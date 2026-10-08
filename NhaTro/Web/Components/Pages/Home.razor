@@ -1,0 +1,23 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject ISnackbar Snackbar
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudText Typo="Typo.h4">Web vận hành nhà trọ</MudText>
+
+<MudButton Variant="Variant.Filled"
+           Color="Color.Primary"
+           OnClick="Test">
+    Kiểm tra
+</MudButton>
+
+@code {
+    private void Test()
+    {
+        Snackbar.Add("MudBlazor hoạt động!", Severity.Success);
+    }
+}

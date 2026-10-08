@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="NhaTro.E2ETests/NhaTro.E2ETests.csproj" />
+    <Project Path="NhaTro.IntegrationTests/NhaTro.IntegrationTests.csproj" />
+    <Project Path="NhaTro.UnitTests/NhaTro.UnitTests.csproj" />
+  </Folder>
+  <Project Path="Web/Web.csproj" />
+</Solution>

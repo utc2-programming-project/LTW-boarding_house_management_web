@@ -1,0 +1,26 @@
+# Local CodeGraph index and cache
+.codegraph/
+
+# Project-local OpenCode MCP configuration
+/opencode.json
+
+# Visual Studio / .NET
+.vs/
+bin/
+obj/
+out/
+publish/
+TestResults/
+*.user
+*.suo
+*.userprefs
+
+# Secrets, local data, logs (never commit)
+secrets.json
+*.pfx
+*.key
+NhaTroData/
+**/logs/
+**/uploads/
+**/data-protection-keys/
+**/backups/

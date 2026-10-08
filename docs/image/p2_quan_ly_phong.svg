@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1050" viewBox="0 0 1900 1050">
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L9,4 L0,8" fill="none" stroke="#1e293b" stroke-width="2"/></marker></defs>
+<rect width="100%" height="100%" fill="white"/>
+<rect x="780" y="150" width="270" height="720" rx="14" fill="#96f2d7" stroke="#1e293b" stroke-width="2"/>
+<rect x="60" y="160" width="230" height="180" rx="14" fill="#a5d8ff" stroke="#1e293b" stroke-width="2"/>
+<rect x="60" y="420" width="230" height="180" rx="14" fill="#a5d8ff" stroke="#1e293b" stroke-width="2"/>
+<rect x="60" y="680" width="230" height="180" rx="14" fill="#a5d8ff" stroke="#1e293b" stroke-width="2"/>
+<rect x="1540" y="425" width="290" height="170" rx="14" fill="#d0bfff" stroke="#1e293b" stroke-width="2"/>
+<polyline points="295,210 775,210" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="775,290 295,290" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="295,470 775,470" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="775,550 295,550" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="295,730 775,730" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="775,810 295,810" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="1535,470 1055,470" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<polyline points="1055,550 1535,550" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="950.0" y="65.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#1e293b">P2: QUẢN LÝ PHÒNG</text>
+<text x="915.0" y="519.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">P2: Quản lý phòng</text>
+<text x="175.0" y="259.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Chủ trọ</text>
+<text x="535.0" y="192.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC xem, thiết lập giá phòng</text>
+<text x="535.0" y="272.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT phòng, trạng thái phòng</text>
+<text x="175.0" y="519.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Quản lý</text>
+<text x="535.0" y="452.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT phòng, YC cập nhật</text>
+<text x="535.0" y="532.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">KQ cập nhật, trạng thái phòng</text>
+<text x="175.0" y="779.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Khách thuê</text>
+<text x="535.0" y="712.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC xem phòng đang thuê</text>
+<text x="535.0" y="792.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT phòng đang thuê</text>
+<text x="1685.0" y="519.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">D2: Dữ liệu phòng</text>
+<text x="1295.0" y="452.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">Dữ liệu phòng, trạng thái phòng</text>
+<text x="1295.0" y="532.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT phòng cập nhật</text>
+<text x="950.0" y="990.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#1e293b">Xanh trời: tác nhân  •  Xanh lá: tiến trình  •  Tím: kho dữ liệu  •  Mũi tên: chiều dữ liệu</text>
+<text x="950.0" y="1027.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Luồng tiến trình chính — không phải sơ đồ phân rã mức 2. Các mã lặp lại biểu diễn cùng tác nhân/tiến trình/kho.</text>
+</svg>
