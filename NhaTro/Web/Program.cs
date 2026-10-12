@@ -61,6 +61,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddMudServices();
+builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
