@@ -1,234 +1,254 @@
-# Cấu trúc thư mục — Web vận hành nhà trọ
+# Cấu trúc thư mục / Folder structure — Web vận hành nhà trọ
 
-## 1. Nguyên tắc
+**English name:** Boarding House Operations Web
 
-- Một project **Blazor Web App** chứa frontend và backend, mở và debug bằng Visual Studio.
-- Chia **theo chức năng** trong `Features/`: giao diện, DTO, xử lý nghiệp vụ và quy tắc của chức năng nằm gần nhau.
-- Phần tái sử dụng chia rõ: `Shared/` cho giao diện, `Common/` cho kiểu dữ liệu và tiện ích thuần, `Infrastructure/` cho tích hợp kỹ thuật.
-- EF Core và cấu hình database tập trung trong `Data/`; không thêm generic repository hoặc framework mới.
-- Đây là cấu trúc kế hoạch cho toàn hệ thống, chưa phải mã nguồn đã triển khai. Chỉ tạo folder khi có file thực tế.
-- Tham chiếu: [công nghệ](../tech-stack/cong_nghe_su_dung.md), [nghiệp vụ](../thiet_ke_he_thong.md).
+**GitHub:** https://github.com/TinhSsc/boarding-house-management-web.git
 
-## 2. Cấu trúc toàn bộ repository
+## 1. Nguyên tắc / Principles
+
+- Một project **Blazor Web App** chứa frontend và backend; Visual Studio mở `NhaTro/NhaTro.slnx`.
+- Chia theo chức năng / **Feature-oriented**: UI, entity, DTO, service và rule nằm trong cùng feature.
+- Không chuyển repo sang `src/` và `tests/`, không đổi tên project/namespace chỉ để khớp một cây mẫu.
+- Cây **hiện tại** và cây **khung phát triển** tách riêng. Theo yêu cầu INIT, các folder trong cây mở rộng đã được tạo và giữ bằng `.gitkeep`; folder có sẵn không có nghĩa là tính năng đã triển khai.
+- EF Core tập trung ở `Data/`; giữ `ApplicationDbContext` và `ApplicationUser` hiện có. Không thêm generic repository hoặc framework mới.
+- Tham chiếu: [công nghệ](../tech-stack/cong_nghe_su_dung.md), [nghiệp vụ P1–P8](../thiet_ke_he_thong.md), [UI](../design/phong_cach_giao_dien.md), [phân công](../task/cong_viec_theo_tuan.md).
+
+## 2. Cây hiện tại / Current repository tree
+
+Các nhánh dưới đây đã có; cây lược bỏ `bin/`, `obj/`, `.vs/`, file cá nhân và chi tiết template Identity.
 
 ```text
 LTW/
-├── NhaTro.sln                       # Solution cho Visual Studio
-├── global.json                      # Ghim .NET SDK
-├── .editorconfig                    # Quy ước định dạng C# và Razor
 ├── .gitignore
-├── README.md
 ├── .github/
-│   └── workflows/                   # Build, test, audit và publish
-├── src/
-│   └── NhaTro.Web/
-│       ├── NhaTro.Web.csproj
-│       ├── Program.cs               # Khởi tạo host, DI và pipeline
-│       ├── appsettings.json
-│       ├── appsettings.Development.json
-│       ├── Properties/
-│       │   └── launchSettings.json
-│       ├── Components/
-│       │   ├── App.razor
-│       │   ├── Routes.razor
-│       │   ├── Layout/              # Layout, menu, header
-│       │   ├── Account/             # Component Identity, luồng HTTP đăng nhập
-│       │   └── Shared/
-│       │       ├── Forms/           # Input và hiển thị validation dùng chung
-│       │       ├── Tables/          # Thành phần bảng dùng chung
-│       │       ├── Dialogs/         # Xác nhận, thông báo
-│       │       ├── Feedback/        # Loading, empty, error, reconnect
-│       │       └── Theme/           # Theme MudBlazor, màu và typography
-│       ├── Features/
-│       │   ├── Accounts/            # P1: tài khoản, vai trò, phân công quản lý
-│       │   ├── Properties/          # P2: nhà trọ/tòa nhà và phạm vi sở hữu
-│       │   ├── Rooms/               # P2: phòng, giá chuẩn, hiện trạng
-│       │   ├── Tenants/             # P3: hồ sơ khách thuê, giấy tờ
-│       │   ├── Contracts/           # P4: hợp đồng, thành viên, gia hạn, thanh lý
-│       │   ├── Deposits/            # P4: thu, hoàn và xử lý tiền cọc
-│       │   ├── Utilities/           # P5: dịch vụ, đơn giá, chỉ số điện nước
-│       │   ├── Invoices/            # P6: lập/phát hành hóa đơn, dòng chi phí
-│       │   ├── Payments/            # P6: yêu cầu/minh chứng thanh toán, xác nhận thu, biên lai
-│       │   ├── Maintenance/         # P7: sự cố, tiến độ và chi phí bảo trì
-│       │   ├── Reports/             # P8: doanh thu, công nợ, thống kê
-│       │   └── Dashboard/           # Màn hình tổng quan theo vai trò
-│       ├── Common/
-│       │   ├── Constants/           # Hằng số dùng chung thực sự
-│       │   ├── Models/              # PagedResult, kiểu kết quả dùng chung
-│       │   ├── Exceptions/          # Lỗi dùng chung, không chứa dữ liệu nhạy cảm
-│       │   ├── Extensions/          # Extension thuần, tên và phạm vi rõ ràng
-│       │   └── Utils/               # Tiện ích thuần, không có I/O hoặc nghiệp vụ
-│       ├── Data/
-│       │   ├── AppDbContext.cs
-│       │   ├── Configurations/      # Fluent API, chia theo feature
-│       │   ├── Migrations/          # EF Core migrations
-│       │   └── Seeding/             # Dữ liệu khởi tạo, tách dữ liệu demo
-│       ├── Authorization/
-│       │   ├── Policies/            # Vai trò và tên policy
-│       │   ├── Requirements/        # Yêu cầu quyền theo resource
-│       │   ├── Handlers/            # Kiểm tra sở hữu/phân công/thành viên
-│       │   └── Services/            # Truy vấn phạm vi truy cập dùng chung
-│       ├── Infrastructure/
-│       │   ├── Identity/            # ApplicationUser, tích hợp Identity
-│       │   ├── Storage/             # Lưu/đọc tệp vật lý, không quyết định quyền
-│       │   ├── Auditing/            # Ghi lịch sử nghiệp vụ vào SQL Server
-│       │   ├── Idempotency/         # Lưu khóa và kết quả chống ghi trùng
-│       │   ├── Time/                # Chuyển UTC/múi giờ Việt Nam khi cần
-│       │   ├── Logging/             # Cấu hình Serilog, redaction
-│       │   ├── HealthChecks/        # Liveness/readiness
-│       │   ├── ErrorHandling/       # Xử lý lỗi HTTP, chuyển lỗi an toàn
-│       │   └── Security/            # Data Protection và cấu hình bảo mật
-│       ├── Configuration/
-│       │   ├── Options/             # Cấu hình kiểu dữ liệu rõ ràng
-│       │   └── Validation/          # Options Validation
-│       ├── Endpoints/
-│       │   ├── Files/               # HTTP tải tệp có kiểm tra quyền
-│       │   └── Health/              # Endpoint live/ready
-│       ├── DependencyInjection/     # Nhóm đăng ký DI, giữ Program.cs gọn
-│       └── wwwroot/
-│           ├── css/                 # Style toàn ứng dụng, design tokens
-│           ├── fonts/               # Font hỗ trợ tiếng Việt
-│           ├── images/              # Chỉ ảnh công khai
-│           └── js/                  # Chỉ khi cần JS interop
-├── tests/
-│   ├── NhaTro.UnitTests/
-│   │   ├── Features/                # Test quy tắc nghiệp vụ theo feature
-│   │   ├── Common/                  # Test utils và extension
-│   │   └── TestSupport/             # Fake TimeProvider, test data, helper
-│   ├── NhaTro.IntegrationTests/
-│   │   ├── Features/                # SQL Server, transaction, concurrency
-│   │   ├── Authorization/           # Test xuyên user/tòa nhà/hợp đồng
-│   │   ├── Endpoints/               # Auth HTTP, tải tệp, health
-│   │   └── TestSupport/             # WebApplicationFactory, DB cô lập
-│   └── NhaTro.E2ETests/
-│       ├── Features/                # Playwright .NET theo luồng chức năng
-│       └── TestSupport/             # Browser fixture, dữ liệu và page helpers
-├── scripts/
-│   ├── database/                    # Migrate, backup/restore có kiểm soát
-│   └── deployment/                  # Publish và triển khai IIS
+│   └── workflows/
+│       └── ci.yml                       # Windows: restore/build/test .NET 10
+├── NhaTro/
+│   ├── NhaTro.slnx                      # Solution Visual Studio
+│   ├── Web/
+│   │   ├── Web.csproj                   # Một web project; namespace Web
+│   │   ├── Program.cs                   # DI, Identity, EF, MudBlazor, Serilog
+│   │   ├── appsettings.json
+│   │   ├── appsettings.Development.json
+│   │   ├── Properties/
+│   │   │   └── launchSettings.json
+│   │   ├── Components/
+│   │   │   ├── App.razor
+│   │   │   ├── Routes.razor
+│   │   │   ├── _Imports.razor
+│   │   │   ├── Layout/                  # MainLayout, ReconnectModal
+│   │   │   ├── Pages/                   # Home: giới thiệu INIT; trang lỗi
+│   │   │   │   ├── Home.razor
+│   │   │   │   └── Home.razor.css
+│   │   │   └── Account/                 # Template Identity + HTTP auth
+│   │   ├── Data/
+│   │   │   ├── ApplicationDbContext.cs
+│   │   │   ├── ApplicationUser.cs
+│   │   │   ├── Configurations/
+│   │   │   │   ├── Properties/
+│   │   │   │   ├── Rooms/
+│   │   │   │   └── Tenants/
+│   │   │   └── Migrations/              # Identity, CoreSchema, snapshot
+│   │   ├── Features/
+│   │   │   ├── Properties/
+│   │   │   │   └── Entities/Property.cs
+│   │   │   ├── Rooms/
+│   │   │   │   ├── Entities/Room.cs
+│   │   │   │   └── Enums/RoomStatus.cs
+│   │   │   └── Tenants/
+│   │   │       └── Entities/Tenant.cs
+│   │   └── wwwroot/                    # app.css và static assets template
+│   ├── NhaTro.UnitTests/                # xUnit: scaffold
+│   ├── NhaTro.IntegrationTests/         # xUnit + WebApplicationFactory
+│   └── NhaTro.E2ETests/                 # xUnit + Playwright .NET
 └── docs/
     ├── thiet_ke_he_thong.md
-    ├── architecture/               # Cấu trúc, quyết định kiến trúc
-    ├── tech-stack/                 # Công nghệ sử dụng
-    ├── design/                     # Database, UI và trạng thái nghiệp vụ
-    ├── api/                        # HTTP contract đăng nhập/tệp/health
-    ├── image/                      # Sơ đồ hiện hành
-    ├── archive/                    # Bản cũ, không dùng làm đặc tả hiện hành
-    └── operations/                 # Hướng dẫn triển khai, phục hồi, xử lý sự cố
+    ├── thiet_ke_he_thong.docx
+    ├── bieudochot.excalidraw
+    ├── architecture/                   # Tài liệu tổ chức code
+    │   ├── README.md
+    │   ├── cau_truc_thu_muc.md          # Cây và quy tắc hiện hành
+    │   └── cau_truc_thu_muc.docx        # Bản Word; cần đồng bộ khi xuất
+    ├── tech-stack/
+    ├── design/
+    ├── task/
+    ├── api/
+    ├── image/
+    └── archive/
 ```
 
-Các file sơ đồ hiện có trong `docs/` được giữ nguyên; cây trên không yêu cầu di chuyển hoặc xóa tài liệu cũ. Các project test không làm thay đổi việc frontend và backend cùng một project web.
+**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage.
 
-### Ranh giới trách nhiệm cần thống nhất
+## 3. Khung thư mục đã tạo / Created folder scaffold
 
-- `Components/Account/`: giao diện và luồng HTTP đăng nhập/đăng xuất của Identity; không chứa chức năng quản trị tài khoản.
-- `Features/Accounts/`: quản trị tài khoản, vai trò và phân công Quản lý theo nghiệp vụ P1.
-- `Infrastructure/Identity/`: kiểu `ApplicationUser` và tích hợp kỹ thuật Identity; không chứa màn hình hoặc quy tắc phân công nghiệp vụ.
-- `Features/Payments/`: khách thuê gửi yêu cầu, thông tin/minh chứng thanh toán; Quản lý kiểm tra và xác nhận thu tiền. **Gửi yêu cầu/minh chứng không đồng nghĩa hóa đơn đã thanh toán**. Đối soát là kiểm tra thủ công tiền mặt/chuyển khoản, không ngụ ý tích hợp ngân hàng.
-- Cây folder là **cách tổ chức mã nguồn dự kiến**, không tự xác nhận thêm chức năng. `Properties/` tổ chức dữ liệu nhà trọ/tòa nhà; `Deposits/` vẫn thuộc P4, không phải tiến trình mới. Chi tiết thu/hoàn/xử lý cọc và chi phí bảo trì phải theo đặc tả đã được thống nhất; không tự bổ sung chức năng chỉ vì có folder.
+Các folder dưới **`NhaTro/Web/`** đã được tạo; folder rỗng giữ bằng `.gitkeep`, không tạo project mới hoặc class mẫu. Các chú thích chức năng vẫn là **kế hoạch triển khai**, không phải nghiệp vụ đã hoàn thành.
 
-## 3. Cấu trúc bên trong mỗi chức năng
+```text
+Web/
+├── Components/
+│   ├── Layout/                         # Phú: sidebar/topbar sau INIT
+│   └── Shared/
+│       ├── Forms/                      # Phúc: input/validation
+│       ├── Tables/                     # Phúc: filter/paging
+│       ├── Dialogs/                    # Phúc: confirmation
+│       ├── Feedback/                   # Loading/empty/error
+│       ├── Theme/                      # Phú: tokens/MudTheme/Lucide
+│       └── Localization/               # Phú: language selector
+├── Features/
+│   ├── Accounts/                       # P1 — Tính
+│   ├── Properties/                     # P2 — Phúc, mở rộng entity đã có
+│   ├── Rooms/                          # P2 — Phúc, mở rộng entity đã có
+│   ├── Tenants/                        # P3 — Phúc, mở rộng entity đã có
+│   ├── Contracts/                      # P4 — Mai
+│   ├── Deposits/                       # P4 — Mai; chỉ theo đặc tả đã chốt
+│   ├── Utilities/                      # P5 — Mai backend, Phú UI
+│   ├── Invoices/                       # P6 — Phát
+│   ├── Payments/                       # P6 — Phát
+│   ├── Maintenance/                    # P7 — Phú
+│   ├── Reports/                        # P8 — Phú; nguồn từ mỗi người
+│   └── Dashboard/                      # Phú; số liệu theo quyền
+├── Common/
+│   ├── Constants/
+│   ├── Models/                         # Kết quả/phân trang dùng chung
+│   ├── Exceptions/
+│   ├── Extensions/
+│   ├── Utils/                          # Mai: hàm thuần ngày/tiền
+│   └── Localization/                   # SharedResource.cs (resource marker)
+├── Resources/                          # Bản dịch .resx vi-VN/en-US
+├── Data/
+│   ├── Configurations/                 # Bổ sung theo feature
+│   ├── Migrations/                     # Migrations cộng thêm, theo lượt
+│   └── Seeding/                        # Tách dữ liệu nền và dữ liệu demo
+├── Authorization/
+│   ├── Policies/
+│   ├── Requirements/
+│   ├── Handlers/
+│   └── Services/                       # Tính: phạm vi truy cập
+├── Infrastructure/
+│   ├── Storage/                        # Phúc: I/O tệp ngoài wwwroot
+│   ├── Auditing/                       # Audit theo nhu cầu nghiệp vụ
+│   ├── Idempotency/                    # Chống ghi giao dịch trùng
+│   ├── Time/                           # UTC ↔ Việt Nam khi cần
+│   ├── Logging/                        # Tách Serilog khi cần
+│   ├── HealthChecks/
+│   ├── ErrorHandling/
+│   └── Security/                       # Keys, Data Protection
+├── Configuration/
+│   ├── Options/
+│   └── Validation/
+├── Endpoints/
+│   ├── Files/                          # Tải tệp qua kiểm quyền
+│   ├── Health/
+│   └── Localization/                   # Đặt culture cookie khi triển khai
+├── DependencyInjection/                # Chỉ tách khi Program.cs cần gọn
+└── wwwroot/
+    ├── app.css                         # Giữ file hiện có
+    ├── css/                            # Tokens khi theme thật được làm
+    ├── fonts/
+    ├── images/                         # Chỉ ảnh công khai
+    └── js/                             # Chỉ khi cần interop
+```
 
-Ví dụ chức năng hóa đơn:
+- Giữ `ApplicationUser` ở `Data/`, không tạo bản thứ hai tại `Infrastructure/Identity/`.
+- `Components/Account/` là luồng đăng nhập Identity; `Features/Accounts/` là quản trị tài khoản/role/phân công P1.
+- `Utilities/` là điện nước/dịch vụ; `Common/Utils/` là tiện ích lập trình.
+- `Deposits/` vẫn thuộc P4. Có folder không có nghĩa là tự bổ sung nghiệp vụ cọc.
+
+## 4. Một chức năng / Feature template
 
 ```text
 Features/Invoices/
-├── Pages/
-│   ├── InvoiceList.razor
-│   ├── InvoiceList.razor.cs         # Code-behind nếu component dài
-│   ├── InvoiceList.razor.css        # CSS isolation khi cần
-│   └── InvoiceDetail.razor
-├── Components/                     # Chỉ dùng trong chức năng hóa đơn
-│   ├── InvoiceForm.razor
-│   └── InvoiceItemsTable.razor
-├── Entities/                       # Invoice, InvoiceItem
-├── DTOs/                           # Request, response, filter; không bind entity
-├── Services/                       # InvoiceService: điều phối nghiệp vụ
-├── Rules/                          # Tính tiền, phát hành, chuyển trạng thái
-├── Mapping/                        # Mapping thủ công nếu cần tách riêng
-└── Enums/                          # Trạng thái hóa đơn
+├── Pages/                              # InvoiceList.razor, InvoiceDetail.razor
+├── Components/                         # Chỉ dùng trong feature
+├── Entities/                           # Invoice, InvoiceItem khi chốt schema
+├── DTOs/                               # Request/response/filter; không bind entity
+├── Services/                           # InvoiceService điều phối thao tác
+├── Rules/                              # Quy tắc tính tiền/chuyển trạng thái
+├── Mapping/                            # Mapping thủ công nếu cần tách
+└── Enums/
+
+Data/Configurations/Invoices/           # Fluent API của entity hóa đơn
 ```
 
-- Áp dụng cùng cách chia cho các feature khác, nhưng **không bắt buộc feature nào cũng có đủ thư mục**.
-- Component có `@page` vẫn được Blazor Router tìm thấy khi đặt trong `Features/`; bảo đảm namespace và `_Imports.razor` phù hợp.
-- Entity ở feature; cấu hình EF tương ứng ở `Data/Configurations/Invoices/`. Một `AppDbContext` quản lý toàn bộ database.
-- Interface chỉ thêm khi có ranh giới cần thay thế hoặc nhiều implementation, không tạo một interface cho mọi class theo máy móc.
-- `Utilities/` là nghiệp vụ **điện nước/dịch vụ**; `Common/Utils/` là tiện ích lập trình, không trộn hai loại này.
+- Khung `Invoices/` đã tạo đủ các folder trong ví dụ; các feature khác giữ folder nền và mở rộng theo nhu cầu, không bắt buộc có đủ mọi nhánh. `.razor.cs` và `.razor.css` đặt cạnh component khi cần.
+- Component `@page` trong `Features/` được Router tìm thấy; thêm `_Imports.razor` ở phạm vi thích hợp, không import mọi feature toàn cục.
+- Namespace ví dụ: **`Web.Features.Invoices.Services`**, không phải `NhaTro.Web.*`.
+- Interface chỉ thêm khi cần thay thế implementation; không tạo một interface cho mọi class.
 
-## 4. Quy tắc tái sử dụng và phụ thuộc
-
-| Nơi đặt | Được chứa | Không được chứa |
-| --- | --- | --- |
-| `Common/Utils/` | Hàm thuần định dạng, chuẩn hóa dữ liệu dùng chung, dễ unit test | DbContext, HTTP, đọc tệp, trạng thái người đăng nhập, tính công nợ |
-| `Common/Extensions/` | Extension có tên rõ và trách nhiệm nhỏ | Lệnh ghi database hoặc thao tác tài chính bị che trong extension |
-| `Components/Shared/` | Component UI dùng cho nhiều feature | Truy vấn SQL trực tiếp hoặc quyết định quyền nghiệp vụ |
-| `Features/<Tên>/Rules/` | Logic nghiệp vụ ưu tiên thuần như tính hóa đơn, kiểm tra điều kiện duyệt; nhận dữ liệu từ Service | Truy cập database trực tiếp, lưu tệp hoặc cấu hình logger |
-| `Infrastructure/` | Adapter kỹ thuật, I/O, cơ chế dùng chung | Quyết định khách nào được xem CCCD, khoản thu nào hợp lệ |
-| `Authorization/` | Kiểm tra quyền và phạm vi dữ liệu dùng chung | Chỉ kiểm tra UI mà bỏ kiểm tra trong Service |
-| `tests/*/TestSupport/` | Fixture, fake và dữ liệu test tái sử dụng | Helper test được đưa vào project chạy thật |
-
-**Hướng phụ thuộc:**
+## 5. Phụ thuộc và transaction / Dependencies and transactions
 
 ```text
 Feature UI → Feature Service → Rules + Authorization + Data/Infrastructure
-Shared UI → Common
-Data → Entity cần ánh xạ EF + Configuration
-Infrastructure → Kiểu dữ liệu cần cho tích hợp + Common/Configuration
-Common → .NET và các kiểu dùng chung; không tham chiếu ngược Feature
+Shared UI → Common + Resources
+Data → Feature entities + EF configurations
+Infrastructure → Common/Configuration + kiểu dữ liệu tích hợp cần thiết
+Common → .NET; không phụ thuộc ngược Feature hoặc UI
 ```
 
-- UI không truy cập DbContext trực tiếp. **Service đầu vào của một thao tác** tạo và giải phóng DbContext bằng `IDbContextFactory`, quản lý transaction khi cần và chịu trách nhiệm `SaveChangesAsync`/commit.
-- Các bước nội bộ tham gia cùng thao tác nhận DbContext của Service đầu vào qua phương thức nội bộ hoặc làm việc trên entity đã được tải; không tự tạo context, tự commit hoặc giải phóng context được truyền vào. Không lưu context trong field dùng lâu dài theo circuit; không dùng đồng thời một context trong các tác vụ song song.
-- `Data/` tham chiếu entity để ánh xạ EF. `Infrastructure/` chỉ dùng kiểu dữ liệu cần thiết cho tích hợp, không phụ thuộc component hoặc DTO dành riêng cho form. Service chuyển dữ liệu form sang kiểu phù hợp trước khi gọi tích hợp.
-- `Rules/` nhận dữ liệu đã được Service chuẩn bị, ưu tiên hàm thuần; việc truy vấn, kiểm tra quyền và điều phối ghi dữ liệu thuộc Service.
-- Feature có thể gọi Service của feature khác khi có nghiệp vụ thực, nhưng không tạo vòng phụ thuộc. Ví dụ lập hóa đơn đọc hợp đồng/dịch vụ, không gọi ngược Service thanh toán để lập hóa đơn.
-- Nếu một transaction thay đổi nhiều feature, một Service điều phối dùng **cùng DbContext/transaction**; không gọi chuỗi Service tự tạo context rồi cho rằng tất cả đều nguyên tử.
-- Chống ghi trùng, audit và thay đổi thu tiền cần được ghi cùng transaction khi yêu cầu nguyên tử; không dùng helper tự ghi database ngoài transaction đó.
-- Ví dụ xác nhận thanh toán: `PaymentService` đầu vào tạo context/transaction, kiểm tra quyền và khóa chống trùng, ghi nhận khoản thu, cập nhật trạng thái hóa đơn theo số tiền đã xác nhận và ghi audit; tất cả dùng cùng context. Chỉ trả thành công khi commit hoàn tất; lỗi phải rollback. Không cần generic repository hoặc framework Unit of Work.
-- Không chuyển mọi thứ vào `Utils`. Logic dùng một nơi giữ tại feature; chỉ đưa ra dùng chung khi trách nhiệm và nhu cầu tái sử dụng rõ ràng.
-- Tiện ích không giữ state theo circuit trong biến static; thời gian hiện tại lấy qua `TimeProvider`, không tạo một global clock riêng.
+- UI/shared component không truy vấn SQL hoặc quyết định quyền thay backend.
+- Service đầu vào tạo context ngắn hạn qua **`IDbContextFactory<ApplicationDbContext>`**, kiểm quyền, điều phối transaction và chịu trách nhiệm `SaveChangesAsync`/commit.
+- Bước nội bộ dùng **cùng context/transaction** hoặc entity đã tải; không tự tạo context/commit/dispose context được truyền vào. Không giữ context theo circuit, không dùng cùng context song song.
+- Rules ưu tiên hàm thuần; service chuẩn bị dữ liệu và thực hiện I/O. Feature có thể dùng service feature khác nhưng không tạo vòng phụ thuộc.
+- Xác nhận thu tiền: quyền + chống trùng + khoản thu + cập nhật hóa đơn + audit dùng cùng transaction khi yêu cầu nguyên tử; lỗi rollback. **Gửi minh chứng không đồng nghĩa đã thanh toán**.
+- Không dồn nghiệp vụ vào Utils; Utils không chứa DbContext, HTTP, storage hoặc logic công nợ. Thời gian trong nghiệp vụ dùng `TimeProvider` khi nhóm triển khai.
 
-## 5. Thành phần có điều kiện theo kế hoạch công nghệ
+## 6. Hai ngôn ngữ / Localization
 
-| Yêu cầu được xác nhận | Vị trí |
-| --- | --- |
-| Chạy nghiệp vụ định kỳ | `BackgroundJobs/` chứa hosted service; gọi Service nghiệp vụ, lưu kỳ xử lý bền vững, không chỉ dùng timer trong bộ nhớ |
-| Xuất Excel | `Infrastructure/Exports/Excel/` cho ClosedXML; chọn dữ liệu và kiểm tra quyền tại feature |
-| Tạo PDF | `Infrastructure/Exports/Pdf/` cho QuestPDF; template theo hợp đồng/hóa đơn/phiếu thu, kiểm tra license |
+- Hỗ trợ **`vi-VN` / `en-US`**, mặc định tiếng Việt. Folder, class, namespace và resource key bằng tiếng Anh.
+- INIT chỉ đổi nội dung giới thiệu tại `Home.razor`, chưa lưu lựa chọn qua trang/tải lại và chưa dịch Identity.
+- Phú thiết lập `AddLocalization`, `RequestLocalization`, resource và selector chung; cookie culture được đặt qua HTTP endpoint để dùng cho lần tải trang/circuit mới. Không đổi global culture của mọi người dùng.
+- Shared resource marker tại `Common/Localization/SharedResource.cs`; dùng `IStringLocalizer<SharedResource>` với `ResourcesPath = "Resources"`.
+- Ví dụ đúng theo namespace marker: `Resources/Common/Localization/SharedResource.vi-VN.resx` và `SharedResource.en-US.resx`. Resource feature dùng marker/namespace riêng khi cần; hai ngôn ngữ phải có cùng key.
+- Mỗi người dịch UI/validation/trạng thái phần mình. Tính phụ trách Identity; Mai thống nhất ngày/tiền; Phát kiểm song ngữ; Phúc cập nhật hướng dẫn.
+- Không dịch nội dung nhập, enum lưu SQL hoặc tên riêng. Chuyển ngôn ngữ không đổi VND, quy tắc tính, quyền hoặc dữ liệu.
+- Dùng định dạng chung của dự án: `dd/MM/yyyy`, `HH:mm`, số Việt Nam và VND; nếu muốn định dạng theo culture thì nhóm phải chốt lại, không đổi ngầm khi chọn English.
 
-Không tạo các folder này hoặc cài package nếu chưa có yêu cầu tương ứng. Đây là điều kiện chức năng, không phải chia giai đoạn phát triển.
-
-## 6. Dữ liệu vận hành nằm ngoài repository và thư mục publish
-
-Ví dụ đường dẫn trên máy chủ; cấu hình thực tế qua Options và biến môi trường:
+## 7. Test, tài liệu và scripts / Tests, docs and scripts
 
 ```text
-D:/NhaTroData/
-├── uploads/
-│   ├── identity-documents/          # CCCD, giấy tờ; không public
-│   ├── payment-evidence/            # Biên lai; không public
-│   └── maintenance/                 # Ảnh sự cố, vẫn kiểm tra quyền
-├── logs/                            # Log kỹ thuật, có giới hạn lưu giữ
-└── data-protection-keys/            # Lưu bền vững, bảo vệ khóa và ACL
+NhaTro/
+├── NhaTro.UnitTests/
+│   ├── Features/                       # Rules theo chức năng
+│   ├── Common/                         # Utils/formatting
+│   └── TestSupport/                    # Fake clock/data/helper
+├── NhaTro.IntegrationTests/
+│   ├── Features/                       # SQL/transaction/concurrency
+│   ├── Authorization/
+│   ├── Endpoints/                      # HTTP auth/files/health/culture
+│   └── TestSupport/                    # Factory + database test cô lập
+└── NhaTro.E2ETests/
+    ├── Features/                       # Playwright, gồm Việt/Anh
+    └── TestSupport/                    # Browser fixtures/page helpers
 
-Kho backup riêng được bảo vệ:
-├── database/
-├── uploads/
-└── keys/                            # Có phương án phục hồi khả năng giải mã
+docs/design/database/                   # .gitkeep; Tính bổ sung ERD theo migrations
+docs/operations/                        # .gitkeep; hướng dẫn IIS/restore bổ sung sau
+scripts/database/                       # .gitkeep; chưa có script thật
+scripts/deployment/                     # .gitkeep; chưa có script thật
+README.md                               # Phúc: setup/use bằng Việt/Anh, bổ sung sau
 ```
 
-- Không commit uploads, log, backup, keys hoặc secret; không đặt chúng trong `wwwroot`.
-- File storage không có quyền thực thi; tên tệp do server sinh, metadata và liên kết resource lưu trong SQL Server.
-- Backup cần bản sao độc lập với máy chạy ứng dụng; tạo folder `backups` trên cùng ổ không đủ để bảo vệ khi mất máy/ổ đĩa.
-- Truy cập tệp phải qua Service kiểm quyền và endpoint tải tệp; không đưa đường dẫn vật lý lên giao diện.
+Các folder trong mục này đã được tạo và giữ bằng `.gitkeep`; riêng `README.md` ở root vẫn chưa tạo. Chưa có test/fixture hoặc script nghiệp vụ trong các folder mới. Solution folder trong Visual Studio không bắt buộc trùng folder vật lý trên ổ đĩa. Phú ghép PR/CI, Tính hỗ trợ; không tự di chuyển project test.
 
-## 7. Quy ước đặt tên
+**`.gitkeep`:** file placeholder để Git giữ folder rỗng, không phải cấu hình hoặc mã chạy. Khi folder có file thật có thể bỏ `.gitkeep`; không xóa file của người khác chỉ để làm sạch khung.
 
-- Folder, namespace và mã nguồn dùng tiếng Anh, PascalCase; nội dung giao diện dùng tiếng Việt.
-- Đặt tên cụ thể: `PaymentService`, `InvoiceCalculation`, `StorageOptions`; tránh `Helper`, `Manager`, `Utils` cho class chứa nhiều trách nhiệm.
-- Tên namespace theo đường dẫn, ví dụ `NhaTro.Web.Features.Invoices.Services`.
-- `_Imports.razor` dùng tại phạm vi phù hợp cho component trong `Components/` và `Features/`, không import tất cả feature vào mọi component.
-- CSS riêng đặt cạnh component (`.razor.css`); CSS toàn hệ thống ở `wwwroot/css/`.
-- Không lưu `bin/`, `obj/`, `.vs/`, kết quả test hoặc bản publish trong Git.
+## 8. Dữ liệu ngoài Git / Runtime data outside Git
 
-> Cấu trúc này giữ một ứng dụng thống nhất, tách rõ từng chức năng và phần tái sử dụng, không bổ sung kiến trúc phân tán hay framework ngoài kế hoạch công nghệ.
+- Không commit secret, connection string chứa mật khẩu, uploads, log, backup hoặc Data Protection keys.
+- SQL và User Secrets của mỗi máy không chia sẻ qua Git. Thành viên cần cấu hình kết nối rồi áp dụng migrations; không tạo lại migration INIT.
+- Giấy tờ/minh chứng/ảnh sự cố nằm ngoài `wwwroot` và thư mục publish; đường dẫn cấu hình qua Options. Server sinh tên tệp, metadata lưu SQL, tải tệp phải kiểm quyền.
+- Log local hiện ở `%LOCALAPPDATA%/NhaTro/logs`; không mô tả đường dẫn máy chủ dự kiến như cấu hình đã có.
+- Khi triển khai IIS: thống nhất thư mục uploads/logs/keys, ACL và backup độc lập. Backup cùng ổ không đủ bảo vệ mất máy; phải thử restore DB/tệp/keys.
+- Không đưa `bin/`, `obj/`, `.vs/`, `*.csproj.user`, kết quả test hay publish vào Git.
+
+## 9. Phần có điều kiện / Optional scope
+
+Không tạo folder hoặc cài package cho **PDF, background jobs, payment gateway** nếu chưa xác nhận yêu cầu. Excel (ClosedXML) đã được chốt cho “Xuất báo cáo” P8 (D8): khi triển khai VHT-103 thêm `Infrastructure/Exports/` phù hợp.
+
+Dự kiến bổ sung theo ma trận quyền (chỉ tạo khi làm task tương ứng, không tạo class rỗng trước):
+- `Features/Accounts/` mở rộng: quản trị Admin, vòng đời tài khoản (VHT-95).
+- Công tắc và phê duyệt: `Services/Approvals`, `Services/Settings` (VHT-94, VHT-96, VHT-97).
+- Thùng rác: xóa mềm trong `Rooms`, `Tenants` (VHT-98, VHT-99).
+- Biểu giá và lịch sử chỉ số: `Data/Tariffs`, bảng lịch sử sửa chỉ số (VHT-100, VHT-102).
+- Xuất Excel: `Infrastructure/Exports/` (VHT-103); nhật ký thao tác (VHT-104, nếu D16 chốt).
+
+> Một ứng dụng thống nhất / One web application. INIT cung cấp folder scaffold; nhóm bổ sung file thật theo từng chức năng, không tạo class rỗng hoặc nghiệp vụ ngoài phạm vi.

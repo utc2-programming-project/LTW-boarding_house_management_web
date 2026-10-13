@@ -1,6 +1,6 @@
 # Sơ đồ luồng chính thức
 
-Nguồn chỉnh sửa: [../bieudochot.excalidraw](../bieudochot.excalidraw), gồm 8 frame P1–P8.
+Nguồn chỉnh sửa: [../bieudochot.excalidraw](../bieudochot.excalidraw), gồm 8 frame P1–P8. Xuất lại ngày 13/10/2026: P1 có thêm tác nhân Admin; P2–P8 đổi nhãn theo công tắc Quản lý và duyệt thao tác.
 
 | Nội dung | SVG | PNG |
 | --- | --- | --- |
@@ -14,9 +14,9 @@ Nguồn chỉnh sửa: [../bieudochot.excalidraw](../bieudochot.excalidraw), g�
 | P7 — Bảo trì và sự cố | [SVG](p7_bao_tri_su_co.svg) | [PNG](p7_bao_tri_su_co.png) |
 | P8 — Báo cáo và thống kê | [SVG](p8_bao_cao_thong_ke.svg) | [PNG](p8_bao_cao_thong_ke.png) |
 
-SVG và nguồn Excalidraw dùng cùng tập luồng. PNG mới được xuất từ SVG ở kích thước 1900 × 1050; không sửa đè chữ/mũi tên trên ảnh chụp cũ. Không cần chụp thủ công cho lần sửa này.
+SVG và nguồn Excalidraw dùng cùng tập luồng. PNG mới được xuất từ nguồn ở kích thước 1900 × 1050 (render cùng dữ liệu Excalidraw); không sửa đè chữ/mũi tên trên ảnh chụp cũ. Không cần chụp thủ công cho lần sửa này.
 
-Các ảnh chụp cũ được lưu trong `docs/archive/truoc_sua_luong/`, không còn nhúng trong tài liệu. P1, P3, P4, P6, P7 có sửa nội dung; P2, P5, P8 chỉ chuẩn hóa bố cục/nhãn.
+Bản trước khi thêm Admin (8 PNG + 8 SVG + `dfd_tong_the.svg` cũ và `bieudochot_truoc_admin.excalidraw`) được lưu trong `docs/archive/truoc_admin/`, không còn nhúng trong tài liệu. Các ảnh chụp cũ hơn được lưu trong `docs/archive/truoc_sua_luong/`.
 
 Không gọi đây là DFD mức 2. Không thêm công nghệ hay thiết kế chi tiết vào bộ luồng chính thức. Nếu chỉnh nguồn sau này, phải xuất lại ảnh tương ứng và cập nhật tài liệu cùng lúc.
 
