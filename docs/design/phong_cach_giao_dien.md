@@ -6,6 +6,7 @@
 - Icon: [Lucide Animated](https://lucide-animated.com/). **Không dùng emoji, icon bàn phím hoặc trộn icon Material.**
 - Giữ Blazor/MudBlazor; chuyển SVG/hiệu ứng Lucide Animated sang dạng tương thích Blazor, giữ giấy phép MIT; không thêm React.
 - Dùng chung quy chuẩn cho mọi chức năng và vai trò; không bổ sung nghiệp vụ.
+- Giao diện hỗ trợ tiếng Việt (`vi-VN`) và tiếng Anh (`en-US`), mặc định tiếng Việt; mỗi feature có cùng resource key ở hai ngôn ngữ. Quy chuẩn font/màu/layout dùng chung, kiểm tra cả text tiếng Anh dài; xem phân công localization tại `docs/task/cong_viec_theo_tuan.md`. INIT hiện chỉ có trang giới thiệu song ngữ, không phải toàn ứng dụng đã được dịch.
 - Đơn vị: CSS px; chữ triển khai bằng rem, gốc 16px. Chiều cao component là tối thiểu, cho phép giãn theo nội dung.
 
 ## 2. Font và cỡ chữ
@@ -206,3 +207,11 @@ Biểu đồ: đường 2px, marker 4px, đầu cột bo 4px; grid border 1px; l
 - Hỗ trợ bàn phím, nhãn truy cập, zoom và giảm chuyển động. Mục tiêu tương phản: chữ thường 4.5:1; chữ lớn và điều khiển 3:1, kiểm thử khi triển khai.
 - Kiểm tra viewport 360, 390, 768, 1024, 1280, 1440px và zoom 200%.
 - Dùng theme/token chung; không tự đổi font, màu, icon hoặc thông số theo từng trang.
+
+## 9. Vai trò, phê duyệt và thùng rác (bổ sung theo ma trận quyền)
+
+- Nguồn chuẩn quyền: `docs/task/thao_tac_va_quyen.xlsx` (4 vai trò Admin/Chủ trọ/Quản lý/Khách thuê, 16 công tắc Quản lý).
+- Menu theo vai trò: Admin chỉ thấy Tài khoản, Phân quyền, Nhật ký (không menu nghiệp vụ P2–P8); Chủ trọ có thêm Công tắc, Hàng đợi duyệt, Thùng rác.
+- Nhãn trạng thái `Chờ duyệt` dùng badge cảnh báo, có đủ VI/EN; trạng thái tài khoản (Chờ duyệt/Hoạt động/Khóa) dùng màu thông tin/thành công/trung tính kèm chữ, không chỉ dùng màu.
+- Trang thùng rác (phòng, hồ sơ khách) dùng empty state khi trống; nút Khôi phục chỉ Chủ trọ thấy.
+- Số CCCD của khách thuê luôn che với Quản lý; không xuất CCCD ra Excel.
