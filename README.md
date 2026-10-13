@@ -189,23 +189,83 @@ Hiện chỉ có 3 test rỗng, mỗi project một test. Kết quả mong đợ
 ### Cấu trúc thư mục
 
 ```text
-.
-├── .github/workflows/ci.yml
-├── docs/                          Thiết kế, kiến trúc, công nghệ, giao diện, phân công, sơ đồ
+LTW-boarding_house_management_web/             Thư mục gốc repository
+├── .github/
+│   └── workflows/
+│       └── ci.yml                             Restore, build, test
+├── .config/
+│   └── dotnet-tools.json                      Ghim dotnet-ef
+├── docs/
+│   ├── architecture/
+│   ├── design/
+│   ├── image/
+│   ├── report/
+│   ├── task/
+│   └── tech-stack/
+├── .editorconfig                              Quy ước định dạng C# và Razor
+├── .gitignore
+├── global.json                                Ghim phiên bản .NET SDK
+├── README.md
+│
 └── NhaTro/
-    ├── NhaTro.slnx
-    ├── Web/                       Blazor Web App (frontend và backend)
+    ├── NhaTro.slnx                            Solution
+    │
+    ├── Web/                                   Project Blazor Web App
+    │   ├── Web.csproj
     │   ├── Program.cs
-    │   ├── Components/            App, Routes, Layout, Pages, Account (Identity scaffold)
-    │   ├── Data/                  ApplicationDbContext, Configurations/, Migrations/
-    │   ├── Features/              Properties, Rooms, Tenants (hiện chỉ có Entities; Rooms có thêm Enums)
+    │   ├── appsettings.json
+    │   ├── appsettings.Development.json
+    │   ├── Properties/
+    │   │   ├── launchSettings.json
+    │   │   ├── serviceDependencies.json
+    │   │   └── serviceDependencies.local.json
+    │   │
+    │   ├── Components/                        Giao diện dùng chung
+    │   │   ├── App.razor
+    │   │   ├── Routes.razor
+    │   │   ├── _Imports.razor
+    │   │   ├── Layout/                        MainLayout, ReconnectModal
+    │   │   ├── Pages/                         Home, Error, NotFound
+    │   │   ├── Account/                       Giao diện Identity có sẵn từ template
+    │   │   └── Shared/                        Form, bảng, dialog dùng lại
+    │   │
+    │   ├── Features/                          Chia theo chức năng nghiệp vụ
+    │   │   ├── Properties/                    P2: nhà trọ
+    │   │   ├── Rooms/                         P2: phòng
+    │   │   ├── Tenants/                       P3: khách thuê
+    │   │   ├── Accounts/                      P1: quản trị tài khoản, vai trò
+    │   │   ├── Contracts/                     P4: hợp đồng, tiền cọc
+    │   │   ├── Utilities/                     P5: dịch vụ, điện nước
+    │   │   ├── Invoices/                      P6: hóa đơn
+    │   │   ├── Payments/                      P6: thanh toán
+    │   │   ├── Maintenance/                   P7: sự cố, bảo trì
+    │   │   ├── Reports/                       P8: báo cáo, thống kê
+    │   │   └── Dashboard/                     Tổng quan theo vai trò
+    │   │       Mỗi feature gồm: Pages/, Components/, Entities/, DTOs/,
+    │   │       Services/, Enums/ (chỉ tạo thư mục con khi có file)
+    │   │
+    │   ├── Data/
+    │   │   ├── ApplicationDbContext.cs
+    │   │   ├── ApplicationUser.cs
+    │   │   ├── Configurations/                Fluent API, chia theo feature
+    │   │   ├── Migrations/
+    │   │   └── Seeding/                       Vai trò, dữ liệu mẫu
+    │   │
     │   └── wwwroot/
+    │       └── app.css                        Thêm thư mục con khi có file
+    │
     ├── NhaTro.UnitTests/
+    │   ├── NhaTro.UnitTests.csproj
+    │   └── Features/
     ├── NhaTro.IntegrationTests/
+    │   ├── NhaTro.IntegrationTests.csproj
+    │   └── Features/
     └── NhaTro.E2ETests/
+        ├── NhaTro.E2ETests.csproj
+        └── Features/
 ```
 
-Cấu trúc đầy đủ dự kiến cho toàn hệ thống nằm ở [docs/architecture/cau_truc_thu_muc.md](docs/architecture/cau_truc_thu_muc.md). Thư mục chỉ được tạo khi có file thực tế.
+Đây là cấu trúc đích. Hiện trạng: `Features/` mới có `Properties`, `Rooms`, `Tenants` (chỉ có `Entities`; `Rooms` có thêm `Enums`). Các mục chưa tồn tại gồm `.config/`, `.editorconfig`, `global.json`, `Components/Shared/`, `Data/Seeding/`, các feature còn lại và thư mục `Features/` trong ba project test. Thư mục chỉ được tạo khi có file thực tế. Mô tả chi tiết hơn nằm ở [docs/architecture/cau_truc_thu_muc.md](docs/architecture/cau_truc_thu_muc.md).
 
 ### Xử lý lỗi thường gặp
 
@@ -229,7 +289,7 @@ Cấu trúc đầy đủ dự kiến cho toàn hệ thống nằm ở [docs/arch
 | Công nghệ và quy ước | [docs/tech-stack/cong_nghe_su_dung.md](docs/tech-stack/cong_nghe_su_dung.md) |
 | Quy chuẩn giao diện | [docs/design/phong_cach_giao_dien.md](docs/design/phong_cach_giao_dien.md) |
 | Phân công và lịch theo tuần | [docs/task/phan_cong_cong_viec.md](docs/task/phan_cong_cong_viec.md), [docs/task/cong_viec_theo_tuan.md](docs/task/cong_viec_theo_tuan.md) |
-| Dàn ý báo cáo Word | [docs/report/dan_y_bao_cao_word.md](docs/report/dan_y_bao_cao_word.md) |
+| Dàn ý báo cáo Word | [docs/report/dan_y_bao_cao_word.docx](docs/report/dan_y_bao_cao_word.docx) |
 
 **Quy tắc ngắn cho cả nhóm**
 
@@ -405,7 +465,7 @@ There are only three empty tests today, one per project. Expect 3 passed and 0 f
 
 **CI** (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main`: Windows, .NET `10.0.x`, then `restore`, `build`, `test` on `NhaTro/NhaTro.slnx`. Run the same three commands locally before opening a PR.
 
-The current folder layout is shown in the Vietnamese section "Cấu trúc thư mục"; the planned full structure is in [docs/architecture/cau_truc_thu_muc.md](docs/architecture/cau_truc_thu_muc.md).
+The target folder layout is shown in the Vietnamese section "Cấu trúc thư mục", with the current state noted below it; a more detailed description is in [docs/architecture/cau_truc_thu_muc.md](docs/architecture/cau_truc_thu_muc.md).
 
 ### Troubleshooting
 
@@ -423,6 +483,7 @@ The current folder layout is shown in the Vietnamese section "Cấu trúc thư m
 ### Setup checklist
 
 Whoever completes a clean-clone run should note their name and the date in the PR or team chat, and report any failing item with the error message.
+
 - [ ] `dotnet restore` and `dotnet build` succeed with 0 errors
 - [ ] `dotnet ef database update` succeeds and `migrations list` shows both migrations
 - [ ] `dotnet run` serves `/` and the **Kiểm tra** button shows a message
