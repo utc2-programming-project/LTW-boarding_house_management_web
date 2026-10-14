@@ -72,6 +72,8 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
+        // VHT-6 (3a): dang ky cong khai KHONG nhan role nao (chong nang quyen).
+        // Role chi do Admin gan sau (cho duyet), khong doc tu form/query.
         var user = CreateUser();
 
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
