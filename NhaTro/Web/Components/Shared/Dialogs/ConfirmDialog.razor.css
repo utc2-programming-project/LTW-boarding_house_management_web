@@ -1,0 +1,61 @@
+/* Không đặt display cho .confirm-dialog: trình duyệt tự ẩn <dialog> khi chưa mở. */
+.confirm-dialog {
+    box-sizing: border-box;
+    width: min(400px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    padding: 24px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+}
+
+.confirm-dialog::backdrop {
+    background: var(--overlay, rgba(15, 23, 42, 0.40));
+}
+
+.confirm-dialog[open] {
+    animation: dialog-in 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+}
+
+.body {
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--text-secondary, #475569);
+}
+
+.body ::deep p {
+    margin: 0;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.footer .btn {
+    min-width: 96px;
+}
+
+@keyframes dialog-in {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 767.98px) {
+    .confirm-dialog { padding: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .confirm-dialog[open] { animation: none; }
+}

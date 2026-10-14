@@ -1,0 +1,22 @@
+<span class="badge @ToneClass">
+    @if (Icon is not null)
+    {
+        <span class="badge-icon" aria-hidden="true">@Icon</span>
+    }
+    @Text
+</span>
+
+@code {
+    /// <summary>Nhãn chữ. Trạng thái luôn có chữ, không chỉ thể hiện bằng màu.</summary>
+    [Parameter, EditorRequired]
+    public string Text { get; set; } = string.Empty;
+
+    [Parameter]
+    public BadgeTone Tone { get; set; } = BadgeTone.Neutral;
+
+    /// <summary>Icon 16px tùy chọn (SVG, màu currentColor).</summary>
+    [Parameter]
+    public RenderFragment? Icon { get; set; }
+
+    private string ToneClass => $"tone-{Tone.ToString().ToLowerInvariant()}";
+}

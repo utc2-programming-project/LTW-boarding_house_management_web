@@ -36,3 +36,91 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ==========================================================================
+   Nút bấm dùng chung (VHT-15) — docs/design/phong_cach_giao_dien.md, mục 3 và 6.
+   Màu lấy từ token; giá trị sau dấu phẩy là mặc định chế độ sáng cho tới khi
+   theme chung (VHT-19) định nghĩa token.
+   ========================================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms, border-color 150ms;
+}
+
+    .btn:focus-visible {
+        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline-offset: 2px;
+    }
+
+.btn-primary {
+    background: var(--primary, #4F46E5);
+    color: var(--on-primary, #FFFFFF);
+}
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--primary-hover, #4338CA);
+    }
+
+    .btn-primary:active:not(:disabled) {
+        background: var(--primary-pressed, #3730A3);
+    }
+
+.btn-secondary {
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    border-color: var(--control-border, #64748B);
+}
+
+    .btn-secondary:hover:not(:disabled) {
+        background: var(--hover-bg, #F1F5F9);
+    }
+
+    .btn-secondary:active:not(:disabled) {
+        background: var(--pressed-bg, #E2E8F0);
+    }
+
+.btn-danger {
+    background: #B91C1C;
+    color: #FFFFFF;
+}
+
+    .btn-danger:hover:not(:disabled) {
+        background: #991B1B;
+    }
+
+    .btn-danger:active:not(:disabled) {
+        background: #7F1D1D;
+    }
+
+.btn:disabled {
+    background: var(--disabled-bg, #F1F5F9);
+    color: var(--text-disabled, #94A3B8);
+    border-color: transparent;
+    cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn {
+        transition: none;
+    }
+}

@@ -1,0 +1,31 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    height: 24px;
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-icon {
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+}
+
+.badge-icon ::deep svg {
+    width: 16px;
+    height: 16px;
+}
+
+.tone-neutral { color: var(--neutral-text, #475569); background: var(--neutral-bg, #F1F5F9); border-color: var(--neutral-border, #CBD5E1); }
+.tone-success { color: var(--success-text, #166534); background: var(--success-bg, #F0FDF4); border-color: var(--success-border, #BBF7D0); }
+.tone-warning { color: var(--warning-text, #92400E); background: var(--warning-bg, #FFFBEB); border-color: var(--warning-border, #FDE68A); }
+.tone-error { color: var(--error-text, #B91C1C); background: var(--error-bg, #FEF2F2); border-color: var(--error-border, #FECACA); }
+.tone-info { color: var(--info-text, #1E40AF); background: var(--info-bg, #EFF6FF); border-color: var(--info-border, #BFDBFE); }
