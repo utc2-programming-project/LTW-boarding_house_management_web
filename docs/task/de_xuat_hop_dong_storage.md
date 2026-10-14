@@ -1,6 +1,6 @@
 # Đề xuất hợp đồng storage và giới hạn tệp
 
-> **Trạng thái:** Bản đề xuất, **chưa có giá trị nào được nhóm xác nhận**. Mọi con số, định dạng và quyền dưới đây là *đề xuất* để nhóm chốt ở mục 10. Không đưa vào code cho đến khi mục tương ứng ở mục 10 chuyển sang "Đã chốt".
+> **Trạng thái:** Bản đề xuất, **chưa có giá trị nào được nhóm xác nhận**. Mọi con số, định dạng và quyền dưới đây là *đề xuất* để nhóm chốt. Không đưa vào code cho đến khi giá trị tương ứng được nhóm chốt.
 >
 > **Phối hợp:** Tính (kiểm quyền / cấu hình giới hạn), Phúc/Phú (nhu cầu tệp, dữ liệu gửi lên).
 > **Bàn giao cho:** VHT-13 (Tạo storage backend dùng chung).
@@ -171,7 +171,7 @@ Khách thuê **không** tải được file của khách thuê khác hoặc file
 | Khách thuê | Cần chốt | Đề xuất: chỉ xóa file **do mình upload** (`IdentityDocument`, `IncidentPhoto`, `PaymentProof`) và chỉ khi nghiệp vụ liên quan chưa xử lý/xác nhận. Điều kiện "chưa xử lý" cần Phúc/Phú xác nhận theo trạng thái P6/P7 |
 | Admin | **Không** | Không có nghiệp vụ |
 
-> **Admin luôn bị chặn:** Admin không truy cập bất kỳ API `/api/files` nào (kể cả file do chính mình tạo), do policy Admin chỉ quản trị tài khoản/vai trò/nhật ký, **không có quyền nghiệp vụ** — xem `docs/design/phong_cach_giao_dien.md` §9 và checklist nghiệm thu ("Admin bị chặn mọi thao tác nghiệp vụ"). Các API trả `401/403` như mọi thao tác nghiệp vụ bị chặn; cần **ghi tường minh** để lúc viết policy/viết test (VHT-101) không vô tình cấp quyền mặc định cho Admin.
+> **Admin luôn bị chặn:** Admin không truy cập bất kỳ API `/api/files` nào (kể cả file do chính mình tạo), do policy Admin chỉ quản trị tài khoản/vai trò/nhật ký, **không có quyền nghiệp vụ** — xem `docs/design/phong_cach_giao_dien.md` §9 và checklist nghiệm thu ("Admin bị chặn mọi thao tác nghiệp vụ"). Các API trả `403` (Admin đã đăng nhập, chỉ thiếu quyền) như mọi thao tác nghiệp vụ bị chặn; cần **ghi tường minh** để lúc viết policy/viết test (VHT-101) không vô tình cấp quyền mặc định cho Admin.
 
 **API xóa và luồng thay thế:** xem mục 8.8 và 8.9.
 
@@ -283,13 +283,13 @@ Tên `FileStream` giữ theo code hiện có (DTO này chỉ dùng nội bộ n�
 
 ### 7.5 Đối chiếu code hiện tại (4 file đã có trong `Features/Storage/DTOs/`)
 
-Code đã được cập nhật cho khớp mục 7 (2026-10-14). Các giá trị enum vẫn là **đề xuất**, chờ nhóm chốt ở mục 10. Bảng đối chiếu:
+Code đã được cập nhật cho khớp mục 7 (2026-10-14). Các giá trị enum vẫn là **đề xuất**, chờ nhóm chốt. Bảng đối chiếu:
 
-| DTO | Việc cần sửa ở code |
+| DTO | Đối chiếu với mục 7 |
 |---|---|
 | `UploadFileRequest` | Thêm `FileCategory` (enum); đổi `RelatedEntityType` sang enum `RelatedEntityType` |
 | `FileMetadataDto` | **Bỏ** `StoredFileName` và `IsDeleted` khỏi DTO trả client; **thêm** `FileCategory`; đổi `RelatedEntityType` sang enum. Nếu cần `StoredFileName`/`IsDeleted` thì chuyển sang entity/model nội bộ |
-| `FileDownloadResponse` | Giữ tên `FileStream` (doc đã theo code) |
+| `FileDownloadResponse` | Giữ tên `FileStream`; giữ `FileSizeBytes` (đã bổ sung vào bảng mục 7.4) |
 | `UploadResult` | Khớp mục 7.3; kiểm tra `ErrorCode` dùng đúng các mã ở mục 5 |
 | Mới | Tạo enum `FileCategory` (6 giá trị) và `RelatedEntityType` (6 giá trị), cấu hình serialize chuỗi (`JsonStringEnumConverter`) |
 
@@ -415,7 +415,7 @@ description       = Vòi nước phòng 101 bị rò
 
 ### 8.8 Xóa file — `DELETE /api/files/{id}`
 
-- Xóa mềm: đặt `IsDeleted = true`, giữ nguyên file vật lý (xóa vật lý theo chính sách lưu trữ ở mục 9, câu hỏi 8).
+- Xóa mềm: đặt `IsDeleted = true`, giữ nguyên file vật lý (thời điểm xóa vật lý theo chính sách lưu trữ — cần nhóm chốt).
 - Kiểm quyền theo mục 4.3.
 - **Thành công:** `204 No Content`, không có body.
 - **Thất bại:** cùng cấu trúc lỗi như 8.6 / 8.7, thêm `401 Unauthorized`.
