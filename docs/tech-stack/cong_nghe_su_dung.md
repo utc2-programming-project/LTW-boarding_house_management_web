@@ -22,7 +22,7 @@
 | Cơ sở dữ liệu | SQL Server | Lưu dữ liệu nghiệp vụ |
 | Quản lý database | SQL Server Management Studio (SSMS) | Kiểm tra dữ liệu, truy vấn và sao lưu |
 | ORM | EF Core 10 + migrations | Truy vấn LINQ, ánh xạ và quản lý schema |
-| Đăng nhập | ASP.NET Core Identity + cookie | Quản lý tài khoản, mật khẩu băm và vai trò |
+| Đăng nhập | ASP.NET Core Identity + cookie | Quản lý tài khoản, mật khẩu băm và vai trò; bốn vai trò `Admin`, `ChuTro`, `QuanLy`, `KhachThue`; Admin đầu tiên được seed bằng User Secrets/biến môi trường, không đăng ký công khai |
 | Phân quyền | Authorization policies + kiểm tra phạm vi dữ liệu | Bảo vệ dữ liệu theo chủ trọ, tòa nhà và hợp đồng |
 | Validation | DataAnnotations + quy tắc trong Service | Kiểm tra form và ràng buộc nghiệp vụ |
 | Xử lý lỗi | ASP.NET Core Exception Handler + Blazor ErrorBoundary | Xử lý lỗi HTTP và lỗi component, không lộ stack trace |
@@ -39,6 +39,7 @@
 | Cấu hình kiểu dữ liệu rõ ràng | `IOptions<T>` + Options Validation | Đọc cấu hình giới hạn tệp, đường dẫn lưu trữ, thiết lập nghiệp vụ; kiểm tra bằng `ValidateOnStart` |
 | Quản lý thời gian | `TimeProvider`, `DateOnly`, UTC | Thống nhất thời gian và kiểm thử hạn thanh toán, ngày hóa đơn, thời hạn hợp đồng |
 | Sao lưu, phục hồi | SQL Server Backup/Restore + sao lưu thư mục tệp và Data Protection keys | Khôi phục dữ liệu và cấu hình bảo mật khi có sự cố |
+| Xuất Excel | ClosedXML | Đã xác nhận: dòng 'Xuất báo cáo' trong xlsx quyền (D8) |
 
 ### Thành phần phụ thuộc yêu cầu nghiệp vụ
 
@@ -47,8 +48,7 @@ Các mục dưới đây là lựa chọn theo chức năng, **không phải cô
 | Thành phần | Công nghệ | Điều kiện sử dụng |
 | --- | --- | --- |
 | Xử lý định kỳ | `BackgroundService` + `PeriodicTimer` | Có yêu cầu tự động kiểm tra hợp đồng/công nợ hoặc lập hóa đơn theo lịch; dùng thành phần tích hợp .NET, không thêm job framework |
-| Xuất Excel | ClosedXML | Có yêu cầu xuất danh sách hoặc báo cáo Excel |
-| Tạo PDF | QuestPDF | Có yêu cầu tạo hợp đồng, hóa đơn hoặc phiếu thu PDF; kiểm tra giấy phép theo tổ chức sử dụng trước khi chọn |
+| Tạo PDF | QuestPDF | Có yêu cầu tạo hợp đồng, hóa đơn hoặc phiếu thu PDF; kiểm tra giấy phép theo tổ chức sử dụng trước khi chọn. Hiện không có yêu cầu (D8) |
 
 ## 3. Cách kết hợp
 
@@ -73,29 +73,34 @@ Component Blazor → Service C# → EF Core → SQL Server
 | Giao diện | Một theme thống nhất, font hỗ trợ tiếng Việt, responsive, sáng/tối, loading/empty/error state; không dùng thêm Bootstrap |
 | Dữ liệu | LINQ async, projection, phân trang; tiền dùng `decimal`; transaction và optimistic concurrency cho thao tác quan trọng. Phí dịch vụ dạng danh mục + dòng chi tiết (`InvoiceItem`), không ghim cột `TienDien/TienNuoc` cứng; đa tòa nhà (`Property`) từ đầu; lưu giá lịch sử (snapshot) vào hợp đồng/hóa đơn thay vì chỉ trỏ giá hiện tại |
 | Chống ghi nhận trùng | Dùng idempotency key hoặc mã giao dịch duy nhất cho xác nhận thu tiền; unique theo hợp đồng và kỳ hóa đơn; lưu kết quả và khóa chống trùng trong cùng transaction với thay đổi nghiệp vụ, không chỉ khóa nút trên UI |
-| Toàn vẹn database | Thiết lập unique index (dùng filtered index khi có xóa mềm), foreign key, check constraint và quy tắc xóa phù hợp; không xóa dây chuyền lịch sử hợp đồng, hóa đơn và thu tiền. Bảng quan trọng có `CreatedAt/UpdatedAt/IsDeleted` có chọn lọc + query filter; trạng thái hóa đơn/thanh toán dùng enum và kiểm tra chuyển trạng thái hợp lệ trong Service, chỉ các trạng thái đúng luồng P6 |
+| Toàn vẹn database | Thiết lập unique index (dùng filtered index khi có xóa mềm), foreign key, check constraint và quy tắc xóa phù hợp; không xóa dây chuyền lịch sử hợp đồng, hóa đơn và thu tiền. Bảng quan trọng có `CreatedAt/UpdatedAt/IsDeleted` có chọn lọc + query filter; trạng thái hóa đơn/thanh toán dùng enum và kiểm tra chuyển trạng thái hợp lệ trong Service, chỉ các trạng thái đúng luồng P6. Room và Tenant dùng xóa mềm cho thùng rác (`IsDeleted/DeletedAt/DeletedBy`), chặn xóa khi còn hợp đồng hiệu lực bằng kiểm tra trong Service và ràng buộc phù hợp; filtered unique index cho mã phòng chưa xóa |
 | Thời gian nghiệp vụ | Lấy thời gian hiện tại qua `TimeProvider`; timestamp lưu UTC, hiển thị theo múi giờ Việt Nam; dùng `DateOnly` cho ngày thuần túy, xác định kỳ hóa đơn theo lịch Việt Nam |
 | Cấu hình nghiệp vụ | Bind cấu hình qua Options và kiểm tra khi khởi động; không tự thêm tiền phạt hay quy tắc tài chính chưa được xác nhận |
 | Mất kết nối Blazor | Hiển thị mất kết nối/kết nối lại; circuit không phải nơi lưu dữ liệu bền vững. Cảnh báo dữ liệu chưa lưu, hỗ trợ bản nháp phía server cho biểu mẫu quan trọng; tra lại kết quả giao dịch trước khi gửi lại, không tự thực hiện lại thao tác thu tiền |
 | Mapping | Mapping thủ công giữa entity và DTO; không thêm AutoMapper hoặc Mapster |
-| Phân quyền | Kiểm tra vai trò và phạm vi tòa nhà/hợp đồng trong Service; không chỉ dựa vào `AuthorizeView` |
+| Phân quyền | Kiểm tra vai trò và phạm vi tòa nhà/hợp đồng trong Service; không chỉ dựa vào `AuthorizeView`. Thêm **công tắc Quản lý** (Cho phép/Duyệt/Không thể) cho thao tác ⚙️; Admin không có quyền nghiệp vụ; công tắc lưu trong SQL, không đặt trong appsettings |
 | Mật khẩu | Dùng password hasher của Identity, không tự viết thuật toán băm |
 | Tệp tải lên | Giới hạn dung lượng ngay khi đọc stream, kiểm tra loại/nội dung, sinh tên lưu phía server; không tin tên và extension từ client; thư mục lưu không có quyền thực thi, tích hợp quét mã độc nếu điều kiện vận hành cho phép |
-| Dữ liệu cá nhân | Giới hạn quyền xem/tải CCCD, audit truy cập không chứa nội dung giấy tờ; quy định thời hạn lưu và xóa khi đủ điều kiện, không xóa hồ sơ phải giữ theo nghĩa vụ nghiệp vụ/pháp lý; đánh giá nhu cầu mã hóa khi lưu và quản lý khóa riêng |
+| Dữ liệu cá nhân | Giới hạn quyền xem/tải CCCD, audit truy cập không chứa nội dung giấy tờ; quy định thời hạn lưu và xóa khi đủ điều kiện, không xóa hồ sơ phải giữ theo nghĩa vụ nghiệp vụ/pháp lý; đánh giá nhu cầu mã hóa khi lưu và quản lý khóa riêng. Quản lý chỉ xem trường được phép (số CCCD bị che, D9); Admin không xem; xuất Excel không chứa CCCD |
 | Kiểm thử dữ liệu | Dùng SQL Server database riêng cho integration test; không dùng EF InMemory để chứng minh transaction/concurrency |
 | Kiểm thử Blazor | WebApplicationFactory kiểm tra HTTP/auth; Playwright kiểm tra tương tác component trong trình duyệt |
-| Logging, audit | Serilog lưu log kỹ thuật; lịch sử thao tác nghiệp vụ lưu trong SQL Server, không dùng log thay cho dữ liệu thu tiền |
+| Logging, audit | Serilog lưu log kỹ thuật; lịch sử thao tác nghiệp vụ lưu trong SQL Server, không dùng log thay cho dữ liệu thu tiền; sự kiện quản trị tài khoản (tạo/khóa/cấp vai trò) cũng ghi vào lịch sử trong SQL Server |
 | Triển khai | `dotnet publish` → IIS; bật WebSocket, HTTPS; apply migrations bằng bước triển khai riêng, migration cộng thêm không sửa vỡ bảng cũ, không tự migrate trong mỗi circuit |
 | Lưu trữ vận hành | Tệp, log và Data Protection keys nằm ngoài thư mục publish; giới hạn quyền truy cập và thời gian giữ log |
 | Phạm vi vận hành | Một instance web; sao lưu database, tệp và kiểm tra phục hồi; health live/ready không công khai thông tin nhạy cảm |
 | Data Protection keys | Lưu bền vững ngoài thư mục publish, giới hạn ACL cho tài khoản ứng dụng; bảo vệ khóa trên đĩa bằng Windows DPAPI hoặc chứng thư phù hợp. Khi khôi phục, cần cả khóa và khả năng giải mã chúng, không chỉ sao chép thư mục keys |
 | Tác vụ định kỳ nếu được chọn | Tạo DI scope/DbContext theo lần chạy, hỗ trợ cancellation, retry có giới hạn và log lỗi; lưu kỳ xử lý/trạng thái bền vững, có unique constraint/idempotency để khởi động lại không tạo trùng; phục hồi kỳ bị bỏ lỡ, không dựa riêng vào timer trong bộ nhớ |
-| Excel/PDF nếu được chọn | Kiểm tra quyền và phạm vi dữ liệu trước khi xuất, giới hạn khối lượng; không xuất CCCD mặc định. Excel ghi dữ liệu người dùng dưới dạng giá trị, không coi là công thức; kiểm tra license và phiên bản package |
+| Công tắc và phê duyệt | Yêu cầu duyệt lưu entity riêng (loại thao tác, dữ liệu đề xuất, trạng thái, người gửi/duyệt); duyệt kiểm lại trạng thái hiện tại; áp dụng thao tác và ghi kết quả cùng transaction; khóa duy nhất chống duyệt trùng; không dựa vào nút bị khóa trên UI |
+| Biểu giá điện/nước | Cấu hình khóa, có hiệu lực theo ngày, nạp bằng migration/cấu hình đã kiểm tra; snapshot vào chi phí; không có giao diện sửa; dịch vụ khác lưu ở danh mục + đơn giá lịch sử |
+| Lịch sử sửa chỉ số | Bảng lịch sử bất biến (ai, khi nào, cũ → mới, lý do); sửa chỉ số và ghi lịch sử cùng transaction; chỉ kỳ liền trước chưa phát hành hóa đơn |
+| Excel (đã chọn) | Kiểm tra quyền/phạm vi/công tắc SW-16, ghi giá trị không công thức, giới hạn khối lượng, kiểm license và phiên bản |
+| PDF (nếu được chọn) | Kiểm tra quyền và phạm vi dữ liệu trước khi xuất, giới hạn khối lượng; không xuất CCCD mặc định |
 
 ## 5. Không nằm trong kế hoạch công nghệ
 
 - React/Vue, JWT, microservices, CQRS/MediatR, generic repository.
 - Redis, message broker, background job framework bên ngoài (Hangfire/Quartz), Docker và Kubernetes. `BackgroundService` tích hợp .NET chỉ dùng theo điều kiện ở mục 2.
+- PDF/QuestPDF không nằm trong kế hoạch (D8). ClosedXML đã nằm trong kế hoạch cho xuất báo cáo P8.
 - Không thêm công cụ chỉ để dùng hết roadmap; thay đổi danh sách phải cập nhật lại kế hoạch này.
 
-> Chọn phiên bản MudBlazor và các package tương thích với .NET 10. Kế hoạch này không thay đổi phạm vi nghiệp vụ trong `../thiet_ke_he_thong.md`.
+> Chọn phiên bản MudBlazor và các package tương thích với .NET 10. Kế hoạch này không thay đổi phạm vi nghiệp vụ trong `../thiet_ke_he_thong.md`. Phạm vi quyền: `task/thao_tac_va_quyen.xlsx`.

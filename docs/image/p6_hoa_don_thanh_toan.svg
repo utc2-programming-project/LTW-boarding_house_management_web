@@ -18,16 +18,19 @@
 <polyline points="1055,280 1535,280" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
 <polyline points="1535,510 1055,510" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
 <polyline points="1535,780 1055,780" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
-<text x="950.0" y="65.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#1e293b">P6: HÓA ĐƠN VÀ THANH TOÁN</text>
+<text x="-1050" y="-2275" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#1e293b">P6: HÓA ĐƠN VÀ THANH TOÁN</text>
 <text x="915.0" y="504.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">P6: Hóa đơn và thanh</text>
 <text x="915.0" y="534.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">toán</text>
 <text x="175.0" y="259.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Chủ trọ</text>
-<text x="535.0" y="192.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC xem doanh thu, công nợ</text>
-<text x="535.0" y="272.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT doanh thu, công nợ</text>
+<text x="535.0" y="165.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC xem doanh thu, công nợ;</text>
+<text x="535.0" y="192.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">KQ duyệt YC của Quản lý</text>
+<text x="535.0" y="245.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT doanh thu, công nợ,</text>
+<text x="535.0" y="272.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC chờ duyệt</text>
 <text x="175.0" y="519.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Quản lý</text>
-<text x="535.0" y="425.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC tạo hóa đơn, xác nhận thanh</text>
-<text x="535.0" y="452.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">toán</text>
-<text x="535.0" y="532.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">KQ xử lý, TT thanh toán</text>
+<text x="535.0" y="425.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC tạo/phát hành hóa đơn (theo công tắc),</text>
+<text x="535.0" y="452.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">xác nhận thanh toán</text>
+<text x="535.0" y="505.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">KQ xử lý hoặc chờ duyệt, TT thanh</text>
+<text x="535.0" y="532.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">toán, công nợ từng hóa đơn</text>
 <text x="175.0" y="779.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">Khách thuê</text>
 <text x="535.0" y="685.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">YC xem hóa đơn, YC thanh toán,</text>
 <text x="535.0" y="712.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">TT thanh toán</text>
@@ -42,6 +45,6 @@
 <text x="1685.0" y="774.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">D5: Điện nước và</text>
 <text x="1685.0" y="804.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#1e293b">dịch vụ</text>
 <text x="1295.0" y="762.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#1e293b">Chi phí điện nước, dịch vụ</text>
-<text x="950.0" y="990.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#1e293b">Xanh trời: tác nhân  •  Xanh lá: tiến trình  •  Tím: kho dữ liệu  •  Mũi tên: chiều dữ liệu</text>
-<text x="950.0" y="1027.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Luồng tiến trình chính — không phải sơ đồ phân rã mức 2. Các mã lặp lại biểu diễn cùng tác nhân/tiến trình/kho.</text>
+<text x="-1050" y="-1350" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#1e293b">Xanh trời: tác nhân  •  Xanh lá: tiến trình  •  Tím: kho dữ liệu  •  Mũi tên: chiều dữ liệu</text>
+<text x="-1050" y="-1313" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#1e293b">Luồng tiến trình chính — không phải sơ đồ phân rã mức 2. Các mã lặp lại biểu diễn cùng tác nhân/tiến trình/kho.</text>
 </svg>
