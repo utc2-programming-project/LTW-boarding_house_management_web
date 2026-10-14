@@ -17,6 +17,9 @@ TestResults/
 
 # Secrets, local data, logs (never commit)
 secrets.json
+.env
+*.env
+appsettings.Local.json
 *.pfx
 *.key
 NhaTroData/

@@ -3,7 +3,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Components;
 using Web.Components.Account;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 using Web.Data;
+using Web.Data.Seeding;
+using Web.Features.Accounts;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
@@ -55,9 +59,28 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.SignIn.RequireConfirmedAccount = true;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
+    // Nghiep vu P2-P8: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
+    options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
+});
+builder.Services.AddScoped<RoleService>();
+
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supported = new[] { new CultureInfo("vi-VN"), new CultureInfo("en-US") };
+    options.DefaultRequestCulture = new RequestCulture("vi-VN");
+    options.SupportedCultures = supported;
+    options.SupportedUICultures = supported;
+    // Thu tu: cookie cua selector -> Accept-Language cua trinh duyet.
+});
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddMudServices();
@@ -80,7 +103,40 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseRequestLocalization();
+
 app.UseAntiforgery();
+
+// VHT-6 (3d): endpoint cho selector cua Phu (VHT-20).
+// Dat cookie chuan ".AspNetCore.Culture", song sau reload/dang nhap (1 nam).
+// Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture (VHT-10).
+app.MapPost("/culture/set", (HttpContext http, string culture) =>
+{
+    if (culture != "vi-VN" && culture != "en-US")
+    {
+        return Results.BadRequest("Ngon ngu khong duoc ho tro.");
+    }
+
+    http.Response.Cookies.Append(
+        CookieRequestCultureProvider.DefaultCookieName,
+        CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+        new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Secure = http.Request.IsHttps,
+            IsEssential = true,
+        });
+    return Results.Ok(new { culture });
+});
+
+app.MapGet("/culture/current", (HttpContext http) =>
+{
+    var feature = http.Features.Get<IRequestCultureFeature>();
+    var current = feature?.RequestCulture.Culture.Name ?? "vi-VN";
+    return Results.Ok(new { current, supported = new[] { "vi-VN", "en-US" } });
+});
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
@@ -88,5 +144,24 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// VHT-6 (3a/3b): gieo role, Admin dau tien tu secret, roi den user mau dev.
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        await RoleSeeder.EnsureAsync(scope.ServiceProvider);
+        await AdminSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
+        if (app.Environment.IsDevelopment())
+        {
+            await DevAccountSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Gieo role/user mau that bai");
+        throw;
+    }
+}
 
 app.Run();
