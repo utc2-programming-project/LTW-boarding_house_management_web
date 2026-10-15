@@ -208,4 +208,7 @@
   <data name="BackToPreview" xml:space="preserve">
     <value>Về trang mẫu</value>
   </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Tổng quan</value>
+  </data>
 </root>

@@ -208,4 +208,7 @@
   <data name="BackToPreview" xml:space="preserve">
     <value>Back to preview</value>
   </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
 </root>
