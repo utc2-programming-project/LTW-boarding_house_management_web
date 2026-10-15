@@ -1,0 +1,24 @@
+@inject IStringLocalizer<Shared> L
+
+<nav class="breadcrumb" aria-label="@L["Breadcrumb"]">
+    <ol>
+        @foreach (var item in Items)
+        {
+            <li>
+                @if (item.Href is not null)
+                {
+                    <a href="@item.Href">@item.Label</a><LucideIcon Name="chevron" />
+                }
+                else
+                {
+                    <span aria-current="page">@item.Label</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<BreadcrumbItem> Items { get; set; } = [];
+    public sealed record BreadcrumbItem(string Label, string? Href = null);
+}

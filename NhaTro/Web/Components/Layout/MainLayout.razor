@@ -1,9 +1,53 @@
 @inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject IStringLocalizer<Shared> L
 
-@Body
+<MudThemeProvider Theme="AppTheme.Value" IsDarkMode="_dark" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+<a class="skip-link" href="#main-content">@L["SkipContent"]</a>
+<div class="app-shell">
+    <AppSidebar />
+    <div class="drawer-overlay" data-drawer-overlay hidden></div>
+    <div class="app-workspace">
+        <AppTopbar />
+        <main id="main-content" class="app-content" tabindex="-1">@Body</main>
+    </div>
 </div>
+<div id="blazor-error-ui" data-nosnippet role="alert">
+    <span>@L["ConnectionError"]</span>
+    <a href="" class="reload">@L["Reload"]</a>
+    <button type="button" class="dismiss icon-button" aria-label="@L["Close"]"><LucideIcon Name="close" /></button>
+</div>
+
+@code {
+    private bool _dark;
+    private DotNetObjectReference<MainLayout>? _reference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _reference = DotNetObjectReference.Create(this);
+        _dark = await JS.InvokeAsync<bool>("appLayout.connect", _reference);
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public Task SetTheme(bool dark)
+    {
+        _dark = dark;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Prerender/static SSR không tạo JS reference và không được gọi interop.
+        if (_reference is null) return;
+        try { await JS.InvokeVoidAsync("appLayout.disconnect"); }
+        catch (JSDisconnectedException) { }
+        _reference?.Dispose();
+    }
+}

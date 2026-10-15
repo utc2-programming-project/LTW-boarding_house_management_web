@@ -79,4 +79,133 @@
   <data name="Error" xml:space="preserve">
     <value>Lỗi</value>
   </data>
+  <data name="Navigation" xml:space="preserve">
+    <value>Điều hướng</value>
+  </data>
+  <data name="CloseNavigation" xml:space="preserve">
+    <value>Đóng điều hướng</value>
+  </data>
+  <data name="ToggleNavigation" xml:space="preserve">
+    <value>Đóng hoặc mở thanh điều hướng</value>
+  </data>
+  <data name="LayoutPreview" xml:space="preserve">
+    <value>Trang mẫu giao diện</value>
+  </data>
+  <data name="Unavailable" xml:space="preserve">
+    <value>Chưa khả dụng</value>
+  </data>
+  <data name="ToggleTheme" xml:space="preserve">
+    <value>Chuyển giao diện sáng hoặc tối</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Ngôn ngữ</value>
+  </data>
+  <data name="CultureError" xml:space="preserve">
+    <value>Không thể đổi ngôn ngữ. Vui lòng thử lại.</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Đang tải…</value>
+  </data>
+  <data name="MyAccount" xml:space="preserve">
+    <value>Tài khoản của tôi</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Đăng xuất</value>
+  </data>
+  <data name="Breadcrumb" xml:space="preserve">
+    <value>Đường dẫn điều hướng</value>
+  </data>
+  <data name="SkipContent" xml:space="preserve">
+    <value>Đến nội dung chính</value>
+  </data>
+  <data name="ConnectionError" xml:space="preserve">
+    <value>Đã xảy ra lỗi. Vui lòng tải lại trang.</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Tải lại</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Đóng</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Tài khoản</value>
+  </data>
+  <data name="Permissions" xml:space="preserve">
+    <value>Phân quyền</value>
+  </data>
+  <data name="Properties" xml:space="preserve">
+    <value>Nhà trọ</value>
+  </data>
+  <data name="Rooms" xml:space="preserve">
+    <value>Phòng</value>
+  </data>
+  <data name="Tenants" xml:space="preserve">
+    <value>Khách thuê</value>
+  </data>
+  <data name="Contracts" xml:space="preserve">
+    <value>Hợp đồng</value>
+  </data>
+  <data name="Services" xml:space="preserve">
+    <value>Dịch vụ</value>
+  </data>
+  <data name="Pricing" xml:space="preserve">
+    <value>Giá phòng và dịch vụ khác</value>
+  </data>
+  <data name="Invoices" xml:space="preserve">
+    <value>Hóa đơn</value>
+  </data>
+  <data name="Incidents" xml:space="preserve">
+    <value>Sự cố</value>
+  </data>
+  <data name="Reports" xml:space="preserve">
+    <value>Báo cáo</value>
+  </data>
+  <data name="ManagerSwitches" xml:space="preserve">
+    <value>Công tắc Quản lý</value>
+  </data>
+  <data name="Approvals" xml:space="preserve">
+    <value>Hàng đợi duyệt</value>
+  </data>
+  <data name="Trash" xml:space="preserve">
+    <value>Thùng rác</value>
+  </data>
+  <data name="MyRequests" xml:space="preserve">
+    <value>Yêu cầu của tôi</value>
+  </data>
+  <data name="MyRoom" xml:space="preserve">
+    <value>Phòng của tôi</value>
+  </data>
+  <data name="MyInvoices" xml:space="preserve">
+    <value>Hóa đơn của tôi</value>
+  </data>
+  <data name="ReportIncident" xml:space="preserve">
+    <value>Báo sự cố</value>
+  </data>
+  <data name="PreviewDescription" xml:space="preserve">
+    <value>Khung giao diện dùng chung với điều hướng, ngôn ngữ và chế độ sáng/tối.</value>
+  </data>
+  <data name="SampleData" xml:space="preserve">
+    <value>Dữ liệu mẫu</value>
+  </data>
+  <data name="DisplayExamples" xml:space="preserve">
+    <value>Ví dụ định dạng hiển thị</value>
+  </data>
+  <data name="SampleDisclaimer" xml:space="preserve">
+    <value>Các giá trị dưới đây chỉ dùng minh họa giao diện, không phải dữ liệu nghiệp vụ.</value>
+  </data>
+  <data name="SampleDate" xml:space="preserve">
+    <value>Ngày minh họa</value>
+  </data>
+  <data name="SampleAmount" xml:space="preserve">
+    <value>Số tiền minh họa</value>
+  </data>
+  <data name="NoData" xml:space="preserve">
+    <value>Chưa có dữ liệu</value>
+  </data>
+  <data name="ModulesPending" xml:space="preserve">
+    <value>Các phân hệ sẽ xuất hiện khi được tích hợp. Mục chưa khả dụng chưa thể mở.</value>
+  </data>
+  <data name="BackToPreview" xml:space="preserve">
+    <value>Về trang mẫu</value>
+  </data>
 </root>
