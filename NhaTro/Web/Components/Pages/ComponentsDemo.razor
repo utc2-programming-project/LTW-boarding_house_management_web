@@ -1,6 +1,8 @@
 @page "/dev/components"
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
+@using FluentValidation
+@using Web.Features.Accounts
 @using Web.Common.Models
 @using Web.Common.Utils
 @using Web.Components.Shared.Dialogs
@@ -9,6 +11,7 @@
 @using Web.Components.Shared.Tables
 @using Web.Features.Rooms.Enums
 @inject IWebHostEnvironment Env
+@inject ToastService Toasts
 
 <PageTitle>Component dùng chung</PageTitle>
 
@@ -34,11 +37,12 @@
             <h2 id="demo-form">FormField</h2>
             <EditForm Model="_form" OnValidSubmit="SaveAsync">
                 <DataAnnotationsValidator />
+                <FluentValidationValidator Validator="_validator" />
                 <FormField TValue="string" Id="room-code" Label="Mã phòng" Required="true"
                            Hint="Tối đa 50 ký tự." For="() => _form.Code">
                     <InputText id="room-code" @bind-Value="_form.Code" aria-describedby="room-code-hint room-code-error" />
                 </FormField>
-                <FormField TValue="decimal" Id="room-price" Label="Giá thuê (₫)" For="() => _form.Price">
+                <FormField TValue="decimal" Id="room-price" Label="Giá thuê (₫)" Hint="Phòng đang thuê phải có giá lớn hơn 0 (kiểm tra bằng FluentValidation)." For="() => _form.Price">
                     <InputNumber id="room-price" @bind-Value="_form.Price" aria-describedby="room-price-error" />
                 </FormField>
                 <FormField TValue="RoomStatus" Id="room-status" Label="Trạng thái" For="() => _form.Status">
@@ -50,11 +54,38 @@
                     </InputSelect>
                 </FormField>
                 <button type="submit" class="btn btn-primary" disabled="@_saving">@(_saving ? "Đang lưu…" : "Lưu")</button>
-                @if (_saved)
-                {
-                    <span class="note" role="status">Đã lưu (mẫu, chưa ghi SQL).</span>
-                }
             </EditForm>
+        </section>
+
+        <section aria-labelledby="demo-toast">
+            <h2 id="demo-toast">Toast</h2>
+            <div class="row">
+                <button type="button" class="btn btn-secondary" @onclick="@(() => Toasts.Success("Đã lưu thay đổi."))">Toast thành công (5s)</button>
+                <button type="button" class="btn btn-secondary" @onclick="@(() => Toasts.Error("Không lưu được. Vui lòng thử lại."))">Toast lỗi (giữ tới khi đóng)</button>
+            </div>
+        </section>
+
+        <section aria-labelledby="demo-loading">
+            <h2 id="demo-loading">LoadingOverlay</h2>
+            <div class="row">
+                <button type="button" class="btn btn-secondary" @onclick="ToggleLoading">@(_regionLoading ? "Tắt loading" : "Bật loading")</button>
+            </div>
+            <LoadingOverlay Visible="_regionLoading">
+                <EmptyStateCard Title="Vùng nội dung" Description="Vùng này bị phủ khi đang tải." />
+            </LoadingOverlay>
+            <LoadingOverlay />
+        </section>
+
+        <section aria-labelledby="demo-auth">
+            <h2 id="demo-auth">AuthorizeView / policy</h2>
+            <AuthorizeView Roles="@Roles.ChuTro">
+                <Authorized>
+                    <button type="button" class="btn btn-secondary">Khôi phục (chỉ Chủ trọ)</button>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="note">Nút Khôi phục chỉ hiện với vai trò Chủ trọ.</span>
+                </NotAuthorized>
+            </AuthorizeView>
         </section>
 
         <section aria-labelledby="demo-table">
@@ -73,10 +104,6 @@
         <section aria-labelledby="demo-confirm">
             <h2 id="demo-confirm">ConfirmDialog</h2>
             <button type="button" class="btn btn-secondary" @onclick="OpenConfirm">Xóa phòng (ví dụ)</button>
-            @if (_deleted)
-            {
-                <span class="note" role="status">Đã xác nhận (mẫu, chưa xóa gì).</span>
-            }
             <ConfirmDialog Visible="_confirmOpen" Title="Xóa phòng?" Danger="true"
                            Message="Phòng sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau."
                            ConfirmText="Xóa" OnConfirm="DeleteAsync" OnCancel="CloseConfirm" />
@@ -108,13 +135,24 @@
             Updated: new DateOnly(2026, 10, 1).AddDays(i)))
         .ToList();
 
+    private sealed class DemoFormValidator : AbstractValidator<DemoForm>
+    {
+        public DemoFormValidator()
+        {
+            RuleFor(x => x.Price)
+                .GreaterThan(0)
+                .When(x => x.Status == RoomStatus.Rented)
+                .WithMessage("Phòng đang thuê phải có giá lớn hơn 0.");
+        }
+    }
+
     private readonly DemoForm _form = new();
+    private readonly IValidator _validator = new DemoFormValidator();
     private readonly RenderFragment<DemoRoom> _statusCell = room => @<StatusBadge Tone="room.Tone" Text="@room.StatusText" />;
     private IReadOnlyList<DataTableColumn<DemoRoom>> _columns = [];
     private bool _saving;
-    private bool _saved;
+    private bool _regionLoading;
     private bool _confirmOpen;
-    private bool _deleted;
 
     protected override void OnInitialized()
     {
@@ -159,17 +197,14 @@
     private async Task SaveAsync()
     {
         _saving = true;
-        _saved = false;
         await Task.Delay(800);
         _saving = false;
-        _saved = true;
+        Toasts.Success("Đã lưu (mẫu, chưa ghi SQL).");
     }
 
-    private void OpenConfirm()
-    {
-        _deleted = false;
-        _confirmOpen = true;
-    }
+    private void ToggleLoading() => _regionLoading = !_regionLoading;
+
+    private void OpenConfirm() => _confirmOpen = true;
 
     private void CloseConfirm() => _confirmOpen = false;
 
@@ -177,6 +212,6 @@
     {
         await Task.Delay(800);
         _confirmOpen = false;
-        _deleted = true;
+        Toasts.Success("Đã xác nhận (mẫu, chưa xóa gì).");
     }
 }

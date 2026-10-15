@@ -1,0 +1,40 @@
+@* Trạng thái "loading vùng": icon 20px + chữ 14/22. Bọc nội dung để phủ lên vùng đó,
+   hoặc dùng không có nội dung để hiện dòng "Đang tải…" độc lập. *@
+@if (ChildContent is null)
+{
+    if (Visible)
+    {
+        <div class="loading" role="status">
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="text">@Text</span>
+        </div>
+    }
+}
+else
+{
+    <div class="region" aria-busy="@(Visible ? "true" : null)">
+        @ChildContent
+        @if (Visible)
+        {
+            <div class="overlay" role="status">
+                <div class="loading">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span class="text">@Text</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool Visible { get; set; } = true;
+
+    /// <summary>Truyền chữ đã dịch khi giao diện tiếng Anh.</summary>
+    [Parameter]
+    public string Text { get; set; } = "Đang tải…";
+
+    /// <summary>Vùng cần phủ. Bỏ trống để chỉ hiện spinner và chữ.</summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

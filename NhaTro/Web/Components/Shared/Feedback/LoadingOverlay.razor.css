@@ -1,0 +1,46 @@
+.region {
+    position: relative;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--surface, #FFFFFF) 70%, transparent);
+}
+
+.loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: var(--text-secondary, #475569);
+}
+
+.spinner {
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border, #E2E8F0);
+    border-top-color: var(--primary, #4F46E5);
+    border-radius: 50%;
+    animation: spin 800ms linear infinite;
+}
+
+.text {
+    font-size: 14px;
+    line-height: 22px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+}
