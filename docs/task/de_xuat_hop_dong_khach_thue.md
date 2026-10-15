@@ -85,11 +85,11 @@ Hai khái niệm tách biệt, không dùng chung bảng:
 
 ## 3. Phát hiện hồ sơ trùng
 
-Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`**. Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) **trên toàn hệ thống**, không giới hạn theo phạm vi của người gọi. Nếu hồ sơ trùng nằm ngoài phạm vi, vẫn trả `DuplicateTenant` nhưng không kèm thông tin hồ sơ đó (`PossibleDuplicates` để trống).
+Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`** (trừ khi khách thuê tự sửa, xem 6.7). Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) **trên toàn hệ thống**, không giới hạn theo phạm vi của người gọi. Nếu hồ sơ trùng nằm ngoài phạm vi, vẫn trả `DuplicateTenant` nhưng không kèm thông tin hồ sơ đó (`PossibleDuplicates` để trống).
 
 | Tiêu chí | Mức | Xử lý đề xuất |
 |---|---|---|
-| Trùng `IdNumber` (sau chuẩn hóa) | **Trùng cứng** | Chặn, trả `DuplicateTenant` (HTTP 409), kèm `Id` và `FullName` của hồ sơ đang có để người dùng mở hồ sơ đó |
+| Trùng `IdNumber` (sau chuẩn hóa) | **Trùng cứng** | Chặn, trả `DuplicateTenant` (HTTP 409), kèm `Id` và `FullName` của hồ sơ đang có để người dùng mở hồ sơ đó (chỉ khi hồ sơ nằm trong phạm vi của người gọi) |
 | Trùng `PhoneNumber` (sau chuẩn hóa) | **Nghi trùng** | Không chặn. Trả danh sách `PossibleDuplicates` để UI hỏi xác nhận; gửi lại với `ConfirmDuplicatePhone = true` thì tạo |
 | Trùng `FullName` + `DateOfBirth` | **Nghi trùng** | *Cần chốt có kiểm tra không* |
 | Trùng `Email` | Không kiểm tra | Một email có thể dùng chung (gia đình) |
@@ -451,33 +451,6 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
 ```
 
 > Lỗi của mọi endpoint dùng chung khung `TenantResult`, kể cả endpoint danh sách; danh sách thành công thì trả `PagedResult<TenantListItemDto>`.
-
----
-
-## 11. Kiểm thử và bàn giao (đợt 1C)
-
-**Kiểm thử service (Đào):**
-
-| Nhóm | Ca kiểm thử chính |
-|---|---|
-| Quyền | Admin bị chặn mọi API; Khách thuê chỉ truy cập hồ sơ của mình; Quản lý bị giới hạn theo phạm vi đã chốt |
-| Danh sách / lọc | Lọc theo `Keyword`, `IsActive`, `HasAccount`; phân trang; sắp xếp; dữ liệu rỗng |
-| Tạo | Thiếu trường bắt buộc; trùng `IdNumber` (409); nghi trùng số điện thoại (có/không xác nhận); chuẩn hóa dữ liệu |
-| Sửa | Chủ trọ/Quản lý sửa mọi trường; khách chỉ sửa trường mục 5.2 (trường khác bị bỏ qua hoặc báo lỗi); `RowVersion` cũ trả 409 |
-| Ngừng sử dụng | Hồ sơ không có hợp đồng ngừng được; có hợp đồng trả `TenantInUse` |
-| Che dữ liệu | Danh sách và chọn khách chỉ trả `IdNumberMasked`; `Note` không lộ cho khách thuê |
-| Liên kết tài khoản | Một tài khoản không gắn hai hồ sơ; khóa tài khoản không xóa hồ sơ |
-| Chọn khách | Chỉ hồ sơ còn sử dụng, trong phạm vi quyền; `ExcludeTenantIds` hoạt động |
-
-**Bàn giao:**
-- **Phúc:** mục 2, 5, 6, 9 và **mẫu kết quả thật từ SQL** theo mục 10 (trường cần gửi, trường nhận về, mã lỗi).
-- **Đào (chọn khách):** mục 6.8 và quy tắc chọn đã chốt.
-- **Tính:** mục 4 (xác nhận cách kiểm quyền) và mục 8 (thay đổi schema).
-
-**Tiêu chí hoàn thành đề xuất:**
-- Phúc biết dữ liệu cần gửi và nhận cho form khách thuê.
-- Tính xác nhận cách kiểm quyền và thay đổi schema.
-- Service chạy trên SQL thật, có test đạt cho các nhóm ở bảng trên.
 
 ---
 
