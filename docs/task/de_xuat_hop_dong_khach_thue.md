@@ -117,6 +117,8 @@ Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumbe
 
 **Phạm vi dữ liệu của Quản lý:** toàn bộ nhà trọ hay chỉ nhà được phân công. *Cần chốt* (cùng câu hỏi ở hợp đồng storage, nên chốt một lần cho cả hệ thống). Dù chốt thế nào, **việc lọc theo phạm vi nằm trong service**, không chỉ ở controller, để mọi nơi gọi service (kể cả hàm chọn khách) đều bị giới hạn như nhau.
 
+**Đánh đổi cần nhắc khi chốt phạm vi (mục 3):** vì kiểm trùng chạy **trên toàn hệ thống**, Quản lý có thể dò xem một số CCCD đã tồn tại trong hệ thống hay chưa qua lỗi `DuplicateTenant`, kể cả với hồ sơ ngoài phạm vi. Cân nhắc điểm này khi chốt phạm vi của Quản lý, nhất là nếu chọn "chỉ nhà được phân công".
+
 **Che dữ liệu nhạy cảm:**
 - Danh sách và hàm chọn khách chỉ trả `IdNumberMasked` (ví dụ `********1234`), không trả số đầy đủ.
 - `IdNumber` đầy đủ chỉ có trong chi tiết cho Chủ trọ, Quản lý (trong phạm vi) và chính khách thuê đó.
@@ -421,6 +423,8 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
   ]
 }
 ```
+
+> Nếu hồ sơ trùng nằm ngoài phạm vi của người gọi, `possibleDuplicates` là `null` (xem mục 3).
 
 ### 10.4 Sửa thất bại — Hồ sơ vừa bị người khác cập nhật
 
