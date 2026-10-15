@@ -79,7 +79,9 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.DefaultRequestCulture = new RequestCulture("vi-VN");
     options.SupportedCultures = supported;
     options.SupportedUICultures = supported;
-    // Thu tu: cookie cua selector -> Accept-Language cua trinh duyet.
+    // Chỉ dùng lựa chọn cookie; chưa chọn thì dùng VI, không theo query/trình duyệt.
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
 });
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();

@@ -208,4 +208,25 @@
   <data name="BackToPreview" xml:space="preserve">
     <value>Về trang mẫu</value>
   </data>
+  <data name="AccountStatusPendingApproval" xml:space="preserve">
+    <value>Chờ duyệt</value>
+  </data>
+  <data name="AccountStatusActive" xml:space="preserve">
+    <value>Hoạt động</value>
+  </data>
+  <data name="AccountStatusLocked" xml:space="preserve">
+    <value>Khóa</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>Từ chối</value>
+  </data>
+  <data name="CancelRequest" xml:space="preserve">
+    <value>Hủy yêu cầu</value>
+  </data>
+  <data name="RoleAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Khôi phục</value>
+  </data>
 </root>

@@ -208,4 +208,25 @@
   <data name="BackToPreview" xml:space="preserve">
     <value>Back to preview</value>
   </data>
+  <data name="AccountStatusPendingApproval" xml:space="preserve">
+    <value>Pending approval</value>
+  </data>
+  <data name="AccountStatusActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="AccountStatusLocked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>Reject</value>
+  </data>
+  <data name="CancelRequest" xml:space="preserve">
+    <value>Cancel request</value>
+  </data>
+  <data name="RoleAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
 </root>
