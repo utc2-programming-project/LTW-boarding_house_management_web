@@ -85,7 +85,7 @@ Hai khái niệm tách biệt, không dùng chung bảng:
 
 ## 3. Phát hiện hồ sơ trùng
 
-Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`**. Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) trong phạm vi dữ liệu mà người gọi được xem.
+Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`**. Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) **trên toàn hệ thống**, không giới hạn theo phạm vi của người gọi. Nếu hồ sơ trùng nằm ngoài phạm vi, vẫn trả `DuplicateTenant` nhưng không kèm thông tin hồ sơ đó (`PossibleDuplicates` để trống).
 
 | Tiêu chí | Mức | Xử lý đề xuất |
 |---|---|---|
@@ -229,6 +229,8 @@ Các trường ở mục 5.1 và bắt buộc có `RowVersion`. Có thêm `Confi
 
 Chỉ có đúng các trường ở mục 5.2; không có trường nào khác để tránh khách gửi thừa dữ liệu rồi bị gán nhầm.
 
+Khi khách thuê tự sửa (`UpdateOwnAsync`), service **không** kiểm trùng số điện thoại và **không** trả `PossibleDuplicates`, để khách không thấy được hồ sơ của người khác.
+
 ### 6.8 Chọn khách (cho hợp đồng, Đào dùng)
 
 `TenantPickerRequest`:
@@ -293,7 +295,11 @@ Dùng cùng khuôn `Succeeded` / `ErrorCode` / `ErrorMessage` như `UploadResult
 | Ngừng / kích hoạt lại | `PATCH /api/tenants/{id}/active` | 200 + `TenantResult` |
 | Chọn khách | `GET /api/tenants/picker` | 200 + danh sách `TenantPickerItemDto` |
 
+**Ràng buộc route:** dùng `{id:guid}` cho `GET /api/tenants/{id}` (và các endpoint `{id}` khác) để không nhầm với `/me` và `/picker`.
+
 **Ngừng sử dụng:** không cho ngừng sử dụng hồ sơ đang có hợp đồng hiệu lực (trả `TenantInUse`, 409). Điều kiện kiểm tra dựa vào dữ liệu hợp đồng, Đào xác nhận cách truy vấn.
+
+**Kích hoạt lại:** khi `SetActiveAsync(isActive = true)`, phải kiểm trùng `IdNumber` với các hồ sơ đang sử dụng và trả `DuplicateTenant` nếu trùng; nếu không sẽ vi phạm chỉ mục duy nhất (mục 3, mục 8).
 
 **Khi chưa có hợp đồng trong schema:** các cờ `HasActiveContract` và kiểm tra `TenantInUse` để chờ, không làm ở đợt 1C nếu bảng hợp đồng chưa sẵn sàng.
 
@@ -443,6 +449,8 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
   "possibleDuplicates": null
 }
 ```
+
+> Lỗi của mọi endpoint dùng chung khung `TenantResult`, kể cả endpoint danh sách; danh sách thành công thì trả `PagedResult<TenantListItemDto>`.
 
 ---
 
