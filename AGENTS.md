@@ -7,7 +7,7 @@
 - Dat ten nhanh khong dau, vi du: `VHT-6-hoan-thien-role-va-pham-vi-nguoi-dung`.
 - Truoc khi doi nhanh ma co thay doi chua commit: stash hoac commit, khong `reset --hard`, khong `checkout` de mat WIP.
 - Day nhanh feature len remote va mo PR ve `dev`, khong merge thang vao `main`.
-
+- Không được tự ý push lên, phải hỏi ý.
 
 ## Docs (`docs/` — AI tra cứu khi cần, không đọc hết)
 
