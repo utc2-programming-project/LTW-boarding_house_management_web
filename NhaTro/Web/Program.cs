@@ -1,4 +1,3 @@
-using FluentValidation;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
@@ -87,7 +86,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
