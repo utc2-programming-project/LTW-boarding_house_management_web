@@ -6,6 +6,7 @@
     <div class="topbar-actions">
         <button class="icon-button" type="button" data-theme-toggle aria-label="@L["ToggleTheme"]" aria-pressed="false"><span class="light-icon"><LucideIcon Name="moon" /></span><span class="dark-icon"><LucideIcon Name="sun" /></span></button>
         <div class="culture-control">
+            <AntiforgeryToken />
             <span class="sr-only" id="culture-label">@L["Language"]</span>
             <div role="group" aria-labelledby="culture-label">
                 <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>

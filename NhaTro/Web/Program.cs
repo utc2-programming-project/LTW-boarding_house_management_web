@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Components;
@@ -75,6 +76,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<RoleService>();
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supported = new[] { new CultureInfo("vi-VN"), new CultureInfo("en-US") };
@@ -114,8 +116,18 @@ app.UseAntiforgery();
 // VHT-6 (3d): endpoint cho selector cua Phu (VHT-20).
 // Dat cookie chuan ".AspNetCore.Culture", song sau reload/dang nhap (1 nam).
 // Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture (VHT-10).
-app.MapPost("/culture/set", (HttpContext http, string culture) =>
+app.MapPost("/culture/set", async Task<IResult> (HttpContext http, string culture, IAntiforgery antiforgery) =>
 {
+    // Xác thực trước khi ghi cookie, kể cả endpoint chỉ nhận culture từ query.
+    try
+    {
+        await antiforgery.ValidateRequestAsync(http);
+    }
+    catch (AntiforgeryValidationException)
+    {
+        return Results.BadRequest();
+    }
+
     if (culture != "vi-VN" && culture != "en-US")
     {
         return Results.BadRequest("Ngon ngu khong duoc ho tro.");
