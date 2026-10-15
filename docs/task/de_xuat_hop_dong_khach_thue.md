@@ -1,6 +1,6 @@
 # Đề xuất hợp đồng DTO khách thuê và service P3
 
-> **Trạng thái:** Bản đề xuất, **chưa có giá trị nào được nhóm xác nhận**. Mọi trường, quy tắc và quyền dưới đây là *đề xuất* để nhóm chốt ở mục 11. Chỗ ghi *"Cần chốt"* là câu hỏi mở. Không đưa vào code hoặc schema cho đến khi mục tương ứng được nhóm chốt.
+> **Trạng thái:** Bản đề xuất, **chưa có giá trị nào được nhóm xác nhận**. Mọi trường, quy tắc và quyền dưới đây là *đề xuất* để nhóm chốt. Chỗ ghi *"Cần chốt"* là câu hỏi mở. Không đưa vào code hoặc schema cho đến khi mục tương ứng được nhóm chốt.
 >
 > **Phạm vi:** phân hệ P3 (khách thuê), đợt 1B (chốt DTO) và đợt 1C (viết service trên SQL). Không làm việc ngoài hai đợt này và ngoài các quyết định D1–D17.
 > **Phối hợp:** Phúc (trường form UI), Đào (DTO/service, quy tắc chọn khách cho hợp đồng), Tính (quyền VHT-6, schema Tenant VHT-5).
@@ -446,24 +446,7 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
 
 ---
 
-## 11. Câu hỏi cần nhóm trả lời
-
-| # | Người trả lời | Câu hỏi |
-|---|---|---|
-| 1 | Phúc | Form tạo/sửa khách cần đúng các trường ở mục 2 chưa? Trường nào bắt buộc trên UI? `IdIssuedDate`, `IdIssuedPlace` có cần không? |
-| 2 | Phúc | Khách thuê xem và tự sửa những trường nào trên UI (mục 5.2)? |
-| 3 | Đào | Quy tắc chọn khách cho hợp đồng: có cho chọn khách đang có hợp đồng hiệu lực không? Danh sách chọn cần thêm trường nào? |
-| 4 | Đào | Có cờ `HasActiveContract` ở đợt này không, hay chờ khi bảng hợp đồng sẵn sàng? |
-| 5 | Tính | Ma trận quyền ở mục 4 có khớp `thao_tac_va_quyen.xlsx` và VHT-6 không? Phạm vi dữ liệu của Quản lý là toàn bộ hay theo nhà được phân công? |
-| 6 | Tính | Thay đổi schema ở mục 8 có ổn không? Kiểu PK, có mã hóa `IdNumber` không? |
-| 7 | Tính / Đào | Ai gắn/gỡ tài khoản với hồ sơ khách thuê và ở feature nào? |
-| 8 | Cả nhóm | Trường bắt buộc khi tạo: `FullName`, `PhoneNumber`; còn `IdNumber` bắt buộc ngay khi tạo hay trước khi ký hợp đồng? |
-| 9 | Cả nhóm | Cách phát hiện trùng ở mục 3: trùng cứng theo `IdNumber`, nghi trùng theo `PhoneNumber`; có thêm `FullName` + `DateOfBirth` không? Tạo mới trùng hồ sơ đã ngừng sử dụng thì xử lý thế nào? |
-| 10 | Cả nhóm | Có nhận hộ chiếu (số giấy tờ có chữ cái) không? Giá trị `Gender`? `PageSize` mặc định và tối đa? |
-
----
-
-## 12. Kiểm thử và bàn giao (đợt 1C)
+## 11. Kiểm thử và bàn giao (đợt 1C)
 
 **Kiểm thử service (Đào):**
 
