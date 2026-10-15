@@ -1,0 +1,105 @@
+@implements IDisposable
+@inject ToastService Toasts
+
+<div class="toast @ToneClass" role="@(Message.Kind == ToastKind.Error ? "alert" : "status")"
+     @onmouseenter="OnEnter" @onmouseleave="OnLeave" @onfocusin="OnFocusIn" @onfocusout="OnFocusOut">
+    <span class="icon" aria-hidden="true">
+        @if (Message.Kind == ToastKind.Error)
+        {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+        }
+        else
+        {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
+        }
+    </span>
+    <p class="text">@Message.Text</p>
+    <button type="button" class="close" aria-label="@CloseLabel" @onclick="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+    </button>
+</div>
+
+@code {
+    private static readonly TimeSpan AutoCloseAfter = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan MinRemaining = TimeSpan.FromSeconds(1);
+
+    private CancellationTokenSource? _timer;
+    private TimeSpan _remaining = AutoCloseAfter;
+    private long _startedAt;
+    private bool _hover;
+    private bool _focus;
+
+    [Parameter, EditorRequired]
+    public ToastMessage Message { get; set; } = default!;
+
+    /// <summary>Tên truy cập của nút đóng; truyền bản dịch khi giao diện tiếng Anh.</summary>
+    [Parameter]
+    public string CloseLabel { get; set; } = "Đóng thông báo";
+
+    private string ToneClass => Message.Kind == ToastKind.Error ? "tone-error" : "tone-success";
+
+    protected override void OnInitialized()
+    {
+        if (Message.AutoClose)
+        {
+            StartTimer();
+        }
+    }
+
+    private void StartTimer()
+    {
+        _timer?.Cancel();
+        _timer?.Dispose();
+        _timer = new CancellationTokenSource();
+        _startedAt = Environment.TickCount64;
+        _ = CloseAfterAsync(_remaining, _timer.Token);
+    }
+
+    private async Task CloseAfterAsync(TimeSpan delay, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(delay, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await InvokeAsync(Close);
+    }
+
+    private void PauseTimer()
+    {
+        if (_timer is null) return;
+
+        _timer.Cancel();
+        _timer.Dispose();
+        _timer = null;
+
+        var elapsed = TimeSpan.FromMilliseconds(Environment.TickCount64 - _startedAt);
+        _remaining = _remaining - elapsed;
+        if (_remaining < MinRemaining) _remaining = MinRemaining;
+    }
+
+    private void ResumeIfIdle()
+    {
+        if (Message.AutoClose && !_hover && !_focus && _timer is null)
+        {
+            StartTimer();
+        }
+    }
+
+    private void OnEnter() { _hover = true; PauseTimer(); }
+    private void OnLeave() { _hover = false; ResumeIfIdle(); }
+    private void OnFocusIn() { _focus = true; PauseTimer(); }
+    private void OnFocusOut() { _focus = false; ResumeIfIdle(); }
+
+    private void Close() => Toasts.Dismiss(Message.Id);
+
+    public void Dispose()
+    {
+        _timer?.Cancel();
+        _timer?.Dispose();
+    }
+}

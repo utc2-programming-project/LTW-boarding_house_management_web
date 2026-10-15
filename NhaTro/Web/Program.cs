@@ -8,6 +8,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Web.Data;
 using Web.Data.Seeding;
+using Web.Components.Shared.Feedback;
 using Web.Features.Accounts;
 using MudBlazor.Services;
 using Serilog;
@@ -85,6 +86,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<ToastService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();

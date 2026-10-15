@@ -1,0 +1,47 @@
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+    text-align: center;
+}
+
+.icon {
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted, #64748B);
+}
+
+.icon ::deep svg {
+    width: 48px;
+    height: 48px;
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    color: var(--text-primary, #0D131B);
+}
+
+.description {
+    margin: 0;
+    max-width: 480px;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--text-secondary, #475569);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+@media (max-width: 767.98px) {
+    .empty-state { padding: 24px; }
+}
