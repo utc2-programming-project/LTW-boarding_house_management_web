@@ -90,7 +90,7 @@ Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumbe
 | Tiêu chí | Mức | Xử lý đề xuất |
 |---|---|---|
 | Trùng `IdNumber` (sau chuẩn hóa) | **Trùng cứng** | Chặn, trả `DuplicateTenant` (HTTP 409), kèm `Id` và `FullName` của hồ sơ đang có để người dùng mở hồ sơ đó (chỉ khi hồ sơ nằm trong phạm vi của người gọi) |
-| Trùng `PhoneNumber` (sau chuẩn hóa) | **Nghi trùng** | Không chặn. Trả danh sách `PossibleDuplicates` để UI hỏi xác nhận; gửi lại với `ConfirmDuplicatePhone = true` thì tạo |
+| Trùng `PhoneNumber` (sau chuẩn hóa) | **Nghi trùng** | Không chặn. Trả danh sách `PossibleDuplicates` để UI hỏi xác nhận; gửi lại với `ConfirmDuplicatePhone = true` thì tạo. Với trùng `PhoneNumber`, chỉ kiểm tra và liệt kê các hồ sơ **trong phạm vi của người gọi**; cảnh báo trùng số điện thoại chỉ để hỗ trợ nhập liệu, không có ràng buộc ở DB nên không cần quét toàn hệ thống |
 | Trùng `FullName` + `DateOfBirth` | **Nghi trùng** | *Cần chốt có kiểm tra không* |
 | Trùng `Email` | Không kiểm tra | Một email có thể dùng chung (gia đình) |
 
