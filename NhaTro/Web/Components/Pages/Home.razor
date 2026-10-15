@@ -1,31 +1,26 @@
 @page "/"
-@rendermode InteractiveServer
+@inject IStringLocalizer<Shared> L
+@using Web.Common.Utils
 
-<PageTitle>@(_english ? "Boarding House Operations Web" : "Web vận hành nhà trọ")</PageTitle>
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
-
-<main class="intro-page" lang="@(_english ? "en" : "vi")">
-    <section class="intro-card" aria-labelledby="intro-title">
-        <div class="intro-header">
-            <span class="intro-label">@(_english ? "TEAM PROJECT · INIT" : "DỰ ÁN NHÓM · INIT")</span>
-            <button class="intro-button secondary" lang="@(_english ? "vi" : "en")" @onclick="() => _english = !_english">@(_english ? "Tiếng Việt" : "English")</button>
-        </div>
-        <h1 id="intro-title">@(_english ? "Boarding House Operations Web" : "Web vận hành nhà trọ")</h1>
-        <p>@(_english ? "A platform for boarding house operations: rooms, tenants, contracts, invoices, payment collection and incident handling." : "Nền tảng hỗ trợ vận hành nhà trọ: phòng, khách thuê, hợp đồng, hóa đơn, thu tiền và xử lý sự cố.")</p>
-        <div class="intro-status">@(_english ? "The project scaffold is ready. The team will develop features in stages." : "Khung dự án đã khởi tạo. Các chức năng sẽ được nhóm phát triển theo từng giai đoạn.")</div>
-        <div class="intro-actions">
-            <a class="intro-button primary" href="Account/Login">@(_english ? "Sign in" : "Đăng nhập")</a>
-            <a class="intro-button secondary" href="Account/Register">@(_english ? "Register" : "Đăng ký")</a>
-        </div>
-        <p class="intro-tech">C# · .NET 10 · Blazor · MudBlazor · SQL Server</p>
-        <a class="intro-repository" href="https://github.com/TinhSsc/boarding-house-management-web.git">GitHub · @(_english ? "Source code" : "Mã nguồn")</a>
+<PageTitle>@L["LayoutPreview"] — @L["AppName"]</PageTitle>
+<section class="preview-page" aria-labelledby="preview-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LayoutPreview"]) })" />
+    <header class="page-heading">
+        <div><h1 id="preview-title">@L["LayoutPreview"]</h1><p>@L["PreviewDescription"]</p></div>
+        <span class="preview-badge">@L["SampleData"]</span>
+    </header>
+    <section class="preview-card" aria-labelledby="sample-title">
+        <h2 id="sample-title">@L["DisplayExamples"]</h2>
+        <p>@L["SampleDisclaimer"]</p>
+        <dl class="sample-values">
+            <div><dt>@L["SampleDate"]</dt><dd>@DateFormatter.Format(new DateOnly(2026, 10, 15))</dd></div>
+            <div><dt>@L["SampleAmount"]</dt><dd>@MoneyFormatter.Format(1500000m)</dd></div>
+        </dl>
     </section>
-</main>
-
-@code {
-    // INIT only; shared resource-based localization is part of the team's plan.
-    private bool _english;
-}
+    <section class="preview-card empty-state" aria-labelledby="empty-title">
+        <LucideIcon Name="empty" />
+        <h2 id="empty-title">@L["NoData"]</h2>
+        <p>@L["ModulesPending"]</p>
+        <a class="app-button secondary" href="/">@L["BackToPreview"]</a>
+    </section>
+</section>
