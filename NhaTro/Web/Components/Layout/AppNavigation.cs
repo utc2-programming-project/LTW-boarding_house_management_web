@@ -5,6 +5,7 @@ public static class AppNavigation
     // Chỉ gắn route khi module có trang thật và đã bảo vệ quyền.
     public static readonly NavigationItem[] Items =
     [
+        new("Dashboard", "chart", "ChuTro,QuanLy"),
         new("Accounts", "users", "Admin,ChuTro"),
         new("Permissions", "shield", "Admin"),
         new("Properties", "building", "ChuTro,QuanLy"),
