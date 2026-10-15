@@ -42,5 +42,5 @@ public class TenantDetailDto
     public DateTimeOffset? UpdatedAt { get; init; }
 
     /// <summary>Base64, gửi lại khi sửa.</summary>
-    public string? RowVersion { get; init; }
+    public required string RowVersion { get; init; }
 }

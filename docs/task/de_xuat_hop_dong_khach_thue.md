@@ -4,7 +4,7 @@
 >
 > **Phạm vi:** phân hệ P3 (khách thuê), đợt 1B (chốt DTO) và đợt 1C (viết service trên SQL). Không làm việc ngoài hai đợt này và ngoài các quyết định D1–D17.
 > **Phối hợp:** Phúc (trường form UI), Đào (DTO/service, quy tắc chọn khách cho hợp đồng), Tính (quyền VHT-6, schema Tenant VHT-5).
-> **Nguồn đối chiếu:** `docs/task/thao_tac_va_quyen.xlsx`, quyết định D1–D17, schema Tenant INIT hiện có (Đào đối chiếu với bảng thật), `hop_dong_storage_va_gioi_han_tep.md` (tệp giấy tờ của khách thuê).
+> **Nguồn đối chiếu:** `docs/task/thao_tac_va_quyen.xlsx`, quyết định D1–D17, schema Tenant INIT hiện có (Đào đối chiếu với bảng thật), `de_xuat_hop_dong_storage.md` (tệp giấy tờ của khách thuê).
 
 ---
 
@@ -85,7 +85,7 @@ Hai khái niệm tách biệt, không dùng chung bảng:
 
 ## 3. Phát hiện hồ sơ trùng
 
-Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`** (trừ khi khách thuê tự sửa, xem 6.7). Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) **trên toàn hệ thống**, không giới hạn theo phạm vi của người gọi. Nếu hồ sơ trùng nằm ngoài phạm vi, vẫn trả `DuplicateTenant` nhưng không kèm thông tin hồ sơ đó (`PossibleDuplicates` để trống).
+Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumber`** (trừ khi khách thuê tự sửa, xem 6.7). Đối tượng so sánh là các hồ sơ còn sử dụng (`IsActive = true`) **trên toàn hệ thống**, không giới hạn theo phạm vi của người gọi (riêng trùng `PhoneNumber` chỉ xét trong phạm vi của người gọi, xem bảng). Nếu hồ sơ trùng nằm ngoài phạm vi, vẫn trả `DuplicateTenant` nhưng không kèm thông tin hồ sơ đó (`PossibleDuplicates` để trống).
 
 | Tiêu chí | Mức | Xử lý đề xuất |
 |---|---|---|
@@ -205,7 +205,7 @@ Mọi thao tác sửa gửi kèm `RowVersion` đã đọc. Nếu bản ghi đã 
 | `Note` | string? | **Chỉ trả cho Chủ trọ/Quản lý** |
 | `IsActive` | bool | |
 | `HasAccount` | bool | Không trả `UserId` thô cho khách thuê |
-| `CreatedAt` / `UpdatedAt` | DateTimeOffset | |
+| `CreatedAt` / `UpdatedAt` | DateTimeOffset / DateTimeOffset? | `UpdatedAt` null khi chưa sửa lần nào |
 | `RowVersion` | string | Base64, gửi lại khi sửa |
 
 ### 6.5 `CreateTenantRequest` — tạo hồ sơ
