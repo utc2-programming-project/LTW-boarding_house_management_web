@@ -39,8 +39,8 @@ h1:focus {
 
 /* ==========================================================================
    Nút bấm dùng chung (VHT-15) — docs/design/phong_cach_giao_dien.md, mục 3 và 6.
-   Màu lấy từ token; giá trị sau dấu phẩy là mặc định chế độ sáng cho tới khi
-   theme chung (VHT-19) định nghĩa token.
+   Màu lấy từ token theme VHT-19; giá trị sau dấu phẩy là fallback khi
+   stylesheet được dùng độc lập.
    ========================================================================== */
 .btn {
     display: inline-flex;
@@ -48,7 +48,7 @@ h1:focus {
     justify-content: center;
     gap: 8px;
     box-sizing: border-box;
-    height: 40px;
+    min-height: 40px;
     padding: 0 16px;
     border: 1px solid transparent;
     border-radius: 8px;
@@ -56,6 +56,7 @@ h1:focus {
     font-size: 14px;
     line-height: 20px;
     font-weight: 600;
+    text-decoration: none;
     cursor: pointer;
     transition: background-color 150ms, border-color 150ms;
 }
@@ -93,16 +94,16 @@ h1:focus {
     }
 
 .btn-danger {
-    background: #B91C1C;
+    background: var(--danger, #B91C1C);
     color: #FFFFFF;
 }
 
     .btn-danger:hover:not(:disabled) {
-        background: #991B1B;
+        background: var(--danger-hover, #991B1B);
     }
 
     .btn-danger:active:not(:disabled) {
-        background: #7F1D1D;
+        background: var(--danger-pressed, #7F1D1D);
     }
 
 .btn:disabled {

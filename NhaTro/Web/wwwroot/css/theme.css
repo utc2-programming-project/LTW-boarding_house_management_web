@@ -44,9 +44,9 @@ body { margin:0;background:var(--page-bg);color:var(--text-primary);font-family:
 button,input,select,textarea { font:inherit; }
 button,a { -webkit-tap-highlight-color:transparent; }
 :focus-visible { outline:2px solid var(--focus-ring);outline-offset:2px; }
-.app-shell a { color:var(--accent-text); }
+.app-shell a:not(.btn) { color:var(--accent-text); }
 .app-shell button { cursor:pointer; }
-.app-shell button:disabled { cursor:wait;opacity:.65; }
+.app-shell button:disabled:not(.btn) { cursor:wait;opacity:.65; }
 .app-shell { min-height:100dvh; }
 .app-sidebar { position:fixed;inset:0 auto 0 0;width:var(--sidebar-width);padding:16px;background:var(--sidebar-bg);border-right:1px solid var(--border);z-index:100;overflow-y:auto; }
 .app-brand { display:flex;align-items:center;gap:8px;margin-bottom:24px;min-height:40px;color:var(--text-primary)!important;text-decoration:none;font-size:1.125rem;font-weight:700;line-height:1.333; }
@@ -67,17 +67,6 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .icon-button { display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;padding:8px;border:0;border-radius:8px;background:transparent;color:var(--text-secondary); }
 .icon-button:hover { background:var(--hover-bg); }
 .icon-button:active { background:var(--pressed-bg); }
-.app-button { display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border:1px solid transparent;border-radius:8px;font-weight:600;line-height:1.429;text-decoration:none; }
-.app-button.primary { background:var(--primary);color:var(--on-primary); }
-.app-button.primary:hover { background:var(--primary-hover); }
-.app-button.primary:active { background:var(--primary-pressed); }
-.app-button.secondary { background:var(--surface);color:var(--text-primary);border-color:var(--control-border); }
-.app-button.secondary:hover { background:var(--hover-bg); }
-.app-button.secondary:active { background:var(--pressed-bg); }
-.app-button.danger { background:var(--danger);color:var(--on-primary); }
-.app-button.danger:hover { background:var(--danger-hover); }
-.app-button.danger:active { background:var(--danger-pressed); }
-.app-button:disabled { background:var(--disabled-bg);color:var(--text-disabled); }
 .avatar { display:grid;place-items:center;width:36px;height:36px;border-radius:999px;background:var(--accent-soft);font-weight:600;text-decoration:none; }
 .culture-control { position:relative; }
 .culture-control [role="group"] { display:flex; }
@@ -144,7 +133,6 @@ button,a { -webkit-tap-highlight-color:transparent; }
  .topbar-actions { gap:4px; }
  .icon-button,.culture-button,.avatar { min-width:44px;min-height:44px; }
  .icon-button { flex-basis:44px; }
- .app-button { min-height:44px; }
  .sign-in { padding:8px; }
  .app-sidebar { width:min(280px,calc(100vw - 48px));z-index:310;transform:translateX(-100%);visibility:hidden;transition:transform 200ms var(--ease),visibility 200ms; }
  [data-drawer-open="true"] .app-sidebar { transform:translateX(0);visibility:visible; }
@@ -159,7 +147,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
  .empty-state { padding:24px; }
 }
 @media (prefers-reduced-motion:no-preference) {
- .icon-button,.nav-item,.app-button,.culture-button { transition:background-color 150ms var(--ease),color 150ms var(--ease); }
+ .icon-button,.nav-item,.culture-button { transition:background-color 150ms var(--ease),color 150ms var(--ease); }
  .icon-button:hover .lucide-icon,.icon-button:focus-visible .lucide-icon { animation:icon-nudge 250ms var(--ease) 1; }
  @keyframes icon-nudge { 50% { transform:rotate(-10deg); } }
 }

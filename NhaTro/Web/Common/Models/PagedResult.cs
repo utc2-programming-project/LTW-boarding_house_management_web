@@ -1,4 +1,11 @@
 namespace Web.Common.Models;
 
-/// <summary>Một trang dữ liệu kèm tổng số bản ghi (trước khi phân trang). Service trả về, bảng dùng chung hiển thị.</summary>
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount);
+// Ket qua phan trang dung chung cho list P2 (Phuc dung cho filter/paging).
+// Service chi tra 1 trang, khong load het vao RAM.
+public sealed class PagedResult<T>
+{
+    public IReadOnlyList<T> Items { get; init; } = [];
+    public int TotalCount { get; init; }
+    public int Page { get; init; } = 1;
+    public int PageSize { get; init; } = 20;
+}
