@@ -7,11 +7,30 @@
 ## Cách dùng / Working rules
 
 - **Đây là kế hoạch duy nhất.** Mỗi mã là một đầu việc để đưa lên Jira/GitHub. Quyền theo vai trò: **xlsx `thao_tac_va_quyen.xlsx` là nguồn chuẩn**; mọi mô tả task phải khớp ma trận này. Trạng thái Jira hiện dùng `To Do → In Progress → Testing → Done`; việc bị chặn được đánh dấu và liên kết với task chặn, không chuyển thành Done. Xem [quy ước Jira](quy_uoc_jira.md). Các tuần là dự kiến; cuối tuần đối chiếu đầu ra, không tự tick vì hết thời gian.
-- **Nhãn Jira là nguồn chuẩn / Labels:** `backend` = service/quyền/logic; `ui` = giao diện; `database` = schema/migration/ERD; `testing` = kiểm thử; `github` = PR/CI/release; `deploy` = triển khai/vận hành; `docs` = README/Word/slide; cộng `p1…p8`, `dot-*`, `admin`, `cong-tac`, `phe-duyet`, `thung-rac`, `bieu-gia`, `excel`, `lich-su`, `cong-tac-phe-duyet`. Tài liệu không gắn tag `[Backend]`… vào tên việc — xem nhãn trên Jira.
+- **Nhãn Jira là nguồn chuẩn / Labels:** tầng triển khai ghi ở **Components** (`backend` = service/quyền/logic; `frontend` = giao diện; `database` = schema/migration/ERD; `test` = kiểm thử; `docs` = README/Word/slide); labels chỉ giữ `p1…p8`, `dot-*`, `github`, `phan-quyen`, `cong-tac`, `cong-tac-phe-duyet`, `thung-rac`, `bieu-gia`, `excel`, `lich-su`, `nen-tang-chung`, `chat-luong-ban-giao`. Chi tiết xem [quy ước Jira](quy_uoc_jira.md). Tài liệu không gắn tag `[Backend]`… vào tên việc.
 - **Nội dung thực hiện / What to do** tóm tắt việc cần làm trong từng task; tiêu chí hoàn thành tập trung ở cổng cuối tuần và checklist nghiệm thu cuối file.
 - **Xem [timeline chạy song song](timeline_song_song.md):** mỗi cột là một người, các ô cùng hàng làm đồng thời; hàng sau ghi đầu ra cần chờ. `A // B` = đồng thời; `A → B` = phụ thuộc. Timeline không thêm task/đổi phân công; trong một ô có nhiều việc thì người đó làm lần lượt.
-- **Mã Jira:** tài liệu này dùng thẳng mã `VHT-n` của Jira (VD `VHT-4` Chốt thao tác và quyền P1–P8). Không dùng mã tuần `W…` riêng để tránh hai hệ mã song song. 11 task mới `VHT-94 … VHT-104` được thêm cho Admin/công tắc/thùng rác/biểu giá/Excel.
-- **“Phối hợp” không luôn nghĩa là “phải chờ”.** Người review có thể review khi có PR; UI bắt đầu sau khi chốt DTO bằng dữ liệu mẫu, không chờ backend hoàn chỉnh. Chỉ chờ khi ghép SQL/giao dịch thật hoặc cần đầu ra cụ thể đã ghi.
+- **Mã Jira:** tài liệu này dùng thẳng mã `VHT-n` của Jira (VD `VHT-4` Chốt thao tác và quyền P1–P8). Không dùng mã tuần `W…` riêng để tránh hai hệ mã song song. 11 task mới `VHT-94 … VHT-104` được thêm cho Admin/công tắc/thùng rác/biểu giá/Excel; 48 task tách đợt `VHT-112 … VHT-159` nằm ở mục riêng từng tuần.
+
+### Epic / Nhóm việc (nguồn parent trên Jira)
+
+| Epic | Nhóm | Task con (đếm) |
+| --- | --- | --- |
+| VHT-83 | P1 · Tài khoản và phân quyền | 8 |
+| VHT-84 | P2 · Nhà trọ và phòng | 5 |
+| VHT-85 | P3 · Khách thuê và hồ sơ | 10 |
+| VHT-86 | P4 · Hợp đồng | 11 |
+| VHT-87 | P5 · Điện nước và dịch vụ | 8 |
+| VHT-88 | P6 · Hóa đơn và thu tiền | 9 |
+| VHT-89 | P7 · Sự cố | 4 |
+| VHT-90 | P8 · Dashboard và báo cáo | 11 |
+| VHT-91 | Nền tảng chung · UI, SQL, storage | 30 |
+| VHT-92 | Chất lượng và bàn giao | 39 |
+| VHT-93 | Công tắc Quản lý và phê duyệt | 3 |
+
+Mỗi task tách đợt (VHT-112…VHT-159) đều có Parent là Epic của task gốc.
+
+**“Phối hợp” không luôn nghĩa là “phải chờ”.** Người review có thể review khi có PR; UI bắt đầu sau khi chốt DTO bằng dữ liệu mẫu, không chờ backend hoàn chỉnh. Chỉ chờ khi ghép SQL/giao dịch thật hoặc cần đầu ra cụ thể đã ghi.
 - **Không song song trên cùng file/DB dùng chung:** chia file theo feature; chốt DTO rồi mới tách nhánh. `Program.cs`, resource dùng chung, model snapshot và migrations ghép theo lượt; test dùng DB riêng. Nếu đổi DTO, báo ngay người đang làm UI/test.
 - INIT đã có repo/CI, project, Identity nền, SQL lõi, test scaffold, folder và trang giới thiệu. **Không giao nhóm tạo lại INIT.** Sidebar/theme thật, localization toàn app, nghiệp vụ và test thật chưa xong.
 - Tên rút gọn: **Tính** = Tính Ct; **Đào** = Mai Đào; **Phát** = Hình Vĩnh Phát; **Phúc** = Đinh Hoàng Phúc; **Phú** = Phú. Người ở cột **Chính** chịu trách nhiệm bàn giao; người ở cột **Phối hợp** cung cấp/review phần ghi rõ, không làm trùng.
@@ -54,6 +73,20 @@
 | VHT-23 | Chốt DTO khách thuê và service P3 | Phát | Phúc: trường form; Đào: chọn khách; Tính: quyền/schema | Mở rộng Tenant INIT; viết DTO/service list/detail/filter/cập nhật và chọn khách theo quyền; test, bàn giao Phúc/Đào. |
 | VHT-94 | Nền công tắc Quản lý | Tính | VHT-4, VHT-6; Đào/Phát: review cách gọi policy | Làm cấu hình lưu 16 công tắc (Cho phép/Duyệt/Không thể, mặc định Duyệt; SW-15 chỉ Cho phép/Không thể) và policy handler dùng chung: kiểm công tắc trước khi thực thi thao tác ⚙️ của Quản lý; chưa làm hàng đợi. Unit test 3 chế độ × 16 thao tác. |
 
+### Task tách đợt / Split tasks (tuần 1)
+
+7 task tách từ task gốc nhiều đợt, mỗi task nằm đúng sprint của đợt nó, Parent là Epic của task gốc, mô tả là pointer về task gốc.
+
+| Mã | Việc / Task | Chính | Tách từ | Đợt |
+| --- | --- | --- | --- | --- |
+| VHT-112 | Chốt DTO nhà trọ và phòng P2 | Tính | VHT-7 — Chốt DTO nhà trọ/phòng và service P2 | 1B |
+| VHT-113 | Chốt DTO khách thuê P3 | Phát | VHT-23 — Chốt DTO khách thuê và service P3 | 1B |
+| VHT-114 | Dựng form hợp đồng mẫu P4 | Đào | VHT-11 — Dựng form tạo hợp đồng mẫu P4 | 1C |
+| VHT-115 | Dựng UI phòng mẫu P2 | Phúc | VHT-16 — Dựng UI tra cứu và quản lý phòng P2 | 1C |
+| VHT-116 | Dựng UI khách mẫu P3 | Phúc | VHT-17 — Dựng UI khách thuê và hồ sơ cá nhân P3 | 1C |
+| VHT-117 | Rà soát và merge PR tuần 1 | Phú | VHT-21 — Chốt quy trình nhánh và ghép tuần 1 | 1C |
+| VHT-118 | Sửa layout và selector sau ghép | Phú | VHT-19 — Dựng theme và layout dùng chung | 1D |
+
 **Cổng cuối tuần / Gate:** P1–P3 chạy SQL trên bản chung, style/resource dùng được, storage nền và test thật chạy. 4 vai trò đăng nhập được; nền công tắc (VHT-94) có policy handler. Phúc gửi phòng/khách cho Đào; Phát gửi storage cho Tính/Phúc/Phú. Nếu chưa đạt, ghi task thiếu và người xử lý trước khi ghép P4.
 
 ## Tuần 2 / Week 2 — Hợp đồng thật, chi phí và sự cố
@@ -95,6 +128,25 @@
 | VHT-100 | Nạp biểu giá điện/nước cấu hình khóa | Đào | VHT-9; Phát: đầu vào hóa đơn | Nạp biểu giá bậc thang theo quy định hiện hành (nhóm xác nhận số liệu và ngày hiệu lực), có hiệu lực theo ngày, snapshot vào chi phí; không có đường sửa qua giao diện; unit test từng bậc, biên bậc và đổi kỳ. |
 | VHT-101 | Test ma trận quyền tự động từ xlsx | Phúc | VHT-94, VHT-96; Phát: điều phối test | Từ `thao_tac_va_quyen.xlsx` sinh case 45 thao tác × 4 vai trò (ô ❌ = case cấm; ô ⚙️ × 3 chế độ); chạy qua HTTP/service. |
 
+### Task tách đợt / Split tasks (tuần 2)
+
+12 task tách từ task gốc nhiều đợt, mỗi task nằm đúng sprint của đợt nó, Parent là Epic của task gốc, mô tả là pointer về task gốc.
+
+| Mã | Việc / Task | Chính | Tách từ | Đợt |
+| --- | --- | --- | --- | --- |
+| VHT-119 | Rà phạm vi quản lý sau ghép P1–P3 | Tính | VHT-24 — Hoàn thiện phạm vi quản lý/tòa nhà P1–P3 | 2C |
+| VHT-120 | Ghép liên kết thuê thật P3 | Phát | VHT-25 — Gắn tài khoản với hồ sơ và liên kết thuê | 2C |
+| VHT-121 | Rà soát migration hóa đơn theo lượt | Tính | VHT-28 — Rà soát migration và cập nhật ERD P4/P5/P7 | 2C |
+| VHT-122 | Cập nhật ERD theo migration đã ghép | Tính | VHT-28 — Rà soát migration và cập nhật ERD P4/P5/P7 | 2D |
+| VHT-123 | Kiểm migration và ERD trên bản chung | Tính | VHT-28 — Rà soát migration và cập nhật ERD P4/P5/P7 | 2E |
+| VHT-124 | Sửa UI hợp đồng sau ghép P4 | Đào | VHT-31 — Ghép tạo và duyệt hợp đồng P4 | 2D |
+| VHT-125 | Ghép phòng đang thuê thật P3 | Phúc | VHT-36 — Dựng UI giấy tờ và phòng thuê P3 | 2D |
+| VHT-126 | Ghép service đơn giá thật P5 | Phúc | VHT-37 — Dựng UI đơn giá và dịch vụ P5 | 2C |
+| VHT-127 | Ghép sự cố thật và ảnh P7 | Phú | VHT-39 — Dựng UI báo và xử lý sự cố P7 | 2D |
+| VHT-128 | Ghép nguồn khách cho báo cáo P8 | Phú | VHT-40 — Dựng dashboard và báo cáo P8 | 2E |
+| VHT-129 | Regression tuần 2 | Phát | VHT-42 — Kiểm thử hợp đồng và giấy tờ P4 | 2E |
+| VHT-130 | Phát hành bản tích hợp tuần 2 | Phú | VHT-44 — Ghép PR và phát hành IIS thử | 2E |
+
 **Cổng cuối tuần / Gate:** tạo → duyệt hợp đồng đổi phòng thật; khách xem hồ sơ/phòng/hợp đồng; dịch vụ/đơn giá và sự cố chạy. Có nguồn report phòng/khách, khung hóa đơn và IIS thử. Công tắc Quản lý + hàng đợi duyệt chạy với 3 chế độ; thùng rác phòng/khách; biểu giá điện/nước đã nạp và test các bậc; 4 vai trò đăng nhập. Không bắt đầu thu tiền thật nếu hợp đồng/chi phí chưa đạt.
 
 ## Tuần 3 / Week 3 — Đủ P1–P8 và đối chiếu tiền
@@ -129,6 +181,31 @@
 | VHT-103 | Xuất báo cáo Excel | Đào | VHT-52, VHT-57, VHT-61 | Thêm ClosedXML; xuất theo quyền/phạm vi và công tắc SW-16; không xuất CCCD; ghi giá trị (không công thức) từ dữ liệu người dùng; giới hạn khối lượng; kiểm giấy phép/phiên bản package. |
 | VHT-104 | Màn hình nhật ký thao tác (**có điều kiện D16**) | Phú | VHT-96; Tính: log | Admin xem nhật ký tài khoản/hệ thống, Chủ trọ xem nhật ký nghiệp vụ trong phạm vi; không chứa mật khẩu/token/nội dung giấy tờ. Bỏ task nếu D16 không được chốt. |
 
+### Task tách đợt / Split tasks (tuần 3)
+
+18 task tách từ task gốc nhiều đợt, mỗi task nằm đúng sprint của đợt nó, Parent là Epic của task gốc, mô tả là pointer về task gốc.
+
+| Mã | Việc / Task | Chính | Tách từ | Đợt |
+| --- | --- | --- | --- | --- |
+| VHT-131 | Kiểm tra phạm vi sau tích hợp | Tính | VHT-47 — Kiểm tra phạm vi xuyên P4/P6/P7 | 3D |
+| VHT-132 | Cập nhật ERD theo migration | Tính | VHT-48 — Rà soát schema và ERD tài chính | 3C |
+| VHT-133 | Chốt ERD toàn hệ thống | Tính | VHT-48 — Rà soát schema và ERD tài chính | 3D |
+| VHT-134 | Kiểm migration và ERD trên release | Tính | VHT-48 — Rà soát schema và ERD tài chính | 3E |
+| VHT-135 | Bổ sung demo hóa đơn và giao dịch | Tính | VHT-49 — Dựng dữ liệu demo và migrate DB | 3C |
+| VHT-136 | Sửa gia hạn và thanh lý P4 | Đào | VHT-50 — Gia hạn/thanh lý và thông tin cọc P4 | 3D |
+| VHT-137 | Phát hành hóa đơn thật P6 | Phát | VHT-53 — Lập và phát hành hóa đơn từ nguồn thật | 3B |
+| VHT-138 | Sửa UI P2/P3/P5 theo dữ liệu thật | Phúc | VHT-59 — Rà UI P2/P3/P5 và phần chọn hợp đồng | 3C |
+| VHT-139 | Kiểm thử UI P2/P3/P5 trên bản chung | Phúc | VHT-59 — Rà UI P2/P3/P5 và phần chọn hợp đồng | 3E |
+| VHT-140 | Ghép nguồn dashboard P8 | Phú | VHT-61 — Ghép dashboard và báo cáo thật P8 | 3C |
+| VHT-141 | Ghép đủ nguồn và đối chiếu KPI P8 | Phú | VHT-61 — Ghép dashboard và báo cáo thật P8 | 3D |
+| VHT-142 | Regression báo cáo trên release | Phú | VHT-61 — Ghép dashboard và báo cáo thật P8 | 3E |
+| VHT-143 | Ghép tra cứu kết quả thanh toán P6 | Phú | VHT-62 — Xử lý reconnect và form quan trọng | 3C |
+| VHT-144 | Thử ngắt và nối mạng | Phú | VHT-62 — Xử lý reconnect và form quan trọng | 3D |
+| VHT-145 | Kiểm thử tiền thật P4–P6 | Phát | VHT-63 — Kiểm thử tiền và transaction P4–P6 | 3D |
+| VHT-146 | Regression tiền trên release | Phát | VHT-63 — Kiểm thử tiền và transaction P4–P6 | 3E |
+| VHT-147 | Cập nhật Word sau tích hợp | Phúc | VHT-66 — Viết Word, README và ảnh toàn luồng | 3D |
+| VHT-148 | Chụp ảnh IIS thật cho Word | Phúc | VHT-66 — Viết Word, README và ảnh toàn luồng | 3E |
+
 **Cổng cuối tuần / Gate:** demo trọn phòng → khách → hợp đồng → chi phí → hóa đơn → YC/xác nhận → báo cáo; thêm sự cố và dữ liệu phạm vi khác. P1–P8 có SQL thật trên IIS. Còn lỗi phải có mã, chủ sửa và hạn tuần 4. Sửa chỉ số kỳ liền trước có lịch sử; xuất Excel đúng quyền (không CCCD).
 
 ## Tuần 4 / Week 4 — Kiểm chứng, sửa lỗi và nộp
@@ -155,6 +232,24 @@
 | VHT-80 | Chốt Word và README | Phúc | Dùng bản VHT-66; Tính gửi ERD cuối, Phát gửi kết quả test, từng người rà phần mình khi có | Cập nhật liên tục mục tiêu/phạm vi, thiết kế, triển khai, test, phân công và hướng dẫn; chỉ chốt ảnh/số liệu/giới hạn theo release đã nghiệm thu. |
 | VHT-81 | Chốt slide và kịch bản demo | Phú | Dùng nội dung/ảnh đã có; Phúc gửi bản Word mới, Phát gửi bộ test; cả nhóm rà lời trình bày | Dựng slide và chia phần trình bày sớm từ nội dung hiện có; sau release, thay ảnh/số liệu bằng bản thật và chạy thử kịch bản 4 vai trò (thêm Admin). |
 | VHT-82 | Chạy thử demo và đóng gói | Phúc | Phú: release/slide; Tính/Đào/Phát: kiểm source | Chạy thử demo cùng 5 người; đóng gói source/release/report/slide theo yêu cầu môn; loại secret và dữ liệu thật khỏi bản nộp. |
+
+### Task tách đợt / Split tasks (tuần 4)
+
+11 task tách từ task gốc nhiều đợt, mỗi task nằm đúng sprint của đợt nó, Parent là Epic của task gốc, mô tả là pointer về task gốc.
+
+| Mã | Việc / Task | Chính | Tách từ | Đợt |
+| --- | --- | --- | --- | --- |
+| VHT-149 | Kiểm thử lại sau sửa lỗi | Phát | VHT-68 — Regression 4 vai trò, tòa nhà khác nhau | 4B |
+| VHT-150 | Regression cuối trước deploy | Phát | VHT-68 — Regression 4 vai trò, tòa nhà khác nhau | 4C |
+| VHT-151 | Sửa lỗi regression P4/P5/P7 | Đào | VHT-70 — Sửa lỗi P4/P5/P7 và lịch sử | 4B |
+| VHT-152 | Sửa lỗi tiền và storage P6 | Phát | VHT-71 — Sửa lỗi P3/P6 và đối chiếu tiền | 4B |
+| VHT-153 | Kiểm thử UI sau sửa lỗi | Phúc | VHT-72 — Rà UI VI/EN P2/P3/P5 và form chung | 4B |
+| VHT-154 | Thực hiện restore DB và tệp | Tính | VHT-74 — Backup/restore DB, tệp và keys | 4B |
+| VHT-155 | Backup cuối theo release | Tính | VHT-74 — Backup/restore DB, tệp và keys | 4D |
+| VHT-156 | Triển khai bản cuối và smoke | Phú | VHT-77 — Triển khai cuối và smoke IIS | 4C |
+| VHT-157 | Ghép ERD, ảnh và test vào Word | Phúc | VHT-80 — Chốt Word và README | 4C |
+| VHT-158 | Chốt Word theo release | Phúc | VHT-80 — Chốt Word và README | 4D |
+| VHT-159 | Làm slide và chạy demo release | Phú | VHT-81 — Chốt slide và kịch bản demo | 4D |
 
 **Cổng cuối tuần / Gate:** checklist nghiệm thu đạt trên bản deploy, không còn lỗi cản luồng/tiền/quyền; clone sạch và restore đã thử; tài liệu/source/demo cùng phiên bản. Không cam kết hoàn thành chỉ vì lịch 4 tuần đã kết thúc.
 
