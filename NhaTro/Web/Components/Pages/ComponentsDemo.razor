@@ -10,8 +10,10 @@
 @using Web.Components.Shared.Forms
 @using Web.Components.Shared.Tables
 @using Web.Features.Rooms.Enums
+@using Web.Infrastructure.Time
 @inject IWebHostEnvironment Env
 @inject ToastService Toasts
+@inject TimeProvider Time
 
 <PageTitle>Component dùng chung</PageTitle>
 
@@ -40,9 +42,9 @@
                 <FluentValidationValidator Validator="_validator" />
                 <FormField TValue="string" Id="room-code" Label="Mã phòng" Required="true"
                            Hint="Tối đa 50 ký tự." For="() => _form.Code">
-                    <InputText id="room-code" @bind-Value="_form.Code" aria-describedby="room-code-hint room-code-error" />
+                    <InputText @ref="_codeInput" id="room-code" @bind-Value="_form.Code" aria-describedby="room-code-hint room-code-error" />
                 </FormField>
-                <FormField TValue="decimal" Id="room-price" Label="Giá thuê (₫)" Hint="Phòng đang thuê phải có giá lớn hơn 0 (kiểm tra bằng FluentValidation)." For="() => _form.Price">
+                <FormField TValue="decimal" Id="room-price" Label="Giá thuê (₫)" Required="true" Hint="Giá thuê phải lớn hơn 0 (kiểm tra bằng FluentValidation)." For="() => _form.Price">
                     <InputNumber id="room-price" @bind-Value="_form.Price" aria-describedby="room-price-error" />
                 </FormField>
                 <FormField TValue="RoomStatus" Id="room-status" Label="Trạng thái" For="() => _form.Status">
@@ -90,21 +92,35 @@
 
         <section aria-labelledby="demo-table">
             <h2 id="demo-table">DataTable</h2>
-            <DataTable TItem="DemoRoom" Columns="_columns" ItemsProvider="LoadRoomsAsync"
-                       PageSize="5" Caption="Danh sách phòng (mẫu)" />
+            <DataTable @ref="_table" TItem="DemoRoom" Columns="_columns" ItemsProvider="LoadRoomsAsync"
+                       PageSize="5" Caption="Danh sách phòng (mẫu)">
+                <EmptyActions>
+                    <button type="button" class="btn btn-primary" @onclick="FocusFormAsync">Thêm phòng</button>
+                </EmptyActions>
+            </DataTable>
         </section>
 
         <section aria-labelledby="demo-empty">
             <h2 id="demo-empty">EmptyStateCard</h2>
             <EmptyStateCard Title="Chưa có dữ liệu" Description="Hãy thêm phòng đầu tiên để bắt đầu.">
-                <button type="button" class="btn btn-primary">Thêm phòng</button>
+                <button type="button" class="btn btn-primary" @onclick="FocusFormAsync">Thêm phòng</button>
             </EmptyStateCard>
         </section>
 
         <section aria-labelledby="demo-confirm">
             <h2 id="demo-confirm">ConfirmDialog</h2>
-            <button type="button" class="btn btn-secondary" @onclick="OpenConfirm">Xóa phòng (ví dụ)</button>
-            <ConfirmDialog Visible="_confirmOpen" Title="Xóa phòng?" Danger="true"
+            <div class="row delete-row">
+                <label class="select-label" for="room-to-delete">Chọn phòng cần xóa</label>
+                <select id="room-to-delete" class="room-select" @bind="_roomToDelete">
+                    <option value="">— Chọn phòng —</option>
+                    @foreach (var room in _rooms.OrderBy(r => r.Code, StringComparer.Ordinal))
+                    {
+                        <option value="@room.Code">@room.Code · @room.StatusText</option>
+                    }
+                </select>
+                <button type="button" class="btn btn-secondary" disabled="@string.IsNullOrEmpty(_roomToDelete)" @onclick="OpenConfirm">Xóa phòng</button>
+            </div>
+            <ConfirmDialog Visible="_confirmOpen" Title="@($"Xóa phòng {_roomToDelete}?")" Danger="true"
                            Message="Phòng sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau."
                            ConfirmText="Xóa" OnConfirm="DeleteAsync" OnCancel="CloseConfirm" />
         </section>
@@ -118,7 +134,7 @@
         [MaxLength(50, ErrorMessage = "Mã phòng tối đa 50 ký tự.")]
         public string Code { get; set; } = string.Empty;
 
-        [Range(0, 100_000_000, ErrorMessage = "Giá thuê phải từ 0 đến 100.000.000.")]
+        // Quy tắc giá thuê (> 0 và tối đa 100.000.000) do FluentValidation kiểm tra, xem DemoFormValidator.
         public decimal Price { get; set; }
 
         public RoomStatus Status { get; set; }
@@ -126,7 +142,8 @@
 
     private sealed record DemoRoom(string Code, string StatusText, BadgeTone Tone, decimal Price, DateOnly Updated);
 
-    private static readonly List<DemoRoom> Rooms = Enumerable.Range(1, 23)
+    // Dữ liệu mẫu nằm trong bộ nhớ của từng phiên (không dùng static để các người dùng không ảnh hưởng nhau).
+    private readonly List<DemoRoom> _rooms = Enumerable.Range(1, 23)
         .Select(i => new DemoRoom(
             Code: $"P{100 + i}",
             StatusText: (i % 3) switch { 0 => "Còn trống", 1 => "Đang thuê", _ => "Bảo trì" },
@@ -137,25 +154,32 @@
 
     private sealed class DemoFormValidator : AbstractValidator<DemoForm>
     {
-        public DemoFormValidator()
+        public DemoFormValidator(Func<string, bool> codeExists)
         {
+            RuleFor(x => x.Code)
+                .Must(code => string.IsNullOrWhiteSpace(code) || !codeExists(code.Trim()))
+                .WithMessage("Mã phòng đã tồn tại.");
+
             RuleFor(x => x.Price)
-                .GreaterThan(0)
-                .When(x => x.Status == RoomStatus.Rented)
-                .WithMessage("Phòng đang thuê phải có giá lớn hơn 0.");
+                .GreaterThan(0).WithMessage("Giá thuê phải lớn hơn 0.")
+                .LessThanOrEqualTo(100_000_000).WithMessage("Giá thuê tối đa 100.000.000.");
         }
     }
 
     private readonly DemoForm _form = new();
-    private readonly IValidator _validator = new DemoFormValidator();
+    private IValidator _validator = default!;
+    private InputText? _codeInput;
     private readonly RenderFragment<DemoRoom> _statusCell = room => @<StatusBadge Tone="room.Tone" Text="@room.StatusText" />;
     private IReadOnlyList<DataTableColumn<DemoRoom>> _columns = [];
+    private DataTable<DemoRoom>? _table;
+    private string _roomToDelete = string.Empty;
     private bool _saving;
     private bool _regionLoading;
     private bool _confirmOpen;
 
     protected override void OnInitialized()
     {
+        _validator = new DemoFormValidator(code => _rooms.Any(r => string.Equals(r.Code, code, StringComparison.OrdinalIgnoreCase)));
         _columns =
         [
             new() { Key = "code", Title = "Mã phòng", Value = r => r.Code, Sortable = true, Filterable = true },
@@ -170,7 +194,7 @@
     {
         await Task.Delay(400); // để thấy trạng thái đang tải
 
-        IEnumerable<DemoRoom> query = Rooms;
+        IEnumerable<DemoRoom> query = _rooms;
 
         if (request.Filters.TryGetValue("code", out var code))
         {
@@ -194,24 +218,74 @@
         return new PagedResult<DemoRoom>(page, all.Count);
     }
 
+    // Form hợp lệ mới tới đây: thêm phòng vào danh sách mẫu trong bộ nhớ (chưa ghi SQL) rồi tải lại bảng.
     private async Task SaveAsync()
     {
         _saving = true;
-        await Task.Delay(800);
-        _saving = false;
-        Toasts.Success("Đã lưu (mẫu, chưa ghi SQL).");
+        try
+        {
+            await Task.Delay(800);
+
+            var (statusText, tone) = _form.Status switch
+            {
+                RoomStatus.Rented => ("Đang thuê", BadgeTone.Info),
+                RoomStatus.Maintenance => ("Bảo trì", BadgeTone.Warning),
+                _ => ("Còn trống", BadgeTone.Success),
+            };
+
+            var room = new DemoRoom(_form.Code.Trim(), statusText, tone, _form.Price, Time.TodayVietnam());
+            _rooms.Add(room);
+
+            _form.Code = string.Empty;
+            _form.Price = 0;
+            _form.Status = RoomStatus.Available;
+
+            Toasts.Success($"Đã thêm phòng {room.Code} (mẫu, chưa ghi SQL).");
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    // "Thêm phòng" không tự thêm: đưa người dùng tới form để nhập, rồi bấm Lưu.
+    private async Task FocusFormAsync()
+    {
+        if (_codeInput?.Element is { } element)
+        {
+            await element.FocusAsync();
+        }
     }
 
     private void ToggleLoading() => _regionLoading = !_regionLoading;
 
-    private void OpenConfirm() => _confirmOpen = true;
+    // Chỉ mở hộp thoại khi đã chọn phòng.
+    private void OpenConfirm()
+    {
+        if (string.IsNullOrEmpty(_roomToDelete)) return;
+        _confirmOpen = true;
+    }
 
     private void CloseConfirm() => _confirmOpen = false;
 
     private async Task DeleteAsync()
     {
         await Task.Delay(800);
+
+        var code = _roomToDelete;
+        _rooms.RemoveAll(r => r.Code == code);
+        _roomToDelete = string.Empty;
         _confirmOpen = false;
-        Toasts.Success("Đã xác nhận (mẫu, chưa xóa gì).");
+        Toasts.Success($"Đã xóa phòng {code} (mẫu, chưa ghi SQL).");
+
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
     }
 }

@@ -7,23 +7,23 @@
     font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.demo h1 {
-    margin: 0 0 8px;
-    font-size: 28px;
-    line-height: 36px;
-    font-weight: 700;
-}
+    .demo h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        line-height: 36px;
+        font-weight: 700;
+    }
 
-.demo h2 {
-    margin: 0 0 16px;
-    font-size: 20px;
-    line-height: 28px;
-    font-weight: 600;
-}
+    .demo h2 {
+        margin: 0 0 16px;
+        font-size: 20px;
+        line-height: 28px;
+        font-weight: 600;
+    }
 
-.demo section {
-    margin-top: 32px;
-}
+    .demo section {
+        margin-top: 32px;
+    }
 
 .note {
     margin: 0;
@@ -38,7 +38,41 @@
     gap: 8px;
 }
 
+.delete-row {
+    align-items: center;
+}
+
+.select-label {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+}
+
+.room-select {
+    box-sizing: border-box;
+    min-width: 220px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--control-border, #64748B);
+    border-radius: 8px;
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    font-family: inherit;
+    font-size: 14px;
+}
+
+    .room-select:focus-visible {
+        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline-offset: 2px;
+    }
+
 @media (max-width: 767.98px) {
-    .demo { padding: 16px; }
-    .demo h1 { font-size: 24px; line-height: 32px; }
+    .demo {
+        padding: 16px;
+    }
+
+        .demo h1 {
+            font-size: 24px;
+            line-height: 32px;
+        }
 }
