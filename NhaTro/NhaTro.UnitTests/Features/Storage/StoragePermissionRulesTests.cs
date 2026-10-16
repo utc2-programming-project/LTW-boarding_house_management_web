@@ -1,0 +1,75 @@
+using Web.Features.Accounts;
+using Web.Features.Storage.Enums;
+using Web.Features.Storage.Rules;
+
+namespace NhaTro.UnitTests.Features.Storage;
+
+// VHT-13: ma tran quyen VHT-12 muc 4, dac biet Admin khong co quyen nghiep vu (D1-D17 12/10/2026).
+public class StoragePermissionRulesTests
+{
+    public static TheoryData<FileCategory> AllCategories() =>
+    [
+        FileCategory.RoomPhoto,
+        FileCategory.Contract,
+        FileCategory.Invoice,
+        FileCategory.IdentityDocument,
+        FileCategory.IncidentPhoto,
+        FileCategory.PaymentProof,
+    ];
+
+    [Theory]
+    [MemberData(nameof(AllCategories))]
+    public void Admin_khong_duoc_upload_bat_ky_loai_nao(FileCategory category)
+    {
+        Assert.False(StoragePermissionRules.CanUpload(Roles.Admin, category));
+        Assert.False(StoragePermissionRules.CanDownload(Roles.Admin, isUploader: true, relatedEntityInScope: true));
+        Assert.False(StoragePermissionRules.CanDelete(Roles.Admin, isUploader: true));
+    }
+
+    [Theory]
+    [MemberData(nameof(AllCategories))]
+    public void ChuTro_va_QuanLy_duoc_upload_moi_loai_tep(FileCategory category)
+    {
+        Assert.True(StoragePermissionRules.CanUpload(Roles.ChuTro, category));
+        Assert.True(StoragePermissionRules.CanUpload(Roles.QuanLy, category));
+    }
+
+    [Theory]
+    [InlineData(FileCategory.IdentityDocument, true)]
+    [InlineData(FileCategory.IncidentPhoto, true)]
+    [InlineData(FileCategory.PaymentProof, true)]
+    [InlineData(FileCategory.RoomPhoto, false)]
+    [InlineData(FileCategory.Contract, false)]
+    [InlineData(FileCategory.Invoice, false)]
+    public void KhachThue_chi_upload_giay_to_anh_su_co_va_minh_chung(FileCategory category, bool expected) =>
+        Assert.Equal(expected, StoragePermissionRules.CanUpload(Roles.KhachThue, category));
+
+    [Fact]
+    public void KhachThue_khong_tai_duoc_tep_ngoai_pham_vi()
+    {
+        Assert.False(StoragePermissionRules.CanDownload(
+            Roles.KhachThue, isUploader: false, relatedEntityInScope: false));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void KhachThue_tai_duoc_tep_cua_minh_hoac_trong_pham_vi(bool isUploader, bool inScope) =>
+        Assert.True(StoragePermissionRules.CanDownload(Roles.KhachThue, isUploader, inScope));
+
+    [Fact]
+    public void KhachThue_chi_xoa_tep_do_minh_upload()
+    {
+        Assert.True(StoragePermissionRules.CanDelete(Roles.KhachThue, isUploader: true));
+        Assert.False(StoragePermissionRules.CanDelete(Roles.KhachThue, isUploader: false));
+    }
+
+    [Fact]
+    public void Vai_tro_khong_xac_dinh_bi_tu_choi()
+    {
+        Assert.False(StoragePermissionRules.CanUpload("Guest", FileCategory.RoomPhoto));
+        Assert.False(StoragePermissionRules.CanDownload("Guest", isUploader: true, relatedEntityInScope: true));
+        Assert.False(StoragePermissionRules.CanDelete("Guest", isUploader: true));
+    }
+}
