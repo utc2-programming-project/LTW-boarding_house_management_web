@@ -275,7 +275,6 @@ public sealed class FileService(
         BusinessGuard.EnsureBusinessAllowed(user);
 
         var role = RoleOf(user);
-        var userId = user.UserId() ?? string.Empty;
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var file = await db.StoredFiles.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
@@ -284,7 +283,7 @@ public sealed class FileService(
             return false;
         }
 
-        if (!StoragePermissionRules.CanDelete(role, file.UploadedByUserId == userId))
+        if (!StoragePermissionRules.CanDelete(role))
         {
             // Cố ý trả 404 (không phải 403) để không lộ tệp có tồn tại với người ngoài phạm vi.
             return false;

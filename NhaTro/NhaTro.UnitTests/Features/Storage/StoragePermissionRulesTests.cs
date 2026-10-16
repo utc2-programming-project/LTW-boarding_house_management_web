@@ -23,7 +23,7 @@ public class StoragePermissionRulesTests
     {
         Assert.False(StoragePermissionRules.CanUpload(Roles.Admin, category));
         Assert.False(StoragePermissionRules.CanDownload(Roles.Admin, isUploader: true, relatedEntityInScope: true));
-        Assert.False(StoragePermissionRules.CanDelete(Roles.Admin, isUploader: true));
+        Assert.False(StoragePermissionRules.CanDelete(Roles.Admin));
     }
 
     [Theory]
@@ -72,10 +72,10 @@ public class StoragePermissionRulesTests
         Assert.True(StoragePermissionRules.CanDownload(Roles.KhachThue, isUploader, inScope));
 
     [Fact]
-    public void KhachThue_chi_xoa_tep_do_minh_upload()
+    public void KhachThue_bi_chan_xoa_mac_dinh_cho_toi_khi_chot()
     {
-        Assert.True(StoragePermissionRules.CanDelete(Roles.KhachThue, isUploader: true));
-        Assert.False(StoragePermissionRules.CanDelete(Roles.KhachThue, isUploader: false));
+        // VHT-12 mục 4.3: khách xóa tệp của mình "Cần chốt" -> deny-by-default.
+        Assert.False(StoragePermissionRules.CanDelete(Roles.KhachThue));
     }
 
     [Fact]
@@ -83,6 +83,6 @@ public class StoragePermissionRulesTests
     {
         Assert.False(StoragePermissionRules.CanUpload("Guest", FileCategory.RoomPhoto));
         Assert.False(StoragePermissionRules.CanDownload("Guest", isUploader: true, relatedEntityInScope: true));
-        Assert.False(StoragePermissionRules.CanDelete("Guest", isUploader: true));
+        Assert.False(StoragePermissionRules.CanDelete("Guest"));
     }
 }

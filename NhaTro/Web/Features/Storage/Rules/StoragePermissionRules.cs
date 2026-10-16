@@ -50,15 +50,16 @@ public static class StoragePermissionRules
     };
 
     /// <summary>
-    /// Xóa mềm: Chủ trọ/Quản lý xóa mọi tệp; khách thuê chỉ xóa tệp do mình upload
-    /// (điều kiện "nghiệp vụ chưa xử lý" chờ Phúc/Phú xác nhận — VHT-12 mục 4.3); Admin không xóa.
+    /// Xóa mềm: Chủ trọ/Quản lý xóa mọi tệp; Admin không xóa. Khách thuê xóa tệp của mình còn
+    /// "Cần chốt" ở VHT-12 mục 4.3 (kèm điều kiện "nghiệp vụ chưa xử lý" chờ P6/P7) nên mặc định
+    /// <b>chặn</b> theo nguyên tắc deny-by-default; mở lại khi nhóm chốt.
     /// </summary>
-    public static bool CanDelete(string role, bool isUploader) => role switch
+    public static bool CanDelete(string role) => role switch
     {
         Roles.Admin => false,
         Roles.ChuTro => true,
         Roles.QuanLy => true,
-        Roles.KhachThue => isUploader,
+        Roles.KhachThue => false,
         _ => false,
     };
 }
