@@ -43,14 +43,19 @@
 
 ## 3. Còn để ngỏ (cần nhóm chốt — không tự quyết)
 
+### 3.1. Cần chốt ngay (đang ảnh hưởng hành vi đã code)
+
 1. `PaymentProof` cho Chủ trọ/Quản lý: hiện **mặc định chặn** (mục 2). Cần chốt có cho phép "nhập hộ khách" không.
 2. `403` hay `404` khi tải/xóa tệp của người khác (hợp đồng storage mục 5): code đã thống nhất **404**; cần nhóm xác nhận.
-3. Số tệp tối đa mỗi đối tượng (`Storage:MaxFilesPerEntity` đang `null` = không giới hạn).
 4. Khách thuê xóa tệp của mình: hiện **chặn mặc định** (deny-by-default) cho tới khi nhóm chốt; khi mở cần thêm điều kiện "nghiệp vụ chưa xử lý/xác nhận" (chờ trạng thái P6/P7). Khách xóa tệp của người khác → `404`.
+8. **Tệp mồ côi khi siết kiểm tra tồn tại (mục 4):** `Contract`/`Invoice`/`Payment`/`MaintenanceIncident` hiện chưa kiểm tồn tại đối tượng nên có thể đã có tệp gắn `relatedEntityId` sai; khi P6/P7 có bảng, phải chốt **ai chịu trách nhiệm rà/dọn** các tệp này (script dọn + thời điểm chạy) — hoặc chọn phương án **tạm từ chối** upload các loại đó đến khi có bảng. Cả hai đều cần nhóm chốt.
+
+### 3.2. Có thể chờ (không ảnh hưởng đợt 1C)
+
+3. Số tệp tối đa mỗi đối tượng (`Storage:MaxFilesPerEntity` đang `null` = không giới hạn).
 5. Phạm vi Quản lý theo tòa nhà (chờ VHT-24) — hiện theo hợp đồng storage "tất cả file".
 6. **Thời hạn lưu giấy tờ cá nhân (CCCD):** xóa mềm đang giữ tệp vật lý **vô thời hạn** — là dữ liệu nhạy cảm nên cần chốt thời hạn/xóa thật khi khách trả phòng; có thêm `DeletedAt`/`DeletedByUserId` không (hợp đồng storage mục 3).
 7. `Content-Disposition` cho ảnh sự cố: chốt `inline` hay `attachment` (với Phúc/Phú).
-8. **Tệp mồ côi khi siết kiểm tra tồn tại (mục 4):** `Contract`/`Invoice`/`Payment`/`MaintenanceIncident` hiện chưa kiểm tồn tại đối tượng nên có thể đã có tệp gắn `relatedEntityId` sai; khi P6/P7 có bảng, phải chốt **ai chịu trách nhiệm rà/dọn** các tệp này (script dọn + thời điểm chạy) — hoặc chọn phương án **tạm từ chối** upload các loại đó đến khi có bảng. Cả hai đều cần nhóm chốt.
 
 ## 4. Phần chờ nghiệp vụ P4/P6/P7
 
@@ -147,12 +152,12 @@
 - Smoke test HTTP (`dotnet run` tại `Web`, 3 tài khoản tạm tạo trên DB local rồi dọn) khớp hợp đồng storage:
   - `GET /api/files` khi chưa đăng nhập → `401`.
   - Chủ trọ upload PNG hợp lệ (`RoomPhoto`) → `200`; tải lại đúng `Content-Type`, byte khớp tệp gốc, có `X-Content-Type-Options: nosniff`.
-  - Khách thuê tải/xóa tệp của người khác → `404`; admin mọi thao tác (upload/tải/liệt kê) → `403`.
+  - Khách thuê tải/xóa tệp của **người khác** → `404` (đã smoke). Riêng **khách thuê xóa tệp của chính mình** thì chưa smoke — xem "Chưa kiểm". Admin mọi thao tác (upload/tải/liệt kê) → `403`.
   - Chủ trọ upload `PaymentProof` → `403` (mặc định chặn).
   - Nội dung PNG giả đuôi `.pdf` (loại `Contract`) → `400 InvalidFileType`; `.webp` cho `PaymentProof` → `400 InvalidFileType`; cặp loại tệp–đối tượng lệch → `400 InvalidRequest`.
   - Khách thuê upload `RoomPhoto` (không được phép) → `403`.
   - PNG 6 MB cho `RoomPhoto` (giới hạn 5 MB) → `413 FileSizeExceeded` và không ghi đĩa.
-  - `POST` thiếu antiforgery token → `400`. `DELETE /api/files/{id}` cũng **bắt buộc** antiforgery token (endpoint tự kiểm trước khi xóa); thiếu token → `400 InvalidRequest`.
+  - `POST` thiếu antiforgery token → `400` (đã smoke). `DELETE /api/files/{id}` cũng **bắt buộc** antiforgery token (endpoint tự kiểm trước khi xóa): dự kiến thiếu token → `400 InvalidRequest`, **nhưng ca này chưa smoke (suy từ code)** — xem "Chưa kiểm".
   - Chủ trọ xóa mềm tệp **do chính Chủ trọ upload** → `204`; tải lại → `404 FileNotFound`; danh sách sau xóa → `[]`. (Ca Chủ trọ xóa tệp **do khách thuê upload** chưa kiểm — xem danh sách "chưa kiểm".)
   - Kiểm DB/đĩa: `StoredFileName` = uuid + đuôi, `RelativePath` = `yyyy/MM/<uuid>.<ext>` theo giờ VN, tệp nằm ngoài `wwwroot`; xóa mềm giữ tệp vật lý.
 - **CI / SHA / reviewer: chưa có.** Toàn bộ kiểm chứng trên là chạy local. Cần mở PR về `dev` để GitHub Actions `build-test` (`.github/workflows/ci.yml`) chạy đạt trên đúng head, và gán **reviewer độc lập** (đề xuất **Phát**, dự phòng **Đào** — không phải tác giả) theo bảng VHT-117. Ghi SHA head và link run khi PR mở.
