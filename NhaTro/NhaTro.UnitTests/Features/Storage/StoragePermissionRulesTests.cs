@@ -27,11 +27,24 @@ public class StoragePermissionRulesTests
     }
 
     [Theory]
-    [MemberData(nameof(AllCategories))]
-    public void ChuTro_va_QuanLy_duoc_upload_moi_loai_tep(FileCategory category)
+    [InlineData(FileCategory.RoomPhoto)]
+    [InlineData(FileCategory.Contract)]
+    [InlineData(FileCategory.Invoice)]
+    [InlineData(FileCategory.IdentityDocument)]
+    [InlineData(FileCategory.IncidentPhoto)]
+    public void ChuTro_va_QuanLy_duoc_upload_cac_loai_da_chot(FileCategory category)
     {
         Assert.True(StoragePermissionRules.CanUpload(Roles.ChuTro, category));
         Assert.True(StoragePermissionRules.CanUpload(Roles.QuanLy, category));
+    }
+
+    [Theory]
+    [InlineData(Roles.ChuTro)]
+    [InlineData(Roles.QuanLy)]
+    public void ChuTro_va_QuanLy_bi_chan_upload_PaymentProof_vi_chua_chot(string role)
+    {
+        // VHT-12 mục 4.1: PaymentProof cho Chủ trọ/Quản lý "Cần chốt" -> deny-by-default.
+        Assert.False(StoragePermissionRules.CanUpload(role, FileCategory.PaymentProof));
     }
 
     [Theory]

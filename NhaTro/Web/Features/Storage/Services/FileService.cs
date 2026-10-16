@@ -183,8 +183,9 @@ public sealed class FileService(
     }
 
     /// <summary>
-    /// Tải tệp: kiểm quyền trước, chỉ mở đĩa khi được phép. Trả <c>null</c> khi không tìm thấy
-    /// (đã xóa mềm hoặc không tồn tại); ném <see cref="UnauthorizedAccessException"/> khi bị chặn.
+    /// Tải tệp: kiểm quyền trước, chỉ mở đĩa khi được phép. Trả <c>null</c> khi không tìm thấy, khi tệp
+    /// vật lý mất, hoặc khi người gọi ngoài phạm vi — đều là <c>404</c> để không lộ tệp có tồn tại
+    /// (VHT-12 mục 5). Không ném ngoại lệ quyền để endpoint không phân biệt "bị chặn" với "không có".
     /// </summary>
     public async Task<FileDownloadResponse?> DownloadAsync(
         Guid id,
@@ -209,7 +210,8 @@ public sealed class FileService(
 
         if (!StoragePermissionRules.CanDownload(role, isUploader, inScope))
         {
-            throw new UnauthorizedAccessException("Ngoài phạm vi tệp của bạn.");
+            // Cố ý trả 404 (không phải 403) để không lộ tệp có tồn tại với người ngoài phạm vi.
+            return null;
         }
 
         var stream = fileStorage.TryOpenRead(file.RelativePath);
@@ -265,8 +267,8 @@ public sealed class FileService(
     }
 
     /// <summary>
-    /// Xóa mềm: đặt <c>IsDeleted</c>, giữ tệp vật lý. Trả <c>false</c> khi không tìm thấy;
-    /// ném <see cref="UnauthorizedAccessException"/> khi bị chặn.
+    /// Xóa mềm: đặt <c>IsDeleted</c>, giữ tệp vật lý. Trả <c>false</c> khi không tìm thấy hoặc khi
+    /// người gọi ngoài phạm vi (đều là <c>404</c> để không lộ tệp có tồn tại); không ném ngoại lệ quyền.
     /// </summary>
     public async Task<bool> DeleteAsync(Guid id, IPrincipal user, CancellationToken cancellationToken = default)
     {
@@ -284,7 +286,8 @@ public sealed class FileService(
 
         if (!StoragePermissionRules.CanDelete(role, file.UploadedByUserId == userId))
         {
-            throw new UnauthorizedAccessException("Ngoài phạm vi tệp của bạn.");
+            // Cố ý trả 404 (không phải 403) để không lộ tệp có tồn tại với người ngoài phạm vi.
+            return false;
         }
 
         file.IsDeleted = true;

@@ -85,29 +85,31 @@ public static class FileEndpoints
         FileService service,
         CancellationToken cancellationToken)
     {
+        FileDownloadResponse? response;
         try
         {
-            var response = await service.DownloadAsync(id, http.User, cancellationToken);
-            if (response is null)
-            {
-                return FileNotFound();
-            }
-
-            // Results.Stream tự dọn luồng sau khi trả xong.
-            return Results.Stream(
-                response.FileStream,
-                response.ContentType,
-                response.FileName,
-                enableRangeProcessing: true);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbidden();
+            response = await service.DownloadAsync(id, http.User, cancellationToken);
         }
         catch (StoragePathViolationException)
         {
             return FileNotFound();
         }
+
+        if (response is null)
+        {
+            // Không tìm thấy, đã xóa mềm, hoặc ngoài phạm vi — cùng 404 để không lộ tệp có tồn tại.
+            return FileNotFound();
+        }
+
+        // Không để trình duyệt tự đoán MIME (dữ liệu người dùng tải lên).
+        http.Response.Headers["X-Content-Type-Options"] = "nosniff";
+
+        // Results.Stream tự dọn luồng sau khi trả xong.
+        return Results.Stream(
+            response.FileStream,
+            response.ContentType,
+            response.FileName,
+            enableRangeProcessing: true);
     }
 
     private static async Task<IResult> ListAsync(
@@ -123,15 +125,8 @@ public static class FileEndpoints
             return InvalidRequest();
         }
 
-        try
-        {
-            var files = await service.ListAsync(entityType, relatedEntityId.Trim(), http.User, cancellationToken);
-            return Results.Json(files);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbidden();
-        }
+        var files = await service.ListAsync(entityType, relatedEntityId.Trim(), http.User, cancellationToken);
+        return Results.Json(files);
     }
 
     private static async Task<IResult> DeleteAsync(
@@ -150,10 +145,6 @@ public static class FileEndpoints
         {
             var deleted = await service.DeleteAsync(id, http.User, cancellationToken);
             return deleted ? Results.NoContent() : FileNotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbidden();
         }
         catch (StoragePathViolationException)
         {
@@ -181,11 +172,6 @@ public static class FileEndpoints
         Results.Json(
             UploadResult.Failure(StorageErrorCodes.InvalidRequest, "Dữ liệu gửi lên không hợp lệ."),
             statusCode: StatusCodes.Status400BadRequest);
-
-    private static IResult Forbidden() =>
-        Results.Json(
-            UploadResult.Failure(StorageErrorCodes.Forbidden, "Bạn không có quyền thực hiện thao tác này"),
-            statusCode: StatusCodes.Status403Forbidden);
 
     private static IResult FileNotFound() =>
         Results.Json(

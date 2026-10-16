@@ -21,12 +21,17 @@ public static class StoragePermissionRules
         FileCategory.PaymentProof,
     ];
 
-    /// <summary>Khách thuê chỉ được upload giấy tờ, ảnh sự cố và minh chứng của chính mình.</summary>
+    /// <summary>
+    /// Khách thuê chỉ được upload giấy tờ, ảnh sự cố và minh chứng của chính mình.
+    /// <para>
+    /// <c>PaymentProof</c> cho Chủ trọ/Quản lý còn "Cần chốt" ở VHT-12 mục 4.1 (nhập hộ khách?), nên
+    /// mặc định <b>chặn</b> theo nguyên tắc deny-by-default (cấp quyền sau dễ hơn thu hồi).
+    /// </para>
+    /// </summary>
     public static bool CanUpload(string role, FileCategory category) => role switch
     {
         Roles.Admin => false,
-        Roles.ChuTro => true,
-        Roles.QuanLy => true,
+        Roles.ChuTro or Roles.QuanLy => category != FileCategory.PaymentProof,
         Roles.KhachThue => TenantUploadableCategories.Contains(category),
         _ => false,
     };
