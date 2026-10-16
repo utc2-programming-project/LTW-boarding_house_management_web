@@ -1,9 +1,9 @@
 # VHT-13 — Tạo storage backend dùng chung
 
 > **Nhánh:** `VHT-13-tao-storage-backend-dung-chung` (từ `dev`).
-> **Đầu vào:** VHT-12 (`docs/task/de_xuat_hop_dong_storage.md`) — hợp đồng DTO/enum/giới hạn/quyền.
+> **Đầu vào:** VHT-12 — hợp đồng storage (`docs/task/de_xuat_hop_dong_storage.md`) về DTO/enum/giới hạn/quyền.
 > **Phạm vi đợt:** 1C. Không làm nghiệp vụ P4/P6/P7 (chỉ cung cấp nền storage để VHT-26/33/54 dùng).
-> **Lưu ý:** VHT-12 ghi rõ **chưa có giá trị nào được nhóm xác nhận**. Mọi giới hạn/định dạng/quyền
+> **Lưu ý:** hợp đồng storage ghi rõ **chưa có giá trị nào được nhóm xác nhận**. Mọi giới hạn/định dạng/quyền
 > trong code là **giá trị mặc định tạm** — xem mục 2 và danh sách chờ chốt ở mục 3.
 
 ## 1. Đã làm
@@ -36,32 +36,33 @@
 - Admin bị chặn hai lớp: policy endpoint `Business` và `BusinessGuard` trong service.
 - Endpoint `/api` trả **401/403** thay vì chuyển hướng trang đăng nhập.
 - Xóa là xóa mềm (`IsDeleted = true`), giữ tệp vật lý.
-- Tải/xóa tệp **ngoài phạm vi** trả **404** (không phải 403) để không lộ tệp có tồn tại — theo gợi ý VHT-12 mục 5. Lưu ý: các ví dụ hợp đồng **8.7/8.8 minh họa `403`** và hợp đồng **chưa có ca `404`** cho tệp ngoài phạm vi, nên đây là lựa chọn chờ nhóm chốt (mục 3). Admin vẫn **403** vì bị chặn ở tầng policy, không phải "ngoài phạm vi".
-- `PaymentProof` cho Chủ trọ/Quản lý: **mặc định chặn** (deny-by-default) vì VHT-12 mục 4.1 ghi "Cần chốt (nhập hộ khách?)"; khách thuê vẫn upload `PaymentProof` của mình được.
-- Khách thuê **xóa tệp của chính mình**: **mặc định chặn** (deny-by-default) vì VHT-12 mục 4.3 ghi "Cần chốt"; mở lại kèm điều kiện "nghiệp vụ chưa xử lý" khi P6/P7 sẵn sàng.
+- Tải/xóa tệp **ngoài phạm vi** trả **404** (không phải 403) để không lộ tệp có tồn tại — theo gợi ý hợp đồng storage mục 5. Lưu ý: các ví dụ hợp đồng **8.7/8.8 minh họa `403`** và hợp đồng **chưa có ca `404`** cho tệp ngoài phạm vi, nên đây là lựa chọn chờ nhóm chốt (mục 3). Admin vẫn **403** vì bị chặn ở tầng policy, không phải "ngoài phạm vi".
+- `PaymentProof` cho Chủ trọ/Quản lý: **mặc định chặn** (deny-by-default) vì hợp đồng storage mục 4.1 ghi "Cần chốt (nhập hộ khách?)"; khách thuê vẫn upload `PaymentProof` của mình được.
+- Khách thuê **xóa tệp của chính mình**: **mặc định chặn** (deny-by-default) vì hợp đồng storage mục 4.3 ghi "Cần chốt"; mở lại kèm điều kiện "nghiệp vụ chưa xử lý" khi P6/P7 sẵn sàng.
 - Phản hồi tải tệp gắn `X-Content-Type-Options: nosniff`.
 
 ## 3. Còn để ngỏ (cần nhóm chốt — không tự quyết)
 
 1. `PaymentProof` cho Chủ trọ/Quản lý: hiện **mặc định chặn** (mục 2). Cần chốt có cho phép "nhập hộ khách" không.
-2. `403` hay `404` khi tải/xóa tệp của người khác (VHT-12 mục 5): code đã thống nhất **404**; cần nhóm xác nhận.
+2. `403` hay `404` khi tải/xóa tệp của người khác (hợp đồng storage mục 5): code đã thống nhất **404**; cần nhóm xác nhận.
 3. Số tệp tối đa mỗi đối tượng (`Storage:MaxFilesPerEntity` đang `null` = không giới hạn).
 4. Khách thuê xóa tệp của mình: hiện **chặn mặc định** (deny-by-default) cho tới khi nhóm chốt; khi mở cần thêm điều kiện "nghiệp vụ chưa xử lý/xác nhận" (chờ trạng thái P6/P7). Khách xóa tệp của người khác → `404`.
-5. Phạm vi Quản lý theo tòa nhà (chờ VHT-24) — hiện theo VHT-12 "tất cả file".
-6. **Thời hạn lưu giấy tờ cá nhân (CCCD):** xóa mềm đang giữ tệp vật lý **vô thời hạn** — là dữ liệu nhạy cảm nên cần chốt thời hạn/xóa thật khi khách trả phòng; có thêm `DeletedAt`/`DeletedByUserId` không (VHT-12 mục 3).
+5. Phạm vi Quản lý theo tòa nhà (chờ VHT-24) — hiện theo hợp đồng storage "tất cả file".
+6. **Thời hạn lưu giấy tờ cá nhân (CCCD):** xóa mềm đang giữ tệp vật lý **vô thời hạn** — là dữ liệu nhạy cảm nên cần chốt thời hạn/xóa thật khi khách trả phòng; có thêm `DeletedAt`/`DeletedByUserId` không (hợp đồng storage mục 3).
 7. `Content-Disposition` cho ảnh sự cố: chốt `inline` hay `attachment` (với Phúc/Phú).
+8. **Tệp mồ côi khi siết kiểm tra tồn tại (mục 4):** `Contract`/`Invoice`/`Payment`/`MaintenanceIncident` hiện chưa kiểm tồn tại đối tượng nên có thể đã có tệp gắn `relatedEntityId` sai; khi P6/P7 có bảng, phải chốt **ai chịu trách nhiệm rà/dọn** các tệp này (script dọn + thời điểm chạy) — hoặc chọn phương án **tạm từ chối** upload các loại đó đến khi có bảng. Cả hai đều cần nhóm chốt.
 
 ## 4. Phần chờ nghiệp vụ P4/P6/P7
 
 - `RelatedEntityType` `Contract`, `Invoice`, `Payment`, `MaintenanceIncident` chưa có bảng nên **chưa kiểm được** tồn tại đối tượng liên quan; `Room`/`Tenant` đã kiểm.
-- **Hệ quả của việc chưa có bảng:** `RelatedEntityExistsAsync` hiện **bỏ qua** kiểm tồn tại (trả `true`) cho các loại trên, nên Chủ trọ/Quản lý có thể upload và gắn tệp vào `relatedEntityId` **bất kỳ, kể cả không tồn tại**. Khách thuê vẫn bị chặn bởi kiểm phạm vi (mặc định từ chối). Cần siết khi P4/P6/P7 có bảng.
+- **Hệ quả của việc chưa có bảng:** `RelatedEntityExistsAsync` hiện **bỏ qua** kiểm tồn tại (trả `true`) cho các loại trên, nên Chủ trọ/Quản lý có thể upload và gắn tệp vào `relatedEntityId` **bất kỳ, kể cả không tồn tại**. Khách thuê vẫn bị chặn bởi kiểm phạm vi (mặc định từ chối). Cần siết khi P4/P6/P7 có bảng — **tệp đã gắn sai sẽ không tự được dọn, nên cách rà/dọn (hoặc tạm từ chối upload) được đưa vào mục 3 để nhóm chốt**.
 - Phạm vi khách thuê với ảnh phòng/ảnh sự cố/hợp đồng/hóa đơn cần liên kết thuê (P4) nên hiện chỉ nhận diện qua **tệp do chính khách upload**; các trường hợp khác mặc định **từ chối** để không mở quyền sớm.
 - **Hệ quả bàn giao 1D:** khách thuê hiện **không xem được** ảnh phòng/hợp đồng/hóa đơn của mình (vd: hóa đơn gắn `Invoice`) vì chờ P4. Đây là **hành vi có chủ đích, không phải lỗi** — đừng ghi thành bug 1D.
 - Khi P4/P6/P7 có bảng, bổ sung vào `FileService.RelatedEntityExistsAsync` và `IsRelatedEntityInScopeAsync`.
 
-## 5. Đối chiếu hợp đồng VHT-12 (schema/DTO)
+## 5. Đối chiếu hợp đồng storage (schema/DTO)
 
-- **`RelatedEntityId` kiểu `string` (nvarchar 450):** PK thật của `Room`/`Tenant` là `int`; service parse `int` khi kiểm tồn tại. Contract/Invoice/Payment/MaintenanceIncident chưa có bảng nên **chưa xác nhận** được "kiểu phải khớp PK thật" (VHT-12 mục 3). Giữ `string` cho đa hình (một cột cho nhiều đối tượng) — cần chốt khi có schema thật.
+- **`RelatedEntityId` kiểu `string` (nvarchar 450):** PK thật của `Room`/`Tenant` là `int`; service parse `int` khi kiểm tồn tại. Contract/Invoice/Payment/MaintenanceIncident chưa có bảng nên **chưa xác nhận** được "kiểu phải khớp PK thật" (hợp đồng storage mục 3). Giữ `string` cho đa hình (một cột cho nhiều đối tượng) — cần chốt khi có schema thật.
 - **Enum `Payment` vs `PaymentRequest`:** hợp đồng storage (`docs/task/de_xuat_hop_dong_storage.md`) ghi ở **mục 1** rằng `MaintenanceIncident`/`Payment` là tên đề xuất, và nếu schema P6 gắn minh chứng vào yêu cầu thanh toán thì **đổi thành `PaymentRequest`**. Code đang dùng `Payment`. Chưa có bảng nào nên chưa chốt tên cuối.
 - 12 trường metadata khớp hợp đồng; `RelativePath` là trường **nội bộ bổ sung** (không có trong hợp đồng) để tải tệp ngoài `wwwroot`.
 
@@ -101,7 +102,36 @@
           CONSTRAINT [FK_StoredFiles_AspNetUsers_UploadedByUserId] FOREIGN KEY ([UploadedByUserId]) REFERENCES [AspNetUsers] ([Id]) ON DELETE NO ACTION
       );
   END;
+
+  IF NOT EXISTS (
+      SELECT * FROM [__EFMigrationsHistory]
+      WHERE [MigrationId] = N'20261016142707_AddStorageStoredFiles'
+  )
+  BEGIN
+      CREATE INDEX [IX_StoredFiles_RelatedEntityType_RelatedEntityId] ON [StoredFiles] ([RelatedEntityType], [RelatedEntityId]);
+  END;
+
+  IF NOT EXISTS (
+      SELECT * FROM [__EFMigrationsHistory]
+      WHERE [MigrationId] = N'20261016142707_AddStorageStoredFiles'
+  )
+  BEGIN
+      CREATE INDEX [IX_StoredFiles_UploadedByUserId] ON [StoredFiles] ([UploadedByUserId]);
+  END;
+
+  IF NOT EXISTS (
+      SELECT * FROM [__EFMigrationsHistory]
+      WHERE [MigrationId] = N'20261016142707_AddStorageStoredFiles'
+  )
+  BEGIN
+      INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+      VALUES (N'20261016142707_AddStorageStoredFiles', N'10.0.12');
+  END;
+
+  COMMIT;
+  GO
   ```
+  Trích đoạn trên gồm đủ 1 `CREATE TABLE` (chứa PK + 1 FK), 2 `CREATE INDEX` và dòng `INSERT` vào `__EFMigrationsHistory`.
   (File đầy đủ sinh lại được bằng lệnh trên; có thể đính kèm theo PR nếu reviewer yêu cầu.)
 - **Thử `database update` trên DB test riêng (không dùng DB LocalDB dùng chung):**
   - DB **sạch** (`VHT13_Test_Clean`): `database update` → `Done`; bảng `StoredFiles` tồn tại; `__EFMigrationsHistory` đủ 3 dòng.
@@ -113,8 +143,8 @@
 ## 7. Kiểm chứng (build / test / smoke / CI)
 
 - `dotnet build NhaTro/NhaTro.slnx` — 0 warning, 0 error.
-- `dotnet test NhaTro/NhaTro.slnx` — UnitTests **149 pass** (gồm 49 test storage mới, có ca chặn mặc định `PaymentProof` và chặn xóa của khách thuê); IntegrationTests 1 pass; E2ETests 1 pass.
-- Smoke test HTTP (`dotnet run` tại `Web`, 3 tài khoản tạm tạo trên DB local rồi dọn) khớp hợp đồng VHT-12:
+- `dotnet test NhaTro/NhaTro.slnx` — UnitTests **149 pass**, trong đó **87 ca** thuộc `Features/Storage` (đã gồm ca chặn mặc định `PaymentProof` và chặn xóa của khách thuê); IntegrationTests 1 pass; E2ETests 1 pass.
+- Smoke test HTTP (`dotnet run` tại `Web`, 3 tài khoản tạm tạo trên DB local rồi dọn) khớp hợp đồng storage:
   - `GET /api/files` khi chưa đăng nhập → `401`.
   - Chủ trọ upload PNG hợp lệ (`RoomPhoto`) → `200`; tải lại đúng `Content-Type`, byte khớp tệp gốc, có `X-Content-Type-Options: nosniff`.
   - Khách thuê tải/xóa tệp của người khác → `404`; admin mọi thao tác (upload/tải/liệt kê) → `403`.
@@ -123,7 +153,8 @@
   - Khách thuê upload `RoomPhoto` (không được phép) → `403`.
   - PNG 6 MB cho `RoomPhoto` (giới hạn 5 MB) → `413 FileSizeExceeded` và không ghi đĩa.
   - `POST` thiếu antiforgery token → `400`. `DELETE /api/files/{id}` cũng **bắt buộc** antiforgery token (endpoint tự kiểm trước khi xóa); thiếu token → `400 InvalidRequest`.
-  - Chủ trọ xóa mềm tệp của mình → `204`; tải lại → `404 FileNotFound`; danh sách sau xóa → `[]`.
+  - Chủ trọ xóa mềm tệp **do chính Chủ trọ upload** → `204`; tải lại → `404 FileNotFound`; danh sách sau xóa → `[]`. (Ca Chủ trọ xóa tệp **do khách thuê upload** chưa kiểm — xem danh sách "chưa kiểm".)
   - Kiểm DB/đĩa: `StoredFileName` = uuid + đuôi, `RelativePath` = `yyyy/MM/<uuid>.<ext>` theo giờ VN, tệp nằm ngoài `wwwroot`; xóa mềm giữ tệp vật lý.
 - **CI / SHA / reviewer: chưa có.** Toàn bộ kiểm chứng trên là chạy local. Cần mở PR về `dev` để GitHub Actions `build-test` (`.github/workflows/ci.yml`) chạy đạt trên đúng head, và gán **reviewer độc lập** (đề xuất **Phát**, dự phòng **Đào** — không phải tác giả) theo bảng VHT-117. Ghi SHA head và link run khi PR mở.
-- **Chưa có:** quét virus (`MaliciousFile` — VHT-12 để sau); integration test cần SQL Server; phạm vi khách thuê theo hợp đồng (chờ P4).
+- **Chưa kiểm (bằng smoke test HTTP):** ca Chủ trọ xóa tệp **do khách thuê upload**; ca khách thuê xóa tệp **của chính mình** (mặc định chặn → `404`) — hiện chỉ có unit test; ca `DELETE` **thiếu antiforgery token** (suy từ code: endpoint tự kiểm trước khi xóa).
+- **Chưa có:** quét virus (`MaliciousFile` — hợp đồng storage để sau); integration test cần SQL Server; phạm vi khách thuê theo hợp đồng (chờ P4).
