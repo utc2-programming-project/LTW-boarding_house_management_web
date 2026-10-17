@@ -103,13 +103,26 @@ public class TenantServiceTests
             CreatedAt = new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc),
         };
 
-        var managerView = TenantMapping.ToDetail(entity, includeNote: true);
+        var managerView = TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: true);
         Assert.Equal("Nội bộ", managerView.Note);
         Assert.Equal(DateTimeKind.Utc, managerView.CreatedAt.UtcDateTime.Kind);
         Assert.Null(managerView.UpdatedAt);
 
-        var tenantView = TenantMapping.ToDetail(entity, includeNote: false);
+        var tenantView = TenantMapping.ToDetail(entity, includeNote: false, revealIdNumber: true);
         Assert.Null(tenantView.Note);
+    }
+
+    [Fact]
+    public void Mapping_che_so_giay_to_khi_khong_duoc_xem_day_du()
+    {
+        var entity = new Tenant { CitizenId = "079201004821" };
+
+        var chuTro = TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: true);
+        Assert.Equal("079201004821", chuTro.IdNumber);
+
+        // D9: Quản lý nhận chuỗi che thay vì số đầy đủ.
+        var quanLy = TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: false);
+        Assert.Equal("********4821", quanLy.IdNumber);
     }
 
     [Fact]
@@ -121,7 +134,7 @@ public class TenantServiceTests
             UpdatedAt = new DateTime(2026, 6, 7, 8, 9, 10, DateTimeKind.Unspecified),
         };
 
-        var detail = TenantMapping.ToDetail(entity, includeNote: false);
+        var detail = TenantMapping.ToDetail(entity, includeNote: false, revealIdNumber: true);
         Assert.Equal(DateTimeKind.Utc, detail.CreatedAt.UtcDateTime.Kind);
         Assert.NotNull(detail.UpdatedAt);
         Assert.Equal(DateTimeKind.Utc, detail.UpdatedAt!.Value.UtcDateTime.Kind);

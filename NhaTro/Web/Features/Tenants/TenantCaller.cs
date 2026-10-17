@@ -11,4 +11,10 @@ public sealed record TenantCaller(string UserId, string Role)
     public bool IsAdmin => Role == Accounts.Roles.Admin;
 
     public bool IsTenant => Role == Accounts.Roles.KhachThue;
+
+    /// <summary>
+    /// D9 (thao_tac_va_quyen.xlsx): chỉ Chủ trọ được xem số CCCD đầy đủ; Quản lý luôn bị che.
+    /// Dùng để quyết định trả <c>IdNumber</c> đầy đủ hay chuỗi che ở chi tiết.
+    /// </summary>
+    public bool CanRevealIdNumber => Role == Accounts.Roles.ChuTro;
 }

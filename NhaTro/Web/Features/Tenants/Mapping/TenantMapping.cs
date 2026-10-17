@@ -28,13 +28,14 @@ public static class TenantMapping
         HasActiveContract = hasActiveContract,
     };
 
-    public static TenantDetailDto ToDetail(Tenant e, bool includeNote) => new()
+    public static TenantDetailDto ToDetail(Tenant e, bool includeNote, bool revealIdNumber) => new()
     {
         Id = e.Id,
         FullName = e.FullName,
         PhoneNumber = e.Phone,
         Email = e.Email,
-        IdNumber = e.CitizenId,
+        // D9: chỉ Chủ trọ (và chính khách) thấy số đầy đủ; Quản lý nhận chuỗi che.
+        IdNumber = revealIdNumber ? e.CitizenId : TenantNormalizer.MaskIdNumber(e.CitizenId),
         DateOfBirth = e.DateOfBirth,
         Gender = e.Gender,
         PermanentAddress = e.PermanentAddress,

@@ -37,6 +37,7 @@
 - `NormalizeIdNumber` dùng ASCII + in hoa; `NormalizePhone` nhận `+84`/`0084`/`84…`; tìm kiếm bỏ qua từ khóa SĐT/giấy tờ < 3 ký tự và chuẩn hóa tên trước khi so.
 - Kiểm **độ dài sau `Normalize`** (khớp cột DB: 200/20/256/20/300/200/500) → `InvalidRequest` + thông báo `InvalidLength`. `[MaxLength]` của DTO chỉ chạy trên chuỗi thô, không thay thế được bước này (chống `SqlException` truncation → 500).
 - Chặn client gửi **trường lạ** ngoài DTO: `ConfigureHttpJsonOptions(... UnmappedMemberHandling = Disallow)` ở `Program.cs` (áp cho JSON của HTTP endpoint; Blazor Server gọi service nội bộ nên không qua JSON).
+- **D9 (che số CCCD):** chi tiết trả `IdNumber` đầy đủ cho **Chủ trọ** và chính khách; với **Quản lý** trả chuỗi che (qua `TenantCaller.CanRevealIdNumber`). Vì `UpdateTenantRequest` là PUT gửi đủ trường, nếu Quản lý gửi lại đúng chuỗi che thì service **giữ nguyên** số CCCD (tránh ghi đè bằng mask). Có test cho cả hai chiều.
 - `Gender` lưu chuỗi; `Normalize()` chỉ gọi ở service (không gọi lại trong mapping).
 - Liên kết tài khoản: thêm `LinkAccountAsync`/`UnlinkAccountAsync` — chặn liên kết nhầm (tài khoản phải tồn tại, đúng vai trò `KhachThue`, chưa gắn hồ sơ khác); FK `UserId → AspNetUsers` (Restrict) + unique filtered index là lớp chặn cuối; vi phạm unique khi đua → `AccountAlreadyLinked` thay vì 500.
 - Integration test SQL Server thật (`NhaTro/NhaTro.IntegrationTests/Features/Tenants/TenantServiceIntegrationTests.cs`): lưu rồi tải lại đúng; RowVersion cũ → `ConcurrencyConflict`; trùng giấy tờ → `DuplicateTenant` kèm hồ sơ trùng; liên kết/gỡ tài khoản (sai vai trò, không tồn tại, đã gắn hồ sơ khác); khách chỉ sửa 3 trường; **kiểm quyền** (Admin và Khách thuê bị chặn khỏi nghiệp vụ quản lý; khách chỉ xem hồ sơ của mình, không thấy ghi chú); **độ dài sau chuẩn hóa**. Chạy trên LocalDB, tự `Skip` nếu máy/CI không có.
@@ -44,7 +45,8 @@
 **Còn cần nhóm chốt / follow-up:**
 - Trùng `PhoneNumber`: tạm dùng mã `DuplicatePhone` (ngoài 9 mã ở mục 9) để UI hỏi "vẫn lưu".
 - `IdNumber`: bắt buộc khi tạo hay chỉ trước khi ký hợp đồng; có nhận hộ chiếu không; có mã hóa cột không.
-- Phạm vi Quản lý: hiện **toàn hệ thống**, chờ VHT-24/VHT-25.
+- **D9 — Quản lý xem danh sách khách "trong tòa nhà của mình"** và trường **`phòng`**: **chưa làm được ở VHT-23** vì `Tenant` chưa liên kết tới tòa nhà/phòng (đi qua hợp đồng, VHT-24/VHT-25). Phạm vi Quản lý hiện là **toàn hệ thống**; khi có liên kết chỉ sửa 1 hook `ScopeQuery`. `TenantListItemDto` cũng chưa có trường `phòng` (chờ cùng nguồn).
+- Xóa hồ sơ = **xóa mềm (thùng rác VHT-99)**: VHT-23 đã sẵn cơ chế (`IsDeleted` + `HasQueryFilter`, chỉ mục duy nhất lọc bỏ hồ sơ đã xóa); **thao tác xóa/khôi phục** thuộc VHT-99, kèm chặn khi còn hợp đồng hiệu lực (`TenantInUse`).
 - `UserId` **đang áp theo hướng 1-1** (unique filtered index + `LinkAccountAsync` chặn): cần Đào/Phát xác nhận; nếu cho 1 tài khoản nhiều hồ sơ thì bỏ unique, nới `LinkAccountAsync`, và sửa `GetAsync`/`GetOwnAsync`/`UpdateOwnAsync`.
 - `HasActiveContract` (filter) hiện **bỏ qua im lặng**, và giá trị trong list/picker luôn `false`; `TenantInUse` chưa kiểm — chờ bảng hợp đồng.
 - Ngữ nghĩa PUT của `UpdateTenantRequest`: form sửa phải gửi đủ trường; xác nhận có cho xóa `IdNumber` khi hồ sơ đã gắn hợp đồng không.
@@ -168,9 +170,9 @@ Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumbe
 
 **Đánh đổi cần nhắc khi chốt phạm vi (mục 3):** vì kiểm trùng chạy **trên toàn hệ thống**, Quản lý có thể dò xem một số CCCD đã tồn tại trong hệ thống hay chưa qua lỗi `DuplicateTenant`, kể cả với hồ sơ ngoài phạm vi. Cân nhắc điểm này khi chốt phạm vi của Quản lý, nhất là nếu chọn "chỉ nhà được phân công".
 
-**Che dữ liệu nhạy cảm:**
+**Che dữ liệu nhạy cảm (D9):**
 - Danh sách và hàm chọn khách chỉ trả `IdNumberMasked` (ví dụ `********1234`), không trả số đầy đủ.
-- `IdNumber` đầy đủ chỉ có trong chi tiết cho Chủ trọ, Quản lý (trong phạm vi) và chính khách thuê đó.
+- `IdNumber` đầy đủ chỉ có trong chi tiết cho **Chủ trọ** và **chính khách thuê đó**; với **Quản lý** luôn trả chuỗi che (D9: "số CCCD bị che"). Khi Quản lý sửa và gửi lại đúng chuỗi che, service coi như **không đổi** `IdNumber` (tránh ghi đè bằng mask); muốn đổi thì gõ lại số mới đầy đủ (Quản lý được sửa giấy tờ, SĐT theo ma trận).
 - `Note` không bao giờ trả cho khách thuê.
 - Không ghi `IdNumber` đầy đủ vào log.
 

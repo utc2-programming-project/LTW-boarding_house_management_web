@@ -59,7 +59,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             var entity = await ScopeQuery(caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
             return entity is null
                 ? NotFound()
-                : TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+                : TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
         }
 
         if (caller.IsTenant)
@@ -70,7 +70,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             // Không lộ hồ sơ ngoài phạm vi: trả TenantNotFound thay vì Forbidden (mục 9).
             return own is null || own.Id != id
                 ? NotFound()
-                : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false));
+                : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false, revealIdNumber: true));
         }
 
         throw Forbidden(caller);
@@ -88,7 +88,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
 
         return own is null
             ? NotFound()
-            : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false));
+            : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false, revealIdNumber: true));
     }
 
     public async Task<TenantResult> CreateAsync(
@@ -148,13 +148,15 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UpdateAsync(
         int id, UpdateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        // D9: Quản lý không thấy số CCCD đầy đủ nên form có thể gửi lại chuỗi che; giữ bản gốc để nhận diện.
+        var submittedIdNumber = request.IdNumber;
         request.Normalize();
 
         var invalid = ValidateProfile(
@@ -175,6 +177,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         if (entity is null)
         {
             return NotFound();
+        }
+
+        // Quản lý gửi lại đúng chuỗi che => coi như không đổi số CCCD (tránh ghi đè bằng mask).
+        if (!caller.CanRevealIdNumber
+            && submittedIdNumber is not null
+            && submittedIdNumber == TenantNormalizer.MaskIdNumber(entity.CitizenId))
+        {
+            request.IdNumber = entity.CitizenId;
         }
 
         // Đổi IdNumber: kiểm trùng toàn hệ thống, trừ chính hồ sơ đang sửa.
@@ -219,7 +229,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UpdateOwnAsync(
@@ -269,7 +279,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: false));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: false, revealIdNumber: true));
     }
 
     public async Task<TenantResult> SetActiveAsync(
@@ -291,7 +301,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         // Trạng thái không đổi: trả về hồ sơ hiện tại, không ghi UpdatedAt.
         if (entity.IsActive == isActive)
         {
-            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
         }
 
         if (isActive)
@@ -326,7 +336,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> LinkAccountAsync(
@@ -386,7 +396,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.AccountAlreadyLinked, TenantErrorMessages.AccountAlreadyLinked);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UnlinkAccountAsync(
@@ -408,7 +418,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         // Chưa gắn tài khoản: trả nguyên trạng, không ghi UpdatedAt.
         if (entity.UserId is null)
         {
-            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
         }
 
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
@@ -424,7 +434,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
     }
 
     public async Task<List<TenantPickerItemDto>> SearchForPickerAsync(

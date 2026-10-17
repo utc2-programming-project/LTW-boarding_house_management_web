@@ -340,6 +340,57 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal("An", manySpaces.Tenant!.FullName);
     }
 
+    // ---------- D9: Quản lý chỉ thấy số CCCD bị che ----------
+
+    [SqlServerFact]
+    public async Task Quan_ly_bi_che_so_cccd_va_khong_ghi_de_bang_chuoi_che()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        var service = new TenantService(db, TimeProvider.System);
+        var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
+
+        var created = await service.CreateAsync(
+            NewTenant("An", "0901234567", idNumber: "079201004821"), Manager);
+        var id = created.Tenant!.Id;
+        Assert.Equal("079201004821", created.Tenant.IdNumber); // Chủ trọ thấy đầy đủ
+
+        // Quản lý nhận chuỗi che ở chi tiết.
+        var asQuanLy = await service.GetAsync(id, quanLy);
+        Assert.True(asQuanLy.Succeeded, asQuanLy.ErrorMessage);
+        Assert.Equal("********4821", asQuanLy.Tenant!.IdNumber);
+
+        // Quản lý sửa SĐT; form gửi lại chuỗi che => CCCD giữ nguyên, không bị ghi đè bằng mask.
+        var updated = await service.UpdateAsync(id, new UpdateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0909999999",
+            IdNumber = "********4821",
+            RowVersion = asQuanLy.Tenant.RowVersion,
+        }, quanLy);
+        Assert.True(updated.Succeeded, updated.ErrorMessage);
+        Assert.Equal("********4821", updated.Tenant!.IdNumber);
+
+        await using var checkDb = fixture.CreateContext();
+        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Manager);
+        Assert.Equal("0909999999", reloaded.Tenant!.PhoneNumber);
+        Assert.Equal("079201004821", reloaded.Tenant.IdNumber);
+
+        // Quản lý gõ lại số mới đầy đủ: đổi được (ma trận: Quản lý sửa giấy tờ, SĐT).
+        var changed = await service.UpdateAsync(id, new UpdateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0909999999",
+            IdNumber = "079 201 004 999",
+            RowVersion = reloaded.Tenant.RowVersion,
+        }, quanLy);
+        Assert.True(changed.Succeeded, changed.ErrorMessage);
+        Assert.Equal("********4999", changed.Tenant!.IdNumber);
+
+        var final = await service.GetAsync(id, Manager);
+        Assert.Equal("079201004999", final.Tenant!.IdNumber);
+    }
+
     private static CreateTenantRequest NewTenant(
         string fullName, string phone, string? idNumber = null, string? note = null) => new()
         {

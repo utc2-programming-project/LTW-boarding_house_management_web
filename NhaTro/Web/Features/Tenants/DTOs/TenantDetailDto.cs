@@ -17,8 +17,8 @@ public class TenantDetailDto
     public string? Email { get; init; }
 
     /// <summary>
-    /// Số giấy tờ đầy đủ. Chỉ trả cho Chủ trọ/Quản lý trong phạm vi và chính khách thuê đó;
-    /// danh sách và picker chỉ trả <c>IdNumberMasked</c> (mục 4).
+    /// Số giấy tờ. Chỉ trả đầy đủ cho Chủ trọ và chính khách thuê đó; với Quản lý (D9) trả chuỗi che
+    /// (giống <c>IdNumberMasked</c>). Danh sách và picker luôn chỉ trả <c>IdNumberMasked</c> (mục 4).
     /// </summary>
     public string? IdNumber { get; init; }
 
