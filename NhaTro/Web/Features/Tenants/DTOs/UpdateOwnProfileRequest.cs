@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Web.Features.Tenants.DTOs;
 
 /// <summary>
@@ -8,14 +10,27 @@ namespace Web.Features.Tenants.DTOs;
 /// Không có ConfirmDuplicatePhone: khi khách tự sửa, service không kiểm trùng số điện thoại
 /// và không trả PossibleDuplicates (để khách không thấy hồ sơ của người khác).
 /// </remarks>
-public class UpdateOwnProfileRequest
+public sealed class UpdateOwnProfileRequest
 {
-    public required string PhoneNumber { get; init; }
+    [Required(ErrorMessage = "Nhập số điện thoại.")]
+    [MaxLength(20, ErrorMessage = "Số điện thoại tối đa 20 ký tự.")]
+    public string PhoneNumber { get; set; } = string.Empty;
 
-    public string? Email { get; init; }
+    [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
+    [MaxLength(256, ErrorMessage = "Email tối đa 256 ký tự.")]
+    public string? Email { get; set; }
 
-    public string? PermanentAddress { get; init; }
+    [MaxLength(300, ErrorMessage = "Địa chỉ tối đa 300 ký tự.")]
+    public string? PermanentAddress { get; set; }
 
     /// <summary>Bắt buộc: chống ghi đè đồng thời (mục 5.3).</summary>
-    public required string RowVersion { get; init; }
+    [Required(ErrorMessage = "Thiếu RowVersion.")]
+    public string RowVersion { get; set; } = string.Empty;
+
+    public void Normalize()
+    {
+        PhoneNumber = TenantNormalizer.NormalizePhone(PhoneNumber);
+        Email = TenantNormalizer.NormalizeOptional(Email);
+        PermanentAddress = TenantNormalizer.NormalizeOptional(PermanentAddress);
+    }
 }

@@ -8,7 +8,7 @@ namespace Web.Features.Tenants.DTOs;
 /// </summary>
 public class TenantDetailDto
 {
-    public required Guid Id { get; init; }
+    public required int Id { get; init; }
 
     public required string FullName { get; init; }
 
@@ -16,7 +16,10 @@ public class TenantDetailDto
 
     public string? Email { get; init; }
 
-    /// <summary>Đầy đủ, theo quy tắc che ở mục 4.</summary>
+    /// <summary>
+    /// Số giấy tờ. Chỉ trả đầy đủ cho Chủ trọ và chính khách thuê đó; với Quản lý (D9) trả chuỗi che
+    /// (giống <c>IdNumberMasked</c>). Danh sách và picker luôn chỉ trả <c>IdNumberMasked</c> (mục 4).
+    /// </summary>
     public string? IdNumber { get; init; }
 
     public DateOnly? DateOfBirth { get; init; }
@@ -39,6 +42,7 @@ public class TenantDetailDto
 
     public required DateTimeOffset CreatedAt { get; init; }
 
+    /// <summary>null khi chưa sửa lần nào.</summary>
     public DateTimeOffset? UpdatedAt { get; init; }
 
     /// <summary>Base64, gửi lại khi sửa.</summary>

@@ -15,6 +15,7 @@ using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Features.Accounts;
+using Web.Features.Tenants;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Storage;
@@ -109,6 +110,14 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
 });
 builder.Services.AddScoped<RoleService>();
+// VHT-23 (dot 1C): service khach thue P3, kiem quyen/pham vi trong service.
+builder.Services.AddScoped<ITenantService, TenantService>();
+
+// VHT-23: chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
+// Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.UnmappedMemberHandling =
+        System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow);
 
 // VHT-13: storage dung chung. Gioi han doc tu cau hinh, kiem tra ngay khi khoi dong.
 builder.Services.AddOptions<StorageOptions>()
