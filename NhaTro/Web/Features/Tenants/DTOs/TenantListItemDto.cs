@@ -6,13 +6,13 @@ namespace Web.Features.Tenants.DTOs;
 /// </summary>
 public class TenantListItemDto
 {
-    public required Guid Id { get; init; }
+    public required int Id { get; init; }
 
     public required string FullName { get; init; }
 
     public required string PhoneNumber { get; init; }
 
-    /// <summary>Chỉ 4 số cuối (ví dụ ********1234).</summary>
+    /// <summary>Chỉ 4 ký tự cuối (ví dụ ********1234).</summary>
     public string? IdNumberMasked { get; init; }
 
     public required bool IsActive { get; init; }
@@ -20,6 +20,6 @@ public class TenantListItemDto
     /// <summary>UserId != null.</summary>
     public required bool HasAccount { get; init; }
 
-    /// <summary>Cần chốt như mục 6.1.</summary>
+    /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
     public required bool HasActiveContract { get; init; }
 }

@@ -7,6 +7,11 @@ namespace Web.Features.Tenants.DTOs;
 /// </summary>
 public class TenantResult
 {
+    // Chi tao qua cac factory de ket qua luon nhat quan.
+    private TenantResult()
+    {
+    }
+
     public required bool Succeeded { get; init; }
 
     /// <summary>null khi thất bại.</summary>

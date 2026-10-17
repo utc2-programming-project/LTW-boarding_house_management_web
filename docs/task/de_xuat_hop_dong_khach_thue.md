@@ -8,6 +8,55 @@
 
 ---
 
+## 0.1 Chốt đối chiếu DTO với schema (đợt 1C)
+
+> Ghi lúc viết service 1C. Đây là các điểm DTO 1B đề xuất khác ERD VHT-5, đã thống nhất hướng áp dụng trong code. Chỗ nào còn **cần nhóm chốt** thì ghi rõ.
+
+| Điểm | DTO 1B đề xuất | ERD VHT-5 / thực tế | Đã áp dụng ở 1C |
+|---|---|---|---|
+| Kiểu `Id` | `Guid` | `int identity` (PK `Tenants`) | **`int`**: sửa `TenantDetailDto`, `TenantListItemDto`, `TenantPickerItemDto`, `TenantPickerRequest.ExcludeTenantIds` sang `int` |
+| Xóa mềm | cột `IsActive` | cột `IsDeleted` (thùng rác) | Thêm **`IsActive`** (hoạt động) và **giữ `IsDeleted`** (thùng rác VHT-99), theo quy ước Property/Room |
+| Tên trường | `PhoneNumber`, `IdNumber` | cột `Phone`, `CitizenId` | Giữ tên cột DB; DTO dùng `PhoneNumber`/`IdNumber`, đổi chiếu tại `TenantMapping` |
+| `RowVersion` | `byte[]` | chưa có | Thêm cột `rowversion` để chống ghi đè |
+| `Gender` | enum | chưa có | Thêm cột, lưu **chuỗi** (`HasConversion<string>()`) cho dễ đọc/ổn định |
+| Chỉ mục `CitizenId` | duy nhất khi khác null | `UNIQUE ... IsDeleted = 0` | Đổi thành `... AND [IsActive] = 1` cho **khớp logic service** (chỉ kiểm trùng hồ sơ đang sử dụng) |
+| Chỉ mục `UserId` | duy nhất khi khác null | index thường, chờ chốt | Đặt **unique filtered** (`UserId IS NOT NULL AND IsDeleted = 0`); cần Đào/Phát xác nhận 1 tài khoản ↔ 1 hồ sơ |
+
+> Lý do: ERD VHT-5 là nguồn chuẩn schema (AGENTS yêu cầu không tự suy luận schema), và P2 (Property/Room) đã dùng `int Id` + tách `IsActive`/`IsDeleted`. DTO 1B là *đề xuất*, chưa được chốt với schema nên phải đổi theo.
+
+**Vị trí code 1C:** `NhaTro/Web/Features/Tenants/TenantService.cs` (+ `ITenantService.cs`, `TenantNormalizer.cs`, `TenantErrorCodes.cs`, `Mapping/TenantMapping.cs`), migration mới `20261017005536_ExtendTenantProfile`, đăng ký DI ở `Program.cs`.
+
+**Đã xử lý theo rà soát:**
+- Race trùng khi tạo/sửa/kích hoạt: bắt `DbUpdateException` vi phạm unique (SQL 2601/2627) → trả `DuplicateTenant` thay vì 500.
+- Lộ thông tin: chỉ kèm `PossibleDuplicates` khi hồ sơ trùng **nằm trong phạm vi** người gọi (mục 3).
+- `ScopeQuery` giữ tracking cho hàm ghi; query đọc thêm `.AsNoTracking()`; thao tác sửa/ngừng sử dụng đi qua `ScopeQuery` để sau này VHT-25 thu hẹp phạm vi là có hiệu lực.
+- `SetActiveAsync` nhận `RowVersion`, bắt `ConcurrencyConflict`, và không ghi `UpdatedAt` khi trạng thái không đổi.
+- `(Page-1)*PageSize` tính bằng `long`, chặn tràn `int`.
+- `Normalize()` là nguồn duy nhất kẹp giá trị (bỏ `[Range]` ở `Page/PageSize/Limit` để không 400 trước khi kẹp): `PageSize` >100 → 100, `Limit` >50 → 50; `ExcludeTenantIds` cắt còn 100.
+- Kiểm định dạng sau chuẩn hóa: SĐT 10–11 số bắt đầu 0; `DateOfBirth` không ở tương lai; `IdIssuedDate` không trước `DateOfBirth`.
+- `NormalizeIdNumber` dùng ASCII + in hoa; `NormalizePhone` nhận `+84`/`0084`/`84…`; tìm kiếm bỏ qua từ khóa SĐT/giấy tờ < 3 ký tự và chuẩn hóa tên trước khi so.
+- Kiểm **độ dài sau `Normalize`** (khớp cột DB: 200/20/256/20/300/200/500) → `InvalidRequest` + thông báo `InvalidLength`. `[MaxLength]` của DTO chỉ chạy trên chuỗi thô, không thay thế được bước này (chống `SqlException` truncation → 500).
+- Chặn client gửi **trường lạ** ngoài DTO: `ConfigureHttpJsonOptions(... UnmappedMemberHandling = Disallow)` ở `Program.cs` (áp cho JSON của HTTP endpoint; Blazor Server gọi service nội bộ nên không qua JSON).
+- `Gender` lưu chuỗi; `Normalize()` chỉ gọi ở service (không gọi lại trong mapping).
+- Liên kết tài khoản: thêm `LinkAccountAsync`/`UnlinkAccountAsync` — chặn liên kết nhầm (tài khoản phải tồn tại, đúng vai trò `KhachThue`, chưa gắn hồ sơ khác); FK `UserId → AspNetUsers` (Restrict) + unique filtered index là lớp chặn cuối; vi phạm unique khi đua → `AccountAlreadyLinked` thay vì 500.
+- Integration test SQL Server thật (`NhaTro/NhaTro.IntegrationTests/Features/Tenants/TenantServiceIntegrationTests.cs`): lưu rồi tải lại đúng; RowVersion cũ → `ConcurrencyConflict`; trùng giấy tờ → `DuplicateTenant` kèm hồ sơ trùng; liên kết/gỡ tài khoản (sai vai trò, không tồn tại, đã gắn hồ sơ khác); khách chỉ sửa 3 trường; **kiểm quyền** (Admin và Khách thuê bị chặn khỏi nghiệp vụ quản lý; khách chỉ xem hồ sơ của mình, không thấy ghi chú); **độ dài sau chuẩn hóa**. Chạy trên LocalDB, tự `Skip` nếu máy/CI không có.
+
+**Còn cần nhóm chốt / follow-up:**
+- Trùng `PhoneNumber`: tạm dùng mã `DuplicatePhone` (ngoài 9 mã ở mục 9) để UI hỏi "vẫn lưu".
+- `IdNumber`: bắt buộc khi tạo hay chỉ trước khi ký hợp đồng; có nhận hộ chiếu không; có mã hóa cột không.
+- Phạm vi Quản lý: hiện **toàn hệ thống**, chờ VHT-24/VHT-25.
+- `UserId` **đang áp theo hướng 1-1** (unique filtered index + `LinkAccountAsync` chặn): cần Đào/Phát xác nhận; nếu cho 1 tài khoản nhiều hồ sơ thì bỏ unique, nới `LinkAccountAsync`, và sửa `GetAsync`/`GetOwnAsync`/`UpdateOwnAsync`.
+- `HasActiveContract` (filter) hiện **bỏ qua im lặng**, và giá trị trong list/picker luôn `false`; `TenantInUse` chưa kiểm — chờ bảng hợp đồng.
+- Ngữ nghĩa PUT của `UpdateTenantRequest`: form sửa phải gửi đủ trường; xác nhận có cho xóa `IdNumber` khi hồ sơ đã gắn hợp đồng không.
+- Khách đã `IsActive = false` hiện vẫn tự sửa được — cần xác nhận có chặn không.
+- Email/`PhoneNumber` của hồ sơ tách khỏi tài khoản đăng nhập — chốt có đồng bộ không.
+- Khôi phục hồ sơ thùng rác (VHT-98/99) sẽ cần `IgnoreQueryFilters()` + kiểm trùng `CitizenId` trước khi khôi phục.
+- Testcontainers **không dùng** (tech-stack cấm Docker); integration test chạy LocalDB và tạo schema bằng `EnsureCreated` (xem chú thích `SqlServerFixture`). CI (`.github/workflows/ci.yml`) đã thêm `dotnet tool restore`, `dotnet ef migrations has-pending-model-changes` (exit code 1 khi thiếu migration), bước **chạy toàn bộ migration lên một DB trống** (`dotnet ef database update --connection`, bắt lỗi migration/SQL — bổ sung cho `EnsureCreated`), và bước khởi động LocalDB trước `dotnet test`.
+- `TenantScope.EnsureCanAccess` (VHT-6) hiện chưa dùng ở production: **giữ**, khớp pattern `PropertyScope`/`RoomScope` (cả bộ 3 chỉ được `GuardTests` dùng, sẽ nối khi có controller/UI ở VHT-17). Cần chốt phạm vi Quản lý (VHT-24/VHT-25) trước khi dùng.
+- Collation/tìm tiếng Việt không dấu (`nguyen` → `Nguyễn`) phụ thuộc collation DB; cần chốt.
+
+---
+
 ## 0. Phạm vi và vị trí code
 
 **Phạm vi hợp đồng này:**
@@ -154,6 +203,8 @@ Mọi thao tác sửa gửi kèm `RowVersion` đã đọc. Nếu bản ghi đã 
 ## 6. DTO
 
 > **Vị trí code:** `NhaTro/Web/Features/Tenants/DTOs/` — namespace `Web.Features.Tenants.DTOs`
+>
+> **Kiểu `Id`:** theo mục 0.1, `Id` là `int` (không phải `Guid` như bản đề xuất đầu).
 
 ### 6.1 `TenantFilterRequest` — lọc danh sách
 
@@ -347,6 +398,7 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
 ## 10. Ví dụ — mẫu kết quả cho Phúc
 
 > Dữ liệu minh họa. Ở đợt 1C, Đào gửi Phúc **kết quả thật** từ SQL theo đúng cấu trúc này.
+> Lưu ý mục 0.1: `id` là số nguyên (`int`), không phải chuỗi Guid như ví dụ dưới; các ví dụ giữ nguyên để dễ đối chiếu cấu trúc trường.
 
 ### 10.1 Danh sách — `GET /api/tenants?keyword=nguyen&page=1&pageSize=20`
 
@@ -455,6 +507,74 @@ Tính thực hiện thay đổi schema; Đào làm DTO/service sau khi nhận sc
 ```
 
 > Lỗi của mọi endpoint dùng chung khung `TenantResult`, kể cả endpoint danh sách; danh sách thành công thì trả `PagedResult<TenantListItemDto>`.
+
+### 10.6 Mẫu kết quả theo DTO 1C (gửi Phúc)
+
+> Cấu trúc đúng như service `TenantService` trả về (camelCase mặc định của ASP.NET Core). `id` là **số nguyên**. Đây là mẫu theo DTO đã viết; bản chụp từ SQL thật bổ sung khi DB demo sẵn sàng (chưa chạy được SQL trong phiên này).
+
+Danh sách (`GET /api/tenants?keyword=nguyen&page=1&pageSize=20`):
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "fullName": "Nguyễn Văn An",
+      "phoneNumber": "0901234567",
+      "idNumberMasked": "********4821",
+      "isActive": true,
+      "hasAccount": true,
+      "hasActiveContract": false
+    }
+  ],
+  "page": 1,
+  "pageSize": 20,
+  "totalCount": 1
+}
+```
+
+Chi tiết (`GET /api/tenants/{id}`):
+
+```json
+{
+  "succeeded": true,
+  "tenant": {
+    "id": 1,
+    "fullName": "Nguyễn Văn An",
+    "phoneNumber": "0901234567",
+    "email": "an.nguyen@example.com",
+    "idNumber": "079201004821",
+    "dateOfBirth": "2001-05-14",
+    "gender": "Male",
+    "permanentAddress": "12 Lê Lợi, Quận 1, TP.HCM",
+    "idIssuedDate": null,
+    "idIssuedPlace": null,
+    "note": null,
+    "isActive": true,
+    "hasAccount": true,
+    "createdAt": "2026-10-01T09:00:00+00:00",
+    "updatedAt": null,
+    "rowVersion": "AAAAAAAAB9E="
+  },
+  "errorCode": null,
+  "errorMessage": null,
+  "possibleDuplicates": null
+}
+```
+
+Chọn khách (`GET /api/tenants/picker`):
+
+```json
+[
+  {
+    "id": 1,
+    "fullName": "Nguyễn Văn An",
+    "phoneNumber": "0901234567",
+    "idNumberMasked": "********4821",
+    "hasActiveContract": false
+  }
+]
+```
 
 ---
 
