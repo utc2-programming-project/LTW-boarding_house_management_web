@@ -54,7 +54,13 @@
         control.querySelectorAll("button").forEach(item => item.disabled = true);
         status.textContent = status.dataset.loadingLabel;
         try {
-            const response = await fetch(`/culture/set?culture=${encodeURIComponent(button.dataset.culture)}`, { method: "POST", credentials: "same-origin" });
+            const token = control.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) throw new Error("Missing antiforgery token");
+            const response = await fetch(`/culture/set?culture=${encodeURIComponent(button.dataset.culture)}`, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { RequestVerificationToken: token }
+            });
             if (!response.ok) throw new Error("Culture update failed");
             window.location.reload();
         } catch {

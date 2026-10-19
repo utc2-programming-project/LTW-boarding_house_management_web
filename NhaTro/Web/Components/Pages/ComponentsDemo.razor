@@ -1,0 +1,297 @@
+@page "/dev/components"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using Web.Features.Accounts
+@using Web.Common.Models
+@using Web.Common.Utils
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Forms
+@using Web.Components.Shared.Tables
+@using Web.Features.Rooms.Enums
+@using Web.Infrastructure.Time
+@inject IWebHostEnvironment Env
+@inject ToastService Toasts
+@inject TimeProvider Time
+
+<PageTitle>Component dùng chung</PageTitle>
+
+@* Trang thử nội bộ cho VHT-15: chỉ hiển thị ở môi trường Development, dùng dữ liệu mẫu, không lưu SQL. *@
+@if (Env.IsDevelopment())
+{
+    <main class="demo">
+        <h1>Component dùng chung</h1>
+        <p class="note">Trang thử nội bộ (VHT-15). Dữ liệu mẫu, không lưu SQL.</p>
+
+        <section aria-labelledby="demo-badge">
+            <h2 id="demo-badge">StatusBadge</h2>
+            <div class="row">
+                <StatusBadge Tone="BadgeTone.Warning" Text="Chờ duyệt" />
+                <StatusBadge Tone="BadgeTone.Success" Text="Hoạt động" />
+                <StatusBadge Tone="BadgeTone.Neutral" Text="Khóa" />
+                <StatusBadge Tone="BadgeTone.Info" Text="Đang thuê" />
+                <StatusBadge Tone="BadgeTone.Error" Text="Quá hạn" />
+            </div>
+        </section>
+
+        <section aria-labelledby="demo-form">
+            <h2 id="demo-form">FormField</h2>
+            <EditForm EditContext="_editContext" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <FormField TValue="string" Id="room-code" Label="Mã phòng" Required="true"
+                           Hint="Tối đa 50 ký tự." For="() => _form.Code">
+                    <InputText @ref="_codeInput" id="room-code" @bind-Value="_form.Code" aria-describedby="room-code-hint room-code-error" />
+                </FormField>
+                <FormField TValue="decimal" Id="room-price" Label="Giá thuê (₫)" Required="true" Hint="Giá thuê phải lớn hơn 0." For="() => _form.Price">
+                    <InputNumber id="room-price" @bind-Value="_form.Price" aria-describedby="room-price-error" />
+                </FormField>
+                <FormField TValue="RoomStatus" Id="room-status" Label="Trạng thái" For="() => _form.Status">
+                    <InputSelect id="room-status" @bind-Value="_form.Status" aria-describedby="room-status-error">
+                        @foreach (var status in Enum.GetValues<RoomStatus>())
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </InputSelect>
+                </FormField>
+                <button type="submit" class="btn btn-primary" disabled="@_saving">@(_saving ? "Đang lưu…" : "Lưu")</button>
+            </EditForm>
+        </section>
+
+        <section aria-labelledby="demo-toast">
+            <h2 id="demo-toast">Toast</h2>
+            <div class="row">
+                <button type="button" class="btn btn-secondary" @onclick="@(() => Toasts.Success("Đã lưu thay đổi."))">Toast thành công (5s)</button>
+                <button type="button" class="btn btn-secondary" @onclick="@(() => Toasts.Error("Không lưu được. Vui lòng thử lại."))">Toast lỗi (giữ tới khi đóng)</button>
+            </div>
+        </section>
+
+        <section aria-labelledby="demo-loading">
+            <h2 id="demo-loading">LoadingOverlay</h2>
+            <div class="row">
+                <button type="button" class="btn btn-secondary" @onclick="ToggleLoading">@(_regionLoading ? "Tắt loading" : "Bật loading")</button>
+            </div>
+            <LoadingOverlay Visible="_regionLoading">
+                <EmptyStateCard Title="Vùng nội dung" Description="Vùng này bị phủ khi đang tải." />
+            </LoadingOverlay>
+            <LoadingOverlay Visible="true" />
+        </section>
+
+        <section aria-labelledby="demo-auth">
+            <h2 id="demo-auth">AuthorizeView / policy</h2>
+            <AuthorizeView Roles="@Roles.ChuTro">
+                <Authorized>
+                    <button type="button" class="btn btn-secondary">Khôi phục (chỉ Chủ trọ)</button>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="note">Nút Khôi phục chỉ hiện với vai trò Chủ trọ.</span>
+                </NotAuthorized>
+            </AuthorizeView>
+        </section>
+
+        <section aria-labelledby="demo-table">
+            <h2 id="demo-table">DataTable</h2>
+            <DataTable @ref="_table" TItem="DemoRoom" Columns="_columns" ItemsProvider="LoadRoomsAsync"
+                       PageSize="5" Caption="Danh sách phòng (mẫu)">
+                <EmptyActions>
+                    <button type="button" class="btn btn-primary" @onclick="FocusFormAsync">Thêm phòng</button>
+                </EmptyActions>
+            </DataTable>
+        </section>
+
+        <section aria-labelledby="demo-empty">
+            <h2 id="demo-empty">EmptyStateCard</h2>
+            <EmptyStateCard Title="Chưa có dữ liệu" Description="Hãy thêm phòng đầu tiên để bắt đầu.">
+                <button type="button" class="btn btn-primary" @onclick="FocusFormAsync">Thêm phòng</button>
+            </EmptyStateCard>
+        </section>
+
+        <section aria-labelledby="demo-confirm">
+            <h2 id="demo-confirm">ConfirmDialog</h2>
+            <div class="row delete-row">
+                <label class="select-label" for="room-to-delete">Chọn phòng cần xóa</label>
+                <select id="room-to-delete" class="room-select" @bind="_roomToDelete">
+                    <option value="">— Chọn phòng —</option>
+                    @foreach (var room in _rooms.OrderBy(r => r.Code, StringComparer.Ordinal))
+                    {
+                        <option value="@room.Code">@room.Code · @room.StatusText</option>
+                    }
+                </select>
+                <button type="button" class="btn btn-secondary" disabled="@string.IsNullOrEmpty(_roomToDelete)" @onclick="OpenConfirm">Xóa phòng</button>
+            </div>
+            <ConfirmDialog Visible="_confirmOpen" Title="@($"Xóa phòng {_roomToDelete}?")" Danger="true"
+                           Message="Phòng sẽ được chuyển vào thùng rác. Bạn có thể khôi phục sau."
+                           ConfirmText="Xóa" OnConfirm="DeleteAsync" OnCancel="CloseConfirm" />
+        </section>
+    </main>
+}
+
+@code {
+    private sealed class DemoForm
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã phòng.")]
+        [MaxLength(50, ErrorMessage = "Mã phòng tối đa 50 ký tự.")]
+        public string Code { get; set; } = string.Empty;
+
+        [Range(typeof(decimal), "0.01", "100000000",
+            ErrorMessage = "Giá thuê phải lớn hơn 0 và tối đa 100.000.000.",
+            ParseLimitsInInvariantCulture = true, ConvertValueInInvariantCulture = true)]
+        public decimal Price { get; set; }
+
+        public RoomStatus Status { get; set; }
+    }
+
+    private sealed record DemoRoom(string Code, string StatusText, BadgeTone Tone, decimal Price, DateOnly Updated);
+
+    // Dữ liệu mẫu nằm trong bộ nhớ của từng phiên (không dùng static để các người dùng không ảnh hưởng nhau).
+    private readonly List<DemoRoom> _rooms = Enumerable.Range(1, 23)
+        .Select(i => new DemoRoom(
+            Code: $"P{100 + i}",
+            StatusText: (i % 3) switch { 0 => "Available", 1 => "Rented", _ => "Maintenance" },
+            Tone: (i % 3) switch { 0 => BadgeTone.Success, 1 => BadgeTone.Info, _ => BadgeTone.Warning },
+            Price: 1_500_000 + (i % 5) * 250_000,
+            Updated: new DateOnly(2026, 10, 1).AddDays(i)))
+        .ToList();
+
+    private readonly DemoForm _form = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private InputText? _codeInput;
+    private readonly RenderFragment<DemoRoom> _statusCell = room => @<StatusBadge Tone="room.Tone" Text="@room.StatusText" />;
+    private IReadOnlyList<DataTableColumn<DemoRoom>> _columns = [];
+    private DataTable<DemoRoom>? _table;
+    private string _roomToDelete = string.Empty;
+    private bool _saving;
+    private bool _regionLoading;
+    private bool _confirmOpen;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(_form);
+        _messages = new ValidationMessageStore(_editContext);
+        // Lỗi nghiệp vụ (trùng mã) do SaveAsync thêm vào; xóa khi người dùng sửa ô đó hoặc khi kiểm tra lại.
+        _editContext.OnFieldChanged += (_, e) => _messages.Clear(e.FieldIdentifier);
+        _editContext.OnValidationRequested += (_, _) => _messages.Clear();
+        _columns =
+        [
+            new() { Key = "code", Title = "Mã phòng", Value = r => r.Code, Sortable = true, Filterable = true },
+            new() { Key = "status", Title = "Trạng thái", Template = _statusCell, Sortable = true },
+            new() { Key = "price", Title = "Giá thuê", Value = r => MoneyFormatter.Format(r.Price), IsNumeric = true, Sortable = true },
+            new() { Key = "updated", Title = "Cập nhật", Value = r => DateFormatter.Format(r.Updated), Sortable = true },
+        ];
+    }
+
+    // Giống một service thật: nhận yêu cầu của bảng, trả về một trang dữ liệu.
+    private async Task<PagedResult<DemoRoom>> LoadRoomsAsync(DataTableRequest request)
+    {
+        await Task.Delay(400); // để thấy trạng thái đang tải
+
+        IEnumerable<DemoRoom> query = _rooms;
+
+        if (request.Filters.TryGetValue("code", out var code))
+        {
+            query = query.Where(r => r.Code.Contains(code, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (request.SortKey is not null)
+        {
+            Func<DemoRoom, object> key = request.SortKey switch
+            {
+                "status" => r => r.StatusText,
+                "price" => r => r.Price,
+                "updated" => r => r.Updated,
+                _ => r => r.Code,
+            };
+            query = request.SortDescending ? query.OrderByDescending(key) : query.OrderBy(key);
+        }
+
+        var all = query.ToList();
+        var page = all.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList();
+        return new PagedResult<DemoRoom>
+        {
+            Items = page,
+            TotalCount = all.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    // Form hợp lệ (DataAnnotations) mới tới đây. Quy tắc nghiệp vụ "mã phòng không trùng" kiểm tra ở bước lưu,
+    // giống quy tắc trong Service; hợp lệ thì thêm vào danh sách mẫu trong bộ nhớ (chưa ghi SQL) rồi tải lại bảng.
+    private async Task SaveAsync()
+    {
+        var code = _form.Code.Trim();
+        if (_rooms.Any(r => string.Equals(r.Code, code, StringComparison.OrdinalIgnoreCase)))
+        {
+            _messages.Add(_editContext.Field(nameof(DemoForm.Code)), "Mã phòng đã tồn tại.");
+            _editContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            await Task.Delay(800);
+
+            var (statusText, tone) = _form.Status switch
+            {
+                RoomStatus.Rented => ("Rented", BadgeTone.Info),
+                RoomStatus.Maintenance => ("Maintenance", BadgeTone.Warning),
+                _ => ("Available", BadgeTone.Success),
+            };
+
+            var room = new DemoRoom(code, statusText, tone, _form.Price, Time.TodayVietnam());
+            _rooms.Add(room);
+
+            _form.Code = string.Empty;
+            _form.Price = 0;
+            _form.Status = RoomStatus.Available;
+
+            Toasts.Success($"Đã thêm phòng {room.Code} (mẫu, chưa ghi SQL).");
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    // "Thêm phòng" không tự thêm: đưa người dùng tới form để nhập, rồi bấm Lưu.
+    private async Task FocusFormAsync()
+    {
+        if (_codeInput?.Element is { } element)
+        {
+            await element.FocusAsync();
+        }
+    }
+
+    private void ToggleLoading() => _regionLoading = !_regionLoading;
+
+    // Chỉ mở hộp thoại khi đã chọn phòng.
+    private void OpenConfirm()
+    {
+        if (string.IsNullOrEmpty(_roomToDelete)) return;
+        _confirmOpen = true;
+    }
+
+    private void CloseConfirm() => _confirmOpen = false;
+
+    private async Task DeleteAsync()
+    {
+        await Task.Delay(800);
+
+        var code = _roomToDelete;
+        _rooms.RemoveAll(r => r.Code == code);
+        _roomToDelete = string.Empty;
+        _confirmOpen = false;
+        Toasts.Success($"Đã xóa phòng {code} (mẫu, chưa ghi SQL).");
+
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+}

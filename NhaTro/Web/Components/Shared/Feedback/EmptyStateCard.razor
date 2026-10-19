@@ -1,0 +1,42 @@
+<div class="empty-state">
+    <span class="icon" aria-hidden="true">
+        @if (Icon is not null)
+        {
+            @Icon
+        }
+        else
+        {
+            @* Lucide "inbox" *@
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+            </svg>
+        }
+    </span>
+    <p class="title">@Title</p>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <p class="description">@Description</p>
+    }
+    @if (ChildContent is not null)
+    {
+        <div class="actions">@ChildContent</div>
+    }
+</div>
+
+@code {
+    /// <summary>Tiêu đề đã dịch, ví dụ "Chưa có dữ liệu" / "No data".</summary>
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    /// <summary>Icon thay thế (SVG 24×24, hiển thị 48px).</summary>
+    [Parameter]
+    public RenderFragment? Icon { get; set; }
+
+    /// <summary>Nút kêu gọi hành động: tạo mới hoặc xóa bộ lọc.</summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

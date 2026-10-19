@@ -1,0 +1,25 @@
+namespace Web.Features.Tenants.DTOs;
+
+/// <summary>
+/// Một dòng trong danh sách khách thuê.
+/// Nguồn: docs/task/de_xuat_hop_dong_khach_thue.md mục 6.3.
+/// </summary>
+public class TenantListItemDto
+{
+    public required int Id { get; init; }
+
+    public required string FullName { get; init; }
+
+    public required string PhoneNumber { get; init; }
+
+    /// <summary>Chỉ 4 ký tự cuối (ví dụ ********1234).</summary>
+    public string? IdNumberMasked { get; init; }
+
+    public required bool IsActive { get; init; }
+
+    /// <summary>UserId != null.</summary>
+    public required bool HasAccount { get; init; }
+
+    /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
+    public required bool HasActiveContract { get; init; }
+}

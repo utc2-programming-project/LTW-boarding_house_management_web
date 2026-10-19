@@ -6,9 +6,10 @@ using Web.Data;
 namespace NhaTro.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// SQL Server LocalDB thật cho integration test P2.
-/// Tech-stack quy định: SQL Server database riêng, KHÔNG EF InMemory (không chứng minh được
-/// filtered unique index) và KHÔNG Docker/Testcontainers. Mỗi lần chạy tạo DB riêng, xóa khi xong.
+/// SQL Server LocalDB thật cho integration test.
+/// Tech-stack quy định: dùng SQL Server database riêng, KHÔNG dùng EF InMemory (không chứng minh
+/// được rowversion/filtered index) và KHÔNG Docker/Testcontainers.
+/// Mỗi lần chạy tạo một database riêng, áp migration, xóa khi xong.
 /// </summary>
 public sealed class SqlServerFixture : IAsyncLifetime
 {
@@ -44,9 +45,10 @@ public sealed class SqlServerFixture : IAsyncLifetime
             return;
         }
 
-        // EnsureCreated thay Migrate: DbContext "trần" thiếu phần Identity SchemaVersion=Version3
-        // (bảng passkey) nên EF báo PendingModelChangesWarning khi Migrate. Migration thật vẫn được
-        // kiểm bằng `dotnet ef migrations has-pending-model-changes` ở CI.
+        // Tạo schema theo model hiện tại. Dùng EnsureCreated thay Migrate vì DbContext "trần"
+        // (không qua AddIdentityCore) thiếu phần Identity SchemaVersion=Version3 (bảng passkey),
+        // khiến EF 9 báo PendingModelChangesWarning khi Migrate. Migration thật vẫn được kiểm
+        // bằng `dotnet ef migrations has-pending-model-changes`; ở đây chỉ cần đúng schema Tenant.
         await using var db = CreateContext();
         await db.Database.EnsureCreatedAsync();
     }
@@ -87,6 +89,7 @@ public sealed class SqlServerFixture : IAsyncLifetime
         await using var db = CreateContext();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.UserRoles.ExecuteDeleteAsync();
         await db.RoleClaims.ExecuteDeleteAsync();
         await db.Users.ExecuteDeleteAsync();
@@ -120,7 +123,9 @@ public sealed class SqlServerFixture : IAsyncLifetime
     }
 }
 
-/// <summary>[Fact] chỉ chạy khi có SQL Server LocalDB; nếu không thì Skip để CI không đỏ oan.</summary>
+/// <summary>
+/// [Fact] chỉ chạy khi có SQL Server LocalDB; nếu không thì Skip để CI không đỏ oan.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class SqlServerFactAttribute : FactAttribute
 {

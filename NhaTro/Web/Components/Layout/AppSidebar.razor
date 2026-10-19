@@ -4,7 +4,6 @@
     <a class="app-brand" href="/" aria-label="@L["AppName"]" title="@L["AppName"]"><span class="app-logo"><LucideIcon Name="building" /></span><span class="sidebar-label">@L["AppName"]</span></a>
     <button class="icon-button drawer-close" type="button" data-drawer-close aria-label="@L["CloseNavigation"]"><LucideIcon Name="close" /></button>
     <nav class="sidebar-menu" aria-label="@L["Navigation"]">
-        <NavLink href="/" Match="NavLinkMatch.All" class="nav-item" aria-label="@L["LayoutPreview"]" title="@L["LayoutPreview"]"><LucideIcon Name="home" /><span class="sidebar-label">@L["LayoutPreview"]</span></NavLink>
         @foreach (var item in AppNavigation.Items)
         {
             <AuthorizeView Roles="@item.Roles" Context="menuAuth">
@@ -18,5 +17,6 @@
                 }
             </AuthorizeView>
         }
+        <NavLink href="/" Match="NavLinkMatch.All" class="nav-item" aria-label="@L["LayoutPreview"]" title="@L["LayoutPreview"]"><LucideIcon Name="home" /><span class="sidebar-label">@L["LayoutPreview"]</span></NavLink>
     </nav>
 </aside>

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
-    branches: [main]
+    branches: [main, dev]
 
 jobs:
   build-test:
@@ -14,6 +14,42 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+      # dotnet-ef ghim trong .config/dotnet-tools.json (tái lập được, không phụ thuộc tool toàn cục).
+      - name: Restore công cụ .NET
+        run: dotnet tool restore
       - run: dotnet restore NhaTro/NhaTro.slnx
       - run: dotnet build NhaTro/NhaTro.slnx --no-restore --nologo
+      # Integration test + bước migration dùng SQL Server LocalDB thật; chuẩn bị sẵn (best-effort,
+      # không fail job: nếu runner không có LocalDB thì test tự Skip — xem SqlServerFixture).
+      - name: Chuẩn bị SQL Server LocalDB
+        shell: pwsh
+        run: |
+          if (Get-Command sqllocaldb -ErrorAction SilentlyContinue) {
+            if (-not (sqllocaldb info MSSQLLocalDB 2>$null)) { sqllocaldb create MSSQLLocalDB }
+            sqllocaldb start MSSQLLocalDB
+            sqllocaldb info MSSQLLocalDB
+          } else {
+            Write-Warning "Không có sqllocaldb; integration test SQL sẽ tự bỏ qua."
+          }
+          exit 0
+      # Chặn merge khi model khác migration (thiếu migration): exit code 1 -> fail job.
+      - name: Kiểm tra migration khớp model
+        run: dotnet ef migrations has-pending-model-changes --project NhaTro/Web --startup-project NhaTro/Web --no-build
+      # Chạy thật TOÀN BỘ migration lên một DB trống để bắt lỗi migration/SQL.
+      # Bổ sung cho integration test (EnsureCreated, chỉ kiểm schema Tenant) và has-pending (chỉ kiểm tĩnh).
+      - name: Chạy migration lên DB trống
+        shell: pwsh
+        run: |
+          $db = "NhaTro_CiMigrate"
+          $cs = "Server=(localdb)\MSSQLLocalDB;Database=$db;Trusted_Connection=True"
+          dotnet ef database update --project NhaTro/Web --startup-project NhaTro/Web --no-build --connection $cs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host "Migration áp thành công lên $db."
+          # Dọn DB tạm: ưu tiên sqlcmd; nếu runner không có thì thôi (không đánh đỏ CI).
+          if (Get-Command sqlcmd -ErrorAction SilentlyContinue) {
+            sqlcmd -S "(localdb)\MSSQLLocalDB" -Q "IF DB_ID('$db') IS NOT NULL BEGIN ALTER DATABASE [$db] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$db]; END"
+          } else {
+            Write-Warning "Không có sqlcmd; bỏ qua xóa DB tạm $db."
+          }
+      # Chạy cả Unit, Integration và E2E trong solution.
       - run: dotnet test NhaTro/NhaTro.slnx --no-build --nologo

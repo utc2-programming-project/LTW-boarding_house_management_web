@@ -165,6 +165,8 @@ Web/
 - `Utilities/` là điện nước/dịch vụ; `Common/Utils/` là tiện ích lập trình.
 - `Deposits/` vẫn thuộc P4. Có folder không có nghĩa là tự bổ sung nghiệp vụ cọc.
 
+**VHT-13 (đã triển khai — storage backend dùng chung):** các folder trên không còn rỗng ở phần storage. Code thật gồm `Infrastructure/Storage/` (`IFileStorage`, `LocalFileStorage`, tên tệp do server sinh, chặn path traversal), `Features/Storage/` (`Rules/` quyền + loại/kích thước + nhận dạng nội dung, `Services/FileService`, `Entities/StoredFile`, `Mapping/`, `DTOs/`), `Endpoints/Files/FileEndpoints.cs` (`POST/GET/DELETE /api/files`), `Configuration/Options/StorageOptions.cs` + `Configuration/Validation/StorageOptionsValidator.cs`, `Infrastructure/ErrorHandling/FileUploadExceptionMiddleware.cs`, `Data/Configurations/Storage/StoredFileConfiguration.cs` và migration `AddStorageStoredFiles`. `.gitkeep` tương ứng đã bỏ.
+
 ## 4. Một chức năng / Feature template
 
 ```text
