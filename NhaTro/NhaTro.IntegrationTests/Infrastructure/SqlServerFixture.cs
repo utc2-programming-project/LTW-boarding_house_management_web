@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
@@ -86,11 +87,39 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
+        await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.UserRoles.ExecuteDeleteAsync();
         await db.RoleClaims.ExecuteDeleteAsync();
         await db.Users.ExecuteDeleteAsync();
         await db.Roles.ExecuteDeleteAsync();
+    }
+
+    /// <summary>Seed tài khoản kèm vai trò (OwnerId/UserId là FK thật tới AspNetUsers).</summary>
+    public static async Task SeedAccountAsync(ApplicationDbContext db, string userId, string roleName)
+    {
+        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+        if (role is null)
+        {
+            role = new IdentityRole(roleName);
+            db.Roles.Add(role);
+            await db.SaveChangesAsync();
+        }
+
+        db.Users.Add(new ApplicationUser
+        {
+            Id = userId,
+            UserName = userId,
+            NormalizedUserName = userId.ToUpperInvariant(),
+            SecurityStamp = Guid.NewGuid().ToString(),
+            ConcurrencyStamp = Guid.NewGuid().ToString(),
+            EmailConfirmed = true,
+        });
+        await db.SaveChangesAsync();
+
+        db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = role.Id });
+        await db.SaveChangesAsync();
     }
 }
 

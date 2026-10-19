@@ -1,0 +1,21 @@
+using Web.Features.Accounts;
+
+namespace Web.Features.Properties;
+
+/// <summary>
+/// Ngữ cảnh người gọi service P2 (nhà trọ + phòng).
+/// Service tự kiểm quyền/phạm vi bên trong; không nhận OwnerId/phạm vi từ client.
+/// </summary>
+public sealed record PropertyCaller(string UserId, string Role)
+{
+    public bool IsChuTro => Role == Roles.ChuTro;
+
+    public bool IsQuanLy => Role == Roles.QuanLy;
+
+    public bool IsAdmin => Role == Roles.Admin;
+
+    public bool IsKhachThue => Role == Roles.KhachThue;
+
+    /// <summary>Chủ trọ / Quản lý: được đọc P2 trong phạm vi của mình.</summary>
+    public bool IsManager => IsChuTro || IsQuanLy;
+}
