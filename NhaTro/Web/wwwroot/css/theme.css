@@ -54,11 +54,11 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .lucide-icon { display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle; }
 .app-logo .lucide-icon { width:24px;height:24px; }
 .sidebar-menu { display:flex;flex-direction:column;gap:4px; }
-.nav-item { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:8px;font-size:.875rem;font-weight:500;line-height:1.429;color:var(--text-secondary)!important;text-decoration:none;overflow-wrap:anywhere; }
-.nav-item[href]:hover { background:var(--hover-bg); }
-.nav-item.active { background:var(--accent-soft);color:var(--accent-text)!important;font-weight:600; }
-.nav-item small { display:block;font-size:.75rem;font-weight:400;line-height:1.5;color:var(--text-muted); }
-.nav-item.unavailable { cursor:default; }
+.sidebar-menu .nav-item { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:8px;font-size:.875rem;font-weight:500;line-height:1.429;color:var(--text-secondary)!important;text-decoration:none;overflow-wrap:anywhere; }
+.sidebar-menu .nav-item[href]:hover { background:var(--hover-bg); }
+.sidebar-menu .nav-item.active { background:var(--accent-soft);color:var(--accent-text)!important;font-weight:600; }
+.sidebar-menu .nav-item small { display:block;font-size:.75rem;font-weight:400;line-height:1.5;color:var(--text-muted); }
+.sidebar-menu .nav-item.unavailable { cursor:default; }
 .app-workspace { min-width:0;margin-left:var(--sidebar-width); }
 .app-topbar { position:sticky;top:0;z-index:100;min-height:var(--topbar-height);display:flex;align-items:center;gap:12px;padding:8px 24px;background:var(--topbar-bg);border-bottom:1px solid var(--border); }
 .topbar-title { min-width:0;overflow-wrap:anywhere;font-weight:600; }
@@ -115,15 +115,15 @@ button,a { -webkit-tap-highlight-color:transparent; }
  [data-sidebar-collapsed="true"] .app-sidebar { padding:16px 8px; }
  [data-sidebar-collapsed="true"] .sidebar-label { display:none; }
  [data-sidebar-collapsed="true"] .app-brand { justify-content:center; }
- [data-sidebar-collapsed="true"] .nav-item { justify-content:center;padding:12px; }
+ [data-sidebar-collapsed="true"] .sidebar-menu .nav-item { justify-content:center;padding:12px; }
 }
 @media (min-width:768px) and (max-width:1199px) {
  :root { --sidebar-width:72px;--page-padding:24px; }
  .app-topbar [data-drawer-toggle] { display:none; }
  .app-sidebar { padding:16px 8px; }
  .sidebar-label { display:none; }
- .app-brand,.nav-item { justify-content:center; }
- .nav-item { padding:12px; }
+ .app-brand,.sidebar-menu .nav-item { justify-content:center; }
+ .sidebar-menu .nav-item { padding:12px; }
 }
 @media (max-width:767px) {
  :root { --topbar-height:56px;--page-padding:16px; }
@@ -147,7 +147,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
  .empty-state { padding:24px; }
 }
 @media (prefers-reduced-motion:no-preference) {
- .icon-button,.nav-item,.culture-button { transition:background-color 150ms var(--ease),color 150ms var(--ease); }
+ .icon-button,.sidebar-menu .nav-item,.culture-button { transition:background-color 150ms var(--ease),color 150ms var(--ease); }
  .icon-button:hover .lucide-icon,.icon-button:focus-visible .lucide-icon { animation:icon-nudge 250ms var(--ease) 1; }
  @keyframes icon-nudge { 50% { transform:rotate(-10deg); } }
 }
