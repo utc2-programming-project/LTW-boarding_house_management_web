@@ -1,8 +1,9 @@
-﻿@page "/Account/Login"
+﻿@page "/login"
+@page "/Account/Login"
 
-@using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Forms
 @using Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -10,70 +11,83 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<Shared> L
 
-<PageTitle>Log in</PageTitle>
+@* VHT-8: trang dang nhap theo chuan phong_cach_giao_dien.md.
+   Giu static SSR + form POST vi Identity ghi cookie qua HTTP, khong lam duoc trong circuit Blazor. *@
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+<PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="login-title">
+    <div class="auth-card">
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LoginTitle"]) })" />
+
+        <header class="page-heading auth-heading">
+            <div>
+                <h1 id="login-title">@L["LoginTitle"]</h1>
+                <p>@L["LoginSubtitle"]</p>
+            </div>
+        </header>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@errorMessage</span>
+            </div>
+        }
+
+        <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+            <FormField TValue="string" Id="login-email" Label="@L["EmailLabel"]" Required="true"
+                       For="() => Input.Email">
+                <InputText @bind-Value="Input.Email" id="login-email" class="input"
+                           autocomplete="username webauthn" aria-required="true"
+                           aria-describedby="login-email-error" />
+            </FormField>
+
+            <FormField TValue="string" Id="login-password" Label="@L["PasswordLabel"]" Required="true"
+                       For="() => Input.Password">
+                <div class="password-wrap">
+                    <InputText @bind-Value="Input.Password" id="login-password"
+                               type="password" class="input"
+                               autocomplete="current-password" aria-required="true"
+                               aria-describedby="login-password-error" />
+                    <button type="button" class="password-toggle" data-password-toggle="login-password"
+                            data-show-label="@L["ShowPassword"]" data-hide-label="@L["HidePassword"]"
+                            aria-label="@L["ShowPassword"]" aria-pressed="false">
+                        <span class="pw-icon-show"><LucideIcon Name="eye" /></span>
+                        <span class="pw-icon-hide"><LucideIcon Name="eye-off" /></span>
+                    </button>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <hr />
-                <div class="d-flex flex-column">
-                    <span class="text-secondary mx-auto mt-2">OR</span>
-                    <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn btn-link mx-auto">Log in with a passkey</PasskeySubmit>
-                </div>
-                <hr />
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
+            </FormField>
+
+            <div class="remember-row">
+                <label class="checkbox-label" for="login-remember">
+                    <InputCheckbox @bind-Value="Input.RememberMe" id="login-remember" class="checkbox" />
+                    <span>@L["RememberMe"]</span>
+                </label>
+                <a href="Account/ForgotPassword">@L["ForgotPassword"]</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" disabled="@_submitting">
+                @if (_submitting)
+                {
+                    <span class="spinner" aria-hidden="true"></span>
+                }
+                @L["LoginButton"]
+            </button>
+        </EditForm>
+
+        @* Chi hien o Development khi da co mat khau dev (xem DevQuickLogin.razor). *@
+        <DevQuickLogin />
     </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
-</div>
+</section>
 
 @code {
     private string? errorMessage;
+    private bool _submitting;
     private EditContext editContext = default!;
+    private ValidationMessageStore? messageStore;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -87,78 +101,112 @@
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
-
         editContext = new EditContext(Input);
+        messageStore ??= new ValidationMessageStore(editContext);
+        editContext.OnFieldChanged += (_, _) =>
+        {
+            messageStore.Clear();
+            errorMessage = null;
+        };
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            // Clear the existing external cookie to ensure a clean login process
+            // Xoa cookie dang nhap ngoai (neu co) de bat dau luong dang nhap sach.
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
     }
 
     public async Task LoginUser()
     {
-        if (!string.IsNullOrEmpty(Input.Passkey?.Error))
+        if (_submitting)
         {
-            errorMessage = $"Error: {Input.Passkey.Error}";
             return;
         }
 
-        SignInResult result;
-        if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
-        {
-            // When performing passkey sign-in, don't perform form validation.
-            result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
-        }
-        else
-        {
-            // If doing a password sign-in, validate the form.
-            if (!editContext.Validate())
-            {
-                return;
-            }
+        // Thong bao loi hien bang <ValidationMessage> da dich trong FormField.
+        messageStore!.Clear();
+        errorMessage = null;
+        var valid = true;
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+        if (string.IsNullOrWhiteSpace(Input.Email))
+        {
+            messageStore.Add(() => Input.Email, L["EmailRequired"]);
+            valid = false;
         }
+        else if (!IsValidEmail(Input.Email))
+        {
+            messageStore.Add(() => Input.Email, L["EmailInvalid"]);
+            valid = false;
+        }
+
+        if (string.IsNullOrEmpty(Input.Password))
+        {
+            messageStore.Add(() => Input.Password, L["PasswordRequired"]);
+            valid = false;
+        }
+
+        if (!valid)
+        {
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        _submitting = true;
+
+        var result = await SignInManager.PasswordSignInAsync(
+            Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo(ReturnUrl);
+            Logger.LogInformation("Nguoi dung dang nhap thanh cong.");
+            // ReturnUrl rong -> ve trang chu; tranh NavigateTo("") lam IdentityRedirectManager loi.
+            RedirectManager.RedirectTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+            return;
         }
-        else if (result.RequiresTwoFactor)
+
+        _submitting = false;
+
+        if (result.RequiresTwoFactor)
         {
             RedirectManager.RedirectTo(
                 "Account/LoginWith2fa",
                 new() { ["returnUrl"] = ReturnUrl, ["rememberMe"] = Input.RememberMe });
+            return;
         }
-        else if (result.IsLockedOut)
+
+        if (result.IsLockedOut)
         {
-            Logger.LogWarning("User account locked out.");
+            Logger.LogWarning("Tai khoan dang nhap bi khoa.");
             RedirectManager.RedirectTo("Account/Lockout");
+            return;
         }
-        else
+
+        // Khong noi ro email sai hay mat khau sai (tranh do tai khoan).
+        errorMessage = L["LoginInvalid"];
+    }
+
+    private static bool IsValidEmail(string value)
+    {
+        var trimmed = value.Trim();
+        var at = trimmed.IndexOf('@');
+        if (at <= 0 || at != trimmed.LastIndexOf('@') || at == trimmed.Length - 1)
         {
-            errorMessage = "Error: Invalid login attempt.";
+            return false;
         }
+
+        var domain = trimmed[(at + 1)..];
+        return domain.Contains('.')
+            && !domain.StartsWith('.')
+            && !domain.EndsWith('.')
+            && !trimmed.Contains(' ');
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
         public string Email { get; set; } = "";
 
-        [Required]
-        [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
-        [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
-
-        public PasskeyInputModel? Passkey { get; set; }
     }
 }

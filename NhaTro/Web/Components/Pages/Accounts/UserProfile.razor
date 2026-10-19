@@ -1,0 +1,187 @@
+@page "/profile"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Forms
+
+@inject IAccountService Accounts
+@inject AuthenticationStateProvider AuthState
+@inject IStringLocalizer<Shared> L
+@inject ToastService Toasts
+
+@* VHT-8: ho so ca nhan (/profile). Ca 4 vai tro deu vao duoc, chi sua duoc cua chinh minh. *@
+
+<PageTitle>@L["ProfileTitle"] · @L["AppName"]</PageTitle>
+
+<section aria-labelledby="profile-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ProfileTitle"]) })" />
+
+    <header class="page-heading">
+        <div>
+            <h1 id="profile-title">@L["ProfileTitle"]</h1>
+            <p>@L["ProfileSubtitle"]</p>
+        </div>
+        @if (_profile is not null)
+        {
+            <StatusBadge Tone="@RoleTone(_profile.Role)" Text="@RoleText(_profile.Role)" />
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_profile is null)
+    {
+        <EmptyStateCard Title="@L["NoData"]" Description="@L["ProfileLoadFailed"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="profile-grid">
+            <div class="preview-card">
+                <h2 class="card-title">@L["ProfileInfoSection"]</h2>
+
+                <EditForm EditContext="_editContext" OnValidSubmit="SaveProfileAsync">
+                    <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
+                               For="() => _form.FullName">
+                        <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
+                                   aria-describedby="profile-fullname-error" />
+                    </FormField>
+
+                    <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
+                               Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
+                        <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
+                                   aria-describedby="profile-phone-hint profile-phone-error" />
+                    </FormField>
+
+                    <FormField TValue="string" Id="profile-email" Label="@L["EmailLabel"]"
+                               Hint="@L["EmailReadonlyHint"]" For="() => _emailReadonly">
+                        <InputText @bind-Value="_emailReadonly" id="profile-email" readonly />
+                    </FormField>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" disabled="@_saving">
+                            @if (_saving)
+                            {
+                                <span class="spinner" aria-hidden="true"></span>
+                            }
+                            @L["SaveChanges"]
+                        </button>
+                        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="ResetForm">
+                            @L["Cancel"]
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+
+            <div class="preview-card">
+                <h2 class="card-title">@L["SecuritySection"]</h2>
+                <p class="note">@L["ChangePasswordHint"]</p>
+                <a class="btn btn-secondary" href="Account/Manage/ChangePassword">
+                    <LucideIcon Name="key" />
+                    @L["ChangePassword"]
+                </a>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private MyProfileDto? _profile;
+    private bool _loading = true;
+    private bool _saving;
+
+    private EditContext _editContext = default!;
+    private ProfileForm _form = new();
+    private string _emailReadonly = string.Empty;
+
+    private sealed class ProfileForm
+    {
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = new EditContext(_form);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            _profile = null;
+            _loading = false;
+            return;
+        }
+
+        var result = await Accounts.GetMyProfileAsync(userId);
+        _profile = result.Succeeded ? result.Value : null;
+        if (_profile is not null)
+        {
+            _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+            _emailReadonly = _profile.Email ?? _profile.UserName;
+            _editContext = new EditContext(_form);
+        }
+
+        _loading = false;
+    }
+
+    private void ResetForm()
+    {
+        if (_profile is null) return;
+        _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+        _editContext = new EditContext(_form);
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return;
+
+        _saving = true;
+        var result = await Accounts.UpdateMyProfileAsync(
+            new UpdateMyProfileRequest { FullName = _form.FullName, PhoneNumber = _form.PhoneNumber },
+            userId);
+        _saving = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        _profile = result.Value;
+        _emailReadonly = _profile?.Email ?? _emailReadonly;
+        Toasts.Success(L["ProfileSaved"]);
+    }
+
+    private string MessageFor(string? code) => code switch
+    {
+        AccountErrorCodes.InvalidPhone => L["ErrorInvalidPhone"],
+        AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
+        _ => L["ErrorGeneric"],
+    };
+
+    private string RoleText(string role) => L[AccountPermissionRules.RoleResourceKey(role)];
+
+    private static BadgeTone RoleTone(string role) => role switch
+    {
+        Roles.Admin => BadgeTone.Error,
+        Roles.ChuTro => BadgeTone.Info,
+        Roles.QuanLy => BadgeTone.Success,
+        Roles.KhachThue => BadgeTone.Neutral,
+        _ => BadgeTone.Neutral,
+    };
+}

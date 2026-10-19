@@ -44,8 +44,17 @@
         document.querySelector(".skip-link")?.setAttribute("inert", "");
         syncControls();
     }
-    async function setCulture(button) {
-        const control = button.closest(".culture-control");
+    // VHT-8: nút hiện/ẩn mật khẩu ở trang đăng nhập (static SSR nên xử lý bằng JS thuần).
+    function togglePassword(button) {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.setAttribute("aria-pressed", String(show));
+        const label = show ? button.dataset.hideLabel : button.dataset.showLabel;
+        if (label) button.setAttribute("aria-label", label);
+    }
+    async function setCulture(button) {        const control = button.closest(".culture-control");
         if (!control || control.getAttribute("aria-busy") === "true" || button.getAttribute("aria-pressed") === "true") return;
         const error = control.querySelector("[data-culture-error]");
         const status = control.querySelector("[data-culture-status]");
@@ -91,6 +100,8 @@
             closeDrawer();
         } else if (button?.matches("[data-culture]")) {
             void setCulture(button);
+        } else if (button?.matches("[data-password-toggle]")) {
+            togglePassword(button);
         }
         if (event.target.closest(".sidebar-menu a,.app-brand")) closeDrawer(false);
         if (event.target.closest("#blazor-error-ui .dismiss")) document.getElementById("blazor-error-ui").style.display = "none";
