@@ -87,6 +87,8 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
+        // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
+        await db.StoredFiles.ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
@@ -102,8 +104,18 @@ public sealed class SqlServerFixture : IAsyncLifetime
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
         if (role is null)
         {
-            role = new IdentityRole(roleName);
+            role = new IdentityRole(roleName)
+            {
+                // UserManager.GetUsersInRoleAsync tra theo NormalizedName; seed thang vao Db
+                // phai tu dien cot nay, neu khong RoleService khong thay Admin cuoi cung.
+                NormalizedName = roleName.ToUpperInvariant(),
+            };
             db.Roles.Add(role);
+            await db.SaveChangesAsync();
+        }
+        else if (role.NormalizedName is null)
+        {
+            role.NormalizedName = roleName.ToUpperInvariant();
             await db.SaveChangesAsync();
         }
 
