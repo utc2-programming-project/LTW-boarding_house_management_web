@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Localization;
 using Web.Data;
 using Web.Data.Seeding;
 using Web.Features.Accounts;
+using Web.Features.Properties;
+using Web.Features.Rooms;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
@@ -71,6 +73,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
 });
 builder.Services.AddScoped<RoleService>();
+// VHT-7 (dot 1C): service nha tro/phong P2. Policy cong tac va kiem hop dong la diem goi cho VHT-94/VHT-98.
+builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomChangePolicy, RoomChangePolicyStub>();
+builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.Configure<RequestLocalizationOptions>(options =>

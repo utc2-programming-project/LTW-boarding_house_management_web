@@ -51,10 +51,21 @@ LTW/
 │   │   │   └── Migrations/              # Identity, CoreSchema, snapshot
 │   │   ├── Features/
 │   │   │   ├── Properties/
-│   │   │   │   └── Entities/Property.cs
+│   │   │   │   ├── Entities/Property.cs
+│   │   │   │   ├── DTOs/                # PropertyFilter/ListItem/Detail/Save
+│   │   │   │   ├── Mapping/PropertyMapping.cs
+│   │   │   │   ├── PropertyCaller.cs, PropertyResult.cs, PropertyErrorCodes.cs
+│   │   │   │   ├── IPropertyService.cs, PropertyService.cs   # VHT-7 đợt 1C
+│   │   │   │   └── PropertyScope.cs
 │   │   │   ├── Rooms/
 │   │   │   │   ├── Entities/Room.cs
-│   │   │   │   └── Enums/RoomStatus.cs
+│   │   │   │   ├── Enums/RoomStatus.cs
+│   │   │   │   ├── DTOs/                # Filter/ListItem/Detail/Save/Option/OptionRequest
+│   │   │   │   ├── Mapping/RoomMapping.cs
+│   │   │   │   ├── IRoomService.cs, RoomService.cs          # VHT-7 đợt 1C
+│   │   │   │   ├── IRoomChangePolicy.cs                     # điểm gọi VHT-94
+│   │   │   │   ├── IRoomUsageChecker.cs                     # điểm gọi VHT-98
+│   │   │   │   └── RoomScope.cs, RoomResult.cs, RoomErrorCodes.cs
 │   │   │   └── Tenants/
 │   │   │       └── Entities/Tenant.cs
 │   │   └── wwwroot/                    # app.css và static assets template
@@ -77,7 +88,7 @@ LTW/
     └── archive/
 ```
 
-**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage.
+**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage. P2 (nhà trọ/phòng) đã có DTO + service SQL ở `Features/Properties/` và `Features/Rooms/` (VHT-7), chưa có trang UI.
 
 ## 3. Khung thư mục đã tạo / Created folder scaffold
 

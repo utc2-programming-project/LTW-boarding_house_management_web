@@ -1,0 +1,134 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Web.Data;
+
+namespace NhaTro.IntegrationTests.Infrastructure;
+
+/// <summary>
+/// SQL Server LocalDB thật cho integration test P2.
+/// Tech-stack quy định: SQL Server database riêng, KHÔNG EF InMemory (không chứng minh được
+/// filtered unique index) và KHÔNG Docker/Testcontainers. Mỗi lần chạy tạo DB riêng, xóa khi xong.
+/// </summary>
+public sealed class SqlServerFixture : IAsyncLifetime
+{
+    private const string LocalDbMaster =
+        @"Server=(localdb)\MSSQLLocalDB;Database=master;Trusted_Connection=True;Connect Timeout=15";
+
+    private readonly string _databaseName = $"NhaTro_It_{Guid.NewGuid():N}";
+
+    /// <summary>False khi máy/CI không có SQL Server LocalDB: mọi test đánh dấu Skip.</summary>
+    public static bool Available { get; } = Probe();
+
+    public string ConnectionString =>
+        $@"Server=(localdb)\MSSQLLocalDB;Database={_databaseName};Trusted_Connection=True;MultipleActiveResultSets=true;Connect Timeout=15";
+
+    private static bool Probe()
+    {
+        try
+        {
+            using var connection = new SqlConnection(LocalDbMaster);
+            connection.Open();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task InitializeAsync()
+    {
+        if (!Available)
+        {
+            return;
+        }
+
+        // EnsureCreated thay Migrate: DbContext "trần" thiếu phần Identity SchemaVersion=Version3
+        // (bảng passkey) nên EF báo PendingModelChangesWarning khi Migrate. Migration thật vẫn được
+        // kiểm bằng `dotnet ef migrations has-pending-model-changes` ở CI.
+        await using var db = CreateContext();
+        await db.Database.EnsureCreatedAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (!Available)
+        {
+            return;
+        }
+
+        try
+        {
+            SqlConnection.ClearAllPools();
+            await using var connection = new SqlConnection(LocalDbMaster);
+            await connection.OpenAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                $"IF DB_ID('{_databaseName}') IS NOT NULL " +
+                $"ALTER DATABASE [{_databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; " +
+                $"IF DB_ID('{_databaseName}') IS NOT NULL DROP DATABASE [{_databaseName}];";
+            await command.ExecuteNonQueryAsync();
+        }
+        catch (SqlException)
+        {
+            // Dọn dẹp best-effort: database có thể chưa được tạo nếu InitializeAsync lỗi.
+        }
+    }
+
+    public ApplicationDbContext CreateContext() =>
+        new(new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlServer(ConnectionString)
+            .Options);
+
+    /// <summary>Xóa dữ liệu giữa các test, theo thứ tự khóa ngoại.</summary>
+    public async Task ResetAsync()
+    {
+        await using var db = CreateContext();
+        await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.UserRoles.ExecuteDeleteAsync();
+        await db.RoleClaims.ExecuteDeleteAsync();
+        await db.Users.ExecuteDeleteAsync();
+        await db.Roles.ExecuteDeleteAsync();
+    }
+
+    /// <summary>Seed tài khoản kèm vai trò (OwnerId/UserId là FK thật tới AspNetUsers).</summary>
+    public static async Task SeedAccountAsync(ApplicationDbContext db, string userId, string roleName)
+    {
+        var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+        if (role is null)
+        {
+            role = new IdentityRole(roleName);
+            db.Roles.Add(role);
+            await db.SaveChangesAsync();
+        }
+
+        db.Users.Add(new ApplicationUser
+        {
+            Id = userId,
+            UserName = userId,
+            NormalizedUserName = userId.ToUpperInvariant(),
+            SecurityStamp = Guid.NewGuid().ToString(),
+            ConcurrencyStamp = Guid.NewGuid().ToString(),
+            EmailConfirmed = true,
+        });
+        await db.SaveChangesAsync();
+
+        db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = role.Id });
+        await db.SaveChangesAsync();
+    }
+}
+
+/// <summary>[Fact] chỉ chạy khi có SQL Server LocalDB; nếu không thì Skip để CI không đỏ oan.</summary>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class SqlServerFactAttribute : FactAttribute
+{
+    public SqlServerFactAttribute()
+    {
+        if (!SqlServerFixture.Available)
+        {
+            Skip = "Không có SQL Server LocalDB trên máy này (bỏ qua integration test).";
+        }
+    }
+}
