@@ -251,3 +251,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// VHT-14: WebApplicationFactory can resolve the entry-point assembly for HTTP/auth integration tests.
+public partial class Program { }
