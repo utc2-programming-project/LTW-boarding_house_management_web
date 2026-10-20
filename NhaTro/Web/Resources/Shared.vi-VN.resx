@@ -505,7 +505,6 @@
   <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
   <data name="TenantsTitle" xml:space="preserve"><value>Khách thuê</value></data>
   <data name="TenantsSubtitle" xml:space="preserve"><value>Quản lý hồ sơ và thông tin định danh người lưu trú</value></data>
-  <data name="TenantLiveDataBadge" xml:space="preserve"><value>Dữ liệu SQL</value></data>
   <data name="TenantAdd" xml:space="preserve"><value>Tiếp nhận khách</value></data>
   <data name="TenantExport" xml:space="preserve"><value>Xuất danh sách</value></data>
   <data name="TenantStatTotal" xml:space="preserve"><value>Tổng khách thuê</value></data>

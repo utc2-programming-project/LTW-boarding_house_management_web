@@ -505,7 +505,6 @@
   <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>
   <data name="TenantsTitle" xml:space="preserve"><value>Tenants</value></data>
   <data name="TenantsSubtitle" xml:space="preserve"><value>Manage tenant records and identity details</value></data>
-  <data name="TenantLiveDataBadge" xml:space="preserve"><value>SQL data</value></data>
   <data name="TenantAdd" xml:space="preserve"><value>Admit tenant</value></data>
   <data name="TenantExport" xml:space="preserve"><value>Export list</value></data>
   <data name="TenantStatTotal" xml:space="preserve"><value>Total tenants</value></data>

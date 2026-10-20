@@ -2,8 +2,6 @@
 .tenant-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .tenant-page-heading p { margin: 8px 0 0; }
 .tenant-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-.tenant-live-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 24px; padding: 2px 9px; border: 1px solid var(--neutral-border); border-radius: 999px; background: var(--neutral-bg); color: var(--neutral-text); font-size: .6875rem; font-weight: 600; }
-.tenant-live-badge > span { width: 7px; height: 7px; border-radius: 50%; background: var(--success-text); }
 .tenant-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .tenant-page-actions .btn { min-height: 44px; }
 
@@ -24,8 +22,8 @@
 .tenant-filter-card { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
 .tenant-filter-row { display: flex; align-items: center; gap: 10px; }
 .tenant-search-field { position: relative; display: flex; flex: 1 1 340px; align-items: center; min-width: 200px; }
-.tenant-search-field > .lucide-icon { position: absolute; left: 12px; color: var(--text-muted); }
-.tenant-search-field .input { padding-left: 40px; padding-right: 48px; border-color: transparent; background: var(--surface-subtle); }
+.tenant-search-icon { position: absolute; z-index: 1; left: 12px; display: inline-flex; color: var(--text-muted); pointer-events: none; }
+.tenant-search-field ::deep .input { padding-left: 40px; padding-right: 48px; border-color: transparent; background: var(--surface-subtle); }
 .tenant-filter-select { flex: 0 1 170px; min-width: 135px; }
 .tenant-filter-select .input { border-color: transparent; background-color: var(--surface-subtle); }
 .tenant-sort-select { flex-basis: 190px; }

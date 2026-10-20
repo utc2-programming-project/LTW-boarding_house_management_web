@@ -13,7 +13,6 @@
         <div>
             <div class="tenant-title-row">
                 <h1 id="tenants-title">@L["TenantsTitle"]</h1>
-                <span class="tenant-live-badge"><span aria-hidden="true"></span>@L["TenantLiveDataBadge"]</span>
             </div>
             <p>@L["TenantsSubtitle"]</p>
         </div>
@@ -70,7 +69,7 @@
         <div class="tenant-filter-row">
             <div class="tenant-search-field">
                 <label class="sr-only" for="tenant-search">@L["TenantSearch"]</label>
-                <LucideIcon Name="search" />
+                <span class="tenant-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                 <InputText id="tenant-search" class="input" @bind-Value="_keyword" @bind-Value:after="ResetTableAsync"
                            placeholder="@L["TenantSearchHint"]" autocomplete="off" />
             </div>
