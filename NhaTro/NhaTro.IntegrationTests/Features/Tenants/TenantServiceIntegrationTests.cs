@@ -16,7 +16,7 @@ namespace NhaTro.IntegrationTests.Features.Tenants;
 public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     : IClassFixture<SqlServerFixture>
 {
-    private static readonly TenantCaller Manager = new("manager-1", Roles.ChuTro);
+    private static readonly TenantCaller Owner = new("owner-1", Roles.ChuTro);
 
     // ---------- Tiêu chí 1: lưu rồi tải lại đúng ----------
 
@@ -39,7 +39,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
             IdIssuedDate = new DateOnly(2021, 1, 2),
             IdIssuedPlace = " Cục Cảnh sát ",
             Note = " ghi chú nội bộ ",
-        }, Manager);
+        }, Owner);
 
         Assert.True(created.Succeeded, created.ErrorMessage);
         var tenant = created.Tenant!;
@@ -59,7 +59,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
 
         // Đọc lại bằng context mới (không dùng cache của context vừa ghi).
         await using var reloadDb = fixture.CreateContext();
-        var reloaded = await new TenantService(reloadDb, TimeProvider.System).GetAsync(tenant.Id, Manager);
+        var reloaded = await new TenantService(reloadDb, TimeProvider.System).GetAsync(tenant.Id, Owner);
 
         Assert.True(reloaded.Succeeded, reloaded.ErrorMessage);
         Assert.Equal(tenant.Id, reloaded.Tenant!.Id);
@@ -76,7 +76,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var service = new TenantService(db, TimeProvider.System);
 
-        var created = await service.CreateAsync(NewTenant("An", "0901234567"), Manager);
+        var created = await service.CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
         var staleVersion = created.Tenant.RowVersion;
 
@@ -85,7 +85,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
             FullName = "An lần 1",
             PhoneNumber = "0901234567",
             RowVersion = staleVersion,
-        }, Manager);
+        }, Owner);
         Assert.True(first.Succeeded, first.ErrorMessage);
 
         var second = await service.UpdateAsync(id, new UpdateTenantRequest
@@ -93,7 +93,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
             FullName = "An lần 2",
             PhoneNumber = "0901234567",
             RowVersion = staleVersion,
-        }, Manager);
+        }, Owner);
 
         Assert.False(second.Succeeded);
         Assert.Equal(TenantErrorCodes.ConcurrencyConflict, second.ErrorCode);
@@ -107,11 +107,11 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var service = new TenantService(db, TimeProvider.System);
 
         var first = await service.CreateAsync(
-            NewTenant("An", "0901111111", idNumber: "079201004821"), Manager);
+            NewTenant("An", "0901111111", idNumber: "079201004821"), Owner);
         Assert.True(first.Succeeded, first.ErrorMessage);
 
         var second = await service.CreateAsync(
-            NewTenant("Bình", "0902222222", idNumber: "079 201 004821"), Manager);
+            NewTenant("Bình", "0902222222", idNumber: "079 201 004821"), Owner);
 
         Assert.False(second.Succeeded);
         Assert.Equal(TenantErrorCodes.DuplicateTenant, second.ErrorCode);
@@ -129,11 +129,11 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
 
         var created = await new TenantService(db, TimeProvider.System)
-            .CreateAsync(NewTenant("An", "0901234567"), Manager);
+            .CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
 
         var linked = await new TenantService(db, TimeProvider.System)
-            .LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Manager);
+            .LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
 
         Assert.True(linked.Succeeded, linked.ErrorMessage);
         Assert.True(linked.Tenant!.HasAccount);
@@ -156,37 +156,37 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
 
         var service = new TenantService(db, TimeProvider.System);
-        var a = await service.CreateAsync(NewTenant("An", "0901111111"), Manager);
-        var b = await service.CreateAsync(NewTenant("Bình", "0902222222"), Manager);
+        var a = await service.CreateAsync(NewTenant("An", "0901111111"), Owner);
+        var b = await service.CreateAsync(NewTenant("Bình", "0902222222"), Owner);
         var idA = a.Tenant!.Id;
         var idB = b.Tenant!.Id;
 
         // Tài khoản không tồn tại.
-        var missing = await service.LinkAccountAsync(idA, "khong-ton-tai", a.Tenant.RowVersion, Manager);
+        var missing = await service.LinkAccountAsync(idA, "khong-ton-tai", a.Tenant.RowVersion, Owner);
         Assert.Equal(TenantErrorCodes.InvalidRequest, missing.ErrorCode);
 
         // Tài khoản tồn tại nhưng không phải khách thuê.
-        var wrongRole = await service.LinkAccountAsync(idA, "chu-tro-1", a.Tenant.RowVersion, Manager);
+        var wrongRole = await service.LinkAccountAsync(idA, "chu-tro-1", a.Tenant.RowVersion, Owner);
         Assert.Equal(TenantErrorCodes.InvalidRequest, wrongRole.ErrorCode);
 
         // Gắn đúng tài khoản khách thuê.
-        var ok = await service.LinkAccountAsync(idA, "khach-1", a.Tenant.RowVersion, Manager);
+        var ok = await service.LinkAccountAsync(idA, "khach-1", a.Tenant.RowVersion, Owner);
         Assert.True(ok.Succeeded, ok.ErrorMessage);
 
         // Cùng tài khoản gắn cho hồ sơ thứ hai.
-        var duplicated = await service.LinkAccountAsync(idB, "khach-1", b.Tenant.RowVersion, Manager);
+        var duplicated = await service.LinkAccountAsync(idB, "khach-1", b.Tenant.RowVersion, Owner);
         Assert.Equal(TenantErrorCodes.AccountAlreadyLinked, duplicated.ErrorCode);
 
         // Hồ sơ đã có tài khoản: không cho ghi đè.
-        var reLink = await service.LinkAccountAsync(idA, "khach-1", ok.Tenant!.RowVersion, Manager);
+        var reLink = await service.LinkAccountAsync(idA, "khach-1", ok.Tenant!.RowVersion, Owner);
         Assert.Equal(TenantErrorCodes.AccountAlreadyLinked, reLink.ErrorCode);
 
         // Gỡ rồi gắn sang hồ sơ B được.
-        var unlinked = await service.UnlinkAccountAsync(idA, ok.Tenant.RowVersion, Manager);
+        var unlinked = await service.UnlinkAccountAsync(idA, ok.Tenant.RowVersion, Owner);
         Assert.True(unlinked.Succeeded, unlinked.ErrorMessage);
         Assert.False(unlinked.Tenant!.HasAccount);
 
-        var moved = await service.LinkAccountAsync(idB, "khach-1", b.Tenant.RowVersion, Manager);
+        var moved = await service.LinkAccountAsync(idB, "khach-1", b.Tenant.RowVersion, Owner);
         Assert.True(moved.Succeeded, moved.ErrorMessage);
     }
 
@@ -201,10 +201,10 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
 
         var service = new TenantService(db, TimeProvider.System);
         var created = await service.CreateAsync(
-            NewTenant("An", "0901234567", idNumber: "079201004821", note: "nội bộ"), Manager);
+            NewTenant("An", "0901234567", idNumber: "079201004821", note: "nội bộ"), Owner);
         var id = created.Tenant!.Id;
 
-        var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Manager);
+        var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
 
         await using var ownDb = fixture.CreateContext();
@@ -221,7 +221,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.True(updated.Succeeded, updated.ErrorMessage);
 
         await using var checkDb = fixture.CreateContext();
-        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Manager);
+        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Owner);
         var detail = reloaded.Tenant!;
 
         // Ba trường khách được sửa.
@@ -257,6 +257,10 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => service.ListAsync(new TenantFilterRequest(), admin));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.GetSummaryAsync(admin));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.SearchUnlinkedAccountsAsync(null, 20, admin));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => service.CreateAsync(NewTenant("An", "0901234567"), admin));
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -301,9 +305,9 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var service = new TenantService(db, TimeProvider.System);
 
         var created = await service.CreateAsync(
-            NewTenant("An", "0901234567", note: "nội bộ"), Manager);
+            NewTenant("An", "0901234567", note: "nội bộ"), Owner);
         var id = created.Tenant!.Id;
-        var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Manager);
+        var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
 
         var khach = new TenantCaller("khach-1", Roles.KhachThue);
@@ -329,13 +333,13 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var service = new TenantService(db, TimeProvider.System);
 
         var tooLongName = await service.CreateAsync(
-            NewTenant(new string('A', 201), "0901234567"), Manager);
+            NewTenant(new string('A', 201), "0901234567"), Owner);
         Assert.False(tooLongName.Succeeded);
         Assert.Equal(TenantErrorCodes.InvalidRequest, tooLongName.ErrorCode);
 
         // Chuỗi thô dài nhưng sau Normalize (gộp khoảng trắng) vẫn hợp lệ -> phải lưu được.
         var manySpaces = await service.CreateAsync(
-            NewTenant("An" + new string(' ', 400), "0901234567"), Manager);
+            NewTenant("An" + new string(' ', 400), "0901234567"), Owner);
         Assert.True(manySpaces.Succeeded, manySpaces.ErrorMessage);
         Assert.Equal("An", manySpaces.Tenant!.FullName);
     }
@@ -351,7 +355,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
         var created = await service.CreateAsync(
-            NewTenant("An", "0901234567", idNumber: "079201004821"), Manager);
+            NewTenant("An", "0901234567", idNumber: "079201004821"), Owner);
         var id = created.Tenant!.Id;
         Assert.Equal("079201004821", created.Tenant.IdNumber); // Chủ trọ thấy đầy đủ
 
@@ -372,7 +376,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal("********4821", updated.Tenant!.IdNumber);
 
         await using var checkDb = fixture.CreateContext();
-        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Manager);
+        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Owner);
         Assert.Equal("0909999999", reloaded.Tenant!.PhoneNumber);
         Assert.Equal("079201004821", reloaded.Tenant.IdNumber);
 
@@ -387,8 +391,52 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.True(changed.Succeeded, changed.ErrorMessage);
         Assert.Equal("********4999", changed.Tenant!.IdNumber);
 
-        var final = await service.GetAsync(id, Manager);
+        var final = await service.GetAsync(id, Owner);
         Assert.Equal("079201004999", final.Tenant!.IdNumber);
+    }
+
+    [SqlServerFact]
+    public async Task Summary_va_tai_khoan_chua_lien_ket_theo_dung_quyen()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SeedAccountAsync(db, "tenant-linked", Roles.KhachThue);
+        await SeedAccountAsync(db, "tenant-free", Roles.KhachThue);
+        await SeedAccountAsync(db, "manager-account", Roles.QuanLy);
+
+        var service = new TenantService(db, TimeProvider.System);
+        var created = await service.CreateAsync(
+            NewTenant("Nguyễn B", "0901234567", "079201004821"), Owner);
+        Assert.True(created.Succeeded, created.ErrorMessage);
+
+        var linked = await service.LinkAccountAsync(
+            created.Tenant!.Id, "tenant-linked", created.Tenant.RowVersion, Owner);
+        Assert.True(linked.Succeeded, linked.ErrorMessage);
+
+        var ownerSummary = await service.GetSummaryAsync(Owner);
+        var manager = new TenantCaller("manager-account", Roles.QuanLy);
+        var managerSummary = await service.GetSummaryAsync(manager);
+        var available = await service.SearchUnlinkedAccountsAsync(null, 20, Owner);
+        var managerRows = await service.ListAsync(new TenantFilterRequest(), manager);
+        var managerDetail = await service.GetAsync(created.Tenant!.Id, manager);
+
+        Assert.Equal(1, ownerSummary.TotalCount);
+        Assert.Equal(1, ownerSummary.ActiveCount);
+        Assert.Equal(1, ownerSummary.LinkedAccountCount);
+        Assert.Equal(1, ownerSummary.WithIdNumberCount);
+        Assert.Equal(0, managerSummary.LinkedAccountCount);
+        Assert.Null(managerRows.Items.Single().HasAccount);
+        Assert.True(managerDetail.Succeeded);
+        Assert.Null(managerDetail.Tenant!.HasAccount);
+        Assert.Single(available);
+        Assert.Equal("tenant-free", available[0].UserId);
+        Assert.Equal("tenant-free", available[0].DisplayName);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.SearchUnlinkedAccountsAsync(null, 20, manager));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.ListAsync(new TenantFilterRequest { HasAccount = true }, manager));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.LinkAccountAsync(created.Tenant.Id, "tenant-free", created.Tenant.RowVersion, manager));
     }
 
     private static CreateTenantRequest NewTenant(

@@ -14,6 +14,22 @@ namespace Web.Features.Tenants;
 /// </summary>
 public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) : ITenantService
 {
+    public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
+    {
+        EnsureManager(caller);
+
+        var query = ScopeQuery(caller).AsNoTracking();
+        return new TenantListSummaryDto
+        {
+            TotalCount = await query.CountAsync(ct),
+            ActiveCount = await query.CountAsync(t => t.IsActive, ct),
+            LinkedAccountCount = caller.Role == Accounts.Roles.ChuTro
+                ? await query.CountAsync(t => t.UserId != null, ct)
+                : 0,
+            WithIdNumberCount = await query.CountAsync(t => t.CitizenId != null && t.CitizenId != "", ct),
+        };
+    }
+
     public async Task<PagedResult<TenantListItemDto>> ListAsync(
         TenantFilterRequest filter, TenantCaller caller, CancellationToken ct = default)
     {
@@ -21,6 +37,12 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         filter.Normalize();
 
         var query = ApplyKeyword(ScopeQuery(caller).AsNoTracking(), filter.Keyword);
+        if (filter.HasAccount is not null && !caller.CanRevealIdNumber)
+        {
+            // Không cho Quản lý suy ra trạng thái liên kết tài khoản qua số dòng trả về (D9).
+            throw Forbidden(caller);
+        }
+
         if (filter.IsActive is { } isActive)
         {
             query = query.Where(t => t.IsActive == isActive);
@@ -45,11 +67,54 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
 
         return new PagedResult<TenantListItemDto>
         {
-            Items = rows.Select(t => TenantMapping.ToListItem(t)).ToList(),
+            Items = rows.Select(t => TenantMapping.ToListItem(
+                t, includeAccountStatus: caller.CanRevealIdNumber)).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
             TotalCount = total,
         };
+    }
+
+    public async Task<List<TenantAccountOptionDto>> SearchUnlinkedAccountsAsync(
+        string? keyword, int limit, TenantCaller caller, CancellationToken ct = default)
+    {
+        EnsureOwner(caller);
+
+        limit = Math.Clamp(limit, 1, 50);
+        keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+
+        var tenantRoleIds = db.Roles.AsNoTracking()
+            .Where(role => role.Name == Accounts.Roles.KhachThue)
+            .Select(role => role.Id);
+
+        var query = db.Users.AsNoTracking()
+            .Where(user => db.UserRoles.Any(userRole =>
+                userRole.UserId == user.Id && tenantRoleIds.Contains(userRole.RoleId)))
+            .Where(user => !db.Tenants.Any(tenant => tenant.UserId == user.Id));
+
+        if (keyword is not null)
+        {
+            query = query.Where(user =>
+                (user.FullName != null && user.FullName.Contains(keyword))
+                || (user.Email != null && user.Email.Contains(keyword))
+                || (user.PhoneNumber != null && user.PhoneNumber.Contains(keyword)));
+        }
+
+        var users = await query
+            .OrderBy(user => user.FullName)
+            .ThenBy(user => user.Email)
+            .Take(limit)
+            .Select(user => new TenantAccountOptionDto
+            {
+                UserId = user.Id,
+                DisplayName = user.FullName != null && user.FullName != ""
+                    ? user.FullName
+                    : user.Email ?? user.UserName ?? user.Id,
+                Email = user.Email,
+            })
+            .ToListAsync(ct);
+
+        return users;
     }
 
     public async Task<TenantResult> GetAsync(int id, TenantCaller caller, CancellationToken ct = default)
@@ -59,7 +124,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             var entity = await ScopeQuery(caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
             return entity is null
                 ? NotFound()
-                : TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+                : TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+                    revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
         }
 
         if (caller.IsTenant)
@@ -128,7 +194,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
                 return TenantResult.Failure(
                     TenantErrorCodes.DuplicatePhone,
                     TenantErrorMessages.DuplicatePhone,
-                    phoneDuplicates.Select(t => TenantMapping.ToListItem(t)).ToList());
+                    phoneDuplicates.Select(t => TenantMapping.ToListItem(
+                        t, includeAccountStatus: caller.CanRevealIdNumber)).ToList());
             }
         }
 
@@ -148,7 +215,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UpdateAsync(
@@ -208,7 +276,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
                 return TenantResult.Failure(
                     TenantErrorCodes.DuplicatePhone,
                     TenantErrorMessages.DuplicatePhone,
-                    phoneDuplicates.Select(t => TenantMapping.ToListItem(t)).ToList());
+                    phoneDuplicates.Select(t => TenantMapping.ToListItem(
+                        t, includeAccountStatus: caller.CanRevealIdNumber)).ToList());
             }
         }
 
@@ -229,7 +298,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UpdateOwnAsync(
@@ -301,7 +371,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         // Trạng thái không đổi: trả về hồ sơ hiện tại, không ghi UpdatedAt.
         if (entity.IsActive == isActive)
         {
-            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+                revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
         }
 
         if (isActive)
@@ -336,13 +407,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> LinkAccountAsync(
         int id, string accountUserId, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
-        EnsureManager(caller);
+        EnsureOwner(caller);
 
         if (string.IsNullOrWhiteSpace(accountUserId) ||
             !TryParseRowVersion(rowVersion, out var expectedVersion))
@@ -396,13 +468,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.AccountAlreadyLinked, TenantErrorMessages.AccountAlreadyLinked);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
     public async Task<TenantResult> UnlinkAccountAsync(
         int id, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
-        EnsureManager(caller);
+        EnsureOwner(caller);
 
         if (!TryParseRowVersion(rowVersion, out var expectedVersion))
         {
@@ -418,7 +491,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         // Chưa gắn tài khoản: trả nguyên trạng, không ghi UpdatedAt.
         if (entity.UserId is null)
         {
-            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+            return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+                revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
         }
 
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
@@ -434,7 +508,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
         }
 
-        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: caller.CanRevealIdNumber));
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
     public async Task<List<TenantPickerItemDto>> SearchForPickerAsync(
@@ -547,7 +622,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             ? TenantResult.Failure(
                 TenantErrorCodes.DuplicateTenant,
                 TenantErrorMessages.DuplicateTenant,
-                [TenantMapping.ToListItem(duplicate)])
+                [TenantMapping.ToListItem(duplicate, includeAccountStatus: caller.CanRevealIdNumber)])
             : TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
     }
 
@@ -583,6 +658,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
     private static void EnsureManager(TenantCaller caller)
     {
         if (!caller.IsManager)
+        {
+            throw Forbidden(caller);
+        }
+    }
+
+    private static void EnsureOwner(TenantCaller caller)
+    {
+        if (!caller.CanRevealIdNumber)
         {
             throw Forbidden(caller);
         }

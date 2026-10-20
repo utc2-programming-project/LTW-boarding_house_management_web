@@ -67,7 +67,12 @@ LTW/
 │   │   │   │   ├── IRoomUsageChecker.cs                     # điểm gọi VHT-98
 │   │   │   │   └── RoomScope.cs, RoomResult.cs, RoomErrorCodes.cs
 │   │   │   └── Tenants/
-│   │   │       └── Entities/Tenant.cs
+│   │   │       ├── Entities/Tenant.cs
+│   │   │       ├── DTOs/, Mapping/, Enums/
+│   │   │       ├── TenantService.cs, TenantCaller.cs, TenantScope.cs
+│   │   │       ├── Services/TenantPageService.cs
+│   │   │       ├── Pages/                 # TenantList, MyTenantProfile (VHT-17)
+│   │   │       └── Components/            # Dialog/form P3
 │   │   └── wwwroot/                    # app.css và static assets template
 │   ├── NhaTro.UnitTests/                # xUnit: scaffold
 │   ├── NhaTro.IntegrationTests/         # xUnit + WebApplicationFactory

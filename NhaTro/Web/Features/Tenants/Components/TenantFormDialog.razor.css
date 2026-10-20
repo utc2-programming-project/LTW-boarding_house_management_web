@@ -1,0 +1,88 @@
+.tenant-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+        "name phone"
+        "email id"
+        "birth gender"
+        "issued-date issued-place"
+        "address note";
+    column-gap: 24px;
+    row-gap: 18px;
+}
+
+.tenant-form-grid-no-id {
+    grid-template-areas:
+        "name phone"
+        "email birth"
+        "gender issued-date"
+        "issued-place issued-place"
+        "address note";
+}
+
+.tenant-form-field {
+    min-width: 0;
+}
+
+.tenant-form-name { grid-area: name; }
+.tenant-form-phone { grid-area: phone; }
+.tenant-form-email { grid-area: email; }
+.tenant-form-id { grid-area: id; }
+.tenant-form-birth { grid-area: birth; }
+.tenant-form-gender { grid-area: gender; }
+.tenant-form-issued-date { grid-area: issued-date; }
+.tenant-form-issued-place { grid-area: issued-place; }
+.tenant-form-address { grid-area: address; }
+.tenant-form-note { grid-area: note; }
+
+/* FormField is a child component, so ::deep is required for its wrapper and controls. */
+.tenant-form-grid ::deep .field {
+    min-width: 0;
+    margin: 0;
+}
+
+.tenant-form-grid ::deep .input {
+    height: 44px;
+}
+
+.tenant-form-grid ::deep .tenant-textarea {
+    height: 112px;
+    min-height: 112px;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.tenant-form-grid ::deep .input[readonly] {
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+}
+
+.tenant-form-grid ::deep .tenant-mono {
+    font-family: ui-monospace, Consolas, monospace;
+}
+
+.tenant-form-submit {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tenant-duplicate-list {
+    margin: 12px 0 0;
+    padding-left: 24px;
+}
+
+@media (max-width: 767px) {
+    .tenant-form-grid,
+    .tenant-form-grid-no-id {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: none;
+        gap: 14px;
+    }
+
+    .tenant-form-field {
+        grid-area: auto;
+    }
+}

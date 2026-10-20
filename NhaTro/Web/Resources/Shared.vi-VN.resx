@@ -500,4 +500,123 @@
   <data name="DevQuickLoginHint" xml:space="preserve">
     <value>Chỉ hiện khi chạy ở máy dev và đã cấu hình mật khẩu test. Bấm để vào thẳng từng vai trò; không bao giờ hiển thị ở môi trường thật.</value>
   </data>
+
+  <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
+  <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
+  <data name="TenantsTitle" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="TenantsSubtitle" xml:space="preserve"><value>Quản lý hồ sơ và thông tin định danh người lưu trú</value></data>
+  <data name="TenantLiveDataBadge" xml:space="preserve"><value>Dữ liệu SQL</value></data>
+  <data name="TenantAdd" xml:space="preserve"><value>Tiếp nhận khách</value></data>
+  <data name="TenantExport" xml:space="preserve"><value>Xuất danh sách</value></data>
+  <data name="TenantStatTotal" xml:space="preserve"><value>Tổng khách thuê</value></data>
+  <data name="TenantStatActive" xml:space="preserve"><value>Đang lưu trú</value></data>
+  <data name="TenantStatAccounts" xml:space="preserve"><value>Đã kích hoạt app</value></data>
+  <data name="TenantStatIdCoverage" xml:space="preserve"><value>Có số CCCD</value></data>
+  <data name="TenantPeople" xml:space="preserve"><value>người</value></data>
+  <data name="TenantRecords" xml:space="preserve"><value>hồ sơ</value></data>
+  <data name="TenantAccounts" xml:space="preserve"><value>tài khoản</value></data>
+  <data name="TenantSecurityHint" xml:space="preserve"><value>CCCD luôn được che trong danh sách</value></data>
+  <data name="TenantSearch" xml:space="preserve"><value>Tìm khách thuê</value></data>
+  <data name="TenantSearchHint" xml:space="preserve"><value>Tìm theo họ tên, số điện thoại hoặc số CCCD</value></data>
+  <data name="TenantSearchPrivacyHint" xml:space="preserve"><value>Nhập ít nhất 3 ký tự để tìm theo số điện thoại hoặc CCCD</value></data>
+  <data name="TenantStatusFilter" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="TenantStatusAll" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="TenantStatusActive" xml:space="preserve"><value>Đang sử dụng</value></data>
+  <data name="TenantStatusInactive" xml:space="preserve"><value>Ngừng sử dụng</value></data>
+  <data name="TenantAccountFilter" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="TenantAccountAll" xml:space="preserve"><value>Tất cả tài khoản</value></data>
+  <data name="TenantAccountYes" xml:space="preserve"><value>Có tài khoản</value></data>
+  <data name="TenantAccountNo" xml:space="preserve"><value>Chưa có tài khoản</value></data>
+  <data name="TenantSort" xml:space="preserve"><value>Sắp xếp</value></data>
+  <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Ngày tạo mới nhất</value></data>
+  <data name="TenantSortNameAsc" xml:space="preserve"><value>Tên A–Z</value></data>
+  <data name="TenantSortNameDesc" xml:space="preserve"><value>Tên Z–A</value></data>
+  <data name="TenantReset" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="TenantColumnName" xml:space="preserve"><value>Họ tên khách thuê</value></data>
+  <data name="TenantColumnPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="TenantColumnIdNumber" xml:space="preserve"><value>CCCD / CMND (D9)</value></data>
+  <data name="TenantColumnStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="TenantColumnAccount" xml:space="preserve"><value>Tài khoản app</value></data>
+  <data name="TenantColumnActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="TenantRecordNumber" xml:space="preserve"><value>Hồ sơ #{0}</value></data>
+  <data name="TenantViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="TenantEdit" xml:space="preserve"><value>Sửa hồ sơ</value></data>
+  <data name="TenantDeactivate" xml:space="preserve"><value>Ngừng sử dụng hồ sơ này?</value></data>
+  <data name="TenantActivate" xml:space="preserve"><value>Kích hoạt lại hồ sơ này?</value></data>
+  <data name="TenantNoResultsTitle" xml:space="preserve"><value>Không tìm thấy khách thuê</value></data>
+  <data name="TenantEmptyDescription" xml:space="preserve"><value>Chưa có hồ sơ khách thuê. Tiếp nhận khách mới để bắt đầu quản lý.</value></data>
+  <data name="TenantDetailTitle" xml:space="preserve"><value>Chi tiết khách thuê</value></data>
+  <data name="TenantPersonalSection" xml:space="preserve"><value>Thông tin cá nhân</value></data>
+  <data name="TenantIdentitySection" xml:space="preserve"><value>Thông tin giấy tờ</value></data>
+  <data name="TenantAccountSection" xml:space="preserve"><value>Tài khoản ứng dụng</value></data>
+  <data name="TenantLinkedAccount" xml:space="preserve"><value>Đã liên kết tài khoản</value></data>
+  <data name="TenantUnlinkedAccount" xml:space="preserve"><value>Chưa liên kết tài khoản</value></data>
+  <data name="TenantLinkAccount" xml:space="preserve"><value>Liên kết tài khoản</value></data>
+  <data name="TenantUnlinkAccount" xml:space="preserve"><value>Gỡ liên kết</value></data>
+  <data name="TenantLinkDialogTitle" xml:space="preserve"><value>Liên kết tài khoản khách thuê</value></data>
+  <data name="TenantAccountSearch" xml:space="preserve"><value>Tìm tài khoản</value></data>
+  <data name="TenantAccountSearchHint" xml:space="preserve"><value>Tìm theo tên, email hoặc số điện thoại</value></data>
+  <data name="TenantSelectAccount" xml:space="preserve"><value>Chọn một tài khoản</value></data>
+  <data name="TenantNoAvailableAccounts" xml:space="preserve"><value>Không có tài khoản khách thuê chưa liên kết</value></data>
+  <data name="TenantCreateTitle" xml:space="preserve"><value>Tiếp nhận khách thuê</value></data>
+  <data name="TenantUpdateTitle" xml:space="preserve"><value>Chỉnh sửa hồ sơ khách thuê</value></data>
+  <data name="TenantFullName" xml:space="preserve"><value>Họ và tên</value></data>
+  <data name="TenantPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="TenantEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="TenantIdNumber" xml:space="preserve"><value>Số CCCD / CMND</value></data>
+  <data name="TenantDateOfBirth" xml:space="preserve"><value>Ngày sinh</value></data>
+  <data name="TenantGender" xml:space="preserve"><value>Giới tính</value></data>
+  <data name="TenantGenderMale" xml:space="preserve"><value>Nam</value></data>
+  <data name="TenantGenderFemale" xml:space="preserve"><value>Nữ</value></data>
+  <data name="TenantGenderOther" xml:space="preserve"><value>Khác</value></data>
+  <data name="TenantPermanentAddress" xml:space="preserve"><value>Địa chỉ thường trú</value></data>
+  <data name="TenantIdIssuedDate" xml:space="preserve"><value>Ngày cấp</value></data>
+  <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Nơi cấp</value></data>
+  <data name="TenantInternalNote" xml:space="preserve"><value>Ghi chú nội bộ</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>D9: số CCCD của Quản lý luôn được che.</value></data>
+  <data name="TenantProfileTitle" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
+  <data name="TenantProfileSubtitle" xml:space="preserve"><value>Xem thông tin lưu trú và cập nhật thông tin liên hệ của bạn</value></data>
+  <data name="TenantProfileReadonly" xml:space="preserve"><value>Thông tin này do Chủ trọ hoặc Quản lý cập nhật</value></data>
+  <data name="TenantProfileEditable" xml:space="preserve"><value>Thông tin bạn có thể tự cập nhật</value></data>
+  <data name="TenantProfileMissing" xml:space="preserve"><value>Hồ sơ khách thuê chưa được liên kết với tài khoản này. Vui lòng liên hệ Chủ trọ.</value></data>
+  <data name="TenantProfileLoadFailed" xml:space="preserve"><value>Không tải được hồ sơ của bạn. Vui lòng thử lại.</value></data>
+  <data name="TenantProfileSaved" xml:space="preserve"><value>Đã lưu hồ sơ của bạn</value></data>
+  <data name="TenantCreated" xml:space="preserve"><value>Đã tiếp nhận hồ sơ khách thuê</value></data>
+  <data name="TenantUpdated" xml:space="preserve"><value>Đã cập nhật hồ sơ khách thuê</value></data>
+  <data name="TenantStatusUpdated" xml:space="preserve"><value>Đã cập nhật trạng thái hồ sơ</value></data>
+  <data name="TenantAccountLinked" xml:space="preserve"><value>Đã liên kết tài khoản khách thuê</value></data>
+  <data name="TenantAccountUnlinked" xml:space="preserve"><value>Đã gỡ liên kết tài khoản</value></data>
+  <data name="TenantUnlinkTitle" xml:space="preserve"><value>Gỡ liên kết tài khoản?</value></data>
+  <data name="TenantUnlinkMessage" xml:space="preserve"><value>Tài khoản sẽ không còn mở được hồ sơ khách thuê này.</value></data>
+  <data name="TenantValidationRequired" xml:space="preserve"><value>Vui lòng nhập {0}.</value></data>
+  <data name="TenantValidationPhone" xml:space="preserve"><value>Số điện thoại cần có 10–11 chữ số và bắt đầu bằng 0.</value></data>
+  <data name="TenantValidationEmail" xml:space="preserve"><value>Email không hợp lệ.</value></data>
+  <data name="TenantValidationLength" xml:space="preserve"><value>{0} không được vượt quá {1} ký tự.</value></data>
+  <data name="TenantValidationBirthDate" xml:space="preserve"><value>Ngày sinh không được ở tương lai.</value></data>
+  <data name="TenantValidationIssuedDate" xml:space="preserve"><value>Ngày cấp không được trước ngày sinh.</value></data>
+  <data name="TenantErrorDuplicateId" xml:space="preserve"><value>Số giấy tờ này đã được dùng trong một hồ sơ khách thuê khác.</value></data>
+  <data name="TenantErrorDuplicatePhone" xml:space="preserve"><value>Số điện thoại đã có trong hồ sơ khác. Bạn có muốn tiếp tục lưu không?</value></data>
+  <data name="TenantErrorConflict" xml:space="preserve"><value>Hồ sơ vừa được thay đổi ở nơi khác. Tải lại dữ liệu rồi thử lại.</value></data>
+  <data name="TenantErrorNotFound" xml:space="preserve"><value>Không tìm thấy hồ sơ khách thuê.</value></data>
+  <data name="TenantErrorAccountLinked" xml:space="preserve"><value>Tài khoản này đã được liên kết với hồ sơ khác.</value></data>
+  <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Chỉ có thể liên kết tài khoản mang vai trò Khách thuê.</value></data>
+  <data name="TenantErrorGeneric" xml:space="preserve"><value>Không thể thực hiện thao tác. Vui lòng thử lại.</value></data>
+  <data name="TenantErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="TenantSummary" xml:space="preserve"><value>Tổng quan khách thuê</value></data>
+  <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
+  <data name="TenantAllRecordsHint" xml:space="preserve"><value>Hồ sơ trong hệ thống</value></data>
+  <data name="TenantActiveRateHint" xml:space="preserve"><value>tỉ lệ hoạt động</value></data>
+  <data name="TenantAccountRateHint" xml:space="preserve"><value>đã liên kết SĐT</value></data>
+  <data name="TenantFilters" xml:space="preserve"><value>Bộ lọc khách thuê</value></data>
+  <data name="TenantRowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
+  <data name="TenantExported" xml:space="preserve"><value>Đã xuất {0} hồ sơ khách thuê (CSV)</value></data>
+  <data name="TenantExportFailed" xml:space="preserve"><value>Không thể xuất danh sách khách thuê.</value></data>
+  <data name="TenantActivateTitle" xml:space="preserve"><value>Kích hoạt lại hồ sơ</value></data>
+  <data name="TenantDeactivateTitle" xml:space="preserve"><value>Ngừng sử dụng hồ sơ</value></data>
+  <data name="TenantActivateButton" xml:space="preserve"><value>Kích hoạt lại</value></data>
+  <data name="TenantDeactivateButton" xml:space="preserve"><value>Ngừng sử dụng</value></data>
+  <data name="TenantDuplicatePhoneTitle" xml:space="preserve"><value>Xác nhận số điện thoại trùng</value></data>
+  <data name="TenantCreatedAt" xml:space="preserve"><value>Tạo lúc:</value></data>
+  <data name="TenantUpdatedAt" xml:space="preserve"><value>Cập nhật:</value></data>
+  <data name="TenantProfileEditHint" xml:space="preserve"><value>Khách thuê chỉ tự sửa số điện thoại, email và địa chỉ thường trú.</value></data>
 </root>

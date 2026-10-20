@@ -17,8 +17,8 @@ public class TenantListItemDto
 
     public required bool IsActive { get; init; }
 
-    /// <summary>UserId != null.</summary>
-    public required bool HasAccount { get; init; }
+    /// <summary>Null khi vai trò không được xem trạng thái tài khoản app (D9).</summary>
+    public required bool? HasAccount { get; init; }
 
     /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
     public required bool HasActiveContract { get; init; }

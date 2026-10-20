@@ -1,5 +1,5 @@
 @page "/profile"
-@attribute [Authorize]
+@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
@@ -17,18 +17,18 @@
 
 <PageTitle>@L["ProfileTitle"] · @L["AppName"]</PageTitle>
 
-<section aria-labelledby="profile-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ProfileTitle"]) })" />
+<section class="profile-page" aria-labelledby="profile-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+    {
+        new(L["Dashboard"], "/"),
+        new(L["ProfileTitle"]),
+    })" />
 
-    <header class="page-heading">
+    <header class="page-heading profile-page-heading">
         <div>
             <h1 id="profile-title">@L["ProfileTitle"]</h1>
             <p>@L["ProfileSubtitle"]</p>
         </div>
-        @if (_profile is not null)
-        {
-            <StatusBadge Tone="@RoleTone(_profile.Role)" Text="@RoleText(_profile.Role)" />
-        }
     </header>
 
     @if (_loading)
@@ -43,29 +43,52 @@
     }
     else
     {
-        <div class="profile-grid">
-            <div class="preview-card">
-                <h2 class="card-title">@L["ProfileInfoSection"]</h2>
+        <div class="profile-overview">
+            <div class="profile-avatar" aria-hidden="true">@ProfileInitials</div>
+            <div class="profile-identity">
+                <p class="profile-overview-label">@L["ProfileInfoSection"]</p>
+                <h2>@ProfileDisplayName</h2>
+                <p class="profile-email">@_emailReadonly</p>
+                <p class="profile-email-hint">@L["EmailReadonlyHint"]</p>
+            </div>
+            <div class="profile-role">
+                <StatusBadge Tone="@RoleTone(_profile.Role)" Text="@RoleText(_profile.Role)" />
+            </div>
+        </div>
+
+        <div class="profile-content-grid">
+            <section class="profile-card profile-form-card" aria-labelledby="profile-info-title">
+                <div class="profile-card-heading">
+                    <span class="profile-heading-icon" aria-hidden="true"><LucideIcon Name="user" /></span>
+                    <div>
+                        <h2 id="profile-info-title">@L["ProfileInfoSection"]</h2>
+                    </div>
+                </div>
 
                 <EditForm EditContext="_editContext" OnValidSubmit="SaveProfileAsync">
-                    <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
-                               For="() => _form.FullName">
-                        <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
-                                   aria-describedby="profile-fullname-error" />
-                    </FormField>
+                    <div class="profile-fields">
+                        <div class="profile-field-name">
+                            <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
+                                       For="() => _form.FullName">
+                                <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
+                                           aria-describedby="profile-fullname-error" />
+                            </FormField>
+                        </div>
 
-                    <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
-                               Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
-                        <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
-                                   aria-describedby="profile-phone-hint profile-phone-error" />
-                    </FormField>
+                        <div class="profile-field-phone">
+                            <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
+                                       Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
+                                <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
+                                           aria-describedby="profile-phone-hint profile-phone-error" />
+                            </FormField>
+                        </div>
 
-                    <FormField TValue="string" Id="profile-email" Label="@L["EmailLabel"]"
-                               Hint="@L["EmailReadonlyHint"]" For="() => _emailReadonly">
-                        <InputText @bind-Value="_emailReadonly" id="profile-email" readonly />
-                    </FormField>
+                    </div>
 
-                    <div class="form-actions">
+                    <div class="profile-actions">
+                        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="ResetForm">
+                            @L["Cancel"]
+                        </button>
                         <button type="submit" class="btn btn-primary" disabled="@_saving">
                             @if (_saving)
                             {
@@ -73,21 +96,23 @@
                             }
                             @L["SaveChanges"]
                         </button>
-                        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="ResetForm">
-                            @L["Cancel"]
-                        </button>
                     </div>
                 </EditForm>
-            </div>
+            </section>
 
-            <div class="preview-card">
-                <h2 class="card-title">@L["SecuritySection"]</h2>
-                <p class="note">@L["ChangePasswordHint"]</p>
-                <a class="btn btn-secondary" href="Account/Manage/ChangePassword">
-                    <LucideIcon Name="key" />
-                    @L["ChangePassword"]
-                </a>
-            </div>
+            <aside class="profile-side-column">
+                <section class="profile-card profile-security-card" aria-labelledby="profile-security-title">
+                    <span class="profile-security-icon" aria-hidden="true"><LucideIcon Name="shield-check" /></span>
+                    <div class="profile-security-copy">
+                        <h2 id="profile-security-title">@L["SecuritySection"]</h2>
+                        <p>@L["ChangePasswordHint"]</p>
+                    </div>
+                    <a class="btn btn-secondary profile-security-action" href="Account/Manage/ChangePassword">
+                        <LucideIcon Name="key" />
+                        @L["ChangePassword"]
+                    </a>
+                </section>
+            </aside>
         </div>
     }
 </section>
@@ -100,6 +125,21 @@
     private EditContext _editContext = default!;
     private ProfileForm _form = new();
     private string _emailReadonly = string.Empty;
+
+    private string ProfileDisplayName => string.IsNullOrWhiteSpace(_profile?.FullName)
+        ? _profile?.UserName ?? string.Empty
+        : _profile?.FullName ?? string.Empty;
+
+    private string ProfileInitials
+    {
+        get
+        {
+            var parts = ProfileDisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0) return "?";
+            if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+            return string.Concat(char.ToUpperInvariant(parts[0][0]), char.ToUpperInvariant(parts[^1][0]));
+        }
+    }
 
     private sealed class ProfileForm
     {
@@ -116,25 +156,33 @@
     private async Task LoadAsync()
     {
         _loading = true;
-        var state = await AuthState.GetAuthenticationStateAsync();
-        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId))
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                _profile = null;
+                return;
+            }
+
+            var result = await Accounts.GetMyProfileAsync(userId);
+            _profile = result.Succeeded ? result.Value : null;
+            if (_profile is not null)
+            {
+                _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+                _emailReadonly = _profile.Email ?? _profile.UserName;
+                _editContext = new EditContext(_form);
+            }
+        }
+        catch
         {
             _profile = null;
-            _loading = false;
-            return;
         }
-
-        var result = await Accounts.GetMyProfileAsync(userId);
-        _profile = result.Succeeded ? result.Value : null;
-        if (_profile is not null)
+        finally
         {
-            _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
-            _emailReadonly = _profile.Email ?? _profile.UserName;
-            _editContext = new EditContext(_form);
+            _loading = false;
         }
-
-        _loading = false;
     }
 
     private void ResetForm()
@@ -146,25 +194,35 @@
 
     private async Task SaveProfileAsync()
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId)) return;
-
+        if (_saving) return;
         _saving = true;
-        var result = await Accounts.UpdateMyProfileAsync(
-            new UpdateMyProfileRequest { FullName = _form.FullName, PhoneNumber = _form.PhoneNumber },
-            userId);
-        _saving = false;
-
-        if (!result.Succeeded)
+        try
         {
-            Toasts.Error(MessageFor(result.ErrorCode));
-            return;
-        }
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return;
 
-        _profile = result.Value;
-        _emailReadonly = _profile?.Email ?? _emailReadonly;
-        Toasts.Success(L["ProfileSaved"]);
+            var result = await Accounts.UpdateMyProfileAsync(
+                new UpdateMyProfileRequest { FullName = _form.FullName, PhoneNumber = _form.PhoneNumber },
+                userId);
+            if (!result.Succeeded)
+            {
+                Toasts.Error(MessageFor(result.ErrorCode));
+                return;
+            }
+
+            _profile = result.Value;
+            _emailReadonly = _profile?.Email ?? _emailReadonly;
+            Toasts.Success(L["ProfileSaved"]);
+        }
+        catch
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
 
     private string MessageFor(string? code) => code switch

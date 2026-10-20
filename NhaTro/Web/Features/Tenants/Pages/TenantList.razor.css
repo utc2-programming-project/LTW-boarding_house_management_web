@@ -1,0 +1,83 @@
+.tenant-list-page { display: flex; flex-direction: column; gap: 24px; }
+.tenant-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.tenant-page-heading p { margin: 8px 0 0; }
+.tenant-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.tenant-live-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 24px; padding: 2px 9px; border: 1px solid var(--neutral-border); border-radius: 999px; background: var(--neutral-bg); color: var(--neutral-text); font-size: .6875rem; font-weight: 600; }
+.tenant-live-badge > span { width: 7px; height: 7px; border-radius: 50%; background: var(--success-text); }
+.tenant-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.tenant-page-actions .btn { min-height: 44px; }
+
+.tenant-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.tenant-stats-manager { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.tenant-stat-card { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
+.tenant-stat-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text-secondary); font-size: .8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.tenant-stat-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 9px; background: var(--accent-soft); color: var(--accent-text); }
+.tenant-stat-icon-blue { background: var(--info-bg); color: var(--info-text); }
+.tenant-stat-icon-neutral { background: var(--neutral-bg); color: var(--neutral-text); }
+.tenant-stat-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+.tenant-stat-value { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; color: var(--text-primary); font-size: 2rem; line-height: 1.25; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tenant-stat-value small { color: var(--text-secondary); font-size: .8125rem; font-weight: 500; }
+.tenant-stat-card p { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--text-secondary); font-size: .75rem; }
+.tenant-stat-card p .lucide-icon { width: 15px; height: 15px; flex-basis: 15px; color: var(--accent-text); }
+.tenant-summary-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid var(--error-border); border-radius: 8px; background: var(--error-bg); color: var(--error-text); }
+
+.tenant-filter-card { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
+.tenant-filter-row { display: flex; align-items: center; gap: 10px; }
+.tenant-search-field { position: relative; display: flex; flex: 1 1 340px; align-items: center; min-width: 200px; }
+.tenant-search-field > .lucide-icon { position: absolute; left: 12px; color: var(--text-muted); }
+.tenant-search-field .input { padding-left: 40px; padding-right: 48px; border-color: transparent; background: var(--surface-subtle); }
+.tenant-filter-select { flex: 0 1 170px; min-width: 135px; }
+.tenant-filter-select .input { border-color: transparent; background-color: var(--surface-subtle); }
+.tenant-sort-select { flex-basis: 190px; }
+.tenant-page-size { flex-basis: 82px; min-width: 72px; }
+.tenant-reset-button { flex: 0 0 auto; min-height: 44px; }
+.tenant-filter-footnote { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .75rem; }
+.tenant-filter-footnote > span { display: inline-flex; align-items: center; gap: 6px; }
+.tenant-filter-footnote .lucide-icon { width: 15px; height: 15px; flex-basis: 15px; color: var(--accent-text); }
+
+.tenant-name-cell { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.tenant-name-text { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.tenant-name-button { width: fit-content; max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: .8125rem; font-weight: 650; text-align: left; overflow-wrap: anywhere; }
+.tenant-name-button:hover { color: var(--accent-text); text-decoration: underline; }
+.tenant-name-text small { color: var(--text-muted); font-family: ui-monospace,Consolas,monospace; font-size: .6875rem; }
+.tenant-id-mask { font-family: ui-monospace,Consolas,monospace; font-size: .75rem; letter-spacing: .04em; }
+.tenant-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.tenant-icon-button { display: inline-grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); }
+.tenant-icon-button:hover { background: var(--hover-bg); color: var(--accent-text); }
+.tenant-icon-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.tenant-icon-danger:hover { color: var(--danger); }
+.tenant-icon-success:hover { color: var(--success-text); }
+.tenant-filter-card select { min-width: 0; }
+
+@media (max-width: 1199px) {
+    .tenant-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .tenant-filter-row { flex-wrap: wrap; }
+    .tenant-search-field { flex-basis: 100%; }
+    .tenant-filter-select { flex: 1 1 150px; }
+}
+
+@media (max-width: 767px) {
+    .tenant-list-page { gap: 16px; }
+    .tenant-page-heading { align-items: stretch; flex-direction: column; gap: 14px; }
+    .tenant-page-actions { justify-content: stretch; }
+    .tenant-page-actions .btn { flex: 1; min-height: 44px; }
+    .tenant-stats { gap: 10px; }
+    .tenant-stat-card { padding: 14px; }
+    .tenant-stat-top { align-items: flex-start; font-size: .6875rem; }
+    .tenant-stat-value { font-size: 1.625rem; }
+    .tenant-stat-icon { width: 32px; height: 32px; }
+    .tenant-filter-card { padding: 12px; }
+    .tenant-filter-row { align-items: stretch; gap: 8px; }
+    .tenant-search-field { flex: 1 1 100%; }
+    .tenant-filter-select { flex: 1 1 calc(50% - 8px); }
+    .tenant-filter-select .input { min-height: 44px; }
+    .tenant-reset-button { flex: 1 1 100%; }
+    .tenant-filter-footnote { align-items: flex-start; flex-direction: column; gap: 8px; }
+}
+
+@media (max-width: 420px) {
+    .tenant-stats { grid-template-columns: 1fr; }
+    .tenant-stat-card { padding: 16px; }
+    .tenant-page-actions { flex-direction: column; }
+    .tenant-page-actions .btn { width: 100%; }
+}
