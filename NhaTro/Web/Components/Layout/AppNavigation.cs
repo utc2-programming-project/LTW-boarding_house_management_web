@@ -6,7 +6,9 @@ public static class AppNavigation
     public static readonly NavigationItem[] Items =
     [
         new("Dashboard", "chart", "ChuTro,QuanLy"),
-        new("Accounts", "users", "Admin,ChuTro"),
+        // VHT-8: /admin/users chỉ dành cho Admin (D1). Màn hình trạng thái tài khoản của
+        // Chủ trọ/Quản lý thuộc VHT-95 nên "Accounts" tạm chỉ mở cho Admin.
+        new("Accounts", "users", "Admin", "/admin/users"),
         new("Permissions", "shield", "Admin"),
         new("Properties", "building", "ChuTro,QuanLy"),
         new("Rooms", "door", "ChuTro,QuanLy"),
@@ -23,7 +25,9 @@ public static class AppNavigation
         new("MyRequests", "file", "QuanLy"),
         new("MyRoom", "door", "KhachThue"),
         new("MyInvoices", "receipt", "KhachThue"),
-        new("ReportIncident", "wrench", "KhachThue")
+        new("ReportIncident", "wrench", "KhachThue"),
+        // VHT-8: hồ sơ cá nhân mở cho cả 4 vai trò.
+        new("MyAccount", "user", "Admin,ChuTro,QuanLy,KhachThue", "/profile")
     ];
 }
 

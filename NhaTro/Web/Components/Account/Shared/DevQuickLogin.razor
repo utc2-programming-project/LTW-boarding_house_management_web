@@ -1,0 +1,75 @@
+@using Web.Data.Seeding
+@using Web.Features.Accounts
+
+@inject IConfiguration Config
+@inject IWebHostEnvironment Env
+@inject IStringLocalizer<Shared> L
+
+@* VHT-8: bang "dang nhap nhanh" giup tester vao tung vai tro trong 1 bam.
+   Chi hien khi chay Development VA da cau hinh mat khau dev trong User Secrets,
+   nen khong bao gio lo ra o moi truong that. *@
+@if (Entries.Count > 0)
+{
+    <aside class="dev-login" aria-label="@L["DevQuickLoginTitle"]">
+        <p class="dev-login-title">
+            <span class="dev-badge">DEV</span>
+            @L["DevQuickLoginTitle"]
+        </p>
+        <p class="dev-login-hint">@L["DevQuickLoginHint"]</p>
+        <ul class="dev-login-list">
+            @foreach (var entry in Entries)
+            {
+                <li class="dev-login-row">
+                    <span class="dev-login-cred">
+                        <span class="dev-login-role">@L[AccountPermissionRules.RoleResourceKey(entry.Role)]</span>
+                        <code>@entry.Email</code>
+                        <code>@entry.Password</code>
+                    </span>
+                    <form method="post" action="/login">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="_handler" value="login" />
+                        <input type="hidden" name="Input.Email" value="@entry.Email" />
+                        <input type="hidden" name="Input.Password" value="@entry.Password" />
+                        <input type="hidden" name="Input.RememberMe" value="false" />
+                        <button type="submit" class="btn btn-secondary btn-sm">@L["LoginButton"]</button>
+                    </form>
+                </li>
+            }
+        </ul>
+    </aside>
+}
+
+@code {
+    private sealed record DevLoginEntry(string Role, string Email, string Password);
+
+    private List<DevLoginEntry> Entries { get; } = [];
+
+    protected override void OnInitialized()
+    {
+        if (!Env.IsDevelopment())
+        {
+            return;
+        }
+
+        // Admin that duoc gieo tu AdminSeed (khong phai tu DevAccounts).
+        var adminEmail = Config["AdminSeed:Email"];
+        var adminPassword = Config["AdminSeed:Password"];
+        if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+        {
+            Entries.Add(new DevLoginEntry(Roles.Admin, adminEmail, adminPassword));
+        }
+
+        // Cac vai tro con lai lay tu danh sach user mau (bo qua admin mau vi da co Admin that).
+        var devPassword = Config["DevAccounts:Password"];
+        if (!string.IsNullOrWhiteSpace(devPassword))
+        {
+            foreach (var (email, role) in DevAccountSeeder.Accounts)
+            {
+                if (role != Roles.Admin)
+                {
+                    Entries.Add(new DevLoginEntry(role, email, devPassword));
+                }
+            }
+        }
+    }
+}

@@ -211,4 +211,293 @@
   <data name="Dashboard" xml:space="preserve">
     <value>Tổng quan</value>
   </data>
+
+  <!-- VHT-8: dang nhap -->
+  <data name="LoginTitle" xml:space="preserve">
+    <value>Đăng nhập</value>
+  </data>
+  <data name="LoginSubtitle" xml:space="preserve">
+    <value>Dùng email và mật khẩu đã được cấp để vào hệ thống.</value>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Đăng nhập</value>
+  </data>
+  <data name="LoginInvalid" xml:space="preserve">
+    <value>Email hoặc mật khẩu không đúng.</value>
+  </data>
+  <data name="EmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Vui lòng nhập email.</value>
+  </data>
+  <data name="EmailInvalid" xml:space="preserve">
+    <value>Email không đúng định dạng.</value>
+  </data>
+  <data name="PasswordLabel" xml:space="preserve">
+    <value>Mật khẩu</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Vui lòng nhập mật khẩu.</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Ghi nhớ đăng nhập</value>
+  </data>
+  <data name="ShowPassword" xml:space="preserve">
+    <value>Hiện mật khẩu</value>
+  </data>
+  <data name="HidePassword" xml:space="preserve">
+    <value>Ẩn mật khẩu</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Quên mật khẩu?</value>
+  </data>
+
+  <!-- VHT-8: ho so ca nhan -->
+  <data name="ProfileTitle" xml:space="preserve">
+    <value>Hồ sơ cá nhân</value>
+  </data>
+  <data name="ProfileSubtitle" xml:space="preserve">
+    <value>Xem và cập nhật thông tin của chính bạn.</value>
+  </data>
+  <data name="ProfileInfoSection" xml:space="preserve">
+    <value>Thông tin cá nhân</value>
+  </data>
+  <data name="ProfileLoadFailed" xml:space="preserve">
+    <value>Không tải được hồ sơ. Vui lòng thử lại.</value>
+  </data>
+  <data name="ProfileSaved" xml:space="preserve">
+    <value>Đã lưu thông tin cá nhân.</value>
+  </data>
+  <data name="FullNameLabel" xml:space="preserve">
+    <value>Họ tên</value>
+  </data>
+  <data name="PhoneLabel" xml:space="preserve">
+    <value>Số điện thoại</value>
+  </data>
+  <data name="PhoneHint" xml:space="preserve">
+    <value>10 chữ số, bắt đầu bằng 0.</value>
+  </data>
+  <data name="EmailReadonlyHint" xml:space="preserve">
+    <value>Email dùng để đăng nhập, chưa đổi được tại đây.</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Lưu thay đổi</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>Thử lại</value>
+  </data>
+  <data name="SecuritySection" xml:space="preserve">
+    <value>Bảo mật</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Đổi mật khẩu</value>
+  </data>
+  <data name="ChangePasswordHint" xml:space="preserve">
+    <value>Đổi mật khẩu định kỳ để bảo vệ tài khoản.</value>
+  </data>
+
+  <!-- VHT-8: quan tri tai khoan -->
+  <data name="AccountsTitle" xml:space="preserve">
+    <value>Quản trị tài khoản</value>
+  </data>
+  <data name="AccountsSubtitle" xml:space="preserve">
+    <value>Xem danh sách người dùng, khóa/mở khóa và gán vai trò.</value>
+  </data>
+  <data name="SearchAccounts" xml:space="preserve">
+    <value>Tìm kiếm</value>
+  </data>
+  <data name="SearchAccountsHint" xml:space="preserve">
+    <value>Tìm theo tên, email hoặc số điện thoại</value>
+  </data>
+  <data name="FilterRole" xml:space="preserve">
+    <value>Vai trò</value>
+  </data>
+  <data name="FilterAllRoles" xml:space="preserve">
+    <value>Tất cả vai trò</value>
+  </data>
+  <data name="ColumnAccount" xml:space="preserve">
+    <value>Tài khoản</value>
+  </data>
+  <data name="ColumnRole" xml:space="preserve">
+    <value>Vai trò</value>
+  </data>
+  <data name="ColumnStatus" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="ColumnActions" xml:space="preserve">
+    <value>Thao tác</value>
+  </data>
+  <data name="StatusActive" xml:space="preserve">
+    <value>Hoạt động</value>
+  </data>
+  <data name="StatusLocked" xml:space="preserve">
+    <value>Đã khóa</value>
+  </data>
+  <data name="ChangeRole" xml:space="preserve">
+    <value>Gán vai trò</value>
+  </data>
+  <data name="Lock" xml:space="preserve">
+    <value>Khóa</value>
+  </data>
+  <data name="Unlock" xml:space="preserve">
+    <value>Mở khóa</value>
+  </data>
+  <data name="ThisIsYou" xml:space="preserve">
+    <value>Đây là bạn</value>
+  </data>
+  <data name="AccountsEmptyHint" xml:space="preserve">
+    <value>Không có tài khoản nào khớp bộ lọc hiện tại.</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>Xác nhận</value>
+  </data>
+  <data name="ChangeRoleTitle" xml:space="preserve">
+    <value>Gán vai trò</value>
+  </data>
+  <data name="ChangeRoleMessageBefore" xml:space="preserve">
+    <value>Chọn vai trò mới cho tài khoản</value>
+  </data>
+  <data name="NewRoleLabel" xml:space="preserve">
+    <value>Vai trò mới</value>
+  </data>
+  <data name="ChangeRoleWarning" xml:space="preserve">
+    <value>Vai trò cũ sẽ bị thay thế ngay khi xác nhận.</value>
+  </data>
+  <data name="LockTitle" xml:space="preserve">
+    <value>Khóa tài khoản</value>
+  </data>
+  <data name="UnlockTitle" xml:space="preserve">
+    <value>Mở khóa tài khoản</value>
+  </data>
+  <data name="LockConfirm" xml:space="preserve">
+    <value>Khóa</value>
+  </data>
+  <data name="UnlockConfirm" xml:space="preserve">
+    <value>Mở khóa</value>
+  </data>
+  <data name="LockMessage" xml:space="preserve">
+    <value>Khóa tài khoản {0}? Người này sẽ không đăng nhập được cho tới khi mở khóa.</value>
+  </data>
+  <data name="UnlockMessage" xml:space="preserve">
+    <value>Mở khóa tài khoản {0}?</value>
+  </data>
+  <data name="RoleChanged" xml:space="preserve">
+    <value>Đã cập nhật vai trò.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Đã khóa tài khoản.</value>
+  </data>
+  <data name="AccountUnlocked" xml:space="preserve">
+    <value>Đã mở khóa tài khoản.</value>
+  </data>
+
+  <!-- VHT-8: vai tro -->
+  <data name="RoleAdmin" xml:space="preserve">
+    <value>Quản trị viên</value>
+  </data>
+  <data name="RoleChuTro" xml:space="preserve">
+    <value>Chủ trọ</value>
+  </data>
+  <data name="RoleQuanLy" xml:space="preserve">
+    <value>Quản lý</value>
+  </data>
+  <data name="RoleKhachThue" xml:space="preserve">
+    <value>Khách thuê</value>
+  </data>
+  <data name="RoleUnknown" xml:space="preserve">
+    <value>Chưa gán</value>
+  </data>
+
+  <!-- VHT-8: thong bao loi thao tac tai khoan -->
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>Không thực hiện được. Vui lòng thử lại.</value>
+  </data>
+  <data name="ErrorForbidden" xml:space="preserve">
+    <value>Bạn không có quyền thực hiện thao tác này.</value>
+  </data>
+  <data name="ErrorUserNotFound" xml:space="preserve">
+    <value>Không tìm thấy tài khoản.</value>
+  </data>
+  <data name="ErrorInvalidPhone" xml:space="preserve">
+    <value>Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.</value>
+  </data>
+  <data name="ErrorCannotChangeOwnRole" xml:space="preserve">
+    <value>Không thể tự đổi vai trò của chính mình.</value>
+  </data>
+  <data name="ErrorCannotRemoveLastAdmin" xml:space="preserve">
+    <value>Không thể bỏ vai trò của quản trị viên cuối cùng.</value>
+  </data>
+  <data name="ErrorCannotLockSelf" xml:space="preserve">
+    <value>Không thể tự khóa tài khoản của chính mình.</value>
+  </data>
+  <data name="ErrorCannotLockAdmin" xml:space="preserve">
+    <value>Không được khóa tài khoản quản trị viên.</value>
+  </data>
+  <data name="ErrorRoleNotAllowed" xml:space="preserve">
+    <value>Bạn không được phép gán vai trò này.</value>
+  </data>
+  <data name="ErrorInvalidRole" xml:space="preserve">
+    <value>Vai trò không hợp lệ.</value>
+  </data>
+
+  <!-- VHT-8: chu cua bang du lieu -->
+  <data name="TableLoading" xml:space="preserve">
+    <value>Đang tải…</value>
+  </data>
+  <data name="TableEmptyTitle" xml:space="preserve">
+    <value>Chưa có dữ liệu</value>
+  </data>
+  <data name="TableNoResults" xml:space="preserve">
+    <value>Không có kết quả phù hợp</value>
+  </data>
+  <data name="TableClearFilters" xml:space="preserve">
+    <value>Xóa bộ lọc</value>
+  </data>
+  <data name="TableLoadFailed" xml:space="preserve">
+    <value>Không tải được dữ liệu.</value>
+  </data>
+  <data name="TableRetry" xml:space="preserve">
+    <value>Thử lại</value>
+  </data>
+  <data name="TableFilterBy" xml:space="preserve">
+    <value>Lọc theo</value>
+  </data>
+  <data name="TablePagination" xml:space="preserve">
+    <value>Phân trang</value>
+  </data>
+  <data name="TableFirstPage" xml:space="preserve">
+    <value>Trang đầu</value>
+  </data>
+  <data name="TablePreviousPage" xml:space="preserve">
+    <value>Trang trước</value>
+  </data>
+  <data name="TableNextPage" xml:space="preserve">
+    <value>Trang sau</value>
+  </data>
+  <data name="TableLastPage" xml:space="preserve">
+    <value>Trang cuối</value>
+  </data>
+  <data name="TablePage" xml:space="preserve">
+    <value>Trang</value>
+  </data>
+  <data name="TableSummary" xml:space="preserve">
+    <value>Hiển thị {0}–{1} / {2}</value>
+  </data>
+
+  <!-- VHT-8: khong du quyen -->
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Không có quyền truy cập</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>Bạn không được phép xem trang này. Liên hệ quản trị viên nếu cần hỗ trợ.</value>
+  </data>
+
+  <!-- VHT-8: dang nhap nhanh cho tester (chi hien khi chay Development) -->
+  <data name="DevQuickLoginTitle" xml:space="preserve">
+    <value>Đăng nhập nhanh để test</value>
+  </data>
+  <data name="DevQuickLoginHint" xml:space="preserve">
+    <value>Chỉ hiện khi chạy ở máy dev và đã cấu hình mật khẩu test. Bấm để vào thẳng từng vai trò; không bao giờ hiển thị ở môi trường thật.</value>
+  </data>
 </root>
