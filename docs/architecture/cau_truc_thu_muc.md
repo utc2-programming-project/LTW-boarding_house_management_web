@@ -58,7 +58,7 @@ LTW/
 │   │   │   │   ├── DTOs/                # PropertyFilter/ListItem/Detail/Save
 │   │   │   │   ├── Mapping/PropertyMapping.cs
 │   │   │   │   ├── PropertyCaller.cs, PropertyResult.cs, PropertyErrorCodes.cs
-│   │   │   │   ├── IPropertyService.cs, PropertyService.cs   # VHT-7 đợt 1C
+│   │   │   │   ├── IPropertyService.cs, PropertyService.cs   # Service SQL P2
 │   │   │   │   ├── Services/P2CallerProvider.cs, PropertyPageService.cs
 │   │   │   │   └── PropertyScope.cs
 │   │   │   ├── Rooms/
@@ -68,7 +68,7 @@ LTW/
 │   │   │   │   ├── Enums/RoomStatus.cs
 │   │   │   │   ├── DTOs/                # Filter/ListItem/Detail/Save/Summary/Option/OptionRequest
 │   │   │   │   ├── Mapping/RoomMapping.cs
-│   │   │   │   ├── IRoomService.cs, RoomService.cs          # VHT-7 đợt 1C
+│   │   │   │   ├── IRoomService.cs, RoomService.cs          # Service SQL P2
 │   │   │   │   ├── IRoomChangePolicy.cs                     # điểm gọi VHT-94
 │   │   │   │   ├── IRoomUsageChecker.cs                     # điểm gọi VHT-98
 │   │   │   │   ├── Services/RoomPageService.cs                # Adapter UI -> service SQL

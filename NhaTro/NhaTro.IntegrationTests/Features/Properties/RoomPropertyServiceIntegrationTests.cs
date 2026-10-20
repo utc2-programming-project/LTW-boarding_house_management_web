@@ -11,7 +11,7 @@ using Web.Features.Rooms.Enums;
 namespace NhaTro.IntegrationTests.Features.Properties;
 
 /// <summary>
-/// VHT-7 (đợt 1C) — integration test P2 trên SQL Server thật, chứng minh tiêu chí nghiệm thu:
+/// P2 — integration test trên SQL Server thật, chứng minh các tiêu chí nghiệm thu:
 /// lưu rồi tải lại đúng; chặn mã phòng trùng theo nhà; chặn giá sai; chặn truy cập ngoài phạm vi.
 /// </summary>
 public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture)
@@ -22,10 +22,32 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
     private static readonly PropertyCaller QuanLy = new("quan-ly-1", Roles.QuanLy);
 
     private static RoomService NewRoomService(ApplicationDbContext db, IRoomChangePolicy? policy = null) =>
-        new(db, TimeProvider.System, policy ?? new RoomChangePolicyStub(), new NoActiveContractRoomUsageChecker());
+        new(
+            CreateContextFactory(db),
+            TimeProvider.System,
+            policy ?? new RoomChangePolicyStub(),
+            new NoActiveContractRoomUsageChecker());
 
     private static PropertyService NewPropertyService(ApplicationDbContext db) =>
-        new(db, TimeProvider.System);
+        new(CreateContextFactory(db), TimeProvider.System);
+
+    private static IDbContextFactory<ApplicationDbContext> CreateContextFactory(ApplicationDbContext db) =>
+        new TestDbContextFactory(db.Database.GetConnectionString()
+            ?? throw new InvalidOperationException("The test database has no connection string."));
+
+    private sealed class TestDbContextFactory(string connectionString) : IDbContextFactory<ApplicationDbContext>
+    {
+        public ApplicationDbContext CreateDbContext() => new(
+            new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlServer(connectionString)
+                .Options);
+
+        public Task<ApplicationDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(CreateDbContext());
+        }
+    }
 
     // ---------- Tiêu chí 1: lưu rồi tải lại đúng ----------
 
@@ -415,7 +437,7 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         }, ChuTro);
 
         var service = new RoomService(
-            db, TimeProvider.System, new RoomChangePolicyStub(), new AlwaysInUseChecker());
+            CreateContextFactory(db), TimeProvider.System, new RoomChangePolicyStub(), new AlwaysInUseChecker());
 
         var deleted = await service.DeleteAsync(room.Room!.Id, ChuTro);
 

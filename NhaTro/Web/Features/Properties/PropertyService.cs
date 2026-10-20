@@ -8,10 +8,12 @@ using Web.Features.Properties.Mapping;
 namespace Web.Features.Properties;
 
 /// <summary>
-/// Nhà trọ P2 đợt 1C: query/save trên SQL, kiểm quyền và phạm vi bên trong service.
+/// Service SQL cho nhà trọ P2: kiểm quyền/phạm vi và chịu trách nhiệm lưu dữ liệu.
 /// Nguồn: docs/task/de_xuat_hop_dong_nha_tro_phong.md; quyền: docs/task/thao_tac_va_quyen.xlsx (P2).
 /// </summary>
-public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock) : IPropertyService
+public sealed class PropertyService(
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    TimeProvider clock) : IPropertyService
 {
     public async Task<PagedResult<PropertyListItem>> ListAsync(
         PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default)
@@ -19,7 +21,8 @@ public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock)
         EnsureCanRead(caller);
         filter.Normalize();
 
-        var query = ScopeQuery(caller).AsNoTracking();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var query = ScopeQuery(db, caller).AsNoTracking();
         if (filter.IsActive is { } isActive)
         {
             query = query.Where(p => p.IsActive == isActive);
@@ -58,7 +61,8 @@ public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock)
     {
         EnsureCanRead(caller);
 
-        var entity = await ScopeQuery(caller).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
         return entity is null
             ? NotFound()
             : PropertyResult.Success(PropertyMapping.ToDetail(entity));
@@ -76,6 +80,7 @@ public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock)
             return invalid;
         }
 
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var entity = new Property
         {
             OwnerId = caller.UserId,
@@ -101,7 +106,8 @@ public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock)
             return invalid;
         }
 
-        var entity = await ScopeQuery(caller).FirstOrDefaultAsync(p => p.Id == id, ct);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(p => p.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -117,11 +123,8 @@ public sealed class PropertyService(ApplicationDbContext db, TimeProvider clock)
 
     // Phạm vi (VHT-6/VHT-24): Chủ trọ chỉ thấy nhà có OwnerId của mình.
     // Quản lý chưa có bảng phân công tòa nhà nên tạm đọc toàn bộ như P3; VHT-24 chỉ sửa tại đây.
-    private IQueryable<Property> ScopeQuery(PropertyCaller caller)
-    {
-        var query = db.Properties.AsQueryable();
-        return caller.IsChuTro ? query.Where(p => p.OwnerId == caller.UserId) : query;
-    }
+    private static IQueryable<Property> ScopeQuery(ApplicationDbContext db, PropertyCaller caller) =>
+        PropertyScope.Apply(db.Properties, caller);
 
     // Quyền P2: Chủ trọ/Quản lý xem; Admin và Khách thuê không vào nghiệp vụ quản lý.
     // Khách thuê chỉ xem phòng đang thuê qua hợp đồng (VHT-36), không qua service này.

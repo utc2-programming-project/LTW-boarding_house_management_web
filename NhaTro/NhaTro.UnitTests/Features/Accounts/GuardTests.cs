@@ -68,9 +68,9 @@ public class GuardTests
     public void Doi_ID_sang_nha_nguoi_khac_bi_chan()
     {
         Assert.Throws<UnauthorizedAccessException>(
-            () => PropertyScope.EnsureCanAccess("owner-A", "owner-B", Roles.ChuTro));
+            () => PropertyScope.EnsureOwnerCanAccess("owner-A", "owner-B"));
         Assert.Throws<UnauthorizedAccessException>(
-            () => RoomScope.EnsureCanAccess("owner-A", "owner-B", Roles.ChuTro));
+            () => RoomScope.EnsureOwnerCanAccess("owner-A", "owner-B"));
         Assert.Throws<UnauthorizedAccessException>(
             () => TenantScope.EnsureCanAccess("user-A", "user-B", Roles.KhachThue));
     }
@@ -78,8 +78,8 @@ public class GuardTests
     [Fact]
     public void Dung_chu_duoc_qua()
     {
-        PropertyScope.EnsureCanAccess("owner-A", "owner-A", Roles.ChuTro);
-        RoomScope.EnsureCanAccess("owner-A", "owner-A", Roles.ChuTro);
+        PropertyScope.EnsureOwnerCanAccess("owner-A", "owner-A");
+        RoomScope.EnsureOwnerCanAccess("owner-A", "owner-A");
         TenantScope.EnsureCanAccess("user-A", "user-A", Roles.KhachThue);
     }
 }

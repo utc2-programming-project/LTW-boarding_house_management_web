@@ -136,7 +136,7 @@ builder.Services.AddScoped<RoleService>();
 // VHT-8: service tai khoan P1 (ho so ca nhan + quan tri tai khoan theo D1).
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-// VHT-7 (dot 1C): service nha tro/phong P2. Policy cong tac va kiem hop dong la diem goi cho VHT-94/VHT-98.
+// P2 SQL services. Approval policy and active-contract checks are extension points for VHT-94/VHT-98.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomChangePolicy, RoomChangePolicyStub>();
