@@ -9,7 +9,9 @@ namespace Web.Data.Seeding;
 // Thieu mat khau thi bo qua (chi gieo role), ghi log canh bao.
 public static class DevAccountSeeder
 {
-    private static readonly (string Email, string Role)[] Accounts =
+    // Cong khai de bang "dang nhap nhanh" o trang Login (chi Development) hien dung
+    // danh sach tai khoan mau ma khong phai chep lai.
+    public static readonly (string Email, string Role)[] Accounts =
     [
         ("admin@nhatro.local", Roles.Admin),
         ("chutro@nhatro.local", Roles.ChuTro),

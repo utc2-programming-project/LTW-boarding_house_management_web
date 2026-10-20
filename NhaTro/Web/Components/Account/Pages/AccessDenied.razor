@@ -1,8 +1,18 @@
 ﻿@page "/Account/AccessDenied"
 
-<PageTitle>Access denied</PageTitle>
+@inject IStringLocalizer<Shared> L
 
-<header>
-    <h1 class="text-danger">Access denied</h1>
-    <p class="text-danger">You do not have access to this resource.</p>
-</header>
+@* VHT-8: trang bao khong du quyen (vd KhachThue vao /admin/users). *@
+
+<PageTitle>@L["AccessDeniedTitle"] · @L["AppName"]</PageTitle>
+
+<section aria-labelledby="access-denied-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["AccessDeniedTitle"]) })" />
+
+    <div class="preview-card empty-state">
+        <LucideIcon Name="shield-check" />
+        <h2 id="access-denied-title">@L["AccessDeniedTitle"]</h2>
+        <p>@L["AccessDeniedMessage"]</p>
+        <a class="btn btn-secondary" href="/">@L["Dashboard"]</a>
+    </div>
+</section>
