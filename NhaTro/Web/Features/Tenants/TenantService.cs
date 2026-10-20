@@ -9,16 +9,19 @@ using Web.Features.Tenants.Mapping;
 namespace Web.Features.Tenants;
 
 /// <summary>
-/// Service khách thuê P3 đợt 1C: query/save/chọn khách trên SQL, kiểm quyền và phạm vi bên trong.
+/// Service SQL khách thuê P3: query/save/chọn khách trên SQL, kiểm quyền và phạm vi bên trong.
 /// Nguồn: docs/task/de_xuat_hop_dong_khach_thue.md mục 7.
 /// </summary>
-public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) : ITenantService
+public sealed class TenantService(
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    TimeProvider clock) : ITenantService
 {
     public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = ScopeQuery(caller).AsNoTracking();
+        var query = ScopeQuery(db, caller).AsNoTracking();
         return new TenantListSummaryDto
         {
             TotalCount = await query.CountAsync(ct),
@@ -35,8 +38,9 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
     {
         EnsureManager(caller);
         filter.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = ApplyKeyword(ScopeQuery(caller).AsNoTracking(), filter.Keyword);
+        var query = ApplyKeyword(ScopeQuery(db, caller).AsNoTracking(), filter.Keyword);
         if (filter.HasAccount is not null && !caller.CanRevealIdNumber)
         {
             // Không cho Quản lý suy ra trạng thái liên kết tài khoản qua số dòng trả về (D9).
@@ -79,6 +83,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         string? keyword, int limit, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureOwner(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         limit = Math.Clamp(limit, 1, 50);
         keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
@@ -119,9 +124,16 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
 
     public async Task<TenantResult> GetAsync(int id, TenantCaller caller, CancellationToken ct = default)
     {
+        if (!caller.IsManager && !caller.IsTenant)
+        {
+            throw Forbidden(caller);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
         if (caller.IsManager)
         {
-            var entity = await ScopeQuery(caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
+            var entity = await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
             return entity is null
                 ? NotFound()
                 : TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
@@ -136,7 +148,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             // Không lộ hồ sơ ngoài phạm vi: trả TenantNotFound thay vì Forbidden (mục 9).
             return own is null || own.Id != id
                 ? NotFound()
-                : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false, revealIdNumber: true));
+                : TenantProfile(own, caller);
         }
 
         throw Forbidden(caller);
@@ -149,18 +161,20 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             throw Forbidden(caller);
         }
 
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var own = await db.Tenants.AsNoTracking()
             .FirstOrDefaultAsync(t => t.UserId == caller.UserId, ct);
 
         return own is null
             ? NotFound()
-            : TenantResult.Success(TenantMapping.ToDetail(own, includeNote: false, revealIdNumber: true));
+            : TenantProfile(own, caller);
     }
 
     public async Task<TenantResult> CreateAsync(
         CreateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         request.Normalize();
 
         var invalid = ValidateProfile(
@@ -179,14 +193,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
                 .FirstOrDefaultAsync(t => t.IsActive && t.CitizenId == request.IdNumber, ct);
             if (duplicateId is not null)
             {
-                return await DuplicateTenantResultAsync(duplicateId, caller, ct);
+                return await DuplicateTenantResultAsync(db, duplicateId, caller, ct);
             }
         }
 
         // Nghi trùng PhoneNumber: chỉ trong phạm vi người gọi (mục 3), cảnh báo nhập liệu.
         if (!request.ConfirmDuplicatePhone)
         {
-            var phoneDuplicates = await ScopeQuery(caller).AsNoTracking()
+            var phoneDuplicates = await ScopeQuery(db, caller).AsNoTracking()
                 .Where(t => t.IsActive && t.Phone == request.PhoneNumber)
                 .ToListAsync(ct);
             if (phoneDuplicates.Count > 0)
@@ -223,6 +237,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         int id, UpdateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         // D9: Quản lý không thấy số CCCD đầy đủ nên form có thể gửi lại chuỗi che; giữ bản gốc để nhận diện.
         var submittedIdNumber = request.IdNumber;
         request.Normalize();
@@ -241,7 +256,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
         }
 
-        var entity = await ScopeQuery(caller).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -262,13 +277,13 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
                 .FirstOrDefaultAsync(t => t.IsActive && t.Id != id && t.CitizenId == request.IdNumber, ct);
             if (duplicateId is not null)
             {
-                return await DuplicateTenantResultAsync(duplicateId, caller, ct);
+                return await DuplicateTenantResultAsync(db, duplicateId, caller, ct);
             }
         }
 
         if (!request.ConfirmDuplicatePhone && request.PhoneNumber != entity.Phone)
         {
-            var phoneDuplicates = await ScopeQuery(caller).AsNoTracking()
+            var phoneDuplicates = await ScopeQuery(db, caller).AsNoTracking()
                 .Where(t => t.IsActive && t.Id != id && t.Phone == request.PhoneNumber)
                 .ToListAsync(ct);
             if (phoneDuplicates.Count > 0)
@@ -309,6 +324,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         {
             throw Forbidden(caller);
         }
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         request.Normalize();
         // Kiểm độ dài sau chuẩn hóa (DTO [MaxLength] chạy trên chuỗi thô) để khớp cột DB.
@@ -335,6 +351,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return NotFound();
         }
 
+        TenantScope.EnsureCanAccess(entity.UserId, caller.UserId, caller.Role);
+
         // Khách tự sửa: KHÔNG kiểm trùng số điện thoại, KHÔNG trả PossibleDuplicates (mục 6.7).
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = rowVersion;
         TenantMapping.ApplyOwnUpdate(request, entity);
@@ -356,13 +374,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         int id, bool isActive, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         if (!TryParseRowVersion(rowVersion, out var expectedVersion))
         {
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
         }
 
-        var entity = await ScopeQuery(caller).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -384,7 +403,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
                     .FirstOrDefaultAsync(t => t.IsActive && t.Id != id && t.CitizenId == entity.CitizenId, ct);
                 if (duplicateId is not null)
                 {
-                    return await DuplicateTenantResultAsync(duplicateId, caller, ct);
+                    return await DuplicateTenantResultAsync(db, duplicateId, caller, ct);
                 }
             }
         }
@@ -415,6 +434,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         int id, string accountUserId, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureOwner(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         if (string.IsNullOrWhiteSpace(accountUserId) ||
             !TryParseRowVersion(rowVersion, out var expectedVersion))
@@ -422,7 +442,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
         }
 
-        var entity = await ScopeQuery(caller).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -440,7 +460,7 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.AccountNotFound);
         }
 
-        if (!await IsTenantAccountAsync(accountUserId, ct))
+        if (!await IsTenantAccountAsync(db, accountUserId, ct))
         {
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.AccountNotTenant);
         }
@@ -476,13 +496,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
         int id, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureOwner(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         if (!TryParseRowVersion(rowVersion, out var expectedVersion))
         {
             return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
         }
 
-        var entity = await ScopeQuery(caller).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -517,8 +538,9 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
     {
         EnsureManager(caller);
         request.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = ApplyKeyword(ScopeQuery(caller).AsNoTracking(), request.Keyword)
+        var query = ApplyKeyword(ScopeQuery(db, caller).AsNoTracking(), request.Keyword)
             .Where(t => t.IsActive);
 
         if (request.ExcludeTenantIds is { Count: > 0 } exclude)
@@ -538,7 +560,14 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
     // Phạm vi dữ liệu (theo dõi được, dùng cả cho ghi): Chủ trọ/Quản lý hiện xem toàn hệ thống
     // vì chưa có liên kết tòa nhà. Khi VHT-24/VHT-25 chốt phạm vi Quản lý, chỉ sửa tại đây;
     // query đọc thêm .AsNoTracking() tại chỗ gọi.
-    private IQueryable<Tenant> ScopeQuery(TenantCaller caller) => db.Tenants;
+    private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) => db.Tenants;
+
+    private static TenantResult TenantProfile(Tenant tenant, TenantCaller caller)
+    {
+        TenantScope.EnsureCanAccess(tenant.UserId, caller.UserId, caller.Role);
+        return TenantResult.Success(TenantMapping.ToDetail(
+            tenant, includeNote: false, revealIdNumber: true));
+    }
 
     private static IQueryable<Tenant> ApplyKeyword(IQueryable<Tenant> query, string? keyword)
     {
@@ -615,9 +644,9 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
 
     // Chi kem thong tin ho so trung khi nam trong pham vi nguoi goi (muc 3); ngoai pham vi thi khong.
     private async Task<TenantResult> DuplicateTenantResultAsync(
-        Tenant duplicate, TenantCaller caller, CancellationToken ct)
+        ApplicationDbContext db, Tenant duplicate, TenantCaller caller, CancellationToken ct)
     {
-        var inScope = await ScopeQuery(caller).AsNoTracking().AnyAsync(t => t.Id == duplicate.Id, ct);
+        var inScope = await ScopeQuery(db, caller).AsNoTracking().AnyAsync(t => t.Id == duplicate.Id, ct);
         return inScope
             ? TenantResult.Failure(
                 TenantErrorCodes.DuplicateTenant,
@@ -627,7 +656,8 @@ public sealed class TenantService(ApplicationDbContext db, TimeProvider clock) :
     }
 
     // Tai khoan duoc phep gan lam khach thue: ton tai va co vai tro KhachThue.
-    private async Task<bool> IsTenantAccountAsync(string userId, CancellationToken ct) =>
+    private static async Task<bool> IsTenantAccountAsync(
+        ApplicationDbContext db, string userId, CancellationToken ct) =>
         await (from userRole in db.UserRoles
                join role in db.Roles on userRole.RoleId equals role.Id
                where userRole.UserId == userId && role.Name == Accounts.Roles.KhachThue

@@ -24,8 +24,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Luu_roi_tai_lai_dung_moi_truong()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
 
         var created = await service.CreateAsync(new CreateTenantRequest
         {
@@ -57,9 +56,8 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.False(tenant.HasAccount);
         Assert.NotEmpty(tenant.RowVersion);
 
-        // Đọc lại bằng context mới (không dùng cache của context vừa ghi).
-        await using var reloadDb = fixture.CreateContext();
-        var reloaded = await new TenantService(reloadDb, TimeProvider.System).GetAsync(tenant.Id, Owner);
+        // Đọc lại qua một service operation khác, dùng context mới và không dùng cache.
+        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(tenant.Id, Owner);
 
         Assert.True(reloaded.Succeeded, reloaded.ErrorMessage);
         Assert.Equal(tenant.Id, reloaded.Tenant!.Id);
@@ -73,8 +71,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task RowVersion_cu_tra_ConcurrencyConflict()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
 
         var created = await service.CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
@@ -103,8 +100,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Trung_giay_to_tra_DuplicateTenant_kem_ho_so_trung()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
 
         var first = await service.CreateAsync(
             NewTenant("An", "0901111111", idNumber: "079201004821"), Owner);
@@ -128,18 +124,17 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
 
-        var created = await new TenantService(db, TimeProvider.System)
+        var created = await new TenantService(fixture, TimeProvider.System)
             .CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
 
-        var linked = await new TenantService(db, TimeProvider.System)
+        var linked = await new TenantService(fixture, TimeProvider.System)
             .LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
 
         Assert.True(linked.Succeeded, linked.ErrorMessage);
         Assert.True(linked.Tenant!.HasAccount);
 
-        await using var ownDb = fixture.CreateContext();
-        var own = await new TenantService(ownDb, TimeProvider.System)
+        var own = await new TenantService(fixture, TimeProvider.System)
             .GetOwnAsync(new TenantCaller("khach-1", Roles.KhachThue));
 
         Assert.True(own.Succeeded, own.ErrorMessage);
@@ -155,7 +150,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
         await SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
 
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var a = await service.CreateAsync(NewTenant("An", "0901111111"), Owner);
         var b = await service.CreateAsync(NewTenant("Bình", "0902222222"), Owner);
         var idA = a.Tenant!.Id;
@@ -199,7 +194,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
 
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var created = await service.CreateAsync(
             NewTenant("An", "0901234567", idNumber: "079201004821", note: "nội bộ"), Owner);
         var id = created.Tenant!.Id;
@@ -207,8 +202,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
 
-        await using var ownDb = fixture.CreateContext();
-        var ownService = new TenantService(ownDb, TimeProvider.System);
+        var ownService = new TenantService(fixture, TimeProvider.System);
         var tenantCaller = new TenantCaller("khach-1", Roles.KhachThue);
 
         var updated = await ownService.UpdateOwnAsync(new UpdateOwnProfileRequest
@@ -220,8 +214,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         }, tenantCaller);
         Assert.True(updated.Succeeded, updated.ErrorMessage);
 
-        await using var checkDb = fixture.CreateContext();
-        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Owner);
+        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(id, Owner);
         var detail = reloaded.Tenant!;
 
         // Ba trường khách được sửa.
@@ -251,8 +244,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Admin_bi_chan_khoi_moi_nghiep_vu_khach_thue()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var admin = new TenantCaller("admin-1", Roles.Admin);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -275,8 +267,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Khach_thue_khong_goi_duoc_nghiep_vu_quan_ly()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var khach = new TenantCaller("khach-1", Roles.KhachThue);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -302,7 +293,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await fixture.ResetAsync();
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
 
         var created = await service.CreateAsync(
             NewTenant("An", "0901234567", note: "nội bộ"), Owner);
@@ -329,8 +320,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Qua_dai_sau_chuan_hoa_tra_InvalidRequest()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
 
         var tooLongName = await service.CreateAsync(
             NewTenant(new string('A', 201), "0901234567"), Owner);
@@ -350,8 +340,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Quan_ly_bi_che_so_cccd_va_khong_ghi_de_bang_chuoi_che()
     {
         await fixture.ResetAsync();
-        await using var db = fixture.CreateContext();
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
         var created = await service.CreateAsync(
@@ -375,8 +364,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.True(updated.Succeeded, updated.ErrorMessage);
         Assert.Equal("********4821", updated.Tenant!.IdNumber);
 
-        await using var checkDb = fixture.CreateContext();
-        var reloaded = await new TenantService(checkDb, TimeProvider.System).GetAsync(id, Owner);
+        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(id, Owner);
         Assert.Equal("0909999999", reloaded.Tenant!.PhoneNumber);
         Assert.Equal("079201004821", reloaded.Tenant.IdNumber);
 
@@ -404,7 +392,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "tenant-free", Roles.KhachThue);
         await SeedAccountAsync(db, "manager-account", Roles.QuanLy);
 
-        var service = new TenantService(db, TimeProvider.System);
+        var service = new TenantService(fixture, TimeProvider.System);
         var created = await service.CreateAsync(
             NewTenant("Nguyễn B", "0901234567", "079201004821"), Owner);
         Assert.True(created.Succeeded, created.ErrorMessage);
