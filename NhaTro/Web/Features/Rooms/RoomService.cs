@@ -20,6 +20,26 @@ public sealed class RoomService(
     IRoomChangePolicy changePolicy,
     IRoomUsageChecker usageChecker) : IRoomService
 {
+    public async Task<RoomSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+
+        var counts = await ScopeRooms(caller)
+            .GroupBy(room => room.Status)
+            .Select(group => new { Status = group.Key, Count = group.Count() })
+            .ToListAsync(ct);
+
+        int CountFor(RoomStatus status) => counts.FirstOrDefault(item => item.Status == status)?.Count ?? 0;
+
+        return new RoomSummary
+        {
+            Total = counts.Sum(item => item.Count),
+            Available = CountFor(RoomStatus.Available),
+            Rented = CountFor(RoomStatus.Rented),
+            Maintenance = CountFor(RoomStatus.Maintenance)
+        };
+    }
+
     public async Task<PagedResult<RoomListItem>> ListAsync(
         RoomFilter filter, PropertyCaller caller, CancellationToken ct = default)
     {

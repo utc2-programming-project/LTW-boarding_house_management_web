@@ -1,0 +1,207 @@
+@page "/properties"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
+@rendermode InteractiveServer
+@inject PropertyPageService PageService
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertyList> Logger
+
+<PageTitle>@L["P2PropertiesTitle"] · @L["AppName"]</PageTitle>
+
+<div class="p2-page">
+    <header class="p2-heading">
+        <div>
+            <h1>@L["P2PropertiesTitle"]</h1>
+            <p>@L["P2PropertiesSubtitle"]</p>
+        </div>
+        @if (_isOwner)
+        {
+            <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                <LucideIcon Name="plus" />@L["P2AddProperty"]
+            </button>
+        }
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(_pageError))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_pageError</span>
+            <button class="btn btn-secondary" type="button" @onclick="InitializeAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_ready)
+    {
+        <section class="p2-filter-panel" aria-label="@L["P2PropertyFilters"]">
+            <form class="property-filters" @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+                <label class="search-field" for="property-keyword">
+                    <LucideIcon Name="search" />
+                    <span class="sr-only">@L["P2SearchProperties"]</span>
+                    <input id="property-keyword" type="search" maxlength="200" autocomplete="off"
+                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput" />
+                </label>
+                <label class="filter-select" for="property-active">
+                    <span class="sr-only">@L["P2Activity"]</span>
+                    <select id="property-active" @bind="_activeFilter">
+                        <option value="">@L["P2AllActivity"]</option>
+                        <option value="true">@L["P2Active"]</option>
+                        <option value="false">@L["P2Inactive"]</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />@L["P2ResetFilters"]
+                </button>
+            </form>
+        </section>
+
+        <DataTable @key="_tableKey" @ref="_table" TItem="PropertyListItem" Columns="_columns"
+                   ItemsProvider="LoadPropertiesAsync" PageSize="_pageSize"
+                   Caption="@L["P2PropertiesTable"]" Labels="_tableLabels">
+            <EmptyActions>
+                @if (_isOwner)
+                {
+                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">@L["P2AddProperty"]</button>
+                }
+            </EmptyActions>
+        </DataTable>
+
+        <div class="p2-table-options">
+            <label for="property-page-size">@L["P2RowsPerPage"]</label>
+            <select id="property-page-size" value="@_pageSize" @onchange="ChangePageSize">
+                <option value="10">10</option><option value="20">20</option><option value="50">50</option>
+            </select>
+        </div>
+    }
+</div>
+
+@if (_formVisible)
+{
+    <PropertyFormDialog @key="_formKey" Visible="true" PropertyId="_formPropertyId"
+                        OnClose="CloseForm" OnSaved="OnPropertySavedAsync" />
+}
+@if (_selectedProperty is not null)
+{
+    <PropertyDetailsDialog Property="_selectedProperty" IsOwner="_isOwner"
+                           OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms" />
+}
+
+@code {
+    private DataTable<PropertyListItem>? _table;
+    private IReadOnlyList<DataTableColumn<PropertyListItem>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private PropertyListItem? _selectedProperty;
+    private string _keyword = string.Empty;
+    private string _activeFilter = string.Empty;
+    private string? _pageError;
+    private int _tableKey;
+    private int _formKey;
+    private int _pageSize = 20;
+    private int? _formPropertyId;
+    private bool _formVisible;
+    private bool _ready;
+    private bool _isOwner;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+        await InitializeAsync();
+    }
+
+    private async Task InitializeAsync()
+    {
+        _pageError = null;
+        try
+        {
+            var role = await PageService.GetCurrentRoleAsync();
+            if (role is not Roles.ChuTro and not Roles.QuanLy)
+            {
+                _pageError = L["P2Forbidden"];
+                _ready = false;
+                return;
+            }
+            _isOwner = role == Roles.ChuTro;
+            _ready = true;
+        }
+        catch (Exception ex)
+        {
+            _ready = false;
+            _pageError = L["P2LoadFailed"];
+            Logger.LogError(ex, "P2 property page initialization failed");
+        }
+    }
+
+    private IReadOnlyList<DataTableColumn<PropertyListItem>> BuildColumns()
+    {
+        RenderFragment<PropertyListItem> name = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Name</button>;
+        RenderFragment<PropertyListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
+        RenderFragment<PropertyListItem> actions = item => @<div class="p2-row-actions">
+            <button class="icon-button" type="button" aria-label="@L["P2ViewDetails"]" title="@L["P2ViewDetails"]" @onclick="() => OpenDetails(item)"><LucideIcon Name="eye" /></button>
+            @if (_isOwner)
+            {
+                <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "name", Title = L["P2PropertyName"], Template = name, Sortable = false },
+            new() { Key = "address", Title = L["P2Address"], Value = item => string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address },
+            new() { Key = "roomCount", Title = L["P2RoomCount"], Value = item => item.RoomCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true },
+            new() { Key = "activity", Title = L["P2Activity"], Template = activity },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+        ];
+    }
+
+    private async Task<PagedResult<PropertyListItem>> LoadPropertiesAsync(DataTableRequest request)
+    {
+        var active = bool.TryParse(_activeFilter, out var parsed) ? parsed : (bool?)null;
+        return await PageService.ListAsync(new PropertyFilter
+        {
+            Keyword = _keyword,
+            IsActive = active,
+            Page = request.Page,
+            PageSize = request.PageSize
+        });
+    }
+
+    private Task ApplyFiltersAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ResetFiltersAsync()
+    {
+        _keyword = string.Empty;
+        _activeFilter = string.Empty;
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+        return Task.CompletedTask;
+    }
+
+    private void OpenCreate() { _formPropertyId = null; _formKey++; _formVisible = true; }
+    private void OpenEdit(int id) { _formPropertyId = id; _formKey++; _formVisible = true; }
+    private void OpenDetails(PropertyListItem item) => _selectedProperty = item;
+    private void CloseForm() => _formVisible = false;
+    private void CloseDetails() => _selectedProperty = null;
+    private void EditSelected() { if (_selectedProperty is not null) OpenEdit(_selectedProperty.Id); _selectedProperty = null; }
+    private void ViewRooms(int propertyId) => Navigation.NavigateTo($"/rooms?propertyId={propertyId}");
+
+    private async Task OnPropertySavedAsync()
+    {
+        _formVisible = false;
+        Toasts.Success(L["P2SaveSucceeded"]);
+        if (_table is not null) await _table.ReloadAsync();
+    }
+}

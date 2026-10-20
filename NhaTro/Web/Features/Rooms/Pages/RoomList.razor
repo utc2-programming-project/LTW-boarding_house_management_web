@@ -1,0 +1,474 @@
+@page "/rooms"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
+@rendermode InteractiveServer
+@inject RoomPageService PageService
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<RoomList> Logger
+
+<PageTitle>@L["P2RoomsTitle"] · @L["AppName"]</PageTitle>
+
+<div class="p2-page">
+    <header class="p2-heading">
+        <div>
+            <h1>@L["P2RoomsTitle"]</h1>
+            <p>@L["P2RoomsSubtitle"]</p>
+        </div>
+        @if (_isOwner)
+        {
+            <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                <LucideIcon Name="plus" />@L["P2AddRoom"]
+            </button>
+        }
+    </header>
+
+    @if (_summaryError is not null)
+    {
+        <div class="p2-alert warning" role="status">
+            <span>@_summaryError</span>
+            <button class="btn btn-secondary" type="button" @onclick="LoadSummaryAsync">@L["Retry"]</button>
+        </div>
+    }
+
+    else if (_summary is not null)
+    {
+        <section class="p2-summary-grid" aria-label="@L["P2RoomSummary"]">
+            <article class="p2-summary-card">
+                <div class="summary-label">@L["P2TotalRooms"]<span class="summary-icon"><LucideIcon Name="door" /></span></div>
+                <div class="summary-value">@_summary.Total <span>@L["P2RoomUnit"]</span></div>
+                <p>@L["P2RoomsInScope"]</p>
+            </article>
+            <article class="p2-summary-card">
+                <div class="summary-label">@L["P2Available"]<span class="summary-dot success"></span></div>
+                <div class="summary-value">@_summary.Available <span>@L["P2RoomUnit"]</span></div>
+                <p>@L["P2ReadyForRent"]</p>
+            </article>
+            <article class="p2-summary-card">
+                <div class="summary-label">@L["P2Rented"]<span class="summary-dot primary"></span></div>
+                <div class="summary-value">@_summary.Rented <span>@L["P2RoomUnit"]</span></div>
+                <p>@L["P2CurrentlyOccupied"]</p>
+            </article>
+            <article class="p2-summary-card">
+                <div class="summary-label">@L["P2Maintenance"]<span class="summary-dot warning"></span></div>
+                <div class="summary-value">@_summary.Maintenance <span>@L["P2RoomUnit"]</span></div>
+                <p>@L["P2UnavailableForRent"]</p>
+            </article>
+        </section>
+    }
+
+    @if (_needsPropertyFirst)
+    {
+        <div class="p2-alert warning" role="status">
+            <span>@L["P2CreatePropertyFirst"]</span>
+            <button class="btn btn-secondary" type="button" @onclick="GoToProperties">@L["P2ManageProperties"]</button>
+        </div>
+    }
+
+    @if (_propertyLoadError is not null)
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_propertyLoadError</span>
+            <button class="btn btn-secondary" type="button" @onclick="InitializeAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_ready)
+    {
+        <section class="p2-filter-panel" aria-label="@L["P2RoomFilters"]">
+            <form class="room-filters" @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+                <label class="search-field" for="room-keyword">
+                    <LucideIcon Name="search" />
+                    <span class="sr-only">@L["P2SearchRooms"]</span>
+                    <input id="room-keyword" type="search" maxlength="50" autocomplete="off"
+                           placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:event="oninput" />
+                </label>
+                <label class="filter-select" for="room-property">
+                    <span class="sr-only">@L["P2Property"]</span>
+                    <select id="room-property" @bind="_propertyFilter">
+                        <option value="">@L["P2AllProperties"]</option>
+                        @foreach (var property in _properties)
+                        {
+                            <option value="@property.Id">@property.Name</option>
+                        }
+                    </select>
+                </label>
+                <label class="filter-select" for="room-status">
+                    <span class="sr-only">@L["P2Status"]</span>
+                    <select id="room-status" @bind="_statusFilter">
+                        <option value="">@L["P2AllStatuses"]</option>
+                        <option value="@((int)RoomStatus.Available)">@L["P2StatusAvailable"]</option>
+                        <option value="@((int)RoomStatus.Rented)">@L["P2StatusRented"]</option>
+                        <option value="@((int)RoomStatus.Maintenance)">@L["P2StatusMaintenance"]</option>
+                    </select>
+                </label>
+                <label class="filter-select" for="room-activity">
+                    <span class="sr-only">@L["P2Activity"]</span>
+                    <select id="room-activity" @bind="_activeFilter">
+                        <option value="">@L["P2AllActivity"]</option>
+                        <option value="true">@L["P2Active"]</option>
+                        <option value="false">@L["P2Inactive"]</option>
+                    </select>
+                </label>
+                <label class="price-field" for="room-min-price">
+                    <span>@L["P2MinPrice"]</span>
+                    <input id="room-min-price" type="number" min="0" step="1000" inputmode="numeric" @bind="_minPriceText" />
+                </label>
+                <label class="price-field" for="room-max-price">
+                    <span>@L["P2MaxPrice"]</span>
+                    <input id="room-max-price" type="number" min="0" step="1000" inputmode="numeric" @bind="_maxPriceText" />
+                </label>
+                <label class="available-toggle" for="room-only-available">
+                    <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
+                    <span>@L["P2OnlyAvailable"]</span>
+                </label>
+                <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />@L["P2ResetFilters"]
+                </button>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(_filterError))
+            {
+                <p class="filter-error" role="alert">@_filterError</p>
+            }
+            @if (_propertyFilter.Length > 0 && int.TryParse(_propertyFilter, out var propertyId))
+            {
+                <div class="p2-active-filter">
+                    <span>@L["P2FilteringByProperty"]</span>
+                    <strong>@(_properties.FirstOrDefault(item => item.Id == propertyId)?.Name ?? L["P2Property"])</strong>
+                    <button type="button" class="text-button" @onclick="ClearPropertyFilterAsync">@L["P2ClearFilter"]</button>
+                </div>
+            }
+        </section>
+
+        <DataTable @key="_tableKey" @ref="_table" TItem="RoomListItem" Columns="_columns"
+                   ItemsProvider="LoadRoomsAsync" PageSize="_pageSize"
+                   Caption="@L["P2RoomsTable"]" Labels="_tableLabels">
+            <EmptyActions>
+                @if (_isOwner && _properties.Count > 0)
+                {
+                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">@L["P2AddRoom"]</button>
+                }
+                else if (_properties.Count == 0)
+                {
+                    <button class="btn btn-secondary" type="button" @onclick="GoToProperties">@L["P2ManageProperties"]</button>
+                }
+            </EmptyActions>
+        </DataTable>
+        <div class="p2-table-options">
+            <label for="room-page-size">@L["P2RowsPerPage"]</label>
+            <select id="room-page-size" value="@_pageSize" @onchange="ChangePageSize">
+                <option value="10">10</option><option value="20">20</option><option value="50">50</option>
+            </select>
+        </div>
+    }
+</div>
+
+@if (_formVisible)
+{
+    <RoomFormDialog @key="_formKey" Visible="true" RoomId="_formRoomId" IsOwner="_isOwner"
+                    Properties="_properties" InitialPropertyId="@SelectedPropertyId"
+                    OnClose="CloseForm" OnSaved="OnRoomSavedAsync" />
+}
+@if (_selectedRoom is not null)
+{
+    <RoomDetailsDialog Room="_selectedRoom" IsOwner="_isOwner" OnClose="CloseDetails"
+                       OnEdit="EditSelected" OnDelete="RequestDelete" />
+}
+<ConfirmDialog Visible="_deleteVisible" Title="@L["P2DeleteRoomTitle"]"
+               Message="@L["P2DeleteRoomConfirm", _deleteRoom?.Code ?? string.Empty]"
+               ConfirmText="@L["P2MoveToTrash"]" CancelText="@L["Cancel"]" BusyText="@L["P2Deleting"]"
+               Danger="true" OnConfirm="DeleteRoomAsync" OnCancel="CancelDelete" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyId { get; set; }
+
+    private DataTable<RoomListItem>? _table;
+    private IReadOnlyList<DataTableColumn<RoomListItem>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private IReadOnlyList<PropertyListItem> _properties = [];
+    private RoomSummary? _summary;
+    private RoomListItem? _selectedRoom;
+    private RoomListItem? _deleteRoom;
+    private string _keyword = string.Empty;
+    private string _propertyFilter = string.Empty;
+    private string _statusFilter = string.Empty;
+    private string _activeFilter = string.Empty;
+    private string _minPriceText = string.Empty;
+    private string _maxPriceText = string.Empty;
+    private string? _filterError;
+    private string? _propertyLoadError;
+    private string? _summaryError;
+    private bool _onlyAvailable;
+    private bool _ready;
+    private bool _isOwner;
+    private bool _formVisible;
+    private bool _deleteVisible;
+    private bool _needsPropertyFirst;
+    private int _tableKey;
+    private int _formKey;
+    private int _pageSize = 20;
+    private int? _formRoomId;
+    private int? SelectedPropertyId => int.TryParse(_propertyFilter, out var value) ? value : null;
+    private int? _lastAppliedPropertyId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+        await InitializeAsync();
+    }
+
+    protected override Task OnParametersSetAsync()
+    {
+        // Blazor reuses this page when only the query string changes. Keep the
+        // property selector and table in sync with links from the property list.
+        if (_lastAppliedPropertyId == PropertyId)
+            return Task.CompletedTask;
+
+        _lastAppliedPropertyId = PropertyId;
+        if (_ready)
+        {
+            _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+            _tableKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task InitializeAsync()
+    {
+        _propertyLoadError = null;
+        try
+        {
+            var role = await PageService.GetCurrentRoleAsync();
+            if (role is not Roles.ChuTro and not Roles.QuanLy)
+            {
+                _propertyLoadError = L["P2Forbidden"];
+                _ready = false;
+                return;
+            }
+            _isOwner = role == Roles.ChuTro;
+            _properties = await PageService.GetPropertyOptionsAsync();
+            _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+            _lastAppliedPropertyId = PropertyId;
+            _ready = true;
+            await LoadSummaryAsync();
+        }
+        catch (Exception ex)
+        {
+            _ready = false;
+            _propertyLoadError = L["P2LoadFailed"];
+            Logger.LogError(ex, "P2 room page initialization failed");
+        }
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        _summaryError = null;
+        try { _summary = await PageService.GetSummaryAsync(); }
+        catch (Exception ex)
+        {
+            _summary = null;
+            _summaryError = L["P2LoadSummaryFailed"];
+            Logger.LogError(ex, "P2 room summary load failed");
+        }
+    }
+
+    private IReadOnlyList<DataTableColumn<RoomListItem>> BuildColumns()
+    {
+        RenderFragment<RoomListItem> code = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Code</button>;
+        RenderFragment<RoomListItem> status = item => @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
+        RenderFragment<RoomListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
+        RenderFragment<RoomListItem> actions = item => @<div class="p2-row-actions">
+            <button class="icon-button" type="button" aria-label="@L["P2ViewDetails"]" title="@L["P2ViewDetails"]" @onclick="() => OpenDetails(item)"><LucideIcon Name="eye" /></button>
+            <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
+            @if (_isOwner)
+            {
+                <button class="icon-button danger-action" type="button" aria-label="@L["P2MoveToTrash"]" title="@L["P2MoveToTrash"]" @onclick="() => RequestDelete(item)"><LucideIcon Name="trash" /></button>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "code", Title = L["P2RoomCode"], Template = code },
+            new() { Key = "property", Title = L["P2Property"], Value = item => item.PropertyName },
+            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
+            new() { Key = "area", Title = L["P2Area"], Value = item => item.AreaM2?.ToString("N2", CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
+            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
+            new() { Key = "status", Title = L["P2Status"], Template = status },
+            new() { Key = "activity", Title = L["P2Activity"], Template = activity },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+        ];
+    }
+
+    private async Task<PagedResult<RoomListItem>> LoadRoomsAsync(DataTableRequest request)
+    {
+        int? propertyId = int.TryParse(_propertyFilter, out var parsedProperty) ? parsedProperty : null;
+        RoomStatus? status = int.TryParse(_statusFilter, out var parsedStatus) && Enum.IsDefined((RoomStatus)parsedStatus)
+            ? (RoomStatus)parsedStatus
+            : null;
+        bool? isActive = bool.TryParse(_activeFilter, out var parsedActive) ? parsedActive : null;
+        MoneyFormatter.TryParse(_minPriceText, out var minPrice);
+        MoneyFormatter.TryParse(_maxPriceText, out var maxPrice);
+
+        return await PageService.ListAsync(new RoomFilter
+        {
+            PropertyId = propertyId,
+            Status = status,
+            Keyword = _keyword,
+            IsActive = isActive,
+            OnlyAvailable = _onlyAvailable ? true : null,
+            MinPrice = string.IsNullOrWhiteSpace(_minPriceText) ? null : minPrice,
+            MaxPrice = string.IsNullOrWhiteSpace(_maxPriceText) ? null : maxPrice,
+            Page = request.Page,
+            PageSize = request.PageSize
+        });
+    }
+
+    private Task ApplyFiltersAsync()
+    {
+        _filterError = null;
+        var hasMin = string.IsNullOrWhiteSpace(_minPriceText) || MoneyFormatter.TryParse(_minPriceText, out _);
+        var hasMax = string.IsNullOrWhiteSpace(_maxPriceText) || MoneyFormatter.TryParse(_maxPriceText, out _);
+        if (!hasMin || !hasMax)
+        {
+            _filterError = L["P2ValidationPriceNumber"];
+            return Task.CompletedTask;
+        }
+
+        if ((!string.IsNullOrWhiteSpace(_minPriceText) && MoneyFormatter.TryParse(_minPriceText, out var negativeMin) && negativeMin < 0)
+            || (!string.IsNullOrWhiteSpace(_maxPriceText) && MoneyFormatter.TryParse(_maxPriceText, out var negativeMax) && negativeMax < 0))
+        {
+            _filterError = L["P2ValidationPriceNumber"];
+            return Task.CompletedTask;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_minPriceText) && !string.IsNullOrWhiteSpace(_maxPriceText)
+            && MoneyFormatter.TryParse(_minPriceText, out var min) && MoneyFormatter.TryParse(_maxPriceText, out var max) && min > max)
+        {
+            _filterError = L["P2ValidationPriceRange"];
+            return Task.CompletedTask;
+        }
+
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ResetFiltersAsync()
+    {
+        _keyword = string.Empty;
+        _propertyFilter = string.Empty;
+        _statusFilter = string.Empty;
+        _activeFilter = string.Empty;
+        _minPriceText = string.Empty;
+        _maxPriceText = string.Empty;
+        _onlyAvailable = false;
+        _filterError = null;
+        _tableKey++;
+        Navigation.NavigateTo("/rooms", replace: true);
+        return Task.CompletedTask;
+    }
+
+    private Task ClearPropertyFilterAsync()
+    {
+        _propertyFilter = string.Empty;
+        _tableKey++;
+        Navigation.NavigateTo("/rooms", replace: true);
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+        return Task.CompletedTask;
+    }
+
+    private string StatusText(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => L["P2StatusAvailable"],
+        RoomStatus.Rented => L["P2StatusRented"],
+        RoomStatus.Maintenance => L["P2StatusMaintenance"],
+        _ => L["P2StatusUnknown"]
+    };
+
+    private static BadgeTone StatusTone(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => BadgeTone.Success,
+        RoomStatus.Rented => BadgeTone.Info,
+        RoomStatus.Maintenance => BadgeTone.Warning,
+        _ => BadgeTone.Neutral
+    };
+
+    private void OpenCreate()
+    {
+        if (!_isOwner) return;
+        if (_properties.Count == 0)
+        {
+            _needsPropertyFirst = true;
+            return;
+        }
+
+        _needsPropertyFirst = false;
+        _formRoomId = null;
+        _formKey++;
+        _formVisible = true;
+    }
+    private void OpenEdit(int id) { _formRoomId = id; _formKey++; _formVisible = true; }
+    private void OpenDetails(RoomListItem item) => _selectedRoom = item;
+    private void CloseForm() => _formVisible = false;
+    private void CloseDetails() => _selectedRoom = null;
+    private void EditSelected() { if (_selectedRoom is not null) OpenEdit(_selectedRoom.Id); _selectedRoom = null; }
+    private void RequestDelete(RoomListItem item) { if (_isOwner) { _deleteRoom = item; _deleteVisible = true; _selectedRoom = null; } }
+    private void CancelDelete() { _deleteVisible = false; _deleteRoom = null; }
+    private void GoToProperties() => Navigation.NavigateTo("/properties");
+
+    private async Task OnRoomSavedAsync()
+    {
+        _formVisible = false;
+        Toasts.Success(L["P2SaveSucceeded"]);
+        await RefreshAfterMutationAsync();
+    }
+
+    private async Task DeleteRoomAsync()
+    {
+        if (!_isOwner || _deleteRoom is null) { CancelDelete(); return; }
+        try
+        {
+            var result = await PageService.DeleteAsync(_deleteRoom.Id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["P2RoomMovedToTrash"]);
+                CancelDelete();
+                await RefreshAfterMutationAsync();
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode switch
+            {
+                RoomErrorCodes.RoomInUse => L["P2RoomInUse"],
+                RoomErrorCodes.Forbidden => L["P2Forbidden"],
+                RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
+                _ => L["P2SaveFailed"]
+            });
+            CancelDelete();
+        }
+        catch (UnauthorizedAccessException) { Toasts.Error(L["P2Forbidden"]); CancelDelete(); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 room delete failed");
+            Toasts.Error(L["P2SaveFailed"]);
+            CancelDelete();
+        }
+    }
+
+    private async Task RefreshAfterMutationAsync()
+    {
+        await LoadSummaryAsync();
+        if (_table is not null) await _table.ReloadAsync();
+    }
+}

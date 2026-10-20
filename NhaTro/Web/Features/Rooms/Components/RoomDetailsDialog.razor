@@ -1,0 +1,98 @@
+@inject RoomPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<RoomDetailsDialog> Logger
+
+<FeatureDialog Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
+    <section class="p2-details-body">
+        @if (_loading)
+        {
+            <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="p2-alert error" role="alert">
+                <span>@_error</span>
+                <button class="btn btn-secondary" type="button" @onclick="RetryLoadAsync">@L["Retry"]</button>
+            </div>
+        }
+        else if (_detail is not null)
+        {
+            <div class="p2-detail-status">
+                <StatusBadge Text="@StatusText(_detail.Status)" Tone="@StatusTone(_detail.Status)" />
+                <StatusBadge Text="@(_detail.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(_detail.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />
+            </div>
+            <dl class="p2-detail-grid">
+                <div><dt>@L["P2Property"]</dt><dd>@_detail.PropertyName</dd></div>
+                <div><dt>@L["P2RoomCode"]</dt><dd>@_detail.Code</dd></div>
+                <div><dt>@L["P2Floor"]</dt><dd>@(_detail.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"])</dd></div>
+                <div><dt>@L["P2Area"]</dt><dd>@(_detail.AreaM2?.ToString("N2", CultureInfo.CurrentCulture) ?? L["P2NotProvided"]) @L["P2SquareMeter"]</dd></div>
+                <div><dt>@L["P2StandardPrice"]</dt><dd>@MoneyFormatter.Format(_detail.StandardPrice)</dd></div>
+                <div><dt>@L["P2CreatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.CreatedAt)</dd></div>
+                @if (_detail.UpdatedAt.HasValue)
+                {
+                    <div><dt>@L["P2UpdatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.UpdatedAt)</dd></div>
+                }
+            </dl>
+            <div class="p2-details-actions">
+                <button class="btn btn-secondary" type="button" @onclick="OnClose">@L["Close"]</button>
+                <button class="btn btn-primary" type="button" @onclick="OnEdit">@L["P2Edit"]</button>
+                @if (IsOwner)
+                {
+                    <button class="btn btn-danger" type="button" @onclick="() => OnDelete.InvokeAsync(Room)">@L["P2MoveToTrash"]</button>
+                }
+            </div>
+        }
+    </section>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public RoomListItem Room { get; set; } = new();
+    [Parameter] public bool IsOwner { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback<RoomListItem> OnDelete { get; set; }
+
+    private RoomDetail? _detail;
+    private string? _error;
+    private bool _loading = true;
+    private string DialogTitle => $"{L["P2RoomDetails"].Value} · {Room.Code}";
+
+    protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var result = await PageService.GetAsync(Room.Id);
+            if (result.Succeeded) _detail = result.Room;
+            else _error = result.ErrorCode == RoomErrorCodes.RoomNotFound ? L["P2RoomNotFound"] : L["P2LoadFailed"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "P2 room detail load failed");
+        }
+        finally { _loading = false; }
+    }
+
+    private Task RetryLoadAsync() => LoadAsync();
+
+    private string StatusText(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => L["P2StatusAvailable"],
+        RoomStatus.Rented => L["P2StatusRented"],
+        RoomStatus.Maintenance => L["P2StatusMaintenance"],
+        _ => L["P2StatusUnknown"]
+    };
+
+    private static BadgeTone StatusTone(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => BadgeTone.Success,
+        RoomStatus.Rented => BadgeTone.Info,
+        RoomStatus.Maintenance => BadgeTone.Warning,
+        _ => BadgeTone.Neutral
+    };
+}
