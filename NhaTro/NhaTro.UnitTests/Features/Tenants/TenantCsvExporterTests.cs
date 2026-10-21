@@ -34,8 +34,32 @@ public class TenantCsvExporterTests
 
         Assert.DoesNotContain("TenantColumnAccount", csv);
         Assert.Equal(
-            "\uFEFF\"TenantColumnName\",\"TenantColumnPhone\",\"TenantColumnIdNumber\",\"TenantColumnStatus\"",
+            "\uFEFF\"TenantColumnName\",\"TenantColumnPhone\",\"TenantColumnStatus\"",
             csv);
+    }
+
+    // B17-05: file xuất không được chứa số CCCD, kể cả bản che, với mọi vai trò.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_never_exports_id_number_column_or_value(bool includeAccount)
+    {
+        var tenant = new TenantListItemDto
+        {
+            Id = 2,
+            FullName = "Nguyen Van A",
+            PhoneNumber = "0912345678",
+            IdNumberMasked = "********4821",
+            IsActive = true,
+            HasAccount = false,
+            HasActiveContract = false,
+        };
+
+        var csv = TenantCsvExporter.Build([tenant], includeAccount, Localize);
+
+        Assert.DoesNotContain("TenantColumnIdNumber", csv);
+        Assert.DoesNotContain("4821", csv);
+        Assert.DoesNotContain("********", csv);
     }
 
     private static string Localize(string key) => key;

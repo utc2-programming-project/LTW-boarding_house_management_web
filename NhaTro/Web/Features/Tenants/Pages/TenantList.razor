@@ -210,6 +210,12 @@
             },
             new()
             {
+                Key = "room",
+                Title = L["TenantColumnRoom"],
+                Value = tenant => string.IsNullOrWhiteSpace(tenant.RoomName) ? L["NoData"].Value : tenant.RoomName,
+            },
+            new()
+            {
                 Key = "idNumber",
                 Title = L["TenantColumnIdNumber"],
                 Template = tenant => @<span class="tenant-id-mask" title="@L["TenantIdMaskedHint"]">@(string.IsNullOrWhiteSpace(tenant.IdNumberMasked) ? L["NoData"] : tenant.IdNumberMasked)</span>,

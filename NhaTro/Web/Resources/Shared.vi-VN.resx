@@ -535,7 +535,7 @@
   <data name="TenantColumnPhone" xml:space="preserve"><value>Số điện thoại</value></data>
   <data name="TenantColumnIdNumber" xml:space="preserve"><value>CCCD / CMND</value></data>
   <data name="TenantColumnStatus" xml:space="preserve"><value>Trạng thái</value></data>
-  <data name="TenantColumnAccount" xml:space="preserve"><value>Tài khoản app</value></data>
+  <data name="TenantColumnAccount" xml:space="preserve"><value>Tài khoản</value></data>
   <data name="TenantColumnActions" xml:space="preserve"><value>Thao tác</value></data>
   <data name="TenantRecordNumber" xml:space="preserve"><value>Hồ sơ #{0}</value></data>
   <data name="TenantViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
@@ -574,7 +574,9 @@
   <data name="TenantInternalNote" xml:space="preserve"><value>Ghi chú nội bộ</value></data>
   <data name="TenantIdMaskedHint" xml:space="preserve"><value>Số CCCD của Quản lý luôn được che.</value></data>
   <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Nhập đầy đủ số CCCD/CMND. Sau khi lưu, số này sẽ được che.</value></data>
-  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>Số hiện tại đang được che. Để nguyên để giữ số cũ, hoặc nhập lại đầy đủ để thay đổi.</value></data>
+  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>Số hiện tại đang được che. Để trống để giữ số cũ, hoặc nhập đầy đủ số mới để thay đổi.</value></data>
+  <data name="TenantValidationIdNumber" xml:space="preserve"><value>Số giấy tờ không hợp lệ: nhập tối thiểu 8 chữ hoặc số và không dùng dấu *.</value></data>
+  <data name="TenantColumnRoom" xml:space="preserve"><value>Phòng</value></data>
   <data name="TenantProfileTitle" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
   <data name="TenantProfileSubtitle" xml:space="preserve"><value>Xem thông tin lưu trú và cập nhật thông tin liên hệ của bạn</value></data>
   <data name="TenantProfileReadonly" xml:space="preserve"><value>Thông tin này do Chủ trọ hoặc Quản lý cập nhật</value></data>

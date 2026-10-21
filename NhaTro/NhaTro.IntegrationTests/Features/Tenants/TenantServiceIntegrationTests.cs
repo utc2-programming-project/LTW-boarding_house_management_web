@@ -403,6 +403,48 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.All(list.Items, item => Assert.Equal("********4821", item.IdNumberMasked));
     }
 
+    // Rủi ro CCCD: sửa dở chuỗi che hoặc nhập số quá ngắn không được ghi đè số thật.
+    [SqlServerFact]
+    public async Task Cccd_bi_che_sua_do_hoac_qua_ngan_bi_tu_choi_va_khong_ghi_de_so_that()
+    {
+        await fixture.ResetAsync();
+        var service = new TenantService(fixture, TimeProvider.System);
+        var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
+
+        var created = await service.CreateAsync(
+            NewTenant("An", "0901234567", idNumber: "079201004821"), Owner);
+        var id = created.Tenant!.Id;
+        var asQuanLy = await service.GetAsync(id, quanLy);
+
+        // Xóa bớt một dấu * rồi lưu: không được coi là số mới "4821".
+        var brokenMask = await service.UpdateAsync(id, new UpdateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0901234567",
+            IdNumber = "*******4821",
+            RowVersion = asQuanLy.Tenant!.RowVersion,
+        }, quanLy);
+        Assert.False(brokenMask.Succeeded);
+
+        // Số quá ngắn cũng bị từ chối.
+        var tooShort = await service.UpdateAsync(id, new UpdateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0901234567",
+            IdNumber = "4821",
+            RowVersion = asQuanLy.Tenant.RowVersion,
+        }, quanLy);
+        Assert.False(tooShort.Succeeded);
+
+        // Tạo mới với chuỗi che hoặc số ngắn cũng bị từ chối.
+        Assert.False((await service.CreateAsync(NewTenant("Bình", "0902222222", idNumber: "********4821"), quanLy)).Succeeded);
+        Assert.False((await service.CreateAsync(NewTenant("Cường", "0903333333", idNumber: "123"), quanLy)).Succeeded);
+
+        // Số thật vẫn nguyên vẹn.
+        var asOwner = await service.GetAsync(id, Owner);
+        Assert.Equal("079201004821", asOwner.Tenant!.IdNumber);
+    }
+
     [SqlServerFact]
     public async Task Summary_va_tai_khoan_chua_lien_ket_theo_dung_quyen()
     {

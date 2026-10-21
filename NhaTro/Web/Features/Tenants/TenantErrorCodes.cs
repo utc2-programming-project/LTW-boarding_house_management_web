@@ -36,6 +36,7 @@ public static class TenantErrorMessages
     public const string InvalidPhone = "Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)";
     public const string InvalidDateOfBirth = "Ngày sinh không được ở tương lai";
     public const string InvalidIdIssuedDate = "Ngày cấp giấy tờ không được trước ngày sinh";
+    public const string InvalidIdNumber = "Số giấy tờ không hợp lệ (tối thiểu 8 chữ hoặc số, không chứa dấu *)";
 
     /// <summary>
     /// Vượt độ dài cột DB sau chuẩn hóa. DTO có [MaxLength] nhưng nó chạy trên chuỗi thô

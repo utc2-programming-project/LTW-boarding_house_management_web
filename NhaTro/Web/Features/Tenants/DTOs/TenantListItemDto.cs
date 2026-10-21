@@ -22,4 +22,10 @@ public class TenantListItemDto
 
     /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
     public required bool HasActiveContract { get; init; }
+
+    /// <summary>
+    /// Tên phòng đang thuê (D9: Quản lý được xem cột "phòng"). Hiện luôn null vì <c>Tenant</c> chưa liên kết tới
+    /// phòng/hợp đồng (VHT-24/VHT-25); khi có liên kết chỉ cần gán giá trị này trong <c>TenantMapping.ToListItem</c>.
+    /// </summary>
+    public string? RoomName { get; init; }
 }

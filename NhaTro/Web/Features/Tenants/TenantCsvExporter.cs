@@ -2,6 +2,7 @@ using Web.Features.Tenants.DTOs;
 
 namespace Web.Features.Tenants;
 
+// Theo tech-stack: file xuất không chứa số CCCD (kể cả bản che) với mọi vai trò.
 public static class TenantCsvExporter
 {
     public static string Build(
@@ -13,7 +14,6 @@ public static class TenantCsvExporter
         {
             localize("TenantColumnName"),
             localize("TenantColumnPhone"),
-            localize("TenantColumnIdNumber"),
             localize("TenantColumnStatus"),
         };
         if (includeAccount) headers.Add(localize("TenantColumnAccount"));
@@ -24,7 +24,6 @@ public static class TenantCsvExporter
             {
                 Csv(tenant.FullName),
                 Csv(tenant.PhoneNumber),
-                Csv(tenant.IdNumberMasked),
                 Csv(localize(tenant.IsActive ? "TenantStatusActive" : "TenantStatusInactive")),
             };
             if (includeAccount)

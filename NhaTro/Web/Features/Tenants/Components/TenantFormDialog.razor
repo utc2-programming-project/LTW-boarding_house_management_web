@@ -32,7 +32,7 @@
                            Hint="@(CanRevealIdNumber ? null : L[Tenant is null ? "TenantIdManagerCreateHint" : "TenantIdManagerEditHint"].Value)"
                            For="() => _form.IdNumber">
                     <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" maxlength="20"
-                               autocomplete="off"
+                               autocomplete="off" placeholder="@(IdNumberPlaceholder)"
                                aria-describedby="@(CanRevealIdNumber ? "tenant-id-number-error" : "tenant-id-number-hint tenant-id-number-error")" />
                 </FormField>
             </div>
@@ -133,6 +133,9 @@
     [Inject] private ToastService Toasts { get; set; } = default!;
     [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
 
+    // Quản lý đang sửa hồ sơ: hiện số đã che làm gợi ý; để trống nghĩa là giữ nguyên số cũ.
+    private string? IdNumberPlaceholder => !CanRevealIdNumber && Tenant is not null ? Tenant.IdNumber : null;
+
     private TenantFormModel _form = new();
     private EditContext _editContext = default!;
     private ValidationMessageStore _messages = default!;
@@ -176,7 +179,8 @@
                 FullName = Tenant.FullName,
                 PhoneNumber = Tenant.PhoneNumber,
                 Email = Tenant.Email,
-                IdNumber = Tenant.IdNumber,
+                // Quản lý chỉ nhận chuỗi che: để trống ô nhập (chuỗi che hiện ở placeholder) để không ai sửa dở chuỗi che.
+                IdNumber = CanRevealIdNumber ? Tenant.IdNumber : null,
                 DateOfBirth = Tenant.DateOfBirth,
                 Gender = Tenant.Gender,
                 PermanentAddress = Tenant.PermanentAddress,
@@ -352,6 +356,7 @@
         valid &= CheckLength(nameof(_form.FullName), TenantNormalizer.NormalizeFullName(_form.FullName), 200, L["TenantFullName"]);
         valid &= CheckLength(nameof(_form.PhoneNumber), TenantNormalizer.NormalizePhone(_form.PhoneNumber), 20, L["TenantPhone"]);
         valid &= CheckLength(nameof(_form.Email), _form.Email, 256, L["TenantEmail"]);
+        valid &= CheckIdNumber();
         valid &= CheckLength(nameof(_form.IdNumber), TenantNormalizer.NormalizeIdNumber(_form.IdNumber), 20, L["TenantIdNumber"]);
         valid &= CheckLength(nameof(_form.PermanentAddress), _form.PermanentAddress, 300, L["TenantPermanentAddress"]);
         valid &= CheckLength(nameof(_form.IdIssuedPlace), _form.IdIssuedPlace, 200, L["TenantIdIssuedPlace"]);
@@ -362,6 +367,28 @@
 
         _editContext.NotifyValidationStateChanged();
         return valid;
+    }
+
+    // Số giấy tờ không bắt buộc. Có nhập thì tối thiểu 8 ký tự chữ/số và không chứa dấu * (chuỗi che).
+    // Chủ trọ sửa hồ sơ mà không đổi số thì bỏ qua, để hồ sơ cũ có số ngắn vẫn lưu được.
+    private bool CheckIdNumber()
+    {
+        var raw = _form.IdNumber;
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+
+        var normalized = TenantNormalizer.NormalizeIdNumber(raw);
+        if (Tenant is not null && CanRevealIdNumber && normalized == TenantNormalizer.NormalizeIdNumber(Tenant.IdNumber))
+        {
+            return true;
+        }
+
+        if (raw.Contains('*') || normalized.Length < 8)
+        {
+            Add(nameof(_form.IdNumber), L["TenantValidationIdNumber"]);
+            return false;
+        }
+
+        return true;
     }
 
     private bool CheckLength(string property, string? value, int max, string label)

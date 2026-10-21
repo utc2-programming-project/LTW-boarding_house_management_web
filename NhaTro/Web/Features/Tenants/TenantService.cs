@@ -175,6 +175,7 @@ public sealed class TenantService(
     {
         EnsureManager(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var submittedIdNumber = request.IdNumber;
         request.Normalize();
 
         var invalid = ValidateProfile(
@@ -184,6 +185,12 @@ public sealed class TenantService(
         if (invalid is not null)
         {
             return invalid;
+        }
+
+        // Tạo mới thì không có số cũ để giữ: chuỗi chứa dấu * hoặc quá ngắn đều là nhập sai, không được lưu.
+        if (ContainsMaskCharacter(submittedIdNumber) || !IsValidIdNumberFormat(request.IdNumber))
+        {
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidIdNumber);
         }
 
         // Trùng IdNumber: toàn hệ thống (mục 3). Chặn cứng.
@@ -268,6 +275,18 @@ public sealed class TenantService(
             && submittedIdNumber == TenantNormalizer.MaskIdNumber(entity.CitizenId))
         {
             request.IdNumber = entity.CitizenId;
+        }
+        else if (ContainsMaskCharacter(submittedIdNumber))
+        {
+            // Chuỗi che đã bị sửa dở (vd. xóa bớt dấu *): Normalize sẽ bỏ hết dấu * và chỉ còn 4 số cuối,
+            // nếu cho qua thì ghi đè mất CCCD thật. Chặn lại thay vì đoán ý người dùng.
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidIdNumber);
+        }
+
+        // Chỉ kiểm định dạng khi số thật sự đổi, để hồ sơ cũ có số ngắn vẫn sửa được các trường khác.
+        if (request.IdNumber != entity.CitizenId && !IsValidIdNumberFormat(request.IdNumber))
+        {
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidIdNumber);
         }
 
         // Đổi IdNumber: kiểm trùng toàn hệ thống, trừ chính hồ sơ đang sửa.
@@ -684,6 +703,15 @@ public sealed class TenantService(
             return false;
         }
     }
+
+    /// <summary>Số giấy tờ rỗng là hợp lệ (không bắt buộc); có giá trị thì tối thiểu 8 ký tự (hộ chiếu 8-9, CMND 9, CCCD 12).</summary>
+    private static bool IsValidIdNumberFormat(string? normalizedIdNumber) =>
+        string.IsNullOrEmpty(normalizedIdNumber) || normalizedIdNumber.Length >= MinIdNumberLength;
+
+    private static bool ContainsMaskCharacter(string? rawIdNumber) =>
+        rawIdNumber is not null && rawIdNumber.Contains('*');
+
+    private const int MinIdNumberLength = 8;
 
     private static void EnsureManager(TenantCaller caller)
     {
