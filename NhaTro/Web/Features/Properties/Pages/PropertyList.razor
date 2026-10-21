@@ -57,7 +57,8 @@
 
         <DataTable @key="_tableKey" @ref="_table" TItem="PropertyListItem" Columns="_columns"
                    ItemsProvider="LoadPropertiesAsync" PageSize="_pageSize"
-                   Caption="@L["P2PropertiesTable"]" Labels="_tableLabels">
+                   Caption="@L["P2PropertiesTable"]" Labels="_tableLabels"
+                   HasActiveFilters="_hasActiveFilters" OnClearFilters="ClearFiltersFromTableAsync">
             <EmptyActions>
                 @if (_isOwner)
                 {
@@ -101,6 +102,7 @@
     private bool _formVisible;
     private bool _ready;
     private bool _isOwner;
+    private bool _hasActiveFilters;
 
     protected override async Task OnInitializedAsync()
     {
@@ -168,6 +170,7 @@
 
     private Task ApplyFiltersAsync()
     {
+        _hasActiveFilters = !string.IsNullOrWhiteSpace(_keyword) || !string.IsNullOrWhiteSpace(_activeFilter);
         _tableKey++;
         return Task.CompletedTask;
     }
@@ -176,7 +179,16 @@
     {
         _keyword = string.Empty;
         _activeFilter = string.Empty;
+        _hasActiveFilters = false;
         _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ClearFiltersFromTableAsync()
+    {
+        _keyword = string.Empty;
+        _activeFilter = string.Empty;
+        _hasActiveFilters = false;
         return Task.CompletedTask;
     }
 

@@ -2,7 +2,7 @@
 @inject IStringLocalizer<Shared> L
 @inject ILogger<PropertyFormDialog> Logger
 
-<FeatureDialog Visible="Visible" Title="@(IsEdit ? L["P2EditProperty"].Value : L["P2AddProperty"].Value)"
+<FeatureDialog @ref="_featureDialog" Visible="Visible" Title="@(IsEdit ? L["P2EditProperty"].Value : L["P2AddProperty"].Value)"
                CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose" CssClass="property-form-dialog">
     <EditForm Model="_model" OnSubmit="HandleSubmitAsync">
         <div class="p2-form-body">
@@ -20,7 +20,7 @@
             {
                 <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
             }
-            else
+            else if (!_loadFailed)
             {
                 <div class="p2-form-grid">
                     <div class="p2-field full">
@@ -40,12 +40,15 @@
                 </div>
             }
         </div>
-        <footer class="p2-form-footer">
-            <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="OnClose">@L["Cancel"]</button>
-            <button class="btn btn-primary" type="submit" disabled="@(_loading || _saving)" aria-busy="@(_saving ? "true" : null)">
-                @(_saving ? L["P2Saving"] : L["Save"])
-            </button>
-        </footer>
+        @if (!_loadFailed)
+        {
+            <footer class="p2-form-footer">
+                <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="CloseDialogAsync">@L["Cancel"]</button>
+                <button class="btn btn-primary" type="submit" disabled="@(_loading || _loadFailed || _saving)" aria-busy="@(_saving ? "true" : null)">
+                    @(_saving ? L["P2Saving"] : L["Save"])
+                </button>
+            </footer>
+        }
     </EditForm>
 </FeatureDialog>
 
@@ -55,6 +58,7 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaved { get; set; }
 
+    private FeatureDialog? _featureDialog;
     private PropertySave _model = new();
     private readonly Dictionary<string, string> _errors = new();
     private bool _loading;
@@ -100,6 +104,8 @@
 
     private async Task HandleSubmitAsync(EditContext _)
     {
+        if (_loading || _loadFailed || _saving) return;
+
         _errors.Clear();
         _error = null;
         _model.Normalize();
@@ -117,6 +123,7 @@
 
             if (result.Succeeded)
             {
+                if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
                 await OnSaved.InvokeAsync();
                 return;
             }
@@ -174,4 +181,6 @@
         }
         finally { _loading = false; }
     }
+
+    private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
 }

@@ -2,7 +2,7 @@
 @inject IStringLocalizer<Shared> L
 @inject ILogger<RoomDetailsDialog> Logger
 
-<FeatureDialog Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
+<FeatureDialog @ref="_featureDialog" Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
     <section class="p2-details-body">
         @if (_loading)
         {
@@ -34,11 +34,11 @@
                 }
             </dl>
             <div class="p2-details-actions">
-                <button class="btn btn-secondary" type="button" @onclick="OnClose">@L["Close"]</button>
-                <button class="btn btn-primary" type="button" @onclick="OnEdit">@L["P2Edit"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="CloseDialogAsync">@L["Close"]</button>
+                <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>
                 @if (IsOwner)
                 {
-                    <button class="btn btn-danger" type="button" @onclick="() => OnDelete.InvokeAsync(Room)">@L["P2MoveToTrash"]</button>
+                    <button class="btn btn-danger" type="button" @onclick="DeleteAsync">@L["P2MoveToTrash"]</button>
                 }
             </div>
         }
@@ -52,6 +52,7 @@
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback<RoomListItem> OnDelete { get; set; }
 
+    private FeatureDialog? _featureDialog;
     private RoomDetail? _detail;
     private string? _error;
     private bool _loading = true;
@@ -79,6 +80,16 @@
     }
 
     private Task RetryLoadAsync() => LoadAsync();
+
+    private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
+
+    private Task EditAsync() => _featureDialog?.RequestCloseAsync(OnEdit) ?? OnEdit.InvokeAsync();
+
+    private async Task DeleteAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnDelete.InvokeAsync(Room);
+    }
 
     private string StatusText(RoomStatus status) => status switch
     {

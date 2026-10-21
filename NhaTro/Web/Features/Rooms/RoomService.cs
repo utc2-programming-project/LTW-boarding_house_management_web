@@ -25,7 +25,8 @@ public sealed class RoomService(
         EnsureCanRead(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var counts = await ScopeRooms(db, caller)
+        var rooms = ScopeRooms(db, caller);
+        var counts = await rooms
             .GroupBy(room => room.Status)
             .Select(group => new { Status = group.Key, Count = group.Count() })
             .ToListAsync(ct);
@@ -35,7 +36,8 @@ public sealed class RoomService(
         return new RoomSummary
         {
             Total = counts.Sum(item => item.Count),
-            Available = CountFor(RoomStatus.Available),
+            Available = await rooms.CountAsync(
+                room => room.IsActive && room.Status == RoomStatus.Available, ct),
             Rented = CountFor(RoomStatus.Rented),
             Maintenance = CountFor(RoomStatus.Maintenance)
         };
@@ -322,7 +324,7 @@ public sealed class RoomService(
 
         if (filter.OnlyAvailable == true)
         {
-            query = query.Where(r => r.Status == RoomStatus.Available);
+            query = query.Where(r => r.IsActive && r.Status == RoomStatus.Available);
         }
 
         if (filter.IsActive is { } isActive)

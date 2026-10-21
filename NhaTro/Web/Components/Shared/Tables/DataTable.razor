@@ -95,7 +95,7 @@
                         <td colspan="@Columns.Count" class="state-cell">
                             @if (HasFilters)
                             {
-                                <EmptyStateCard Title="@Labels.NoResultsTitle">
+                                <EmptyStateCard Title="@Labels.NoResultsTitle" Description="@Labels.NoResultsDescription">
                                     <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
                                 </EmptyStateCard>
                             }
@@ -210,9 +210,17 @@
     [Parameter]
     public RenderFragment? EmptyActions { get; set; }
 
+    /// <summary>Cho biết trang chứa bảng đang áp dụng bộ lọc ngoài DataTable.</summary>
+    [Parameter]
+    public bool HasActiveFilters { get; set; }
+
+    /// <summary>Xóa bộ lọc do trang quản lý khi người dùng chọn xóa bộ lọc ở empty state.</summary>
+    [Parameter]
+    public EventCallback OnClearFilters { get; set; }
+
     private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
 
-    private bool HasFilters => _filters.Count > 0;
+    private bool HasFilters => _filters.Count > 0 || HasActiveFilters;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -292,11 +300,12 @@
         return LoadAsync();
     }
 
-    private Task ClearFiltersAsync()
+    private async Task ClearFiltersAsync()
     {
         _filters.Clear();
         _page = 1;
-        return LoadAsync();
+        await OnClearFilters.InvokeAsync();
+        await LoadAsync();
     }
 
     private bool IsSorted(string key, bool descending) => _sortKey == key && _sortDescending == descending;

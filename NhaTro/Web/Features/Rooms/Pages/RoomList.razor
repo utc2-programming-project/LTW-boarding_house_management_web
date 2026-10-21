@@ -75,7 +75,7 @@
     else if (_ready)
     {
         <section class="p2-filter-panel" aria-label="@L["P2RoomFilters"]">
-            <form class="room-filters" @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+            <form class="room-filters" novalidate @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
                 <label class="search-field" for="room-keyword">
                     <LucideIcon Name="search" />
                     <span class="sr-only">@L["P2SearchRooms"]</span>
@@ -111,11 +111,11 @@
                 </label>
                 <label class="price-field" for="room-min-price">
                     <span>@L["P2MinPrice"]</span>
-                    <input id="room-min-price" type="number" min="0" step="1000" inputmode="numeric" @bind="_minPriceText" />
+                    <input id="room-min-price" type="number" min="0" step="any" inputmode="numeric" @bind="_minPriceText" />
                 </label>
                 <label class="price-field" for="room-max-price">
                     <span>@L["P2MaxPrice"]</span>
-                    <input id="room-max-price" type="number" min="0" step="1000" inputmode="numeric" @bind="_maxPriceText" />
+                    <input id="room-max-price" type="number" min="0" step="any" inputmode="numeric" @bind="_maxPriceText" />
                 </label>
                 <label class="available-toggle" for="room-only-available">
                     <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
@@ -142,7 +142,8 @@
 
         <DataTable @key="_tableKey" @ref="_table" TItem="RoomListItem" Columns="_columns"
                    ItemsProvider="LoadRoomsAsync" PageSize="_pageSize"
-                   Caption="@L["P2RoomsTable"]" Labels="_tableLabels">
+                   Caption="@L["P2RoomsTable"]" Labels="_tableLabels"
+                   HasActiveFilters="_hasActiveFilters" OnClearFilters="ClearFiltersFromTableAsync">
             <EmptyActions>
                 @if (_isOwner && _properties.Count > 0)
                 {
@@ -205,6 +206,7 @@
     private bool _formVisible;
     private bool _deleteVisible;
     private bool _needsPropertyFirst;
+    private bool _hasActiveFilters;
     private int _tableKey;
     private int _formKey;
     private int _pageSize = 20;
@@ -230,6 +232,7 @@
         if (_ready)
         {
             _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+            _hasActiveFilters = HasRoomFilters();
             _tableKey++;
         }
 
@@ -252,6 +255,7 @@
             _properties = await PageService.GetPropertyOptionsAsync();
             _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             _lastAppliedPropertyId = PropertyId;
+            _hasActiveFilters = HasRoomFilters();
             _ready = true;
             await LoadSummaryAsync();
         }
@@ -294,7 +298,7 @@
             new() { Key = "code", Title = L["P2RoomCode"], Template = code },
             new() { Key = "property", Title = L["P2Property"], Value = item => item.PropertyName },
             new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
-            new() { Key = "area", Title = L["P2Area"], Value = item => item.AreaM2?.ToString("N2", CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
+            new() { Key = "area", Title = L["P2Area"], Value = FormatArea, IsNumeric = true },
             new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
             new() { Key = "status", Title = L["P2Status"], Template = status },
             new() { Key = "activity", Title = L["P2Activity"], Template = activity },
@@ -351,6 +355,7 @@
             return Task.CompletedTask;
         }
 
+        _hasActiveFilters = HasRoomFilters();
         _tableKey++;
         return Task.CompletedTask;
     }
@@ -365,6 +370,7 @@
         _maxPriceText = string.Empty;
         _onlyAvailable = false;
         _filterError = null;
+        _hasActiveFilters = false;
         _tableKey++;
         Navigation.NavigateTo("/rooms", replace: true);
         return Task.CompletedTask;
@@ -373,10 +379,40 @@
     private Task ClearPropertyFilterAsync()
     {
         _propertyFilter = string.Empty;
+        _hasActiveFilters = HasRoomFilters();
         _tableKey++;
         Navigation.NavigateTo("/rooms", replace: true);
         return Task.CompletedTask;
     }
+
+    private Task ClearFiltersFromTableAsync()
+    {
+        _keyword = string.Empty;
+        _propertyFilter = string.Empty;
+        _statusFilter = string.Empty;
+        _activeFilter = string.Empty;
+        _minPriceText = string.Empty;
+        _maxPriceText = string.Empty;
+        _onlyAvailable = false;
+        _filterError = null;
+        _hasActiveFilters = false;
+        _lastAppliedPropertyId = null;
+        Navigation.NavigateTo("/rooms", replace: true);
+        return Task.CompletedTask;
+    }
+
+    private bool HasRoomFilters() =>
+        !string.IsNullOrWhiteSpace(_keyword)
+        || !string.IsNullOrWhiteSpace(_propertyFilter)
+        || !string.IsNullOrWhiteSpace(_statusFilter)
+        || !string.IsNullOrWhiteSpace(_activeFilter)
+        || !string.IsNullOrWhiteSpace(_minPriceText)
+        || !string.IsNullOrWhiteSpace(_maxPriceText)
+        || _onlyAvailable;
+
+    private string FormatArea(RoomListItem item) => item.AreaM2 is { } area
+        ? $"{area.ToString("N2", CultureInfo.CurrentCulture)} {L["P2SquareMeter"]}"
+        : L["P2NotProvided"].Value;
 
     private Task ChangePageSize(ChangeEventArgs args)
     {

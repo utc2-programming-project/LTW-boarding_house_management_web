@@ -449,7 +449,10 @@
     <value>Chưa có dữ liệu</value>
   </data>
   <data name="TableNoResults" xml:space="preserve">
-    <value>Không có kết quả phù hợp</value>
+    <value>Không tìm thấy kết quả</value>
+  </data>
+  <data name="TableNoResultsDescription" xml:space="preserve">
+    <value>Thử thay đổi hoặc xóa bộ lọc để tìm dữ liệu khác.</value>
   </data>
   <data name="TableClearFilters" xml:space="preserve">
     <value>Xóa bộ lọc</value>
@@ -587,7 +590,7 @@
   <data name="P2CreatedAt" xml:space="preserve"><value>Ngày tạo</value></data>
   <data name="P2UpdatedAt" xml:space="preserve"><value>Cập nhật lần cuối</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Chờ duyệt</value></data>
-  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Service chưa ghi thay đổi vào SQL; luồng gửi và duyệt yêu cầu sẽ được ghép ở đợt sau.</value></data>
+  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Tính năng duyệt sẽ được bổ sung trong giai đoạn sau.</value></data>
   <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Chuyển phòng vào thùng rác?</value></data>
   <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Phòng {0} sẽ được chuyển vào thùng rác.</value></data>
   <data name="P2MoveToTrash" xml:space="preserve"><value>Chuyển vào thùng rác</value></data>

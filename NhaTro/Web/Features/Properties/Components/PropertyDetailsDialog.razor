@@ -2,7 +2,7 @@
 @inject PropertyPageService PageService
 @inject ILogger<PropertyDetailsDialog> Logger
 
-<FeatureDialog Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
+<FeatureDialog @ref="_featureDialog" Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
     <section class="p2-details-body">
         @if (_loading)
         {
@@ -31,10 +31,10 @@
                 }
             </dl>
             <div class="p2-details-actions">
-                <button class="btn btn-secondary" type="button" @onclick="() => OnViewRooms.InvokeAsync(Property.Id)">@L["P2ViewRooms"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2ViewRooms"]</button>
                 @if (IsOwner)
                 {
-                    <button class="btn btn-primary" type="button" @onclick="OnEdit">@L["P2Edit"]</button>
+                    <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>
                 }
             </div>
         }
@@ -48,6 +48,7 @@
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback<int> OnViewRooms { get; set; }
 
+    private FeatureDialog? _featureDialog;
     private PropertyDetail? _detail;
     private string? _error;
     private bool _loading = true;
@@ -75,4 +76,12 @@
     }
 
     private Task RetryLoadAsync() => LoadAsync();
+
+    private Task EditAsync() => _featureDialog?.RequestCloseAsync(OnEdit) ?? OnEdit.InvokeAsync();
+
+    private async Task ViewRoomsAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnViewRooms.InvokeAsync(Property.Id);
+    }
 }

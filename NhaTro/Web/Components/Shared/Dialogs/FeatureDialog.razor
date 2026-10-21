@@ -47,7 +47,34 @@
         _openInDom = Visible;
     }
 
-    private Task CloseAsync() => Busy ? Task.CompletedTask : OnClose.InvokeAsync();
+    private Task CloseAsync() => RequestCloseAsync(OnClose);
+
+    public Task RequestCloseAsync() => RequestCloseAsync(OnClose);
+
+    public async Task RequestCloseAsync(EventCallback callback)
+    {
+        if (Busy) return;
+        await CloseNativeAsync();
+        await callback.InvokeAsync();
+    }
+
+    public async Task CloseNativeAsync()
+    {
+        if (_module is null || !_openInDom) return;
+
+        try
+        {
+            await _module.InvokeVoidAsync("close", _dialog);
+        }
+        catch (JSDisconnectedException)
+        {
+            // The parent can still finish closing after the circuit is disconnected.
+        }
+        finally
+        {
+            _openInDom = false;
+        }
+    }
 
     [JSInvokable]
     public Task OnDismissRequested() =>
