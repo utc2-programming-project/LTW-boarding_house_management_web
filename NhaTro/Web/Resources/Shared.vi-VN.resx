@@ -585,6 +585,7 @@
   <data name="P2ValidationPriceNegative" xml:space="preserve"><value>Giá thuê không được là số âm.</value></data>
   <data name="P2ValidationPriceMax" xml:space="preserve"><value>Giá thuê vượt quá giới hạn lưu trữ cho phép.</value></data>
   <data name="P2ValidationStatus" xml:space="preserve"><value>Trạng thái phòng không hợp lệ.</value></data>
+  <data name="P2ValidationInactiveRoomStatus" xml:space="preserve"><value>Phòng ngừng hoạt động phải ở trạng thái Còn trống. Vui lòng đổi trạng thái trước khi lưu.</value></data>
   <data name="P2EditRoom" xml:space="preserve"><value>Chỉnh sửa phòng</value></data>
   <data name="P2RoomDetails" xml:space="preserve"><value>Chi tiết phòng</value></data>
   <data name="P2CreatedAt" xml:space="preserve"><value>Ngày tạo</value></data>

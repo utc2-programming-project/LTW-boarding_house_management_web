@@ -585,6 +585,7 @@
   <data name="P2ValidationPriceNegative" xml:space="preserve"><value>Rental price cannot be negative.</value></data>
   <data name="P2ValidationPriceMax" xml:space="preserve"><value>Rental price exceeds the supported storage limit.</value></data>
   <data name="P2ValidationStatus" xml:space="preserve"><value>Room status is invalid.</value></data>
+  <data name="P2ValidationInactiveRoomStatus" xml:space="preserve"><value>An inactive room must have Available status. Change the room status before saving.</value></data>
   <data name="P2EditRoom" xml:space="preserve"><value>Edit room</value></data>
   <data name="P2RoomDetails" xml:space="preserve"><value>Room details</value></data>
   <data name="P2CreatedAt" xml:space="preserve"><value>Created</value></data>

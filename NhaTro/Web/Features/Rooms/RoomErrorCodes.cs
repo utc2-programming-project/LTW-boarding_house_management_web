@@ -11,6 +11,7 @@ public static class RoomErrorCodes
     public const string RoomInUse = nameof(RoomInUse);
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string RoomOperationFailed = nameof(RoomOperationFailed);
+    public const string InactiveRoomStatus = nameof(InactiveRoomStatus);
 }
 
 /// <summary>Thông báo lỗi tiếng Việt hiển thị trên UI.</summary>
@@ -29,4 +30,5 @@ public static class RoomErrorMessages
     public const string InvalidArea = "Diện tích phòng không hợp lệ";
     public const string InvalidFloor = "Tầng không hợp lệ";
     public const string InvalidStatus = "Trạng thái phòng không hợp lệ";
+    public const string InactiveRoomStatus = "Phòng ngừng hoạt động phải ở trạng thái Còn trống";
 }

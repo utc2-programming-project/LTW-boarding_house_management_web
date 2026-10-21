@@ -27,17 +27,17 @@ public sealed class RoomService(
 
         var rooms = ScopeRooms(db, caller);
         var counts = await rooms
-            .GroupBy(room => room.Status)
-            .Select(group => new { Status = group.Key, Count = group.Count() })
+            .GroupBy(room => new { room.Status, room.IsActive })
+            .Select(group => new { group.Key.Status, group.Key.IsActive, Count = group.Count() })
             .ToListAsync(ct);
 
-        int CountFor(RoomStatus status) => counts.FirstOrDefault(item => item.Status == status)?.Count ?? 0;
+        int CountFor(RoomStatus status) =>
+            counts.FirstOrDefault(item => item.Status == status && item.IsActive)?.Count ?? 0;
 
         return new RoomSummary
         {
             Total = counts.Sum(item => item.Count),
-            Available = await rooms.CountAsync(
-                room => room.IsActive && room.Status == RoomStatus.Available, ct),
+            Available = CountFor(RoomStatus.Available),
             Rented = CountFor(RoomStatus.Rented),
             Maintenance = CountFor(RoomStatus.Maintenance)
         };
@@ -443,6 +443,13 @@ public sealed class RoomService(
         if (!Enum.IsDefined(request.Status))
         {
             return RoomResult.Failure(RoomErrorCodes.InvalidRequest, RoomErrorMessages.InvalidStatus);
+        }
+
+        if (!request.IsActive && request.Status != RoomStatus.Available)
+        {
+            return RoomResult.Failure(
+                RoomErrorCodes.InactiveRoomStatus,
+                RoomErrorMessages.InactiveRoomStatus);
         }
 
         // Cột decimal(…,2): làm tròn về 2 chữ số thập phân thay vì để SQL cắt ngầm.

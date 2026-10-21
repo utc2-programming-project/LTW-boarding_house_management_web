@@ -515,14 +515,79 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         {
             PropertyId = property.Property.Id, Code = "P102", StandardPrice = 1_000_000m, IsActive = false,
         }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P103", StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+        }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P104", StandardPrice = 1_000_000m,
+            Status = RoomStatus.Maintenance,
+        }, ChuTro);
 
         var summary = await service.GetSummaryAsync(ChuTro);
-        Assert.Equal(2, summary.Total);
+        Assert.Equal(4, summary.Total);
         Assert.Equal(1, summary.Available);
+        Assert.Equal(1, summary.Rented);
+        Assert.Equal(1, summary.Maintenance);
 
         var onlyAvailable = await service.ListAsync(new RoomFilter { OnlyAvailable = true }, ChuTro);
         var room = Assert.Single(onlyAvailable.Items);
         Assert.Equal("P101", room.Code);
+    }
+
+    [SqlServerFact]
+    public async Task Khong_cho_luu_phong_inactive_voi_trang_thai_rented_hoac_maintenance()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomService(db);
+        var activeRented = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id,
+            Code = "P201",
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+        }, ChuTro);
+        Assert.True(activeRented.Succeeded, activeRented.ErrorMessage);
+
+        foreach (var (code, status) in new[]
+        {
+            ("P202", RoomStatus.Rented),
+            ("P203", RoomStatus.Maintenance),
+        })
+        {
+            var createResult = await service.CreateAsync(new RoomSave
+            {
+                PropertyId = property.Property.Id,
+                Code = code,
+                StandardPrice = 1_000_000m,
+                Status = status,
+                IsActive = false,
+            }, ChuTro);
+
+            Assert.False(createResult.Succeeded);
+            Assert.Equal(RoomErrorCodes.InactiveRoomStatus, createResult.ErrorCode);
+        }
+
+        var updateResult = await service.UpdateAsync(activeRented.Room!.Id, new RoomSave
+        {
+            PropertyId = property.Property.Id,
+            Code = "P201",
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+            IsActive = false,
+        }, ChuTro);
+
+        Assert.False(updateResult.Succeeded);
+        Assert.Equal(RoomErrorCodes.InactiveRoomStatus, updateResult.ErrorCode);
+
+        var persistedRoom = await service.GetAsync(activeRented.Room.Id, ChuTro);
+        Assert.True(persistedRoom.Succeeded, persistedRoom.ErrorMessage);
+        Assert.True(persistedRoom.Room!.IsActive);
+        Assert.Equal(RoomStatus.Rented, persistedRoom.Room.Status);
     }
 
     private async Task SeedAsync()

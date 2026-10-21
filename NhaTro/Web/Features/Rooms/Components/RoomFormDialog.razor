@@ -64,11 +64,12 @@
                     </div>
                     <div class="p2-field">
                         <label for="room-status-select">@L["P2Status"]</label>
-                        <InputSelect id="room-status-select" @bind-Value="_model.Status">
+                        <InputSelect id="room-status-select" @bind-Value="_model.Status" aria-describedby="room-status-error">
                             <option value="@RoomStatus.Available">@L["P2StatusAvailable"]</option>
                             <option value="@RoomStatus.Rented">@L["P2StatusRented"]</option>
                             <option value="@RoomStatus.Maintenance">@L["P2StatusMaintenance"]</option>
                         </InputSelect>
+                        <span class="p2-field-error" id="room-status-error" aria-live="polite">@ErrorFor(nameof(_model.Status))</span>
                     </div>
                     <label class="p2-check-field" for="room-is-active">
                         <InputCheckbox id="room-is-active" @bind-Value="_model.IsActive" />
@@ -166,6 +167,8 @@
         if (_model.StandardPrice < 0) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceNegative"];
         if (_model.StandardPrice > 9_999_999_999_999_999.99m) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceMax"];
         if (!Enum.IsDefined(_model.Status)) _errors[nameof(_model.Status)] = L["P2ValidationStatus"];
+        else if (!_model.IsActive && _model.Status != RoomStatus.Available)
+            _errors[nameof(_model.Status)] = L["P2ValidationInactiveRoomStatus"];
         if (_errors.Count > 0) return;
         if (!IsEdit && !IsOwner) { _error = L["P2Forbidden"]; return; }
 
@@ -207,6 +210,7 @@
 
     private string MapError(string? code) => code switch
     {
+        RoomErrorCodes.InactiveRoomStatus => L["P2ValidationInactiveRoomStatus"],
         RoomErrorCodes.InvalidRequest => L["P2ValidationInvalidRequest"],
         RoomErrorCodes.Forbidden => L["P2Forbidden"],
         RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
