@@ -67,7 +67,7 @@
                             <p>@L["TenantProfileEditHint"]</p>
                         </div>
                     </div>
-                    <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync">
+                    <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync" novalidate>
                         <div class="tenant-profile-form">
                             <FormField TValue="string" Id="tenant-own-phone" Label="@L["TenantPhone"]" Required="true"
                                        Hint="@L["TenantValidationPhone"]" For="() => _form.PhoneNumber">

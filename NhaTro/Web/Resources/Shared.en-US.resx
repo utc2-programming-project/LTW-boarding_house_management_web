@@ -533,7 +533,7 @@
   <data name="TenantReset" xml:space="preserve"><value>Reset</value></data>
   <data name="TenantColumnName" xml:space="preserve"><value>Tenant name</value></data>
   <data name="TenantColumnPhone" xml:space="preserve"><value>Phone number</value></data>
-  <data name="TenantColumnIdNumber" xml:space="preserve"><value>National ID (D9)</value></data>
+  <data name="TenantColumnIdNumber" xml:space="preserve"><value>National ID</value></data>
   <data name="TenantColumnStatus" xml:space="preserve"><value>Status</value></data>
   <data name="TenantColumnAccount" xml:space="preserve"><value>App account</value></data>
   <data name="TenantColumnActions" xml:space="preserve"><value>Actions</value></data>
@@ -572,7 +572,9 @@
   <data name="TenantIdIssuedDate" xml:space="preserve"><value>Issue date</value></data>
   <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Place of issue</value></data>
   <data name="TenantInternalNote" xml:space="preserve"><value>Internal note</value></data>
-  <data name="TenantIdMaskedHint" xml:space="preserve"><value>D9: managers always see a masked ID number.</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Managers always see a masked ID number.</value></data>
+  <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Enter the full ID number. It is masked after saving.</value></data>
+  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>The current number is masked. Leave it unchanged to keep it, or type the full number to replace it.</value></data>
   <data name="TenantProfileTitle" xml:space="preserve"><value>My tenant profile</value></data>
   <data name="TenantProfileSubtitle" xml:space="preserve"><value>View your residency details and update your contact information</value></data>
   <data name="TenantProfileReadonly" xml:space="preserve"><value>This information is managed by your landlord or manager</value></data>

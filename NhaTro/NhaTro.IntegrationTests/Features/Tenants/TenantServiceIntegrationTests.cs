@@ -383,6 +383,26 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal("079201004999", final.Tenant!.IdNumber);
     }
 
+    // B17-02: form Quản lý được nhập CCCD đầy đủ khi tạo hồ sơ; lưu số thật nhưng Quản lý chỉ nhận lại chuỗi che.
+    [SqlServerFact]
+    public async Task Quan_ly_tao_ho_so_nhap_cccd_day_du_thi_luu_that_va_chi_thay_chuoi_che()
+    {
+        await fixture.ResetAsync();
+        var service = new TenantService(fixture, TimeProvider.System);
+        var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
+
+        var created = await service.CreateAsync(
+            NewTenant("Bình", "0902222222", idNumber: "079 201 004 821"), quanLy);
+        Assert.True(created.Succeeded, created.ErrorMessage);
+        Assert.Equal("********4821", created.Tenant!.IdNumber);
+
+        var asOwner = await service.GetAsync(created.Tenant.Id, Owner);
+        Assert.Equal("079201004821", asOwner.Tenant!.IdNumber);
+
+        var list = await service.ListAsync(new TenantFilterRequest(), quanLy);
+        Assert.All(list.Items, item => Assert.Equal("********4821", item.IdNumberMasked));
+    }
+
     [SqlServerFact]
     public async Task Summary_va_tai_khoan_chua_lien_ket_theo_dung_quyen()
     {

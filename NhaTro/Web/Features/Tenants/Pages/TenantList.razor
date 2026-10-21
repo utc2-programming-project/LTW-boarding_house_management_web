@@ -65,6 +65,13 @@
         </article>
     </section>
 
+    @if (_loadingDetail)
+    {
+        <div class="tenant-detail-loading">
+            <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+        </div>
+    }
+
     <section class="tenant-filter-card" aria-label="@L["TenantFilters"]">
         <div class="tenant-filter-row">
             <div class="tenant-search-field">
@@ -164,6 +171,7 @@
     private bool _canRevealIdNumber;
     private bool _summaryError;
     private bool _exporting;
+    private bool _loadingDetail;
     private bool _showDetails;
     private bool _showForm;
     private bool _showLinkAccount;
@@ -317,6 +325,7 @@
 
     private async Task<bool> LoadDetailAsync(int id)
     {
+        _loadingDetail = true;
         try
         {
             var result = await TenantPages.GetAsync(id);
@@ -338,6 +347,10 @@
         {
             Toasts.Error(L["TenantErrorGeneric"]);
             return false;
+        }
+        finally
+        {
+            _loadingDetail = false;
         }
     }
 
@@ -495,24 +508,7 @@
                 rows.AddRange(result.Items);
             }
 
-            var headers = new List<string>
-            {
-                L["TenantColumnName"], L["TenantColumnPhone"], L["TenantColumnIdNumber"], L["TenantColumnStatus"]
-            };
-            if (_canRevealIdNumber) headers.Add(L["TenantColumnAccount"]);
-
-            var csvRows = rows.Select(tenant =>
-            {
-                var values = new List<string>
-                {
-                    Csv(tenant.FullName), Csv(tenant.PhoneNumber), Csv(tenant.IdNumberMasked),
-                    Csv(tenant.IsActive ? L["TenantStatusActive"] : L["TenantStatusInactive"]),
-                };
-                if (_canRevealIdNumber) values.Add(Csv(tenant.HasAccount == true ? L["TenantAccountYes"] : L["TenantAccountNo"]));
-                return string.Join(',', values);
-            });
-
-            var content = "\uFEFF" + string.Join(Environment.NewLine, new[] { string.Join(',', headers.Select(Csv)) }.Concat(csvRows));
+            var content = TenantCsvExporter.Build(rows, _canRevealIdNumber, key => L[key]);
             var fileName = $"tenants_{DateTime.Now:yyyyMMdd_HHmm}.csv";
             await JS.InvokeVoidAsync("appTenantExport.download", fileName, content);
             Toasts.Success(string.Format(L["TenantExported"], rows.Count));
@@ -537,13 +533,6 @@
         SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
         SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
     };
-
-    private static string Csv(string? value)
-    {
-        var text = value ?? string.Empty;
-        if (text.Length > 0 && text[0] is '=' or '+' or '-' or '@') text = "'" + text;
-        return $"\"{text.Replace("\"", "\"\"")}\"";
-    }
 
     private string SummaryValue(int? value) => value?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
 

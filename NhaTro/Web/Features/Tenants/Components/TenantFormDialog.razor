@@ -2,8 +2,8 @@
                    Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
                    CssClass="tenant-form-dialog" OnClose="OnClose">
     <ChildContent>
-    <EditForm EditContext="_editContext" OnSubmit="HandleFormSubmitAsync">
-        <div class="tenant-form-grid @(CanRevealIdNumber || Tenant is not null ? "" : "tenant-form-grid-no-id")">
+    <EditForm EditContext="_editContext" OnSubmit="HandleFormSubmitAsync" novalidate>
+        <div class="tenant-form-grid">
             <div class="tenant-form-field tenant-form-name">
                 <FormField TValue="string" Id="tenant-full-name" Label="@L["TenantFullName"]" Required="true"
                            For="() => _form.FullName">
@@ -27,25 +27,15 @@
                 </FormField>
             </div>
 
-            @if (CanRevealIdNumber)
-            {
-                <div class="tenant-form-field tenant-form-id">
-                    <FormField TValue="string" Id="tenant-id-number" Label="@L["TenantIdNumber"]" For="() => _form.IdNumber">
-                        <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" maxlength="20"
-                                   autocomplete="off" aria-describedby="tenant-id-number-error" />
-                    </FormField>
-                </div>
-            }
-            else if (Tenant is not null)
-            {
-                <div class="tenant-form-field tenant-form-id">
-                    <FormField TValue="string" Id="tenant-id-number" Label="@L["TenantIdNumber"]"
-                               Hint="@L["TenantIdMaskedHint"]" For="() => _form.IdNumber">
-                        <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" readonly
-                                   aria-describedby="tenant-id-number-hint tenant-id-number-error" />
-                    </FormField>
-                </div>
-            }
+            <div class="tenant-form-field tenant-form-id">
+                <FormField TValue="string" Id="tenant-id-number" Label="@L["TenantIdNumber"]"
+                           Hint="@(CanRevealIdNumber ? null : L[Tenant is null ? "TenantIdManagerCreateHint" : "TenantIdManagerEditHint"].Value)"
+                           For="() => _form.IdNumber">
+                    <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" maxlength="20"
+                               autocomplete="off"
+                               aria-describedby="@(CanRevealIdNumber ? "tenant-id-number-error" : "tenant-id-number-hint tenant-id-number-error")" />
+                </FormField>
+            </div>
 
             <div class="tenant-form-field tenant-form-birth">
                 <FormField TValue="DateOnly?" Id="tenant-date-of-birth" Label="@L["TenantDateOfBirth"]"
@@ -262,7 +252,7 @@
                 FullName = _form.FullName,
                 PhoneNumber = _form.PhoneNumber,
                 Email = _form.Email,
-                IdNumber = CanRevealIdNumber ? _form.IdNumber : null,
+                IdNumber = _form.IdNumber,
                 DateOfBirth = _form.DateOfBirth,
                 Gender = _form.Gender,
                 PermanentAddress = _form.PermanentAddress,
@@ -278,8 +268,8 @@
             FullName = _form.FullName,
             PhoneNumber = _form.PhoneNumber,
             Email = _form.Email,
-            // Gửi lại chuỗi che của Quản lý để backend giữ nguyên CCCD thật.
-            IdNumber = CanRevealIdNumber ? _form.IdNumber : Tenant.IdNumber,
+            // Quản lý để trống ô CCCD thì gửi lại chuỗi che để backend giữ nguyên số thật (tránh vô tình xóa).
+            IdNumber = CanRevealIdNumber || !string.IsNullOrWhiteSpace(_form.IdNumber) ? _form.IdNumber : Tenant.IdNumber,
             DateOfBirth = _form.DateOfBirth,
             Gender = _form.Gender,
             PermanentAddress = _form.PermanentAddress,
@@ -362,10 +352,7 @@
         valid &= CheckLength(nameof(_form.FullName), TenantNormalizer.NormalizeFullName(_form.FullName), 200, L["TenantFullName"]);
         valid &= CheckLength(nameof(_form.PhoneNumber), TenantNormalizer.NormalizePhone(_form.PhoneNumber), 20, L["TenantPhone"]);
         valid &= CheckLength(nameof(_form.Email), _form.Email, 256, L["TenantEmail"]);
-        if (CanRevealIdNumber)
-        {
-            valid &= CheckLength(nameof(_form.IdNumber), TenantNormalizer.NormalizeIdNumber(_form.IdNumber), 20, L["TenantIdNumber"]);
-        }
+        valid &= CheckLength(nameof(_form.IdNumber), TenantNormalizer.NormalizeIdNumber(_form.IdNumber), 20, L["TenantIdNumber"]);
         valid &= CheckLength(nameof(_form.PermanentAddress), _form.PermanentAddress, 300, L["TenantPermanentAddress"]);
         valid &= CheckLength(nameof(_form.IdIssuedPlace), _form.IdIssuedPlace, 200, L["TenantIdIssuedPlace"]);
         if (CanManage)

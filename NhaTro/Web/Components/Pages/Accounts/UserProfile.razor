@@ -149,7 +149,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _editContext = new EditContext(_form);
+        _editContext = CreateEditContext();
         await LoadAsync();
     }
 
@@ -172,7 +172,7 @@
             {
                 _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
                 _emailReadonly = _profile.Email ?? _profile.UserName;
-                _editContext = new EditContext(_form);
+                _editContext = CreateEditContext();
             }
         }
         catch
@@ -189,7 +189,43 @@
     {
         if (_profile is null) return;
         _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
-        _editContext = new EditContext(_form);
+        _editContext = CreateEditContext();
+    }
+
+    // EditForm chạy OnValidSubmit nên cần một bộ kiểm tra gắn vào EditContext; nếu không, form luôn "hợp lệ"
+    // và lỗi chỉ hiện sau khi service trả về. Dùng ValidationMessageStore để message theo ngôn ngữ đang chọn.
+    private EditContext CreateEditContext()
+    {
+        var context = new EditContext(_form);
+        var messages = new ValidationMessageStore(context);
+        context.OnValidationRequested += (_, _) =>
+        {
+            messages.Clear();
+            ValidateProfile((ProfileForm)context.Model, messages);
+            context.NotifyValidationStateChanged();
+        };
+        context.OnFieldChanged += (_, args) =>
+        {
+            messages.Clear(args.FieldIdentifier);
+            context.NotifyValidationStateChanged();
+        };
+        return context;
+    }
+
+    // Cùng quy tắc với AccountService.UpdateMyProfileAsync: họ tên tối đa 200 ký tự, SĐT 10 chữ số bắt đầu bằng 0.
+    private void ValidateProfile(ProfileForm form, ValidationMessageStore messages)
+    {
+        if ((form.FullName?.Trim().Length ?? 0) > 200)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.FullName)),
+                string.Format(L["TenantValidationLength"], L["FullNameLabel"], 200));
+        }
+
+        var phone = form.PhoneNumber?.Trim();
+        if (!string.IsNullOrEmpty(phone) && !AccountService.IsValidVietnamPhone(phone))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
+        }
     }
 
     private async Task SaveProfileAsync()

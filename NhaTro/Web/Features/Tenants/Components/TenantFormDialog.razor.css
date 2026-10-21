@@ -11,15 +11,6 @@
     row-gap: 18px;
 }
 
-.tenant-form-grid-no-id {
-    grid-template-areas:
-        "name phone"
-        "email birth"
-        "gender issued-date"
-        "issued-place issued-place"
-        "address note";
-}
-
 .tenant-form-field {
     min-width: 0;
 }
@@ -75,8 +66,7 @@
 }
 
 @media (max-width: 767px) {
-    .tenant-form-grid,
-    .tenant-form-grid-no-id {
+    .tenant-form-grid {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas: none;
         gap: 14px;

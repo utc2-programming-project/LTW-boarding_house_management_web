@@ -509,7 +509,7 @@
   <data name="TenantExport" xml:space="preserve"><value>Xuất danh sách</value></data>
   <data name="TenantStatTotal" xml:space="preserve"><value>Tổng khách thuê</value></data>
   <data name="TenantStatActive" xml:space="preserve"><value>Đang lưu trú</value></data>
-  <data name="TenantStatAccounts" xml:space="preserve"><value>Đã kích hoạt app</value></data>
+  <data name="TenantStatAccounts" xml:space="preserve"><value>Đã có tài khoản</value></data>
   <data name="TenantStatIdCoverage" xml:space="preserve"><value>Có số CCCD</value></data>
   <data name="TenantPeople" xml:space="preserve"><value>người</value></data>
   <data name="TenantRecords" xml:space="preserve"><value>hồ sơ</value></data>
@@ -533,7 +533,7 @@
   <data name="TenantReset" xml:space="preserve"><value>Đặt lại</value></data>
   <data name="TenantColumnName" xml:space="preserve"><value>Họ tên khách thuê</value></data>
   <data name="TenantColumnPhone" xml:space="preserve"><value>Số điện thoại</value></data>
-  <data name="TenantColumnIdNumber" xml:space="preserve"><value>CCCD / CMND (D9)</value></data>
+  <data name="TenantColumnIdNumber" xml:space="preserve"><value>CCCD / CMND</value></data>
   <data name="TenantColumnStatus" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="TenantColumnAccount" xml:space="preserve"><value>Tài khoản app</value></data>
   <data name="TenantColumnActions" xml:space="preserve"><value>Thao tác</value></data>
@@ -572,7 +572,9 @@
   <data name="TenantIdIssuedDate" xml:space="preserve"><value>Ngày cấp</value></data>
   <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Nơi cấp</value></data>
   <data name="TenantInternalNote" xml:space="preserve"><value>Ghi chú nội bộ</value></data>
-  <data name="TenantIdMaskedHint" xml:space="preserve"><value>D9: số CCCD của Quản lý luôn được che.</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Số CCCD của Quản lý luôn được che.</value></data>
+  <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Nhập đầy đủ số CCCD/CMND. Sau khi lưu, số này sẽ được che.</value></data>
+  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>Số hiện tại đang được che. Để nguyên để giữ số cũ, hoặc nhập lại đầy đủ để thay đổi.</value></data>
   <data name="TenantProfileTitle" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
   <data name="TenantProfileSubtitle" xml:space="preserve"><value>Xem thông tin lưu trú và cập nhật thông tin liên hệ của bạn</value></data>
   <data name="TenantProfileReadonly" xml:space="preserve"><value>Thông tin này do Chủ trọ hoặc Quản lý cập nhật</value></data>
@@ -605,7 +607,7 @@
   <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
   <data name="TenantAllRecordsHint" xml:space="preserve"><value>Hồ sơ trong hệ thống</value></data>
   <data name="TenantActiveRateHint" xml:space="preserve"><value>tỉ lệ hoạt động</value></data>
-  <data name="TenantAccountRateHint" xml:space="preserve"><value>đã liên kết SĐT</value></data>
+  <data name="TenantAccountRateHint" xml:space="preserve"><value>đã liên kết tài khoản</value></data>
   <data name="TenantFilters" xml:space="preserve"><value>Bộ lọc khách thuê</value></data>
   <data name="TenantRowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
   <data name="TenantExported" xml:space="preserve"><value>Đã xuất {0} hồ sơ khách thuê (CSV)</value></data>

@@ -79,3 +79,15 @@
     .tenant-page-actions { flex-direction: column; }
     .tenant-page-actions .btn { width: 100%; }
 }
+
+.tenant-detail-loading {
+    position: fixed;
+    inset-block-end: 24px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 8px;
+    background: var(--surface, #FFFFFF);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
+}
