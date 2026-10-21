@@ -498,6 +498,33 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         Assert.Equal(3, filtered.TotalCount);
     }
 
+    // ---------- B16-03: phòng ngừng hoạt động không được tính là phòng trống ----------
+
+    [SqlServerFact]
+    public async Task Tong_quan_va_loc_phong_trong_bo_qua_phong_inactive()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomService(db);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P102", StandardPrice = 1_000_000m, IsActive = false,
+        }, ChuTro);
+
+        var summary = await service.GetSummaryAsync(ChuTro);
+        Assert.Equal(2, summary.Total);
+        Assert.Equal(1, summary.Available);
+
+        var onlyAvailable = await service.ListAsync(new RoomFilter { OnlyAvailable = true }, ChuTro);
+        var room = Assert.Single(onlyAvailable.Items);
+        Assert.Equal("P101", room.Code);
+    }
+
     private async Task SeedAsync()
     {
         await fixture.ResetAsync();

@@ -111,11 +111,11 @@
                 </label>
                 <label class="price-field" for="room-min-price">
                     <span>@L["P2MinPrice"]</span>
-                    <input id="room-min-price" type="number" min="0" step="any" inputmode="numeric" @bind="_minPriceText" />
+                    <input id="room-min-price" type="number" min="0" step="1" inputmode="numeric" @bind="_minPriceText" />
                 </label>
                 <label class="price-field" for="room-max-price">
                     <span>@L["P2MaxPrice"]</span>
-                    <input id="room-max-price" type="number" min="0" step="any" inputmode="numeric" @bind="_maxPriceText" />
+                    <input id="room-max-price" type="number" min="0" step="1" inputmode="numeric" @bind="_maxPriceText" />
                 </label>
                 <label class="available-toggle" for="room-only-available">
                     <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
