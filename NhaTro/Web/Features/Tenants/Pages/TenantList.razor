@@ -127,6 +127,7 @@
 
     <DataTable @key="_tableKey" @ref="_table" TItem="TenantListItemDto" Columns="_columns"
                ItemsProvider="LoadTenantsAsync" PageSize="_pageSize" Caption="@L["TenantsTitle"]"
+               HasActiveFilters="HasActiveTenantFilters" OnClearFilters="ClearTenantFiltersAsync"
                Labels="DataTableLabelLocalizer.Create(L)">
         <EmptyActions>
             <button type="button" class="btn btn-primary" @onclick="OpenCreate">
@@ -306,6 +307,19 @@
         _accountFilter = string.Empty;
         _sortFilter = "created";
         await ResetTableAsync();
+    }
+
+    private bool HasActiveTenantFilters =>
+        !string.IsNullOrWhiteSpace(_keyword)
+        || !string.IsNullOrEmpty(_statusFilter)
+        || !string.IsNullOrEmpty(_accountFilter);
+
+    private Task ClearTenantFiltersAsync()
+    {
+        _keyword = null;
+        _statusFilter = string.Empty;
+        _accountFilter = string.Empty;
+        return Task.CompletedTask;
     }
 
     private void OpenCreate()
