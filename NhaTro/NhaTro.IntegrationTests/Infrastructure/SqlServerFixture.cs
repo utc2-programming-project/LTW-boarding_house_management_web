@@ -87,6 +87,8 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
+        await db.FileAccessAuditLogs.ExecuteDeleteAsync();
+        await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();

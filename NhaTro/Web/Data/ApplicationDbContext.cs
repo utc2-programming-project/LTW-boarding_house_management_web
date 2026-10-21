@@ -13,6 +13,7 @@ namespace Web.Data
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
+        public DbSet<FileAccessAuditLog> FileAccessAuditLogs => Set<FileAccessAuditLog>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
