@@ -13,6 +13,9 @@ public static class TenantErrorCodes
     public const string AccountAlreadyLinked = nameof(AccountAlreadyLinked);
     public const string TenantOperationFailed = nameof(TenantOperationFailed);
 
+    /// <summary>Quản lý bị công tắc SW-04/05/06 chặn ở chế độ Chờ duyệt (VHT-94).</summary>
+    public const string ApprovalRequired = nameof(ApprovalRequired);
+
     /// <summary>
     /// Nghi trùng số điện thoại cần xác nhận (mục 3). Chưa có trong 9 mã ở mục 9,
     /// cần nhóm chốt tên mã; tạm dùng để UI hỏi "vẫn lưu".
@@ -36,6 +39,7 @@ public static class TenantErrorMessages
     public const string InvalidPhone = "Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)";
     public const string InvalidDateOfBirth = "Ngày sinh không được ở tương lai";
     public const string InvalidIdIssuedDate = "Ngày cấp giấy tờ không được trước ngày sinh";
+    public const string InvalidIdNumber = "Số giấy tờ không hợp lệ (tối thiểu 8 chữ hoặc số, không chứa dấu *)";
 
     /// <summary>
     /// Vượt độ dài cột DB sau chuẩn hóa. DTO có [MaxLength] nhưng nó chạy trên chuỗi thô
@@ -44,4 +48,5 @@ public static class TenantErrorMessages
     public const string InvalidLength = "Dữ liệu vượt quá độ dài cho phép";
     public const string AccountNotFound = "Không tìm thấy tài khoản";
     public const string AccountNotTenant = "Tài khoản không phải khách thuê";
+    public const string ApprovalRequired = "Thay đổi đang chờ Chủ trọ duyệt";
 }

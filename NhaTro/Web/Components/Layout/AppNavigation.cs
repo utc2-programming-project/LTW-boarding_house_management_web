@@ -12,8 +12,8 @@ public static class AppNavigation
         new("Permissions", "shield", "Admin"),
         new("Properties", "building", "ChuTro,QuanLy", "/properties"),
         new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
-        new("Tenants", "users", "ChuTro,QuanLy"),
-        new("Contracts", "file", "ChuTro,QuanLy"),
+        new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
+        new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
         new("Services", "settings", "ChuTro,QuanLy"),
         new("Pricing", "wallet", "ChuTro"),
         new("Invoices", "receipt", "ChuTro,QuanLy"),
@@ -26,8 +26,9 @@ public static class AppNavigation
         new("MyRoom", "door", "KhachThue"),
         new("MyInvoices", "receipt", "KhachThue"),
         new("ReportIncident", "wrench", "KhachThue"),
-        // VHT-8: hồ sơ cá nhân mở cho cả 4 vai trò.
-        new("MyAccount", "user", "Admin,ChuTro,QuanLy,KhachThue", "/profile")
+        // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.
+        new("MyAccount", "user", "Admin,ChuTro,QuanLy", "/profile"),
+        new("MyTenantProfile", "user", "KhachThue", "/tenant/profile")
     ];
 }
 

@@ -1,0 +1,288 @@
+@page "/tenant/profile"
+@attribute [Authorize(Roles = Roles.KhachThue)]
+@rendermode InteractiveServer
+
+<PageTitle>@L["TenantProfileTitle"] · @L["AppName"]</PageTitle>
+
+<section class="tenant-profile-page" aria-labelledby="tenant-profile-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["MyTenantProfile"]) })" />
+    <header class="page-heading">
+        <div>
+            <h1 id="tenant-profile-title">@L["TenantProfileTitle"]</h1>
+            <p>@L["TenantProfileSubtitle"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_loadFailed)
+    {
+        <EmptyStateCard Title="@L["TenantProfileTitle"]" Description="@L["TenantProfileLoadFailed"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_profile is null)
+    {
+        <EmptyStateCard Title="@L["TenantProfileTitle"]" Description="@L["TenantProfileMissing"]">
+            <a class="btn btn-secondary" href="/">@L["BackToPreview"]</a>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="tenant-profile-layout">
+            <article class="preview-card tenant-profile-card">
+                <div class="tenant-profile-hero">
+                    <div class="tenant-profile-avatar" aria-hidden="true">@Initial(_profile.FullName)</div>
+                    <div>
+                        <h2>@_profile.FullName</h2>
+                        <p>@string.Format(L["TenantRecordNumber"], _profile.Id)</p>
+                    </div>
+                    <StatusBadge Tone="@(_profile.IsActive ? BadgeTone.Success : BadgeTone.Neutral)"
+                                 Text="@(_profile.IsActive ? L["TenantStatusActive"] : L["TenantStatusInactive"])" />
+                </div>
+
+                <section class="tenant-profile-readonly" aria-labelledby="tenant-profile-details-title">
+                    <div class="tenant-profile-section-heading">
+                        <div>
+                            <h3 id="tenant-profile-details-title">@L["TenantPersonalSection"]</h3>
+                            <p>@L["TenantProfileReadonly"]</p>
+                        </div>
+                    </div>
+                    <dl class="tenant-profile-details">
+                        <div><dt>@L["TenantFullName"]</dt><dd>@_profile.FullName</dd></div>
+                        <div><dt>@L["TenantIdNumber"]</dt><dd class="tenant-mono">@Value(_profile.IdNumber)</dd></div>
+                        <div><dt>@L["TenantDateOfBirth"]</dt><dd>@DateFormatter.Format(_profile.DateOfBirth)</dd></div>
+                        <div><dt>@L["TenantGender"]</dt><dd>@GenderText(_profile.Gender)</dd></div>
+                        <div><dt>@L["TenantIdIssuedDate"]</dt><dd>@DateFormatter.Format(_profile.IdIssuedDate)</dd></div>
+                        <div><dt>@L["TenantIdIssuedPlace"]</dt><dd>@Value(_profile.IdIssuedPlace)</dd></div>
+                    </dl>
+                </section>
+
+                <section class="tenant-profile-editable" aria-labelledby="tenant-profile-edit-title">
+                    <div class="tenant-profile-section-heading">
+                        <div>
+                            <h3 id="tenant-profile-edit-title">@L["TenantProfileEditable"]</h3>
+                            <p>@L["TenantProfileEditHint"]</p>
+                        </div>
+                    </div>
+                    <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync" novalidate>
+                        <div class="tenant-profile-form">
+                            <FormField TValue="string" Id="tenant-own-phone" Label="@L["TenantPhone"]" Required="true"
+                                       Hint="@L["TenantValidationPhone"]" For="() => _form.PhoneNumber">
+                                <InputText id="tenant-own-phone" class="input" @bind-Value="_form.PhoneNumber"
+                                           maxlength="20" inputmode="tel" autocomplete="tel"
+                                           aria-describedby="tenant-own-phone-hint tenant-own-phone-error" />
+                            </FormField>
+                            <FormField TValue="string" Id="tenant-own-email" Label="@L["TenantEmail"]"
+                                       For="() => _form.Email">
+                                <InputText id="tenant-own-email" class="input" @bind-Value="_form.Email"
+                                           maxlength="256" type="email" autocomplete="email"
+                                           aria-describedby="tenant-own-email-error" />
+                            </FormField>
+                            <FormField TValue="string" Id="tenant-own-address" Label="@L["TenantPermanentAddress"]"
+                                       For="() => _form.PermanentAddress">
+                                <InputTextArea id="tenant-own-address" class="input tenant-profile-address"
+                                               @bind-Value="_form.PermanentAddress" maxlength="300"
+                                               aria-describedby="tenant-own-address-error" />
+                            </FormField>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="ResetForm">@L["Cancel"]</button>
+                            <button type="submit" class="btn btn-primary" disabled="@_saving" aria-busy="@(_saving ? "true" : null)">
+                                @if (_saving) { <span class="spinner" aria-hidden="true"></span> }
+                                @L["SaveChanges"]
+                            </button>
+                        </div>
+                    </EditForm>
+                </section>
+
+                <div class="tenant-profile-security">
+                    <div>
+                        <h3>@L["SecuritySection"]</h3>
+                        <p>@L["ChangePasswordHint"]</p>
+                    </div>
+                    <a class="btn btn-secondary" href="Account/Manage/ChangePassword">
+                        <LucideIcon Name="key" /> @L["ChangePassword"]
+                    </a>
+                </div>
+            </article>
+        </div>
+    }
+</section>
+
+@code {
+    [Inject] private TenantPageService TenantPages { get; set; } = default!;
+    [Inject] private ToastService Toasts { get; set; } = default!;
+    [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+
+    private TenantDetailDto? _profile;
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _saving;
+    private ProfileForm _form = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+
+    private sealed class ProfileForm
+    {
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? PermanentAddress { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ResetValidation();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            var result = await TenantPages.GetOwnAsync();
+            _profile = result.Succeeded ? result.Tenant : null;
+            _loadFailed = !result.Succeeded && result.ErrorCode != TenantErrorCodes.TenantNotFound;
+            if (_profile is not null) ResetForm();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _profile = null;
+            _loadFailed = true;
+        }
+        catch
+        {
+            _profile = null;
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        if (_profile is null) return;
+        _form = new ProfileForm
+        {
+            PhoneNumber = _profile.PhoneNumber,
+            Email = _profile.Email,
+            PermanentAddress = _profile.PermanentAddress,
+        };
+        ResetValidation();
+    }
+
+    private void ResetValidation()
+    {
+        _editContext = new EditContext(_form);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
+    }
+
+    private Task HandleSubmitAsync(EditContext _) => SaveAsync();
+
+    private async Task SaveAsync()
+    {
+        if (_saving || _profile is null || !ValidateForm()) return;
+
+        TenantResult result;
+        _saving = true;
+        try
+        {
+            result = await TenantPages.UpdateOwnAsync(new UpdateOwnProfileRequest
+            {
+                PhoneNumber = _form.PhoneNumber,
+                Email = _form.Email,
+                PermanentAddress = _form.PermanentAddress,
+                RowVersion = _profile.RowVersion,
+            });
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (!result.Succeeded)
+        {
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
+            {
+                Toasts.Error(L["TenantErrorConflict"]);
+                await LoadAsync();
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode == TenantErrorCodes.InvalidRequest
+                ? L["TenantValidationPhone"]
+                : L["TenantErrorGeneric"]);
+            return;
+        }
+
+        // Đọc lại từ service sau khi ghi để trang phản ánh dữ liệu thực đã lưu trong SQL.
+        await LoadAsync();
+        Toasts.Success(L["TenantProfileSaved"]);
+    }
+
+    private bool ValidateForm()
+    {
+        _messages.Clear();
+        var valid = true;
+
+        if (string.IsNullOrWhiteSpace(_form.PhoneNumber))
+        {
+            Add(nameof(_form.PhoneNumber), string.Format(L["TenantValidationRequired"], L["TenantPhone"]));
+            valid = false;
+        }
+        else if (!TenantNormalizer.IsValidVietnamesePhone(TenantNormalizer.NormalizePhone(_form.PhoneNumber)))
+        {
+            Add(nameof(_form.PhoneNumber), L["TenantValidationPhone"]);
+            valid = false;
+        }
+        if (!string.IsNullOrWhiteSpace(_form.Email) && !new EmailAddressAttribute().IsValid(_form.Email))
+        {
+            Add(nameof(_form.Email), L["TenantValidationEmail"]);
+            valid = false;
+        }
+        valid &= CheckLength(nameof(_form.PhoneNumber), TenantNormalizer.NormalizePhone(_form.PhoneNumber), 20, L["TenantPhone"]);
+        valid &= CheckLength(nameof(_form.Email), _form.Email, 256, L["TenantEmail"]);
+        valid &= CheckLength(nameof(_form.PermanentAddress), _form.PermanentAddress, 300, L["TenantPermanentAddress"]);
+        _editContext.NotifyValidationStateChanged();
+        return valid;
+    }
+
+    private bool CheckLength(string property, string? value, int max, string label)
+    {
+        if ((value?.Length ?? 0) <= max) return true;
+        Add(property, string.Format(L["TenantValidationLength"], label, max));
+        return false;
+    }
+
+    private void Add(string property, string message) =>
+        _messages.Add(new FieldIdentifier(_form, property), message);
+
+    private string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
+
+    private string Value(string? value) => string.IsNullOrWhiteSpace(value) ? L["NoData"] : value;
+
+    private string GenderText(Gender? gender) => gender switch
+    {
+        Gender.Male => L["TenantGenderMale"],
+        Gender.Female => L["TenantGenderFemale"],
+        Gender.Other => L["TenantGenderOther"],
+        _ => L["NoData"],
+    };
+}

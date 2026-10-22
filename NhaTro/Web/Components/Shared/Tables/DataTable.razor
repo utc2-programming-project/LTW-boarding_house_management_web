@@ -210,11 +210,11 @@
     [Parameter]
     public RenderFragment? EmptyActions { get; set; }
 
-    /// <summary>Cho biết trang chứa bảng đang áp dụng bộ lọc ngoài DataTable.</summary>
+    /// <summary>Cho biết bộ lọc ngoài bảng có đang được áp dụng không.</summary>
     [Parameter]
     public bool HasActiveFilters { get; set; }
 
-    /// <summary>Xóa bộ lọc do trang quản lý khi người dùng chọn xóa bộ lọc ở empty state.</summary>
+    /// <summary>Xóa các bộ lọc do trang cha quản lý.</summary>
     [Parameter]
     public EventCallback OnClearFilters { get; set; }
 
@@ -303,8 +303,12 @@
     private async Task ClearFiltersAsync()
     {
         _filters.Clear();
+        if (HasActiveFilters)
+        {
+            await OnClearFilters.InvokeAsync();
+        }
+
         _page = 1;
-        await OnClearFilters.InvokeAsync();
         await LoadAsync();
     }
 

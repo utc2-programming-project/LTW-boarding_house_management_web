@@ -1,0 +1,35 @@
+.tenant-account-link-dialog { max-width: 560px; }
+.tenant-account-search { margin-bottom: 16px; }
+.tenant-account-search .field { margin: 0; }
+
+.tenant-account-options {
+    display: grid;
+    gap: 8px;
+    max-height: min(45dvh, 360px);
+    overflow: auto;
+    margin: 0;
+    padding: 2px;
+    border: 0;
+}
+
+.tenant-account-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.tenant-account-option:hover { background: var(--hover-bg); }
+.tenant-account-option:has(input:checked) { border-color: var(--accent-border); background: var(--selected-bg); }
+.tenant-account-option input { width: 18px; height: 18px; accent-color: var(--primary); }
+.tenant-account-option-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+.tenant-account-option-text { display: grid; min-width: 0; gap: 3px; }
+.tenant-account-option-text strong,.tenant-account-option-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tenant-account-option-text small { color: var(--text-muted); }
+.tenant-inline-error { display: grid; justify-items: center; gap: 8px; padding: 24px 8px; text-align: center; }
+.tenant-inline-error p { margin: 0; }
