@@ -11,7 +11,7 @@ using Web.Features.Rooms.Enums;
 namespace NhaTro.IntegrationTests.Features.Properties;
 
 /// <summary>
-/// VHT-7 (đợt 1C) — integration test P2 trên SQL Server thật, chứng minh tiêu chí nghiệm thu:
+/// P2 — integration test trên SQL Server thật, chứng minh các tiêu chí nghiệm thu:
 /// lưu rồi tải lại đúng; chặn mã phòng trùng theo nhà; chặn giá sai; chặn truy cập ngoài phạm vi.
 /// </summary>
 public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture)
@@ -22,10 +22,32 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
     private static readonly PropertyCaller QuanLy = new("quan-ly-1", Roles.QuanLy);
 
     private static RoomService NewRoomService(ApplicationDbContext db, IRoomChangePolicy? policy = null) =>
-        new(db, TimeProvider.System, policy ?? new RoomChangePolicyStub(), new NoActiveContractRoomUsageChecker());
+        new(
+            CreateContextFactory(db),
+            TimeProvider.System,
+            policy ?? new RoomChangePolicyStub(),
+            new NoActiveContractRoomUsageChecker());
 
     private static PropertyService NewPropertyService(ApplicationDbContext db) =>
-        new(db, TimeProvider.System);
+        new(CreateContextFactory(db), TimeProvider.System);
+
+    private static IDbContextFactory<ApplicationDbContext> CreateContextFactory(ApplicationDbContext db) =>
+        new TestDbContextFactory(db.Database.GetConnectionString()
+            ?? throw new InvalidOperationException("The test database has no connection string."));
+
+    private sealed class TestDbContextFactory(string connectionString) : IDbContextFactory<ApplicationDbContext>
+    {
+        public ApplicationDbContext CreateDbContext() => new(
+            new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlServer(connectionString)
+                .Options);
+
+        public Task<ApplicationDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(CreateDbContext());
+        }
+    }
 
     // ---------- Tiêu chí 1: lưu rồi tải lại đúng ----------
 
@@ -415,7 +437,7 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         }, ChuTro);
 
         var service = new RoomService(
-            db, TimeProvider.System, new RoomChangePolicyStub(), new AlwaysInUseChecker());
+            CreateContextFactory(db), TimeProvider.System, new RoomChangePolicyStub(), new AlwaysInUseChecker());
 
         var deleted = await service.DeleteAsync(room.Room!.Id, ChuTro);
 
@@ -474,6 +496,98 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
 
         var filtered = await service.ListAsync(new RoomFilter { MinPrice = 3_000_000m }, ChuTro);
         Assert.Equal(3, filtered.TotalCount);
+    }
+
+    // ---------- B16-03: phòng ngừng hoạt động không được tính là phòng trống ----------
+
+    [SqlServerFact]
+    public async Task Tong_quan_va_loc_phong_trong_bo_qua_phong_inactive()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomService(db);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P102", StandardPrice = 1_000_000m, IsActive = false,
+        }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P103", StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+        }, ChuTro);
+        await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property.Id, Code = "P104", StandardPrice = 1_000_000m,
+            Status = RoomStatus.Maintenance,
+        }, ChuTro);
+
+        var summary = await service.GetSummaryAsync(ChuTro);
+        Assert.Equal(4, summary.Total);
+        Assert.Equal(1, summary.Available);
+        Assert.Equal(1, summary.Rented);
+        Assert.Equal(1, summary.Maintenance);
+
+        var onlyAvailable = await service.ListAsync(new RoomFilter { OnlyAvailable = true }, ChuTro);
+        var room = Assert.Single(onlyAvailable.Items);
+        Assert.Equal("P101", room.Code);
+    }
+
+    [SqlServerFact]
+    public async Task Khong_cho_luu_phong_inactive_voi_trang_thai_rented_hoac_maintenance()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomService(db);
+        var activeRented = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id,
+            Code = "P201",
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+        }, ChuTro);
+        Assert.True(activeRented.Succeeded, activeRented.ErrorMessage);
+
+        foreach (var (code, status) in new[]
+        {
+            ("P202", RoomStatus.Rented),
+            ("P203", RoomStatus.Maintenance),
+        })
+        {
+            var createResult = await service.CreateAsync(new RoomSave
+            {
+                PropertyId = property.Property.Id,
+                Code = code,
+                StandardPrice = 1_000_000m,
+                Status = status,
+                IsActive = false,
+            }, ChuTro);
+
+            Assert.False(createResult.Succeeded);
+            Assert.Equal(RoomErrorCodes.InactiveRoomStatus, createResult.ErrorCode);
+        }
+
+        var updateResult = await service.UpdateAsync(activeRented.Room!.Id, new RoomSave
+        {
+            PropertyId = property.Property.Id,
+            Code = "P201",
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+            IsActive = false,
+        }, ChuTro);
+
+        Assert.False(updateResult.Succeeded);
+        Assert.Equal(RoomErrorCodes.InactiveRoomStatus, updateResult.ErrorCode);
+
+        var persistedRoom = await service.GetAsync(activeRented.Room.Id, ChuTro);
+        Assert.True(persistedRoom.Succeeded, persistedRoom.ErrorMessage);
+        Assert.True(persistedRoom.Room!.IsActive);
+        Assert.Equal(RoomStatus.Rented, persistedRoom.Room.Status);
     }
 
     private async Task SeedAsync()

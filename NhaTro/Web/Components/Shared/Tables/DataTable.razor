@@ -95,7 +95,7 @@
                         <td colspan="@Columns.Count" class="state-cell">
                             @if (HasFilters)
                             {
-                                <EmptyStateCard Title="@Labels.NoResultsTitle">
+                                <EmptyStateCard Title="@Labels.NoResultsTitle" Description="@Labels.NoResultsDescription">
                                     <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
                                 </EmptyStateCard>
                             }

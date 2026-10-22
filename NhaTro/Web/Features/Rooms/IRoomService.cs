@@ -9,6 +9,8 @@ namespace Web.Features.Rooms;
 /// </summary>
 public interface IRoomService
 {
+    Task<RoomSummary> GetSummaryAsync(Properties.PropertyCaller caller, CancellationToken ct = default);
+
     Task<PagedResult<RoomListItem>> ListAsync(
         RoomFilter filter, Properties.PropertyCaller caller, CancellationToken ct = default);
 

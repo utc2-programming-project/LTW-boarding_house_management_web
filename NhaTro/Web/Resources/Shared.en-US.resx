@@ -449,7 +449,10 @@
     <value>No data yet</value>
   </data>
   <data name="TableNoResults" xml:space="preserve">
-    <value>No matching results</value>
+    <value>No results found</value>
+  </data>
+  <data name="TableNoResultsDescription" xml:space="preserve">
+    <value>Try changing or clearing the filters to find other results.</value>
   </data>
   <data name="TableClearFilters" xml:space="preserve">
     <value>Clear filters</value>
@@ -500,6 +503,105 @@
   <data name="DevQuickLoginHint" xml:space="preserve">
     <value>Only shown when running locally in development with a test password configured. Click to enter each role directly; never shown in a real environment.</value>
   </data>
+
+  <!-- VHT-16: P2 property and room management UI -->
+  <data name="P2PropertiesTitle" xml:space="preserve"><value>Properties</value></data>
+  <data name="P2PropertiesSubtitle" xml:space="preserve"><value>Manage properties within your account scope</value></data>
+  <data name="P2AddProperty" xml:space="preserve"><value>Add property</value></data>
+  <data name="P2PropertyFilters" xml:space="preserve"><value>Property filters</value></data>
+  <data name="P2SearchProperties" xml:space="preserve"><value>Search property name or address</value></data>
+  <data name="P2Activity" xml:space="preserve"><value>Activity</value></data>
+  <data name="P2AllActivity" xml:space="preserve"><value>All activity</value></data>
+  <data name="P2Active" xml:space="preserve"><value>Active</value></data>
+  <data name="P2Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="P2ApplyFilters" xml:space="preserve"><value>Apply</value></data>
+  <data name="P2ResetFilters" xml:space="preserve"><value>Reset</value></data>
+  <data name="P2PropertyName" xml:space="preserve"><value>Property name</value></data>
+  <data name="P2Address" xml:space="preserve"><value>Address</value></data>
+  <data name="P2NotProvided" xml:space="preserve"><value>Not provided</value></data>
+  <data name="P2RoomCount" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="P2PropertiesTable" xml:space="preserve"><value>Property list</value></data>
+  <data name="P2RowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
+  <data name="P2LoadFailed" xml:space="preserve"><value>Could not load the data. Please try again.</value></data>
+  <data name="P2LoadSummaryFailed" xml:space="preserve"><value>Could not load the overview.</value></data>
+  <data name="P2Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="P2Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="P2SaveSucceeded" xml:space="preserve"><value>Changes saved.</value></data>
+  <data name="P2SaveFailed" xml:space="preserve"><value>Could not save the changes. Please try again.</value></data>
+  <data name="P2Forbidden" xml:space="preserve"><value>You are not allowed to perform this action.</value></data>
+  <data name="P2Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="P2ViewDetails" xml:space="preserve"><value>View details</value></data>
+  <data name="P2EditProperty" xml:space="preserve"><value>Edit property</value></data>
+  <data name="P2ValidationPropertyNameRequired" xml:space="preserve"><value>Enter a property name.</value></data>
+  <data name="P2ValidationNameLength" xml:space="preserve"><value>Property name must be 200 characters or fewer.</value></data>
+  <data name="P2ValidationAddressLength" xml:space="preserve"><value>Address must be 500 characters or fewer.</value></data>
+  <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Some of the entered data is invalid. Please review it.</value></data>
+  <data name="P2PropertyNotFound" xml:space="preserve"><value>Property not found or access is not allowed.</value></data>
+  <data name="P2RoomsTitle" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2RoomsSubtitle" xml:space="preserve"><value>Track rooms, rental prices, and occupancy status</value></data>
+  <data name="P2AddRoom" xml:space="preserve"><value>Add room</value></data>
+  <data name="P2RoomSummary" xml:space="preserve"><value>Room overview</value></data>
+  <data name="P2TotalRooms" xml:space="preserve"><value>Total rooms</value></data>
+  <data name="P2RoomUnit" xml:space="preserve"><value>rooms</value></data>
+  <data name="P2RoomsInScope" xml:space="preserve"><value>Within your access scope</value></data>
+  <data name="P2Available" xml:space="preserve"><value>Available</value></data>
+  <data name="P2ReadyForRent" xml:space="preserve"><value>Ready to rent</value></data>
+  <data name="P2Rented" xml:space="preserve"><value>Rented</value></data>
+  <data name="P2CurrentlyOccupied" xml:space="preserve"><value>Currently occupied</value></data>
+  <data name="P2Maintenance" xml:space="preserve"><value>Maintenance</value></data>
+  <data name="P2UnavailableForRent" xml:space="preserve"><value>Temporarily unavailable</value></data>
+  <data name="P2RoomFilters" xml:space="preserve"><value>Room filters</value></data>
+  <data name="P2SearchRooms" xml:space="preserve"><value>Search by room code</value></data>
+  <data name="P2Property" xml:space="preserve"><value>Property</value></data>
+  <data name="P2AllProperties" xml:space="preserve"><value>All properties</value></data>
+  <data name="P2Status" xml:space="preserve"><value>Room status</value></data>
+  <data name="P2AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="P2StatusAvailable" xml:space="preserve"><value>Available</value></data>
+  <data name="P2StatusRented" xml:space="preserve"><value>Rented</value></data>
+  <data name="P2StatusMaintenance" xml:space="preserve"><value>Under maintenance</value></data>
+  <data name="P2StatusUnknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="P2MinPrice" xml:space="preserve"><value>Min price</value></data>
+  <data name="P2MaxPrice" xml:space="preserve"><value>Max price</value></data>
+  <data name="P2OnlyAvailable" xml:space="preserve"><value>Available only</value></data>
+  <data name="P2ValidationPriceNumber" xml:space="preserve"><value>Price filters must be non-negative numbers.</value></data>
+  <data name="P2ValidationPriceRange" xml:space="preserve"><value>Minimum price cannot exceed maximum price.</value></data>
+  <data name="P2FilteringByProperty" xml:space="preserve"><value>Filtering by property:</value></data>
+  <data name="P2ClearFilter" xml:space="preserve"><value>Clear</value></data>
+  <data name="P2RoomsTable" xml:space="preserve"><value>Room list</value></data>
+  <data name="P2ManageProperties" xml:space="preserve"><value>Manage properties</value></data>
+  <data name="P2CreatePropertyFirst" xml:space="preserve"><value>Create a property before adding a room.</value></data>
+  <data name="P2RoomCode" xml:space="preserve"><value>Room code</value></data>
+  <data name="P2Floor" xml:space="preserve"><value>Floor</value></data>
+  <data name="P2Area" xml:space="preserve"><value>Area</value></data>
+  <data name="P2SquareMeter" xml:space="preserve"><value>m²</value></data>
+  <data name="P2StandardPrice" xml:space="preserve"><value>Rental price</value></data>
+  <data name="P2SelectProperty" xml:space="preserve"><value>Select a property</value></data>
+  <data name="P2PriceInputHint" xml:space="preserve"><value>Enter the amount in Vietnamese dong (VND).</value></data>
+  <data name="P2ValidationPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
+  <data name="P2ValidationRoomCodeRequired" xml:space="preserve"><value>Enter a room code.</value></data>
+  <data name="P2ValidationRoomCodeLength" xml:space="preserve"><value>Room code must be 50 characters or fewer.</value></data>
+  <data name="P2ValidationFloor" xml:space="preserve"><value>Floor must be between 0 and 1000.</value></data>
+  <data name="P2ValidationArea" xml:space="preserve"><value>Area must be between 0 and 100000 m².</value></data>
+  <data name="P2ValidationPriceNegative" xml:space="preserve"><value>Rental price cannot be negative.</value></data>
+  <data name="P2ValidationPriceMax" xml:space="preserve"><value>Rental price exceeds the supported storage limit.</value></data>
+  <data name="P2ValidationStatus" xml:space="preserve"><value>Room status is invalid.</value></data>
+  <data name="P2ValidationInactiveRoomStatus" xml:space="preserve"><value>An inactive room must have Available status. Change the room status before saving.</value></data>
+  <data name="P2EditRoom" xml:space="preserve"><value>Edit room</value></data>
+  <data name="P2RoomDetails" xml:space="preserve"><value>Room details</value></data>
+  <data name="P2CreatedAt" xml:space="preserve"><value>Created</value></data>
+  <data name="P2UpdatedAt" xml:space="preserve"><value>Last updated</value></data>
+  <data name="P2ApprovalPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Approval will be available in a future update.</value></data>
+  <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Move room to trash?</value></data>
+  <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Room {0} will be moved to trash.</value></data>
+  <data name="P2MoveToTrash" xml:space="preserve"><value>Move to trash</value></data>
+  <data name="P2Deleting" xml:space="preserve"><value>Moving…</value></data>
+  <data name="P2RoomMovedToTrash" xml:space="preserve"><value>Room moved to trash.</value></data>
+  <data name="P2RoomInUse" xml:space="preserve"><value>This room has an active contract and cannot be deleted.</value></data>
+  <data name="P2RoomNotFound" xml:space="preserve"><value>Room not found or access is not allowed.</value></data>
+  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in the property.</value></data>
+  <data name="P2ViewRooms" xml:space="preserve"><value>View rooms</value></data>
 
   <!-- VHT-17: tenant management and tenant profile P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>

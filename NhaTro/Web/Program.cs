@@ -16,7 +16,9 @@ using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Features.Accounts;
 using Web.Features.Properties;
+using Web.Features.Properties.Services;
 using Web.Features.Rooms;
+using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Services;
@@ -136,10 +138,13 @@ builder.Services.AddScoped<RoleService>();
 // VHT-8: service tai khoan P1 (ho so ca nhan + quan tri tai khoan theo D1).
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-// VHT-7 (dot 1C): service nha tro/phong P2. Policy cong tac va kiem hop dong la diem goi cho VHT-94/VHT-98.
+// P2 SQL services. Approval policy and active-contract checks are extension points for VHT-94/VHT-98.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
+builder.Services.AddScoped<P2CallerProvider>();
+builder.Services.AddScoped<PropertyPageService>();
+builder.Services.AddScoped<RoomPageService>();
 
 // VHT-94 (dot 1D): 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
 // Service doc/ghi chi cho Chu tro; policy chi doc de quyet dinh thay Quan ly.

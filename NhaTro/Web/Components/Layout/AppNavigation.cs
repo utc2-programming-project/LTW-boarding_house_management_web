@@ -10,8 +10,8 @@ public static class AppNavigation
         // Chủ trọ/Quản lý thuộc VHT-95 nên "Accounts" tạm chỉ mở cho Admin.
         new("Accounts", "users", "Admin", "/admin/users"),
         new("Permissions", "shield", "Admin"),
-        new("Properties", "building", "ChuTro,QuanLy"),
-        new("Rooms", "door", "ChuTro,QuanLy"),
+        new("Properties", "building", "ChuTro,QuanLy", "/properties"),
+        new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
         new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
         new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
         new("Services", "settings", "ChuTro,QuanLy"),
