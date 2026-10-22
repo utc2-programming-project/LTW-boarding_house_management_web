@@ -1,0 +1,299 @@
+@page "/admin/users"
+@attribute [Authorize(Roles = Roles.Admin)]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Models
+@using Web.Common.Utils
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Forms
+@using Web.Components.Shared.Tables
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+
+@inject IAccountService Accounts
+@inject AuthenticationStateProvider AuthState
+@inject IStringLocalizer<Shared> L
+@inject ToastService Toasts
+
+@* VHT-8: quan tri tai khoan (/admin/users). Chi Admin (D1).
+   Trang thai "Cho duyet" do VHT-95 lam; VHT-8 chi khoa/mo khoa + gan vai tro. *@
+
+<PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
+
+<section aria-labelledby="accounts-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["AccountsTitle"]) })" />
+
+    <header class="page-heading">
+        <div>
+            <h1 id="accounts-title">@L["AccountsTitle"]</h1>
+            <p>@L["AccountsSubtitle"]</p>
+        </div>
+    </header>
+
+    <div class="toolbar" role="search">
+        <div class="field field-inline">
+            <label class="label" for="account-search">@L["SearchAccounts"]</label>
+            <div class="password-wrap">
+                <InputText id="account-search" class="input" @bind-Value="_keyword"
+                           @bind-Value:after="ReloadAsync" placeholder="@L["SearchAccountsHint"]" />
+                <span class="input-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+            </div>
+        </div>
+
+        <div class="field field-inline">
+            <label class="label" for="account-role">@L["FilterRole"]</label>
+            <select id="account-role" class="input" @bind="_roleFilter" @bind:after="ReloadAsync">
+                <option value="">@L["FilterAllRoles"]</option>
+                @foreach (var role in _roleOptions)
+                {
+                    <option value="@role">@RoleText(role)</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <DataTable @ref="_table" TItem="AccountListItemDto" Columns="_columns"
+               ItemsProvider="LoadAccountsAsync" PageSize="10" Caption="@L["AccountsTitle"]"
+               Labels="DataTableLabelLocalizer.Create(L)">
+
+        <EmptyActions>
+            <p class="note">@L["AccountsEmptyHint"]</p>
+        </EmptyActions>
+    </DataTable>
+</section>
+
+<ConfirmDialog Visible="_confirmRole.Visible" Title="@L["ChangeRoleTitle"]"
+               ConfirmText="@L["Confirm"]" CancelText="@L["Cancel"]"
+               OnConfirm="ConfirmRoleAsync" OnCancel="CancelRoleChange">
+    <p>@L["ChangeRoleMessageBefore"] <strong>@_confirmRole.UserName</strong></p>
+    <div class="field">
+        <label class="label" for="role-select">@L["NewRoleLabel"]</label>
+        <select id="role-select" class="input" @bind="_confirmRole.NewRole">
+            @foreach (var role in _roleOptions)
+            {
+                <option value="@role">@RoleText(role)</option>
+            }
+        </select>
+    </div>
+    <p class="note">@L["ChangeRoleWarning"]</p>
+</ConfirmDialog>
+
+<ConfirmDialog Visible="_confirmLock.Visible" Title="@(_confirmLock.Lock ? L["LockTitle"] : L["UnlockTitle"])"
+               Message="@LockMessage()"
+               ConfirmText="@(_confirmLock.Lock ? L["LockConfirm"] : L["UnlockConfirm"])"
+               CancelText="@L["Cancel"]" Danger="_confirmLock.Lock"
+               OnConfirm="ConfirmLockAsync" OnCancel="CancelLock" />
+
+@code {
+    private const int PageSize = 10;
+
+    private DataTable<AccountListItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<AccountListItemDto>> _columns = [];
+    private IReadOnlyList<string> _roleOptions = [];
+
+    private string? _keyword;
+    private string? _roleFilter;
+    private string _callerUserId = string.Empty;
+    private string _callerRole = string.Empty;
+
+    private RoleChangeState _confirmRole = new();
+    private LockState _confirmLock = new();
+
+    private sealed class RoleChangeState
+    {
+        public bool Visible { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string NewRole { get; set; } = string.Empty;
+    }
+
+    private sealed class LockState
+    {
+        public bool Visible { get; set; }
+        public bool Lock { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _callerUserId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        _callerRole = Roles.All.FirstOrDefault(state.User.IsInRole) ?? string.Empty;
+
+        // D1: Admin doi vai tro duoc cho ca 4 vai tro; cac vai tro khac khong doi vai tro.
+        _roleOptions = AccountPermissionRules.AssignableRoles(_callerRole);
+
+        _columns =
+        [
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "name",
+                Title = L["ColumnAccount"],
+                Sortable = true,
+                Template = user => @<span class="account-cell">
+                    <span class="account-name">@(string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName)</span>
+                    @if (!string.IsNullOrWhiteSpace(user.FullName))
+                    {
+                        <small class="account-sub">@user.UserName</small>
+                    }
+                </span>,
+            },
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "email",
+                Title = L["EmailLabel"],
+                Value = user => user.Email,
+            },
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "phone",
+                Title = L["PhoneLabel"],
+                Value = user => string.IsNullOrWhiteSpace(user.PhoneNumber) ? L["NoData"] : user.PhoneNumber,
+            },
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "role",
+                Title = L["ColumnRole"],
+                Sortable = true,
+                Template = user => @<StatusBadge Tone="@RoleTone(user.Role)" Text="@RoleText(user.Role)" />,
+            },
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "status",
+                Title = L["ColumnStatus"],
+                Template = user => @<StatusBadge Tone="@(user.IsLocked ? BadgeTone.Error : BadgeTone.Success)"
+                                                   Text="@(user.IsLocked ? L["StatusLocked"] : L["StatusActive"])" />,
+            },
+            new DataTableColumn<AccountListItemDto>
+            {
+                Key = "actions",
+                Title = L["ColumnActions"],
+                Template = user => @<span class="row-actions">
+                    @if (_roleOptions.Count > 0 && user.Id != _callerUserId)
+                    {
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OpenRoleChange(user)">
+                            @L["ChangeRole"]
+                        </button>
+                    }
+                    @if (user.Id != _callerUserId)
+                    {
+                        <button type="button" class="btn @(user.IsLocked ? "btn-secondary" : "btn-danger") btn-sm"
+                                @onclick="() => OpenLock(user)">
+                            @(user.IsLocked ? L["Unlock"] : L["Lock"])
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="note">@L["ThisIsYou"]</span>
+                    }
+                </span>,
+            },
+        ];
+    }
+
+    private async Task<PagedResult<AccountListItemDto>> LoadAccountsAsync(DataTableRequest request)
+    {
+        var keyword = string.IsNullOrWhiteSpace(_keyword)
+            ? request.Filters.GetValueOrDefault("name")
+            : _keyword;
+        var role = string.IsNullOrWhiteSpace(_roleFilter)
+            ? request.Filters.GetValueOrDefault("role")
+            : _roleFilter;
+
+        return await Accounts.ListAsync(
+            keyword, role, request.Page, request.PageSize, _callerUserId, _callerRole);
+    }
+
+    private Task ReloadAsync() => _table?.ReloadAsync() ?? Task.CompletedTask;
+
+    private void OpenRoleChange(AccountListItemDto user)
+    {
+        _confirmRole = new RoleChangeState
+        {
+            Visible = true,
+            UserId = user.Id,
+            UserName = string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName,
+            NewRole = _roleOptions.Contains(user.Role) ? user.Role : _roleOptions.FirstOrDefault() ?? string.Empty,
+        };
+    }
+
+    private void CancelRoleChange() => _confirmRole.Visible = false;
+
+    private async Task ConfirmRoleAsync()
+    {
+        var result = await Accounts.ChangeRoleAsync(
+            _confirmRole.UserId, _confirmRole.NewRole, _callerUserId, _callerRole);
+
+        _confirmRole.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["RoleChanged"]);
+        await ReloadAsync();
+    }
+
+    private void OpenLock(AccountListItemDto user)
+    {
+        _confirmLock = new LockState
+        {
+            Visible = true,
+            Lock = !user.IsLocked,
+            UserId = user.Id,
+            UserName = string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName,
+        };
+    }
+
+    private void CancelLock() => _confirmLock.Visible = false;
+
+    private string LockMessage() => string.Format(
+        _confirmLock.Lock ? L["LockMessage"] : L["UnlockMessage"], _confirmLock.UserName);
+
+    private async Task ConfirmLockAsync()
+    {
+        var result = _confirmLock.Lock
+            ? await Accounts.LockAsync(_confirmLock.UserId, _callerUserId, _callerRole)
+            : await Accounts.UnlockAsync(_confirmLock.UserId, _callerUserId, _callerRole);
+
+        _confirmLock.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(_confirmLock.Lock ? L["AccountLocked"] : L["AccountUnlocked"]);
+        await ReloadAsync();
+    }
+
+    private string MessageFor(string? code) => code switch
+    {
+        AccountErrorCodes.CannotChangeOwnRole => L["ErrorCannotChangeOwnRole"],
+        AccountErrorCodes.CannotRemoveLastAdmin => L["ErrorCannotRemoveLastAdmin"],
+        AccountErrorCodes.CannotLockSelf => L["ErrorCannotLockSelf"],
+        AccountErrorCodes.CannotLockAdmin => L["ErrorCannotLockAdmin"],
+        AccountErrorCodes.RoleNotAllowed => L["ErrorRoleNotAllowed"],
+        AccountErrorCodes.InvalidRole => L["ErrorInvalidRole"],
+        AccountErrorCodes.Forbidden => L["ErrorForbidden"],
+        AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
+        _ => L["ErrorGeneric"],
+    };
+
+    private string RoleText(string role) => L[AccountPermissionRules.RoleResourceKey(role)];
+
+    private static BadgeTone RoleTone(string role) => role switch
+    {
+        Roles.Admin => BadgeTone.Error,
+        Roles.ChuTro => BadgeTone.Info,
+        Roles.QuanLy => BadgeTone.Success,
+        Roles.KhachThue => BadgeTone.Neutral,
+        _ => BadgeTone.Neutral,
+    };
+}

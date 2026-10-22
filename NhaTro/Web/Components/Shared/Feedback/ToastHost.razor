@@ -1,0 +1,18 @@
+@implements IDisposable
+@inject ToastService Toasts
+
+@* Đặt một lần trong layout. Phải chạy interactive để nhận toast từ trang. *@
+<div class="toast-host">
+    @foreach (var toast in Toasts.Toasts)
+    {
+        <Toast @key="toast.Id" Message="toast" />
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Toasts.Changed += OnChanged;
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Toasts.Changed -= OnChanged;
+}

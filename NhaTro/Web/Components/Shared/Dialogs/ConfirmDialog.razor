@@ -1,0 +1,134 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<dialog @ref="_dialog" class="confirm-dialog" aria-labelledby="@_titleId" aria-describedby="@_bodyId">
+    <h2 id="@_titleId" class="title">@Title</h2>
+    <div id="@_bodyId" class="body">
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            <p>@Message</p>
+        }
+    </div>
+    <div class="footer">
+        <button type="button" class="btn btn-secondary" autofocus disabled="@_busy" @onclick="CancelAsync">@CancelText</button>
+        <button type="button" class="btn @(Danger ? "btn-danger" : "btn-primary")"
+                disabled="@_busy" aria-busy="@(_busy ? "true" : null)" @onclick="ConfirmAsync">
+            @(_busy ? BusyText : ConfirmText)
+        </button>
+    </div>
+</dialog>
+
+@code {
+    private const string ModulePath = "./Components/Shared/Dialogs/ConfirmDialog.razor.js";
+
+    private ElementReference _dialog;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _registration;
+    private DotNetObjectReference<ConfirmDialog>? _self;
+    private bool _openInDom;
+    private bool _busy;
+    private readonly string _titleId = $"confirm-{Guid.NewGuid():N}-title";
+    private readonly string _bodyId = $"confirm-{Guid.NewGuid():N}-body";
+
+    /// <summary>Bên gọi điều khiển việc mở/đóng; đặt về false trong OnConfirm (khi xong) và OnCancel.</summary>
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>Nội dung ngắn. Dùng ChildContent nếu cần nội dung phức tạp hơn.</summary>
+    [Parameter]
+    public string? Message { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Truyền chữ đã dịch khi giao diện tiếng Anh.</summary>
+    [Parameter]
+    public string ConfirmText { get; set; } = "Đồng ý";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Hủy";
+
+    [Parameter]
+    public string BusyText { get; set; } = "Đang xử lý…";
+
+    /// <summary>Thao tác nguy hiểm (xóa...): nút xác nhận màu đỏ.</summary>
+    [Parameter]
+    public bool Danger { get; set; }
+
+    /// <summary>Chạy khi bấm đồng ý. Trong lúc chờ, hai nút bị khóa để không gửi lặp.</summary>
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible == _openInDom) return;
+
+        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
+        if (_registration is null)
+        {
+            _self = DotNetObjectReference.Create(this);
+            _registration = await _module.InvokeAsync<IJSObjectReference>("register", _dialog, _self);
+        }
+
+        await _module.InvokeVoidAsync(Visible ? "open" : "close", _dialog);
+        _openInDom = Visible;
+    }
+
+    private async Task CancelAsync()
+    {
+        if (_busy) return;
+        await OnCancel.InvokeAsync();
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            await OnConfirm.InvokeAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    /// <summary>Trình duyệt báo người dùng nhấn Esc (hoặc tự đóng hộp thoại).</summary>
+    [JSInvokable]
+    public Task OnDismissRequested() =>
+        Visible && !_busy ? InvokeAsync(CancelAsync) : Task.CompletedTask;
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_registration is not null)
+            {
+                await _registration.InvokeVoidAsync("dispose");
+                await _registration.DisposeAsync();
+            }
+
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit đã đóng: không còn gì để dọn phía trình duyệt.
+        }
+
+        _self?.Dispose();
+    }
+}

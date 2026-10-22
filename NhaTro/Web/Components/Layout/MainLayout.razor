@@ -1,3 +1,4 @@
+@using Web.Components.Shared.Feedback
 @inherits LayoutComponentBase
 @implements IAsyncDisposable
 @inject IJSRuntime JS
@@ -7,6 +8,8 @@
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
+
+<ToastHost @rendermode="InteractiveServer" />
 
 <a class="skip-link" href="#main-content">@L["SkipContent"]</a>
 <div class="app-shell">

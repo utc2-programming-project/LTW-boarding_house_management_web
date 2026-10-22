@@ -1,0 +1,326 @@
+@typeparam TItem
+@inject ILogger<DataTable<TItem>> Logger
+
+<div class="table-card">
+    <div role="status" class="visually-hidden">@(_loading ? Labels.Loading : null)</div>
+
+    <div class="table-scroll" aria-busy="@(_loading ? "true" : null)">
+        <table>
+            @if (!string.IsNullOrWhiteSpace(Caption))
+            {
+                <caption class="visually-hidden">@Caption</caption>
+            }
+            <thead>
+                <tr>
+                    @foreach (var col in Columns)
+                    {
+                        <th scope="col" class="@CellClass(col)" aria-sort="@AriaSort(col)">
+                            @if (col.Sortable)
+                            {
+                                <button type="button" class="sort-button" @onclick="() => ToggleSortAsync(col.Key)">
+                                    <span>@col.Title</span>
+                                    <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        @if (IsSorted(col.Key, descending: false))
+                                        {
+                                            <path d="M12 19V5" />
+                                            <path d="m5 12 7-7 7 7" />
+                                        }
+                                        else if (IsSorted(col.Key, descending: true))
+                                        {
+                                            <path d="M12 5v14" />
+                                            <path d="m19 12-7 7-7-7" />
+                                        }
+                                        else
+                                        {
+                                            <path d="m21 16-4 4-4-4" />
+                                            <path d="M17 20V4" />
+                                            <path d="m3 8 4-4 4 4" />
+                                            <path d="M7 4v16" />
+                                        }
+                                    </svg>
+                                </button>
+                            }
+                            else
+                            {
+                                @col.Title
+                            }
+                        </th>
+                    }
+                </tr>
+                @if (Columns.Any(c => c.Filterable))
+                {
+                    <tr class="filter-row">
+                        @foreach (var col in Columns)
+                        {
+                            <td>
+                                @if (col.Filterable)
+                                {
+                                    <input type="text" class="filter-input"
+                                           aria-label="@($"{Labels.FilterBy} {col.Title}")"
+                                           value="@_filters.GetValueOrDefault(col.Key)"
+                                           @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())" />
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </thead>
+            <tbody>
+                @if (_loading)
+                {
+                    @for (var i = 0; i < SkeletonRows; i++)
+                    {
+                        <tr aria-hidden="true">
+                            @foreach (var col in Columns)
+                            {
+                                <td><span class="skeleton"></span></td>
+                            }
+                        </tr>
+                    }
+                }
+                else if (_failed)
+                {
+                    <tr>
+                        <td colspan="@Columns.Count" class="state-cell">
+                            <div class="error-box" role="alert">
+                                <p>@Labels.LoadFailed</p>
+                                <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@Labels.Retry</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (_total == 0)
+                {
+                    <tr>
+                        <td colspan="@Columns.Count" class="state-cell">
+                            @if (HasFilters)
+                            {
+                                <EmptyStateCard Title="@Labels.NoResultsTitle" Description="@Labels.NoResultsDescription">
+                                    <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
+                                </EmptyStateCard>
+                            }
+                            else
+                            {
+                                @if (EmptyActions is not null)
+                                {
+                                    <EmptyStateCard Title="@Labels.EmptyTitle" Description="@Labels.EmptyDescription">
+                                        @EmptyActions
+                                    </EmptyStateCard>
+                                }
+                                else
+                                {
+                                    <EmptyStateCard Title="@Labels.EmptyTitle" Description="@Labels.EmptyDescription" />
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in _items)
+                    {
+                        <tr class="data-row">
+                            @foreach (var col in Columns)
+                            {
+                                <td class="@CellClass(col)">
+                                    @if (col.Template is not null)
+                                    {
+                                        @col.Template(item)
+                                    }
+                                    else
+                                    {
+                                        @(col.Value?.Invoke(item) ?? "—")
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!_loading && !_failed && _total > 0)
+    {
+        var (firstItem, lastItem) = PaginationHelper.ItemRange(_page, PageSize, _total);
+        <div class="table-footer">
+            <span class="summary">@(string.Format(Labels.Summary, firstItem, lastItem, _total))</span>
+            @if (TotalPages > 1)
+            {
+                <nav class="pager" aria-label="@Labels.Pagination">
+                    <button type="button" class="page-button" aria-label="@Labels.FirstPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></svg>
+                    </button>
+                    <button type="button" class="page-button" aria-label="@Labels.PreviousPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(_page - 1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                    </button>
+                    @foreach (var p in PaginationHelper.PageWindow(_page, TotalPages))
+                    {
+                        <button type="button" class="page-button @(p == _page ? "current" : null)"
+                                aria-label="@($"{Labels.Page} {p}")" aria-current="@(p == _page ? "page" : null)"
+                                @onclick="() => GoToPageAsync(p)">@p</button>
+                    }
+                    <button type="button" class="page-button" aria-label="@Labels.NextPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(_page + 1)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                    </button>
+                    <button type="button" class="page-button" aria-label="@Labels.LastPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(TotalPages)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 17 5-5-5-5" /><path d="m13 17 5-5-5-5" /></svg>
+                    </button>
+                </nav>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const int SkeletonRows = 5;
+
+    private readonly Dictionary<string, string> _filters = new();
+    private IReadOnlyList<TItem> _items = [];
+    private int _total;
+    private int _page = 1;
+    private int _requestId;
+    private string? _sortKey;
+    private bool _sortDescending;
+    private bool _loading;
+    private bool _failed;
+
+    /// <summary>Các cột. Danh sách này nên tạo một lần (ví dụ trong OnInitialized), không tạo lại mỗi lần render.</summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DataTableColumn<TItem>> Columns { get; set; } = [];
+
+    /// <summary>
+    /// Nơi lấy dữ liệu của một trang (thường là gọi service). Bảng tự quản lý trang, sắp xếp, lọc,
+    /// trạng thái đang tải/rỗng/lỗi; bên gọi chỉ trả về <see cref="PagedResult{T}"/>.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public Func<DataTableRequest, Task<PagedResult<TItem>>> ItemsProvider { get; set; } = default!;
+
+    [Parameter]
+    public int PageSize { get; set; } = 10;
+
+    /// <summary>Mô tả bảng cho trình đọc màn hình (không hiển thị).</summary>
+    [Parameter]
+    public string? Caption { get; set; }
+
+    [Parameter]
+    public DataTableLabels Labels { get; set; } = new();
+
+    /// <summary>Nút kêu gọi hành động khi bảng rỗng và chưa lọc gì, ví dụ "Thêm phòng".</summary>
+    [Parameter]
+    public RenderFragment? EmptyActions { get; set; }
+
+    /// <summary>Cho biết bộ lọc ngoài bảng có đang được áp dụng không.</summary>
+    [Parameter]
+    public bool HasActiveFilters { get; set; }
+
+    /// <summary>Xóa các bộ lọc do trang cha quản lý.</summary>
+    [Parameter]
+    public EventCallback OnClearFilters { get; set; }
+
+    private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
+
+    private bool HasFilters => _filters.Count > 0 || HasActiveFilters;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    /// <summary>Tải lại trang hiện tại, ví dụ sau khi thêm/sửa/xóa.</summary>
+    public Task ReloadAsync() => LoadAsync();
+
+    private DataTableRequest BuildRequest() =>
+        new(_page, PageSize, _sortKey, _sortDescending, new Dictionary<string, string>(_filters));
+
+    private async Task LoadAsync()
+    {
+        var id = ++_requestId;
+        _loading = true;
+        _failed = false;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var result = await ItemsProvider(BuildRequest());
+            if (id != _requestId) return; // đã có yêu cầu mới hơn
+
+            var lastPage = PaginationHelper.TotalPages(result.TotalCount, PageSize);
+            if (_page > lastPage)
+            {
+                // Trang hiện tại không còn (ví dụ vừa xóa bản ghi cuối): lùi về trang cuối.
+                _page = lastPage;
+                if (result.TotalCount > 0)
+                {
+                    await LoadAsync();
+                    return;
+                }
+            }
+
+            _items = result.Items;
+            _total = result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            if (id != _requestId) return;
+            Logger.LogError(ex, "Không tải được dữ liệu bảng {Caption}", Caption);
+            _items = [];
+            _total = 0;
+            _failed = true;
+        }
+
+        _loading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task GoToPageAsync(int page)
+    {
+        _page = PaginationHelper.ClampPage(page, TotalPages);
+        return LoadAsync();
+    }
+
+    private Task ToggleSortAsync(string key)
+    {
+        _sortDescending = _sortKey == key && !_sortDescending;
+        _sortKey = key;
+        _page = 1;
+        return LoadAsync();
+    }
+
+    private Task FilterChangedAsync(string key, string? value)
+    {
+        var text = value?.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            _filters.Remove(key);
+        }
+        else
+        {
+            _filters[key] = text;
+        }
+
+        _page = 1;
+        return LoadAsync();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        _filters.Clear();
+        if (HasActiveFilters)
+        {
+            await OnClearFilters.InvokeAsync();
+        }
+
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private bool IsSorted(string key, bool descending) => _sortKey == key && _sortDescending == descending;
+
+    private string? AriaSort(DataTableColumn<TItem> col)
+    {
+        if (!col.Sortable) return null;
+        if (IsSorted(col.Key, descending: false)) return "ascending";
+        if (IsSorted(col.Key, descending: true)) return "descending";
+        return "none";
+    }
+
+    private static string? CellClass(DataTableColumn<TItem> col) => col.IsNumeric ? "numeric" : null;
+}

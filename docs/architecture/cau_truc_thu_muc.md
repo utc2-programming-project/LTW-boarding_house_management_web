@@ -40,6 +40,7 @@ LTW/
 │   │   │   ├── Pages/                   # Home: giới thiệu INIT; trang lỗi
 │   │   │   │   ├── Home.razor
 │   │   │   │   └── Home.razor.css
+│   │   │   ├── Shared/                  # Dialogs, feedback, forms, tables, LucideIcon
 │   │   │   └── Account/                 # Template Identity + HTTP auth
 │   │   ├── Data/
 │   │   │   ├── ApplicationDbContext.cs
@@ -51,12 +52,34 @@ LTW/
 │   │   │   └── Migrations/              # Identity, CoreSchema, snapshot
 │   │   ├── Features/
 │   │   │   ├── Properties/
-│   │   │   │   └── Entities/Property.cs
+│   │   │   │   ├── Pages/PropertyList.razor
+│   │   │   │   ├── Components/PropertyFormDialog.razor, PropertyDetailsDialog.razor
+│   │   │   │   ├── Entities/Property.cs
+│   │   │   │   ├── DTOs/                # PropertyFilter/ListItem/Detail/Save
+│   │   │   │   ├── Mapping/PropertyMapping.cs
+│   │   │   │   ├── PropertyCaller.cs, PropertyResult.cs, PropertyErrorCodes.cs
+│   │   │   │   ├── IPropertyService.cs, PropertyService.cs   # Service SQL P2
+│   │   │   │   ├── Services/P2CallerProvider.cs, PropertyPageService.cs
+│   │   │   │   └── PropertyScope.cs
 │   │   │   ├── Rooms/
+│   │   │   │   ├── Pages/RoomList.razor
+│   │   │   │   ├── Components/RoomFormDialog.razor, RoomDetailsDialog.razor
 │   │   │   │   ├── Entities/Room.cs
-│   │   │   │   └── Enums/RoomStatus.cs
+│   │   │   │   ├── Enums/RoomStatus.cs
+│   │   │   │   ├── DTOs/                # Filter/ListItem/Detail/Save/Summary/Option/OptionRequest
+│   │   │   │   ├── Mapping/RoomMapping.cs
+│   │   │   │   ├── IRoomService.cs, RoomService.cs          # Service SQL P2
+│   │   │   │   ├── IRoomChangePolicy.cs                     # điểm gọi VHT-94
+│   │   │   │   ├── IRoomUsageChecker.cs                     # điểm gọi VHT-98
+│   │   │   │   ├── Services/RoomPageService.cs                # Adapter UI -> service SQL
+│   │   │   │   └── RoomScope.cs, RoomResult.cs, RoomErrorCodes.cs
 │   │   │   └── Tenants/
-│   │   │       └── Entities/Tenant.cs
+│   │   │       ├── Entities/Tenant.cs
+│   │   │       ├── DTOs/, Mapping/, Enums/
+│   │   │       ├── TenantService.cs, TenantCaller.cs, TenantScope.cs
+│   │   │       ├── Services/TenantPageService.cs
+│   │   │       ├── Pages/                 # TenantList, MyTenantProfile (VHT-17)
+│   │   │       └── Components/            # Dialog/form P3
 │   │   └── wwwroot/                    # app.css và static assets template
 │   ├── NhaTro.UnitTests/                # xUnit: scaffold
 │   ├── NhaTro.IntegrationTests/         # xUnit + WebApplicationFactory
@@ -77,7 +100,9 @@ LTW/
     └── archive/
 ```
 
-**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage.
+**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. P2 now has bilingual SQL-backed property and room list/detail/forms in `Features/Properties/` and `Features/Rooms/` (VHT-16 UI + VHT-7 services), with role-gated actions and server-side filtering/pagination. Manager property assignment (VHT-24), live approval switches/queue (VHT-94/VHT-96), and active-contract deletion checks (VHT-98) remain on their service extension points. `docs/UI/UI_Quan_ly_phong` remains the design prototype; its sample rows are not loaded by the application.
+
+**VHT-94 (đã triển khai - nền công tắc Quản lý):** `Features/Settings/` gồm `ManagerToggleCatalog` (21 mã SW-01…SW-16 + SW-15a…e), `Enums/`, `Entities/ManagerToggle`, `Services/ManagerToggleService` (đọc/ghi SQL + guard Chủ trọ), `Services/ManagerTogglePolicy` (mode → Allowed/RequiresApproval/Denied, cài thêm `IRoomChangePolicy` để P2 dùng lại), `DTOs/`; `Data/Configurations/Settings/ManagerToggleConfiguration.cs` + migration `AddManagerToggles` (seed 21 dòng, check constraint SW-15). Công tắc lưu SQL, **không** dùng `IOptions`/appsettings. UI cấu hình vẫn là NEW-04 (VHT-97), hàng đợi duyệt là VHT-96.
 
 ## 3. Khung thư mục đã tạo / Created folder scaffold
 
@@ -153,6 +178,8 @@ Web/
 - `Components/Account/` là luồng đăng nhập Identity; `Features/Accounts/` là quản trị tài khoản/role/phân công P1.
 - `Utilities/` là điện nước/dịch vụ; `Common/Utils/` là tiện ích lập trình.
 - `Deposits/` vẫn thuộc P4. Có folder không có nghĩa là tự bổ sung nghiệp vụ cọc.
+
+**VHT-13 (đã triển khai — storage backend dùng chung):** các folder trên không còn rỗng ở phần storage. Code thật gồm `Infrastructure/Storage/` (`IFileStorage`, `LocalFileStorage`, tên tệp do server sinh, chặn path traversal), `Features/Storage/` (`Rules/` quyền + loại/kích thước + nhận dạng nội dung, `Services/FileService`, `Entities/StoredFile`, `Mapping/`, `DTOs/`), `Endpoints/Files/FileEndpoints.cs` (`POST/GET/DELETE /api/files`), `Configuration/Options/StorageOptions.cs` + `Configuration/Validation/StorageOptionsValidator.cs`, `Infrastructure/ErrorHandling/FileUploadExceptionMiddleware.cs`, `Data/Configurations/Storage/StoredFileConfiguration.cs` và migration `AddStorageStoredFiles`. `.gitkeep` tương ứng đã bỏ.
 
 ## 4. Một chức năng / Feature template
 

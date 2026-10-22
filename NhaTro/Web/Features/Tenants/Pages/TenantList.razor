@@ -1,0 +1,575 @@
+@page "/tenants"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject TenantPageService TenantPages
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["TenantsTitle"] · @L["AppName"]</PageTitle>
+
+<section class="tenant-list-page" aria-labelledby="tenants-title">
+    <header class="tenant-page-heading">
+        <div>
+            <div class="tenant-title-row">
+                <h1 id="tenants-title">@L["TenantsTitle"]</h1>
+            </div>
+            <p>@L["TenantsSubtitle"]</p>
+        </div>
+        <div class="tenant-page-actions">
+            @if (_canRevealIdNumber)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
+                    @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
+                    else { <LucideIcon Name="download" /> }
+                    @L["TenantExport"]
+                </button>
+            }
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                <LucideIcon Name="plus" /> @L["TenantAdd"]
+            </button>
+        </div>
+    </header>
+
+    @if (_summaryError)
+    {
+        <div class="tenant-summary-error" role="alert">
+            <span>@L["TenantSummaryLoadFailed"]</span>
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="LoadSummaryAsync">@L["Retry"]</button>
+        </div>
+    }
+
+    <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
+        <article class="tenant-stat-card">
+            <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
+            <div class="tenant-stat-value">@SummaryValue(_summary?.TotalCount)<small>@L["TenantPeople"]</small></div>
+            <p>@L["TenantAllRecordsHint"]</p>
+        </article>
+        <article class="tenant-stat-card">
+            <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
+            <div class="tenant-stat-value">@SummaryValue(_summary?.ActiveCount)<small>@L["TenantRecords"]</small></div>
+            <p>@Percent(_summary?.ActiveCount, _summary?.TotalCount) @L["TenantActiveRateHint"]</p>
+        </article>
+        @if (_canRevealIdNumber)
+        {
+            <article class="tenant-stat-card">
+                <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
+                <div class="tenant-stat-value">@SummaryValue(_summary?.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
+                <p>@Percent(_summary?.LinkedAccountCount, _summary?.TotalCount) @L["TenantAccountRateHint"]</p>
+            </article>
+        }
+        <article class="tenant-stat-card">
+            <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
+            <div class="tenant-stat-value">@Percent(_summary?.WithIdNumberCount, _summary?.TotalCount)<small>%</small></div>
+            <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
+        </article>
+    </section>
+
+    @if (_loadingDetail)
+    {
+        <div class="tenant-detail-loading">
+            <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+        </div>
+    }
+
+    <section class="tenant-filter-card" aria-label="@L["TenantFilters"]">
+        <div class="tenant-filter-row">
+            <div class="tenant-search-field">
+                <label class="sr-only" for="tenant-search">@L["TenantSearch"]</label>
+                <span class="tenant-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <InputText id="tenant-search" class="input" @bind-Value="_keyword" @bind-Value:after="ResetTableAsync"
+                           placeholder="@L["TenantSearchHint"]" autocomplete="off" />
+            </div>
+            <div class="tenant-filter-select">
+                <label class="sr-only" for="tenant-status-filter">@L["TenantStatusFilter"]</label>
+                <select id="tenant-status-filter" class="input" @bind="_statusFilter" @bind:after="ResetTableAsync">
+                    <option value="">@L["TenantStatusAll"]</option>
+                    <option value="active">@L["TenantStatusActive"]</option>
+                    <option value="inactive">@L["TenantStatusInactive"]</option>
+                </select>
+            </div>
+            @if (_canRevealIdNumber)
+            {
+                <div class="tenant-filter-select">
+                    <label class="sr-only" for="tenant-account-filter">@L["TenantAccountFilter"]</label>
+                    <select id="tenant-account-filter" class="input" @bind="_accountFilter" @bind:after="ResetTableAsync">
+                        <option value="">@L["TenantAccountAll"]</option>
+                        <option value="linked">@L["TenantAccountYes"]</option>
+                        <option value="unlinked">@L["TenantAccountNo"]</option>
+                    </select>
+                </div>
+            }
+            <div class="tenant-filter-select tenant-sort-select">
+                <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
+                <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
+                    <option value="created">@L["TenantSortCreatedDesc"]</option>
+                    <option value="name-asc">@L["TenantSortNameAsc"]</option>
+                    <option value="name-desc">@L["TenantSortNameDesc"]</option>
+                </select>
+            </div>
+            <div class="tenant-filter-select tenant-page-size">
+                <label class="sr-only" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
+                <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-secondary tenant-reset-button" @onclick="ResetFiltersAsync">
+                <LucideIcon Name="refresh-cw" /> @L["TenantReset"]
+            </button>
+        </div>
+        <div class="tenant-filter-footnote">
+            <span><LucideIcon Name="shield-check" /> @L["TenantSearchPrivacyHint"]</span>
+            <span>@L["TenantSecurityHint"]</span>
+        </div>
+    </section>
+
+    <DataTable @key="_tableKey" @ref="_table" TItem="TenantListItemDto" Columns="_columns"
+               ItemsProvider="LoadTenantsAsync" PageSize="_pageSize" Caption="@L["TenantsTitle"]"
+               HasActiveFilters="HasActiveTenantFilters" OnClearFilters="ClearTenantFiltersAsync"
+               Labels="DataTableLabelLocalizer.Create(L)">
+        <EmptyActions>
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                <LucideIcon Name="plus" /> @L["TenantAdd"]
+            </button>
+        </EmptyActions>
+    </DataTable>
+</section>
+
+<TenantDetailsDialog Visible="_showDetails" Tenant="_selectedTenant" CanManage="true"
+                     CanViewAccount="_canRevealIdNumber"
+                     OnClose="CloseDetailsAsync" OnEdit="OpenEditAsync" OnSetActive="RequestStatusChangeAsync"
+                     OnLinkAccount="OpenLinkAccountAsync" OnUnlinkAccount="RequestUnlinkAccountAsync" />
+<TenantFormDialog Visible="_showForm" Tenant="_formTenant" CanManage="true"
+                   CanRevealIdNumber="_canRevealIdNumber" OnClose="CloseFormAsync" OnSaved="RefreshAsync" />
+<TenantAccountLinkDialog Visible="_showLinkAccount" Tenant="_selectedTenant"
+                          OnClose="CloseLinkAccountAsync" OnLinked="RefreshDetailsAsync" />
+
+<ConfirmDialog Visible="_showStatusConfirm"
+               Title="@(_nextIsActive ? L["TenantActivateTitle"] : L["TenantDeactivateTitle"])"
+               Message="@(_nextIsActive ? L["TenantActivate"] : L["TenantDeactivate"])"
+               ConfirmText="@L["Confirm"]" CancelText="@L["Cancel"]" Danger="@(!_nextIsActive)"
+               OnConfirm="ConfirmStatusChangeAsync" OnCancel="CancelStatusChangeAsync" />
+<ConfirmDialog Visible="_showUnlinkConfirm" Title="@L["TenantUnlinkTitle"]"
+               Message="@L["TenantUnlinkMessage"]" ConfirmText="@L["TenantUnlinkAccount"]"
+               CancelText="@L["Cancel"]" Danger="true"
+               OnConfirm="ConfirmUnlinkAccountAsync" OnCancel="CancelUnlinkAccountAsync" />
+
+@code {
+    private const int ExportPageSize = 100;
+    private DataTable<TenantListItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<TenantListItemDto>> _columns = [];
+    private TenantListSummaryDto? _summary;
+    private TenantDetailDto? _selectedTenant;
+    private TenantDetailDto? _formTenant;
+    private string? _keyword;
+    private string _statusFilter = string.Empty;
+    private string _accountFilter = string.Empty;
+    private string _sortFilter = "created";
+    private int _pageSize = 20;
+    private int _tableKey;
+    private bool _canRevealIdNumber;
+    private bool _summaryError;
+    private bool _exporting;
+    private bool _loadingDetail;
+    private bool _showDetails;
+    private bool _showForm;
+    private bool _showLinkAccount;
+    private bool _showStatusConfirm;
+    private bool _showUnlinkConfirm;
+    private bool _nextIsActive;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _canRevealIdNumber = await TenantPages.GetCurrentRoleAsync() == Roles.ChuTro;
+        BuildColumns();
+        await LoadSummaryAsync();
+    }
+
+    private void BuildColumns()
+    {
+        var columns = new List<DataTableColumn<TenantListItemDto>>
+        {
+            new()
+            {
+                Key = "name",
+                Title = L["TenantColumnName"],
+                Template = tenant => @<div class="tenant-name-cell">
+                    <span class="tenant-avatar" aria-hidden="true">@Initial(tenant.FullName)</span>
+                    <span class="tenant-name-text">
+                        <button type="button" class="tenant-name-button" @onclick="() => OpenDetailsAsync(tenant.Id)">@tenant.FullName</button>
+                        <small>@string.Format(L["TenantRecordNumber"], tenant.Id)</small>
+                    </span>
+                </div>,
+            },
+            new()
+            {
+                Key = "phone",
+                Title = L["TenantColumnPhone"],
+                Value = tenant => tenant.PhoneNumber,
+            },
+            new()
+            {
+                Key = "room",
+                Title = L["TenantColumnRoom"],
+                Value = tenant => string.IsNullOrWhiteSpace(tenant.RoomName) ? L["NoData"].Value : tenant.RoomName,
+            },
+            new()
+            {
+                Key = "idNumber",
+                Title = L["TenantColumnIdNumber"],
+                Template = tenant => @<span class="tenant-id-mask" title="@L["TenantIdMaskedHint"]">@(string.IsNullOrWhiteSpace(tenant.IdNumberMasked) ? L["NoData"] : tenant.IdNumberMasked)</span>,
+            },
+            new()
+            {
+                Key = "status",
+                Title = L["TenantColumnStatus"],
+                Template = tenant => @<StatusBadge Tone="@(tenant.IsActive ? BadgeTone.Success : BadgeTone.Neutral)"
+                                                   Text="@(tenant.IsActive ? L["TenantStatusActive"] : L["TenantStatusInactive"])" />,
+            },
+        };
+
+        if (_canRevealIdNumber)
+        {
+            columns.Add(new DataTableColumn<TenantListItemDto>
+            {
+                Key = "account",
+                Title = L["TenantColumnAccount"],
+                Template = tenant => @<StatusBadge Tone="@(tenant.HasAccount == true ? BadgeTone.Info : BadgeTone.Neutral)"
+                                                   Text="@(tenant.HasAccount == true ? L["TenantAccountYes"] : L["TenantAccountNo"])" />,
+            });
+        }
+
+        columns.Add(new DataTableColumn<TenantListItemDto>
+        {
+            Key = "actions",
+            Title = L["TenantColumnActions"],
+            Template = tenant => @<span class="tenant-row-actions">
+                <button type="button" class="tenant-icon-button" title="@L["TenantViewDetails"]"
+                        aria-label="@L["TenantViewDetails"]: @tenant.FullName" @onclick="() => OpenDetailsAsync(tenant.Id)">
+                    <LucideIcon Name="eye" />
+                </button>
+                <button type="button" class="tenant-icon-button" title="@L["TenantEdit"]"
+                        aria-label="@L["TenantEdit"]: @tenant.FullName" @onclick="() => OpenEditFromListAsync(tenant.Id)">
+                    <LucideIcon Name="pen" />
+                </button>
+                <button type="button" class="tenant-icon-button @(tenant.IsActive ? "tenant-icon-danger" : "tenant-icon-success")"
+                        title="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"])"
+                        aria-label="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"]): @tenant.FullName"
+                        @onclick="() => OpenStatusFromListAsync(tenant.Id, !tenant.IsActive)">
+                    <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
+                </button>
+            </span>,
+        });
+
+        _columns = columns;
+    }
+
+    private async Task<Web.Common.Models.PagedResult<TenantListItemDto>> LoadTenantsAsync(DataTableRequest request)
+    {
+        var filter = new TenantFilterRequest
+        {
+            Keyword = _keyword,
+            IsActive = _statusFilter switch { "active" => true, "inactive" => false, _ => null },
+            HasAccount = _canRevealIdNumber ? _accountFilter switch { "linked" => true, "unlinked" => false, _ => null } : null,
+            Page = request.Page,
+            PageSize = request.PageSize,
+            SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
+            SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
+        };
+        return await TenantPages.ListAsync(filter);
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        _summaryError = false;
+        try
+        {
+            _summary = await TenantPages.GetSummaryAsync();
+        }
+        catch
+        {
+            _summaryError = true;
+        }
+    }
+
+    private async Task ResetTableAsync()
+    {
+        _tableKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _keyword = null;
+        _statusFilter = string.Empty;
+        _accountFilter = string.Empty;
+        _sortFilter = "created";
+        await ResetTableAsync();
+    }
+
+    private bool HasActiveTenantFilters =>
+        !string.IsNullOrWhiteSpace(_keyword)
+        || !string.IsNullOrEmpty(_statusFilter)
+        || !string.IsNullOrEmpty(_accountFilter);
+
+    private Task ClearTenantFiltersAsync()
+    {
+        _keyword = null;
+        _statusFilter = string.Empty;
+        _accountFilter = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private void OpenCreate()
+    {
+        _formTenant = null;
+        _showForm = true;
+    }
+
+    private async Task OpenEditFromListAsync(int id)
+    {
+        if (await LoadDetailAsync(id))
+        {
+            _formTenant = _selectedTenant;
+            _showDetails = false;
+            _showForm = true;
+        }
+    }
+
+    private async Task OpenDetailsAsync(int id)
+    {
+        if (await LoadDetailAsync(id)) _showDetails = true;
+    }
+
+    private async Task<bool> LoadDetailAsync(int id)
+    {
+        _loadingDetail = true;
+        try
+        {
+            var result = await TenantPages.GetAsync(id);
+            if (!result.Succeeded || result.Tenant is null)
+            {
+                Toasts.Error(ErrorMessage(result.ErrorCode));
+                return false;
+            }
+
+            _selectedTenant = result.Tenant;
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["TenantErrorForbidden"]);
+            return false;
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return false;
+        }
+        finally
+        {
+            _loadingDetail = false;
+        }
+    }
+
+    private async Task OpenEditAsync(TenantDetailDto tenant)
+    {
+        _formTenant = tenant;
+        _showDetails = false;
+        _showForm = true;
+        await Task.CompletedTask;
+    }
+
+    private Task CloseDetailsAsync()
+    {
+        _showDetails = false;
+        return Task.CompletedTask;
+    }
+
+    private Task CloseFormAsync()
+    {
+        _showForm = false;
+        return Task.CompletedTask;
+    }
+
+    private Task OpenLinkAccountAsync()
+    {
+        _showLinkAccount = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CloseLinkAccountAsync()
+    {
+        _showLinkAccount = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadSummaryAsync();
+        if (_table is not null) await _table.ReloadAsync();
+    }
+
+    private async Task RefreshDetailsAsync()
+    {
+        if (_selectedTenant is not null && await LoadDetailAsync(_selectedTenant.Id))
+        {
+            _showDetails = true;
+        }
+        await RefreshAsync();
+    }
+
+    private async Task RequestStatusChangeAsync(bool isActive)
+    {
+        _nextIsActive = isActive;
+        _showStatusConfirm = true;
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenStatusFromListAsync(int id, bool isActive)
+    {
+        if (await LoadDetailAsync(id))
+        {
+            _nextIsActive = isActive;
+            _showStatusConfirm = true;
+        }
+    }
+
+    private async Task ConfirmStatusChangeAsync()
+    {
+        _showStatusConfirm = false;
+        if (_selectedTenant is null) return;
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.SetActiveAsync(
+                _selectedTenant.Id, _nextIsActive, _selectedTenant.RowVersion);
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        if (!result.Succeeded)
+        {
+            Toasts.Error(ErrorMessage(result.ErrorCode));
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
+            {
+                await RefreshDetailsAsync();
+            }
+            return;
+        }
+
+        _selectedTenant = result.Tenant;
+        Toasts.Success(L["TenantStatusUpdated"]);
+        await RefreshAsync();
+    }
+
+    private Task CancelStatusChangeAsync()
+    {
+        _showStatusConfirm = false;
+        return Task.CompletedTask;
+    }
+
+    private Task RequestUnlinkAccountAsync()
+    {
+        _showUnlinkConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmUnlinkAccountAsync()
+    {
+        _showUnlinkConfirm = false;
+        if (_selectedTenant is null) return;
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.UnlinkAccountAsync(_selectedTenant.Id, _selectedTenant.RowVersion);
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        if (!result.Succeeded)
+        {
+            Toasts.Error(ErrorMessage(result.ErrorCode));
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict) await RefreshDetailsAsync();
+            return;
+        }
+
+        Toasts.Success(L["TenantAccountUnlinked"]);
+        await RefreshDetailsAsync();
+    }
+
+    private Task CancelUnlinkAccountAsync()
+    {
+        _showUnlinkConfirm = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task ExportAsync()
+    {
+        if (_exporting) return;
+        _exporting = true;
+
+        try
+        {
+            var firstPage = await TenantPages.ListAsync(CreateExportFilter(page: 1));
+            var rows = firstPage.Items.ToList();
+            var pageCount = (int)Math.Ceiling(firstPage.TotalCount / (double)ExportPageSize);
+            for (var page = 2; page <= pageCount; page++)
+            {
+                var result = await TenantPages.ListAsync(CreateExportFilter(page));
+                rows.AddRange(result.Items);
+            }
+
+            var content = TenantCsvExporter.Build(rows, _canRevealIdNumber, key => L[key]);
+            var fileName = $"tenants_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            await JS.InvokeVoidAsync("appTenantExport.download", fileName, content);
+            Toasts.Success(string.Format(L["TenantExported"], rows.Count));
+        }
+        catch
+        {
+            Toasts.Error(L["TenantExportFailed"]);
+        }
+        finally
+        {
+            _exporting = false;
+        }
+    }
+
+    private TenantFilterRequest CreateExportFilter(int page) => new()
+    {
+        Keyword = _keyword,
+        IsActive = _statusFilter switch { "active" => true, "inactive" => false, _ => null },
+        HasAccount = _accountFilter switch { "linked" => true, "unlinked" => false, _ => null },
+        Page = page,
+        PageSize = ExportPageSize,
+        SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
+        SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
+    };
+
+    private string SummaryValue(int? value) => value?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+
+    private string Percent(int? value, int? total) =>
+        total is > 0 && value is not null ? ((double)value.Value / total.Value * 100).ToString("0.#", CultureInfo.CurrentCulture) : "0";
+
+    private static string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
+
+    private string ErrorMessage(string? code) => code switch
+    {
+        TenantErrorCodes.DuplicateTenant => L["TenantErrorDuplicateId"],
+        TenantErrorCodes.TenantNotFound => L["TenantErrorNotFound"],
+        TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
+        TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+        TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
+        _ => L["TenantErrorGeneric"],
+    };
+
+}

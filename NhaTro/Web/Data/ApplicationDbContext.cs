@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
+using Web.Features.Settings.Entities;
+using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 
 namespace Web.Data
@@ -11,6 +13,10 @@ namespace Web.Data
         public DbSet<Property> Properties => Set<Property>();
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
+        public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
+
+        // VHT-94: 21 cong tac Quan ly (SW-01..SW-16 + SW-15a..e).
+        public DbSet<ManagerToggle> ManagerToggles => Set<ManagerToggle>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

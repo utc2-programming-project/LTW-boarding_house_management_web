@@ -1,0 +1,69 @@
+@using System.Linq.Expressions
+@typeparam TValue
+
+<div class="field">
+    <div class="label-heading">
+        <label class="label" for="@Id">
+            <span class="label-text">
+                @Label
+                @if (Required)
+                {
+                    <span class="required" aria-hidden="true">*</span>
+                }
+            </span>
+            @LabelSuffix
+        </label>
+        @LabelAction
+    </div>
+    @ChildContent
+    @if (!string.IsNullOrWhiteSpace(Hint))
+    {
+        <div id="@($"{Id}-hint")" class="hint">@Hint</div>
+    }
+    <div id="@($"{Id}-error")" class="error" aria-live="polite">
+        @* ValidationMessage bắt buộc có EditContext; ngoài EditForm (vd. ô tìm kiếm trong dialog) thì bỏ qua để không làm chết circuit. *@
+        @if (EditContext is not null)
+        {
+            <ValidationMessage For="For" />
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private EditContext? EditContext { get; set; }
+
+    /// <summary>Nhãn đã dịch, đặt phía trên ô nhập.</summary>
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Id của ô nhập bên trong. Ô nhập phải dùng đúng <c>id</c> này và
+    /// <c>aria-describedby="{Id}-hint {Id}-error"</c> để trình đọc màn hình đọc được gợi ý và lỗi.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>Thuộc tính của model gắn với ô nhập, ví dụ <c>() =&gt; model.Name</c>. Dùng bên trong EditForm.</summary>
+    [Parameter, EditorRequired]
+    public Expression<Func<TValue>> For { get; set; } = default!;
+
+    [Parameter]
+    public string? Hint { get; set; }
+
+    /// <summary>Optional count or short hint aligned on the label row.</summary>
+    [Parameter]
+    public RenderFragment? LabelSuffix { get; set; }
+
+    /// <summary>Optional action beside the label, rendered outside the label element.</summary>
+    [Parameter]
+    public RenderFragment? LabelAction { get; set; }
+
+    /// <summary>Chỉ hiện dấu *; việc bắt buộc nhập vẫn do DataAnnotations (<c>[Required]</c>) kiểm tra.</summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>Ô nhập: InputText, InputNumber, InputSelect, InputTextArea...</summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

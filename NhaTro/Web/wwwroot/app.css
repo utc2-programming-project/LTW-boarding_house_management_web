@@ -36,3 +36,527 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ==========================================================================
+   Nút bấm dùng chung (VHT-15) — docs/design/phong_cach_giao_dien.md, mục 3 và 6.
+   Màu lấy từ token theme VHT-19; giá trị sau dấu phẩy là fallback khi
+   stylesheet được dùng độc lập.
+   ========================================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 150ms, border-color 150ms;
+}
+
+    .btn:focus-visible {
+        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline-offset: 2px;
+    }
+
+.btn-primary {
+    background: var(--primary, #4F46E5);
+    color: var(--on-primary, #FFFFFF);
+}
+
+    .btn-primary:hover:not(:disabled) {
+        background: var(--primary-hover, #4338CA);
+    }
+
+    .btn-primary:active:not(:disabled) {
+        background: var(--primary-pressed, #3730A3);
+    }
+
+.btn-secondary {
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    border-color: var(--control-border, #64748B);
+}
+
+    .btn-secondary:hover:not(:disabled) {
+        background: var(--hover-bg, #F1F5F9);
+    }
+
+    .btn-secondary:active:not(:disabled) {
+        background: var(--pressed-bg, #E2E8F0);
+    }
+
+.btn-danger {
+    background: var(--danger, #B91C1C);
+    color: #FFFFFF;
+}
+
+    .btn-danger:hover:not(:disabled) {
+        background: var(--danger-hover, #991B1B);
+    }
+
+    .btn-danger:active:not(:disabled) {
+        background: var(--danger-pressed, #7F1D1D);
+    }
+
+.btn:disabled {
+    background: var(--disabled-bg, #F1F5F9);
+    color: var(--text-disabled, #94A3B8);
+    border-color: transparent;
+    cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   VHT-8 — đăng nhập, hồ sơ cá nhân, quản trị tài khoản.
+   Dùng chung cho trang static SSR (Login) và trang interactive (Profile, Users)
+   nên để ở stylesheet toàn cục thay vì CSS scoped từng component.
+   Token màu lấy từ theme VHT-19; giá trị sau dấu phẩy là fallback.
+   ========================================================================== */
+
+/* Ô nhập ngoài FormField (thanh lọc, hộp thoại) — giống hệt FormField để không lệch. */
+.input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--control-border, #64748B);
+    border-radius: 8px;
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 22px;
+    outline: none;
+}
+
+    .input:hover {
+        border-color: var(--border-hover, #475569);
+    }
+
+    .input:focus-visible {
+        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline-offset: 2px;
+    }
+
+    .input[readonly],
+    .input:disabled {
+        background: var(--surface-subtle, #F1F5F9);
+    }
+
+    .input.invalid {
+        border-color: var(--error-text, #B91C1C);
+    }
+
+        .input.invalid:not(:focus-visible) {
+            outline: none;
+        }
+
+/* Nút phụ trong bảng: nhỏ hơn nút thường nhưng vẫn đủ 44px khi chạm. */
+.btn-sm {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* Spinner 20px dùng trong nút submit (LoadingOverlay chỉ có bản scoped). */
+.btn .spinner {
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: app-spin 800ms linear infinite;
+}
+
+@keyframes app-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn .spinner {
+        animation: none;
+    }
+}
+
+/* Trang đăng nhập căn giữa. */
+.auth-page {
+    display: flex;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+    background: var(--surface, #FFFFFF);
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: var(--radius-card, 12px);
+    box-shadow: var(--shadow-card, 0 1px 2px rgba(15,23,42,.04));
+}
+
+.auth-heading {
+    margin-bottom: 24px;
+}
+
+/* Bảng đăng nhập nhanh cho tester — chỉ hiện khi chạy Development. */
+.dev-login {
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--surface-subtle, #F1F5F9);
+    border: 1px dashed var(--control-border, #64748B);
+    border-radius: var(--radius-card, 12px);
+}
+
+.dev-login-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 600;
+    color: var(--text-primary, #0D131B);
+}
+
+.dev-badge {
+    flex: none;
+    padding: 2px 6px;
+    border: 1px solid var(--warning-border, #FDE68A);
+    border-radius: 4px;
+    background: var(--warning-bg, #FFFBEB);
+    color: var(--warning-text, #B45309);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.dev-login-hint {
+    margin: 8px 0 12px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--text-secondary, #475569);
+}
+
+.dev-login-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dev-login-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.dev-login-cred {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.dev-login-role {
+    flex: none;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+    color: var(--accent-text, #4F46E5);
+}
+
+.dev-login-cred code {
+    padding: 2px 6px;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 4px;
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+/* Ô mật khẩu có nút con mắt bên phải. */
+.password-wrap {
+    position: relative;
+}
+
+    .password-wrap .input {
+        padding-right: 48px;
+    }
+
+.password-toggle {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary, #475569);
+    cursor: pointer;
+}
+
+    .password-toggle:hover {
+        background: var(--hover-bg, #F1F5F9);
+    }
+
+    .password-toggle:focus-visible {
+        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline-offset: 2px;
+    }
+
+/* Hai icon con mắt, đổi qua lại bằng JS (trang đăng nhập là static SSR nên không re-render). */
+.password-toggle .pw-icon-show,
+.password-toggle .pw-icon-hide {
+    display: inline-flex;
+}
+
+.password-toggle .pw-icon-hide {
+    display: none;
+}
+
+.password-toggle[aria-pressed="true"] .pw-icon-show {
+    display: none;
+}
+
+.password-toggle[aria-pressed="true"] .pw-icon-hide {
+    display: inline-flex;
+}
+
+.input-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    display: inline-flex;
+    transform: translateY(-50%);
+    color: var(--text-muted, #64748B);
+    pointer-events: none;
+}
+
+    .input-icon .lucide-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+/* "Ghi nhớ đăng nhập" + quên mật khẩu. */
+.remember-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 4px 0 20px;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--text-primary, #0D131B);
+    cursor: pointer;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--primary, #4F46E5);
+}
+
+.form-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--error-bg, #FEF2F2);
+    border: 1px solid var(--error-border, #FECACA);
+    border-radius: 8px;
+    color: var(--error-text, #B91C1C);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+    .form-alert .lucide-icon {
+        flex: none;
+        width: 20px;
+        height: 20px;
+    }
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.note {
+    margin: 8px 0 0;
+    color: var(--text-secondary, #475569);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+/* Hồ sơ cá nhân: 2 cột trên desktop, 1 cột trên mobile. */
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+.card-title {
+    margin: 0 0 16px;
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 600;
+}
+
+/* Thanh lọc của bảng tài khoản. */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+    .toolbar .field {
+        display: flex;
+        flex: 1 1 240px;
+        flex-direction: column;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .toolbar .label {
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 20px;
+        font-weight: 500;
+        color: var(--text-primary, #0D131B);
+    }
+
+    .toolbar .password-wrap .input {
+        padding-right: 44px;
+    }
+
+/* Cột "Tài khoản" và "Thao tác". */
+.account-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.account-name {
+    font-weight: 500;
+}
+
+.account-sub {
+    color: var(--text-muted, #64748B);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.row-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Hộp thoại gán vai trò có <select> ngoài FormField. */
+.confirm-dialog .field {
+    display: flex;
+    flex-direction: column;
+    margin: 12px 0;
+}
+
+.confirm-dialog .label {
+    margin-bottom: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--text-primary, #0D131B);
+}
+
+@media (max-width: 767.98px) {
+    .input {
+        font-size: 16px;
+        line-height: 24px;
+    }
+
+    .auth-card {
+        padding: 16px;
+    }
+
+    .profile-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .toolbar .field {
+        flex: 1 1 auto;
+    }
+
+    .btn-sm {
+        min-height: 44px;
+    }
+
+    .password-toggle {
+        width: 44px;
+        height: 44px;
+        top: 0;
+        right: 0;
+    }
+
+        .password-wrap .input {
+            padding-right: 52px;
+        }
+}

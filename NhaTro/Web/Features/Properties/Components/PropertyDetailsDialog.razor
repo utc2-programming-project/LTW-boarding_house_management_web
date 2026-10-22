@@ -1,0 +1,87 @@
+@inject IStringLocalizer<Shared> L
+@inject PropertyPageService PageService
+@inject ILogger<PropertyDetailsDialog> Logger
+
+<FeatureDialog @ref="_featureDialog" Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
+    <section class="p2-details-body">
+        @if (_loading)
+        {
+            <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="p2-alert error" role="alert">
+                <span>@_error</span>
+                <button class="btn btn-secondary" type="button" @onclick="RetryLoadAsync">@L["Retry"]</button>
+            </div>
+        }
+        else if (_detail is not null)
+        {
+            <div class="p2-detail-status">
+                <StatusBadge Text="@(_detail.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)"
+                             Tone="@(_detail.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />
+            </div>
+            <dl class="p2-detail-grid">
+                <div><dt>@L["P2Address"]</dt><dd>@(string.IsNullOrWhiteSpace(_detail.Address) ? L["P2NotProvided"] : _detail.Address)</dd></div>
+                <div><dt>@L["P2RoomCount"]</dt><dd>@Property.RoomCount</dd></div>
+                <div><dt>@L["P2CreatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.CreatedAt)</dd></div>
+                @if (_detail.UpdatedAt.HasValue)
+                {
+                    <div><dt>@L["P2UpdatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.UpdatedAt)</dd></div>
+                }
+            </dl>
+            <div class="p2-details-actions">
+                <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2ViewRooms"]</button>
+                @if (IsOwner)
+                {
+                    <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>
+                }
+            </div>
+        }
+    </section>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public PropertyListItem Property { get; set; } = new();
+    [Parameter] public bool IsOwner { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback<int> OnViewRooms { get; set; }
+
+    private FeatureDialog? _featureDialog;
+    private PropertyDetail? _detail;
+    private string? _error;
+    private bool _loading = true;
+    private string DialogTitle => _detail?.Name ?? Property.Name;
+
+    protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var result = await PageService.GetAsync(Property.Id);
+            if (result.Succeeded) _detail = result.Property;
+            else _error = result.ErrorCode == PropertyErrorCodes.PropertyNotFound ? L["P2PropertyNotFound"] : L["P2LoadFailed"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "P2 property detail load failed");
+        }
+        finally { _loading = false; }
+    }
+
+    private Task RetryLoadAsync() => LoadAsync();
+
+    private Task EditAsync() => _featureDialog?.RequestCloseAsync(OnEdit) ?? OnEdit.InvokeAsync();
+
+    private async Task ViewRoomsAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnViewRooms.InvokeAsync(Property.Id);
+    }
+}

@@ -1,0 +1,119 @@
+<TenantDialogShell Visible="Visible" Title="@L["TenantDetailTitle"]"
+                   Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
+                   CssClass="tenant-details-dialog" OnClose="OnClose">
+    <ChildContent>
+    @if (Tenant is not null)
+    {
+        <div class="tenant-detail-summary">
+            <div class="tenant-avatar tenant-avatar-large" aria-hidden="true">@Initial(Tenant.FullName)</div>
+            <div class="tenant-detail-name">
+                <h3>@Tenant.FullName</h3>
+                <div class="tenant-badges">
+                    <StatusBadge Tone="@(Tenant.IsActive ? BadgeTone.Success : BadgeTone.Neutral)"
+                                 Text="@(Tenant.IsActive ? L["TenantStatusActive"] : L["TenantStatusInactive"])" />
+                    @if (CanViewAccount)
+                    {
+                        <StatusBadge Tone="@(Tenant.HasAccount == true ? BadgeTone.Info : BadgeTone.Neutral)"
+                                     Text="@(Tenant.HasAccount == true ? L["TenantAccountYes"] : L["TenantAccountNo"])" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        <section class="tenant-detail-section" aria-labelledby="tenant-personal-heading">
+            <h3 id="tenant-personal-heading">@L["TenantPersonalSection"]</h3>
+            <dl class="tenant-detail-grid">
+                <div><dt>@L["TenantFullName"]</dt><dd>@Value(Tenant.FullName)</dd></div>
+                <div><dt>@L["TenantPhone"]</dt><dd class="tenant-mono">@Value(Tenant.PhoneNumber)</dd></div>
+                <div><dt>@L["TenantEmail"]</dt><dd>@Value(Tenant.Email)</dd></div>
+                <div><dt>@L["TenantDateOfBirth"]</dt><dd>@DateFormatter.Format(Tenant.DateOfBirth)</dd></div>
+                <div class="tenant-detail-wide"><dt>@L["TenantPermanentAddress"]</dt><dd>@Value(Tenant.PermanentAddress)</dd></div>
+            </dl>
+        </section>
+
+        <section class="tenant-detail-section" aria-labelledby="tenant-identity-heading">
+            <h3 id="tenant-identity-heading">@L["TenantIdentitySection"]</h3>
+            <dl class="tenant-detail-grid">
+                <div><dt>@L["TenantIdNumber"]</dt><dd class="tenant-mono">@Value(Tenant.IdNumber)</dd></div>
+                <div><dt>@L["TenantGender"]</dt><dd>@GenderText(Tenant.Gender)</dd></div>
+                <div><dt>@L["TenantIdIssuedDate"]</dt><dd>@DateFormatter.Format(Tenant.IdIssuedDate)</dd></div>
+                <div><dt>@L["TenantIdIssuedPlace"]</dt><dd>@Value(Tenant.IdIssuedPlace)</dd></div>
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(Tenant.Note))
+            {
+                <div class="tenant-note"><strong>@L["TenantInternalNote"]</strong><p>@Tenant.Note</p></div>
+            }
+        </section>
+
+        @if (CanViewAccount)
+        {
+            <section class="tenant-detail-section tenant-account-section" aria-labelledby="tenant-account-heading">
+                <div>
+                    <h3 id="tenant-account-heading">@L["TenantAccountSection"]</h3>
+                    <p>@(Tenant.HasAccount == true ? L["TenantLinkedAccount"] : L["TenantUnlinkedAccount"])</p>
+                </div>
+                @if (Tenant.HasAccount == true)
+                {
+                    <button type="button" class="btn btn-secondary btn-sm" @onclick="OnUnlinkAccount">
+                        <LucideIcon Name="unlink" /> @L["TenantUnlinkAccount"]
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary btn-sm" @onclick="OnLinkAccount">
+                        <LucideIcon Name="user" /> @L["TenantLinkAccount"]
+                    </button>
+                }
+            </section>
+        }
+
+        <p class="tenant-detail-dates">
+            <span>@L["TenantCreatedAt"] <strong>@DateFormatter.FormatDateTime(Tenant.CreatedAt.UtcDateTime)</strong></span>
+            <span>@L["TenantUpdatedAt"] <strong>@DateFormatter.FormatDateTime(Tenant.UpdatedAt?.UtcDateTime)</strong></span>
+        </p>
+    }
+    </ChildContent>
+    <Footer>
+        @if (Tenant is not null)
+        {
+            @if (CanManage)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="() => OnSetActive.InvokeAsync(!Tenant.IsActive)">
+                    <LucideIcon Name="@(Tenant.IsActive ? "lock" : "unlock")" />
+                    @(Tenant.IsActive ? L["TenantDeactivateButton"] : L["TenantActivateButton"])
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="() => OnEdit.InvokeAsync(Tenant)">
+                    <LucideIcon Name="file" /> @L["TenantEdit"]
+                </button>
+            }
+            <button type="button" class="btn btn-secondary" @onclick="OnClose">@L["Cancel"]</button>
+        }
+    </Footer>
+</TenantDialogShell>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public TenantDetailDto? Tenant { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    [Parameter] public bool CanViewAccount { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<TenantDetailDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<bool> OnSetActive { get; set; }
+    [Parameter] public EventCallback OnLinkAccount { get; set; }
+    [Parameter] public EventCallback OnUnlinkAccount { get; set; }
+
+    [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+
+    private string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
+
+    private string Value(string? value) => string.IsNullOrWhiteSpace(value) ? L["NoData"] : value;
+
+    private string GenderText(Gender? gender) => gender switch
+    {
+        Gender.Male => L["TenantGenderMale"],
+        Gender.Female => L["TenantGenderFemale"],
+        Gender.Other => L["TenantGenderOther"],
+        _ => L["NoData"],
+    };
+}

@@ -1,0 +1,281 @@
+@page "/profile"
+@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro + "," + Roles.QuanLy)]
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Forms
+
+@inject IAccountService Accounts
+@inject AuthenticationStateProvider AuthState
+@inject IStringLocalizer<Shared> L
+@inject ToastService Toasts
+
+@* VHT-8: ho so ca nhan (/profile). Ca 4 vai tro deu vao duoc, chi sua duoc cua chinh minh. *@
+
+<PageTitle>@L["ProfileTitle"] · @L["AppName"]</PageTitle>
+
+<section class="profile-page" aria-labelledby="profile-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+    {
+        new(L["Dashboard"], "/"),
+        new(L["ProfileTitle"]),
+    })" />
+
+    <header class="page-heading profile-page-heading">
+        <div>
+            <h1 id="profile-title">@L["ProfileTitle"]</h1>
+            <p>@L["ProfileSubtitle"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_profile is null)
+    {
+        <EmptyStateCard Title="@L["NoData"]" Description="@L["ProfileLoadFailed"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="profile-overview">
+            <div class="profile-avatar" aria-hidden="true">@ProfileInitials</div>
+            <div class="profile-identity">
+                <p class="profile-overview-label">@L["ProfileInfoSection"]</p>
+                <h2>@ProfileDisplayName</h2>
+                <p class="profile-email">@_emailReadonly</p>
+                <p class="profile-email-hint">@L["EmailReadonlyHint"]</p>
+            </div>
+            <div class="profile-role">
+                <StatusBadge Tone="@RoleTone(_profile.Role)" Text="@RoleText(_profile.Role)" />
+            </div>
+        </div>
+
+        <div class="profile-content-grid">
+            <section class="profile-card profile-form-card" aria-labelledby="profile-info-title">
+                <div class="profile-card-heading">
+                    <span class="profile-heading-icon" aria-hidden="true"><LucideIcon Name="user" /></span>
+                    <div>
+                        <h2 id="profile-info-title">@L["ProfileInfoSection"]</h2>
+                    </div>
+                </div>
+
+                <EditForm EditContext="_editContext" OnValidSubmit="SaveProfileAsync">
+                    <div class="profile-fields">
+                        <div class="profile-field-name">
+                            <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
+                                       For="() => _form.FullName">
+                                <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
+                                           aria-describedby="profile-fullname-error" />
+                            </FormField>
+                        </div>
+
+                        <div class="profile-field-phone">
+                            <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
+                                       Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
+                                <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
+                                           aria-describedby="profile-phone-hint profile-phone-error" />
+                            </FormField>
+                        </div>
+
+                    </div>
+
+                    <div class="profile-actions">
+                        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="ResetForm">
+                            @L["Cancel"]
+                        </button>
+                        <button type="submit" class="btn btn-primary" disabled="@_saving">
+                            @if (_saving)
+                            {
+                                <span class="spinner" aria-hidden="true"></span>
+                            }
+                            @L["SaveChanges"]
+                        </button>
+                    </div>
+                </EditForm>
+            </section>
+
+            <aside class="profile-side-column">
+                <section class="profile-card profile-security-card" aria-labelledby="profile-security-title">
+                    <span class="profile-security-icon" aria-hidden="true"><LucideIcon Name="shield-check" /></span>
+                    <div class="profile-security-copy">
+                        <h2 id="profile-security-title">@L["SecuritySection"]</h2>
+                        <p>@L["ChangePasswordHint"]</p>
+                    </div>
+                    <a class="btn btn-secondary profile-security-action" href="Account/Manage/ChangePassword">
+                        <LucideIcon Name="key" />
+                        @L["ChangePassword"]
+                    </a>
+                </section>
+            </aside>
+        </div>
+    }
+</section>
+
+@code {
+    private MyProfileDto? _profile;
+    private bool _loading = true;
+    private bool _saving;
+
+    private EditContext _editContext = default!;
+    private ProfileForm _form = new();
+    private string _emailReadonly = string.Empty;
+
+    private string ProfileDisplayName => string.IsNullOrWhiteSpace(_profile?.FullName)
+        ? _profile?.UserName ?? string.Empty
+        : _profile?.FullName ?? string.Empty;
+
+    private string ProfileInitials
+    {
+        get
+        {
+            var parts = ProfileDisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length == 0) return "?";
+            if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+            return string.Concat(char.ToUpperInvariant(parts[0][0]), char.ToUpperInvariant(parts[^1][0]));
+        }
+    }
+
+    private sealed class ProfileForm
+    {
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = CreateEditContext();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                _profile = null;
+                return;
+            }
+
+            var result = await Accounts.GetMyProfileAsync(userId);
+            _profile = result.Succeeded ? result.Value : null;
+            if (_profile is not null)
+            {
+                _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+                _emailReadonly = _profile.Email ?? _profile.UserName;
+                _editContext = CreateEditContext();
+            }
+        }
+        catch
+        {
+            _profile = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        if (_profile is null) return;
+        _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+        _editContext = CreateEditContext();
+    }
+
+    // EditForm chạy OnValidSubmit nên cần một bộ kiểm tra gắn vào EditContext; nếu không, form luôn "hợp lệ"
+    // và lỗi chỉ hiện sau khi service trả về. Dùng ValidationMessageStore để message theo ngôn ngữ đang chọn.
+    private EditContext CreateEditContext()
+    {
+        var context = new EditContext(_form);
+        var messages = new ValidationMessageStore(context);
+        context.OnValidationRequested += (_, _) =>
+        {
+            messages.Clear();
+            ValidateProfile((ProfileForm)context.Model, messages);
+            context.NotifyValidationStateChanged();
+        };
+        context.OnFieldChanged += (_, args) =>
+        {
+            messages.Clear(args.FieldIdentifier);
+            context.NotifyValidationStateChanged();
+        };
+        return context;
+    }
+
+    // Cùng quy tắc với AccountService.UpdateMyProfileAsync: họ tên tối đa 200 ký tự, SĐT 10 chữ số bắt đầu bằng 0.
+    private void ValidateProfile(ProfileForm form, ValidationMessageStore messages)
+    {
+        if ((form.FullName?.Trim().Length ?? 0) > 200)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.FullName)),
+                string.Format(L["TenantValidationLength"], L["FullNameLabel"], 200));
+        }
+
+        var phone = form.PhoneNumber?.Trim();
+        if (!string.IsNullOrEmpty(phone) && !AccountService.IsValidVietnamPhone(phone))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return;
+
+            var result = await Accounts.UpdateMyProfileAsync(
+                new UpdateMyProfileRequest { FullName = _form.FullName, PhoneNumber = _form.PhoneNumber },
+                userId);
+            if (!result.Succeeded)
+            {
+                Toasts.Error(MessageFor(result.ErrorCode));
+                return;
+            }
+
+            _profile = result.Value;
+            _emailReadonly = _profile?.Email ?? _emailReadonly;
+            Toasts.Success(L["ProfileSaved"]);
+        }
+        catch
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private string MessageFor(string? code) => code switch
+    {
+        AccountErrorCodes.InvalidPhone => L["ErrorInvalidPhone"],
+        AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
+        _ => L["ErrorGeneric"],
+    };
+
+    private string RoleText(string role) => L[AccountPermissionRules.RoleResourceKey(role)];
+
+    private static BadgeTone RoleTone(string role) => role switch
+    {
+        Roles.Admin => BadgeTone.Error,
+        Roles.ChuTro => BadgeTone.Info,
+        Roles.QuanLy => BadgeTone.Success,
+        Roles.KhachThue => BadgeTone.Neutral,
+        _ => BadgeTone.Neutral,
+    };
+}

@@ -1,0 +1,6 @@
+{
+  "name": "VHT Quản Lý Trọ - Vận Hành Cơ Sở",
+  "description": "Hệ thống quản lý phòng trọ, bất động sản cho thuê và tối ưu vận hành cơ sở với bảng phân tích KPI, danh mục phòng, khách thuê và hợp đồng.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

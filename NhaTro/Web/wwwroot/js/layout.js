@@ -2,6 +2,7 @@
 (() => {
     const root = document.documentElement;
     const storageKey = "nhatro.theme";
+    const contractFormStateKey = "nhatro.contract-create.preview";
     let receiver = null;
     let returnFocus = null;
     const mobile = window.matchMedia("(max-width: 767px)");
@@ -9,6 +10,45 @@
     let initialTheme = "light";
     try { initialTheme = localStorage.getItem(storageKey) === "dark" ? "dark" : "light"; } catch { }
     root.dataset.theme = initialTheme;
+
+    // Keep this preview form's values when the VI/EN selector reloads the page.
+    window.contractFormPreview = {
+        take() {
+            try {
+                const state = sessionStorage.getItem(contractFormStateKey);
+                sessionStorage.removeItem(contractFormStateKey);
+                return state;
+            } catch {
+                return null;
+            }
+        },
+        store() {
+            const form = document.querySelector("form.contract-form");
+            if (!form) return;
+            const value = id => form.querySelector(`#${id}`)?.value ?? "";
+            const number = id => value(id) === "" ? null : Number(value(id));
+            const members = Array.from(form.querySelectorAll(".member-row"), row => ({
+                FullName: row.querySelector(".member-name")?.value ?? "",
+                PhoneNumber: row.querySelector(".member-phone")?.value ?? "",
+                Relationship: row.querySelector(".member-relationship")?.value ?? "Other"
+            }));
+            try {
+                sessionStorage.setItem(contractFormStateKey, JSON.stringify({
+                    PropertyId: number("contract-property"),
+                    RoomId: number("contract-room"),
+                    RepresentativeTenantId: number("contract-tenant"),
+                    StartDate: value("contract-start") || null,
+                    EndDate: value("contract-end") || null,
+                    MonthlyRentVnd: number("contract-rent"),
+                    DepositVnd: number("contract-deposit"),
+                    PaymentCycleMonths: number("contract-cycle"),
+                    MeterReadingDay: number("contract-meter-day"),
+                    Notes: value("contract-notes"),
+                    Members: members
+                }));
+            } catch { }
+        }
+    };
 
     function syncControls() {
         if (!root.dataset.theme) root.dataset.theme = initialTheme;
@@ -44,8 +84,17 @@
         document.querySelector(".skip-link")?.setAttribute("inert", "");
         syncControls();
     }
-    async function setCulture(button) {
-        const control = button.closest(".culture-control");
+    // VHT-8: nút hiện/ẩn mật khẩu ở trang đăng nhập (static SSR nên xử lý bằng JS thuần).
+    function togglePassword(button) {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.setAttribute("aria-pressed", String(show));
+        const label = show ? button.dataset.hideLabel : button.dataset.showLabel;
+        if (label) button.setAttribute("aria-label", label);
+    }
+    async function setCulture(button) {        const control = button.closest(".culture-control");
         if (!control || control.getAttribute("aria-busy") === "true" || button.getAttribute("aria-pressed") === "true") return;
         const error = control.querySelector("[data-culture-error]");
         const status = control.querySelector("[data-culture-status]");
@@ -54,8 +103,15 @@
         control.querySelectorAll("button").forEach(item => item.disabled = true);
         status.textContent = status.dataset.loadingLabel;
         try {
-            const response = await fetch(`/culture/set?culture=${encodeURIComponent(button.dataset.culture)}`, { method: "POST", credentials: "same-origin" });
+            const token = control.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (!token) throw new Error("Missing antiforgery token");
+            const response = await fetch(`/culture/set?culture=${encodeURIComponent(button.dataset.culture)}`, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { RequestVerificationToken: token }
+            });
             if (!response.ok) throw new Error("Culture update failed");
+            window.contractFormPreview?.store();
             window.location.reload();
         } catch {
             error.hidden = false;
@@ -85,6 +141,8 @@
             closeDrawer();
         } else if (button?.matches("[data-culture]")) {
             void setCulture(button);
+        } else if (button?.matches("[data-password-toggle]")) {
+            togglePassword(button);
         }
         if (event.target.closest(".sidebar-menu a,.app-brand")) closeDrawer(false);
         if (event.target.closest("#blazor-error-ui .dismiss")) document.getElementById("blazor-error-ui").style.display = "none";
