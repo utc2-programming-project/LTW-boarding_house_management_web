@@ -17,7 +17,9 @@ using Web.Endpoints.Files;
 using Web.Features.Accounts;
 using Web.Features.Properties;
 using Web.Features.Rooms;
+using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Storage;
@@ -137,11 +139,20 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // VHT-7 (dot 1C): service nha tro/phong P2. Policy cong tac va kiem hop dong la diem goi cho VHT-94/VHT-98.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<IRoomChangePolicy, RoomChangePolicyStub>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
+
+// VHT-94 (dot 1D): 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
+// Service doc/ghi chi cho Chu tro; policy chi doc de quyet dinh thay Quan ly.
+builder.Services.AddScoped<ManagerToggleService>();
+builder.Services.AddScoped<IManagerToggleService>(sp => sp.GetRequiredService<ManagerToggleService>());
+builder.Services.AddScoped<IManagerToggleReader>(sp => sp.GetRequiredService<ManagerToggleService>());
+builder.Services.AddScoped<ManagerTogglePolicy>();
+builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
+builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 
 // VHT-23 (dot 1C): service khach thue P3, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<TenantPageService>();
 
 // VHT-23: chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.

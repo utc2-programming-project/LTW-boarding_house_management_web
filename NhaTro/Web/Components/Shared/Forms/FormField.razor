@@ -21,11 +21,18 @@
         <div id="@($"{Id}-hint")" class="hint">@Hint</div>
     }
     <div id="@($"{Id}-error")" class="error" aria-live="polite">
-        <ValidationMessage For="For" />
+        @* ValidationMessage bắt buộc có EditContext; ngoài EditForm (vd. ô tìm kiếm trong dialog) thì bỏ qua để không làm chết circuit. *@
+        @if (EditContext is not null)
+        {
+            <ValidationMessage For="For" />
+        }
     </div>
 </div>
 
 @code {
+    [CascadingParameter]
+    private EditContext? EditContext { get; set; }
+
     /// <summary>Nhãn đã dịch, đặt phía trên ô nhập.</summary>
     [Parameter, EditorRequired]
     public string Label { get; set; } = string.Empty;

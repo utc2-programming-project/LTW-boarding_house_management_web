@@ -1,0 +1,412 @@
+<TenantDialogShell Visible="Visible" Title="@(Tenant is null ? L["TenantCreateTitle"] : L["TenantUpdateTitle"])"
+                   Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
+                   CssClass="tenant-form-dialog" OnClose="OnClose">
+    <ChildContent>
+    <EditForm EditContext="_editContext" OnSubmit="HandleFormSubmitAsync" novalidate>
+        <div class="tenant-form-grid">
+            <div class="tenant-form-field tenant-form-name">
+                <FormField TValue="string" Id="tenant-full-name" Label="@L["TenantFullName"]" Required="true"
+                           For="() => _form.FullName">
+                    <InputText id="tenant-full-name" class="input" @bind-Value="_form.FullName" maxlength="200"
+                               autocomplete="name" aria-describedby="tenant-full-name-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-phone">
+                <FormField TValue="string" Id="tenant-phone" Label="@L["TenantPhone"]" Required="true"
+                           Hint="@L["TenantValidationPhone"]" For="() => _form.PhoneNumber">
+                    <InputText id="tenant-phone" class="input" @bind-Value="_form.PhoneNumber" maxlength="20"
+                               inputmode="tel" autocomplete="tel" aria-describedby="tenant-phone-hint tenant-phone-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-email">
+                <FormField TValue="string" Id="tenant-email" Label="@L["TenantEmail"]" For="() => _form.Email">
+                    <InputText id="tenant-email" class="input" @bind-Value="_form.Email" maxlength="256"
+                               type="email" autocomplete="email" aria-describedby="tenant-email-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-id">
+                <FormField TValue="string" Id="tenant-id-number" Label="@L["TenantIdNumber"]"
+                           Hint="@(CanRevealIdNumber ? null : L[Tenant is null ? "TenantIdManagerCreateHint" : "TenantIdManagerEditHint"].Value)"
+                           For="() => _form.IdNumber">
+                    <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" maxlength="20"
+                               autocomplete="off" placeholder="@(IdNumberPlaceholder)"
+                               aria-describedby="@(CanRevealIdNumber ? "tenant-id-number-error" : "tenant-id-number-hint tenant-id-number-error")" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-birth">
+                <FormField TValue="DateOnly?" Id="tenant-date-of-birth" Label="@L["TenantDateOfBirth"]"
+                           For="() => _form.DateOfBirth">
+                    <InputDate id="tenant-date-of-birth" class="input" @bind-Value="_form.DateOfBirth"
+                               aria-describedby="tenant-date-of-birth-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-gender">
+                <FormField TValue="Gender?" Id="tenant-gender" Label="@L["TenantGender"]" For="() => _form.Gender">
+                    <InputSelect id="tenant-gender" class="input" @bind-Value="_form.Gender">
+                        <option value="">@L["NoData"]</option>
+                        <option value="Male">@L["TenantGenderMale"]</option>
+                        <option value="Female">@L["TenantGenderFemale"]</option>
+                        <option value="Other">@L["TenantGenderOther"]</option>
+                    </InputSelect>
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-issued-date">
+                <FormField TValue="DateOnly?" Id="tenant-id-issued-date" Label="@L["TenantIdIssuedDate"]"
+                           For="() => _form.IdIssuedDate">
+                    <InputDate id="tenant-id-issued-date" class="input" @bind-Value="_form.IdIssuedDate"
+                               aria-describedby="tenant-id-issued-date-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-issued-place">
+                <FormField TValue="string" Id="tenant-id-issued-place" Label="@L["TenantIdIssuedPlace"]"
+                           For="() => _form.IdIssuedPlace">
+                    <InputText id="tenant-id-issued-place" class="input" @bind-Value="_form.IdIssuedPlace" maxlength="200"
+                               aria-describedby="tenant-id-issued-place-error" />
+                </FormField>
+            </div>
+
+            <div class="tenant-form-field tenant-form-address">
+                <FormField TValue="string" Id="tenant-address" Label="@L["TenantPermanentAddress"]"
+                           For="() => _form.PermanentAddress">
+                    <InputTextArea id="tenant-address" class="input tenant-textarea" @bind-Value="_form.PermanentAddress"
+                                   maxlength="300" aria-describedby="tenant-address-error" />
+                </FormField>
+            </div>
+
+            @if (CanManage)
+            {
+                <div class="tenant-form-field tenant-form-note">
+                    <FormField TValue="string" Id="tenant-note" Label="@L["TenantInternalNote"]" For="() => _form.Note">
+                        <InputTextArea id="tenant-note" class="input tenant-textarea" @bind-Value="_form.Note"
+                                       maxlength="500" aria-describedby="tenant-note-error" />
+                    </FormField>
+                </div>
+            }
+        </div>
+        <button type="submit" class="tenant-form-submit" aria-hidden="true" tabindex="-1"></button>
+    </EditForm>
+    </ChildContent>
+
+    <Footer>
+        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="OnClose">@L["Cancel"]</button>
+        <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SubmitAsync">
+            @if (_saving)
+            {
+                <span class="spinner" aria-hidden="true"></span>
+            }
+            @(Tenant is null ? L["TenantAdd"] : L["SaveChanges"])
+        </button>
+    </Footer>
+</TenantDialogShell>
+
+<ConfirmDialog Visible="_confirmDuplicatePhone" Title="@L["TenantDuplicatePhoneTitle"]"
+               Message="@L["TenantErrorDuplicatePhone"]" ConfirmText="@L["Confirm"]"
+               CancelText="@L["Cancel"]" OnConfirm="ConfirmDuplicatePhoneAsync" OnCancel="CancelDuplicatePhone">
+    <p>@L["TenantErrorDuplicatePhone"]</p>
+    @if (_possibleDuplicates.Count > 0)
+    {
+        <ul class="tenant-duplicate-list">
+            @foreach (var duplicate in _possibleDuplicates)
+            {
+                <li><strong>@duplicate.FullName</strong> · @duplicate.PhoneNumber</li>
+            }
+        </ul>
+    }
+</ConfirmDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public TenantDetailDto? Tenant { get; set; }
+    [Parameter] public bool CanManage { get; set; }
+    [Parameter] public bool CanRevealIdNumber { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    [Inject] private TenantPageService TenantPages { get; set; } = default!;
+    [Inject] private ToastService Toasts { get; set; } = default!;
+    [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+
+    // Quản lý đang sửa hồ sơ: hiện số đã che làm gợi ý; để trống nghĩa là giữ nguyên số cũ.
+    private string? IdNumberPlaceholder => !CanRevealIdNumber && Tenant is not null ? Tenant.IdNumber : null;
+
+    private TenantFormModel _form = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private bool _saving;
+    private bool _wasVisible;
+    private int? _currentTenantId;
+    private bool _confirmDuplicatePhone;
+    private IReadOnlyList<TenantListItemDto> _possibleDuplicates = [];
+
+    private sealed class TenantFormModel
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public string? IdNumber { get; set; }
+        public DateOnly? DateOfBirth { get; set; }
+        public Gender? Gender { get; set; }
+        public string? PermanentAddress { get; set; }
+        public DateOnly? IdIssuedDate { get; set; }
+        public string? IdIssuedPlace { get; set; }
+        public string? Note { get; set; }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && (!_wasVisible || _currentTenantId != Tenant?.Id))
+        {
+            ResetForm();
+        }
+
+        _wasVisible = Visible;
+        _currentTenantId = Tenant?.Id;
+    }
+
+    private void ResetForm()
+    {
+        _form = Tenant is null
+            ? new TenantFormModel()
+            : new TenantFormModel
+            {
+                FullName = Tenant.FullName,
+                PhoneNumber = Tenant.PhoneNumber,
+                Email = Tenant.Email,
+                // Quản lý chỉ nhận chuỗi che: để trống ô nhập (chuỗi che hiện ở placeholder) để không ai sửa dở chuỗi che.
+                IdNumber = CanRevealIdNumber ? Tenant.IdNumber : null,
+                DateOfBirth = Tenant.DateOfBirth,
+                Gender = Tenant.Gender,
+                PermanentAddress = Tenant.PermanentAddress,
+                IdIssuedDate = Tenant.IdIssuedDate,
+                IdIssuedPlace = Tenant.IdIssuedPlace,
+                Note = Tenant.Note,
+            };
+
+        _editContext = new EditContext(_form);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
+    }
+
+    private async Task SubmitAsync()
+    {
+        _confirmDuplicatePhone = false;
+        if (_saving || !ValidateForm()) return;
+
+        TenantResult result;
+        _saving = true;
+        try
+        {
+            result = await SaveAsync(confirmDuplicatePhone: false);
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (result.Succeeded)
+        {
+            Toasts.Success(L[Tenant is null ? "TenantCreated" : "TenantUpdated"]);
+            await OnSaved.InvokeAsync();
+            await OnClose.InvokeAsync();
+            return;
+        }
+
+        if (result.ErrorCode == TenantErrorCodes.DuplicatePhone)
+        {
+            _possibleDuplicates = result.PossibleDuplicates ?? [];
+            _confirmDuplicatePhone = true;
+            return;
+        }
+
+        if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
+        {
+            Toasts.Error(L["TenantErrorConflict"]);
+            await OnClose.InvokeAsync();
+            await OnSaved.InvokeAsync();
+            return;
+        }
+
+        Toasts.Error(ErrorMessage(result.ErrorCode));
+    }
+
+    private Task HandleFormSubmitAsync(EditContext _) => SubmitAsync();
+
+    private async Task<TenantResult> SaveAsync(bool confirmDuplicatePhone)
+    {
+        if (Tenant is null)
+        {
+            return await TenantPages.CreateAsync(new CreateTenantRequest
+            {
+                FullName = _form.FullName,
+                PhoneNumber = _form.PhoneNumber,
+                Email = _form.Email,
+                IdNumber = _form.IdNumber,
+                DateOfBirth = _form.DateOfBirth,
+                Gender = _form.Gender,
+                PermanentAddress = _form.PermanentAddress,
+                IdIssuedDate = _form.IdIssuedDate,
+                IdIssuedPlace = _form.IdIssuedPlace,
+                Note = _form.Note,
+                ConfirmDuplicatePhone = confirmDuplicatePhone,
+            });
+        }
+
+        return await TenantPages.UpdateAsync(Tenant.Id, new UpdateTenantRequest
+        {
+            FullName = _form.FullName,
+            PhoneNumber = _form.PhoneNumber,
+            Email = _form.Email,
+            // Quản lý để trống ô CCCD thì gửi lại chuỗi che để backend giữ nguyên số thật (tránh vô tình xóa).
+            IdNumber = CanRevealIdNumber || !string.IsNullOrWhiteSpace(_form.IdNumber) ? _form.IdNumber : Tenant.IdNumber,
+            DateOfBirth = _form.DateOfBirth,
+            Gender = _form.Gender,
+            PermanentAddress = _form.PermanentAddress,
+            IdIssuedDate = _form.IdIssuedDate,
+            IdIssuedPlace = _form.IdIssuedPlace,
+            Note = _form.Note,
+            ConfirmDuplicatePhone = confirmDuplicatePhone,
+            RowVersion = Tenant.RowVersion,
+        });
+    }
+
+    private async Task ConfirmDuplicatePhoneAsync()
+    {
+        _confirmDuplicatePhone = false;
+        TenantResult result;
+        _saving = true;
+        try
+        {
+            result = await SaveAsync(confirmDuplicatePhone: true);
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(ErrorMessage(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L[Tenant is null ? "TenantCreated" : "TenantUpdated"]);
+        await OnSaved.InvokeAsync();
+        await OnClose.InvokeAsync();
+    }
+
+    private void CancelDuplicatePhone() => _confirmDuplicatePhone = false;
+
+    private bool ValidateForm()
+    {
+        _messages.Clear();
+        var valid = true;
+
+        if (string.IsNullOrWhiteSpace(_form.FullName))
+        {
+            Add(nameof(_form.FullName), string.Format(L["TenantValidationRequired"], L["TenantFullName"]));
+            valid = false;
+        }
+        if (string.IsNullOrWhiteSpace(_form.PhoneNumber))
+        {
+            Add(nameof(_form.PhoneNumber), string.Format(L["TenantValidationRequired"], L["TenantPhone"]));
+            valid = false;
+        }
+        else if (!TenantNormalizer.IsValidVietnamesePhone(TenantNormalizer.NormalizePhone(_form.PhoneNumber)))
+        {
+            Add(nameof(_form.PhoneNumber), L["TenantValidationPhone"]);
+            valid = false;
+        }
+        if (!string.IsNullOrWhiteSpace(_form.Email) && !new EmailAddressAttribute().IsValid(_form.Email))
+        {
+            Add(nameof(_form.Email), L["TenantValidationEmail"]);
+            valid = false;
+        }
+        if (_form.DateOfBirth is { } dob && dob > DateOnly.FromDateTime(DateTime.UtcNow))
+        {
+            Add(nameof(_form.DateOfBirth), L["TenantValidationBirthDate"]);
+            valid = false;
+        }
+        if (_form.IdIssuedDate is { } issued && _form.DateOfBirth is { } birth && issued < birth)
+        {
+            Add(nameof(_form.IdIssuedDate), L["TenantValidationIssuedDate"]);
+            valid = false;
+        }
+
+        valid &= CheckLength(nameof(_form.FullName), TenantNormalizer.NormalizeFullName(_form.FullName), 200, L["TenantFullName"]);
+        valid &= CheckLength(nameof(_form.PhoneNumber), TenantNormalizer.NormalizePhone(_form.PhoneNumber), 20, L["TenantPhone"]);
+        valid &= CheckLength(nameof(_form.Email), _form.Email, 256, L["TenantEmail"]);
+        valid &= CheckIdNumber();
+        valid &= CheckLength(nameof(_form.IdNumber), TenantNormalizer.NormalizeIdNumber(_form.IdNumber), 20, L["TenantIdNumber"]);
+        valid &= CheckLength(nameof(_form.PermanentAddress), _form.PermanentAddress, 300, L["TenantPermanentAddress"]);
+        valid &= CheckLength(nameof(_form.IdIssuedPlace), _form.IdIssuedPlace, 200, L["TenantIdIssuedPlace"]);
+        if (CanManage)
+        {
+            valid &= CheckLength(nameof(_form.Note), _form.Note, 500, L["TenantInternalNote"]);
+        }
+
+        _editContext.NotifyValidationStateChanged();
+        return valid;
+    }
+
+    // Số giấy tờ không bắt buộc. Có nhập thì tối thiểu 8 ký tự chữ/số và không chứa dấu * (chuỗi che).
+    // Chủ trọ sửa hồ sơ mà không đổi số thì bỏ qua, để hồ sơ cũ có số ngắn vẫn lưu được.
+    private bool CheckIdNumber()
+    {
+        var raw = _form.IdNumber;
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+
+        var normalized = TenantNormalizer.NormalizeIdNumber(raw);
+        if (Tenant is not null && CanRevealIdNumber && normalized == TenantNormalizer.NormalizeIdNumber(Tenant.IdNumber))
+        {
+            return true;
+        }
+
+        if (raw.Contains('*') || normalized.Length < 8)
+        {
+            Add(nameof(_form.IdNumber), L["TenantValidationIdNumber"]);
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool CheckLength(string property, string? value, int max, string label)
+    {
+        if ((value?.Length ?? 0) <= max) return true;
+        Add(property, string.Format(L["TenantValidationLength"], label, max));
+        return false;
+    }
+
+    private void Add(string property, string message) =>
+        _messages.Add(new FieldIdentifier(_form, property), message);
+
+    private string ErrorMessage(string? code) => code switch
+    {
+        TenantErrorCodes.DuplicateTenant => L["TenantErrorDuplicateId"],
+        TenantErrorCodes.TenantNotFound => L["TenantErrorNotFound"],
+        TenantErrorCodes.InvalidRequest => L["TenantErrorGeneric"],
+        TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
+        _ => L["TenantErrorGeneric"],
+    };
+}
