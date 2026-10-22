@@ -2,6 +2,7 @@
 (() => {
     const root = document.documentElement;
     const storageKey = "nhatro.theme";
+    const contractFormStateKey = "nhatro.contract-create.preview";
     let receiver = null;
     let returnFocus = null;
     const mobile = window.matchMedia("(max-width: 767px)");
@@ -9,6 +10,45 @@
     let initialTheme = "light";
     try { initialTheme = localStorage.getItem(storageKey) === "dark" ? "dark" : "light"; } catch { }
     root.dataset.theme = initialTheme;
+
+    // Keep this preview form's values when the VI/EN selector reloads the page.
+    window.contractFormPreview = {
+        take() {
+            try {
+                const state = sessionStorage.getItem(contractFormStateKey);
+                sessionStorage.removeItem(contractFormStateKey);
+                return state;
+            } catch {
+                return null;
+            }
+        },
+        store() {
+            const form = document.querySelector("form.contract-form");
+            if (!form) return;
+            const value = id => form.querySelector(`#${id}`)?.value ?? "";
+            const number = id => value(id) === "" ? null : Number(value(id));
+            const members = Array.from(form.querySelectorAll(".member-row"), row => ({
+                FullName: row.querySelector(".member-name")?.value ?? "",
+                PhoneNumber: row.querySelector(".member-phone")?.value ?? "",
+                Relationship: row.querySelector(".member-relationship")?.value ?? "Other"
+            }));
+            try {
+                sessionStorage.setItem(contractFormStateKey, JSON.stringify({
+                    PropertyId: number("contract-property"),
+                    RoomId: number("contract-room"),
+                    RepresentativeTenantId: number("contract-tenant"),
+                    StartDate: value("contract-start") || null,
+                    EndDate: value("contract-end") || null,
+                    MonthlyRentVnd: number("contract-rent"),
+                    DepositVnd: number("contract-deposit"),
+                    PaymentCycleMonths: number("contract-cycle"),
+                    MeterReadingDay: number("contract-meter-day"),
+                    Notes: value("contract-notes"),
+                    Members: members
+                }));
+            } catch { }
+        }
+    };
 
     function syncControls() {
         if (!root.dataset.theme) root.dataset.theme = initialTheme;
@@ -71,6 +111,7 @@
                 headers: { RequestVerificationToken: token }
             });
             if (!response.ok) throw new Error("Culture update failed");
+            window.contractFormPreview?.store();
             window.location.reload();
         } catch {
             error.hidden = false;
