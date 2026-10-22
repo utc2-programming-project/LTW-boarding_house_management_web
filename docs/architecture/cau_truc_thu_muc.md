@@ -90,6 +90,8 @@ LTW/
 
 **Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage. P2 (nhà trọ/phòng) đã có DTO + service SQL ở `Features/Properties/` và `Features/Rooms/` (VHT-7), chưa có trang UI.
 
+**VHT-94 (đã triển khai - nền công tắc Quản lý):** `Features/Settings/` gồm `ManagerToggleCatalog` (21 mã SW-01…SW-16 + SW-15a…e), `Enums/`, `Entities/ManagerToggle`, `Services/ManagerToggleService` (đọc/ghi SQL + guard Chủ trọ), `Services/ManagerTogglePolicy` (mode → Allowed/RequiresApproval/Denied, cài thêm `IRoomChangePolicy` để P2 dùng lại), `DTOs/`; `Data/Configurations/Settings/ManagerToggleConfiguration.cs` + migration `AddManagerToggles` (seed 21 dòng, check constraint SW-15). Công tắc lưu SQL, **không** dùng `IOptions`/appsettings. UI cấu hình vẫn là NEW-04 (VHT-97), hàng đợi duyệt là VHT-96.
+
 ## 3. Khung thư mục đã tạo / Created folder scaffold
 
 Các folder dưới **`NhaTro/Web/`** đã được tạo; folder rỗng giữ bằng `.gitkeep`, không tạo project mới hoặc class mẫu. Các chú thích chức năng vẫn là **kế hoạch triển khai**, không phải nghiệp vụ đã hoàn thành.
