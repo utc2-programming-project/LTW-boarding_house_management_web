@@ -87,6 +87,8 @@ public sealed class SqlServerFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
+        // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
+        await db.ManagerToggles.ExecuteUpdateAsync(s => s.SetProperty(t => t.UpdatedByUserId, (string?)null));
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
         await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();

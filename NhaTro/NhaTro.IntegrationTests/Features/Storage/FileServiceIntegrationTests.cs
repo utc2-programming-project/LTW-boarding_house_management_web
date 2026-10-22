@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NhaTro.IntegrationTests.Infrastructure;
+using NhaTro.IntegrationTests.TestSupport;
 using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Accounts;
@@ -35,7 +36,8 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
 
         var owner = new TenantCaller("chu-tro-1", Roles.ChuTro);
-        var tenantService = new TenantService(db, TimeProvider.System);
+        var tenantService = new TenantService(
+            db, TimeProvider.System, new AllowAllManagerTogglePolicy());
         var created = await tenantService.CreateAsync(new CreateTenantRequest
         {
             FullName = "An",
@@ -129,7 +131,8 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
 
         var owner = new TenantCaller("chu-tro-1", Roles.ChuTro);
-        var tenantService = new TenantService(db, TimeProvider.System);
+        var tenantService = new TenantService(
+            db, TimeProvider.System, new AllowAllManagerTogglePolicy());
         var created = await tenantService.CreateAsync(new CreateTenantRequest
         {
             FullName = "An",
