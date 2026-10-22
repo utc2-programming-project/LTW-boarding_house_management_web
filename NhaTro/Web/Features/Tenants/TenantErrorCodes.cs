@@ -13,6 +13,9 @@ public static class TenantErrorCodes
     public const string AccountAlreadyLinked = nameof(AccountAlreadyLinked);
     public const string TenantOperationFailed = nameof(TenantOperationFailed);
 
+    /// <summary>Quản lý bị công tắc SW-04/05/06 chặn ở chế độ Chờ duyệt (VHT-94).</summary>
+    public const string ApprovalRequired = nameof(ApprovalRequired);
+
     /// <summary>
     /// Nghi trùng số điện thoại cần xác nhận (mục 3). Chưa có trong 9 mã ở mục 9,
     /// cần nhóm chốt tên mã; tạm dùng để UI hỏi "vẫn lưu".
@@ -45,4 +48,5 @@ public static class TenantErrorMessages
     public const string InvalidLength = "Dữ liệu vượt quá độ dài cho phép";
     public const string AccountNotFound = "Không tìm thấy tài khoản";
     public const string AccountNotTenant = "Tài khoản không phải khách thuê";
+    public const string ApprovalRequired = "Thay đổi đang chờ Chủ trọ duyệt";
 }

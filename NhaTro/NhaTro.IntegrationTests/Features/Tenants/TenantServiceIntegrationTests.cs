@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Rooms;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.DTOs;
 using Web.Features.Tenants.Enums;
@@ -12,11 +16,22 @@ namespace NhaTro.IntegrationTests.Features.Tenants;
 /// <summary>
 /// VHT-23 (đợt 1C) — integration test trên SQL Server thật, chứng minh 3 tiêu chí nghiệm thu:
 /// lưu rồi tải lại đúng; không liên kết nhầm tài khoản; khách không sửa trường ngoài quyền.
+/// VHT-94 bổ sung: thao tác ⚙️ của Quản lý trên hồ sơ khách thuê phải đi qua công tắc.
 /// </summary>
 public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     : IClassFixture<SqlServerFixture>
 {
     private static readonly TenantCaller Owner = new("owner-1", Roles.ChuTro);
+
+    // Mặc định cho phép hết để các test cũ giữ nguyên hành vi; test công tắc truyền policy riêng.
+    private TenantService NewTenantService(
+        IManagerTogglePolicy? policy = null) =>
+        new(fixture, TimeProvider.System, policy ?? new AllowAllTogglePolicy());
+
+    // Policy thật + reader giả: kiểm đúng D4 (Chủ trọ luôn Allowed) và ánh xạ mã công tắc.
+    private static ManagerTogglePolicy NewTogglePolicy(
+        params (string Code, ManagerToggleMode Mode)[] modes) =>
+        new(new FakeToggleReader(modes), NullLogger<ManagerTogglePolicy>.Instance);
 
     // ---------- Tiêu chí 1: lưu rồi tải lại đúng ----------
 
@@ -24,7 +39,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Luu_roi_tai_lai_dung_moi_truong()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
 
         var created = await service.CreateAsync(new CreateTenantRequest
         {
@@ -57,7 +72,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.NotEmpty(tenant.RowVersion);
 
         // Đọc lại qua một service operation khác, dùng context mới và không dùng cache.
-        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(tenant.Id, Owner);
+        var reloaded = await NewTenantService().GetAsync(tenant.Id, Owner);
 
         Assert.True(reloaded.Succeeded, reloaded.ErrorMessage);
         Assert.Equal(tenant.Id, reloaded.Tenant!.Id);
@@ -71,7 +86,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task RowVersion_cu_tra_ConcurrencyConflict()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
 
         var created = await service.CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
@@ -100,7 +115,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Trung_giay_to_tra_DuplicateTenant_kem_ho_so_trung()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
 
         var first = await service.CreateAsync(
             NewTenant("An", "0901111111", idNumber: "079201004821"), Owner);
@@ -124,17 +139,17 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
 
-        var created = await new TenantService(fixture, TimeProvider.System)
+        var created = await NewTenantService()
             .CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
 
-        var linked = await new TenantService(fixture, TimeProvider.System)
+        var linked = await NewTenantService()
             .LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
 
         Assert.True(linked.Succeeded, linked.ErrorMessage);
         Assert.True(linked.Tenant!.HasAccount);
 
-        var own = await new TenantService(fixture, TimeProvider.System)
+        var own = await NewTenantService()
             .GetOwnAsync(new TenantCaller("khach-1", Roles.KhachThue));
 
         Assert.True(own.Succeeded, own.ErrorMessage);
@@ -150,7 +165,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
         await SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
 
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var a = await service.CreateAsync(NewTenant("An", "0901111111"), Owner);
         var b = await service.CreateAsync(NewTenant("Bình", "0902222222"), Owner);
         var idA = a.Tenant!.Id;
@@ -194,7 +209,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
 
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var created = await service.CreateAsync(
             NewTenant("An", "0901234567", idNumber: "079201004821", note: "nội bộ"), Owner);
         var id = created.Tenant!.Id;
@@ -202,7 +217,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         var linked = await service.LinkAccountAsync(id, "khach-1", created.Tenant.RowVersion, Owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
 
-        var ownService = new TenantService(fixture, TimeProvider.System);
+        var ownService = NewTenantService();
         var tenantCaller = new TenantCaller("khach-1", Roles.KhachThue);
 
         var updated = await ownService.UpdateOwnAsync(new UpdateOwnProfileRequest
@@ -214,7 +229,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         }, tenantCaller);
         Assert.True(updated.Succeeded, updated.ErrorMessage);
 
-        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(id, Owner);
+        var reloaded = await NewTenantService().GetAsync(id, Owner);
         var detail = reloaded.Tenant!;
 
         // Ba trường khách được sửa.
@@ -244,7 +259,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Admin_bi_chan_khoi_moi_nghiep_vu_khach_thue()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var admin = new TenantCaller("admin-1", Roles.Admin);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -267,7 +282,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Khach_thue_khong_goi_duoc_nghiep_vu_quan_ly()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var khach = new TenantCaller("khach-1", Roles.KhachThue);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -293,7 +308,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await fixture.ResetAsync();
         await using var db = fixture.CreateContext();
         await SeedAccountAsync(db, "khach-1", Roles.KhachThue);
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
 
         var created = await service.CreateAsync(
             NewTenant("An", "0901234567", note: "nội bộ"), Owner);
@@ -320,7 +335,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Qua_dai_sau_chuan_hoa_tra_InvalidRequest()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
 
         var tooLongName = await service.CreateAsync(
             NewTenant(new string('A', 201), "0901234567"), Owner);
@@ -340,7 +355,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Quan_ly_bi_che_so_cccd_va_khong_ghi_de_bang_chuoi_che()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
         var created = await service.CreateAsync(
@@ -364,7 +379,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         Assert.True(updated.Succeeded, updated.ErrorMessage);
         Assert.Equal("********4821", updated.Tenant!.IdNumber);
 
-        var reloaded = await new TenantService(fixture, TimeProvider.System).GetAsync(id, Owner);
+        var reloaded = await NewTenantService().GetAsync(id, Owner);
         Assert.Equal("0909999999", reloaded.Tenant!.PhoneNumber);
         Assert.Equal("079201004821", reloaded.Tenant.IdNumber);
 
@@ -388,7 +403,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Quan_ly_tao_ho_so_nhap_cccd_day_du_thi_luu_that_va_chi_thay_chuoi_che()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
         var created = await service.CreateAsync(
@@ -408,7 +423,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Cccd_bi_che_sua_do_hoac_qua_ngan_bi_tu_choi_va_khong_ghi_de_so_that()
     {
         await fixture.ResetAsync();
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
         var created = await service.CreateAsync(
@@ -454,7 +469,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "tenant-free", Roles.KhachThue);
         await SeedAccountAsync(db, "manager-account", Roles.QuanLy);
 
-        var service = new TenantService(fixture, TimeProvider.System);
+        var service = NewTenantService();
         var created = await service.CreateAsync(
             NewTenant("Nguyễn B", "0901234567", "079201004821"), Owner);
         Assert.True(created.Succeeded, created.ErrorMessage);
@@ -489,6 +504,106 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
             () => service.LinkAccountAsync(created.Tenant.Id, "tenant-free", created.Tenant.RowVersion, manager));
     }
 
+    // ---------- VHT-94: thao tác ⚙️ của Quản lý phải đi qua công tắc ----------
+
+    [SqlServerFact]
+    public async Task Quan_ly_tao_ho_so_phai_qua_cong_tac_SW04()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
+
+        // Không thể -> 403, không ghi.
+        var denied = NewTenantService(NewTogglePolicy(("SW-04", ManagerToggleMode.Deny)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => denied.CreateAsync(NewTenant("An", "0901234567"), quanLy));
+        Assert.False(await db.Tenants.AnyAsync());
+
+        // Duyệt -> trả ApprovalRequired, không ghi; hàng đợi duyệt thuộc VHT-96.
+        var pending = NewTenantService(NewTogglePolicy(("SW-04", ManagerToggleMode.Approve)));
+        var blocked = await pending.CreateAsync(NewTenant("An", "0901234567"), quanLy);
+        Assert.False(blocked.Succeeded);
+        Assert.Equal(TenantErrorCodes.ApprovalRequired, blocked.ErrorCode);
+        Assert.False(await db.Tenants.AnyAsync());
+
+        // Cho phép -> Quản lý tạo được.
+        var allowed = NewTenantService(NewTogglePolicy(("SW-04", ManagerToggleMode.Allow)));
+        var created = await allowed.CreateAsync(NewTenant("An", "0901234567"), quanLy);
+        Assert.True(created.Succeeded, created.ErrorMessage);
+    }
+
+    [SqlServerFact]
+    public async Task Quan_ly_sua_va_ngung_ho_so_phai_qua_cong_tac_SW05_SW06()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
+
+        var created = await NewTenantService().CreateAsync(NewTenant("An", "0901234567"), Owner);
+        var id = created.Tenant!.Id;
+
+        // Sửa hồ sơ: Không thể -> 403.
+        var deniedUpdate = NewTenantService(NewTogglePolicy(("SW-05", ManagerToggleMode.Deny)));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => deniedUpdate.UpdateAsync(id, new UpdateTenantRequest
+            {
+                FullName = "Bị chặn",
+                PhoneNumber = "0909999999",
+                RowVersion = created.Tenant.RowVersion,
+            }, quanLy));
+
+        // Sửa hồ sơ: Duyệt -> ApprovalRequired.
+        var pendingUpdate = NewTenantService(NewTogglePolicy(("SW-05", ManagerToggleMode.Approve)));
+        var pending = await pendingUpdate.UpdateAsync(id, new UpdateTenantRequest
+        {
+            FullName = "Chờ duyệt",
+            PhoneNumber = "0909999999",
+            RowVersion = created.Tenant.RowVersion,
+        }, quanLy);
+        Assert.Equal(TenantErrorCodes.ApprovalRequired, pending.ErrorCode);
+
+        // Chưa có thay đổi nào được ghi.
+        var reloaded = await NewTenantService().GetAsync(id, Owner);
+        Assert.Equal("An", reloaded.Tenant!.FullName);
+
+        // Ngừng sử dụng: Duyệt cũng phải chờ duyệt (SW-06).
+        var pendingStop = NewTenantService(NewTogglePolicy(("SW-06", ManagerToggleMode.Approve)));
+        var stop = await pendingStop.SetActiveAsync(id, false, reloaded.Tenant.RowVersion, quanLy);
+        Assert.Equal(TenantErrorCodes.ApprovalRequired, stop.ErrorCode);
+
+        var stillActive = await NewTenantService().GetAsync(id, Owner);
+        Assert.True(stillActive.Tenant!.IsActive);
+    }
+
+    [SqlServerFact]
+    public async Task Chu_tro_khong_bi_cong_tac_chan_D4()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+
+        // Cả 3 công tắc đều "Không thể" nhưng Chủ trọ vẫn có hiệu lực ngay.
+        var service = NewTenantService(NewTogglePolicy(
+            ("SW-04", ManagerToggleMode.Deny),
+            ("SW-05", ManagerToggleMode.Deny),
+            ("SW-06", ManagerToggleMode.Deny)));
+
+        var created = await service.CreateAsync(NewTenant("An", "0901234567"), Owner);
+        Assert.True(created.Succeeded, created.ErrorMessage);
+
+        var updated = await service.UpdateAsync(created.Tenant!.Id, new UpdateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0909999999",
+            RowVersion = created.Tenant.RowVersion,
+        }, Owner);
+        Assert.True(updated.Succeeded, updated.ErrorMessage);
+
+        var stopped = await service.SetActiveAsync(
+            created.Tenant.Id, false, updated.Tenant!.RowVersion, Owner);
+        Assert.True(stopped.Succeeded, stopped.ErrorMessage);
+        Assert.False(stopped.Tenant!.IsActive);
+    }
+
     private static CreateTenantRequest NewTenant(
         string fullName, string phone, string? idNumber = null, string? note = null) => new()
         {
@@ -521,5 +636,26 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
 
         db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = role.Id });
         await db.SaveChangesAsync();
+    }
+
+    private sealed class AllowAllTogglePolicy : IManagerTogglePolicy
+    {
+        public Task<RoomChangeDecision> EvaluateAsync(
+            ManagerAction action, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
+
+        public Task<RoomChangeDecision> EvaluateAsync(
+            string code, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
+    }
+
+    // Thiếu mã thì trả Duyệt, đúng chế độ mặc định của danh mục (fail closed).
+    private sealed class FakeToggleReader((string Code, ManagerToggleMode Mode)[] modes) : IManagerToggleReader
+    {
+        private readonly Dictionary<string, ManagerToggleMode> _modes =
+            modes.ToDictionary(m => m.Code, m => m.Mode, StringComparer.OrdinalIgnoreCase);
+
+        public Task<ManagerToggleMode> GetModeAsync(string code, CancellationToken ct = default) =>
+            Task.FromResult(_modes.TryGetValue(code, out var mode) ? mode : ManagerToggleMode.Approve);
     }
 }

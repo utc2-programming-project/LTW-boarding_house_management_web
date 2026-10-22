@@ -1,6 +1,9 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Rooms;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Features.Tenants.DTOs;
 using Web.Features.Tenants.Entities;
 using Web.Features.Tenants.Enums;
@@ -14,7 +17,8 @@ namespace Web.Features.Tenants;
 /// </summary>
 public sealed class TenantService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    TimeProvider clock) : ITenantService
+    TimeProvider clock,
+    IManagerTogglePolicy togglePolicy) : ITenantService
 {
     public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
     {
@@ -174,6 +178,12 @@ public sealed class TenantService(
         CreateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        var blocked = await CheckToggleAsync(caller, ManagerAction.SW04, ct);
+        if (blocked is not null)
+        {
+            return blocked;
+        }
+
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var submittedIdNumber = request.IdNumber;
         request.Normalize();
@@ -244,6 +254,12 @@ public sealed class TenantService(
         int id, UpdateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        var blocked = await CheckToggleAsync(caller, ManagerAction.SW05, ct);
+        if (blocked is not null)
+        {
+            return blocked;
+        }
+
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         // D9: Quản lý không thấy số CCCD đầy đủ nên form có thể gửi lại chuỗi che; giữ bản gốc để nhận diện.
         var submittedIdNumber = request.IdNumber;
@@ -393,6 +409,12 @@ public sealed class TenantService(
         int id, bool isActive, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
+        var blocked = await CheckToggleAsync(caller, ManagerAction.SW06, ct);
+        if (blocked is not null)
+        {
+            return blocked;
+        }
+
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         if (!TryParseRowVersion(rowVersion, out var expectedVersion))
@@ -727,6 +749,24 @@ public sealed class TenantService(
         {
             throw Forbidden(caller);
         }
+    }
+
+    // Điểm gọi policy công tắc Quản lý (VHT-94): Quản lý tạo/sửa/ngừng hồ sơ khách thuê phải qua
+    // SW-04/05/06. Chủ trọ luôn có hiệu lực ngay (D4) vì policy trả Allowed trước khi đọc công tắc.
+    // Kiểm trước mọi truy vấn dữ liệu để người bị chặn không dò được hồ sơ trùng hay hồ sơ có tồn tại.
+    // Chờ duyệt hiện chỉ trả lời; hàng đợi duyệt thuộc VHT-96.
+    private async Task<TenantResult?> CheckToggleAsync(
+        TenantCaller caller, ManagerAction action, CancellationToken ct)
+    {
+        var decision = await togglePolicy.EvaluateAsync(action, caller.Role, ct);
+
+        return decision switch
+        {
+            RoomChangeDecision.Denied => throw Forbidden(caller),
+            RoomChangeDecision.RequiresApproval => TenantResult.Failure(
+                TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired),
+            _ => null,
+        };
     }
 
     private static UnauthorizedAccessException Forbidden(TenantCaller caller) =>
