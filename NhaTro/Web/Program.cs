@@ -186,6 +186,9 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.DefaultRequestCulture = new RequestCulture("vi-VN");
     options.SupportedCultures = supported;
     options.SupportedUICultures = supported;
+    // Chỉ dùng lựa chọn cookie; chưa chọn thì dùng VI, không theo query/trình duyệt.
+    options.RequestCultureProviders.Clear();
+    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
     // Chỉ dùng cookie của selector; chưa chọn ngôn ngữ thì mặc định tiếng Việt.
     options.RequestCultureProviders = [new CookieRequestCultureProvider()];
 });
