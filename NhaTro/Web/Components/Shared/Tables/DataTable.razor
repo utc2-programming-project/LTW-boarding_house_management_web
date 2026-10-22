@@ -210,9 +210,17 @@
     [Parameter]
     public RenderFragment? EmptyActions { get; set; }
 
+    /// <summary>Cho biết bộ lọc ngoài bảng có đang được áp dụng không.</summary>
+    [Parameter]
+    public bool HasActiveFilters { get; set; }
+
+    /// <summary>Xóa các bộ lọc do trang cha quản lý.</summary>
+    [Parameter]
+    public EventCallback OnClearFilters { get; set; }
+
     private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
 
-    private bool HasFilters => _filters.Count > 0;
+    private bool HasFilters => _filters.Count > 0 || HasActiveFilters;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -292,11 +300,16 @@
         return LoadAsync();
     }
 
-    private Task ClearFiltersAsync()
+    private async Task ClearFiltersAsync()
     {
         _filters.Clear();
+        if (HasActiveFilters)
+        {
+            await OnClearFilters.InvokeAsync();
+        }
+
         _page = 1;
-        return LoadAsync();
+        await LoadAsync();
     }
 
     private bool IsSorted(string key, bool descending) => _sortKey == key && _sortDescending == descending;

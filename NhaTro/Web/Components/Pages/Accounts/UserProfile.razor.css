@@ -1,0 +1,230 @@
+.profile-page {
+    min-width: 0;
+}
+
+.profile-page-heading {
+    margin-bottom: 20px;
+}
+
+.profile-overview {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+    margin-bottom: 24px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.profile-avatar {
+    display: grid;
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border: 1px solid var(--accent-border);
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+.profile-identity {
+    min-width: 0;
+}
+
+.profile-overview-label {
+    margin: 0 0 3px;
+    color: var(--text-secondary);
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.profile-identity h2 {
+    overflow-wrap: anywhere;
+    font-size: 1.25rem;
+    line-height: 1.4;
+}
+
+.profile-email {
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+    color: var(--text-secondary);
+    font-size: .875rem;
+}
+
+.profile-email-hint {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: .75rem;
+    line-height: 1.5;
+}
+
+.profile-role {
+    margin-left: auto;
+    padding-left: 16px;
+}
+
+.profile-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(300px, .9fr);
+    align-items: start;
+    gap: 24px;
+}
+
+.profile-card {
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.profile-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.profile-heading-icon,
+.profile-security-icon {
+    display: grid;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 1px solid var(--accent-border);
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.profile-heading-icon ::deep .lucide-icon,
+.profile-security-icon ::deep .lucide-icon {
+    width: 21px;
+    height: 21px;
+}
+
+.profile-card-heading h2,
+.profile-security-copy h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.45;
+    font-weight: 650;
+}
+
+.profile-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(220px, .85fr);
+    grid-template-areas:
+        "name phone";
+    gap: 20px 24px;
+}
+
+.profile-field-name { grid-area: name; }
+.profile-field-phone { grid-area: phone; }
+
+.profile-fields ::deep .field {
+    min-width: 0;
+    margin: 0;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.profile-side-column {
+    display: grid;
+    gap: 20px;
+}
+
+.profile-security-card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+}
+
+.profile-security-copy {
+    min-width: 0;
+}
+
+.profile-security-copy p {
+    margin: 6px 0 0;
+    font-size: .875rem;
+    line-height: 1.6;
+}
+
+.profile-security-action {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 4px;
+}
+
+@media (max-width: 960px) {
+    .profile-content-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .profile-side-column {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-overview {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 18px;
+    }
+
+    .profile-avatar {
+        flex-basis: 52px;
+        width: 52px;
+        height: 52px;
+        font-size: 1rem;
+    }
+
+    .profile-role {
+        width: 100%;
+        margin: 0;
+        padding: 0 0 0 66px;
+    }
+
+    .profile-card {
+        padding: 18px;
+    }
+
+    .profile-fields {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "name"
+            "phone";
+        gap: 16px;
+    }
+
+    .profile-actions {
+        flex-direction: column-reverse;
+    }
+
+    .profile-actions .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+}

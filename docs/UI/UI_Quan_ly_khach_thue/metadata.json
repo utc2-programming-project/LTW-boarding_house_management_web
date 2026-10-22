@@ -1,0 +1,6 @@
+{
+  "name": "RoomJune - Quản lý phòng trọ",
+  "description": "Hệ thống quản lý hồ sơ khách thuê và định danh người lưu trú chuẩn bảo mật D9",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

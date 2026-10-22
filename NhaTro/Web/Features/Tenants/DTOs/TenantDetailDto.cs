@@ -37,8 +37,11 @@ public class TenantDetailDto
 
     public required bool IsActive { get; init; }
 
-    /// <summary>Không trả UserId thô cho khách thuê.</summary>
-    public required bool HasAccount { get; init; }
+    /// <summary>
+    /// Trạng thái liên kết tài khoản. Null khi vai trò không được xem thông tin tài khoản (D9).
+    /// Không trả UserId thô cho bất kỳ vai trò nào.
+    /// </summary>
+    public required bool? HasAccount { get; init; }
 
     public required DateTimeOffset CreatedAt { get; init; }
 

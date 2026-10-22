@@ -17,7 +17,8 @@
         </div>
         <AuthorizeView>
             <Authorized Context="auth">
-                <a class="avatar" href="profile" aria-label="@L["MyAccount"]" title="@L["MyAccount"]">@Initials(auth.User.Identity?.Name)</a>
+                <a class="avatar" href="@(auth.User.IsInRole(Web.Features.Accounts.Roles.KhachThue) ? "tenant/profile" : "profile")"
+                   aria-label="@L["MyAccount"]" title="@L["MyAccount"]">@Initials(auth.User.Identity?.Name)</a>
                 <form action="Account/Logout" method="post" data-enhance="false">
                     <AntiforgeryToken />
                     <input type="hidden" name="returnUrl" value="" />

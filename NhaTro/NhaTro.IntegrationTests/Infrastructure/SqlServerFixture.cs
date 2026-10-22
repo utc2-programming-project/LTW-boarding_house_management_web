@@ -11,7 +11,7 @@ namespace NhaTro.IntegrationTests.Infrastructure;
 /// được rowversion/filtered index) và KHÔNG Docker/Testcontainers.
 /// Mỗi lần chạy tạo một database riêng, áp migration, xóa khi xong.
 /// </summary>
-public sealed class SqlServerFixture : IAsyncLifetime
+public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<ApplicationDbContext>
 {
     private const string LocalDbMaster =
         @"Server=(localdb)\MSSQLLocalDB;Database=master;Trusted_Connection=True;Connect Timeout=15";
@@ -82,6 +82,14 @@ public sealed class SqlServerFixture : IAsyncLifetime
         new(new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlServer(ConnectionString)
             .Options);
+
+    public ApplicationDbContext CreateDbContext() => CreateContext();
+
+    public Task<ApplicationDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(CreateContext());
+    }
 
     /// <summary>Xóa dữ liệu giữa các test, theo thứ tự khóa ngoại.</summary>
     public async Task ResetAsync()

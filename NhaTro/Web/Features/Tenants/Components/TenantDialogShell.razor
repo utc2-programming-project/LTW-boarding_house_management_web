@@ -1,0 +1,89 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject IStringLocalizer<Shared> L
+
+<dialog @ref="_dialog" class="tenant-dialog @CssClass" aria-labelledby="@_titleId" aria-modal="true"
+        @onclick="CloseAsync">
+    <section class="tenant-dialog-panel" @onclick:stopPropagation="true">
+        <header class="tenant-dialog-header">
+            <div>
+                <h2 id="@_titleId">@Title</h2>
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <p>@Subtitle</p>
+                }
+            </div>
+            <button type="button" class="icon-button" aria-label="@L["Close"]" @onclick="CloseAsync">
+                <LucideIcon Name="close" />
+            </button>
+        </header>
+        @if (Visible)
+        {
+            <div class="tenant-dialog-body">
+                @ChildContent
+            </div>
+            @if (Footer is not null)
+            {
+                <footer class="tenant-dialog-footer">
+                    @Footer
+                </footer>
+            }
+        }
+    </section>
+</dialog>
+
+@code {
+    private const string ModulePath = "./Features/Tenants/Components/TenantDialogShell.razor.js";
+    private readonly string _titleId = $"tenant-dialog-{Guid.NewGuid():N}-title";
+    private ElementReference _dialog;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _registration;
+    private DotNetObjectReference<TenantDialogShell>? _self;
+    private bool _openInDom;
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_module is null)
+        {
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
+            _self = DotNetObjectReference.Create(this);
+            _registration = await _module.InvokeAsync<IJSObjectReference>("register", _dialog, _self);
+        }
+
+        if (Visible == _openInDom) return;
+
+        await _module.InvokeVoidAsync(Visible ? "open" : "close", _dialog);
+        _openInDom = Visible;
+    }
+
+    private Task CloseAsync() => OnClose.InvokeAsync();
+
+    [JSInvokable]
+    public Task RequestCloseAsync() => InvokeAsync(CloseAsync);
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_registration is not null)
+            {
+                await _registration.InvokeVoidAsync("dispose");
+                await _registration.DisposeAsync();
+            }
+            if (_module is not null) await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        _self?.Dispose();
+    }
+}

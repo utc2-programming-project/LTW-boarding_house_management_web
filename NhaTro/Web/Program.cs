@@ -19,6 +19,7 @@ using Web.Features.Properties;
 using Web.Features.Rooms;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Storage;
@@ -151,6 +152,7 @@ builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<Manage
 
 // VHT-23 (dot 1C): service khach thue P3, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<TenantPageService>();
 
 // VHT-23: chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
