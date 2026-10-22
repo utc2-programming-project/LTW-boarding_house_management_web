@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ContractPageTitle" xml:space="preserve"><value>Create rental contract</value></data>
+  <data name="ContractCreateBreadcrumb" xml:space="preserve"><value>New contract</value></data>
+  <data name="ContractDemoTopline" xml:space="preserve"><value>Sample data — not saved to SQL (UI preview)</value></data>
+  <data name="ContractDemoTitle" xml:space="preserve"><value>Preview mode: sample data, not saved to SQL</value></data>
+  <data name="ContractDemoDescription" xml:space="preserve"><value>This form uses mock data and stays in the current UI session. No request is sent and nothing is saved to the database.</value></data>
+  <data name="ContractDemoBadge" xml:space="preserve"><value>Preview</value></data>
+  <data name="ContractStandard" xml:space="preserve"><value>4P contract form</value></data>
+  <data name="ContractLegalCaption" xml:space="preserve"><value>Legal &amp; property operations</value></data>
+  <data name="ContractCreateHeading" xml:space="preserve"><value>Create a new rental contract</value></data>
+  <data name="ContractDraftStatus" xml:space="preserve"><value>Status: Draft</value></data>
+  <data name="ContractSectionProperty" xml:space="preserve"><value>Property &amp; room information</value></data>
+  <data name="ContractRequiredTag" xml:space="preserve"><value>Required</value></data>
+  <data name="ContractPropertyLabel" xml:space="preserve"><value>Rental property / building</value></data>
+  <data name="ContractPropertyPlaceholder" xml:space="preserve"><value>-- Select a property / branch --</value></data>
+  <data name="ContractPropertyCount" xml:space="preserve"><value>{0} sample properties</value></data>
+  <data name="ContractRoomLabel" xml:space="preserve"><value>Room code</value></data>
+  <data name="ContractRoomAvailabilityHint" xml:space="preserve"><value>Shows rooms vacant now or by the lease start date.</value></data>
+  <data name="ContractRoomAvailableFrom" xml:space="preserve"><value>Available from {0}</value></data>
+  <data name="ContractRoomPlaceholder" xml:space="preserve"><value>-- Select a room --</value></data>
+  <data name="ContractSelectPropertyFirst" xml:space="preserve"><value>Select a property first</value></data>
+  <data name="ContractRoomCount" xml:space="preserve"><value>{0} rooms vacant by the start date</value></data>
+  <data name="ContractNoAvailableRooms" xml:space="preserve"><value>No rooms are vacant by the selected start date in the sample data.</value></data>
+  <data name="ContractRoomFloor" xml:space="preserve"><value>Floor {0}</value></data>
+  <data name="ContractArea" xml:space="preserve"><value>Area: {0} m²</value></data>
+  <data name="ContractStandardPrice" xml:space="preserve"><value>Listed monthly rent</value></data>
+  <data name="ContractUseRoomPrice" xml:space="preserve"><value>Use room's standard rent</value></data>
+  <data name="ContractTenantSection" xml:space="preserve"><value>Tenant &amp; household members</value></data>
+  <data name="ContractTenantSectionHint" xml:space="preserve"><value>Representative tenant &amp; roommates</value></data>
+  <data name="ContractRepresentativeLabel" xml:space="preserve"><value>Contract representative (Party B)</value></data>
+  <data name="ContractTenantPlaceholder" xml:space="preserve"><value>-- Select the signing representative --</value></data>
+  <data name="ContractTenantCount" xml:space="preserve"><value>{0} sample profiles</value></data>
+  <data name="ContractMaskedId" xml:space="preserve"><value>ID {0}</value></data>
+  <data name="ContractRoommatesLabel" xml:space="preserve"><value>Household members</value></data>
+  <data name="ContractMemberCount" xml:space="preserve"><value>{0} people</value></data>
+  <data name="ContractAddMember" xml:space="preserve"><value>Add member</value></data>
+  <data name="ContractRemoveMember" xml:space="preserve"><value>Remove member</value></data>
+  <data name="ContractMemberName" xml:space="preserve"><value>Full name</value></data>
+  <data name="ContractMemberPhone" xml:space="preserve"><value>Phone number</value></data>
+  <data name="ContractRelationship" xml:space="preserve"><value>Relationship</value></data>
+  <data name="ContractRelationshipPartner" xml:space="preserve"><value>Spouse / partner</value></data>
+  <data name="ContractRelationshipColleague" xml:space="preserve"><value>Colleague</value></data>
+  <data name="ContractRelationshipChild" xml:space="preserve"><value>Child</value></data>
+  <data name="ContractRelationshipRelative" xml:space="preserve"><value>Relative</value></data>
+  <data name="ContractRelationshipOther" xml:space="preserve"><value>Other</value></data>
+  <data name="ContractSectionPeriod" xml:space="preserve"><value>Contract term</value></data>
+  <data name="ContractApproxDuration" xml:space="preserve"><value>Term: about {0} months</value></data>
+  <data name="ContractStartDate" xml:space="preserve"><value>Start date</value></data>
+  <data name="ContractEndDate" xml:space="preserve"><value>End date</value></data>
+  <data name="ContractDateRule" xml:space="preserve"><value>VHT-9 rule: the rental term must be at least one month.</value></data>
+  <data name="ContractSectionFinance" xml:space="preserve"><value>Finance &amp; services</value></data>
+  <data name="ContractCurrencyCycle" xml:space="preserve"><value>VND / billing cycle</value></data>
+  <data name="ContractRentLabel" xml:space="preserve"><value>Monthly room rent (VND/month)</value></data>
+  <data name="ContractRentPlaceholder" xml:space="preserve"><value>Example: 4,500,000</value></data>
+  <data name="ContractDepositLabel" xml:space="preserve"><value>Room deposit</value></data>
+  <data name="ContractDepositPlaceholder" xml:space="preserve"><value>Example: 4,500,000</value></data>
+  <data name="ContractDepositHint" xml:space="preserve"><value>The deposit can be 0 ₫.</value></data>
+  <data name="ContractPaymentCycle" xml:space="preserve"><value>Payment cycle</value></data>
+  <data name="ContractCycleOne" xml:space="preserve"><value>Monthly (1 month)</value></data>
+  <data name="ContractCycleThree" xml:space="preserve"><value>Every 3 months</value></data>
+  <data name="ContractCycleSix" xml:space="preserve"><value>Every 6 months</value></data>
+  <data name="ContractMeterDay" xml:space="preserve"><value>Utilities reading day</value></data>
+  <data name="ContractDayMonthly" xml:space="preserve"><value>Day {0} each month</value></data>
+  <data name="ContractLastDayMonthly" xml:space="preserve"><value>Last day of each month</value></data>
+  <data name="ContractUtilitiesTitle" xml:space="preserve"><value>Sample listed service rates</value></data>
+  <data name="ContractElectricity" xml:space="preserve"><value>Electricity</value></data>
+  <data name="ContractWater" xml:space="preserve"><value>Water</value></data>
+  <data name="ContractInternet" xml:space="preserve"><value>Internet</value></data>
+  <data name="ContractWaste" xml:space="preserve"><value>Waste &amp; cleaning</value></data>
+  <data name="ContractPerKwh" xml:space="preserve"><value>/kWh</value></data>
+  <data name="ContractPerCubicMeter" xml:space="preserve"><value>/m³</value></data>
+  <data name="ContractPerMonth" xml:space="preserve"><value>/month</value></data>
+  <data name="ContractNotesSection" xml:space="preserve"><value>Additional terms &amp; notes</value></data>
+  <data name="ContractOptional" xml:space="preserve"><value>Optional</value></data>
+  <data name="ContractNotesPlaceholder" xml:space="preserve"><value>Add special rules, supplied items, registered parking or other 4P contract terms…</value></data>
+  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Initial payment total</value></data>
+  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Deposit + first cycle:</value></data>
+  <data name="ContractInitialDeposit" xml:space="preserve"><value>Deposit</value></data>
+  <data name="ContractFirstCycle" xml:space="preserve"><value>First cycle ({0} months)</value></data>
+  <data name="ContractTemplateFooter" xml:space="preserve"><value>Standard 4P form (Room - Fees - Legal - Penalties).</value></data>
+  <data name="ContractCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ContractSaveDraft" xml:space="preserve"><value>Save draft</value></data>
+  <data name="ContractSubmitApproval" xml:space="preserve"><value>Submit for approval</value></data>
+  <data name="ContractValidationTitle" xml:space="preserve"><value>Please review these fields:</value></data>
+  <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
+  <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Select a room.</value></data>
+  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is no longer available or does not belong to the selected property.</value></data>
+  <data name="ContractErrorRepresentativeRequired" xml:space="preserve"><value>Select the representative tenant.</value></data>
+  <data name="ContractErrorStartDateRequired" xml:space="preserve"><value>Select a start date.</value></data>
+  <data name="ContractErrorEndDateRequired" xml:space="preserve"><value>Select an end date.</value></data>
+  <data name="ContractErrorEndDateMinimum" xml:space="preserve"><value>The end date must be at least one month after the start date.</value></data>
+  <data name="ContractErrorRentRequired" xml:space="preserve"><value>Enter the monthly rent.</value></data>
+  <data name="ContractErrorRentPositive" xml:space="preserve"><value>Rent must be greater than 0 ₫.</value></data>
+  <data name="ContractErrorDepositRequired" xml:space="preserve"><value>Enter the deposit (0 is allowed).</value></data>
+  <data name="ContractErrorDepositNonnegative" xml:space="preserve"><value>The deposit cannot be negative.</value></data>
+  <data name="ContractErrorPaymentCycleRequired" xml:space="preserve"><value>Select a payment cycle.</value></data>
+  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Payment cycle must be 1, 3, or 6 months.</value></data>
+  <data name="ContractDraftPreviewOnly" xml:space="preserve"><value>This draft is held only in the current preview session; it has not been saved to SQL.</value></data>
+  <data name="ContractSubmitOwnerPreviewOnly" xml:space="preserve"><value>The form is valid. There is no contract service yet, so the request was not sent or saved.</value></data>
+  <data name="ContractSubmitManagerPreviewOnly" xml:space="preserve"><value>The form is valid for a Pending Approval request. There is no contract service yet, so no request was created, sent, or saved.</value></data>
+  <data name="ContractNavLabel" xml:space="preserve"><value>Contracts</value></data>
+  <data name="ContractRequiredWord" xml:space="preserve"><value>Required</value></data>
+  <data name="ContractAccessDeniedTitle" xml:space="preserve"><value>Access denied</value></data>
+  <data name="ContractAccessDeniedMessage" xml:space="preserve"><value>You cannot view this page. Only owners and managers can create contracts.</value></data>
+  <data name="ContractDraftSnapshotSummary" xml:space="preserve"><value>This preview session holds rent {0} and a start date of {1} in memory.</value></data>
+</root>

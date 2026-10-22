@@ -211,4 +211,415 @@
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>
+
+  <!-- VHT-8: sign-in -->
+  <data name="LoginTitle" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="LoginSubtitle" xml:space="preserve">
+    <value>Use the email and password you were given to access the system.</value>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="LoginInvalid" xml:space="preserve">
+    <value>Incorrect email or password.</value>
+  </data>
+  <data name="EmailLabel" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailRequired" xml:space="preserve">
+    <value>Please enter your email.</value>
+  </data>
+  <data name="EmailInvalid" xml:space="preserve">
+    <value>Email is not in a valid format.</value>
+  </data>
+  <data name="PasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Please enter your password.</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Remember me</value>
+  </data>
+  <data name="ShowPassword" xml:space="preserve">
+    <value>Show password</value>
+  </data>
+  <data name="HidePassword" xml:space="preserve">
+    <value>Hide password</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Forgot your password?</value>
+  </data>
+
+  <!-- VHT-8: personal profile -->
+  <data name="ProfileTitle" xml:space="preserve">
+    <value>My profile</value>
+  </data>
+  <data name="ProfileSubtitle" xml:space="preserve">
+    <value>View and update your own information.</value>
+  </data>
+  <data name="ProfileInfoSection" xml:space="preserve">
+    <value>Personal information</value>
+  </data>
+  <data name="ProfileLoadFailed" xml:space="preserve">
+    <value>Could not load your profile. Please try again.</value>
+  </data>
+  <data name="ProfileSaved" xml:space="preserve">
+    <value>Your profile has been saved.</value>
+  </data>
+  <data name="FullNameLabel" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+  <data name="PhoneLabel" xml:space="preserve">
+    <value>Phone number</value>
+  </data>
+  <data name="PhoneHint" xml:space="preserve">
+    <value>10 digits, starting with 0.</value>
+  </data>
+  <data name="EmailReadonlyHint" xml:space="preserve">
+    <value>The email used to sign in; it cannot be changed here yet.</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="SecuritySection" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Change password</value>
+  </data>
+  <data name="ChangePasswordHint" xml:space="preserve">
+    <value>Change your password regularly to keep your account safe.</value>
+  </data>
+
+  <!-- VHT-8: account administration -->
+  <data name="AccountsTitle" xml:space="preserve">
+    <value>Account administration</value>
+  </data>
+  <data name="AccountsSubtitle" xml:space="preserve">
+    <value>Browse users, lock or unlock accounts, and assign roles.</value>
+  </data>
+  <data name="SearchAccounts" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="SearchAccountsHint" xml:space="preserve">
+    <value>Search by name, email, or phone number</value>
+  </data>
+  <data name="FilterRole" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="FilterAllRoles" xml:space="preserve">
+    <value>All roles</value>
+  </data>
+  <data name="ColumnAccount" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="ColumnRole" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="ColumnStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="ColumnActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="StatusActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="StatusLocked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="ChangeRole" xml:space="preserve">
+    <value>Assign role</value>
+  </data>
+  <data name="Lock" xml:space="preserve">
+    <value>Lock</value>
+  </data>
+  <data name="Unlock" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="ThisIsYou" xml:space="preserve">
+    <value>This is you</value>
+  </data>
+  <data name="AccountsEmptyHint" xml:space="preserve">
+    <value>No accounts match the current filters.</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="ChangeRoleTitle" xml:space="preserve">
+    <value>Assign role</value>
+  </data>
+  <data name="ChangeRoleMessageBefore" xml:space="preserve">
+    <value>Choose a new role for</value>
+  </data>
+  <data name="NewRoleLabel" xml:space="preserve">
+    <value>New role</value>
+  </data>
+  <data name="ChangeRoleWarning" xml:space="preserve">
+    <value>The previous role is replaced as soon as you confirm.</value>
+  </data>
+  <data name="LockTitle" xml:space="preserve">
+    <value>Lock account</value>
+  </data>
+  <data name="UnlockTitle" xml:space="preserve">
+    <value>Unlock account</value>
+  </data>
+  <data name="LockConfirm" xml:space="preserve">
+    <value>Lock</value>
+  </data>
+  <data name="UnlockConfirm" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="LockMessage" xml:space="preserve">
+    <value>Lock account {0}? This person cannot sign in until it is unlocked.</value>
+  </data>
+  <data name="UnlockMessage" xml:space="preserve">
+    <value>Unlock account {0}?</value>
+  </data>
+  <data name="RoleChanged" xml:space="preserve">
+    <value>Role updated.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Account locked.</value>
+  </data>
+  <data name="AccountUnlocked" xml:space="preserve">
+    <value>Account unlocked.</value>
+  </data>
+
+  <!-- VHT-8: roles -->
+  <data name="RoleAdmin" xml:space="preserve">
+    <value>Administrator</value>
+  </data>
+  <data name="RoleChuTro" xml:space="preserve">
+    <value>Landlord</value>
+  </data>
+  <data name="RoleQuanLy" xml:space="preserve">
+    <value>Manager</value>
+  </data>
+  <data name="RoleKhachThue" xml:space="preserve">
+    <value>Tenant</value>
+  </data>
+  <data name="RoleUnknown" xml:space="preserve">
+    <value>Not assigned</value>
+  </data>
+
+  <!-- VHT-8: account operation error messages -->
+  <data name="ErrorGeneric" xml:space="preserve">
+    <value>Something went wrong. Please try again.</value>
+  </data>
+  <data name="ErrorForbidden" xml:space="preserve">
+    <value>You do not have permission to do this.</value>
+  </data>
+  <data name="ErrorUserNotFound" xml:space="preserve">
+    <value>Account not found.</value>
+  </data>
+  <data name="ErrorInvalidPhone" xml:space="preserve">
+    <value>Phone number must have 10 digits and start with 0.</value>
+  </data>
+  <data name="ErrorCannotChangeOwnRole" xml:space="preserve">
+    <value>You cannot change your own role.</value>
+  </data>
+  <data name="ErrorCannotRemoveLastAdmin" xml:space="preserve">
+    <value>You cannot remove the role of the last administrator.</value>
+  </data>
+  <data name="ErrorCannotLockSelf" xml:space="preserve">
+    <value>You cannot lock your own account.</value>
+  </data>
+  <data name="ErrorCannotLockAdmin" xml:space="preserve">
+    <value>Administrator accounts cannot be locked.</value>
+  </data>
+  <data name="ErrorRoleNotAllowed" xml:space="preserve">
+    <value>You are not allowed to assign this role.</value>
+  </data>
+  <data name="ErrorInvalidRole" xml:space="preserve">
+    <value>Invalid role.</value>
+  </data>
+
+  <!-- VHT-8: data table strings -->
+  <data name="TableLoading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="TableEmptyTitle" xml:space="preserve">
+    <value>No data yet</value>
+  </data>
+  <data name="TableNoResults" xml:space="preserve">
+    <value>No matching results</value>
+  </data>
+  <data name="TableClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="TableLoadFailed" xml:space="preserve">
+    <value>Could not load data.</value>
+  </data>
+  <data name="TableRetry" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="TableFilterBy" xml:space="preserve">
+    <value>Filter by</value>
+  </data>
+  <data name="TablePagination" xml:space="preserve">
+    <value>Pagination</value>
+  </data>
+  <data name="TableFirstPage" xml:space="preserve">
+    <value>First page</value>
+  </data>
+  <data name="TablePreviousPage" xml:space="preserve">
+    <value>Previous page</value>
+  </data>
+  <data name="TableNextPage" xml:space="preserve">
+    <value>Next page</value>
+  </data>
+  <data name="TableLastPage" xml:space="preserve">
+    <value>Last page</value>
+  </data>
+  <data name="TablePage" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="TableSummary" xml:space="preserve">
+    <value>Showing {0}–{1} of {2}</value>
+  </data>
+
+  <!-- VHT-8: access denied -->
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access denied</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>You are not allowed to view this page. Contact an administrator if you need help.</value>
+  </data>
+
+  <!-- VHT-8: quick sign-in for testers (dev only) -->
+  <data name="DevQuickLoginTitle" xml:space="preserve">
+    <value>Quick sign-in for testing</value>
+  </data>
+  <data name="DevQuickLoginHint" xml:space="preserve">
+    <value>Only shown when running locally in development with a test password configured. Click to enter each role directly; never shown in a real environment.</value>
+  </data>
+
+  <!-- VHT-17: tenant management and tenant profile P3 -->
+  <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>
+  <data name="TenantsTitle" xml:space="preserve"><value>Tenants</value></data>
+  <data name="TenantsSubtitle" xml:space="preserve"><value>Manage tenant records and identity details</value></data>
+  <data name="TenantAdd" xml:space="preserve"><value>Admit tenant</value></data>
+  <data name="TenantExport" xml:space="preserve"><value>Export list</value></data>
+  <data name="TenantStatTotal" xml:space="preserve"><value>Total tenants</value></data>
+  <data name="TenantStatActive" xml:space="preserve"><value>Currently staying</value></data>
+  <data name="TenantStatAccounts" xml:space="preserve"><value>App accounts linked</value></data>
+  <data name="TenantStatIdCoverage" xml:space="preserve"><value>ID numbers on file</value></data>
+  <data name="TenantPeople" xml:space="preserve"><value>people</value></data>
+  <data name="TenantRecords" xml:space="preserve"><value>records</value></data>
+  <data name="TenantAccounts" xml:space="preserve"><value>accounts</value></data>
+  <data name="TenantSecurityHint" xml:space="preserve"><value>ID numbers are always masked in the list</value></data>
+  <data name="TenantSearch" xml:space="preserve"><value>Search tenants</value></data>
+  <data name="TenantSearchHint" xml:space="preserve"><value>Search by name, phone number, or ID number</value></data>
+  <data name="TenantSearchPrivacyHint" xml:space="preserve"><value>Enter at least 3 characters to search by phone or ID number</value></data>
+  <data name="TenantStatusFilter" xml:space="preserve"><value>Status</value></data>
+  <data name="TenantStatusAll" xml:space="preserve"><value>All statuses</value></data>
+  <data name="TenantStatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="TenantStatusInactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="TenantAccountFilter" xml:space="preserve"><value>Account</value></data>
+  <data name="TenantAccountAll" xml:space="preserve"><value>All accounts</value></data>
+  <data name="TenantAccountYes" xml:space="preserve"><value>Has account</value></data>
+  <data name="TenantAccountNo" xml:space="preserve"><value>No account</value></data>
+  <data name="TenantSort" xml:space="preserve"><value>Sort</value></data>
+  <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Newest first</value></data>
+  <data name="TenantSortNameAsc" xml:space="preserve"><value>Name A–Z</value></data>
+  <data name="TenantSortNameDesc" xml:space="preserve"><value>Name Z–A</value></data>
+  <data name="TenantReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="TenantColumnName" xml:space="preserve"><value>Tenant name</value></data>
+  <data name="TenantColumnPhone" xml:space="preserve"><value>Phone number</value></data>
+  <data name="TenantColumnIdNumber" xml:space="preserve"><value>National ID</value></data>
+  <data name="TenantColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="TenantColumnAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="TenantColumnActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="TenantRecordNumber" xml:space="preserve"><value>Record #{0}</value></data>
+  <data name="TenantViewDetails" xml:space="preserve"><value>View details</value></data>
+  <data name="TenantEdit" xml:space="preserve"><value>Edit record</value></data>
+  <data name="TenantDeactivate" xml:space="preserve"><value>Deactivate this record?</value></data>
+  <data name="TenantActivate" xml:space="preserve"><value>Reactivate this record?</value></data>
+  <data name="TenantNoResultsTitle" xml:space="preserve"><value>No tenants found</value></data>
+  <data name="TenantEmptyDescription" xml:space="preserve"><value>There are no tenant records yet. Admit a tenant to start managing records.</value></data>
+  <data name="TenantDetailTitle" xml:space="preserve"><value>Tenant details</value></data>
+  <data name="TenantPersonalSection" xml:space="preserve"><value>Personal information</value></data>
+  <data name="TenantIdentitySection" xml:space="preserve"><value>Identity document</value></data>
+  <data name="TenantAccountSection" xml:space="preserve"><value>App account</value></data>
+  <data name="TenantLinkedAccount" xml:space="preserve"><value>Account linked</value></data>
+  <data name="TenantUnlinkedAccount" xml:space="preserve"><value>No account linked</value></data>
+  <data name="TenantLinkAccount" xml:space="preserve"><value>Link account</value></data>
+  <data name="TenantUnlinkAccount" xml:space="preserve"><value>Unlink account</value></data>
+  <data name="TenantLinkDialogTitle" xml:space="preserve"><value>Link tenant account</value></data>
+  <data name="TenantAccountSearch" xml:space="preserve"><value>Search accounts</value></data>
+  <data name="TenantAccountSearchHint" xml:space="preserve"><value>Search by name, email, or phone number</value></data>
+  <data name="TenantSelectAccount" xml:space="preserve"><value>Select an account</value></data>
+  <data name="TenantNoAvailableAccounts" xml:space="preserve"><value>No unlinked tenant accounts are available</value></data>
+  <data name="TenantCreateTitle" xml:space="preserve"><value>Admit tenant</value></data>
+  <data name="TenantUpdateTitle" xml:space="preserve"><value>Edit tenant record</value></data>
+  <data name="TenantFullName" xml:space="preserve"><value>Full name</value></data>
+  <data name="TenantPhone" xml:space="preserve"><value>Phone number</value></data>
+  <data name="TenantEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="TenantIdNumber" xml:space="preserve"><value>National ID number</value></data>
+  <data name="TenantDateOfBirth" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="TenantGender" xml:space="preserve"><value>Gender</value></data>
+  <data name="TenantGenderMale" xml:space="preserve"><value>Male</value></data>
+  <data name="TenantGenderFemale" xml:space="preserve"><value>Female</value></data>
+  <data name="TenantGenderOther" xml:space="preserve"><value>Other</value></data>
+  <data name="TenantPermanentAddress" xml:space="preserve"><value>Permanent address</value></data>
+  <data name="TenantIdIssuedDate" xml:space="preserve"><value>Issue date</value></data>
+  <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Place of issue</value></data>
+  <data name="TenantInternalNote" xml:space="preserve"><value>Internal note</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Managers always see a masked ID number.</value></data>
+  <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Enter the full ID number. It is masked after saving.</value></data>
+  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>The current number is masked. Leave it empty to keep it, or type the full new number to replace it.</value></data>
+  <data name="TenantValidationIdNumber" xml:space="preserve"><value>Invalid ID number: enter at least 8 letters or digits and do not use the * character.</value></data>
+  <data name="TenantColumnRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="TenantProfileTitle" xml:space="preserve"><value>My tenant profile</value></data>
+  <data name="TenantProfileSubtitle" xml:space="preserve"><value>View your residency details and update your contact information</value></data>
+  <data name="TenantProfileReadonly" xml:space="preserve"><value>This information is managed by your landlord or manager</value></data>
+  <data name="TenantProfileEditable" xml:space="preserve"><value>Information you can update</value></data>
+  <data name="TenantProfileMissing" xml:space="preserve"><value>Your tenant record is not linked to this account. Please contact your landlord.</value></data>
+  <data name="TenantProfileLoadFailed" xml:space="preserve"><value>Could not load your profile. Please try again.</value></data>
+  <data name="TenantProfileSaved" xml:space="preserve"><value>Your profile has been saved</value></data>
+  <data name="TenantCreated" xml:space="preserve"><value>Tenant record created</value></data>
+  <data name="TenantUpdated" xml:space="preserve"><value>Tenant record updated</value></data>
+  <data name="TenantStatusUpdated" xml:space="preserve"><value>Record status updated</value></data>
+  <data name="TenantAccountLinked" xml:space="preserve"><value>Tenant account linked</value></data>
+  <data name="TenantAccountUnlinked" xml:space="preserve"><value>Account unlinked</value></data>
+  <data name="TenantUnlinkTitle" xml:space="preserve"><value>Unlink this account?</value></data>
+  <data name="TenantUnlinkMessage" xml:space="preserve"><value>This account will no longer be able to open this tenant record.</value></data>
+  <data name="TenantValidationRequired" xml:space="preserve"><value>Enter {0}.</value></data>
+  <data name="TenantValidationPhone" xml:space="preserve"><value>Use 10–11 digits, starting with 0.</value></data>
+  <data name="TenantValidationEmail" xml:space="preserve"><value>Enter a valid email address.</value></data>
+  <data name="TenantValidationLength" xml:space="preserve"><value>{0} must not exceed {1} characters.</value></data>
+  <data name="TenantValidationBirthDate" xml:space="preserve"><value>Date of birth cannot be in the future.</value></data>
+  <data name="TenantValidationIssuedDate" xml:space="preserve"><value>Issue date cannot be before the date of birth.</value></data>
+  <data name="TenantErrorDuplicateId" xml:space="preserve"><value>This identity number is already used by another tenant record.</value></data>
+  <data name="TenantErrorDuplicatePhone" xml:space="preserve"><value>This phone number is already used by another record. Do you want to continue?</value></data>
+  <data name="TenantErrorConflict" xml:space="preserve"><value>This record changed elsewhere. Reload it before trying again.</value></data>
+  <data name="TenantErrorNotFound" xml:space="preserve"><value>Tenant record not found.</value></data>
+  <data name="TenantErrorAccountLinked" xml:space="preserve"><value>This account is already linked to another record.</value></data>
+  <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Only an account with the Tenant role can be linked.</value></data>
+  <data name="TenantErrorGeneric" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
+  <data name="TenantErrorForbidden" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
+  <data name="TenantSummary" xml:space="preserve"><value>Tenant overview</value></data>
+  <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Could not load tenant summary.</value></data>
+  <data name="TenantAllRecordsHint" xml:space="preserve"><value>Records in this system</value></data>
+  <data name="TenantActiveRateHint" xml:space="preserve"><value>active rate</value></data>
+  <data name="TenantAccountRateHint" xml:space="preserve"><value>accounts linked</value></data>
+  <data name="TenantFilters" xml:space="preserve"><value>Tenant filters</value></data>
+  <data name="TenantRowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
+  <data name="TenantExported" xml:space="preserve"><value>Exported {0} tenant records (CSV)</value></data>
+  <data name="TenantExportFailed" xml:space="preserve"><value>Could not export the tenant list.</value></data>
+  <data name="TenantActivateTitle" xml:space="preserve"><value>Reactivate tenant record</value></data>
+  <data name="TenantDeactivateTitle" xml:space="preserve"><value>Deactivate tenant record</value></data>
+  <data name="TenantActivateButton" xml:space="preserve"><value>Reactivate</value></data>
+  <data name="TenantDeactivateButton" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="TenantDuplicatePhoneTitle" xml:space="preserve"><value>Confirm duplicate phone number</value></data>
+  <data name="TenantCreatedAt" xml:space="preserve"><value>Created:</value></data>
+  <data name="TenantUpdatedAt" xml:space="preserve"><value>Updated:</value></data>
+  <data name="TenantProfileEditHint" xml:space="preserve"><value>Tenants can only update their phone number, email, and permanent address.</value></data>
 </root>

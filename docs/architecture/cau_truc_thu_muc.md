@@ -67,7 +67,12 @@ LTW/
 │   │   │   │   ├── IRoomUsageChecker.cs                     # điểm gọi VHT-98
 │   │   │   │   └── RoomScope.cs, RoomResult.cs, RoomErrorCodes.cs
 │   │   │   └── Tenants/
-│   │   │       └── Entities/Tenant.cs
+│   │   │       ├── Entities/Tenant.cs
+│   │   │       ├── DTOs/, Mapping/, Enums/
+│   │   │       ├── TenantService.cs, TenantCaller.cs, TenantScope.cs
+│   │   │       ├── Services/TenantPageService.cs
+│   │   │       ├── Pages/                 # TenantList, MyTenantProfile (VHT-17)
+│   │   │       └── Components/            # Dialog/form P3
 │   │   └── wwwroot/                    # app.css và static assets template
 │   ├── NhaTro.UnitTests/                # xUnit: scaffold
 │   ├── NhaTro.IntegrationTests/         # xUnit + WebApplicationFactory
@@ -89,6 +94,8 @@ LTW/
 ```
 
 **Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. Test projects are scaffolds, not proof of full feature coverage. P2 (nhà trọ/phòng) đã có DTO + service SQL ở `Features/Properties/` và `Features/Rooms/` (VHT-7), chưa có trang UI.
+
+**VHT-94 (đã triển khai - nền công tắc Quản lý):** `Features/Settings/` gồm `ManagerToggleCatalog` (21 mã SW-01…SW-16 + SW-15a…e), `Enums/`, `Entities/ManagerToggle`, `Services/ManagerToggleService` (đọc/ghi SQL + guard Chủ trọ), `Services/ManagerTogglePolicy` (mode → Allowed/RequiresApproval/Denied, cài thêm `IRoomChangePolicy` để P2 dùng lại), `DTOs/`; `Data/Configurations/Settings/ManagerToggleConfiguration.cs` + migration `AddManagerToggles` (seed 21 dòng, check constraint SW-15). Công tắc lưu SQL, **không** dùng `IOptions`/appsettings. UI cấu hình vẫn là NEW-04 (VHT-97), hàng đợi duyệt là VHT-96.
 
 ## 3. Khung thư mục đã tạo / Created folder scaffold
 

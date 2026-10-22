@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#e4f2ff", "surface-container-high": "#dce9ff", "on-error-container": "#93000a", "surface-bright": "#f8f9ff", "error-container": "#ffdad6", "secondary-fixed-dim": "#b7c4ff", "on-surface": "#0b1c30", "on-primary-fixed": "#00174b", "on-secondary-fixed": "#001551", "on-primary-fixed-variant": "#003ea8", "inverse-primary": "#b4c5ff", "on-tertiary-fixed-variant": "#004c6e", "tertiary-container": "#0074a6", "primary-container": "#2563eb", "on-surface-variant": "#434655", "on-secondary-container": "#fffbff", "primary": "#004ac6", "on-tertiary": "#ffffff", "surface-container-highest": "#d3e4fe", "surface-dim": "#cbdbf5", "tertiary": "#005a82", "background": "#f8f9ff", "secondary-fixed": "#dce1ff", "surface": "#f8f9ff", "error": "#ba1a1a", "surface-container": "#e5eeff", "outline-variant": "#c3c6d7", "secondary-container": "#4069f2", "secondary": "#1d4ed8", "primary-fixed-dim": "#b4c5ff", "on-background": "#0b1c30", "on-secondary": "#ffffff", "surface-tint": "#0053db", "inverse-surface": "#213145", "tertiary-fixed": "#c9e6ff", "surface-container-low": "#eff4ff", "primary-fixed": "#dbe1ff", "inverse-on-surface": "#eaf1ff", "on-secondary-fixed-variant": "#0039b5", "on-primary": "#ffffff", "on-tertiary-fixed": "#001e2f", "surface-variant": "#d3e4fe", "tertiary-fixed-dim": "#89ceff", "on-error": "#ffffff", "on-primary-container": "#eeefff", "surface-container-lowest": "#ffffff", "outline": "#737686" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1.5rem", "space-xs": "0.25rem", "gutter-desktop": "1.5rem", "margin": "1rem", "gutter": "1rem", "margin-desktop": "2rem", "space-xl": "2rem", "space-md": "1rem", "space-sm": "0.5rem" }, "fontFamily": { "label-sm": [ "Inter" ], "label-md": [ "Inter" ], "body-md": [ "Inter" ], "title-md": [ "Inter" ], "headline-lg": [ "Inter" ], "body-lg": [ "Inter" ], "metric-num": [ "Inter" ], "headline-md": [ "Inter" ], "body-sm": [ "Inter" ], "headline-xl-mobile": [ "Inter" ], "headline-xl": [ "Inter" ] }, "fontSize": { "label-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" } ], "label-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "title-md": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "metric-num": [ "28px", { "lineHeight": "34px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "fontWeight": "400" } ], "headline-xl-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "headline-xl": [ "32px", { "lineHeight": "40px", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-24 px-space-md flex items-center gap-space-sm"><div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[24px]">apartment</span></div><div class="flex flex-col"><span class="font-title-md text-title-md text-on-surface tracking-tight font-bold">AnGia Property</span><span class="font-body-sm text-body-sm text-on-surface-variant">Quản lý cho thuê</span></div></div><div class="px-space-md py-space-xs"><div class="px-space-sm py-1.5 bg-surface-container-low rounded-xl flex items-center justify-between text-on-surface-variant"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-primary">domain</span><span class="font-label-md text-label-md font-semibold text-on-surface truncate max-w-[140px]">Tòa nhà An Gia 01</span></div><span class="material-symbols-outlined text-[18px]">unfold_more</span></div></div><nav class="flex flex-col gap-1 px-space-md pt-space-md" data-active-classes="bg-primary-container text-on-primary-container font-semibold shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="tong-quan" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-label-md text-label-md">Tổng quan</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="quan-ly-nha-tro" href="#"><span class="material-symbols-outlined text-[20px]">home_work</span><span class="font-label-md text-label-md">Quản lý nhà trọ</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="quan-ly-phong" href="#"><span class="material-symbols-outlined text-[20px]">meeting_room</span><span class="font-label-md text-label-md">Quản lý phòng</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl transition-all bg-primary-container text-on-primary-container font-semibold shadow-sm" data-path="hop-dong" href="#"><span class="material-symbols-outlined text-[20px]">description</span><span class="font-label-md text-label-md">Hợp đồng</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="hoa-don" href="#"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-label-md text-label-md">Hóa đơn</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="cai-dat" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-md text-label-md">Cài đặt</span></a></nav></div><div class="p-space-md"><div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-1"><div class="flex items-center gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-tertiary">support_agent</span><span class="font-label-sm text-label-sm font-semibold">Hỗ trợ kỹ thuật</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Hotline: 1900 6868</p></div></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-8 w-full bg-primary-container px-space-lg flex items-center justify-between"><div class="flex items-center gap-2 text-on-primary-container"><span class="material-symbols-outlined text-[16px]">bolt</span><span class="font-label-sm text-label-sm font-semibold tracking-wide">⚡ Dữ liệu mẫu – chưa lưu SQL (Bản thử nghiệm Frontend)</span></div><span class="font-label-sm text-label-sm text-on-primary-container/80">Chế độ xem trước</span></div><div class="h-16 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-2 text-on-surface-variant"><a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="hop-dong" href="#">Hợp đồng</a><span class="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span><span class="font-label-md text-label-md font-semibold text-on-surface">Tạo hợp đồng mới</span></div><div class="flex items-center gap-space-md"><div class="relative"><button class="w-9 h-9 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span></button><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></div><div class="flex items-center gap-space-sm pl-space-sm border-l border-surface-container-high"><div class="flex flex-col text-right"><span class="font-label-md text-label-md font-semibold text-on-surface">Nguyen Van A</span><span class="font-body-sm text-body-sm text-on-surface-variant">Quản lý viên</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-24 bg-surface px-space-lg pb-space-xl flex-1"><div class="flex flex-col w-full">
+<!-- Top Demo Banner Notification -->
+<div class="w-full bg-surface-container-high text-on-surface rounded-xl p-space-md shadow-sm mb-space-lg flex items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md font-semibold text-primary">Chế độ Demo: Dữ liệu mẫu – chưa lưu SQL</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Toàn bộ thao tác chỉ lưu tạm trên bộ nhớ giao diện frontend (Frontend Memory Mock - VHT-11 Mục 1C).</span>
+</div>
+</div>
+<div class="shrink-0 flex items-center gap-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-primary-container text-on-primary-container font-semibold">
+        Mẫu 4P v2.4
+      </span>
+</div>
+</div>
+<!-- Header Info Row -->
+<div class="flex flex-col md:flex-row md:items-end justify-between pb-space-lg gap-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-2 text-on-surface-variant mb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">Mẫu hợp đồng 4P</span>
+<span class="text-on-surface-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Pháp lý &amp; Quản lý vận hành</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-surface">Tạo hợp đồng thuê phòng mới</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-container text-primary font-label-md text-label-md">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        Trạng thái: Soạn thảo
+      </span>
+</div>
+</div>
+<!-- Main Contract Form Grid -->
+<form class="grid grid-cols-12 gap-y-space-lg md:gap-x-space-lg" id="contractForm" onsubmit="event.preventDefault();">
+<!-- LEFT COLUMN: Primary Details & Tenant (7 cols on lg) -->
+<div class="col-span-12 lg:col-span-7 flex flex-col gap-space-lg">
+<!-- SECTION A: Property & Room Selection -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-sm">A</span>
+<h2 class="font-title-md text-title-md font-bold text-on-surface">Thông tin nhà trọ &amp; phòng</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Bắt buộc</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- House selection -->
+<div class="flex flex-col gap-1.5" id="houseGroup">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between" for="houseSelect">
+<span>Nhà trọ / Tòa nhà <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">2 cơ sở</span>
+</label>
+<div class="relative">
+<select class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all appearance-none cursor-pointer" id="houseSelect">
+<option disabled="" selected="" value="">-- Chọn nhà trọ / chi nhánh --</option>
+<!-- Populated via JS -->
+</select>
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant absolute right-3 top-2.5 pointer-events-none">expand_more</span>
+</div>
+<p class="font-body-sm text-body-sm text-error hidden" id="houseError"></p>
+</div>
+<!-- Room selection -->
+<div class="flex flex-col gap-1.5" id="roomGroup">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between" for="roomSelect">
+<span>Mã phòng <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal" id="roomCountLabel">Chưa chọn tòa</span>
+</label>
+<div class="relative">
+<select class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all appearance-none cursor-pointer" disabled="" id="roomSelect">
+<option disabled="" selected="" value="">Vui lòng chọn nhà trọ trước</option>
+</select>
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant absolute right-3 top-2.5 pointer-events-none">meeting_room</span>
+</div>
+<p class="font-body-sm text-body-sm text-error hidden" id="roomError"></p>
+</div>
+</div>
+<!-- Selected Room Detail Preview Pill -->
+<div class="mt-space-md p-space-sm bg-surface-container-low rounded-xl hidden items-center justify-between" id="roomSummaryBox">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface" id="roomDetailName">Phòng 101</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant" id="roomDetailMeta">Tầng 1 • Diện tích: 24m²</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Đơn giá niêm yết</span>
+<div class="font-title-md text-title-md font-bold text-primary" id="roomDetailPrice">0 ₫</div>
+</div>
+</div>
+</section>
+<!-- SECTION B: Tenant & Roommates -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-sm">B</span>
+<h2 class="font-title-md text-title-md font-bold text-on-surface">Thông tin khách thuê &amp; thành viên</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Khách đại diện &amp; người ở cùng</span>
+</div>
+<!-- Representative Select -->
+<div class="flex flex-col gap-1.5 mb-space-md" id="tenantGroup">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between" for="tenantSelect">
+<span>Người đại diện hợp đồng (Bên B) <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-primary">5 hồ sơ mẫu</span>
+</label>
+<div class="relative">
+<select class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all appearance-none cursor-pointer" id="tenantSelect">
+<option disabled="" selected="" value="">-- Chọn người đại diện ký hợp đồng --</option>
+<!-- Populated via JS -->
+</select>
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant absolute right-3 top-2.5 pointer-events-none">person_search</span>
+</div>
+<p class="font-body-sm text-body-sm text-error hidden" id="tenantError"></p>
+</div>
+<!-- Dynamic Representative Card info (revealed when selected) -->
+<div class="hidden p-space-md bg-surface-container-low rounded-xl mb-space-lg" id="tenantDetailCard">
+<div class="flex items-center justify-between pb-2 mb-2">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-label-sm" id="tenantAvatar">NV</div>
+<div>
+<span class="font-title-md text-title-md font-bold text-on-surface" id="tenantCardName">Nguyễn Văn Hưng</span>
+<span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-container text-on-primary-container">Đại diện ký</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span> Đã xác minh CCCD
+            </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-on-surface-variant">
+<div class="p-2 bg-surface-container-lowest rounded-lg">
+<span class="font-body-sm text-body-sm block text-outline">Số điện thoại:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface" id="tenantCardPhone">0903123456</span>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded-lg">
+<span class="font-body-sm text-body-sm block text-outline">Số CCCD / CMND:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface" id="tenantCardCccd">079095001234</span>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded-lg">
+<span class="font-body-sm text-body-sm block text-outline">Email:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate block" id="tenantCardEmail">hung.nv@example.com</span>
+</div>
+<div class="p-2 bg-surface-container-lowest rounded-lg">
+<span class="font-body-sm text-body-sm block text-outline">Địa chỉ thường trú:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface truncate block" id="tenantCardAddress">Hải Châu, Đà Nẵng</span>
+</div>
+</div>
+</div>
+<!-- Roommates Section -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Danh sách thành viên ở cùng</span>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-primary" id="memberCountBadge">1 người</span>
+</div>
+<button class="h-8 px-3 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-all" id="btnAddMember" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+              Thêm thành viên
+            </button>
+</div>
+<div class="flex flex-col gap-2.5 mt-1" id="membersContainer">
+<!-- Roommate item rows will be injected here -->
+</div>
+</div>
+</section>
+<!-- SECTION D: Notes -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+<label class="font-title-md text-title-md font-bold text-on-surface" for="contractNotes">Điều khoản bổ sung &amp; Ghi chú</label>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Không bắt buộc</span>
+</div>
+<textarea class="w-full p-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all" id="contractNotes" placeholder="Nhập quy định riêng, đồ dùng bàn giao thêm, biển số xe đăng ký gửi, hoặc điều khoản thỏa thuận mẫu 4P..." rows="3"></textarea>
+</section>
+</div>
+<!-- RIGHT COLUMN: Terms, Finance & Summary (5 cols on lg) -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-space-lg">
+<!-- SECTION C: Contract Duration & Terms -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-sm">C</span>
+<h2 class="font-title-md text-title-md font-bold text-on-surface">Thời hạn hợp đồng</h2>
+</div>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-primary" id="contractDurationBadge">
+            Thời hạn: --
+          </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<!-- Start Date -->
+<div class="flex flex-col gap-1.5" id="startDateGroup">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="startDateInput">
+              Ngày bắt đầu <span class="text-error">*</span>
+</label>
+<input class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all" id="startDateInput" type="date"/>
+<p class="font-body-sm text-body-sm text-error hidden" id="startDateError"></p>
+</div>
+<!-- End Date -->
+<div class="flex flex-col gap-1.5" id="endDateGroup">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="endDateInput">
+              Ngày kết thúc <span class="text-error">*</span>
+</label>
+<input class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all" id="endDateInput" type="date"/>
+<p class="font-body-sm text-body-sm text-error hidden" id="endDateError"></p>
+</div>
+</div>
+<div class="mt-space-md p-space-sm bg-surface-container-low rounded-lg flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">rule</span>
+<span>Quy tắc VHT-11: Hợp đồng 4P yêu cầu thời hạn thuê tối thiểu <strong>01 tháng</strong>.</span>
+</div>
+</section>
+<!-- SECTION D: Payment & Financials -->
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex items-center gap-space-sm">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-label-sm">D</span>
+<h2 class="font-title-md text-title-md font-bold text-on-surface">Tài chính &amp; Dịch vụ</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">VNĐ / chu kỳ</span>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Monthly Rent -->
+<div class="flex flex-col gap-1.5" id="rentGroup">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="rentPriceInput">
+                Giá thuê phòng (VNĐ/tháng) <span class="text-error">*</span>
+</label>
+<button class="text-[12px] font-semibold text-primary hover:underline" id="btnAutoFillRent" type="button">
+                Áp giá chuẩn phòng
+              </button>
+</div>
+<div class="relative">
+<input class="w-full h-[40px] pl-3 pr-12 bg-surface-container-low rounded-lg font-title-md text-title-md font-bold text-primary focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all" id="rentPriceInput" placeholder="Ví dụ: 4.500.000" type="text"/>
+<span class="absolute right-3 top-2.5 font-label-md text-label-md font-medium text-on-surface-variant pointer-events-none">VNĐ</span>
+</div>
+<p class="font-body-sm text-body-sm text-error hidden" id="rentError"></p>
+</div>
+<!-- Deposit -->
+<div class="flex flex-col gap-1.5" id="depositGroup">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="depositInput">
+                Tiền đặt cọc phòng <span class="text-error">*</span>
+</label>
+<span class="text-[12px] text-on-surface-variant" id="depositSuggestionLabel">Gợi ý: 1 tháng tiền thuê</span>
+</div>
+<div class="relative">
+<input class="w-full h-[40px] pl-3 pr-12 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:shadow-md transition-all font-semibold" id="depositInput" placeholder="Ví dụ: 4.500.000" type="text"/>
+<span class="absolute right-3 top-2.5 font-label-md text-label-md font-medium text-on-surface-variant pointer-events-none">VNĐ</span>
+</div>
+<p class="font-body-sm text-body-sm text-error hidden" id="depositError"></p>
+</div>
+<!-- Payment Cycle & Reading Day -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="cycleSelect">Chu kỳ thanh toán <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest appearance-none cursor-pointer" id="cycleSelect">
+<option selected="" value="1">Hàng tháng (1 tháng/lần)</option>
+<option value="2">2 tháng / lần</option>
+<option value="3">3 tháng / lần (Theo quý)</option>
+<option value="6">6 tháng / lần</option>
+<option value="12">12 tháng / lần (Theo năm)</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute right-3 top-2.5 pointer-events-none">calendar_month</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold" for="meterDayInput">Ngày chốt số điện nước</label>
+<div class="relative">
+<select class="w-full h-[40px] px-3 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest appearance-none cursor-pointer" id="meterDayInput">
+<option selected="" value="25">Ngày 25 hàng tháng</option>
+<option value="28">Ngày 28 hàng tháng</option>
+<option value="30">Ngày cuối cùng tháng</option>
+<option value="01">Ngày 01 đầu tháng</option>
+<option value="15">Ngày 15 giữa tháng</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute right-3 top-2.5 pointer-events-none">speed</span>
+</div>
+</div>
+</div>
+<!-- Standard Utility Rates Preview Card -->
+<div class="p-space-sm bg-surface-container-low rounded-xl flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">Bảng giá dịch vụ niêm yết tòa</span>
+<div class="grid grid-cols-2 gap-2 text-body-sm font-body-sm">
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded-lg">
+<span class="flex items-center gap-1.5 text-on-surface"><span class="material-symbols-outlined text-[16px] text-amber-500">bolt</span> Điện:</span>
+<span class="font-bold text-on-surface">3.500 ₫/kWh</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded-lg">
+<span class="flex items-center gap-1.5 text-on-surface"><span class="material-symbols-outlined text-[16px] text-blue-500">water_drop</span> Nước máy:</span>
+<span class="font-bold text-on-surface">20.000 ₫/m³</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded-lg">
+<span class="flex items-center gap-1.5 text-on-surface"><span class="material-symbols-outlined text-[16px] text-indigo-500">wifi</span> Internet:</span>
+<span class="font-bold text-on-surface">100.000 ₫/tháng</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-surface-container-lowest rounded-lg">
+<span class="flex items-center gap-1.5 text-on-surface"><span class="material-symbols-outlined text-[16px] text-emerald-500">delete_outline</span> Rác &amp; Vệ sinh:</span>
+<span class="font-bold text-on-surface">50.000 ₫/tháng</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Financial Total Summary Preview Card -->
+<div class="bg-gradient-to-br from-primary-container via-primary to-secondary text-on-primary rounded-xl p-space-lg shadow-md flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-primary-container/80 uppercase font-semibold tracking-wider">Tổng thanh toán ban đầu</span>
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div class="flex items-baseline justify-between pt-1">
+<span class="font-body-md text-body-md">Tiền cọc + Kỳ đầu:</span>
+<span class="font-metric-num text-metric-num font-bold tracking-tight" id="initialTotalSummary">0 ₫</span>
+</div>
+<div class="text-[12px] text-on-primary-container/90 pt-1 border-t border-white/10 flex justify-between">
+<span>Tiền cọc giữ phòng: <strong id="summaryDepositPart">0 ₫</strong></span>
+<span>Tiền phòng: <strong id="summaryRentPart">0 ₫</strong></span>
+</div>
+</div>
+</div>
+<!-- STICKY ACTION BAR AT BOTTOM OF FORM (12 Cols) -->
+<div class="col-span-12 sticky bottom-4 z-20 bg-surface-container-lowest/95 backdrop-blur-md rounded-xl p-space-md shadow-xl flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-2 text-on-surface-variant w-full sm:w-auto">
+<span class="material-symbols-outlined text-primary text-[20px]">security</span>
+<span class="font-body-sm text-body-sm">Biểu mẫu chuẩn 4P (Phòng - Phí - Pháp lý - Phạt vi phạm).</span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<!-- Cancel button -->
+<button class="h-10 px-space-md rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold transition-all" id="btnCancel" type="button">
+          Hủy bỏ
+        </button>
+<!-- Save Draft button -->
+<button class="h-10 px-space-md rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-all" id="btnSaveDraft" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+          Lưu nháp
+        </button>
+<!-- Submit for Review Button -->
+<button class="h-10 px-space-lg rounded-xl bg-primary hover:bg-secondary text-on-primary font-label-md text-label-md font-bold shadow-md flex items-center gap-2 transition-all" id="btnSubmitReview" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+          Gửi duyệt hợp đồng
+        </button>
+</div>
+</div>
+</form>
+<!-- MODAL: Confirmation / Summary Modal Before Submitting -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm hidden" id="reviewModal">
+<div class="bg-surface-container-lowest rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[921px] animate-in fade-in duration-150">
+<!-- Modal Header -->
+<div class="p-space-lg bg-surface-container-low flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface">Xác nhận gửi duyệt hợp đồng</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Bản xem trước Demo - Chưa lưu vào database</span>
+</div>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant" id="btnCloseModal" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Modal Body (Preview Content) -->
+<div class="p-space-lg overflow-y-auto flex flex-col gap-space-md font-body-md text-body-md text-on-surface">
+<div class="p-space-sm bg-primary/5 rounded-xl flex items-center gap-space-sm text-primary">
+<span class="material-symbols-outlined text-[22px]">info</span>
+<p class="font-body-sm text-body-sm">Vui lòng kiểm tra lại tất cả các thông tin thỏa thuận mẫu 4P trước khi chuyển sang trạng thái chờ phê duyệt.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<!-- House & Room -->
+<div class="p-3 bg-surface-container-low rounded-xl">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase font-semibold">Tòa nhà &amp; Phòng</span>
+<div class="font-title-md text-title-md font-bold text-on-surface mt-1" id="modalHouseRoom">--</div>
+<div class="text-body-sm text-on-surface-variant" id="modalRoomType">--</div>
+</div>
+<!-- Tenant -->
+<div class="p-3 bg-surface-container-low rounded-xl">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase font-semibold">Bên thuê (Đại diện)</span>
+<div class="font-title-md text-title-md font-bold text-on-surface mt-1" id="modalTenantName">--</div>
+<div class="text-body-sm text-on-surface-variant" id="modalTenantPhone">--</div>
+</div>
+<!-- Duration -->
+<div class="p-3 bg-surface-container-low rounded-xl">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase font-semibold">Thời hạn hiệu lực</span>
+<div class="font-label-md text-label-md font-bold text-on-surface mt-1" id="modalDuration">--</div>
+<div class="text-body-sm text-primary font-semibold" id="modalDurationMonths">--</div>
+</div>
+<!-- Financials -->
+<div class="p-3 bg-surface-container-low rounded-xl">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase font-semibold">Tiền phòng &amp; Đặt cọc</span>
+<div class="font-label-md text-label-md font-bold text-primary mt-1" id="modalFinance">--</div>
+<div class="text-body-sm text-on-surface-variant" id="modalCycle">--</div>
+</div>
+</div>
+<!-- Roommates List Preview in Modal -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-md text-label-md font-bold text-on-surface">Thành viên ở cùng:</span>
+<div class="p-3 bg-surface-container-low rounded-xl text-body-sm text-on-surface-variant" id="modalRoommatesList">
+            Chưa có thành viên thêm.
+          </div>
+</div>
+<!-- Notes Preview -->
+<div class="flex flex-col gap-1.5 hidden" id="modalNotesWrapper">
+<span class="font-label-md text-label-md font-bold text-on-surface">Ghi chú bổ sung:</span>
+<div class="p-3 bg-surface-container-low rounded-xl text-body-sm text-on-surface italic" id="modalNotes">
+            --
+          </div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-space-md bg-surface-container-low flex items-center justify-end gap-space-sm">
+<button class="h-10 px-4 rounded-xl bg-surface-container-lowest text-on-surface hover:bg-surface-container font-label-md text-label-md font-semibold transition-all" id="btnDismissModal" type="button">
+          Đóng &amp; Chỉnh sửa
+        </button>
+<button class="h-10 px-5 rounded-xl bg-primary hover:bg-secondary text-on-primary font-label-md text-label-md font-bold shadow-md transition-all flex items-center gap-2" id="btnConfirmCompleteModal" type="button">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+          Xác nhận hoàn tất demo
+        </button>
+</div>
+</div>
+</div>
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div class="fixed top-28 right-6 z-50 flex flex-col gap-2 pointer-events-none" id="toastContainer"></div>
+<!-- Client Side Interactive Logic -->
+<script>
+    // -------------------------------------------------------------
+    // 1. MOCK DATA DEFINITIONS (VHT-11 MỤC 1C)
+    // -------------------------------------------------------------
+    const mockHouses = [
+      {
+        id: "house-1",
+        name: "Nhà trọ An Cư 1 - Quận Bình Thạnh",
+        address: "128 Ung Văn Khiêm, P. 25, Q. Bình Thạnh, TP.HCM",
+        rooms: [
+          { id: "r101", code: "Phòng 101", floor: "Tầng 1", area: "22m²", price: 4200000, status: "available", statusLabel: "Còn trống" },
+          { id: "r102", code: "Phòng 102", floor: "Tầng 1", area: "25m² (Gác lửng)", price: 4800000, status: "occupied", statusLabel: "Đang ở" },
+          { id: "r201", code: "Phòng 201", floor: "Tầng 2 (Ban công)", area: "28m²", price: 5200000, status: "available", statusLabel: "Còn trống" },
+          { id: "r202", code: "Phòng 202", floor: "Tầng 2", area: "20m²", price: 3900000, status: "maintenance", statusLabel: "Bảo trì" }
+        ]
+      },
+      {
+        id: "house-2",
+        name: "Ký túc xá & Căn hộ GreenHouse - Quận 7",
+        address: "45 Đường số 7, Tân Kiểng, Quận 7, TP.HCM",
+        rooms: [
+          { id: "gh301", code: "Studio GH-301", floor: "Tầng 3 (Cửa sổ lớn)", area: "32m²", price: 6500000, status: "available", statusLabel: "Còn trống" },
+          { id: "gh302", code: "Studio GH-302", floor: "Tầng 3", area: "30m²", price: 6000000, status: "occupied", statusLabel: "Đang ở" },
+          { id: "gh401", code: "Duplex GH-401", floor: "Tầng 4 (Gác đúc)", area: "38m²", price: 7500000, status: "available", statusLabel: "Còn trống" },
+          { id: "gh402", code: "Phòng GH-402", floor: "Tầng 4", area: "24m²", price: 5000000, status: "maintenance", statusLabel: "Bảo trì" }
+        ]
+      }
+    ];
+
+    const mockTenants = [
+      {
+        id: "ten-1",
+        name: "Nguyễn Văn Hưng",
+        phone: "0903123456",
+        cccd: "079095001234",
+        email: "hung.nv@gmail.com",
+        address: "Hải Châu, Đà Nẵng",
+        avatar: "NH"
+      },
+      {
+        id: "ten-2",
+        name: "Trần Thị Mai",
+        phone: "0912345678",
+        cccd: "082198005678",
+        email: "mai.tran@outlook.com",
+        address: "TP. Buôn Ma Thuột, Đắk Lắk",
+        avatar: "TM"
+      },
+      {
+        id: "ten-3",
+        name: "Lê Hoàng Long",
+        phone: "0987654321",
+        cccd: "001201004321",
+        email: "long.lh@company.vn",
+        address: "Đống Đa, Hà Nội",
+        avatar: "LL"
+      },
+      {
+        id: "ten-4",
+        name: "Phạm Thu Trang",
+        phone: "0934567890",
+        cccd: "077196008899",
+        email: "trang.pham@edu.vn",
+        address: "Ninh Kiều, Cần Thơ",
+        avatar: "PT"
+      },
+      {
+        id: "ten-5",
+        name: "Đỗ Minh Tuấn",
+        phone: "0977889900",
+        cccd: "036094002233",
+        email: "tuan.dm@techcorp.io",
+        address: "TP. Nam Định, Nam Định",
+        avatar: "ĐT"
+      }
+    ];
+
+    // Roommates state
+    let roommates = [
+      { id: 'mem-1', name: 'Lê Văn An', phone: '0908889901', relation: 'Bạn cùng phòng / Đồng nghiệp' }
+    ];
+
+    // Format VND
+    function formatVND(amount) {
+      if (!amount || isNaN(amount)) return '0 ₫';
+      return new Intl.NumberFormat('vi-VN').format(amount) + ' ₫';
+    }
+
+    function parseVND(str) {
+      if (!str) return 0;
+      return parseInt(str.toString().replace(/\D/g, ''), 10) || 0;
+    }
+
+    // -------------------------------------------------------------
+    // 2. DOM ELEMENTS
+    // -------------------------------------------------------------
+    const houseSelect = document.getElementById('houseSelect');
+    const roomSelect = document.getElementById('roomSelect');
+    const roomCountLabel = document.getElementById('roomCountLabel');
+    const roomSummaryBox = document.getElementById('roomSummaryBox');
+    const roomDetailName = document.getElementById('roomDetailName');
+    const roomDetailMeta = document.getElementById('roomDetailMeta');
+    const roomDetailPrice = document.getElementById('roomDetailPrice');
+
+    const tenantSelect = document.getElementById('tenantSelect');
+    const tenantDetailCard = document.getElementById('tenantDetailCard');
+    const tenantAvatar = document.getElementById('tenantAvatar');
+    const tenantCardName = document.getElementById('tenantCardName');
+    const tenantCardPhone = document.getElementById('tenantCardPhone');
+    const tenantCardCccd = document.getElementById('tenantCardCccd');
+    const tenantCardEmail = document.getElementById('tenantCardEmail');
+    const tenantCardAddress = document.getElementById('tenantCardAddress');
+
+    const membersContainer = document.getElementById('membersContainer');
+    const btnAddMember = document.getElementById('btnAddMember');
+    const memberCountBadge = document.getElementById('memberCountBadge');
+
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+    const contractDurationBadge = document.getElementById('contractDurationBadge');
+
+    const rentPriceInput = document.getElementById('rentPriceInput');
+    const depositInput = document.getElementById('depositInput');
+    const btnAutoFillRent = document.getElementById('btnAutoFillRent');
+    const cycleSelect = document.getElementById('cycleSelect');
+    const initialTotalSummary = document.getElementById('initialTotalSummary');
+    const summaryDepositPart = document.getElementById('summaryDepositPart');
+    const summaryRentPart = document.getElementById('summaryRentPart');
+
+    const btnSubmitReview = document.getElementById('btnSubmitReview');
+    const btnSaveDraft = document.getElementById('btnSaveDraft');
+    const btnCancel = document.getElementById('btnCancel');
+
+    const reviewModal = document.getElementById('reviewModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnDismissModal = document.getElementById('btnDismissModal');
+    const btnConfirmCompleteModal = document.getElementById('btnConfirmCompleteModal');
+
+    // -------------------------------------------------------------
+    // 3. INITIALIZATION & POPULATION
+    // -------------------------------------------------------------
+    function init() {
+      // 1. Populate Houses
+      mockHouses.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h.id;
+        opt.textContent = `${h.name}`;
+        houseSelect.appendChild(opt);
+      });
+
+      // 2. Populate Tenants
+      mockTenants.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.name} - CCCD: ${t.cccd.substring(0, 4)}... - SĐT: ${t.phone}`;
+        tenantSelect.appendChild(opt);
+      });
+
+      // 3. Default Dates (Today to +6 months)
+      const today = new Date();
+      const sixMonthsLater = new Date();
+      sixMonthsLater.setMonth(today.getMonth() + 6);
+
+      startDateInput.value = today.toISOString().split('T')[0];
+      endDateInput.value = sixMonthsLater.toISOString().split('T')[0];
+      updateDurationBadge();
+
+      // Render initial roommates
+      renderRoommates();
+
+      // Calculate initial financial summary
+      updateFinancialSummary();
+    }
+
+    // -------------------------------------------------------------
+    // 4. EVENT LISTENERS
+    // -------------------------------------------------------------
+    // House change -> Update rooms
+    houseSelect.addEventListener('change', function() {
+      clearFieldError('house');
+      const selectedHouseId = this.value;
+      const house = mockHouses.find(h => h.id === selectedHouseId);
+
+      roomSelect.innerHTML = '<option value="" disabled selected>-- Chọn phòng trọ --</option>';
+      roomSummaryBox.classList.add('hidden');
+      roomSummaryBox.classList.remove('flex');
+
+      if (house && house.rooms.length > 0) {
+        roomSelect.disabled = false;
+        roomCountLabel.textContent = `${house.rooms.length} phòng khả dụng`;
+
+        house.rooms.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          const statusTag = r.status === 'available' ? '🟢 Còn trống' : (r.status === 'occupied' ? '🔴 Đang ở' : '🟡 Bảo trì');
+          opt.textContent = `${r.code} - ${formatVND(r.price)}/tháng [${statusTag}]`;
+          if (r.status !== 'available') {
+            opt.disabled = true;
+          }
+          roomSelect.appendChild(opt);
+        });
+      } else {
+        roomSelect.disabled = true;
+        roomCountLabel.textContent = '0 phòng';
+      }
+    });
+
+    // Room change -> Update price preview & suggest rent
+    roomSelect.addEventListener('change', function() {
+      clearFieldError('room');
+      const house = mockHouses.find(h => h.id === houseSelect.value);
+      if (!house) return;
+      const room = house.rooms.find(r => r.id === this.value);
+      if (!room) return;
+
+      // Show summary box
+      roomDetailName.textContent = `${room.code} (${room.floor})`;
+      roomDetailMeta.textContent = `${house.name} • ${room.area}`;
+      roomDetailPrice.textContent = formatVND(room.price);
+      roomSummaryBox.classList.remove('hidden');
+      roomSummaryBox.classList.add('flex');
+
+      // Auto-populate rent price & deposit
+      rentPriceInput.value = new Intl.NumberFormat('vi-VN').format(room.price);
+      depositInput.value = new Intl.NumberFormat('vi-VN').format(room.price);
+      clearFieldError('rent');
+      clearFieldError('deposit');
+      updateFinancialSummary();
+    });
+
+    // Auto-fill standard price
+    btnAutoFillRent.addEventListener('click', () => {
+      const house = mockHouses.find(h => h.id === houseSelect.value);
+      if (!house) return;
+      const room = house.rooms.find(r => r.id === roomSelect.value);
+      if (room) {
+        rentPriceInput.value = new Intl.NumberFormat('vi-VN').format(room.price);
+        updateFinancialSummary();
+        showToast('Đã khôi phục mức giá niêm yết theo phòng', 'info');
+      }
+    });
+
+    // Tenant change -> Show tenant card
+    tenantSelect.addEventListener('change', function() {
+      clearFieldError('tenant');
+      const tenant = mockTenants.find(t => t.id === this.value);
+      if (!tenant) return;
+
+      tenantAvatar.textContent = tenant.avatar;
+      tenantCardName.textContent = tenant.name;
+      tenantCardPhone.textContent = tenant.phone;
+      tenantCardCccd.textContent = tenant.cccd;
+      tenantCardEmail.textContent = tenant.email;
+      tenantCardAddress.textContent = tenant.address;
+      tenantDetailCard.classList.remove('hidden');
+    });
+
+    // Format Currency inputs on blur & input
+    [rentPriceInput, depositInput].forEach(inp => {
+      inp.addEventListener('input', function() {
+        const num = parseVND(this.value);
+        this.value = num ? new Intl.NumberFormat('vi-VN').format(num) : '';
+        updateFinancialSummary();
+      });
+    });
+
+    // Date changes -> Validate duration
+    startDateInput.addEventListener('change', () => {
+      validateDates();
+      updateDurationBadge();
+    });
+    endDateInput.addEventListener('change', () => {
+      validateDates();
+      updateDurationBadge();
+    });
+
+    // Roommate interactions
+    btnAddMember.addEventListener('click', () => {
+      const newId = 'mem-' + Date.now();
+      roommates.push({ id: newId, name: '', phone: '', relation: 'Người ở cùng' });
+      renderRoommates();
+      showToast('Đã thêm 1 dòng thành viên ở cùng', 'info');
+    });
+
+    function renderRoommates() {
+      membersContainer.innerHTML = '';
+      memberCountBadge.textContent = `${roommates.length} người`;
+
+      if (roommates.length === 0) {
+        membersContainer.innerHTML = `
+          <div class="p-3 bg-surface-container-low rounded-lg text-center text-on-surface-variant font-body-sm text-body-sm">
+            Chưa có người ở cùng. Bấm "+ Thêm thành viên" nếu có.
+          </div>
+        `;
+        return;
+      }
+
+      roommates.forEach((m, idx) => {
+        const row = document.createElement('div');
+        row.className = "p-2.5 bg-surface-container-low rounded-xl flex flex-col sm:flex-row items-center gap-2";
+        row.innerHTML = `
+          <div class="w-6 h-6 rounded-md bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[11px] shrink-0">
+            ${idx + 1}
+          </div>
+          <div class="flex-1 w-full min-w-0">
+            <input type="text" placeholder="Họ và tên thành viên *" value="${escapeHtml(m.name)}" oninput="updateMemberName('${m.id}', this.value)" class="w-full h-9 px-2.5 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:shadow-sm" />
+          </div>
+          <div class="w-full sm:w-36 shrink-0">
+            <input type="text" placeholder="Số điện thoại" value="${escapeHtml(m.phone)}" oninput="updateMemberPhone('${m.id}', this.value)" class="w-full h-9 px-2.5 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:shadow-sm" />
+          </div>
+          <div class="w-full sm:w-44 shrink-0">
+            <select onchange="updateMemberRelation('${m.id}', this.value)" class="w-full h-9 px-2 bg-surface-container-lowest rounded-lg font-body-sm text-body-sm text-on-surface focus:outline-none focus:shadow-sm cursor-pointer">
+              <option value="Bạn cùng phòng" ${m.relation.includes('Bạn') ? 'selected' : ''}>Bạn cùng phòng</option>
+              <option value="Vợ / Chồng" ${m.relation.includes('Vợ') ? 'selected' : ''}>Vợ / Chồng</option>
+              <option value="Anh / Chị / Em" ${m.relation.includes('Anh') ? 'selected' : ''}>Anh / Chị / Em</option>
+              <option value="Con cái" ${m.relation.includes('Con') ? 'selected' : ''}>Con cái</option>
+              <option value="Đồng nghiệp" ${m.relation.includes('Đồng') ? 'selected' : ''}>Đồng nghiệp</option>
+            </select>
+          </div>
+          <button type="button" onclick="removeMember('${m.id}')" class="w-8 h-8 rounded-lg hover:bg-error-container text-on-surface-variant hover:text-error flex items-center justify-center transition-all shrink-0" title="Xóa thành viên">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        `;
+        membersContainer.appendChild(row);
+      });
+    }
+
+    window.updateMemberName = function(id, val) {
+      const item = roommates.find(x => x.id === id);
+      if (item) item.name = val;
+    };
+    window.updateMemberPhone = function(id, val) {
+      const item = roommates.find(x => x.id === id);
+      if (item) item.phone = val;
+    };
+    window.updateMemberRelation = function(id, val) {
+      const item = roommates.find(x => x.id === id);
+      if (item) item.relation = val;
+    };
+    window.removeMember = function(id) {
+      roommates = roommates.filter(x => x.id !== id);
+      renderRoommates();
+      showToast('Đã xóa thành viên khỏi danh sách', 'info');
+    };
+
+    function escapeHtml(text) {
+      return text ? text.replace(/"/g, '&quot;') : '';
+    }
+
+    // -------------------------------------------------------------
+    // 5. VALIDATION LOGIC
+    // -------------------------------------------------------------
+    function validateDates() {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+      const errorEl = document.getElementById('endDateError');
+
+      if (!startDateInput.value) {
+        showFieldError('startDate', 'Vui lòng chọn ngày bắt đầu hợp đồng');
+        return false;
+      } else {
+        clearFieldError('startDate');
+      }
+
+      if (!endDateInput.value) {
+        showFieldError('endDate', 'Vui lòng chọn ngày kết thúc hợp đồng');
+        return false;
+      }
+
+      // Check at least 1 month
+      const minDate = new Date(start);
+      minDate.setMonth(minDate.getMonth() + 1);
+
+      if (end < minDate) {
+        showFieldError('endDate', 'Ngày kết thúc phải sau ngày bắt đầu ít nhất 01 tháng theo quy định mẫu 4P.');
+        return false;
+      }
+
+      clearFieldError('endDate');
+      return true;
+    }
+
+    function updateDurationBadge() {
+      if (!startDateInput.value || !endDateInput.value) {
+        contractDurationBadge.textContent = "Thời hạn: --";
+        return;
+      }
+      const s = new Date(startDateInput.value);
+      const e = new Date(endDateInput.value);
+      if (e <= s) {
+        contractDurationBadge.textContent = "Thời hạn không hợp lệ";
+        return;
+      }
+      // Calculate months approximate
+      const months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+      contractDurationBadge.textContent = `Thời hạn: ~${Math.max(1, months)} tháng`;
+    }
+
+    function updateFinancialSummary() {
+      const rent = parseVND(rentPriceInput.value);
+      const deposit = parseVND(depositInput.value);
+      const total = rent + deposit;
+
+      initialTotalSummary.textContent = formatVND(total);
+      summaryRentPart.textContent = formatVND(rent);
+      summaryDepositPart.textContent = formatVND(deposit);
+    }
+
+    function showFieldError(field, msg) {
+      const el = document.getElementById(`${field}Error`);
+      const grp = document.getElementById(`${field}Group`);
+      if (el) {
+        el.textContent = msg;
+        el.classList.remove('hidden');
+      }
+      if (grp) {
+        grp.classList.add('text-error');
+      }
+    }
+
+    function clearFieldError(field) {
+      const el = document.getElementById(`${field}Error`);
+      const grp = document.getElementById(`${field}Group`);
+      if (el) {
+        el.textContent = '';
+        el.classList.add('hidden');
+      }
+      if (grp) {
+        grp.classList.remove('text-error');
+      }
+    }
+
+    function validateFullForm() {
+      let isValid = true;
+      let firstErrorElement = null;
+
+      // 1. House
+      if (!houseSelect.value) {
+        showFieldError('house', 'Vui lòng chọn nhà trọ / tòa nhà');
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = houseSelect;
+      } else {
+        clearFieldError('house');
+      }
+
+      // 2. Room
+      if (!roomSelect.value) {
+        showFieldError('room', 'Vui lòng chọn mã phòng cần cho thuê');
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = roomSelect;
+      } else {
+        clearFieldError('room');
+      }
+
+      // 3. Tenant
+      if (!tenantSelect.value) {
+        showFieldError('tenant', 'Vui lòng chọn khách đại diện hợp đồng (Bên B)');
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = tenantSelect;
+      } else {
+        clearFieldError('tenant');
+      }
+
+      // 4. Dates
+      if (!validateDates()) {
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = endDateInput;
+      }
+
+      // 5. Rent price
+      const rentVal = parseVND(rentPriceInput.value);
+      if (!rentVal || rentVal <= 0) {
+        showFieldError('rent', 'Giá thuê phòng phải lớn hơn 0 VNĐ');
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = rentPriceInput;
+      } else {
+        clearFieldError('rent');
+      }
+
+      // 6. Deposit
+      const depositVal = parseVND(depositInput.value);
+      if (depositVal < 0 || depositInput.value.trim() === '') {
+        showFieldError('deposit', 'Tiền đặt cọc không được để trống (nhập 0 nếu không thu)');
+        isValid = false;
+        if (!firstErrorElement) firstErrorElement = depositInput;
+      } else {
+        clearFieldError('deposit');
+      }
+
+      if (!isValid && firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorElement.focus();
+        showToast('Vui lòng kiểm tra và sửa các trường thông tin báo đỏ', 'error');
+      }
+
+      return isValid;
+    }
+
+    // -------------------------------------------------------------
+    // 6. ACTIONS & SUBMISSION
+    // -------------------------------------------------------------
+    btnSubmitReview.addEventListener('click', () => {
+      if (!validateFullForm()) return;
+
+      // Fill modal data
+      const house = mockHouses.find(h => h.id === houseSelect.value);
+      const room = house.rooms.find(r => r.id === roomSelect.value);
+      const tenant = mockTenants.find(t => t.id === tenantSelect.value);
+      const cycleText = cycleSelect.options[cycleSelect.selectedIndex].text;
+
+      document.getElementById('modalHouseRoom').textContent = `${room.code} - ${house.name}`;
+      document.getElementById('modalRoomType').textContent = `${room.floor} • Diện tích ${room.area}`;
+
+      document.getElementById('modalTenantName').textContent = tenant.name;
+      document.getElementById('modalTenantPhone').textContent = `${tenant.phone} (CCCD: ${tenant.cccd})`;
+
+      document.getElementById('modalDuration').textContent = `Từ ${startDateInput.value} đến ${endDateInput.value}`;
+      document.getElementById('modalDurationMonths').textContent = contractDurationBadge.textContent;
+
+      document.getElementById('modalFinance').textContent = `${rentPriceInput.value} ₫/tháng • Cọc: ${depositInput.value} ₫`;
+      document.getElementById('modalCycle').textContent = `Kỳ hạn: ${cycleText} • Chốt số: ngày ${document.getElementById('meterDayInput').value}`;
+
+      // Roommates in modal
+      const modalRoommatesList = document.getElementById('modalRoommatesList');
+      const validRoommates = roommates.filter(r => r.name.trim() !== '');
+      if (validRoommates.length > 0) {
+        modalRoommatesList.innerHTML = validRoommates.map(r => `
+          <div class="flex items-center justify-between py-1 border-b border-surface-container-high last:border-none">
+            <span class="font-medium text-on-surface">• ${escapeHtml(r.name)} (${r.relation})</span>
+            <span class="text-on-surface-variant">${r.phone || 'Không có SĐT'}</span>
+          </div>
+        `).join('');
+      } else {
+        modalRoommatesList.textContent = 'Không có thành viên ở cùng (chỉ có người đại diện đứng tên).';
+      }
+
+      // Notes
+      const notes = document.getElementById('contractNotes').value.trim();
+      const modalNotesWrapper = document.getElementById('modalNotesWrapper');
+      if (notes) {
+        document.getElementById('modalNotes').textContent = notes;
+        modalNotesWrapper.classList.remove('hidden');
+      } else {
+        modalNotesWrapper.classList.add('hidden');
+      }
+
+      // Open Modal
+      reviewModal.classList.remove('hidden');
+    });
+
+    // Close Modal triggers
+    [btnCloseModal, btnDismissModal].forEach(btn => {
+      btn.addEventListener('click', () => {
+        reviewModal.classList.add('hidden');
+      });
+    });
+
+    // Final confirmation in modal
+    btnConfirmCompleteModal.addEventListener('click', () => {
+      reviewModal.classList.add('hidden');
+      showToast('🎉 Hợp đồng đã được tạo và gửi duyệt thành công (Bản Demo Frontend)!', 'success');
+      setTimeout(() => {
+        showToast('ℹ️ Trạng thái: Đang chờ chủ nhà duyệt điện tử (Mẫu 4P)', 'info');
+      }, 1000);
+    });
+
+    // Save Draft
+    btnSaveDraft.addEventListener('click', () => {
+      showToast('Đã lưu nháp vào bộ nhớ tạm (Demo Frontend Storage)', 'info');
+    });
+
+    // Cancel Button
+    btnCancel.addEventListener('click', () => {
+      if (confirm('Bạn có chắc chắn muốn hủy bỏ việc tạo hợp đồng? Dữ liệu chưa lưu sẽ bị xóa.')) {
+        document.getElementById('contractForm').reset();
+        tenantDetailCard.classList.add('hidden');
+        roomSummaryBox.classList.add('hidden');
+        roomSummaryBox.classList.remove('flex');
+        roomSelect.disabled = true;
+        roommates = [];
+        renderRoommates();
+        updateFinancialSummary();
+        showToast('Đã đặt lại biểu mẫu hợp đồng', 'info');
+      }
+    });
+
+    // -------------------------------------------------------------
+    // 7. TOAST NOTIFICATION UTILITY
+    // -------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-primary-container text-on-primary-container',
+        error: 'bg-error-container text-on-error-container',
+        info: 'bg-surface-container-highest text-on-surface'
+      };
+
+      const icon = {
+        success: 'check_circle',
+        error: 'error',
+        info: 'info'
+      };
+
+      toast.className = `px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 transition-all transform duration-200 pointer-events-auto ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <span class="material-symbols-outlined text-[20px]">${icon[type] || 'info'}</span>
+        <span class="font-label-md text-label-md font-semibold">${message}</span>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 250);
+      }, 4000);
+    }
+
+    // Initialize application logic on ready
+    document.addEventListener('DOMContentLoaded', init);
+    // Call init right away in case DOMContentLoaded already fired
+    init();
+  </script>
+</div></main></div></body></html>

@@ -9,8 +9,13 @@ namespace Web.Features.Tenants;
 /// </summary>
 public interface ITenantService
 {
+    Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default);
+
     Task<PagedResult<TenantListItemDto>> ListAsync(
         TenantFilterRequest filter, TenantCaller caller, CancellationToken ct = default);
+
+    Task<List<TenantAccountOptionDto>> SearchUnlinkedAccountsAsync(
+        string? keyword, int limit, TenantCaller caller, CancellationToken ct = default);
 
     Task<TenantResult> GetAsync(int id, TenantCaller caller, CancellationToken ct = default);
 

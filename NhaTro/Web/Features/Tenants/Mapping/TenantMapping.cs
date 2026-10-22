@@ -8,14 +8,15 @@ namespace Web.Features.Tenants.Mapping;
 // ApplyX gia dinh DTO da duoc Normalize() o service (mot noi chuan hoa duy nhat).
 public static class TenantMapping
 {
-    public static TenantListItemDto ToListItem(Tenant e, bool hasActiveContract = false) => new()
+    public static TenantListItemDto ToListItem(
+        Tenant e, bool hasActiveContract = false, bool includeAccountStatus = true) => new()
     {
         Id = e.Id,
         FullName = e.FullName,
         PhoneNumber = e.Phone,
         IdNumberMasked = TenantNormalizer.MaskIdNumber(e.CitizenId),
         IsActive = e.IsActive,
-        HasAccount = e.UserId is not null,
+        HasAccount = includeAccountStatus ? e.UserId is not null : null,
         HasActiveContract = hasActiveContract,
     };
 
@@ -28,7 +29,8 @@ public static class TenantMapping
         HasActiveContract = hasActiveContract,
     };
 
-    public static TenantDetailDto ToDetail(Tenant e, bool includeNote, bool revealIdNumber) => new()
+    public static TenantDetailDto ToDetail(
+        Tenant e, bool includeNote, bool revealIdNumber, bool includeAccountStatus = true) => new()
     {
         Id = e.Id,
         FullName = e.FullName,
@@ -43,7 +45,7 @@ public static class TenantMapping
         IdIssuedPlace = e.IdIssuedPlace,
         Note = includeNote ? e.Note : null,
         IsActive = e.IsActive,
-        HasAccount = e.UserId is not null,
+        HasAccount = includeAccountStatus ? e.UserId is not null : null,
         CreatedAt = ToOffset(e.CreatedAt),
         UpdatedAt = e.UpdatedAt is { } updatedAt ? ToOffset(updatedAt) : null,
         RowVersion = Convert.ToBase64String(e.RowVersion),

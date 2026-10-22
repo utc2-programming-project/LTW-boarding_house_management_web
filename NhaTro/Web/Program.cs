@@ -17,7 +17,9 @@ using Web.Endpoints.Files;
 using Web.Features.Accounts;
 using Web.Features.Properties;
 using Web.Features.Rooms;
+using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Storage;
@@ -97,8 +99,27 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = true;
+        // VHT-8: tam thoi tat xac thuc email (chua cau hinh SMTP - lam sau).
+        // Bat lai khi co IEmailSender that, neu khong tai khoan do quan tri tao se khong dang nhap duoc.
+        options.SignIn.RequireConfirmedAccount = false;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+
+        // Do manh mat khau theo dac ta VHT-8: toi thieu 8 ky tu, co chu hoa, chu thuong, so.
+        // Dac ta KHONG yeu cau ky tu dac biet nen tat de tranh bao loi kho hieu.
+        options.Password.RequiredLength = 8;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredUniqueChars = 1;
+
+        // Khoa tam thoi khi dang nhap sai nhieu lan (khac voi khoa tai khoan do quan tri - D1).
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+        // Ten dang nhap = email (VHT-8): khong cho trung email.
+        options.User.RequireUniqueEmail = true;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -112,15 +133,26 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
 });
 builder.Services.AddScoped<RoleService>();
+// VHT-8: service tai khoan P1 (ho so ca nhan + quan tri tai khoan theo D1).
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 // VHT-7 (dot 1C): service nha tro/phong P2. Policy cong tac va kiem hop dong la diem goi cho VHT-94/VHT-98.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<IRoomChangePolicy, RoomChangePolicyStub>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
+
+// VHT-94 (dot 1D): 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
+// Service doc/ghi chi cho Chu tro; policy chi doc de quyet dinh thay Quan ly.
+builder.Services.AddScoped<ManagerToggleService>();
+builder.Services.AddScoped<IManagerToggleService>(sp => sp.GetRequiredService<ManagerToggleService>());
+builder.Services.AddScoped<IManagerToggleReader>(sp => sp.GetRequiredService<ManagerToggleService>());
+builder.Services.AddScoped<ManagerTogglePolicy>();
+builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
+builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 
 // VHT-23 (dot 1C): service khach thue P3, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<TenantPageService>();
 
 // VHT-23: chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
@@ -251,3 +283,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// VHT-14: WebApplicationFactory can resolve the entry-point assembly for HTTP/auth integration tests.
+public partial class Program { }

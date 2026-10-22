@@ -17,14 +17,15 @@
         </div>
         <AuthorizeView>
             <Authorized Context="auth">
-                <a class="avatar" href="Account/Manage" aria-label="@L["MyAccount"]" title="@L["MyAccount"]">@Initials(auth.User.Identity?.Name)</a>
+                <a class="avatar" href="@(auth.User.IsInRole(Web.Features.Accounts.Roles.KhachThue) ? "tenant/profile" : "profile")"
+                   aria-label="@L["MyAccount"]" title="@L["MyAccount"]">@Initials(auth.User.Identity?.Name)</a>
                 <form action="Account/Logout" method="post" data-enhance="false">
                     <AntiforgeryToken />
                     <input type="hidden" name="returnUrl" value="" />
                     <button type="submit" class="icon-button" aria-label="@L["SignOut"]" title="@L["SignOut"]"><LucideIcon Name="logout" /></button>
                 </form>
             </Authorized>
-            <NotAuthorized><a class="btn btn-secondary sign-in" href="Account/Login">@L["SignIn"]</a></NotAuthorized>
+            <NotAuthorized><a class="btn btn-secondary sign-in" href="login">@L["SignIn"]</a></NotAuthorized>
         </AuthorizeView>
     </div>
 </header>
