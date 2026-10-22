@@ -163,8 +163,8 @@ dotnet build NhaTro/NhaTro.slnx --nologo
 Build succeeded. 0 Warning(s), 0 Error(s)
 
 dotnet test NhaTro/NhaTro.slnx --nologo
-Unit:        Passed! Failed: 0, Passed: 234, Skipped: 0
-Integration: Passed! Failed: 0, Passed: 30,  Skipped: 0
+Unit:        Passed! Failed: 0, Passed: 323, Skipped: 0
+Integration: Passed! Failed: 0, Passed: 42,  Skipped: 0
 E2E:         Passed! Failed: 0, Passed: 1,   Skipped: 0
 ```
 
