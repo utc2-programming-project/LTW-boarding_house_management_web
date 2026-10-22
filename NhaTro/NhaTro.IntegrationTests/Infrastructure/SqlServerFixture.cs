@@ -95,6 +95,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
+        // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
+        await db.StoredFiles.ExecuteDeleteAsync();
         // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
         await db.ManagerToggles.ExecuteUpdateAsync(s => s.SetProperty(t => t.UpdatedByUserId, (string?)null));
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
@@ -112,8 +114,18 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
         if (role is null)
         {
-            role = new IdentityRole(roleName);
+            role = new IdentityRole(roleName)
+            {
+                // UserManager.GetUsersInRoleAsync tra theo NormalizedName; seed thang vao Db
+                // phai tu dien cot nay, neu khong RoleService khong thay Admin cuoi cung.
+                NormalizedName = roleName.ToUpperInvariant(),
+            };
             db.Roles.Add(role);
+            await db.SaveChangesAsync();
+        }
+        else if (role.NormalizedName is null)
+        {
+            role.NormalizedName = roleName.ToUpperInvariant();
             await db.SaveChangesAsync();
         }
 
