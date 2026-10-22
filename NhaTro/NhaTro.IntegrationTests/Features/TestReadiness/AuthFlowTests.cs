@@ -56,7 +56,9 @@ public sealed class AuthFlowTests(WebAppFixture fixture) : IClassFixture<WebAppF
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Invalid login attempt", html);
+        // Thông báo lỗi đã bản địa hóa (vi-VN), nên kiểm khối alert thay vì chuỗi tiếng Anh.
+        Assert.Contains("class=\"form-alert\"", html);
+        Assert.Contains("role=\"alert\"", html);
     }
 
     [WebAppFact]

@@ -53,9 +53,9 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var propertyService = new PropertyService(db, TimeProvider.System);
+        var propertyService = new PropertyService(fixture, TimeProvider.System);
         var roomService = new RoomService(
-            db,
+            fixture,
             TimeProvider.System,
             new FixedRoomChangePolicy(RoomChangeDecision.Allowed),
             new NoActiveContractRoomUsageChecker());
@@ -87,9 +87,9 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var propertyService = new PropertyService(db, TimeProvider.System);
+        var propertyService = new PropertyService(fixture, TimeProvider.System);
         var roomService = new RoomService(
-            db,
+            fixture,
             TimeProvider.System,
             new FixedRoomChangePolicy(RoomChangeDecision.Allowed),
             new NoActiveContractRoomUsageChecker());
@@ -129,9 +129,9 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var propertyService = new PropertyService(db, TimeProvider.System);
+        var propertyService = new PropertyService(fixture, TimeProvider.System);
         var roomService = new RoomService(
-            db,
+            fixture,
             TimeProvider.System,
             new FixedRoomChangePolicy(RoomChangeDecision.Allowed),
             new NoActiveContractRoomUsageChecker());
@@ -151,7 +151,7 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var service = NewRoomService(db, RoomChangeDecision.Allowed);
+        var service = NewRoomService(fixture, RoomChangeDecision.Allowed);
         var quanLy = new PropertyCaller(ids.QuanLyId, Roles.QuanLy);
 
         var result = await service.UpdateAsync(ids.RoomAId, RoomUpdate(ids.PropertyAId, 3_500_000m), quanLy);
@@ -170,7 +170,7 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var service = NewRoomService(db, RoomChangeDecision.RequiresApproval);
+        var service = NewRoomService(fixture, RoomChangeDecision.RequiresApproval);
         var quanLy = new PropertyCaller(ids.QuanLyId, Roles.QuanLy);
 
         var result = await service.UpdateAsync(ids.RoomAId, RoomUpdate(ids.PropertyAId, 3_500_000m), quanLy);
@@ -189,7 +189,7 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
         await using var db = fixture.CreateContext();
         var ids = await TestDataSeeder.SeedAsync(db);
 
-        var service = NewRoomService(db, RoomChangeDecision.Denied);
+        var service = NewRoomService(fixture, RoomChangeDecision.Denied);
         var quanLy = new PropertyCaller(ids.QuanLyId, Roles.QuanLy);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -200,8 +200,10 @@ public sealed class TestReadinessIntegrationTests(SqlServerFixture fixture)
             await db.Rooms.Where(r => r.Id == ids.RoomAId).Select(r => r.StandardPrice).SingleAsync());
     }
 
-    private static RoomService NewRoomService(ApplicationDbContext db, RoomChangeDecision decision) =>
-        new(db, TimeProvider.System, new FixedRoomChangePolicy(decision), new NoActiveContractRoomUsageChecker());
+    private static RoomService NewRoomService(
+        IDbContextFactory<ApplicationDbContext> dbContextFactory,
+        RoomChangeDecision decision) =>
+        new(dbContextFactory, TimeProvider.System, new FixedRoomChangePolicy(decision), new NoActiveContractRoomUsageChecker());
 
     private static RoomSave RoomUpdate(int propertyId, decimal price) => new()
     {

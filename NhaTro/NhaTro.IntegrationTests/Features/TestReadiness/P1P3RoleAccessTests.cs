@@ -14,6 +14,8 @@ using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
 using Web.Features.Rooms;
 using Web.Features.Rooms.DTOs;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
@@ -43,6 +45,8 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
     private static readonly PropertyCaller Manager = new("manager-1", Roles.QuanLy);
 
     private static readonly TenantCaller TenantManager = new("manager-1", Roles.QuanLy);
+    // Gắn tài khoản khách thuê là thao tác của Chủ trọ (TenantService.EnsureOwner).
+    private static readonly TenantCaller TenantOwner = new("owner-a", Roles.ChuTro);
     private static readonly TenantCaller TenantA = new("khach-1", Roles.KhachThue);
     private static readonly TenantCaller TenantB = new("khach-2", Roles.KhachThue);
     private static readonly TenantCaller Admin = new("admin-1", Roles.Admin);
@@ -53,17 +57,20 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
     private static readonly byte[] JpegBytes =
         [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01];
 
-    private static RoomService NewRoomService(ApplicationDbContext db) =>
-        new(db, TimeProvider.System, new RoomChangePolicyStub(), new NoActiveContractRoomUsageChecker());
+    private static RoomService NewRoomService(IDbContextFactory<ApplicationDbContext> dbContextFactory) =>
+        new(dbContextFactory, TimeProvider.System, new RoomChangePolicyStub(), new NoActiveContractRoomUsageChecker());
+
+    private static TenantService NewTenantService(IDbContextFactory<ApplicationDbContext> dbContextFactory) =>
+        new(dbContextFactory, TimeProvider.System, new AllowAllTogglePolicy());
 
     [SqlServerFact]
     public async Task Bon_vai_tro_chi_thay_du_lieu_dung_pham_vi_P1_P3()
     {
         var data = await SeedAsync();
         await using var db = fixture.CreateContext();
-        var properties = new PropertyService(db, TimeProvider.System);
-        var rooms = NewRoomService(db);
-        var tenants = new TenantService(db, TimeProvider.System);
+        var properties = new PropertyService(fixture, TimeProvider.System);
+        var rooms = NewRoomService(fixture);
+        var tenants = new TenantService(fixture, TimeProvider.System, new AllowAllTogglePolicy());
 
         // Chủ trọ A: chỉ thấy nhà/phòng của mình.
         var propertiesA = await properties.ListAsync(new PropertyFilter(), OwnerA);
@@ -139,9 +146,9 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         await fixture.ResetAsync();
         await using var db = fixture.CreateContext();
 
-        var properties = new PropertyService(db, TimeProvider.System);
-        var rooms = NewRoomService(db);
-        var tenants = new TenantService(db, TimeProvider.System);
+        var properties = new PropertyService(fixture, TimeProvider.System);
+        var rooms = NewRoomService(fixture);
+        var tenants = new TenantService(fixture, TimeProvider.System, new AllowAllTogglePolicy());
 
         var adminProperty = new PropertyCaller("admin-1", Roles.Admin);
         var adminTenant = new TenantCaller("admin-1", Roles.Admin);
@@ -211,9 +218,9 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
     {
         var data = await SeedAsync();
         await using var db = fixture.CreateContext();
-        var properties = new PropertyService(db, TimeProvider.System);
-        var rooms = NewRoomService(db);
-        var tenants = new TenantService(db, TimeProvider.System);
+        var properties = new PropertyService(fixture, TimeProvider.System);
+        var rooms = NewRoomService(fixture);
+        var tenants = new TenantService(fixture, TimeProvider.System, new AllowAllTogglePolicy());
 
         // P2: thiếu tên nhà, giá âm, mã phòng trùng trong cùng nhà.
         var blankProperty = await properties.CreateAsync(new PropertySave { Name = "   " }, OwnerA);
@@ -342,9 +349,9 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         await SqlServerFixture.SeedAccountAsync(db, "khach-1", Roles.KhachThue);
         await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
 
-        var properties = new PropertyService(db, TimeProvider.System);
-        var rooms = NewRoomService(db);
-        var tenants = new TenantService(db, TimeProvider.System);
+        var properties = new PropertyService(fixture, TimeProvider.System);
+        var rooms = NewRoomService(fixture);
+        var tenants = new TenantService(fixture, TimeProvider.System, new AllowAllTogglePolicy());
 
         var propertyA = await properties.CreateAsync(new PropertySave { Name = "Nhà A" }, OwnerA);
         var propertyB = await properties.CreateAsync(new PropertySave { Name = "Nhà B" }, OwnerB);
@@ -382,9 +389,9 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         Assert.True(tenantB.Succeeded, tenantB.ErrorMessage);
 
         var linkedA = await tenants.LinkAccountAsync(
-            tenantA.Tenant!.Id, "khach-1", tenantA.Tenant.RowVersion, TenantManager);
+            tenantA.Tenant!.Id, "khach-1", tenantA.Tenant.RowVersion, TenantOwner);
         var linkedB = await tenants.LinkAccountAsync(
-            tenantB.Tenant!.Id, "khach-2", tenantB.Tenant.RowVersion, TenantManager);
+            tenantB.Tenant!.Id, "khach-2", tenantB.Tenant.RowVersion, TenantOwner);
         Assert.True(linkedA.Succeeded, linkedA.ErrorMessage);
         Assert.True(linkedB.Succeeded, linkedB.ErrorMessage);
 
@@ -490,5 +497,17 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         public bool Exists(string relativePath) => _files.ContainsKey(relativePath);
 
         public void Delete(string relativePath) => _files.Remove(relativePath);
+    }
+
+    /// <summary>P1–P3 chưa cần kiểm công tắc nên cho phép hết để giữ nguyên hành vi cũ.</summary>
+    private sealed class AllowAllTogglePolicy : IManagerTogglePolicy
+    {
+        public Task<RoomChangeDecision> EvaluateAsync(
+            ManagerAction action, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
+
+        public Task<RoomChangeDecision> EvaluateAsync(
+            string code, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
     }
 }
