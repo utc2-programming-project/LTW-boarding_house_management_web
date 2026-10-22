@@ -2,13 +2,19 @@
 @typeparam TValue
 
 <div class="field">
-    <label class="label" for="@Id">
-        @Label
-        @if (Required)
-        {
-            <span class="required" aria-hidden="true">*</span>
-        }
-    </label>
+    <div class="label-heading">
+        <label class="label" for="@Id">
+            <span class="label-text">
+                @Label
+                @if (Required)
+                {
+                    <span class="required" aria-hidden="true">*</span>
+                }
+            </span>
+            @LabelSuffix
+        </label>
+        @LabelAction
+    </div>
     @ChildContent
     @if (!string.IsNullOrWhiteSpace(Hint))
     {
@@ -37,6 +43,14 @@
 
     [Parameter]
     public string? Hint { get; set; }
+
+    /// <summary>Optional count or short hint aligned on the label row.</summary>
+    [Parameter]
+    public RenderFragment? LabelSuffix { get; set; }
+
+    /// <summary>Optional action beside the label, rendered outside the label element.</summary>
+    [Parameter]
+    public RenderFragment? LabelAction { get; set; }
 
     /// <summary>Chỉ hiện dấu *; việc bắt buộc nhập vẫn do DataAnnotations (<c>[Required]</c>) kiểm tra.</summary>
     [Parameter]
