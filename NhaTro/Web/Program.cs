@@ -133,6 +133,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
     // Nghiep vu P2-P8: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
+    // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
+    options.AddPolicy(Web.Features.Maintenance.IncidentDemoSession.Policy, p => p
+        .RequireAuthenticatedUser()
+        .RequireAssertion(context => Web.Features.Maintenance.IncidentDemoSession.IsAllowed(context.User)));
 });
 builder.Services.AddScoped<RoleService>();
 // VHT-8: service tai khoan P1 (ho so ca nhan + quan tri tai khoan theo D1).

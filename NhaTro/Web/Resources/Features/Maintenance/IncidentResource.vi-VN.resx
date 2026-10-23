@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Báo và xử lý sự cố</value>
+  </data>
+  <data name="TenantHeading" xml:space="preserve">
+    <value>Báo sự cố phòng của bạn</value>
+  </data>
+  <data name="TenantSubtitle" xml:space="preserve">
+    <value>Gửi phiếu và theo dõi kết quả xử lý.</value>
+  </data>
+  <data name="StaffSubtitle" xml:space="preserve">
+    <value>Theo dõi và xử lý sự cố trong phạm vi nhà trọ của bạn.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Trang chủ</value>
+  </data>
+  <data name="SampleBadge" xml:space="preserve">
+    <value>Dữ liệu mẫu · 2A</value>
+  </data>
+  <data name="SampleNotice" xml:space="preserve">
+    <value>Chưa ghép backend P7 và ảnh private thật. Thao tác chỉ thay đổi dữ liệu mẫu trong phiên; tải lại trang hoặc đổi ngôn ngữ sẽ khởi tạo lại.</value>
+  </data>
+  <data name="ScopeNotice" xml:space="preserve">
+    <value>Nhà trọ, phòng, phiếu và lịch sử trên trang đều là dữ liệu giả để minh họa phạm vi theo vai trò.</value>
+  </data>
+  <data name="DemoControls" xml:space="preserve">
+    <value>Kịch bản mô phỏng</value>
+  </data>
+  <data name="DemoControlsNotice" xml:space="preserve">
+    <value>Chỉ thay đổi kịch bản của phiên mẫu. Đây không phải cấu hình quyền thật hoặc hàng đợi duyệt của hệ thống.</value>
+  </data>
+  <data name="DataScenario" xml:space="preserve">
+    <value>Trạng thái danh sách mẫu</value>
+  </data>
+  <data name="ScenarioNormal" xml:space="preserve">
+    <value>Có dữ liệu mẫu</value>
+  </data>
+  <data name="ScenarioEmpty" xml:space="preserve">
+    <value>Danh sách rỗng mẫu</value>
+  </data>
+  <data name="ScenarioError" xml:space="preserve">
+    <value>Mô phỏng lỗi tải danh sách</value>
+  </data>
+  <data name="CreateIncident" xml:space="preserve">
+    <value>Báo sự cố</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Tiêu đề sự cố</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>Nhà trọ</value>
+  </data>
+  <data name="Room" xml:space="preserve">
+    <value>Phòng</value>
+  </data>
+  <data name="PropertyRoom" xml:space="preserve">
+    <value>Nhà trọ / Phòng</value>
+  </data>
+  <data name="SelectProperty" xml:space="preserve">
+    <value>Chọn nhà trọ</value>
+  </data>
+  <data name="SelectRoom" xml:space="preserve">
+    <value>Chọn phòng</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Phân loại</value>
+  </data>
+  <data name="CategoryElectrical" xml:space="preserve">
+    <value>Điện</value>
+  </data>
+  <data name="CategoryWater" xml:space="preserve">
+    <value>Nước</value>
+  </data>
+  <data name="CategoryFurniture" xml:space="preserve">
+    <value>Nội thất</value>
+  </data>
+  <data name="CategoryEquipment" xml:space="preserve">
+    <value>Thiết bị</value>
+  </data>
+  <data name="CategoryOther" xml:space="preserve">
+    <value>Khác</value>
+  </data>
+  <data name="Urgency" xml:space="preserve">
+    <value>Mức độ khẩn cấp</value>
+  </data>
+  <data name="UrgencyNormal" xml:space="preserve">
+    <value>Thường</value>
+  </data>
+  <data name="UrgencyUrgent" xml:space="preserve">
+    <value>Gấp</value>
+  </data>
+  <data name="UrgencyEmergency" xml:space="preserve">
+    <value>Khẩn cấp</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Mô tả chi tiết</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Trạng thái xử lý</value>
+  </data>
+  <data name="StatusNew" xml:space="preserve">
+    <value>Mới tiếp nhận</value>
+  </data>
+  <data name="StatusInProgress" xml:space="preserve">
+    <value>Đang xử lý</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Hoàn thành</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Thời điểm tạo</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Thao tác</value>
+  </data>
+  <data name="ViewDetail" xml:space="preserve">
+    <value>Xem chi tiết</value>
+  </data>
+  <data name="ViewDetailNamed" xml:space="preserve">
+    <value>Xem chi tiết: {0}</value>
+  </data>
+  <data name="DetailTitle" xml:space="preserve">
+    <value>Chi tiết sự cố mẫu</value>
+  </data>
+  <data name="TechnicalNotes" xml:space="preserve">
+    <value>Ghi chú kỹ thuật (nội bộ)</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Cập nhật xử lý mẫu</value>
+  </data>
+  <data name="NextStatus" xml:space="preserve">
+    <value>Bước xử lý tiếp theo</value>
+  </data>
+  <data name="ProposedStatus" xml:space="preserve">
+    <value>Trạng thái đề xuất</value>
+  </data>
+  <data name="CompletedNotice" xml:space="preserve">
+    <value>Phiếu đã hoàn thành. Không có bước chuyển trạng thái tiếp theo.</value>
+  </data>
+  <data name="PendingApproval" xml:space="preserve">
+    <value>Chờ duyệt</value>
+  </data>
+  <data name="ApprovalNotice" xml:space="preserve">
+    <value>Đây là đề xuất chờ duyệt mẫu. Phiếu và trạng thái hiện hành chưa được áp dụng thay đổi; chưa ghép hàng đợi duyệt thật.</value>
+  </data>
+  <data name="ActionCreate" xml:space="preserve">
+    <value>SW-12 · Tạo phiếu</value>
+  </data>
+  <data name="ActionUpdate" xml:space="preserve">
+    <value>SW-13 · Cập nhật xử lý</value>
+  </data>
+  <data name="ActionResultPhoto" xml:space="preserve">
+    <value>SW-14 · Ảnh kết quả</value>
+  </data>
+  <data name="ModeAllow" xml:space="preserve">
+    <value>Cho phép</value>
+  </data>
+  <data name="ModeApproval" xml:space="preserve">
+    <value>Duyệt</value>
+  </data>
+  <data name="ModeDeny" xml:space="preserve">
+    <value>Không thể</value>
+  </data>
+  <data name="SubmitSample" xml:space="preserve">
+    <value>Gửi phiếu mẫu</value>
+  </data>
+  <data name="RequestSample" xml:space="preserve">
+    <value>Gửi đề xuất mẫu</value>
+  </data>
+  <data name="UpdateSample" xml:space="preserve">
+    <value>Cập nhật mẫu</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Đang xử lý…</value>
+  </data>
+  <data name="SampleCreated" xml:space="preserve">
+    <value>Đã tạo phiếu mẫu trong phiên. Chưa lưu SQL.</value>
+  </data>
+  <data name="SampleRequested" xml:space="preserve">
+    <value>Đã ghi đề xuất chờ duyệt mẫu. Chưa áp dụng thay đổi hoặc gửi tới hàng đợi thật.</value>
+  </data>
+  <data name="SampleUpdated" xml:space="preserve">
+    <value>Đã cập nhật phiếu mẫu trong phiên.</value>
+  </data>
+  <data name="SamplePhotosSaved" xml:space="preserve">
+    <value>Đã thêm ảnh vào phiếu mẫu trong phiên. Chưa lưu storage thật.</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Hình ảnh đính kèm</value>
+  </data>
+  <data name="PhotoHint" xml:space="preserve">
+    <value>JPG/JPEG/PNG, tối đa 5 MB mỗi ảnh. Tối đa {0} ảnh trong lượt chọn này, tính cả ảnh đã chọn.</value>
+  </data>
+  <data name="PhotoSlots" xml:space="preserve">
+    <value>Phiếu còn {0} chỗ ảnh (giới hạn 3 ảnh tổng, gồm ảnh chờ duyệt).</value>
+  </data>
+  <data name="ReadingPhotos" xml:space="preserve">
+    <value>Đang đọc ảnh…</value>
+  </data>
+  <data name="RemovePhoto" xml:space="preserve">
+    <value>Bỏ ảnh</value>
+  </data>
+  <data name="RemovePhotoNamed" xml:space="preserve">
+    <value>Bỏ ảnh: {0}</value>
+  </data>
+  <data name="PhotoLimit" xml:space="preserve">
+    <value>Tối đa 3 ảnh tổng trên phiếu; vui lòng kiểm tra số chỗ ảnh còn lại.</value>
+  </data>
+  <data name="PhotoInvalid" xml:space="preserve">
+    <value>Ảnh phải là JPG/JPEG/PNG có nội dung hợp lệ, không rỗng và không quá 5 MB. Không đọc được ảnh; hãy chọn lại.</value>
+  </data>
+  <data name="PhotoRequired" xml:space="preserve">
+    <value>Vui lòng chọn ít nhất một ảnh kết quả.</value>
+  </data>
+  <data name="ResultPhoto" xml:space="preserve">
+    <value>Ảnh kết quả sửa chữa</value>
+  </data>
+  <data name="ReportPhoto" xml:space="preserve">
+    <value>Ảnh báo sự cố</value>
+  </data>
+  <data name="SaveResultPhotos" xml:space="preserve">
+    <value>Gửi ảnh kết quả mẫu</value>
+  </data>
+  <data name="PendingPhotoCount" xml:space="preserve">
+    <value>{0} ảnh đang chờ duyệt, chưa áp dụng vào phiếu.</value>
+  </data>
+  <data name="TenantPhotoNotice" xml:space="preserve">
+    <value>Chỉ hiển thị ảnh thuộc quyền xem của bạn trong phiên mẫu.</value>
+  </data>
+  <data name="SampleIllustration" xml:space="preserve">
+    <value>Ảnh minh họa mẫu, không phải ảnh sự cố thật.</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>Lịch sử xử lý</value>
+  </data>
+  <data name="ActorTenant" xml:space="preserve">
+    <value>Khách thuê (mẫu)</value>
+  </data>
+  <data name="ActorManager" xml:space="preserve">
+    <value>Quản lý (mẫu)</value>
+  </data>
+  <data name="ActorOwner" xml:space="preserve">
+    <value>Chủ trọ (mẫu)</value>
+  </data>
+  <data name="EventCreated" xml:space="preserve">
+    <value>Tạo phiếu mẫu</value>
+  </data>
+  <data name="EventStarted" xml:space="preserve">
+    <value>Bắt đầu xử lý mẫu</value>
+  </data>
+  <data name="EventCompleted" xml:space="preserve">
+    <value>Hoàn thành xử lý mẫu</value>
+  </data>
+  <data name="EventPhotos" xml:space="preserve">
+    <value>Thêm ảnh kết quả mẫu</value>
+  </data>
+  <data name="EventRequested" xml:space="preserve">
+    <value>Gửi đề xuất chờ duyệt mẫu</value>
+  </data>
+  <data name="SampleTitleWater" xml:space="preserve">
+    <value>Rò nước vòi lavabo</value>
+  </data>
+  <data name="SampleDescriptionWater" xml:space="preserve">
+    <value>Vòi lavabo bị rò nước liên tục dù đã khóa. Cần kiểm tra và sửa chữa.</value>
+  </data>
+  <data name="SampleTitleElectrical" xml:space="preserve">
+    <value>Ổ điện có dấu hiệu chập</value>
+  </data>
+  <data name="SampleDescriptionElectrical" xml:space="preserve">
+    <value>Ổ điện cạnh cửa phát tiếng nổ nhỏ. Đã ngắt nguồn và chờ kiểm tra.</value>
+  </data>
+  <data name="SampleTitleEquipment" xml:space="preserve">
+    <value>Quạt thông gió không chạy</value>
+  </data>
+  <data name="SampleDescriptionEquipment" xml:space="preserve">
+    <value>Quạt thông gió không hoạt động khi bật công tắc. Phiếu mẫu đã hoàn thành.</value>
+  </data>
+  <data name="TitleInvalid" xml:space="preserve">
+    <value>Tiêu đề phải có ít nhất 5 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
+  </data>
+  <data name="DescriptionInvalid" xml:space="preserve">
+    <value>Mô tả phải có ít nhất 10 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
+  </data>
+  <data name="PropertyRequired" xml:space="preserve">
+    <value>Vui lòng chọn nhà trọ trong phạm vi của bạn.</value>
+  </data>
+  <data name="RoomRequired" xml:space="preserve">
+    <value>Vui lòng chọn phòng hợp lệ trong nhà trọ và phạm vi của bạn.</value>
+  </data>
+  <data name="ValueInvalid" xml:space="preserve">
+    <value>Giá trị đã chọn không hợp lệ.</value>
+  </data>
+  <data name="TransitionInvalid" xml:space="preserve">
+    <value>Không thể chuyển trạng thái theo bước đã chọn.</value>
+  </data>
+  <data name="AlreadyPending" xml:space="preserve">
+    <value>Đã có đề xuất cập nhật chờ duyệt. Không gửi lặp.</value>
+  </data>
+  <data name="ActionDenied" xml:space="preserve">
+    <value>Công tắc mô phỏng đang ở chế độ Không thể cho thao tác này.</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>Bạn không có quyền truy cập nghiệp vụ sự cố.</value>
+  </data>
+  <data name="SessionChanged" xml:space="preserve">
+    <value>Tài khoản của phiên đã thay đổi. Vui lòng tải lại trang.</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>Không tìm thấy phiếu trong phạm vi được phép xem.</value>
+  </data>
+  <data name="NoData" xml:space="preserve">
+    <value>Chưa có dữ liệu</value>
+  </data>
+  <data name="EmptyDescription" xml:space="preserve">
+    <value>Chưa có phiếu trong phạm vi này. Bạn có thể tạo phiếu mẫu mới.</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>Không có kết quả phù hợp</value>
+  </data>
+  <data name="ClearFilters" xml:space="preserve">
+    <value>Xóa bộ lọc</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Đang tải…</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Không tải được danh sách. Nếu đang bật kịch bản lỗi mẫu, hãy chuyển về Có dữ liệu mẫu.</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>Thử lại</value>
+  </data>
+  <data name="FilterBy" xml:space="preserve">
+    <value>Lọc theo</value>
+  </data>
+  <data name="Pagination" xml:space="preserve">
+    <value>Phân trang</value>
+  </data>
+  <data name="FirstPage" xml:space="preserve">
+    <value>Trang đầu</value>
+  </data>
+  <data name="PreviousPage" xml:space="preserve">
+    <value>Trang trước</value>
+  </data>
+  <data name="NextPage" xml:space="preserve">
+    <value>Trang sau</value>
+  </data>
+  <data name="LastPage" xml:space="preserve">
+    <value>Trang cuối</value>
+  </data>
+  <data name="Page" xml:space="preserve">
+    <value>Trang</value>
+  </data>
+  <data name="PageSummary" xml:space="preserve">
+    <value>Hiển thị {0}–{1} / {2}</value>
+  </data>
+  <data name="ListCaption" xml:space="preserve">
+    <value>Danh sách sự cố mẫu trong phạm vi của bạn</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Hủy nhập</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Đóng</value>
+  </data>
+</root>

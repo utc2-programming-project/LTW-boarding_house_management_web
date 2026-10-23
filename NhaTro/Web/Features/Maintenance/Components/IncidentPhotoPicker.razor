@@ -1,0 +1,89 @@
+@implements IDisposable
+@inject IStringLocalizer<IncidentResource> L
+
+<div class="photo-picker">
+    <label for="@_inputId">@L["Attachments"]</label>
+    <InputFile @key="_inputVersion" id="@_inputId" OnChange="ReadAsync" multiple
+               accept=".jpg,.jpeg,.png" disabled="@(Disabled || _reading || Photos.Count >= Capacity)"
+               class="@(_error is null ? null : "invalid")" aria-invalid="@(_error is not null)"
+               aria-describedby="@(_inputId + "-hint " + _inputId + "-error")" />
+    <p id="@(_inputId + "-hint")">@L["PhotoHint", Capacity]</p>
+    @if (_reading)
+    {
+        <p role="status">@L["ReadingPhotos"]</p>
+    }
+    <div id="@(_inputId + "-error")" class="photo-error" role="alert">@_error</div>
+    <div class="photo-grid">
+        @foreach (var photo in Photos)
+        {
+            <figure>
+                <img src="@photo.DataUrl" alt="@photo.Name" />
+                <figcaption>@photo.Name</figcaption>
+                <button type="button" class="btn btn-secondary" disabled="@(Disabled || _reading)"
+                        aria-label="@L["RemovePhotoNamed", photo.Name]" @onclick="() => RemoveAsync(photo)">@L["RemovePhoto"]</button>
+            </figure>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<IncidentDemoPhoto> Photos { get; set; } = [];
+    [Parameter] public EventCallback<IReadOnlyList<IncidentDemoPhoto>> PhotosChanged { get; set; }
+    [Parameter] public EventCallback<bool> BusyChanged { get; set; }
+    [Parameter] public int Capacity { get; set; } = IncidentDemoPhoto.MaxCount;
+    [Parameter] public bool Disabled { get; set; }
+    private readonly string _inputId = $"incident-photo-{Guid.NewGuid():N}";
+    private readonly CancellationTokenSource _lifetime = new();
+    private string? _error;
+    private bool _reading;
+    private bool _disposed;
+    private int _inputVersion;
+
+    private async Task ReadAsync(InputFileChangeEventArgs args)
+    {
+        if (_reading || Disabled) return;
+        _error = null;
+        if (args.FileCount + Photos.Count > Capacity)
+        {
+            _error = L["PhotoLimit"];
+            _inputVersion++;
+            return;
+        }
+        _reading = true;
+        await BusyChanged.InvokeAsync(true);
+        try
+        {
+            // Chỉ thay danh sách khi cả lượt đọc hợp lệ; lỗi không xóa ảnh/nội dung đang nhập.
+            var selected = new List<IncidentDemoPhoto>(Photos);
+            foreach (var file in args.GetMultipleFiles(IncidentDemoPhoto.MaxCount))
+                selected.Add(await IncidentDemoPhoto.ReadAsync(file, _lifetime.Token));
+            if (!_disposed) await PhotosChanged.InvokeAsync(selected.ToArray());
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is InvalidOperationException)
+        {
+            _error = L["PhotoInvalid"];
+        }
+        finally
+        {
+            _reading = false;
+            _inputVersion++;
+            if (!_disposed) await BusyChanged.InvokeAsync(false);
+        }
+    }
+
+    private async Task RemoveAsync(IncidentDemoPhoto photo)
+    {
+        if (Disabled || _reading) return;
+        _error = null;
+        await PhotosChanged.InvokeAsync(Photos.Where(p => !ReferenceEquals(p, photo)).ToArray());
+        _inputVersion++;
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _lifetime.Cancel();
+        _lifetime.Dispose();
+    }
+}

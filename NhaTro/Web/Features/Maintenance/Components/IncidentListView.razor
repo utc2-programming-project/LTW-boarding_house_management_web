@@ -1,0 +1,126 @@
+@inject IStringLocalizer<IncidentResource> L
+@using Microsoft.JSInterop
+
+<div class="incident-list" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
+<DataTable @ref="_table" TItem="IncidentDemoItem" Columns="_columns" ItemsProvider="LoadAsync"
+           Labels="Labels" Caption="@L["ListCaption"]" PageSize="5">
+    <EmptyActions>
+        @if (CanCreate)
+        {
+            <button type="button" class="btn btn-primary" @onclick="OnCreate">@L["CreateIncident"]</button>
+        }
+    </EmptyActions>
+</DataTable>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IncidentDemoSession Session { get; set; } = default!;
+    [Parameter] public IReadOnlyList<IncidentDemoRoom> Rooms { get; set; } = [];
+    [Parameter] public EventCallback<int> OnDetail { get; set; }
+    [Parameter] public EventCallback OnCreate { get; set; }
+    [Parameter] public bool CanCreate { get; set; }
+    [Parameter] public string Scenario { get; set; } = "Normal";
+    private DataTable<IncidentDemoItem>? _table;
+    private ElementReference _listRegion;
+    private readonly Dictionary<int, ElementReference> _detailButtons = [];
+    private int? _focusAfterRender;
+    private string? _previousScenario;
+    private IReadOnlyList<DataTableColumn<IncidentDemoItem>> _columns = [];
+
+    private DataTableLabels Labels => new()
+    {
+        Loading = L["Loading"], EmptyTitle = L["NoData"], EmptyDescription = L["EmptyDescription"],
+        NoResultsTitle = L["NoResults"], ClearFilters = L["ClearFilters"], LoadFailed = L["LoadFailed"],
+        Retry = L["Retry"], FilterBy = L["FilterBy"], Pagination = L["Pagination"],
+        FirstPage = L["FirstPage"], PreviousPage = L["PreviousPage"], NextPage = L["NextPage"],
+        LastPage = L["LastPage"], Page = L["Page"], Summary = L["PageSummary"]
+    };
+
+    protected override void OnInitialized()
+    {
+        _columns =
+        [
+            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true, Filterable = true },
+            new() { Key = "Room", Title = L["PropertyRoom"], Value = RoomText, Sortable = true, Filterable = true },
+            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Filterable = true },
+            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Filterable = true },
+            new() { Key = "Status", Title = L["Status"], Filterable = true, Template = i => @<div>
+                @if (!i.AwaitingCreation)
+                {
+                    <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentDemoStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
+                }
+                @if (i.Pending.Count > 0)
+                {
+                    <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
+                }
+            </div> },
+            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true },
+            new() { Key = "Actions", Title = L["Actions"], Template = i => @<button type="button" class="btn btn-secondary incident-detail-action"
+                @ref="_detailButtons[i.Id]"
+                aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button> }
+        ];
+    }
+
+    private string Text(IncidentDemoItem item, string text) => item.IsSeeded ? L[text] : text;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_previousScenario == Scenario) return;
+        _previousScenario = Scenario;
+        if (_table is not null) await _table.ReloadAsync();
+    }
+
+    // Bảng có thể thay DOM nút khi reload; focus nút hiện hành sau render, không dùng reference cũ của dialog.
+    public Task RestoreDetailFocusAsync(int id)
+    {
+        _focusAfterRender = id;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusAfterRender is not int id) return;
+        _focusAfterRender = null;
+        var target = _detailButtons.TryGetValue(id, out var button) ? button : _listRegion;
+        try { await target.FocusAsync(); }
+        catch (JSDisconnectedException) { }
+    }
+
+    private string RoomText(IncidentDemoItem item)
+    {
+        var room = Rooms.FirstOrDefault(r => r.Id == item.RoomId);
+        return room is null ? L["NoData"] : $"{room.PropertyName} / {room.Name}";
+    }
+
+    private async Task<PagedResult<IncidentDemoItem>> LoadAsync(DataTableRequest request)
+    {
+        _detailButtons.Clear();
+        // Kịch bản mô phỏng có nhãn; không giả làm lỗi service thật hoặc fallback sang mẫu.
+        await Task.Yield();
+        var scoped = await Session.ListAsync();
+        if (Scenario == "Error") throw new IncidentDemoException("SampleLoadError");
+        IEnumerable<IncidentDemoItem> items = Scenario == "Empty" ? [] : scoped;
+        foreach (var filter in request.Filters)
+        {
+            items = items.Where(i => (filter.Key switch
+            {
+                "Title" => Text(i, i.Title), "Room" => RoomText(i),
+                "Category" => L[$"Category{i.Category}"].Value, "Urgency" => L[$"Urgency{i.Urgency}"].Value,
+                "Status" => (i.AwaitingCreation ? "" : L[$"Status{i.Status}"].Value) + (i.Pending.Count > 0 ? " " + L["PendingApproval"] : ""),
+                _ => ""
+            }).Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase));
+        }
+        var ordered = request.SortKey switch
+        {
+            "Title" => items.OrderBy(i => Text(i, i.Title), StringComparer.CurrentCultureIgnoreCase),
+            "Room" => items.OrderBy(RoomText, StringComparer.CurrentCultureIgnoreCase),
+            "Created" => items.OrderBy(i => i.CreatedAtUtc),
+            _ => items.OrderByDescending(i => i.CreatedAtUtc)
+        };
+        var sorted = request.SortDescending ? ordered.Reverse() : ordered;
+        var all = sorted.ToArray();
+        return new() { Items = all.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToArray(),
+            TotalCount = all.Length, Page = request.Page, PageSize = request.PageSize };
+    }
+
+    public Task ReloadAsync() => _table?.ReloadAsync() ?? Task.CompletedTask;
+}
