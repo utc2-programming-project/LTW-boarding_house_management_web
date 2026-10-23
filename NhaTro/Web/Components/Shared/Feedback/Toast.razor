@@ -4,18 +4,11 @@
 <div class="toast @ToneClass" role="@(Message.Kind == ToastKind.Error ? "alert" : "status")"
      @onmouseenter="OnEnter" @onmouseleave="OnLeave" @onfocusin="OnFocusIn" @onfocusout="OnFocusOut">
     <span class="icon" aria-hidden="true">
-        @if (Message.Kind == ToastKind.Error)
-        {
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-        }
-        else
-        {
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
-        }
+        <LucideIcon Name="@(Message.Kind == ToastKind.Error ? "alert" : "circle-check")" />
     </span>
     <p class="text">@Message.Text</p>
     <button type="button" class="close" aria-label="@CloseLabel" @onclick="Close">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+        <LucideIcon Name="close" />
     </button>
 </div>
 
