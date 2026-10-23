@@ -5,11 +5,27 @@
 }
 
 .label {
-    margin-bottom: 8px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 0;
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
     color: var(--text-primary, #0D131B);
+}
+
+.label-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.label-text {
+    min-width: 0;
 }
 
 .required {

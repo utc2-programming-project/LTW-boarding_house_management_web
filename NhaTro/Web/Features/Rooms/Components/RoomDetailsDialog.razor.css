@@ -1,0 +1,14 @@
+.p2-details-body { padding: 24px; }
+.p2-detail-status { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.p2-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.p2-detail-grid > div { min-width: 0; padding: 14px 16px; border-radius: var(--radius-card); background: var(--surface-subtle); }
+.p2-detail-grid dt { color: var(--text-secondary); font-size: .8125rem; }
+.p2-detail-grid dd { margin: 6px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.p2-details-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 16px; border: 1px solid transparent; border-radius: var(--radius-control); font-weight: 600; }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn-secondary { border-color: var(--control-border); background: var(--surface); color: var(--text-primary); }
+.btn-danger { border-color: var(--danger); background: var(--danger); color: #fff; }
+.p2-alert { padding: 12px 14px; border: 1px solid var(--error-border); border-radius: var(--radius-control); background: var(--error-bg); color: var(--error-text); }
+.p2-inline-loading { padding: 24px 0; color: var(--text-secondary); }
+@media (max-width: 560px) { .p2-details-body { padding: 16px; } .p2-detail-grid { grid-template-columns: minmax(0, 1fr); } .p2-details-actions > button { flex: 1; } }

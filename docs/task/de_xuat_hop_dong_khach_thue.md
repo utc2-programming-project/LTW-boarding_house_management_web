@@ -172,7 +172,7 @@ Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumbe
 
 **Che dữ liệu nhạy cảm (D9):**
 - Danh sách và hàm chọn khách chỉ trả `IdNumberMasked` (ví dụ `********1234`), không trả số đầy đủ.
-- `IdNumber` đầy đủ chỉ có trong chi tiết cho **Chủ trọ** và **chính khách thuê đó**; với **Quản lý** luôn trả chuỗi che (D9: "số CCCD bị che"). Khi Quản lý sửa và gửi lại đúng chuỗi che, service coi như **không đổi** `IdNumber` (tránh ghi đè bằng mask); muốn đổi thì gõ lại số mới đầy đủ (Quản lý được sửa giấy tờ, SĐT theo ma trận).
+- `IdNumber` đầy đủ chỉ có trong chi tiết cho **Chủ trọ** và **chính khách thuê đó**; với **Quản lý** luôn trả chuỗi che (D9: "số CCCD bị che"). Khi Quản lý sửa và gửi lại đúng chuỗi che, service coi như **không đổi** `IdNumber` (tránh ghi đè bằng mask); muốn đổi thì gõ lại số mới đầy đủ (Quản lý được sửa giấy tờ, SĐT theo ma trận). Form Quản lý để trống ô CCCD khi sửa (số che hiện ở placeholder), để trống nghĩa là giữ số cũ. Service từ chối số chứa dấu `*` (trừ đúng chuỗi che gửi lại nguyên vẹn) và số mới ngắn hơn 8 ký tự chữ/số, để không ghi đè CCCD thật bằng phần còn lại sau khi chuẩn hóa. **Đã chốt D9 theo hướng này.**
 - `Note` không bao giờ trả cho khách thuê.
 - Không ghi `IdNumber` đầy đủ vào log.
 

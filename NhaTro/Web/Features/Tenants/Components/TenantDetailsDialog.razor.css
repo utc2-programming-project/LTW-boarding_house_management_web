@@ -1,0 +1,104 @@
+.tenant-detail-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-subtle);
+}
+
+.tenant-avatar {
+    display: grid;
+    flex: 0 0 40px;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 700;
+}
+
+.tenant-avatar-large {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+    font-size: 1.25rem;
+}
+
+.tenant-detail-name { min-width: 0; }
+.tenant-detail-name h3 { margin: 0; overflow-wrap: anywhere; font-size: 1rem; font-weight: 700; }
+.tenant-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+.tenant-detail-section {
+    margin-top: 24px;
+}
+
+.tenant-detail-section h3 {
+    margin: 0 0 12px;
+    font-size: .9375rem;
+    font-weight: 650;
+}
+
+.tenant-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.tenant-detail-grid > div {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-subtle);
+}
+
+.tenant-detail-grid dt { color: var(--text-secondary); font-size: .75rem; }
+.tenant-detail-grid dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: .875rem; font-weight: 600; }
+.tenant-detail-grid .tenant-detail-wide { grid-column: 1 / -1; }
+.tenant-mono { font-family: ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+.tenant-note {
+    margin-top: 12px;
+    padding: 12px;
+    border-left: 3px solid var(--accent-border);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+}
+
+.tenant-note p { margin: 4px 0 0; white-space: pre-wrap; }
+
+.tenant-account-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.tenant-account-section h3 { margin-bottom: 4px; }
+.tenant-account-section p { margin: 0; font-size: .8125rem; }
+
+.tenant-detail-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 20px 0 0;
+    font-size: .75rem;
+}
+
+.tenant-detail-dates strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.tenant-dialog-footer { flex-wrap: wrap; }
+
+@media (max-width: 520px) {
+    .tenant-detail-grid { grid-template-columns: 1fr; }
+    .tenant-detail-grid .tenant-detail-wide { grid-column: auto; }
+    .tenant-account-section { align-items: flex-start; flex-direction: column; }
+    .tenant-dialog-footer .btn { flex: 1 1 auto; min-height: 44px; }
+}

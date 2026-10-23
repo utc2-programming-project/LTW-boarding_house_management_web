@@ -1,0 +1,156 @@
+<TenantDialogShell Visible="Visible" Title="@L["TenantLinkDialogTitle"]"
+                   Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
+                   CssClass="tenant-account-link-dialog" OnClose="OnClose">
+    <ChildContent>
+    <div class="tenant-account-search">
+        <FormField TValue="string" Id="tenant-account-search" Label="@L["TenantAccountSearch"]"
+                   Hint="@L["TenantAccountSearchHint"]" For="() => _keyword">
+            <InputText id="tenant-account-search" class="input" @bind-Value="_keyword"
+                       @bind-Value:after="LoadAccountsAsync" autocomplete="off" />
+        </FormField>
+    </div>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_failed)
+    {
+        <div class="tenant-inline-error" role="alert">
+            <p>@L["TableLoadFailed"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAccountsAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_accounts.Count == 0)
+    {
+        <EmptyStateCard Title="@L["TenantNoAvailableAccounts"]" />
+    }
+    else
+    {
+        <fieldset class="tenant-account-options">
+            <legend class="sr-only">@L["TenantSelectAccount"]</legend>
+            @foreach (var account in _accounts)
+            {
+                <label class="tenant-account-option" for="@($"tenant-account-{account.UserId}")">
+                    <input id="@($"tenant-account-{account.UserId}")" type="radio" name="tenant-account"
+                           value="@account.UserId" @onchange="() => _selectedUserId = account.UserId"
+                           checked="@(_selectedUserId == account.UserId)" />
+                    <span class="tenant-account-option-avatar" aria-hidden="true">@Initial(account.DisplayName)</span>
+                    <span class="tenant-account-option-text">
+                        <strong>@account.DisplayName</strong>
+                        <small>@(string.IsNullOrWhiteSpace(account.Email) ? L["NoData"] : account.Email)</small>
+                    </span>
+                </label>
+            }
+        </fieldset>
+    }
+    </ChildContent>
+
+    <Footer>
+        <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="OnClose">@L["Cancel"]</button>
+        <button type="button" class="btn btn-primary" disabled="@(_saving || string.IsNullOrWhiteSpace(_selectedUserId) || Tenant is null)"
+                aria-busy="@(_saving ? "true" : null)" @onclick="LinkAsync">
+            @if (_saving) { <span class="spinner" aria-hidden="true"></span> }
+            @L["TenantLinkAccount"]
+        </button>
+    </Footer>
+</TenantDialogShell>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public TenantDetailDto? Tenant { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnLinked { get; set; }
+
+    [Inject] private TenantPageService TenantPages { get; set; } = default!;
+    [Inject] private ToastService Toasts { get; set; } = default!;
+    [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+
+    private List<TenantAccountOptionDto> _accounts = [];
+    private string? _keyword;
+    private string? _selectedUserId;
+    private bool _loading;
+    private bool _failed;
+    private bool _saving;
+    private bool _wasVisible;
+    private int? _currentTenantId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && (!_wasVisible || _currentTenantId != Tenant?.Id))
+        {
+            _keyword = null;
+            _selectedUserId = null;
+            _wasVisible = true;
+            _currentTenantId = Tenant?.Id;
+            await LoadAccountsAsync();
+        }
+        else
+        {
+            _wasVisible = Visible;
+            _currentTenantId = Tenant?.Id;
+        }
+    }
+
+    private async Task LoadAccountsAsync()
+    {
+        _loading = true;
+        _failed = false;
+        try
+        {
+            _accounts = await TenantPages.SearchUnlinkedAccountsAsync(_keyword, 30);
+            if (_selectedUserId is not null && _accounts.All(account => account.UserId != _selectedUserId))
+            {
+                _selectedUserId = null;
+            }
+        }
+        catch
+        {
+            _accounts = [];
+            _failed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LinkAsync()
+    {
+        if (_saving || Tenant is null || string.IsNullOrWhiteSpace(_selectedUserId)) return;
+
+        _saving = true;
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.LinkAccountAsync(Tenant.Id, _selectedUserId, Tenant.RowVersion);
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+        finally
+        {
+            _saving = false;
+        }
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(result.ErrorCode switch
+            {
+                TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
+                TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+                _ => L["TenantErrorAccountNotTenant"],
+            });
+            return;
+        }
+
+        Toasts.Success(L["TenantAccountLinked"]);
+        await OnLinked.InvokeAsync();
+        await OnClose.InvokeAsync();
+    }
+
+    private static string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value.Trim()[..1].ToUpperInvariant();
+}

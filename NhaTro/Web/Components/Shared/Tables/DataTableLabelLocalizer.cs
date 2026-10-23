@@ -13,6 +13,7 @@ public static class DataTableLabelLocalizer
         Loading = localizer["TableLoading"],
         EmptyTitle = localizer["TableEmptyTitle"],
         NoResultsTitle = localizer["TableNoResults"],
+        NoResultsDescription = localizer["TableNoResultsDescription"],
         ClearFilters = localizer["TableClearFilters"],
         LoadFailed = localizer["TableLoadFailed"],
         Retry = localizer["TableRetry"],

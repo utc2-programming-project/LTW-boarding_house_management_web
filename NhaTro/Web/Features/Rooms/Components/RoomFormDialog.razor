@@ -1,0 +1,258 @@
+@inject RoomPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<RoomFormDialog> Logger
+
+<FeatureDialog @ref="_featureDialog" Visible="Visible" Title="@(IsEdit ? L["P2EditRoom"].Value : L["P2AddRoom"].Value)"
+               CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose" CssClass="room-form-dialog">
+    <EditForm Model="_model" OnSubmit="HandleSubmitAsync" novalidate>
+        <div class="p2-form-body">
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="p2-alert error" role="alert">
+                    <span>@_error</span>
+                    @if (_loadFailed)
+                    {
+                        <button class="btn btn-secondary" type="button" @onclick="RetryLoadAsync">@L["Retry"]</button>
+                    }
+                </div>
+            }
+            @if (_approvalPending)
+            {
+                <div class="p2-alert warning" role="status">
+                    <StatusBadge Text="@L["P2ApprovalPending"]" Tone="BadgeTone.Warning" />
+                    <span>@L["P2ApprovalPendingHint"]</span>
+                </div>
+            }
+            @if (_loading)
+            {
+                <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+            }
+            else if (!_loadFailed)
+            {
+                <div class="p2-form-grid">
+                    <div class="p2-field">
+                        <label for="room-property-select">@L["P2Property"] <span class="required" aria-hidden="true">*</span></label>
+                        <InputSelect id="room-property-select" @bind-Value="_model.PropertyId" aria-describedby="room-property-error">
+                            <option value="0">@L["P2SelectProperty"]</option>
+                            @foreach (var property in Properties)
+                            {
+                                <option value="@property.Id">@property.Name</option>
+                            }
+                        </InputSelect>
+                        <span class="p2-field-error" id="room-property-error" aria-live="polite">@ErrorFor(nameof(_model.PropertyId))</span>
+                    </div>
+                    <div class="p2-field">
+                        <label for="room-code">@L["P2RoomCode"] <span class="required" aria-hidden="true">*</span></label>
+                        <InputText id="room-code" @bind-Value="_model.Code" maxlength="50" autocomplete="off" aria-describedby="room-code-error" />
+                        <span class="p2-field-error" id="room-code-error" aria-live="polite">@ErrorFor(nameof(_model.Code))</span>
+                    </div>
+                    <div class="p2-field">
+                        <label for="room-floor">@L["P2Floor"]</label>
+                        <InputNumber id="room-floor" @bind-Value="_model.Floor" min="0" max="1000" aria-describedby="room-floor-error" />
+                        <span class="p2-field-error" id="room-floor-error" aria-live="polite">@ErrorFor(nameof(_model.Floor))</span>
+                    </div>
+                    <div class="p2-field">
+                        <label for="room-area">@L["P2Area"] (@L["P2SquareMeter"])</label>
+                        <InputNumber id="room-area" @bind-Value="_model.AreaM2" min="0" max="100000" step="0.01" inputmode="decimal" aria-describedby="room-area-error" />
+                        <span class="p2-field-error" id="room-area-error" aria-live="polite">@ErrorFor(nameof(_model.AreaM2))</span>
+                    </div>
+                    <div class="p2-field">
+                        <label for="room-standard-price">@L["P2StandardPrice"] <span class="required" aria-hidden="true">*</span></label>
+                        <InputNumber id="room-standard-price" @bind-Value="_model.StandardPrice" min="0" max="9999999999999999.99" step="any" inputmode="numeric" aria-describedby="room-price-hint room-price-error" />
+                        <span class="p2-field-hint" id="room-price-hint">@L["P2PriceInputHint"]</span>
+                        <span class="p2-field-error" id="room-price-error" aria-live="polite">@ErrorFor(nameof(_model.StandardPrice))</span>
+                    </div>
+                    <div class="p2-field">
+                        <label for="room-status-select">@L["P2Status"]</label>
+                        <InputSelect id="room-status-select" @bind-Value="_model.Status" aria-describedby="room-status-error">
+                            <option value="@RoomStatus.Available">@L["P2StatusAvailable"]</option>
+                            <option value="@RoomStatus.Rented">@L["P2StatusRented"]</option>
+                            <option value="@RoomStatus.Maintenance">@L["P2StatusMaintenance"]</option>
+                        </InputSelect>
+                        <span class="p2-field-error" id="room-status-error" aria-live="polite">@ErrorFor(nameof(_model.Status))</span>
+                    </div>
+                    <label class="p2-check-field" for="room-is-active">
+                        <InputCheckbox id="room-is-active" @bind-Value="_model.IsActive" />
+                        <span>@L["P2Active"]</span>
+                    </label>
+                </div>
+            }
+        </div>
+        @if (!_loadFailed)
+        {
+            <footer class="p2-form-footer">
+                <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="CloseDialogAsync">@L["Cancel"]</button>
+                <button class="btn btn-primary" type="submit" disabled="@(_loading || _loadFailed || _saving)" aria-busy="@(_saving ? "true" : null)">
+                    @(_saving ? L["P2Saving"] : L["Save"])
+                </button>
+            </footer>
+        }
+    </EditForm>
+</FeatureDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public int? RoomId { get; set; }
+    [Parameter] public bool IsOwner { get; set; }
+    [Parameter] public IReadOnlyList<PropertyListItem> Properties { get; set; } = [];
+    [Parameter] public int? InitialPropertyId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private FeatureDialog? _featureDialog;
+    private RoomSave _model = new();
+    private readonly Dictionary<string, string> _errors = new();
+    private string? _error;
+    private bool _loading;
+    private bool _saving;
+    private bool _loadFailed;
+    private bool _approvalPending;
+    private bool IsEdit => RoomId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RoomId is not int id)
+        {
+            if (InitialPropertyId is int propertyId && Properties.Any(property => property.Id == propertyId))
+                _model.PropertyId = propertyId;
+            return;
+        }
+        _loading = true;
+        try
+        {
+            var result = await PageService.GetAsync(id);
+            if (!result.Succeeded || result.Room is null)
+            {
+                _error = MapError(result.ErrorCode);
+                _loadFailed = true;
+                return;
+            }
+
+            _model = new RoomSave
+            {
+                PropertyId = result.Room.PropertyId,
+                Code = result.Room.Code,
+                Floor = result.Room.Floor,
+                AreaM2 = result.Room.AreaM2,
+                StandardPrice = result.Room.StandardPrice,
+                Status = result.Room.Status,
+                IsActive = result.Room.IsActive
+            };
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            _loadFailed = true;
+            Logger.LogError(ex, "P2 room detail load failed");
+        }
+        finally { _loading = false; }
+    }
+
+    private string? ErrorFor(string field) => _errors.GetValueOrDefault(field);
+
+    private async Task HandleSubmitAsync(EditContext _)
+    {
+        if (_loading || _loadFailed || _saving) return;
+
+        _errors.Clear();
+        _error = null;
+        _approvalPending = false;
+        _model.Normalize();
+        if (_model.PropertyId <= 0 || !Properties.Any(property => property.Id == _model.PropertyId))
+            _errors[nameof(_model.PropertyId)] = L["P2ValidationPropertyRequired"];
+        if (string.IsNullOrWhiteSpace(_model.Code)) _errors[nameof(_model.Code)] = L["P2ValidationRoomCodeRequired"];
+        else if (_model.Code.Length > 50) _errors[nameof(_model.Code)] = L["P2ValidationRoomCodeLength"];
+        if (_model.Floor is < 0 or > 1000) _errors[nameof(_model.Floor)] = L["P2ValidationFloor"];
+        if (_model.AreaM2 is < 0 or > 100000) _errors[nameof(_model.AreaM2)] = L["P2ValidationArea"];
+        if (_model.StandardPrice < 0) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceNegative"];
+        if (_model.StandardPrice > 9_999_999_999_999_999.99m) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceMax"];
+        if (!Enum.IsDefined(_model.Status)) _errors[nameof(_model.Status)] = L["P2ValidationStatus"];
+        else if (!_model.IsActive && _model.Status != RoomStatus.Available)
+            _errors[nameof(_model.Status)] = L["P2ValidationInactiveRoomStatus"];
+        if (_errors.Count > 0) return;
+        if (!IsEdit && !IsOwner) { _error = L["P2Forbidden"]; return; }
+
+        _saving = true;
+        try
+        {
+            var result = IsEdit
+                ? await PageService.UpdateAsync(RoomId!.Value, _model)
+                : await PageService.CreateAsync(_model);
+            if (result.Succeeded)
+            {
+                if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+                await OnSaved.InvokeAsync();
+                return;
+            }
+
+            if (result.ErrorCode == RoomErrorCodes.ApprovalRequired)
+            {
+                _approvalPending = true;
+                return;
+            }
+
+            _error = MapError(result.ErrorCode);
+            _loadFailed = false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["P2Forbidden"];
+            _loadFailed = false;
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2SaveFailed"];
+            _loadFailed = false;
+            Logger.LogError(ex, "P2 room save failed");
+        }
+        finally { _saving = false; }
+    }
+
+    private string MapError(string? code) => code switch
+    {
+        RoomErrorCodes.InactiveRoomStatus => L["P2ValidationInactiveRoomStatus"],
+        RoomErrorCodes.InvalidRequest => L["P2ValidationInvalidRequest"],
+        RoomErrorCodes.Forbidden => L["P2Forbidden"],
+        RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
+        RoomErrorCodes.PropertyNotFound => L["P2PropertyNotFound"],
+        RoomErrorCodes.DuplicateRoomCode => L["P2DuplicateRoomCode"],
+        _ => L["P2SaveFailed"]
+    };
+
+    private async Task RetryLoadAsync()
+    {
+        if (RoomId is not int id) return;
+        _error = null;
+        _loadFailed = false;
+        _loading = true;
+        try
+        {
+            var result = await PageService.GetAsync(id);
+            if (!result.Succeeded || result.Room is null)
+            {
+                _error = MapError(result.ErrorCode);
+                _loadFailed = true;
+                return;
+            }
+            _model = new RoomSave
+            {
+                PropertyId = result.Room.PropertyId,
+                Code = result.Room.Code,
+                Floor = result.Room.Floor,
+                AreaM2 = result.Room.AreaM2,
+                StandardPrice = result.Room.StandardPrice,
+                Status = result.Room.Status,
+                IsActive = result.Room.IsActive
+            };
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            _loadFailed = true;
+            Logger.LogError(ex, "P2 room detail retry failed");
+        }
+        finally { _loading = false; }
+    }
+
+    private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
+}

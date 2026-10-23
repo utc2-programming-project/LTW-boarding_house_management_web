@@ -208,6 +208,24 @@
   <data name="BackToPreview" xml:space="preserve">
     <value>Về trang mẫu</value>
   </data>
+  <data name="AccountStatusPendingApproval" xml:space="preserve">
+    <value>Chờ duyệt</value>
+  </data>
+  <data name="AccountStatusActive" xml:space="preserve">
+    <value>Hoạt động</value>
+  </data>
+  <data name="AccountStatusLocked" xml:space="preserve">
+    <value>Khóa</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>Từ chối</value>
+  </data>
+  <data name="CancelRequest" xml:space="preserve">
+    <value>Hủy yêu cầu</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Khôi phục</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Tổng quan</value>
   </data>
@@ -449,7 +467,10 @@
     <value>Chưa có dữ liệu</value>
   </data>
   <data name="TableNoResults" xml:space="preserve">
-    <value>Không có kết quả phù hợp</value>
+    <value>Không tìm thấy kết quả</value>
+  </data>
+  <data name="TableNoResultsDescription" xml:space="preserve">
+    <value>Thử thay đổi hoặc xóa bộ lọc để tìm dữ liệu khác.</value>
   </data>
   <data name="TableClearFilters" xml:space="preserve">
     <value>Xóa bộ lọc</value>
@@ -500,4 +521,225 @@
   <data name="DevQuickLoginHint" xml:space="preserve">
     <value>Chỉ hiện khi chạy ở máy dev và đã cấu hình mật khẩu test. Bấm để vào thẳng từng vai trò; không bao giờ hiển thị ở môi trường thật.</value>
   </data>
+
+  <!-- VHT-16: giao diện quản lý nhà trọ và phòng P2 -->
+  <data name="P2PropertiesTitle" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="P2PropertiesSubtitle" xml:space="preserve"><value>Quản lý các nhà trọ trong phạm vi tài khoản của bạn</value></data>
+  <data name="P2AddProperty" xml:space="preserve"><value>Thêm nhà trọ</value></data>
+  <data name="P2PropertyFilters" xml:space="preserve"><value>Bộ lọc nhà trọ</value></data>
+  <data name="P2SearchProperties" xml:space="preserve"><value>Tìm theo tên hoặc địa chỉ nhà trọ</value></data>
+  <data name="P2Activity" xml:space="preserve"><value>Hoạt động</value></data>
+  <data name="P2AllActivity" xml:space="preserve"><value>Tất cả hoạt động</value></data>
+  <data name="P2Active" xml:space="preserve"><value>Đang hoạt động</value></data>
+  <data name="P2Inactive" xml:space="preserve"><value>Ngừng hoạt động</value></data>
+  <data name="P2ApplyFilters" xml:space="preserve"><value>Áp dụng</value></data>
+  <data name="P2ResetFilters" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="P2PropertyName" xml:space="preserve"><value>Tên nhà trọ</value></data>
+  <data name="P2Address" xml:space="preserve"><value>Địa chỉ</value></data>
+  <data name="P2NotProvided" xml:space="preserve"><value>Chưa cập nhật</value></data>
+  <data name="P2RoomCount" xml:space="preserve"><value>Số phòng</value></data>
+  <data name="P2Actions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="P2PropertiesTable" xml:space="preserve"><value>Danh sách nhà trọ</value></data>
+  <data name="P2RowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
+  <data name="P2LoadFailed" xml:space="preserve"><value>Không tải được dữ liệu. Vui lòng thử lại.</value></data>
+  <data name="P2LoadSummaryFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
+  <data name="P2Loading" xml:space="preserve"><value>Đang tải…</value></data>
+  <data name="P2Saving" xml:space="preserve"><value>Đang lưu…</value></data>
+  <data name="P2SaveSucceeded" xml:space="preserve"><value>Đã lưu thay đổi.</value></data>
+  <data name="P2SaveFailed" xml:space="preserve"><value>Không thể lưu thay đổi. Vui lòng thử lại.</value></data>
+  <data name="P2Forbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="P2Edit" xml:space="preserve"><value>Chỉnh sửa</value></data>
+  <data name="P2ViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="P2EditProperty" xml:space="preserve"><value>Chỉnh sửa nhà trọ</value></data>
+  <data name="P2ValidationPropertyNameRequired" xml:space="preserve"><value>Vui lòng nhập tên nhà trọ.</value></data>
+  <data name="P2ValidationNameLength" xml:space="preserve"><value>Tên nhà trọ không được vượt quá 200 ký tự.</value></data>
+  <data name="P2ValidationAddressLength" xml:space="preserve"><value>Địa chỉ không được vượt quá 500 ký tự.</value></data>
+  <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Dữ liệu nhập chưa hợp lệ. Vui lòng kiểm tra lại.</value></data>
+  <data name="P2PropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ hoặc bạn không có quyền truy cập.</value></data>
+  <data name="P2RoomsTitle" xml:space="preserve"><value>Phòng</value></data>
+  <data name="P2RoomsSubtitle" xml:space="preserve"><value>Theo dõi phòng, giá thuê và trạng thái sử dụng</value></data>
+  <data name="P2AddRoom" xml:space="preserve"><value>Thêm phòng</value></data>
+  <data name="P2RoomSummary" xml:space="preserve"><value>Tổng quan phòng</value></data>
+  <data name="P2TotalRooms" xml:space="preserve"><value>Tổng số phòng</value></data>
+  <data name="P2RoomUnit" xml:space="preserve"><value>phòng</value></data>
+  <data name="P2RoomsInScope" xml:space="preserve"><value>Trong phạm vi được xem</value></data>
+  <data name="P2Available" xml:space="preserve"><value>Phòng trống</value></data>
+  <data name="P2ReadyForRent" xml:space="preserve"><value>Sẵn sàng cho thuê</value></data>
+  <data name="P2Rented" xml:space="preserve"><value>Đang thuê</value></data>
+  <data name="P2CurrentlyOccupied" xml:space="preserve"><value>Đang có người lưu trú</value></data>
+  <data name="P2Maintenance" xml:space="preserve"><value>Bảo trì</value></data>
+  <data name="P2UnavailableForRent" xml:space="preserve"><value>Tạm ngừng cho thuê</value></data>
+  <data name="P2RoomFilters" xml:space="preserve"><value>Bộ lọc phòng</value></data>
+  <data name="P2SearchRooms" xml:space="preserve"><value>Tìm theo mã phòng</value></data>
+  <data name="P2Property" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="P2AllProperties" xml:space="preserve"><value>Tất cả nhà trọ</value></data>
+  <data name="P2Status" xml:space="preserve"><value>Trạng thái phòng</value></data>
+  <data name="P2AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="P2StatusAvailable" xml:space="preserve"><value>Còn trống</value></data>
+  <data name="P2StatusRented" xml:space="preserve"><value>Đang cho thuê</value></data>
+  <data name="P2StatusMaintenance" xml:space="preserve"><value>Đang bảo trì</value></data>
+  <data name="P2StatusUnknown" xml:space="preserve"><value>Không xác định</value></data>
+  <data name="P2MinPrice" xml:space="preserve"><value>Giá từ</value></data>
+  <data name="P2MaxPrice" xml:space="preserve"><value>Giá đến</value></data>
+  <data name="P2OnlyAvailable" xml:space="preserve"><value>Chỉ phòng trống</value></data>
+  <data name="P2ValidationPriceNumber" xml:space="preserve"><value>Giá lọc phải là số không âm.</value></data>
+  <data name="P2ValidationPriceRange" xml:space="preserve"><value>Giá tối thiểu không được lớn hơn giá tối đa.</value></data>
+  <data name="P2FilteringByProperty" xml:space="preserve"><value>Đang lọc nhà trọ:</value></data>
+  <data name="P2ClearFilter" xml:space="preserve"><value>Bỏ lọc</value></data>
+  <data name="P2RoomsTable" xml:space="preserve"><value>Danh sách phòng</value></data>
+  <data name="P2ManageProperties" xml:space="preserve"><value>Quản lý nhà trọ</value></data>
+  <data name="P2CreatePropertyFirst" xml:space="preserve"><value>Bạn cần tạo nhà trọ trước khi thêm phòng.</value></data>
+  <data name="P2RoomCode" xml:space="preserve"><value>Mã phòng</value></data>
+  <data name="P2Floor" xml:space="preserve"><value>Tầng</value></data>
+  <data name="P2Area" xml:space="preserve"><value>Diện tích</value></data>
+  <data name="P2SquareMeter" xml:space="preserve"><value>m²</value></data>
+  <data name="P2StandardPrice" xml:space="preserve"><value>Giá thuê</value></data>
+  <data name="P2SelectProperty" xml:space="preserve"><value>Chọn nhà trọ</value></data>
+  <data name="P2PriceInputHint" xml:space="preserve"><value>Nhập số tiền bằng đồng (VND).</value></data>
+  <data name="P2ValidationPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
+  <data name="P2ValidationRoomCodeRequired" xml:space="preserve"><value>Vui lòng nhập mã phòng.</value></data>
+  <data name="P2ValidationRoomCodeLength" xml:space="preserve"><value>Mã phòng không được vượt quá 50 ký tự.</value></data>
+  <data name="P2ValidationFloor" xml:space="preserve"><value>Tầng phải nằm trong khoảng từ 0 đến 1000.</value></data>
+  <data name="P2ValidationArea" xml:space="preserve"><value>Diện tích phải nằm trong khoảng từ 0 đến 100000 m².</value></data>
+  <data name="P2ValidationPriceNegative" xml:space="preserve"><value>Giá thuê không được là số âm.</value></data>
+  <data name="P2ValidationPriceMax" xml:space="preserve"><value>Giá thuê vượt quá giới hạn lưu trữ cho phép.</value></data>
+  <data name="P2ValidationStatus" xml:space="preserve"><value>Trạng thái phòng không hợp lệ.</value></data>
+  <data name="P2ValidationInactiveRoomStatus" xml:space="preserve"><value>Phòng ngừng hoạt động phải ở trạng thái Còn trống. Vui lòng đổi trạng thái trước khi lưu.</value></data>
+  <data name="P2EditRoom" xml:space="preserve"><value>Chỉnh sửa phòng</value></data>
+  <data name="P2RoomDetails" xml:space="preserve"><value>Chi tiết phòng</value></data>
+  <data name="P2CreatedAt" xml:space="preserve"><value>Ngày tạo</value></data>
+  <data name="P2UpdatedAt" xml:space="preserve"><value>Cập nhật lần cuối</value></data>
+  <data name="P2ApprovalPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Tính năng duyệt sẽ được bổ sung trong giai đoạn sau.</value></data>
+  <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Chuyển phòng vào thùng rác?</value></data>
+  <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Phòng {0} sẽ được chuyển vào thùng rác.</value></data>
+  <data name="P2MoveToTrash" xml:space="preserve"><value>Chuyển vào thùng rác</value></data>
+  <data name="P2Deleting" xml:space="preserve"><value>Đang chuyển…</value></data>
+  <data name="P2RoomMovedToTrash" xml:space="preserve"><value>Đã chuyển phòng vào thùng rác.</value></data>
+  <data name="P2RoomInUse" xml:space="preserve"><value>Phòng đang có hợp đồng hiệu lực nên không thể xóa.</value></data>
+  <data name="P2RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng hoặc bạn không có quyền truy cập.</value></data>
+  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>Mã phòng đã tồn tại trong nhà trọ này.</value></data>
+  <data name="P2ViewRooms" xml:space="preserve"><value>Xem danh sách phòng</value></data>
+
+  <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
+  <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
+  <data name="TenantsTitle" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="TenantsSubtitle" xml:space="preserve"><value>Quản lý hồ sơ và thông tin định danh người lưu trú</value></data>
+  <data name="TenantAdd" xml:space="preserve"><value>Tiếp nhận khách</value></data>
+  <data name="TenantExport" xml:space="preserve"><value>Xuất danh sách</value></data>
+  <data name="TenantStatTotal" xml:space="preserve"><value>Tổng khách thuê</value></data>
+  <data name="TenantStatActive" xml:space="preserve"><value>Đang lưu trú</value></data>
+  <data name="TenantStatAccounts" xml:space="preserve"><value>Đã có tài khoản</value></data>
+  <data name="TenantStatIdCoverage" xml:space="preserve"><value>Có số CCCD</value></data>
+  <data name="TenantPeople" xml:space="preserve"><value>người</value></data>
+  <data name="TenantRecords" xml:space="preserve"><value>hồ sơ</value></data>
+  <data name="TenantAccounts" xml:space="preserve"><value>tài khoản</value></data>
+  <data name="TenantSecurityHint" xml:space="preserve"><value>CCCD luôn được che trong danh sách</value></data>
+  <data name="TenantSearch" xml:space="preserve"><value>Tìm khách thuê</value></data>
+  <data name="TenantSearchHint" xml:space="preserve"><value>Tìm theo họ tên, số điện thoại hoặc số CCCD</value></data>
+  <data name="TenantSearchPrivacyHint" xml:space="preserve"><value>Nhập ít nhất 3 ký tự để tìm theo số điện thoại hoặc CCCD</value></data>
+  <data name="TenantStatusFilter" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="TenantStatusAll" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="TenantStatusActive" xml:space="preserve"><value>Đang sử dụng</value></data>
+  <data name="TenantStatusInactive" xml:space="preserve"><value>Ngừng sử dụng</value></data>
+  <data name="TenantAccountFilter" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="TenantAccountAll" xml:space="preserve"><value>Tất cả tài khoản</value></data>
+  <data name="TenantAccountYes" xml:space="preserve"><value>Có tài khoản</value></data>
+  <data name="TenantAccountNo" xml:space="preserve"><value>Chưa có tài khoản</value></data>
+  <data name="TenantSort" xml:space="preserve"><value>Sắp xếp</value></data>
+  <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Ngày tạo mới nhất</value></data>
+  <data name="TenantSortNameAsc" xml:space="preserve"><value>Tên A–Z</value></data>
+  <data name="TenantSortNameDesc" xml:space="preserve"><value>Tên Z–A</value></data>
+  <data name="TenantReset" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="TenantColumnName" xml:space="preserve"><value>Họ tên khách thuê</value></data>
+  <data name="TenantColumnPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="TenantColumnIdNumber" xml:space="preserve"><value>CCCD / CMND</value></data>
+  <data name="TenantColumnStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="TenantColumnAccount" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="TenantColumnActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="TenantRecordNumber" xml:space="preserve"><value>Hồ sơ #{0}</value></data>
+  <data name="TenantViewDetails" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="TenantEdit" xml:space="preserve"><value>Sửa hồ sơ</value></data>
+  <data name="TenantDeactivate" xml:space="preserve"><value>Ngừng sử dụng hồ sơ này?</value></data>
+  <data name="TenantActivate" xml:space="preserve"><value>Kích hoạt lại hồ sơ này?</value></data>
+  <data name="TenantNoResultsTitle" xml:space="preserve"><value>Không tìm thấy khách thuê</value></data>
+  <data name="TenantEmptyDescription" xml:space="preserve"><value>Chưa có hồ sơ khách thuê. Tiếp nhận khách mới để bắt đầu quản lý.</value></data>
+  <data name="TenantDetailTitle" xml:space="preserve"><value>Chi tiết khách thuê</value></data>
+  <data name="TenantPersonalSection" xml:space="preserve"><value>Thông tin cá nhân</value></data>
+  <data name="TenantIdentitySection" xml:space="preserve"><value>Thông tin giấy tờ</value></data>
+  <data name="TenantAccountSection" xml:space="preserve"><value>Tài khoản ứng dụng</value></data>
+  <data name="TenantLinkedAccount" xml:space="preserve"><value>Đã liên kết tài khoản</value></data>
+  <data name="TenantUnlinkedAccount" xml:space="preserve"><value>Chưa liên kết tài khoản</value></data>
+  <data name="TenantLinkAccount" xml:space="preserve"><value>Liên kết tài khoản</value></data>
+  <data name="TenantUnlinkAccount" xml:space="preserve"><value>Gỡ liên kết</value></data>
+  <data name="TenantLinkDialogTitle" xml:space="preserve"><value>Liên kết tài khoản khách thuê</value></data>
+  <data name="TenantAccountSearch" xml:space="preserve"><value>Tìm tài khoản</value></data>
+  <data name="TenantAccountSearchHint" xml:space="preserve"><value>Tìm theo tên, email hoặc số điện thoại</value></data>
+  <data name="TenantSelectAccount" xml:space="preserve"><value>Chọn một tài khoản</value></data>
+  <data name="TenantNoAvailableAccounts" xml:space="preserve"><value>Không có tài khoản khách thuê chưa liên kết</value></data>
+  <data name="TenantCreateTitle" xml:space="preserve"><value>Tiếp nhận khách thuê</value></data>
+  <data name="TenantUpdateTitle" xml:space="preserve"><value>Chỉnh sửa hồ sơ khách thuê</value></data>
+  <data name="TenantFullName" xml:space="preserve"><value>Họ và tên</value></data>
+  <data name="TenantPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="TenantEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="TenantIdNumber" xml:space="preserve"><value>Số CCCD / CMND</value></data>
+  <data name="TenantDateOfBirth" xml:space="preserve"><value>Ngày sinh</value></data>
+  <data name="TenantGender" xml:space="preserve"><value>Giới tính</value></data>
+  <data name="TenantGenderMale" xml:space="preserve"><value>Nam</value></data>
+  <data name="TenantGenderFemale" xml:space="preserve"><value>Nữ</value></data>
+  <data name="TenantGenderOther" xml:space="preserve"><value>Khác</value></data>
+  <data name="TenantPermanentAddress" xml:space="preserve"><value>Địa chỉ thường trú</value></data>
+  <data name="TenantIdIssuedDate" xml:space="preserve"><value>Ngày cấp</value></data>
+  <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Nơi cấp</value></data>
+  <data name="TenantInternalNote" xml:space="preserve"><value>Ghi chú nội bộ</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Số CCCD của Quản lý luôn được che.</value></data>
+  <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Nhập đầy đủ số CCCD/CMND. Sau khi lưu, số này sẽ được che.</value></data>
+  <data name="TenantIdManagerEditHint" xml:space="preserve"><value>Số hiện tại đang được che. Để trống để giữ số cũ, hoặc nhập đầy đủ số mới để thay đổi.</value></data>
+  <data name="TenantValidationIdNumber" xml:space="preserve"><value>Số giấy tờ không hợp lệ: nhập tối thiểu 8 chữ hoặc số và không dùng dấu *.</value></data>
+  <data name="TenantColumnRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="TenantProfileTitle" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
+  <data name="TenantProfileSubtitle" xml:space="preserve"><value>Xem thông tin lưu trú và cập nhật thông tin liên hệ của bạn</value></data>
+  <data name="TenantProfileReadonly" xml:space="preserve"><value>Thông tin này do Chủ trọ hoặc Quản lý cập nhật</value></data>
+  <data name="TenantProfileEditable" xml:space="preserve"><value>Thông tin bạn có thể tự cập nhật</value></data>
+  <data name="TenantProfileMissing" xml:space="preserve"><value>Hồ sơ khách thuê chưa được liên kết với tài khoản này. Vui lòng liên hệ Chủ trọ.</value></data>
+  <data name="TenantProfileLoadFailed" xml:space="preserve"><value>Không tải được hồ sơ của bạn. Vui lòng thử lại.</value></data>
+  <data name="TenantProfileSaved" xml:space="preserve"><value>Đã lưu hồ sơ của bạn</value></data>
+  <data name="TenantCreated" xml:space="preserve"><value>Đã tiếp nhận hồ sơ khách thuê</value></data>
+  <data name="TenantUpdated" xml:space="preserve"><value>Đã cập nhật hồ sơ khách thuê</value></data>
+  <data name="TenantStatusUpdated" xml:space="preserve"><value>Đã cập nhật trạng thái hồ sơ</value></data>
+  <data name="TenantAccountLinked" xml:space="preserve"><value>Đã liên kết tài khoản khách thuê</value></data>
+  <data name="TenantAccountUnlinked" xml:space="preserve"><value>Đã gỡ liên kết tài khoản</value></data>
+  <data name="TenantUnlinkTitle" xml:space="preserve"><value>Gỡ liên kết tài khoản?</value></data>
+  <data name="TenantUnlinkMessage" xml:space="preserve"><value>Tài khoản sẽ không còn mở được hồ sơ khách thuê này.</value></data>
+  <data name="TenantValidationRequired" xml:space="preserve"><value>Vui lòng nhập {0}.</value></data>
+  <data name="TenantValidationPhone" xml:space="preserve"><value>Số điện thoại cần có 10–11 chữ số và bắt đầu bằng 0.</value></data>
+  <data name="TenantValidationEmail" xml:space="preserve"><value>Email không hợp lệ.</value></data>
+  <data name="TenantValidationLength" xml:space="preserve"><value>{0} không được vượt quá {1} ký tự.</value></data>
+  <data name="TenantValidationBirthDate" xml:space="preserve"><value>Ngày sinh không được ở tương lai.</value></data>
+  <data name="TenantValidationIssuedDate" xml:space="preserve"><value>Ngày cấp không được trước ngày sinh.</value></data>
+  <data name="TenantErrorDuplicateId" xml:space="preserve"><value>Số giấy tờ này đã được dùng trong một hồ sơ khách thuê khác.</value></data>
+  <data name="TenantErrorDuplicatePhone" xml:space="preserve"><value>Số điện thoại đã có trong hồ sơ khác. Bạn có muốn tiếp tục lưu không?</value></data>
+  <data name="TenantErrorConflict" xml:space="preserve"><value>Hồ sơ vừa được thay đổi ở nơi khác. Tải lại dữ liệu rồi thử lại.</value></data>
+  <data name="TenantErrorNotFound" xml:space="preserve"><value>Không tìm thấy hồ sơ khách thuê.</value></data>
+  <data name="TenantErrorAccountLinked" xml:space="preserve"><value>Tài khoản này đã được liên kết với hồ sơ khác.</value></data>
+  <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Chỉ có thể liên kết tài khoản mang vai trò Khách thuê.</value></data>
+  <data name="TenantErrorGeneric" xml:space="preserve"><value>Không thể thực hiện thao tác. Vui lòng thử lại.</value></data>
+  <data name="TenantErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="TenantSummary" xml:space="preserve"><value>Tổng quan khách thuê</value></data>
+  <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
+  <data name="TenantAllRecordsHint" xml:space="preserve"><value>Hồ sơ trong hệ thống</value></data>
+  <data name="TenantActiveRateHint" xml:space="preserve"><value>tỉ lệ hoạt động</value></data>
+  <data name="TenantAccountRateHint" xml:space="preserve"><value>đã liên kết tài khoản</value></data>
+  <data name="TenantFilters" xml:space="preserve"><value>Bộ lọc khách thuê</value></data>
+  <data name="TenantRowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
+  <data name="TenantExported" xml:space="preserve"><value>Đã xuất {0} hồ sơ khách thuê (CSV)</value></data>
+  <data name="TenantExportFailed" xml:space="preserve"><value>Không thể xuất danh sách khách thuê.</value></data>
+  <data name="TenantActivateTitle" xml:space="preserve"><value>Kích hoạt lại hồ sơ</value></data>
+  <data name="TenantDeactivateTitle" xml:space="preserve"><value>Ngừng sử dụng hồ sơ</value></data>
+  <data name="TenantActivateButton" xml:space="preserve"><value>Kích hoạt lại</value></data>
+  <data name="TenantDeactivateButton" xml:space="preserve"><value>Ngừng sử dụng</value></data>
+  <data name="TenantDuplicatePhoneTitle" xml:space="preserve"><value>Xác nhận số điện thoại trùng</value></data>
+  <data name="TenantCreatedAt" xml:space="preserve"><value>Tạo lúc:</value></data>
+  <data name="TenantUpdatedAt" xml:space="preserve"><value>Cập nhật:</value></data>
+  <data name="TenantProfileEditHint" xml:space="preserve"><value>Khách thuê chỉ tự sửa số điện thoại, email và địa chỉ thường trú.</value></data>
 </root>

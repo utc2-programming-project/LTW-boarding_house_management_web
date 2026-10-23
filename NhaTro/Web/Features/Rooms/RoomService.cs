@@ -11,22 +11,46 @@ using Web.Features.Rooms.Mapping;
 namespace Web.Features.Rooms;
 
 /// <summary>
-/// Phòng P2 đợt 1C: query/save trên SQL, kiểm mã phòng theo nhà, giá/trạng thái, phân trang
+/// Service SQL cho phòng P2: kiểm mã phòng theo nhà, giá/trạng thái, phân trang
 /// và dữ liệu chọn phòng. Quyền theo docs/task/thao_tac_va_quyen.xlsx (P2).
 /// </summary>
 public sealed class RoomService(
-    ApplicationDbContext db,
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
     TimeProvider clock,
     IRoomChangePolicy changePolicy,
     IRoomUsageChecker usageChecker) : IRoomService
 {
+    public async Task<RoomSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var rooms = ScopeRooms(db, caller);
+        var counts = await rooms
+            .GroupBy(room => new { room.Status, room.IsActive })
+            .Select(group => new { group.Key.Status, group.Key.IsActive, Count = group.Count() })
+            .ToListAsync(ct);
+
+        int CountFor(RoomStatus status) =>
+            counts.FirstOrDefault(item => item.Status == status && item.IsActive)?.Count ?? 0;
+
+        return new RoomSummary
+        {
+            Total = counts.Sum(item => item.Count),
+            Available = CountFor(RoomStatus.Available),
+            Rented = CountFor(RoomStatus.Rented),
+            Maintenance = CountFor(RoomStatus.Maintenance)
+        };
+    }
+
     public async Task<PagedResult<RoomListItem>> ListAsync(
         RoomFilter filter, PropertyCaller caller, CancellationToken ct = default)
     {
         EnsureCanRead(caller);
         filter.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = ApplyFilter(ScopeRooms(caller), filter);
+        var query = ApplyFilter(ScopeRooms(db, caller), filter);
 
         var total = await query.CountAsync(ct);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
@@ -51,8 +75,9 @@ public sealed class RoomService(
         int id, PropertyCaller caller, CancellationToken ct = default)
     {
         EnsureCanRead(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var row = await ScopeRooms(caller)
+        var row = await ScopeRooms(db, caller)
             .Where(r => r.Id == id)
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
             .FirstOrDefaultAsync(ct);
@@ -75,12 +100,13 @@ public sealed class RoomService(
             return invalid;
         }
 
-        if (!await PropertyInScopeAsync(request.PropertyId, caller, ct))
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await PropertyInScopeAsync(db, request.PropertyId, caller, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.PropertyNotFound, RoomErrorMessages.PropertyNotFound);
         }
 
-        if (await RoomCodeExistsAsync(request.PropertyId, request.Code, excludeRoomId: null, ct))
+        if (await RoomCodeExistsAsync(db, request.PropertyId, request.Code, excludeRoomId: null, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
@@ -99,7 +125,7 @@ public sealed class RoomService(
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
 
-        var propertyName = await PropertyNameAsync(entity.PropertyId, ct);
+        var propertyName = await PropertyNameAsync(db, entity.PropertyId, ct);
         return RoomResult.Success(RoomMapping.ToDetail(entity, propertyName));
     }
 
@@ -115,7 +141,8 @@ public sealed class RoomService(
             return invalid;
         }
 
-        var entity = await ScopeRooms(caller).FirstOrDefaultAsync(r => r.Id == id, ct);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeRooms(db, caller).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -123,12 +150,12 @@ public sealed class RoomService(
 
         // Đổi nhà trọ: nhà đích cũng phải nằm trong phạm vi người gọi.
         if (entity.PropertyId != request.PropertyId
-            && !await PropertyInScopeAsync(request.PropertyId, caller, ct))
+            && !await PropertyInScopeAsync(db, request.PropertyId, caller, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.PropertyNotFound, RoomErrorMessages.PropertyNotFound);
         }
 
-        if (await RoomCodeExistsAsync(request.PropertyId, request.Code, id, ct))
+        if (await RoomCodeExistsAsync(db, request.PropertyId, request.Code, id, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
@@ -167,7 +194,7 @@ public sealed class RoomService(
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
 
-        var propertyName = await PropertyNameAsync(entity.PropertyId, ct);
+        var propertyName = await PropertyNameAsync(db, entity.PropertyId, ct);
         return RoomResult.Success(RoomMapping.ToDetail(entity, propertyName));
     }
 
@@ -177,7 +204,8 @@ public sealed class RoomService(
         // Ma trận #15: chỉ Chủ trọ xóa phòng (Quản lý ❌).
         EnsureCanManage(caller);
 
-        var entity = await ScopeRooms(caller).FirstOrDefaultAsync(r => r.Id == id, ct);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeRooms(db, caller).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (entity is null)
         {
             return NotFound();
@@ -202,7 +230,8 @@ public sealed class RoomService(
         // Ma trận #16: chỉ Chủ trọ khôi phục.
         EnsureCanManage(caller);
 
-        var entity = await ScopeRooms(caller, includeDeleted: true)
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeRooms(db, caller, includeDeleted: true)
             .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted, ct);
         if (entity is null)
         {
@@ -210,7 +239,7 @@ public sealed class RoomService(
         }
 
         // Khôi phục khi mã phòng đã bị dùng lại cho phòng đang hoạt động => chặn (ma trận #16).
-        if (await RoomCodeExistsAsync(entity.PropertyId, entity.Code, id, ct))
+        if (await RoomCodeExistsAsync(db, entity.PropertyId, entity.Code, id, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
@@ -227,7 +256,7 @@ public sealed class RoomService(
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
         }
 
-        var propertyName = await PropertyNameAsync(entity.PropertyId, ct);
+        var propertyName = await PropertyNameAsync(db, entity.PropertyId, ct);
         return RoomResult.Success(RoomMapping.ToDetail(entity, propertyName));
     }
 
@@ -236,8 +265,9 @@ public sealed class RoomService(
     {
         EnsureCanRead(caller);
         request.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = ScopeRooms(caller).Where(r => r.IsActive);
+        var query = ScopeRooms(db, caller).Where(r => r.IsActive);
 
         if (!request.IncludeUnavailable)
         {
@@ -271,19 +301,13 @@ public sealed class RoomService(
 
     // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ chỉ thấy phòng thuộc nhà mình.
     // Quản lý chưa có bảng phân công tòa nhà nên tạm đọc toàn bộ; VHT-24 chỉ sửa tại đây.
-    private IQueryable<Room> ScopeRooms(PropertyCaller caller, bool includeDeleted = false)
+    private static IQueryable<Room> ScopeRooms(
+        ApplicationDbContext db,
+        PropertyCaller caller,
+        bool includeDeleted = false)
     {
         var rooms = includeDeleted ? db.Rooms.IgnoreQueryFilters() : db.Rooms;
-
-        if (caller.IsChuTro)
-        {
-            rooms = from r in rooms
-                    join p in db.Properties on r.PropertyId equals p.Id
-                    where p.OwnerId == caller.UserId
-                    select r;
-        }
-
-        return rooms;
+        return RoomScope.Apply(rooms, db.Properties, caller);
     }
 
     private static IQueryable<Room> ApplyFilter(IQueryable<Room> query, RoomFilter filter)
@@ -300,7 +324,7 @@ public sealed class RoomService(
 
         if (filter.OnlyAvailable == true)
         {
-            query = query.Where(r => r.Status == RoomStatus.Available);
+            query = query.Where(r => r.IsActive && r.Status == RoomStatus.Available);
         }
 
         if (filter.IsActive is { } isActive)
@@ -326,24 +350,28 @@ public sealed class RoomService(
         return query;
     }
 
-    private async Task<bool> PropertyInScopeAsync(int propertyId, PropertyCaller caller, CancellationToken ct)
+    private static async Task<bool> PropertyInScopeAsync(
+        ApplicationDbContext db,
+        int propertyId,
+        PropertyCaller caller,
+        CancellationToken ct)
     {
-        var query = db.Properties.Where(p => p.Id == propertyId);
-        if (caller.IsChuTro)
-        {
-            query = query.Where(p => p.OwnerId == caller.UserId);
-        }
-
+        var query = PropertyScope.Apply(db.Properties, caller).Where(p => p.Id == propertyId);
         return await query.AnyAsync(ct);
     }
 
     // Trùng mã theo nhà, chỉ xét phòng chưa xóa mềm (khớp unique filtered index IX_Rooms_PropertyId_Code).
-    private Task<bool> RoomCodeExistsAsync(int propertyId, string code, int? excludeRoomId, CancellationToken ct) =>
+    private static Task<bool> RoomCodeExistsAsync(
+        ApplicationDbContext db,
+        int propertyId,
+        string code,
+        int? excludeRoomId,
+        CancellationToken ct) =>
         db.Rooms.AnyAsync(
             r => r.PropertyId == propertyId && r.Code == code && (excludeRoomId == null || r.Id != excludeRoomId),
             ct);
 
-    private Task<string> PropertyNameAsync(int propertyId, CancellationToken ct) =>
+    private static Task<string> PropertyNameAsync(ApplicationDbContext db, int propertyId, CancellationToken ct) =>
         db.Properties.Where(p => p.Id == propertyId).Select(p => p.Name).FirstAsync(ct);
 
     // Loại thay đổi để tra đúng công tắc SW-01/02/03.
@@ -415,6 +443,13 @@ public sealed class RoomService(
         if (!Enum.IsDefined(request.Status))
         {
             return RoomResult.Failure(RoomErrorCodes.InvalidRequest, RoomErrorMessages.InvalidStatus);
+        }
+
+        if (!request.IsActive && request.Status != RoomStatus.Available)
+        {
+            return RoomResult.Failure(
+                RoomErrorCodes.InactiveRoomStatus,
+                RoomErrorMessages.InactiveRoomStatus);
         }
 
         // Cột decimal(…,2): làm tròn về 2 chữ số thập phân thay vì để SQL cắt ngầm.

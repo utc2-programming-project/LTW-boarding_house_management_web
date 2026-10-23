@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ContractPageTitle" xml:space="preserve"><value>Tạo hợp đồng thuê phòng</value></data>
+  <data name="ContractCreateBreadcrumb" xml:space="preserve"><value>Tạo hợp đồng mới</value></data>
+  <data name="ContractDemoTopline" xml:space="preserve"><value>Dữ liệu mẫu — chưa lưu SQL (bản thử nghiệm giao diện)</value></data>
+  <data name="ContractDemoTitle" xml:space="preserve"><value>Chế độ demo: dữ liệu mẫu, chưa lưu SQL</value></data>
+  <data name="ContractDemoDescription" xml:space="preserve"><value>Thao tác trong biểu mẫu dùng dữ liệu giả lập và chỉ nằm trong phiên giao diện hiện tại. Chưa có yêu cầu nào được gửi hoặc lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ContractDemoBadge" xml:space="preserve"><value>Chế độ xem trước</value></data>
+  <data name="ContractStandard" xml:space="preserve"><value>Mẫu hợp đồng 4P</value></data>
+  <data name="ContractLegalCaption" xml:space="preserve"><value>Pháp lý &amp; Quản lý vận hành</value></data>
+  <data name="ContractCreateHeading" xml:space="preserve"><value>Tạo hợp đồng thuê phòng mới</value></data>
+  <data name="ContractDraftStatus" xml:space="preserve"><value>Trạng thái: Soạn thảo</value></data>
+  <data name="ContractSectionProperty" xml:space="preserve"><value>Thông tin nhà trọ &amp; phòng</value></data>
+  <data name="ContractRequiredTag" xml:space="preserve"><value>Bắt buộc</value></data>
+  <data name="ContractPropertyLabel" xml:space="preserve"><value>Nhà trọ / Tòa nhà</value></data>
+  <data name="ContractPropertyPlaceholder" xml:space="preserve"><value>-- Chọn nhà trọ / chi nhánh --</value></data>
+  <data name="ContractPropertyCount" xml:space="preserve"><value>{0} cơ sở mẫu</value></data>
+  <data name="ContractRoomLabel" xml:space="preserve"><value>Mã phòng</value></data>
+  <data name="ContractRoomAvailabilityHint" xml:space="preserve"><value>Hiển thị phòng đang trống hoặc sẽ trống trước ngày bắt đầu hợp đồng.</value></data>
+  <data name="ContractRoomAvailableFrom" xml:space="preserve"><value>Trống từ {0}</value></data>
+  <data name="ContractRoomPlaceholder" xml:space="preserve"><value>-- Chọn phòng --</value></data>
+  <data name="ContractSelectPropertyFirst" xml:space="preserve"><value>Vui lòng chọn nhà trọ trước</value></data>
+  <data name="ContractRoomCount" xml:space="preserve"><value>{0} phòng trống theo ngày bắt đầu</value></data>
+  <data name="ContractNoAvailableRooms" xml:space="preserve"><value>Không có phòng trống theo ngày bắt đầu trong dữ liệu mẫu.</value></data>
+  <data name="ContractRoomFloor" xml:space="preserve"><value>Tầng {0}</value></data>
+  <data name="ContractArea" xml:space="preserve"><value>Diện tích: {0} m²</value></data>
+  <data name="ContractStandardPrice" xml:space="preserve"><value>Đơn giá niêm yết</value></data>
+  <data name="ContractUseRoomPrice" xml:space="preserve"><value>Áp giá chuẩn phòng</value></data>
+  <data name="ContractTenantSection" xml:space="preserve"><value>Thông tin khách thuê &amp; thành viên</value></data>
+  <data name="ContractTenantSectionHint" xml:space="preserve"><value>Khách đại diện &amp; người ở cùng</value></data>
+  <data name="ContractRepresentativeLabel" xml:space="preserve"><value>Người đại diện hợp đồng (Bên B)</value></data>
+  <data name="ContractTenantPlaceholder" xml:space="preserve"><value>-- Chọn người đại diện ký hợp đồng --</value></data>
+  <data name="ContractTenantCount" xml:space="preserve"><value>{0} hồ sơ mẫu</value></data>
+  <data name="ContractMaskedId" xml:space="preserve"><value>CCCD {0}</value></data>
+  <data name="ContractRoommatesLabel" xml:space="preserve"><value>Danh sách thành viên ở cùng</value></data>
+  <data name="ContractMemberCount" xml:space="preserve"><value>{0} người</value></data>
+  <data name="ContractAddMember" xml:space="preserve"><value>Thêm thành viên</value></data>
+  <data name="ContractRemoveMember" xml:space="preserve"><value>Xóa thành viên</value></data>
+  <data name="ContractMemberName" xml:space="preserve"><value>Họ và tên</value></data>
+  <data name="ContractMemberPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="ContractRelationship" xml:space="preserve"><value>Mối quan hệ</value></data>
+  <data name="ContractRelationshipPartner" xml:space="preserve"><value>Vợ / chồng</value></data>
+  <data name="ContractRelationshipColleague" xml:space="preserve"><value>Đồng nghiệp</value></data>
+  <data name="ContractRelationshipChild" xml:space="preserve"><value>Con</value></data>
+  <data name="ContractRelationshipRelative" xml:space="preserve"><value>Người thân</value></data>
+  <data name="ContractRelationshipOther" xml:space="preserve"><value>Khác</value></data>
+  <data name="ContractSectionPeriod" xml:space="preserve"><value>Thời hạn hợp đồng</value></data>
+  <data name="ContractApproxDuration" xml:space="preserve"><value>Thời hạn: khoảng {0} tháng</value></data>
+  <data name="ContractStartDate" xml:space="preserve"><value>Ngày bắt đầu</value></data>
+  <data name="ContractEndDate" xml:space="preserve"><value>Ngày kết thúc</value></data>
+  <data name="ContractDateRule" xml:space="preserve"><value>Quy tắc VHT-9: thời hạn thuê tối thiểu 01 tháng.</value></data>
+  <data name="ContractSectionFinance" xml:space="preserve"><value>Tài chính &amp; Dịch vụ</value></data>
+  <data name="ContractCurrencyCycle" xml:space="preserve"><value>VND / chu kỳ</value></data>
+  <data name="ContractRentLabel" xml:space="preserve"><value>Giá thuê phòng (VND/tháng)</value></data>
+  <data name="ContractRentPlaceholder" xml:space="preserve"><value>Ví dụ: 4.500.000</value></data>
+  <data name="ContractDepositLabel" xml:space="preserve"><value>Tiền đặt cọc phòng</value></data>
+  <data name="ContractDepositPlaceholder" xml:space="preserve"><value>Ví dụ: 4.500.000</value></data>
+  <data name="ContractDepositHint" xml:space="preserve"><value>Tiền cọc có thể bằng 0 ₫.</value></data>
+  <data name="ContractPaymentCycle" xml:space="preserve"><value>Chu kỳ thanh toán</value></data>
+  <data name="ContractCycleOne" xml:space="preserve"><value>Hàng tháng (1 tháng)</value></data>
+  <data name="ContractCycleThree" xml:space="preserve"><value>Mỗi 3 tháng</value></data>
+  <data name="ContractCycleSix" xml:space="preserve"><value>Mỗi 6 tháng</value></data>
+  <data name="ContractMeterDay" xml:space="preserve"><value>Ngày chốt điện nước</value></data>
+  <data name="ContractDayMonthly" xml:space="preserve"><value>Ngày {0} hàng tháng</value></data>
+  <data name="ContractLastDayMonthly" xml:space="preserve"><value>Ngày cuối tháng</value></data>
+  <data name="ContractUtilitiesTitle" xml:space="preserve"><value>Bảng giá dịch vụ niêm yết mẫu</value></data>
+  <data name="ContractElectricity" xml:space="preserve"><value>Điện</value></data>
+  <data name="ContractWater" xml:space="preserve"><value>Nước máy</value></data>
+  <data name="ContractInternet" xml:space="preserve"><value>Internet</value></data>
+  <data name="ContractWaste" xml:space="preserve"><value>Rác &amp; vệ sinh</value></data>
+  <data name="ContractPerKwh" xml:space="preserve"><value>/kWh</value></data>
+  <data name="ContractPerCubicMeter" xml:space="preserve"><value>/m³</value></data>
+  <data name="ContractPerMonth" xml:space="preserve"><value>/tháng</value></data>
+  <data name="ContractNotesSection" xml:space="preserve"><value>Điều khoản bổ sung &amp; Ghi chú</value></data>
+  <data name="ContractOptional" xml:space="preserve"><value>Không bắt buộc</value></data>
+  <data name="ContractNotesPlaceholder" xml:space="preserve"><value>Nhập quy định riêng, đồ dùng bàn giao thêm, biển xe đăng ký gửi hoặc điều khoản thỏa thuận mẫu 4P…</value></data>
+  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Tổng thanh toán ban đầu</value></data>
+  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Tiền cọc + kỳ đầu:</value></data>
+  <data name="ContractInitialDeposit" xml:space="preserve"><value>Tiền cọc</value></data>
+  <data name="ContractFirstCycle" xml:space="preserve"><value>Kỳ đầu ({0} tháng)</value></data>
+  <data name="ContractTemplateFooter" xml:space="preserve"><value>Biểu mẫu chuẩn 4P (Phòng - Phí - Pháp lý - Phạt vi phạm).</value></data>
+  <data name="ContractCancel" xml:space="preserve"><value>Hủy bỏ</value></data>
+  <data name="ContractSaveDraft" xml:space="preserve"><value>Lưu nháp</value></data>
+  <data name="ContractSubmitApproval" xml:space="preserve"><value>Gửi duyệt hợp đồng</value></data>
+  <data name="ContractValidationTitle" xml:space="preserve"><value>Vui lòng kiểm tra các trường sau:</value></data>
+  <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
+  <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Vui lòng chọn phòng.</value></data>
+  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>Phòng không còn trống hoặc không thuộc nhà trọ đã chọn.</value></data>
+  <data name="ContractErrorRepresentativeRequired" xml:space="preserve"><value>Vui lòng chọn khách thuê đại diện.</value></data>
+  <data name="ContractErrorStartDateRequired" xml:space="preserve"><value>Vui lòng chọn ngày bắt đầu.</value></data>
+  <data name="ContractErrorEndDateRequired" xml:space="preserve"><value>Vui lòng chọn ngày kết thúc.</value></data>
+  <data name="ContractErrorEndDateMinimum" xml:space="preserve"><value>Ngày kết thúc phải sau ngày bắt đầu ít nhất một tháng.</value></data>
+  <data name="ContractErrorRentRequired" xml:space="preserve"><value>Vui lòng nhập giá thuê.</value></data>
+  <data name="ContractErrorRentPositive" xml:space="preserve"><value>Giá thuê phải lớn hơn 0 ₫.</value></data>
+  <data name="ContractErrorDepositRequired" xml:space="preserve"><value>Vui lòng nhập tiền đặt cọc (có thể nhập 0).</value></data>
+  <data name="ContractErrorDepositNonnegative" xml:space="preserve"><value>Tiền đặt cọc không được âm.</value></data>
+  <data name="ContractErrorPaymentCycleRequired" xml:space="preserve"><value>Vui lòng chọn chu kỳ thanh toán.</value></data>
+  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Chu kỳ thanh toán phải là 1, 3 hoặc 6 tháng.</value></data>
+  <data name="ContractDraftPreviewOnly" xml:space="preserve"><value>Bản nháp chỉ được giữ trong bộ nhớ của phiên xem trước này; chưa được lưu vào SQL.</value></data>
+  <data name="ContractSubmitOwnerPreviewOnly" xml:space="preserve"><value>Dữ liệu hợp lệ. Chưa có dịch vụ hợp đồng nên yêu cầu chưa được gửi hoặc lưu.</value></data>
+  <data name="ContractSubmitManagerPreviewOnly" xml:space="preserve"><value>Dữ liệu hợp lệ cho trạng thái Chờ duyệt. Chưa có dịch vụ hợp đồng nên yêu cầu chưa được tạo, gửi hoặc lưu.</value></data>
+  <data name="ContractNavLabel" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="ContractRequiredWord" xml:space="preserve"><value>Bắt buộc</value></data>
+  <data name="ContractAccessDeniedTitle" xml:space="preserve"><value>Không có quyền truy cập</value></data>
+  <data name="ContractAccessDeniedMessage" xml:space="preserve"><value>Bạn không được phép xem trang này. Chỉ Chủ trọ và Quản lý được tạo hợp đồng.</value></data>
+  <data name="ContractDraftSnapshotSummary" xml:space="preserve"><value>Bản xem trước đang giữ giá thuê {0}, ngày bắt đầu {1} trong bộ nhớ phiên này.</value></data>
+</root>
