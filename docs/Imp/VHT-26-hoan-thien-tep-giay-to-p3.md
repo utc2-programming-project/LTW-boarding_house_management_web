@@ -19,24 +19,33 @@
 
 ## 2. Phạm vi quyền (D9 + VHT-12 §4)
 
+> **Tạm hoãn phần D9 liên quan Quản lý theo tòa nhà (23/10/2026):** chưa có dữ liệu phân công Quản lý (VHT-24) nên phần Quản lý trong tài liệu này đang được **comment tạm**. Code vẫn giữ interface `IManagerTenantScope` + `NoManagerTenantScope` (deny-by-default).
+> Tham chiếu khi mở lại: `docs/task/thao_tac_va_quyen.xlsx` (D9), `docs/task/cong_viec_theo_tuan.md` (VHT-24), `NhaTro/Web/Features/Tenants/Documents/IManagerTenantScope.cs`.
+
 `TenantDocumentAccessLevel` gồm `None`, `Own`, `Owner`, `Manager`.
 
 | Vai trò | Xem/tải | Upload | Thay | Xóa mềm | Xuất |
 |---|---:|---:|---:|---:|---:|
 | Admin | Không | Không | Không | Không | Không |
 | Chủ trọ (`Owner`) | Có | Có | Có | Có | Có |
-| Quản lý trong tòa nhà được giao (`Manager`) | Có | Có | Có | Có | **Không (D9)** |
 | Quản lý ngoài phạm vi (`None`) | Không | Không | Không | Không | Không |
 | Khách thuê đúng hồ sơ (`Own`) | Có | Có | Không | Không | Có |
 | Khách thuê hồ sơ khác (`None`) | Không | Không | Không | Không | Không |
+
+<!-- TẠM HOÃN D9 (23/10/2026) — chưa có dữ liệu phân công Quản lý theo tòa nhà (VHT-24):
+| Quản lý trong tòa nhà được giao (`Manager`) | Có | Có | Có | Có | **Không (D9)** |
+-->
 
 Điểm quan trọng:
 
 - **Admin bị chặn 2 lớp:** policy `Business` ở endpoint + `FileService`/`TenantDocumentService` kiểm lại.
 - **Ngoài phạm vi tải bằng id vẫn bị chặn:** `DownloadAsync` trả `null` → endpoint trả `404` (không phân biệt “không có tệp” với “không có quyền”), không mở stream.
 - **Đường tải chung `/api/files/{id}` cũng bị chặn:** `FileService` dùng chung `ITenantDocumentScopeService`, không chỉ endpoint P3.
+<!-- TẠM HOÃN D9 — mở lại khi VHT-24 bàn giao dữ liệu phân công Quản lý:
 - **D9 “không xuất”:** `TenantDocumentPermissionRules.CanExport` trả `false` cho `Manager`; DTO danh sách trả cờ `CanExport` để UI VHT-36 ẩn nút xuất. Chưa có endpoint export trong VHT-26.
 - **Phạm vi Quản lý:** VHT-24 chưa bàn giao bảng phân công. VHT-26 dùng interface `IManagerTenantScope` + implementation mặc định `NoManagerTenantScope` (deny-by-default). Khi VHT-24 có dữ liệu, chỉ thay implementation, không sửa service giấy tờ. Integration test đã kiểm cả trường hợp được giao (fake scope) và chưa được giao (mặc định).
+-->
+- **Quản lý theo tòa nhà (D9):** tạm hoãn — xem ghi chú đầu mục và mục 7.
 - **Phạm vi Chủ trọ:** hiện giữ như P3 hiện tại (mọi hồ sơ còn tồn tại), chờ VHT-25 khóa theo chủ sở hữu/nhà.
 
 ## 3. Metadata và audit
@@ -98,10 +107,14 @@ Kết quả:
 |---|---|---|
 | Tải đúng hồ sơ | `FileServiceIntegrationTests` upload rồi Chủ trọ + khách đúng hồ sơ tải được | Đạt |
 | Người ngoài phạm vi bị chặn dù biết id | Khách khác, Quản lý chưa được giao, Admin đều không tải được | Đạt |
-| Quản lý trong tòa nhà được giao | Fake `IManagerTenantScope` trả `true`; Quản lý tải được nhưng `CanExport = false` | Đạt (chờ dữ liệu VHT-24) |
+| Quản lý trong tòa nhà được giao (tạm hoãn D9) | Chờ dữ liệu phân công Quản lý của VHT-24 | Chưa nghiệm thu |
 | Audit không chứa nội dung giấy tờ | Reflection trên `FileAccessAuditLog` + kiểm dòng audit thực tế | Đạt |
 | Không mất liên kết khi thay/xóa | Upload mới trước, xóa mềm cũ sau; bù trừ nếu lỗi; xóa mềm giữ metadata | Đạt |
 | Migration hợp lệ | Integration test áp migration mới lên database sạch | Đạt |
+
+<!-- TẠM HOÃN D9 (23/10/2026):
+| Quản lý trong tòa nhà được giao | Fake `IManagerTenantScope` trả `true`; Quản lý tải được nhưng `CanExport = false` | Đạt (chờ dữ liệu VHT-24) |
+-->
 
 ## 6. Hợp đồng endpoint P3
 
