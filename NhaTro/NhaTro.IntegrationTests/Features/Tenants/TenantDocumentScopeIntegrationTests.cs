@@ -26,7 +26,7 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
 
         var tenantService = new TenantService(
-            db, TimeProvider.System, new AllowAllManagerTogglePolicy());
+            fixture, TimeProvider.System, new AllowAllManagerTogglePolicy());
         var created = await tenantService.CreateAsync(new CreateTenantRequest
         {
             FullName = "An",

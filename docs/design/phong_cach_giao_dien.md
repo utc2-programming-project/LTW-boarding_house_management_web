@@ -11,7 +11,7 @@
 
 ## 2. Font và cỡ chữ
 
-**Font:** `Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`; hỗ trợ tiếng Việt. Độ đậm: 400/500/600/700. Số liệu dùng `tabular-nums`.
+**Font:** `Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`; hỗ trợ tiếng Việt. Tự lưu trữ Inter trong `NhaTro/Web/wwwroot/fonts`, không phụ thuộc CDN. Độ đậm: 400/500/600/700. Số liệu dùng `tabular-nums`.
 
 | Thành phần | Cỡ chữ / dòng | Đậm | Màu |
 | --- | --- | --- | --- |

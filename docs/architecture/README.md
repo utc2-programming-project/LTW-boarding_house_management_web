@@ -10,6 +10,7 @@ Repository: https://github.com/TinhSsc/boarding-house-management-web.git
 - [Công nghệ / Technology](../tech-stack/cong_nghe_su_dung.md).
 - [Luồng nghiệp vụ / Business flows](../thiet_ke_he_thong.md).
 - [Quy chuẩn giao diện / UI guidelines](../design/phong_cach_giao_dien.md).
+- [Localization VI/EN và selector](localization.md).
 - [Kế hoạch theo tuần / Weekly plan](../task/cong_viec_theo_tuan.md).
 
 ## Quy tắc cập nhật / Maintenance

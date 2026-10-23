@@ -37,7 +37,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
 
         var owner = new TenantCaller("chu-tro-1", Roles.ChuTro);
         var tenantService = new TenantService(
-            db, TimeProvider.System, new AllowAllManagerTogglePolicy());
+            fixture, TimeProvider.System, new AllowAllManagerTogglePolicy());
         var created = await tenantService.CreateAsync(new CreateTenantRequest
         {
             FullName = "An",
@@ -132,7 +132,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
 
         var owner = new TenantCaller("chu-tro-1", Roles.ChuTro);
         var tenantService = new TenantService(
-            db, TimeProvider.System, new AllowAllManagerTogglePolicy());
+            fixture, TimeProvider.System, new AllowAllManagerTogglePolicy());
         var created = await tenantService.CreateAsync(new CreateTenantRequest
         {
             FullName = "An",

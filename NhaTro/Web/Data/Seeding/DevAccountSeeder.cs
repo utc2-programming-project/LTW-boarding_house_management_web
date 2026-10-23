@@ -53,6 +53,23 @@ public static class DevAccountSeeder
                     continue;
                 }
             }
+            else if (!await userManager.CheckPasswordAsync(user, password))
+            {
+                // The login page shows the configured development password. Keep existing
+                // sample users in sync too, otherwise the displayed password can be stale.
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                var reset = await userManager.ResetPasswordAsync(user, resetToken, password);
+                if (!reset.Succeeded)
+                {
+                    logger.LogWarning("Khong dong bo duoc mat khau user mau {Email}: {Errors}", email,
+                        string.Join(", ", reset.Errors.Select(e => e.Description)));
+                    continue;
+                }
+            }
+
+            // Clear lockout from previous local testing so the sample accounts remain usable.
+            await userManager.ResetAccessFailedCountAsync(user);
+            await userManager.SetLockoutEndDateAsync(user, null);
 
             if (!await userManager.IsInRoleAsync(user, role))
             {

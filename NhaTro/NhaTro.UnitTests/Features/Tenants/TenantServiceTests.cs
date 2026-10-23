@@ -99,17 +99,21 @@ public class TenantServiceTests
             Id = 9,
             FullName = "Trần Thị B",
             Phone = "0912345678",
+            UserId = "tenant-user",
             Note = "Nội bộ",
             CreatedAt = new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc),
         };
 
-        var managerView = TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: true);
+        var managerView = TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: false, includeAccountStatus: false);
         Assert.Equal("Nội bộ", managerView.Note);
+        Assert.Null(managerView.HasAccount);
         Assert.Equal(DateTimeKind.Utc, managerView.CreatedAt.UtcDateTime.Kind);
         Assert.Null(managerView.UpdatedAt);
 
         var tenantView = TenantMapping.ToDetail(entity, includeNote: false, revealIdNumber: true);
         Assert.Null(tenantView.Note);
+        Assert.True(tenantView.HasAccount);
     }
 
     [Fact]
@@ -123,6 +127,9 @@ public class TenantServiceTests
         // D9: Quản lý nhận chuỗi che thay vì số đầy đủ.
         var quanLy = TenantMapping.ToDetail(entity, includeNote: true, revealIdNumber: false);
         Assert.Equal("********4821", quanLy.IdNumber);
+
+        var managerListItem = TenantMapping.ToListItem(entity, includeAccountStatus: false);
+        Assert.Null(managerListItem.HasAccount);
     }
 
     [Fact]
