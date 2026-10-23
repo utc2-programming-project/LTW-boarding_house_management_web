@@ -12,6 +12,7 @@ using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
+using Web.Features.Properties.Services;
 using Web.Features.Rooms;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Settings.Enums;
@@ -114,9 +115,9 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         var restoredByB = await rooms.RestoreAsync(data.RoomB, OwnerB);
         Assert.True(restoredByB.Succeeded, restoredByB.ErrorMessage);
 
-        // Quản lý: xem được cả hai tòa nhà và cả hai phòng (chưa có phân công tòa nhà ở P2).
-        Assert.Equal(2, (await properties.ListAsync(new PropertyFilter(), Manager)).TotalCount);
-        Assert.Equal(2, (await rooms.ListAsync(new RoomFilter(), Manager)).TotalCount);
+        // VHT-24: Quản lý chưa được phân công thì không thấy tòa nhà/phòng nào.
+        Assert.Equal(0, (await properties.ListAsync(new PropertyFilter(), Manager)).TotalCount);
+        Assert.Equal(0, (await rooms.ListAsync(new RoomFilter(), Manager)).TotalCount);
 
         // Admin bị chặn ở service P2 và P3, không chỉ ẩn nút trên UI.
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -138,6 +139,82 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
 
         var other = await tenants.GetAsync(data.TenantB, TenantA);
         Assert.Equal(TenantErrorCodes.TenantNotFound, other.ErrorCode);
+    }
+
+    [SqlServerFact]
+    public async Task Quan_ly_chi_thay_va_sua_duoc_toa_nha_duoc_phan_cong()
+    {
+        var data = await SeedAsync();
+
+        var managers = new PropertyManagerService(fixture, TimeProvider.System);
+        var properties = new PropertyService(fixture, TimeProvider.System);
+        var rooms = NewRoomService(fixture);
+
+        // Chưa phân công: Quản lý không thấy tòa nhà/phòng nào.
+        Assert.Equal(0, (await properties.ListAsync(new PropertyFilter(), Manager)).TotalCount);
+        Assert.Equal(0, (await rooms.ListAsync(new RoomFilter(), Manager)).TotalCount);
+
+        // Chủ trọ B không gán được Quản lý vào nhà của Chủ trọ A (coi như không tồn tại).
+        var crossAssign = await managers.AssignAsync(data.PropertyA, "manager-1", OwnerB);
+        Assert.Equal(PropertyManagerErrorCodes.PropertyNotFound, crossAssign.ErrorCode);
+
+        // Quản lý không tự gán được cho chính mình.
+        var selfAssign = await managers.AssignAsync(data.PropertyA, "manager-1", Manager);
+        Assert.Equal(PropertyManagerErrorCodes.Forbidden, selfAssign.ErrorCode);
+
+        // Gán một tài khoản không phải Quản lý bị từ chối.
+        var wrongRole = await managers.AssignAsync(data.PropertyA, "owner-b", OwnerA);
+        Assert.Equal(PropertyManagerErrorCodes.InvalidManagerRole, wrongRole.ErrorCode);
+
+        // Gán manager-1 -> nhà A.
+        var assigned = await managers.AssignAsync(data.PropertyA, "manager-1", OwnerA);
+        Assert.True(assigned.Succeeded, assigned.ErrorMessage);
+
+        // Quản lý chỉ thấy nhà A/phòng A.
+        var props = await properties.ListAsync(new PropertyFilter(), Manager);
+        Assert.Equal(1, props.TotalCount);
+        Assert.Equal(data.PropertyA, Assert.Single(props.Items).Id);
+
+        var roomList = await rooms.ListAsync(new RoomFilter(), Manager);
+        Assert.Equal(1, roomList.TotalCount);
+        Assert.Equal(data.RoomA, Assert.Single(roomList.Items).Id);
+
+        // Không xem/sửa được nhà B/phòng B.
+        Assert.Equal(
+            PropertyErrorCodes.PropertyNotFound,
+            (await properties.GetAsync(data.PropertyB, Manager)).ErrorCode);
+        Assert.Equal(
+            RoomErrorCodes.RoomNotFound,
+            (await rooms.GetAsync(data.RoomB, Manager)).ErrorCode);
+        Assert.Equal(
+            RoomErrorCodes.RoomNotFound,
+            (await rooms.UpdateAsync(data.RoomB, new RoomSave
+            {
+                PropertyId = data.PropertyB,
+                Code = "P101",
+                StandardPrice = 9_000_000m,
+            }, Manager)).ErrorCode);
+
+        // Gán trùng khi đang hiệu lực bị chặn.
+        var duplicate = await managers.AssignAsync(data.PropertyA, "manager-1", OwnerA);
+        Assert.Equal(PropertyManagerErrorCodes.AlreadyAssigned, duplicate.ErrorCode);
+
+        // Bỏ gán: mất quyền ngay, nhưng dòng lịch sử vẫn còn.
+        var revoked = await managers.RevokeAsync(data.PropertyA, "manager-1", OwnerA);
+        Assert.True(revoked.Succeeded, revoked.ErrorMessage);
+        Assert.Equal(0, (await properties.ListAsync(new PropertyFilter(), Manager)).TotalCount);
+
+        var active = await managers.ListAssignmentsAsync(data.PropertyA, OwnerA);
+        Assert.True(active.Succeeded, active.ErrorMessage);
+        Assert.Empty(active.Items);
+
+        var history = await managers.ListAssignmentsAsync(data.PropertyA, OwnerA, includeHistory: true);
+        Assert.True(history.Succeeded, history.ErrorMessage);
+        Assert.Contains(history.Items, item => item.ManagerUserId == "manager-1" && !item.IsActive);
+
+        // Quản lý không đọc được danh sách phân công (chỉ Chủ trọ).
+        var forbiddenList = await managers.ListAssignmentsAsync(data.PropertyA, Manager, includeHistory: true);
+        Assert.Equal(PropertyManagerErrorCodes.Forbidden, forbiddenList.ErrorCode);
     }
 
     [SqlServerFact]

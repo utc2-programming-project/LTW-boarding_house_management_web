@@ -87,6 +87,21 @@ public static class TestDataSeeder
             await db.SaveChangesAsync();
         }
 
+        // VHT-24: Quản lý mẫu được phân công tòa A để các test công tắc P2 giữ đúng hành vi cũ.
+        var assignment = await db.PropertyManagers.FirstOrDefaultAsync(
+            a => a.PropertyId == propertyA.Id && a.ManagerUserId == quanLyId && a.RevokedAt == null);
+        if (assignment is null)
+        {
+            db.PropertyManagers.Add(new PropertyManager
+            {
+                PropertyId = propertyA.Id,
+                ManagerUserId = quanLyId,
+                AssignedAt = DateTime.UtcNow,
+                AssignedByUserId = chuTroAId,
+            });
+            await db.SaveChangesAsync();
+        }
+
         var roomA = await db.Rooms.FirstOrDefaultAsync(r => r.PropertyId == propertyA.Id && r.Code == RoomACode);
         if (roomA is null)
         {

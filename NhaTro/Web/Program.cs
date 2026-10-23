@@ -141,6 +141,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // P2 SQL services. Approval policy and active-contract checks are extension points for VHT-94/VHT-98.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+// VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
+builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
