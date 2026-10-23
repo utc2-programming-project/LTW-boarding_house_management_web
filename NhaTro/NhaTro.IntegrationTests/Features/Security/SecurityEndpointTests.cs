@@ -76,4 +76,21 @@ public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [WebAppFact]
+    public async Task Download_personal_data_thieu_antiforgery_tra_400()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+
+        var login = await LoginFormClient.PostFreshAsync(
+            client, TestDataSeeder.ChuTroAEmail, TestDataSeeder.Password);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        // Endpoint POST không bind form nên phải tự kiểm token; thiếu token => 400, không tải file.
+        var response = await client.PostAsync(
+            "/Account/Manage/DownloadPersonalData",
+            new FormUrlEncodedContent(new Dictionary<string, string>()));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }

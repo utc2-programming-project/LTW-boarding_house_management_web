@@ -114,8 +114,15 @@ namespace Microsoft.AspNetCore.Routing
             manageGroup.MapPost("/DownloadPersonalData", async (
                 HttpContext context,
                 [FromServices] UserManager<ApplicationUser> userManager,
-                [FromServices] AuthenticationStateProvider authenticationStateProvider) =>
+                [FromServices] AuthenticationStateProvider authenticationStateProvider,
+                [FromServices] IAntiforgery antiforgery) =>
             {
+                // VHT-27: đây là POST không bind form nên middleware không tự kiểm; phải tự kiểm token.
+                if (!await antiforgery.IsRequestValidAsync(context))
+                {
+                    return Results.BadRequest();
+                }
+
                 var user = await userManager.GetUserAsync(context.User);
                 if (user is null)
                 {

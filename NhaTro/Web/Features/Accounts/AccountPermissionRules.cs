@@ -119,6 +119,17 @@ public static class AccountPermissionRules
         return null;
     }
 
+    /// <summary>
+    /// VHT-27: chặn tự xoá tài khoản khi đó là Admin cuối cùng (màn hình xoá dữ liệu cá nhân).
+    /// Trả về null nếu được phép, ngược lại là mã lỗi.
+    /// </summary>
+    public static string? CheckSelfDelete(bool targetIsAdmin, bool targetIsLastAdmin)
+    {
+        return targetIsAdmin && targetIsLastAdmin
+            ? AccountErrorCodes.CannotRemoveLastAdmin
+            : null;
+    }
+
     /// <summary>Nhan hien thi cua vai tro (dung key .resx, khong tra chuoi da dich o day).</summary>
     public static string RoleResourceKey(string role) => role switch
     {

@@ -233,8 +233,19 @@ Rà **và** cấu hình các lớp bảo mật / xử lý lỗi dùng chung đ�
 - [x] F. Health live/ready (package EF, ẩn danh) + test 200 `Healthy`
 - [x] G. Data Protection keys (HSTS rà khi deploy — còn mở)
 - [x] Build 0 warning / 0 error
-- [x] Chạy unit + integration: **Unit 348 pass**, **Integration 70 pass** (E2E chưa chạy lại — không đổi luồng UI đăng nhập thường)
+- [x] Chạy unit + integration: **Unit 362 pass**, **Integration 73 pass** (E2E chưa chạy lại — không đổi luồng UI đăng nhập thường)
 - [x] Cập nhật tài liệu liên quan (`docs/operations/secrets.md` — Data Protection keys; tech-stack cập nhật khi thay CAPTCHA thật)
+
+### 7.1. Vá sau rà soát (VHT-27)
+
+| # | Vấn đề phát hiện | Cách xử lý | Test |
+|---|---|---|---|
+| 1 | Admin cuối tự xoá được tài khoản → hệ thống mất người quản trị | `AccountPermissionRules.CheckSelfDelete` + chặn trong `DeletePersonalData.razor`; xoá thất bại do FK trả thông báo thay vì 500 | `AccountPermissionRulesTests`, `DeleteAccountGuardTests` |
+| 2 | `/Account/Login/` (dấu `/` cuối) lách rate limit; mã 2FA/khôi phục không bị giới hạn | `RateLimitPolicies` chuẩn hoá path + thêm `/Account/LoginWith2fa`, `/Account/LoginWithRecoveryCode` | `RateLimitPoliciesTests`, `LoginRateLimitBypassTests` |
+| 3 | Sau IIS/proxy, mọi request cùng IP loopback → chung một xô rate limit | `ClientKey` lấy IP cuối của `X-Forwarded-For` khi peer là loopback (không tin header từ client ngoài) | `RateLimitPoliciesTests` |
+| 4 | `POST /Account/Manage/DownloadPersonalData` không kiểm antiforgery | Tự `IsRequestValidAsync` trong handler (endpoint không bind form) | `SecurityEndpointTests` |
+
+**Ghi chú triển khai:** nếu chạy sau reverse proxy khác máy, cần cấu hình `ForwardedHeaders` ở tầng host; cơ chế trong `ClientKey` chỉ xử lý proxy cùng máy (loopback) như IIS mặc định.
 
 **Còn mở (không chặn merge):**
 - Test HTTP 413/`InvalidFileType` và test HTTP non-dev 500 (hiện đã có unit/service test).

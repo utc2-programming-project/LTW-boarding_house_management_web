@@ -17,10 +17,23 @@ internal static class LoginFormClient
     {
         var response = await client.GetAsync($"{path}?returnUrl=%2F");
         response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
+        return ExtractForm(await response.Content.ReadAsStringAsync());
+    }
 
+    /// <summary>Lấy token + handler của một form bất kỳ (màn hình đã đăng nhập).</summary>
+    public static async Task<(string Token, string? Handler)> GetAnyFormAsync(
+        HttpClient client,
+        string path)
+    {
+        var response = await client.GetAsync(path);
+        response.EnsureSuccessStatusCode();
+        return ExtractForm(await response.Content.ReadAsStringAsync());
+    }
+
+    private static (string Token, string? Handler) ExtractForm(string html)
+    {
         var token = HiddenValue(html, "__RequestVerificationToken")
-            ?? throw new InvalidOperationException("Không tìm thấy antiforgery token trên trang đăng nhập.");
+            ?? throw new InvalidOperationException("Không tìm thấy antiforgery token trên trang.");
         return (token, HiddenValue(html, "_handler"));
     }
 
