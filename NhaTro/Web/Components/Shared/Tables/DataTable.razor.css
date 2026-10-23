@@ -82,7 +82,7 @@ thead th.numeric .sort-button {
     outline-offset: 2px;
 }
 
-.sort-icon {
+.sort-button ::deep .sort-icon {
     width: 16px;
     height: 16px;
     flex: none;
@@ -188,7 +188,7 @@ thead th.numeric .sort-button {
     cursor: pointer;
 }
 
-.page-button svg {
+.page-button ::deep svg {
     width: 20px;
     height: 20px;
 }
