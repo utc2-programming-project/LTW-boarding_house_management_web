@@ -742,4 +742,44 @@
   <data name="TenantCreatedAt" xml:space="preserve"><value>Created:</value></data>
   <data name="TenantUpdatedAt" xml:space="preserve"><value>Updated:</value></data>
   <data name="TenantProfileEditHint" xml:space="preserve"><value>Tenants can only update their phone number, email, and permanent address.</value></data>
+  <data name="HomeTitle" xml:space="preserve"><value>Overview</value></data>
+  <data name="HomeSubtitle" xml:space="preserve"><value>Choose where you want to work.</value></data>
+  <data name="HomeAdminHint" xml:space="preserve"><value>Manage user accounts and your personal profile.</value></data>
+  <data name="HomeManagerHint" xml:space="preserve"><value>Manage properties, rooms, and tenants within your account.</value></data>
+  <data name="HomeTenantHint" xml:space="preserve"><value>View your tenancy record and update your contact details.</value></data>
+  <data name="HomeSignedOut" xml:space="preserve"><value>Please sign in to continue.</value></data>
+  <data name="HomeNoRole" xml:space="preserve"><value>Your account has no role assigned. Please contact an administrator.</value></data>
+  <data name="OpenModule" xml:space="preserve"><value>Open</value></data>
+
+  <!-- VHT-27: shared security and error handling -->
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="ErrorPageMessage" xml:space="preserve">
+    <value>An error occurred while processing your request. Please try again or return to the home page.</value>
+  </data>
+  <data name="ErrorRequestId" xml:space="preserve">
+    <value>Request ID</value>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Page not found</value>
+  </data>
+  <data name="NotFoundMessage" xml:space="preserve">
+    <value>The content you are looking for does not exist or has been moved.</value>
+  </data>
+  <data name="BackToHome" xml:space="preserve">
+    <value>Back to home</value>
+  </data>
+  <data name="TooManyRequests" xml:space="preserve">
+    <value>Too many requests. Please try again later.</value>
+  </data>
+  <data name="CaptchaRequired" xml:space="preserve">
+    <value>Because of repeated failed attempts, please answer the verification question.</value>
+  </data>
+  <data name="CaptchaQuestion" xml:space="preserve">
+    <value>Verification question</value>
+  </data>
+  <data name="CaptchaInvalid" xml:space="preserve">
+    <value>The verification answer is not correct.</value>
+  </data>
 </root>

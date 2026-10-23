@@ -4,20 +4,22 @@ using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
 using Web.Features.Storage.Rules;
 using Web.Features.Storage.Services;
+using Web.Infrastructure.Security;
 using Web.Infrastructure.Storage;
 
 namespace Web.Endpoints.Files;
 
 /// <summary>
-/// Endpoint tệp dùng chung (VHT-12 mục 8): upload, tải, liệt kê và xóa mềm — mọi thao tác đều
+/// Endpoint tệp dùng chung: upload, tải, liệt kê và xóa mềm — mọi thao tác đều
 /// kiểm quyền trong <see cref="FileService"/> và chặn Admin ở policy "Business".
 /// </summary>
 public static class FileEndpoints
 {
     public static IEndpointRouteBuilder MapFileEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/files")
-            .RequireAuthorization("Business");
+        var group = endpoints.MapGroup("/api/files").RequireAuthorization("Business")
+            // Giới hạn tần suất cho endpoint tệp.
+            .RequireRateLimiting(RateLimitPolicies.FileUpload);
 
         // Tự xác thực antiforgery trong handler để endpoint không phụ thuộc metadata form của framework.
         group.MapPost("/", UploadAsync).DisableAntiforgery();

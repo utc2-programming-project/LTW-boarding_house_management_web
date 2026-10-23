@@ -742,4 +742,44 @@
   <data name="TenantCreatedAt" xml:space="preserve"><value>Tạo lúc:</value></data>
   <data name="TenantUpdatedAt" xml:space="preserve"><value>Cập nhật:</value></data>
   <data name="TenantProfileEditHint" xml:space="preserve"><value>Khách thuê chỉ tự sửa số điện thoại, email và địa chỉ thường trú.</value></data>
+  <data name="HomeTitle" xml:space="preserve"><value>Tổng quan</value></data>
+  <data name="HomeSubtitle" xml:space="preserve"><value>Chọn khu vực bạn cần làm việc.</value></data>
+  <data name="HomeAdminHint" xml:space="preserve"><value>Quản trị tài khoản người dùng và hồ sơ cá nhân.</value></data>
+  <data name="HomeManagerHint" xml:space="preserve"><value>Quản lý nhà trọ, phòng và khách thuê trong phạm vi tài khoản của bạn.</value></data>
+  <data name="HomeTenantHint" xml:space="preserve"><value>Xem hồ sơ lưu trú và cập nhật thông tin liên hệ của bạn.</value></data>
+  <data name="HomeSignedOut" xml:space="preserve"><value>Vui lòng đăng nhập để tiếp tục.</value></data>
+  <data name="HomeNoRole" xml:space="preserve"><value>Tài khoản của bạn chưa được gán vai trò. Vui lòng liên hệ quản trị viên.</value></data>
+  <data name="OpenModule" xml:space="preserve"><value>Mở</value></data>
+
+  <!-- VHT-27: bao mat va xu ly loi dung chung -->
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Đã xảy ra lỗi</value>
+  </data>
+  <data name="ErrorPageMessage" xml:space="preserve">
+    <value>Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại hoặc quay về trang chủ.</value>
+  </data>
+  <data name="ErrorRequestId" xml:space="preserve">
+    <value>Mã yêu cầu</value>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Không tìm thấy trang</value>
+  </data>
+  <data name="NotFoundMessage" xml:space="preserve">
+    <value>Nội dung bạn tìm kiếm không tồn tại hoặc đã bị di chuyển.</value>
+  </data>
+  <data name="BackToHome" xml:space="preserve">
+    <value>Về trang chủ</value>
+  </data>
+  <data name="TooManyRequests" xml:space="preserve">
+    <value>Bạn thao tác quá nhanh. Vui lòng thử lại sau.</value>
+  </data>
+  <data name="CaptchaRequired" xml:space="preserve">
+    <value>Vì bạn đã nhập sai nhiều lần, vui lòng trả lời câu hỏi xác minh.</value>
+  </data>
+  <data name="CaptchaQuestion" xml:space="preserve">
+    <value>Câu hỏi xác minh</value>
+  </data>
+  <data name="CaptchaInvalid" xml:space="preserve">
+    <value>Câu trả lời xác minh không đúng.</value>
+  </data>
 </root>
