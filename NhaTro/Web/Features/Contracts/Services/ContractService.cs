@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Entities;
+using Web.Features.Contracts.Enums;
 using Web.Features.Rooms;
 using Web.Features.Rooms.Enums;
 
@@ -35,19 +37,21 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var roomIsAvailable = await DbContext.Rooms
+        var room = await DbContext.Rooms
             .AsNoTracking()
-            .AnyAsync(room => room.Id == request.RoomId
+            .FirstOrDefaultAsync(room => room.Id == request.RoomId
                 && room.IsActive
                 && !room.IsDeleted
                 && room.Status == RoomStatus.Available);
 
-        if (!roomIsAvailable)
+        if (room is null)
         {
             throw new ArgumentException(
                 "Phòng không tồn tại hoặc hiện không ở trạng thái có thể cho thuê.",
                 nameof(request.RoomId));
         }
+
+        var currentRoomPrice = room.StandardPrice;
 
         var requestedTenantIds = request.TenantIds.Distinct().ToList();
         var existingTenantCount = await DbContext.Tenants
@@ -64,6 +68,19 @@ public sealed class ContractService : IContractService
                 "Một hoặc nhiều khách thuê không tồn tại hoặc không còn hoạt động.",
                 nameof(request.TenantIds));
         }
+
+        var depositAmount = currentRoomPrice * 0.20m;
+        _ = new Contract
+        {
+            ContractId = Guid.NewGuid(),
+            ContractNumber = $"HD-{Guid.NewGuid():N}".ToUpperInvariant(),
+            RoomId = room.Id,
+            SnapshotPrice = currentRoomPrice,
+            DepositAmount = depositAmount,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Status = ContractStatus.Pending,
+        };
 
         throw new NotImplementedException(
             "Tạo hợp đồng chưa được triển khai sau bước kiểm tra dữ liệu.");
