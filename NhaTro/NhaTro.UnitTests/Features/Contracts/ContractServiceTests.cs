@@ -8,7 +8,7 @@ public sealed class ContractServiceTests
     [Theory]
     [InlineData(2026, 10, 22, 2026, 10, 22)]
     [InlineData(2026, 10, 23, 2026, 10, 22)]
-    public void CreateContractAsync_RejectsStartDateThatIsNotBeforeEndDate(
+    public async Task CreateContractAsync_RejectsStartDateThatIsNotBeforeEndDate(
         int startYear, int startMonth, int startDay,
         int endYear, int endMonth, int endDay)
     {
@@ -16,33 +16,41 @@ public sealed class ContractServiceTests
         var request = CreateRequest(
             new DateTime(startYear, startMonth, startDay),
             new DateTime(endYear, endMonth, endDay),
-            [Guid.NewGuid()]);
+            [1]);
 
-        var exception = Assert.Throws<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
 
         Assert.Equal("StartDate", exception.ParamName);
     }
 
     [Fact]
-    public void CreateContractAsync_RejectsNullTenantIds()
+    public async Task CreateContractAsync_RejectsNullTenantIds()
     {
         var service = CreateService();
         var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), null!);
 
-        var exception = Assert.Throws<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
 
         Assert.Equal("TenantIds", exception.ParamName);
     }
 
     [Fact]
-    public void CreateContractAsync_RejectsEmptyTenantIds()
+    public async Task CreateContractAsync_RejectsEmptyTenantIds()
     {
         var service = CreateService();
         var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), []);
 
-        var exception = Assert.Throws<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
 
         Assert.Equal("TenantIds", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task CreateContractAsync_RejectsNullRequest()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateContractAsync(null!));
     }
 
     private static ContractService CreateService() => new(null!, null!);
@@ -50,5 +58,5 @@ public sealed class ContractServiceTests
     private static CreateContractRequest CreateRequest(
         DateTime startDate,
         DateTime endDate,
-        List<Guid> tenantIds) => new(Guid.NewGuid(), startDate, endDate, tenantIds);
+        List<int> tenantIds) => new(1, startDate, endDate, tenantIds);
 }
