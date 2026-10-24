@@ -17,7 +17,7 @@ figcaption { margin-top: 8px; font-size: .75rem; overflow-wrap: anywhere; }
 .pending-entry { padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--warning-border); }
 .processing-panel { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); }
 .processing-panel label { display: block; margin: 20px 0 8px; font-weight: 500; }
-.processing-panel select, .processing-panel textarea { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text-primary); }
+.processing-panel input, .processing-panel textarea { box-sizing: border-box; width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text-primary); }
 .processing-panel textarea { resize: vertical; }
 .processing-panel > button { margin-top: 20px; min-width: 180px; }
 .history { list-style: none; padding: 0; margin: 0; }
@@ -26,10 +26,12 @@ figcaption { margin-top: 8px; font-size: .75rem; overflow-wrap: anywhere; }
 .detail-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
 .detail-error { color: var(--error-text); margin-top: 20px; }
 .detail-error p { color: inherit; }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 @media (max-width: 767px) {
     .detail-body { padding: 16px; }
     .detail-grid, .photo-grid { grid-template-columns: 1fr; }
     .processing-panel { padding: 16px; }
-    .processing-panel select, .processing-panel textarea { font-size: 1rem; min-height: 44px; }
+    .processing-panel input, .processing-panel textarea { font-size: 1rem; min-height: 44px; }
+    .approval-actions > button { min-height: 44px; flex: 1; }
     .processing-panel > button, .detail-actions > button { width: 100%; min-height: 44px; }
 }

@@ -381,4 +381,20 @@
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="DemoWorkflowNotice" xml:space="preserve"><value>Allow applies sample changes immediately; Approval required only creates proposals. Landlords approve/reject in report details. Sign-in sessions do not share data: landlords can add sample requests to try approval. Switching to Allow does not approve existing proposals; reloading clears sample session changes.</value></data>
+  <data name="AddApprovalSamples" xml:space="preserve"><value>Add sample pending requests</value></data>
+  <data name="ApprovalSamplesReady" xml:space="preserve"><value>Added 3 sample request reports. Filter by Pending approval and open details to approve or reject.</value></data>
+  <data name="ApprovalSamplesAdded" xml:space="preserve"><value>Sample requests have already been added in this session.</value></data>
+  <data name="ApproveSample" xml:space="preserve"><value>Approve sample request</value></data>
+  <data name="RejectSample" xml:space="preserve"><value>Reject sample request</value></data>
+  <data name="SampleApproved" xml:space="preserve"><value>The request was approved and applied in this sample session.</value></data>
+  <data name="SampleRejected" xml:space="preserve"><value>The sample request was rejected; proposed changes were not applied.</value></data>
+  <data name="RequestNotFound" xml:space="preserve"><value>This request is no longer pending. Please reload the details.</value></data>
+  <data name="EventApproved" xml:space="preserve"><value>Sample request approved</value></data>
+  <data name="EventRejected" xml:space="preserve"><value>Sample request rejected</value></data>
+  <data name="Assignee" xml:space="preserve"><value>Assigned technician (enter a name)</value></data>
+  <data name="AssigneeInvalid" xml:space="preserve"><value>The technician name must be at most 100 characters after trimming.</value></data>
+  <data name="RepairCost" xml:space="preserve"><value>Repair cost (VND)</value></data>
+  <data name="RepairCostHint" xml:space="preserve"><value>Optional. Enter a non-negative whole amount, e.g. 150000 or 150.000. This is internal processing information; there is no separate cost approval workflow.</value></data>
+  <data name="RepairCostInvalid" xml:space="preserve"><value>Enter a non-negative whole VND amount, or leave blank if unknown.</value></data>
 </root>

@@ -45,6 +45,11 @@
         <details class="demo-controls">
             <summary>@L["DemoControls"]</summary>
             <p>@L["DemoControlsNotice"]</p>
+            <p>@L["DemoWorkflowNotice"]</p>
+            @if (_owner)
+            {
+                <button type="button" class="btn btn-secondary" disabled="@_approvalSamplesAdded" @onclick="AddApprovalSamplesAsync">@L["AddApprovalSamples"]</button>
+            }
             <div class="demo-grid">
                 @if (_manager)
                 {
@@ -98,6 +103,8 @@
     private string _scenario = "Normal";
     private bool _tenant;
     private bool _manager;
+    private bool _owner;
+    private bool _approvalSamplesAdded;
     private bool _loading = true;
     private bool _creating;
     private int? _detailId;
@@ -117,6 +124,7 @@
             if (!IncidentDemoSession.IsAllowed(user)) throw new IncidentDemoException("AccessDenied");
             _tenant = !user.IsInRole(Roles.ChuTro) && !user.IsInRole(Roles.QuanLy);
             _manager = user.IsInRole(Roles.QuanLy) && !user.IsInRole(Roles.ChuTro);
+            _owner = user.IsInRole(Roles.ChuTro);
             _session ??= new(Authentication, Time);
             await _session.InitializeAsync();
             _rooms = await _session.RoomsAsync();
@@ -145,6 +153,20 @@
         else await ReloadAsync();
     }
     private Task ReloadAsync() => _list?.ReloadAsync() ?? Task.CompletedTask;
+
+    private async Task AddApprovalSamplesAsync()
+    {
+        if (_session is null || _approvalSamplesAdded) return;
+        try
+        {
+            await _session.AddApprovalSamplesAsync();
+            _approvalSamplesAdded = true;
+            if (_scenario != "Normal") _scenario = "Normal";
+            else await ReloadAsync();
+            Toasts.Success(L["ApprovalSamplesReady"]);
+        }
+        catch (IncidentDemoException ex) { Toasts.Error(L[ex.Message]); }
+    }
 
     private async Task ChangeModeAsync(IncidentDemoAction action, ChangeEventArgs args)
     {

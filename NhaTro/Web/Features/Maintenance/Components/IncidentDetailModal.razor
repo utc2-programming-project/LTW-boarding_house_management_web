@@ -52,12 +52,17 @@
                     <section>
                         <h3>@L["TechnicalNotes"]</h3>
                         <p class="preserve-text">@(string.IsNullOrWhiteSpace(_item.TechnicalNotes) ? L["NoData"].Value : _item.TechnicalNotes)</p>
+                        <dl class="detail-grid">
+                            <div><dt>@L["Assignee"]</dt><dd>@(string.IsNullOrWhiteSpace(_item.Assignee) ? L["NoData"].Value : _item.Assignee)</dd></div>
+                            <div><dt>@L["RepairCost"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_item.RepairCost)</dd></div>
+                        </dl>
                     </section>
                     @if (_item.Pending.Count > 0)
                     {
                         <section class="pending-panel">
                             <h3>@L["PendingApproval"]</h3>
                             <p>@L["ApprovalNotice"]</p>
+                            <p>@L["DemoWorkflowNotice"]</p>
                             @foreach (var pending in _item.Pending)
                             {
                                 <div class="pending-entry">
@@ -71,6 +76,11 @@
                                     {
                                         <p class="preserve-text">@pending.Notes</p>
                                     }
+                                    @if (pending.Action == IncidentDemoAction.Update)
+                                    {
+                                        <p>@L["Assignee"]: @(string.IsNullOrWhiteSpace(pending.Assignee) ? L["NoData"].Value : pending.Assignee)</p>
+                                        <p class="tabular-nums">@L["RepairCost"]: @MoneyFormatter.Format(pending.RepairCost)</p>
+                                    }
                                     @if (pending.Photos.Count > 0)
                                     {
                                         <p>@L["PendingPhotoCount", pending.Photos.Count]</p>
@@ -81,6 +91,12 @@
                                             }
                                         </div>
                                     }
+                                    <AuthorizeView Roles="ChuTro" Context="ownerContext">
+                                        <div class="approval-actions">
+                                            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="() => DecideAsync(pending.Id, true)">@L["ApproveSample"]</button>
+                                            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="() => DecideAsync(pending.Id, false)">@L["RejectSample"]</button>
+                                        </div>
+                                    </AuthorizeView>
                                 </div>
                             }
                         </section>
@@ -96,12 +112,14 @@
                             else
                             {
                                 <p>@L["ActionUpdate"] · @L[$"Mode{_updateMode}"]</p>
-                                <label for="incident-next-status">@L["NextStatus"]</label>
-                                <select id="incident-next-status" disabled>
-                                    <option>@L[$"Status{NextStatus}"]</option>
-                                </select>
+                                <dl><dt>@L["NextStatus"]</dt><dd>@L[$"Status{NextStatus}"]</dd></dl>
                                 <label for="incident-technical-notes">@L["TechnicalNotes"]</label>
                                 <textarea id="incident-technical-notes" rows="3" @bind="_notes" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)"></textarea>
+                                <label for="incident-assignee">@L["Assignee"]</label>
+                                <input id="incident-assignee" maxlength="100" @bind="_assignee" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                <label for="incident-repair-cost">@L["RepairCost"]</label>
+                                <input id="incident-repair-cost" inputmode="numeric" @bind="_repairCostText" aria-describedby="incident-repair-cost-hint" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                <p id="incident-repair-cost-hint" class="sample-note">@L["RepairCostHint"]</p>
                                 @if (HasPendingUpdate) { <p>@L["AlreadyPending"]</p> }
                                 <button type="button" class="btn btn-primary" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)"
                                         aria-busy="@_saving" @onclick="UpdateAsync">
@@ -160,6 +178,8 @@
     private IncidentDemoMode _photoMode;
     private IReadOnlyList<IncidentDemoPhoto> _photos = [];
     private string _notes = "";
+    private string _assignee = "";
+    private string _repairCostText = "";
     private string? _error;
     private bool _loading = true;
     private bool _saving;
@@ -192,6 +212,8 @@
             _updateMode = await Session.ModeAsync(IncidentDemoAction.Update);
             _photoMode = await Session.ModeAsync(IncidentDemoAction.ResultPhoto);
             _notes = _item.TechnicalNotes;
+            _assignee = _item.Assignee;
+            _repairCostText = _item.RepairCost is null ? "" : MoneyFormatter.Format(_item.RepairCost);
         }
         catch (IncidentDemoException ex)
         {
@@ -209,10 +231,43 @@
         _error = null;
         try
         {
-            var pending = await Session.UpdateAsync(IncidentId, NextStatus, _notes);
+            decimal? repairCost = null;
+            if (!string.IsNullOrWhiteSpace(_repairCostText))
+            {
+                if (!MoneyFormatter.TryParse(_repairCostText, out var amount) || amount < 0)
+                    throw new IncidentDemoException("RepairCostInvalid");
+                repairCost = amount;
+            }
+            var pending = await Session.UpdateAsync(IncidentId, NextStatus, _notes, _assignee, repairCost);
             Toasts.Success(L[pending ? "SampleRequested" : "SampleUpdated"]);
             await RefreshAsync();
             await OnChanged.InvokeAsync();
+        }
+        catch (IncidentDemoException ex) { _error = L[ex.Message]; Toasts.Error(_error); }
+        finally { _saving = false; }
+    }
+
+    private async Task DecideAsync(Guid requestId, bool approve)
+    {
+        if (Busy || _item is null) return;
+        _saving = true;
+        _error = null;
+        try
+        {
+            var rejectedCreation = !approve && _item.AwaitingCreation;
+            await Session.DecideAsync(IncidentId, requestId, approve);
+            Toasts.Success(L[approve ? "SampleApproved" : "SampleRejected"]);
+            if (rejectedCreation)
+            {
+                if (_dialog is not null) await _dialog.CloseNativeAsync();
+                await OnChanged.InvokeAsync();
+                await OnClose.InvokeAsync();
+            }
+            else
+            {
+                await RefreshAsync();
+                await OnChanged.InvokeAsync();
+            }
         }
         catch (IncidentDemoException ex) { _error = L[ex.Message]; Toasts.Error(_error); }
         finally { _saving = false; }

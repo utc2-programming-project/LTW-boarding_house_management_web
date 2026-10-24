@@ -13,7 +13,11 @@ public enum IncidentDemoAction { Create, Update, ResultPhoto }
 public sealed record IncidentDemoRoom(int Id, int PropertyId, string PropertyName, string Name);
 public sealed record IncidentDemoHistory(DateTime AtUtc, string ActorKey, string EventKey);
 public sealed record IncidentDemoPending(IncidentDemoAction Action, IncidentDemoStatus? ProposedStatus,
-    string Notes, IReadOnlyList<IncidentDemoPhoto> Photos, DateTime AtUtc);
+    string Notes, IReadOnlyList<IncidentDemoPhoto> Photos, DateTime AtUtc,
+    string Assignee = "", decimal? RepairCost = null)
+{
+    public Guid Id { get; init; } = Guid.NewGuid();
+}
 
 public sealed record IncidentDemoPhoto(string Name, byte[] Content, bool IsResult = false, string UploadedBy = "")
 {
@@ -47,7 +51,7 @@ public sealed record IncidentDemoItem(int Id, int RoomId, string Title, string D
     IncidentDemoCategory Category, IncidentDemoUrgency Urgency, IncidentDemoStatus Status,
     DateTime CreatedAtUtc, string TechnicalNotes, IReadOnlyList<IncidentDemoPhoto> Photos,
     IReadOnlyList<IncidentDemoHistory> History, IReadOnlyList<IncidentDemoPending> Pending,
-    bool AwaitingCreation = false, bool IsSeeded = false);
+    bool AwaitingCreation = false, bool IsSeeded = false, string Assignee = "", decimal? RepairCost = null);
 
 public sealed class IncidentDemoForm
 {

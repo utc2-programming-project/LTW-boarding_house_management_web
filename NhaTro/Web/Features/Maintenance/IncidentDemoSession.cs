@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Web.Features.Accounts;
+using Web.Common.Utils;
 using Web.Features.Maintenance.Models;
 
 namespace Web.Features.Maintenance;
@@ -18,6 +19,7 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
     };
     private string? _sessionUserId;
     private int _nextId = 105;
+    private bool _approvalSamplesAdded;
     private static readonly IncidentDemoRoom[] DemoRooms =
     [
         new(101, 1, "An Bình (demo)", "A101"),
@@ -100,6 +102,8 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
     private static IncidentDemoItem Visible(ClaimsPrincipal user, IncidentDemoItem item) => !IsTenant(user) ? item : item with
     {
         TechnicalNotes = "",
+        Assignee = "",
+        RepairCost = null,
         Photos = item.Photos.Where(p => p.UploadedBy == user.FindFirstValue(ClaimTypes.NameIdentifier)).ToArray(),
         Pending = []
     };
@@ -149,7 +153,7 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
         return pending;
     }
 
-    public async Task<bool> UpdateAsync(int id, IncidentDemoStatus next, string notes)
+    public async Task<bool> UpdateAsync(int id, IncidentDemoStatus next, string notes, string assignee = "", decimal? repairCost = null)
     {
         var user = await CallerAsync();
         var item = Find(user, id);
@@ -158,13 +162,18 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
         if (item.AwaitingCreation || !Enum.IsDefined(next) || item.Status == IncidentDemoStatus.Completed
             || (int)next != (int)item.Status + 1) throw new IncidentDemoException("TransitionInvalid");
         if (item.Pending.Any(p => p.Action == IncidentDemoAction.Update)) throw new IncidentDemoException("AlreadyPending");
+        if (assignee.Trim().Length > 100) throw new IncidentDemoException("AssigneeInvalid");
+        if (repairCost < 0 || (repairCost is not null && repairCost != MoneyFormatter.RoundVnd(repairCost.Value)))
+            throw new IncidentDemoException("RepairCostInvalid");
         var now = time.GetUtcNow().UtcDateTime;
         var pending = mode == IncidentDemoMode.Approval;
         Replace(item, item with
         {
             Status = pending ? item.Status : next,
             TechnicalNotes = pending ? item.TechnicalNotes : notes.Trim(),
-            Pending = pending ? [.. item.Pending, new(IncidentDemoAction.Update, next, notes.Trim(), [], now)] : item.Pending,
+            Assignee = pending ? item.Assignee : assignee.Trim(),
+            RepairCost = pending ? item.RepairCost : repairCost,
+            Pending = pending ? [.. item.Pending, new(IncidentDemoAction.Update, next, notes.Trim(), [], now, assignee.Trim(), repairCost)] : item.Pending,
             History = [.. item.History, new(now, Actor(user), pending ? "EventRequested" : next == IncidentDemoStatus.InProgress ? "EventStarted" : "EventCompleted")]
         });
         return pending;
@@ -189,6 +198,83 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
             History = [.. item.History, new(now, Actor(user), pending ? "EventRequested" : "EventPhotos")]
         });
         return pending;
+    }
+
+    // Chủ trọ duyệt snapshot trong đúng phiên mẫu; không đổi role hoặc dùng dữ liệu giữa các phiên.
+    public async Task DecideAsync(int id, Guid requestId, bool approve)
+    {
+        var user = await CallerAsync();
+        if (!user.IsInRole(Roles.ChuTro)) throw new IncidentDemoException("AccessDenied");
+        var item = Find(user, id);
+        var request = item.Pending.FirstOrDefault(p => p.Id == requestId)
+            ?? throw new IncidentDemoException("RequestNotFound");
+        var remaining = item.Pending.Where(p => p.Id != requestId).ToArray();
+        if (!approve && request.Action == IncidentDemoAction.Create)
+        {
+            _items.Remove(item);
+            return;
+        }
+
+        var updated = item with { Pending = remaining };
+        if (approve)
+        {
+            switch (request.Action)
+            {
+                case IncidentDemoAction.Create:
+                    if (!item.AwaitingCreation) throw new IncidentDemoException("TransitionInvalid");
+                    CheckPhotos(request.Photos);
+                    updated = updated with { AwaitingCreation = false, Photos = request.Photos };
+                    break;
+                case IncidentDemoAction.Update:
+                    if (item.AwaitingCreation || request.ProposedStatus is null || item.Status == IncidentDemoStatus.Completed
+                        || (int)request.ProposedStatus.Value != (int)item.Status + 1)
+                        throw new IncidentDemoException("TransitionInvalid");
+                    updated = updated with { Status = request.ProposedStatus.Value, TechnicalNotes = request.Notes,
+                        Assignee = request.Assignee, RepairCost = request.RepairCost };
+                    break;
+                case IncidentDemoAction.ResultPhoto:
+                    if (item.AwaitingCreation) throw new IncidentDemoException("TransitionInvalid");
+                    CheckPhotos(request.Photos, item.Photos.Count(p => p.IsResult));
+                    updated = updated with { Photos = [.. item.Photos, .. request.Photos] };
+                    break;
+                default:
+                    throw new IncidentDemoException("ValueInvalid");
+            }
+        }
+        var now = time.GetUtcNow().UtcDateTime;
+        updated = updated with { History = [.. item.History, new(now, Actor(user), approve ? "EventApproved" : "EventRejected")] };
+        if (approve)
+        {
+            var eventKey = request.Action switch
+            {
+                IncidentDemoAction.Create => "EventCreated",
+                IncidentDemoAction.ResultPhoto => "EventPhotos",
+                _ => updated.Status == IncidentDemoStatus.InProgress ? "EventStarted" : "EventCompleted"
+            };
+            updated = updated with { History = [.. updated.History, new(now, Actor(user), eventKey)] };
+        }
+        Replace(item, updated);
+    }
+
+    public async Task AddApprovalSamplesAsync()
+    {
+        var user = await CallerAsync();
+        if (!user.IsInRole(Roles.ChuTro)) throw new IncidentDemoException("AccessDenied");
+        if (_approvalSamplesAdded) throw new IncidentDemoException("ApprovalSamplesAdded");
+        var now = time.GetUtcNow().UtcDateTime;
+        // Tạo phiếu đề xuất riêng để không ghi đè dữ liệu người dùng đã nhập trong phiên.
+        var illustration = _items.SelectMany(i => i.Photos).FirstOrDefault();
+        foreach (var action in Enum.GetValues<IncidentDemoAction>())
+        {
+            var photos = action == IncidentDemoAction.ResultPhoto && illustration is not null
+                ? new[] { illustration with { IsResult = true, UploadedBy = "sample-manager" } } : [];
+            var request = new IncidentDemoPending(action, action == IncidentDemoAction.Update ? IncidentDemoStatus.InProgress : null,
+                "", photos, now);
+            _items.Add(new(_nextId++, 101, "SampleTitleWater", "SampleDescriptionWater", IncidentDemoCategory.Water,
+                IncidentDemoUrgency.Normal, IncidentDemoStatus.New, now, "", [],
+                [new(now, "ActorManager", "EventRequested")], [request], action == IncidentDemoAction.Create, true));
+        }
+        _approvalSamplesAdded = true;
     }
 
     private void Replace(IncidentDemoItem old, IncidentDemoItem updated) => _items[_items.IndexOf(old)] = updated;

@@ -173,6 +173,139 @@ public sealed class IncidentDemoSessionTests
         Assert.Equal(full, await session.DetailAsync(item.Id));
     }
 
+    [Theory]
+    [InlineData(IncidentDemoAction.Create, true)]
+    [InlineData(IncidentDemoAction.Create, false)]
+    [InlineData(IncidentDemoAction.Update, true)]
+    [InlineData(IncidentDemoAction.Update, false)]
+    [InlineData(IncidentDemoAction.ResultPhoto, true)]
+    [InlineData(IncidentDemoAction.ResultPhoto, false)]
+    public async Task Landlord_decides_each_sample_request_once(IncidentDemoAction action, bool approve)
+    {
+        var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.ChuTro)), TimeProvider.System);
+        await session.InitializeAsync();
+        await session.AddApprovalSamplesAsync();
+        Assert.Equal(7, (await session.ListAsync()).Count);
+        var item = Assert.Single(await session.ListAsync(), i => i.Pending.Any(p => p.Action == action));
+        var request = Assert.Single(item.Pending);
+
+        await session.DecideAsync(item.Id, request.Id, approve);
+
+        if (action == IncidentDemoAction.Create && !approve)
+        {
+            Assert.Equal("NotFound", (await Assert.ThrowsAsync<IncidentDemoException>(() => session.DetailAsync(item.Id))).Message);
+        }
+        else
+        {
+            var after = await session.DetailAsync(item.Id);
+            Assert.Empty(after.Pending);
+            Assert.False(after.AwaitingCreation);
+            Assert.Equal(approve && action == IncidentDemoAction.Update ? IncidentDemoStatus.InProgress : IncidentDemoStatus.New, after.Status);
+            Assert.Equal(approve && action == IncidentDemoAction.ResultPhoto ? 1 : 0, after.Photos.Count);
+            Assert.Contains(after.History, h => h.EventKey == (approve ? "EventApproved" : "EventRejected"));
+            Assert.Equal("RequestNotFound", (await Assert.ThrowsAsync<IncidentDemoException>(
+                () => session.DecideAsync(item.Id, request.Id, !approve))).Message);
+        }
+        Assert.Equal("ApprovalSamplesAdded", (await Assert.ThrowsAsync<IncidentDemoException>(session.AddApprovalSamplesAsync)).Message);
+    }
+
+    [Theory]
+    [InlineData(Roles.QuanLy)]
+    [InlineData(Roles.KhachThue)]
+    public async Task Non_landlords_cannot_seed_or_decide_requests(string role)
+    {
+        var session = new IncidentDemoSession(new DemoAuthentication(User(role)), TimeProvider.System);
+        await session.InitializeAsync();
+        Assert.Equal("AccessDenied", (await Assert.ThrowsAsync<IncidentDemoException>(session.AddApprovalSamplesAsync)).Message);
+        Assert.Equal("AccessDenied", (await Assert.ThrowsAsync<IncidentDemoException>(
+            () => session.DecideAsync(101, Guid.NewGuid(), true))).Message);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Proposed_assignment_and_cost_only_apply_after_approval_and_remain_private(bool approve)
+    {
+        var authentication = new DemoAuthentication(User(Roles.QuanLy));
+        var session = new IncidentDemoSession(authentication, TimeProvider.System);
+        await session.InitializeAsync();
+        Assert.True(await session.UpdateAsync(101, IncidentDemoStatus.InProgress, "Internal note", "  Demo technician  ", 150000));
+        var before = await session.DetailAsync(101);
+        Assert.Equal("", before.Assignee);
+        Assert.Null(before.RepairCost);
+        var request = Assert.Single(before.Pending);
+        Assert.Equal("Demo technician", request.Assignee);
+        Assert.Equal(150000m, request.RepairCost);
+
+        authentication.Principal = User(Roles.ChuTro);
+        await session.DecideAsync(101, request.Id, approve);
+        var after = await session.DetailAsync(101);
+        Assert.Equal(approve ? "Demo technician" : "", after.Assignee);
+        Assert.Equal(approve ? (decimal?)150000m : null, after.RepairCost);
+        Assert.Equal(approve ? "Internal note" : "", after.TechnicalNotes);
+
+        authentication.Principal = User(Roles.KhachThue);
+        var tenant = await session.DetailAsync(101);
+        Assert.Equal("", tenant.Assignee);
+        Assert.Null(tenant.RepairCost);
+        Assert.Equal("", tenant.TechnicalNotes);
+        Assert.Empty(tenant.Pending);
+    }
+
+    [Fact]
+    public async Task Allow_applies_assignment_and_cost_and_invalid_values_leave_report_unchanged()
+    {
+        var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.QuanLy)), TimeProvider.System);
+        await session.InitializeAsync();
+        await session.SetModeAsync(IncidentDemoAction.Update, IncidentDemoMode.Allow);
+        var before = await session.DetailAsync(101);
+        await Assert.ThrowsAsync<IncidentDemoException>(() => session.UpdateAsync(101, IncidentDemoStatus.InProgress, "", new string('x', 101), 0));
+        await Assert.ThrowsAsync<IncidentDemoException>(() => session.UpdateAsync(101, IncidentDemoStatus.InProgress, "", "", -1));
+        await Assert.ThrowsAsync<IncidentDemoException>(() => session.UpdateAsync(101, IncidentDemoStatus.InProgress, "", "", 1.5m));
+        Assert.Equal(before, await session.DetailAsync(101));
+        Assert.False(await session.UpdateAsync(101, IncidentDemoStatus.InProgress, "", " Tech ", 0));
+        var after = await session.DetailAsync(101);
+        Assert.Equal("Tech", after.Assignee);
+        Assert.Equal(0m, after.RepairCost);
+    }
+
+    [Fact]
+    public async Task Approving_creation_preserves_report_photos_and_allows_processing()
+    {
+        var authentication = new DemoAuthentication(User(Roles.QuanLy));
+        var session = new IncidentDemoSession(authentication, TimeProvider.System);
+        await session.InitializeAsync();
+        var form = Form(101);
+        form.Photos = [Photo(), Photo(), Photo()];
+        Assert.True(await session.CreateAsync(form));
+        var item = Assert.Single(await session.ListAsync(), i => i.AwaitingCreation);
+        Assert.Empty(item.Photos);
+        authentication.Principal = User(Roles.ChuTro);
+        await session.DecideAsync(item.Id, Assert.Single(item.Pending).Id, true);
+        var accepted = await session.DetailAsync(item.Id);
+        Assert.False(accepted.AwaitingCreation);
+        Assert.Equal(3, accepted.Photos.Count(p => !p.IsResult));
+        Assert.Empty(accepted.Pending);
+        Assert.False(await session.UpdateAsync(item.Id, IncidentDemoStatus.InProgress, "", "Tech", 200000));
+        Assert.False(await session.AddResultPhotosAsync(item.Id, [Photo(), Photo(), Photo()]));
+        Assert.Equal(6, (await session.DetailAsync(item.Id)).Photos.Count);
+    }
+
+    [Fact]
+    public async Task Rejecting_pending_photos_releases_slots_without_changing_existing_photos()
+    {
+        var authentication = new DemoAuthentication(User(Roles.QuanLy));
+        var session = new IncidentDemoSession(authentication, TimeProvider.System);
+        await session.InitializeAsync();
+        await session.AddResultPhotosAsync(101, [Photo(), Photo(), Photo()]);
+        var before = await session.DetailAsync(101);
+        authentication.Principal = User(Roles.ChuTro);
+        await session.DecideAsync(101, Assert.Single(before.Pending).Id, false);
+        Assert.Single((await session.DetailAsync(101)).Photos);
+        authentication.Principal = User(Roles.QuanLy);
+        Assert.True(await session.AddResultPhotosAsync(101, [Photo(), Photo(), Photo()]));
+    }
+
     private static IncidentDemoForm Form(int roomId) => new()
     {
         PropertyId = 1, RoomId = roomId, Title = "Phiếu kiểm tra", Description = "Mô tả sự cố đủ độ dài để gửi."
