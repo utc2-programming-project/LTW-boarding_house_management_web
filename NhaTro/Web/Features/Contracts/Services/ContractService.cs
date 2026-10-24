@@ -17,6 +17,21 @@ public sealed class ContractService : IContractService
 
     public Task<ContractResponseDto> CreateContractAsync(CreateContractRequest request)
     {
-        throw new NotImplementedException();
+        if (request.StartDate >= request.EndDate)
+        {
+            throw new ArgumentException(
+                "Ngày bắt đầu phải trước ngày kết thúc.",
+                nameof(request.StartDate));
+        }
+
+        if (request.TenantIds is null || request.TenantIds.Count == 0)
+        {
+            throw new ArgumentException(
+                "Hợp đồng phải có ít nhất một khách thuê.",
+                nameof(request.TenantIds));
+        }
+
+        throw new NotImplementedException(
+            "Tạo hợp đồng chưa được triển khai sau bước kiểm tra dữ liệu.");
     }
 }
