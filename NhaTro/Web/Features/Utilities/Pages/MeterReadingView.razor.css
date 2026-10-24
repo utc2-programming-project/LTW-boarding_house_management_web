@@ -6,6 +6,30 @@
     gap: 24px;
 }
 
+.sample-data-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    color: var(--text-secondary, #475569);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.sample-data-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 8px;
+    border: 1px solid var(--accent-border, #C7D2FE);
+    border-radius: 6px;
+    background: var(--accent-soft, #EEF2FF);
+    color: var(--accent-text, #4338CA);
+    font-size: 12px;
+    font-weight: 600;
+}
+
 .top-nav-bar {
     display: flex;
     align-items: center;

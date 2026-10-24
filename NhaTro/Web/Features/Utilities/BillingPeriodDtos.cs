@@ -11,7 +11,8 @@ namespace Web.Features.Utilities
         string Label,
         decimal Quantity,
         decimal UnitPrice,
-        decimal Amount);
+        decimal Amount,
+        string? ServiceCode = null);
 
     /// <summary>Lịch sử sửa chỉ số kỳ liền trước (D10): ai, khi nào, cũ → mới, lý do.</summary>
     public record IndexCorrectionDto(

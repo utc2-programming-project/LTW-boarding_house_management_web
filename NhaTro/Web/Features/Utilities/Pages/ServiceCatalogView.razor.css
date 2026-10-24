@@ -6,57 +6,27 @@
     gap: 24px;
 }
 
-/* Demo Strip */
-.demo-warning-strip {
+.sample-data-note {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
-    border: 1px solid #FDE68A;
-    border-radius: 12px;
-    background: #FFFBEB;
-    color: #92400E;
-}
-
-.demo-strip-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.demo-strip-content .lucide-icon {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    color: #D97706;
-    margin-top: 2px;
-}
-
-.demo-strip-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.demo-strip-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #78350F;
-}
-
-.demo-strip-desc {
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    color: var(--text-secondary, #475569);
     font-size: 12px;
-    color: #92400E;
+    line-height: 18px;
 }
 
-.demo-strip-badge {
-    flex: none;
-    padding: 4px 10px;
+.sample-data-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 8px;
+    border: 1px solid var(--accent-border, #C7D2FE);
     border-radius: 6px;
-    background: #FEF3C7;
-    color: #92400E;
-    font-size: 11px;
+    background: var(--accent-soft, #EEF2FF);
+    color: var(--accent-text, #4338CA);
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -233,14 +203,24 @@
 .search-input-box .search-icon {
     position: absolute;
     left: 12px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 18px;
     height: 18px;
     color: var(--text-muted, #64748B);
-    pointer-events-none;
+    pointer-events: none;
+}
+
+.search-input-box .search-icon ::deep .lucide-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
 }
 
 .search-field {
-    padding-left: 38px;
+    padding-left: 40px;
 }
 
 .select-filter {
@@ -380,6 +360,26 @@
     font-size: 14px;
 }
 
+.price-status {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.price-status-active { color: #166534; }
+.price-status-upcoming { color: #92400E; }
+.price-status-expired { color: var(--text-muted, #64748B); }
+
+.readonly-inline-label,
+.service-status-text {
+    display: inline-block;
+    margin-left: 6px;
+    color: var(--text-secondary, #475569);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
 .tier-view-link {
     display: inline-flex;
     align-items: center;
@@ -498,59 +498,6 @@
     flex-wrap: wrap;
 }
 
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.rows-per-page {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.select-page-size {
-    width: 64px;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 12px;
-}
-
-.page-buttons {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.btn-page {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 6px;
-    border: 1px solid var(--border, #E2E8F0);
-    border-radius: 6px;
-    background: var(--surface, #FFFFFF);
-    color: var(--text-primary, #0D131B);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.btn-page.active {
-    background: var(--primary, #4F46E5);
-    color: #FFFFFF;
-    border-color: var(--primary, #4F46E5);
-    font-weight: 600;
-}
-
-.btn-page:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
 /* Empty State */
 .empty-state-box {
     display: flex;
@@ -591,6 +538,43 @@
     font-size: 14px;
     line-height: 22px;
     color: var(--text-secondary, #475569);
+}
+
+@media (max-width: 767.98px) {
+    .icon-action-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .ui-switch,
+    .ui-switch.active {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        justify-content: center;
+        background: transparent;
+    }
+
+    .ui-switch::before {
+        content: "";
+        position: absolute;
+        inset: 10px 2px;
+        border-radius: 999px;
+        background: var(--control-border, #64748B);
+    }
+
+    .ui-switch.active::before {
+        background: var(--primary, #4F46E5);
+    }
+
+    .ui-switch-thumb {
+        position: relative;
+        transform: translateX(-8px);
+    }
+
+    .ui-switch.active .ui-switch-thumb {
+        transform: translateX(8px);
+    }
 }
 
 .text-right {

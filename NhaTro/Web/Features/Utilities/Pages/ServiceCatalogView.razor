@@ -1,6 +1,6 @@
 @page "/services"
 @rendermode InteractiveServer
-@attribute [Authorize(Roles = "ChuTro,QuanLy,KhachThue,Admin")]
+@attribute [Authorize(Policy = "UtilityBusiness")]
 @inject IStringLocalizer<UtilityResources> L
 @inject UtilitySampleStateService StateService
 @inject ToastService Toast
@@ -15,6 +15,10 @@
         <div class="heading-group">
             <h1 class="page-title">@L["CatalogHeading"]</h1>
             <p class="page-subtitle">@L["CatalogSubtitle"]</p>
+            <div class="sample-data-note">
+                <span class="sample-data-badge">@L["SampleDataBadge"]</span>
+                <span>@L["SampleDataNotice"]</span>
+            </div>
         </div>
 
         <div class="header-actions">
@@ -26,13 +30,14 @@
                 <LucideIcon Name="zap" />
                 <span>@L["MeterReadingBtn"]</span>
             </button>
-            @if (_isChuTro)
-            {
-                <button type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
-                    <LucideIcon Name="plus" />
-                    <span>@L["AddNewServiceBtn"]</span>
-                </button>
-            }
+            <AuthorizeView Policy="UtilityManage">
+                <Authorized>
+                    <button type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
+                        <LucideIcon Name="plus" />
+                        <span>@L["AddNewServiceBtn"]</span>
+                    </button>
+                </Authorized>
+            </AuthorizeView>
         </div>
     </header>
 
@@ -99,7 +104,9 @@
     <div class="filters-container">
         <div class="filters-row">
             <div class="search-input-box">
-                <LucideIcon Name="search" Class="search-icon" />
+                <span class="search-icon" aria-hidden="true">
+                    <LucideIcon Name="search" />
+                </span>
                 <input type="text"
                        class="input search-field"
                        placeholder="@L["SearchPlaceholder"]"
@@ -110,9 +117,9 @@
 
             <select class="input select-filter" @bind="_selectedBuilding" @bind:after="ApplyFilters">
                 <option value="all">@L["AllBuildings"]</option>
-                @foreach (var b in StateService.Buildings.Where(b => b.Id != "all"))
+                @foreach (var b in _visibleBuildings)
                 {
-                    <option value="@b.Id">@b.Name</option>
+                    <option value="@b.Id">@(b.Id == "all" ? L["AllBuildings"] : b.Name)</option>
                 }
             </select>
 
@@ -186,26 +193,29 @@
                                 <!-- Loại dịch vụ -->
                                 <td>
                                     <span class="type-pill @(service.Type == ServiceTypeCategory.Meter ? "meter-pill" : "fixed-pill")">
-                                        @service.TypeLabel
+                                        @L[GetServiceTypeResourceKey(service.Type)]
                                     </span>
                                 </td>
 
                                 <!-- Đơn vị tính -->
-                                <td class="cell-unit font-medium text-slate-600">@service.Unit</td>
+                                <td class="cell-unit font-medium text-slate-600">@L[GetUnitResourceKey(service.Unit)]</td>
 
                                 <!-- Đơn giá áp dụng -->
                                 <td class="text-right cell-rate tabular-nums">
                                     @if (service.RateType == ServiceRateType.Tiered)
                                     {
                                         <button type="button" class="tier-view-link" @onclick="() => OpenTierModal(service.Name)">
-                                            <span>@service.RateDisplay</span>
+                                            <span>@L["TieredTariffLabel"]</span>
                                             <LucideIcon Name="eye" />
                                         </button>
                                     }
                                     else
                                     {
-                                        <span class="font-bold text-slate-900">@service.RateDisplay</span>
+                                        <span class="font-bold text-slate-900">@MoneyFormatter.Format(service.CurrentRate)</span>
                                     }
+                                    <span class="price-status @GetPriceStatusClass(service.PriceStatus)">
+                                        @L[GetPriceStatusResourceKey(service.PriceStatus)]
+                                    </span>
                                 </td>
 
                                 <!-- Bắt đầu hiệu lực -->
@@ -227,14 +237,26 @@
 
                                 <!-- Kích hoạt Switch -->
                                 <td class="text-center cell-switch">
-                                    <button type="button"
-                                            role="switch"
-                                            aria-checked="@service.Active"
-                                            disabled="@(service.IsReadOnly || !_isChuTro)"
-                                            class="ui-switch @(service.Active ? "active" : "")"
-                                            @onclick="() => HandleToggleActive(service.Id)">
-                                        <span class="ui-switch-thumb"></span>
-                                    </button>
+                                    <AuthorizeView Policy="UtilityManage">
+                                        <Authorized>
+                                            <button type="button"
+                                                    role="switch"
+                                                    aria-label="@L[service.Active ? "ActiveStatus" : "InactiveStatus"]"
+                                                    aria-checked="@service.Active"
+                                                    disabled="@service.IsReadOnly"
+                                                    class="ui-switch @(service.Active ? "active" : "")"
+                                                    @onclick="() => HandleToggleActive(service.Id)">
+                                                <span class="ui-switch-thumb"></span>
+                                            </button>
+                                            @if (service.IsReadOnly)
+                                            {
+                                                <span class="readonly-inline-label">@L["ReadOnlyStatus"]</span>
+                                            }
+                                        </Authorized>
+                                        <NotAuthorized>
+                                            <span class="service-status-text">@L[service.Active ? "ActiveStatus" : "InactiveStatus"]</span>
+                                        </NotAuthorized>
+                                    </AuthorizeView>
                                 </td>
 
                                 <!-- Thao tác -->
@@ -252,18 +274,23 @@
                                             <button type="button"
                                                     class="icon-action-btn"
                                                     title="@L["PriceHistoryTooltip"]"
-                                                    @onclick='() => Navigation.NavigateTo("/services/prices")'>
+                                                    @onclick='() => Navigation.NavigateTo($"/services/prices?serviceId={Uri.EscapeDataString(service.Id)}")'>
                                                 <LucideIcon Name="history" />
                                             </button>
                                         }
-                                        else if (_isChuTro)
+                                        else if (!service.IsReadOnly)
                                         {
-                                            <button type="button"
-                                                    class="icon-action-btn edit-action-btn"
-                                                    title="@L["EditPriceTooltip"]"
-                                                    @onclick="() => OpenUpdateModal(service)">
-                                                <LucideIcon Name="edit" />
-                                            </button>
+                                            <AuthorizeView Policy="UtilityManage">
+                                                <Authorized>
+                                                    <button type="button"
+                                                            class="icon-action-btn edit-action-btn"
+                                                            title="@L["EditPriceTooltip"]"
+                                                            aria-label="@L["EditPriceTooltip"]"
+                                                            @onclick="() => OpenUpdateModal(service)">
+                                                        <LucideIcon Name="edit" />
+                                                    </button>
+                                                </Authorized>
+                                            </AuthorizeView>
                                         }
                                     </div>
                                 </td>
@@ -273,27 +300,9 @@
                 </table>
             </div>
 
-            <!-- Footer Pagination -->
             <footer class="table-footer">
                 <div class="pagination-info">
-                    @L["TableShowing"] <strong>1–@_filteredServices.Count</strong> @L["TableOf"] <strong>@_filteredServices.Count</strong> @L["TableServicesUnit"]
-                </div>
-
-                <div class="pagination-controls">
-                    <div class="rows-per-page">
-                        <span>@L["RowsPerPage"]</span>
-                        <select class="input select-page-size" disabled>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                        </select>
-                    </div>
-
-                    <div class="page-buttons">
-                        <button type="button" class="btn-page" disabled>&lt;</button>
-                        <button type="button" class="btn-page active">1</button>
-                        <button type="button" class="btn-page" disabled>&gt;</button>
-                    </div>
+                    @string.Format(L["TableResultCount"], _filteredServices.Count)
                 </div>
             </footer>
         }
@@ -315,43 +324,52 @@
 </div>
 
 <!-- Modals -->
-<ServicePriceModal IsOpen="@_isUpdateModalOpen"
-                   Service="@_selectedService"
-                   OnClose="() => _isUpdateModalOpen = false"
-                   OnSave="HandleSavePrice" />
+<AuthorizeView Policy="UtilityManage">
+    <Authorized>
+        <ServicePriceModal IsOpen="@_isUpdateModalOpen"
+                           Service="@_selectedService"
+                           OnClose="() => _isUpdateModalOpen = false"
+                           OnSave="HandleSavePrice" />
+        <ServiceCreateModal IsOpen="@_isCreateModalOpen"
+                            OnClose="() => _isCreateModalOpen = false"
+                            OnCreate="HandleCreateService" />
+    </Authorized>
+</AuthorizeView>
 
 <ServiceTierModal IsOpen="@_isTierModalOpen"
                   ServiceName="@_tierServiceName"
                   OnClose="() => _isTierModalOpen = false" />
 
-<ServiceCreateModal IsOpen="@_isCreateModalOpen"
-                    OnClose="() => _isCreateModalOpen = false"
-                    OnCreate="HandleCreateService" />
-
 @code {
     private List<ServiceItemDto> _filteredServices = [];
     private string _searchTerm = string.Empty;
-    private string _selectedBuilding = "b1";
+    private string _selectedBuilding = "all";
     private string _selectedType = "all";
     private string _selectedStatus = "all";
+    private string _callerRole = string.Empty;
+    private string _callerEmail = string.Empty;
+    private string _modifierName = string.Empty;
+    private List<BuildingOptionDto> _visibleBuildings = [];
 
     private int _totalCount;
     private int _activeCount;
     private int _pausedCount;
     private int _readOnlyCount;
 
-    private bool _isChuTro;
     private bool _isUpdateModalOpen;
     private bool _isTierModalOpen;
     private bool _isCreateModalOpen;
     private ServiceItemDto? _selectedService;
-    private string _tierServiceName = "Điện sinh hoạt";
+    private string _tierServiceName = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        _isChuTro = user.IsInRole("ChuTro") || user.IsInRole("Admin");
+        _callerRole = UtilityDraftRules.ResolveRole(user);
+        _callerEmail = UtilityDraftRules.ResolveEmail(user);
+        _modifierName = user.Identity?.Name ?? string.Empty;
+        _visibleBuildings = StateService.GetBuildingsForCaller(_callerRole, _callerEmail).ToList();
 
         StateService.OnChange += HandleStateChanged;
         LoadData();
@@ -368,7 +386,7 @@
 
     private void LoadData()
     {
-        var allServices = StateService.GetServices();
+        var allServices = StateService.GetServicesForCaller(_callerRole, _callerEmail);
         _totalCount = allServices.Count;
         _activeCount = allServices.Count(s => s.Active);
         _pausedCount = allServices.Count(s => !s.Active);
@@ -379,7 +397,9 @@
 
     private void ApplyFilters()
     {
-        _filteredServices = StateService.GetServices(
+        _filteredServices = StateService.GetServicesForCaller(
+            _callerRole,
+            _callerEmail,
             _selectedBuilding,
             _selectedType,
             _selectedStatus,
@@ -389,7 +409,7 @@
     private void ResetFilters()
     {
         _searchTerm = string.Empty;
-        _selectedBuilding = "b1";
+        _selectedBuilding = "all";
         _selectedType = "all";
         _selectedStatus = "all";
         ApplyFilters();
@@ -403,9 +423,7 @@
 
     private void HandleToggleActive(string serviceId)
     {
-        if (!_isChuTro) return;
-
-        var success = StateService.ToggleServiceActive(serviceId);
+        var success = StateService.ToggleServiceActive(serviceId, _callerRole);
         if (success)
         {
             Toast.Success(L["ToastServiceToggled"]);
@@ -432,13 +450,13 @@
         }
         else
         {
-            OpenUpdateModal(service);
+            Navigation.NavigateTo($"/services/prices?serviceId={Uri.EscapeDataString(service.Id)}");
         }
     }
 
     private Task HandleSavePrice(UpdatePriceRequest req)
     {
-        var res = StateService.UpdateServicePrice(req, "Chủ trọ An");
+        var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
         if (res.Success)
         {
             Toast.Success(L["ToastPriceUpdatedSuccess"]);
@@ -446,14 +464,14 @@
         }
         else
         {
-            Toast.Error(res.Error ?? "Lỗi khi cập nhật đơn giá");
+            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
         }
         return Task.CompletedTask;
     }
 
     private Task HandleCreateService(CreateServiceRequest req)
     {
-        var res = StateService.AddService(req);
+        var res = StateService.AddService(req, _callerRole, _modifierName);
         if (res.Success)
         {
             Toast.Success(L["ToastCreatedSuccess"]);
@@ -461,10 +479,42 @@
         }
         else
         {
-            Toast.Error(res.Error ?? "Lỗi khi thêm dịch vụ");
+            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
         }
         return Task.CompletedTask;
     }
+
+    private static string GetServiceTypeResourceKey(ServiceTypeCategory type) => type switch
+    {
+        ServiceTypeCategory.Meter => "MeterType",
+        ServiceTypeCategory.FixedMonthly => "FixedMonthlyType",
+        _ => "CustomType",
+    };
+
+    private static string GetUnitResourceKey(ServiceUnitCategory unit) => unit switch
+    {
+        ServiceUnitCategory.Room => "UnitRoom",
+        ServiceUnitCategory.Person => "UnitPerson",
+        ServiceUnitCategory.Vehicle => "UnitVehicle",
+        ServiceUnitCategory.Visit => "UnitVisit",
+        ServiceUnitCategory.KilowattHour => "UnitKwh",
+        ServiceUnitCategory.CubicMeter => "UnitM3",
+        _ => "NoData",
+    };
+
+    private static string GetPriceStatusResourceKey(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "StatusActive",
+        PriceVersionStatus.Upcoming => "StatusUpcoming",
+        _ => "StatusExpired",
+    };
+
+    private static string GetPriceStatusClass(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "price-status-active",
+        PriceVersionStatus.Upcoming => "price-status-upcoming",
+        _ => "price-status-expired",
+    };
 
     public void Dispose()
     {

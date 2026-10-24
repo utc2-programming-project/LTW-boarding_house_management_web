@@ -1,34 +1,37 @@
-using System.Globalization;
+using System.Security.Claims;
+using Web.Features.Accounts;
 using Web.Features.Utilities.DTOs;
 
 namespace Web.Features.Utilities.Rules;
 
-public enum UtilityValidationError
+public enum UtilityErrorCode
 {
-    PriceMustBePositive,
     NameIsRequired,
-    EffectiveToMustBeAfterOrOnEffectiveFrom,
+    PriceMustBePositive,
+    InvalidServiceUnit,
+    EffectiveFromIsRequired,
+    EffectiveToMustBeAfterEffectiveFrom,
+    InvalidBuildingScope,
     MeterReadingMustBeGreaterOrEqualStart,
     MeterReadingCannotBeNegative,
     AdjustmentReasonIsRequired,
+    BillingPeriodEndMustBeOnOrAfterStart,
+    AccessDenied,
+    ServiceNotFound,
+    ReadOnlyTariff,
+    PriceVersionConflict,
+    RoomNotFound,
 }
 
-public sealed record UtilityValidationIssue(string Field, UtilityValidationError Error, string Message);
+public sealed record UtilityValidationIssue(string Field, UtilityErrorCode Error);
 
 public static class UtilityDraftRules
 {
-    private static readonly NumberFormatInfo VndNumberFormat = new()
-    {
-        NumberGroupSeparator = ".",
-        NumberDecimalSeparator = ",",
-        NumberGroupSizes = [3],
-    };
-
     public static readonly IReadOnlyList<ElectricTierDto> DefaultElectricTiers =
     [
-        new(1, "Bậc 1 (0-50 kWh)", 50m, 1_800m),
-        new(2, "Bậc 2 (51-100 kWh)", 50m, 2_000m),
-        new(3, "Bậc 3 (>100 kWh)", null, 3_000m),
+        new(1, 50m, 1_800m),
+        new(2, 50m, 2_000m),
+        new(3, null, 3_000m),
     ];
 
     public static ElectricityCalculationResult CalculateElectricityTiered(
@@ -36,17 +39,9 @@ public static class UtilityDraftRules
         IReadOnlyList<ElectricTierDto>? tiers = null)
     {
         tiers ??= DefaultElectricTiers;
-        var safeUsage = Math.Max(0m, usageKwh);
-
-        if (safeUsage == 0m)
-        {
-            return new ElectricityCalculationResult(0m, "0 kWh × 0 ₫", []);
-        }
-
-        var remaining = safeUsage;
+        var remaining = Math.Max(0m, usageKwh);
         var total = 0m;
         var applied = new List<TierAppliedDto>();
-        var formulaParts = new List<string>();
 
         foreach (var tier in tiers)
         {
@@ -56,22 +51,14 @@ public static class UtilityDraftRules
             var cost = unitsInTier * tier.Rate;
             total += cost;
             remaining -= unitsInTier;
-
-            applied.Add(new TierAppliedDto(tier.Name, unitsInTier, tier.Rate, cost));
-            formulaParts.Add($"{unitsInTier.ToString("N0", VndNumberFormat)}×{tier.Rate.ToString("N0", VndNumberFormat)}");
+            applied.Add(new TierAppliedDto(tier.Id, unitsInTier, tier.Rate, cost));
         }
 
-        var breakdown = $"Bậc thang {applied.Count} bậc: {string.Join(" + ", formulaParts)}";
-        return new ElectricityCalculationResult(total, breakdown, applied);
+        return new ElectricityCalculationResult(total, applied);
     }
 
-    public static WaterCalculationResult CalculateWaterCost(decimal usageM3, decimal unitRate = 15_000m)
-    {
-        var safeUsage = Math.Max(0m, usageM3);
-        var total = safeUsage * unitRate;
-        var breakdown = $"Đơn giá cố định: {safeUsage.ToString("N0", VndNumberFormat)} m³ × {unitRate.ToString("N0", VndNumberFormat)} ₫";
-        return new WaterCalculationResult(total, breakdown);
-    }
+    public static WaterCalculationResult CalculateWaterCost(decimal usageM3, decimal unitRate = 15_000m) =>
+        new(Math.Max(0m, usageM3) * unitRate);
 
     public static TotalMonthlyBillResult CalculateTotalMonthlyBill(
         decimal roomRent,
@@ -82,37 +69,38 @@ public static class UtilityDraftRules
         decimal cleaningCost = 0m,
         decimal parkingCost = 0m)
     {
-        var elecCalc = CalculateElectricityTiered(electricityUsageKwh);
-        var waterCalc = CalculateWaterCost(waterUsageM3, waterRate);
+        var electricity = CalculateElectricityTiered(electricityUsageKwh).Total;
+        var water = CalculateWaterCost(waterUsageM3, waterRate).Total;
         var serviceCost = internetCost + cleaningCost + parkingCost;
-        var totalCost = roomRent + elecCalc.Total + waterCalc.Total + serviceCost;
-
         return new TotalMonthlyBillResult(
             roomRent,
-            elecCalc.Total,
-            waterCalc.Total,
+            electricity,
+            water,
             serviceCost,
-            totalCost);
+            roomRent + electricity + water + serviceCost);
     }
 
     public static List<UtilityValidationIssue> ValidateCreateService(CreateServiceRequest request)
     {
         var issues = new List<UtilityValidationIssue>();
-
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            issues.Add(new UtilityValidationIssue(
-                nameof(request.Name),
-                UtilityValidationError.NameIsRequired,
-                "Tên dịch vụ không được để trống / Service name is required."));
+            issues.Add(new(nameof(request.Name), UtilityErrorCode.NameIsRequired));
         }
 
         if (request.Rate <= 0m)
         {
-            issues.Add(new UtilityValidationIssue(
-                nameof(request.Rate),
-                UtilityValidationError.PriceMustBePositive,
-                "Đơn giá phải là số dương lớn hơn 0 / Price must be greater than 0."));
+            issues.Add(new(nameof(request.Rate), UtilityErrorCode.PriceMustBePositive));
+        }
+
+        if (request.EffectiveFrom == default)
+        {
+            issues.Add(new(nameof(request.EffectiveFrom), UtilityErrorCode.EffectiveFromIsRequired));
+        }
+
+        if (!Enum.IsDefined(request.Unit))
+        {
+            issues.Add(new(nameof(request.Unit), UtilityErrorCode.InvalidServiceUnit));
         }
 
         return issues;
@@ -121,25 +109,33 @@ public static class UtilityDraftRules
     public static List<UtilityValidationIssue> ValidateUpdatePrice(UpdatePriceRequest request)
     {
         var issues = new List<UtilityValidationIssue>();
-
         if (request.NewRate <= 0m)
         {
-            issues.Add(new UtilityValidationIssue(
-                nameof(request.NewRate),
-                UtilityValidationError.PriceMustBePositive,
-                "Đơn giá phải là số dương lớn hơn 0 / Price must be greater than 0."));
+            issues.Add(new(nameof(request.NewRate), UtilityErrorCode.PriceMustBePositive));
         }
 
-        if (request.EffectiveTo.HasValue && request.EffectiveTo.Value < request.EffectiveFrom)
+        if (!Enum.IsDefined(request.Unit))
         {
-            issues.Add(new UtilityValidationIssue(
-                nameof(request.EffectiveTo),
-                UtilityValidationError.EffectiveToMustBeAfterOrOnEffectiveFrom,
-                "Ngày hết hiệu lực phải sau hoặc bằng ngày bắt đầu / Effective end date must be on or after start date."));
+            issues.Add(new(nameof(request.Unit), UtilityErrorCode.InvalidServiceUnit));
+        }
+
+        if (request.EffectiveFrom == default)
+        {
+            issues.Add(new(nameof(request.EffectiveFrom), UtilityErrorCode.EffectiveFromIsRequired));
+        }
+
+        if (request.EffectiveTo.HasValue && request.EffectiveTo.Value <= request.EffectiveFrom)
+        {
+            issues.Add(new(nameof(request.EffectiveTo), UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom));
         }
 
         return issues;
     }
+
+    public static List<UtilityValidationIssue> ValidateBillingPeriod(DateOnly start, DateOnly end) =>
+        end < start
+            ? [new(nameof(end), UtilityErrorCode.BillingPeriodEndMustBeOnOrAfterStart)]
+            : [];
 
     public static List<UtilityValidationIssue> ValidateMeterReading(
         decimal startReading,
@@ -148,42 +144,46 @@ public static class UtilityDraftRules
         string? adjustmentReason = null)
     {
         var issues = new List<UtilityValidationIssue>();
-
         if (endReading < 0m)
         {
-            issues.Add(new UtilityValidationIssue(
-                "EndReading",
-                UtilityValidationError.MeterReadingCannotBeNegative,
-                "Chỉ số cuối kỳ không thể là số âm / End reading cannot be negative."));
+            issues.Add(new("EndReading", UtilityErrorCode.MeterReadingCannotBeNegative));
         }
 
         if (endReading < startReading)
         {
-            issues.Add(new UtilityValidationIssue(
-                "EndReading",
-                UtilityValidationError.MeterReadingMustBeGreaterOrEqualStart,
-                $"Chỉ số cuối kỳ ({endReading.ToString("N0", VndNumberFormat)}) phải lớn hơn hoặc bằng chỉ số đầu kỳ ({startReading.ToString("N0", VndNumberFormat)}) / End reading must be greater than or equal to start reading."));
+            issues.Add(new("EndReading", UtilityErrorCode.MeterReadingMustBeGreaterOrEqualStart));
         }
 
         if (hasChangedFromInitial && string.IsNullOrWhiteSpace(adjustmentReason))
         {
-            issues.Add(new UtilityValidationIssue(
-                "AdjustmentReason",
-                UtilityValidationError.AdjustmentReasonIsRequired,
-                "Bắt buộc nhập lý do điều chỉnh chỉ số / Adjustment reason is required."));
+            issues.Add(new("AdjustmentReason", UtilityErrorCode.AdjustmentReasonIsRequired));
         }
 
         return issues;
     }
 
-    public static bool CanManageServicePrices(string? role) =>
-        string.Equals(role, "ChuTro", StringComparison.OrdinalIgnoreCase);
+    public static string ResolveRole(ClaimsPrincipal user)
+    {
+        // Match the restrictive role precedence used by the server caller providers.
+        return new[] { Roles.Admin, Roles.KhachThue, Roles.QuanLy, Roles.ChuTro }
+            .FirstOrDefault(user.IsInRole) ?? string.Empty;
+    }
+
+    public static string ResolveEmail(ClaimsPrincipal user) =>
+        user.FindFirst(ClaimTypes.Email)?.Value ?? user.Identity?.Name ?? string.Empty;
+
+    public static bool CanViewUtilityData(string? role) =>
+        IsRole(role, Roles.ChuTro) || IsRole(role, Roles.QuanLy) || IsRole(role, Roles.KhachThue);
+
+    public static bool CanManageServicePrices(string? role) => IsRole(role, Roles.ChuTro);
 
     public static bool CanRecordMeterReadings(string? role) =>
-        string.Equals(role, "ChuTro", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(role, "QuanLy", StringComparison.OrdinalIgnoreCase);
+        IsRole(role, Roles.ChuTro) || IsRole(role, Roles.QuanLy);
 
     public static bool IsTariffReadOnly(string serviceCode) =>
         string.Equals(serviceCode, "ELEC", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(serviceCode, "WATER", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRole(string? value, string role) =>
+        string.Equals(value, role, StringComparison.OrdinalIgnoreCase);
 }

@@ -15,7 +15,7 @@ public static class AppNavigation
         new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
         new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
         new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
-        new("Pricing", "wallet", "ChuTro,QuanLy", "/services/prices"),
+        new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
         new("Invoices", "receipt", "ChuTro,QuanLy"),
         new("Incidents", "wrench", "ChuTro,QuanLy"),
         new("Reports", "chart", "ChuTro"),

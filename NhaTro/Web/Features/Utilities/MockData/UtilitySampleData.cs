@@ -1,4 +1,4 @@
-using Web.Common.Utils;
+using Web.Features.Accounts;
 using Web.Features.Utilities.DTOs;
 
 namespace Web.Features.Utilities.MockData;
@@ -12,6 +12,42 @@ public static class UtilitySampleData
         new("b2", "Nhà trọ Bình Minh", "45/12 Đường số 8, P. Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh", 8, 8),
     ];
 
+    public static IReadOnlyList<string> GetAllowedBuildingIds(string? role, string? email)
+    {
+        if (role == Roles.ChuTro)
+        {
+            return Buildings.Where(building => building.Id != "all").Select(building => building.Id).ToArray();
+        }
+
+        var normalizedEmail = email?.Trim();
+        return role switch
+        {
+            Roles.QuanLy when string.Equals(normalizedEmail, "quanly@nhatro.local", StringComparison.OrdinalIgnoreCase) => ["b1"],
+            Roles.KhachThue when string.Equals(normalizedEmail, "khachthue@nhatro.local", StringComparison.OrdinalIgnoreCase) => ["b1"],
+            _ => [],
+        };
+    }
+
+    public static IReadOnlyList<string> GetAllowedRoomIds(string? role, string? email)
+    {
+        if (role == Roles.ChuTro)
+        {
+            return CreateDefaultRoomReadings().Select(room => room.Id).ToArray();
+        }
+
+        if (role == Roles.QuanLy && string.Equals(email?.Trim(), "quanly@nhatro.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return CreateDefaultRoomReadings().Where(room => room.BuildingId == "b1").Select(room => room.Id).ToArray();
+        }
+
+        if (role == Roles.KhachThue && string.Equals(email?.Trim(), "khachthue@nhatro.local", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["room-101"];
+        }
+
+        return [];
+    }
+
     public static List<ServiceItemDto> CreateDefaultServices() =>
     [
         new()
@@ -20,11 +56,9 @@ public static class UtilitySampleData
             Name = "Điện sinh hoạt",
             Code = "ELEC",
             Type = ServiceTypeCategory.Meter,
-            TypeLabel = "Theo chỉ số",
-            Unit = "kWh",
+            Unit = ServiceUnitCategory.KilowattHour,
             RateType = ServiceRateType.Tiered,
             CurrentRate = 2_000m,
-            RateDisplay = "Bậc thang · 3 bậc",
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
             Active = true,
@@ -32,7 +66,7 @@ public static class UtilitySampleData
             BuildingId = "b1",
             BuildingName = "Tòa nhà An Gia 01",
             Description = "Tính theo bậc thang quy định cố định hệ thống (Bậc 1: 1.800 ₫, Bậc 2: 2.000 ₫, Bậc 3: 3.000 ₫)",
-            HistoryCount = 3,
+            HistoryCount = 1,
         },
         new()
         {
@@ -40,11 +74,9 @@ public static class UtilitySampleData
             Name = "Nước sinh hoạt",
             Code = "WATER",
             Type = ServiceTypeCategory.Meter,
-            TypeLabel = "Theo chỉ số",
-            Unit = "m³",
+            Unit = ServiceUnitCategory.CubicMeter,
             RateType = ServiceRateType.Flat,
             CurrentRate = 15_000m,
-            RateDisplay = MoneyFormatter.Format(15_000m),
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
             Active = true,
@@ -52,7 +84,7 @@ public static class UtilitySampleData
             BuildingId = "b1",
             BuildingName = "Tòa nhà An Gia 01",
             Description = "Chỉ số nước sinh hoạt qua đồng hồ phòng riêng hoặc chia đều theo thỏa thuận",
-            HistoryCount = 2,
+            HistoryCount = 1,
         },
         new()
         {
@@ -60,11 +92,9 @@ public static class UtilitySampleData
             Name = "Internet cáp quang",
             Code = "NET",
             Type = ServiceTypeCategory.FixedMonthly,
-            TypeLabel = "Cố định hàng tháng",
-            Unit = "Phòng",
+            Unit = ServiceUnitCategory.Room,
             RateType = ServiceRateType.Flat,
             CurrentRate = 100_000m,
-            RateDisplay = MoneyFormatter.Format(100_000m),
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
             Active = true,
@@ -80,11 +110,9 @@ public static class UtilitySampleData
             Name = "Vệ sinh & Môi trường",
             Code = "CLEAN",
             Type = ServiceTypeCategory.FixedMonthly,
-            TypeLabel = "Cố định hàng tháng",
-            Unit = "Người",
+            Unit = ServiceUnitCategory.Person,
             RateType = ServiceRateType.Flat,
             CurrentRate = 30_000m,
-            RateDisplay = MoneyFormatter.Format(30_000m),
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
             Active = true,
@@ -100,11 +128,9 @@ public static class UtilitySampleData
             Name = "Gửi xe máy",
             Code = "PARK",
             Type = ServiceTypeCategory.FixedMonthly,
-            TypeLabel = "Cố định hàng tháng",
-            Unit = "Xe",
+            Unit = ServiceUnitCategory.Vehicle,
             RateType = ServiceRateType.Flat,
             CurrentRate = 80_000m,
-            RateDisplay = MoneyFormatter.Format(80_000m),
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
             Active = false,
@@ -120,18 +146,49 @@ public static class UtilitySampleData
     [
         new()
         {
+            Id = "pv-1-1",
+            ServiceId = "srv-1",
+            ServiceName = "Điện sinh hoạt",
+            Unit = ServiceUnitCategory.KilowattHour,
+            Rate = 0m,
+            RateType = ServiceRateType.Tiered,
+            EffectiveFrom = new DateOnly(2026, 1, 1),
+            Status = PriceVersionStatus.Active,
+            BuildingScope = "b1",
+            BuildingName = "Tòa nhà An Gia 01",
+            CreatedAt = new DateTime(2025, 12, 15, 8, 30, 0, DateTimeKind.Utc),
+            CreatedBy = "System",
+            Note = "D7",
+        },
+        new()
+        {
+            Id = "pv-2-1",
+            ServiceId = "srv-2",
+            ServiceName = "Nước sinh hoạt",
+            Unit = ServiceUnitCategory.CubicMeter,
+            Rate = 15_000m,
+            RateType = ServiceRateType.Flat,
+            EffectiveFrom = new DateOnly(2026, 1, 1),
+            Status = PriceVersionStatus.Active,
+            BuildingScope = "b1",
+            BuildingName = "Tòa nhà An Gia 01",
+            CreatedAt = new DateTime(2025, 12, 15, 8, 30, 0, DateTimeKind.Utc),
+            CreatedBy = "System",
+            Note = "D7",
+        },
+        new()
+        {
             Id = "pv-3-1",
             ServiceId = "srv-3",
             ServiceName = "Internet cáp quang",
-            Unit = "Phòng",
+            Unit = ServiceUnitCategory.Room,
             Rate = 100_000m,
             RateType = ServiceRateType.Flat,
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
-            Status = "active",
+            Status = PriceVersionStatus.Active,
             BuildingScope = "b1",
             BuildingName = "Tòa nhà An Gia 01",
-            AutoActivate = true,
             CreatedAt = new DateTime(2025, 12, 15, 8, 30, 0, DateTimeKind.Utc),
             CreatedBy = "Chủ trọ An",
             Note = "Nâng cấp băng thông lên 300Mbps cho toàn tòa",
@@ -141,15 +198,14 @@ public static class UtilitySampleData
             Id = "pv-3-2",
             ServiceId = "srv-3",
             ServiceName = "Internet cáp quang",
-            Unit = "Phòng",
+            Unit = ServiceUnitCategory.Room,
             Rate = 90_000m,
             RateType = ServiceRateType.Flat,
             EffectiveFrom = new DateOnly(2025, 6, 1),
             EffectiveTo = new DateOnly(2025, 12, 31),
-            Status = "expired",
+            Status = PriceVersionStatus.Expired,
             BuildingScope = "b1",
             BuildingName = "Tòa nhà An Gia 01",
-            AutoActivate = true,
             CreatedAt = new DateTime(2025, 5, 20, 10, 0, 0, DateTimeKind.Utc),
             CreatedBy = "Chủ trọ An",
             Note = "Gói cước 150Mbps cũ",
@@ -159,15 +215,14 @@ public static class UtilitySampleData
             Id = "pv-3-3",
             ServiceId = "srv-3",
             ServiceName = "Internet cáp quang",
-            Unit = "Phòng",
+            Unit = ServiceUnitCategory.Room,
             Rate = 80_000m,
             RateType = ServiceRateType.Flat,
             EffectiveFrom = new DateOnly(2025, 1, 1),
             EffectiveTo = new DateOnly(2025, 5, 31),
-            Status = "expired",
+            Status = PriceVersionStatus.Expired,
             BuildingScope = "all",
             BuildingName = "Tất cả nhà trọ",
-            AutoActivate = true,
             CreatedAt = new DateTime(2024, 12, 10, 9, 0, 0, DateTimeKind.Utc),
             CreatedBy = "Chủ trọ An",
             Note = "Gói khởi điểm ban đầu",
@@ -177,15 +232,14 @@ public static class UtilitySampleData
             Id = "pv-4-1",
             ServiceId = "srv-4",
             ServiceName = "Vệ sinh & Môi trường",
-            Unit = "Người",
+            Unit = ServiceUnitCategory.Person,
             Rate = 30_000m,
             RateType = ServiceRateType.Flat,
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
-            Status = "active",
+            Status = PriceVersionStatus.Active,
             BuildingScope = "b1",
             BuildingName = "Tòa nhà An Gia 01",
-            AutoActivate = true,
             CreatedAt = new DateTime(2025, 12, 20, 14, 0, 0, DateTimeKind.Utc),
             CreatedBy = "Chủ trọ An",
             Note = "Áp dụng định kỳ dọn vệ sinh 3 lần/tuần",
@@ -195,15 +249,14 @@ public static class UtilitySampleData
             Id = "pv-5-1",
             ServiceId = "srv-5",
             ServiceName = "Gửi xe máy",
-            Unit = "Xe",
+            Unit = ServiceUnitCategory.Vehicle,
             Rate = 80_000m,
             RateType = ServiceRateType.Flat,
             EffectiveFrom = new DateOnly(2026, 1, 1),
             EffectiveTo = null,
-            Status = "active",
+            Status = PriceVersionStatus.Active,
             BuildingScope = "b1",
             BuildingName = "Tòa nhà An Gia 01",
-            AutoActivate = true,
             CreatedAt = new DateTime(2025, 12, 20, 14, 30, 0, DateTimeKind.Utc),
             CreatedBy = "Chủ trọ An",
             Note = "Giữ xe máy cố định",
@@ -223,7 +276,6 @@ public static class UtilitySampleData
             TenantName = "Nguyễn Văn An",
             TenantPhone = "0908889901",
             RoomRent = 3_000_000m,
-            PeriodMonth = "Tháng 10/2026",
             PeriodStart = new DateOnly(2026, 10, 1),
             PeriodEnd = new DateOnly(2026, 10, 31),
             Status = "open",
@@ -265,7 +317,6 @@ public static class UtilitySampleData
             TenantName = "Trần Thị Bình",
             TenantPhone = "0908889902",
             RoomRent = 3_200_000m,
-            PeriodMonth = "Tháng 10/2026",
             PeriodStart = new DateOnly(2026, 10, 1),
             PeriodEnd = new DateOnly(2026, 10, 31),
             Status = "open",
@@ -293,7 +344,6 @@ public static class UtilitySampleData
             TenantName = "Lê Hoàng Minh",
             TenantPhone = "0908889903",
             RoomRent = 3_500_000m,
-            PeriodMonth = "Tháng 10/2026",
             PeriodStart = new DateOnly(2026, 10, 1),
             PeriodEnd = new DateOnly(2026, 10, 31),
             Status = "open",
@@ -308,6 +358,33 @@ public static class UtilitySampleData
             CleaningCost = 30_000m,
             ParkingCost = 160_000m,
             RefCode = "REF-P201-202610",
+            AuditLogs = []
+        },
+        new()
+        {
+            Id = "room-301",
+            RoomCode = "P301",
+            RoomName = "Phòng 301",
+            BuildingId = "b2",
+            BuildingName = "Nhà trọ Bình Minh",
+            ContractCode = "HD-2026-004",
+            TenantName = "Trần Gia Huy",
+            TenantPhone = "0908889904",
+            RoomRent = 2_800_000m,
+            PeriodStart = new DateOnly(2026, 10, 1),
+            PeriodEnd = new DateOnly(2026, 10, 31),
+            Status = "open",
+            ElectricMeterCode = "EM-301",
+            ElectricStart = 760m,
+            ElectricEnd = 835m,
+            WaterMeterCode = "WM-301",
+            WaterStart = 42m,
+            WaterEnd = 47m,
+            WaterRate = 15_000m,
+            InternetCost = 100_000m,
+            CleaningCost = 30_000m,
+            ParkingCost = 80_000m,
+            RefCode = "REF-P301-202610",
             AuditLogs = []
         },
     ];

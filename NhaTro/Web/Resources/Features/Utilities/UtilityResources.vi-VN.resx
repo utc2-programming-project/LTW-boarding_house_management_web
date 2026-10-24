@@ -98,8 +98,6 @@
   <data name="BuildingScopeLabel" xml:space="preserve"><value>Phạm vi áp dụng</value></data>
   <data name="EffectiveFromLabel" xml:space="preserve"><value>Bắt đầu hiệu lực</value></data>
   <data name="EffectiveToLabel" xml:space="preserve"><value>Hết hiệu lực (không bắt buộc)</value></data>
-  <data name="AutoActivateLabel" xml:space="preserve"><value>Kích hoạt ngay khi đến mốc hiệu lực</value></data>
-  <data name="AutoActivateDesc" xml:space="preserve"><value>Tự động thay thế giá cũ trong các hóa đơn tạo sau ngày này</value></data>
   <data name="NoteLabel" xml:space="preserve"><value>Ghi chú thay đổi (Audit log)</value></data>
   <data name="NotePlaceholder" xml:space="preserve"><value>Nhập lý do điều chỉnh đơn giá...</value></data>
   <data name="SavePriceBtn" xml:space="preserve"><value>Lưu mốc giá mới</value></data>
@@ -109,8 +107,6 @@
   <data name="PricesBreadcrumb" xml:space="preserve"><value>Bảng đơn giá theo kỳ</value></data>
   <data name="PricesHeading" xml:space="preserve"><value>Bảng đơn giá theo kỳ</value></data>
   <data name="PricesSubtitle" xml:space="preserve"><value>Quản lý các phiên bản giá dịch vụ có hiệu lực theo dòng thời gian và chính sách áp dụng.</value></data>
-  <data name="PricesWarningTitle" xml:space="preserve"><value>Dữ liệu mô phỏng theo kỳ — chưa đồng bộ hóa đơn cũ</value></data>
-  <data name="PricesWarningDesc" xml:space="preserve"><value>Phiên bản giá mới chỉ áp dụng từ mốc thời gian bắt đầu hiệu lực; hóa đơn các tháng trước đó được bảo toàn đơn giá lịch sử.</value></data>
   <data name="BackToCatalogBtn" xml:space="preserve"><value>Về danh mục dịch vụ</value></data>
   <data name="UpdatePriceMilestoneBtn" xml:space="preserve"><value>Cập nhật mốc giá mới</value></data>
   <data name="TabAllServices" xml:space="preserve"><value>Tất cả dịch vụ</value></data>
@@ -131,8 +127,8 @@
   <data name="ReadingsBreadcrumb" xml:space="preserve"><value>Kỳ &amp; chỉ số</value></data>
   <data name="ReadingsHeading" xml:space="preserve"><value>Ghi chỉ số &amp; Chi phí mẫu</value></data>
   <data name="ReadingsSubtitle" xml:space="preserve"><value>Chốt chỉ số điện nước theo kỳ và tính trước chi phí dịch vụ cho từng phòng.</value></data>
-  <data name="ReadingsVersionBadge" xml:space="preserve"><value>Phiên bản v2.4 (Phase B / VHT-38)</value></data>
-  <data name="SaveReadingsBtn" xml:space="preserve"><value>Lưu nhập chỉ số</value></data>
+  <data name="ReadingsVersionBadge" xml:space="preserve"><value>Dữ liệu mẫu · VHT-38</value></data>
+  <data name="SaveReadingsBtn" xml:space="preserve"><value>Cập nhật xem trước</value></data>
 
   <data name="Sec1Heading" xml:space="preserve"><value>1. Chọn kỳ &amp; Thông tin phòng</value></data>
   <data name="Sec1StatusOpen" xml:space="preserve"><value>Mở (Đang ghi chỉ số)</value></data>
@@ -188,7 +184,7 @@
   <data name="NoAuditLogs" xml:space="preserve"><value>Chưa có lượt sửa đổi thủ công nào cho phòng này trong kỳ hiện tại.</value></data>
 
   <data name="Sec5Heading" xml:space="preserve"><value>Quy tắc bảo vệ kỳ kế toán đã khóa:</value></data>
-  <data name="Sec5Notice" xml:space="preserve"><value>Kỳ đã phát hành hóa đơn, không thể sửa chỉ số. Khi cần điều chỉnh, vui lòng thực hiện hủy phát hành hóa đơn hoặc tạo phiếu bù trừ trong mục Hóa đơn &amp; Thu chi.</value></data>
+  <data name="Sec5Notice" xml:space="preserve"><value>Đây là kỳ mẫu trong bộ nhớ phiên hiện tại. Việc sửa kỳ đã phát hành hóa đơn và điều chỉnh hóa đơn thật nằm ngoài phạm vi Sprint 2A.</value></data>
 
   <data name="ReasonModalTitle" xml:space="preserve"><value>Xác nhận lưu chỉ số công tơ</value></data>
   <data name="ReasonModalDesc" xml:space="preserve"><value>Bạn đã thay đổi chỉ số công tơ cho {0}. Vui lòng nhập lý do điều chỉnh để ghi nhận vào hồ sơ kiểm toán (Audit Log):</value></data>
@@ -196,12 +192,55 @@
   <data name="ReasonFieldPlaceholder" xml:space="preserve"><value>Ví dụ: Ghi nhầm số đồng hồ thực tế kiểm tra lại...</value></data>
   <data name="ReasonConfirmBtn" xml:space="preserve"><value>Xác nhận lưu</value></data>
 
-  <data name="ToastCreatedSuccess" xml:space="preserve"><value>Thêm dịch vụ mới thành công!</value></data>
-  <data name="ToastPriceUpdatedSuccess" xml:space="preserve"><value>Cập nhật mốc giá mới thành công!</value></data>
-  <data name="ToastServiceToggled" xml:space="preserve"><value>Đã cập nhật trạng thái hoạt động của dịch vụ.</value></data>
-  <data name="ToastReadingsSaved" xml:space="preserve"><value>Lưu chỉ số và tính chi phí kỳ thành công!</value></data>
+  <data name="ToastCreatedSuccess" xml:space="preserve"><value>Dịch vụ đã được thêm vào dữ liệu mẫu trong phiên này.</value></data>
+  <data name="ToastPriceUpdatedSuccess" xml:space="preserve"><value>Mốc giá mẫu đã thay đổi trong phiên này; chưa lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ToastServiceToggled" xml:space="preserve"><value>Trạng thái dịch vụ mẫu đã đổi trong phiên này.</value></data>
+  <data name="ToastReadingsSaved" xml:space="preserve"><value>Chỉ số mẫu đã cập nhật trong phiên này; chưa lưu vào cơ sở dữ liệu.</value></data>
   <data name="LoadingText" xml:space="preserve"><value>Đang tải dữ liệu dịch vụ...</value></data>
   <data name="UnitKwh" xml:space="preserve"><value>kWh</value></data>
   <data name="UnitM3" xml:space="preserve"><value>m³</value></data>
+  <data name="SampleDataBadge" xml:space="preserve"><value>Dữ liệu mẫu</value></data>
+  <data name="SampleDataNotice" xml:space="preserve"><value>Thay đổi chỉ nằm trong bộ nhớ phiên hiện tại; chưa được lưu vào cơ sở dữ liệu.</value></data>
+  <data name="TieredTariffLabel" xml:space="preserve"><value>Biểu giá bậc thang</value></data>
+  <data name="ReadOnlyStatus" xml:space="preserve"><value>Chỉ xem</value></data>
+  <data name="TableResultCount" xml:space="preserve"><value>{0} dịch vụ</value></data>
+  <data name="PricesEmptyDescription" xml:space="preserve"><value>Chưa có phiên bản giá mẫu trong phạm vi này.</value></data>
+  <data name="UnitRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="UnitPerson" xml:space="preserve"><value>Người</value></data>
+  <data name="UnitVehicle" xml:space="preserve"><value>Xe</value></data>
+  <data name="UnitVisit" xml:space="preserve"><value>Lần</value></data>
+  <data name="PeriodStartLabel" xml:space="preserve"><value>Ngày bắt đầu kỳ</value></data>
+  <data name="PeriodEndLabel" xml:space="preserve"><value>Ngày kết thúc kỳ</value></data>
+  <data name="PreviousPeriodEndHint" xml:space="preserve"><value>Chỉ số đầu kỳ lấy từ cuối kỳ {0}</value></data>
+  <data name="ManualMeterReadingHint" xml:space="preserve"><value>Nhập chỉ số công tơ mẫu</value></data>
+  <data name="CostInternet" xml:space="preserve"><value>Internet</value></data>
+  <data name="CostCleaning" xml:space="preserve"><value>Vệ sinh</value></data>
+  <data name="CostParking" xml:space="preserve"><value>Gửi xe</value></data>
+  <data name="CostFormulaRateTimesQuantity" xml:space="preserve"><value>{0} × {1}</value></data>
+  <data name="CostFormulaFixedCharge" xml:space="preserve"><value>Khoản phí dịch vụ mẫu</value></data>
+  <data name="CostServiceQuantity" xml:space="preserve"><value>1 khoản</value></data>
+  <data name="TierFormulaLabel" xml:space="preserve"><value>Bậc {0}</value></data>
+  <data name="TierFormulaPart" xml:space="preserve"><value>{0}: {1} × {2}</value></data>
+  <data name="NoConsumption" xml:space="preserve"><value>Không phát sinh tiêu thụ</value></data>
+  <data name="AuditElectricMeterReading" xml:space="preserve"><value>Chỉ số điện cuối kỳ</value></data>
+  <data name="AuditWaterMeterReading" xml:space="preserve"><value>Chỉ số nước cuối kỳ</value></data>
+  <data name="ReadingsEmptyTitle" xml:space="preserve"><value>Không có kỳ mẫu trong phạm vi của bạn</value></data>
+  <data name="ReadingsEmptyDescription" xml:space="preserve"><value>Trang này chỉ hiển thị dữ liệu mẫu được gán cho tài khoản xem trước.</value></data>
+  <data name="ErrorNameIsRequired" xml:space="preserve"><value>Vui lòng nhập tên dịch vụ.</value></data>
+  <data name="ErrorPriceMustBePositive" xml:space="preserve"><value>Đơn giá phải lớn hơn 0.</value></data>
+  <data name="ErrorInvalidServiceUnit" xml:space="preserve"><value>Đơn vị tính không hợp lệ.</value></data>
+  <data name="ErrorEffectiveFromIsRequired" xml:space="preserve"><value>Vui lòng chọn ngày bắt đầu hiệu lực.</value></data>
+  <data name="ErrorEffectiveToMustBeAfterEffectiveFrom" xml:space="preserve"><value>Ngày hết hiệu lực phải sau ngày bắt đầu hiệu lực.</value></data>
+  <data name="ErrorInvalidBuildingScope" xml:space="preserve"><value>Phạm vi nhà trọ hoặc tòa nhà không hợp lệ.</value></data>
+  <data name="ErrorMeterReadingMustBeGreaterOrEqualStart" xml:space="preserve"><value>Chỉ số cuối kỳ phải lớn hơn hoặc bằng chỉ số đầu kỳ.</value></data>
+  <data name="ErrorMeterReadingCannotBeNegative" xml:space="preserve"><value>Chỉ số cuối kỳ không thể là số âm.</value></data>
+  <data name="ErrorAdjustmentReasonIsRequired" xml:space="preserve"><value>Vui lòng nhập lý do điều chỉnh chỉ số.</value></data>
+  <data name="ErrorBillingPeriodEndMustBeOnOrAfterStart" xml:space="preserve"><value>Ngày kết thúc kỳ phải bằng hoặc sau ngày bắt đầu.</value></data>
+  <data name="ErrorAccessDenied" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="ErrorServiceNotFound" xml:space="preserve"><value>Không tìm thấy dịch vụ trong phạm vi được phép.</value></data>
+  <data name="ErrorReadOnlyTariff" xml:space="preserve"><value>Biểu giá điện/nước chỉ đọc theo D7.</value></data>
+  <data name="ErrorPriceVersionConflict" xml:space="preserve"><value>Mốc giá bị trùng hoặc chồng lấn với phiên bản khác trong cùng phạm vi.</value></data>
+  <data name="ErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép.</value></data>
+  <data name="ErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi. Vui lòng thử lại.</value></data>
 </root>
 

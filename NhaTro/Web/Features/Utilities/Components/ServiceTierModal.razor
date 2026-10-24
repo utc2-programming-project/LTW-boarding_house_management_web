@@ -36,7 +36,7 @@
                             @foreach (var tier in UtilityDraftRules.DefaultElectricTiers)
                             {
                                 <tr>
-                                    <td class="font-semibold text-slate-800">@tier.Name</td>
+                                    <td class="font-semibold text-slate-800">@string.Format(L["TierFormulaLabel"], tier.Id)</td>
                                     <td>
                                         @if (tier.MaxKwh.HasValue)
                                         {
@@ -48,7 +48,7 @@
                                         }
                                     </td>
                                     <td class="text-right font-bold tabular-nums text-indigo-700">
-                                        @tier.Rate.ToString("N0") ₫
+                                        @MoneyFormatter.Format(tier.Rate)
                                     </td>
                                 </tr>
                             }
@@ -68,7 +68,7 @@
 
 @code {
     [Parameter] public bool IsOpen { get; set; }
-    [Parameter] public string ServiceName { get; set; } = "Điện sinh hoạt";
+    [Parameter] public string ServiceName { get; set; } = string.Empty;
     [Parameter] public EventCallback OnClose { get; set; }
 
     private async Task HandleClose() => await OnClose.InvokeAsync();

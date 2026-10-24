@@ -7,12 +7,11 @@ namespace NhaTro.UnitTests.Features.Utilities;
 public sealed class UtilityCalculationRulesTests
 {
     [Fact]
-    public void CalculateElectricityTiered_WithZeroUsage_ReturnsZero()
+    public void CalculateElectricityTiered_WithZeroUsage_ReturnsZeroAndNoTiers()
     {
         var result = UtilityDraftRules.CalculateElectricityTiered(0);
 
         Assert.Equal(0m, result.Total);
-        Assert.Equal("0 kWh × 0 ₫", result.Breakdown);
         Assert.Empty(result.TiersApplied);
     }
 
@@ -21,11 +20,11 @@ public sealed class UtilityCalculationRulesTests
     {
         var result = UtilityDraftRules.CalculateElectricityTiered(40);
 
-        // 40 * 1800 = 72,000
         Assert.Equal(72_000m, result.Total);
-        Assert.Single(result.TiersApplied);
-        Assert.Equal(40m, result.TiersApplied[0].Units);
-        Assert.Equal(1_800m, result.TiersApplied[0].Rate);
+        var tier = Assert.Single(result.TiersApplied);
+        Assert.Equal(1, tier.TierId);
+        Assert.Equal(40m, tier.Units);
+        Assert.Equal(1_800m, tier.Rate);
     }
 
     [Fact]
@@ -33,25 +32,19 @@ public sealed class UtilityCalculationRulesTests
     {
         var result = UtilityDraftRules.CalculateElectricityTiered(80);
 
-        // 50 * 1800 (90,000) + 30 * 2000 (60,000) = 150,000
         Assert.Equal(150_000m, result.Total);
-        Assert.Equal(2, result.TiersApplied.Count);
-        Assert.Equal(50m, result.TiersApplied[0].Units);
-        Assert.Equal(30m, result.TiersApplied[1].Units);
+        Assert.Equal([50m, 30m], result.TiersApplied.Select(tier => tier.Units));
+        Assert.Equal([1, 2], result.TiersApplied.Select(tier => tier.TierId));
     }
 
     [Fact]
-    public void CalculateElectricityTiered_AcrossAllThreeTiers_CalculatesExact120KwhMatchingDemo()
+    public void CalculateElectricityTiered_AcrossAllThreeTiers_CalculatesExact120Kwh()
     {
         var result = UtilityDraftRules.CalculateElectricityTiered(120);
 
-        // 50 * 1800 (90,000) + 50 * 2000 (100,000) + 20 * 3000 (60,000) = 250,000
         Assert.Equal(250_000m, result.Total);
-        Assert.Equal(3, result.TiersApplied.Count);
-        Assert.Equal(50m, result.TiersApplied[0].Units);
-        Assert.Equal(50m, result.TiersApplied[1].Units);
-        Assert.Equal(20m, result.TiersApplied[2].Units);
-        Assert.Equal("Bậc thang 3 bậc: 50×1.800 + 50×2.000 + 20×3.000", result.Breakdown);
+        Assert.Equal([50m, 50m, 20m], result.TiersApplied.Select(tier => tier.Units));
+        Assert.Equal([1_800m, 2_000m, 3_000m], result.TiersApplied.Select(tier => tier.Rate));
     }
 
     [Fact]
@@ -60,11 +53,10 @@ public sealed class UtilityCalculationRulesTests
         var result = UtilityDraftRules.CalculateWaterCost(6, 15_000m);
 
         Assert.Equal(90_000m, result.Total);
-        Assert.Equal("Đơn giá cố định: 6 m³ × 15.000 ₫", result.Breakdown);
     }
 
     [Fact]
-    public void CalculateTotalMonthlyBill_MatchesDemoScreenshot_Total3470000()
+    public void CalculateTotalMonthlyBill_MatchesSampleDto_Total3470000()
     {
         var bill = UtilityDraftRules.CalculateTotalMonthlyBill(
             roomRent: 3_000_000m,
@@ -83,4 +75,3 @@ public sealed class UtilityCalculationRulesTests
         Assert.Equal("3.470.000 ₫", MoneyFormatter.Format(bill.TotalCost));
     }
 }
-

@@ -13,19 +13,35 @@ public enum ServiceRateType
     Tiered,
 }
 
+public enum ServiceUnitCategory
+{
+    Room,
+    Person,
+    Vehicle,
+    Visit,
+    KilowattHour,
+    CubicMeter,
+}
+
+public enum PriceVersionStatus
+{
+    Active,
+    Upcoming,
+    Expired,
+}
+
 public sealed class ServiceItemDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public ServiceTypeCategory Type { get; set; }
-    public string TypeLabel { get; set; } = string.Empty;
-    public string Unit { get; set; } = string.Empty;
+    public ServiceUnitCategory Unit { get; set; } = ServiceUnitCategory.Room;
     public ServiceRateType RateType { get; set; }
     public decimal CurrentRate { get; set; }
-    public string RateDisplay { get; set; } = string.Empty;
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
+    public PriceVersionStatus PriceStatus { get; set; } = PriceVersionStatus.Active;
     public bool Active { get; set; } = true;
     public bool IsReadOnly { get; set; }
     public string BuildingId { get; set; } = "all";
@@ -39,13 +55,12 @@ public sealed class ServiceItemDto
         Name = Name,
         Code = Code,
         Type = Type,
-        TypeLabel = TypeLabel,
         Unit = Unit,
         RateType = RateType,
         CurrentRate = CurrentRate,
-        RateDisplay = RateDisplay,
         EffectiveFrom = EffectiveFrom,
         EffectiveTo = EffectiveTo,
+        PriceStatus = PriceStatus,
         Active = Active,
         IsReadOnly = IsReadOnly,
         BuildingId = BuildingId,
@@ -60,27 +75,44 @@ public sealed class PriceVersionDto
     public string Id { get; set; } = string.Empty;
     public string ServiceId { get; set; } = string.Empty;
     public string ServiceName { get; set; } = string.Empty;
-    public string Unit { get; set; } = string.Empty;
+    public ServiceUnitCategory Unit { get; set; } = ServiceUnitCategory.Room;
     public decimal Rate { get; set; }
     public ServiceRateType RateType { get; set; }
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
-    public string Status { get; set; } = "active"; // active, upcoming, expired
+    public PriceVersionStatus Status { get; set; } = PriceVersionStatus.Active;
     public string BuildingScope { get; set; } = "all";
     public string BuildingName { get; set; } = string.Empty;
-    public bool AutoActivate { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string? Note { get; set; }
+
+    public PriceVersionDto Copy() => new()
+    {
+        Id = Id,
+        ServiceId = ServiceId,
+        ServiceName = ServiceName,
+        Unit = Unit,
+        Rate = Rate,
+        RateType = RateType,
+        EffectiveFrom = EffectiveFrom,
+        EffectiveTo = EffectiveTo,
+        Status = Status,
+        BuildingScope = BuildingScope,
+        BuildingName = BuildingName,
+        CreatedAt = CreatedAt,
+        CreatedBy = CreatedBy,
+        Note = Note,
+    };
 }
 
-public sealed record ElectricTierDto(int Id, string Name, decimal? MaxKwh, decimal Rate);
+public sealed record ElectricTierDto(int Id, decimal? MaxKwh, decimal Rate);
 
-public sealed record TierAppliedDto(string TierName, decimal Units, decimal Rate, decimal Amount);
+public sealed record TierAppliedDto(int TierId, decimal Units, decimal Rate, decimal Amount);
 
-public sealed record ElectricityCalculationResult(decimal Total, string Breakdown, IReadOnlyList<TierAppliedDto> TiersApplied);
+public sealed record ElectricityCalculationResult(decimal Total, IReadOnlyList<TierAppliedDto> TiersApplied);
 
-public sealed record WaterCalculationResult(decimal Total, string Breakdown);
+public sealed record WaterCalculationResult(decimal Total);
 
 public sealed record TotalMonthlyBillResult(
     decimal RoomRent,
@@ -113,7 +145,6 @@ public sealed class RoomReadingSampleDto
     public string TenantName { get; set; } = string.Empty;
     public string TenantPhone { get; set; } = string.Empty;
     public decimal RoomRent { get; set; }
-    public string PeriodMonth { get; set; } = string.Empty;
     public DateOnly PeriodStart { get; set; }
     public DateOnly PeriodEnd { get; set; }
     public string Status { get; set; } = "open"; // open, locked, billed
@@ -141,7 +172,6 @@ public sealed class RoomReadingSampleDto
         TenantName = TenantName,
         TenantPhone = TenantPhone,
         RoomRent = RoomRent,
-        PeriodMonth = PeriodMonth,
         PeriodStart = PeriodStart,
         PeriodEnd = PeriodEnd,
         Status = Status,
@@ -175,11 +205,10 @@ public sealed class UpdatePriceRequest
 {
     public string ServiceId { get; set; } = string.Empty;
     public decimal NewRate { get; set; }
-    public string Unit { get; set; } = string.Empty;
+    public ServiceUnitCategory Unit { get; set; } = ServiceUnitCategory.Room;
     public string BuildingScope { get; set; } = "all";
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
-    public bool AutoActivate { get; set; } = true;
     public string? Note { get; set; }
 }
 
@@ -187,9 +216,10 @@ public sealed class CreateServiceRequest
 {
     public string Name { get; set; } = string.Empty;
     public ServiceTypeCategory Type { get; set; } = ServiceTypeCategory.FixedMonthly;
-    public string Unit { get; set; } = "Phòng";
+    public ServiceUnitCategory Unit { get; set; } = ServiceUnitCategory.Room;
     public decimal Rate { get; set; }
     public string BuildingId { get; set; } = "b1";
+    public DateOnly EffectiveFrom { get; set; }
     public string? Description { get; set; }
 }
 

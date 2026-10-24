@@ -1,58 +1,77 @@
-using Web.Common.Utils;
+using System.Globalization;
+using Web.Features.Accounts;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.MockData;
 using Web.Features.Utilities.Rules;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Utilities.Services;
 
-/// <summary>
-/// Quản lý dữ liệu mẫu P5 (Đợt 2A) trong bộ nhớ phiên.
-/// Cho phép thêm dịch vụ mới, cập nhật mốc giá, bật/tắt kích hoạt và nhập chỉ số xem trước.
-/// </summary>
-public sealed class UtilitySampleStateService
+/// <summary>In-memory P5 sample state for Sprint 2A. Nothing in this service is persisted.</summary>
+public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
 {
-    private readonly List<ServiceItemDto> _services;
-    private readonly List<PriceVersionDto> _priceVersions;
-    private readonly List<RoomReadingSampleDto> _roomReadings;
+    private readonly List<ServiceItemDto> _services = UtilitySampleData.CreateDefaultServices();
+    private readonly List<PriceVersionDto> _priceVersions = UtilitySampleData.CreateDefaultPriceVersions();
+    private readonly List<RoomReadingSampleDto> _roomReadings = UtilitySampleData.CreateDefaultRoomReadings();
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     public event Action? OnChange;
 
-    public UtilitySampleStateService()
-    {
-        _services = UtilitySampleData.CreateDefaultServices();
-        _priceVersions = UtilitySampleData.CreateDefaultPriceVersions();
-        _roomReadings = UtilitySampleData.CreateDefaultRoomReadings();
-    }
-
     public IReadOnlyList<BuildingOptionDto> Buildings => UtilitySampleData.Buildings;
 
-    public IReadOnlyList<ServiceItemDto> GetServices(
+    public DateOnly Today => _timeProvider.TodayVietnam();
+
+    public IReadOnlyList<BuildingOptionDto> GetBuildingsForCaller(string? role, string? email)
+    {
+        var allowedIds = UtilitySampleData.GetAllowedBuildingIds(role, email).ToHashSet(StringComparer.Ordinal);
+        return UtilitySampleData.Buildings.Where(building => allowedIds.Contains(building.Id)).ToArray();
+    }
+
+    public IReadOnlyList<ServiceItemDto> GetServicesForCaller(
+        string? role,
+        string? email,
         string? buildingId = null,
         string? type = null,
         string? status = null,
         string? searchTerm = null)
     {
-        var query = _services.AsEnumerable();
+        if (!UtilityDraftRules.CanViewUtilityData(role)) return [];
 
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        var allowedIds = UtilitySampleData.GetAllowedBuildingIds(role, email).ToHashSet(StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(buildingId) && buildingId != "all" && !allowedIds.Contains(buildingId))
         {
-            query = query.Where(s => s.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                     s.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            return [];
         }
+
+        var pricingScope = !string.IsNullOrWhiteSpace(buildingId) && buildingId != "all"
+            ? buildingId
+            : allowedIds.Count == 1 ? allowedIds.First() : "all";
+        RefreshPriceStatuses();
+        RefreshCurrentPrices(pricingScope);
+
+        var query = _services.AsEnumerable()
+            .Where(service => service.BuildingId == "all" || allowedIds.Contains(service.BuildingId));
 
         if (!string.IsNullOrWhiteSpace(buildingId) && buildingId != "all")
         {
-            query = query.Where(s => s.BuildingId == buildingId || s.BuildingId == "all");
+            query = query.Where(service => service.BuildingId == "all" || service.BuildingId == buildingId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(service =>
+                service.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                service.Code.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
         }
 
         if (!string.IsNullOrWhiteSpace(type) && type != "all")
         {
             query = type switch
             {
-                "meter" => query.Where(s => s.Type == ServiceTypeCategory.Meter),
-                "fixed_monthly" => query.Where(s => s.Type == ServiceTypeCategory.FixedMonthly),
-                "custom" => query.Where(s => s.Type == ServiceTypeCategory.Custom),
-                _ => query
+                "meter" => query.Where(service => service.Type == ServiceTypeCategory.Meter),
+                "fixed_monthly" => query.Where(service => service.Type == ServiceTypeCategory.FixedMonthly),
+                "custom" => query.Where(service => service.Type == ServiceTypeCategory.Custom),
+                _ => query,
             };
         }
 
@@ -60,28 +79,49 @@ public sealed class UtilitySampleStateService
         {
             query = status switch
             {
-                "active" => query.Where(s => s.Active),
-                "inactive" => query.Where(s => !s.Active),
-                _ => query
+                "active" => query.Where(service => service.Active),
+                "inactive" => query.Where(service => !service.Active),
+                _ => query,
             };
         }
 
-        return query.Select(s => s.Copy()).ToList();
+        return query.Select(service => service.Copy()).ToArray();
     }
 
-    public ServiceItemDto? GetServiceById(string id) =>
-        _services.FirstOrDefault(s => s.Id == id)?.Copy();
+    public ServiceItemDto? GetServiceByIdForCaller(string? role, string? email, string serviceId) =>
+        GetServicesForCaller(role, email).FirstOrDefault(service => service.Id == serviceId);
 
-    public (bool Success, string? Error, ServiceItemDto? Item) AddService(CreateServiceRequest request)
+    public IReadOnlyList<BuildingOptionDto> GetEditableBuildingScopes(ServiceItemDto service)
     {
+        if (service.BuildingId != "all")
+        {
+            return UtilitySampleData.Buildings.Where(building => building.Id == service.BuildingId).ToArray();
+        }
+
+        return UtilitySampleData.Buildings.Where(building => building.Id != "all").ToArray();
+    }
+
+    public (bool Success, UtilityErrorCode? Error, ServiceItemDto? Item) AddService(
+        CreateServiceRequest request,
+        string? callerRole,
+        string modifierName)
+    {
+        if (!UtilityDraftRules.CanManageServicePrices(callerRole))
+        {
+            return (false, UtilityErrorCode.AccessDenied, null);
+        }
+
         var issues = UtilityDraftRules.ValidateCreateService(request);
         if (issues.Count > 0)
         {
-            return (false, issues[0].Message, null);
+            return (false, issues[0].Error, null);
         }
 
-        var buildingObj = Buildings.FirstOrDefault(b => b.Id == request.BuildingId);
-        var buildingName = buildingObj?.Name ?? "Tất cả nhà trọ";
+        var building = UtilitySampleData.Buildings.FirstOrDefault(option => option.Id == request.BuildingId);
+        if (building is null)
+        {
+            return (false, UtilityErrorCode.InvalidBuildingScope, null);
+        }
 
         var newId = $"srv-{_services.Count + 1}";
         var newService = new ServiceItemDto
@@ -90,28 +130,20 @@ public sealed class UtilitySampleStateService
             Name = request.Name.Trim(),
             Code = $"SRV{_services.Count + 1:D2}",
             Type = request.Type,
-            TypeLabel = request.Type switch
-            {
-                ServiceTypeCategory.Meter => "Theo chỉ số",
-                ServiceTypeCategory.FixedMonthly => "Cố định hàng tháng",
-                _ => "Tùy chọn"
-            },
             Unit = request.Unit,
             RateType = ServiceRateType.Flat,
             CurrentRate = request.Rate,
-            RateDisplay = MoneyFormatter.Format(request.Rate),
-            EffectiveFrom = new DateOnly(2026, 11, 1),
-            EffectiveTo = null,
+            EffectiveFrom = request.EffectiveFrom,
+            PriceStatus = GetStatus(request.EffectiveFrom, null),
             Active = true,
             IsReadOnly = false,
             BuildingId = request.BuildingId,
-            BuildingName = buildingName,
-            Description = request.Description ?? "Dịch vụ bổ sung",
+            BuildingName = building.Name,
+            Description = request.Description,
             HistoryCount = 1,
         };
 
         _services.Add(newService);
-
         _priceVersions.Insert(0, new PriceVersionDto
         {
             Id = $"pv-{newId}-1",
@@ -119,53 +151,74 @@ public sealed class UtilitySampleStateService
             ServiceName = newService.Name,
             Unit = newService.Unit,
             Rate = newService.CurrentRate,
-            RateType = ServiceRateType.Flat,
+            RateType = newService.RateType,
             EffectiveFrom = newService.EffectiveFrom,
-            EffectiveTo = null,
-            Status = "active",
+            Status = GetStatus(newService.EffectiveFrom, null),
             BuildingScope = newService.BuildingId,
-            BuildingName = buildingName,
-            AutoActivate = true,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "Chủ trọ An",
-            Note = "Khởi tạo dịch vụ mới",
+            BuildingName = newService.BuildingName,
+            CreatedAt = _timeProvider.UtcNow(),
+            CreatedBy = modifierName,
+            Note = request.Description,
         });
 
+        RefreshCurrentPrices(newService.BuildingId);
         NotifyStateChanged();
         return (true, null, newService.Copy());
     }
 
-    public (bool Success, string? Error, PriceVersionDto? Version) UpdateServicePrice(
+    public (bool Success, UtilityErrorCode? Error, PriceVersionDto? Version) UpdateServicePrice(
         UpdatePriceRequest request,
-        string modifierName = "Chủ trọ An")
+        string? callerRole,
+        string modifierName)
     {
+        if (!UtilityDraftRules.CanManageServicePrices(callerRole))
+        {
+            return (false, UtilityErrorCode.AccessDenied, null);
+        }
+
         var issues = UtilityDraftRules.ValidateUpdatePrice(request);
         if (issues.Count > 0)
         {
-            return (false, issues[0].Message, null);
+            return (false, issues[0].Error, null);
         }
 
-        var service = _services.FirstOrDefault(s => s.Id == request.ServiceId);
+        var service = _services.FirstOrDefault(item => item.Id == request.ServiceId);
         if (service is null)
         {
-            return (false, "Dịch vụ không tồn tại / Service not found.", null);
+            return (false, UtilityErrorCode.ServiceNotFound, null);
         }
 
-        if (service.IsReadOnly)
+        if (service.IsReadOnly || UtilityDraftRules.IsTariffReadOnly(service.Code))
         {
-            return (false, "Biểu giá điện/nước là chỉ đọc, không thể thay đổi đơn giá (D7) / Electricity and water tariffs are read-only (D7).", null);
+            return (false, UtilityErrorCode.ReadOnlyTariff, null);
         }
 
-        var buildingObj = Buildings.FirstOrDefault(b => b.Id == request.BuildingScope);
-        var buildingName = buildingObj?.Name ?? "Tất cả nhà trọ";
-
-        // Expire older active versions of this service
-        foreach (var pv in _priceVersions.Where(v => v.ServiceId == request.ServiceId && v.Status == "active"))
+        if (!IsValidScopeForService(service, request.BuildingScope))
         {
-            pv.Status = "expired";
-            pv.EffectiveTo ??= request.EffectiveFrom.AddDays(-1);
+            return (false, UtilityErrorCode.InvalidBuildingScope, null);
         }
 
+        var sameScopeVersions = _priceVersions
+            .Where(version => version.ServiceId == request.ServiceId && version.BuildingScope == request.BuildingScope)
+            .ToList();
+        var overlapsLaterVersion = sameScopeVersions.Any(version =>
+            version.EffectiveFrom >= request.EffectiveFrom &&
+            (!request.EffectiveTo.HasValue || version.EffectiveFrom <= request.EffectiveTo.Value));
+        if (overlapsLaterVersion)
+        {
+            return (false, UtilityErrorCode.PriceVersionConflict, null);
+        }
+
+        foreach (var previous in sameScopeVersions.Where(version =>
+                     version.EffectiveFrom < request.EffectiveFrom &&
+                     (!version.EffectiveTo.HasValue || version.EffectiveTo.Value >= request.EffectiveFrom)))
+        {
+            previous.EffectiveTo = request.EffectiveFrom.AddDays(-1);
+            previous.Status = GetStatus(previous.EffectiveFrom, previous.EffectiveTo);
+        }
+
+        var buildingName = UtilitySampleData.Buildings
+            .First(option => option.Id == request.BuildingScope).Name;
         var newVersion = new PriceVersionDto
         {
             Id = $"pv-{request.ServiceId}-{_priceVersions.Count + 1}",
@@ -176,128 +229,125 @@ public sealed class UtilitySampleStateService
             RateType = service.RateType,
             EffectiveFrom = request.EffectiveFrom,
             EffectiveTo = request.EffectiveTo,
-            Status = request.AutoActivate ? "active" : "upcoming",
+            Status = GetStatus(request.EffectiveFrom, request.EffectiveTo),
             BuildingScope = request.BuildingScope,
             BuildingName = buildingName,
-            AutoActivate = request.AutoActivate,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = _timeProvider.UtcNow(),
             CreatedBy = modifierName,
-            Note = request.Note ?? $"Điều chỉnh đơn giá mới có hiệu lực từ {DateFormatter.Format(request.EffectiveFrom)}",
+            Note = request.Note,
         };
 
         _priceVersions.Insert(0, newVersion);
-
-        // If auto activate, update current service
-        if (request.AutoActivate)
-        {
-            service.CurrentRate = request.NewRate;
-            service.RateDisplay = MoneyFormatter.Format(request.NewRate);
-            service.Unit = request.Unit;
-            service.EffectiveFrom = request.EffectiveFrom;
-            service.EffectiveTo = request.EffectiveTo;
-        }
-
-        service.HistoryCount = _priceVersions.Count(v => v.ServiceId == request.ServiceId);
-
+        service.HistoryCount = _priceVersions.Count(version => version.ServiceId == service.Id);
+        RefreshCurrentPrices(request.BuildingScope);
         NotifyStateChanged();
-        return (true, null, newVersion);
+        return (true, null, newVersion.Copy());
     }
 
-    public bool ToggleServiceActive(string id)
+    public bool ToggleServiceActive(string id, string? callerRole)
     {
-        var service = _services.FirstOrDefault(s => s.Id == id);
-        if (service is null || service.IsReadOnly) return false;
+        var service = _services.FirstOrDefault(item => item.Id == id);
+        if (!UtilityDraftRules.CanManageServicePrices(callerRole) || service is null || service.IsReadOnly)
+        {
+            return false;
+        }
 
         service.Active = !service.Active;
         NotifyStateChanged();
         return true;
     }
 
-    public IReadOnlyList<PriceVersionDto> GetPriceVersions(string? serviceId = null)
+    public IReadOnlyList<PriceVersionDto> GetPriceVersionsForCaller(
+        string? role,
+        string? email,
+        string? serviceId = null)
     {
-        var query = _priceVersions.AsEnumerable();
+        if (!UtilityDraftRules.CanViewUtilityData(role)) return [];
+
+        var allowedIds = UtilitySampleData.GetAllowedBuildingIds(role, email).ToHashSet(StringComparer.Ordinal);
+        RefreshPriceStatuses();
+        var visibleServiceIds = GetServicesForCaller(role, email)
+            .Select(service => service.Id)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var query = _priceVersions.Where(version =>
+            visibleServiceIds.Contains(version.ServiceId) &&
+            (version.BuildingScope == "all" || allowedIds.Contains(version.BuildingScope)));
         if (!string.IsNullOrWhiteSpace(serviceId) && serviceId != "all")
         {
-            query = query.Where(v => v.ServiceId == serviceId);
+            query = query.Where(version => version.ServiceId == serviceId);
         }
-        return query.OrderByDescending(v => v.EffectiveFrom).ThenByDescending(v => v.CreatedAt).ToList();
+
+        return query
+            .OrderByDescending(version => version.EffectiveFrom)
+            .ThenByDescending(version => version.CreatedAt)
+            .Select(version => version.Copy())
+            .ToArray();
     }
 
-    public IReadOnlyList<RoomReadingSampleDto> GetRoomReadings() =>
-        _roomReadings.Select(r => r.Copy()).ToList();
+    public IReadOnlyList<RoomReadingSampleDto> GetRoomReadingsForCaller(string? role, string? email)
+    {
+        if (!UtilityDraftRules.CanViewUtilityData(role)) return [];
+        var allowedRoomIds = UtilitySampleData.GetAllowedRoomIds(role, email).ToHashSet(StringComparer.Ordinal);
+        return _roomReadings
+            .Where(room => allowedRoomIds.Contains(room.Id))
+            .Select(room => room.Copy())
+            .ToArray();
+    }
 
-    public RoomReadingSampleDto? GetRoomReadingById(string id) =>
-        _roomReadings.FirstOrDefault(r => r.Id == id)?.Copy();
-
-    public (bool Success, string? Error, RoomReadingSampleDto? Room) SaveRoomReading(
+    public (bool Success, UtilityErrorCode? Error, RoomReadingSampleDto? Room) SaveRoomReading(
         string roomId,
         decimal electricEnd,
         decimal waterEnd,
+        DateOnly periodStart,
+        DateOnly periodEnd,
         string? reason,
-        string modifierName = "Chủ trọ An",
-        string role = "Chủ trọ")
+        string? callerRole,
+        string? callerEmail,
+        string modifierName)
     {
-        var room = _roomReadings.FirstOrDefault(r => r.Id == roomId);
-        if (room is null)
+        if (!UtilityDraftRules.CanRecordMeterReadings(callerRole))
         {
-            return (false, "Không tìm thấy phòng / Room not found.", null);
+            return (false, UtilityErrorCode.AccessDenied, null);
+        }
+
+        var room = _roomReadings.FirstOrDefault(item => item.Id == roomId);
+        if (room is null || !UtilitySampleData.GetAllowedRoomIds(callerRole, callerEmail).Contains(roomId))
+        {
+            return (false, UtilityErrorCode.RoomNotFound, null);
+        }
+
+        var periodIssues = UtilityDraftRules.ValidateBillingPeriod(periodStart, periodEnd);
+        if (periodIssues.Count > 0)
+        {
+            return (false, periodIssues[0].Error, null);
         }
 
         var hasElectricChanged = electricEnd != room.ElectricEnd;
         var hasWaterChanged = waterEnd != room.WaterEnd;
-
-        var electricIssues = UtilityDraftRules.ValidateMeterReading(
-            room.ElectricStart,
-            electricEnd,
-            hasElectricChanged,
-            reason);
-
-        if (electricIssues.Count > 0)
+        var readingIssues = UtilityDraftRules.ValidateMeterReading(
+                room.ElectricStart, electricEnd, hasElectricChanged, reason)
+            .Concat(UtilityDraftRules.ValidateMeterReading(
+                room.WaterStart, waterEnd, hasWaterChanged, reason))
+            .ToArray();
+        if (readingIssues.Length > 0)
         {
-            return (false, electricIssues[0].Message, null);
+            return (false, readingIssues[0].Error, null);
         }
 
-        var waterIssues = UtilityDraftRules.ValidateMeterReading(
-            room.WaterStart,
-            waterEnd,
-            hasWaterChanged,
-            reason);
-
-        if (waterIssues.Count > 0)
-        {
-            return (false, waterIssues[0].Message, null);
-        }
-
-        // Add audit logs for changes
+        room.PeriodStart = periodStart;
+        room.PeriodEnd = periodEnd;
         if (hasElectricChanged)
         {
-            room.AuditLogs.Insert(0, new AuditLogEntryDto
-            {
-                Modifier = modifierName,
-                Role = role,
-                Timestamp = DateTime.UtcNow,
-                FieldChanged = "Chỉ số điện cuối",
-                OldValue = room.ElectricEnd.ToString("N0"),
-                NewValue = electricEnd.ToString("N0"),
-                DetailDiff = $"{room.ElectricEnd:N0} → {electricEnd:N0} kWh",
-                Reason = string.IsNullOrWhiteSpace(reason) ? "Cập nhật định kỳ" : reason.Trim(),
-            });
+            room.AuditLogs.Insert(0, CreateReadingAudit(
+                callerRole!, modifierName, "ElectricMeterReading", room.ElectricEnd, electricEnd, "kWh", reason));
             room.ElectricEnd = electricEnd;
         }
 
         if (hasWaterChanged)
         {
-            room.AuditLogs.Insert(0, new AuditLogEntryDto
-            {
-                Modifier = modifierName,
-                Role = role,
-                Timestamp = DateTime.UtcNow,
-                FieldChanged = "Chỉ số nước cuối",
-                OldValue = room.WaterEnd.ToString("N0"),
-                NewValue = waterEnd.ToString("N0"),
-                DetailDiff = $"{room.WaterEnd:N0} → {waterEnd:N0} m³",
-                Reason = string.IsNullOrWhiteSpace(reason) ? "Cập nhật định kỳ" : reason.Trim(),
-            });
+            room.AuditLogs.Insert(0, CreateReadingAudit(
+                callerRole!, modifierName, "WaterMeterReading", room.WaterEnd, waterEnd, "m³", reason));
             room.WaterEnd = waterEnd;
         }
 
@@ -305,6 +355,75 @@ public sealed class UtilitySampleStateService
         return (true, null, room.Copy());
     }
 
+    private bool IsValidScopeForService(ServiceItemDto service, string buildingScope) =>
+        service.BuildingId == "all"
+            ? UtilitySampleData.Buildings.Any(building => building.Id == buildingScope)
+            : buildingScope == service.BuildingId;
+
+    private PriceVersionStatus GetStatus(DateOnly start, DateOnly? end)
+    {
+        if (start > Today) return PriceVersionStatus.Upcoming;
+        if (end.HasValue && end.Value < Today) return PriceVersionStatus.Expired;
+        return PriceVersionStatus.Active;
+    }
+
+    private void RefreshPriceStatuses()
+    {
+        foreach (var version in _priceVersions)
+        {
+            version.Status = GetStatus(version.EffectiveFrom, version.EffectiveTo);
+        }
+    }
+
+    private void RefreshCurrentPrices(string selectedBuildingScope = "all")
+    {
+        RefreshPriceStatuses();
+        foreach (var service in _services)
+        {
+            var serviceScope = service.BuildingId == "all" ? selectedBuildingScope : service.BuildingId;
+            var versions = _priceVersions
+                .Where(version => version.ServiceId == service.Id &&
+                                  (version.BuildingScope == serviceScope || version.BuildingScope == "all"))
+                .OrderBy(version => version.BuildingScope == serviceScope ? 0 : 1)
+                .ThenByDescending(version => version.EffectiveFrom)
+                .ToArray();
+
+            var current = versions.FirstOrDefault(version => version.Status == PriceVersionStatus.Active);
+            var visible = current ?? versions.FirstOrDefault(version => version.Status == PriceVersionStatus.Upcoming)
+                ?? versions.FirstOrDefault();
+            if (visible is null) continue;
+
+            service.CurrentRate = visible.Rate;
+            service.Unit = visible.Unit;
+            service.EffectiveFrom = visible.EffectiveFrom;
+            service.EffectiveTo = visible.EffectiveTo;
+            service.PriceStatus = visible.Status;
+        }
+    }
+
+    private AuditLogEntryDto CreateReadingAudit(
+        string role,
+        string modifier,
+        string field,
+        decimal oldValue,
+        decimal newValue,
+        string unit,
+        string? reason)
+    {
+        var oldText = oldValue.ToString("0.##", CultureInfo.InvariantCulture);
+        var newText = newValue.ToString("0.##", CultureInfo.InvariantCulture);
+        return new AuditLogEntryDto
+        {
+            Modifier = modifier,
+            Role = role,
+            Timestamp = _timeProvider.UtcNow(),
+            FieldChanged = field,
+            OldValue = oldText,
+            NewValue = newText,
+            DetailDiff = $"{oldText} → {newText} {unit}",
+            Reason = reason?.Trim() ?? string.Empty,
+        };
+    }
+
     private void NotifyStateChanged() => OnChange?.Invoke();
 }
-

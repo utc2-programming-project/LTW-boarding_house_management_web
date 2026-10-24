@@ -98,8 +98,6 @@
   <data name="BuildingScopeLabel" xml:space="preserve"><value>Property Scope</value></data>
   <data name="EffectiveFromLabel" xml:space="preserve"><value>Effective From</value></data>
   <data name="EffectiveToLabel" xml:space="preserve"><value>Effective To (Optional)</value></data>
-  <data name="AutoActivateLabel" xml:space="preserve"><value>Activate upon reaching effective date</value></data>
-  <data name="AutoActivateDesc" xml:space="preserve"><value>Automatically supersedes old rate in invoices generated after this date</value></data>
   <data name="NoteLabel" xml:space="preserve"><value>Revision Notes (Audit log)</value></data>
   <data name="NotePlaceholder" xml:space="preserve"><value>Reason for adjusting rate...</value></data>
   <data name="SavePriceBtn" xml:space="preserve"><value>Save Price Version</value></data>
@@ -109,8 +107,6 @@
   <data name="PricesBreadcrumb" xml:space="preserve"><value>Periodic Tariff Table</value></data>
   <data name="PricesHeading" xml:space="preserve"><value>Periodic Tariff Table</value></data>
   <data name="PricesSubtitle" xml:space="preserve"><value>Manage timeline-based service price versions and applied policies.</value></data>
-  <data name="PricesWarningTitle" xml:space="preserve"><value>Simulated periodic data — historical invoices unchanged</value></data>
-  <data name="PricesWarningDesc" xml:space="preserve"><value>New price versions only take effect from their start date; invoices from preceding cycles preserve historical rates.</value></data>
   <data name="BackToCatalogBtn" xml:space="preserve"><value>Back to Service Catalog</value></data>
   <data name="UpdatePriceMilestoneBtn" xml:space="preserve"><value>Update Price Version</value></data>
   <data name="TabAllServices" xml:space="preserve"><value>All Services</value></data>
@@ -131,8 +127,8 @@
   <data name="ReadingsBreadcrumb" xml:space="preserve"><value>Period &amp; Readings</value></data>
   <data name="ReadingsHeading" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
   <data name="ReadingsSubtitle" xml:space="preserve"><value>Record utility meters by period and preview calculated costs per room.</value></data>
-  <data name="ReadingsVersionBadge" xml:space="preserve"><value>Version v2.4 (Phase B / VHT-38)</value></data>
-  <data name="SaveReadingsBtn" xml:space="preserve"><value>Save Meter Readings</value></data>
+  <data name="ReadingsVersionBadge" xml:space="preserve"><value>Sample data · VHT-38</value></data>
+  <data name="SaveReadingsBtn" xml:space="preserve"><value>Update preview</value></data>
 
   <data name="Sec1Heading" xml:space="preserve"><value>1. Billing Period &amp; Room Details</value></data>
   <data name="Sec1StatusOpen" xml:space="preserve"><value>Open (Recording meter readings)</value></data>
@@ -188,7 +184,7 @@
   <data name="NoAuditLogs" xml:space="preserve"><value>No manual adjustments recorded for this room in the current cycle.</value></data>
 
   <data name="Sec5Heading" xml:space="preserve"><value>Locked Accounting Period Protection Rule:</value></data>
-  <data name="Sec5Notice" xml:space="preserve"><value>Invoiced periods cannot have their meter readings modified. If adjustment is required, cancel invoice issuance or issue a compensating credit memo in Invoices &amp; Payments.</value></data>
+  <data name="Sec5Notice" xml:space="preserve"><value>This is a sample billing period held in the current session's memory. Editing invoiced periods and adjusting real invoices are outside Sprint 2A.</value></data>
 
   <data name="ReasonModalTitle" xml:space="preserve"><value>Confirm Meter Reading Adjustment</value></data>
   <data name="ReasonModalDesc" xml:space="preserve"><value>You have changed the meter readings for {0}. Please specify the adjustment reason for audit logging:</value></data>
@@ -196,12 +192,55 @@
   <data name="ReasonFieldPlaceholder" xml:space="preserve"><value>e.g., Reading discrepancy identified during physical inspection...</value></data>
   <data name="ReasonConfirmBtn" xml:space="preserve"><value>Confirm Save</value></data>
 
-  <data name="ToastCreatedSuccess" xml:space="preserve"><value>Service created successfully!</value></data>
-  <data name="ToastPriceUpdatedSuccess" xml:space="preserve"><value>Price version updated successfully!</value></data>
-  <data name="ToastServiceToggled" xml:space="preserve"><value>Service status updated successfully.</value></data>
-  <data name="ToastReadingsSaved" xml:space="preserve"><value>Meter readings and costs saved successfully!</value></data>
+  <data name="ToastCreatedSuccess" xml:space="preserve"><value>The service was added to sample data for this session.</value></data>
+  <data name="ToastPriceUpdatedSuccess" xml:space="preserve"><value>The sample price changed for this session; it was not saved to the database.</value></data>
+  <data name="ToastServiceToggled" xml:space="preserve"><value>The sample service status changed for this session.</value></data>
+  <data name="ToastReadingsSaved" xml:space="preserve"><value>The sample readings changed for this session; they were not saved to the database.</value></data>
   <data name="LoadingText" xml:space="preserve"><value>Loading service data...</value></data>
   <data name="UnitKwh" xml:space="preserve"><value>kWh</value></data>
   <data name="UnitM3" xml:space="preserve"><value>m³</value></data>
+  <data name="SampleDataBadge" xml:space="preserve"><value>Sample data</value></data>
+  <data name="SampleDataNotice" xml:space="preserve"><value>Changes stay in this session's memory and are not saved to the database.</value></data>
+  <data name="TieredTariffLabel" xml:space="preserve"><value>Tiered tariff</value></data>
+  <data name="ReadOnlyStatus" xml:space="preserve"><value>Read only</value></data>
+  <data name="TableResultCount" xml:space="preserve"><value>{0} services</value></data>
+  <data name="PricesEmptyDescription" xml:space="preserve"><value>There are no sample price versions in this scope.</value></data>
+  <data name="UnitRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="UnitPerson" xml:space="preserve"><value>Person</value></data>
+  <data name="UnitVehicle" xml:space="preserve"><value>Vehicle</value></data>
+  <data name="UnitVisit" xml:space="preserve"><value>Visit</value></data>
+  <data name="PeriodStartLabel" xml:space="preserve"><value>Period start date</value></data>
+  <data name="PeriodEndLabel" xml:space="preserve"><value>Period end date</value></data>
+  <data name="PreviousPeriodEndHint" xml:space="preserve"><value>Starting reading from the end of {0}</value></data>
+  <data name="ManualMeterReadingHint" xml:space="preserve"><value>Enter a sample meter reading</value></data>
+  <data name="CostInternet" xml:space="preserve"><value>Internet</value></data>
+  <data name="CostCleaning" xml:space="preserve"><value>Cleaning</value></data>
+  <data name="CostParking" xml:space="preserve"><value>Parking</value></data>
+  <data name="CostFormulaRateTimesQuantity" xml:space="preserve"><value>{0} × {1}</value></data>
+  <data name="CostFormulaFixedCharge" xml:space="preserve"><value>Sample service charge</value></data>
+  <data name="CostServiceQuantity" xml:space="preserve"><value>1 charge</value></data>
+  <data name="TierFormulaLabel" xml:space="preserve"><value>Tier {0}</value></data>
+  <data name="TierFormulaPart" xml:space="preserve"><value>{0}: {1} × {2}</value></data>
+  <data name="NoConsumption" xml:space="preserve"><value>No consumption</value></data>
+  <data name="AuditElectricMeterReading" xml:space="preserve"><value>Electric meter end reading</value></data>
+  <data name="AuditWaterMeterReading" xml:space="preserve"><value>Water meter end reading</value></data>
+  <data name="ReadingsEmptyTitle" xml:space="preserve"><value>No sample billing period is available in your scope</value></data>
+  <data name="ReadingsEmptyDescription" xml:space="preserve"><value>This page only shows sample data assigned to the preview account.</value></data>
+  <data name="ErrorNameIsRequired" xml:space="preserve"><value>Enter a service name.</value></data>
+  <data name="ErrorPriceMustBePositive" xml:space="preserve"><value>The rate must be greater than 0.</value></data>
+  <data name="ErrorInvalidServiceUnit" xml:space="preserve"><value>Select a valid unit.</value></data>
+  <data name="ErrorEffectiveFromIsRequired" xml:space="preserve"><value>Select an effective start date.</value></data>
+  <data name="ErrorEffectiveToMustBeAfterEffectiveFrom" xml:space="preserve"><value>The effective end date must be after the start date.</value></data>
+  <data name="ErrorInvalidBuildingScope" xml:space="preserve"><value>Select a valid property or building scope.</value></data>
+  <data name="ErrorMeterReadingMustBeGreaterOrEqualStart" xml:space="preserve"><value>The end reading must be greater than or equal to the start reading.</value></data>
+  <data name="ErrorMeterReadingCannotBeNegative" xml:space="preserve"><value>The end reading cannot be negative.</value></data>
+  <data name="ErrorAdjustmentReasonIsRequired" xml:space="preserve"><value>Enter a reason for changing the reading.</value></data>
+  <data name="ErrorBillingPeriodEndMustBeOnOrAfterStart" xml:space="preserve"><value>The period end date must be on or after its start date.</value></data>
+  <data name="ErrorAccessDenied" xml:space="preserve"><value>You are not allowed to perform this action.</value></data>
+  <data name="ErrorServiceNotFound" xml:space="preserve"><value>The service was not found in your permitted scope.</value></data>
+  <data name="ErrorReadOnlyTariff" xml:space="preserve"><value>Electricity and water tariffs are read only under D7.</value></data>
+  <data name="ErrorPriceVersionConflict" xml:space="preserve"><value>This price milestone overlaps another version in the same scope.</value></data>
+  <data name="ErrorRoomNotFound" xml:space="preserve"><value>The room was not found in your permitted scope.</value></data>
+  <data name="ErrorUnknown" xml:space="preserve"><value>An error occurred. Please try again.</value></data>
 </root>
 
