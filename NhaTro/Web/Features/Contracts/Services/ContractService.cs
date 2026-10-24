@@ -107,6 +107,9 @@ public sealed class ContractService : IContractService
         return new ContractResponseDto(
             contract.ContractId,
             contract.ContractNumber,
+            contract.RoomId,
+            contract.StartDate,
+            contract.EndDate,
             contract.SnapshotPrice,
             contract.DepositAmount,
             contract.Status);

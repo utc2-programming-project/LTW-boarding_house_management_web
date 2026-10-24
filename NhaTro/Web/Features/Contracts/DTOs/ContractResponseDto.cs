@@ -6,6 +6,9 @@ namespace Web.Features.Contracts.DTOs;
 public sealed record ContractResponseDto(
     Guid ContractId,
     string ContractNumber,
+    int RoomId,
+    DateTime StartDate,
+    DateTime EndDate,
     decimal SnapshotPrice,
     decimal DepositAmount,
     ContractStatus Status);

@@ -56,6 +56,9 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
 
         Assert.NotEqual(Guid.Empty, response.ContractId);
         Assert.StartsWith("HD-", response.ContractNumber);
+        Assert.Equal(roomId, response.RoomId);
+        Assert.Equal(new DateTime(2026, 10, 22), response.StartDate);
+        Assert.Equal(new DateTime(2026, 11, 22), response.EndDate);
         Assert.Equal(1_000_000m, response.SnapshotPrice);
         Assert.Equal(200_000m, response.DepositAmount);
         Assert.Equal(ContractStatus.Pending, response.Status);
