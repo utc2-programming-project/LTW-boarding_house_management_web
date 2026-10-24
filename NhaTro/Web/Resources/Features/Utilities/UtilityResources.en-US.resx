@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="CatalogPageTitle" xml:space="preserve"><value>Service Catalog &amp; Tariffs</value></data>
+  <data name="CatalogBreadcrumb" xml:space="preserve"><value>Services &amp; Tariffs</value></data>
+  <data name="CatalogOverviewNav" xml:space="preserve"><value>Overview</value></data>
+  <data name="CatalogHeading" xml:space="preserve"><value>Service Catalog &amp; Tariffs</value></data>
+  <data name="CatalogSubtitle" xml:space="preserve"><value>Configure other utility services and view active tariffs for periodic billing calculation.</value></data>
+
+  <data name="DemoTopline" xml:space="preserve"><value>Sample data — not persisted to SQL (UI Prototype v2.4 / Phase 2A)</value></data>
+  <data name="DemoBadge" xml:space="preserve"><value>Preview mode</value></data>
+  <data name="DemoDescription" xml:space="preserve"><value>All operations run on simulated data within this session; no database changes have been submitted or persisted.</value></data>
+
+  <data name="PriceHistoryBtn" xml:space="preserve"><value>Price History</value></data>
+  <data name="AddNewServiceBtn" xml:space="preserve"><value>Add New Service</value></data>
+  <data name="MeterReadingBtn" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
+
+  <data name="StatTotalServices" xml:space="preserve"><value>Total Services</value></data>
+  <data name="StatTotalServicesSub" xml:space="preserve"><value>All active catalog items</value></data>
+  <data name="StatActiveServices" xml:space="preserve"><value>Active</value></data>
+  <data name="StatActiveServicesSub" xml:space="preserve"><value>Automatically billed</value></data>
+  <data name="StatPausedServices" xml:space="preserve"><value>Paused</value></data>
+  <data name="StatPausedServicesSub" xml:space="preserve"><value>Billing temporarily halted</value></data>
+  <data name="StatReadOnlyTariff" xml:space="preserve"><value>Read-Only Tariffs</value></data>
+  <data name="StatReadOnlyTariffSub" xml:space="preserve"><value>Electricity &amp; Water (System-fixed)</value></data>
+  <data name="StatUnitTypes" xml:space="preserve"><value>types</value></data>
+  <data name="StatUnitServices" xml:space="preserve"><value>services</value></data>
+
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search by service name...</value></data>
+  <data name="AllBuildings" xml:space="preserve"><value>All Properties</value></data>
+  <data name="AllTypes" xml:space="preserve"><value>All Service Types</value></data>
+  <data name="MeterType" xml:space="preserve"><value>By Meter</value></data>
+  <data name="FixedMonthlyType" xml:space="preserve"><value>Fixed Monthly</value></data>
+  <data name="CustomType" xml:space="preserve"><value>Custom</value></data>
+  <data name="AllStatuses" xml:space="preserve"><value>All Statuses</value></data>
+  <data name="ActiveStatus" xml:space="preserve"><value>Active</value></data>
+  <data name="InactiveStatus" xml:space="preserve"><value>Paused</value></data>
+  <data name="ResetFilter" xml:space="preserve"><value>Reset</value></data>
+  <data name="ActiveFilterCondition" xml:space="preserve"><value>Active Filter Condition:</value></data>
+  <data name="BuildingFilterPrefix" xml:space="preserve"><value>Property:</value></data>
+
+  <data name="ThServiceName" xml:space="preserve"><value>Service Name</value></data>
+  <data name="ThServiceType" xml:space="preserve"><value>Service Type</value></data>
+  <data name="ThUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="ThRate" xml:space="preserve"><value>Applied Rate</value></data>
+  <data name="ThEffectiveFrom" xml:space="preserve"><value>Effective From</value></data>
+  <data name="ThEffectiveTo" xml:space="preserve"><value>Effective To</value></data>
+  <data name="ThActive" xml:space="preserve"><value>Active</value></data>
+  <data name="ThActions" xml:space="preserve"><value>Actions</value></data>
+
+  <data name="ReadOnlyTitle" xml:space="preserve"><value>Read-only tariff per D7 decision</value></data>
+  <data name="NoData" xml:space="preserve"><value>No data</value></data>
+  <data name="EditPriceTooltip" xml:space="preserve"><value>Edit Rate</value></data>
+  <data name="ViewDetailTooltip" xml:space="preserve"><value>View Details</value></data>
+  <data name="PriceHistoryTooltip" xml:space="preserve"><value>Price History</value></data>
+
+  <data name="TableShowing" xml:space="preserve"><value>Showing</value></data>
+  <data name="TableOf" xml:space="preserve"><value>of</value></data>
+  <data name="TableServicesUnit" xml:space="preserve"><value>services</value></data>
+  <data name="RowsPerPage" xml:space="preserve"><value>Rows per page:</value></data>
+
+  <data name="EmptyServicesTitle" xml:space="preserve"><value>No services found</value></data>
+  <data name="EmptyServicesDesc" xml:space="preserve"><value>No services match the current filter criteria. Please try a different query or reset filters.</value></data>
+  <data name="ClearFilterBtn" xml:space="preserve"><value>Clear Filters</value></data>
+
+  <data name="TierModalTitle" xml:space="preserve"><value>Tiered Tariff:</value></data>
+  <data name="TierModalSubtitle" xml:space="preserve"><value>Applied systematically according to management policy</value></data>
+  <data name="TierModalInfo" xml:space="preserve"><value>This tariff is automatically computed progressively in Meter Readings &amp; Costs.</value></data>
+  <data name="TierColTier" xml:space="preserve"><value>Tier</value></data>
+  <data name="TierColQuota" xml:space="preserve"><value>Quota</value></data>
+  <data name="TierColRate" xml:space="preserve"><value>Rate (₫ / kWh)</value></data>
+  <data name="TierUnlimited" xml:space="preserve"><value>Unlimited</value></data>
+  <data name="TierMaxKwh" xml:space="preserve"><value>Up to {0} kWh</value></data>
+  <data name="CloseBtn" xml:space="preserve"><value>Close</value></data>
+
+  <data name="AddModalTitle" xml:space="preserve"><value>Add New Service</value></data>
+  <data name="AddModalSubtitle" xml:space="preserve"><value>Create supplementary recurring service</value></data>
+  <data name="ServiceNameLabel" xml:space="preserve"><value>Service Name</value></data>
+  <data name="ServiceNamePlaceholder" xml:space="preserve"><value>e.g., Automatic Laundry, Elevator...</value></data>
+  <data name="ServiceUnitLabel" xml:space="preserve"><value>Unit</value></data>
+  <data name="ServiceRateLabel" xml:space="preserve"><value>Unit Rate (₫)</value></data>
+  <data name="ServiceTypeLabel" xml:space="preserve"><value>Service Type</value></data>
+  <data name="ServiceBuildingLabel" xml:space="preserve"><value>Apply to Property</value></data>
+  <data name="ServiceDescLabel" xml:space="preserve"><value>Service Description</value></data>
+  <data name="ServiceDescPlaceholder" xml:space="preserve"><value>Enter billing and usage terms...</value></data>
+  <data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>
+  <data name="CreateBtn" xml:space="preserve"><value>Create Service</value></data>
+
+  <data name="UpdateModalTitle" xml:space="preserve"><value>Update Service Tariff</value></data>
+  <data name="UpdateModalSubtitle" xml:space="preserve"><value>Set a new rate and effective milestone for subsequent billing periods.</value></data>
+  <data name="CurrentPriceDisplay" xml:space="preserve"><value>Current Rate</value></data>
+  <data name="CurrentUnit" xml:space="preserve"><value>Unit:</value></data>
+  <data name="NewPriceLabel" xml:space="preserve"><value>New Rate (₫)</value></data>
+  <data name="BuildingScopeLabel" xml:space="preserve"><value>Property Scope</value></data>
+  <data name="EffectiveFromLabel" xml:space="preserve"><value>Effective From</value></data>
+  <data name="EffectiveToLabel" xml:space="preserve"><value>Effective To (Optional)</value></data>
+  <data name="AutoActivateLabel" xml:space="preserve"><value>Activate upon reaching effective date</value></data>
+  <data name="AutoActivateDesc" xml:space="preserve"><value>Automatically supersedes old rate in invoices generated after this date</value></data>
+  <data name="NoteLabel" xml:space="preserve"><value>Revision Notes (Audit log)</value></data>
+  <data name="NotePlaceholder" xml:space="preserve"><value>Reason for adjusting rate...</value></data>
+  <data name="SavePriceBtn" xml:space="preserve"><value>Save Price Version</value></data>
+  <data name="SavingBtn" xml:space="preserve"><value>Saving...</value></data>
+
+  <data name="PricesPageTitle" xml:space="preserve"><value>Periodic Tariff Table</value></data>
+  <data name="PricesBreadcrumb" xml:space="preserve"><value>Periodic Tariff Table</value></data>
+  <data name="PricesHeading" xml:space="preserve"><value>Periodic Tariff Table</value></data>
+  <data name="PricesSubtitle" xml:space="preserve"><value>Manage timeline-based service price versions and applied policies.</value></data>
+  <data name="PricesWarningTitle" xml:space="preserve"><value>Simulated periodic data — historical invoices unchanged</value></data>
+  <data name="PricesWarningDesc" xml:space="preserve"><value>New price versions only take effect from their start date; invoices from preceding cycles preserve historical rates.</value></data>
+  <data name="BackToCatalogBtn" xml:space="preserve"><value>Back to Service Catalog</value></data>
+  <data name="UpdatePriceMilestoneBtn" xml:space="preserve"><value>Update Price Version</value></data>
+  <data name="TabAllServices" xml:space="preserve"><value>All Services</value></data>
+
+  <data name="ThPriceEffectiveFrom" xml:space="preserve"><value>Effective From</value></data>
+  <data name="ThPriceEffectiveTo" xml:space="preserve"><value>Effective To</value></data>
+  <data name="ThPriceRate" xml:space="preserve"><value>Applied Rate</value></data>
+  <data name="ThPriceStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="ThPriceScope" xml:space="preserve"><value>Applied Scope</value></data>
+  <data name="ThPriceCreator" xml:space="preserve"><value>Created By</value></data>
+  <data name="ThPriceCreatedAt" xml:space="preserve"><value>Creation Date</value></data>
+  <data name="ThPriceNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="StatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="StatusUpcoming" xml:space="preserve"><value>Upcoming</value></data>
+  <data name="StatusExpired" xml:space="preserve"><value>Expired</value></data>
+
+  <data name="ReadingsPageTitle" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
+  <data name="ReadingsBreadcrumb" xml:space="preserve"><value>Period &amp; Readings</value></data>
+  <data name="ReadingsHeading" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
+  <data name="ReadingsSubtitle" xml:space="preserve"><value>Record utility meters by period and preview calculated costs per room.</value></data>
+  <data name="ReadingsVersionBadge" xml:space="preserve"><value>Version v2.4 (Phase B / VHT-38)</value></data>
+  <data name="SaveReadingsBtn" xml:space="preserve"><value>Save Meter Readings</value></data>
+
+  <data name="Sec1Heading" xml:space="preserve"><value>1. Billing Period &amp; Room Details</value></data>
+  <data name="Sec1StatusOpen" xml:space="preserve"><value>Open (Recording meter readings)</value></data>
+  <data name="RoomContractLabel" xml:space="preserve"><value>Contract / Room</value></data>
+  <data name="RoomContractHint" xml:space="preserve"><value>Applies to invoice period {0}</value></data>
+  <data name="BillingCycleLabel" xml:space="preserve"><value>Billing Period (From – To)</value></data>
+  <data name="BillingCycleHint" xml:space="preserve"><value>Full-month cycle (31 days of utility usage)</value></data>
+
+  <data name="Sec2Heading" xml:space="preserve"><value>2. Electricity &amp; Water Meters</value></data>
+  <data name="Sec2AutoCalc" xml:space="preserve"><value>Automatic consumption calculation</value></data>
+  <data name="ElectricTitle" xml:space="preserve"><value>Electricity Meter</value></data>
+  <data name="ElectricMeterPrefix" xml:space="preserve"><value>Meter Code:</value></data>
+  <data name="ElectricStartIndex" xml:space="preserve"><value>Start Reading</value></data>
+  <data name="ElectricEndIndex" xml:space="preserve"><value>End Reading</value></data>
+  <data name="ElectricUsageCalc" xml:space="preserve"><value>Calculated Consumption:</value></data>
+  <data name="WaterTitle" xml:space="preserve"><value>Water Meter</value></data>
+  <data name="WaterMeterPrefix" xml:space="preserve"><value>Meter Code:</value></data>
+  <data name="WaterStartIndex" xml:space="preserve"><value>Start Reading</value></data>
+  <data name="WaterEndIndex" xml:space="preserve"><value>End Reading</value></data>
+  <data name="WaterUsageCalc" xml:space="preserve"><value>Calculated Consumption:</value></data>
+  <data name="LockTariffNotice" xml:space="preserve"><value>Electricity and water tariffs effective from 01/01/2026 (Fixed system tariffs per D7).</value></data>
+
+  <data name="Sec3Heading" xml:space="preserve"><value>Cost Calculation Preview (Draft)</value></data>
+  <data name="Sec3AutoBadge" xml:space="preserve"><value>Auto calculated</value></data>
+  <data name="ThCostType" xml:space="preserve"><value>Cost Item</value></data>
+  <data name="ThFormula" xml:space="preserve"><value>Calculation Formula</value></data>
+  <data name="ThQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="ThUnitPrice" xml:space="preserve"><value>Unit Price</value></data>
+  <data name="ThAmount" xml:space="preserve"><value>Amount</value></data>
+
+  <data name="CostRent" xml:space="preserve"><value>Room Rent</value></data>
+  <data name="CostRentFormula" xml:space="preserve"><value>Fixed rent per contract</value></data>
+  <data name="CostRentQty" xml:space="preserve"><value>1 month</value></data>
+  <data name="CostElectric" xml:space="preserve"><value>Electricity Cost</value></data>
+  <data name="CostElectricPriceNote" xml:space="preserve"><value>Tiered calculation</value></data>
+  <data name="CostWater" xml:space="preserve"><value>Water Cost</value></data>
+  <data name="CostServices" xml:space="preserve"><value>General Services</value></data>
+  <data name="CostServicesQty" xml:space="preserve"><value>2 items</value></data>
+  <data name="CostServicesPriceNote" xml:space="preserve"><value>Standard terms</value></data>
+
+  <data name="TotalCostCardTitle" xml:space="preserve"><value>Total Period Cost (Excluding deposit)</value></data>
+  <data name="TotalCostCardDesc" xml:space="preserve"><value>Includes 1 month room rent and electricity, water, internet, cleaning utilities</value></data>
+  <data name="RefCodeFooter" xml:space="preserve"><value>Illustrative data, not live SQL tariffs; deposit excluded from period total.</value></data>
+  <data name="RefCodePrefix" xml:space="preserve"><value>Reference Code:</value></data>
+
+  <data name="Sec4Heading" xml:space="preserve"><value>Reading Adjustment History (Audit Log - Landlord / Manager only)</value></data>
+  <data name="Sec4CountBadge" xml:space="preserve"><value>{0} revisions</value></data>
+  <data name="ThLogModifier" xml:space="preserve"><value>Modifier</value></data>
+  <data name="ThLogTimestamp" xml:space="preserve"><value>Timestamp</value></data>
+  <data name="ThLogField" xml:space="preserve"><value>Field Changed</value></data>
+  <data name="ThLogDiff" xml:space="preserve"><value>Difference</value></data>
+  <data name="ThLogReason" xml:space="preserve"><value>Adjustment Reason</value></data>
+  <data name="NoAuditLogs" xml:space="preserve"><value>No manual adjustments recorded for this room in the current cycle.</value></data>
+
+  <data name="Sec5Heading" xml:space="preserve"><value>Locked Accounting Period Protection Rule:</value></data>
+  <data name="Sec5Notice" xml:space="preserve"><value>Invoiced periods cannot have their meter readings modified. If adjustment is required, cancel invoice issuance or issue a compensating credit memo in Invoices &amp; Payments.</value></data>
+
+  <data name="ReasonModalTitle" xml:space="preserve"><value>Confirm Meter Reading Adjustment</value></data>
+  <data name="ReasonModalDesc" xml:space="preserve"><value>You have changed the meter readings for {0}. Please specify the adjustment reason for audit logging:</value></data>
+  <data name="ReasonFieldLabel" xml:space="preserve"><value>Adjustment Reason</value></data>
+  <data name="ReasonFieldPlaceholder" xml:space="preserve"><value>e.g., Reading discrepancy identified during physical inspection...</value></data>
+  <data name="ReasonConfirmBtn" xml:space="preserve"><value>Confirm Save</value></data>
+
+  <data name="ToastCreatedSuccess" xml:space="preserve"><value>Service created successfully!</value></data>
+  <data name="ToastPriceUpdatedSuccess" xml:space="preserve"><value>Price version updated successfully!</value></data>
+  <data name="ToastServiceToggled" xml:space="preserve"><value>Service status updated successfully.</value></data>
+  <data name="ToastReadingsSaved" xml:space="preserve"><value>Meter readings and costs saved successfully!</value></data>
+  <data name="LoadingText" xml:space="preserve"><value>Loading service data...</value></data>
+  <data name="UnitKwh" xml:space="preserve"><value>kWh</value></data>
+  <data name="UnitM3" xml:space="preserve"><value>m³</value></data>
+</root>
+

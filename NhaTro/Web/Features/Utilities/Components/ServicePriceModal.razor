@@ -1,0 +1,247 @@
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+
+@if (IsOpen && Service is not null)
+{
+    <div class="modal-backdrop" @onclick="HandleClose" role="dialog" aria-modal="true" aria-labelledby="price-modal-title">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-icon">
+                    <LucideIcon Name="receipt" />
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="price-modal-title">@L["UpdateModalTitle"]</h2>
+                    <p>@L["UpdateModalSubtitle"]</p>
+                </div>
+                <button type="button" class="modal-close-btn" @onclick="HandleClose" aria-label="@L["CloseBtn"]">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                <div class="service-summary-card">
+                    <div class="summary-item">
+                        <span class="summary-label">@L["ThServiceName"]</span>
+                        <strong class="summary-value">@Service.Name</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">@L["CurrentPriceDisplay"]</span>
+                        <span class="summary-value tabular-nums">@Service.RateDisplay / @Service.Unit</span>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="field-label" for="new-rate-input">
+                        @L["NewPriceLabel"] <span class="required-star">*</span>
+                    </label>
+                    <div class="input-with-affix">
+                        <input id="new-rate-input"
+                               type="number"
+                               min="1"
+                               step="1000"
+                               class="input tabular-nums @(_rateError != null ? "invalid" : "")"
+                               @bind="_newRate"
+                               @bind:after="ValidateRate"
+                               placeholder="100000" />
+                        <span class="input-affix">₫</span>
+                    </div>
+                    @if (_rateError != null)
+                    {
+                        <span class="field-error-text" role="alert">@_rateError</span>
+                    }
+                </div>
+
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="unit-select">@L["ThUnit"]</label>
+                        <select id="unit-select" class="input" @bind="_unit">
+                            <option value="Phòng">Phòng</option>
+                            <option value="Người">Người</option>
+                            <option value="Xe">Xe</option>
+                            <option value="kWh">kWh</option>
+                            <option value="m³">m³</option>
+                            <option value="Lần">Lần</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="building-scope-select">@L["BuildingScopeLabel"]</label>
+                        <select id="building-scope-select" class="input" @bind="_buildingScope">
+                            @foreach (var b in StateService.Buildings)
+                            {
+                                <option value="@b.Id">@b.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="effective-from-input">
+                            @L["EffectiveFromLabel"] <span class="required-star">*</span>
+                        </label>
+                        <input id="effective-from-input"
+                               type="date"
+                               class="input"
+                               @bind="_effectiveFrom"
+                               @bind:after="ValidateDates" />
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="effective-to-input">@L["EffectiveToLabel"]</label>
+                        <input id="effective-to-input"
+                               type="date"
+                               class="input @(_dateError != null ? "invalid" : "")"
+                               @bind="_effectiveTo"
+                               @bind:after="ValidateDates" />
+                        @if (_dateError != null)
+                        {
+                            <span class="field-error-text" role="alert">@_dateError</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="switch-row">
+                    <button type="button"
+                            role="switch"
+                            aria-checked="@_autoActivate"
+                            class="ui-switch @(_autoActivate ? "active" : "")"
+                            @onclick="() => _autoActivate = !_autoActivate">
+                        <span class="ui-switch-thumb"></span>
+                    </button>
+                    <div class="switch-labels" @onclick="() => _autoActivate = !_autoActivate">
+                        <span class="switch-title">@L["AutoActivateLabel"]</span>
+                        <span class="switch-desc">@L["AutoActivateDesc"]</span>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="field-label" for="note-input">@L["NoteLabel"]</label>
+                    <input id="note-input"
+                           type="text"
+                           class="input"
+                           @bind="_note"
+                           placeholder="@L["NotePlaceholder"]" />
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="HandleClose" disabled="@_isSaving">
+                    @L["CancelBtn"]
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@L["SavingBtn"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="check" />
+                        <span>@L["SavePriceBtn"]</span>
+                    }
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public ServiceItemDto? Service { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<UpdatePriceRequest> OnSave { get; set; }
+
+    private decimal _newRate;
+    private string _unit = "Phòng";
+    private string _buildingScope = "all";
+    private DateOnly _effectiveFrom = new(2026, 12, 1);
+    private DateOnly? _effectiveTo;
+    private bool _autoActivate = true;
+    private string? _note;
+    private bool _isSaving;
+    private string? _rateError;
+    private string? _dateError;
+
+    protected override void OnParametersSet()
+    {
+        if (Service is not null)
+        {
+            _newRate = Service.CurrentRate;
+            _unit = Service.Unit;
+            _buildingScope = Service.BuildingId;
+            _effectiveFrom = new DateOnly(2026, 12, 1);
+            _effectiveTo = null;
+            _autoActivate = true;
+            _note = string.Empty;
+            _rateError = null;
+            _dateError = null;
+        }
+    }
+
+    private void ValidateRate()
+    {
+        if (_newRate <= 0m)
+        {
+            _rateError = "Đơn giá phải lớn hơn 0 / Price must be greater than 0.";
+        }
+        else
+        {
+            _rateError = null;
+        }
+    }
+
+    private void ValidateDates()
+    {
+        if (_effectiveTo.HasValue && _effectiveTo.Value < _effectiveFrom)
+        {
+            _dateError = "Ngày hết hiệu lực phải sau hoặc bằng ngày bắt đầu hiệu lực.";
+        }
+        else
+        {
+            _dateError = null;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        ValidateRate();
+        ValidateDates();
+
+        if (_rateError != null || _dateError != null)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var req = new UpdatePriceRequest
+            {
+                ServiceId = Service!.Id,
+                NewRate = _newRate,
+                Unit = _unit,
+                BuildingScope = _buildingScope,
+                EffectiveFrom = _effectiveFrom,
+                EffectiveTo = _effectiveTo,
+                AutoActivate = _autoActivate,
+                Note = _note,
+            };
+
+            await OnSave.InvokeAsync(req);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        if (!_isSaving)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}
+

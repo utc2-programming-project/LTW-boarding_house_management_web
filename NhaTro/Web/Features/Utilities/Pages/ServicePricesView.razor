@@ -1,0 +1,203 @@
+@page "/services/prices"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy,KhachThue,Admin")]
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@L["PricesPageTitle"]</PageTitle>
+
+<div class="service-prices-page">
+    <!-- Header -->
+    <header class="page-header">
+        <div class="heading-group">
+            <h1 class="page-title">@L["PricesHeading"]</h1>
+            <p class="page-subtitle">@L["PricesSubtitle"]</p>
+        </div>
+
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
+                <LucideIcon Name="arrow-left" />
+                <span>@L["BackToCatalogBtn"]</span>
+            </button>
+            @if (_isChuTro && _currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
+            {
+                <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
+                    <LucideIcon Name="plus" />
+                    <span>@L["UpdatePriceMilestoneBtn"]</span>
+                </button>
+            }
+        </div>
+    </header>
+
+    <!-- Service Selector Tabs -->
+    <div class="service-tabs-container">
+        <button type="button"
+                class="tab-btn @(_selectedServiceId == "all" ? "active" : "")"
+                @onclick='() => SelectServiceTab("all")'>
+            @L["TabAllServices"]
+        </button>
+        @foreach (var srv in _services)
+        {
+            <button type="button"
+                    class="tab-btn @(_selectedServiceId == srv.Id ? "active" : "")"
+                    @onclick="() => SelectServiceTab(srv.Id)">
+                <span>@srv.Name</span>
+                @if (srv.IsReadOnly)
+                {
+                    <LucideIcon Name="lock" Class="tab-lock-icon" />
+                }
+            </button>
+        }
+    </div>
+
+    <!-- Timeline History Table -->
+    <div class="table-card">
+        @if (_filteredVersions.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="prices-table">
+                    <thead>
+                        <tr>
+                            <th>@L["ThPriceEffectiveFrom"]</th>
+                            <th>@L["ThPriceEffectiveTo"]</th>
+                            <th class="text-right">@L["ThPriceRate"]</th>
+                            <th class="text-center">@L["ThPriceStatus"]</th>
+                            <th>@L["ThPriceScope"]</th>
+                            <th>@L["ThPriceCreator"]</th>
+                            <th>@L["ThPriceCreatedAt"]</th>
+                            <th>@L["ThPriceNotes"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in _filteredVersions)
+                        {
+                            <tr class="version-row">
+                                <td class="tabular-nums font-semibold text-slate-800">
+                                    @DateFormatter.Format(v.EffectiveFrom)
+                                </td>
+                                <td class="tabular-nums">
+                                    @if (v.EffectiveTo.HasValue)
+                                    {
+                                        <span class="text-slate-600">@DateFormatter.Format(v.EffectiveTo)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 italic">@L["NoData"]</span>
+                                    }
+                                </td>
+                                <td class="text-right tabular-nums font-bold text-slate-900">
+                                    @MoneyFormatter.Format(v.Rate) / @v.Unit
+                                </td>
+                                <td class="text-center">
+                                    <span class="status-badge-chip @GetStatusBadgeClass(v.Status)">
+                                        @GetStatusBadgeText(v.Status)
+                                    </span>
+                                </td>
+                                <td class="text-slate-700">@v.BuildingName</td>
+                                <td class="text-slate-700 font-medium">@v.CreatedBy</td>
+                                <td class="tabular-nums text-slate-500 font-mono text-xs">
+                                    @DateFormatter.FormatDateTime(v.CreatedAt)
+                                </td>
+                                <td class="text-slate-600 italic">@(v.Note ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state-box">
+                <div class="empty-icon-wrap">
+                    <LucideIcon Name="history" />
+                </div>
+                <h3 class="empty-title">@L["NoData"]</h3>
+                <p class="empty-desc">Chưa có lịch sử thay đổi đơn giá cho dịch vụ này.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<ServicePriceModal IsOpen="@_isPriceModalOpen"
+                   Service="@_currentSelectedService"
+                   OnClose="() => _isPriceModalOpen = false"
+                   OnSave="HandleSavePrice" />
+
+@code {
+    private List<ServiceItemDto> _services = [];
+    private List<PriceVersionDto> _filteredVersions = [];
+    private string _selectedServiceId = "srv-3"; // Internet cáp quang
+    private ServiceItemDto? _currentSelectedService;
+    private bool _isChuTro;
+    private bool _isPriceModalOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _isChuTro = user.IsInRole("ChuTro") || user.IsInRole("Admin");
+
+        StateService.OnChange += HandleStateChanged;
+        LoadData();
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            LoadData();
+            StateHasChanged();
+        });
+    }
+
+    private void LoadData()
+    {
+        _services = StateService.GetServices().ToList();
+        SelectServiceTab(_selectedServiceId);
+    }
+
+    private void SelectServiceTab(string serviceId)
+    {
+        _selectedServiceId = serviceId;
+        _currentSelectedService = _services.FirstOrDefault(s => s.Id == serviceId);
+        _filteredVersions = StateService.GetPriceVersions(serviceId).ToList();
+    }
+
+    private string GetStatusBadgeClass(string status) => status switch
+    {
+        "active" => "badge-active",
+        "upcoming" => "badge-upcoming",
+        _ => "badge-expired"
+    };
+
+    private string GetStatusBadgeText(string status) => status switch
+    {
+        "active" => L["StatusActive"],
+        "upcoming" => L["StatusUpcoming"],
+        _ => L["StatusExpired"]
+    };
+
+    private Task HandleSavePrice(UpdatePriceRequest req)
+    {
+        var res = StateService.UpdateServicePrice(req, "Chủ trọ An");
+        if (res.Success)
+        {
+            Toast.Success(L["ToastPriceUpdatedSuccess"]);
+            _isPriceModalOpen = false;
+        }
+        else
+        {
+            Toast.Error(res.Error ?? "Lỗi cập nhật giá");
+        }
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        StateService.OnChange -= HandleStateChanged;
+    }
+}
+

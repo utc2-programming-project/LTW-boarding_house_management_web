@@ -1,0 +1,650 @@
+@page "/services/readings"
+@page "/services/meter-reading"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy,KhachThue,Admin")]
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@L["ReadingsPageTitle"]</PageTitle>
+
+<div class="meter-reading-page">
+    <div class="top-nav-bar">
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["CatalogOverviewNav"], "/"),
+                new(L["CatalogBreadcrumb"], "/services"),
+                new(L["ReadingsBreadcrumb"])
+            })" />
+
+        <div class="version-tag">
+            <span class="pulse-dot"></span>
+            <span>@L["ReadingsVersionBadge"]</span>
+        </div>
+    </div>
+
+    <!-- Heading -->
+    <header class="page-header">
+        <div class="heading-group">
+            <h1 class="page-title">@L["ReadingsHeading"]</h1>
+            <p class="page-subtitle">@L["ReadingsSubtitle"]</p>
+        </div>
+
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
+                <LucideIcon Name="close" />
+                <span>@L["CancelBtn"]</span>
+            </button>
+            <button type="button"
+                    class="btn btn-primary"
+                    disabled="@_isTenant"
+                    @onclick="HandleSaveClick">
+                <LucideIcon Name="check" />
+                <span>@L["SaveReadingsBtn"]</span>
+            </button>
+        </div>
+    </header>
+
+    @if (_activeRoom is not null)
+    {
+        <!-- SECTION 1: Chọn kỳ & Thông tin phòng -->
+        <section class="reading-section-card">
+            <div class="section-card-header">
+                <div class="section-header-title">
+                    <span class="indicator-dot"></span>
+                    <h2>@L["Sec1Heading"]</h2>
+                </div>
+                <span class="status-open-badge">
+                    <span class="pulse-badge-dot"></span>
+                    @L["Sec1StatusOpen"]
+                </span>
+            </div>
+
+            <div class="section-card-body grid-2-cols">
+                <div class="form-field-group">
+                    <label class="field-label" for="room-select">
+                        @L["RoomContractLabel"] <span class="required-star">*</span>
+                    </label>
+                    <select id="room-select" class="input font-semibold" value="@_selectedRoomId" @onchange="OnRoomChanged">
+                        @foreach (var room in _rooms)
+                        {
+                            <option value="@room.Id">@room.RoomName — @room.TenantName (@room.BuildingName)</option>
+                        }
+                    </select>
+                    <span class="field-helper-text">
+                        @string.Format(L["RoomContractHint"], _activeRoom.PeriodMonth)
+                    </span>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="field-label">
+                        @L["BillingCycleLabel"] <span class="required-star">*</span>
+                    </label>
+                    <div class="date-range-row">
+                        <input type="date" class="input" @bind="_periodStart" />
+                        <span class="date-range-sep">—</span>
+                        <input type="date" class="input" @bind="_periodEnd" />
+                    </div>
+                    <span class="field-helper-text">@L["BillingCycleHint"]</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Chỉ số công tơ Điện & Nước -->
+        <section class="meters-section">
+            <div class="meters-section-header">
+                <div class="section-header-title">
+                    <span class="indicator-dot"></span>
+                    <h2>@L["Sec2Heading"]</h2>
+                </div>
+                <span class="auto-calc-label">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["Sec2AutoCalc"]</span>
+                </span>
+            </div>
+
+            <div class="meters-grid">
+                <!-- Electricity Meter Card -->
+                <div class="meter-box">
+                    <div class="meter-box-header">
+                        <div class="meter-info-group">
+                            <div class="meter-icon-box amber-box">
+                                <LucideIcon Name="zap" />
+                            </div>
+                            <div>
+                                <h3 class="meter-name">@L["ElectricTitle"]</h3>
+                                <span class="meter-code-text">@L["ElectricMeterPrefix"] @_activeRoom.ElectricMeterCode</span>
+                            </div>
+                        </div>
+                        <span class="meter-unit-badge">@L["ThUnit"]: @L["UnitKwh"]</span>
+                    </div>
+
+                    <div class="meter-inputs-grid">
+                        <div class="meter-col">
+                            <span class="input-col-label">@L["ElectricStartIndex"]</span>
+                            <div class="readonly-reading-box tabular-nums">
+                                <span class="reading-num">@_activeRoom.ElectricStart.ToString("N0")</span>
+                                <span class="reading-unit">@L["UnitKwh"]</span>
+                            </div>
+                            <span class="input-sub-hint">Cuối kỳ 09/2026</span>
+                        </div>
+
+                        <div class="meter-col">
+                            <span class="input-col-label font-semibold">
+                                @L["ElectricEndIndex"] <span class="required-star">*</span>
+                            </span>
+                            <div class="input-with-affix">
+                                <input type="number"
+                                       class="input tabular-nums font-bold @(_electricError != null ? "invalid" : "")"
+                                       disabled="@_isTenant"
+                                       @bind="_electricEndInput"
+                                       @bind:after="OnElectricInputChanged" />
+                                <span class="input-affix">@L["UnitKwh"]</span>
+                            </div>
+                            <span class="input-sub-hint">Nhập tay công tơ</span>
+                        </div>
+                    </div>
+
+                    @if (_electricError != null)
+                    {
+                        <div class="meter-error-banner" role="alert">
+                            <span>@_electricError</span>
+                        </div>
+                    }
+
+                    <div class="calculated-usage-bar">
+                        <span class="usage-label">@L["ElectricUsageCalc"]</span>
+                        <strong class="usage-value tabular-nums">
+                            @_electricUsage.ToString("N0") <span class="usage-unit">@L["UnitKwh"]</span>
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Water Meter Card -->
+                <div class="meter-box">
+                    <div class="meter-box-header">
+                        <div class="meter-info-group">
+                            <div class="meter-icon-box blue-box">
+                                <LucideIcon Name="droplet" />
+                            </div>
+                            <div>
+                                <h3 class="meter-name">@L["WaterTitle"]</h3>
+                                <span class="meter-code-text">@L["WaterMeterPrefix"] @_activeRoom.WaterMeterCode</span>
+                            </div>
+                        </div>
+                        <span class="meter-unit-badge">@L["ThUnit"]: @L["UnitM3"]</span>
+                    </div>
+
+                    <div class="meter-inputs-grid">
+                        <div class="meter-col">
+                            <span class="input-col-label">@L["WaterStartIndex"]</span>
+                            <div class="readonly-reading-box tabular-nums">
+                                <span class="reading-num">@_activeRoom.WaterStart.ToString("N0")</span>
+                                <span class="reading-unit">@L["UnitM3"]</span>
+                            </div>
+                            <span class="input-sub-hint">Cuối kỳ 09/2026</span>
+                        </div>
+
+                        <div class="meter-col">
+                            <span class="input-col-label font-semibold">
+                                @L["WaterEndIndex"] <span class="required-star">*</span>
+                            </span>
+                            <div class="input-with-affix">
+                                <input type="number"
+                                       class="input tabular-nums font-bold @(_waterError != null ? "invalid" : "")"
+                                       disabled="@_isTenant"
+                                       @bind="_waterEndInput"
+                                       @bind:after="OnWaterInputChanged" />
+                                <span class="input-affix">@L["UnitM3"]</span>
+                            </div>
+                            <span class="input-sub-hint">Nhập tay công tơ</span>
+                        </div>
+                    </div>
+
+                    @if (_waterError != null)
+                    {
+                        <div class="meter-error-banner" role="alert">
+                            <span>@_waterError</span>
+                        </div>
+                    }
+
+                    <div class="calculated-usage-bar">
+                        <span class="usage-label">@L["WaterUsageCalc"]</span>
+                        <strong class="usage-value tabular-nums">
+                            @_waterUsage.ToString("N0") <span class="usage-unit">@L["UnitM3"]</span>
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock Notice per D7 -->
+            <div class="tariff-lock-notice">
+                <LucideIcon Name="lock" />
+                <span>@L["LockTariffNotice"]</span>
+            </div>
+        </section>
+
+        <!-- SECTION 3: Bảng tính chi phí xem trước (Dự thảo) -->
+        <section class="cost-table-card">
+            <header class="cost-card-header">
+                <div class="section-header-title">
+                    <span class="indicator-dot"></span>
+                    <h2>@L["Sec3Heading"]</h2>
+                </div>
+                <span class="sparkle-badge">
+                    <LucideIcon Name="sparkles" />
+                    <span>@L["Sec3AutoBadge"]</span>
+                </span>
+            </header>
+
+            <div class="table-responsive">
+                <table class="cost-table">
+                    <thead>
+                        <tr>
+                            <th>@L["ThCostType"]</th>
+                            <th>@L["ThFormula"]</th>
+                            <th>@L["ThQuantity"]</th>
+                            <th>@L["ThUnitPrice"]</th>
+                            <th class="text-right">@L["ThAmount"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Tiền phòng -->
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <LucideIcon Name="home" Class="cost-type-icon" />
+                                    <span class="font-semibold text-slate-800">@L["CostRent"]</span>
+                                </div>
+                            </td>
+                            <td class="text-slate-500">@L["CostRentFormula"]</td>
+                            <td class="text-slate-700">@L["CostRentQty"]</td>
+                            <td class="text-slate-700 tabular-nums">@MoneyFormatter.Format(_activeRoom.RoomRent)</td>
+                            <td class="text-right font-bold tabular-nums text-slate-900">
+                                @MoneyFormatter.Format(_activeRoom.RoomRent)
+                            </td>
+                        </tr>
+
+                        <!-- Tiền điện -->
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <LucideIcon Name="zap" Class="cost-type-icon text-amber-500" />
+                                    <span class="font-semibold text-slate-800">@L["CostElectric"]</span>
+                                </div>
+                            </td>
+                            <td class="text-slate-600 font-mono text-xs">@_electricCalc.Breakdown</td>
+                            <td class="text-slate-700 tabular-nums">@_electricUsage.ToString("N0") @L["UnitKwh"]</td>
+                            <td class="text-slate-500">@L["CostElectricPriceNote"]</td>
+                            <td class="text-right font-bold tabular-nums text-slate-900">
+                                @MoneyFormatter.Format(_electricCalc.Total)
+                            </td>
+                        </tr>
+
+                        <!-- Tiền nước -->
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <LucideIcon Name="droplet" Class="cost-type-icon text-blue-500" />
+                                    <span class="font-semibold text-slate-800">@L["CostWater"]</span>
+                                </div>
+                            </td>
+                            <td class="text-slate-600 font-mono text-xs">@_waterCalc.Breakdown</td>
+                            <td class="text-slate-700 tabular-nums">@_waterUsage.ToString("N0") @L["UnitM3"]</td>
+                            <td class="text-slate-700 tabular-nums">@MoneyFormatter.Format(_activeRoom.WaterRate)</td>
+                            <td class="text-right font-bold tabular-nums text-slate-900">
+                                @MoneyFormatter.Format(_waterCalc.Total)
+                            </td>
+                        </tr>
+
+                        <!-- Dịch vụ chung -->
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <LucideIcon Name="wifi" Class="cost-type-icon text-indigo-500" />
+                                    <span class="font-semibold text-slate-800">@L["CostServices"]</span>
+                                </div>
+                            </td>
+                            <td class="text-slate-500">
+                                Internet (@MoneyFormatter.Format(_activeRoom.InternetCost)/phòng) + Vệ sinh (@MoneyFormatter.Format(_activeRoom.CleaningCost)/người)
+                            </td>
+                            <td class="text-slate-700">@L["CostServicesQty"]</td>
+                            <td class="text-slate-500">@L["CostServicesPriceNote"]</td>
+                            <td class="text-right font-bold tabular-nums text-slate-900">
+                                @MoneyFormatter.Format(_servicesCost)
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Cost Summary Footer -->
+            <div class="cost-total-banner">
+                <div class="total-copy">
+                    <h3 class="total-title">@L["TotalCostCardTitle"]</h3>
+                    <p class="total-desc">@L["TotalCostCardDesc"]</p>
+                </div>
+                <div class="total-number-box tabular-nums">
+                    @MoneyFormatter.Format(_totalCost)
+                </div>
+            </div>
+
+            <footer class="ref-code-bar">
+                <span>@L["RefCodeFooter"]</span>
+                <span class="ref-code font-mono">@L["RefCodePrefix"] <strong>@_activeRoom.RefCode</strong></span>
+            </footer>
+        </section>
+
+        <!-- SECTION 4: Lịch sử điều chỉnh chỉ số (Audit Log) -->
+        @if (!_isTenant)
+        {
+            <section class="audit-log-card">
+                <header class="audit-header">
+                    <div class="audit-title-group">
+                        <LucideIcon Name="history" />
+                        <h3>@L["Sec4Heading"]</h3>
+                    </div>
+                    <span class="audit-count-chip">
+                        @string.Format(L["Sec4CountBadge"], _activeRoom.AuditLogs.Count)
+                    </span>
+                </header>
+
+                @if (_activeRoom.AuditLogs.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>@L["ThLogModifier"]</th>
+                                    <th>@L["ThLogTimestamp"]</th>
+                                    <th>@L["ThLogField"]</th>
+                                    <th>@L["ThLogDiff"]</th>
+                                    <th>@L["ThLogReason"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in _activeRoom.AuditLogs)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="modifier-cell">
+                                                <div class="avatar-circle">
+                                                    @(string.IsNullOrEmpty(log.Modifier) ? "U" : log.Modifier[0].ToString().ToUpper())
+                                                </div>
+                                                <span class="font-semibold text-slate-800">@log.Modifier</span>
+                                            </div>
+                                        </td>
+                                        <td class="tabular-nums font-mono text-xs text-slate-600">
+                                            @DateFormatter.FormatDateTime(log.Timestamp)
+                                        </td>
+                                        <td>
+                                            <code class="field-pill">@log.FieldChanged</code>
+                                        </td>
+                                        <td class="tabular-nums font-mono font-medium text-slate-800">
+                                            @log.DetailDiff
+                                        </td>
+                                        <td class="italic text-slate-600">@log.Reason</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-audit-logs">
+                        @L["NoAuditLogs"]
+                    </div>
+                }
+            </section>
+        }
+
+        <!-- SECTION 5: Quy tắc bảo vệ kỳ kế toán đã khóa -->
+        <div class="locked-rule-banner">
+            <div class="locked-icon-box">
+                <LucideIcon Name="lock" />
+            </div>
+            <div class="locked-text">
+                <h4>@L["Sec5Heading"]</h4>
+                <p>@L["Sec5Notice"]</p>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Reason Confirmation Modal -->
+@if (_showReasonModal && _activeRoom is not null)
+{
+    <div class="modal-backdrop" @onclick="() => _showReasonModal = false" role="dialog" aria-modal="true" aria-labelledby="reason-modal-title">
+        <div class="modal-dialog modal-dialog-sm" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-icon">
+                    <LucideIcon Name="edit" />
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="reason-modal-title">@L["ReasonModalTitle"]</h2>
+                </div>
+                <button type="button" class="modal-close-btn" @onclick="() => _showReasonModal = false" aria-label="@L["CloseBtn"]">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                <p class="text-sm text-slate-600">
+                    @string.Format(L["ReasonModalDesc"], _activeRoom.RoomName)
+                </p>
+
+                <div class="form-field-group">
+                    <label class="field-label" for="adjustment-reason-input">
+                        @L["ReasonFieldLabel"] <span class="required-star">*</span>
+                    </label>
+                    <input id="adjustment-reason-input"
+                           type="text"
+                           class="input @(_reasonError != null ? "invalid" : "")"
+                           @bind="_adjustmentReason"
+                           placeholder="@L["ReasonFieldPlaceholder"]" />
+                    @if (_reasonError != null)
+                    {
+                        <span class="field-error-text" role="alert">@_reasonError</span>
+                    }
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _showReasonModal = false">
+                    @L["CancelBtn"]
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="ConfirmSaveWithReason">
+                    <LucideIcon Name="check" />
+                    <span>@L["ReasonConfirmBtn"]</span>
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private List<RoomReadingSampleDto> _rooms = [];
+    private RoomReadingSampleDto? _activeRoom;
+    private string _selectedRoomId = "room-101";
+
+    private decimal _electricEndInput;
+    private decimal _waterEndInput;
+    private DateOnly _periodStart = new(2026, 10, 1);
+    private DateOnly _periodEnd = new(2026, 10, 31);
+
+    private decimal _electricUsage;
+    private decimal _waterUsage;
+    private ElectricityCalculationResult _electricCalc = new(0, "", []);
+    private WaterCalculationResult _waterCalc = new(0, "");
+    private decimal _servicesCost;
+    private decimal _totalCost;
+
+    private string? _electricError;
+    private string? _waterError;
+    private bool _showReasonModal;
+    private string _adjustmentReason = "Ghi nhầm số đồng hồ thực tế kiểm tra lại";
+    private string? _reasonError;
+    private bool _isTenant;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _isTenant = user.IsInRole("KhachThue") && !user.IsInRole("ChuTro") && !user.IsInRole("QuanLy") && !user.IsInRole("Admin");
+
+        StateService.OnChange += HandleStateChanged;
+        LoadRooms();
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            LoadRooms();
+            StateHasChanged();
+        });
+    }
+
+    private void LoadRooms()
+    {
+        _rooms = StateService.GetRoomReadings().ToList();
+        if (_rooms.Count > 0)
+        {
+            var target = _rooms.FirstOrDefault(r => r.Id == _selectedRoomId) ?? _rooms[0];
+            SelectRoom(target);
+        }
+    }
+
+    private void SelectRoom(RoomReadingSampleDto room)
+    {
+        _activeRoom = room;
+        _selectedRoomId = room.Id;
+        _electricEndInput = room.ElectricEnd;
+        _waterEndInput = room.WaterEnd;
+        _periodStart = room.PeriodStart;
+        _periodEnd = room.PeriodEnd;
+        _electricError = null;
+        _waterError = null;
+
+        Recalculate();
+    }
+
+    private void OnRoomChanged(ChangeEventArgs e)
+    {
+        var roomId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(roomId))
+        {
+            var room = _rooms.FirstOrDefault(r => r.Id == roomId);
+            if (room is not null)
+            {
+                SelectRoom(room);
+            }
+        }
+    }
+
+    private void OnElectricInputChanged()
+    {
+        if (_activeRoom is null) return;
+        var issues = UtilityDraftRules.ValidateMeterReading(_activeRoom.ElectricStart, _electricEndInput);
+        _electricError = issues.Count > 0 ? issues[0].Message : null;
+        Recalculate();
+    }
+
+    private void OnWaterInputChanged()
+    {
+        if (_activeRoom is null) return;
+        var issues = UtilityDraftRules.ValidateMeterReading(_activeRoom.WaterStart, _waterEndInput);
+        _waterError = issues.Count > 0 ? issues[0].Message : null;
+        Recalculate();
+    }
+
+    private void Recalculate()
+    {
+        if (_activeRoom is null) return;
+
+        _electricUsage = _electricEndInput >= _activeRoom.ElectricStart
+            ? _electricEndInput - _activeRoom.ElectricStart
+            : 0;
+
+        _waterUsage = _waterEndInput >= _activeRoom.WaterStart
+            ? _waterEndInput - _activeRoom.WaterStart
+            : 0;
+
+        _electricCalc = UtilityDraftRules.CalculateElectricityTiered(_electricUsage);
+        _waterCalc = UtilityDraftRules.CalculateWaterCost(_waterUsage, _activeRoom.WaterRate);
+
+        _servicesCost = _activeRoom.InternetCost + _activeRoom.CleaningCost + _activeRoom.ParkingCost;
+        _totalCost = _activeRoom.RoomRent + _electricCalc.Total + _waterCalc.Total + _servicesCost;
+    }
+
+    private void HandleSaveClick()
+    {
+        if (_isTenant || _activeRoom is null) return;
+
+        OnElectricInputChanged();
+        OnWaterInputChanged();
+
+        if (_electricError != null || _waterError != null)
+        {
+            Toast.Error("Chỉ số cuối kỳ không hợp lệ. Vui lòng kiểm tra lại!");
+            return;
+        }
+
+        var hasChanged = _electricEndInput != _activeRoom.ElectricEnd || _waterEndInput != _activeRoom.WaterEnd;
+
+        if (hasChanged)
+        {
+            _reasonError = null;
+            _showReasonModal = true;
+        }
+        else
+        {
+            PerformSave(null);
+        }
+    }
+
+    private void ConfirmSaveWithReason()
+    {
+        if (string.IsNullOrWhiteSpace(_adjustmentReason))
+        {
+            _reasonError = "Bắt buộc nhập lý do điều chỉnh chỉ số.";
+            return;
+        }
+
+        _showReasonModal = false;
+        PerformSave(_adjustmentReason);
+    }
+
+    private void PerformSave(string? reason)
+    {
+        if (_activeRoom is null) return;
+
+        var res = StateService.SaveRoomReading(
+            _activeRoom.Id,
+            _electricEndInput,
+            _waterEndInput,
+            reason,
+            "Chủ trọ An",
+            "Chủ trọ");
+
+        if (res.Success)
+        {
+            Toast.Success(L["ToastReadingsSaved"]);
+            _activeRoom = res.Room;
+            Recalculate();
+        }
+        else
+        {
+            Toast.Error(res.Error ?? "Lỗi lưu chỉ số");
+        }
+    }
+
+    public void Dispose()
+    {
+        StateService.OnChange -= HandleStateChanged;
+    }
+}
+

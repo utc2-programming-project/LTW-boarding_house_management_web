@@ -1,0 +1,76 @@
+@inject IStringLocalizer<UtilityResources> L
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop" @onclick="HandleClose" role="dialog" aria-modal="true" aria-labelledby="tier-modal-title">
+        <div class="modal-dialog modal-dialog-tier" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-icon blue-icon">
+                    <LucideIcon Name="shield-check" />
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="tier-modal-title">@L["TierModalTitle"] @ServiceName</h2>
+                    <p>@L["TierModalSubtitle"]</p>
+                </div>
+                <button type="button" class="modal-close-btn" @onclick="HandleClose" aria-label="@L["CloseBtn"]">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                <div class="alert-info-banner">
+                    <LucideIcon Name="info" />
+                    <span>@L["TierModalInfo"]</span>
+                </div>
+
+                <div class="table-container">
+                    <table class="tier-table">
+                        <thead>
+                            <tr>
+                                <th>@L["TierColTier"]</th>
+                                <th>@L["TierColQuota"]</th>
+                                <th class="text-right">@L["TierColRate"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tier in UtilityDraftRules.DefaultElectricTiers)
+                            {
+                                <tr>
+                                    <td class="font-semibold text-slate-800">@tier.Name</td>
+                                    <td>
+                                        @if (tier.MaxKwh.HasValue)
+                                        {
+                                            @string.Format(L["TierMaxKwh"], tier.MaxKwh.Value.ToString("N0"))
+                                        }
+                                        else
+                                        {
+                                            @L["TierUnlimited"]
+                                        }
+                                    </td>
+                                    <td class="text-right font-bold tabular-nums text-indigo-700">
+                                        @tier.Rate.ToString("N0") ₫
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <footer class="modal-footer justify-end">
+                <button type="button" class="btn btn-secondary" @onclick="HandleClose">
+                    @L["CloseBtn"]
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string ServiceName { get; set; } = "Điện sinh hoạt";
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task HandleClose() => await OnClose.InvokeAsync();
+}
+

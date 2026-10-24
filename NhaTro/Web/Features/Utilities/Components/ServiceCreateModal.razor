@@ -1,0 +1,218 @@
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop" @onclick="HandleClose" role="dialog" aria-modal="true" aria-labelledby="create-modal-title">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-icon">
+                    <LucideIcon Name="plus" />
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="create-modal-title">@L["AddModalTitle"]</h2>
+                    <p>@L["AddModalSubtitle"]</p>
+                </div>
+                <button type="button" class="modal-close-btn" @onclick="HandleClose" aria-label="@L["CloseBtn"]">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                <div class="form-field-group">
+                    <label class="field-label" for="service-name-input">
+                        @L["ServiceNameLabel"] <span class="required-star">*</span>
+                    </label>
+                    <input id="service-name-input"
+                           type="text"
+                           class="input @(_nameError != null ? "invalid" : "")"
+                           @bind="_name"
+                           @bind:after="ValidateName"
+                           placeholder="@L["ServiceNamePlaceholder"]" />
+                    @if (_nameError != null)
+                    {
+                        <span class="field-error-text" role="alert">@_nameError</span>
+                    }
+                </div>
+
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="service-type-select">@L["ServiceTypeLabel"]</label>
+                        <select id="service-type-select" class="input" @bind="_type">
+                            <option value="@ServiceTypeCategory.FixedMonthly">@L["FixedMonthlyType"]</option>
+                            <option value="@ServiceTypeCategory.Custom">@L["CustomType"]</option>
+                            <option value="@ServiceTypeCategory.Meter">@L["MeterType"]</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-unit-select">@L["ServiceUnitLabel"]</label>
+                        <select id="create-unit-select" class="input" @bind="_unit">
+                            <option value="Phòng">Phòng</option>
+                            <option value="Người">Người</option>
+                            <option value="Xe">Xe</option>
+                            <option value="Lần">Lần</option>
+                            <option value="kWh">kWh</option>
+                            <option value="m³">m³</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-rate-input">
+                            @L["ServiceRateLabel"] <span class="required-star">*</span>
+                        </label>
+                        <div class="input-with-affix">
+                            <input id="create-rate-input"
+                                   type="number"
+                                   min="1"
+                                   step="1000"
+                                   class="input tabular-nums @(_rateError != null ? "invalid" : "")"
+                                   @bind="_rate"
+                                   @bind:after="ValidateRate"
+                                   placeholder="50000" />
+                            <span class="input-affix">₫</span>
+                        </div>
+                        @if (_rateError != null)
+                        {
+                            <span class="field-error-text" role="alert">@_rateError</span>
+                        }
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-building-select">@L["ServiceBuildingLabel"]</label>
+                        <select id="create-building-select" class="input" @bind="_buildingId">
+                            @foreach (var b in StateService.Buildings)
+                            {
+                                <option value="@b.Id">@b.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-field-group">
+                    <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
+                    <input id="service-desc-input"
+                           type="text"
+                           class="input"
+                           @bind="_description"
+                           placeholder="@L["ServiceDescPlaceholder"]" />
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="HandleClose" disabled="@_isSaving">
+                    @L["CancelBtn"]
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@L["SavingBtn"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="plus" />
+                        <span>@L["CreateBtn"]</span>
+                    }
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<CreateServiceRequest> OnCreate { get; set; }
+
+    private string _name = string.Empty;
+    private ServiceTypeCategory _type = ServiceTypeCategory.FixedMonthly;
+    private string _unit = "Phòng";
+    private decimal _rate = 50_000m;
+    private string _buildingId = "b1";
+    private string? _description;
+    private bool _isSaving;
+    private string? _nameError;
+    private string? _rateError;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+        {
+            _name = string.Empty;
+            _type = ServiceTypeCategory.FixedMonthly;
+            _unit = "Phòng";
+            _rate = 50_000m;
+            _buildingId = "b1";
+            _description = string.Empty;
+            _nameError = null;
+            _rateError = null;
+        }
+    }
+
+    private void ValidateName()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _nameError = "Tên dịch vụ không được để trống / Service name is required.";
+        }
+        else
+        {
+            _nameError = null;
+        }
+    }
+
+    private void ValidateRate()
+    {
+        if (_rate <= 0m)
+        {
+            _rateError = "Đơn giá phải lớn hơn 0 / Price must be greater than 0.";
+        }
+        else
+        {
+            _rateError = null;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        ValidateName();
+        ValidateRate();
+
+        if (_nameError != null || _rateError != null)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var req = new CreateServiceRequest
+            {
+                Name = _name,
+                Type = _type,
+                Unit = _unit,
+                Rate = _rate,
+                BuildingId = _buildingId,
+                Description = _description,
+            };
+
+            await OnCreate.InvokeAsync(req);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        if (!_isSaving)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}
+
