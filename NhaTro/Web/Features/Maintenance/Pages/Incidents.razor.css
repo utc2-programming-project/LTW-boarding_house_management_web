@@ -1,0 +1,17 @@
+.incidents-page { min-width: 0; }
+.sample-banner { padding: 16px 20px; margin-bottom: 24px; border: 1px solid var(--accent-border); background: var(--accent-soft); border-radius: 12px; }
+.sample-banner p { margin: 8px 0 0; color: var(--text-secondary); }
+.sample-banner p:last-child { font-size: .8125rem; }
+.demo-controls { padding: 16px 20px; margin-bottom: 24px; border: 1px dashed var(--control-border); border-radius: 12px; background: var(--surface); }
+.demo-controls summary { padding: 4px 0; cursor: pointer; font-weight: 600; }
+.demo-controls p { margin: 12px 0; }
+.demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.demo-grid label { display: block; margin-bottom: 8px; font-weight: 500; }
+.demo-grid select { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; color: var(--text-primary); background: var(--surface); }
+.permission-note, .page-error { padding: 16px; color: var(--error-text); background: var(--error-bg); border: 1px solid var(--error-border); border-radius: 8px; }
+.page-error p { color: inherit; }
+@media (max-width: 767px) {
+    .demo-grid { grid-template-columns: 1fr; }
+    .demo-grid select, .demo-controls summary { min-height: 44px; font-size: 1rem; }
+    .page-heading > button { width: 100%; }
+}
