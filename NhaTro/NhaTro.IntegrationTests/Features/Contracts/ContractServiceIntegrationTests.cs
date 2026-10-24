@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
@@ -16,7 +18,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     [SqlServerFact]
     public async Task CreateContractAsync_RejectsRoomThatIsNotAvailable()
     {
-        await fixture.ResetAsync();
+        await ResetDatabaseAsync();
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
         await using var dbContext = db;
         var service = new ContractService(dbContext, null!);
@@ -30,7 +32,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     [SqlServerFact]
     public async Task CreateContractAsync_RejectsTenantIdThatDoesNotExist()
     {
-        await fixture.ResetAsync();
+        await ResetDatabaseAsync();
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var service = new ContractService(dbContext, null!);
@@ -39,6 +41,63 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             Request(roomId, tenantIds: [999])));
 
         Assert.Equal("TenantIds", exception.ParamName);
+    }
+
+    [SqlServerFact]
+    public async Task CreateContractAsync_PersistsContractAndMembersWithPriceSnapshots()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var tenant = await AddTenantAsync(dbContext, "Tenant One", "0900000001");
+        var service = new ContractService(dbContext, null!);
+
+        var response = await service.CreateContractAsync(Request(roomId, [tenant.Id]));
+
+        Assert.NotEqual(Guid.Empty, response.ContractId);
+        Assert.StartsWith("HD-", response.ContractNumber);
+        Assert.Equal(1_000_000m, response.SnapshotPrice);
+        Assert.Equal(200_000m, response.DepositAmount);
+        Assert.Equal(ContractStatus.Pending, response.Status);
+
+        await using var reloadedDb = fixture.CreateContext();
+        var savedContract = await reloadedDb.Contracts.SingleAsync(
+            contract => contract.ContractId == response.ContractId);
+        var savedMember = await reloadedDb.ContractMembers.SingleAsync(
+            member => member.ContractId == response.ContractId);
+
+        Assert.Equal(response.SnapshotPrice, savedContract.SnapshotPrice);
+        Assert.Equal(response.DepositAmount, savedContract.DepositAmount);
+        Assert.Equal(tenant.Id, savedMember.TenantId);
+    }
+
+    [SqlServerFact]
+    public async Task CreateContractAsync_RollsBackContractWhenMemberInsertFails()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var tenant = await AddTenantAsync(dbContext, "Tenant Two", "0900000002");
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            ALTER TABLE [ContractMembers]
+            ADD CONSTRAINT [CK_Test_ContractMembers_Reject] CHECK ([TenantId] < 0);
+            """);
+        var service = new ContractService(dbContext, null!);
+
+        try
+        {
+            await Assert.ThrowsAsync<DbUpdateException>(() => service.CreateContractAsync(Request(roomId, [tenant.Id])));
+        }
+        finally
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE [ContractMembers] DROP CONSTRAINT [CK_Test_ContractMembers_Reject];
+                """);
+        }
+
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Empty(await reloadedDb.Contracts.ToListAsync());
+        Assert.Empty(await reloadedDb.ContractMembers.ToListAsync());
     }
 
     private async Task<(ApplicationDbContext Db, int RoomId)> CreateDatabaseWithRoomAsync(RoomStatus roomStatus)
@@ -62,6 +121,25 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await db.SaveChangesAsync();
 
         return (db, room.Id);
+    }
+
+    private async Task ResetDatabaseAsync()
+    {
+        await using (var db = fixture.CreateContext())
+        {
+            await db.ContractMembers.ExecuteDeleteAsync();
+            await db.Contracts.ExecuteDeleteAsync();
+        }
+
+        await fixture.ResetAsync();
+    }
+
+    private static async Task<Tenant> AddTenantAsync(ApplicationDbContext db, string fullName, string phone)
+    {
+        var tenant = new Tenant { FullName = fullName, Phone = phone };
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+        return tenant;
     }
 
     private static CreateContractRequest Request(int roomId, List<int> tenantIds) => new(

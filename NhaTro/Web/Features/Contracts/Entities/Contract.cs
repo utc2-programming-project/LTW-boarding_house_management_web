@@ -20,4 +20,6 @@ public sealed class Contract
     public decimal DepositAmount { get; set; }
 
     public ContractStatus Status { get; set; } = ContractStatus.Pending;
+
+    public ICollection<ContractMember> Members { get; set; } = new List<ContractMember>();
 }

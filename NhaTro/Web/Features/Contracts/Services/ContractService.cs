@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Utils;
 using Web.Data;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
@@ -10,12 +11,12 @@ namespace Web.Features.Contracts.Services;
 
 public sealed class ContractService : IContractService
 {
-    private ApplicationDbContext DbContext { get; }
+    private readonly ApplicationDbContext _context;
     private IRoomService RoomService { get; }
 
     public ContractService(ApplicationDbContext dbContext, IRoomService roomService)
     {
-        DbContext = dbContext;
+        _context = dbContext;
         RoomService = roomService;
     }
 
@@ -37,7 +38,7 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var room = await DbContext.Rooms
+        var room = await _context.Rooms
             .AsNoTracking()
             .FirstOrDefaultAsync(room => room.Id == request.RoomId
                 && room.IsActive
@@ -54,7 +55,7 @@ public sealed class ContractService : IContractService
         var currentRoomPrice = room.StandardPrice;
 
         var requestedTenantIds = request.TenantIds.Distinct().ToList();
-        var existingTenantCount = await DbContext.Tenants
+        var existingTenantCount = await _context.Tenants
             .AsNoTracking()
             .Where(tenant => requestedTenantIds.Contains(tenant.Id)
                 && tenant.IsActive
@@ -69,11 +70,13 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var depositAmount = currentRoomPrice * 0.20m;
-        _ = new Contract
+        var depositAmount = MoneyFormatter.RoundVnd(currentRoomPrice * 0.20m);
+        var contractId = Guid.NewGuid();
+        var contractNumber = $"HD-{contractId:N}".ToUpperInvariant();
+        var contract = new Contract
         {
-            ContractId = Guid.NewGuid(),
-            ContractNumber = $"HD-{Guid.NewGuid():N}".ToUpperInvariant(),
+            ContractId = contractId,
+            ContractNumber = contractNumber,
             RoomId = room.Id,
             SnapshotPrice = currentRoomPrice,
             DepositAmount = depositAmount,
@@ -82,7 +85,30 @@ public sealed class ContractService : IContractService
             Status = ContractStatus.Pending,
         };
 
-        throw new NotImplementedException(
-            "Tạo hợp đồng chưa được triển khai sau bước kiểm tra dữ liệu.");
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Contracts.Add(contract);
+            _context.ContractMembers.AddRange(requestedTenantIds.Select(tenantId => new ContractMember
+            {
+                ContractId = contract.ContractId,
+                TenantId = tenantId,
+            }));
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+        return new ContractResponseDto(
+            contract.ContractId,
+            contract.ContractNumber,
+            contract.SnapshotPrice,
+            contract.DepositAmount,
+            contract.Status);
     }
 }
