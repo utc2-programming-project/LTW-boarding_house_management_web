@@ -17,6 +17,7 @@ public sealed record IncidentDemoPending(IncidentDemoAction Action, IncidentDemo
 
 public sealed record IncidentDemoPhoto(string Name, byte[] Content, bool IsResult = false, string UploadedBy = "")
 {
+    // Giới hạn riêng cho mỗi nhóm: ảnh báo hoặc ảnh kết quả, gồm ảnh chờ duyệt của nhóm đó.
     public const int MaxCount = 3;
     public const long MaxBytes = 5L * 1024 * 1024;
     public string? ContentType => FileContentSniffer.DetectContentType(Content);

@@ -168,7 +168,8 @@
     private bool Busy => _loading || _saving || _uploading;
     private bool HasPendingUpdate => _item?.Pending.Any(p => p.Action == IncidentDemoAction.Update) == true;
     private IncidentDemoStatus NextStatus => _item?.Status == IncidentDemoStatus.New ? IncidentDemoStatus.InProgress : IncidentDemoStatus.Completed;
-    private int AvailablePhotoSlots => Math.Max(0, IncidentDemoPhoto.MaxCount - (_item?.Photos.Count ?? 0) - (_item?.Pending.Sum(p => p.Photos.Count) ?? 0));
+    private int AvailablePhotoSlots => Math.Max(0, IncidentDemoPhoto.MaxCount - (_item?.Photos.Count(p => p.IsResult) ?? 0)
+        - (_item?.Pending.Where(p => p.Action == IncidentDemoAction.ResultPhoto).Sum(p => p.Photos.Count) ?? 0));
     private string RoomText
     {
         get

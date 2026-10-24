@@ -17,7 +17,7 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
         [IncidentDemoAction.ResultPhoto] = IncidentDemoMode.Approval
     };
     private string? _sessionUserId;
-    private int _nextId = 104;
+    private int _nextId = 105;
     private static readonly IncidentDemoRoom[] DemoRooms =
     [
         new(101, 1, "An Bình (demo)", "A101"),
@@ -63,6 +63,10 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
             IncidentDemoUrgency.Normal, IncidentDemoStatus.Completed, now.AddDays(-3), "", [],
             [new(now.AddDays(-3), "ActorTenant", "EventCreated"), new(now.AddDays(-2), "ActorOwner", "EventStarted"),
                 new(now.AddDays(-1), "ActorOwner", "EventCompleted")], []));
+        _items.Add(new(104, 101, "SampleTitleFurniture", "SampleDescriptionFurniture", IncidentDemoCategory.Furniture,
+            IncidentDemoUrgency.Normal, IncidentDemoStatus.Completed, now.AddDays(-4), "", [],
+            [new(now.AddDays(-4), "ActorTenant", "EventCreated"), new(now.AddDays(-3), "ActorManager", "EventStarted"),
+                new(now.AddDays(-2), "ActorManager", "EventCompleted")], []));
         // Một ảnh PNG minh họa mẫu trong bộ nhớ, gắn đúng người báo mô phỏng.
         var illustration = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5QAAAABJRU5ErkJggg==");
         _items[0] = _items[0] with { Photos = [new("sample.png", illustration, UploadedBy: user.FindFirstValue(ClaimTypes.NameIdentifier)!)] };
@@ -173,7 +177,8 @@ public sealed class IncidentDemoSession(AuthenticationStateProvider authenticati
         var mode = Mode(user, IncidentDemoAction.ResultPhoto);
         if (mode == IncidentDemoMode.Deny) throw new IncidentDemoException("ActionDenied");
         if (item.AwaitingCreation || photos.Count == 0) throw new IncidentDemoException("PhotoRequired");
-        CheckPhotos(photos, item.Photos.Count + item.Pending.Sum(p => p.Photos.Count));
+        CheckPhotos(photos, item.Photos.Count(p => p.IsResult)
+            + item.Pending.Where(p => p.Action == IncidentDemoAction.ResultPhoto).Sum(p => p.Photos.Count));
         var now = time.GetUtcNow().UtcDateTime;
         var uploaded = photos.Select(p => p with { IsResult = true, UploadedBy = user.FindFirstValue(ClaimTypes.NameIdentifier)! }).ToArray();
         var pending = mode == IncidentDemoMode.Approval;

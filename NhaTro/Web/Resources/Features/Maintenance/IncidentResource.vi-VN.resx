@@ -202,10 +202,10 @@
     <value>Hình ảnh đính kèm</value>
   </data>
   <data name="PhotoHint" xml:space="preserve">
-    <value>JPG/JPEG/PNG, tối đa 5 MB mỗi ảnh. Tối đa {0} ảnh trong lượt chọn này, tính cả ảnh đã chọn.</value>
+    <value>JPG/JPEG/PNG, tối đa 5 MB mỗi ảnh. Mỗi phiếu có tối đa 3 ảnh báo và 3 ảnh kết quả. Lượt này còn tối đa {0} ảnh, tính cả ảnh đã chọn.</value>
   </data>
   <data name="PhotoSlots" xml:space="preserve">
-    <value>Phiếu còn {0} chỗ ảnh (giới hạn 3 ảnh tổng, gồm ảnh chờ duyệt).</value>
+    <value>Còn {0} chỗ ảnh kết quả (tối đa 3 ảnh kết quả, gồm ảnh chờ duyệt; ảnh báo tính riêng).</value>
   </data>
   <data name="ReadingPhotos" xml:space="preserve">
     <value>Đang đọc ảnh…</value>
@@ -217,7 +217,7 @@
     <value>Bỏ ảnh: {0}</value>
   </data>
   <data name="PhotoLimit" xml:space="preserve">
-    <value>Tối đa 3 ảnh tổng trên phiếu; vui lòng kiểm tra số chỗ ảnh còn lại.</value>
+    <value>Tối đa 3 ảnh báo và 3 ảnh kết quả trên phiếu, tính cả ảnh chờ duyệt trong từng nhóm; vui lòng kiểm tra số chỗ ảnh còn lại.</value>
   </data>
   <data name="PhotoInvalid" xml:space="preserve">
     <value>Ảnh phải là JPG/JPEG/PNG có nội dung hợp lệ, không rỗng và không quá 5 MB. Không đọc được ảnh; hãy chọn lại.</value>
@@ -269,6 +269,12 @@
   </data>
   <data name="EventRequested" xml:space="preserve">
     <value>Gửi đề xuất chờ duyệt mẫu</value>
+  </data>
+  <data name="SampleTitleFurniture" xml:space="preserve">
+    <value>Cửa tủ đã được sửa (mẫu)</value>
+  </data>
+  <data name="SampleDescriptionFurniture" xml:space="preserve">
+    <value>Cửa tủ trong phòng bị lệch bản lề; đã căn chỉnh và kiểm tra đóng mở ổn định.</value>
   </data>
   <data name="SampleTitleWater" xml:space="preserve">
     <value>Rò nước vòi lavabo</value>

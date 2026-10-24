@@ -137,7 +137,13 @@
             await _list.RestoreDetailFocusAsync(closedId.Value);
     }
     private Task OpenDetailAsync(int id) { _detailId = id; return Task.CompletedTask; }
-    private async Task CreatedAsync() { _creating = false; await ReloadAsync(); }
+    private async Task CreatedAsync()
+    {
+        _creating = false;
+        // Đổi scenario sẽ khiến list tự reload qua OnParametersSetAsync.
+        if (_scenario != "Normal") _scenario = "Normal";
+        else await ReloadAsync();
+    }
     private Task ReloadAsync() => _list?.ReloadAsync() ?? Task.CompletedTask;
 
     private async Task ChangeModeAsync(IncidentDemoAction action, ChangeEventArgs args)

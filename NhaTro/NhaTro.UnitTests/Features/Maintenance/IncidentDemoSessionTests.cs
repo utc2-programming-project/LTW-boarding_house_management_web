@@ -10,9 +10,9 @@ namespace NhaTro.UnitTests.Features.Maintenance;
 public sealed class IncidentDemoSessionTests
 {
     [Theory]
-    [InlineData(Roles.ChuTro, 3)]
-    [InlineData(Roles.QuanLy, 2)]
-    [InlineData(Roles.KhachThue, 1)]
+    [InlineData(Roles.ChuTro, 4)]
+    [InlineData(Roles.QuanLy, 3)]
+    [InlineData(Roles.KhachThue, 2)]
     public async Task List_and_detail_enforce_the_same_room_scope(string role, int expectedCount)
     {
         var session = new IncidentDemoSession(new DemoAuthentication(User(role)), TimeProvider.System);
@@ -83,11 +83,11 @@ public sealed class IncidentDemoSessionTests
         await Assert.ThrowsAsync<IncidentDemoException>(() => session.CreateAsync(form));
         await Assert.ThrowsAsync<IncidentDemoException>(() => session.UpdateAsync(101, IncidentDemoStatus.InProgress, ""));
         await Assert.ThrowsAsync<IncidentDemoException>(() => session.AddResultPhotosAsync(101, [Photo()]));
-        Assert.Single(await session.ListAsync());
+        Assert.Equal(2, (await session.ListAsync()).Count);
 
         form.RoomId = 101;
         Assert.False(await session.CreateAsync(form));
-        Assert.Equal(2, (await session.ListAsync()).Count);
+        Assert.Equal(3, (await session.ListAsync()).Count);
     }
 
     [Fact]
@@ -109,9 +109,10 @@ public sealed class IncidentDemoSessionTests
         var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.QuanLy)), TimeProvider.System);
         await session.InitializeAsync();
         Assert.True(await session.AddResultPhotosAsync(101, [Photo(), Photo()]));
+        Assert.True(await session.AddResultPhotosAsync(101, [Photo()]));
         var item = await session.DetailAsync(101);
         Assert.Single(item.Photos);
-        Assert.Equal(2, Assert.Single(item.Pending).Photos.Count);
+        Assert.Equal(3, item.Pending.Sum(p => p.Photos.Count));
         Assert.Equal("PhotoLimit", (await Assert.ThrowsAsync<IncidentDemoException>(() => session.AddResultPhotosAsync(101, [Photo()]))).Message);
         Assert.Single((await session.DetailAsync(101)).Photos);
     }
@@ -126,13 +127,50 @@ public sealed class IncidentDemoSessionTests
 
         var other = new IncidentDemoSession(new DemoAuthentication(User(Roles.ChuTro)), TimeProvider.System);
         await other.InitializeAsync();
-        Assert.Equal(3, (await other.ListAsync()).Count);
-        Assert.Equal(4, (await session.ListAsync()).Count);
+        Assert.Equal(4, (await other.ListAsync()).Count);
+        Assert.Equal(5, (await session.ListAsync()).Count);
 
         authentication.Principal = User(Roles.Admin, Roles.ChuTro);
         await Assert.ThrowsAsync<IncidentDemoException>(() => session.ListAsync());
         authentication.Principal = UserWithId("another-user", Roles.ChuTro);
         Assert.Equal("SessionChanged", (await Assert.ThrowsAsync<IncidentDemoException>(() => session.ListAsync())).Message);
+    }
+
+    [Fact]
+    public async Task Tenant_has_a_completed_sample_with_history_but_no_internal_data()
+    {
+        var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.KhachThue)), TimeProvider.System);
+        await session.InitializeAsync();
+
+        var item = Assert.Single(await session.ListAsync(), i => i.Status == IncidentDemoStatus.Completed);
+        Assert.Equal(101, item.RoomId);
+        Assert.Equal("EventCompleted", item.History[^1].EventKey);
+        var detail = await session.DetailAsync(item.Id);
+        Assert.Equal("", detail.TechnicalNotes);
+        Assert.Empty(detail.Pending);
+    }
+
+    [Fact]
+    public async Task Three_report_photos_and_three_result_photos_have_independent_limits()
+    {
+        var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.ChuTro)), TimeProvider.System);
+        await session.InitializeAsync();
+        var form = Form(101);
+        form.Photos = [Photo(), Photo(), Photo(), Photo()];
+        Assert.Equal("PhotoLimit", (await Assert.ThrowsAsync<IncidentDemoException>(() => session.CreateAsync(form))).Message);
+        Assert.Equal(4, (await session.ListAsync()).Count);
+
+        form.Photos = [Photo(), Photo(), Photo()];
+        Assert.False(await session.CreateAsync(form));
+        var item = Assert.Single(await session.ListAsync(), i => !i.IsSeeded);
+        Assert.False(await session.AddResultPhotosAsync(item.Id, [Photo(), Photo()]));
+        Assert.False(await session.AddResultPhotosAsync(item.Id, [Photo()]));
+        var full = await session.DetailAsync(item.Id);
+        Assert.Equal(3, full.Photos.Count(p => !p.IsResult));
+        Assert.Equal(3, full.Photos.Count(p => p.IsResult));
+        Assert.Equal("PhotoLimit", (await Assert.ThrowsAsync<IncidentDemoException>(
+            () => session.AddResultPhotosAsync(item.Id, [Photo()]))).Message);
+        Assert.Equal(full, await session.DetailAsync(item.Id));
     }
 
     private static IncidentDemoForm Form(int roomId) => new()

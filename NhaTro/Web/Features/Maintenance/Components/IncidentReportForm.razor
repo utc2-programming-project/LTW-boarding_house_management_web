@@ -1,3 +1,4 @@
+@implements IDisposable
 @inject IStringLocalizer<IncidentResource> L
 @inject ToastService Toasts
 
@@ -94,12 +95,21 @@
     {
         _context = new(_form);
         _messages = new(_context);
+        _context.OnFieldChanged += FieldChanged;
         if (Rooms.Count == 1)
         {
             _form.PropertyId = Rooms[0].PropertyId;
             _form.RoomId = Rooms[0].Id;
         }
     }
+
+    private void FieldChanged(object? sender, FieldChangedEventArgs args)
+    {
+        _messages.Clear(args.FieldIdentifier);
+        _context.NotifyValidationStateChanged();
+    }
+
+    public void Dispose() => _context.OnFieldChanged -= FieldChanged;
 
     private void PropertyChanged()
     {

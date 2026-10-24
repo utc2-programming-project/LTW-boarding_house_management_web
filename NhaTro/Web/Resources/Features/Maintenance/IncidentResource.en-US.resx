@@ -202,10 +202,10 @@
     <value>Attachments</value>
   </data>
   <data name="PhotoHint" xml:space="preserve">
-    <value>JPG/JPEG/PNG, up to 5 MB per photo. At most {0} photos in this selection, including selected photos.</value>
+    <value>JPG/JPEG/PNG, up to 5 MB per photo. Each report allows 3 report photos and 3 result photos. At most {0} photos in this selection, including selected photos.</value>
   </data>
   <data name="PhotoSlots" xml:space="preserve">
-    <value>{0} photo slots remain (3 total per report, including photos pending approval).</value>
+    <value>{0} result photo slots remain (up to 3 result photos, including pending approval; report photos count separately).</value>
   </data>
   <data name="ReadingPhotos" xml:space="preserve">
     <value>Reading photos…</value>
@@ -217,7 +217,7 @@
     <value>Remove photo: {0}</value>
   </data>
   <data name="PhotoLimit" xml:space="preserve">
-    <value>A report allows up to 3 photos in total. Please check the remaining photo slots.</value>
+    <value>A report allows up to 3 report photos and 3 result photos, including pending approval in each group. Please check the remaining photo slots.</value>
   </data>
   <data name="PhotoInvalid" xml:space="preserve">
     <value>Use a non-empty JPG/JPEG/PNG with matching file content, up to 5 MB. The image could not be read; please select it again.</value>
@@ -269,6 +269,12 @@
   </data>
   <data name="EventRequested" xml:space="preserve">
     <value>Sample approval request submitted</value>
+  </data>
+  <data name="SampleTitleFurniture" xml:space="preserve">
+    <value>Wardrobe door repaired (sample)</value>
+  </data>
+  <data name="SampleDescriptionFurniture" xml:space="preserve">
+    <value>The wardrobe door hinge was misaligned; it has been adjusted and checked to open and close smoothly.</value>
   </data>
   <data name="SampleTitleWater" xml:space="preserve">
     <value>Leaking washbasin tap</value>
