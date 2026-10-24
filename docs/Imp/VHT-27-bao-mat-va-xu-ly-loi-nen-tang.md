@@ -16,14 +16,14 @@
 | 1 | **Antiforgery** | Giữ `UseAntiforgery()` toàn cục; `/api/files` tự `ValidateRequestAsync`. Thêm test: thiếu token ở login, `/culture/set`, `/api/files` → **400** |
 | 2 | **Giới hạn đăng nhập** | Rate limit theo IP: login **10/phút**, `/api/files` **20/phút**, `/culture/set` **20/phút** → **429** (JSON `UploadResult` cho `/api`). Giữ lockout 5 lần/15 phút sẵn có |
 | 3 | **CAPTCHA** | Sau **3 lần sai** hiện thử thách cộng hai số; đáp án mã hoá bằng Data Protection (`ICaptchaVerifier` + `LocalCaptchaVerifier`), sẵn sàng thay captcha thật không sửa luồng login |
-| 4 | **Lọc log** | `SensitiveDataScrubber` (Serilog enricher) che `Password`, `Token`, `Authorization`, `Cookie`, `IdNumber/CitizenId`, `ConnectionString`, `Secret`… thành `***` |
+| 4 | **Lọc log** | `SensitiveDataScrubber` (Serilog enricher) che `Password`, `Token`, `Authorization`, `Cookie`, `IdNumber/CitizenId`, `ConnectionString`, `Secret`… thành `***`; `SafeExceptionEnricher` + `LogSanitizer` che cả nội dung exception (SQL, endpoint DB, đường dẫn máy) trước khi ghi |
 | 5 | **Lỗi an toàn** | `/api` non-dev: `ApiExceptionHandlerMiddleware` trả JSON **500** theo shape `UploadResult`, không lộ exception. Viết lại `/Error`, `/not-found` song ngữ, an toàn |
 | 6 | **Health** | `/health/live` (process sống) và `/health/ready` (kết nối DB) — ẩn danh, chỉ trả `Healthy`/`Unhealthy`, `Cache-Control: no-store` |
 | 7 | **Data Protection** | Khoá lưu ngoài thư mục publish theo `Security:DataProtectionKeysPath`, `SetApplicationName("NhaTro.Web")`; hướng dẫn trong `docs/operations/secrets.md` |
 
 **Cấu hình mới:** section `Security` trong `appsettings.json` (`DataProtectionKeysPath`, `Captcha.RequiredAfterFailedAttempts`, `RateLimit.*`).
 
-**Kiểm chứng:** build **0 warning / 0 error**; **Unit 348 pass**; **Integration 70 pass**.
+**Kiểm chứng:** build **0 warning / 0 error**; **Unit 357 pass**; **Integration 73 pass**.
 
 ---
 
@@ -122,7 +122,7 @@ Rà **và** cấu hình các lớp bảo mật / xử lý lỗi dùng chung đ�
 - [x] Áp danh sách cấm log ở trên; rà chỗ ghi log user/email hiện có. → Rà toàn bộ `Log*` trong `Web/`: không chỗ nào ghi `IdNumber`/mật khẩu/hash/token/cookie/nội dung tệp. Chỉ log UserId/email/fileCategory/tên tệp server — chấp nhận được.
 - [x] Rà `UseSerilogRequestLogging`: đảm bảo không log query string nhạy cảm; cân nhắc `EnrichDiagnosticContext` chỉ ghi path/method/status. → Mặc định chỉ ghi `RequestPath` (không query string); giữ nguyên.
 - [x] Kiểm các chỗ hiện có ghi log user/email — chấp nhận hay che (chốt). → Chấp nhận email/UserId (định danh tài khoản), không chấp nhận dữ liệu nhạy cảm khác.
-- [x] (Nếu cần) helper che dữ liệu trong `Infrastructure/Logging/`. → `SensitiveDataScrubber` (Serilog enricher) che thuộc tính tên `Password`, `Token`, `IdNumber`, `Cookie`, `ConnectionString`… thành `***`.
+- [x] (Nếu cần) helper che dữ liệu trong `Infrastructure/Logging/`. → `SensitiveDataScrubber` (Serilog enricher) che thuộc tính tên `Password`, `Token`, `IdNumber`, `Cookie`, `ConnectionString`… thành `***`; `LogSanitizer` + `SafeExceptionEnricher` che nội dung exception (secret/connection string/đường dẫn tuyệt đối).
 - [x] Test: thao tác có `IdNumber`/login sai **không** xuất hiện giá trị nhạy cảm trong log. → Unit test `SensitiveDataScrubberTests` (che đúng, giữ thuộc tính thường). **Chưa** thêm test bắt log toàn trình qua HTTP (Serilog ghi file/console khó chặn trong `WebApplicationFactory`) — phần còn lại nếu cần.
 
 **File:** `Program.cs`, `Infrastructure/Logging/` (mới nếu cần).
@@ -233,7 +233,7 @@ Rà **và** cấu hình các lớp bảo mật / xử lý lỗi dùng chung đ�
 - [x] F. Health live/ready (package EF, ẩn danh) + test 200 `Healthy`
 - [x] G. Data Protection keys (HSTS rà khi deploy — còn mở)
 - [x] Build 0 warning / 0 error
-- [x] Chạy unit + integration: **Unit 362 pass**, **Integration 73 pass** (E2E chưa chạy lại — không đổi luồng UI đăng nhập thường)
+- [x] Chạy unit + integration: **Unit 357 pass**, **Integration 73 pass** (E2E chưa chạy lại — không đổi luồng UI đăng nhập thường)
 - [x] Cập nhật tài liệu liên quan (`docs/operations/secrets.md` — Data Protection keys; tech-stack cập nhật khi thay CAPTCHA thật)
 
 ### 7.1. Vá sau rà soát (VHT-27)
@@ -241,9 +241,11 @@ Rà **và** cấu hình các lớp bảo mật / xử lý lỗi dùng chung đ�
 | # | Vấn đề phát hiện | Cách xử lý | Test |
 |---|---|---|---|
 | 1 | Admin cuối tự xoá được tài khoản → hệ thống mất người quản trị | `AccountPermissionRules.CheckSelfDelete` + chặn trong `DeletePersonalData.razor`; xoá thất bại do FK trả thông báo thay vì 500 | `AccountPermissionRulesTests`, `DeleteAccountGuardTests` |
-| 2 | `/Account/Login/` (dấu `/` cuối) lách rate limit; mã 2FA/khôi phục không bị giới hạn | `RateLimitPolicies` chuẩn hoá path + thêm `/Account/LoginWith2fa`, `/Account/LoginWithRecoveryCode` | `RateLimitPoliciesTests`, `LoginRateLimitBypassTests` |
+| 2 | `/Account/Login/` (dấu `/` cuối) lách rate limit; mã 2FA/khôi phục không bị giới hạn | `RateLimitPolicies` chuẩn hoá path + thêm `/Account/LoginWith2fa`, `/Account/LoginWithRecoveryCode` | `RateLimitPoliciesTests`, `LoginRateLimitTests` (gộp case dấu `/`) |
 | 3 | Sau IIS/proxy, mọi request cùng IP loopback → chung một xô rate limit | `ClientKey` lấy IP cuối của `X-Forwarded-For` khi peer là loopback (không tin header từ client ngoài) | `RateLimitPoliciesTests` |
 | 4 | `POST /Account/Manage/DownloadPersonalData` không kiểm antiforgery | Tự `IsRequestValidAsync` trong handler (endpoint không bind form) | `SecurityEndpointTests` |
+| 5 | `POST /Account/Manage/LinkExternalLogin` thiếu token trả **500** (binding `[FromForm]` + middleware .NET 10 ném lỗi khi form chưa xác thực) | Bỏ `[FromForm]`, tự `IsRequestValidAsync` rồi mới đọc form; provider chưa cấu hình → **400** thay vì `Challenge` ném 500 | `SecurityEndpointTests` |
+| 6 | Log vẫn ghi raw exception qua template mặc định `{Exception}` → có thể lộ SQL/connection string/đường dẫn máy | `SafeExceptionEnricher` + `LogSanitizer`; output template của Console/File dùng `{SafeException}` (đã che secret, endpoint DB, path), `{Exception}` bị bỏ | `SafeExceptionEnricherTests` |
 
 **Ghi chú triển khai:** nếu chạy sau reverse proxy khác máy, cần cấu hình `ForwardedHeaders` ở tầng host; cơ chế trong `ClientKey` chỉ xử lý proxy cùng máy (loopback) như IIS mặc định.
 

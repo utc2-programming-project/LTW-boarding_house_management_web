@@ -47,10 +47,15 @@ Directory.CreateDirectory(logDirectory);
 // log ở đây nè, công dụng của serilog đó.
 builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
     // che cac thuoc tinh nhay cam (mat khau, token, CCCD...) truoc khi ghi log.
-    .Enrich.With<SensitiveDataScrubber>().WriteTo.Console().WriteTo.File(
+    .Enrich.With<SensitiveDataScrubber>()
+    // exception chi ghi dang da lam sach (khong lo connection string/SQL/duong dan may).
+    .Enrich.With<SafeExceptionEnricher>()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console)
+    .WriteTo.File(
         Path.Combine(logDirectory, "web-.log"),
         rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7));
+        retainedFileCountLimit: 7,
+        outputTemplate: LogTemplates.File));
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();

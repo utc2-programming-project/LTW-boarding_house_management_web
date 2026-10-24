@@ -38,42 +38,31 @@ public class RateLimitPoliciesTests
     }
 
     [Fact]
-    public void Khoa_theo_ip_that_cua_client()
+    public void ClientKey_lay_ip_va_chi_tin_X_forwarded_for_tu_loopback()
     {
-        var http = new DefaultHttpContext();
-        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.5");
+        Assert.Equal("10.0.0.5", ClientKey("10.0.0.5"));
 
-        Assert.Equal("10.0.0.5", RateLimitPolicies.ClientKey(http));
+        // Proxy cùng máy (IIS): lấy IP cuối của X-Forwarded-For.
+        Assert.Equal("203.0.113.7",
+            ClientKey("127.0.0.1", "198.51.100.9, 203.0.113.7"));
+
+        // Client ngoài không giả được X-Forwarded-For.
+        Assert.Equal("10.0.0.5", ClientKey("10.0.0.5", "1.2.3.4"));
+
+        // Header sai định dạng thì giữ IP peer.
+        Assert.Equal("127.0.0.1", ClientKey("127.0.0.1", "khong-phai-ip"));
     }
 
-    [Fact]
-    public void Sau_proxy_loopback_thi_lay_ip_cuoi_cua_x_forwarded_for()
+    private static string ClientKey(string remoteIp, string? forwardedFor = null)
     {
         var http = new DefaultHttpContext();
-        http.Connection.RemoteIpAddress = IPAddress.Loopback;
-        http.Request.Headers["X-Forwarded-For"] = "198.51.100.9, 203.0.113.7";
+        http.Connection.RemoteIpAddress = IPAddress.Parse(remoteIp);
+        if (forwardedFor is not null)
+        {
+            http.Request.Headers["X-Forwarded-For"] = forwardedFor;
+        }
 
-        Assert.Equal("203.0.113.7", RateLimitPolicies.ClientKey(http));
-    }
-
-    [Fact]
-    public void Client_ngoai_khong_gia_duoc_x_forwarded_for()
-    {
-        var http = new DefaultHttpContext();
-        http.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.5");
-        http.Request.Headers["X-Forwarded-For"] = "1.2.3.4";
-
-        Assert.Equal("10.0.0.5", RateLimitPolicies.ClientKey(http));
-    }
-
-    [Fact]
-    public void X_forwarded_for_sai_dinh_dang_thi_giu_ip_peer()
-    {
-        var http = new DefaultHttpContext();
-        http.Connection.RemoteIpAddress = IPAddress.Loopback;
-        http.Request.Headers["X-Forwarded-For"] = "khong-phai-ip";
-
-        Assert.Equal(IPAddress.Loopback.ToString(), RateLimitPolicies.ClientKey(http));
+        return RateLimitPolicies.ClientKey(http);
     }
 
     private static DefaultHttpContext Post(string path)

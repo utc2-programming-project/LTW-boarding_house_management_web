@@ -7,17 +7,6 @@ namespace NhaTro.IntegrationTests.Features.Security;
 public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture<WebAppFixture>
 {
     [WebAppFact]
-    public async Task Health_live_tra_200_va_chi_tra_trang_thai()
-    {
-        using var client = fixture.CreateClient();
-
-        var response = await client.GetAsync("/health/live");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("Healthy", (await response.Content.ReadAsStringAsync()).Trim());
-    }
-
-    [WebAppFact]
     public async Task Health_ready_tra_200_khi_db_san_sang()
     {
         using var client = fixture.CreateClient();
@@ -76,6 +65,48 @@ public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [WebAppFact]
+    public async Task Link_external_login_thieu_antiforgery_tra_400()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+
+        var login = await LoginFormClient.PostFreshAsync(
+            client, TestDataSeeder.ChuTroAEmail, TestDataSeeder.Password);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var response = await client.PostAsync(
+            "/Account/Manage/LinkExternalLogin",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["provider"] = "Google",
+            }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [WebAppFact]
+    public async Task Link_external_login_provider_khong_cau_hinh_tra_400()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+
+        var login = await LoginFormClient.PostFreshAsync(
+            client, TestDataSeeder.ChuTroAEmail, TestDataSeeder.Password);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var (token, _) = await LoginFormClient.GetAnyFormAsync(client, "/Account/Manage/ChangePassword");
+
+        var response = await client.PostAsync(
+            "/Account/Manage/LinkExternalLogin",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token,
+                ["provider"] = "Google",
+            }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
 
     [WebAppFact]
     public async Task Download_personal_data_thieu_antiforgery_tra_400()

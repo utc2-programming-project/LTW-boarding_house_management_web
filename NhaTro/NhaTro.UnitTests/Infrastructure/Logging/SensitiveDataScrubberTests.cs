@@ -21,6 +21,7 @@ public sealed class SensitiveDataScrubberTests
                 new LogEventProperty("Email", new ScalarValue("a@b.local")),
                 new LogEventProperty("Password", new ScalarValue("Secret123!")),
                 new LogEventProperty("IdNumber", new ScalarValue("079201000001")),
+                new LogEventProperty("Count", new ScalarValue(3)),
             });
 
         new SensitiveDataScrubber().Enrich(logEvent, new TestPropertyFactory());
@@ -28,20 +29,6 @@ public sealed class SensitiveDataScrubberTests
         Assert.Equal("***", ((ScalarValue)logEvent.Properties["Password"]).Value);
         Assert.Equal("***", ((ScalarValue)logEvent.Properties["IdNumber"]).Value);
         Assert.Equal("a@b.local", ((ScalarValue)logEvent.Properties["Email"]).Value);
-    }
-
-    [Fact]
-    public void Khong_dong_vao_thong_diep_khong_co_thuoc_tinh_nhay_cam()
-    {
-        var logEvent = new LogEvent(
-            DateTimeOffset.UtcNow,
-            LogEventLevel.Information,
-            exception: null,
-            new MessageTemplateParser().Parse("Da xu ly {Count} tep"),
-            new[] { new LogEventProperty("Count", new ScalarValue(3)) });
-
-        new SensitiveDataScrubber().Enrich(logEvent, new TestPropertyFactory());
-
         Assert.Equal(3, ((ScalarValue)logEvent.Properties["Count"]).Value);
     }
 

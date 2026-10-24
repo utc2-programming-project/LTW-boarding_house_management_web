@@ -26,6 +26,17 @@ public sealed class LoginRateLimitTests(WebAppFixture fixture) : IClassFixture<W
             {
                 Assert.Equal("Bạn thao tác quá nhanh. Vui lòng thử lại sau.",
                     (await response.Content.ReadAsStringAsync()).Trim());
+
+                // Đường dẫn có dấu '/' cuối không được lách giới hạn (cùng IP, cùng bộ đếm).
+                var bypass = await client.PostAsync(
+                    "/Account/Login/",
+                    new FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        ["Input.Email"] = TestDataSeeder.AdminEmail,
+                        ["Input.Password"] = "SaiMatKhau123!",
+                    }));
+
+                Assert.Equal(HttpStatusCode.TooManyRequests, bypass.StatusCode);
                 return;
             }
         }

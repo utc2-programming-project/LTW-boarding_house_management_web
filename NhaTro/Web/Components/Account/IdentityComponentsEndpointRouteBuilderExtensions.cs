@@ -94,8 +94,34 @@ namespace Microsoft.AspNetCore.Routing
             manageGroup.MapPost("/LinkExternalLogin", async (
                 HttpContext context,
                 [FromServices] SignInManager<ApplicationUser> signInManager,
-                [FromForm] string provider) =>
+                [FromServices] IAntiforgery antiforgery) =>
             {
+                // VHT-27: endpoint tự đọc form nên phải tự kiểm token. Không dùng [FromForm] vì
+                // .NET 10 ném InvalidOperationException khi binding form nếu token sai, làm request
+                // rơi vào 500 thay vì 400.
+                if (!await antiforgery.IsRequestValidAsync(context))
+                {
+                    return Results.BadRequest();
+                }
+
+                var form = await context.Request.ReadFormAsync(context.RequestAborted);
+                var provider = form
+                    .FirstOrDefault(field => string.Equals(field.Key, "provider", StringComparison.OrdinalIgnoreCase))
+                    .Value
+                    .ToString();
+
+                if (string.IsNullOrWhiteSpace(provider))
+                {
+                    return Results.BadRequest();
+                }
+
+                // Chưa cấu hình provider (hoặc provider lạ) thì Challenge sẽ ném 500.
+                var providers = await signInManager.GetExternalAuthenticationSchemesAsync();
+                if (!providers.Any(scheme => string.Equals(scheme.Name, provider, StringComparison.Ordinal)))
+                {
+                    return Results.BadRequest();
+                }
+
                 // Clear the existing external cookie to ensure a clean login process
                 await context.SignOutAsync(IdentityConstants.ExternalScheme);
 

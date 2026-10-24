@@ -27,7 +27,7 @@ public sealed class LocalCaptchaVerifierTests
     }
 
     [Fact]
-    public void Chi_chap_nhan_dung_tong_cua_cau_hoi()
+    public void Chi_chap_nhan_dung_tong_va_token_hop_le()
     {
         var verifier = CreateVerifier();
         var challenge = verifier.CreateChallenge();
@@ -36,26 +36,11 @@ public sealed class LocalCaptchaVerifierTests
         Assert.True(verifier.Verify(challenge.Token, expected.ToString()));
         Assert.True(verifier.Verify(challenge.Token, $" {expected} "));
         Assert.False(verifier.Verify(challenge.Token, (expected + 1).ToString()));
-    }
-
-    [Fact]
-    public void Token_thieu_hoac_gia_bi_tu_choi()
-    {
-        var verifier = CreateVerifier();
-        var challenge = verifier.CreateChallenge();
 
         Assert.False(verifier.Verify(null, "5"));
         Assert.False(verifier.Verify("", "5"));
         Assert.False(verifier.Verify(challenge.Token, ""));
         Assert.False(verifier.Verify("khong-phai-token", "5"));
-    }
-
-    [Fact]
-    public void Token_bi_chinh_sua_bi_tu_choi()
-    {
-        var verifier = CreateVerifier();
-        var challenge = verifier.CreateChallenge();
-        var expected = ExpectedAnswer(challenge.Question);
 
         // Đảo một ký tự trong token (giữ nguyên độ dài) -> mã hoá/MAC không còn hợp lệ.
         var chars = challenge.Token.ToCharArray();
