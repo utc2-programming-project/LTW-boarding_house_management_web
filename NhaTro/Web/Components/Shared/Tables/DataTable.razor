@@ -19,25 +19,18 @@
                             {
                                 <button type="button" class="sort-button" @onclick="() => ToggleSortAsync(col.Key)">
                                     <span>@col.Title</span>
-                                    <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        @if (IsSorted(col.Key, descending: false))
-                                        {
-                                            <path d="M12 19V5" />
-                                            <path d="m5 12 7-7 7 7" />
-                                        }
-                                        else if (IsSorted(col.Key, descending: true))
-                                        {
-                                            <path d="M12 5v14" />
-                                            <path d="m19 12-7 7-7-7" />
-                                        }
-                                        else
-                                        {
-                                            <path d="m21 16-4 4-4-4" />
-                                            <path d="M17 20V4" />
-                                            <path d="m3 8 4-4 4 4" />
-                                            <path d="M7 4v16" />
-                                        }
-                                    </svg>
+                                    @if (IsSorted(col.Key, descending: false))
+                                    {
+                                        <LucideIcon Name="arrow-up" Class="sort-icon" />
+                                    }
+                                    else if (IsSorted(col.Key, descending: true))
+                                    {
+                                        <LucideIcon Name="arrow-down" Class="sort-icon" />
+                                    }
+                                    else
+                                    {
+                                        <LucideIcon Name="chevrons-up-down" Class="sort-icon" />
+                                    }
                                 </button>
                             }
                             else
@@ -149,10 +142,10 @@
             {
                 <nav class="pager" aria-label="@Labels.Pagination">
                     <button type="button" class="page-button" aria-label="@Labels.FirstPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(1)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></svg>
+                        <LucideIcon Name="chevrons-left" />
                     </button>
                     <button type="button" class="page-button" aria-label="@Labels.PreviousPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(_page - 1)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                        <LucideIcon Name="chevron-left" />
                     </button>
                     @foreach (var p in PaginationHelper.PageWindow(_page, TotalPages))
                     {
@@ -161,10 +154,10 @@
                                 @onclick="() => GoToPageAsync(p)">@p</button>
                     }
                     <button type="button" class="page-button" aria-label="@Labels.NextPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(_page + 1)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                        <LucideIcon Name="chevron-right" />
                     </button>
                     <button type="button" class="page-button" aria-label="@Labels.LastPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(TotalPages)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 17 5-5-5-5" /><path d="m13 17 5-5-5-5" /></svg>
+                        <LucideIcon Name="chevrons-right" />
                     </button>
                 </nav>
             }

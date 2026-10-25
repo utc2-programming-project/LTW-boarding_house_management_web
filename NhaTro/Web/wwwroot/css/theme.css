@@ -164,8 +164,86 @@ button,a { -webkit-tap-highlight-color:transparent; }
 }
 @media (prefers-reduced-motion:no-preference) {
  .icon-button,.sidebar-menu .nav-item,.culture-button { transition:background-color 150ms var(--ease),color 150ms var(--ease); }
- .icon-button:hover .lucide-icon,.icon-button:focus-visible .lucide-icon { animation:icon-nudge 250ms var(--ease) 1; }
- @keyframes icon-nudge { 50% { transform:rotate(-10deg); } }
+
+ /* Lucide Animated (MIT): hieu ung hover duoc chuyen sang CSS, khong dung React/Motion. */
+ .lucide-icon { transform-box:fill-box; transform-origin:center; }
+ .lucide-icon [data-anim] { transform-box:fill-box; transform-origin:center; }
+ .lucide-icon [data-anim="draw"] { stroke-dasharray:1; stroke-dashoffset:0; }
+
+ /* Hieu ung rieng cho tung nhom icon. */
+ .lucide-icon[data-icon="plus"],.lucide-icon[data-icon="settings"] { --icon-anim:icon-rotate-180; }
+ .lucide-icon[data-icon="refresh"],.lucide-icon[data-icon="refresh-cw"] { --icon-anim:icon-rotate-50; }
+ .lucide-icon[data-icon="close"],.lucide-icon[data-icon="x"] { --icon-anim:icon-rotate-90; }
+ .lucide-icon[data-icon="key"] { --icon-anim:icon-key; }
+ .lucide-icon[data-icon="moon"] { --icon-anim:icon-wiggle; }
+ .lucide-icon[data-icon="wallet"] { --icon-anim:icon-rock; }
+ .lucide-icon[data-icon="wrench"],.lucide-icon[data-icon="trash"],.lucide-icon[data-icon="trash-2"],.lucide-icon[data-icon="unlink"],.lucide-icon[data-icon="lock"],.lucide-icon[data-icon="unlock"] { --icon-anim:icon-shake; }
+ .lucide-icon[data-icon="alert"],.lucide-icon[data-icon="info"],.lucide-icon[data-icon="shield"],.lucide-icon[data-icon="shield-check"] { --icon-anim:icon-pulse; }
+ .lucide-icon[data-icon="search"] { --icon-anim:icon-search; }
+ .lucide-icon[data-icon="send"] { --icon-anim:icon-send; }
+ .lucide-icon[data-icon="menu"],.lucide-icon[data-icon="sun"],.lucide-icon[data-icon="users"],.lucide-icon[data-icon="check"],.lucide-icon[data-icon="chart"],.lucide-icon[data-icon="user"],.lucide-icon[data-icon="user-off"],.lucide-icon[data-icon="eye"],.lucide-icon[data-icon="eye-off"],.lucide-icon[data-icon="edit"],.lucide-icon[data-icon="pen"],.lucide-icon[data-icon="download"],.lucide-icon[data-icon="logout"],.lucide-icon[data-icon="arrow-right"],.lucide-icon[data-icon="arrow-left"],.lucide-icon[data-icon="chevron"],.lucide-icon[data-icon="chevron-left"],.lucide-icon[data-icon="chevron-right"],.lucide-icon[data-icon="chevrons-left"],.lucide-icon[data-icon="chevrons-right"],.lucide-icon[data-icon="chevrons-up-down"],.lucide-icon[data-icon="arrow-up"],.lucide-icon[data-icon="arrow-down"] { --icon-anim:none; }
+
+ /* Chay hieu ung khi hover/focus ca icon hoac phan tu tuong tac chua icon. */
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon,
+ .lucide-icon:is(:hover,:focus-visible) { animation-name:var(--icon-anim, icon-pop); animation-duration:480ms; animation-timing-function:var(--ease); animation-iteration-count:1; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim] { animation-duration:600ms; animation-timing-function:var(--ease); animation-iteration-count:1; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="draw"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="draw"] { animation-name:icon-draw; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="slide-x"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="slide-x"] { animation-name:icon-slide-x; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="slide-x-back"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="slide-x-back"] { animation-name:icon-slide-x-back; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="slide-y"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="slide-y"] { animation-name:icon-slide-y; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="nudge-left"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="nudge-left"] { animation-name:icon-nudge-left; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="nudge-right"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="nudge-right"] { animation-name:icon-nudge-right; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="nudge-up"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="nudge-up"] { animation-name:icon-nudge-up; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="nudge-down"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="nudge-down"] { animation-name:icon-nudge-down; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="blink"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="blink"] { animation-name:icon-blink; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="ray"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="ray"] { animation-name:icon-ray; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="pulse"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="pulse"] { animation-name:icon-pulse; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="grow"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="grow"] { animation-name:icon-grow; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="menu-1"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="menu-1"] { animation-name:icon-menu-1; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="menu-2"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="menu-2"] { animation-name:icon-menu-2; }
+ :is(a,button,.nav-item,.home-card,.icon-button):is(:hover,:focus-visible) .lucide-icon [data-anim="menu-3"],
+ .lucide-icon:is(:hover,:focus-visible) [data-anim="menu-3"] { animation-name:icon-menu-3; }
+
+ @keyframes icon-pop { 0%,100% { transform:scale(1); } 45% { transform:scale(1.12); } }
+ @keyframes icon-rotate-90 { from { transform:rotate(0); } to { transform:rotate(90deg); } }
+ @keyframes icon-rotate-180 { from { transform:rotate(0); } to { transform:rotate(180deg); } }
+ @keyframes icon-rotate-50 { from { transform:rotate(0); } to { transform:rotate(50deg); } }
+ @keyframes icon-key { 0%,100% { transform:rotate(0); } 35% { transform:rotate(-28deg); } 70% { transform:rotate(-20deg); } }
+ @keyframes icon-wiggle { 0%,100% { transform:rotate(0); } 20% { transform:rotate(-10deg); } 40% { transform:rotate(10deg); } 60% { transform:rotate(-5deg); } 80% { transform:rotate(5deg); } }
+ @keyframes icon-rock { 0%,100% { transform:rotate(0); } 35% { transform:rotate(-6deg); } 70% { transform:rotate(6deg); } }
+ @keyframes icon-shake { 0%,100% { transform:rotate(0); } 20% { transform:rotate(10deg); } 40% { transform:rotate(-12deg); } 60% { transform:rotate(6deg); } 80% { transform:rotate(-4deg); } }
+ @keyframes icon-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+ @keyframes icon-search { 0%,100% { transform:scale(1); } 50% { transform:scale(.86); } }
+ @keyframes icon-send { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(2px,-2px) scale(.9); } }
+ @keyframes icon-draw { from { stroke-dashoffset:1; opacity:0; } to { stroke-dashoffset:0; opacity:1; } }
+ @keyframes icon-slide-x { 0%,100% { transform:translateX(0); } 50% { transform:translateX(-3px); } }
+ @keyframes icon-slide-x-back { 0%,100% { transform:translateX(0); } 50% { transform:translateX(3px); } }
+ @keyframes icon-slide-y { 0%,100% { transform:translateY(0); } 50% { transform:translateY(3px); } }
+ @keyframes icon-nudge-left { 0%,100% { transform:translateX(0); } 50% { transform:translateX(-3px); } }
+ @keyframes icon-nudge-right { 0%,100% { transform:translateX(0); } 50% { transform:translateX(3px); } }
+ @keyframes icon-nudge-up { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+ @keyframes icon-nudge-down { 0%,100% { transform:translateY(0); } 50% { transform:translateY(3px); } }
+ @keyframes icon-blink { 0%,100% { transform:scaleY(1); opacity:1; } 50% { transform:scaleY(.2); opacity:.35; } }
+ @keyframes icon-ray { 0%,100% { opacity:1; } 50% { opacity:.2; } }
+ @keyframes icon-grow { 0%,100% { transform:scaleY(1); } 50% { transform:scaleY(.7); } }
+ @keyframes icon-menu-1 { 0%,100% { transform:rotate(0); } 50% { transform:rotate(45deg); } }
+ @keyframes icon-menu-2 { 0%,100% { opacity:1; } 50% { opacity:0; } }
+ @keyframes icon-menu-3 { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-45deg); } }
 }
 @media (prefers-reduced-motion:reduce) {
  *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; }

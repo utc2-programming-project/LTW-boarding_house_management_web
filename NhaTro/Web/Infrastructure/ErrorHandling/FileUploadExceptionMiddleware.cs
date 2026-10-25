@@ -29,8 +29,9 @@ public sealed class FileUploadExceptionMiddleware(RequestDelegate next, ILogger<
     }
 
     private static bool IsFileUploadRequest(HttpContext context) =>
-        HttpMethods.IsPost(context.Request.Method)
-        && context.Request.Path.StartsWithSegments("/api/files");
+        (HttpMethods.IsPost(context.Request.Method) || HttpMethods.IsPut(context.Request.Method))
+        && (context.Request.Path.StartsWithSegments("/api/files")
+            || context.Request.Path.StartsWithSegments("/api/tenants"));
 
     private async Task WriteTooLargeAsync(HttpContext context, Exception ex)
     {

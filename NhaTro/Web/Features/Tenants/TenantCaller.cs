@@ -8,6 +8,10 @@ public sealed record TenantCaller(string UserId, string Role)
 {
     public bool IsManager => Role is Accounts.Roles.ChuTro or Accounts.Roles.QuanLy;
 
+    public bool IsChuTro => Role == Accounts.Roles.ChuTro;
+
+    public bool IsQuanLy => Role == Accounts.Roles.QuanLy;
+
     public bool IsAdmin => Role == Accounts.Roles.Admin;
 
     public bool IsTenant => Role == Accounts.Roles.KhachThue;

@@ -14,6 +14,7 @@ using Web.Data;
 using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
+using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
@@ -21,6 +22,7 @@ using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
@@ -229,7 +231,13 @@ builder.Services.AddRateLimiter(rateLimiter =>
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
+
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit và điểm mở rộng phạm vi Quản lý theo tòa nhà (VHT-24).
+builder.Services.AddScoped<IManagerTenantScope, NoManagerTenantScope>();
+builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
+builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 
 // Chan o tang server truoc khi vao service: lon hon gioi han cao nhat mot chut (10 MB + overhead multipart).
 const long maxUploadRequestBytes = 12L * 1024 * 1024;
@@ -333,7 +341,10 @@ app.MapStaticAssets();
 app.MapFileEndpoints();
 // health live/ready (an danh, chi tra trang thai).
 app.MapHealthEndpoints();
-app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+// VHT-26: endpoint giay to P3 (metadata, upload, tai, thay, xoa mem) co kiem pham vi ho so.
+app.MapTenantDocumentEndpoints();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
