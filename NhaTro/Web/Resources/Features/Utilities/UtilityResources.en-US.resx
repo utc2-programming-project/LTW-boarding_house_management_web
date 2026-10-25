@@ -201,6 +201,9 @@
   <data name="UnitM3" xml:space="preserve"><value>m³</value></data>
   <data name="SampleDataBadge" xml:space="preserve"><value>Sample data</value></data>
   <data name="SampleDataNotice" xml:space="preserve"><value>Changes stay in this session's memory and are not saved to the database.</value></data>
+  <data name="RecordSampleStatus" xml:space="preserve"><value>Sample record</value></data>
+  <data name="RecordCreatedStatus" xml:space="preserve"><value>Created this session</value></data>
+  <data name="RecordChangedStatus" xml:space="preserve"><value>Changed this session</value></data>
   <data name="TieredTariffLabel" xml:space="preserve"><value>Tiered tariff</value></data>
   <data name="ReadOnlyStatus" xml:space="preserve"><value>Read only</value></data>
   <data name="TableResultCount" xml:space="preserve"><value>{0} services</value></data>

@@ -44,6 +44,7 @@ public sealed class ServiceItemDto
     public PriceVersionStatus PriceStatus { get; set; } = PriceVersionStatus.Active;
     public bool Active { get; set; } = true;
     public bool IsReadOnly { get; set; }
+    public bool IsSessionCreated { get; set; }
     public string BuildingId { get; set; } = "all";
     public string BuildingName { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -63,6 +64,7 @@ public sealed class ServiceItemDto
         PriceStatus = PriceStatus,
         Active = Active,
         IsReadOnly = IsReadOnly,
+        IsSessionCreated = IsSessionCreated,
         BuildingId = BuildingId,
         BuildingName = BuildingName,
         Description = Description,
@@ -86,6 +88,7 @@ public sealed class PriceVersionDto
     public DateTime CreatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string? Note { get; set; }
+    public bool IsSessionCreated { get; set; }
 
     public PriceVersionDto Copy() => new()
     {
@@ -103,6 +106,7 @@ public sealed class PriceVersionDto
         CreatedAt = CreatedAt,
         CreatedBy = CreatedBy,
         Note = Note,
+        IsSessionCreated = IsSessionCreated,
     };
 }
 
@@ -148,6 +152,7 @@ public sealed class RoomReadingSampleDto
     public DateOnly PeriodStart { get; set; }
     public DateOnly PeriodEnd { get; set; }
     public string Status { get; set; } = "open"; // open, locked, billed
+    public bool HasSessionChanges { get; set; }
     public string ElectricMeterCode { get; set; } = string.Empty;
     public decimal ElectricStart { get; set; }
     public decimal ElectricEnd { get; set; }
@@ -175,6 +180,7 @@ public sealed class RoomReadingSampleDto
         PeriodStart = PeriodStart,
         PeriodEnd = PeriodEnd,
         Status = Status,
+        HasSessionChanges = HasSessionChanges,
         ElectricMeterCode = ElectricMeterCode,
         ElectricStart = ElectricStart,
         ElectricEnd = ElectricEnd,
@@ -220,6 +226,7 @@ public sealed class CreateServiceRequest
     public decimal Rate { get; set; }
     public string BuildingId { get; set; } = "b1";
     public DateOnly EffectiveFrom { get; set; }
+    public DateOnly? EffectiveTo { get; set; }
     public string? Description { get; set; }
 }
 

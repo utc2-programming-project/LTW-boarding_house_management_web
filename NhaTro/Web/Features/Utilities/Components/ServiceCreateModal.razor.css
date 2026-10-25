@@ -89,7 +89,7 @@
     padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
 }
 
 .form-field-group {

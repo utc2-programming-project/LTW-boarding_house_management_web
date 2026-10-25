@@ -10,10 +10,26 @@
 <PageTitle>@L["PricesPageTitle"]</PageTitle>
 
 <div class="service-prices-page">
+    @if (_isLoading)
+    {
+        <div class="page-loading">
+            <LoadingOverlay Visible="true" Text="@L["LoadingText"]" />
+        </div>
+    }
+    else
+    {
     <!-- Header -->
     <header class="page-header">
         <div class="heading-group">
-            <h1 class="page-title">@L["PricesHeading"]</h1>
+            <div class="breadcrumb-title-stack">
+                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+                    {
+                        new(L["CatalogOverviewNav"], "/"),
+                        new(L["CatalogBreadcrumb"], "/services"),
+                        new(L["PricesBreadcrumb"])
+                    })" />
+                <h1 class="page-title">@L["PricesHeading"]</h1>
+            </div>
             <p class="page-subtitle">@L["PricesSubtitle"]</p>
             <div class="sample-data-note">
                 <span class="sample-data-badge">@L["SampleDataBadge"]</span>
@@ -84,7 +100,10 @@
                         {
                             <tr class="version-row">
                                 <td class="tabular-nums font-semibold text-slate-800">
-                                    @DateFormatter.Format(v.EffectiveFrom)
+                                    <div>@DateFormatter.Format(v.EffectiveFrom)</div>
+                                    <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")">
+                                        @L[v.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
+                                    </span>
                                 </td>
                                 <td class="tabular-nums">
                                     @if (v.EffectiveTo.HasValue)
@@ -129,13 +148,41 @@
         {
             <div class="empty-state-box">
                 <div class="empty-icon-wrap">
-                    <LucideIcon Name="history" />
+                    <LucideIcon Name="history" Class="empty-state-icon" />
                 </div>
                 <h3 class="empty-title">@L["NoData"]</h3>
                 <p class="empty-desc">@L["PricesEmptyDescription"]</p>
+                <div class="empty-state-actions">
+                    <AuthorizeView Policy="UtilityManage">
+                        <Authorized>
+                            @if (_currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
+                                    <LucideIcon Name="plus" />
+                                    <span>@L["UpdatePriceMilestoneBtn"]</span>
+                                </button>
+                            }
+                            else if (_currentSelectedService is null)
+                            {
+                                <button type="button" class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/services")'>
+                                    <LucideIcon Name="plus" />
+                                    <span>@L["AddNewServiceBtn"]</span>
+                                </button>
+                            }
+                        </Authorized>
+                    </AuthorizeView>
+                    @if (_selectedServiceId != "all")
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick='() => SelectServiceTab("all")'>
+                            <LucideIcon Name="refresh" />
+                            <span>@L["ClearFilterBtn"]</span>
+                        </button>
+                    }
+                </div>
             </div>
         }
     </div>
+    }
 </div>
 
 <AuthorizeView Policy="UtilityManage">
@@ -156,12 +203,14 @@
     private string _callerEmail = string.Empty;
     private string _modifierName = string.Empty;
     private bool _isPriceModalOpen;
+    private bool _isLoading = true;
 
     [Parameter, SupplyParameterFromQuery(Name = "serviceId")]
     public string? ServiceId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         _callerRole = UtilityDraftRules.ResolveRole(user);
@@ -170,6 +219,7 @@
 
         StateService.OnChange += HandleStateChanged;
         LoadData();
+        _isLoading = false;
     }
 
     private void HandleStateChanged()
@@ -232,7 +282,7 @@
         var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
         if (res.Success)
         {
-            Toast.Success(L["ToastPriceUpdatedSample"]);
+            Toast.Success(L["ToastPriceUpdatedSuccess"]);
             _isPriceModalOpen = false;
         }
         else

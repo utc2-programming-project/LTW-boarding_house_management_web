@@ -201,6 +201,9 @@
   <data name="UnitM3" xml:space="preserve"><value>m³</value></data>
   <data name="SampleDataBadge" xml:space="preserve"><value>Dữ liệu mẫu</value></data>
   <data name="SampleDataNotice" xml:space="preserve"><value>Thay đổi chỉ nằm trong bộ nhớ phiên hiện tại; chưa được lưu vào cơ sở dữ liệu.</value></data>
+  <data name="RecordSampleStatus" xml:space="preserve"><value>Bản ghi mẫu</value></data>
+  <data name="RecordCreatedStatus" xml:space="preserve"><value>Tạo trong phiên này</value></data>
+  <data name="RecordChangedStatus" xml:space="preserve"><value>Đã thay đổi trong phiên này</value></data>
   <data name="TieredTariffLabel" xml:space="preserve"><value>Biểu giá bậc thang</value></data>
   <data name="ReadOnlyStatus" xml:space="preserve"><value>Chỉ xem</value></data>
   <data name="TableResultCount" xml:space="preserve"><value>{0} dịch vụ</value></data>

@@ -98,6 +98,11 @@ public static class UtilityDraftRules
             issues.Add(new(nameof(request.EffectiveFrom), UtilityErrorCode.EffectiveFromIsRequired));
         }
 
+        if (request.EffectiveTo.HasValue && request.EffectiveTo.Value <= request.EffectiveFrom)
+        {
+            issues.Add(new(nameof(request.EffectiveTo), UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom));
+        }
+
         if (!Enum.IsDefined(request.Unit))
         {
             issues.Add(new(nameof(request.Unit), UtilityErrorCode.InvalidServiceUnit));

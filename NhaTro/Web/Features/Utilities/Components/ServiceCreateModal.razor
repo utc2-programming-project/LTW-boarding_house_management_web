@@ -112,6 +112,19 @@
                 </div>
 
                 <div class="form-field-group">
+                    <label class="field-label" for="create-effective-to-input">@L["EffectiveToLabel"]</label>
+                    <input id="create-effective-to-input"
+                           type="date"
+                           class="input @(_effectiveToError.HasValue ? "invalid" : "")"
+                           @bind="_effectiveTo"
+                           @bind:after="ValidateDate" />
+                    @if (_effectiveToError.HasValue)
+                    {
+                        <span class="field-error-text" role="alert">@L[$"Error{_effectiveToError.Value}"]</span>
+                    }
+                </div>
+
+                <div class="form-field-group">
                     <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
                     <input id="service-desc-input"
                            type="text"
@@ -153,11 +166,13 @@
     private decimal _rate = 50_000m;
     private string _buildingId = "b1";
     private DateOnly _effectiveFrom;
+    private DateOnly? _effectiveTo;
     private string? _description;
     private bool _isSaving;
     private UtilityErrorCode? _nameError;
     private UtilityErrorCode? _rateError;
     private UtilityErrorCode? _dateError;
+    private UtilityErrorCode? _effectiveToError;
     private UtilityErrorCode? _scopeError;
     private bool _wasOpen;
 
@@ -177,10 +192,12 @@
         _rate = 50_000m;
         _buildingId = StateService.Buildings.FirstOrDefault(building => building.Id != "all")?.Id ?? string.Empty;
         _effectiveFrom = StateService.Today;
+        _effectiveTo = null;
         _description = string.Empty;
         _nameError = null;
         _rateError = null;
         _dateError = null;
+        _effectiveToError = null;
         _scopeError = null;
     }
 
@@ -198,8 +215,9 @@
 
     private void ValidateDate()
     {
-        _dateError = UtilityDraftRules.ValidateCreateService(CreateRequest())
-            .FirstOrDefault(issue => issue.Error == UtilityErrorCode.EffectiveFromIsRequired)?.Error;
+        var issues = UtilityDraftRules.ValidateCreateService(CreateRequest());
+        _dateError = issues.FirstOrDefault(issue => issue.Error == UtilityErrorCode.EffectiveFromIsRequired)?.Error;
+        _effectiveToError = issues.FirstOrDefault(issue => issue.Error == UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom)?.Error;
     }
 
     private void ValidateScope()
@@ -248,6 +266,7 @@
         Rate = _rate,
         BuildingId = _buildingId,
         EffectiveFrom = _effectiveFrom,
+        EffectiveTo = _effectiveTo,
         Description = _description,
     };
 

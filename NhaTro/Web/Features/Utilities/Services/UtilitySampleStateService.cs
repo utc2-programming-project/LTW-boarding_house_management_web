@@ -134,9 +134,11 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             RateType = ServiceRateType.Flat,
             CurrentRate = request.Rate,
             EffectiveFrom = request.EffectiveFrom,
-            PriceStatus = GetStatus(request.EffectiveFrom, null),
+            EffectiveTo = request.EffectiveTo,
+            PriceStatus = GetStatus(request.EffectiveFrom, request.EffectiveTo),
             Active = true,
             IsReadOnly = false,
+            IsSessionCreated = true,
             BuildingId = request.BuildingId,
             BuildingName = building.Name,
             Description = request.Description,
@@ -153,12 +155,14 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             Rate = newService.CurrentRate,
             RateType = newService.RateType,
             EffectiveFrom = newService.EffectiveFrom,
-            Status = GetStatus(newService.EffectiveFrom, null),
+            EffectiveTo = newService.EffectiveTo,
+            Status = GetStatus(newService.EffectiveFrom, newService.EffectiveTo),
             BuildingScope = newService.BuildingId,
             BuildingName = newService.BuildingName,
             CreatedAt = _timeProvider.UtcNow(),
             CreatedBy = modifierName,
             Note = request.Description,
+            IsSessionCreated = true,
         });
 
         RefreshCurrentPrices(newService.BuildingId);
@@ -235,6 +239,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             CreatedAt = _timeProvider.UtcNow(),
             CreatedBy = modifierName,
             Note = request.Note,
+            IsSessionCreated = true,
         };
 
         _priceVersions.Insert(0, newVersion);
@@ -337,6 +342,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
 
         room.PeriodStart = periodStart;
         room.PeriodEnd = periodEnd;
+        room.HasSessionChanges = true;
         if (hasElectricChanged)
         {
             room.AuditLogs.Insert(0, CreateReadingAudit(

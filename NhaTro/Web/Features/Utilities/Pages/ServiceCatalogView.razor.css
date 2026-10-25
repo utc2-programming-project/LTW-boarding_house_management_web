@@ -45,6 +45,12 @@
     gap: 4px;
 }
 
+.page-loading {
+    min-height: 240px;
+    display: grid;
+    place-items: center;
+}
+
 .page-title {
     margin: 0;
     font-size: 28px;
@@ -319,6 +325,28 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+}
+
+.record-origin-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 2px 6px;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 6px;
+    background: var(--surface-subtle, #F1F5F9);
+    color: var(--text-secondary, #475569);
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.record-origin-badge.session {
+    border-color: var(--accent-border, #C7D2FE);
+    background: var(--accent-soft, #EEF2FF);
+    color: var(--accent-text, #4338CA);
 }
 
 .service-name {
@@ -504,7 +532,7 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 48px 24px;
+    padding: 32px 24px;
     gap: 12px;
 }
 
@@ -517,11 +545,6 @@
     border-radius: 16px;
     background: var(--surface-subtle, #F1F5F9);
     color: var(--text-muted, #64748B);
-}
-
-.empty-icon-wrap .lucide-icon {
-    width: 32px;
-    height: 32px;
 }
 
 .empty-title {
@@ -541,6 +564,10 @@
 }
 
 @media (max-width: 767.98px) {
+    .empty-state-box {
+        padding: 24px 16px;
+    }
+
     .icon-action-btn {
         min-width: 44px;
         min-height: 44px;

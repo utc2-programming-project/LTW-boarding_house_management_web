@@ -10,10 +10,25 @@
 <PageTitle>@L["CatalogPageTitle"]</PageTitle>
 
 <div class="service-catalog-page">
+    @if (_isLoading)
+    {
+        <div class="page-loading">
+            <LoadingOverlay Visible="true" Text="@L["LoadingText"]" />
+        </div>
+    }
+    else
+    {
     <!-- Page Heading -->
     <header class="page-header">
         <div class="heading-group">
-            <h1 class="page-title">@L["CatalogHeading"]</h1>
+            <div class="breadcrumb-title-stack">
+                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+                    {
+                        new(L["CatalogOverviewNav"], "/"),
+                        new(L["CatalogBreadcrumb"])
+                    })" />
+                <h1 class="page-title">@L["CatalogHeading"]</h1>
+            </div>
             <p class="page-subtitle">@L["CatalogSubtitle"]</p>
             <div class="sample-data-note">
                 <span class="sample-data-badge">@L["SampleDataBadge"]</span>
@@ -181,6 +196,9 @@
                                 <td class="cell-name">
                                     <div class="service-name-cell">
                                         <span class="service-name font-semibold text-indigo-900">@service.Name</span>
+                                        <span class="record-origin-badge @(service.IsSessionCreated ? "session" : "")">
+                                            @L[service.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
+                                        </span>
                                         @if (service.IsReadOnly)
                                         {
                                             <span class="readonly-badge" title="@L["ReadOnlyTitle"]">
@@ -310,7 +328,7 @@
         {
             <div class="empty-state-box">
                 <div class="empty-icon-wrap">
-                    <LucideIcon Name="search" />
+                    <LucideIcon Name="search" Class="empty-state-icon" />
                 </div>
                 <h3 class="empty-title">@L["EmptyServicesTitle"]</h3>
                 <p class="empty-desc">@L["EmptyServicesDesc"]</p>
@@ -321,6 +339,7 @@
             </div>
         }
     </div>
+    }
 </div>
 
 <!-- Modals -->
@@ -350,6 +369,7 @@
     private string _callerEmail = string.Empty;
     private string _modifierName = string.Empty;
     private List<BuildingOptionDto> _visibleBuildings = [];
+    private bool _isLoading = true;
 
     private int _totalCount;
     private int _activeCount;
@@ -364,6 +384,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         _callerRole = UtilityDraftRules.ResolveRole(user);
@@ -373,6 +394,7 @@
 
         StateService.OnChange += HandleStateChanged;
         LoadData();
+        _isLoading = false;
     }
 
     private void HandleStateChanged()

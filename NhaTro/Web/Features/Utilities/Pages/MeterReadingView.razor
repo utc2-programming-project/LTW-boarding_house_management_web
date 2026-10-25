@@ -11,14 +11,15 @@
 <PageTitle>@L["ReadingsPageTitle"]</PageTitle>
 
 <div class="meter-reading-page">
+    @if (_isLoading)
+    {
+        <div class="page-loading">
+            <LoadingOverlay Visible="true" Text="@L["LoadingText"]" />
+        </div>
+    }
+    else
+    {
     <div class="top-nav-bar">
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-            {
-                new(L["CatalogOverviewNav"], "/"),
-                new(L["CatalogBreadcrumb"], "/services"),
-                new(L["ReadingsBreadcrumb"])
-            })" />
-
         <div class="version-tag">
             <span class="pulse-dot"></span>
             <span>@L["ReadingsVersionBadge"]</span>
@@ -28,7 +29,15 @@
     <!-- Heading -->
     <header class="page-header">
         <div class="heading-group">
-            <h1 class="page-title">@L["ReadingsHeading"]</h1>
+            <div class="breadcrumb-title-stack">
+                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+                    {
+                        new(L["CatalogOverviewNav"], "/"),
+                        new(L["CatalogBreadcrumb"], "/services"),
+                        new(L["ReadingsBreadcrumb"])
+                    })" />
+                <h1 class="page-title">@L["ReadingsHeading"]</h1>
+            </div>
             <p class="page-subtitle">@L["ReadingsSubtitle"]</p>
             <div class="sample-data-note">
                 <span class="sample-data-badge">@L["SampleDataBadge"]</span>
@@ -72,10 +81,15 @@
                     <span class="indicator-dot"></span>
                     <h2>@L["Sec1Heading"]</h2>
                 </div>
-                <span class="status-open-badge">
-                    <span class="pulse-badge-dot"></span>
-                    @L["Sec1StatusOpen"]
-                </span>
+                <div class="section-status-group">
+                    <span class="status-open-badge">
+                        <span class="pulse-badge-dot"></span>
+                        @L["Sec1StatusOpen"]
+                    </span>
+                    <span class="record-origin-badge @(_activeRoom.HasSessionChanges ? "session" : "")">
+                        @L[_activeRoom.HasSessionChanges ? "RecordChangedStatus" : "RecordSampleStatus"]
+                    </span>
+                </div>
             </div>
 
             <div class="section-card-body grid-2-cols">
@@ -391,10 +405,11 @@
     else
     {
         <div class="empty-state-box" role="status">
-            <div class="empty-icon-wrap"><LucideIcon Name="search" /></div>
+            <div class="empty-icon-wrap"><LucideIcon Name="search" Class="empty-state-icon" /></div>
             <h3 class="empty-title">@L["ReadingsEmptyTitle"]</h3>
             <p class="empty-desc">@L["ReadingsEmptyDescription"]</p>
         </div>
+    }
     }
 </div>
 
@@ -465,6 +480,7 @@
     private string _callerEmail = string.Empty;
     private string _modifierName = string.Empty;
     private bool _canRecordReadings;
+    private bool _isLoading = true;
 
     private decimal _electricEndInput;
     private decimal _waterEndInput;
@@ -486,6 +502,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         _callerRole = UtilityDraftRules.ResolveRole(user);
@@ -495,6 +512,7 @@
 
         StateService.OnChange += HandleStateChanged;
         LoadRooms();
+        _isLoading = false;
     }
 
     private void HandleStateChanged()
@@ -721,7 +739,7 @@
 
             if (result.Success)
             {
-                Toast.Success(L["ToastReadingsSample"]);
+                Toast.Success(L["ToastReadingsSaved"]);
                 _activeRoom = result.Room;
                 Recalculate();
             }
