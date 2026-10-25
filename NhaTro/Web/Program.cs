@@ -16,6 +16,7 @@ using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Rooms;
@@ -146,6 +147,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // SQL services. Approval policy and active-contract checks are extension points.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
@@ -370,5 +372,5 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
-// WebApplicationFactory can resolve the entry-point assembly for HTTP/auth integration tests.
+// VHT-14: WebApplicationFactory can resolve the entry-point assembly for HTTP/auth integration tests.
 public partial class Program { }
