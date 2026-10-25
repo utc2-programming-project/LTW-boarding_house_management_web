@@ -397,4 +397,7 @@
   <data name="RepairCost" xml:space="preserve"><value>Repair cost (VND)</value></data>
   <data name="RepairCostHint" xml:space="preserve"><value>Optional. Enter a non-negative whole amount, e.g. 150000 or 150.000. This is internal processing information; there is no separate cost approval workflow.</value></data>
   <data name="RepairCostInvalid" xml:space="preserve"><value>Enter a non-negative whole VND amount, or leave blank if unknown.</value></data>
+  <data name="SampleLoadError" xml:space="preserve">
+    <value>A sample list loading error is being simulated. Select “Sample records” to leave the error scenario.</value>
+  </data>
 </root>

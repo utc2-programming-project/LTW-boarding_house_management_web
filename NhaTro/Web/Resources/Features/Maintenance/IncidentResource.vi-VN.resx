@@ -397,4 +397,7 @@
   <data name="RepairCost" xml:space="preserve"><value>Chi phí sửa chữa (VND)</value></data>
   <data name="RepairCostHint" xml:space="preserve"><value>Không bắt buộc. Nhập số tiền nguyên không âm, ví dụ 150000 hoặc 150.000. Đây là thông tin xử lý nội bộ, không có luồng duyệt chi phí riêng.</value></data>
   <data name="RepairCostInvalid" xml:space="preserve"><value>Chi phí phải là số tiền VND nguyên không âm; để trống nếu chưa có dữ liệu.</value></data>
+  <data name="SampleLoadError" xml:space="preserve">
+    <value>Đang mô phỏng lỗi tải danh sách mẫu. Chọn “Có dữ liệu mẫu” để kết thúc kịch bản lỗi.</value>
+  </data>
 </root>

@@ -30,7 +30,8 @@
     private DataTableLabels Labels => new()
     {
         Loading = L["Loading"], EmptyTitle = L["NoData"], EmptyDescription = L["EmptyDescription"],
-        NoResultsTitle = L["NoResults"], ClearFilters = L["ClearFilters"], LoadFailed = L["LoadFailed"],
+        NoResultsTitle = L["NoResults"], ClearFilters = L["ClearFilters"],
+        LoadFailed = L[Scenario == "Error" ? "SampleLoadError" : "LoadFailed"],
         Retry = L["Retry"], FilterBy = L["FilterBy"], Pagination = L["Pagination"],
         FirstPage = L["FirstPage"], PreviousPage = L["PreviousPage"], NextPage = L["NextPage"],
         LastPage = L["LastPage"], Page = L["Page"], Summary = L["PageSummary"]
