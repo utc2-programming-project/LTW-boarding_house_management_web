@@ -14,6 +14,7 @@ using Web.Data;
 using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
+using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
@@ -21,6 +22,7 @@ using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
@@ -171,7 +173,13 @@ builder.Services.AddOptions<StorageOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
+
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit và điểm mở rộng phạm vi Quản lý theo tòa nhà (VHT-24).
+builder.Services.AddScoped<IManagerTenantScope, NoManagerTenantScope>();
+builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
+builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 
 // Chan o tang server truoc khi vao service: lon hon gioi han cao nhat mot chut (10 MB + overhead multipart).
 const long maxUploadRequestBytes = 12L * 1024 * 1024;
@@ -265,6 +273,8 @@ app.MapGet("/culture/current", (HttpContext http) =>
 app.MapStaticAssets();
 // VHT-13: endpoint tep dung chung, da kiem quyen trong service va chan Admin o policy "Business".
 app.MapFileEndpoints();
+// VHT-26: endpoint giay to P3 (metadata, upload, tai, thay, xoa mem) co kiem pham vi ho so.
+app.MapTenantDocumentEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

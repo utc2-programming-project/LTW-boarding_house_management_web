@@ -14,6 +14,7 @@ namespace Web.Data
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
+        public DbSet<FileAccessAuditLog> FileAccessAuditLogs => Set<FileAccessAuditLog>();
 
         // VHT-94: 21 cong tac Quan ly (SW-01..SW-16 + SW-15a..e).
         public DbSet<ManagerToggle> ManagerToggles => Set<ManagerToggle>();
