@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Web.Components.Shared.Forms
 @using Web.Data
+@using Web.Infrastructure.Security
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -12,9 +13,10 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<Shared> L
+@inject ICaptchaVerifier CaptchaVerifier
 
-@* VHT-8: trang dang nhap theo chuan phong_cach_giao_dien.md.
-   Giu static SSR + form POST vi Identity ghi cookie qua HTTP, khong lam duoc trong circuit Blazor. *@
+@* Trang đăng nhập theo chuẩn phong_cach_giao_dien.md.
+   Giữ static SSR + form POST vì Identity ghi cookie qua HTTP, không làm được trong circuit Blazor. *@
 
 <PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
 
@@ -61,6 +63,19 @@
                 </div>
             </FormField>
 
+            @* chi hien khi da sai qua nguong; dap an duoc ma hoa trong token an. *@
+            @if (_captchaChallenge is not null)
+            {
+                <FormField TValue="string" Id="login-captcha" Label="@CaptchaLabel"
+                           Hint="@L["CaptchaRequired"]" Required="true"
+                           For="() => Input.CaptchaAnswer">
+                    <input type="hidden" name="Input.CaptchaToken" value="@_captchaChallenge.Token" />
+                    <InputText @bind-Value="Input.CaptchaAnswer" id="login-captcha" class="input"
+                               autocomplete="off" inputmode="numeric" aria-required="true"
+                               aria-describedby="login-captcha-error" />
+                </FormField>
+            }
+
             <div class="remember-row">
                 <label class="checkbox-label" for="login-remember">
                     <InputCheckbox @bind-Value="Input.RememberMe" id="login-remember" class="checkbox" />
@@ -88,6 +103,11 @@
     private bool _submitting;
     private EditContext editContext = default!;
     private ValidationMessageStore? messageStore;
+    private CaptchaChallenge? _captchaChallenge;
+
+    private string CaptchaLabel => _captchaChallenge is null
+        ? string.Empty
+        : $"{L["CaptchaQuestion"]}: {_captchaChallenge.Question} = ?";
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -153,13 +173,25 @@
 
         _submitting = true;
 
+        // sau nhieu lan sai, bat buoc giai CAPTCHA truoc khi kiem mat khau.
+        if (await IsCaptchaRequiredAsync())
+        {
+            if (!CaptchaVerifier.Verify(Input.CaptchaToken, Input.CaptchaAnswer))
+            {
+                _submitting = false;
+                errorMessage = L["CaptchaInvalid"];
+                _captchaChallenge = CaptchaVerifier.CreateChallenge();
+                return;
+            }
+        }
+
         var result = await SignInManager.PasswordSignInAsync(
             Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
             Logger.LogInformation("Nguoi dung dang nhap thanh cong.");
-            // ReturnUrl rong -> ve trang chu; tranh NavigateTo("") lam IdentityRedirectManager loi.
+            // ReturnUrl rong -> ve trang chu; tranh NavigateTo lam IdentityRedirectManager loi.
             RedirectManager.RedirectTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
             return;
         }
@@ -183,6 +215,24 @@
 
         // Khong noi ro email sai hay mat khau sai (tranh do tai khoan).
         errorMessage = L["LoginInvalid"];
+
+        // vuot nguong sai thi hien CAPTCHA cho lan dang nhap tiep theo.
+        if (await IsCaptchaRequiredAsync())
+        {
+            _captchaChallenge = CaptchaVerifier.CreateChallenge();
+        }
+    }
+
+    /// <summary>Co bat buoc CAPTCHA khong, dua tren so lan dang nhap sai cua tai khoan.</summary>
+    private async Task<bool> IsCaptchaRequiredAsync()
+    {
+        var user = await UserManager.FindByEmailAsync(Input.Email.Trim());
+        if (user is null)
+        {
+            return false;
+        }
+
+        return CaptchaVerifier.IsChallengeRequired(await UserManager.GetAccessFailedCountAsync(user));
     }
 
     private static bool IsValidEmail(string value)
@@ -208,5 +258,10 @@
         public string Password { get; set; } = "";
 
         public bool RememberMe { get; set; }
+
+        // cau tra loi CAPTCHA + token da phat hanh (khong lo dap an).
+        public string CaptchaAnswer { get; set; } = "";
+
+        public string CaptchaToken { get; set; } = "";
     }
 }
