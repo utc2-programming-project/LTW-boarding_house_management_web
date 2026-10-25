@@ -139,6 +139,20 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
     // Nghiep vu: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
+    options.AddPolicy("UtilityBusiness", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) ||
+         context.User.IsInRole(Roles.QuanLy) ||
+         context.User.IsInRole(Roles.KhachThue))));
+    options.AddPolicy("UtilityManage", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        context.User.IsInRole(Roles.ChuTro)));
+    options.AddPolicy("UtilityRecord", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
 });
 builder.Services.AddScoped<RoleService>();
 // service tai khoan (ho so ca nhan + quan tri tai khoan theo ).
@@ -263,6 +277,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();

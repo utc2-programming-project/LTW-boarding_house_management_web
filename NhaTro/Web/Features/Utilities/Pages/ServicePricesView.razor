@@ -1,0 +1,300 @@
+@page "/services/prices"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UtilityBusiness")]
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@L["PricesPageTitle"]</PageTitle>
+
+<div class="service-prices-page">
+    @if (_isLoading)
+    {
+        <div class="page-loading">
+            <LoadingOverlay Visible="true" Text="@L["LoadingText"]" />
+        </div>
+    }
+    else
+    {
+    <!-- Header -->
+    <header class="page-header">
+        <div class="heading-group">
+            <div class="breadcrumb-title-stack">
+                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+                    {
+                        new(L["CatalogOverviewNav"], "/"),
+                        new(L["CatalogBreadcrumb"], "/services"),
+                        new(L["PricesBreadcrumb"])
+                    })" />
+                <h1 class="page-title">@L["PricesHeading"]</h1>
+            </div>
+            <p class="page-subtitle">@L["PricesSubtitle"]</p>
+            <div class="sample-data-note">
+                <span class="sample-data-badge">@L["SampleDataBadge"]</span>
+                <span>@L["SampleDataNotice"]</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
+                <LucideIcon Name="arrow-left" />
+                <span>@L["BackToCatalogBtn"]</span>
+            </button>
+            <AuthorizeView Policy="UtilityManage">
+                <Authorized>
+                    @if (_currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
+                            <LucideIcon Name="plus" />
+                            <span>@L["UpdatePriceMilestoneBtn"]</span>
+                        </button>
+                    }
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </header>
+
+    <!-- Service Selector Tabs -->
+    <div class="service-tabs-container">
+        <button type="button"
+                class="tab-btn @(_selectedServiceId == "all" ? "active" : "")"
+                @onclick='() => SelectServiceTab("all")'>
+            @L["TabAllServices"]
+        </button>
+        @foreach (var srv in _services)
+        {
+            <button type="button"
+                    class="tab-btn @(_selectedServiceId == srv.Id ? "active" : "")"
+                    @onclick="() => SelectServiceTab(srv.Id)">
+                <span>@srv.Name</span>
+                @if (srv.IsReadOnly)
+                {
+                    <LucideIcon Name="lock" Class="tab-lock-icon" />
+                }
+            </button>
+        }
+    </div>
+
+    <!-- Timeline History Table -->
+    <div class="table-card">
+        @if (_filteredVersions.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="prices-table">
+                    <thead>
+                        <tr>
+                            <th>@L["ThPriceEffectiveFrom"]</th>
+                            <th>@L["ThPriceEffectiveTo"]</th>
+                            <th class="text-right">@L["ThPriceRate"]</th>
+                            <th class="text-center">@L["ThPriceStatus"]</th>
+                            <th>@L["ThPriceScope"]</th>
+                            <th>@L["ThPriceCreator"]</th>
+                            <th>@L["ThPriceCreatedAt"]</th>
+                            <th>@L["ThPriceNotes"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in _filteredVersions)
+                        {
+                            <tr class="version-row">
+                                <td class="tabular-nums font-semibold text-slate-800">
+                                    <div>@DateFormatter.Format(v.EffectiveFrom)</div>
+                                    <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")">
+                                        @L[v.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
+                                    </span>
+                                </td>
+                                <td class="tabular-nums">
+                                    @if (v.EffectiveTo.HasValue)
+                                    {
+                                        <span class="text-slate-600">@DateFormatter.Format(v.EffectiveTo)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 italic">@L["NoData"]</span>
+                                    }
+                                </td>
+                                <td class="text-right tabular-nums font-bold text-slate-900">
+                                    @if (v.RateType == ServiceRateType.Tiered)
+                                    {
+                                        @L["TieredTariffLabel"]
+                                    }
+                                    else
+                                    {
+                                        <span>@MoneyFormatter.Format(v.Rate)</span>
+                                        <span> / </span>
+                                        <span>@L[GetUnitResourceKey(v.Unit)]</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="status-badge-chip @GetStatusBadgeClass(v.Status)">
+                                        @L[GetStatusResourceKey(v.Status)]
+                                    </span>
+                                </td>
+                                <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
+                                <td class="text-slate-700 font-medium">@v.CreatedBy</td>
+                                <td class="tabular-nums text-slate-500 font-mono text-xs">
+                                    @DateFormatter.FormatDateTime(v.CreatedAt)
+                                </td>
+                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? "—" : v.Note)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state-box">
+                <div class="empty-icon-wrap">
+                    <LucideIcon Name="history" Class="empty-state-icon" />
+                </div>
+                <h3 class="empty-title">@L["NoData"]</h3>
+                <p class="empty-desc">@L["PricesEmptyDescription"]</p>
+                <div class="empty-state-actions">
+                    <AuthorizeView Policy="UtilityManage">
+                        <Authorized>
+                            @if (_currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
+                            {
+                                <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
+                                    <LucideIcon Name="plus" />
+                                    <span>@L["UpdatePriceMilestoneBtn"]</span>
+                                </button>
+                            }
+                            else if (_currentSelectedService is null)
+                            {
+                                <button type="button" class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/services")'>
+                                    <LucideIcon Name="plus" />
+                                    <span>@L["AddNewServiceBtn"]</span>
+                                </button>
+                            }
+                        </Authorized>
+                    </AuthorizeView>
+                    @if (_selectedServiceId != "all")
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick='() => SelectServiceTab("all")'>
+                            <LucideIcon Name="refresh" />
+                            <span>@L["ClearFilterBtn"]</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    }
+</div>
+
+<AuthorizeView Policy="UtilityManage">
+    <Authorized>
+        <ServicePriceModal IsOpen="@_isPriceModalOpen"
+                           Service="@_currentSelectedService"
+                           OnClose="() => _isPriceModalOpen = false"
+                           OnSave="HandleSavePrice" />
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private List<ServiceItemDto> _services = [];
+    private List<PriceVersionDto> _filteredVersions = [];
+    private string _selectedServiceId = string.Empty;
+    private ServiceItemDto? _currentSelectedService;
+    private string _callerRole = string.Empty;
+    private string _callerEmail = string.Empty;
+    private string _modifierName = string.Empty;
+    private bool _isPriceModalOpen;
+    private bool _isLoading = true;
+
+    [Parameter, SupplyParameterFromQuery(Name = "serviceId")]
+    public string? ServiceId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Yield();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _callerRole = UtilityDraftRules.ResolveRole(user);
+        _callerEmail = UtilityDraftRules.ResolveEmail(user);
+        _modifierName = user.Identity?.Name ?? string.Empty;
+
+        StateService.OnChange += HandleStateChanged;
+        LoadData();
+        _isLoading = false;
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            LoadData();
+            StateHasChanged();
+        });
+    }
+
+    private void LoadData()
+    {
+        _services = StateService.GetServicesForCaller(_callerRole, _callerEmail).ToList();
+        if (!string.IsNullOrWhiteSpace(ServiceId) && _services.Any(service => service.Id == ServiceId))
+        {
+            _selectedServiceId = ServiceId;
+        }
+        else if (!_services.Any(service => service.Id == _selectedServiceId))
+        {
+            _selectedServiceId = _services.FirstOrDefault()?.Id ?? string.Empty;
+        }
+        SelectServiceTab(_selectedServiceId);
+    }
+
+    private void SelectServiceTab(string serviceId)
+    {
+        _selectedServiceId = serviceId;
+        _currentSelectedService = _services.FirstOrDefault(s => s.Id == serviceId);
+        _filteredVersions = StateService.GetPriceVersionsForCaller(_callerRole, _callerEmail, serviceId).ToList();
+    }
+
+    private static string GetStatusBadgeClass(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "badge-active",
+        PriceVersionStatus.Upcoming => "badge-upcoming",
+        _ => "badge-expired"
+    };
+
+    private static string GetStatusResourceKey(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "StatusActive",
+        PriceVersionStatus.Upcoming => "StatusUpcoming",
+        _ => "StatusExpired"
+    };
+
+    private static string GetUnitResourceKey(ServiceUnitCategory unit) => unit switch
+    {
+        ServiceUnitCategory.Room => "UnitRoom",
+        ServiceUnitCategory.Person => "UnitPerson",
+        ServiceUnitCategory.Vehicle => "UnitVehicle",
+        ServiceUnitCategory.Visit => "UnitVisit",
+        ServiceUnitCategory.KilowattHour => "UnitKwh",
+        ServiceUnitCategory.CubicMeter => "UnitM3",
+        _ => "NoData",
+    };
+
+    private Task HandleSavePrice(UpdatePriceRequest req)
+    {
+        var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
+        if (res.Success)
+        {
+            Toast.Success(L["ToastPriceUpdatedSuccess"]);
+            _isPriceModalOpen = false;
+        }
+        else
+        {
+            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+        }
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        StateService.OnChange -= HandleStateChanged;
+    }
+}
+
