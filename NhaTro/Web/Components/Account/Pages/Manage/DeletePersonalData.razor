@@ -3,6 +3,7 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using Web.Data
+@using Web.Features.Accounts
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -75,15 +76,34 @@
             return;
         }
 
+        var userId = await UserManager.GetUserIdAsync(user);
+
+        // VHT-27: không cho xoá Admin cuối cùng, nếu không hệ thống không còn ai quản trị.
+        var isAdmin = await UserManager.IsInRoleAsync(user, Roles.Admin);
+        var isLastAdmin = isAdmin
+            && (await UserManager.GetUsersInRoleAsync(Roles.Admin)).Count == 1;
+        if (AccountPermissionRules.CheckSelfDelete(isAdmin, isLastAdmin) is not null)
+        {
+            Logger.LogWarning("Chan xoa Admin cuoi cung {UserId}.", userId);
+            message = "Error: The last admin account cannot be deleted. Create another admin first.";
+            return;
+        }
+
         var result = await UserManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
-            throw new InvalidOperationException("Unexpected error occurred deleting user.");
+            // Tài khoản còn dữ liệu nghiệp vụ (nhà, khách, phân công...) sẽ bị FK chặn.
+            // Trả thông báo sạch thay vì ném exception => 500.
+            Logger.LogWarning(
+                "Xoa tai khoan {UserId} that bai: {Errors}",
+                userId,
+                string.Join(", ", result.Errors.Select(e => e.Description)));
+            message = "Error: This account still has related data, so it cannot be deleted.";
+            return;
         }
 
         await SignInManager.SignOutAsync();
 
-        var userId = await UserManager.GetUserIdAsync(user);
         Logger.LogInformation("User with ID '{UserId}' deleted themselves.", userId);
 
         RedirectManager.RedirectToCurrentPage();

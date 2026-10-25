@@ -1,0 +1,546 @@
+@page "/services"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UtilityBusiness")]
+@inject IStringLocalizer<UtilityResources> L
+@inject UtilitySampleStateService StateService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@L["CatalogPageTitle"]</PageTitle>
+
+<div class="service-catalog-page">
+    @if (_isLoading)
+    {
+        <div class="page-loading">
+            <LoadingOverlay Visible="true" Text="@L["LoadingText"]" />
+        </div>
+    }
+    else
+    {
+    <!-- Page Heading -->
+    <header class="page-header">
+        <div class="heading-group">
+            <div class="breadcrumb-title-stack">
+                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+                    {
+                        new(L["CatalogOverviewNav"], "/"),
+                        new(L["CatalogBreadcrumb"])
+                    })" />
+                <h1 class="page-title">@L["CatalogHeading"]</h1>
+            </div>
+            <p class="page-subtitle">@L["CatalogSubtitle"]</p>
+            <div class="sample-data-note">
+                <span class="sample-data-badge">@L["SampleDataBadge"]</span>
+                <span>@L["SampleDataNotice"]</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/prices")'>
+                <LucideIcon Name="history" />
+                <span>@L["PriceHistoryBtn"]</span>
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/readings")'>
+                <LucideIcon Name="zap" />
+                <span>@L["MeterReadingBtn"]</span>
+            </button>
+            <AuthorizeView Policy="UtilityManage">
+                <Authorized>
+                    <button type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
+                        <LucideIcon Name="plus" />
+                        <span>@L["AddNewServiceBtn"]</span>
+                    </button>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </header>
+
+    <!-- 4 Stat KPI Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-info">
+                <span class="stat-label">@L["StatTotalServices"]</span>
+                <div class="stat-value-row">
+                    <span class="stat-number tabular-nums">@_totalCount</span>
+                    <span class="stat-unit">@L["StatUnitTypes"]</span>
+                </div>
+                <span class="stat-subtext">@L["StatTotalServicesSub"]</span>
+            </div>
+            <div class="stat-icon-box indigo-box">
+                <LucideIcon Name="package" />
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <span class="stat-label">@L["StatActiveServices"]</span>
+                <div class="stat-value-row">
+                    <span class="stat-number tabular-nums">@_activeCount</span>
+                    <span class="stat-unit">@L["StatUnitServices"]</span>
+                </div>
+                <span class="stat-subtext">@L["StatActiveServicesSub"]</span>
+            </div>
+            <div class="stat-icon-box green-box">
+                <LucideIcon Name="circle-check" />
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <span class="stat-label">@L["StatPausedServices"]</span>
+                <div class="stat-value-row">
+                    <span class="stat-number tabular-nums">@_pausedCount</span>
+                    <span class="stat-unit">@L["StatUnitServices"]</span>
+                </div>
+                <span class="stat-subtext">@L["StatPausedServicesSub"]</span>
+            </div>
+            <div class="stat-icon-box slate-box">
+                <LucideIcon Name="pause-circle" />
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-info">
+                <span class="stat-label">@L["StatReadOnlyTariff"]</span>
+                <div class="stat-value-row">
+                    <span class="stat-number tabular-nums">@_readOnlyCount</span>
+                    <span class="stat-unit">@L["StatUnitServices"]</span>
+                </div>
+                <span class="stat-subtext">@L["StatReadOnlyTariffSub"]</span>
+            </div>
+            <div class="stat-icon-box blue-box">
+                <LucideIcon Name="shield-check" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search Toolbar -->
+    <div class="filters-container">
+        <div class="filters-row">
+            <div class="search-input-box">
+                <span class="search-icon" aria-hidden="true">
+                    <LucideIcon Name="search" />
+                </span>
+                <input type="text"
+                       class="input search-field"
+                       placeholder="@L["SearchPlaceholder"]"
+                       @bind="_searchTerm"
+                       @bind:event="oninput"
+                       @bind:after="ApplyFilters" />
+            </div>
+
+            <select class="input select-filter" @bind="_selectedBuilding" @bind:after="ApplyFilters">
+                <option value="all">@L["AllBuildings"]</option>
+                @foreach (var b in _visibleBuildings)
+                {
+                    <option value="@b.Id">@(b.Id == "all" ? L["AllBuildings"] : b.Name)</option>
+                }
+            </select>
+
+            <select class="input select-filter" @bind="_selectedType" @bind:after="ApplyFilters">
+                <option value="all">@L["AllTypes"]</option>
+                <option value="meter">@L["MeterType"]</option>
+                <option value="fixed_monthly">@L["FixedMonthlyType"]</option>
+            </select>
+
+            <select class="input select-filter" @bind="_selectedStatus" @bind:after="ApplyFilters">
+                <option value="all">@L["AllStatuses"]</option>
+                <option value="active">@L["ActiveStatus"]</option>
+                <option value="inactive">@L["InactiveStatus"]</option>
+            </select>
+
+            <button type="button" class="btn btn-secondary btn-reset" @onclick="ResetFilters">
+                <LucideIcon Name="refresh" />
+                <span>@L["ResetFilter"]</span>
+            </button>
+        </div>
+
+        @if (_selectedBuilding != "all")
+        {
+            <div class="active-condition-tag">
+                <span>@L["ActiveFilterCondition"]</span>
+                <span class="condition-chip">
+                    <span>@L["BuildingFilterPrefix"] <strong>@GetCurrentBuildingName()</strong></span>
+                    <button type="button" class="chip-remove-btn" @onclick='() => { _selectedBuilding = "all"; ApplyFilters(); }' aria-label="@L["ClearFilterBtn"]">
+                        <LucideIcon Name="close" />
+                    </button>
+                </span>
+            </div>
+        }
+    </div>
+
+    <!-- Table or Empty State -->
+    <div class="table-card">
+        @if (_filteredServices.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="services-table">
+                    <thead>
+                        <tr>
+                            <th>@L["ThServiceName"]</th>
+                            <th>@L["ThServiceType"]</th>
+                            <th>@L["ThUnit"]</th>
+                            <th class="text-right">@L["ThRate"]</th>
+                            <th>@L["ThEffectiveFrom"]</th>
+                            <th>@L["ThEffectiveTo"]</th>
+                            <th class="text-center">@L["ThActive"]</th>
+                            <th class="text-right">@L["ThActions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var service in _filteredServices)
+                        {
+                            <tr class="service-row">
+                                <!-- Tên dịch vụ -->
+                                <td class="cell-name">
+                                    <div class="service-name-cell">
+                                        <span class="service-name font-semibold text-indigo-900">@service.Name</span>
+                                        <span class="record-origin-badge @(service.IsSessionCreated ? "session" : "")">
+                                            @L[service.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
+                                        </span>
+                                        @if (service.IsReadOnly)
+                                        {
+                                            <span class="readonly-badge" title="@L["ReadOnlyTitle"]">
+                                                <LucideIcon Name="lock" />
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <!-- Loại dịch vụ -->
+                                <td>
+                                    <span class="type-pill @(service.Type == ServiceTypeCategory.Meter ? "meter-pill" : "fixed-pill")">
+                                        @L[GetServiceTypeResourceKey(service.Type)]
+                                    </span>
+                                </td>
+
+                                <!-- Đơn vị tính -->
+                                <td class="cell-unit font-medium text-slate-600">@L[GetUnitResourceKey(service.Unit)]</td>
+
+                                <!-- Đơn giá áp dụng -->
+                                <td class="text-right cell-rate tabular-nums">
+                                    @if (service.RateType == ServiceRateType.Tiered)
+                                    {
+                                        <button type="button" class="tier-view-link" @onclick="() => OpenTierModal(service.Name)">
+                                            <span>@L["TieredTariffLabel"]</span>
+                                            <LucideIcon Name="eye" />
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="font-bold text-slate-900">@MoneyFormatter.Format(service.CurrentRate)</span>
+                                    }
+                                    <span class="price-status @GetPriceStatusClass(service.PriceStatus)">
+                                        @L[GetPriceStatusResourceKey(service.PriceStatus)]
+                                    </span>
+                                </td>
+
+                                <!-- Bắt đầu hiệu lực -->
+                                <td class="tabular-nums cell-date text-slate-600">
+                                    @DateFormatter.Format(service.EffectiveFrom)
+                                </td>
+
+                                <!-- Hết hiệu lực -->
+                                <td class="tabular-nums cell-date">
+                                    @if (service.EffectiveTo.HasValue)
+                                    {
+                                        <span class="text-slate-600">@DateFormatter.Format(service.EffectiveTo)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-slate-400 italic">@L["NoData"]</span>
+                                    }
+                                </td>
+
+                                <!-- Kích hoạt Switch -->
+                                <td class="text-center cell-switch">
+                                    <AuthorizeView Policy="UtilityManage">
+                                        <Authorized>
+                                            <button type="button"
+                                                    role="switch"
+                                                    aria-label="@L[service.Active ? "ActiveStatus" : "InactiveStatus"]"
+                                                    aria-checked="@service.Active"
+                                                    disabled="@service.IsReadOnly"
+                                                    class="ui-switch @(service.Active ? "active" : "")"
+                                                    @onclick="() => HandleToggleActive(service.Id)">
+                                                <span class="ui-switch-thumb"></span>
+                                            </button>
+                                            @if (service.IsReadOnly)
+                                            {
+                                                <span class="readonly-inline-label">@L["ReadOnlyStatus"]</span>
+                                            }
+                                        </Authorized>
+                                        <NotAuthorized>
+                                            <span class="service-status-text">@L[service.Active ? "ActiveStatus" : "InactiveStatus"]</span>
+                                        </NotAuthorized>
+                                    </AuthorizeView>
+                                </td>
+
+                                <!-- Thao tác -->
+                                <td class="text-right cell-actions">
+                                    <div class="action-buttons-group">
+                                        <button type="button"
+                                                class="icon-action-btn"
+                                                title="@L["ViewDetailTooltip"]"
+                                                @onclick="() => HandleViewDetail(service)">
+                                            <LucideIcon Name="eye" />
+                                        </button>
+
+                                        @if (service.IsReadOnly)
+                                        {
+                                            <button type="button"
+                                                    class="icon-action-btn"
+                                                    title="@L["PriceHistoryTooltip"]"
+                                                    @onclick='() => Navigation.NavigateTo($"/services/prices?serviceId={Uri.EscapeDataString(service.Id)}")'>
+                                                <LucideIcon Name="history" />
+                                            </button>
+                                        }
+                                        else if (!service.IsReadOnly)
+                                        {
+                                            <AuthorizeView Policy="UtilityManage">
+                                                <Authorized>
+                                                    <button type="button"
+                                                            class="icon-action-btn edit-action-btn"
+                                                            title="@L["EditPriceTooltip"]"
+                                                            aria-label="@L["EditPriceTooltip"]"
+                                                            @onclick="() => OpenUpdateModal(service)">
+                                                        <LucideIcon Name="edit" />
+                                                    </button>
+                                                </Authorized>
+                                            </AuthorizeView>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <footer class="table-footer">
+                <div class="pagination-info">
+                    @string.Format(L["TableResultCount"], _filteredServices.Count)
+                </div>
+            </footer>
+        }
+        else
+        {
+            <div class="empty-state-box">
+                <div class="empty-icon-wrap">
+                    <LucideIcon Name="search" Class="empty-state-icon" />
+                </div>
+                <h3 class="empty-title">@L["EmptyServicesTitle"]</h3>
+                <p class="empty-desc">@L["EmptyServicesDesc"]</p>
+                <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["ClearFilterBtn"]</span>
+                </button>
+            </div>
+        }
+    </div>
+    }
+</div>
+
+<!-- Modals -->
+<AuthorizeView Policy="UtilityManage">
+    <Authorized>
+        <ServicePriceModal IsOpen="@_isUpdateModalOpen"
+                           Service="@_selectedService"
+                           OnClose="() => _isUpdateModalOpen = false"
+                           OnSave="HandleSavePrice" />
+        <ServiceCreateModal IsOpen="@_isCreateModalOpen"
+                            OnClose="() => _isCreateModalOpen = false"
+                            OnCreate="HandleCreateService" />
+    </Authorized>
+</AuthorizeView>
+
+<ServiceTierModal IsOpen="@_isTierModalOpen"
+                  ServiceName="@_tierServiceName"
+                  OnClose="() => _isTierModalOpen = false" />
+
+@code {
+    private List<ServiceItemDto> _filteredServices = [];
+    private string _searchTerm = string.Empty;
+    private string _selectedBuilding = "all";
+    private string _selectedType = "all";
+    private string _selectedStatus = "all";
+    private string _callerRole = string.Empty;
+    private string _callerEmail = string.Empty;
+    private string _modifierName = string.Empty;
+    private List<BuildingOptionDto> _visibleBuildings = [];
+    private bool _isLoading = true;
+
+    private int _totalCount;
+    private int _activeCount;
+    private int _pausedCount;
+    private int _readOnlyCount;
+
+    private bool _isUpdateModalOpen;
+    private bool _isTierModalOpen;
+    private bool _isCreateModalOpen;
+    private ServiceItemDto? _selectedService;
+    private string _tierServiceName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Yield();
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _callerRole = UtilityDraftRules.ResolveRole(user);
+        _callerEmail = UtilityDraftRules.ResolveEmail(user);
+        _modifierName = user.Identity?.Name ?? string.Empty;
+        _visibleBuildings = StateService.GetBuildingsForCaller(_callerRole, _callerEmail).ToList();
+
+        StateService.OnChange += HandleStateChanged;
+        LoadData();
+        _isLoading = false;
+    }
+
+    private void HandleStateChanged()
+    {
+        InvokeAsync(() =>
+        {
+            LoadData();
+            StateHasChanged();
+        });
+    }
+
+    private void LoadData()
+    {
+        var allServices = StateService.GetServicesForCaller(_callerRole, _callerEmail);
+        _totalCount = allServices.Count;
+        _activeCount = allServices.Count(s => s.Active);
+        _pausedCount = allServices.Count(s => !s.Active);
+        _readOnlyCount = allServices.Count(s => s.IsReadOnly);
+
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        _filteredServices = StateService.GetServicesForCaller(
+            _callerRole,
+            _callerEmail,
+            _selectedBuilding,
+            _selectedType,
+            _selectedStatus,
+            _searchTerm).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        _searchTerm = string.Empty;
+        _selectedBuilding = "all";
+        _selectedType = "all";
+        _selectedStatus = "all";
+        ApplyFilters();
+    }
+
+    private string GetCurrentBuildingName()
+    {
+        var b = StateService.Buildings.FirstOrDefault(x => x.Id == _selectedBuilding);
+        return b?.Name ?? L["AllBuildings"];
+    }
+
+    private void HandleToggleActive(string serviceId)
+    {
+        var success = StateService.ToggleServiceActive(serviceId, _callerRole);
+        if (success)
+        {
+            Toast.Success(L["ToastServiceToggled"]);
+        }
+    }
+
+    private void OpenTierModal(string serviceName)
+    {
+        _tierServiceName = serviceName;
+        _isTierModalOpen = true;
+    }
+
+    private void OpenUpdateModal(ServiceItemDto service)
+    {
+        _selectedService = service;
+        _isUpdateModalOpen = true;
+    }
+
+    private void HandleViewDetail(ServiceItemDto service)
+    {
+        if (service.RateType == ServiceRateType.Tiered)
+        {
+            OpenTierModal(service.Name);
+        }
+        else
+        {
+            Navigation.NavigateTo($"/services/prices?serviceId={Uri.EscapeDataString(service.Id)}");
+        }
+    }
+
+    private Task HandleSavePrice(UpdatePriceRequest req)
+    {
+        var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
+        if (res.Success)
+        {
+            Toast.Success(L["ToastPriceUpdatedSuccess"]);
+            _isUpdateModalOpen = false;
+        }
+        else
+        {
+            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task HandleCreateService(CreateServiceRequest req)
+    {
+        var res = StateService.AddService(req, _callerRole, _modifierName);
+        if (res.Success)
+        {
+            Toast.Success(L["ToastCreatedSuccess"]);
+            _isCreateModalOpen = false;
+        }
+        else
+        {
+            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+        }
+        return Task.CompletedTask;
+    }
+
+    private static string GetServiceTypeResourceKey(ServiceTypeCategory type) => type switch
+    {
+        ServiceTypeCategory.Meter => "MeterType",
+        ServiceTypeCategory.FixedMonthly => "FixedMonthlyType",
+        _ => "CustomType",
+    };
+
+    private static string GetUnitResourceKey(ServiceUnitCategory unit) => unit switch
+    {
+        ServiceUnitCategory.Room => "UnitRoom",
+        ServiceUnitCategory.Person => "UnitPerson",
+        ServiceUnitCategory.Vehicle => "UnitVehicle",
+        ServiceUnitCategory.Visit => "UnitVisit",
+        ServiceUnitCategory.KilowattHour => "UnitKwh",
+        ServiceUnitCategory.CubicMeter => "UnitM3",
+        _ => "NoData",
+    };
+
+    private static string GetPriceStatusResourceKey(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "StatusActive",
+        PriceVersionStatus.Upcoming => "StatusUpcoming",
+        _ => "StatusExpired",
+    };
+
+    private static string GetPriceStatusClass(PriceVersionStatus status) => status switch
+    {
+        PriceVersionStatus.Active => "price-status-active",
+        PriceVersionStatus.Upcoming => "price-status-upcoming",
+        _ => "price-status-expired",
+    };
+
+    public void Dispose()
+    {
+        StateService.OnChange -= HandleStateChanged;
+    }
+}
+

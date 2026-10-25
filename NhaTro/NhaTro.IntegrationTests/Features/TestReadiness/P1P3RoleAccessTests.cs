@@ -21,6 +21,7 @@ using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
 using Web.Features.Storage.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.DTOs;
 using Web.Infrastructure.Storage;
 
@@ -410,11 +411,19 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
             .UseSqlServer(fixture.ConnectionString)
             .Options;
 
+        var factory = new TestDbContextFactory(options);
+        var audit = new FileAccessAuditWriter(
+            factory, TimeProvider.System, NullLogger<FileAccessAuditWriter>.Instance);
+        var scope = new TenantDocumentScopeService(
+            fixture.CreateContext(), new NoManagerTenantScope());
+
         return new FileService(
-            new TestDbContextFactory(options),
+            factory,
             storage,
             Options.Create(new Web.Configuration.Options.StorageOptions()),
             TimeProvider.System,
+            scope,
+            audit,
             NullLogger<FileService>.Instance);
     }
 

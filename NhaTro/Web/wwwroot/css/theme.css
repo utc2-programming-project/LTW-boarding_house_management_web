@@ -68,6 +68,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .app-brand { display:flex;align-items:center;gap:8px;margin-bottom:24px;min-height:40px;color:var(--text-primary)!important;text-decoration:none;font-size:1.125rem;font-weight:700;line-height:1.333; }
 .app-logo { width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:8px;background:var(--accent-soft);color:var(--accent-text); }
 .lucide-icon { display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle; }
+.lucide-icon.empty-state-icon { width:48px;height:48px;flex-basis:48px; }
 .app-logo .lucide-icon { width:24px;height:24px; }
 .sidebar-menu { display:flex;flex-direction:column;gap:4px; }
 .sidebar-menu .nav-item { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:8px;font-size:.875rem;font-weight:500;line-height:1.429;color:var(--text-secondary)!important;text-decoration:none;overflow-wrap:anywhere; }
@@ -100,6 +101,8 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .page-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px; }
 .page-heading p { margin:8px 0 0; }
 .breadcrumb { margin-bottom:8px;font-size:.8125rem;line-height:1.538; }
+.breadcrumb-title-stack { display:flex;flex-direction:column;gap:8px; }
+.breadcrumb-title-stack > .breadcrumb { margin-bottom:0; }
 .breadcrumb ol { display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0; }
 .breadcrumb li { display:flex;align-items:center;gap:8px;min-width:0; }
 .breadcrumb a { color:var(--text-secondary);text-decoration:none; }

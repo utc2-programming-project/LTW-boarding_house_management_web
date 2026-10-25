@@ -14,13 +14,16 @@ using Web.Data;
 using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
+using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
+using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
@@ -28,6 +31,13 @@ using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Threading.RateLimiting;
+using Web.Endpoints.Health;
+using Web.Infrastructure.Logging;
+using Web.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 var logDirectory = Path.Combine(
@@ -38,19 +48,20 @@ var logDirectory = Path.Combine(
 Directory.CreateDirectory(logDirectory);
 
 // log ở đây nè, công dụng của serilog đó.
-builder.Services.AddSerilog(config => config
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
+builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
+    // che cac thuoc tinh nhay cam (mat khau, token, CCCD...) truoc khi ghi log.
+    .Enrich.With<SensitiveDataScrubber>()
+    // exception chi ghi dang da lam sach (khong lo connection string/SQL/duong dan may).
+    .Enrich.With<SafeExceptionEnricher>()
+    .WriteTo.Console(outputTemplate: LogTemplates.Console)
     .WriteTo.File(
         Path.Combine(logDirectory, "web-.log"),
         rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7));
+        retainedFileCountLimit: 7,
+        outputTemplate: LogTemplates.File));
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -60,10 +71,9 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+    }).AddIdentityCookies();
 
-// VHT-13: endpoint /api tra 401/403 dung hop dong VHT-12 muc 5, khong chuyen huong trang dang nhap.
+// endpoint /api tra 401/403 dung hop dong muc 5, khong chuyen huong trang dang nhap.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     var redirectToLogin = options.Events.OnRedirectToLogin;
@@ -101,12 +111,12 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        // VHT-8: tam thoi tat xac thuc email (chua cau hinh SMTP - lam sau).
+        // tam thoi tat xac thuc email (chua cau hinh SMTP - lam sau).
         // Bat lai khi co IEmailSender that, neu khong tai khoan do quan tri tao se khong dang nhap duoc.
         options.SignIn.RequireConfirmedAccount = false;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
 
-        // Do manh mat khau theo dac ta VHT-8: toi thieu 8 ky tu, co chu hoa, chu thuong, so.
+        // Do manh mat khau theo dac ta: toi thieu 8 ky tu, co chu hoa, chu thuong, so.
         // Dac ta KHONG yeu cau ky tu dac biet nen tat de tranh bao loi kho hieu.
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
@@ -115,42 +125,53 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredUniqueChars = 1;
 
-        // Khoa tam thoi khi dang nhap sai nhieu lan (khac voi khoa tai khoan do quan tri - D1).
+        // Khoa tam thoi khi dang nhap sai nhieu lan (khac voi khoa tai khoan do quan tri - ).
         options.Lockout.AllowedForNewUsers = true;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 
-        // Ten dang nhap = email (VHT-8): khong cho trung email.
+        // Ten dang nhap = email: khong cho trung email.
         options.User.RequireUniqueEmail = true;
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager().AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
-    // Nghiep vu P2-P8: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
+    // Nghiep vu: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
     // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
     options.AddPolicy(Web.Features.Maintenance.IncidentDemoSession.Policy, p => p
         .RequireAuthenticatedUser()
         .RequireAssertion(context => Web.Features.Maintenance.IncidentDemoSession.IsAllowed(context.User)));
+    options.AddPolicy("UtilityBusiness", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) ||
+         context.User.IsInRole(Roles.QuanLy) ||
+         context.User.IsInRole(Roles.KhachThue))));
+    options.AddPolicy("UtilityManage", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        context.User.IsInRole(Roles.ChuTro)));
+    options.AddPolicy("UtilityRecord", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
 });
 builder.Services.AddScoped<RoleService>();
-// VHT-8: service tai khoan P1 (ho so ca nhan + quan tri tai khoan theo D1).
+// service tai khoan (ho so ca nhan + quan tri tai khoan theo ).
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-// P2 SQL services. Approval policy and active-contract checks are extension points for VHT-94/VHT-98.
+// SQL services. Approval policy and active-contract checks are extension points.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
 
-// VHT-94 (dot 1D): 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
+// 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
 // Service doc/ghi chi cho Chu tro; policy chi doc de quyet dinh thay Quan ly.
 builder.Services.AddScoped<ManagerToggleService>();
 builder.Services.AddScoped<IManagerToggleService>(sp => sp.GetRequiredService<ManagerToggleService>());
@@ -159,23 +180,84 @@ builder.Services.AddScoped<ManagerTogglePolicy>();
 builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 
-// VHT-23 (dot 1C): service khach thue P3, kiem quyen/pham vi trong service.
+// service khach thue, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<TenantPageService>();
 
-// VHT-23: chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
+// chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.UnmappedMemberHandling =
         System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow);
 
-// VHT-13: storage dung chung. Gioi han doc tu cau hinh, kiem tra ngay khi khoi dong.
-builder.Services.AddOptions<StorageOptions>()
-    .Bind(builder.Configuration.GetSection(StorageOptions.SectionName))
-    .ValidateOnStart();
+// bao mat nen tang. Moi nguong doc tu cau hinh "Security", co mac dinh an toan neu thieu.
+var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>()
+    ?? new SecurityOptions();
+
+// Giu khoa Data Protection ngoai thu muc publish de cookie dang nhap khong bi mat khi trien khai lai.
+if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
+{
+    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
+            Environment.ExpandEnvironmentVariables(securityOptions.DataProtectionKeysPath))).SetApplicationName("NhaTro.Web");
+}
+
+// CAPTCHA sau nhieu lan dang nhap sai. Giai doan 1 dung thach thuc cuc bo (khong them phu thuoc).
+builder.Services.AddSingleton<ICaptchaVerifier, LocalCaptchaVerifier>();
+
+// health live/ready. Ready kiem ket noi DB qua goi EF HealthChecks.
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database", tags: [HealthEndpoints.ReadyTag]);
+
+// rate limiting. Global chi ap cho POST dang nhap; policy rieng cho /api/files va /culture/set.
+builder.Services.AddRateLimiter(rateLimiter =>
+{
+    rateLimiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    rateLimiter.AddPolicy(RateLimitPolicies.FileUpload, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPolicies.ClientKey(http),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = securityOptions.RateLimit.FileUploadPermitLimit,
+                Window = TimeSpan.FromSeconds(securityOptions.RateLimit.FileUploadWindowSeconds),
+                QueueLimit = 0,
+            }));
+
+    rateLimiter.AddPolicy(RateLimitPolicies.CultureSet, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPolicies.ClientKey(http),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = securityOptions.RateLimit.CultureSetPermitLimit,
+                Window = TimeSpan.FromSeconds(securityOptions.RateLimit.CultureSetWindowSeconds),
+                QueueLimit = 0,
+            }));
+
+    rateLimiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
+        RateLimitPolicies.IsLoginRequest(http)
+            ? RateLimitPartition.GetFixedWindowLimiter(
+                RateLimitPolicies.ClientKey(http),
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = securityOptions.RateLimit.LoginPermitLimit,
+                    Window = TimeSpan.FromSeconds(securityOptions.RateLimit.LoginWindowSeconds),
+                    QueueLimit = 0,
+                })
+            : RateLimitPartition.GetNoLimiter("no-limit"));
+
+    rateLimiter.OnRejected = RateLimitPolicies.WriteRejectionAsync;
+});
+
+// storage dung chung. Gioi han doc tu cau hinh, kiem tra ngay khi khoi dong.
+builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
+builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
+
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit và điểm mở rộng phạm vi Quản lý theo tòa nhà (VHT-24).
+builder.Services.AddScoped<IManagerTenantScope, NoManagerTenantScope>();
+builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
+builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 
 // Chan o tang server truoc khi vao service: lon hon gioi han cao nhat mot chut (10 MB + overhead multipart).
 const long maxUploadRequestBytes = 12L * 1024 * 1024;
@@ -199,12 +281,13 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
-// VHT-13: map loi 413 cua Kestrel/multipart ve cung cau truc JSON FileSizeExceeded.
+// map loi 413 cua Kestrel/multipart ve cung cau truc JSON FileSizeExceeded.
 app.UseMiddleware<FileUploadExceptionMiddleware>();
 app.Logger.LogInformation("Web vận hành nhà trọ đã khởi động");
 // Configure the HTTP request pipeline.
@@ -214,6 +297,11 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    // loi ngoai du kien o /api tra JSON an toan, khong lo chi tiet/stack trace.
+    app.UseWhen(
+        context => context.Request.Path.StartsWithSegments("/api"),
+        apiApp => apiApp.UseMiddleware<ApiExceptionHandlerMiddleware>());
+
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
@@ -223,11 +311,14 @@ app.UseHttpsRedirection();
 
 app.UseRequestLocalization();
 
+// gioi han tan suat (global chi ap cho POST dang nhap; policy rieng gan theo endpoint).
+app.UseRateLimiter();
+
 app.UseAntiforgery();
 
-// VHT-6 (3d): endpoint cho selector cua Phu (VHT-20).
+// endpoint cho selector cua Phu.
 // Dat cookie chuan ".AspNetCore.Culture", song sau reload/dang nhap (1 nam).
-// Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture (VHT-10).
+// Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture.
 app.MapPost("/culture/set", async Task<IResult> (HttpContext http, string culture, IAntiforgery antiforgery) =>
 {
     // Xác thực trước khi ghi cookie, kể cả endpoint chỉ nhận culture từ query.
@@ -257,7 +348,7 @@ app.MapPost("/culture/set", async Task<IResult> (HttpContext http, string cultur
             IsEssential = true,
         });
     return Results.Ok(new { culture });
-});
+}).RequireRateLimiting(RateLimitPolicies.CultureSet);
 
 app.MapGet("/culture/current", (HttpContext http) =>
 {
@@ -267,15 +358,19 @@ app.MapGet("/culture/current", (HttpContext http) =>
 });
 
 app.MapStaticAssets();
-// VHT-13: endpoint tep dung chung, da kiem quyen trong service va chan Admin o policy "Business".
+// endpoint tep dung chung, da kiem quyen trong service va chan Admin o policy "Business".
 app.MapFileEndpoints();
+// health live/ready (an danh, chi tra trang thai).
+app.MapHealthEndpoints();
+// VHT-26: endpoint giay to P3 (metadata, upload, tai, thay, xoa mem) co kiem pham vi ho so.
+app.MapTenantDocumentEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-// VHT-6 (3a/3b): gieo role, Admin dau tien tu secret, roi den user mau dev.
+// gieo role, Admin dau tien tu secret, roi den user mau dev.
 using (var scope = app.Services.CreateScope())
 {
     try

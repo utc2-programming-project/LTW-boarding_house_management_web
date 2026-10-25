@@ -1,0 +1,217 @@
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    animation: modal-fade-in 150ms ease;
+}
+
+.modal-dialog {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 16px;
+    background: var(--surface, #FFFFFF);
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+}
+
+.modal-header-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--accent-soft, #EEF2FF);
+    color: var(--primary, #4F46E5);
+}
+
+.modal-header-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-header-text h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+    color: var(--text-primary, #0D131B);
+}
+
+.modal-header-text p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--text-secondary, #475569);
+}
+
+.modal-close-btn {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted, #64748B);
+    cursor: pointer;
+    transition: background 150ms;
+}
+
+.modal-close-btn:hover {
+    background: var(--hover-bg, #F1F5F9);
+    color: var(--text-primary, #0D131B);
+}
+
+.modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.service-summary-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid var(--accent-border, #C7D2FE);
+    border-radius: 12px;
+    background: var(--accent-soft, #EEF2FF);
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--text-secondary, #475569);
+}
+
+.summary-value {
+    font-size: 14px;
+    color: var(--text-primary, #0D131B);
+}
+
+.form-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-label {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--text-primary, #0D131B);
+}
+
+.required-star {
+    color: var(--error-text, #B91C1C);
+}
+
+.field-error-text {
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--error-text, #B91C1C);
+    margin-top: -4px;
+}
+
+.input-with-affix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-affix .input {
+    padding-right: 32px;
+}
+
+.input-affix {
+    position: absolute;
+    right: 12px;
+    font-size: 14px;
+    color: var(--text-muted, #64748B);
+    pointer-events: none;
+}
+
+.grid-2-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 767.98px) {
+    .grid-2-cols {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border, #E2E8F0);
+}
+
+@media (max-width: 767.98px) {
+    .modal-backdrop {
+        padding: 8px;
+    }
+
+    .modal-header,
+    .modal-body {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .modal-footer {
+        padding: 12px 16px;
+    }
+
+    .modal-footer .btn {
+        min-height: 44px;
+    }
+
+    .modal-close-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+

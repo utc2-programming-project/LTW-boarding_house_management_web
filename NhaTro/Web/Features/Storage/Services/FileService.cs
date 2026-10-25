@@ -3,12 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 using Web.Data;
-using Web.Features.Accounts;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
 using Web.Features.Storage.Mapping;
 using Web.Features.Storage.Rules;
+using Web.Features.Tenants;
+using Web.Features.Tenants.Documents;
 using Web.Infrastructure.Storage;
 
 namespace Web.Features.Storage.Services;
@@ -16,15 +17,25 @@ namespace Web.Features.Storage.Services;
 /// <summary>
 /// Storage dùng chung (VHT-13): lưu/tải/xóa mềm tệp ngoài <c>wwwroot</c> kèm kiểm quyền.
 /// Là nơi duy nhất quyết định quyền storage; endpoint chỉ chuyển tiếp kết quả.
+/// VHT-26 bổ sung phạm vi giấy tờ P3 (theo hồ sơ khách thuê) và audit truy cập tệp.
 /// </summary>
 public sealed class FileService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IFileStorage fileStorage,
     IOptions<StorageOptions> options,
     TimeProvider timeProvider,
+    ITenantDocumentScopeService tenantDocumentScope,
+    IFileAccessAuditWriter audit,
     ILogger<FileService> logger)
 {
     private StorageOptions Options => options.Value;
+
+    /// <summary>Overload cho HTTP endpoint (ClaimsPrincipal của request).</summary>
+    public Task<UploadResult> UploadAsync(
+        UploadFileRequest request,
+        IPrincipal user,
+        CancellationToken cancellationToken = default) =>
+        UploadAsync(request, StorageCaller.FromPrincipal(user), cancellationToken);
 
     /// <summary>
     /// Lưu tệp: kiểm quyền → kiểm loại/cặp đối tượng → đọc stream có giới hạn → kiểm nội dung thật
@@ -32,23 +43,25 @@ public sealed class FileService(
     /// </summary>
     public async Task<UploadResult> UploadAsync(
         UploadFileRequest request,
-        IPrincipal user,
+        StorageCaller caller,
         CancellationToken cancellationToken = default)
     {
-        BusinessGuard.EnsureBusinessAllowed(user);
-
-        var role = RoleOf(user);
-        var userId = user.UserId() ?? string.Empty;
+        EnsureBusinessAllowed(caller);
 
         if (request.File is null
             || !Enum.IsDefined(request.FileCategory)
             || !Enum.IsDefined(request.RelatedEntityType))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, null, null, null, false,
+                StorageErrorCodes.InvalidRequest, cancellationToken);
             return UploadResult.Failure(StorageErrorCodes.InvalidRequest, "Dữ liệu gửi lên không hợp lệ.");
         }
 
-        if (!StoragePermissionRules.CanUpload(role, request.FileCategory))
+        if (!StoragePermissionRules.CanUpload(caller.Role, request.FileCategory))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, request.RelatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.Forbidden,
                 "Bạn không có quyền thực hiện thao tác này.");
@@ -56,18 +69,36 @@ public sealed class FileService(
 
         if (!FileTypeRules.IsPairValid(request.FileCategory, request.RelatedEntityType))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, request.RelatedEntityId, false,
+                StorageErrorCodes.InvalidRequest, cancellationToken);
             return UploadResult.Failure(StorageErrorCodes.InvalidRequest, "Dữ liệu gửi lên không hợp lệ.");
         }
 
         var relatedEntityId = request.RelatedEntityId?.Trim() ?? string.Empty;
         if (relatedEntityId.Length == 0 || relatedEntityId.Length > 450)
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.InvalidRequest, cancellationToken);
+            return UploadResult.Failure(StorageErrorCodes.InvalidRequest, "Dữ liệu gửi lên không hợp lệ.");
+        }
+
+        // Room/Tenant dùng khóa int: chuẩn hóa để "001" và "1" không tạo hai liên kết khác nhau.
+        if (!TryCanonicalizeRelatedEntityId(request.RelatedEntityType, relatedEntityId, out relatedEntityId))
+        {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.InvalidRequest, cancellationToken);
             return UploadResult.Failure(StorageErrorCodes.InvalidRequest, "Dữ liệu gửi lên không hợp lệ.");
         }
 
         var extension = FileTypeRules.GetExtension(request.File.FileName);
         if (!FileTypeRules.IsExtensionAllowed(request.FileCategory, extension))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.InvalidFileType, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.InvalidFileType,
                 $"{FileTypeRules.DisplayName(request.FileCategory)} chỉ chấp nhận file {FileTypeRules.DescribeAllowedExtensions(request.FileCategory)}");
@@ -84,16 +115,25 @@ public sealed class FileService(
             }
             catch (StorageFileTooLargeException)
             {
+                await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                    request.RelatedEntityType, relatedEntityId, false,
+                    StorageErrorCodes.FileSizeExceeded, cancellationToken);
                 return TooLarge(maxBytes);
             }
             catch (StorageEmptyFileException)
             {
+                await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                    request.RelatedEntityType, relatedEntityId, false,
+                    StorageErrorCodes.EmptyFile, cancellationToken);
                 return UploadResult.Failure(StorageErrorCodes.EmptyFile, "File không có nội dung.");
             }
         }
 
         if (!FileContentSniffer.IsAllowedContent(request.FileCategory, extension, content))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.InvalidFileType, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.InvalidFileType,
                 $"{FileTypeRules.DisplayName(request.FileCategory)} chỉ chấp nhận file {FileTypeRules.DescribeAllowedExtensions(request.FileCategory)}");
@@ -103,15 +143,35 @@ public sealed class FileService(
 
         if (!await RelatedEntityExistsAsync(db, request.RelatedEntityType, relatedEntityId, cancellationToken))
         {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.RelatedEntityNotFound, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.RelatedEntityNotFound,
                 "Không tìm thấy đối tượng liên quan.");
         }
 
-        // Khách thuê chỉ được gắn tệp vào đối tượng thuộc phạm vi của mình.
-        if (role == Roles.KhachThue
-            && !await IsRelatedEntityInScopeAsync(db, request.RelatedEntityType, relatedEntityId, userId, cancellationToken))
+        // Giấy tờ P3: phạm vi theo hồ sơ khách thuê (Admin đã bị chặn, Quản lý theo tòa nhà được giao).
+        if (request.RelatedEntityType == RelatedEntityType.Tenant)
         {
+            var access = await ResolveTenantAccessAsync(relatedEntityId, caller, cancellationToken);
+            if (!TenantDocumentPermissionRules.CanUpload(access))
+            {
+                await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                    request.RelatedEntityType, relatedEntityId, false,
+                    StorageErrorCodes.Forbidden, cancellationToken);
+                return UploadResult.Failure(
+                    StorageErrorCodes.Forbidden,
+                    "Bạn không có quyền thao tác giấy tờ của hồ sơ này.");
+            }
+        }
+        // Các loại khác: khách thuê chỉ được gắn tệp vào đối tượng thuộc phạm vi của mình.
+        else if (caller.IsKhachThue
+            && !await IsRelatedEntityInScopeAsync(db, request.RelatedEntityType, relatedEntityId, caller.UserId, cancellationToken))
+        {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.Forbidden,
                 "Bạn không có quyền thực hiện thao tác này.");
@@ -128,6 +188,9 @@ public sealed class FileService(
 
             if (currentCount >= limit)
             {
+                await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                    request.RelatedEntityType, relatedEntityId, false,
+                    StorageErrorCodes.FileCountExceeded, cancellationToken);
                 return UploadResult.Failure(
                     StorageErrorCodes.FileCountExceeded,
                     "Đã đạt số file tối đa cho mục này.");
@@ -143,6 +206,9 @@ public sealed class FileService(
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             logger.LogError(ex, "Không ghi được tệp lên đĩa cho loại {FileCategory}.", request.FileCategory);
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.UploadFailed, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.UploadFailed,
                 "Không thể tải lên, vui lòng thử lại.");
@@ -157,7 +223,7 @@ public sealed class FileService(
             ContentType = FileContentSniffer.DetectContentType(content) ?? FileTypeRules.ContentTypeForExtension(extension),
             FileSizeBytes = written.SizeBytes,
             FileCategory = request.FileCategory,
-            UploadedByUserId = userId,
+            UploadedByUserId = caller.UserId,
             UploadedAt = uploadedAt,
             RelatedEntityId = relatedEntityId,
             RelatedEntityType = request.RelatedEntityType,
@@ -174,13 +240,26 @@ public sealed class FileService(
             // Metadata không lưu được thì bỏ tệp vừa ghi để không còn tệp mồ côi trên đĩa.
             logger.LogError(ex, "Lưu metadata tệp thất bại, xóa tệp vừa ghi.");
             TryDeletePhysical(written.RelativePath);
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.UploadFailed, cancellationToken);
             return UploadResult.Failure(
                 StorageErrorCodes.UploadFailed,
                 "Không thể tải lên, vui lòng thử lại.");
         }
 
+        await AuditAsync(caller, FileAccessAction.Upload, stored.Id, stored.FileCategory,
+            stored.RelatedEntityType, stored.RelatedEntityId, true, null, cancellationToken);
+
         return UploadResult.Success(StoredFileMapping.ToMetadata(stored));
     }
+
+    /// <summary>Overload cho HTTP endpoint.</summary>
+    public Task<FileDownloadResponse?> DownloadAsync(
+        Guid id,
+        IPrincipal user,
+        CancellationToken cancellationToken = default) =>
+        DownloadAsync(id, StorageCaller.FromPrincipal(user), cancellationToken);
 
     /// <summary>
     /// Tải tệp: kiểm quyền trước, chỉ mở đĩa khi được phép. Trả <c>null</c> khi không tìm thấy, khi tệp
@@ -189,28 +268,27 @@ public sealed class FileService(
     /// </summary>
     public async Task<FileDownloadResponse?> DownloadAsync(
         Guid id,
-        IPrincipal user,
+        StorageCaller caller,
         CancellationToken cancellationToken = default)
     {
-        BusinessGuard.EnsureBusinessAllowed(user);
-
-        var role = RoleOf(user);
-        var userId = user.UserId() ?? string.Empty;
+        EnsureBusinessAllowed(caller);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var file = await db.StoredFiles.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
         if (file is null)
         {
+            await AuditAsync(caller, FileAccessAction.Download, id, null, null, null, false,
+                StorageErrorCodes.FileNotFound, cancellationToken);
             return null;
         }
 
-        var isUploader = file.UploadedByUserId == userId;
-        var inScope = role != Roles.KhachThue
-            || await IsRelatedEntityInScopeAsync(db, file.RelatedEntityType, file.RelatedEntityId, userId, cancellationToken);
-
-        if (!StoragePermissionRules.CanDownload(role, isUploader, inScope))
+        var allowed = await CanDownloadAsync(db, file, caller, cancellationToken);
+        if (!allowed)
         {
             // Cố ý trả 404 (không phải 403) để không lộ tệp có tồn tại với người ngoài phạm vi.
+            await AuditAsync(caller, FileAccessAction.Download, file.Id, file.FileCategory,
+                file.RelatedEntityType, file.RelatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
             return null;
         }
 
@@ -218,8 +296,14 @@ public sealed class FileService(
         if (stream is null)
         {
             // Metadata còn nhưng tệp vật lý mất: coi như không tìm thấy, không lộ đường dẫn.
+            await AuditAsync(caller, FileAccessAction.Download, file.Id, file.FileCategory,
+                file.RelatedEntityType, file.RelatedEntityId, false,
+                StorageErrorCodes.FileNotFound, cancellationToken);
             return null;
         }
+
+        await AuditAsync(caller, FileAccessAction.Download, file.Id, file.FileCategory,
+            file.RelatedEntityType, file.RelatedEntityId, true, null, cancellationToken);
 
         return new FileDownloadResponse
         {
@@ -230,32 +314,60 @@ public sealed class FileService(
         };
     }
 
+    /// <summary>Overload cho HTTP endpoint.</summary>
+    public Task<IReadOnlyList<FileMetadataDto>> ListAsync(
+        RelatedEntityType relatedEntityType,
+        string relatedEntityId,
+        IPrincipal user,
+        CancellationToken cancellationToken = default) =>
+        ListAsync(relatedEntityType, relatedEntityId, StorageCaller.FromPrincipal(user), cancellationToken);
+
     /// <summary>Liệt kê tệp chưa xóa của một đối tượng liên quan, đã lọc theo phạm vi người gọi.</summary>
     public async Task<IReadOnlyList<FileMetadataDto>> ListAsync(
         RelatedEntityType relatedEntityType,
         string relatedEntityId,
-        IPrincipal user,
+        StorageCaller caller,
         CancellationToken cancellationToken = default)
     {
-        BusinessGuard.EnsureBusinessAllowed(user);
-
-        var role = RoleOf(user);
-        var userId = user.UserId() ?? string.Empty;
+        EnsureBusinessAllowed(caller);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        // Giấy tờ P3: kiểm phạm vi hồ sơ trước; ngoài phạm vi trả danh sách rỗng (không lộ tệp).
+        if (relatedEntityType == RelatedEntityType.Tenant)
+        {
+            var access = await ResolveTenantAccessAsync(relatedEntityId, caller, cancellationToken);
+            if (!TenantDocumentPermissionRules.CanView(access))
+            {
+                await AuditAsync(caller, FileAccessAction.List, null, FileCategory.IdentityDocument,
+                    relatedEntityType, relatedEntityId, false,
+                    StorageErrorCodes.Forbidden, cancellationToken);
+                return [];
+            }
+
+            var tenantFiles = await db.StoredFiles.AsNoTracking()
+                .Where(f => f.RelatedEntityType == relatedEntityType && f.RelatedEntityId == relatedEntityId)
+                .OrderByDescending(f => f.UploadedAt)
+                .ToListAsync(cancellationToken);
+
+            await AuditAsync(caller, FileAccessAction.List, null, FileCategory.IdentityDocument,
+                relatedEntityType, relatedEntityId, true, null, cancellationToken);
+
+            return tenantFiles.Select(StoredFileMapping.ToMetadata).ToList();
+        }
 
         var query = db.StoredFiles.AsNoTracking()
             .Where(f => f.RelatedEntityType == relatedEntityType && f.RelatedEntityId == relatedEntityId);
 
-        if (role == Roles.KhachThue)
+        if (caller.IsKhachThue)
         {
             var inScope = await IsRelatedEntityInScopeAsync(
-                db, relatedEntityType, relatedEntityId, userId, cancellationToken);
+                db, relatedEntityType, relatedEntityId, caller.UserId, cancellationToken);
 
             if (!inScope)
             {
                 // Không thuộc phạm vi: chỉ thấy tệp do chính mình upload.
-                query = query.Where(f => f.UploadedByUserId == userId);
+                query = query.Where(f => f.UploadedByUserId == caller.UserId);
             }
         }
 
@@ -266,36 +378,117 @@ public sealed class FileService(
         return files.Select(StoredFileMapping.ToMetadata).ToList();
     }
 
+    /// <summary>Overload cho HTTP endpoint.</summary>
+    public Task<bool> DeleteAsync(
+        Guid id,
+        IPrincipal user,
+        CancellationToken cancellationToken = default) =>
+        DeleteAsync(id, StorageCaller.FromPrincipal(user), cancellationToken);
+
     /// <summary>
     /// Xóa mềm: đặt <c>IsDeleted</c>, giữ tệp vật lý. Trả <c>false</c> khi không tìm thấy hoặc khi
     /// người gọi ngoài phạm vi (đều là <c>404</c> để không lộ tệp có tồn tại); không ném ngoại lệ quyền.
     /// </summary>
-    public async Task<bool> DeleteAsync(Guid id, IPrincipal user, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(
+        Guid id,
+        StorageCaller caller,
+        CancellationToken cancellationToken = default)
     {
-        BusinessGuard.EnsureBusinessAllowed(user);
-
-        var role = RoleOf(user);
+        EnsureBusinessAllowed(caller);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var file = await db.StoredFiles.FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
         if (file is null)
         {
+            await AuditAsync(caller, FileAccessAction.Delete, id, null, null, null, false,
+                StorageErrorCodes.FileNotFound, cancellationToken);
             return false;
         }
 
-        if (!StoragePermissionRules.CanDelete(role))
+        var allowed = file.RelatedEntityType == RelatedEntityType.Tenant
+            ? TenantDocumentPermissionRules.CanDelete(
+                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken))
+            : StoragePermissionRules.CanDelete(caller.Role);
+
+        if (!allowed)
         {
             // Cố ý trả 404 (không phải 403) để không lộ tệp có tồn tại với người ngoài phạm vi.
+            await AuditAsync(caller, FileAccessAction.Delete, file.Id, file.FileCategory,
+                file.RelatedEntityType, file.RelatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
             return false;
         }
 
         file.IsDeleted = true;
         await db.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync(caller, FileAccessAction.Delete, file.Id, file.FileCategory,
+            file.RelatedEntityType, file.RelatedEntityId, true, null, cancellationToken);
         return true;
     }
 
+    private async Task<bool> CanDownloadAsync(
+        ApplicationDbContext db,
+        StoredFile file,
+        StorageCaller caller,
+        CancellationToken cancellationToken)
+    {
+        // Giấy tờ P3: phạm vi hồ sơ khách thuê (Admin = None, Quản lý ngoài tòa nhà = None).
+        if (file.RelatedEntityType == RelatedEntityType.Tenant)
+        {
+            var access = await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken);
+            return TenantDocumentPermissionRules.CanView(access);
+        }
+
+        var isUploader = file.UploadedByUserId == caller.UserId;
+        var inScope = !caller.IsKhachThue
+            || await IsRelatedEntityInScopeAsync(
+                db, file.RelatedEntityType, file.RelatedEntityId, caller.UserId, cancellationToken);
+
+        return StoragePermissionRules.CanDownload(caller.Role, isUploader, inScope);
+    }
+
+    private async Task<TenantDocumentAccessLevel> ResolveTenantAccessAsync(
+        string relatedEntityId,
+        StorageCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(relatedEntityId, out var tenantId))
+        {
+            return TenantDocumentAccessLevel.None;
+        }
+
+        return await tenantDocumentScope.ResolveAsync(
+            tenantId,
+            new TenantCaller(caller.UserId, caller.Role),
+            cancellationToken);
+    }
+
+    private Task AuditAsync(
+        StorageCaller caller,
+        FileAccessAction action,
+        Guid? fileId,
+        FileCategory? category,
+        RelatedEntityType? relatedEntityType,
+        string? relatedEntityId,
+        bool succeeded,
+        string? errorCode,
+        CancellationToken cancellationToken) =>
+        audit.WriteAsync(
+            new FileAccessAuditEntry(
+                caller.UserId,
+                caller.Role,
+                action,
+                fileId,
+                category,
+                relatedEntityType,
+                relatedEntityId,
+                succeeded,
+                errorCode),
+            cancellationToken);
+
     // Đối tượng liên quan đang có bảng: Room, Tenant. Các loại P4/P6/P7 chưa có bảng nên bỏ qua
-    // kiểm tra tồn tại; VHT-26/VHT-33/VHT-54 bổ sung khi bảng tương ứng được tạo.
+    // kiểm tra tồn tại; VHT-33/VHT-54 bổ sung khi bảng tương ứng được tạo.
     private static async Task<bool> RelatedEntityExistsAsync(
         ApplicationDbContext db,
         RelatedEntityType type,
@@ -309,8 +502,8 @@ public sealed class FileService(
         _ => true,
     };
 
-    // Khách thuê có thuộc đối tượng liên quan không. Hiện chỉ suy ra được từ hồ sơ khách thuê;
-    // phòng/hợp đồng/hóa đơn/sự cố/thanh toán chờ P4/P6/P7 nên mặc định từ chối để không mở quyền sớm.
+    // Khách thuê có thuộc đối tượng liên quan không (các loại P4/P6/P7 chưa có bảng; Tenant dùng
+    // TenantDocumentScopeService). Mặc định từ chối để không mở quyền sớm.
     private static async Task<bool> IsRelatedEntityInScopeAsync(
         ApplicationDbContext db,
         RelatedEntityType type,
@@ -327,6 +520,29 @@ public sealed class FileService(
         UploadResult.Failure(
             StorageErrorCodes.FileSizeExceeded,
             $"File vượt quá dung lượng cho phép (tối đa {FileTypeRules.DescribeMegabytes(maxBytes)} MB)");
+
+    // Room/Tenant dùng khóa int: chuẩn hóa về dạng không có số 0 thừa trước khi lưu/tra cứu.
+    private static bool TryCanonicalizeRelatedEntityId(
+        RelatedEntityType type,
+        string raw,
+        out string canonical)
+    {
+        canonical = raw;
+        if (type is not (RelatedEntityType.Room or RelatedEntityType.Tenant))
+        {
+            return true;
+        }
+
+        if (!int.TryParse(raw, System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out var id)
+            || id <= 0)
+        {
+            return false;
+        }
+
+        canonical = id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return true;
+    }
 
     private void TryDeletePhysical(string relativePath)
     {
@@ -352,16 +568,12 @@ public sealed class FileService(
         return name.Length > 260 ? name[..260] : name;
     }
 
-    private static string RoleOf(IPrincipal user)
+    private static void EnsureBusinessAllowed(StorageCaller caller)
     {
-        foreach (var role in Roles.All)
+        if (caller.IsAdmin)
         {
-            if (user.IsInRole(role))
-            {
-                return role;
-            }
+            throw new UnauthorizedAccessException(
+                "Admin chi quan tri tai khoan/vai tro, khong duoc goi service nghiep vu.");
         }
-
-        return string.Empty;
     }
 }

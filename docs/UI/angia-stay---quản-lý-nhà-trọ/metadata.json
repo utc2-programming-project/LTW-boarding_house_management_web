@@ -1,0 +1,6 @@
+{
+  "name": "AnGia Stay - Quản Lý Nhà Trọ",
+  "description": "Hệ thống quản lý nhà trọ, danh mục dịch vụ, bảng đơn giá theo kỳ và ghi chỉ số điện nước chuyên nghiệp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

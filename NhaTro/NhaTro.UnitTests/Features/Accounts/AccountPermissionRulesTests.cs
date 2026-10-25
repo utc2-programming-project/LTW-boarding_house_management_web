@@ -133,4 +133,30 @@ public class AccountPermissionRulesTests
     {
         Assert.Equal(expectedKey, AccountPermissionRules.RoleResourceKey(role));
     }
+
+    [Fact]
+    public void Khong_duoc_xoa_Admin_cuoi_cung()
+    {
+        var reason = AccountPermissionRules.CheckSelfDelete(
+            targetIsAdmin: true, targetIsLastAdmin: true);
+
+        Assert.Equal(AccountErrorCodes.CannotRemoveLastAdmin, reason);
+    }
+
+    [Fact]
+    public void Admin_con_nguoi_khac_thi_duoc_xoa()
+    {
+        Assert.Null(AccountPermissionRules.CheckSelfDelete(
+            targetIsAdmin: true, targetIsLastAdmin: false));
+    }
+
+    [Theory]
+    [InlineData(Roles.ChuTro)]
+    [InlineData(Roles.QuanLy)]
+    [InlineData(Roles.KhachThue)]
+    public void Vai_tro_khac_khong_bi_chan_xoa(string role)
+    {
+        Assert.Null(AccountPermissionRules.CheckSelfDelete(
+            targetIsAdmin: role == Roles.Admin, targetIsLastAdmin: false));
+    }
 }
