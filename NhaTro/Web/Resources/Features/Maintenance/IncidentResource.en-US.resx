@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Incident reports and maintenance</value>
+  </data>
+  <data name="TenantHeading" xml:space="preserve">
+    <value>Report an issue in your room</value>
+  </data>
+  <data name="TenantSubtitle" xml:space="preserve">
+    <value>Submit a report and follow its progress.</value>
+  </data>
+  <data name="StaffSubtitle" xml:space="preserve">
+    <value>Track and handle incidents within your property scope.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="SampleBadge" xml:space="preserve">
+    <value>Sample data · 2A</value>
+  </data>
+  <data name="SampleNotice" xml:space="preserve">
+    <value>P7 backend and private storage are not connected. Actions change sample data in this session only; reloading or changing language resets it.</value>
+  </data>
+  <data name="ScopeNotice" xml:space="preserve">
+    <value>Properties, rooms, reports and history on this page are fictional examples of role-based scope.</value>
+  </data>
+  <data name="DemoControls" xml:space="preserve">
+    <value>Demo scenarios</value>
+  </data>
+  <data name="DemoControlsNotice" xml:space="preserve">
+    <value>These controls affect this demo session only. They do not configure actual permissions or the system approval queue.</value>
+  </data>
+  <data name="DataScenario" xml:space="preserve">
+    <value>Sample list state</value>
+  </data>
+  <data name="ScenarioNormal" xml:space="preserve">
+    <value>Sample records</value>
+  </data>
+  <data name="ScenarioEmpty" xml:space="preserve">
+    <value>Empty sample list</value>
+  </data>
+  <data name="ScenarioError" xml:space="preserve">
+    <value>Simulate a list loading error</value>
+  </data>
+  <data name="CreateIncident" xml:space="preserve">
+    <value>Report an incident</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Incident title</value>
+  </data>
+  <data name="Property" xml:space="preserve">
+    <value>Property</value>
+  </data>
+  <data name="Room" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="PropertyRoom" xml:space="preserve">
+    <value>Property / Room</value>
+  </data>
+  <data name="SelectProperty" xml:space="preserve">
+    <value>Select a property</value>
+  </data>
+  <data name="SelectRoom" xml:space="preserve">
+    <value>Select a room</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="CategoryElectrical" xml:space="preserve">
+    <value>Electrical</value>
+  </data>
+  <data name="CategoryWater" xml:space="preserve">
+    <value>Water</value>
+  </data>
+  <data name="CategoryFurniture" xml:space="preserve">
+    <value>Furniture</value>
+  </data>
+  <data name="CategoryEquipment" xml:space="preserve">
+    <value>Equipment</value>
+  </data>
+  <data name="CategoryOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="Urgency" xml:space="preserve">
+    <value>Urgency</value>
+  </data>
+  <data name="UrgencyNormal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="UrgencyUrgent" xml:space="preserve">
+    <value>Urgent</value>
+  </data>
+  <data name="UrgencyEmergency" xml:space="preserve">
+    <value>Emergency</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Processing status</value>
+  </data>
+  <data name="StatusNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="StatusInProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="StatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="CreatedAt" xml:space="preserve">
+    <value>Created at</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="ViewDetail" xml:space="preserve">
+    <value>View details</value>
+  </data>
+  <data name="ViewDetailNamed" xml:space="preserve">
+    <value>View details: {0}</value>
+  </data>
+  <data name="DetailTitle" xml:space="preserve">
+    <value>Sample incident details</value>
+  </data>
+  <data name="TechnicalNotes" xml:space="preserve">
+    <value>Technical notes (internal)</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Update sample progress</value>
+  </data>
+  <data name="NextStatus" xml:space="preserve">
+    <value>Next processing step</value>
+  </data>
+  <data name="ProposedStatus" xml:space="preserve">
+    <value>Proposed status</value>
+  </data>
+  <data name="CompletedNotice" xml:space="preserve">
+    <value>This report is complete. No further status transition is available.</value>
+  </data>
+  <data name="PendingApproval" xml:space="preserve">
+    <value>Pending approval</value>
+  </data>
+  <data name="ApprovalNotice" xml:space="preserve">
+    <value>This is a sample approval request. The proposed change has not been applied to the report or its status; the actual approval queue is not connected.</value>
+  </data>
+  <data name="ActionCreate" xml:space="preserve">
+    <value>SW-12 · Create report</value>
+  </data>
+  <data name="ActionUpdate" xml:space="preserve">
+    <value>SW-13 · Update progress</value>
+  </data>
+  <data name="ActionResultPhoto" xml:space="preserve">
+    <value>SW-14 · Result photos</value>
+  </data>
+  <data name="ModeAllow" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="ModeApproval" xml:space="preserve">
+    <value>Approval required</value>
+  </data>
+  <data name="ModeDeny" xml:space="preserve">
+    <value>Not allowed</value>
+  </data>
+  <data name="SubmitSample" xml:space="preserve">
+    <value>Submit sample report</value>
+  </data>
+  <data name="RequestSample" xml:space="preserve">
+    <value>Submit sample request</value>
+  </data>
+  <data name="UpdateSample" xml:space="preserve">
+    <value>Update sample</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Processing…</value>
+  </data>
+  <data name="SampleCreated" xml:space="preserve">
+    <value>Sample report created in this session. It has not been saved to SQL.</value>
+  </data>
+  <data name="SampleRequested" xml:space="preserve">
+    <value>Sample approval request recorded. No change has been applied or sent to the actual queue.</value>
+  </data>
+  <data name="SampleUpdated" xml:space="preserve">
+    <value>Sample report updated in this session.</value>
+  </data>
+  <data name="SamplePhotosSaved" xml:space="preserve">
+    <value>Photos added to this session's sample report. They have not been saved to actual storage.</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Attachments</value>
+  </data>
+  <data name="PhotoHint" xml:space="preserve">
+    <value>JPG/JPEG/PNG, up to 5 MB per photo. Each report allows 3 report photos and 3 result photos. At most {0} photos in this selection, including selected photos.</value>
+  </data>
+  <data name="PhotoSlots" xml:space="preserve">
+    <value>{0} result photo slots remain (up to 3 result photos, including pending approval; report photos count separately).</value>
+  </data>
+  <data name="ReadingPhotos" xml:space="preserve">
+    <value>Reading photos…</value>
+  </data>
+  <data name="RemovePhoto" xml:space="preserve">
+    <value>Remove photo</value>
+  </data>
+  <data name="RemovePhotoNamed" xml:space="preserve">
+    <value>Remove photo: {0}</value>
+  </data>
+  <data name="PhotoLimit" xml:space="preserve">
+    <value>A report allows up to 3 report photos and 3 result photos, including pending approval in each group. Please check the remaining photo slots.</value>
+  </data>
+  <data name="PhotoInvalid" xml:space="preserve">
+    <value>Use a non-empty JPG/JPEG/PNG with matching file content, up to 5 MB. The image could not be read; please select it again.</value>
+  </data>
+  <data name="PhotoRequired" xml:space="preserve">
+    <value>Please select at least one result photo.</value>
+  </data>
+  <data name="ResultPhoto" xml:space="preserve">
+    <value>Repair result photo</value>
+  </data>
+  <data name="ReportPhoto" xml:space="preserve">
+    <value>Reported issue photo</value>
+  </data>
+  <data name="SaveResultPhotos" xml:space="preserve">
+    <value>Submit sample result photos</value>
+  </data>
+  <data name="PendingPhotoCount" xml:space="preserve">
+    <value>{0} photos await approval and have not been applied to the report.</value>
+  </data>
+  <data name="TenantPhotoNotice" xml:space="preserve">
+    <value>Only photos within your viewing scope in this sample session are shown.</value>
+  </data>
+  <data name="SampleIllustration" xml:space="preserve">
+    <value>Sample illustration, not an actual incident photo.</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>Activity history</value>
+  </data>
+  <data name="ActorTenant" xml:space="preserve">
+    <value>Tenant (sample)</value>
+  </data>
+  <data name="ActorManager" xml:space="preserve">
+    <value>Manager (sample)</value>
+  </data>
+  <data name="ActorOwner" xml:space="preserve">
+    <value>Owner (sample)</value>
+  </data>
+  <data name="EventCreated" xml:space="preserve">
+    <value>Sample report created</value>
+  </data>
+  <data name="EventStarted" xml:space="preserve">
+    <value>Sample processing started</value>
+  </data>
+  <data name="EventCompleted" xml:space="preserve">
+    <value>Sample processing completed</value>
+  </data>
+  <data name="EventPhotos" xml:space="preserve">
+    <value>Sample result photos added</value>
+  </data>
+  <data name="EventRequested" xml:space="preserve">
+    <value>Sample approval request submitted</value>
+  </data>
+  <data name="SampleTitleFurniture" xml:space="preserve">
+    <value>Wardrobe door repaired (sample)</value>
+  </data>
+  <data name="SampleDescriptionFurniture" xml:space="preserve">
+    <value>The wardrobe door hinge was misaligned; it has been adjusted and checked to open and close smoothly.</value>
+  </data>
+  <data name="SampleTitleWater" xml:space="preserve">
+    <value>Leaking washbasin tap</value>
+  </data>
+  <data name="SampleDescriptionWater" xml:space="preserve">
+    <value>The washbasin tap keeps leaking after it is closed. Inspection and repair are needed.</value>
+  </data>
+  <data name="SampleTitleElectrical" xml:space="preserve">
+    <value>Electrical socket short circuit</value>
+  </data>
+  <data name="SampleDescriptionElectrical" xml:space="preserve">
+    <value>The socket next to the door made a popping sound. Power has been switched off pending inspection.</value>
+  </data>
+  <data name="SampleTitleEquipment" xml:space="preserve">
+    <value>Ventilation fan not working</value>
+  </data>
+  <data name="SampleDescriptionEquipment" xml:space="preserve">
+    <value>The ventilation fan did not run when switched on. This sample report is now complete.</value>
+  </data>
+  <data name="TitleInvalid" xml:space="preserve">
+    <value>The title must contain at least 5 characters after trimming.</value>
+  </data>
+  <data name="DescriptionInvalid" xml:space="preserve">
+    <value>The description must contain at least 10 characters after trimming.</value>
+  </data>
+  <data name="PropertyRequired" xml:space="preserve">
+    <value>Select a property within your scope.</value>
+  </data>
+  <data name="RoomRequired" xml:space="preserve">
+    <value>Select a valid room within the chosen property and your scope.</value>
+  </data>
+  <data name="ValueInvalid" xml:space="preserve">
+    <value>The selected value is invalid.</value>
+  </data>
+  <data name="TransitionInvalid" xml:space="preserve">
+    <value>The selected status transition is not allowed.</value>
+  </data>
+  <data name="AlreadyPending" xml:space="preserve">
+    <value>An update request is already pending approval. Do not submit it again.</value>
+  </data>
+  <data name="ActionDenied" xml:space="preserve">
+    <value>The demo switch does not allow this action.</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>You do not have permission to access incidents.</value>
+  </data>
+  <data name="SessionChanged" xml:space="preserve">
+    <value>The session account has changed. Please reload the page.</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>The report was not found within your permitted scope.</value>
+  </data>
+  <data name="NoData" xml:space="preserve">
+    <value>No data</value>
+  </data>
+  <data name="EmptyDescription" xml:space="preserve">
+    <value>There are no reports in this scope. You can create a new sample report.</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No matching results</value>
+  </data>
+  <data name="ClearFilters" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>The list could not be loaded. If the sample error scenario is selected, switch back to Sample records.</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="FilterBy" xml:space="preserve">
+    <value>Filter by</value>
+  </data>
+  <data name="Pagination" xml:space="preserve">
+    <value>Pagination</value>
+  </data>
+  <data name="FirstPage" xml:space="preserve">
+    <value>First page</value>
+  </data>
+  <data name="PreviousPage" xml:space="preserve">
+    <value>Previous page</value>
+  </data>
+  <data name="NextPage" xml:space="preserve">
+    <value>Next page</value>
+  </data>
+  <data name="LastPage" xml:space="preserve">
+    <value>Last page</value>
+  </data>
+  <data name="Page" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="PageSummary" xml:space="preserve">
+    <value>Showing {0}–{1} of {2}</value>
+  </data>
+  <data name="ListCaption" xml:space="preserve">
+    <value>Sample incidents within your scope</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="DemoWorkflowNotice" xml:space="preserve"><value>Allow applies sample changes immediately; Approval required only creates proposals. Landlords approve/reject in report details. Sign-in sessions do not share data: landlords can add sample requests to try approval. Switching to Allow does not approve existing proposals; reloading clears sample session changes.</value></data>
+  <data name="AddApprovalSamples" xml:space="preserve"><value>Add sample pending requests</value></data>
+  <data name="ApprovalSamplesReady" xml:space="preserve"><value>Added 3 sample request reports. Filter by Pending approval and open details to approve or reject.</value></data>
+  <data name="ApprovalSamplesAdded" xml:space="preserve"><value>Sample requests have already been added in this session.</value></data>
+  <data name="ApproveSample" xml:space="preserve"><value>Approve sample request</value></data>
+  <data name="RejectSample" xml:space="preserve"><value>Reject sample request</value></data>
+  <data name="SampleApproved" xml:space="preserve"><value>The request was approved and applied in this sample session.</value></data>
+  <data name="SampleRejected" xml:space="preserve"><value>The sample request was rejected; proposed changes were not applied.</value></data>
+  <data name="RequestNotFound" xml:space="preserve"><value>This request is no longer pending. Please reload the details.</value></data>
+  <data name="EventApproved" xml:space="preserve"><value>Sample request approved</value></data>
+  <data name="EventRejected" xml:space="preserve"><value>Sample request rejected</value></data>
+  <data name="Assignee" xml:space="preserve"><value>Assigned technician (enter a name)</value></data>
+  <data name="AssigneeInvalid" xml:space="preserve"><value>The technician name must be at most 100 characters after trimming.</value></data>
+  <data name="RepairCost" xml:space="preserve"><value>Repair cost (VND)</value></data>
+  <data name="RepairCostHint" xml:space="preserve"><value>Optional. Enter a non-negative whole amount, e.g. 150000 or 150.000. This is internal processing information; there is no separate cost approval workflow.</value></data>
+  <data name="RepairCostInvalid" xml:space="preserve"><value>Enter a non-negative whole VND amount, or leave blank if unknown.</value></data>
+  <data name="SampleLoadError" xml:space="preserve">
+    <value>A sample list loading error is being simulated. Select “Sample records” to leave the error scenario.</value>
+  </data>
+</root>

@@ -17,7 +17,7 @@ public static class AppNavigation
         new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
         new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
         new("Invoices", "receipt", "ChuTro,QuanLy"),
-        new("Incidents", "wrench", "ChuTro,QuanLy"),
+        new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
         new("Reports", "chart", "ChuTro"),
         new("ManagerSwitches", "settings", "ChuTro"),
         new("Approvals", "check", "ChuTro"),
@@ -25,7 +25,7 @@ public static class AppNavigation
         new("MyRequests", "file", "QuanLy"),
         new("MyRoom", "door", "KhachThue"),
         new("MyInvoices", "receipt", "KhachThue"),
-        new("ReportIncident", "wrench", "KhachThue"),
+        new("ReportIncident", "wrench", "KhachThue", "/incidents"),
         // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.
         new("MyAccount", "user", "Admin,ChuTro,QuanLy", "/profile"),
         new("MyTenantProfile", "user", "KhachThue", "/tenant/profile")

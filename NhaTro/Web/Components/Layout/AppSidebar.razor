@@ -6,7 +6,8 @@
     <nav class="sidebar-menu" aria-label="@L["Navigation"]">
         @foreach (var item in AppNavigation.Items)
         {
-            <AuthorizeView Roles="@item.Roles" Context="menuAuth">
+            <AuthorizeView Roles="@item.Roles" Context="menuAuth"
+                           Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentDemoSession.Policy : null)">
                 @if (item.Href is not null)
                 {
                     <NavLink href="@item.Href" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>

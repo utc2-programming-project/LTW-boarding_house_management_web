@@ -20,17 +20,8 @@
 - `task/cong_viec_theo_tuan.md`: kế hoạch 4 tuần, mã Jira `VHT-n` là chuẩn.
 - `task/timeline_song_song.md`: ai làm song song với ai, việc nào chờ việc nào.
 - `task/thao_tac_va_quyen.xlsx`: ma trận quyền theo vai trò — nguồn chuẩn, mô tả task phải khớp.
-- `Imp/`: kế hoạch chi tiết task **đang làm** (VD `VHT-27-*.md`). Task xong chuyển sang `archive/imp/`. Làm task nào đọc file đó.
+- `Imp/`: kế hoạch chi tiết từng task (VD `VHT-5-ERD-*.md`). Làm task nào đọc file đó.
 - `operations/secrets.md`: quản lý secret (User Secrets / env), cấm commit secret.
 - `report/dan_y_bao_cao_word.md`: dàn ý báo cáo Word.
 - `quy_uoc_ngay_tien_gio.md`: format ngày/tiền/giờ chung, dùng hàm có sẵn, không tự `ToString`.
 - Bỏ qua: `archive/`, `image/`, `*.docx`, `*.excalidraw` (file sinh ra / ảnh minh họa).
-
-## Kiem thu (tranh lam nang repo)
-
-- Thay doi nho (1–2 file, config/log/UI nhỏ, sửa lỗi cục bộ): **không viết thêm test**. Chỉ cần `dotnet build`, chạy app và xem log.
-- Chỉ viết nhiều test khi thay đổi **lan rộng**: nhiều file, nhiều tầng, hoặc đụng nghiệp vụ tiền/quyền/dữ liệu, hoặc lỗi đã từng tái diễn.
-- Không lặp cùng một hành vi ở cả Unit và Integration. Chọn tầng thấp nhất còn kiểm được: hàm thuần → Unit; cần HTTP/DB → Integration.
-- Gộp test cùng nhóm vào một class/file, dùng chung fixture. Không tách mỗi test một class chỉ để có DB riêng (mỗi class là một DB fixture).
-- Giữ test bảo vệ nghiệp vụ, tiền, phân quyền, bảo mật. Xóa/gộp test trùng lặp hoặc test chỉ kiểm hành vi framework.
-- Không thêm test để đủ số lượng; mỗi test phải bảo vệ một rủi ro cụ thể.

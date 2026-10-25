@@ -1,0 +1,295 @@
+@inject IStringLocalizer<IncidentResource> L
+@inject ToastService Toasts
+
+<FeatureDialog @ref="_dialog" Visible="true" Title="@L["DetailTitle"]" CloseLabel="@L["Close"]" Busy="@Busy" OnClose="OnClose">
+    <div class="detail-body">
+        <p class="sample-note">@L["SampleNotice"]</p>
+        @if (_loading)
+        {
+            <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+        }
+        else if (_item is not null)
+        {
+            <div class="detail-heading">
+                <h3>@Text(_item.Title)</h3>
+                @if (!_item.AwaitingCreation)
+                {
+                    <StatusBadge Text="@L[$"Status{_item.Status}"]" Tone="@(_item.Status == IncidentDemoStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
+                }
+                @if (_item.Pending.Count > 0)
+                {
+                    <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
+                }
+            </div>
+            <dl class="detail-grid">
+                <div><dt>@L["PropertyRoom"]</dt><dd>@RoomText</dd></div>
+                <div><dt>@L["CreatedAt"]</dt><dd class="tabular-nums">@DateFormatter.FormatDateTime(_item.CreatedAtUtc)</dd></div>
+                <div><dt>@L["Category"]</dt><dd>@L[$"Category{_item.Category}"]</dd></div>
+                <div><dt>@L["Urgency"]</dt><dd>@L[$"Urgency{_item.Urgency}"]</dd></div>
+            </dl>
+            <section>
+                <h3>@L["Description"]</h3>
+                <p class="preserve-text">@Text(_item.Description)</p>
+            </section>
+            <section>
+                <h3>@L["Attachments"]</h3>
+                @if (TenantView) { <p class="sample-note">@L["TenantPhotoNotice"]</p> }
+                @if (_item.Photos.Count == 0) { <p>@L["NoData"]</p> }
+                <div class="photo-grid">
+                    @foreach (var photo in _item.Photos)
+                    {
+                        <figure>
+                            <img src="@photo.DataUrl" alt="@photo.Name" />
+                            <figcaption>@photo.Name · @L[photo.IsResult ? "ResultPhoto" : "ReportPhoto"]</figcaption>
+                            @if (_item.IsSeeded) { <span class="sample-note">@L["SampleIllustration"]</span> }
+                        </figure>
+                    }
+                </div>
+            </section>
+            @if (!TenantView)
+            {
+                <AuthorizeView Roles="ChuTro,QuanLy">
+                    <section>
+                        <h3>@L["TechnicalNotes"]</h3>
+                        <p class="preserve-text">@(string.IsNullOrWhiteSpace(_item.TechnicalNotes) ? L["NoData"].Value : _item.TechnicalNotes)</p>
+                        <dl class="detail-grid">
+                            <div><dt>@L["Assignee"]</dt><dd>@(string.IsNullOrWhiteSpace(_item.Assignee) ? L["NoData"].Value : _item.Assignee)</dd></div>
+                            <div><dt>@L["RepairCost"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_item.RepairCost)</dd></div>
+                        </dl>
+                    </section>
+                    @if (_item.Pending.Count > 0)
+                    {
+                        <section class="pending-panel">
+                            <h3>@L["PendingApproval"]</h3>
+                            <p>@L["ApprovalNotice"]</p>
+                            <p>@L["DemoWorkflowNotice"]</p>
+                            @foreach (var pending in _item.Pending)
+                            {
+                                <div class="pending-entry">
+                                    <strong>@L[$"Action{pending.Action}"]</strong>
+                                    <p class="tabular-nums">@DateFormatter.FormatDateTime(pending.AtUtc)</p>
+                                    @if (pending.ProposedStatus is not null)
+                                    {
+                                        <p>@L["ProposedStatus"]: @L[$"Status{pending.ProposedStatus}"]</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(pending.Notes))
+                                    {
+                                        <p class="preserve-text">@pending.Notes</p>
+                                    }
+                                    @if (pending.Action == IncidentDemoAction.Update)
+                                    {
+                                        <p>@L["Assignee"]: @(string.IsNullOrWhiteSpace(pending.Assignee) ? L["NoData"].Value : pending.Assignee)</p>
+                                        <p class="tabular-nums">@L["RepairCost"]: @MoneyFormatter.Format(pending.RepairCost)</p>
+                                    }
+                                    @if (pending.Photos.Count > 0)
+                                    {
+                                        <p>@L["PendingPhotoCount", pending.Photos.Count]</p>
+                                        <div class="photo-grid">
+                                            @foreach (var photo in pending.Photos)
+                                            {
+                                                <figure><img src="@photo.DataUrl" alt="@photo.Name" /><figcaption>@photo.Name</figcaption></figure>
+                                            }
+                                        </div>
+                                    }
+                                    <AuthorizeView Roles="ChuTro" Context="ownerContext">
+                                        <div class="approval-actions">
+                                            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="() => DecideAsync(pending.Id, true)">@L["ApproveSample"]</button>
+                                            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="() => DecideAsync(pending.Id, false)">@L["RejectSample"]</button>
+                                        </div>
+                                    </AuthorizeView>
+                                </div>
+                            }
+                        </section>
+                    }
+                    @if (!_item.AwaitingCreation)
+                    {
+                        <section class="processing-panel">
+                            <h3>@L["Processing"]</h3>
+                            @if (_item.Status == IncidentDemoStatus.Completed)
+                            {
+                                <p>@L["CompletedNotice"]</p>
+                            }
+                            else
+                            {
+                                <p>@L["ActionUpdate"] · @L[$"Mode{_updateMode}"]</p>
+                                <dl><dt>@L["NextStatus"]</dt><dd>@L[$"Status{NextStatus}"]</dd></dl>
+                                <label for="incident-technical-notes">@L["TechnicalNotes"]</label>
+                                <textarea id="incident-technical-notes" rows="3" @bind="_notes" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)"></textarea>
+                                <label for="incident-assignee">@L["Assignee"]</label>
+                                <input id="incident-assignee" maxlength="100" @bind="_assignee" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                <label for="incident-repair-cost">@L["RepairCost"]</label>
+                                <input id="incident-repair-cost" inputmode="numeric" @bind="_repairCostText" aria-describedby="incident-repair-cost-hint" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                <p id="incident-repair-cost-hint" class="sample-note">@L["RepairCostHint"]</p>
+                                @if (HasPendingUpdate) { <p>@L["AlreadyPending"]</p> }
+                                <button type="button" class="btn btn-primary" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)"
+                                        aria-busy="@_saving" @onclick="UpdateAsync">
+                                    @(_saving ? L["Saving"] : _updateMode == IncidentDemoMode.Approval ? L["RequestSample"] : L["UpdateSample"])
+                                </button>
+                            }
+                        </section>
+                        <section class="processing-panel">
+                            <h3>@L["ResultPhoto"]</h3>
+                            <p>@L["ActionResultPhoto"] · @L[$"Mode{_photoMode}"]</p>
+                            <p>@L["PhotoSlots", AvailablePhotoSlots]</p>
+                            <IncidentPhotoPicker @key="_photoVersion" @bind-Photos="_photos" Capacity="AvailablePhotoSlots"
+                                                 Disabled="@(_saving || _photoMode == IncidentDemoMode.Deny)" BusyChanged="value => _uploading = value" />
+                            <button type="button" class="btn btn-secondary" disabled="@(Busy || _photoMode == IncidentDemoMode.Deny || _photos.Count == 0)"
+                                    @onclick="SavePhotosAsync">@(_saving ? L["Saving"] : L["SaveResultPhotos"])</button>
+                        </section>
+                    }
+                </AuthorizeView>
+            }
+            <section>
+                <h3>@L["History"]</h3>
+                <ol class="history">
+                    @foreach (var entry in _item.History.OrderByDescending(h => h.AtUtc))
+                    {
+                        <li>
+                            <span>@L[entry.EventKey] · @L[entry.ActorKey]</span>
+                            <span class="tabular-nums">@DateFormatter.FormatDateTime(entry.AtUtc)</span>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+        @if (_error is not null)
+        {
+            <div class="detail-error" role="alert">
+                <p>@_error</p>
+                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="RefreshAsync">@L["Retry"]</button>
+            </div>
+        }
+        <div class="detail-actions">
+            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="CloseAsync">@L["Close"]</button>
+        </div>
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public IncidentDemoSession Session { get; set; } = default!;
+    [Parameter] public int IncidentId { get; set; }
+    [Parameter] public IReadOnlyList<IncidentDemoRoom> Rooms { get; set; } = [];
+    [Parameter] public bool TenantView { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private FeatureDialog? _dialog;
+    private IncidentDemoItem? _item;
+    private IncidentDemoMode _updateMode;
+    private IncidentDemoMode _photoMode;
+    private IReadOnlyList<IncidentDemoPhoto> _photos = [];
+    private string _notes = "";
+    private string _assignee = "";
+    private string _repairCostText = "";
+    private string? _error;
+    private bool _loading = true;
+    private bool _saving;
+    private bool _uploading;
+    private int _photoVersion;
+    private bool Busy => _loading || _saving || _uploading;
+    private bool HasPendingUpdate => _item?.Pending.Any(p => p.Action == IncidentDemoAction.Update) == true;
+    private IncidentDemoStatus NextStatus => _item?.Status == IncidentDemoStatus.New ? IncidentDemoStatus.InProgress : IncidentDemoStatus.Completed;
+    private int AvailablePhotoSlots => Math.Max(0, IncidentDemoPhoto.MaxCount - (_item?.Photos.Count(p => p.IsResult) ?? 0)
+        - (_item?.Pending.Where(p => p.Action == IncidentDemoAction.ResultPhoto).Sum(p => p.Photos.Count) ?? 0));
+    private string RoomText
+    {
+        get
+        {
+            var room = Rooms.FirstOrDefault(r => r.Id == _item?.RoomId);
+            return room is null ? L["NoData"] : $"{room.PropertyName} / {room.Name}";
+        }
+    }
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+    private string Text(string text) => _item?.IsSeeded == true ? L[text] : text;
+
+    private async Task RefreshAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _item = await Session.DetailAsync(IncidentId);
+            _updateMode = await Session.ModeAsync(IncidentDemoAction.Update);
+            _photoMode = await Session.ModeAsync(IncidentDemoAction.ResultPhoto);
+            _notes = _item.TechnicalNotes;
+            _assignee = _item.Assignee;
+            _repairCostText = _item.RepairCost is null ? "" : MoneyFormatter.Format(_item.RepairCost);
+        }
+        catch (IncidentDemoException ex)
+        {
+            // Không tiếp tục hiển thị snapshot cũ nếu quyền hoặc phạm vi đã thay đổi.
+            _item = null;
+            _error = L[ex.Message];
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task UpdateAsync()
+    {
+        if (Busy || _item is null) return;
+        _saving = true;
+        _error = null;
+        try
+        {
+            decimal? repairCost = null;
+            if (!string.IsNullOrWhiteSpace(_repairCostText))
+            {
+                if (!MoneyFormatter.TryParse(_repairCostText, out var amount) || amount < 0)
+                    throw new IncidentDemoException("RepairCostInvalid");
+                repairCost = amount;
+            }
+            var pending = await Session.UpdateAsync(IncidentId, NextStatus, _notes, _assignee, repairCost);
+            Toasts.Success(L[pending ? "SampleRequested" : "SampleUpdated"]);
+            await RefreshAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (IncidentDemoException ex) { _error = L[ex.Message]; Toasts.Error(_error); }
+        finally { _saving = false; }
+    }
+
+    private async Task DecideAsync(Guid requestId, bool approve)
+    {
+        if (Busy || _item is null) return;
+        _saving = true;
+        _error = null;
+        try
+        {
+            var rejectedCreation = !approve && _item.AwaitingCreation;
+            await Session.DecideAsync(IncidentId, requestId, approve);
+            Toasts.Success(L[approve ? "SampleApproved" : "SampleRejected"]);
+            if (rejectedCreation)
+            {
+                if (_dialog is not null) await _dialog.CloseNativeAsync();
+                await OnChanged.InvokeAsync();
+                await OnClose.InvokeAsync();
+            }
+            else
+            {
+                await RefreshAsync();
+                await OnChanged.InvokeAsync();
+            }
+        }
+        catch (IncidentDemoException ex) { _error = L[ex.Message]; Toasts.Error(_error); }
+        finally { _saving = false; }
+    }
+
+    private async Task SavePhotosAsync()
+    {
+        if (Busy || _photos.Count == 0) return;
+        _saving = true;
+        _error = null;
+        try
+        {
+            var pending = await Session.AddResultPhotosAsync(IncidentId, _photos);
+            _photos = [];
+            _photoVersion++;
+            Toasts.Success(L[pending ? "SampleRequested" : "SamplePhotosSaved"]);
+            await RefreshAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (IncidentDemoException ex) { _error = L[ex.Message]; Toasts.Error(_error); }
+        finally { _saving = false; }
+    }
+
+    private Task CloseAsync() => _dialog?.RequestCloseAsync() ?? Task.CompletedTask;
+}

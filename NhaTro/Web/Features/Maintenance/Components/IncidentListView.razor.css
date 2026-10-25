@@ -1,0 +1,8 @@
+.incident-list { min-width: 0; }
+
+/* Giữ chữ nút trên một dòng; bảng vẫn cuộn ngang trong khung ở màn hình hẹp. */
+.incident-list ::deep .incident-detail-action {
+    min-width: 112px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}

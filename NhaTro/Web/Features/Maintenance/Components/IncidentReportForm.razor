@@ -1,0 +1,155 @@
+@implements IDisposable
+@inject IStringLocalizer<IncidentResource> L
+@inject ToastService Toasts
+
+<FeatureDialog @ref="_dialog" Visible="true" Title="@L["CreateIncident"]" CloseLabel="@L["Close"]"
+               Busy="@Busy" OnClose="OnClose">
+    <div class="report-body">
+        <p class="sample-note">@L["SampleNotice"]</p>
+        @if (Mode == IncidentDemoMode.Approval)
+        {
+            <p class="pending-note">@L["ApprovalNotice"]</p>
+        }
+        <EditForm EditContext="_context" OnSubmit="SubmitAsync">
+            <fieldset disabled="@Busy">
+                <div class="form-grid">
+                    <FormField TValue="int" Id="incident-property" Label="@L["Property"]" Required="true" For="() => _form.PropertyId">
+                        <InputSelect id="incident-property" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged" aria-describedby="incident-property-error">
+                            <option value="0">@L["SelectProperty"]</option>
+                            @foreach (var property in Rooms.DistinctBy(r => r.PropertyId))
+                            {
+                                <option value="@property.PropertyId">@property.PropertyName</option>
+                            }
+                        </InputSelect>
+                    </FormField>
+                    <FormField TValue="int" Id="incident-room" Label="@L["Room"]" Required="true" For="() => _form.RoomId">
+                        <InputSelect id="incident-room" @bind-Value="_form.RoomId" aria-describedby="incident-room-error">
+                            <option value="0">@L["SelectRoom"]</option>
+                            @foreach (var room in Rooms.Where(r => r.PropertyId == _form.PropertyId))
+                            {
+                                <option value="@room.Id">@room.Name</option>
+                            }
+                        </InputSelect>
+                    </FormField>
+                    <div class="full-width">
+                        <FormField TValue="string" Id="incident-title" Label="@L["Title"]" Required="true" For="() => _form.Title">
+                            <InputText id="incident-title" @bind-Value="_form.Title" aria-describedby="incident-title-error" />
+                        </FormField>
+                    </div>
+                    <FormField TValue="IncidentDemoCategory" Id="incident-category" Label="@L["Category"]" For="() => _form.Category">
+                        <InputSelect id="incident-category" @bind-Value="_form.Category" aria-describedby="incident-category-error">
+                            @foreach (var value in Enum.GetValues<IncidentDemoCategory>())
+                            {
+                                <option value="@value">@L[$"Category{value}"]</option>
+                            }
+                        </InputSelect>
+                    </FormField>
+                    <FormField TValue="IncidentDemoUrgency" Id="incident-urgency" Label="@L["Urgency"]" For="() => _form.Urgency">
+                        <InputSelect id="incident-urgency" @bind-Value="_form.Urgency" aria-describedby="incident-urgency-error">
+                            @foreach (var value in Enum.GetValues<IncidentDemoUrgency>())
+                            {
+                                <option value="@value">@L[$"Urgency{value}"]</option>
+                            }
+                        </InputSelect>
+                    </FormField>
+                    <div class="full-width">
+                        <FormField TValue="string" Id="incident-description" Label="@L["Description"]" Required="true" For="() => _form.Description">
+                            <InputTextArea id="incident-description" rows="4" @bind-Value="_form.Description" aria-describedby="incident-description-error" />
+                        </FormField>
+                    </div>
+                    <div class="full-width">
+                        <IncidentPhotoPicker @bind-Photos="_form.Photos" BusyChanged="value => _uploading = value" Disabled="_saving" />
+                    </div>
+                </div>
+            </fieldset>
+            @if (_error is not null)
+            {
+                <p class="form-error" role="alert">@_error</p>
+            }
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="CloseAsync">@L["Cancel"]</button>
+                <button type="submit" class="btn btn-primary" disabled="@(Busy || Mode == IncidentDemoMode.Deny)" aria-busy="@Busy">
+                    @(Busy ? L["Saving"] : Mode == IncidentDemoMode.Approval ? L["RequestSample"] : L["SubmitSample"])
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public IncidentDemoSession Session { get; set; } = default!;
+    [Parameter] public IReadOnlyList<IncidentDemoRoom> Rooms { get; set; } = [];
+    [Parameter] public IncidentDemoMode Mode { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    private FeatureDialog? _dialog;
+    private readonly IncidentDemoForm _form = new();
+    private EditContext _context = default!;
+    private ValidationMessageStore _messages = default!;
+    private string? _error;
+    private bool _saving;
+    private bool _uploading;
+    private bool Busy => _saving || _uploading;
+
+    protected override void OnInitialized()
+    {
+        _context = new(_form);
+        _messages = new(_context);
+        _context.OnFieldChanged += FieldChanged;
+        if (Rooms.Count == 1)
+        {
+            _form.PropertyId = Rooms[0].PropertyId;
+            _form.RoomId = Rooms[0].Id;
+        }
+    }
+
+    private void FieldChanged(object? sender, FieldChangedEventArgs args)
+    {
+        _messages.Clear(args.FieldIdentifier);
+        _context.NotifyValidationStateChanged();
+    }
+
+    public void Dispose() => _context.OnFieldChanged -= FieldChanged;
+
+    private void PropertyChanged()
+    {
+        _form.RoomId = 0;
+        _messages.Clear(new FieldIdentifier(_form, nameof(_form.RoomId)));
+        _context.NotifyValidationStateChanged();
+    }
+
+    private async Task SubmitAsync(EditContext context)
+    {
+        if (Busy) return;
+        _error = null;
+        _messages.Clear();
+        _form.Title = _form.Title.Trim();
+        _form.Description = _form.Description.Trim();
+        if (!Rooms.Any(r => r.PropertyId == _form.PropertyId)) AddError(nameof(_form.PropertyId), "PropertyRequired");
+        if (!Rooms.Any(r => r.Id == _form.RoomId && r.PropertyId == _form.PropertyId)) AddError(nameof(_form.RoomId), "RoomRequired");
+        if (_form.Title.Length < 5) AddError(nameof(_form.Title), "TitleInvalid");
+        if (_form.Description.Length < 10) AddError(nameof(_form.Description), "DescriptionInvalid");
+        if (!Enum.IsDefined(_form.Category)) AddError(nameof(_form.Category), "ValueInvalid");
+        if (!Enum.IsDefined(_form.Urgency)) AddError(nameof(_form.Urgency), "ValueInvalid");
+        context.NotifyValidationStateChanged();
+        if (context.GetValidationMessages().Any()) return;
+        _saving = true;
+        try
+        {
+            var pending = await Session.CreateAsync(_form);
+            Toasts.Success(L[pending ? "SampleRequested" : "SampleCreated"]);
+            if (_dialog is not null) await _dialog.CloseNativeAsync();
+            await OnSaved.InvokeAsync();
+        }
+        catch (IncidentDemoException ex)
+        {
+            _error = L[ex.Message];
+            Toasts.Error(_error);
+        }
+        finally { _saving = false; }
+    }
+
+    private void AddError(string field, string key) =>
+        _messages.Add(new FieldIdentifier(_form, field), L[key]);
+    private Task CloseAsync() => _dialog?.RequestCloseAsync() ?? Task.CompletedTask;
+}
