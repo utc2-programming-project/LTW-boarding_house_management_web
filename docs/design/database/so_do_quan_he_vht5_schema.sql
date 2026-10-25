@@ -7,7 +7,7 @@
 --   * AspNetUsers: + FullName (VHT-8).
 --   * Tenants: + IsActive, RowVersion, Gender, DateOfBirth, IdIssuedDate, IdIssuedPlace,
 --     PermanentAddress, Note; đổi lọc CitizenId (thêm IsActive = 1), UserId thành unique (VHT-23).
---   * StoredFiles (VHT-12/VHT-13), ManagerToggles + 21 công tắc (VHT-94).
+--   * StoredFiles (VHT-12/VHT-13), FileAccessAuditLogs (VHT-26), ManagerToggles + 21 công tắc (VHT-94).
 IF DB_ID(N'NhaTro') IS NULL
     CREATE DATABASE NhaTro;
 GO
@@ -208,6 +208,40 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_StoredFiles_RelatedEn
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_StoredFiles_UploadedByUserId' AND object_id = OBJECT_ID(N'dbo.StoredFiles'))
     CREATE INDEX IX_StoredFiles_UploadedByUserId ON StoredFiles(UploadedByUserId);
+GO
+
+-- ============================================================================
+-- VHT-26 — Nhật ký truy cập tệp (append-only)
+-- Cố ý KHÔNG có khóa ngoại tới AspNetUsers/StoredFiles: log phải còn khi tài khoản
+-- hoặc tệp đã bị xóa. ActorUserId/FileId chỉ là giá trị tham chiếu mềm.
+-- ============================================================================
+IF OBJECT_ID(N'dbo.FileAccessAuditLogs', N'U') IS NULL
+BEGIN
+    CREATE TABLE FileAccessAuditLogs
+    (
+        Id BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_FileAccessAuditLogs PRIMARY KEY,
+        OccurredAt DATETIMEOFFSET NOT NULL,  -- thời điểm truy cập
+        ActorUserId NVARCHAR(450) NOT NULL,  -- người thực hiện (tham chiếu mềm, không FK)
+        ActorRole NVARCHAR(20) NOT NULL,  -- vai trò tại thời điểm thao tác
+        Action NVARCHAR(20) NOT NULL,  -- Upload/Download/Delete/List...
+        FileId UNIQUEIDENTIFIER,  -- tệp liên quan (tham chiếu mềm, không FK)
+        FileCategory INT,  -- loại tệp tại thời điểm thao tác
+        RelatedEntityType INT,  -- loại đối tượng liên quan
+        RelatedEntityId NVARCHAR(450),  -- ID đối tượng liên quan
+        Succeeded BIT NOT NULL,  -- thao tác thành công hay bị chặn
+        ErrorCode NVARCHAR(50)  -- mã lỗi khi bị chặn
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FileAccessAuditLogs_ActorUserId_OccurredAt' AND object_id = OBJECT_ID(N'dbo.FileAccessAuditLogs'))
+    CREATE INDEX IX_FileAccessAuditLogs_ActorUserId_OccurredAt ON FileAccessAuditLogs(ActorUserId, OccurredAt);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FileAccessAuditLogs_FileId' AND object_id = OBJECT_ID(N'dbo.FileAccessAuditLogs'))
+    CREATE INDEX IX_FileAccessAuditLogs_FileId ON FileAccessAuditLogs(FileId);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FileAccessAuditLogs_RelatedEntityType_RelatedEntityId_OccurredAt' AND object_id = OBJECT_ID(N'dbo.FileAccessAuditLogs'))
+    CREATE INDEX IX_FileAccessAuditLogs_RelatedEntityType_RelatedEntityId_OccurredAt ON FileAccessAuditLogs(RelatedEntityType, RelatedEntityId, OccurredAt);
 GO
 
 -- ============================================================================

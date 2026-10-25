@@ -36,7 +36,7 @@ Review/merge migration theo lượt; chạy trên DB sạch và DB có dữ li�
 - Không merge PR, không push khi chưa hỏi.
 - Không chốt thay nhóm các điểm còn mở ở mục 8 (cọc, hủy hợp đồng, kỳ lẻ, làm tròn…).
 
-## 3. Hiện trạng đã kiểm (nền `dev` = `fbc5c84`)
+## 3. Hiện trạng đã kiểm (nền `dev` = `781c268`, đã merge vào nhánh VHT-28 ngày 25/10/2026)
 
 ### 3.1 Migration đang có
 
@@ -48,8 +48,14 @@ Review/merge migration theo lượt; chạy trên DB sạch và DB có dữ li�
 | 4 | `20261017005536_ExtendTenantProfile` | 8 cột hồ sơ khách + đổi lọc unique | **thiếu** → đã bổ sung ở 2A |
 | 5 | `20261019101408_AddUserFullName` | `AspNetUsers.FullName` | **thiếu** → đã bổ sung ở 2A |
 | 6 | `20261020080707_AddManagerToggles` | `ManagerToggles` + 21 dòng seed + 3 check | **thiếu** → đã bổ sung ở 2A |
+| 7 | `20261021014020_AddFileAccessAuditLog` | `FileAccessAuditLogs` (append-only, không FK) | **thiếu** → đã bổ sung ở 2A |
 
-Chưa có migration nào cho P4/P5/P7. Entity hiện có: `Properties`, `Rooms`, `Tenants`, `StoredFile`, `ManagerToggle`. P4/P5 mới có DTO (`Features/Contracts/ ContractDtos.cs`, `Features/Utilities/*Dtos.cs`) và form mẫu, chưa có bảng.
+Chưa có migration nào cho P4/P5/P7 trên `dev`. Entity hiện có: `Properties`, `Rooms`, `Tenants`, `StoredFile`, `FileAccessAuditLog`, `ManagerToggle`.
+
+- **P4** có trên nhánh `VHT-29-tao-hop-dong` (chưa merge): `Contract`, `ContractMember`, migration `20261024084644_AddContracts`.
+- **P5** mới có DTO (`Features/Utilities/*Dtos.cs`), chưa có entity/migration.
+- **P7** mới có thư mục rỗng `Features/Maintenance/`, chưa có entity/migration (nhánh `VHT-39-...` chỉ là UI).
+- **Metadata tệp** đã xong trên `dev`: `StoredFiles` + `FileAccessAuditLogs` + quy tắc loại tệp.
 
 ### 3.2 Delta ERD đã phát hiện và xử lý ở 2A
 
@@ -62,6 +68,7 @@ Chưa có migration nào cho P4/P5/P7. Entity hiện có: `Properties`, `Rooms`,
 | `IX_Tenants_FullName`, `IX_Tenants_Phone` | không có | có | đã thêm |
 | `StoredFiles` | không có | 14 cột, FK user Restrict, 2 index | đã thêm |
 | `ManagerToggles` | không có | 4 cột, PK `Code`, FK user, 3 check, seed 21 dòng | đã thêm |
+| `FileAccessAuditLogs` | không có | 11 cột, PK `bigint identity`, 3 index, **không FK** (log phải sống sau khi user/tệp bị xóa) | đã thêm |
 
 > Hai thay đổi **đổi ngữ nghĩa** phải ghi rõ trong ERD/Word: (1) `UserId` nay là 1–1 (một tài khoản tối đa một hồ sơ khách), khác kết luận VHT-5; (2) CCCD chỉ chặn trùng khi hồ sơ `IsActive = 1`. Cả hai đến từ VHT-23 và cần Đào/Phát xác nhận lại khi dùng cho P4 (hợp đồng tham chiếu hồ sơ khách).
 
@@ -69,11 +76,41 @@ Chưa có migration nào cho P4/P5/P7. Entity hiện có: `Properties`, `Rooms`,
 
 | Nội dung | Lệnh | Kết quả |
 | --- | --- | --- |
-| Danh sách migration | `dotnet ef migrations list --project NhaTro/Web` | 6 migration, không có pending |
-| DB sạch | `scripts/database/kiem_tra_migration.ps1` | Đạt: tạo DB mới, áp đủ 6 migration |
+| Danh sách migration | `dotnet ef migrations list --project NhaTro/Web` | 7 migration, không có pending |
+| DB sạch | `scripts/database/kiem_tra_migration.ps1` | Đạt: tạo DB mới, áp đủ 7 migration |
 | DB có dữ liệu | cùng script (seed Users/Properties/Rooms/Tenants rồi update lại) | Đạt: dữ liệu còn nguyên `1\|1\|1` |
 | PK/FK/unique/check | cùng script | Đủ PK; FK nghiệp vụ `NO_ACTION`; 3 check của `ManagerToggles` |
-| ERD SQL vs schema EF | so `sys.columns`/`sys.indexes`/`sys.foreign_keys` giữa 2 DB | 0 khác biệt cột, 0 khác biệt index; 7 FK khác chỉ thuộc bảng Identity phụ (ERD không vẽ, đúng thiết kế) |
+| ERD SQL vs schema EF | so `sys.columns`/`sys.indexes`/`sys.foreign_keys` giữa 2 DB | 0 khác biệt cột, 0 khác biệt index trên 7 bảng nghiệp vụ; FK khác chỉ thuộc bảng Identity phụ (ERD không vẽ, đúng thiết kế) |
+
+> **Bài học khi làm script:** lần đầu chạy với `--no-build`, EF dùng bản build cũ nên **bỏ sót migration mới `AddFileAccessAuditLog`** mà vẫn báo "đạt". Script đã bỏ `--no-build` và kiểm lại pending **theo DB kiểm tra** (không theo DB mặc định trong `appsettings`). Từ nay mọi lần kiểm phải để EF build lại.
+
+### 3.4 Tình trạng 2A sau khi pull `dev` — **chưa thể đóng**
+
+| Hạng mục của 2A | Trạng thái | Bằng chứng |
+| --- | --- | --- |
+| Metadata tệp dùng chung | **Xong** | `StoredFiles` + `FileAccessAuditLogs` đã merge `dev`, ERD đã cập nhật |
+| Schema P4 (hợp đồng) | **Chưa merge, chưa đạt** | Có trên nhánh `VHT-29-tao-hop-dong`; xem lỗi ở mục 3.4.1 |
+| Schema P5 (dịch vụ/kỳ/chi phí) | **Chưa có** | Chỉ có DTO, không có entity/migration ở bất kỳ nhánh nào |
+| Schema P7 (sự cố) | **Chưa có** | `Features/Maintenance/` chỉ có `.gitkeep` |
+| ERD khớp phần đã merge | **Xong** | Mục 3.2–3.3 |
+| Người thứ hai chạy script | **Chưa** | Cần Đào hoặc Phát |
+
+#### 3.4.1 Rà schema P4 trên nhánh `VHT-29-tao-hop-dong` (ngày 25/10/2026)
+
+Đây là lỗi **chặn merge** theo checklist mục 5, không phải góp ý phong cách:
+
+| # | Vấn đề | Hệ quả |
+| --- | --- | --- |
+| 1 | `Contract.ContractId` là `Guid`, trong khi DTO `ContractDto` và mọi bảng khác dùng `int` | Lệch kiểu xuyên DTO/service/UI; `StoredFiles.RelatedEntityId` là chuỗi nên phải quy ước riêng |
+| 2 | Không có cột đại diện trong `ContractMembers` (DTO có `IsRepresentative`) | Không thể bảo đảm "đúng một người đại diện" |
+| 3 | Không có unique/ràng buộc chống **2 hợp đồng hiệu lực cùng một phòng**; `IX_Contracts_RoomId` là index thường | Vi phạm quy tắc VHT-9 mục 2; đua dữ liệu sẽ lọt |
+| 4 | Thiếu `CHECK StartDate < EndDate` | Lưu được hợp đồng vô nghĩa |
+| 5 | Không có `IsDeleted`; `IX_Contracts_ContractNumber` unique không lọc | Không có thùng rác hợp đồng; xóa mềm sau này sẽ vướng unique |
+| 6 | Thiếu các cột DTO cần: `CreatedBy`, `ApprovedBy`, `ApprovedAt`, `RejectReason`, `CancelReason`, `InitialElectricIndex`, `InitialWaterIndex`, `CreatedAt/UpdatedAt` | Service không trả đủ `ContractDto`; không có dấu vết duyệt/từ chối |
+| 7 | Không có bảng snapshot dòng dịch vụ (`ServiceLines`) | Hợp đồng không giữ được dịch vụ đã chốt, P5/P6 mất nguồn |
+| 8 | Không có bảng lịch sử trạng thái | Không đáp ứng "giữ lịch sử" của VHT-9 |
+
+Phần **đạt**: FK `RoomId → Rooms` Restrict, khóa chính ghép `(ContractId, TenantId)`, FK thành viên Restrict, tiền `decimal(18,2)`, trạng thái lưu `int`.
 
 ## 4. Việc cần làm theo đợt
 
@@ -91,6 +128,8 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 | 2A.6 | Chốt `RelatedEntityType` cho P7 trước khi Phát/Phú dựng ảnh sự cố | Tính + Phát | Enum không đổi sau khi có dữ liệu |
 
 **Điều kiện xong 2A:** ERD SQL khớp schema đã merge; script chạy đạt trên máy ít nhất 1 người ngoài Tính; Đào/Phát đã nhận checklist và xác nhận tên bảng/entity.
+
+> **Trạng thái 25/10/2026: CHƯA ĐẠT.** Đã xong ERD + script phía Tính; còn thiếu: P4 đang ở nhánh `VHT-29` và chưa đạt checklist (mục 3.4.1), P5/P7 chưa có schema, chưa có người thứ hai chạy script, chưa gửi checklist cho Đào/Phát.
 
 ### Đợt 2C — Review theo từng PR (VHT-121)
 
@@ -153,7 +192,8 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 
 ### 5.3 Kiểm chạy
 
-- [ ] `dotnet ef migrations list` không có `(Pending)`.
+- [ ] `dotnet ef migrations list` không có `(Pending)` **khi truyền `--connection` của DB kiểm tra** (pending so với DB mặc định trong `appsettings` là bình thường).
+- [ ] Không dùng `--no-build`: EF phải build lại, nếu không sẽ bỏ sót migration mới (đã xảy ra với `AddFileAccessAuditLog`).
 - [ ] `scripts/database/kiem_tra_migration.ps1` đạt trên nhánh PR (DB sạch + DB có dữ liệu).
 - [ ] Snapshot không chứa thay đổi ngoài phạm vi PR (diff snapshot chỉ đúng bảng/cột của task).
 - [ ] Không đổi `ConnectionStrings`, không commit DB/log/tệp.

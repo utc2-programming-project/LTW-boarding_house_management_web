@@ -45,17 +45,18 @@ Write-Step "Xoa DB kiem tra cu (neu co)"
 Pass "DB sach: $Database"
 
 Write-Step "Liet ke migration trong project"
-$migrations = & dotnet ef migrations list --project $projectPath --no-build 2>&1
-if ($LASTEXITCODE -ne 0) { $migrations = & dotnet ef migrations list --project $projectPath 2>&1 }
+$migrations = & dotnet ef migrations list --project $projectPath 2>&1
+if ($LASTEXITCODE -ne 0) { throw "dotnet ef migrations list that bai: $migrations" }
 $migrations | ForEach-Object { Write-Host "  $_" }
-$pending = @($migrations | Where-Object { $_ -match "\(Pending\)" })
-if ($pending.Count -gt 0) { Fail "Co migration chua co trong snapshot/DB: $($pending -join ', ')" }
-else { Pass "Khong co migration pending" }
 
 Write-Step "Ap migration len DB sach"
-& dotnet ef database update --project $projectPath --connection $connection --no-build | Out-Host
+& dotnet ef database update --project $projectPath --connection $connection | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "database update tren DB sach that bai." }
-Pass "DB sach da cap nhat"
+
+$afterUpdate = & dotnet ef migrations list --project $projectPath --connection $connection 2>&1
+$pendingAfter = @($afterUpdate | Where-Object { $_ -match "\(Pending\)" })
+if ($pendingAfter.Count -gt 0) { Fail "Con migration chua ap tren DB kiem tra: $($pendingAfter -join ', ')" }
+else { Pass "DB sach da cap nhat, khong con migration pending" }
 
 Write-Step "Kiem tra cau truc (PK/FK/unique/check)"
 $tables = @(Invoke-Sql $Database "SELECT t.name FROM sys.tables t WHERE t.is_ms_shipped = 0 AND t.name <> '__EFMigrationsHistory' ORDER BY t.name")
@@ -99,7 +100,7 @@ Invoke-Sql $Database $seed | Out-Null
 Pass "Da nap du lieu mau (Users/Properties/Rooms/Tenants)"
 
 Write-Step "Chay lai migration tren DB co du lieu"
-& dotnet ef database update --project $projectPath --connection $connection --no-build | Out-Host
+& dotnet ef database update --project $projectPath --connection $connection | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "database update tren DB co du lieu that bai." }
 $counts = @(Invoke-Sql $Database "SELECT (SELECT COUNT(*) FROM Properties), (SELECT COUNT(*) FROM Rooms), (SELECT COUNT(*) FROM Tenants)")
 Pass "Du lieu con nguyen (Properties|Rooms|Tenants): $($counts -join ' ')"
