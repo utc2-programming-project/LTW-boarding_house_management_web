@@ -8,6 +8,7 @@ namespace Web.Features.Tenants.Mapping;
 // ApplyX gia dinh DTO da duoc Normalize() o service (mot noi chuan hoa duy nhat).
 public static class TenantMapping
 {
+    // 2C: khi ghép liên kết thuê, thêm tham số roomName để điền cột phòng đang thuê.
     public static TenantListItemDto ToListItem(
         Tenant e, bool hasActiveContract = false, bool includeAccountStatus = true) => new()
     {
