@@ -41,12 +41,27 @@ using Web.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 // IIS co the dat log ngoai thu muc publish; dev giu duong dan mac dinh.
-var configuredLogDirectory = builder.Configuration["Logging:Directory"];
-var logDirectory = string.IsNullOrWhiteSpace(configuredLogDirectory) ? Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "NhaTro",
-    "logs") : Path.GetFullPath(
-        Environment.ExpandEnvironmentVariables(configuredLogDirectory), builder.Environment.ContentRootPath);
+var configuredLogDirectory = builder.Configuration["Logging:Directory"] ?? string.Empty;
+string logDirectory;
+try
+{
+    // Windows co the cat chuoi tai NUL khi mo rong bien; phai chan truoc buoc nay.
+    if (configuredLogDirectory.Contains('\0'))
+    {
+        throw new ArgumentException();
+    }
+
+    configuredLogDirectory = Environment.ExpandEnvironmentVariables(configuredLogDirectory).Trim();
+    logDirectory = configuredLogDirectory.Length == 0 ? Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "NhaTro",
+        "logs") : Path.GetFullPath(configuredLogDirectory, builder.Environment.ContentRootPath);
+}
+catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+{
+    // Chi neu ten cau hinh, khong dua gia tri duong dan vao loi startup.
+    throw new InvalidOperationException("Logging:Directory must be a valid directory path.");
+}
 
 Directory.CreateDirectory(logDirectory);
 
@@ -196,6 +211,14 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // bao mat nen tang. Moi nguong doc tu cau hinh "Security", co mac dinh an toan neu thieu.
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>()
     ?? new SecurityOptions();
+
+// Khong am tham bo qua DPAPI khi nguoi van hanh chua dat duong dan keys.
+if (securityOptions.ProtectKeysWithDpapi &&
+    string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
+{
+    throw new InvalidOperationException(
+        "Security:ProtectKeysWithDpapi requires Security:DataProtectionKeysPath.");
+}
 
 // Giu khoa Data Protection ngoai thu muc publish de cookie dang nhap khong bi mat khi trien khai lai.
 if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))

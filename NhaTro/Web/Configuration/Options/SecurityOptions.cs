@@ -2,7 +2,7 @@ namespace Web.Configuration.Options;
 
 /// <summary>
 /// Cấu hình bảo mật nền tảng, bind từ section "Security" trong appsettings.
-/// Mọi giá trị đều có mặc định an toàn nên thiếu cấu hình vẫn chạy được.
+/// Khi yêu cầu DPAPI, phải cung cấp đường dẫn lưu keys.
 /// Không chứa secret.
 /// </summary>
 public sealed class SecurityOptions
@@ -11,7 +11,8 @@ public sealed class SecurityOptions
 
     /// <summary>
     /// Thư mục lưu khoá Data Protection (ngoài thư mục publish). Hỗ trợ biến môi trường
-    /// (ví dụ <c>%LOCALAPPDATA%\NhaTro\keys</c>). Trống thì dùng mặc định của nền tảng.
+    /// (ví dụ <c>%LOCALAPPDATA%\NhaTro\keys</c>). Chỉ được dùng mặc định của nền tảng
+    /// khi đường dẫn trống và không yêu cầu <see cref="ProtectKeysWithDpapi"/>.
     /// </summary>
     public string DataProtectionKeysPath { get; set; } = string.Empty;
 

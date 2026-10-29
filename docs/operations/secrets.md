@@ -37,10 +37,9 @@ token CAPTCHA cũ không giải mã được.
   `%LOCALAPPDATA%\NhaTro\keys` trên máy dev.
 - Trên server phải trỏ tới thư mục **ngoài thư mục publish** và **ổn định qua các lần deploy**, ví dụ:
 
-  ```bash
-  # Windows / IIS: đặt biến môi trường
-  setx Security__DataProtectionKeysPath "D:\App_Data\NhaTro\keys"
-  ```
+  đặt `Security__DataProtectionKeysPath` là `D:\App_Data\NhaTro\keys` trong cấu hình
+  **app pool riêng** theo [hướng dẫn IIS](iis-deployment.md#3-cấu-hình-môi-trường-và-acl).
+  Biến của tài khoản quản trị đặt bằng `setx` không tự trở thành biến của worker IIS.
 
   hoặc trong `appsettings.Production.json`:
   ```json
@@ -63,4 +62,4 @@ Theo [hướng dẫn IIS](iis-deployment.md) để đặt biến theo app pool r
 - Đặt `ASPNETCORE_ENVIRONMENT` và `DOTNET_ENVIRONMENT` nhất quán là `Production`, `AllowedHosts` theo hostname thật; cấu hình cổng HTTPS theo binding.
 - Seed Admin chỉ khi cần, gỡ secret seed sau khi đã xác nhận tài khoản; không đặt secret seed tài khoản mẫu dev trên server.
 
-Biến môi trường và cấu hình IIS có thể được người có quyền quản trị đọc; giới hạn quyền truy cập cả cấu hình và bản backup. Không đưa secret thật vào Git, publish profile, `web.config` của artifact, log hoặc release record. Hướng dẫn `setx` ở phần keys phía trên chỉ minh họa tên biến/đường dẫn, không phải cách cấp cấu hình theo app pool.
+Biến môi trường và cấu hình IIS có thể được người có quyền quản trị đọc; giới hạn quyền truy cập cả cấu hình và bản backup. Không đưa secret thật vào Git, publish profile, `web.config` của artifact, log hoặc release record.

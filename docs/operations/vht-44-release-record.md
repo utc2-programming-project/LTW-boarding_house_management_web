@@ -17,6 +17,8 @@ Người dùng xác nhận chưa deploy. Đã restore, build Release và publish
 
 Kết quả này chưa kiểm chứng IIS/HTTPS/WebSocket/reconnect, ACL app pool, migration server hoặc cookie/tệp qua lần deploy. Hai đợt bên dưới vẫn chờ môi trường thực tế.
 
+Sau review PR, đã thêm kiểm tra startup khi bật DPAPI mà đường dẫn keys rỗng; log path bỏ khoảng trắng ở biên, từ chối NUL trước mở rộng biến môi trường và báo tên cấu hình khi đường dẫn không hợp lệ; profile lấy TFM từ project và hướng dẫn secrets bỏ ví dụ setx server. Kiểm lại bản sửa ngày 29/10/2026: build Release và hai cách publish đều đạt; 8 test startup/configuration, 87 unit storage, 9 integration security/storage đạt (104/104, không skip). Chưa deploy IIS; kết quả này không thay thế smoke trên server.
+
 | Thông tin | 2B — Bản nền | 2E — Tích hợp tuần 2 |
 | --- | --- | --- |
 | Trạng thái | Chờ môi trường, chốt nguồn và kiểm thử | Chờ nguồn tích hợp và môi trường |
