@@ -40,10 +40,13 @@ using Web.Infrastructure.Logging;
 using Web.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
-var logDirectory = Path.Combine(
+// IIS co the dat log ngoai thu muc publish; dev giu duong dan mac dinh.
+var configuredLogDirectory = builder.Configuration["Logging:Directory"];
+var logDirectory = string.IsNullOrWhiteSpace(configuredLogDirectory) ? Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "NhaTro",
-    "logs");
+    "logs") : Path.GetFullPath(
+        Environment.ExpandEnvironmentVariables(configuredLogDirectory), builder.Environment.ContentRootPath);
 
 Directory.CreateDirectory(logDirectory);
 
@@ -197,8 +200,19 @@ var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionNa
 // Giu khoa Data Protection ngoai thu muc publish de cookie dang nhap khong bi mat khi trien khai lai.
 if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
 {
-    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
+    var dataProtection = builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
             Environment.ExpandEnvironmentVariables(securityOptions.DataProtectionKeysPath))).SetApplicationName("NhaTro.Web");
+
+    // IIS mot may: chi identity Windows hien tai giai ma duoc keys moi; khong doi keys cu.
+    if (securityOptions.ProtectKeysWithDpapi)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException("Security:ProtectKeysWithDpapi requires Windows.");
+        }
+
+        dataProtection.ProtectKeysWithDpapi();
+    }
 }
 
 // CAPTCHA sau nhieu lan dang nhap sai. Giai doan 1 dung thach thuc cuc bo (khong them phu thuoc).

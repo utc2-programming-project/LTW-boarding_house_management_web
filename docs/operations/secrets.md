@@ -52,3 +52,15 @@ token CAPTCHA cũ không giải mã được.
 ## Server (IIS)
 
 Đặt biến môi trường `AdminSeed__Email` và `AdminSeed__Password` trên server.
+
+## Publish IIS thử (VHT-44)
+
+Theo [hướng dẫn IIS](iis-deployment.md) để đặt biến theo app pool riêng, cấp ACL và giữ cấu hình qua các lần publish. Không dùng `setx` dưới tài khoản quản trị rồi giả định worker IIS sẽ nhận biến đó; restart app pool sau khi cấu hình đúng phạm vi.
+
+- `ConnectionStrings__DefaultConnection`: kết nối SQL thử do Tính cấu hình trực tiếp trên server; không dùng LocalDB dev.
+- `Storage__RootPath`, `Security__DataProtectionKeysPath`, `Logging__Directory`: đường dẫn tuyệt đối ngoài cây site/publish; storage/keys phải giữ ổn định qua các lần deploy.
+- `Security__ProtectKeysWithDpapi=true`: mã hóa keys mới theo identity Windows cho IIS một máy. Giữ identity/profile; không dùng tùy chọn này để chia sẻ keys sang máy khác. Keys plaintext cũ không tự được mã hóa lại.
+- Đặt `ASPNETCORE_ENVIRONMENT` và `DOTNET_ENVIRONMENT` nhất quán là `Production`, `AllowedHosts` theo hostname thật; cấu hình cổng HTTPS theo binding.
+- Seed Admin chỉ khi cần, gỡ secret seed sau khi đã xác nhận tài khoản; không đặt secret seed tài khoản mẫu dev trên server.
+
+Biến môi trường và cấu hình IIS có thể được người có quyền quản trị đọc; giới hạn quyền truy cập cả cấu hình và bản backup. Không đưa secret thật vào Git, publish profile, `web.config` của artifact, log hoặc release record. Hướng dẫn `setx` ở phần keys phía trên chỉ minh họa tên biến/đường dẫn, không phải cách cấp cấu hình theo app pool.

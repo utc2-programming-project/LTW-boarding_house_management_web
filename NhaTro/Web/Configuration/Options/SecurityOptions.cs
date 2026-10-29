@@ -15,6 +15,12 @@ public sealed class SecurityOptions
     /// </summary>
     public string DataProtectionKeysPath { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Bật mã hoá keys mới bằng DPAPI theo identity Windows cho IIS một máy.
+    /// Giữ nguyên identity/profile và thư mục keys khi publish lại. Dev mặc định không bật.
+    /// </summary>
+    public bool ProtectKeysWithDpapi { get; set; }
+
     public CaptchaOptions Captcha { get; set; } = new();
 
     public RateLimitOptions RateLimit { get; set; } = new();
