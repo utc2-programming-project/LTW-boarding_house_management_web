@@ -100,7 +100,18 @@ Hai khái niệm tách biệt, không dùng chung bảng:
 - Một tài khoản vai trò Khách thuê gắn với **tối đa một** hồ sơ (`UserId` duy nhất khi khác null).
 - Khóa/xóa tài khoản **không** xóa hồ sơ; ngừng sử dụng hồ sơ **không** tự khóa tài khoản.
 - Khách thuê chỉ thấy và sửa hồ sơ có `UserId` trùng với tài khoản đang đăng nhập.
-- Ai thực hiện việc gắn tài khoản vào hồ sơ và ở feature nào: *Cần chốt* (Tính / Đào).
+- **Ai gắn/gỡ (chốt ở VHT-25, đợt 2B):** chỉ **Chủ trọ**, thực hiện tại trang Khách thuê
+  (`TenantList` → hộp thoại chi tiết khách). Quản lý và Admin **không** có thao tác gắn/gỡ;
+  service ném `UnauthorizedAccessException` (403) nếu sai vai trò.
+- **Cách thay liên kết (chốt ở VHT-25):** không ghi đè trực tiếp. Muốn đổi tài khoản phải
+  **gỡ liên kết cũ trước, rồi gắn tài khoản mới**; hồ sơ đang có tài khoản gọi gắn lại trả
+  `AccountAlreadyLinked`. Một tài khoản đã gắn hồ sơ khác cũng trả `AccountAlreadyLinked`
+  (service kiểm trước, unique index có lọc trên `Tenant.UserId` là lớp chặn cuối khi có hai request đồng thời).
+- **DTO cho UI (chốt ở VHT-25):** chi tiết khách trả `HasAccount` (bool?) để UI hiện trạng thái
+  đã/chưa liên kết và bật nút Gắn/Gỡ; danh sách và picker chỉ trả `HasAccount`/`HasActiveContract`
+  theo quyền xem của vai trò gọi. Không trả `UserId` thô ra DTO.
+- **Phạm vi 2B:** chỉ gắn user ↔ hồ sơ. Truy vấn phòng/hợp đồng đang thuê (ghép `ContractMember →
+  Contract → Room`) là **2C**, chờ VHT-30 (duyệt hợp đồng) và nằm ở nhánh `VHT-120`, không làm sớm.
 
 ---
 
@@ -164,7 +175,7 @@ Thực hiện ở service khi **tạo** và khi **sửa `IdNumber` / `PhoneNumbe
 | Tự sửa hồ sơ của mình | — | — | Có, **chỉ các trường ở mục 5.2** | **Không** |
 | Ngừng / kích hoạt lại hồ sơ | Có | Cần chốt | **Không** | **Không** |
 | Chọn khách (cho hợp đồng) | Có | Có | **Không** | **Không** |
-| Gắn / gỡ tài khoản | Cần chốt | Cần chốt | **Không** | **Không** |
+| Gắn / gỡ tài khoản | Có | **Không** | **Không** | **Không** |
 
 **Phạm vi dữ liệu của Quản lý:** toàn bộ nhà trọ hay chỉ nhà được phân công. *Cần chốt* (cùng câu hỏi ở hợp đồng storage, nên chốt một lần cho cả hệ thống). Dù chốt thế nào, **việc lọc theo phạm vi nằm trong service**, không chỉ ở controller, để mọi nơi gọi service (kể cả hàm chọn khách) đều bị giới hạn như nhau.
 

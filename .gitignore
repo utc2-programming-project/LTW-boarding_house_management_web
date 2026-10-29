@@ -28,7 +28,6 @@ NhaTroData/
 **/data-protection-keys/
 **/backups/
 outputs/
-*.zip
 
 docs/archive/*
 !docs/archive/truoc_admin/

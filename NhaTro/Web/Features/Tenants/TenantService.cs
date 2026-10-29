@@ -63,18 +63,8 @@ public sealed class TenantService(
                 : query.Where(t => t.UserId == null);
         }
 
-        // 2C (VHT-25) — lọc "đang có hợp đồng" lấy từ hợp đồng thật; chờ VHT-30 (duyệt hợp đồng) mới bật.
-        // Tạm giữ hành vi 1C: bỏ qua HasActiveContract, HasActiveContract/RoomName trong list để trống.
-        /*
-        var today = Today();
-        if (filter.HasActiveContract is { } hasActiveContract)
-        {
-            var activeTenantIds = CurrentContractTenantIds(db, today);
-            query = hasActiveContract
-                ? query.Where(t => activeTenantIds.Contains(t.Id))
-                : query.Where(t => !activeTenantIds.Contains(t.Id));
-        }
-        */
+        // HasActiveContract chờ bảng hợp đồng (mục 7) — bỏ qua ở 1C; ghi rõ cho Phúc.
+        // Giá trị HasActiveContract trong list/picker hiện luôn false.
 
         var total = await query.CountAsync(ct);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
@@ -83,7 +73,6 @@ public sealed class TenantService(
             .Take(filter.PageSize)
             .ToListAsync(ct);
 
-        // 2C: bật lại activeRentals + truyền hasActiveContract/roomName khi ghép liên kết thuê.
         return new PagedResult<TenantListItemDto>
         {
             Items = rows.Select(t => TenantMapping.ToListItem(
@@ -184,47 +173,6 @@ public sealed class TenantService(
             ? NotFound()
             : TenantProfile(own, caller);
     }
-
-    // 2C (VHT-25) — truy vấn hồ sơ + hợp đồng + phòng đang thuê: chờ VHT-30 (duyệt hợp đồng) mới bật.
-    /*
-    public async Task<TenantRentalResult> GetRentalOverviewAsync(
-        int id, TenantCaller caller, CancellationToken ct = default)
-    {
-        if (!caller.IsManager && !caller.IsTenant)
-        {
-            throw Forbidden(caller);
-        }
-
-        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-
-        var tenant = caller.IsManager
-            ? await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct)
-            : await db.Tenants.AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == caller.UserId, ct);
-
-        // Khách gọi hồ sơ khác: trả NotFound, không lộ hồ sơ/phòng của người khác.
-        return tenant is null
-            ? RentalNotFound()
-            : await BuildRentalOverviewAsync(db, tenant, ct);
-    }
-
-    public async Task<TenantRentalResult> GetOwnRentalOverviewAsync(
-        TenantCaller caller, CancellationToken ct = default)
-    {
-        if (!caller.IsTenant)
-        {
-            throw Forbidden(caller);
-        }
-
-        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-        var own = await db.Tenants.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.UserId == caller.UserId, ct);
-
-        return own is null
-            ? RentalNotFound()
-            : await BuildRentalOverviewAsync(db, own, ct);
-    }
-    */
 
     public async Task<TenantResult> CreateAsync(
         CreateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
@@ -647,7 +595,6 @@ public sealed class TenantService(
             .Take(request.Limit)
             .ToListAsync(ct);
 
-        // 2C: bật lại activeRentals + truyền hasActiveContract khi ghép liên kết thuê.
         return rows.Select(t => TenantMapping.ToPickerItem(t)).ToList();
     }
 
@@ -655,121 +602,6 @@ public sealed class TenantService(
     // vì chưa có liên kết tòa nhà. Khi VHT-24/VHT-25 chốt phạm vi Quản lý, chỉ sửa tại đây;
     // query đọc thêm .AsNoTracking() tại chỗ gọi.
     private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) => db.Tenants;
-
-    // 2C (VHT-25) — truy vấn hợp đồng/phòng đang thuê theo liên kết thật; chờ VHT-30 (duyệt hợp đồng) mới bật.
-    /*
-    private async Task<TenantRentalResult> BuildRentalOverviewAsync(
-        ApplicationDbContext db, Tenant tenant, CancellationToken ct)
-    {
-        var today = Today();
-        var rows = await RentalRows(db, tenant.Id).ToListAsync(ct);
-
-        // Đang thuê trước, rồi lịch sử mới nhất trước; giữ đủ nhiều hợp đồng lịch sử của cùng khách.
-        var rentals = rows
-            .Select(row => ToRentalDto(row, today))
-            .OrderByDescending(rental => rental.IsCurrent)
-            .ThenByDescending(rental => rental.StartDate)
-            .ThenByDescending(rental => rental.ContractId)
-            .ToList();
-
-        return TenantRentalResult.Success(new TenantRentalOverviewDto
-        {
-            TenantId = tenant.Id,
-            FullName = tenant.FullName,
-            Rentals = rentals,
-            CurrentRental = rentals.FirstOrDefault(rental => rental.IsCurrent),
-        });
-    }
-
-    private static IQueryable<TenantRentalRow> RentalRows(ApplicationDbContext db, int tenantId) =>
-        from member in db.ContractMembers.AsNoTracking()
-        join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
-        join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
-        join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
-        where member.TenantId == tenantId
-        select new TenantRentalRow(
-            member.TenantId,
-            contract.ContractId,
-            contract.ContractNumber,
-            contract.RoomId,
-            room.Code,
-            property.Id,
-            property.Name,
-            contract.StartDate,
-            contract.EndDate,
-            contract.SnapshotPrice,
-            contract.DepositAmount,
-            contract.Status);
-
-    private static TenantRentalContractDto ToRentalDto(TenantRentalRow row, DateTime today) => new()
-    {
-        ContractId = row.ContractId,
-        ContractNumber = row.ContractNumber,
-        RoomId = row.RoomId,
-        RoomCode = row.RoomCode,
-        PropertyId = row.PropertyId,
-        PropertyName = row.PropertyName,
-        StartDate = DateOnly.FromDateTime(row.StartDate),
-        EndDate = DateOnly.FromDateTime(row.EndDate),
-        SnapshotPrice = row.SnapshotPrice,
-        DepositAmount = row.DepositAmount,
-        Status = row.Status,
-        IsCurrent = row.Status == ContractStatus.Approved
-            && row.StartDate <= today
-            && row.EndDate >= today,
-    };
-
-    /// <summary>Id khách đang có hợp đồng đã duyệt và còn hiệu lực hôm nay (dùng lọc danh sách/picker).</summary>
-    private static IQueryable<int> CurrentContractTenantIds(ApplicationDbContext db, DateTime today) =>
-        from member in db.ContractMembers
-        join contract in db.Contracts on member.ContractId equals contract.ContractId
-        where contract.Status == ContractStatus.Approved
-            && contract.StartDate <= today
-            && contract.EndDate >= today
-        select member.TenantId;
-
-    /// <summary>Một khách có thể có nhiều hợp đồng; lấy phòng của hợp đồng đang hiệu lực mới nhất để hiển thị.</summary>
-    private static async Task<Dictionary<int, string>> LoadCurrentRentalsAsync(
-        ApplicationDbContext db, IReadOnlyCollection<int> tenantIds, DateTime today, CancellationToken ct)
-    {
-        if (tenantIds.Count == 0)
-        {
-            return [];
-        }
-
-        var rows = await (
-                from member in db.ContractMembers.AsNoTracking()
-                join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
-                join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
-                where tenantIds.Contains(member.TenantId)
-                    && contract.Status == ContractStatus.Approved
-                    && contract.StartDate <= today
-                    && contract.EndDate >= today
-                select new
-                {
-                    member.TenantId,
-                    contract.ContractId,
-                    contract.StartDate,
-                    room.Code,
-                })
-            .ToListAsync(ct);
-
-        return rows
-            .GroupBy(row => row.TenantId)
-            .ToDictionary(
-                group => group.Key,
-                group => group
-                    .OrderByDescending(row => row.StartDate)
-                    .ThenByDescending(row => row.ContractId)
-                    .First()
-                    .Code);
-    }
-
-    private DateTime Today() => clock.GetUtcNow().UtcDateTime.Date;
-
-    private static TenantRentalResult RentalNotFound() =>
-        TenantRentalResult.Failure(TenantErrorCodes.TenantNotFound, TenantErrorMessages.TenantNotFound);
-    */
 
     private static TenantResult TenantProfile(Tenant tenant, TenantCaller caller)
     {
@@ -944,22 +776,4 @@ public sealed class TenantService(
 
     private static TenantResult NotFound() =>
         TenantResult.Failure(TenantErrorCodes.TenantNotFound, TenantErrorMessages.TenantNotFound);
-
-    // 2C: dòng join dùng cho truy vấn hợp đồng/phòng đang thuê.
-    /*
-    /// <summary>Dòng join Tenant -> ContractMember -> Contract -> Room -> Property.</summary>
-    private sealed record TenantRentalRow(
-        int TenantId,
-        Guid ContractId,
-        string ContractNumber,
-        int RoomId,
-        string RoomCode,
-        int PropertyId,
-        string PropertyName,
-        DateTime StartDate,
-        DateTime EndDate,
-        decimal SnapshotPrice,
-        decimal DepositAmount,
-        ContractStatus Status);
-    */
 }

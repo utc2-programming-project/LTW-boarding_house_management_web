@@ -64,23 +64,8 @@ public sealed class TenantPageService(AuthenticationStateProvider authentication
         string? keyword, int limit = 20, CancellationToken ct = default) =>
         await tenants.SearchUnlinkedAccountsAsync(keyword, limit, await GetCallerAsync(), ct);
 
-    // 2C (VHT-25) — trang khách/trang chi tiết đọc phòng đang thuê; chờ VHT-30 mới bật.
-    /*
-    public Task<TenantRentalResult> GetRentalOverviewAsync(int id, CancellationToken ct = default) =>
-        CallRentalAsync(caller => tenants.GetRentalOverviewAsync(id, caller, ct));
-
-    public Task<TenantRentalResult> GetOwnRentalOverviewAsync(CancellationToken ct = default) =>
-        CallRentalAsync(caller => tenants.GetOwnRentalOverviewAsync(caller, ct));
-    */
-
     private async Task<TenantResult> CallAsync(Func<TenantCaller, Task<TenantResult>> operation) =>
         await operation(await GetCallerAsync());
-
-    /*
-    private async Task<TenantRentalResult> CallRentalAsync(
-        Func<TenantCaller, Task<TenantRentalResult>> operation) =>
-        await operation(await GetCallerAsync());
-    */
 
     private async Task<TenantCaller> GetCallerAsync()
     {

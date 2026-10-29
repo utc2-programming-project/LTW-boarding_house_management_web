@@ -15,6 +15,6 @@ public class TenantPickerItemDto
     /// <summary>Chỉ 4 ký tự cuối (ví dụ ********1234).</summary>
     public string? IdNumberMasked { get; init; }
 
-    /// <summary>2C (VHT-25): hợp đồng đã duyệt còn hiệu lực; hiện chưa bật nên luôn false.</summary>
+    /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
     public required bool HasActiveContract { get; init; }
 }

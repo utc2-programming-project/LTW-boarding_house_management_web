@@ -97,9 +97,6 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await using var db = CreateContext();
         // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
         await db.StoredFiles.ExecuteDeleteAsync();
-        // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.
-        await db.ContractMembers.ExecuteDeleteAsync();
-        await db.Contracts.ExecuteDeleteAsync();
         // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
         await db.ManagerToggles.ExecuteUpdateAsync(s => s.SetProperty(t => t.UpdatedByUserId, (string?)null));
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
