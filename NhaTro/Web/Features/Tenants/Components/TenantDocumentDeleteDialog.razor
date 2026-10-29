@@ -1,0 +1,103 @@
+@using Web.Features.Tenants.Documents
+@inject IStringLocalizer<Shared> L
+
+@if (Visible && Document is not null)
+{
+    <div role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in"
+         style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background-color: var(--overlay);"
+         @onclick="OnClose">
+        <div class="w-[400px] max-w-full bg-[var(--surface)] rounded-[16px] p-[24px] shadow-[0_24px_64px_var(--shadow-dialog)] flex flex-col"
+             style="width: 400px; max-width: 100%; background: var(--surface); border-radius: 16px; padding: 24px; box-shadow: 0 24px 64px var(--shadow-dialog); display: flex; flex-direction: column;"
+             @onclick:stopPropagation="true">
+            
+            <!-- Top Icon 48x48 red circle -->
+            <div style="width: 48px; height: 48px; border-radius: 9999px; background-color: var(--error-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--error-text);">
+                <LucideIcon Name="alert-triangle" />
+            </div>
+
+            <!-- Title -->
+            <h2 id="delete-dialog-title" style="font-size: 18px; line-height: 26px; font-weight: 700; color: var(--text-primary); margin: 12px 0 0 0;">
+                @L["DeleteDocumentConfirmTitle"]
+            </h2>
+
+            <!-- Description -->
+            <p style="font-size: 14px; line-height: 20px; color: var(--text-secondary); margin: 8px 0 0 0;">
+                @L["DocumentPrefix"] <strong style="color: var(--text-primary);">@Document.FileName</strong> @L["DeleteDocumentConfirmMessageTail"]
+            </p>
+
+            <!-- File summary chip -->
+            <div style="margin-top: 16px; padding: 10px; background-color: var(--page-bg); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                <div style="padding: 6px; border-radius: 6px; background-color: var(--error-bg); color: var(--error-text); display: flex; align-items: center; justify-content: center;">
+                    <LucideIcon Name="file-text" />
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                    <p style="font-size: 13px; color: var(--text-primary); font-weight: 500; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        @Document.FileName
+                    </p>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 2px 0 0 0;">
+                        @L["DocumentSize"]: @FormatFileSize(Document.FileSizeBytes) · @L["DocumentType"]: @GetExtension(Document.FileName)
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 24px;">
+                <button type="button" disabled="@_isDeleting"
+                        style="height: 40px; padding: 0 16px; border-radius: 8px; background: var(--surface); border: 1px solid var(--text-muted); color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer;"
+                        @onclick="OnClose">
+                    @L["Cancel"]
+                </button>
+                <button type="button" disabled="@_isDeleting"
+                        style="height: 40px; padding: 0 18px; border-radius: 8px; background: var(--error-text); border: none; color: var(--surface); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
+                        @onclick="ConfirmDeleteAsync">
+                    @if (_isDeleting)
+                    {
+                        <span class="spinner" aria-hidden="true" style="width: 14px; height: 14px; border: 2px solid var(--surface); border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
+                        <span>@L["Deleting"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="trash-2" />
+                        <span>@L["Delete"]</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public TenantDocumentMetadataDto? Document { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    private bool _isDeleting;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        _isDeleting = true;
+        try
+        {
+            await OnConfirm.InvokeAsync();
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
+    }
+
+    private string GetExtension(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).TrimStart('.').ToUpperInvariant();
+        return string.IsNullOrWhiteSpace(ext) ? L["GenericFileType"].Value : ext;
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+    }
+}

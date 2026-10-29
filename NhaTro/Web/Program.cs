@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.Authorization;
+﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -201,6 +201,7 @@ builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<Manage
 // service khach thue, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<TenantPageService>();
+builder.Services.AddScoped<TenantDocumentPageService>();
 
 // chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.

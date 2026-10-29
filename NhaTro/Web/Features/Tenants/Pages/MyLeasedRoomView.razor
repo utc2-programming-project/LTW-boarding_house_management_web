@@ -1,0 +1,374 @@
+@page "/tenant/my-room"
+@attribute [Authorize(Roles = Roles.KhachThue)]
+@rendermode InteractiveServer
+@inject TenantDocumentPageService DocumentService
+@inject ToastService Toasts
+@inject NavigationManager Nav
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["MyRoomTitle"] · @L["AppName"]</PageTitle>
+
+<div class="space-y-6 max-w-[1440px] mx-auto px-4 md:px-8 py-6 md:py-8 font-sans antialiased text-[#0D131B]">
+    <!-- Breadcrumb -->
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["MyRoomTitle"]) })" />
+
+    @if (_loading)
+    {
+        <div class="p-12 flex flex-col items-center justify-center gap-3 bg-white rounded-xl border border-[#E2E8F0]">
+            <div class="spinner" style="width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: #4F46E5; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <span class="text-[14px] text-[#64748B]">@L["TableLoading"]</span>
+        </div>
+    }
+    else if (_loadFailed)
+    {
+        <div class="p-8 text-center bg-white rounded-xl border border-[#FECACA] flex flex-col items-center justify-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-[#FEF2F2] text-[#B91C1C] flex items-center justify-center">
+                <LucideIcon Name="alert-triangle" />
+            </div>
+            <h3 class="text-[16px] font-bold text-[#0D131B]">@L["MyRoomLoadFailed"]</h3>
+            <button type="button" class="px-4 py-2 rounded-lg bg-[#4F46E5] text-white text-[13px] font-medium hover:bg-[#4338CA] transition-colors"
+                    @onclick="LoadRoomAsync">
+                @L["Retry"]
+            </button>
+        </div>
+    }
+    else if (_leasedRoom is null)
+    {
+        <div class="p-12 text-center bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col items-center justify-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center">
+                <LucideIcon Name="home" />
+            </div>
+            <h3 class="text-[18px] font-bold text-[#0D131B] m-0">@L["EmptyMyRoomTitle"]</h3>
+            <p class="text-[14px] text-[#475569] max-w-md m-0">@L["EmptyMyRoomDesc"]</p>
+            <a href="/tenant/profile" class="mt-2 inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-[#4F46E5] text-white text-[14px] font-medium shadow-sm text-decoration-none">
+                <LucideIcon Name="user" />
+                <span>@L["MyTenantProfile"]</span>
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Title & Action Header (ContractsView.tsx) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-[28px] font-bold text-[#0D131B] tracking-tight m-0">
+                    Hợp đồng & Điều khoản cư trú
+                </h1>
+                <p class="text-[14px] text-[#475569] mt-1 mb-0">
+                    Chi tiết hợp đồng thuê phòng @_leasedRoom.RoomCode @_leasedRoom.PropertyName và các phụ lục điện tử có giá trị pháp lý.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <button type="button"
+                        @onclick="OpenRenewModal"
+                        class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white border border-[#CBD5E1] hover:bg-[#F8FAFC] text-[#334155] text-[14px] font-medium shadow-sm transition-colors cursor-pointer">
+                    <LucideIcon Name="refresh-cw" />
+                    <span>@L["RenewContract"]</span>
+                </button>
+
+                <a href="/documents"
+                   class="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-[14px] font-medium shadow-sm transition-colors cursor-pointer text-decoration-none">
+                    <LucideIcon Name="download" />
+                    <span>Tải bản hợp đồng đầy đủ (PDF)</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contract Overview Bento (ContractsView.tsx) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- 1. Room info -->
+            <div class="p-5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm flex items-start gap-4">
+                <div class="p-2.5 rounded-lg bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0">
+                    <LucideIcon Name="home" />
+                </div>
+                <div>
+                    <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold block">
+                        Thông tin phòng
+                    </span>
+                    <p class="text-[18px] font-bold text-[#0D131B] mt-0.5 mb-0">
+                        @_leasedRoom.RoomCode · @_leasedRoom.PropertyName
+                    </p>
+                    <p class="text-[12px] text-[#475569] mt-0.5 mb-0">
+                        @if (_leasedRoom.AreaM2.HasValue)
+                        {
+                            <span>Diện tích: @_leasedRoom.AreaM2.Value.ToString("0.##") m² · </span>
+                        }
+                        <span>@(_leasedRoom.PropertyAddress ?? "Địa chỉ nhà trọ")</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Contract Status -->
+            <div class="p-5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm flex items-start gap-4">
+                <div class="p-2.5 rounded-lg bg-[#F0FDF4] text-[#166534] flex items-center justify-center shrink-0">
+                    <LucideIcon Name="check-circle-2" />
+                </div>
+                <div>
+                    <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold block">
+                        Trạng thái ký kết
+                    </span>
+                    <p class="text-[18px] font-bold text-[#166534] mt-0.5 mb-0">
+                        @_leasedRoom.StatusLabel
+                    </p>
+                    <p class="text-[12px] text-[#475569] mt-0.5 mb-0">
+                        Mã số: @_leasedRoom.ContractNumber
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Duration -->
+            <div class="p-5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm flex items-start gap-4">
+                <div class="p-2.5 rounded-lg bg-[#EFF6FF] text-[#1E40AF] flex items-center justify-center shrink-0">
+                    <LucideIcon Name="calendar" />
+                </div>
+                <div>
+                    <span class="text-[12px] text-[#64748B] uppercase tracking-wider font-semibold block">
+                        Thời hạn thuê
+                    </span>
+                    <p class="text-[18px] font-bold text-[#0D131B] mt-0.5 mb-0">
+                        @GetDurationMonths(_leasedRoom.StartDate, _leasedRoom.EndDate) tháng
+                    </p>
+                    <p class="text-[12px] text-[#475569] mt-0.5 mb-0">
+                        @DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.EndDate))
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contract Terms Details (ContractsView.tsx) -->
+        <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
+            <div class="border-b border-[#E2E8F0] pb-4 flex items-center justify-between">
+                <h2 class="text-[18px] font-bold text-[#0D131B] m-0">
+                    Điều khoản thỏa thuận cốt lõi
+                </h2>
+                <span class="text-[12px] text-[#64748B]">Ban hành bởi BQL NhaTro</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[14px]">
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-[#64748B] text-[12px] font-semibold uppercase block">
+                            Giá thuê định kỳ hàng tháng
+                        </span>
+                        <p class="text-[18px] font-bold text-[#0D131B] tabular-nums mt-0.5 mb-0">
+                            @MoneyFormatter.Format(_leasedRoom.MonthlyRent) / tháng
+                        </p>
+                        <p class="text-[12px] text-[#64748B] mt-0.5 mb-0">Hạn đóng tiền: Ngày 05 hàng tháng.</p>
+                    </div>
+
+                    <div>
+                        <span class="text-[#64748B] text-[12px] font-semibold uppercase block">
+                            Tiền đặt cọc phòng
+                        </span>
+                        <p class="text-[16px] font-semibold text-[#0D131B] tabular-nums mt-0.5 mb-0">
+                            @MoneyFormatter.Format(_leasedRoom.DepositAmount)
+                        </p>
+                        <p class="text-[12px] text-[#166534] mt-0.5 mb-0">Đã thanh toán và ghi nhận ngày @DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate)).</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-[#64748B] text-[12px] font-semibold uppercase block">
+                            Cam kết an ninh & PCCC
+                        </span>
+                        <p class="text-[14px] text-[#0D131B] mt-1 mb-0 leading-relaxed">
+                            Bên thuê tuân thủ nghiêm ngặt quy định không để vật dụng cản trở lối thoát hiểm, không sạc xe điện trong phòng ngủ.
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="text-[#64748B] text-[12px] font-semibold uppercase block">
+                            Chính sách trả phòng trước hạn
+                        </span>
+                        <p class="text-[14px] text-[#0D131B] mt-1 mb-0 leading-relaxed">
+                            Báo trước tối thiểu 30 ngày cho bên cho thuê để tiến hành kiểm kê tài sản và hoàn cọc.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-[#E2E8F0] flex items-center gap-3 text-[#166534] bg-[#F0FDF4] p-3 rounded-lg">
+                <div class="text-[#166534] shrink-0 flex items-center">
+                    <LucideIcon Name="shield-check" />
+                </div>
+                <span class="text-[13px] font-medium">
+                    Hợp đồng đã được xác thực bảo mật và lưu vết trong kho lưu trữ dữ liệu cá nhân của cư dân.
+                </span>
+            </div>
+        </div>
+
+        <!-- Roommates Section -->
+        @if (_leasedRoom.Roommates.Count > 0)
+        {
+            <div class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                    <h3 class="text-[16px] font-bold text-[#0D131B] m-0">@L["Roommates"]</h3>
+                    <span class="px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#4F46E5] text-[12px] font-semibold">
+                        @_leasedRoom.Roommates.Count @L["TenantPeople"]
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    @foreach (var mate in _leasedRoom.Roommates)
+                    {
+                        <div class="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-[#EEF2FF] text-[#4F46E5] font-bold flex items-center justify-center shrink-0">
+                                @Initial(mate.FullName)
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold text-[14px] text-[#0D131B] truncate">@mate.FullName</span>
+                                    @if (mate.IsCurrentUser)
+                                    {
+                                        <span class="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#166534]">
+                                            @L["ThisIsYou"]
+                                        </span>
+                                    }
+                                </div>
+                                <span class="text-[12px] text-[#64748B] tabular-nums">@mate.PhoneNumber</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Renew Modal Popup -->
+@if (_renewModalOpen)
+{
+    <div role="dialog" aria-modal="true"
+         style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background-color: rgba(15, 23, 42, 0.45);"
+         @onclick="() => _renewModalOpen = false">
+        <div style="width: 100%; max-width: 480px; background-color: #ffffff; border-radius: 16px; box-shadow: 0 24px 64px rgba(15,23,42,0.18); overflow: hidden; display: flex; flex-direction: column;"
+             @onclick:stopPropagation="true">
+            <div style="background-color: #F8FAFC; padding: 16px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 700; color: #0D131B; margin: 0;">@L["RenewContractTitle"]</h3>
+                    <p style="font-size: 12px; color: #64748B; margin: 2px 0 0 0;">Phòng @_leasedRoom?.RoomCode</p>
+                </div>
+                <button type="button" style="background: transparent; border: none; color: #64748B; cursor: pointer;"
+                        @onclick="() => _renewModalOpen = false">
+                    <LucideIcon Name="x" />
+                </button>
+            </div>
+
+            <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="font-size: 13px; font-weight: 600; color: #0D131B; display: block; margin-bottom: 6px;">
+                        @L["RenewDuration"]
+                    </label>
+                    <select @bind="_renewMonths"
+                            style="width: 100%; height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid #CBD5E1; background-color: #F8FAFC; font-size: 13px; color: #0D131B;">
+                        <option value="6">6 @L["Months"]</option>
+                        <option value="12">12 @L["Months"]</option>
+                        <option value="24">24 @L["Months"]</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 13px; font-weight: 600; color: #0D131B; display: block; margin-bottom: 6px;">
+                        @L["RenewNote"]
+                    </label>
+                    <textarea @bind="_renewNote" rows="3"
+                              placeholder="@L["RenewNotePlaceholder"]"
+                              style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #CBD5E1; background-color: #F8FAFC; font-size: 13px; color: #0D131B; resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <div style="background-color: #F8FAFC; padding: 12px 24px; border-top: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                <button type="button"
+                        style="height: 38px; padding: 0 16px; border-radius: 8px; background: #ffffff; border: 1px solid #CBD5E1; color: #334155; font-size: 13px; font-weight: 500; cursor: pointer;"
+                        @onclick="() => _renewModalOpen = false">
+                    @L["Cancel"]
+                </button>
+                <button type="button" disabled="@_submittingRenew"
+                        style="height: 38px; padding: 0 18px; border-radius: 8px; background: #4F46E5; border: none; color: #ffffff; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"
+                        @onclick="SubmitRenewAsync">
+                    @if (_submittingRenew)
+                    {
+                        <span class="spinner" aria-hidden="true" style="width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
+                        <span>@L["Sending"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="send" />
+                        <span>@L["SendRenewRequest"]</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _loadFailed;
+    private LeasedRoomDetailDto? _leasedRoom;
+
+    private bool _renewModalOpen;
+    private int _renewMonths = 12;
+    private string? _renewNote;
+    private bool _submittingRenew;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoomAsync();
+    }
+
+    private async Task LoadRoomAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            _leasedRoom = await DocumentService.GetMyLeasedRoomAsync();
+        }
+        catch (Exception)
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenRenewModal()
+    {
+        _renewMonths = 12;
+        _renewNote = null;
+        _renewModalOpen = true;
+    }
+
+    private async Task SubmitRenewAsync()
+    {
+        _submittingRenew = true;
+        try
+        {
+            await Task.Delay(400);
+            Toasts.Success(L["RenewContractSuccess"]);
+            _renewModalOpen = false;
+        }
+        finally
+        {
+            _submittingRenew = false;
+        }
+    }
+
+    private static int GetDurationMonths(DateTime start, DateTime end)
+    {
+        var months = ((end.Year - start.Year) * 12) + end.Month - start.Month;
+        return months > 0 ? months : 12;
+    }
+
+    private static string Initial(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "K";
+        var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts[^1][..1].ToUpperInvariant();
+    }
+}

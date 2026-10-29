@@ -38,6 +38,10 @@ public sealed class TenantDocumentScopeService(
 
         if (caller.IsChuTro)
         {
+            // Trang quản lý khách thuê hiện coi các hồ sơ còn hoạt động trong hệ thống
+            // là phạm vi của Chủ trọ; chưa có khóa PropertyId trực tiếp trên Tenant.
+            // Đồng bộ quyền giấy tờ với cùng phạm vi đó để hồ sơ không bị chặn chỉ vì
+            // chưa có hợp đồng liên kết.
             return TenantDocumentAccessLevel.Owner;
         }
 

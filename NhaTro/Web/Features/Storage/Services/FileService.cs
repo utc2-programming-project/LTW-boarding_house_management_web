@@ -407,7 +407,8 @@ public sealed class FileService(
 
         var allowed = file.RelatedEntityType == RelatedEntityType.Tenant
             ? TenantDocumentPermissionRules.CanDelete(
-                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken))
+                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken),
+                file.UploadedByUserId == caller.UserId)
             : StoragePermissionRules.CanDelete(caller.Role);
 
         if (!allowed)
@@ -437,7 +438,7 @@ public sealed class FileService(
         if (file.RelatedEntityType == RelatedEntityType.Tenant)
         {
             var access = await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken);
-            return TenantDocumentPermissionRules.CanView(access);
+            return TenantDocumentPermissionRules.CanDownload(access);
         }
 
         var isUploader = file.UploadedByUserId == caller.UserId;

@@ -151,6 +151,7 @@ public static class TenantDocumentEndpoints
             FileCategory = FileCategory.IdentityDocument,
             RelatedEntityType = RelatedEntityType.Tenant,
             RelatedEntityId = tenantId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            DocumentType = form["documentType"].ToString(),
             Description = form["description"].ToString(),
         };
     }
@@ -167,6 +168,7 @@ public static class TenantDocumentEndpoints
         StorageErrorCodes.Forbidden => Results.Json(result, statusCode: StatusCodes.Status403Forbidden),
         StorageErrorCodes.Unauthorized => Results.Json(result, statusCode: StatusCodes.Status401Unauthorized),
         StorageErrorCodes.FileNotFound => Results.Json(result, statusCode: StatusCodes.Status404NotFound),
+        StorageErrorCodes.DuplicateDocumentType => Results.Json(result, statusCode: StatusCodes.Status409Conflict),
         StorageErrorCodes.InvalidFileType
             or StorageErrorCodes.InvalidRequest
             or StorageErrorCodes.EmptyFile

@@ -45,6 +45,47 @@
             }
         </section>
 
+        @if (CanManage)
+        {
+            <section class="tenant-detail-section tenant-documents-section" aria-labelledby="tenant-documents-heading">
+                <h3 id="tenant-documents-heading">@L["TenantDocumentsTitle"]</h3>
+                @if (_documentsLoading)
+                {
+                    <p class="tenant-documents-message">@L["DocumentsLoading"]</p>
+                }
+                else if (_documentsUnavailable)
+                {
+                    <p class="tenant-documents-message" role="status">@L["TenantDocumentsUnavailable"]</p>
+                }
+                else if (_documents is null || _documents.Items.Count == 0)
+                {
+                    <p class="tenant-documents-message">@L["NoDocumentsFound"]</p>
+                }
+                else
+                {
+                    <ul class="tenant-documents-list">
+                        @foreach (var document in _documents.Items)
+                        {
+                            <li>
+                                <div class="tenant-documents-file">
+                                    <strong>@document.FileName</strong>
+                                    <span>@DateFormatter.FormatDateTime(document.UploadedAt.UtcDateTime)</span>
+                                </div>
+                                @if (_documents.CanDownload)
+                                {
+                                    <a class="btn btn-secondary btn-sm"
+                                       href="/api/tenants/@Tenant.Id/documents/@document.Id"
+                                       download="@document.FileName">
+                                        <LucideIcon Name="download" /> @L["DownloadDocumentSecure"]
+                                    </a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+        }
+
         @if (CanViewAccount)
         {
             <section class="tenant-detail-section tenant-account-section" aria-labelledby="tenant-account-heading">
@@ -103,6 +144,46 @@
     [Parameter] public EventCallback OnUnlinkAccount { get; set; }
 
     [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+    [Inject] private TenantDocumentPageService DocumentService { get; set; } = default!;
+
+    private TenantDocumentListDto? _documents;
+    private bool _documentsLoading;
+    private bool _documentsUnavailable;
+    private bool _wasVisible;
+    private int? _loadedTenantId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible || Tenant is null || !CanManage)
+        {
+            _wasVisible = Visible;
+            return;
+        }
+
+        if (_wasVisible && _loadedTenantId == Tenant.Id)
+        {
+            return;
+        }
+
+        _wasVisible = true;
+        _loadedTenantId = Tenant.Id;
+        _documents = null;
+        _documentsUnavailable = false;
+        _documentsLoading = true;
+        try
+        {
+            _documents = await DocumentService.GetDocumentsAsync(Tenant.Id);
+            _documentsUnavailable = _documents is null;
+        }
+        catch
+        {
+            _documentsUnavailable = true;
+        }
+        finally
+        {
+            _documentsLoading = false;
+        }
+    }
 
     private string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
