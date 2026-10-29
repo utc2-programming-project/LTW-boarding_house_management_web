@@ -47,4 +47,22 @@ public interface ITenantService
 
     Task<List<TenantPickerItemDto>> SearchForPickerAsync(
         TenantPickerRequest request, TenantCaller caller, CancellationToken ct = default);
+
+    /// <summary>
+    /// 2B (VHT-25): truy vấn hồ sơ + hợp đồng + phòng đang thuê của một khách theo liên kết thật
+    /// (<c>Tenant -> ContractMember -> Contract -> Room -> Property</c>), chỉ dùng hợp đồng đã duyệt
+    /// và còn trong khoảng ngày thuê.
+    /// Quản lý/Chủ trọ xem theo phạm vi service; Khách thuê chỉ xem được hồ sơ gắn tài khoản của mình,
+    /// hồ sơ khác trả <see cref="TenantErrorCodes.TenantNotFound"/> để không lộ dữ liệu.
+    /// Khách chưa thuê trả thành công với danh sách rỗng.
+    /// </summary>
+    Task<TenantRentalResult> GetRentalOverviewAsync(
+        int id, TenantCaller caller, CancellationToken ct = default);
+
+    /// <summary>
+    /// Như <see cref="GetRentalOverviewAsync"/> nhưng tự tìm hồ sơ qua <c>Tenant.UserId</c> của tài khoản đang đăng nhập.
+    /// Dùng cho trang khách thuê (VHT-36) và các query "phòng đang thuê" của chính khách.
+    /// </summary>
+    Task<TenantRentalResult> GetOwnRentalOverviewAsync(
+        TenantCaller caller, CancellationToken ct = default);
 }
