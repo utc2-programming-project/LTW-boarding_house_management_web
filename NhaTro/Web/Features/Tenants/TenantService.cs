@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Contracts.Enums;
 using Web.Features.Rooms;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
@@ -172,6 +173,45 @@ public sealed class TenantService(
         return own is null
             ? NotFound()
             : TenantProfile(own, caller);
+    }
+
+    // 2B (VHT-25) — hồ sơ + hợp đồng + phòng đang thuê, lấy từ liên kết thật.
+    public async Task<TenantRentalResult> GetRentalOverviewAsync(
+        int id, TenantCaller caller, CancellationToken ct = default)
+    {
+        if (!caller.IsManager && !caller.IsTenant)
+        {
+            throw Forbidden(caller);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var tenant = caller.IsManager
+            ? await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct)
+            : await db.Tenants.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == caller.UserId, ct);
+
+        // Khách gọi hồ sơ khác: trả NotFound, không lộ hồ sơ/phòng của người khác.
+        return tenant is null
+            ? RentalNotFound()
+            : await BuildRentalOverviewAsync(db, tenant, ct);
+    }
+
+    public async Task<TenantRentalResult> GetOwnRentalOverviewAsync(
+        TenantCaller caller, CancellationToken ct = default)
+    {
+        if (!caller.IsTenant)
+        {
+            throw Forbidden(caller);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var own = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.UserId == caller.UserId, ct);
+
+        return own is null
+            ? RentalNotFound()
+            : await BuildRentalOverviewAsync(db, own, ct);
     }
 
     public async Task<TenantResult> CreateAsync(
@@ -603,6 +643,73 @@ public sealed class TenantService(
     // query đọc thêm .AsNoTracking() tại chỗ gọi.
     private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) => db.Tenants;
 
+    // 2B (VHT-25) — truy vấn hợp đồng/phòng đang thuê theo liên kết thật.
+    private async Task<TenantRentalResult> BuildRentalOverviewAsync(
+        ApplicationDbContext db, Tenant tenant, CancellationToken ct)
+    {
+        var today = Today();
+        var rows = await RentalRows(db, tenant.Id).ToListAsync(ct);
+
+        // Đang thuê trước, rồi lịch sử mới nhất trước; giữ đủ nhiều hợp đồng lịch sử của cùng khách.
+        var rentals = rows
+            .Select(row => ToRentalDto(row, today))
+            .OrderByDescending(rental => rental.IsCurrent)
+            .ThenByDescending(rental => rental.StartDate)
+            .ThenByDescending(rental => rental.ContractId)
+            .ToList();
+
+        return TenantRentalResult.Success(new TenantRentalOverviewDto
+        {
+            TenantId = tenant.Id,
+            FullName = tenant.FullName,
+            Rentals = rentals,
+            CurrentRental = rentals.FirstOrDefault(rental => rental.IsCurrent),
+        });
+    }
+
+    private static IQueryable<TenantRentalRow> RentalRows(ApplicationDbContext db, int tenantId) =>
+        from member in db.ContractMembers.AsNoTracking()
+        join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+        join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+        join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+        where member.TenantId == tenantId
+        select new TenantRentalRow(
+            member.TenantId,
+            contract.ContractId,
+            contract.ContractNumber,
+            contract.RoomId,
+            room.Code,
+            property.Id,
+            property.Name,
+            contract.StartDate,
+            contract.EndDate,
+            contract.SnapshotPrice,
+            contract.DepositAmount,
+            contract.Status);
+
+    private static TenantRentalContractDto ToRentalDto(TenantRentalRow row, DateTime today) => new()
+    {
+        ContractId = row.ContractId,
+        ContractNumber = row.ContractNumber,
+        RoomId = row.RoomId,
+        RoomCode = row.RoomCode,
+        PropertyId = row.PropertyId,
+        PropertyName = row.PropertyName,
+        StartDate = DateOnly.FromDateTime(row.StartDate),
+        EndDate = DateOnly.FromDateTime(row.EndDate),
+        SnapshotPrice = row.SnapshotPrice,
+        DepositAmount = row.DepositAmount,
+        Status = row.Status,
+        IsCurrent = row.Status == ContractStatus.Approved
+            && row.StartDate <= today
+            && row.EndDate >= today,
+    };
+
+    private DateTime Today() => clock.GetUtcNow().UtcDateTime.Date;
+
+    private static TenantRentalResult RentalNotFound() =>
+        TenantRentalResult.Failure(TenantErrorCodes.TenantNotFound, TenantErrorMessages.TenantNotFound);
+
     private static TenantResult TenantProfile(Tenant tenant, TenantCaller caller)
     {
         TenantScope.EnsureCanAccess(tenant.UserId, caller.UserId, caller.Role);
@@ -776,4 +883,19 @@ public sealed class TenantService(
 
     private static TenantResult NotFound() =>
         TenantResult.Failure(TenantErrorCodes.TenantNotFound, TenantErrorMessages.TenantNotFound);
+
+    /// <summary>Dòng join Tenant -> ContractMember -> Contract -> Room -> Property.</summary>
+    private sealed record TenantRentalRow(
+        int TenantId,
+        Guid ContractId,
+        string ContractNumber,
+        int RoomId,
+        string RoomCode,
+        int PropertyId,
+        string PropertyName,
+        DateTime StartDate,
+        DateTime EndDate,
+        decimal SnapshotPrice,
+        decimal DepositAmount,
+        ContractStatus Status);
 }

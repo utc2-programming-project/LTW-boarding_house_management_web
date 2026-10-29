@@ -110,8 +110,10 @@ Hai khái niệm tách biệt, không dùng chung bảng:
 - **DTO cho UI (chốt ở VHT-25):** chi tiết khách trả `HasAccount` (bool?) để UI hiện trạng thái
   đã/chưa liên kết và bật nút Gắn/Gỡ; danh sách và picker chỉ trả `HasAccount`/`HasActiveContract`
   theo quyền xem của vai trò gọi. Không trả `UserId` thô ra DTO.
-- **Phạm vi 2B:** chỉ gắn user ↔ hồ sơ. Truy vấn phòng/hợp đồng đang thuê (ghép `ContractMember →
-  Contract → Room`) là **2C**, chờ VHT-30 (duyệt hợp đồng) và nằm ở nhánh `VHT-120`, không làm sớm.
+- **Phạm vi 2B:** gắn user ↔ hồ sơ **và** truy vấn phòng/hợp đồng đang thuê của một khách
+  (`GetRentalOverviewAsync` / `GetOwnRentalOverviewAsync`), chỉ dùng hợp đồng đã duyệt còn hiệu lực.
+  Việc ghép `HasActiveContract`/`RoomName` vào danh sách + picker và lọc danh sách theo hợp đồng là **2C**,
+  chờ VHT-30 (duyệt hợp đồng) và nằm ở nhánh `VHT-120`, không làm sớm.
 
 ---
 
