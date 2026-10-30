@@ -760,6 +760,209 @@ namespace Web.Migrations
                     b.ToTable("Tenants");
                 });
 
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsPerResident")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsReadOnly")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("ScopeCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SourceName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SourceReference")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Type", "ScopeCode", "EffectiveDate")
+                        .IsUnique();
+
+                    b.ToTable("UtilityTariffs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UtilityTariffs_ReadOnly", "[IsReadOnly] = 1");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            EffectiveDate = new DateOnly(2025, 5, 10),
+                            IsPerResident = false,
+                            IsReadOnly = true,
+                            ScopeCode = "VN-EVN-HOUSEHOLD",
+                            SourceName = "EVN / Ministry of Industry and Trade",
+                            SourceReference = "https://evn.com.vn/userfile/User/tcdl/files/2025/5/BanTinEVNSo182025-20250513160725352.pdf (Decision 1279/QĐ-BCT; household retail rates, VAT excluded)",
+                            Type = 0,
+                            Unit = "kWh"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            EffectiveDate = new DateOnly(2026, 1, 1),
+                            IsPerResident = true,
+                            IsReadOnly = true,
+                            ScopeCode = "HCMC-SAWACO",
+                            SourceName = "SAWACO customer-care portal; 2026 continuation notice",
+                            SourceReference = "https://cskh.sawaco.com.vn/News/Content?branchCode=KtSzxj0rfxc%3D&contentId=Qu20CKHdW0Q%3D ; https://cskh.sawaco.com.vn/ho_tro/hoi_dap?branchCodeIframe=TCT (residential tariff; VAT and wastewater fee excluded)",
+                            Type = 1,
+                            Unit = "m³"
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariffTier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("From")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("TierNumber")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("To")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("UtilityTariffId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilityTariffId", "TierNumber")
+                        .IsUnique();
+
+                    b.ToTable("UtilityTariffTiers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UtilityTariffTiers_From_NonNegative", "[From] >= 0");
+
+                            t.HasCheckConstraint("CK_UtilityTariffTiers_TierNumber_Positive", "[TierNumber] > 0");
+
+                            t.HasCheckConstraint("CK_UtilityTariffTiers_To_After_From", "[To] IS NULL OR [To] > [From]");
+
+                            t.HasCheckConstraint("CK_UtilityTariffTiers_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            From = 0m,
+                            TierNumber = 1,
+                            To = 50m,
+                            UnitPrice = 1984m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            From = 50m,
+                            TierNumber = 2,
+                            To = 100m,
+                            UnitPrice = 2050m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            From = 100m,
+                            TierNumber = 3,
+                            To = 200m,
+                            UnitPrice = 2380m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            From = 200m,
+                            TierNumber = 4,
+                            To = 300m,
+                            UnitPrice = 2998m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 5,
+                            From = 300m,
+                            TierNumber = 5,
+                            To = 400m,
+                            UnitPrice = 3350m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            From = 400m,
+                            TierNumber = 6,
+                            UnitPrice = 3460m,
+                            UtilityTariffId = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            From = 0m,
+                            TierNumber = 1,
+                            To = 4m,
+                            UnitPrice = 6700m,
+                            UtilityTariffId = 2
+                        },
+                        new
+                        {
+                            Id = 8,
+                            From = 4m,
+                            TierNumber = 2,
+                            To = 6m,
+                            UnitPrice = 12900m,
+                            UtilityTariffId = 2
+                        },
+                        new
+                        {
+                            Id = 9,
+                            From = 6m,
+                            TierNumber = 3,
+                            UnitPrice = 14400m,
+                            UtilityTariffId = 2
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -929,9 +1132,25 @@ namespace Web.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariffTier", b =>
+                {
+                    b.HasOne("Web.Features.Utilities.Entities.UtilityTariff", "UtilityTariff")
+                        .WithMany("Tiers")
+                        .HasForeignKey("UtilityTariffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("UtilityTariff");
+                });
+
             modelBuilder.Entity("Web.Features.Contracts.Entities.Contract", b =>
                 {
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
+                {
+                    b.Navigation("Tiers");
                 });
 #pragma warning restore 612, 618
         }

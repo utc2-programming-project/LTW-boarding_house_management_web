@@ -319,6 +319,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
