@@ -19,6 +19,7 @@ using Web.Features.Accounts;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
+using Web.Features.Reports;
 using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
@@ -183,6 +184,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // SQL services. Approval policy and active-contract checks are extension points.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
