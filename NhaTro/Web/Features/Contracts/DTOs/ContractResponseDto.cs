@@ -11,4 +11,5 @@ public sealed record ContractResponseDto(
     DateTime EndDate,
     decimal SnapshotPrice,
     decimal DepositAmount,
-    ContractStatus Status);
+    ContractStatus Status,
+    string? RejectReason = null);

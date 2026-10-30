@@ -21,5 +21,7 @@ public sealed class Contract
 
     public ContractStatus Status { get; set; } = ContractStatus.Pending;
 
+    public string? RejectReason { get; set; }
+
     public ICollection<ContractMember> Members { get; set; } = new List<ContractMember>();
 }

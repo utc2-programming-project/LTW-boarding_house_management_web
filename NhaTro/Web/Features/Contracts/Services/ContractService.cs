@@ -6,6 +6,7 @@ using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Rooms;
+using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 
 namespace Web.Features.Contracts.Services;
@@ -54,7 +55,74 @@ public sealed class ContractService : IContractService
             throw new InvalidOperationException("Chỉ hợp đồng đang chờ duyệt mới được xử lý.");
         }
 
-        throw new NotImplementedException();
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        Room? lockedRoom = null;
+        try
+        {
+            // Serialize decisions for the same room so concurrent approvals see the winner's commit.
+            var room = await _context.Rooms
+                .FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {contract.RoomId}")
+                .IgnoreQueryFilters()
+                .SingleOrDefaultAsync();
+            lockedRoom = room;
+
+            if (room is null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy phòng {contract.RoomId}.");
+            }
+
+            // Another request may have approved this same contract while this request waited on the room lock.
+            await _context.Entry(contract).ReloadAsync();
+            if (contract.Status != ContractStatus.Pending)
+            {
+                throw new InvalidOperationException("Chỉ hợp đồng đang chờ duyệt mới được xử lý.");
+            }
+
+            if (!request.IsApproved)
+            {
+                contract.Status = ContractStatus.Rejected;
+                contract.RejectReason = request.RejectReason!.Trim();
+            }
+            else
+            {
+                if (room.IsDeleted || !room.IsActive)
+                {
+                    throw new InvalidOperationException("Không thể duyệt hợp đồng cho phòng đã ngừng hoạt động.");
+                }
+
+                var hasOverlap = await _context.Contracts.AnyAsync(other =>
+                    other.ContractId != contract.ContractId
+                    && other.RoomId == contract.RoomId
+                    && other.Status == ContractStatus.Approved
+                    && other.StartDate <= contract.EndDate
+                    && contract.StartDate <= other.EndDate);
+
+                if (hasOverlap)
+                {
+                    throw new InvalidOperationException("Phòng đã có hợp đồng hiệu lực trong thời gian này.");
+                }
+
+                contract.Status = ContractStatus.Approved;
+                contract.RejectReason = null;
+                room.Status = RoomStatus.Rented;
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return ToResponse(contract);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            await _context.Entry(contract).ReloadAsync();
+            if (lockedRoom is not null)
+            {
+                await _context.Entry(lockedRoom).ReloadAsync();
+            }
+
+            throw;
+        }
     }
 
     public async Task<ContractResponseDto> CreateContractAsync(CreateContractRequest request)
@@ -149,6 +217,18 @@ public sealed class ContractService : IContractService
             contract.EndDate,
             contract.SnapshotPrice,
             contract.DepositAmount,
-            contract.Status);
+            contract.Status,
+            contract.RejectReason);
     }
+
+    private static ContractResponseDto ToResponse(Contract contract) => new(
+        contract.ContractId,
+        contract.ContractNumber,
+        contract.RoomId,
+        contract.StartDate,
+        contract.EndDate,
+        contract.SnapshotPrice,
+        contract.DepositAmount,
+        contract.Status,
+        contract.RejectReason);
 }
