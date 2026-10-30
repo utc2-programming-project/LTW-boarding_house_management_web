@@ -35,6 +35,20 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         new TestDbContextFactory(db.Database.GetConnectionString()
             ?? throw new InvalidOperationException("The test database has no connection string."));
 
+    // VHT-24: gán Quản lý vào tòa nhà để test công tắc vẫn đi qua được phạm vi.
+    private static async Task AssignManagerAsync(
+        ApplicationDbContext db, int propertyId, string managerUserId, string ownerUserId)
+    {
+        db.PropertyManagers.Add(new Web.Features.Properties.Entities.PropertyManager
+        {
+            PropertyId = propertyId,
+            ManagerUserId = managerUserId,
+            AssignedAt = DateTime.UtcNow,
+            AssignedByUserId = ownerUserId,
+        });
+        await db.SaveChangesAsync();
+    }
+
     private sealed class TestDbContextFactory(string connectionString) : IDbContextFactory<ApplicationDbContext>
     {
         public ApplicationDbContext CreateDbContext() => new(
@@ -346,6 +360,7 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         {
             PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
         }, ChuTro);
+        await AssignManagerAsync(db, property.Property!.Id, QuanLy.UserId, ChuTro.UserId);
 
         // Ma trận P2: không có dòng tạo nhà trọ/phòng cho Quản lý.
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -377,6 +392,7 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
         {
             PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
         }, ChuTro);
+        await AssignManagerAsync(db, property.Property!.Id, QuanLy.UserId, ChuTro.UserId);
 
         var updated = await NewRoomService(db, new AllowAllPolicy()).UpdateAsync(room.Room!.Id, new RoomSave
         {

@@ -299,15 +299,15 @@ public sealed class RoomService(
         return rows.Select(x => RoomMapping.ToOption(x.Room, x.PropertyName)).ToList();
     }
 
-    // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ chỉ thấy phòng thuộc nhà mình.
-    // Quản lý chưa có bảng phân công tòa nhà nên tạm đọc toàn bộ; VHT-24 chỉ sửa tại đây.
+    // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ chỉ thấy phòng thuộc nhà mình;
+    // Quản lý chỉ thấy phòng thuộc nhà được phân công đang hiệu lực.
     private static IQueryable<Room> ScopeRooms(
         ApplicationDbContext db,
         PropertyCaller caller,
         bool includeDeleted = false)
     {
         var rooms = includeDeleted ? db.Rooms.IgnoreQueryFilters() : db.Rooms;
-        return RoomScope.Apply(rooms, db.Properties, caller);
+        return RoomScope.Apply(rooms, db.Properties, db.PropertyManagers, caller);
     }
 
     private static IQueryable<Room> ApplyFilter(IQueryable<Room> query, RoomFilter filter)
@@ -356,7 +356,7 @@ public sealed class RoomService(
         PropertyCaller caller,
         CancellationToken ct)
     {
-        var query = PropertyScope.Apply(db.Properties, caller).Where(p => p.Id == propertyId);
+        var query = PropertyScope.Apply(db.Properties, db.PropertyManagers, caller).Where(p => p.Id == propertyId);
         return await query.AnyAsync(ct);
     }
 

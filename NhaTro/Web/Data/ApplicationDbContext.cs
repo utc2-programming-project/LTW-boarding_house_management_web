@@ -12,6 +12,10 @@ namespace Web.Data
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<Property> Properties => Set<Property>();
+
+        // VHT-24: phân công Quản lý theo tòa nhà (nhiều-nhiều, có lịch sử).
+        public DbSet<PropertyManager> PropertyManagers => Set<PropertyManager>();
+
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Contract> Contracts => Set<Contract>();
