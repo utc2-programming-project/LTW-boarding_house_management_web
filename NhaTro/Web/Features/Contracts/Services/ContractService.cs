@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Utils;
 using Web.Data;
+using Web.Features.Accounts;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
@@ -18,6 +19,42 @@ public sealed class ContractService : IContractService
     {
         _context = dbContext;
         RoomService = roomService;
+    }
+
+    public async Task<ContractResponseDto> ApproveContractAsync(
+        Guid contractId,
+        ApproveContractRequestDto request,
+        int userId,
+        string userRole)
+    {
+        if (userRole is not (Roles.ChuTro or "Landlord"))
+        {
+            throw new UnauthorizedAccessException("Only the landlord can approve or reject a contract.");
+        }
+
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!request.IsApproved && string.IsNullOrWhiteSpace(request.RejectReason))
+        {
+            throw new ArgumentException(
+                "A rejection reason is required when rejecting a contract.",
+                nameof(request));
+        }
+
+        var contract = await _context.Contracts
+            .FirstOrDefaultAsync(item => item.ContractId == contractId);
+
+        if (contract is null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy hợp đồng {contractId}.");
+        }
+
+        if (contract.Status != ContractStatus.Pending)
+        {
+            throw new InvalidOperationException("Chỉ hợp đồng đang chờ duyệt mới được xử lý.");
+        }
+
+        throw new NotImplementedException();
     }
 
     public async Task<ContractResponseDto> CreateContractAsync(CreateContractRequest request)

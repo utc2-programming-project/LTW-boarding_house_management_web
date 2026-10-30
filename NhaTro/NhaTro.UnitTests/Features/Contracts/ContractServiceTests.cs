@@ -1,5 +1,6 @@
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Services;
+using Web.Features.Accounts;
 
 namespace NhaTro.UnitTests.Features.Contracts;
 
@@ -51,6 +52,51 @@ public sealed class ContractServiceTests
         var service = CreateService();
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateContractAsync(null!));
+    }
+
+    [Theory]
+    [InlineData(Roles.QuanLy)]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.KhachThue)]
+    public async Task ApproveContractAsync_RejectsNonLandlordRoles(string userRole)
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto { IsApproved = true },
+            1,
+            userRole));
+    }
+
+    [Theory]
+    [InlineData("Landlord", null)]
+    [InlineData("Landlord", "")]
+    [InlineData("Landlord", "   ")]
+    [InlineData(Roles.ChuTro, null)]
+    public async Task ApproveContractAsync_RequiresReasonWhenRejecting(
+        string userRole,
+        string? rejectReason)
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto { IsApproved = false, RejectReason = rejectReason },
+            1,
+            userRole));
+    }
+
+    [Fact]
+    public async Task ApproveContractAsync_RejectsNullRequest()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            null!,
+            1,
+            "Landlord"));
     }
 
     private static ContractService CreateService() => new(null!, null!);

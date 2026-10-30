@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties.Entities;
@@ -103,6 +104,57 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Empty(await reloadedDb.ContractMembers.ToListAsync());
     }
 
+    [SqlServerFact]
+    public async Task ApproveContractAsync_ThrowsNotFoundForMissingContract()
+    {
+        await ResetDatabaseAsync();
+        var (db, _) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var service = new ContractService(dbContext, null!);
+
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto { IsApproved = true },
+            1,
+            "Landlord"));
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_RejectsContractThatIsNotPending()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, null!);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            1,
+            Roles.ChuTro));
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_ReachesPlaceholderForPendingContract()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, null!);
+
+        await Assert.ThrowsAsync<NotImplementedException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            1,
+            Roles.ChuTro));
+    }
+
     private async Task<(ApplicationDbContext Db, int RoomId)> CreateDatabaseWithRoomAsync(RoomStatus roomStatus)
     {
         var db = fixture.CreateContext();
@@ -144,6 +196,18 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await db.SaveChangesAsync();
         return tenant;
     }
+
+    private static Contract TestContract(Guid contractId, int roomId, ContractStatus status) => new()
+    {
+        ContractId = contractId,
+        ContractNumber = $"HD-{contractId:N}",
+        RoomId = roomId,
+        StartDate = new DateTime(2026, 10, 22),
+        EndDate = new DateTime(2027, 10, 21),
+        SnapshotPrice = 1_000_000m,
+        DepositAmount = 200_000m,
+        Status = status,
+    };
 
     private static CreateContractRequest Request(int roomId, List<int> tenantIds) => new(
         roomId,
