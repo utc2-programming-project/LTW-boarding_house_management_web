@@ -150,7 +150,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
         // Ten dang nhap = email: khong cho trung email.
         options.User.RequireUniqueEmail = true;
-    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager().AddDefaultTokenProviders();
+    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
+      // VHT-95: SignInManager rieng chan tai khoan Chờ duyệt.
+      .AddSignInManager<AccountSignInManager>()
+      .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization(options =>
 {

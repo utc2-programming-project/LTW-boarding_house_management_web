@@ -243,6 +243,9 @@
   <data name="LoginInvalid" xml:space="preserve">
     <value>Email hoặc mật khẩu không đúng.</value>
   </data>
+  <data name="LoginPendingApproval" xml:space="preserve">
+    <value>Tài khoản đang chờ duyệt, vui lòng liên hệ người quản lý tài khoản.</value>
+  </data>
   <data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
   </data>
@@ -410,6 +413,59 @@
     <value>Đã mở khóa tài khoản.</value>
   </data>
 
+  <!-- VHT-95: vong doi tai khoan -->
+  <data name="CreateAccount" xml:space="preserve">
+    <value>Tạo tài khoản</value>
+  </data>
+  <data name="CreateAccountTitle" xml:space="preserve">
+    <value>Tạo tài khoản mới</value>
+  </data>
+  <data name="CreateAccountSubmit" xml:space="preserve">
+    <value>Tạo tài khoản</value>
+  </data>
+  <data name="CreateAccountHint" xml:space="preserve">
+    <value>Mật khẩu ban đầu do bạn đặt và thông báo trực tiếp cho người dùng.</value>
+  </data>
+  <data name="PasswordCreateHint" xml:space="preserve">
+    <value>Tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</value>
+  </data>
+  <data name="CreateAccountPendingNote" xml:space="preserve">
+    <value>Tài khoản Khách thuê do Quản lý tạo ở trạng thái Chờ duyệt cho tới khi Chủ trọ duyệt.</value>
+  </data>
+  <data name="AccountCreated" xml:space="preserve">
+    <value>Đã tạo tài khoản.</value>
+  </data>
+  <data name="AccountCreatedPending" xml:space="preserve">
+    <value>Đã tạo tài khoản ở trạng thái Chờ duyệt.</value>
+  </data>
+  <data name="Approve" xml:space="preserve">
+    <value>Duyệt</value>
+  </data>
+  <data name="ApproveTitle" xml:space="preserve">
+    <value>Duyệt tài khoản</value>
+  </data>
+  <data name="ApproveMessage" xml:space="preserve">
+    <value>Duyệt tài khoản {0}? Người này sẽ đăng nhập được ngay sau khi duyệt.</value>
+  </data>
+  <data name="AccountApproved" xml:space="preserve">
+    <value>Đã duyệt tài khoản.</value>
+  </data>
+  <data name="TenantProfileLabel" xml:space="preserve">
+    <value>Hồ sơ khách thuê</value>
+  </data>
+  <data name="TenantProfileHint" xml:space="preserve">
+    <value>Chỉ hiện hồ sơ chưa có tài khoản và có hợp đồng trong phạm vi của bạn.</value>
+  </data>
+  <data name="SearchTenant" xml:space="preserve">
+    <value>Tìm hồ sơ khách</value>
+  </data>
+  <data name="SelectTenant" xml:space="preserve">
+    <value>Chọn hồ sơ khách</value>
+  </data>
+  <data name="NoAssignableTenants" xml:space="preserve">
+    <value>Không có hồ sơ khách phù hợp.</value>
+  </data>
+
   <!-- VHT-8: vai tro -->
   <data name="RoleAdmin" xml:space="preserve">
     <value>Quản trị viên</value>
@@ -457,6 +513,33 @@
   </data>
   <data name="ErrorInvalidRole" xml:space="preserve">
     <value>Vai trò không hợp lệ.</value>
+  </data>
+  <data name="ErrorCannotLockLastAdmin" xml:space="preserve">
+    <value>Không thể khóa quản trị viên cuối cùng.</value>
+  </data>
+  <data name="ErrorOutOfScope" xml:space="preserve">
+    <value>Tài khoản nằm ngoài phạm vi bạn quản lý.</value>
+  </data>
+  <data name="ErrorTenantRequired" xml:space="preserve">
+    <value>Chọn hồ sơ khách thuê để tạo tài khoản.</value>
+  </data>
+  <data name="ErrorTenantAlreadyLinked" xml:space="preserve">
+    <value>Hồ sơ khách này đã có tài khoản.</value>
+  </data>
+  <data name="ErrorRoleLinkedToTenant" xml:space="preserve">
+    <value>Tài khoản đang gắn hồ sơ khách, hãy gỡ liên kết trước khi đổi vai trò.</value>
+  </data>
+  <data name="ErrorNotPendingApproval" xml:space="preserve">
+    <value>Chỉ duyệt được tài khoản đang chờ duyệt.</value>
+  </data>
+  <data name="ErrorDuplicateEmail" xml:space="preserve">
+    <value>Email đã được dùng cho tài khoản khác.</value>
+  </data>
+  <data name="ErrorWeakPassword" xml:space="preserve">
+    <value>Mật khẩu chưa đủ mạnh.</value>
+  </data>
+  <data name="ErrorInvalidEmail" xml:space="preserve">
+    <value>Email không hợp lệ.</value>
   </data>
 
   <!-- VHT-8: chu cua bang du lieu -->
@@ -512,6 +595,14 @@
   </data>
   <data name="AccessDeniedMessage" xml:space="preserve">
     <value>Bạn không được phép xem trang này. Liên hệ quản trị viên nếu cần hỗ trợ.</value>
+  </data>
+
+  <!-- VHT-95: tai khoan bi khoa -->
+  <data name="LockoutTitle" xml:space="preserve">
+    <value>Tài khoản đã bị khóa</value>
+  </data>
+  <data name="LockoutMessage" xml:space="preserve">
+    <value>Tài khoản của bạn đang bị khóa nên không thể đăng nhập. Liên hệ người quản lý tài khoản để được mở khóa.</value>
   </data>
 
   <!-- VHT-8: dang nhap nhanh cho tester (chi hien khi chay Development) -->

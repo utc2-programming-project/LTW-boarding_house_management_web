@@ -19,7 +19,7 @@ public class AccountPermissionRulesTests
 
     [Theory]
     [InlineData(Roles.Admin, 4)]
-    [InlineData(Roles.ChuTro, 1)]
+    [InlineData(Roles.ChuTro, 2)]
     [InlineData(Roles.QuanLy, 1)]
     [InlineData(Roles.KhachThue, 0)]
     public void So_vai_tro_duoc_phep_gan_theo_D1(string callerRole, int expected)
@@ -28,11 +28,30 @@ public class AccountPermissionRulesTests
     }
 
     [Fact]
-    public void ChuTro_chi_tao_duoc_QuanLy_khong_tao_Admin()
+    public void ChuTro_tao_duoc_QuanLy_va_KhachThue_khong_tao_Admin()
     {
         var roles = AccountPermissionRules.AssignableRoles(Roles.ChuTro);
         Assert.Contains(Roles.QuanLy, roles);
+        Assert.Contains(Roles.KhachThue, roles);
         Assert.DoesNotContain(Roles.Admin, roles);
+    }
+
+    [Fact]
+    public void QuanLy_chi_tao_duoc_KhachThue()
+    {
+        Assert.True(AccountPermissionRules.CanCreateRole(Roles.QuanLy, Roles.KhachThue));
+        Assert.False(AccountPermissionRules.CanCreateRole(Roles.QuanLy, Roles.QuanLy));
+        Assert.False(AccountPermissionRules.CanCreateRole(Roles.KhachThue, Roles.KhachThue));
+    }
+
+    [Fact]
+    public void QuanLy_vao_duoc_man_hinh_tai_khoan_nhung_khong_duyet_khoa()
+    {
+        Assert.True(AccountPermissionRules.CanManageAccounts(Roles.QuanLy));
+        Assert.True(AccountPermissionRules.CanApprove(Roles.ChuTro, Roles.KhachThue));
+        Assert.True(AccountPermissionRules.CanApprove(Roles.Admin, Roles.Admin));
+        Assert.False(AccountPermissionRules.CanApprove(Roles.QuanLy, Roles.KhachThue));
+        Assert.False(AccountPermissionRules.CanApprove(Roles.KhachThue, Roles.KhachThue));
     }
 
     [Fact]
@@ -113,6 +132,32 @@ public class AccountPermissionRulesTests
             Roles.ChuTro, "chutro-1", "quanly-9", Roles.QuanLy, unlock: false));
         Assert.Null(AccountPermissionRules.CheckLock(
             Roles.ChuTro, "chutro-1", "khach-9", Roles.KhachThue, unlock: false));
+    }
+
+    [Fact]
+    public void Khong_duoc_khoa_Admin_cuoi_cung()
+    {
+        var reason = AccountPermissionRules.CheckLock(
+            Roles.Admin, "admin-1", "admin-2", Roles.Admin, unlock: false, targetIsLastAdmin: true);
+
+        Assert.Equal(AccountErrorCodes.CannotLockLastAdmin, reason);
+    }
+
+    [Fact]
+    public void Admin_con_nguoi_khac_thi_khoa_duoc()
+    {
+        Assert.Null(AccountPermissionRules.CheckLock(
+            Roles.Admin, "admin-1", "admin-2", Roles.Admin, unlock: false, targetIsLastAdmin: false));
+    }
+
+    [Fact]
+    public void Khong_doi_vai_tro_tai_khoan_dang_gan_ho_so_khach()
+    {
+        var reason = AccountPermissionRules.CheckChangeRole(
+            Roles.Admin, "admin-1", "khach-9", Roles.KhachThue, targetIsLastAdmin: false,
+            newRole: Roles.QuanLy, targetIsLinkedTenant: true);
+
+        Assert.Equal(AccountErrorCodes.RoleLinkedToTenant, reason);
     }
 
     [Fact]

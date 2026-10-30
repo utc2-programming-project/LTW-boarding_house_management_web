@@ -35,7 +35,19 @@ public interface IAccountService
     Task<AccountResult> LockAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
 
-    /// <summary>Mo khoa tai khoan.</summary>
+    /// <summary>Mo khoa tai khoan; tai khoan chua duyet quay ve Cho duyet.</summary>
     Task<AccountResult> UnlockAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>VHT-95: tao tai khoan theo o #5 (Admin/ChuTro hieu luc ngay, QuanLy Cho duyet).</summary>
+    Task<AccountResult> CreateAsync(
+        CreateAccountRequest request, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>VHT-95: duyet tai khoan dang Cho duyet (o #6).</summary>
+    Task<AccountResult> ApproveAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>VHT-95: ho so khach chua co tai khoan trong pham vi nguoi goi (cho dialog tao).</summary>
+    Task<IReadOnlyList<AssignableTenantDto>> SearchAssignableTenantsAsync(
+        string? keyword, string callerUserId, string callerRole, CancellationToken ct = default);
 }

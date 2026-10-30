@@ -207,9 +207,16 @@ public static class TestDataSeeder
                 EmailConfirmed = true,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 ConcurrencyStamp = Guid.NewGuid().ToString(),
+                // VHT-95: tai khoan nen cua test da duoc duyet.
+                ApprovedAt = DateTime.UtcNow,
             };
             user.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(user, Password);
             db.Users.Add(user);
+            await db.SaveChangesAsync();
+        }
+        else if (user.ApprovedAt is null)
+        {
+            user.ApprovedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
         }
 

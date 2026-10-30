@@ -1,0 +1,203 @@
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Forms
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+
+@inject IAccountService Accounts
+@inject IStringLocalizer<Shared> L
+
+@* VHT-95: tao tai khoan theo o #5. Vai tro Khach thue bat buoc chon ho so trong pham vi. *@
+
+<FeatureDialog Visible="Visible" Title="@L["CreateAccountTitle"]" CloseLabel="@L["Close"]"
+               Busy="_saving" OnClose="OnClose">
+    <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+        <DataAnnotationsValidator />
+
+        <div class="account-form-body">
+            @if (_error is not null)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert-circle" />
+                    <span>@_error</span>
+                </div>
+            }
+
+            <FormField TValue="string" Id="create-account-email" Label="@L["EmailLabel"]" Required="true"
+                       For="() => _model.Email">
+                <InputText id="create-account-email" @bind-Value="_model.Email" type="email"
+                           autocomplete="off" maxlength="256" />
+            </FormField>
+
+            <FormField TValue="string" Id="create-account-name" Label="@L["FullNameLabel"]" Required="true"
+                       For="() => _model.FullName">
+                <InputText id="create-account-name" @bind-Value="_model.FullName"
+                           autocomplete="name" maxlength="200" />
+            </FormField>
+
+            <FormField TValue="string" Id="create-account-phone" Label="@L["PhoneLabel"]"
+                       Hint="@L["PhoneHint"]" For="() => _model.PhoneNumber">
+                <InputText id="create-account-phone" @bind-Value="_model.PhoneNumber"
+                           inputmode="numeric" maxlength="10" />
+            </FormField>
+
+            <FormField TValue="string" Id="create-account-password" Label="@L["PasswordLabel"]" Required="true"
+                       Hint="@L["PasswordCreateHint"]" For="() => _model.Password">
+                <InputText id="create-account-password" @bind-Value="_model.Password" type="password"
+                           autocomplete="new-password" />
+            </FormField>
+
+            <FormField TValue="string" Id="create-account-role" Label="@L["ColumnRole"]" Required="true"
+                       For="() => _model.Role">
+                <InputSelect id="create-account-role" @bind-Value="_model.Role" @bind-Value:after="OnRoleChangedAsync">
+                    @foreach (var role in AssignableRoles)
+                    {
+                        <option value="@role">@L[AccountPermissionRules.RoleResourceKey(role)]</option>
+                    }
+                </InputSelect>
+            </FormField>
+
+            @if (CallerRole == Roles.QuanLy)
+            {
+                <p class="note">@L["CreateAccountPendingNote"]</p>
+            }
+
+            @if (_model.Role == Roles.KhachThue)
+            {
+                <div class="field">
+                    <label class="label" for="create-account-tenant-search">@L["SearchTenant"]</label>
+                    <input id="create-account-tenant-search" class="input" @bind="_tenantKeyword"
+                           @bind:after="LoadTenantsAsync" placeholder="@L["SearchAccountsHint"]" />
+                </div>
+
+                <FormField TValue="int?" Id="create-account-tenant" Label="@L["TenantProfileLabel"]" Required="true"
+                           Hint="@L["TenantProfileHint"]" For="() => _model.TenantId">
+                    <InputSelect id="create-account-tenant" @bind-Value="_model.TenantId">
+                        <option value="">@L["SelectTenant"]</option>
+                        @foreach (var tenant in _tenants)
+                        {
+                            <option value="@tenant.TenantId">@TenantLabel(tenant)</option>
+                        }
+                    </InputSelect>
+                </FormField>
+
+                @if (_tenants.Count == 0)
+                {
+                    <p class="note">@L["NoAssignableTenants"]</p>
+                }
+            }
+
+            <p class="note">@L["CreateAccountHint"]</p>
+
+            <div class="account-form-actions">
+                <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="OnClose">
+                    @L["Cancel"]
+                </button>
+                <button type="submit" class="btn btn-primary" disabled="@_saving">
+                    @if (_saving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    @L["CreateAccountSubmit"]
+                </button>
+            </div>
+        </div>
+    </EditForm>
+</FeatureDialog>
+
+@code {
+    private CreateAccountRequest _model = new();
+    private IReadOnlyList<AssignableTenantDto> _tenants = [];
+    private string _tenantKeyword = string.Empty;
+    private string? _error;
+    private bool _saving;
+    private bool _wasVisible;
+
+    [Parameter] public bool Visible { get; set; }
+
+    [Parameter, EditorRequired] public string CallerUserId { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public string CallerRole { get; set; } = string.Empty;
+
+    [Parameter] public IReadOnlyList<string> AssignableRoles { get; set; } = [];
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    [Parameter] public EventCallback<string> OnCreated { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _model = new CreateAccountRequest { Role = DefaultRole() };
+            _tenantKeyword = string.Empty;
+            _error = null;
+            _tenants = [];
+
+            if (_model.Role == Roles.KhachThue)
+            {
+                await LoadTenantsAsync();
+            }
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private string DefaultRole() =>
+        AssignableRoles.Contains(Roles.KhachThue)
+            ? Roles.KhachThue
+            : AssignableRoles.FirstOrDefault() ?? string.Empty;
+
+    private async Task OnRoleChangedAsync()
+    {
+        _error = null;
+
+        if (_model.Role != Roles.KhachThue)
+        {
+            _model.TenantId = null;
+            _tenants = [];
+            return;
+        }
+
+        await LoadTenantsAsync();
+    }
+
+    private async Task LoadTenantsAsync()
+    {
+        _tenants = await Accounts.SearchAssignableTenantsAsync(_tenantKeyword, CallerUserId, CallerRole);
+
+        // Bo chon ho so khong con trong danh sach (vd. vua bi tai khoan khac gan) thi bo chon.
+        if (_model.TenantId is { } selected && _tenants.All(tenant => tenant.TenantId != selected))
+        {
+            _model.TenantId = null;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _saving = true;
+        _error = null;
+
+        var result = await Accounts.CreateAsync(_model, CallerUserId, CallerRole);
+
+        _saving = false;
+
+        if (!result.Succeeded)
+        {
+            _error = L[AccountErrorCodes.ResourceKey(result.ErrorCode)];
+            return;
+        }
+
+        await OnCreated.InvokeAsync(_model.Role);
+    }
+
+    private string TenantLabel(AssignableTenantDto tenant)
+    {
+        var label = string.IsNullOrWhiteSpace(tenant.PhoneNumber)
+            ? tenant.FullName
+            : $"{tenant.FullName} · {tenant.PhoneNumber}";
+
+        return string.IsNullOrWhiteSpace(tenant.PropertyNames)
+            ? label
+            : $"{label} — {tenant.PropertyNames}";
+    }
+}

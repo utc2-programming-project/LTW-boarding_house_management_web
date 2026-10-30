@@ -1,5 +1,5 @@
 @page "/admin/users"
-@attribute [Authorize(Roles = Roles.Admin)]
+@attribute [Authorize]
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
@@ -17,8 +17,8 @@
 @inject IStringLocalizer<Shared> L
 @inject ToastService Toasts
 
-@* VHT-8: quan tri tai khoan (/admin/users). Chi Admin (D1).
-   Trang thai "Cho duyet" do VHT-95 lam; VHT-8 chi khoa/mo khoa + gan vai tro. *@
+@* VHT-95: quan tri tai khoan (/admin/users) cho Admin, ChuTro, QuanLy.
+   Pham vi du lieu va quyen thao tac do AccountService tu kiem; UI chi hien nut theo quyen. *@
 
 <PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
 
@@ -30,6 +30,12 @@
             <h1 id="accounts-title">@L["AccountsTitle"]</h1>
             <p>@L["AccountsSubtitle"]</p>
         </div>
+        @if (_assignableRoles.Count > 0)
+        {
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                <LucideIcon Name="plus" /> @L["CreateAccount"]
+            </button>
+        }
     </header>
 
     <div class="toolbar" role="search">
@@ -46,7 +52,7 @@
             <label class="label" for="account-role">@L["FilterRole"]</label>
             <select id="account-role" class="input" @bind="_roleFilter" @bind:after="ReloadAsync">
                 <option value="">@L["FilterAllRoles"]</option>
-                @foreach (var role in _roleOptions)
+                @foreach (var role in _filterRoles)
                 {
                     <option value="@role">@RoleText(role)</option>
                 }
@@ -64,6 +70,14 @@
     </DataTable>
 </section>
 
+<CreateAccountDialog Visible="_createVisible" CallerUserId="@_callerUserId" CallerRole="@_callerRole"
+                     AssignableRoles="_assignableRoles"
+                     OnClose="CloseCreate" OnCreated="OnAccountCreated" />
+
+<ConfirmDialog Visible="_confirmApprove.Visible" Title="@L["ApproveTitle"]"
+               Message="@ApproveMessage()" ConfirmText="@L["Approve"]" CancelText="@L["Cancel"]"
+               OnConfirm="ConfirmApproveAsync" OnCancel="CancelApprove" />
+
 <ConfirmDialog Visible="_confirmRole.Visible" Title="@L["ChangeRoleTitle"]"
                ConfirmText="@L["Confirm"]" CancelText="@L["Cancel"]"
                OnConfirm="ConfirmRoleAsync" OnCancel="CancelRoleChange">
@@ -71,7 +85,7 @@
     <div class="field">
         <label class="label" for="role-select">@L["NewRoleLabel"]</label>
         <select id="role-select" class="input" @bind="_confirmRole.NewRole">
-            @foreach (var role in _roleOptions)
+            @foreach (var role in _roleChangeOptions)
             {
                 <option value="@role">@RoleText(role)</option>
             }
@@ -91,15 +105,28 @@
 
     private DataTable<AccountListItemDto>? _table;
     private IReadOnlyList<DataTableColumn<AccountListItemDto>> _columns = [];
-    private IReadOnlyList<string> _roleOptions = [];
+    private IReadOnlyList<string> _assignableRoles = [];
+    private IReadOnlyList<string> _filterRoles = [];
+    private IReadOnlyList<string> _roleChangeOptions = [];
+    private IReadOnlyList<string> _lockableRoles = [];
+    private bool _canChangeRole;
+    private bool _createVisible;
 
     private string? _keyword;
     private string? _roleFilter;
     private string _callerUserId = string.Empty;
     private string _callerRole = string.Empty;
 
+    private ApproveState _confirmApprove = new();
     private RoleChangeState _confirmRole = new();
     private LockState _confirmLock = new();
+
+    private sealed class ApproveState
+    {
+        public bool Visible { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+    }
 
     private sealed class RoleChangeState
     {
@@ -123,8 +150,11 @@
         _callerUserId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
         _callerRole = Roles.All.FirstOrDefault(state.User.IsInRole) ?? string.Empty;
 
-        // D1: Admin doi vai tro duoc cho ca 4 vai tro; cac vai tro khac khong doi vai tro.
-        _roleOptions = AccountPermissionRules.AssignableRoles(_callerRole);
+        _assignableRoles = AccountPermissionRules.AssignableRoles(_callerRole);
+        _filterRoles = AccountPermissionRules.VisibleRoles(_callerRole);
+        _lockableRoles = AccountPermissionRules.LockableRoles(_callerRole);
+        _canChangeRole = AccountPermissionRules.CanChangeRole(_callerRole);
+        _roleChangeOptions = _canChangeRole ? Roles.All : [];
 
         _columns =
         [
@@ -164,30 +194,40 @@
             {
                 Key = "status",
                 Title = L["ColumnStatus"],
-                Template = user => @<StatusBadge Tone="@(user.IsLocked ? BadgeTone.Error : BadgeTone.Success)"
-                                                   Text="@(user.IsLocked ? L["StatusLocked"] : L["StatusActive"])" />,
+                Template = user => @<StatusBadge Tone="@StatusTone(user.Status)"
+                                                   Text="@L[AccountStatusRules.ResourceKey(user.Status)]" />,
             },
             new DataTableColumn<AccountListItemDto>
             {
                 Key = "actions",
                 Title = L["ColumnActions"],
                 Template = user => @<span class="row-actions">
-                    @if (_roleOptions.Count > 0 && user.Id != _callerUserId)
+                    @if (user.Id == _callerUserId)
                     {
-                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OpenRoleChange(user)">
-                            @L["ChangeRole"]
-                        </button>
-                    }
-                    @if (user.Id != _callerUserId)
-                    {
-                        <button type="button" class="btn @(user.IsLocked ? "btn-secondary" : "btn-danger") btn-sm"
-                                @onclick="() => OpenLock(user)">
-                            @(user.IsLocked ? L["Unlock"] : L["Lock"])
-                        </button>
+                        <span class="note">@L["ThisIsYou"]</span>
                     }
                     else
                     {
-                        <span class="note">@L["ThisIsYou"]</span>
+                        @if (user.Status == AccountStatus.Pending
+                             && AccountPermissionRules.CanApprove(_callerRole, user.Role))
+                        {
+                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenApprove(user)">
+                                @L["Approve"]
+                            </button>
+                        }
+                        @if (_canChangeRole)
+                        {
+                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OpenRoleChange(user)">
+                                @L["ChangeRole"]
+                            </button>
+                        }
+                        @if (_lockableRoles.Contains(user.Role))
+                        {
+                            <button type="button" class="btn @(user.IsLocked ? "btn-secondary" : "btn-danger") btn-sm"
+                                    @onclick="() => OpenLock(user)">
+                                @(user.IsLocked ? L["Unlock"] : L["Lock"])
+                            </button>
+                        }
                     }
                 </span>,
             },
@@ -209,14 +249,59 @@
 
     private Task ReloadAsync() => _table?.ReloadAsync() ?? Task.CompletedTask;
 
+    private void OpenCreate() => _createVisible = true;
+
+    private void CloseCreate() => _createVisible = false;
+
+    private async Task OnAccountCreated(string role)
+    {
+        _createVisible = false;
+
+        Toasts.Success(role == Roles.KhachThue && _callerRole == Roles.QuanLy
+            ? L["AccountCreatedPending"]
+            : L["AccountCreated"]);
+
+        await ReloadAsync();
+    }
+
+    private void OpenApprove(AccountListItemDto user)
+    {
+        _confirmApprove = new ApproveState
+        {
+            Visible = true,
+            UserId = user.Id,
+            UserName = DisplayName(user),
+        };
+    }
+
+    private void CancelApprove() => _confirmApprove.Visible = false;
+
+    private string ApproveMessage() => string.Format(L["ApproveMessage"], _confirmApprove.UserName);
+
+    private async Task ConfirmApproveAsync()
+    {
+        var result = await Accounts.ApproveAsync(_confirmApprove.UserId, _callerUserId, _callerRole);
+
+        _confirmApprove.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["AccountApproved"]);
+        await ReloadAsync();
+    }
+
     private void OpenRoleChange(AccountListItemDto user)
     {
         _confirmRole = new RoleChangeState
         {
             Visible = true,
             UserId = user.Id,
-            UserName = string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName,
-            NewRole = _roleOptions.Contains(user.Role) ? user.Role : _roleOptions.FirstOrDefault() ?? string.Empty,
+            UserName = DisplayName(user),
+            NewRole = _roleChangeOptions.Contains(user.Role) ? user.Role : _roleChangeOptions.FirstOrDefault() ?? string.Empty,
         };
     }
 
@@ -246,7 +331,7 @@
             Visible = true,
             Lock = !user.IsLocked,
             UserId = user.Id,
-            UserName = string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName,
+            UserName = DisplayName(user),
         };
     }
 
@@ -273,20 +358,19 @@
         await ReloadAsync();
     }
 
-    private string MessageFor(string? code) => code switch
-    {
-        AccountErrorCodes.CannotChangeOwnRole => L["ErrorCannotChangeOwnRole"],
-        AccountErrorCodes.CannotRemoveLastAdmin => L["ErrorCannotRemoveLastAdmin"],
-        AccountErrorCodes.CannotLockSelf => L["ErrorCannotLockSelf"],
-        AccountErrorCodes.CannotLockAdmin => L["ErrorCannotLockAdmin"],
-        AccountErrorCodes.RoleNotAllowed => L["ErrorRoleNotAllowed"],
-        AccountErrorCodes.InvalidRole => L["ErrorInvalidRole"],
-        AccountErrorCodes.Forbidden => L["ErrorForbidden"],
-        AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
-        _ => L["ErrorGeneric"],
-    };
+    private string MessageFor(string? code) => L[AccountErrorCodes.ResourceKey(code)];
+
+    private static string DisplayName(AccountListItemDto user) =>
+        string.IsNullOrWhiteSpace(user.FullName) ? user.UserName : user.FullName;
 
     private string RoleText(string role) => L[AccountPermissionRules.RoleResourceKey(role)];
+
+    private static BadgeTone StatusTone(AccountStatus status) => status switch
+    {
+        AccountStatus.Pending => BadgeTone.Info,
+        AccountStatus.Locked => BadgeTone.Neutral,
+        _ => BadgeTone.Success,
+    };
 
     private static BadgeTone RoleTone(string role) => role switch
     {
