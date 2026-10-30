@@ -265,7 +265,8 @@ namespace Web.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("RejectReason")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("RoomId")
                         .HasColumnType("int");

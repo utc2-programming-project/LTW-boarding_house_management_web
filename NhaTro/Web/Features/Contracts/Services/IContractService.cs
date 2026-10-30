@@ -1,4 +1,5 @@
 using Web.Features.Contracts.DTOs;
+using Web.Features.Properties;
 
 namespace Web.Features.Contracts.Services;
 
@@ -9,6 +10,6 @@ public interface IContractService
     Task<ContractResponseDto> ApproveContractAsync(
         Guid contractId,
         ApproveContractRequestDto request,
-        int userId,
-        string userRole);
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
 }

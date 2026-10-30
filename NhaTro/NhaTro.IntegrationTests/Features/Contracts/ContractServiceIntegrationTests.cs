@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Contracts;
+using Microsoft.Data.SqlClient;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Services;
+using Web.Features.Properties;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
@@ -22,7 +25,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await ResetDatabaseAsync();
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
         await using var dbContext = db;
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(
             Request(roomId, tenantIds: [1])));
@@ -36,7 +39,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await ResetDatabaseAsync();
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(
             Request(roomId, tenantIds: [999])));
@@ -51,7 +54,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var tenant = await AddTenantAsync(dbContext, "Tenant One", "0900000001");
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         var response = await service.CreateContractAsync(Request(roomId, [tenant.Id]));
 
@@ -86,7 +89,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             ALTER TABLE [ContractMembers]
             ADD CONSTRAINT [CK_Test_ContractMembers_Reject] CHECK ([TenantId] < 0);
             """);
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         try
         {
@@ -110,13 +113,12 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await ResetDatabaseAsync();
         var (db, _) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => service.ApproveContractAsync(
+        await Assert.ThrowsAsync<ContractNotFoundException>(() => service.ApproveContractAsync(
             Guid.NewGuid(),
             new ApproveContractRequestDto { IsApproved = true },
-            1,
-            "Landlord"));
+            OwnerCaller));
     }
 
     [SqlServerFact]
@@ -128,13 +130,13 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var contractId = Guid.NewGuid();
         dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
         await dbContext.SaveChangesAsync();
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.ApproveContractAsync(
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
             contractId,
             new ApproveContractRequestDto { IsApproved = true },
-            1,
-            Roles.ChuTro));
+            OwnerCaller));
+        Assert.Equal(ContractErrorCodes.InvalidStatus, exception.ErrorCode);
     }
 
     [SqlServerFact]
@@ -146,13 +148,12 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var contractId = Guid.NewGuid();
         dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
         await dbContext.SaveChangesAsync();
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         var response = await service.ApproveContractAsync(
             contractId,
             new ApproveContractRequestDto { IsApproved = false, RejectReason = "  Missing signature  " },
-            1,
-            Roles.ChuTro);
+            OwnerCaller);
 
         Assert.Equal(ContractStatus.Rejected, response.Status);
         Assert.Equal("Missing signature", response.RejectReason);
@@ -174,13 +175,12 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var contractId = Guid.NewGuid();
         dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
         await dbContext.SaveChangesAsync();
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         var response = await service.ApproveContractAsync(
             contractId,
             new ApproveContractRequestDto { IsApproved = true },
-            1,
-            Roles.ChuTro);
+            OwnerCaller);
 
         Assert.Equal(ContractStatus.Approved, response.Status);
 
@@ -203,21 +203,214 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             TestContract(approvedId, roomId, ContractStatus.Approved),
             TestContract(pendingId, roomId, ContractStatus.Pending));
         await dbContext.SaveChangesAsync();
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ApproveContractAsync(
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
             pendingId,
             new ApproveContractRequestDto { IsApproved = true },
-            1,
-            Roles.ChuTro));
+            OwnerCaller));
 
-        Assert.Equal("Phòng đã có hợp đồng hiệu lực trong thời gian này.", exception.Message);
+        Assert.Equal(ContractErrorCodes.ContractOverlap, exception.ErrorCode);
 
         await using var reloadedDb = fixture.CreateContext();
         Assert.Equal(ContractStatus.Pending,
             (await reloadedDb.Contracts.SingleAsync(contract => contract.ContractId == pendingId)).Status);
         Assert.Equal(RoomStatus.Available,
             (await reloadedDb.Rooms.SingleAsync(room => room.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_RejectsContractOwnedByAnotherOwner()
+    {
+        await ResetDatabaseAsync();
+        var (db, _) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        const string otherOwnerId = "contract-test-other-owner";
+        await SqlServerFixture.SeedAccountAsync(dbContext, otherOwnerId, Roles.ChuTro);
+        var otherProperty = new Property { Name = "Other property", OwnerId = otherOwnerId };
+        dbContext.Properties.Add(otherProperty);
+        await dbContext.SaveChangesAsync();
+        var otherRoom = new Room
+        {
+            PropertyId = otherProperty.Id,
+            Code = "201",
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Available,
+        };
+        dbContext.Rooms.Add(otherRoom);
+        await dbContext.SaveChangesAsync();
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, otherRoom.Id, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Pending,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Available,
+            (await reloadedDb.Rooms.SingleAsync(item => item.Id == otherRoom.Id)).Status);
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_BlocksManagerForContractTheyCreated()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            new PropertyCaller(OwnerId, Roles.QuanLy)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_RejectsRoomUnderMaintenanceWithoutChangingIt()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Maintenance);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.RoomUnderMaintenance, exception.ErrorCode);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Pending,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Maintenance,
+            (await reloadedDb.Rooms.SingleAsync(item => item.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_SnapshotsCurrentRoomPriceAndDeposit()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var room = await dbContext.Rooms.SingleAsync(item => item.Id == roomId);
+        room.StandardPrice = 1_500_003m;
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        var response = await service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller);
+
+        Assert.Equal(1_500_003m, response.SnapshotPrice);
+        Assert.Equal(300_001m, response.DepositAmount);
+        await using var reloadedDb = fixture.CreateContext();
+        var saved = await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId);
+        Assert.Equal(response.SnapshotPrice, saved.SnapshotPrice);
+        Assert.Equal(response.DepositAmount, saved.DepositAmount);
+    }
+
+    [SqlServerFact]
+    public async Task ApproveContractAsync_DuplicateApprovalAndRejectionAreBlocked()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var approvedId = Guid.NewGuid();
+        var rejectedId = Guid.NewGuid();
+        dbContext.Contracts.AddRange(
+            TestContract(approvedId, roomId, ContractStatus.Pending),
+            TestContract(rejectedId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        await service.ApproveContractAsync(approvedId, new ApproveContractRequestDto { IsApproved = true }, OwnerCaller);
+        var duplicateApproval = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            approvedId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller));
+        Assert.Equal(ContractErrorCodes.InvalidStatus, duplicateApproval.ErrorCode);
+
+        await service.ApproveContractAsync(
+            rejectedId,
+            new ApproveContractRequestDto { IsApproved = false, RejectReason = "No longer needed" },
+            OwnerCaller);
+        var duplicateRejection = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            rejectedId,
+            new ApproveContractRequestDto { IsApproved = false, RejectReason = "Repeated" },
+            OwnerCaller));
+        Assert.Equal(ContractErrorCodes.InvalidStatus, duplicateRejection.ErrorCode);
+        var approvalAfterRejection = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            rejectedId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller));
+        Assert.Equal(ContractErrorCodes.InvalidStatus, approvalAfterRejection.ErrorCode);
+    }
+
+    [SqlServerFact]
+    public async Task ContractsTable_RejectsOverlappingApprovedContractOutsideService()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var existingId = Guid.NewGuid();
+        var candidateId = Guid.NewGuid();
+        dbContext.Contracts.AddRange(
+            TestContract(existingId, roomId, ContractStatus.Approved),
+            TestContract(candidateId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            CREATE TRIGGER [dbo].[TR_Contracts_PreventApprovedOverlap]
+            ON [dbo].[Contracts]
+            AFTER INSERT, UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                IF EXISTS
+                (
+                    SELECT 1
+                    FROM inserted AS candidate
+                    INNER JOIN [dbo].[Contracts] AS existing WITH (UPDLOCK, HOLDLOCK)
+                        ON existing.[RoomId] = candidate.[RoomId]
+                        AND existing.[Status] = 1
+                        AND existing.[ContractId] <> candidate.[ContractId]
+                        AND existing.[StartDate] <= candidate.[EndDate]
+                        AND candidate.[StartDate] <= existing.[EndDate]
+                    WHERE candidate.[Status] = 1
+                )
+                BEGIN
+                    THROW 51030, 'ContractOverlap', 1;
+                END
+            END;
+            """);
+
+        var exception = await Assert.ThrowsAsync<SqlException>(() => dbContext.Contracts
+            .Where(contract => contract.ContractId == candidateId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                contract => contract.Status,
+                ContractStatus.Approved)));
+
+        Assert.Equal(51030, exception.Number);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Pending,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == candidateId)).Status);
     }
 
     [SqlServerFact]
@@ -233,15 +426,14 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             ALTER TABLE [Rooms]
             ADD CONSTRAINT [CK_Test_Rooms_RejectRented] CHECK ([Status] <> 1);
             """);
-        var service = new ContractService(dbContext, null!);
+        var service = new ContractService(dbContext);
 
         try
         {
             await Assert.ThrowsAsync<DbUpdateException>(() => service.ApproveContractAsync(
                 contractId,
                 new ApproveContractRequestDto { IsApproved = true },
-                1,
-                Roles.ChuTro));
+                OwnerCaller));
         }
         finally
         {
@@ -280,14 +472,13 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         async Task<Exception?> TryApproveAsync(Guid id)
         {
             await using var context = fixture.CreateContext();
-            var service = new ContractService(context, null!);
+            var service = new ContractService(context);
             try
             {
                 await service.ApproveContractAsync(
                     id,
                     new ApproveContractRequestDto { IsApproved = true },
-                    1,
-                    Roles.ChuTro);
+                    OwnerCaller);
                 return null;
             }
             catch (Exception exception)
@@ -301,7 +492,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             TryApproveAsync(competingCandidateId));
 
         Assert.Single(results, result => result is null);
-        Assert.Single(results, result => result is InvalidOperationException);
+        Assert.Single(results, IsExpectedConcurrentApprovalLoss);
 
         await using var reloadedDb = fixture.CreateContext();
         Assert.Single(await reloadedDb.Contracts
@@ -314,10 +505,9 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     private async Task<(ApplicationDbContext Db, int RoomId)> CreateDatabaseWithRoomAsync(RoomStatus roomStatus)
     {
         var db = fixture.CreateContext();
-        const string ownerId = "contract-test-owner";
-        await SqlServerFixture.SeedAccountAsync(db, ownerId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
 
-        var property = new Property { Name = "Contract test property", OwnerId = ownerId };
+        var property = new Property { Name = "Contract test property", OwnerId = OwnerId };
         db.Properties.Add(property);
         await db.SaveChangesAsync();
 
@@ -345,6 +535,10 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await fixture.ResetAsync();
     }
 
+    private static bool IsExpectedConcurrentApprovalLoss(Exception? exception) => exception is
+        ContractOperationException or DbUpdateException ||
+        exception is Microsoft.Data.SqlClient.SqlException { Number: 1205 };
+
     private static async Task<Tenant> AddTenantAsync(ApplicationDbContext db, string fullName, string phone)
     {
         var tenant = new Tenant { FullName = fullName, Phone = phone };
@@ -370,4 +564,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         new DateTime(2026, 10, 22),
         new DateTime(2026, 11, 22),
         tenantIds);
+
+    private const string OwnerId = "contract-test-owner";
+    private static PropertyCaller OwnerCaller => new(OwnerId, Roles.ChuTro);
 }
