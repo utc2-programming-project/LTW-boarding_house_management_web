@@ -955,4 +955,28 @@
   <data name="ContentType" xml:space="preserve"><value>Content type</value></data>
   <data name="Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="Deleting" xml:space="preserve"><value>Deleting...</value></data>
+  <data name="LeasedRoomContractHeading" xml:space="preserve"><value>Lease &amp; Residency Terms</value></data>
+  <data name="LeasedRoomContractDescription" xml:space="preserve"><value>Details for the lease of room {0} at {1}, including legally valid electronic appendices.</value></data>
+  <data name="DownloadFullContractPdf" xml:space="preserve"><value>Download full lease agreement (PDF)</value></data>
+  <data name="RoomAreaWithValue" xml:space="preserve"><value>Area: {0} m²</value></data>
+  <data name="ContractSigningStatus" xml:space="preserve"><value>Contract status</value></data>
+  <data name="ContractNumberLabel" xml:space="preserve"><value>Contract no.: {0}</value></data>
+  <data name="RentalDuration" xml:space="preserve"><value>Lease duration</value></data>
+  <data name="DurationInMonths" xml:space="preserve"><value>{0} months</value></data>
+  <data name="CoreAgreementTerms" xml:space="preserve"><value>Core Agreement Terms</value></data>
+  <data name="IssuedByManagement" xml:space="preserve"><value>Issued by property management</value></data>
+  <data name="MonthlyRentLabel" xml:space="preserve"><value>Monthly rent</value></data>
+  <data name="MonthUnit" xml:space="preserve"><value>month</value></data>
+  <data name="MonthlyPaymentDue" xml:space="preserve"><value>Payment due: the 5th of each month.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Room deposit</value></data>
+  <data name="DepositPaidOn" xml:space="preserve"><value>Paid and recorded on {0}.</value></data>
+  <data name="SecurityAndFireSafety" xml:space="preserve"><value>Security and fire safety</value></data>
+  <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>The tenant must keep emergency exits clear and must not charge electric vehicles in sleeping areas.</value></data>
+  <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Early termination policy</value></data>
+  <data name="EarlyTerminationDescription" xml:space="preserve"><value>Give the landlord at least 30 days' notice to inventory the property and process the deposit refund.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease is securely verified and audited in the resident's personal data archive.</value></data>
+  <data name="RoomLabel" xml:space="preserve"><value>Room {0}</value></data>
+  <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
+  <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
 </root>

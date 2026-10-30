@@ -99,6 +99,11 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
         Assert.Equal("HD-A-CURRENT", ownA.Rental.CurrentRental!.ContractNumber);
         Assert.Equal("room-a", ownA.Rental.CurrentRental.RoomCode);
         Assert.Equal(property.Name, ownA.Rental.CurrentRental.PropertyName);
+        Assert.Equal(property.Address, ownA.Rental.CurrentRental.PropertyAddress);
+        Assert.Equal(23.45m, ownA.Rental.CurrentRental.AreaM2);
+        Assert.Contains(
+            ownA.Rental.CurrentRental.Roommates,
+            roommate => roommate.TenantId == tenantA.Id && roommate.FullName == tenantA.FullName);
         Assert.Single(ownA.Rental.Rentals, rental => rental.IsCurrent);
         Assert.Contains(ownA.Rental.Rentals, rental => rental.ContractNumber == "HD-A-OLD" && !rental.IsCurrent);
         Assert.Contains(ownA.Rental.Rentals, rental => rental.ContractNumber == "HD-A-FUTURE" && !rental.IsCurrent);
@@ -151,7 +156,12 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
     private static async Task<(Property Property, List<Room> Rooms)> SeedPropertyWithRoomsAsync(
         ApplicationDbContext db, string propertyName, params string[] roomCodes)
     {
-        var property = new Property { Name = propertyName, OwnerId = Owner.UserId };
+        var property = new Property
+        {
+            Name = propertyName,
+            Address = $"Địa chỉ {propertyName}",
+            OwnerId = Owner.UserId,
+        };
         db.Properties.Add(property);
         await db.SaveChangesAsync();
 
@@ -159,6 +169,7 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
         {
             PropertyId = property.Id,
             Code = code,
+            AreaM2 = 23.45m,
             StandardPrice = 1_000_000m + index,
             Status = RoomStatus.Available,
         }).ToList();

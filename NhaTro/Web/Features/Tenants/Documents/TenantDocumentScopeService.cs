@@ -38,11 +38,21 @@ public sealed class TenantDocumentScopeService(
 
         if (caller.IsChuTro)
         {
-            // Trang quản lý khách thuê hiện coi các hồ sơ còn hoạt động trong hệ thống
-            // là phạm vi của Chủ trọ; chưa có khóa PropertyId trực tiếp trên Tenant.
-            // Đồng bộ quyền giấy tờ với cùng phạm vi đó để hồ sơ không bị chặn chỉ vì
-            // chưa có hợp đồng liên kết.
-            return TenantDocumentAccessLevel.Owner;
+            if (string.IsNullOrWhiteSpace(caller.UserId))
+            {
+                return TenantDocumentAccessLevel.None;
+            }
+
+            var belongsToOwner = await (
+                from member in db.ContractMembers.AsNoTracking()
+                join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+                where member.TenantId == tenantId && property.OwnerId == caller.UserId
+                select property.Id
+            ).AnyAsync(cancellationToken);
+
+            return belongsToOwner ? TenantDocumentAccessLevel.Owner : TenantDocumentAccessLevel.None;
         }
 
         if (caller.IsTenant)

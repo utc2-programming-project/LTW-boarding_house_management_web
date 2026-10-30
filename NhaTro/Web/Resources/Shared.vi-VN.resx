@@ -955,4 +955,28 @@
   <data name="ContentType" xml:space="preserve"><value>Loại nội dung</value></data>
   <data name="Actions" xml:space="preserve"><value>Thao tác</value></data>
   <data name="Deleting" xml:space="preserve"><value>Đang xóa...</value></data>
+  <data name="LeasedRoomContractHeading" xml:space="preserve"><value>Hợp đồng &amp; Điều khoản cư trú</value></data>
+  <data name="LeasedRoomContractDescription" xml:space="preserve"><value>Chi tiết hợp đồng thuê phòng {0} tại {1} và các phụ lục điện tử có giá trị pháp lý.</value></data>
+  <data name="DownloadFullContractPdf" xml:space="preserve"><value>Tải bản hợp đồng đầy đủ (PDF)</value></data>
+  <data name="RoomAreaWithValue" xml:space="preserve"><value>Diện tích: {0} m²</value></data>
+  <data name="ContractSigningStatus" xml:space="preserve"><value>Trạng thái hợp đồng</value></data>
+  <data name="ContractNumberLabel" xml:space="preserve"><value>Mã số: {0}</value></data>
+  <data name="RentalDuration" xml:space="preserve"><value>Thời hạn thuê</value></data>
+  <data name="DurationInMonths" xml:space="preserve"><value>{0} tháng</value></data>
+  <data name="CoreAgreementTerms" xml:space="preserve"><value>Điều khoản thỏa thuận cốt lõi</value></data>
+  <data name="IssuedByManagement" xml:space="preserve"><value>Ban quản lý nhà trọ ban hành</value></data>
+  <data name="MonthlyRentLabel" xml:space="preserve"><value>Giá thuê định kỳ hàng tháng</value></data>
+  <data name="MonthUnit" xml:space="preserve"><value>tháng</value></data>
+  <data name="MonthlyPaymentDue" xml:space="preserve"><value>Hạn đóng tiền: Ngày 05 hàng tháng.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Tiền đặt cọc phòng</value></data>
+  <data name="DepositPaidOn" xml:space="preserve"><value>Đã thanh toán và ghi nhận ngày {0}.</value></data>
+  <data name="SecurityAndFireSafety" xml:space="preserve"><value>Cam kết an ninh và PCCC</value></data>
+  <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>Bên thuê tuân thủ nghiêm ngặt quy định, không để vật dụng cản trở lối thoát hiểm và không sạc xe điện trong phòng ngủ.</value></data>
+  <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Chính sách trả phòng trước hạn</value></data>
+  <data name="EarlyTerminationDescription" xml:space="preserve"><value>Báo trước tối thiểu 30 ngày cho bên cho thuê để kiểm kê tài sản và hoàn cọc.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>Hợp đồng đã được xác thực bảo mật và lưu vết trong kho dữ liệu cá nhân của cư dân.</value></data>
+  <data name="RoomLabel" xml:space="preserve"><value>Phòng {0}</value></data>
+  <data name="ContractStatusApproved" xml:space="preserve"><value>Đang hiệu lực</value></data>
+  <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
 </root>

@@ -1,7 +1,3 @@
-// NOTE (2B): 2 test trong TenantDocumentPermissionRulesTests fail do xung đột interpretation:
-// - Test Khach_thue..._export: Phát kỳ vọng CanExport(KhachThue)=true, code trả false (theo spec literal "khách thuê chỉ xem, không xuất")
-// - Test Quan_ly...: Phát kỳ vọng CanUpload/CanDelete/CanReplace(QuanLy)=true, code trả false (theo spec literal "quản lý chỉ xem")
-// → Cần nhóm chốt trước khi sửa. Không tự sửa test của Phát.
 namespace Web.Features.Tenants.Documents;
 
 /// <summary>

@@ -13,55 +13,24 @@ namespace NhaTro.UnitTests.Features.Tenants;
 
 public class TenantDocumentPageServiceTests
 {
-    [Fact]
-    public void MaxUploadFileSizeBytes_Chuan_10MB()
-    {
-        Assert.Equal(10L * 1024 * 1024, TenantDocumentPageService.MaxUploadFileSizeBytes);
-    }
-
-    [Fact]
-    public void AllowedExtensions_Chi_nhan_pdf_jpg_jpeg_png()
-    {
-        var expected = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
-        Assert.Equal(expected, TenantDocumentPageService.AllowedExtensions);
-    }
-
     [Theory]
-    [InlineData(".docx", false)]
-    [InlineData(".exe", false)]
-    [InlineData(".zip", false)]
-    [InlineData(".pdf", true)]
-    [InlineData(".jpg", true)]
-    [InlineData(".jpeg", true)]
-    [InlineData(".png", true)]
-    public void Kiem_tra_dinh_dang_duoi_tep(string ext, bool expected)
+    [InlineData("large.pdf", 10485761L, StorageErrorCodes.FileSizeExceeded)]
+    [InlineData("empty.pdf", 0L, StorageErrorCodes.EmptyFile)]
+    [InlineData("document.docx", 1024L, StorageErrorCodes.InvalidFileType)]
+    public async Task Upload_De_chuyen_validation_cho_service_va_tra_ErrorCode(
+        string fileName, long size, string errorCode)
     {
-        var isAllowed = TenantDocumentPageService.AllowedExtensions.Contains(ext.ToLowerInvariant());
-        Assert.Equal(expected, isAllowed);
-    }
-
-    [Fact]
-    public async Task Upload_Tu_choi_khi_dung_luong_vuot_10MB()
-    {
-        var service = CreateServiceWithRole(Roles.KhachThue, "tenant-1");
-        var fakeFile = new FakeBrowserFile("test.pdf", TenantDocumentPageService.MaxUploadFileSizeBytes + 1);
+        var backendResult = UploadResult.Failure(errorCode, "backend-error-message");
+        var documentService = new FakeTenantDocumentService(backendResult);
+        var authStateProvider = new FakeAuthStateProvider(Roles.KhachThue, "tenant-1");
+        var service = new TenantDocumentPageService(authStateProvider, documentService, null!);
+        var fakeFile = new FakeBrowserFile(fileName, size);
 
         var result = await service.UploadDocumentAsync(1, fakeFile, "CCCD", null);
 
         Assert.False(result.Succeeded);
-        Assert.Equal(StorageErrorCodes.FileSizeExceeded, result.ErrorCode);
-    }
-
-    [Fact]
-    public async Task Upload_Tu_choi_khi_file_rong()
-    {
-        var service = CreateServiceWithRole(Roles.KhachThue, "tenant-1");
-        var fakeFile = new FakeBrowserFile("test.pdf", 0);
-
-        var result = await service.UploadDocumentAsync(1, fakeFile, "CCCD", null);
-
-        Assert.False(result.Succeeded);
-        Assert.Equal(StorageErrorCodes.EmptyFile, result.ErrorCode);
+        Assert.Equal(errorCode, result.ErrorCode);
+        Assert.Equal("backend-error-message", result.ErrorMessage);
     }
 
     [Fact]
@@ -86,18 +55,6 @@ public class TenantDocumentPageServiceTests
         var result = await service.UploadDocumentAsync(1, fakeFile, "CCCD", null);
 
         Assert.True(result.Succeeded);
-    }
-
-    [Fact]
-    public async Task Upload_Tu_choi_khi_dinh_dang_khong_hop_le()
-    {
-        var service = CreateServiceWithRole(Roles.KhachThue, "tenant-1");
-        var fakeFile = new FakeBrowserFile("document.docx", 1024);
-
-        var result = await service.UploadDocumentAsync(1, fakeFile, "CCCD", null);
-
-        Assert.False(result.Succeeded);
-        Assert.Equal(StorageErrorCodes.InvalidFileType, result.ErrorCode);
     }
 
     private static TenantDocumentPageService CreateServiceWithRole(string role, string userId)
@@ -140,11 +97,18 @@ public class TenantDocumentPageServiceTests
 
     private sealed class FakeTenantDocumentService : ITenantDocumentService
     {
+        private readonly UploadResult? _uploadResult;
+
+        public FakeTenantDocumentService(UploadResult? uploadResult = null)
+        {
+            _uploadResult = uploadResult;
+        }
+
         public Task<TenantDocumentListDto?> ListAsync(int tenantId, TenantCaller caller, CancellationToken cancellationToken = default) =>
             Task.FromResult<TenantDocumentListDto?>(null);
 
         public Task<UploadResult> UploadAsync(int tenantId, UploadFileRequest request, TenantCaller caller, CancellationToken cancellationToken = default) =>
-            Task.FromResult(UploadResult.Success(new FileMetadataDto
+            Task.FromResult(_uploadResult ?? UploadResult.Success(new FileMetadataDto
             {
                 Id = Guid.NewGuid(),
                 FileName = request.File.FileName,
