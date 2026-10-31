@@ -937,7 +937,6 @@
   <data name="DocumentsLoadFailed" xml:space="preserve"><value>Failed to load documents. Please retry.</value></data>
   <data name="NoTenantFound" xml:space="preserve"><value>No tenant record</value></data>
   <data name="NoTenantFoundDesc" xml:space="preserve"><value>Your account is not linked to a tenant profile. Please contact the property manager.</value></data>
-  <data name="SelectTenant" xml:space="preserve"><value>Select tenant</value></data>
   <data name="FilesUnit" xml:space="preserve"><value>files</value></data>
   <data name="RecordsUnit" xml:space="preserve"><value>records</value></data>
   <data name="ExportList" xml:space="preserve"><value>Export list</value></data>
