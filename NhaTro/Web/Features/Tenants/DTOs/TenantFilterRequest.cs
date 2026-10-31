@@ -19,7 +19,7 @@ public sealed class TenantFilterRequest
     /// <summary>Lọc theo đã/chưa có tài khoản.</summary>
     public bool? HasAccount { get; set; }
 
-    /// <summary>Chờ hợp đồng (Đào xác nhận); hiện chưa có bảng hợp đồng nên bỏ qua.</summary>
+    /// <summary>Lọc theo đã/chưa có hợp đồng thuê đang hiệu lực (2C — VHT-120).</summary>
     public bool? HasActiveContract { get; set; }
 
     /// <summary>Bắt đầu từ 1.</summary>

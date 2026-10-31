@@ -57,6 +57,97 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
         Assert.Null(asTenant.Rental.CurrentRental);
     }
 
+    // 2C (VHT-120): danh sách/picker lấy đúng hợp đồng đang hiệu lực từ liên kết thật,
+    // khách chỉ có hợp đồng lịch sử không bị coi là đang thuê dù Room.Status là Occupied.
+    [SqlServerFact]
+    public async Task Danh_sach_va_picker_dung_hop_dong_dang_hieu_luc_va_loc_theo_tinh_trang_thue()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner.UserId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "manager-account", Roles.QuanLy);
+
+        var service = NewTenantService();
+        var tenantA = (await service.CreateAsync(NewTenant("An", "0901111111"), Owner)).Tenant!;
+        var tenantB = (await service.CreateAsync(NewTenant("Bình", "0902222222"), Owner)).Tenant!;
+        var tenantC = (await service.CreateAsync(NewTenant("Cường", "0903333333"), Owner)).Tenant!;
+
+        var (_, roomsA) = await SeedPropertyWithRoomsAsync(db, "Nhà A", "room-a-current", "room-a-old");
+        var (_, roomsB) = await SeedPropertyWithRoomsAsync(db, "Nhà B", "room-b-old-1", "room-b-old-2");
+
+        // Phòng của B đang Rented nhưng hợp đồng đã hết hạn: không được suy ra "đang thuê" từ Room.Status.
+        roomsB[0].Status = RoomStatus.Rented;
+        roomsB[1].Status = RoomStatus.Rented;
+        await db.SaveChangesAsync();
+
+        await AddContractAsync(db, tenantA.Id, roomsA[0].Id, ContractStatus.Approved,
+            Today.AddDays(-10), Today.AddDays(10), "HD-A-CURRENT");
+        await AddContractAsync(db, tenantA.Id, roomsA[1].Id, ContractStatus.Approved,
+            Today.AddDays(-60), Today.AddDays(-1), "HD-A-OLD");
+        await AddContractAsync(db, tenantB.Id, roomsB[0].Id, ContractStatus.Approved,
+            Today.AddDays(-90), Today.AddDays(-30), "HD-B-OLD-1");
+        await AddContractAsync(db, tenantB.Id, roomsB[1].Id, ContractStatus.Approved,
+            Today.AddDays(-20), Today.AddDays(-1), "HD-B-OLD-2");
+
+        var ownerList = await service.ListAsync(new TenantFilterRequest { PageSize = 100 }, Owner);
+        var listA = ownerList.Items.Single(t => t.Id == tenantA.Id);
+        var listB = ownerList.Items.Single(t => t.Id == tenantB.Id);
+        var listC = ownerList.Items.Single(t => t.Id == tenantC.Id);
+        Assert.True(listA.HasActiveContract);
+        Assert.Equal("room-a-current", listA.RoomName);
+        Assert.False(listB.HasActiveContract);
+        Assert.Null(listB.RoomName);
+        Assert.False(listC.HasActiveContract);
+        Assert.Null(listC.RoomName);
+
+        // Lọc trước phân trang/tính tổng: chỉ A đang thuê, B và C chưa thuê.
+        var renting = await service.ListAsync(
+            new TenantFilterRequest { HasActiveContract = true, PageSize = 100 }, Owner);
+        Assert.Equal(1, renting.TotalCount);
+        Assert.Equal(tenantA.Id, renting.Items.Single().Id);
+
+        var notRenting = await service.ListAsync(
+            new TenantFilterRequest { HasActiveContract = false, PageSize = 100 }, Owner);
+        Assert.Equal(2, notRenting.TotalCount);
+        Assert.DoesNotContain(notRenting.Items, tenant => tenant.Id == tenantA.Id);
+
+        var picker = await service.SearchForPickerAsync(new TenantPickerRequest { Limit = 50 }, Owner);
+        Assert.True(picker.Single(t => t.Id == tenantA.Id).HasActiveContract);
+        Assert.False(picker.Single(t => t.Id == tenantB.Id).HasActiveContract);
+        Assert.False(picker.Single(t => t.Id == tenantC.Id).HasActiveContract);
+
+        // Quản lý vẫn thấy phòng/trạng thái thuê nhưng không thấy trạng thái tài khoản (D9).
+        var managerList = await service.ListAsync(
+            new TenantFilterRequest { PageSize = 100 }, new TenantCaller("manager-account", Roles.QuanLy));
+        var managerA = managerList.Items.Single(t => t.Id == tenantA.Id);
+        Assert.True(managerA.HasActiveContract);
+        Assert.Equal("room-a-current", managerA.RoomName);
+        Assert.Null(managerA.HasAccount);
+    }
+
+    // 2C (VHT-120): nhiều hợp đồng cùng hiệu lực chọn xác định theo StartDate mới nhất rồi ContractId.
+    [SqlServerFact]
+    public async Task Nhieu_hop_dong_cung_hieu_luc_chon_hop_dong_moi_nhat()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner.UserId, Roles.ChuTro);
+
+        var service = NewTenantService();
+        var tenant = (await service.CreateAsync(NewTenant("An", "0901111111"), Owner)).Tenant!;
+        var (_, rooms) = await SeedPropertyWithRoomsAsync(db, "Nhà A", "room-older", "room-newer");
+
+        await AddContractAsync(db, tenant.Id, rooms[0].Id, ContractStatus.Approved,
+            Today.AddDays(-30), Today.AddDays(30), "HD-OLDER");
+        await AddContractAsync(db, tenant.Id, rooms[1].Id, ContractStatus.Approved,
+            Today.AddDays(-5), Today.AddDays(25), "HD-NEWER");
+
+        var list = await service.ListAsync(new TenantFilterRequest { PageSize = 100 }, Owner);
+        var row = list.Items.Single(t => t.Id == tenant.Id);
+        Assert.True(row.HasActiveContract);
+        Assert.Equal("room-newer", row.RoomName);
+    }
+
     [SqlServerFact]
     public async Task Chi_tra_dung_hop_dong_cua_khach_va_tach_hien_tai_voi_lich_su()
     {

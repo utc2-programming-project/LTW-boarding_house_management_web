@@ -99,6 +99,14 @@
                     </select>
                 </div>
             }
+            <div class="tenant-filter-select">
+                <label class="sr-only" for="tenant-rental-filter">@L["TenantRentalFilter"]</label>
+                <select id="tenant-rental-filter" class="input" @bind="_rentalFilter" @bind:after="ResetTableAsync">
+                    <option value="">@L["TenantRentalAll"]</option>
+                    <option value="renting">@L["TenantRentalActive"]</option>
+                    <option value="not-renting">@L["TenantRentalNone"]</option>
+                </select>
+            </div>
             <div class="tenant-filter-select tenant-sort-select">
                 <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
                 <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
@@ -166,6 +174,7 @@
     private string? _keyword;
     private string _statusFilter = string.Empty;
     private string _accountFilter = string.Empty;
+    private string _rentalFilter = string.Empty;
     private string _sortFilter = "created";
     private int _pageSize = 20;
     private int _tableKey;
@@ -273,6 +282,7 @@
             Keyword = _keyword,
             IsActive = _statusFilter switch { "active" => true, "inactive" => false, _ => null },
             HasAccount = _canRevealIdNumber ? _accountFilter switch { "linked" => true, "unlinked" => false, _ => null } : null,
+            HasActiveContract = _rentalFilter switch { "renting" => true, "not-renting" => false, _ => null },
             Page = request.Page,
             PageSize = request.PageSize,
             SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
@@ -305,6 +315,7 @@
         _keyword = null;
         _statusFilter = string.Empty;
         _accountFilter = string.Empty;
+        _rentalFilter = string.Empty;
         _sortFilter = "created";
         await ResetTableAsync();
     }
@@ -312,13 +323,15 @@
     private bool HasActiveTenantFilters =>
         !string.IsNullOrWhiteSpace(_keyword)
         || !string.IsNullOrEmpty(_statusFilter)
-        || !string.IsNullOrEmpty(_accountFilter);
+        || !string.IsNullOrEmpty(_accountFilter)
+        || !string.IsNullOrEmpty(_rentalFilter);
 
     private Task ClearTenantFiltersAsync()
     {
         _keyword = null;
         _statusFilter = string.Empty;
         _accountFilter = string.Empty;
+        _rentalFilter = string.Empty;
         return Task.CompletedTask;
     }
 
@@ -548,6 +561,7 @@
         Keyword = _keyword,
         IsActive = _statusFilter switch { "active" => true, "inactive" => false, _ => null },
         HasAccount = _accountFilter switch { "linked" => true, "unlinked" => false, _ => null },
+        HasActiveContract = _rentalFilter switch { "renting" => true, "not-renting" => false, _ => null },
         Page = page,
         PageSize = ExportPageSize,
         SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
