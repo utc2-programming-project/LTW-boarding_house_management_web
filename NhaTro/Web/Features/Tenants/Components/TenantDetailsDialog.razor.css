@@ -41,6 +41,30 @@
     font-weight: 650;
 }
 
+.tenant-documents-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tenant-documents-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-subtle);
+}
+
+.tenant-documents-file { display: grid; min-width: 0; gap: 4px; }
+.tenant-documents-file strong { overflow-wrap: anywhere; font-size: .875rem; }
+.tenant-documents-file span, .tenant-documents-message { color: var(--text-secondary); font-size: .8125rem; }
+.tenant-documents-message { margin: 0; }
+
 .tenant-detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -100,5 +124,6 @@
     .tenant-detail-grid { grid-template-columns: 1fr; }
     .tenant-detail-grid .tenant-detail-wide { grid-column: auto; }
     .tenant-account-section { align-items: flex-start; flex-direction: column; }
+    .tenant-documents-list li { align-items: flex-start; flex-direction: column; }
     .tenant-dialog-footer .btn { flex: 1 1 auto; min-height: 44px; }
 }

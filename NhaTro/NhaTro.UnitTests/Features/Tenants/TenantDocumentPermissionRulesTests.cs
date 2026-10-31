@@ -27,7 +27,7 @@ public class TenantDocumentPermissionRulesTests
     }
 
     [Fact]
-    public void Khach_thue_xem_upload_va_export_ho_so_cua_minh_nhung_khong_xoa_thay()
+    public void Khach_thue_xem_upload_ho_so_cua_minh_nhung_khong_xoa_thay_hoac_xuat()
     {
         var access = TenantDocumentAccessLevel.Own;
 
@@ -35,7 +35,7 @@ public class TenantDocumentPermissionRulesTests
         Assert.True(TenantDocumentPermissionRules.CanUpload(access));
         Assert.False(TenantDocumentPermissionRules.CanDelete(access));
         Assert.False(TenantDocumentPermissionRules.CanReplace(access));
-        Assert.True(TenantDocumentPermissionRules.CanExport(access));
+        Assert.False(TenantDocumentPermissionRules.CanExport(access));
     }
 
     [Fact]
@@ -51,14 +51,14 @@ public class TenantDocumentPermissionRulesTests
     }
 
     [Fact]
-    public void Quan_ly_xem_sua_trong_toa_nha_duoc_giao_nhung_khong_xuat()
+    public void Quan_ly_chi_xem_trong_toa_nha_duoc_giao_khong_upload_xoa_thay_hoac_xuat()
     {
         var access = TenantDocumentAccessLevel.Manager;
 
         Assert.True(TenantDocumentPermissionRules.CanView(access));
-        Assert.True(TenantDocumentPermissionRules.CanUpload(access));
-        Assert.True(TenantDocumentPermissionRules.CanDelete(access));
-        Assert.True(TenantDocumentPermissionRules.CanReplace(access));
+        Assert.False(TenantDocumentPermissionRules.CanUpload(access));
+        Assert.False(TenantDocumentPermissionRules.CanDelete(access));
+        Assert.False(TenantDocumentPermissionRules.CanReplace(access));
         Assert.False(TenantDocumentPermissionRules.CanExport(access));
     }
 

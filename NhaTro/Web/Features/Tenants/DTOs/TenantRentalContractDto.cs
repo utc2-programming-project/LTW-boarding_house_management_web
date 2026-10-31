@@ -20,6 +20,15 @@ public sealed class TenantRentalContractDto
 
     public required string PropertyName { get; init; }
 
+    // Bổ sung bởi VHT-36-2B (Phát approved)
+    public string? PropertyAddress { get; init; }
+
+    // Bổ sung bởi VHT-36-2B (Phát approved)
+    public decimal? AreaM2 { get; init; }
+
+    // Bổ sung bởi VHT-36-2B (Phát approved)
+    public IReadOnlyList<TenantRoommateDto> Roommates { get; init; } = [];
+
     public required DateOnly StartDate { get; init; }
 
     public required DateOnly EndDate { get; init; }

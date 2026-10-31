@@ -38,7 +38,14 @@ public static class AdminSeeder
             return;
         }
 
-        var user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+        // VHT-95: tai khoan seed phai duoc duyet, neu khong se bi chan dang nhap.
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            ApprovedAt = DateTime.UtcNow,
+        };
         var created = await userManager.CreateAsync(user, password);
         if (!created.Succeeded)
         {

@@ -19,6 +19,7 @@ using Web.Features.Accounts;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
+using Web.Features.Reports;
 using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
@@ -150,7 +151,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
         // Ten dang nhap = email: khong cho trung email.
         options.User.RequireUniqueEmail = true;
-    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager().AddDefaultTokenProviders();
+    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
+      // VHT-95: SignInManager rieng chan tai khoan Chờ duyệt.
+      .AddSignInManager<AccountSignInManager>()
+      .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -183,7 +187,10 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // SQL services. Approval policy and active-contract checks are extension points.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+// VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
+builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
@@ -201,6 +208,7 @@ builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<Manage
 // service khach thue, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<TenantPageService>();
+builder.Services.AddScoped<TenantDocumentPageService>();
 
 // chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
 // Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
@@ -320,6 +328,8 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
+    Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();

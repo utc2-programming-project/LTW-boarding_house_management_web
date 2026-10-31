@@ -12,6 +12,8 @@ public sealed class TenantDocumentListDto
 
     public required bool CanUpload { get; init; }
 
+    public required bool CanDownload { get; init; }
+
     public required bool CanDelete { get; init; }
 
     public required bool CanReplace { get; init; }

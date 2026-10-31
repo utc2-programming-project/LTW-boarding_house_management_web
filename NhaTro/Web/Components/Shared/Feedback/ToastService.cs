@@ -6,10 +6,10 @@ public enum ToastKind
     Error,
 }
 
-/// <summary>Một thông báo đang hiển thị. Toast lỗi không tự đóng.</summary>
+/// <summary>Thông báo lỗi cần được người dùng đóng; thông báo thành công tự đóng.</summary>
 public sealed record ToastMessage(Guid Id, ToastKind Kind, string Text)
 {
-    public bool AutoClose => Kind != ToastKind.Error;
+    public bool AutoClose => Kind == ToastKind.Success;
 }
 
 /// <summary>

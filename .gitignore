@@ -1,6 +1,15 @@
 # Local CodeGraph index and cache
 .codegraph/
 
+# AI agent/tool config (local only)
+AGENTS.md
+CLAUDE.md
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
+.qoder/
+.agents/
+
 # Project-local OpenCode MCP configuration
 /opencode.json
 
@@ -32,4 +41,6 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 
-scripts/*   
+scripts/*
+!scripts/database/
+!scripts/database/*.ps1   

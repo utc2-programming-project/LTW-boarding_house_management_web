@@ -1,0 +1,723 @@
+@using Web.Features.Tenants.Documents
+@page "/documents"
+@attribute [Authorize(Roles = Roles.KhachThue)]
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject TenantDocumentPageService DocumentService
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["TenantDocumentsTitle"] · @L["AppName"]</PageTitle>
+
+<div class="doc-page-container">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+    {
+        new(L["Dashboard"], "/"),
+        new(L["TenantDocumentsTitle"])
+    })" />
+
+    <!-- 1. Header Row -->
+    <div class="doc-header-row">
+        <div class="doc-title-block">
+            <div class="doc-title-row">
+                <h1 class="doc-main-title">@L["TenantDocumentsTitle"]</h1>
+                <span class="doc-count-badge">
+                    @(_documentsList?.Items.Count ?? 0) @((_documentsList?.Items.Count ?? 0) == 1 ? L["FileUnitSingular"] : L["FilesUnit"])
+                </span>
+            </div>
+            <p class="doc-subtitle">@L["TenantDocumentsSubtitle"]</p>
+        </div>
+
+        <div class="doc-actions-row">
+            @if (_documentsList?.CanExport == true && (_documentsList?.Items.Count ?? 0) > 0)
+            {
+                <button type="button" class="doc-btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
+                    @if (_exporting)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="download" />
+                    }
+                    <span>@L["ExportList"]</span>
+                </button>
+            }
+
+            @if (_documentsList?.CanUpload == true && _activeTenantId > 0)
+            {
+                <button type="button" class="doc-btn-primary" @onclick="OpenUploadModal">
+                    <LucideIcon Name="upload" />
+                    <span>@L["UploadDocument"]</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- 2. Privacy Banner -->
+    <div class="doc-privacy-banner">
+        <div class="doc-privacy-left">
+            <div class="doc-privacy-icon">
+                <LucideIcon Name="shield" />
+            </div>
+            <p class="doc-privacy-text">
+                @L["PrivacyNoticeDesc"]
+            </p>
+        </div>
+
+        <div class="doc-privacy-right">
+            <LucideIcon Name="lock" />
+            <span>@L["EncryptionMethodLabel"]</span>
+        </div>
+    </div>
+
+    @if (_activeTenantId > 0 && (_documentsList?.Items.Count ?? 0) > 0)
+    {
+                <!-- 3. Storage & Overview Bento Cards (StatsBento.tsx) -->
+                <div class="doc-bento-grid">
+                    <!-- 1. Storage Card -->
+                    <div class="doc-bento-card">
+                        <div class="doc-bento-header">
+                            <span class="doc-bento-label">@L["StorageUsed"]</span>
+                            <div class="doc-bento-icon-box doc-bento-icon-gray">
+                                <LucideIcon Name="hard-drive" />
+                            </div>
+                        </div>
+                        <div class="doc-bento-value-row">
+                            <span class="doc-bento-big-num">@TotalStorageMb</span>
+                            <span class="doc-bento-unit">/ 100 MB</span>
+                        </div>
+                        <div class="doc-progress-track">
+                            <div class="doc-progress-bar" style="width: @(PercentStorageUsed)%;"></div>
+                        </div>
+                    </div>
+        
+                    <!-- 2. Verification State -->
+                    <div class="doc-bento-card">
+                        <div class="doc-bento-header">
+                        <span class="doc-bento-label">@L["VerificationStatusLabel"]</span>
+                            <div class="doc-bento-icon-box doc-bento-icon-blue">
+                                <LucideIcon Name="check-circle-2" />
+                            </div>
+                        </div>
+                        <div class="doc-bento-value-row">
+                            <span class="doc-bento-big-num">
+                                @(_documentsList?.Items.Count ?? 0) @L["OfWord"] @Math.Max(4, _documentsList?.Items.Count ?? 0)
+                            </span>
+                        </div>
+                        <div class="doc-bento-footer-status">
+                            <span class="doc-status-dot"></span>
+                            <span>@L["VerificationCompleteLabel"]</span>
+                        </div>
+                    </div>
+        
+                    <!-- 3. Identity Records -->
+                    <div class="doc-bento-card">
+                        <div class="doc-bento-header">
+                            <span class="doc-bento-label">@L["DocTypeIdentity"]</span>
+                            <div class="doc-bento-icon-box doc-bento-icon-indigo">
+                                <LucideIcon Name="badge-check" />
+                            </div>
+                        </div>
+                        <div class="doc-bento-value-row">
+                        <span class="doc-bento-big-num">@IdentityCount @((IdentityCount == 1) ? L["FileUnitSingular"] : L["FilesUnit"])</span>
+                        </div>
+                        <div class="doc-bento-footer-text">
+                            @L["IdentityCardHint"]
+                        </div>
+                    </div>
+        
+                    <!-- 4. Lease & Residence Term -->
+                    <div class="doc-bento-card">
+                        <div class="doc-bento-header">
+                        <span class="doc-bento-label">@L["LeaseTermTitle"]</span>
+                            <div class="doc-bento-icon-box doc-bento-icon-green">
+                                <LucideIcon Name="file-signature" />
+                            </div>
+                        </div>
+                        <div class="doc-bento-value-row">
+                        <span class="doc-bento-big-num">@L["LeaseActiveStatus"]</span>
+                        </div>
+                        <div class="doc-bento-footer-text">
+                            @L["LeaseActiveHint"]
+                        </div>
+                    </div>
+                </div>
+    }
+
+    @if (_loading)
+    {
+        <DocumentTableSkeleton />
+    }
+    else if (_loadFailed)
+    {
+        <div class="doc-state-card doc-error-state">
+            <div class="doc-state-icon doc-state-icon-error"><LucideIcon Name="alert" /></div>
+            <h2>@L["DocumentsLoadFailed"]</h2>
+            <p>@L["DocumentsLoadFailedDescription"]</p>
+            <button type="button" class="doc-btn-secondary" @onclick="RetryLoadAsync" disabled="@_retrying">
+                <LucideIcon Name="refresh-cw" />
+                <span>@(_retrying ? L["Retrying"] : L["Retry"])</span>
+            </button>
+            <span class="doc-error-code">@L["LoadFailedCode"]</span>
+        </div>
+    }
+    else if (_noTenantLinked)
+    {
+        <div class="doc-state-card doc-empty-state">
+            <div class="doc-state-icon doc-state-icon-empty"><LucideIcon Name="folder" /></div>
+            <h2>@L["NoTenantFound"]</h2>
+            <p>@L["NoTenantFoundDesc"]</p>
+        </div>
+    }
+    else if ((_documentsList?.Items.Count ?? 0) == 0)
+    {
+        <div class="doc-state-card doc-empty-state">
+            <div class="doc-state-icon doc-state-icon-empty"><LucideIcon Name="folder" /></div>
+            <h2>@L["NoDocumentsFound"]</h2>
+            <p>@L["EmptyDocumentsDescription"]</p>
+            @if (_documentsList?.CanUpload == true)
+            {
+                <button type="button" class="doc-btn-primary" @onclick="OpenUploadModal">
+                    <LucideIcon Name="plus" />
+                    <span>@L["UploadFirstDocument"]</span>
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- 4. Documents Table Card (DocumentsTable.tsx) -->
+        <div class="doc-table-card">
+            <!-- Search & Filter Toolbar -->
+            <div class="doc-toolbar">
+                <div class="doc-search-wrapper">
+                    <span class="doc-search-icon">
+                        <LucideIcon Name="search" />
+                    </span>
+                    <input type="text"
+                           value="@_searchKeyword"
+                           @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
+                           placeholder="@L["SearchDocumentsPlaceholder"]"
+                           class="doc-search-input" />
+                </div>
+
+                <div class="doc-filters-wrapper">
+                    <!-- Category filter -->
+                    <div class="doc-select-wrapper">
+                        <select @bind="_selectedCategoryFilter" class="doc-filter-select">
+                            <option value="all">@L["CategoryAll"]</option>
+                            <option value="identity">@L["CategoryIdentity"]</option>
+                            <option value="contract">@L["CategoryContract"]</option>
+                            <option value="residence">@L["CategoryResidence"]</option>
+                        </select>
+                        <span class="doc-filter-icon-left">
+                            <LucideIcon Name="filter" />
+                        </span>
+                        <span class="doc-select-arrow">
+                            <LucideIcon Name="chevron-down" />
+                        </span>
+                    </div>
+
+                    <!-- Sort order -->
+                    <div class="doc-select-wrapper">
+                        <select @bind="_sortOption" class="doc-filter-select">
+                            <option value="newest">@L["SortNewest"]</option>
+                            <option value="oldest">@L["SortOldest"]</option>
+                            <option value="name_asc">@L["SortNameAsc"]</option>
+                            <option value="size_desc">@L["SortSizeDesc"]</option>
+                        </select>
+                        <span class="doc-filter-icon-left">
+                            <LucideIcon Name="arrow-up-down" />
+                        </span>
+                        <span class="doc-select-arrow">
+                            <LucideIcon Name="chevron-down" />
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="doc-table-responsive">
+                <table class="doc-data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 180px;">@L["DocumentType"]</th>
+                            <th scope="col">@L["DocumentFileName"]</th>
+                            <th scope="col" class="text-right" style="width: 140px;">@L["DocumentSize"]</th>
+                            <th scope="col" class="text-right" style="width: 180px;">@L["DocumentUploadedAt"]</th>
+                            <th scope="col" class="text-right" style="width: 140px;">@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (FilteredDocuments.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="doc-empty-table-cell">
+                                    @L["NoDocumentsMatchFilters"]
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var doc in FilteredDocuments)
+                            {
+                                <tr @onclick="() => OpenPreviewModal(doc)">
+                                    <!-- Column 1: Document Type Badge -->
+                                    <td data-label="@L["DocumentType"]">
+                                        <span class="doc-type-pill @GetCategoryPillClass(doc.Description)">
+                                            @GetCategoryLabel(doc.Description)
+                                        </span>
+                                    </td>
+
+                                    <!-- Column 2: File Name -->
+                                    <td data-label="@L["DocumentFileName"]">
+                                        <div class="doc-file-info-group">
+                                            <div class="doc-file-icon-box">
+                                                @if (IsImageFile(doc.FileName))
+                                                {
+                                                    <LucideIcon Name="image" />
+                                                }
+                                                else
+                                                {
+                                                    <LucideIcon Name="file-text" />
+                                                }
+                                            </div>
+                                            <div class="doc-file-names">
+                                                <span class="doc-file-title-text">
+                                                    @doc.FileName
+                                                </span>
+                                                <span class="doc-file-subtitle-text">
+                                                    @(IsImageFile(doc.FileName) ? L["ImageFile"] : L["PdfFile"])
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Column 3: File Size -->
+                                    <td data-label="@L["DocumentSize"]" class="text-right tabular-nums doc-meta-cell">
+                                        @FormatFileSize(doc.FileSizeBytes)
+                                    </td>
+
+                                    <!-- Column 4: Uploaded At -->
+                                    <td data-label="@L["DocumentUploadedAt"]" class="text-right tabular-nums doc-meta-cell">
+                                        @DateFormatter.FormatDateTime(doc.UploadedAt.UtcDateTime)
+                                    </td>
+
+                                    <!-- Column 5: Action buttons -->
+                                    <td data-label="@L["Actions"]" class="text-right" @onclick:stopPropagation="true">
+                                        <div class="doc-action-btn-group">
+                                            <!-- Preview button -->
+                                            <button type="button"
+                                                    @onclick="() => OpenPreviewModal(doc)"
+                                                    title="@L["DocumentPreview"]"
+                                                    class="doc-icon-btn">
+                                                <LucideIcon Name="eye" />
+                                            </button>
+
+                                            <!-- Download button -->
+                                            <button type="button" @onclick="() => DownloadDocumentAsync(doc)"
+                                                    title="@L["DownloadDocumentSecure"]"
+                                                    aria-label="@L["DownloadDocumentSecure"]"
+                                                    class="doc-icon-btn" disabled="@_downloadingDocumentIds.Contains(doc.Id)">
+                                                <LucideIcon Name="download" />
+                                            </button>
+
+                                            <!-- Delete button -->
+                                            @if (_documentsList?.CanDelete == true
+                                                && string.Equals(doc.UploadedByUserId, _currentUserId, StringComparison.Ordinal))
+                                            {
+                                                <button type="button"
+                                                        @onclick="() => ConfirmDelete(doc)"
+                                                        title="@L["Delete"]"
+                                                        class="doc-icon-btn doc-icon-btn-danger">
+                                                    <LucideIcon Name="trash-2" />
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Footer with Pagination -->
+            <div class="doc-table-footer">
+                <span class="doc-footer-count">
+                    @string.Format(L["ShowingDocuments"], FilteredDocuments.Count, _documentsList?.Items.Count ?? 0)
+                </span>
+
+                <div class="doc-pagination-group">
+                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
+                        <LucideIcon Name="chevron-left" />
+                    </button>
+                    <button type="button" class="doc-page-btn doc-page-btn-active">
+                        1
+                    </button>
+                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
+                        <LucideIcon Name="chevron-right" />
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Guidelines Micro-Card -->
+        <div class="doc-guidelines-card">
+            <div class="doc-guidelines-left">
+                <div class="doc-guidelines-icon-box">
+                    <LucideIcon Name="info" />
+                </div>
+                <div>
+                    <h4 class="doc-guidelines-title">@L["FileStandardsTitle"]</h4>
+                    <p class="doc-guidelines-desc">@L["FileStandardsDesc"]</p>
+                </div>
+            </div>
+
+            <button type="button"
+                    @onclick="() => _showRequirementGuide = !_showRequirementGuide"
+                    class="doc-guidelines-btn">
+                @(_showRequirementGuide ? L["HideDetailsGuide"] : L["ViewDetailsGuide"])
+            </button>
+        </div>
+
+        @if (_showRequirementGuide)
+        {
+            <div class="doc-requirements-box">
+                <p class="doc-requirements-title">@L["RequirementChecklistTitle"]</p>
+                <ul class="doc-requirements-list">
+                    <li>@L["RequirementIdentityDocuments"]</li>
+                    <li>@L["RequirementResidenceDocuments"]</li>
+                    <li>@L["RequirementSupportingDocuments"]</li>
+                </ul>
+            </div>
+        }
+    }
+</div>
+
+<!-- Upload Modal -->
+<TenantDocumentUploadDialog Visible="_uploadModalOpen"
+                            TenantId="_activeTenantId"
+                            OnClose="() => _uploadModalOpen = false"
+                            OnUploadSuccess="OnDocumentUploaded" />
+
+<!-- Preview Modal -->
+<TenantDocumentPreviewDialog Visible="_previewModalOpen"
+                             TenantId="_activeTenantId"
+                             Document="_previewDoc"
+                             TenantName="@_activeTenantName"
+                             CitizenId="@_activeTenantCitizenId"
+                             ResidenceAddress="@_activeTenantAddress"
+                             OnClose="() => _previewModalOpen = false" />
+
+<!-- Delete Modal -->
+<TenantDocumentDeleteDialog Visible="_deleteModalOpen"
+                            Document="_docToDelete"
+                            OnClose="() => _deleteModalOpen = false"
+                            OnConfirm="HandleDeleteAsync" />
+
+
+
+@code {
+    private bool _loading = true;
+    private bool _loadFailed;
+    private bool _retrying;
+    private bool _exporting;
+    private bool _noTenantLinked;
+    private readonly HashSet<Guid> _downloadingDocumentIds = [];
+    private int _activeTenantId;
+    private string _currentUserId = string.Empty;
+    private string? _activeTenantName;
+    private string? _activeTenantCitizenId;
+    private string? _activeTenantAddress;
+    private TenantDocumentListDto? _documentsList;
+
+    private string _searchKeyword = string.Empty;
+    private string _selectedCategoryFilter = "all";
+    private string _sortOption = "newest";
+    private bool _showRequirementGuide;
+
+    private bool _uploadModalOpen;
+    private bool _previewModalOpen;
+    private bool _deleteModalOpen;
+    private TenantDocumentMetadataDto? _previewDoc;
+    private TenantDocumentMetadataDto? _docToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        _noTenantLinked = false;
+
+        try
+        {
+            var caller = await DocumentService.GetCallerAsync();
+            _currentUserId = caller.UserId;
+
+            var pageResult = await DocumentService.GetMyDocumentPageAsync();
+            _noTenantLinked = pageResult.NoTenantLinked;
+            var myTenant = pageResult.Tenant;
+            _activeTenantId = myTenant?.Id ?? 0;
+            _activeTenantName = myTenant?.FullName;
+            _activeTenantCitizenId = myTenant?.CitizenId;
+            _activeTenantAddress = myTenant?.PermanentAddress;
+
+            if (_noTenantLinked)
+            {
+                _documentsList = null;
+                return;
+            }
+
+            _documentsList = pageResult.Documents;
+            if (_documentsList is null)
+            {
+                _loadFailed = true;
+            }
+        }
+        catch (Exception)
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RetryLoadAsync()
+    {
+        _retrying = true;
+        try
+        {
+            await Task.Delay(350);
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _retrying = false;
+        }
+    }
+
+    private void OpenUploadModal() => _uploadModalOpen = true;
+
+    private void OpenPreviewModal(TenantDocumentMetadataDto doc)
+    {
+        _previewDoc = doc;
+        _previewModalOpen = true;
+    }
+
+    private void ConfirmDelete(TenantDocumentMetadataDto doc)
+    {
+        _docToDelete = doc;
+        _deleteModalOpen = true;
+    }
+
+    private async Task HandleDeleteAsync()
+    {
+        if (_docToDelete is null || _activeTenantId <= 0) return;
+
+        try
+        {
+            var success = await DocumentService.DeleteDocumentAsync(_activeTenantId, _docToDelete.Id);
+            if (success)
+            {
+                Toasts.Success(L["DocumentDeleteSuccess"]);
+                _deleteModalOpen = false;
+                await LoadDataAsync();
+            }
+            else
+            {
+                Toasts.Error(L["DocumentDeleteFailed"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error($"{L["DocumentDeleteFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            _deleteModalOpen = false;
+            _docToDelete = null;
+        }
+    }
+
+    private async Task OnDocumentUploaded()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task DownloadDocumentAsync(TenantDocumentMetadataDto document)
+    {
+        if (_activeTenantId <= 0 || !_downloadingDocumentIds.Add(document.Id)) return;
+
+        try
+        {
+            var download = await DocumentService.DownloadDocumentAsync(_activeTenantId, document.Id);
+            if (download is null)
+            {
+                Toasts.Error(L["DocumentAccessDenied"].Value);
+                return;
+            }
+
+            await using (download.FileStream)
+            using (var streamReference = new DotNetStreamReference(download.FileStream))
+            {
+                await JS.InvokeVoidAsync("appTenantExport.downloadStream", download.FileName, download.ContentType, streamReference);
+            }
+        }
+        catch (Exception)
+        {
+            Toasts.Error(L["DocumentDownloadFailed"].Value);
+        }
+        finally
+        {
+            _downloadingDocumentIds.Remove(document.Id);
+        }
+    }
+
+    private async Task ExportDocumentsCsvAsync()
+    {
+        if (_documentsList is null || _documentsList.Items.Count == 0) return;
+
+        _exporting = true;
+        try
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"{L["DocumentCode"]},{L["DocumentFileName"]},{L["ContentType"]},{L["DocumentSize"]},{L["DocumentUploadedAt"]},{L["DocumentDescription"]}");
+            foreach (var item in _documentsList.Items)
+            {
+                sb.AppendLine($"\"{item.Id}\",\"{item.FileName}\",\"{item.ContentType}\",{item.FileSizeBytes},\"{item.UploadedAt:yyyy-MM-dd HH:mm:ss}\",\"{item.Description?.Replace("\"", "\"\"")}\"");
+            }
+
+            var fileName = $"documents-tenant-{_activeTenantId}-{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+            await JS.InvokeVoidAsync("appTenantExport.download", fileName, sb.ToString());
+            Toasts.Success(L["ExportSuccess"]);
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error($"{L["ExportFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            _exporting = false;
+        }
+    }
+
+    private IReadOnlyList<TenantDocumentMetadataDto> FilteredDocuments
+    {
+        get
+        {
+            if (_documentsList is null) return [];
+
+            var items = _documentsList.Items.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_searchKeyword))
+            {
+                var kw = _searchKeyword.Trim();
+                items = items.Where(d => d.FileName.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                                         (d.Description?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            if (_selectedCategoryFilter != "all")
+            {
+                var categoryClass = _selectedCategoryFilter switch
+                {
+                    "identity" => "doc-type-pill-identity",
+                    "contract" => "doc-type-pill-contract",
+                    "residence" => "doc-type-pill-residence",
+                    _ => string.Empty
+                };
+                items = items.Where(d => GetCategoryPillClass(d.Description) == categoryClass);
+            }
+
+            items = _sortOption switch
+            {
+                "oldest" => items.OrderBy(d => d.UploadedAt),
+                "name_asc" => items.OrderBy(d => d.FileName),
+                "size_desc" => items.OrderByDescending(d => d.FileSizeBytes),
+                _ => items.OrderByDescending(d => d.UploadedAt)
+            };
+
+            return items.ToList();
+        }
+    }
+
+    private string TotalStorageMb
+    {
+        get
+        {
+            if (_documentsList is null || _documentsList.Items.Count == 0) return "0.0";
+            var bytes = _documentsList.Items.Sum(d => d.FileSizeBytes);
+            return (bytes / (1024.0 * 1024.0)).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private int PercentStorageUsed
+    {
+        get
+        {
+            if (_documentsList is null || _documentsList.Items.Count == 0) return 0;
+            var bytes = _documentsList.Items.Sum(d => d.FileSizeBytes);
+            var mb = bytes / (1024.0 * 1024.0);
+            return Math.Min(100, (int)Math.Round((mb / 100.0) * 100));
+        }
+    }
+
+    private int IdentityCount =>
+        _documentsList?.Items.Count(d => GetCategoryPillClass(d.Description) == "doc-type-pill-identity") ?? 0;
+
+    private static bool IsImageFile(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext is ".jpg" or ".jpeg" or ".png";
+    }
+
+    private string GetCategoryLabel(string? description)
+    {
+        var label = ExtractCategoryLabel(description);
+        var normalized = label.Trim().ToLowerInvariant();
+
+        if (normalized.Contains("front") || normalized.Contains("mặt trước")) return L["DocTypeCccdFront"];
+        if (normalized.Contains("back") || normalized.Contains("mặt sau")) return L["DocTypeCccdBack"];
+        if (normalized.Contains("contract") || normalized.Contains("hợp đồng")) return L["DocTypeContractScan"];
+        if (normalized.Contains("residen") || normalized.Contains("tạm trú") || normalized.Contains("ct07") || normalized.Contains("ct08")) return L["DocTypeResidence"];
+        if (normalized.Contains("identity") || normalized.Contains("định danh") || normalized.Contains("cccd")) return L["DocTypeIdentity"];
+        return L["PersonalDocumentLabel"];
+    }
+
+    private static string ExtractCategoryLabel(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description)) return string.Empty;
+        if (description.StartsWith('['))
+        {
+            var endIndex = description.IndexOf(']');
+            if (endIndex > 1) return description[1..endIndex];
+        }
+        return description;
+    }
+
+    private static string GetCategoryPillClass(string? description)
+    {
+        var label = ExtractCategoryLabel(description).Trim().ToLowerInvariant();
+        if (label.Contains("citizen id") || label.Contains("identity") || label.Contains("cccd") || label.Contains("định danh"))
+            return "doc-type-pill-identity";
+        if (label.Contains("contract") || label.Contains("hợp đồng"))
+            return "doc-type-pill-contract";
+        if (label.Contains("residen") || label.Contains("tạm trú") || label.Contains("ct07") || label.Contains("ct08"))
+            return "doc-type-pill-residence";
+        return "doc-type-pill-other";
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+    }
+}

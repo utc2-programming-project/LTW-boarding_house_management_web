@@ -213,6 +213,14 @@
             return;
         }
 
+        // VHT-95: CanSignInAsync tra false khi tai khoan chua duoc duyet.
+        if (result == SignInResult.NotAllowed)
+        {
+            Logger.LogInformation("Tai khoan dang nhap dang cho duyet.");
+            errorMessage = L["LoginPendingApproval"];
+            return;
+        }
+
         // Khong noi ro email sai hay mat khau sai (tranh do tai khoan).
         errorMessage = L["LoginInvalid"];
 

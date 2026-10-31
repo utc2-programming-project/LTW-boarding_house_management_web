@@ -104,10 +104,14 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.UtilityBillingPeriodSnapshots.ExecuteDeleteAsync();
         await db.UtilityTariffTiers.Where(tier => tier.UtilityTariffId > 5).ExecuteDeleteAsync();
         await db.UtilityTariffs.Where(tariff => tariff.Id > 5).ExecuteDeleteAsync();
+        // VHT-24: PropertyManagers co FK toi Properties va AspNetUsers: xoa truoc ca hai.
+        await db.PropertyManagers.ExecuteDeleteAsync();
         // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
         await db.ManagerToggles.ExecuteUpdateAsync(s => s.SetProperty(t => t.UpdatedByUserId, (string?)null));
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
         await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
+        await db.ServicePriceHistories.ExecuteDeleteAsync();
+        await db.ServiceCatalogs.ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
@@ -143,9 +147,15 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
             Id = userId,
             UserName = userId,
             NormalizedUserName = userId.ToUpperInvariant(),
+            // Identity (.NET 10) tu choi UpdateAsync khi Email rong: seed email hop le de
+            // UserManager (duyet/khoa) chay duoc nhu tai khoan that.
+            Email = $"{userId}@test.local",
+            NormalizedEmail = $"{userId}@test.local".ToUpperInvariant(),
             SecurityStamp = Guid.NewGuid().ToString(),
             ConcurrencyStamp = Guid.NewGuid().ToString(),
             EmailConfirmed = true,
+            // VHT-95: tai khoan gieo cho test coi nhu da duyet de dang nhap duoc.
+            ApprovedAt = DateTime.UtcNow,
         });
         await db.SaveChangesAsync();
 

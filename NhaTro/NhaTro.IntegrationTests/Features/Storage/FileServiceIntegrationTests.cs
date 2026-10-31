@@ -7,6 +7,10 @@ using NhaTro.IntegrationTests.TestSupport;
 using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Entities;
+using Web.Features.Contracts.Enums;
+using Web.Features.Properties.Entities;
+using Web.Features.Rooms.Entities;
 using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
@@ -49,6 +53,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         var linked = await tenantService.LinkAccountAsync(
             tenantId, "khach-1", created.Tenant.RowVersion, owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
+        await SeedOwnerContractAsync(db, tenantId, owner.UserId);
 
         var factory = new TestDbContextFactory(fixture);
         var storage = new MemoryFileStorage();
@@ -59,18 +64,18 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         var scope = new TenantDocumentScopeService(db, new NoManagerTenantScope());
         var service = NewFileService(factory, storage, options, scope, audit);
 
-        var manager = new StorageCaller("chu-tro-1", Roles.ChuTro);
+        var propertyOwner = new StorageCaller("chu-tro-1", Roles.ChuTro);
         var ownerTenant = new StorageCaller("khach-1", Roles.KhachThue);
         var stranger = new StorageCaller("khach-2", Roles.KhachThue);
         var quanLy = new StorageCaller("ql-1", Roles.QuanLy);
         var admin = new StorageCaller("admin-1", Roles.Admin);
 
-        var upload = await service.UploadAsync(NewRequest(tenantId), manager);
+        var upload = await service.UploadAsync(NewRequest(tenantId), propertyOwner);
         Assert.True(upload.Succeeded, upload.ErrorMessage);
         var fileId = upload.File!.Id;
 
         // Chủ trọ và chính khách thuê tải được.
-        await AssertDownloadedAsync(service, fileId, manager);
+        await AssertDownloadedAsync(service, fileId, propertyOwner);
         await AssertDownloadedAsync(service, fileId, ownerTenant);
 
         // Khách khác, Quản lý chưa được giao tòa nhà: 404 dù biết id.
@@ -95,8 +100,8 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
 
         // Khách thuê không được xóa; Chủ trọ xóa mềm được.
         Assert.False(await service.DeleteAsync(fileId, ownerTenant));
-        Assert.True(await service.DeleteAsync(fileId, manager));
-        Assert.Null(await service.DownloadAsync(fileId, manager));
+        Assert.True(await service.DeleteAsync(fileId, propertyOwner));
+        Assert.Null(await service.DownloadAsync(fileId, propertyOwner));
 
         // Audit ghi cả thành công và bị chặn; không có trường nội dung/tên tệp.
         await using var checkDb = fixture.CreateContext();
@@ -143,6 +148,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         var linked = await tenantService.LinkAccountAsync(
             tenantId, "khach-1", created.Tenant.RowVersion, owner);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
+        await SeedOwnerContractAsync(db, tenantId, owner.UserId);
 
         var factory = new TestDbContextFactory(fixture);
         var storage = new MemoryFileStorage();
@@ -170,6 +176,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
             FileCategory = request.FileCategory,
             RelatedEntityType = request.RelatedEntityType,
             RelatedEntityId = string.Empty,
+            DocumentType = request.DocumentType,
             Description = request.Description,
         };
         var uploaded = await service.UploadAsync(
@@ -181,7 +188,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         var ownList = await service.ListAsync(tenantId, new TenantCaller("khach-1", Roles.KhachThue));
         Assert.NotNull(ownList);
         Assert.Single(ownList.Items);
-        Assert.True(ownList.CanExport);
+        Assert.False(ownList.CanExport);
         Assert.False(ownList.CanDelete);
 
         Assert.Null(await service.ListAsync(tenantId, new TenantCaller("khach-2", Roles.KhachThue)));
@@ -194,15 +201,22 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         var managerList = await managerService.ListAsync(tenantId, new TenantCaller("ql-1", Roles.QuanLy));
         Assert.NotNull(managerList);
         Assert.Single(managerList.Items);
+        Assert.False(managerList.CanUpload);
+        Assert.False(managerList.CanDelete);
         Assert.False(managerList.CanExport);
 
-        // Thay tệp: tệp cũ bị xóa mềm, tệp mới còn hiện hành.
+        // Quản lý chỉ xem/tải; không được thay tệp.
         var oldId = uploaded.File.Id;
-        var replaced = await managerService.ReplaceAsync(
+        var managerReplace = await managerService.ReplaceAsync(
             tenantId, oldId, NewRequest(tenantId), new TenantCaller("ql-1", Roles.QuanLy));
+        Assert.False(managerReplace.Succeeded);
+
+        // Chủ trọ thay tệp: tệp cũ bị xóa mềm, tệp mới còn hiện hành.
+        var replaced = await service.ReplaceAsync(
+            tenantId, oldId, NewRequest(tenantId), owner);
         Assert.True(replaced.Succeeded, replaced.ErrorMessage);
         Assert.NotEqual(oldId, replaced.File!.Id);
-        Assert.Null(await managerService.DownloadAsync(tenantId, oldId, new TenantCaller("ql-1", Roles.QuanLy)));
+        Assert.Null(await service.DownloadAsync(tenantId, oldId, owner));
 
         var afterReplace = await service.ListAsync(tenantId, new TenantCaller("khach-1", Roles.KhachThue));
         Assert.NotNull(afterReplace);
@@ -243,8 +257,44 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         FileCategory = FileCategory.IdentityDocument,
         RelatedEntityType = RelatedEntityType.Tenant,
         RelatedEntityId = tenantId.ToString(),
+        DocumentType = "CCCD_Front",
         Description = "CCCD",
     };
+
+    private static async Task SeedOwnerContractAsync(
+        ApplicationDbContext db, int tenantId, string ownerId)
+    {
+        var property = new Property { Name = "Nhà của Chủ trọ", OwnerId = ownerId };
+        db.Properties.Add(property);
+        await db.SaveChangesAsync();
+
+        var room = new Room
+        {
+            PropertyId = property.Id,
+            Code = $"room-{tenantId}",
+            StandardPrice = 1_000_000m,
+        };
+        db.Rooms.Add(room);
+        await db.SaveChangesAsync();
+
+        var contract = new Contract
+        {
+            ContractNumber = $"HD-FILE-{tenantId}",
+            RoomId = room.Id,
+            StartDate = DateTime.UtcNow.Date,
+            EndDate = DateTime.UtcNow.Date.AddMonths(12),
+            SnapshotPrice = 1_000_000m,
+            DepositAmount = 1_000_000m,
+            Status = ContractStatus.Approved,
+        };
+        db.Contracts.Add(contract);
+        db.ContractMembers.Add(new ContractMember
+        {
+            ContractId = contract.ContractId,
+            TenantId = tenantId,
+        });
+        await db.SaveChangesAsync();
+    }
 
     private static async Task AssertDownloadedAsync(
         FileService service,

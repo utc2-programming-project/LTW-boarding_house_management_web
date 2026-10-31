@@ -1,0 +1,30 @@
+@inject IStringLocalizer<Shared> L
+
+<div class="doc-skeleton-card" aria-busy="true" aria-label="@L["TableLoading"]">
+    <div class="doc-skeleton-table-wrap">
+        <table class="doc-skeleton-table">
+            <thead>
+                <tr>
+                    <th>@L["DocumentType"]</th>
+                    <th>@L["DocumentFileName"]</th>
+                    <th>@L["DocumentSize"]</th>
+                    <th>@L["DocumentUploadedAt"]</th>
+                    <th>@L["Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var row = 0; row < 5; row++)
+                {
+                    <tr>
+                        <td><span class="doc-skeleton-pill"></span></td>
+                        <td><div class="doc-skeleton-file"><span></span><span class="doc-skeleton-lines"><i></i><i></i></span></div></td>
+                        <td><span class="doc-skeleton-short"></span></td>
+                        <td><span class="doc-skeleton-date"></span></td>
+                        <td><span class="doc-skeleton-action"></span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="doc-skeleton-footer"><span class="doc-spinner"></span><span>@L["DocumentsLoading"]</span></div>
+</div>

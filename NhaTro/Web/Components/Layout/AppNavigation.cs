@@ -1,4 +1,4 @@
-namespace Web.Components.Layout;
+﻿namespace Web.Components.Layout;
 
 public static class AppNavigation
 {
@@ -6,9 +6,8 @@ public static class AppNavigation
     public static readonly NavigationItem[] Items =
     [
         new("Dashboard", "chart", "ChuTro,QuanLy"),
-        // VHT-8: /admin/users chỉ dành cho Admin (D1). Màn hình trạng thái tài khoản của
-        // Chủ trọ/Quản lý thuộc VHT-95 nên "Accounts" tạm chỉ mở cho Admin.
-        new("Accounts", "users", "Admin", "/admin/users"),
+        // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
+        new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
         new("Permissions", "shield", "Admin"),
         new("Properties", "building", "ChuTro,QuanLy", "/properties"),
         new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
@@ -23,7 +22,8 @@ public static class AppNavigation
         new("Approvals", "check", "ChuTro"),
         new("Trash", "trash", "ChuTro"),
         new("MyRequests", "file", "QuanLy"),
-        new("MyRoom", "door", "KhachThue"),
+        new("MyDocuments", "file-text", "KhachThue", "/documents"),
+        new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
         new("MyInvoices", "receipt", "KhachThue"),
         new("ReportIncident", "wrench", "KhachThue", "/incidents"),
         // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.
