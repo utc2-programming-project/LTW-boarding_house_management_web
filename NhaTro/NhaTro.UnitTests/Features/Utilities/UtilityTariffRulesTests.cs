@@ -76,13 +76,13 @@ public sealed class UtilityTariffRulesTests
 
         Assert.Equal(10_000m, oldCostSnapshot.Sum(line => line.Amount));
         Assert.Equal(12_000m, newCostSnapshot.Sum(line => line.Amount));
-        Assert.Equal(1_000m, Assert.Single(oldCostSnapshot).UnitPrice);
+        Assert.Equal(1_000m, Assert.Single(oldCostSnapshot).Price);
     }
 
     [Fact]
     public void SeededTariffs_AreLockedVersionedAndHaveTraceableSources()
     {
-        Assert.Equal(2, UtilityTariffSeedData.Tariffs.Length);
+        Assert.Equal(5, UtilityTariffSeedData.Tariffs.Length);
         Assert.All(UtilityTariffSeedData.Tariffs, tariff =>
         {
             Assert.True(tariff.IsReadOnly);
@@ -93,37 +93,50 @@ public sealed class UtilityTariffRulesTests
             tariff.Type == TariffType.Electric && tariff.EffectiveDate == new DateOnly(2025, 5, 10));
         Assert.Contains(UtilityTariffSeedData.Tariffs, tariff =>
             tariff.Type == TariffType.Water && tariff.IsPerResident && tariff.EffectiveDate == new DateOnly(2026, 1, 1));
+        Assert.Contains(UtilityTariffSeedData.Tariffs, tariff =>
+            tariff.Type == TariffType.Electric && tariff.EffectiveDate == new DateOnly(2024, 10, 11));
+        Assert.Contains(UtilityTariffSeedData.Tariffs, tariff =>
+            tariff.Type == TariffType.Water && tariff.EffectiveDate == new DateOnly(2025, 1, 1));
     }
 
-    [Theory]
-    [InlineData(2025, 12, 1, 2025, 12, 31, 2026, 1, 1, false)]
-    [InlineData(2025, 12, 1, 2026, 1, 1, 2026, 1, 1, true)]
-    [InlineData(2026, 1, 1, 2026, 1, 31, 2026, 1, 1, false)]
-    public void EnsurePeriodUsesSingleTariff_RejectsOnlyPeriodsCrossingAChange(
-        int startYear,
-        int startMonth,
-        int startDay,
-        int endYear,
-        int endMonth,
-        int endDay,
-        int effectiveYear,
-        int effectiveMonth,
-        int effectiveDay,
-        bool shouldReject)
+    [Fact]
+    public void SplitByEffectiveDates_SeparatesInclusivePeriodAndKeepsEffectiveDateInNewSegment()
     {
-        var start = new DateOnly(startYear, startMonth, startDay);
-        var end = new DateOnly(endYear, endMonth, endDay);
-        var effective = new DateOnly(effectiveYear, effectiveMonth, effectiveDay);
+        var segments = UtilityTariffRules.SplitByEffectiveDates(
+            new DateOnly(2024, 10, 1),
+            new DateOnly(2024, 10, 31),
+            [new DateOnly(2024, 10, 11)]);
 
-        if (shouldReject)
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => UtilityTariffRules.EnsurePeriodUsesSingleTariff(start, end, effective));
-        }
-        else
-        {
-            UtilityTariffRules.EnsurePeriodUsesSingleTariff(start, end, effective);
-        }
+        Assert.Equal(
+            [new TariffPeriodSegment(new DateOnly(2024, 10, 1), new DateOnly(2024, 10, 10)),
+             new TariffPeriodSegment(new DateOnly(2024, 10, 11), new DateOnly(2024, 10, 31))],
+            segments);
+    }
+
+    [Fact]
+    public void AllocateQuantityByDays_DistributesUsageProportionallyAndPreservesTotal()
+    {
+        var beforeChange = UtilityTariffRules.AllocateQuantityByDays(310m, segmentDays: 10, totalDays: 31);
+        var afterChange = UtilityTariffRules.AllocateQuantityByDays(310m, segmentDays: 21, totalDays: 31);
+
+        Assert.Equal(100m, beforeChange);
+        Assert.Equal(210m, afterChange);
+        Assert.Equal(310m, beforeChange + afterChange);
+    }
+
+    [Fact]
+    public void Calculate_ProratesTierAllowanceForPartialTariffSegment()
+    {
+        UtilityTariffTier[] tiers =
+        [
+            new() { TierNumber = 1, From = 0m, To = 5m, UnitPrice = 10m },
+            new() { TierNumber = 2, From = 5m, To = null, UnitPrice = 20m },
+        ];
+
+        var lines = UtilityTariffRules.Calculate(4m, tiers, tierLimitMultiplier: 0.5m);
+
+        Assert.Equal(new[] { 2.5m, 1.5m }, lines.Select(line => line.Quantity));
+        Assert.Equal(55m, lines.Sum(line => line.Amount));
     }
 
     [Fact]

@@ -75,4 +75,10 @@ Kỳ lẻ: kỳ đầu và kỳ cuối không tròn tháng thì tính theo tỷ 
 Gia hạn: thêm snapshot trong cùng hợp đồng, hay tạo hợp đồng mới liên kết?
 Dịch vụ khác: tính cố định theo phòng, theo đầu người hay theo mức dùng?
 Làm tròn: từng dòng hay chỉ tổng, đến đơn vị nào? Phát cũng chốt điểm này ở VHT-34.
-Biểu giá đổi giữa kỳ: kỳ vắt qua ngày hiệu lực mới thì dùng biểu giá của ngày nào (đầu kỳ, cuối kỳ hay tách theo ngày)?
+Biểu giá đổi giữa kỳ (đã chốt VHT-100, 31/10/2026): tách kỳ tại từng ngày hiệu lực; phân bổ đều tổng chỉ số theo số ngày lịch của từng đoạn vì đầu vào chưa có chỉ số tại ngày đổi giá. Ghi rõ giả định phân bổ đều theo ngày.
+
+### VHT-100 tariff crossover decision (2026-10-31)
+
+- A billing period that crosses a tariff effective date is split into inclusive date segments. Each segment uses the tariff effective on its first day.
+- The calculation API currently receives only total consumption for the full period, not meter readings on each change date. Allocate that total to segments in proportion to each segment's inclusive day count (assumption: uniform consumption per calendar day), then calculate each segment with its applicable tariff. Prorate the tariff tier limits by the same day ratio so a partial segment does not receive a full month's tier allowance.
+- Snapshot every applied tariff version and tier cost line, including `TariffVersionId`, `UnitPrice`, allocated `Quantity`, and `Amount`, against the billing period. Historical period reads use these saved values and do not recalculate from the current tariff table.
