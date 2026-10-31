@@ -121,10 +121,10 @@ public sealed class PropertyService(
         return PropertyResult.Success(PropertyMapping.ToDetail(entity));
     }
 
-    // Phạm vi (VHT-6/VHT-24): Chủ trọ chỉ thấy nhà có OwnerId của mình.
-    // Quản lý chưa có bảng phân công tòa nhà nên tạm đọc toàn bộ như P3; VHT-24 chỉ sửa tại đây.
+    // Phạm vi (VHT-6/VHT-24): Chủ trọ chỉ thấy nhà có OwnerId của mình;
+    // Quản lý chỉ thấy nhà được phân công đang hiệu lực.
     private static IQueryable<Property> ScopeQuery(ApplicationDbContext db, PropertyCaller caller) =>
-        PropertyScope.Apply(db.Properties, caller);
+        PropertyScope.Apply(db.Properties, db.PropertyManagers, caller);
 
     // Quyền P2: Chủ trọ/Quản lý xem; Admin và Khách thuê không vào nghiệp vụ quản lý.
     // Khách thuê chỉ xem phòng đang thuê qua hợp đồng (VHT-36), không qua service này.

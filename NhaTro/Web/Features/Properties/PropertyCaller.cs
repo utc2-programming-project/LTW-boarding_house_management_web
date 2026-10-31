@@ -5,7 +5,7 @@ namespace Web.Features.Properties;
 /// <summary>
 /// Ngữ cảnh người gọi service P2 (nhà trọ + phòng).
 /// Service tự kiểm quyền/phạm vi bên trong; không nhận OwnerId/phạm vi từ client.
-/// Quản lý hiện xem toàn hệ thống tới khi VHT-24 bổ sung phân công nhà trọ.
+/// Quản lý chỉ thấy nhà/phòng được phân công đang hiệu lực (VHT-24).
 /// </summary>
 public sealed record PropertyCaller(string UserId, string Role)
 {

@@ -21,8 +21,14 @@ public sealed class AccountListItemDto
     /// <summary>Vai tro duy nhat (he thong chi cho 1 vai tro / tai khoan).</summary>
     public required string Role { get; init; }
 
-    /// <summary>Tai khoan dang bi khoa (LockoutEnd o tuong lai).</summary>
+    /// <summary>Tai khoan dang bi khoa vinh vien boi quan tri.</summary>
     public required bool IsLocked { get; init; }
 
     public DateTimeOffset? LockoutEnd { get; init; }
+
+    /// <summary>VHT-95: Cho duyet / Hoat dong / Khoa (Khoa uu tien cao nhat).</summary>
+    public required AccountStatus Status { get; init; }
+
+    /// <summary>Null = Cho duyet.</summary>
+    public DateTime? ApprovedAt { get; init; }
 }

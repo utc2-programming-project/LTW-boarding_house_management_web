@@ -243,6 +243,9 @@
   <data name="LoginInvalid" xml:space="preserve">
     <value>Incorrect email or password.</value>
   </data>
+  <data name="LoginPendingApproval" xml:space="preserve">
+    <value>This account is pending approval. Please contact your account manager.</value>
+  </data>
   <data name="EmailLabel" xml:space="preserve">
     <value>Email</value>
   </data>
@@ -410,6 +413,59 @@
     <value>Account unlocked.</value>
   </data>
 
+  <!-- VHT-95: account lifecycle -->
+  <data name="CreateAccount" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="CreateAccountTitle" xml:space="preserve">
+    <value>Create a new account</value>
+  </data>
+  <data name="CreateAccountSubmit" xml:space="preserve">
+    <value>Create account</value>
+  </data>
+  <data name="CreateAccountHint" xml:space="preserve">
+    <value>You set the initial password and share it with the user directly.</value>
+  </data>
+  <data name="PasswordCreateHint" xml:space="preserve">
+    <value>At least 8 characters with uppercase, lowercase, and a digit.</value>
+  </data>
+  <data name="CreateAccountPendingNote" xml:space="preserve">
+    <value>Tenant accounts created by a Manager stay pending until the Landlord approves them.</value>
+  </data>
+  <data name="AccountCreated" xml:space="preserve">
+    <value>Account created.</value>
+  </data>
+  <data name="AccountCreatedPending" xml:space="preserve">
+    <value>Account created and is pending approval.</value>
+  </data>
+  <data name="Approve" xml:space="preserve">
+    <value>Approve</value>
+  </data>
+  <data name="ApproveTitle" xml:space="preserve">
+    <value>Approve account</value>
+  </data>
+  <data name="ApproveMessage" xml:space="preserve">
+    <value>Approve account {0}? This person can sign in right after approval.</value>
+  </data>
+  <data name="AccountApproved" xml:space="preserve">
+    <value>Account approved.</value>
+  </data>
+  <data name="TenantProfileLabel" xml:space="preserve">
+    <value>Tenant profile</value>
+  </data>
+  <data name="TenantProfileHint" xml:space="preserve">
+    <value>Only profiles without an account and with a contract in your scope are listed.</value>
+  </data>
+  <data name="SearchTenant" xml:space="preserve">
+    <value>Search tenant profiles</value>
+  </data>
+  <data name="SelectTenant" xml:space="preserve">
+    <value>Select a tenant profile</value>
+  </data>
+  <data name="NoAssignableTenants" xml:space="preserve">
+    <value>No matching tenant profiles.</value>
+  </data>
+
   <!-- VHT-8: roles -->
   <data name="RoleAdmin" xml:space="preserve">
     <value>Administrator</value>
@@ -457,6 +513,33 @@
   </data>
   <data name="ErrorInvalidRole" xml:space="preserve">
     <value>Invalid role.</value>
+  </data>
+  <data name="ErrorCannotLockLastAdmin" xml:space="preserve">
+    <value>The last administrator cannot be locked.</value>
+  </data>
+  <data name="ErrorOutOfScope" xml:space="preserve">
+    <value>This account is outside your scope.</value>
+  </data>
+  <data name="ErrorTenantRequired" xml:space="preserve">
+    <value>Select a tenant profile to create the account.</value>
+  </data>
+  <data name="ErrorTenantAlreadyLinked" xml:space="preserve">
+    <value>This tenant profile already has an account.</value>
+  </data>
+  <data name="ErrorRoleLinkedToTenant" xml:space="preserve">
+    <value>This account is linked to a tenant profile. Unlink it before changing the role.</value>
+  </data>
+  <data name="ErrorNotPendingApproval" xml:space="preserve">
+    <value>Only pending accounts can be approved.</value>
+  </data>
+  <data name="ErrorDuplicateEmail" xml:space="preserve">
+    <value>This email is already used by another account.</value>
+  </data>
+  <data name="ErrorWeakPassword" xml:space="preserve">
+    <value>The password is not strong enough.</value>
+  </data>
+  <data name="ErrorInvalidEmail" xml:space="preserve">
+    <value>Invalid email address.</value>
   </data>
 
   <!-- VHT-8: data table strings -->
@@ -512,6 +595,14 @@
   </data>
   <data name="AccessDeniedMessage" xml:space="preserve">
     <value>You are not allowed to view this page. Contact an administrator if you need help.</value>
+  </data>
+
+  <!-- VHT-95: account locked -->
+  <data name="LockoutTitle" xml:space="preserve">
+    <value>Account locked</value>
+  </data>
+  <data name="LockoutMessage" xml:space="preserve">
+    <value>Your account is locked, so you cannot sign in. Contact your account manager to have it unlocked.</value>
   </data>
 
   <!-- VHT-8: quick sign-in for testers (dev only) -->

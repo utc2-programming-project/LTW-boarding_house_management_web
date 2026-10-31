@@ -1,8 +1,18 @@
 ﻿@page "/Account/Lockout"
 
-<PageTitle>Locked out</PageTitle>
+@inject IStringLocalizer<Shared> L
 
-<header>
-    <h1 class="text-danger">Locked out</h1>
-    <p class="text-danger" role="alert">This account has been locked out, please try again later.</p>
-</header>
+@* VHT-95: trang bao tai khoan bi khoa (Admin khoa vinh vien hoac sai mat khau qua nhieu lan). *@
+
+<PageTitle>@L["LockoutTitle"] · @L["AppName"]</PageTitle>
+
+<section aria-labelledby="lockout-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LockoutTitle"]) })" />
+
+    <div class="preview-card empty-state">
+        <LucideIcon Name="lock" />
+        <h2 id="lockout-title">@L["LockoutTitle"]</h2>
+        <p role="alert">@L["LockoutMessage"]</p>
+        <a class="btn btn-secondary" href="/login">@L["LoginButton"]</a>
+    </div>
+</section>

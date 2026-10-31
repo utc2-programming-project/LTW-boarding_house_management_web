@@ -151,7 +151,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
         // Ten dang nhap = email: khong cho trung email.
         options.User.RequireUniqueEmail = true;
-    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddSignInManager().AddDefaultTokenProviders();
+    }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
+      // VHT-95: SignInManager rieng chan tai khoan Chờ duyệt.
+      .AddSignInManager<AccountSignInManager>()
+      .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -186,6 +189,8 @@ builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+// VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
+builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();

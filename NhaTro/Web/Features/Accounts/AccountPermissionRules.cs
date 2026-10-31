@@ -1,13 +1,13 @@
 namespace Web.Features.Accounts;
 
 /// <summary>
-/// VHT-8 / D1: luat phan quyen quan tri tai khoan.
+/// VHT-8 / VHT-95 / D1: luat phan quyen quan tri tai khoan.
 /// Tach thanh ham thuan (khong DB, khong HttpContext) de unit test nhanh va de doc.
 ///
-/// D1 (chot 12/10/2026):
+/// D1 (chot 12/10/2026) + o #5/#6/#7 cua thao_tac_va_quyen.xlsx:
 ///  - Admin   : quan ly toan bo tai khoan, cap/doi vai tro, khoa/mo khoa.
-///  - ChuTro  : duyet/kich hoat/khoa QuanLy va KhachThue, tao tai khoan QuanLy. KHONG doi vai tro.
-///  - QuanLy  : sua ho so minh, tao tai khoan KhachThue (Cho duyet), xem khach toa nha.
+///  - ChuTro  : tao QuanLy + KhachThue (hieu luc ngay), duyet/khoa trong pham vi minh. KHONG doi vai tro.
+///  - QuanLy  : sua ho so minh, tao tai khoan KhachThue (Cho duyet) trong toa duoc giao.
 ///  - KhachThue: chi ho so ca nhan.
 /// </summary>
 public static class AccountPermissionRules
@@ -16,12 +16,20 @@ public static class AccountPermissionRules
     public static IReadOnlyList<string> AssignableRoles(string callerRole) => callerRole switch
     {
         Roles.Admin => Roles.All,
-        // ChuTro tao duoc tai khoan QuanLy nhung khong doi vai tro (xem CanChangeRole).
-        Roles.ChuTro => [Roles.QuanLy],
-        // QuanLy tao tai khoan KhachThue o trang thai Cho duyet.
+        // ChuTro tao QuanLy + KhachThue nhung khong doi vai tro (xem CanChangeRole).
+        Roles.ChuTro => [Roles.QuanLy, Roles.KhachThue],
+        // QuanLy chi tao tai khoan KhachThue, o trang thai Cho duyet.
         Roles.QuanLy => [Roles.KhachThue],
         _ => [],
     };
+
+    /// <summary>Nguoi goi co duoc tao tai khoan vai tro nay khong (o #5).</summary>
+    public static bool CanCreateRole(string callerRole, string targetRole) =>
+        AssignableRoles(callerRole).Contains(targetRole);
+
+    /// <summary>Nguoi goi co duoc duyet tai khoan vai tro nay khong (o #6, cung pham vi voi khoa).</summary>
+    public static bool CanApprove(string callerRole, string targetRole) =>
+        LockableRoles(callerRole).Contains(targetRole);
 
     /// <summary>Chi Admin duoc doi vai tro (D1: ChuTro "KHONG doi vai tro").</summary>
     public static bool CanChangeRole(string callerRole) => callerRole == Roles.Admin;
@@ -37,14 +45,14 @@ public static class AccountPermissionRules
 
     /// <summary>Nguoi goi co duoc vao man hinh quan tri tai khoan khong.</summary>
     public static bool CanManageAccounts(string callerRole) =>
-        callerRole is Roles.Admin or Roles.ChuTro;
+        callerRole is Roles.Admin or Roles.ChuTro or Roles.QuanLy;
 
     /// <summary>Vai tro ma nguoi goi duoc phep nhin thay trong danh sach.</summary>
     public static IReadOnlyList<string> VisibleRoles(string callerRole) => callerRole switch
     {
         Roles.Admin => Roles.All,
         Roles.ChuTro => [Roles.QuanLy, Roles.KhachThue],
-        // QuanLy chi thay khach trong toa nha minh (D9); pham vi toa nha thuoc VHT-95.
+        // QuanLy chi thay chinh minh + khach trong toa duoc giao; pham vi du lieu loc o service.
         Roles.QuanLy => [Roles.KhachThue],
         _ => [],
     };
@@ -58,7 +66,8 @@ public static class AccountPermissionRules
         string targetUserId,
         string targetRole,
         bool targetIsLastAdmin,
-        string newRole)
+        string newRole,
+        bool targetIsLinkedTenant = false)
     {
         if (!CanChangeRole(callerRole))
         {
@@ -82,6 +91,12 @@ public static class AccountPermissionRules
             return AccountErrorCodes.CannotRemoveLastAdmin;
         }
 
+        // Tai khoan dang gan ho so khach: doi vai tro se lam ho so tro vao tai khoan sai vai tro.
+        if (targetIsLinkedTenant && newRole != targetRole)
+        {
+            return AccountErrorCodes.RoleLinkedToTenant;
+        }
+
         return null;
     }
 
@@ -93,7 +108,8 @@ public static class AccountPermissionRules
         string callerUserId,
         string targetUserId,
         string targetRole,
-        bool unlock)
+        bool unlock,
+        bool targetIsLastAdmin = false)
     {
         if (unlock)
         {
@@ -114,6 +130,12 @@ public static class AccountPermissionRules
         if (callerUserId == targetUserId)
         {
             return AccountErrorCodes.CannotLockSelf;
+        }
+
+        // Khoa Admin cuoi cung (dang hoat dong) se lam he thong khong con ai quan tri.
+        if (targetRole == Roles.Admin && targetIsLastAdmin)
+        {
+            return AccountErrorCodes.CannotLockLastAdmin;
         }
 
         return null;

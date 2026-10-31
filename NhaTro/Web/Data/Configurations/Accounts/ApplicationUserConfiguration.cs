@@ -12,5 +12,8 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
         builder.Property(u => u.FullName).HasMaxLength(200);
+
+        // VHT-95: null = Cho duyet. Migration backfill tai khoan cu de khong bi chan dang nhap.
+        builder.Property(u => u.ApprovedAt);
     }
 }

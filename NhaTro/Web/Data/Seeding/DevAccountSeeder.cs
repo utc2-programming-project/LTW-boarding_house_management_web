@@ -44,7 +44,14 @@ public static class DevAccountSeeder
             var user = await userManager.FindByEmailAsync(email);
             if (user is null)
             {
-                user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+                // VHT-95: tai khoan mau luon duoc duyet de dang nhap duoc.
+                user = new ApplicationUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    ApprovedAt = DateTime.UtcNow,
+                };
                 var created = await userManager.CreateAsync(user, password);
                 if (!created.Succeeded)
                 {
@@ -70,6 +77,13 @@ public static class DevAccountSeeder
             // Clear lockout from previous local testing so the sample accounts remain usable.
             await userManager.ResetAccessFailedCountAsync(user);
             await userManager.SetLockoutEndDateAsync(user, null);
+
+            // VHT-95: tai khoan mau cu (tao truoc migration) cung phai duoc duyet.
+            if (user.ApprovedAt is null)
+            {
+                user.ApprovedAt = DateTime.UtcNow;
+                await userManager.UpdateAsync(user);
+            }
 
             if (!await userManager.IsInRoleAsync(user, role))
             {
