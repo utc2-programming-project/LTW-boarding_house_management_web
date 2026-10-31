@@ -96,20 +96,19 @@ public sealed class ContractService : IContractService
                     ContractErrorCodes.RoomNotFound);
             }
 
-            var propertyOwnerId = await _context.Properties
+            var property = await _context.Properties
                 .IgnoreQueryFilters()
                 .Where(property => property.Id == room.PropertyId)
-                .Select(property => property.OwnerId)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (propertyOwnerId is null)
+            if (property is null)
             {
                 throw new ContractNotFoundException(
                     ContractErrorMessages.PropertyNotFound,
                     ContractErrorCodes.PropertyNotFound);
             }
 
-            if (!PropertyScope.IsOwner(propertyOwnerId, caller.UserId))
+            if (!PropertyScope.IsOwner(property.OwnerId, caller.UserId))
             {
                 throw new ContractAuthorizationException(
                     ContractErrorMessages.OutsideOwnerScope,
@@ -143,6 +142,13 @@ public sealed class ContractService : IContractService
             }
             else
             {
+                if (property.IsDeleted)
+                {
+                    throw new ContractOperationException(
+                        ContractErrorMessages.PropertyUnavailable,
+                        ContractErrorCodes.PropertyUnavailable);
+                }
+
                 if (room.IsDeleted || !room.IsActive)
                 {
                     throw new ContractOperationException(

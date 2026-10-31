@@ -288,7 +288,12 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts");
+                    b.ToTable("Contracts", t =>
+                        {
+                            t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>

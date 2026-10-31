@@ -10,6 +10,7 @@ public static class ContractErrorCodes
     public const string RejectReasonRequired = nameof(RejectReasonRequired);
     public const string RejectReasonTooLong = nameof(RejectReasonTooLong);
     public const string RoomUnavailable = nameof(RoomUnavailable);
+    public const string PropertyUnavailable = nameof(PropertyUnavailable);
     public const string RoomUnderMaintenance = nameof(RoomUnderMaintenance);
     public const string ContractOverlap = nameof(ContractOverlap);
 }
@@ -26,6 +27,7 @@ public static class ContractErrorMessages
     public const string RejectReasonTooLong = "Lý do từ chối không được vượt quá 500 ký tự.";
     public const string RoomUnavailable = "Không thể duyệt hợp đồng cho phòng đã ngừng hoạt động.";
     public const string RoomUnderMaintenance = "Không thể duyệt hợp đồng cho phòng đang bảo trì.";
+    public const string PropertyUnavailable = "Nhà trọ đã bị xóa, không thể duyệt hợp đồng.";
     public const string ContractOverlap = "Phòng đã có hợp đồng hiệu lực trong thời gian này.";
 }
 

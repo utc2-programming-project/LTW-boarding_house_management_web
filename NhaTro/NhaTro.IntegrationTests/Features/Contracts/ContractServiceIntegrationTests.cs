@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Data.Migrations;
 using Web.Features.Accounts;
 using Web.Features.Contracts;
 using Microsoft.Data.SqlClient;
@@ -258,6 +259,34 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task ApproveContractAsync_RejectsContractForSoftDeletedProperty()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var room = await dbContext.Rooms.SingleAsync(item => item.Id == roomId);
+        var property = await dbContext.Properties.SingleAsync(item => item.Id == room.PropertyId);
+        property.IsDeleted = true;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext);
+
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            contractId,
+            new ApproveContractRequestDto { IsApproved = true },
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.PropertyUnavailable, exception.ErrorCode);
+        Assert.Equal(ContractErrorMessages.PropertyUnavailable, exception.Message);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Pending,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Available,
+            (await reloadedDb.Rooms.SingleAsync(item => item.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
     public async Task ApproveContractAsync_BlocksManagerForContractTheyCreated()
     {
         await ResetDatabaseAsync();
@@ -376,41 +405,28 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             TestContract(existingId, roomId, ContractStatus.Approved),
             TestContract(candidateId, roomId, ContractStatus.Pending));
         await dbContext.SaveChangesAsync();
-        await dbContext.Database.ExecuteSqlRawAsync("""
-            CREATE TRIGGER [dbo].[TR_Contracts_PreventApprovedOverlap]
-            ON [dbo].[Contracts]
-            AFTER INSERT, UPDATE
-            AS
-            BEGIN
-                SET NOCOUNT ON;
-                IF EXISTS
-                (
-                    SELECT 1
-                    FROM inserted AS candidate
-                    INNER JOIN [dbo].[Contracts] AS existing WITH (UPDLOCK, HOLDLOCK)
-                        ON existing.[RoomId] = candidate.[RoomId]
-                        AND existing.[Status] = 1
-                        AND existing.[ContractId] <> candidate.[ContractId]
-                        AND existing.[StartDate] <= candidate.[EndDate]
-                        AND candidate.[StartDate] <= existing.[EndDate]
-                    WHERE candidate.[Status] = 1
-                )
-                BEGIN
-                    THROW 51030, 'ContractOverlap', 1;
-                END
-            END;
-            """);
+        try
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(ContractOverlapTriggerSql.CreateOrAlter);
 
-        var exception = await Assert.ThrowsAsync<SqlException>(() => dbContext.Contracts
-            .Where(contract => contract.ContractId == candidateId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(
-                contract => contract.Status,
-                ContractStatus.Approved)));
+            var service = new ContractService(dbContext);
+            var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+                candidateId,
+                new ApproveContractRequestDto { IsApproved = true },
+                OwnerCaller));
 
-        Assert.Equal(51030, exception.Number);
-        await using var reloadedDb = fixture.CreateContext();
-        Assert.Equal(ContractStatus.Pending,
-            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == candidateId)).Status);
+            Assert.Equal(ContractErrorCodes.ContractOverlap, exception.ErrorCode);
+            Assert.Equal(ContractErrorMessages.ContractOverlap, exception.Message);
+            Assert.Equal(51030, FindSqlException(exception)?.Number);
+            await using var reloadedDb = fixture.CreateContext();
+            Assert.Equal(ContractStatus.Pending,
+                (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == candidateId)).Status);
+        }
+        finally
+        {
+            await dbContext.Database.ExecuteSqlRawAsync(
+                "DROP TRIGGER IF EXISTS [dbo].[TR_Contracts_PreventApprovedOverlap];");
+        }
     }
 
     [SqlServerFact]
@@ -492,7 +508,10 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             TryApproveAsync(competingCandidateId));
 
         Assert.Single(results, result => result is null);
-        Assert.Single(results, IsExpectedConcurrentApprovalLoss);
+        var losingRequest = Assert.Single(results, result => result is not null);
+        var operationException = Assert.IsType<ContractOperationException>(losingRequest);
+        Assert.Equal(ContractErrorCodes.ContractOverlap, operationException.ErrorCode);
+        Assert.Equal(ContractErrorMessages.ContractOverlap, operationException.Message);
 
         await using var reloadedDb = fixture.CreateContext();
         Assert.Single(await reloadedDb.Contracts
@@ -535,9 +554,18 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await fixture.ResetAsync();
     }
 
-    private static bool IsExpectedConcurrentApprovalLoss(Exception? exception) => exception is
-        ContractOperationException or DbUpdateException ||
-        exception is Microsoft.Data.SqlClient.SqlException { Number: 1205 };
+    private static SqlException? FindSqlException(Exception? exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is SqlException sqlException)
+            {
+                return sqlException;
+            }
+        }
+
+        return null;
+    }
 
     private static async Task<Tenant> AddTenantAsync(ApplicationDbContext db, string fullName, string phone)
     {
