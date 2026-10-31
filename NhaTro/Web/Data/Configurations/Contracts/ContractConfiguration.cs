@@ -10,12 +10,14 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
     public void Configure(EntityTypeBuilder<Contract> builder)
     {
         builder.HasKey(contract => contract.ContractId);
+        builder.ToTable(table => table.HasTrigger("TR_Contracts_PreventApprovedOverlap"));
         builder.Property(contract => contract.ContractNumber).HasMaxLength(40).IsRequired();
         builder.Property(contract => contract.StartDate).HasColumnType("date");
         builder.Property(contract => contract.EndDate).HasColumnType("date");
         builder.Property(contract => contract.SnapshotPrice).HasPrecision(18, 2);
         builder.Property(contract => contract.DepositAmount).HasPrecision(18, 2);
         builder.Property(contract => contract.Status).HasConversion<int>();
+        builder.Property(contract => contract.RejectReason).HasMaxLength(500);
 
         builder.HasIndex(contract => contract.ContractNumber).IsUnique();
         builder.HasOne<Room>()

@@ -1,5 +1,8 @@
+using Web.Features.Accounts;
+using Web.Features.Contracts;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Services;
+using Web.Features.Properties;
 
 namespace NhaTro.UnitTests.Features.Contracts;
 
@@ -53,7 +56,88 @@ public sealed class ContractServiceTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateContractAsync(null!));
     }
 
-    private static ContractService CreateService() => new(null!, null!);
+    [Theory]
+    [InlineData(Roles.QuanLy)]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.KhachThue)]
+    public async Task ApproveContractAsync_RejectsRolesOtherThanChuTro(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto { IsApproved = true },
+            new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task ApproveContractAsync_RequiresReasonWhenRejecting(string? rejectReason)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto { IsApproved = false, RejectReason = rejectReason },
+            OwnerCaller));
+
+        Assert.Equal("RejectReason", exception.ParamName);
+        Assert.Equal(ContractErrorCodes.RejectReasonRequired, exception.ErrorCode);
+    }
+
+    [Fact]
+    public async Task ApproveContractAsync_RejectsReasonLongerThan500Characters()
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            new ApproveContractRequestDto
+            {
+                IsApproved = false,
+                RejectReason = new string('x', ApproveContractRequestDto.MaxRejectReasonLength + 1),
+            },
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.RejectReasonTooLong, exception.ErrorCode);
+    }
+
+    [Fact]
+    public void ApproveContractAsync_AllowsReasonAt500CharactersForDatabaseValidation()
+    {
+        var dto = new ApproveContractRequestDto
+        {
+            IsApproved = false,
+            RejectReason = new string('x', ApproveContractRequestDto.MaxRejectReasonLength),
+        };
+
+        var validation = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+            dto,
+            new System.ComponentModel.DataAnnotations.ValidationContext(dto),
+            [],
+            validateAllProperties: true);
+
+        Assert.True(validation);
+    }
+
+    [Fact]
+    public async Task ApproveContractAsync_RejectsNullRequest()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.ApproveContractAsync(
+            Guid.NewGuid(),
+            null!,
+            OwnerCaller));
+    }
+
+    private static PropertyCaller OwnerCaller => new("owner-id", Roles.ChuTro);
+
+    private static ContractService CreateService() => new(null!);
 
     private static CreateContractRequest CreateRequest(
         DateTime startDate,

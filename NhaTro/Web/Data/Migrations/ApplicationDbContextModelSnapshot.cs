@@ -267,6 +267,10 @@ namespace Web.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<int>("RoomId")
                         .HasColumnType("int");
 
@@ -287,7 +291,12 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts");
+                    b.ToTable("Contracts", t =>
+                        {
+                            t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
