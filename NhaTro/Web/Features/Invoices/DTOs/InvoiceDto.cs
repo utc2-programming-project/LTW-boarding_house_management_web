@@ -10,7 +10,23 @@ public sealed class InvoiceDto
 {
     public required int Id { get; init; }
 
-    public required int ContractId { get; init; }
+    /// <summary>Hợp đồng nguồn; khớp PK <c>Contracts.ContractId</c> kiểu Guid.</summary>
+    public required Guid ContractId { get; init; }
+
+    public required string ContractNumber { get; init; }
+
+    public required string RoomCode { get; init; }
+
+    public required string PropertyName { get; init; }
+
+    /// <summary>Họ tên các khách thuê trong hợp đồng, sắp theo tên.</summary>
+    public required IReadOnlyList<string> TenantNames { get; init; }
+
+    /// <summary>Thời điểm lập hóa đơn, lưu UTC.</summary>
+    public required DateTime CreatedAt { get; init; }
+
+    /// <summary>Thời điểm phát hành; null khi hóa đơn còn nháp.</summary>
+    public DateTime? IssuedAt { get; init; }
 
     /// <summary>Ngày đầu kỳ (bao gồm), ngày thuần không cộng trừ múi giờ.</summary>
     public required DateOnly PeriodStart { get; init; }
