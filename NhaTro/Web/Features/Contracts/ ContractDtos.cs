@@ -1,6 +1,6 @@
 ﻿// VHT-9 — DTO mẫu P4 (Hợp đồng)
 // TODO: đổi namespace cho khớp Rooms/Tenants (VHT-112, VHT-23).
-using BoardingHouse.Web.Features.Utilities;
+using Web.Features.Utilities;
 
 namespace BoardingHouse.Web.Features.Contracts;
 

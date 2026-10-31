@@ -7,6 +7,7 @@ using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
+using Web.Data.Tariffs;
 
 namespace Web.Data
 {
@@ -26,6 +27,10 @@ namespace Web.Data
 
         // VHT-94: 21 cong tac Quan ly (SW-01..SW-16 + SW-15a..e).
         public DbSet<ManagerToggle> ManagerToggles => Set<ManagerToggle>();
+        public DbSet<UtilityTariff> UtilityTariffs => Set<UtilityTariff>();
+        public DbSet<UtilityTariffTier> UtilityTariffTiers => Set<UtilityTariffTier>();
+        public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();
+        public DbSet<UtilityBillingCostLineSnapshot> UtilityBillingCostLineSnapshots => Set<UtilityBillingCostLineSnapshot>();
 
         public DbSet<ServiceCatalog> ServiceCatalogs => Set<ServiceCatalog>();
         public DbSet<ServicePriceHistory> ServicePriceHistories => Set<ServicePriceHistory>();

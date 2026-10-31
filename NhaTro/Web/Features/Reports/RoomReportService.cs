@@ -77,9 +77,9 @@ public sealed class RoomReportService(
         };
     }
 
-    // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ theo OwnerId; Quản lý tạm toàn hệ thống tới khi có phân công.
+    // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ theo OwnerId; Quản lý theo phân công nhà trọ đang hiệu lực.
     private static IQueryable<Room> ScopeRooms(ApplicationDbContext db, PropertyCaller caller) =>
-        RoomScope.Apply(db.Rooms, db.Properties, caller);
+        RoomScope.Apply(db.Rooms, db.Properties, db.PropertyManagers, caller);
 
     private static IQueryable<Room> ApplyFilter(IQueryable<Room> query, RoomReportFilter filter)
     {

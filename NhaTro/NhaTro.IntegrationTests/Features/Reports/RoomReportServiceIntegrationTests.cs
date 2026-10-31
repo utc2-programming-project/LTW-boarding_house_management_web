@@ -187,22 +187,67 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Empty(report.Rooms.Items);
     }
 
-    // ---------- Case 4: Quản lý xem toàn bộ khi công tắc cho phép ----------
+    // ---------- Case 4: Quản lý chỉ xem phòng thuộc nhà được phân công ----------
 
     [SqlServerFact]
-    public async Task Quan_ly_thay_toan_bo_phong_khi_cong_tac_cho_phep()
+    public async Task Quan_ly_chi_thay_phong_thuoc_nha_duoc_phan_cong()
+    {
+        var seed = await PrepareAsync();
+        await using var db = fixture.CreateContext();
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = seed.PropertyAId,
+            ManagerUserId = ManagerId,
+            AssignedByUserId = OwnerAId,
+        });
+        await db.SaveChangesAsync();
+
+        var report = await NewReportService(db).GetAsync(new RoomReportFilter(), QuanLy);
+
+        // Chỉ A101/A102/A103; loại phòng nhà B, phòng tạm ngưng và phòng xóa mềm.
+        Assert.Equal(3, report.Kpis.Total);
+        Assert.Equal(1, report.Kpis.Available);
+        Assert.Equal(1, report.Kpis.Rented);
+        Assert.Equal(1, report.Kpis.Maintenance);
+        Assert.Equal(3, report.Rooms.TotalCount);
+        Assert.Equal(3, report.Rooms.Items.Count);
+        Assert.All(report.Rooms.Items, item => Assert.Equal(seed.PropertyAId, item.PropertyId));
+        Assert.DoesNotContain(report.Rooms.Items, item => item.Code is "A104" or "A105" or "B201");
+    }
+
+    [SqlServerFact]
+    public async Task Quan_ly_chua_duoc_phan_cong_khong_thay_phong()
     {
         await PrepareAsync();
         await using var db = fixture.CreateContext();
 
         var report = await NewReportService(db).GetAsync(new RoomReportFilter(), QuanLy);
 
-        // A101/A102/A103 + B201; A104 tạm ngưng và A105 xóa mềm không tính.
-        Assert.Equal(4, report.Kpis.Total);
-        Assert.Equal(2, report.Kpis.Available);
-        Assert.Equal(1, report.Kpis.Rented);
-        Assert.Equal(1, report.Kpis.Maintenance);
-        Assert.Equal(4, report.Rooms.TotalCount);
+        Assert.Equal(0, report.Kpis.Total);
+        Assert.Equal(0, report.Rooms.TotalCount);
+        Assert.Empty(report.Rooms.Items);
+    }
+
+    [SqlServerFact]
+    public async Task Quan_ly_bi_thu_hoi_phan_cong_khong_thay_phong()
+    {
+        var seed = await PrepareAsync();
+        await using var db = fixture.CreateContext();
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = seed.PropertyAId,
+            ManagerUserId = ManagerId,
+            AssignedByUserId = OwnerAId,
+            RevokedAt = DateTime.UtcNow,
+            RevokedByUserId = OwnerAId,
+        });
+        await db.SaveChangesAsync();
+
+        var report = await NewReportService(db).GetAsync(new RoomReportFilter(), QuanLy);
+
+        Assert.Equal(0, report.Kpis.Total);
+        Assert.Equal(0, report.Rooms.TotalCount);
+        Assert.Empty(report.Rooms.Items);
     }
 
     // ---------- Case 5: phòng tạm ngưng ----------

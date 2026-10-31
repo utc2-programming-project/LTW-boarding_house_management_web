@@ -937,7 +937,6 @@
   <data name="DocumentsLoadFailed" xml:space="preserve"><value>Không thể tải danh sách giấy tờ. Vui lòng thử lại.</value></data>
   <data name="NoTenantFound" xml:space="preserve"><value>Chưa có hồ sơ khách thuê</value></data>
   <data name="NoTenantFoundDesc" xml:space="preserve"><value>Tài khoản chưa liên kết hồ sơ khách thuê. Vui lòng liên hệ quản lý.</value></data>
-  <data name="SelectTenant" xml:space="preserve"><value>Chọn khách thuê</value></data>
   <data name="FilesUnit" xml:space="preserve"><value>tệp</value></data>
   <data name="RecordsUnit" xml:space="preserve"><value>hồ sơ</value></data>
   <data name="ExportList" xml:space="preserve"><value>Xuất danh sách</value></data>
