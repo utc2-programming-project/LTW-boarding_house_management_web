@@ -1,6 +1,10 @@
 using NhaTro.IntegrationTests.Infrastructure;
 using NhaTro.IntegrationTests.TestSupport;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Entities;
+using Web.Features.Contracts.Enums;
+using Web.Features.Properties.Entities;
+using Web.Features.Rooms.Entities;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.DTOs;
@@ -38,6 +42,37 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         var linked = await tenantService.LinkAccountAsync(
             tenantId, "khach-1", created.Tenant.RowVersion, Manager);
         Assert.True(linked.Succeeded, linked.ErrorMessage);
+
+        var property = new Property { Name = "Nhà của Chủ trọ", OwnerId = Manager.UserId };
+        db.Properties.Add(property);
+        await db.SaveChangesAsync();
+
+        var room = new Room
+        {
+            PropertyId = property.Id,
+            Code = "101",
+            StandardPrice = 1_000_000m,
+        };
+        db.Rooms.Add(room);
+        await db.SaveChangesAsync();
+
+        var contract = new Contract
+        {
+            ContractNumber = "HD-SCOPE-001",
+            RoomId = room.Id,
+            StartDate = DateTime.UtcNow.Date,
+            EndDate = DateTime.UtcNow.Date.AddMonths(12),
+            SnapshotPrice = 1_000_000m,
+            DepositAmount = 1_000_000m,
+            Status = ContractStatus.Approved,
+        };
+        db.Contracts.Add(contract);
+        db.ContractMembers.Add(new ContractMember
+        {
+            ContractId = contract.ContractId,
+            TenantId = tenantId,
+        });
+        await db.SaveChangesAsync();
 
         var scope = new TenantDocumentScopeService(db, new NoManagerTenantScope());
 

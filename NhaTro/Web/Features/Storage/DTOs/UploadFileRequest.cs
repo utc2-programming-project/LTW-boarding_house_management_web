@@ -19,6 +19,9 @@ public class UploadFileRequest
     /// <summary>Loại đối tượng liên quan: Room, Contract, Invoice, Tenant, MaintenanceIncident, Payment.</summary>
     public required RelatedEntityType RelatedEntityType { get; init; }
 
+    /// <summary>Loại giấy tờ cụ thể trong hồ sơ khách thuê (CCCD_Front, CCCD_Back, ...).</summary>
+    public string? DocumentType { get; init; }
+
     /// <summary>Ghi chú tùy chọn.</summary>
     public string? Description { get; init; }
 }

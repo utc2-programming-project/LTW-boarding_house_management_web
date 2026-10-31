@@ -782,4 +782,201 @@
   <data name="CaptchaInvalid" xml:space="preserve">
     <value>The verification answer is not correct.</value>
   </data>
+  <!-- VHT-36 / Đợt 2B: Hồ sơ giấy tờ & Phòng đang thuê P3 -->
+  <data name="TenantDocumentsTitle" xml:space="preserve"><value>My Documents</value></data>
+  <data name="TenantDocumentsSubtitle" xml:space="preserve"><value>Manage identification, residency records, and legal lease files.</value></data>
+  <data name="UploadDocument" xml:space="preserve"><value>Upload document</value></data>
+  <data name="UploadDocumentSubtitle" xml:space="preserve"><value>Upload citizen ID, lease scan, or residency certificate securely.</value></data>
+  <data name="UploadingDocument" xml:space="preserve"><value>Uploading...</value></data>
+  <data name="DocumentType" xml:space="preserve"><value>Document type</value></data>
+  <data name="DocumentTypeRequired" xml:space="preserve"><value>Please select a document type.</value></data>
+  <data name="DocTypeCccdFront" xml:space="preserve"><value>Citizen ID (Front)</value></data>
+  <data name="DocTypeCccdBack" xml:space="preserve"><value>Citizen ID (Back)</value></data>
+  <data name="DocTypeContractScan" xml:space="preserve"><value>Scanned contract</value></data>
+  <data name="DocTypeResidence" xml:space="preserve"><value>Residency permit (CT07)</value></data>
+  <data name="DocTypeOther" xml:space="preserve"><value>Other document</value></data>
+  <data name="DocumentFile" xml:space="preserve"><value>Document file</value></data>
+  <data name="FileRequired" xml:space="preserve"><value>Please select a file.</value></data>
+  <data name="FileTypeNotAllowed" xml:space="preserve"><value>Only PDF, JPG, JPEG, or PNG files are accepted.</value></data>
+  <data name="FileSizeExceeded" xml:space="preserve"><value>File size exceeds the allowed 10 MB limit.</value></data>
+  <data name="EmptyFile" xml:space="preserve"><value>The file is empty. Please choose another file.</value></data>
+  <data name="DocumentAccessDenied" xml:space="preserve"><value>You do not have permission to access this document.</value></data>
+  <data name="DocumentDownloadFailed" xml:space="preserve"><value>Could not download the document. Please try again.</value></data>
+  <data name="ClickOrDragToUpload" xml:space="preserve"><value>Click to choose file or drag &amp; drop here</value></data>
+  <data name="UploadFileAllowedFormats" xml:space="preserve"><value>Supported formats: PDF, JPG, PNG (Max 10 MB)</value></data>
+  <data name="DocumentDescription" xml:space="preserve"><value>Description / Note</value></data>
+  <data name="DocumentDescriptionPlaceholder" xml:space="preserve"><value>Optional notes for this file...</value></data>
+  <data name="DocumentFileName" xml:space="preserve"><value>File name</value></data>
+  <data name="DocumentSize" xml:space="preserve"><value>Size</value></data>
+  <data name="DocumentUploadedAt" xml:space="preserve"><value>Uploaded at</value></data>
+  <data name="DownloadDocumentSecure" xml:space="preserve"><value>Secure download</value></data>
+  <data name="DocumentPreview" xml:space="preserve"><value>View details</value></data>
+  <data name="DocumentPreviewTitle" xml:space="preserve"><value>Document details</value></data>
+  <data name="DocumentMimeType" xml:space="preserve"><value>MIME type</value></data>
+  <data name="DocumentSecureStorageNotice" xml:space="preserve"><value>File is safely kept in a private encrypted vault with protected stream download URLs.</value></data>
+  <data name="DocumentUploadSuccess" xml:space="preserve"><value>Document uploaded successfully.</value></data>
+  <data name="DocumentUploadFailed" xml:space="preserve"><value>Document upload failed. Please try again.</value></data>
+  <data name="DeleteDocumentConfirmTitle" xml:space="preserve"><value>Confirm document removal</value></data>
+  <data name="DeleteDocumentConfirmMessage" xml:space="preserve"><value>Are you sure you want to remove "{0}"? This will mark it as soft-deleted.</value></data>
+  <data name="DocumentDeleteSuccess" xml:space="preserve"><value>Document removed successfully.</value></data>
+  <data name="DocumentDeleteFailed" xml:space="preserve"><value>Cannot delete document or permission denied.</value></data>
+  <data name="DocumentsSummary" xml:space="preserve"><value>Storage overview</value></data>
+  <data name="TotalDocuments" xml:space="preserve"><value>Total files</value></data>
+  <data name="TotalDocumentsHint" xml:space="preserve"><value>All active documents</value></data>
+  <data name="StorageUsed" xml:space="preserve"><value>Storage used</value></data>
+  <data name="StorageLimitHint" xml:space="preserve"><value>Max {0} per file</value></data>
+  <data name="DocTypeIdentity" xml:space="preserve"><value>Identity cards</value></data>
+  <data name="DocTypeIdentityHint" xml:space="preserve"><value>Front &amp; back citizen ID</value></data>
+  <data name="DocTypeResidenceHint" xml:space="preserve"><value>CT07 &amp; police permits</value></data>
+  <data name="PrivacyNotice" xml:space="preserve"><value>Privacy guarantee</value></data>
+  <data name="PrivacyNoticeTitle" xml:space="preserve"><value>Secure personal data vault</value></data>
+  <data name="PrivacyNoticeDesc" xml:space="preserve"><value>All documents and identity records are strictly scoped per D9/D17 regulations; only authorized owners and managers can access them.</value></data>
+  <data name="SearchDocumentsPlaceholder" xml:space="preserve"><value>Filter by file name or notes...</value></data>
+  <data name="CategoryAll" xml:space="preserve"><value>All categories</value></data>
+  <data name="CategoryIdentity" xml:space="preserve"><value>Identity records</value></data>
+  <data name="CategoryContract" xml:space="preserve"><value>Lease contracts</value></data>
+  <data name="CategoryResidence" xml:space="preserve"><value>Residence permits</value></data>
+  <data name="CategoryOther" xml:space="preserve"><value>Other files</value></data>
+  <data name="SortNewest" xml:space="preserve"><value>Newest</value></data>
+  <data name="SortOldest" xml:space="preserve"><value>Oldest</value></data>
+  <data name="SortNameAsc" xml:space="preserve"><value>Name A-Z</value></data>
+  <data name="SortSizeDesc" xml:space="preserve"><value>Largest size</value></data>
+  <data name="NoDocumentsFound" xml:space="preserve"><value>No documents found</value></data>
+  <data name="NoDocumentsFoundDesc" xml:space="preserve"><value>There are currently no files uploaded for this resident, or no files match your filter.</value></data>
+  <data name="DocumentsLoadFailed" xml:space="preserve"><value>Failed to load documents. Please retry.</value></data>
+  <data name="NoTenantFound" xml:space="preserve"><value>No tenant record</value></data>
+  <data name="NoTenantFoundDesc" xml:space="preserve"><value>Your account is not linked to a tenant profile. Please contact the property manager.</value></data>
+  <data name="SelectTenant" xml:space="preserve"><value>Select tenant</value></data>
+  <data name="FilesUnit" xml:space="preserve"><value>files</value></data>
+  <data name="RecordsUnit" xml:space="preserve"><value>records</value></data>
+  <data name="ExportList" xml:space="preserve"><value>Export list</value></data>
+  <data name="ExportSuccess" xml:space="preserve"><value>Export completed successfully.</value></data>
+  <data name="DocumentPrefix" xml:space="preserve"><value>Document</value></data>
+  <data name="DeleteDocumentConfirmMessageTail" xml:space="preserve"><value>will be deleted. This action cannot be undone.</value></data>
+  <data name="VerifiedStatusLabel" xml:space="preserve"><value>Verified</value></data>
+  <data name="PreviewFullNameLabel" xml:space="preserve"><value>FULL NAME</value></data>
+  <data name="CitizenIdLabel" xml:space="preserve"><value>CITIZEN ID</value></data>
+  <data name="ResidenceAddressLabel" xml:space="preserve"><value>PLACE OF RESIDENCE</value></data>
+  <data name="Notes" xml:space="preserve"><value>Notes</value></data>
+  <data name="DocumentCode" xml:space="preserve"><value>Document ID</value></data>
+  <data name="ShowingDocuments" xml:space="preserve"><value>Showing 1–{0} of {1} documents</value></data>
+  <data name="FileStandardsTitle" xml:space="preserve"><value>Supported File Standards</value></data>
+  <data name="FileStandardsDesc" xml:space="preserve"><value>Upload clear scans in PDF, JPG, or PNG formats up to 10 MB each. Make sure identity numbers and stamps are legible.</value></data>
+  <data name="ViewDetailsGuide" xml:space="preserve"><value>View Requirements</value></data>
+  <data name="HideDetailsGuide" xml:space="preserve"><value>Hide Requirements</value></data>
+  <data name="ExportFailed" xml:space="preserve"><value>Export failed.</value></data>
+  <data name="MyRoomTitle" xml:space="preserve"><value>My Leased Room</value></data>
+  <data name="MyRoomSubtitle" xml:space="preserve"><value>Review leased unit details, tenancy agreement, and co-residents.</value></data>
+  <data name="MyRoomLoadFailed" xml:space="preserve"><value>Could not load leased room details. Please retry.</value></data>
+  <data name="EmptyMyRoomTitle" xml:space="preserve"><value>No Leased Room</value></data>
+  <data name="EmptyMyRoomDesc" xml:space="preserve"><value>Your profile is not currently associated with an active lease. Please contact management for room assignment.</value></data>
+  <data name="LeasedRoomInfo" xml:space="preserve"><value>Unit Information</value></data>
+  <data name="LeaseContract" xml:space="preserve"><value>Lease Agreement</value></data>
+  <data name="MonthlyRent" xml:space="preserve"><value>Monthly rent</value></data>
+  <data name="DepositAmount" xml:space="preserve"><value>Security deposit</value></data>
+  <data name="DepositStatus" xml:space="preserve"><value>Deposit status</value></data>
+  <data name="DepositPaidConfirmed" xml:space="preserve"><value>Paid &amp; confirmed</value></data>
+  <data name="ContractNumber" xml:space="preserve"><value>Contract number</value></data>
+  <data name="ContractStartDate" xml:space="preserve"><value>Start date</value></data>
+  <data name="ContractEndDate" xml:space="preserve"><value>End date</value></data>
+  <data name="RoomFloor" xml:space="preserve"><value>Floor</value></data>
+  <data name="RoomArea" xml:space="preserve"><value>Area</value></data>
+  <data name="Roommates" xml:space="preserve"><value>Roommates</value></data>
+  <data name="RoommatesDesc" xml:space="preserve"><value>Other co-residents listed in the active lease.</value></data>
+  <data name="NoRoommates" xml:space="preserve"><value>No other roommates registered for this unit.</value></data>
+  <data name="CoreRentalTerms" xml:space="preserve"><value>Core Rental Terms</value></data>
+  <data name="CoreRentalTermsSubtitle" xml:space="preserve"><value>Mandatory residency rules and safety regulations.</value></data>
+  <data name="FireSafetyRuleTitle" xml:space="preserve"><value>Fire Safety &amp; Emergency Rules</value></data>
+  <data name="FireSafetyRuleDesc" xml:space="preserve"><value>Tenants must strictly maintain unobstructed emergency exit routes and refrain from charging EV battery packs inside living quarters.</value></data>
+  <data name="TerminationNoticeTitle" xml:space="preserve"><value>Termination Notice Period</value></data>
+  <data name="TerminationNoticeDesc" xml:space="preserve"><value>Provide at least 30 days prior written notice to management for move-out inspection and deposit settlement.</value></data>
+  <data name="ContractVaultSyncedNotice" xml:space="preserve"><value>This contract is digitally verified and safely mirrored in your resident document vault.</value></data>
+  <data name="ViewContractScan" xml:space="preserve"><value>My documents</value></data>
+  <data name="RenewContract" xml:space="preserve"><value>Request renewal</value></data>
+  <data name="RenewContractTitle" xml:space="preserve"><value>Request Lease Renewal</value></data>
+  <data name="RenewContractSubtitle" xml:space="preserve"><value>Send renewal proposal for Room {0} to management.</value></data>
+  <data name="RenewDuration" xml:space="preserve"><value>Proposed extension</value></data>
+  <data name="RenewNote" xml:space="preserve"><value>Message to manager</value></data>
+  <data name="RenewNotePlaceholder" xml:space="preserve"><value>Enter any special requests or notes...</value></data>
+  <data name="SendRenewRequest" xml:space="preserve"><value>Send request</value></data>
+  <data name="RenewContractSuccess" xml:space="preserve"><value>Your lease renewal request was sent to management.</value></data>
+  <data name="Months" xml:space="preserve"><value>months</value></data>
+  <data name="Sending" xml:space="preserve"><value>Sending...</value></data>
+  <data name="PreviewState" xml:space="preserve"><value>Preview state</value></data>
+  <data name="PreviewStateNormal" xml:space="preserve"><value>Normal · Populated</value></data>
+  <data name="PreviewStateEmpty" xml:space="preserve"><value>Empty state</value></data>
+  <data name="PreviewStateLoading" xml:space="preserve"><value>Loading skeleton</value></data>
+  <data name="PreviewStateError" xml:space="preserve"><value>Error state</value></data>
+  <data name="DocumentsLoadFailedDescription" xml:space="preserve"><value>An unexpected error occurred while loading your documents. Please try again.</value></data>
+  <data name="LoadFailedCode" xml:space="preserve"><value>Error code: LOAD_FAILED</value></data>
+  <data name="Retrying" xml:space="preserve"><value>Retrying…</value></data>
+  <data name="EmptyDocumentsDescription" xml:space="preserve"><value>Upload ID cards, contracts or temporary residence permits to manage them in one place.</value></data>
+  <data name="UploadFirstDocument" xml:space="preserve"><value>Upload first document</value></data>
+  <data name="NoDocumentsMatchFilters" xml:space="preserve"><value>No documents match your filter criteria.</value></data>
+  <data name="DocumentsLoading" xml:space="preserve"><value>Loading document data…</value></data>
+  <data name="BrowseFile" xml:space="preserve"><value>browse</value></data>
+  <data name="DragAndDropOr" xml:space="preserve"><value>Drag and drop file here, or</value></data>
+  <data name="Max10MB" xml:space="preserve"><value>up to 10 MB</value></data>
+  <data name="Tls13EncryptedNotice" xml:space="preserve"><value>Data is encrypted in transit with TLS 1.3 and stored securely in the building vault.</value></data>
+  <data name="ChangeFile" xml:space="preserve"><value>Choose another file</value></data>
+  <data name="Invalid" xml:space="preserve"><value>Invalid</value></data>
+  <data name="InvalidSubmissionNotice" xml:space="preserve"><value>Some information is invalid. Review the fields marked in red.</value></data>
+  <data name="Optional" xml:space="preserve"><value>optional</value></data>
+  <data name="ReadyToUpload" xml:space="preserve"><value>Ready to upload</value></data>
+  <data name="RemoveFile" xml:space="preserve"><value>Remove file</value></data>
+  <data name="SecurityChecked" xml:space="preserve"><value>Valid</value></data>
+  <data name="UnsupportedFormat" xml:space="preserve"><value>Unsupported format</value></data>
+  <data name="Upload" xml:space="preserve"><value>Upload</value></data>
+  <data name="Documents" xml:space="preserve"><value>Documents</value></data>
+  <data name="MyDocuments" xml:space="preserve"><value>My Documents</value></data>
+  <data name="TenantDocumentsUnavailable" xml:space="preserve"><value>Documents are unavailable within your assigned access scope.</value></data>
+  <data name="DuplicateDocumentType" xml:space="preserve"><value>This document type already has a file. Choose another type or delete the existing file and try again.</value></data>
+  <data name="FileUnitSingular" xml:space="preserve"><value>file</value></data>
+  <data name="EncryptionMethodLabel" xml:space="preserve"><value>256-bit AES encryption</value></data>
+  <data name="VerificationStatusLabel" xml:space="preserve"><value>VERIFICATION STATUS</value></data>
+  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Documents verified</value></data>
+  <data name="OfWord" xml:space="preserve"><value>of</value></data>
+  <data name="IdentityCardHint" xml:space="preserve"><value>ID card front and back</value></data>
+  <data name="LeaseTermTitle" xml:space="preserve"><value>LEASE TERM</value></data>
+  <data name="LeaseActiveStatus" xml:space="preserve"><value>Active</value></data>
+  <data name="LeaseActiveHint" xml:space="preserve"><value>Lease contract is currently active</value></data>
+  <data name="ImageFile" xml:space="preserve"><value>Image</value></data>
+  <data name="PdfFile" xml:space="preserve"><value>Portable Document Format</value></data>
+  <data name="RequirementChecklistTitle" xml:space="preserve"><value>Documents to prepare:</value></data>
+  <data name="RequirementIdentityDocuments" xml:space="preserve"><value>Two clear photos of the front and back of your chip-enabled citizen ID card.</value></data>
+  <data name="RequirementResidenceDocuments" xml:space="preserve"><value>Scanned CT07 or CT08 residence confirmation signed by the local police.</value></data>
+  <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Employment contract or student ID for long-term residents.</value></data>
+  <data name="PreviewDocumentIssuer" xml:space="preserve"><value>SOCIALIST REPUBLIC OF VIETNAM</value></data>
+  <data name="PhotoLabel" xml:space="preserve"><value>PHOTO</value></data>
+  <data name="VerifiedTlsLabel" xml:space="preserve"><value>TLS 1.3 verified</value></data>
+  <data name="SampleResidentAddress" xml:space="preserve"><value>Ben Thanh Ward, District 1, Ho Chi Minh City</value></data>
+  <data name="GenericFileType" xml:space="preserve"><value>FILE</value></data>
+  <data name="PersonalDocumentLabel" xml:space="preserve"><value>Personal document</value></data>
+  <data name="ContentType" xml:space="preserve"><value>Content type</value></data>
+  <data name="Actions" xml:space="preserve"><value>Actions</value></data>
+  <data name="Deleting" xml:space="preserve"><value>Deleting...</value></data>
+  <data name="LeasedRoomContractHeading" xml:space="preserve"><value>Lease &amp; Residency Terms</value></data>
+  <data name="LeasedRoomContractDescription" xml:space="preserve"><value>Details for the lease of room {0} at {1}, including legally valid electronic appendices.</value></data>
+  <data name="DownloadFullContractPdf" xml:space="preserve"><value>Download full lease agreement (PDF)</value></data>
+  <data name="RoomAreaWithValue" xml:space="preserve"><value>Area: {0} m²</value></data>
+  <data name="ContractSigningStatus" xml:space="preserve"><value>Contract status</value></data>
+  <data name="ContractNumberLabel" xml:space="preserve"><value>Contract no.: {0}</value></data>
+  <data name="RentalDuration" xml:space="preserve"><value>Lease duration</value></data>
+  <data name="DurationInMonths" xml:space="preserve"><value>{0} months</value></data>
+  <data name="CoreAgreementTerms" xml:space="preserve"><value>Core Agreement Terms</value></data>
+  <data name="IssuedByManagement" xml:space="preserve"><value>Issued by property management</value></data>
+  <data name="MonthlyRentLabel" xml:space="preserve"><value>Monthly rent</value></data>
+  <data name="MonthUnit" xml:space="preserve"><value>month</value></data>
+  <data name="MonthlyPaymentDue" xml:space="preserve"><value>Payment due: the 5th of each month.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Room deposit</value></data>
+  <data name="DepositPaidOn" xml:space="preserve"><value>Paid and recorded on {0}.</value></data>
+  <data name="SecurityAndFireSafety" xml:space="preserve"><value>Security and fire safety</value></data>
+  <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>The tenant must keep emergency exits clear and must not charge electric vehicles in sleeping areas.</value></data>
+  <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Early termination policy</value></data>
+  <data name="EarlyTerminationDescription" xml:space="preserve"><value>Give the landlord at least 30 days' notice to inventory the property and process the deposit refund.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease is securely verified and audited in the resident's personal data archive.</value></data>
+  <data name="RoomLabel" xml:space="preserve"><value>Room {0}</value></data>
+  <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
+  <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
 </root>

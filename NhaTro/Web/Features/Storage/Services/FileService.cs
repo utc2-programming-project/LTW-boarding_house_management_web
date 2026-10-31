@@ -282,6 +282,15 @@ public sealed class FileService(
             return null;
         }
 
+        // VHT-36-2B: Fix soft-deleted file download (Phát approved)
+        if (file.IsDeleted)
+        {
+            await AuditAsync(caller, FileAccessAction.Download, file.Id, file.FileCategory,
+                file.RelatedEntityType, file.RelatedEntityId, false,
+                StorageErrorCodes.FileNotFound, cancellationToken);
+            return null;
+        }
+
         var allowed = await CanDownloadAsync(db, file, caller, cancellationToken);
         if (!allowed)
         {
@@ -407,7 +416,8 @@ public sealed class FileService(
 
         var allowed = file.RelatedEntityType == RelatedEntityType.Tenant
             ? TenantDocumentPermissionRules.CanDelete(
-                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken))
+                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken),
+                file.UploadedByUserId == caller.UserId)
             : StoragePermissionRules.CanDelete(caller.Role);
 
         if (!allowed)
@@ -437,7 +447,7 @@ public sealed class FileService(
         if (file.RelatedEntityType == RelatedEntityType.Tenant)
         {
             var access = await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken);
-            return TenantDocumentPermissionRules.CanView(access);
+            return TenantDocumentPermissionRules.CanDownload(access);
         }
 
         var isUploader = file.UploadedByUserId == caller.UserId;

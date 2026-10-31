@@ -38,7 +38,21 @@ public sealed class TenantDocumentScopeService(
 
         if (caller.IsChuTro)
         {
-            return TenantDocumentAccessLevel.Owner;
+            if (string.IsNullOrWhiteSpace(caller.UserId))
+            {
+                return TenantDocumentAccessLevel.None;
+            }
+
+            var belongsToOwner = await (
+                from member in db.ContractMembers.AsNoTracking()
+                join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+                where member.TenantId == tenantId && property.OwnerId == caller.UserId
+                select property.Id
+            ).AnyAsync(cancellationToken);
+
+            return belongsToOwner ? TenantDocumentAccessLevel.Owner : TenantDocumentAccessLevel.None;
         }
 
         if (caller.IsTenant)

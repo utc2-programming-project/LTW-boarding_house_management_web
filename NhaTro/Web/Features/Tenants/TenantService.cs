@@ -649,10 +649,34 @@ public sealed class TenantService(
     {
         var today = Today();
         var rows = await RentalRows(db, tenant.Id).ToListAsync(ct);
+        var contractIds = rows.Select(row => row.ContractId).Distinct().ToArray();
+        var roommateRows = await (
+            from member in db.ContractMembers.AsNoTracking()
+            join roommate in db.Tenants.AsNoTracking() on member.TenantId equals roommate.Id
+            where contractIds.Contains(member.ContractId)
+            select new
+            {
+                member.ContractId,
+                Roommate = new TenantRoommateDto
+                {
+                    TenantId = roommate.Id,
+                    FullName = roommate.FullName,
+                    PhoneNumber = roommate.Phone,
+                }
+            }
+        ).ToListAsync(ct);
+        var roommatesByContract = roommateRows
+            .GroupBy(row => row.ContractId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<TenantRoommateDto>)group.Select(row => row.Roommate).ToList());
 
         // Đang thuê trước, rồi lịch sử mới nhất trước; giữ đủ nhiều hợp đồng lịch sử của cùng khách.
         var rentals = rows
-            .Select(row => ToRentalDto(row, today))
+            .Select(row => ToRentalDto(
+                row,
+                today,
+                roommatesByContract.GetValueOrDefault(row.ContractId, [])))
             .OrderByDescending(rental => rental.IsCurrent)
             .ThenByDescending(rental => rental.StartDate)
             .ThenByDescending(rental => rental.ContractId)
@@ -681,13 +705,18 @@ public sealed class TenantService(
             room.Code,
             property.Id,
             property.Name,
+            property.Address,
+            room.AreaM2,
             contract.StartDate,
             contract.EndDate,
             contract.SnapshotPrice,
             contract.DepositAmount,
             contract.Status);
 
-    private static TenantRentalContractDto ToRentalDto(TenantRentalRow row, DateTime today) => new()
+    private static TenantRentalContractDto ToRentalDto(
+        TenantRentalRow row,
+        DateTime today,
+        IReadOnlyList<TenantRoommateDto> roommates) => new()
     {
         ContractId = row.ContractId,
         ContractNumber = row.ContractNumber,
@@ -695,6 +724,9 @@ public sealed class TenantService(
         RoomCode = row.RoomCode,
         PropertyId = row.PropertyId,
         PropertyName = row.PropertyName,
+        PropertyAddress = row.PropertyAddress,
+        AreaM2 = row.AreaM2,
+        Roommates = roommates,
         StartDate = DateOnly.FromDateTime(row.StartDate),
         EndDate = DateOnly.FromDateTime(row.EndDate),
         SnapshotPrice = row.SnapshotPrice,
@@ -893,6 +925,8 @@ public sealed class TenantService(
         string RoomCode,
         int PropertyId,
         string PropertyName,
+        string? PropertyAddress,
+        decimal? AreaM2,
         DateTime StartDate,
         DateTime EndDate,
         decimal SnapshotPrice,

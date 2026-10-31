@@ -1,0 +1,535 @@
+.leased-room-page {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 24px;
+    color: var(--text-primary);
+}
+
+.leased-room-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+}
+
+.leased-room-title-block {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.leased-room-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.leased-room-title-row h1 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.leased-room-status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 10px;
+    border: 1px solid var(--success-border);
+    border-radius: 9999px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.leased-room-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 22px;
+    overflow-wrap: anywhere;
+}
+
+.leased-room-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.leased-room-actions .btn {
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.leased-room-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--info-border);
+    border-radius: 8px;
+    background: var(--info-bg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+.leased-room-banner-copy,
+.leased-room-banner-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--info-text);
+}
+
+.leased-room-banner-copy {
+    min-width: 0;
+}
+
+.leased-room-banner-copy .lucide-icon,
+.leased-room-banner-meta .lucide-icon {
+    flex: 0 0 20px;
+}
+
+.leased-room-banner-copy p {
+    margin: 0;
+    color: inherit;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.leased-room-banner-meta {
+    flex: 0 0 auto;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+}
+
+.leased-room-bento {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.leased-room-bento-card {
+    display: flex;
+    min-width: 0;
+    min-height: 124px;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+}
+
+.leased-room-bento-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.leased-room-bento-label,
+.leased-room-term-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.leased-room-bento-icon {
+    display: flex;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.leased-room-icon-indigo {
+    background: var(--accent-soft);
+    color: var(--primary);
+}
+
+.leased-room-icon-green {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.leased-room-icon-blue {
+    background: var(--info-bg);
+    color: var(--primary);
+}
+
+.leased-room-bento-value {
+    overflow-wrap: anywhere;
+    color: var(--text-primary);
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.leased-room-status-value {
+    color: var(--success-text);
+}
+
+.leased-room-bento-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+}
+
+.leased-room-panel {
+    width: 100%;
+    padding: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+}
+
+.leased-room-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.leased-room-panel-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+}
+
+.leased-room-panel-header > span {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 18px;
+    text-align: right;
+}
+
+.leased-room-terms-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 24px;
+}
+
+.leased-room-term {
+    min-width: 0;
+}
+
+.leased-room-term-value {
+    margin: 4px 0 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.leased-room-term-note {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.leased-room-description {
+    margin: 4px 0 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.leased-room-roommates-header {
+    align-items: flex-start;
+}
+
+.leased-room-roommates-header > div > p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.leased-room-count,
+.leased-room-self {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.leased-room-roommate-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.leased-room-roommate {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.leased-room-avatar {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.leased-room-roommate-details {
+    min-width: 0;
+}
+
+.leased-room-roommate-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: var(--text-primary);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.leased-room-roommate-phone {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+.leased-room-self {
+    min-height: 20px;
+    padding: 0 6px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.leased-room-empty {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--page-bg);
+    color: var(--text-secondary);
+}
+
+.leased-room-state {
+    width: 100%;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.leased-room-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--overlay);
+}
+
+.leased-room-dialog {
+    width: min(100%, 480px);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-dialog);
+}
+
+.leased-room-dialog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+.leased-room-dialog-header h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
+}
+
+.leased-room-dialog-header p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.leased-room-dialog-body {
+    display: grid;
+    gap: 20px;
+    padding: 24px;
+}
+
+.leased-room-dialog-field {
+    display: grid;
+    gap: 8px;
+}
+
+.leased-room-dialog-field label {
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+}
+
+.leased-room-dialog-note {
+    height: auto;
+    min-height: 112px;
+    padding: 12px;
+    resize: vertical;
+}
+
+.leased-room-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+.leased-room-dialog .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: leased-room-spin .8s linear infinite;
+}
+
+@keyframes leased-room-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1024px) {
+    .leased-room-bento {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .leased-room-roommate-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .leased-room-page {
+        gap: 20px;
+    }
+
+    .leased-room-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .leased-room-title-row h1 {
+        font-size: 24px;
+        line-height: 32px;
+    }
+
+    .leased-room-actions,
+    .leased-room-actions > * {
+        width: 100%;
+    }
+
+    .leased-room-actions > * {
+        min-height: 44px;
+    }
+
+    .leased-room-banner {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .leased-room-bento,
+    .leased-room-roommate-list,
+    .leased-room-terms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .leased-room-panel {
+        padding: 16px;
+    }
+
+    .leased-room-roommates-header {
+        align-items: flex-start;
+    }
+
+    .leased-room-dialog-header,
+    .leased-room-dialog-body {
+        padding: 16px;
+    }
+
+    .leased-room-dialog-actions {
+        flex-direction: column-reverse;
+        padding: 16px;
+    }
+
+    .leased-room-dialog-actions .btn {
+        width: 100%;
+    }
+}

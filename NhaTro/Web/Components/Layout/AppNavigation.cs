@@ -1,4 +1,4 @@
-namespace Web.Components.Layout;
+﻿namespace Web.Components.Layout;
 
 public static class AppNavigation
 {
@@ -23,7 +23,8 @@ public static class AppNavigation
         new("Approvals", "check", "ChuTro"),
         new("Trash", "trash", "ChuTro"),
         new("MyRequests", "file", "QuanLy"),
-        new("MyRoom", "door", "KhachThue"),
+        new("MyDocuments", "file-text", "KhachThue", "/documents"),
+        new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
         new("MyInvoices", "receipt", "KhachThue"),
         new("ReportIncident", "wrench", "KhachThue", "/incidents"),
         // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.

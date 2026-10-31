@@ -1,0 +1,915 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Web.Features.Storage
+@inject IStringLocalizer<Shared> L
+@inject TenantDocumentPageService DocumentService
+@inject ToastService Toasts
+
+@if (Visible)
+{
+    <div role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title"
+         class="upload-modal-backdrop" @onclick="HandleClose">
+        <div class="upload-modal-container" @onclick:stopPropagation="true">
+            <!-- Header: Background var(--surface-subtle), px 24px, py 20px -->
+            <div class="modal-header">
+                <div class="header-info">
+                    <div class="header-icon-box">
+                        <LucideIcon Name="upload" />
+                    </div>
+                    <div>
+                        <h2 id="upload-dialog-title" class="modal-title">
+                            @L["UploadDocument"]
+                        </h2>
+                        <p class="modal-subtitle">
+                            @L["UploadFileAllowedFormats"]
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button" aria-label="@L["Close"]"
+                        @onclick="HandleClose" disabled="@_isUploading" class="btn-close">
+                    <LucideIcon Name="close" />
+                </button>
+            </div>
+
+            <!-- Global validation banner -->
+            @if (_hasSubmitted && (!IsFormValid || _fileError is not null))
+            {
+                <div class="validation-banner">
+                    <LucideIcon Name="alert" />
+                    <p>@L["InvalidSubmissionNotice"]</p>
+                </div>
+            }
+
+            <!-- Form Body -->
+            <div class="modal-body">
+                <!-- Field 1: Loại giấy tờ * -->
+                <div class="form-field-group">
+                    <label class="field-label" for="doc-type-select">
+                        @L["DocumentType"] <span class="required-star">*</span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="doc-type-select" disabled="@_isUploading"
+                                class="form-select @(_hasSubmitted && string.IsNullOrWhiteSpace(_selectedCategory) ? "has-error" : null)"
+                                @bind="_selectedCategory" @bind:after="UpdateDuplicateWarning">
+                            <option value="CCCD_Front">@L["DocTypeCccdFront"]</option>
+                            <option value="CCCD_Back">@L["DocTypeCccdBack"]</option>
+                            <option value="Contract_Scan">@L["DocTypeContractScan"]</option>
+                            <option value="Temporary_Residence">@L["DocTypeResidence"]</option>
+                            <option value="Other">@L["DocTypeOther"]</option>
+                        </select>
+                        <div class="select-chevron pointer-events-none">
+                            <LucideIcon Name="chevron" />
+                        </div>
+                    </div>
+                    @if (_hasSubmitted && string.IsNullOrWhiteSpace(_selectedCategory))
+                    {
+                        <p class="inline-error">
+                            <LucideIcon Name="alert" />
+                            <span>@L["DocumentTypeRequired"]</span>
+                        </p>
+                    }
+                    else if (_duplicateTypeSelected)
+                    {
+                        <p class="inline-error" role="alert">
+                            <LucideIcon Name="alert" />
+                            <span>@L["DuplicateDocumentType"]</span>
+                        </p>
+                    }
+                </div>
+
+                <!-- Field 2: Tệp giấy tờ * -->
+                <div class="form-field-group">
+                    <div class="field-label-row">
+                        <label class="field-label" for="doc-file-input">
+                            @L["DocumentFile"] <span class="required-star">*</span>
+                        </label>
+                    </div>
+
+                    <!-- Hidden InputFile -->
+                    <InputFile @key="_fileInputKey" id="doc-file-input" OnChange="HandleFileSelected" accept=".pdf,.png,.jpg,.jpeg"
+                               class="hidden-native-input" disabled="@_isUploading" />
+
+                    @if (_selectedFile is null)
+                    {
+                        <!-- Drop Zone -->
+                        <label for="doc-file-input" class="drop-zone-card @(_fileError is not null ? "drop-zone-error" : null)">
+                            <div class="drop-cloud-icon">
+                                <LucideIcon Name="upload" />
+                            </div>
+                            <p class="drop-primary-text">
+                                @L["DragAndDropOr"] <span class="browse-link">@L["BrowseFile"]</span>
+                            </p>
+                            <p class="drop-secondary-text">
+                                PDF, JPG, JPEG, PNG — @L["Max10MB"]
+                            </p>
+                        </label>
+                    }
+                    else
+                    {
+                        <!-- Selected File Chip -->
+                        <div class="file-chip @(_fileError is not null ? "file-chip-error" : null)">
+                            <div class="file-chip-left">
+                                <div class="file-chip-icon @(_fileError is not null ? "icon-error" : "icon-primary")">
+                                    <LucideIcon Name="file-text" />
+                                </div>
+                                <div class="file-chip-info">
+                                    <div class="file-title-row">
+                                        <span class="file-display-name">@CurrentFileName</span>
+                                    </div>
+                                    <span class="file-display-sub">@CurrentFileSizeFormatted</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (_fileError is not null)
+                    {
+                        <p class="inline-error">
+                            <LucideIcon Name="alert" />
+                            <span>@_fileError</span>
+                        </p>
+                    }
+                    else if (_selectedFile is not null)
+                    {
+                        <div class="file-sub-actions">
+                            <label for="doc-file-input" class="change-file-btn">@L["ChangeFile"]</label>
+                            @if (_duplicateTypeSelected)
+                            {
+                                <span class="file-validation-status file-validation-status-error"
+                                      title="@L["DuplicateDocumentType"]" aria-label="@L["DuplicateDocumentType"]">
+                                    <LucideIcon Name="circle-x" />
+                                    <span>@L["Invalid"]</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="security-checked-badge file-validation-status">
+                                    <LucideIcon Name="circle-check" />
+                                    <span>@L["SecurityChecked"]</span>
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Field 3: Mô tả (không bắt buộc) -->
+                <div class="form-field-group">
+                    <label class="field-label" for="doc-desc-input">
+                        @L["DocumentDescription"] <span class="optional-hint">(@L["Optional"])</span>
+                    </label>
+                    <textarea id="doc-desc-input" rows="3" disabled="@_isUploading"
+                              class="form-textarea" placeholder="@L["DocumentDescriptionPlaceholder"]"
+                              @bind="_description" maxlength="500"></textarea>
+                </div>
+
+                <!-- Footnote on encryption -->
+                <div class="security-footnote">
+                    <LucideIcon Name="circle-check" />
+                    <p>@L["Tls13EncryptedNotice"]</p>
+                </div>
+            </div>
+
+            <!-- Footer: Background var(--surface-subtle), px 24px, py 16px -->
+            <div class="modal-footer">
+                <div class="footer-actions">
+                    <button type="button" class="btn-footer-secondary" disabled="@_isUploading" @onclick="HandleClose">
+                        @L["Cancel"]
+                    </button>
+                    <button type="button" class="btn-footer-primary" disabled="@_isUploading" @onclick="HandleSubmitAsync">
+                        @if (_isUploading)
+                        {
+                            <span class="loading-spin" aria-hidden="true"></span>
+                            <span>@L["UploadingDocument"]</span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="upload" />
+                            <span>@L["Upload"]</span>
+                        }
+                    </button>
+                </div>
+
+                @if (_isUploading)
+                {
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.upload-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-color: var(--overlay);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.upload-modal-container {
+    width: 100%;
+    max-width: 560px;
+    background-color: var(--surface);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px var(--shadow-dialog);
+    max-height: calc(100dvh - 32px);
+    min-height: 0;
+}
+
+.modal-header {
+    background-color: var(--surface-subtle);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex: 0 0 auto;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.header-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background-color: var(--accent-soft);
+    color: var(--primary-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modal-title {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.modal-subtitle {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-secondary);
+    margin: 2px 0 0 0;
+}
+
+.btn-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-close:hover {
+    color: var(--text-primary);
+    background-color: var(--border);
+}
+
+.validation-banner {
+    margin: 16px 24px 0 24px;
+    padding: 12px 14px;
+    background-color: var(--error-bg);
+    border: 1px solid var(--error-border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--error-text);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background-color: var(--surface);
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.form-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.required-star {
+    color: var(--error-text);
+    font-weight: 700;
+}
+
+.optional-hint {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.form-select {
+    width: 100%;
+    height: 40px;
+    padding: 0 36px 0 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--surface);
+    border: 1px solid var(--neutral-border);
+    border-radius: 8px;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.form-select:hover {
+    border-color: var(--text-disabled);
+}
+
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.form-select.has-error {
+    border-color: var(--error-text);
+    background-color: var(--error-bg);
+    box-shadow: 0 0 0 1.5px var(--error-text);
+}
+
+.select-chevron {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.field-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hidden-native-input {
+    display: none;
+}
+
+.drop-zone-card {
+    border: 2px dashed var(--neutral-border);
+    border-radius: 12px;
+    padding: 36px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: var(--page-bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drop-zone-card:hover {
+    border-color: var(--primary);
+    background-color: rgba(238, 242, 255, 0.4);
+}
+
+.drop-zone-card.drop-zone-error {
+    border-color: var(--error-text);
+    background-color: var(--error-bg);
+}
+
+.drop-cloud-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.drop-primary-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.browse-link {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.drop-secondary-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+.file-chip {
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--page-bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.file-chip.file-chip-error {
+    background-color: var(--error-bg);
+    border-color: var(--error-text);
+    box-shadow: 0 0 0 1px var(--error-text);
+}
+
+.file-chip-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.file-chip-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.file-chip-icon.icon-primary {
+    background-color: var(--accent-soft);
+    color: var(--primary);
+}
+
+.file-chip-icon.icon-error {
+    background-color: var(--surface);
+    color: var(--error-text);
+}
+
+.file-chip-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.file-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-display-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-display-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.file-validation-status { display: inline-flex; align-items: center; gap: 4px; }
+.file-validation-status svg { width: 20px; height: 20px; }
+.file-validation-status-error { color: var(--error-text); }
+
+.file-sub-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    padding-top: 4px;
+}
+
+.change-file-btn {
+    color: var(--primary);
+    text-decoration: underline;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.security-checked-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--success-text);
+}
+
+.inline-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--error-text);
+    margin: 4px 0 0 0;
+}
+
+.form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-primary);
+    background-color: var(--surface);
+    border: 1px solid var(--neutral-border);
+    border-radius: 8px;
+    outline: none;
+    resize: none;
+    transition: all 0.15s ease;
+}
+
+.form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.security-footnote {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: var(--page-bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+}
+
+.security-footnote p {
+    font-size: 12px;
+    line-height: 18px;
+    margin: 0;
+}
+
+.modal-footer {
+    background-color: var(--surface-subtle);
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 0 0 auto;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-footer-secondary {
+    height: 40px;
+    padding: 0 20px;
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--neutral-border);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-footer-secondary:hover {
+    background-color: var(--page-bg);
+}
+
+.btn-footer-primary {
+    height: 40px;
+    padding: 0 20px;
+    background-color: var(--primary);
+    color: var(--surface);
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-footer-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-footer-primary:active {
+    background-color: var(--primary-pressed);
+}
+
+.btn-footer-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.loading-spin {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--surface);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@@media (max-width: 767px) {
+    .upload-modal-backdrop { padding: 8px; align-items: flex-end; }
+    .upload-modal-container { width: 100%; max-width: none; max-height: calc(100dvh - 16px); border-radius: 16px 16px 0 0; }
+    .modal-header { padding: 16px; }
+    .modal-body { padding: 16px; }
+    .modal-footer { position: sticky; bottom: 0; padding: 12px 16px; }
+    .footer-actions { width: 100%; }
+    .footer-actions > button { min-height: 44px; flex: 1 1 0; justify-content: center; }
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 2px;
+    background-color: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: var(--primary);
+    border-radius: 999px;
+    width: 40%;
+    animation: indeterminateProgress 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@@keyframes indeterminateProgress {
+    0% { left: -40%; width: 35%; }
+    50% { left: 30%; width: 55%; }
+    100% { left: 100%; width: 35%; }
+}
+</style>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public int TenantId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnUploadSuccess { get; set; }
+
+    private string _selectedCategory = "CCCD_Front";
+    private string? _description;
+    private IBrowserFile? _selectedFile;
+    private string? _fileError;
+    private bool _isUploading;
+    private bool _hasSubmitted;
+    private bool _duplicateTypeSelected;
+    private int _fileInputKey;
+    private bool _wasVisible;
+    private int? _loadedTenantId;
+    private readonly HashSet<string> _existingTypeCodes = new(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] ValidExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
+    private const long MaxSizeBytes = 10L * 1024 * 1024; // 10MB
+
+    private string CurrentFileName => _selectedFile?.Name ?? string.Empty;
+    private long CurrentFileSize => _selectedFile?.Size ?? 0;
+    private string CurrentFileSizeFormatted => FormatFileSize(CurrentFileSize);
+
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(_selectedCategory) &&
+        _selectedFile is not null &&
+        _fileError is null &&
+        !_duplicateTypeSelected;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible)
+        {
+            _wasVisible = false;
+            return;
+        }
+
+        if (_wasVisible && _loadedTenantId == TenantId)
+        {
+            return;
+        }
+
+        _wasVisible = true;
+        _loadedTenantId = TenantId;
+        _existingTypeCodes.Clear();
+        try
+        {
+            var documents = await DocumentService.GetDocumentsAsync(TenantId);
+            foreach (var document in documents?.Items ?? [])
+            {
+                var typeCode = TenantDocumentTypeRules.TypeCodes.FirstOrDefault(code =>
+                    TenantDocumentTypeRules.DescriptionMatches(document.Description, code));
+                if (typeCode is not null)
+                {
+                    _existingTypeCodes.Add(typeCode);
+                }
+            }
+        }
+        catch
+        {
+            // Backend still enforces the duplicate rule if this pre-check cannot load.
+        }
+
+        UpdateDuplicateWarning();
+    }
+
+    private void UpdateDuplicateWarning() =>
+        _duplicateTypeSelected = _existingTypeCodes.Contains(_selectedCategory);
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        ValidateFile();
+    }
+
+    private void ClearSelectedFile()
+    {
+        _selectedFile = null;
+        _fileError = null;
+        _fileInputKey++;
+    }
+
+    private bool ValidateFile()
+    {
+        _fileError = null;
+        var name = CurrentFileName;
+        var size = CurrentFileSize;
+
+        if (string.IsNullOrEmpty(name))
+        {
+            if (_hasSubmitted)
+            {
+                _fileError = L["FileRequired"].Value;
+                return false;
+            }
+            return true;
+        }
+
+        var ext = Path.GetExtension(name).ToLowerInvariant();
+        if (!ValidExtensions.Contains(ext))
+        {
+            _fileError = L["FileTypeNotAllowed"].Value;
+            return false;
+        }
+
+        if (size > MaxSizeBytes)
+        {
+            _fileError = L["FileSizeExceeded"].Value;
+            return false;
+        }
+
+        if (size == 0)
+        {
+            _fileError = L["EmptyFile"].Value;
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        _hasSubmitted = true;
+        UpdateDuplicateWarning();
+        if (_duplicateTypeSelected)
+        {
+            Toasts.Error(L["DuplicateDocumentType"].Value);
+            ClearSelectedFile();
+            return;
+        }
+
+        if (!ValidateFile() || string.IsNullOrWhiteSpace(_selectedCategory) || _selectedFile is null)
+        {
+            return;
+        }
+
+        _isUploading = true;
+        try
+        {
+            var result = await DocumentService.UploadDocumentAsync(TenantId, _selectedFile, _selectedCategory, _description);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["DocumentUploadSuccess"]);
+                await OnUploadSuccess.InvokeAsync();
+                ResetForm();
+                await OnClose.InvokeAsync();
+            }
+            else
+            {
+                if (result.ErrorCode == StorageErrorCodes.DuplicateDocumentType)
+                {
+                    _existingTypeCodes.Add(_selectedCategory);
+                    UpdateDuplicateWarning();
+                    Toasts.Error(L["DuplicateDocumentType"].Value);
+                    ClearSelectedFile();
+                }
+                else
+                {
+                    var messageKey = result.ErrorCode switch
+                    {
+                        StorageErrorCodes.InvalidFileType => "FileTypeNotAllowed",
+                        StorageErrorCodes.FileSizeExceeded => "FileSizeExceeded",
+                        StorageErrorCodes.EmptyFile => "EmptyFile",
+                        StorageErrorCodes.Forbidden => "DocumentAccessDenied",
+                        _ => "DocumentUploadFailed"
+                    };
+                    Toasts.Error(L[messageKey].Value);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error($"{L["DocumentUploadFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private void HandleClose()
+    {
+        if (!_isUploading)
+        {
+            ResetForm();
+            OnClose.InvokeAsync();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _selectedCategory = "CCCD_Front";
+        _selectedFile = null;
+        _description = null;
+        _fileError = null;
+        _hasSubmitted = false;
+        _isUploading = false;
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes <= 0) return "0 B";
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+    }
+}
