@@ -6,6 +6,7 @@ using Web.Features.Rooms.Entities;
 using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
+using Web.Features.Utilities.Entities;
 
 namespace Web.Data
 {
@@ -21,6 +22,9 @@ namespace Web.Data
 
         // VHT-94: 21 cong tac Quan ly (SW-01..SW-16 + SW-15a..e).
         public DbSet<ManagerToggle> ManagerToggles => Set<ManagerToggle>();
+
+        public DbSet<ServiceCatalog> ServiceCatalogs => Set<ServiceCatalog>();
+        public DbSet<ServicePriceHistory> ServicePriceHistories => Set<ServicePriceHistory>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
