@@ -212,6 +212,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             OwnerCaller));
 
         Assert.Equal(ContractErrorCodes.ContractOverlap, exception.ErrorCode);
+        Assert.Equal(ContractErrorMessages.ContractOverlap, exception.Message);
 
         await using var reloadedDb = fixture.CreateContext();
         Assert.Equal(ContractStatus.Pending,
@@ -409,18 +410,19 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         {
             await dbContext.Database.ExecuteSqlRawAsync(ContractOverlapTriggerSql.CreateOrAlter);
 
-            var service = new ContractService(dbContext);
-            var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
-                candidateId,
-                new ApproveContractRequestDto { IsApproved = true },
-                OwnerCaller));
+            // Ghi trực tiếp để kiểm tra trigger, không đi qua bước chặn trùng của service.
+            var exception = await Assert.ThrowsAsync<SqlException>(() =>
+                dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE [Contracts] SET [Status] = {(int)ContractStatus.Approved} WHERE [ContractId] = {candidateId}"));
 
-            Assert.Equal(ContractErrorCodes.ContractOverlap, exception.ErrorCode);
-            Assert.Equal(ContractErrorMessages.ContractOverlap, exception.Message);
-            Assert.Equal(51030, FindSqlException(exception)?.Number);
+            Assert.Equal(51030, exception.Number);
+            Assert.Contains("ContractOverlap", exception.Message);
             await using var reloadedDb = fixture.CreateContext();
             Assert.Equal(ContractStatus.Pending,
                 (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == candidateId)).Status);
+            Assert.Single(await reloadedDb.Contracts
+                .Where(item => item.RoomId == roomId && item.Status == ContractStatus.Approved)
+                .ToListAsync());
         }
         finally
         {
@@ -552,19 +554,6 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         }
 
         await fixture.ResetAsync();
-    }
-
-    private static SqlException? FindSqlException(Exception? exception)
-    {
-        for (var current = exception; current is not null; current = current.InnerException)
-        {
-            if (current is SqlException sqlException)
-            {
-                return sqlException;
-            }
-        }
-
-        return null;
     }
 
     private static async Task<Tenant> AddTenantAsync(ApplicationDbContext db, string fullName, string phone)
