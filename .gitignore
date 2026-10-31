@@ -32,4 +32,6 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 
-scripts/*   
+scripts/*
+!scripts/database/
+!scripts/database/*.ps1   
