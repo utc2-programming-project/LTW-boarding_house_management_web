@@ -140,6 +140,50 @@ public sealed class UtilityTariffRulesTests
     }
 
     [Fact]
+    public void Calculate_RoundsEachCostLineToWholeVndAndKeepsNormalizedQuantity()
+    {
+        UtilityTariffTier[] tiers =
+        [
+            new() { TierNumber = 1, From = 0m, To = 0.5m, UnitPrice = 1m },
+            new() { TierNumber = 2, From = 0.5m, To = 1m, UnitPrice = 1m },
+            new() { TierNumber = 3, From = 1m, To = null, UnitPrice = 1m },
+        ];
+
+        var normalizedQuantity = UtilityTariffRules.NormalizeQuantity(1.00005m);
+        var lines = UtilityTariffRules.Calculate(normalizedQuantity, tiers);
+
+        Assert.Equal(1.0001m, normalizedQuantity);
+        Assert.Equal(normalizedQuantity, lines.Sum(line => line.Quantity));
+        Assert.All(lines, line => Assert.Equal(decimal.Truncate(line.Amount), line.Amount));
+        Assert.Equal(2m, lines.Sum(line => line.Amount));
+    }
+
+    [Fact]
+    public void Calculate_ZeroUsageHasNoCostLines()
+    {
+        var tiers = UtilityTariffSeedData.Tiers.Where(tier => tier.UtilityTariffId == 1).ToArray();
+
+        var lines = UtilityTariffRules.Calculate(0m, tiers);
+
+        Assert.Empty(lines);
+    }
+
+    [Fact]
+    public void SplitByEffectiveDates_HandlesEffectiveDateAtPeriodStartAndEnd()
+    {
+        var start = new DateOnly(2024, 10, 1);
+        var end = new DateOnly(2024, 10, 31);
+
+        var startsOnEffectiveDate = UtilityTariffRules.SplitByEffectiveDates(start, end, [start]);
+        var endsOnEffectiveDate = UtilityTariffRules.SplitByEffectiveDates(start, end, [end]);
+
+        Assert.Equal([new TariffPeriodSegment(start, end)], startsOnEffectiveDate);
+        Assert.Equal(
+            [new TariffPeriodSegment(start, end.AddDays(-1)), new TariffPeriodSegment(end, end)],
+            endsOnEffectiveDate);
+    }
+
+    [Fact]
     public void Calculate_RejectsNegativeUsageAndMalformedTierSchedule()
     {
         var electricTiers = UtilityTariffSeedData.Tiers.Where(tier => tier.UtilityTariffId == 1).ToArray();

@@ -1,10 +1,20 @@
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
+using Web.Common.Utils;
 
 namespace Web.Features.Utilities.Rules;
 
 public static class UtilityTariffRules
 {
+    public const int QuantityScale = 4;
+
+    /// <summary>Matches the database quantity scale so returned and persisted snapshots round-trip exactly.</summary>
+    public static decimal NormalizeQuantity(decimal quantity)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(quantity);
+        return Math.Round(quantity, QuantityScale, MidpointRounding.AwayFromZero);
+    }
+
     public static void EnsureValidPeriod(DateOnly periodStart, DateOnly periodEnd)
     {
         if (periodEnd < periodStart)
@@ -106,11 +116,14 @@ public static class UtilityTariffRules
         }
 
         var lines = new List<TariffTierDto>();
+        var remaining = NormalizeQuantity(quantity);
         foreach (var tier in ordered)
         {
-            var from = tier.From * tierLimitMultiplier;
-            var to = tier.To * tierLimitMultiplier;
-            var tierQuantity = Math.Max(0m, Math.Min(quantity, to ?? quantity) - from);
+            var isLast = tier.TierNumber == ordered[^1].TierNumber;
+            var tierCapacity = tier.To is null
+                ? remaining
+                : NormalizeQuantity((tier.To.Value - tier.From) * tierLimitMultiplier);
+            var tierQuantity = isLast ? remaining : Math.Min(remaining, tierCapacity);
             if (tierQuantity > 0m)
             {
                 lines.Add(new TariffTierDto(
@@ -119,8 +132,10 @@ public static class UtilityTariffRules
                     tier.UnitPrice,
                     tier.TierNumber,
                     tierQuantity,
-                    tierQuantity * tier.UnitPrice));
+                    MoneyFormatter.RoundVnd(tierQuantity * tier.UnitPrice)));
             }
+
+            remaining -= tierQuantity;
         }
 
         return lines;

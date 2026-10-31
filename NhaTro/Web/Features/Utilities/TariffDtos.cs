@@ -44,9 +44,6 @@ namespace Web.Features.Utilities
 
 namespace BoardingHouse.Web.Features.Utilities
 {
-    public enum TariffType { Electric, Water }
-    public record TariffTierDto(decimal From, decimal? To, decimal Price);
-    public record TariffDto(TariffType Type, DateOnly EffectiveFrom, IReadOnlyList<TariffTierDto> Tiers);
     public record ServiceLineDto(int ServiceId, string Name, decimal UnitPrice, string? Unit);
     public record ServicePriceDto(int ServiceId, string Name, decimal UnitPrice, DateOnly EffectiveFrom);
 }

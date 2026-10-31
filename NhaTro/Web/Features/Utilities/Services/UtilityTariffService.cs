@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Utils;
 using Web.Data;
 using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Rules;
@@ -29,6 +30,8 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
             throw new ArgumentOutOfRangeException(nameof(quantity), "Consumption cannot be negative.");
         }
 
+        quantity = UtilityTariffRules.NormalizeQuantity(quantity);
+
         var effectiveDates = await dbContext.UtilityTariffs
             .AsNoTracking()
             .Where(item => item.Type == type
@@ -41,11 +44,12 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
 
         var segments = UtilityTariffRules.SplitByEffectiveDates(periodStart, periodEnd, effectiveDates);
         var totalDays = periodEnd.DayNumber - periodStart.DayNumber + 1;
+        var allocatedQuantity = 0m;
         var tiers = new List<TariffTierDto>();
         var appliedVersions = new List<UtilityTariff>();
-        decimal total = 0m;
-        foreach (var segment in segments)
+        for (var segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
         {
+            var segment = segments[segmentIndex];
             var tariff = await UtilityTariffRules.QueryEffective(
                     dbContext.UtilityTariffs
                         .AsNoTracking()
@@ -71,7 +75,13 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
             }
 
             var segmentDays = segment.End.DayNumber - segment.Start.DayNumber + 1;
-            var segmentQuantity = UtilityTariffRules.AllocateQuantityByDays(quantity, segmentDays, totalDays);
+            var segmentQuantity = segmentIndex == segments.Count - 1
+                ? quantity - allocatedQuantity
+                : Math.Round(
+                    UtilityTariffRules.AllocateQuantityByDays(quantity, segmentDays, totalDays),
+                    UtilityTariffRules.QuantityScale,
+                    MidpointRounding.AwayFromZero);
+            allocatedQuantity += segmentQuantity;
             var segmentTierLimitMultiplier = (tariff.IsPerResident ? residentCount : 1)
                 * segmentDays / (decimal)totalDays;
             var applied = UtilityTariffRules.Calculate(
@@ -84,16 +94,16 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
             foreach (var tariffTier in tariff.Tiers.OrderBy(item => item.TierNumber))
             {
                 applied.TryGetValue(tariffTier.TierNumber, out var appliedLine);
+                var roundedAmount = MoneyFormatter.RoundVnd(appliedLine?.Amount ?? 0m);
                 tiers.Add(new TariffTierDto(
                     tariffTier.From,
                     tariffTier.To,
                     tariffTier.UnitPrice,
                     tariffTier.TierNumber,
                     appliedLine?.Quantity ?? 0m,
-                    appliedLine?.Amount ?? 0m,
+                    roundedAmount,
                     tariff.Id,
                     tariff.EffectiveDate));
-                total += appliedLine?.Amount ?? 0m;
             }
         }
 
@@ -111,7 +121,7 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
             primaryTariff.SourceReference,
             quantity,
             primaryTariff.IsPerResident ? residentCount : 1,
-            total,
+            tiers.Sum(tier => tier.Amount),
             TariffVersionIds: appliedVersions.Select(item => item.Id).Distinct().ToArray());
     }
 
