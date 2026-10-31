@@ -4,7 +4,7 @@ namespace Web.Features.Utilities.Services;
 
 public interface IServiceCatalogService
 {
-    Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(int userId, string userRole);
+    Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(string userRole);
 
     Task<ServiceCatalogDto> CreateOrUpdateServicePriceAsync(
         CreateServiceCatalogDto request,

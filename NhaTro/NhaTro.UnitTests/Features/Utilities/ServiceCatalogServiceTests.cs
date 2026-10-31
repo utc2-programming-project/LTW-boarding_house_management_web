@@ -70,7 +70,7 @@ public sealed class ServiceCatalogServiceTests
     {
         var service = new ServiceCatalogService(null!);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetServiceCatalogsAsync(1, role));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetServiceCatalogsAsync(role));
     }
 
     private static CreateServiceCatalogDto ValidCreateRequest() => new()

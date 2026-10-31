@@ -75,9 +75,79 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         await db.SaveChangesAsync();
         var service = new ServiceCatalogService(db);
 
-        Assert.Single(await service.GetServiceCatalogsAsync(1, Roles.ChuTro));
-        Assert.Single(await service.GetServiceCatalogsAsync(1, Roles.QuanLy));
-        Assert.Single(await service.GetServiceCatalogsAsync(1, Roles.KhachThue));
+        Assert.Single(await service.GetServiceCatalogsAsync(Roles.ChuTro));
+        Assert.Single(await service.GetServiceCatalogsAsync(Roles.QuanLy));
+        Assert.Single(await service.GetServiceCatalogsAsync(Roles.KhachThue));
+    }
+
+    [SqlServerFact]
+    public async Task GetServiceCatalogsAsync_SelectsMostRecentPriceEffectiveToday()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        db.ServiceCatalogs.Add(CatalogWithPrices(
+            ("Earlier", 100_000m, new DateOnly(2026, 1, 1)),
+            ("Current", 120_000m, new DateOnly(2026, 10, 1)),
+            ("Upcoming", 150_000m, new DateOnly(2026, 12, 1))));
+        await db.SaveChangesAsync();
+
+        var service = new ServiceCatalogService(
+            db,
+            new FixedTimeProvider(new DateTimeOffset(2026, 10, 31, 12, 0, 0, TimeSpan.Zero)));
+
+        var catalog = Assert.Single(await service.GetServiceCatalogsAsync(Roles.ChuTro));
+        Assert.Equal("Current", catalog.Name);
+        Assert.Equal(120_000m, catalog.UnitPrice);
+        Assert.Equal(new DateOnly(2026, 10, 1), catalog.EffectiveDate);
+    }
+
+    [SqlServerFact]
+    public async Task GetServiceCatalogsAsync_ReturnsNextScheduledPriceWhenAllVersionsAreFuture()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        db.ServiceCatalogs.Add(CatalogWithPrices(
+            ("Later", 150_000m, new DateOnly(2026, 12, 1)),
+            ("Next", 120_000m, new DateOnly(2026, 11, 1))));
+        await db.SaveChangesAsync();
+
+        var service = new ServiceCatalogService(
+            db,
+            new FixedTimeProvider(new DateTimeOffset(2026, 10, 31, 12, 0, 0, TimeSpan.Zero)));
+
+        var catalog = Assert.Single(await service.GetServiceCatalogsAsync(Roles.ChuTro));
+        Assert.Equal("Next", catalog.Name);
+        Assert.Equal(120_000m, catalog.UnitPrice);
+        Assert.Equal(new DateOnly(2026, 11, 1), catalog.EffectiveDate);
+    }
+
+    [SqlServerFact]
+    public async Task CreateOrUpdateServicePriceAsync_RejectsDuplicateEffectiveDate()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        var service = new ServiceCatalogService(db);
+        var effectiveDate = new DateOnly(2026, 11, 1);
+        var catalog = await service.CreateOrUpdateServicePriceAsync(
+            CreateRequest("Internet", "phòng", "fixed-monthly", 100_000m, effectiveDate),
+            1,
+            Roles.ChuTro);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateOrUpdateServicePriceAsync(
+                catalog.Id,
+                UpdateRequest("Internet", "phòng", "fixed-monthly", 150_000m, effectiveDate),
+                1,
+                Roles.ChuTro));
+
+        Assert.Contains("hiệu lực", exception.Message, StringComparison.OrdinalIgnoreCase);
+
+        await using var verificationDb = fixture.CreateContext();
+        var storedHistory = await verificationDb.ServicePriceHistories
+            .Where(version => version.ServiceCatalogId == catalog.Id)
+            .ToListAsync();
+        var storedVersion = Assert.Single(storedHistory);
+        Assert.Equal(100_000m, storedVersion.UnitPrice);
     }
 
     [SqlServerFact]
@@ -140,4 +210,29 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         UnitPrice = unitPrice,
         EffectiveDate = effectiveDate,
     };
+
+    private static ServiceCatalog CatalogWithPrices(params (string Name, decimal Price, DateOnly Date)[] prices)
+    {
+        var catalog = new ServiceCatalog();
+        foreach (var (name, price, date) in prices)
+        {
+            catalog.PriceHistory.Add(new ServicePriceHistory
+            {
+                Name = name,
+                Unit = "phòng",
+                CalculationMethod = "fixed-monthly",
+                UnitPrice = price,
+                EffectiveDate = date,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = 1,
+            });
+        }
+
+        return catalog;
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 }

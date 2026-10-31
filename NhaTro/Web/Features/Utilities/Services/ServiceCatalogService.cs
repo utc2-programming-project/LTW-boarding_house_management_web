@@ -19,7 +19,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(int userId, string userRole)
+    public async Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(string userRole)
     {
         EnsureCanView(userRole);
         var today = _timeProvider.TodayVietnam();
@@ -146,6 +146,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
                 version.EffectiveDate))
             .ToArray();
 
+        // If every version is scheduled for the future, expose the next scheduled version.
+        // Its EffectiveDate remains visible so callers can distinguish it from an active price.
         var current = history
             .Where(version => version.EffectiveDate <= today)
             .OrderByDescending(version => version.EffectiveDate)
