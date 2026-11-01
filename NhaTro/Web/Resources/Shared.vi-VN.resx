@@ -1069,4 +1069,7 @@
   <data name="ContractStatusApproved" xml:space="preserve"><value>Đang hiệu lực</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
+  <data name="CloseNotification" xml:space="preserve">
+    <value>Đóng thông báo</value>
+  </data>
 </root>

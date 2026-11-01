@@ -39,29 +39,29 @@
             <div class="contract-live-grid">
                 <div class="contract-field">
                     <label for="property-select">@L["ContractPropertyLabel"]</label>
-                    <InputSelect id="property-select" class="input" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
+                    <InputSelect id="property-select" class="@FieldClass(_propertyError)" aria-invalid="@(_propertyError is not null ? "true" : "false")" aria-describedby="@(_propertyError is not null ? "property-error" : null)" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
                         <option value="">@L["ContractPropertyPlaceholder"]</option>
                         @foreach (var property in _options.Properties) { <option value="@property.Id">@property.Name</option> }
                     </InputSelect>
-                    @if (_propertyError is not null) { <small class="contract-field-error">@_propertyError</small> }
+                    @if (_propertyError is not null) { <small id="property-error" class="contract-field-error">@_propertyError</small> }
                 </div>
                 <div class="contract-field">
                     <label for="room-select">@L["ContractRoomLabel"]</label>
-                    <InputSelect id="room-select" class="input" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
+                    <InputSelect id="room-select" class="@FieldClass(_roomError)" aria-invalid="@(_roomError is not null ? "true" : "false")" aria-describedby="@(_roomError is not null ? "room-error" : null)" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
                         <option value="">@L["ContractRoomPlaceholder"]</option>
                         @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
                     </InputSelect>
-                    @if (_roomError is not null) { <small class="contract-field-error">@_roomError</small> }
+                    @if (_roomError is not null) { <small id="room-error" class="contract-field-error">@_roomError</small> }
                 </div>
                 <div class="contract-field">
                     <label for="start-date">@L["ContractStartDate"]</label>
-                    <InputDate id="start-date" class="input" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
-                    @if (_startDateError is not null) { <small class="contract-field-error">@_startDateError</small> }
+                    <InputDate id="start-date" class="@FieldClass(_startDateError)" aria-invalid="@(_startDateError is not null ? "true" : "false")" aria-describedby="@(_startDateError is not null ? "start-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+                    @if (_startDateError is not null) { <small id="start-date-error" class="contract-field-error">@_startDateError</small> }
                 </div>
                 <div class="contract-field">
                     <label for="end-date">@L["ContractEndDate"]</label>
-                    <InputDate id="end-date" class="input" TValue="DateOnly?" @bind-Value="_form.EndDate" />
-                    @if (_endDateError is not null) { <small class="contract-field-error">@_endDateError</small> }
+                    <InputDate id="end-date" class="@FieldClass(_endDateError)" aria-invalid="@(_endDateError is not null ? "true" : "false")" aria-describedby="@(_endDateError is not null ? "end-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.EndDate" />
+                    @if (_endDateError is not null) { <small id="end-date-error" class="contract-field-error">@_endDateError</small> }
                 </div>
             </div>
             @if (SelectedRoom is { } selectedRoom)
@@ -98,6 +98,8 @@
     private readonly List<string> _errors = [];
     private string? _propertyError, _roomError, _startDateError, _endDateError, _tenantError;
     private bool _loading = true, _failed, _submitting;
+
+    private static string FieldClass(string? error) => error is null ? "input" : "input is-invalid";
 
     protected override async Task OnInitializedAsync()
     {
