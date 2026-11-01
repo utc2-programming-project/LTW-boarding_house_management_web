@@ -14,7 +14,7 @@ public sealed class TenantPageService(AuthenticationStateProvider authentication
     public async Task<string> GetCurrentRoleAsync()
     {
         var user = (await authenticationState.GetAuthenticationStateAsync()).User;
-        return Roles.All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+        return Roles.ResolvePrimaryRole(user);
     }
 
     public async Task<Web.Common.Models.PagedResult<TenantListItemDto>> ListAsync(
@@ -82,7 +82,7 @@ public sealed class TenantPageService(AuthenticationStateProvider authentication
     {
         var user = (await authenticationState.GetAuthenticationStateAsync()).User;
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        var role = Roles.All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+        var role = Roles.ResolvePrimaryRole(user);
         return new TenantCaller(userId, role);
     }
 }
