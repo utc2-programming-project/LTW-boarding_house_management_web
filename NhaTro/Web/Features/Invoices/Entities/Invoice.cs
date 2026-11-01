@@ -1,0 +1,36 @@
+using Web.Features.Invoices.Enums;
+
+namespace Web.Features.Invoices.Entities;
+
+/// <summary>
+/// Hóa đơn P6 của một hợp đồng trong một kỳ. Kỳ là khoảng ngày thuần do P5 chốt,
+/// tính cả ngày đầu và ngày cuối. Một hợp đồng chỉ có một hóa đơn cho mỗi ngày bắt đầu kỳ.
+/// </summary>
+public sealed class Invoice
+{
+    public int Id { get; set; }
+
+    public Guid ContractId { get; set; }
+
+    /// <summary>Ngày đầu kỳ (bao gồm), kiểu date không cộng trừ múi giờ.</summary>
+    public DateOnly PeriodStart { get; set; }
+
+    /// <summary>Ngày cuối kỳ (bao gồm), kiểu date không cộng trừ múi giờ.</summary>
+    public DateOnly PeriodEnd { get; set; }
+
+    public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
+
+    /// <summary>Tổng hóa đơn VND, bằng tổng thành tiền các dòng đã làm tròn.</summary>
+    public decimal TotalAmount { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>Thời điểm chuyển từ Draft sang Issued; null khi còn nháp.</summary>
+    public DateTime? IssuedAt { get; set; }
+
+    public byte[] RowVersion { get; set; } = [];
+
+    public ICollection<InvoiceItem> Items { get; set; } = new List<InvoiceItem>();
+}

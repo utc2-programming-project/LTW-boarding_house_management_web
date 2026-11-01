@@ -1,0 +1,353 @@
+@page "/invoices"
+@page "/my-invoices"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "InvoiceView")]
+@inject IInvoiceQueryService InvoiceQuery
+@inject P2CallerProvider CallerProvider
+@inject NavigationManager Navigation
+@inject IStringLocalizer<InvoiceResources> L
+
+<PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
+
+<div class="invoice-page">
+    <BreadcrumbNav Items="@Breadcrumbs" />
+
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">@L[IsMyInvoices ? "MyHeading" : "Heading"]</h1>
+            <p class="page-subtitle">@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="page-error" role="alert">
+            <p>@_error</p>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">@L["StatDraft"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.DraftCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@L["StatIssued"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.IssuedCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@L["StatPaid"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.PaidCount</span>
+            </div>
+            <div class="stat-card outstanding-card">
+                <span class="stat-label">@L["StatOutstanding"]</span>
+                <span class="stat-number tabular-nums">@MoneyFormatter.Format(_result.Summary.OutstandingAmount)</span>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filters-row">
+                <label class="filter-field">
+                    <span>@L["FilterYear"]</span>
+                    <select class="input" @bind="_year" @bind:after="OnFilterChanged">
+                        <option value="">@L["AllYears"]</option>
+                        @foreach (var year in AvailableYears)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterMonth"]</span>
+                    <select class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChanged">
+                        <option value="">@L["AllMonths"]</option>
+                        @for (var month = 1; month <= 12; month++)
+                        {
+                            <option value="@month">@string.Format(L["MonthValue"], month)</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field wide">
+                    <span>@L["FilterContract"]</span>
+                    <select class="input" @bind="_contractId" @bind:after="OnFilterChanged">
+                        <option value="">@L["AllContracts"]</option>
+                        @foreach (var option in _contractOptions)
+                        {
+                            <option value="@option.ContractId">@option.ContractNumber · @option.RoomCode</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterStatus"]</span>
+                    <select class="input" @bind="_status" @bind:after="OnFilterChanged">
+                        <option value="">@L["AllStatuses"]</option>
+                        <option value="@InvoiceStatus.Draft">@L["StatusDraft"]</option>
+                        <option value="@InvoiceStatus.Issued">@L["StatusIssued"]</option>
+                        <option value="@InvoiceStatus.Paid">@L["StatusPaid"]</option>
+                    </select>
+                </label>
+
+                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["ResetFilter"]</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="table-card">
+            @if (_result.Items.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="invoice-table">
+                        <thead>
+                            <tr>
+                                <th>@L["ThInvoice"]</th>
+                                <th>@L["ThPeriod"]</th>
+                                <th>@L["ThContract"]</th>
+                                <th>@L["ThRoomProperty"]</th>
+                                <th>@L["ThTenants"]</th>
+                                <th>@L["ThStatus"]</th>
+                                <th class="text-right">@L["ThTotal"]</th>
+                                <th class="text-right">@L["ThOutstanding"]</th>
+                                <th class="text-right">@L["ThActions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invoice in _result.Items)
+                            {
+                                <tr>
+                                    <td class="font-semibold">HD-@invoice.Id</td>
+                                    <td class="tabular-nums">@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
+                                    <td>@invoice.ContractNumber</td>
+                                    <td>
+                                        <span class="room-code">@invoice.RoomCode</span>
+                                        <span class="property-name">@invoice.PropertyName</span>
+                                    </td>
+                                    <td>
+                                        @if (invoice.TenantNames.Count == 0)
+                                        {
+                                            <span class="muted">@L["NoTenants"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@string.Join(", ", invoice.TenantNames)</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <StatusBadge Text="@StatusText(invoice.Status)" Tone="@StatusTone(invoice.Status)" />
+                                    </td>
+                                    <td class="text-right tabular-nums">@MoneyFormatter.Format(invoice.TotalAmount)</td>
+                                    <td class="text-right tabular-nums @(invoice.OutstandingAmount > 0 ? "outstanding" : "")">
+                                        @MoneyFormatter.Format(invoice.OutstandingAmount)
+                                    </td>
+                                    <td class="text-right">
+                                        <button type="button"
+                                                class="icon-action-btn"
+                                                title="@L["ViewDetail"]"
+                                                aria-label="@L["ViewDetail"]"
+                                                @onclick="() => OpenDetail(invoice.Id)">
+                                            <LucideIcon Name="eye" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <footer class="table-footer">
+                    <span>@string.Format(L["PageInfo"], _result.Page, TotalPages, _result.TotalCount)</span>
+                    <div class="pager">
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page <= 1)" @onclick="PreviousPageAsync">
+                            @L["Previous"]
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page >= TotalPages)" @onclick="NextPageAsync">
+                            @L["Next"]
+                        </button>
+                    </div>
+                </footer>
+            }
+            else
+            {
+                <EmptyStateCard Title="@L["EmptyTitle"]" Description="@L["EmptyDesc"]" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const int PageSize = 20;
+
+    private InvoiceListResult _result = new()
+    {
+        Items = [],
+        TotalCount = 0,
+        Page = 1,
+        PageSize = PageSize,
+        Summary = new InvoiceSummaryDto
+        {
+            DraftCount = 0,
+            IssuedCount = 0,
+            PaidCount = 0,
+            OutstandingAmount = 0m,
+        },
+    };
+
+    private IReadOnlyList<InvoiceContractOptionDto> _contractOptions = [];
+    private bool _loading = true;
+    private string? _error;
+
+    private int? _year;
+    private int? _month;
+    private Guid? _contractId;
+    private InvoiceStatus? _status;
+    private int _page = 1;
+
+    private bool IsMyInvoices =>
+        Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
+
+    private string DetailBase => IsMyInvoices ? "/my-invoices" : "/invoices";
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => IsMyInvoices
+        ? [new(L["OverviewNav"], "/"), new(L["MyBreadcrumb"])]
+        : [new(L["OverviewNav"], "/"), new(L["Breadcrumb"])];
+
+    private IReadOnlyList<int> AvailableYears
+    {
+        get
+        {
+            var current = DateTime.UtcNow.Year;
+            return Enumerable.Range(current - 5, 7).Reverse().ToArray();
+        }
+    }
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            _contractOptions = await InvoiceQuery.GetContractOptionsAsync(caller);
+            _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["ErrorLoad"];
+        }
+        catch (Exception)
+        {
+            _error = L["ErrorLoad"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnFilterChanged()
+    {
+        // Tháng chỉ có nghĩa khi đã chọn năm; bỏ tháng nếu người dùng xóa năm.
+        if (_year is null)
+        {
+            _month = null;
+        }
+
+        _page = 1;
+        await LoadResultAsync();
+    }
+
+    private async Task LoadResultAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
+        }
+        catch (Exception)
+        {
+            _error = L["ErrorLoad"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private InvoiceFilter BuildFilter() => new()
+    {
+        Year = _year,
+        Month = _month,
+        ContractId = _contractId,
+        Status = _status,
+        Page = _page,
+        PageSize = PageSize,
+    };
+
+    private async Task ResetFiltersAsync()
+    {
+        _year = null;
+        _month = null;
+        _contractId = null;
+        _status = null;
+        _page = 1;
+        await LoadResultAsync();
+    }
+
+    private async Task PreviousPageAsync()
+    {
+        if (_page <= 1)
+        {
+            return;
+        }
+
+        _page--;
+        await LoadResultAsync();
+    }
+
+    private async Task NextPageAsync()
+    {
+        if (_page >= TotalPages)
+        {
+            return;
+        }
+
+        _page++;
+        await LoadResultAsync();
+    }
+
+    private void OpenDetail(int invoiceId) => Navigation.NavigateTo($"{DetailBase}/{invoiceId}");
+
+    private string StatusText(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => L["StatusDraft"],
+        InvoiceStatus.Issued => L["StatusIssued"],
+        InvoiceStatus.Paid => L["StatusPaid"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone StatusTone(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => BadgeTone.Neutral,
+        InvoiceStatus.Issued => BadgeTone.Info,
+        InvoiceStatus.Paid => BadgeTone.Success,
+        _ => BadgeTone.Neutral,
+    };
+}

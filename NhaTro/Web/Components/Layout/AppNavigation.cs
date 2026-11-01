@@ -5,7 +5,7 @@ public static class AppNavigation
     // Chỉ gắn route khi module có trang thật và đã bảo vệ quyền.
     public static readonly NavigationItem[] Items =
     [
-        new("Dashboard", "chart", "ChuTro,QuanLy"),
+        new("Dashboard", "chart", "ChuTro,QuanLy", "/dashboard"),
         // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
         new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
         new("Permissions", "shield", "Admin"),
@@ -15,7 +15,7 @@ public static class AppNavigation
         new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
         new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
         new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
-        new("Invoices", "receipt", "ChuTro,QuanLy"),
+        new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
         new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
         new("Reports", "chart", "ChuTro"),
         new("ManagerSwitches", "settings", "ChuTro"),
@@ -24,7 +24,7 @@ public static class AppNavigation
         new("MyRequests", "file", "QuanLy"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
-        new("MyInvoices", "receipt", "KhachThue"),
+        new("MyInvoices", "receipt", "KhachThue", "/my-invoices"),
         new("ReportIncident", "wrench", "KhachThue", "/incidents"),
         // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.
         new("MyAccount", "user", "Admin,ChuTro,QuanLy", "/profile"),

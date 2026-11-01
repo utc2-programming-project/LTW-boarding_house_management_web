@@ -1,0 +1,8 @@
+.dashboard-panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; height:100%; }
+header { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+h2 { font-size:1.25rem; line-height:1.75rem; margin:0; font-weight:600; }
+.feedback { font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); margin:4px 0; }
+.skeleton { height:160px; background:var(--surface-subtle); border-radius:8px; animation:shimmer 1.2s infinite alternate; }
+@keyframes shimmer { to { opacity:.4; } }
+@media(prefers-reduced-motion:reduce) { .skeleton { animation:none; } }
+@media(max-width:767px) { .dashboard-panel { padding:16px; } }

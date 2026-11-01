@@ -16,6 +16,7 @@ using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
@@ -179,6 +180,14 @@ builder.Services.AddAuthorization(options =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
         (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
+    // VHT-35: P6 #34 xem hóa đơn; phạm vi từng vai trò do InvoiceQueryService lọc.
+    // Admin bị chặn ngay từ trang, kể cả khi tài khoản có thêm vai trò nghiệp vụ.
+    options.AddPolicy("InvoiceView", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) ||
+         context.User.IsInRole(Roles.QuanLy) ||
+         context.User.IsInRole(Roles.KhachThue))));
 });
 builder.Services.AddScoped<RoleService>();
 // service tai khoan (ho so ca nhan + quan tri tai khoan theo ).
@@ -188,6 +197,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
+builder.Services.AddScoped<ITenantReportService, TenantReportService>();
+builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
@@ -204,6 +215,11 @@ builder.Services.AddScoped<IManagerToggleReader>(sp => sp.GetRequiredService<Man
 builder.Services.AddScoped<ManagerTogglePolicy>();
 builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
+
+// VHT-96: hang doi duyet thao tac Quan ly. Chua dang ky applier nghiep vu nao:
+// mã SW chưa có applier sẽ bị chặn khi duyệt (fail closed).
+builder.Services.AddScoped<ManagerApprovalService>();
+builder.Services.AddScoped<IManagerApprovalService>(sp => sp.GetRequiredService<ManagerApprovalService>());
 
 // service khach thue, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
@@ -330,6 +346,9 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateSer
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
+// VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
+    Web.Features.Invoices.Services.InvoiceQueryService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
