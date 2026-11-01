@@ -64,8 +64,15 @@ public sealed class TenantService(
                 : query.Where(t => t.UserId == null);
         }
 
-        // HasActiveContract chờ bảng hợp đồng (mục 7) — bỏ qua ở 1C; ghi rõ cho Phúc.
-        // Giá trị HasActiveContract trong list/picker hiện luôn false.
+        // 2C (VHT-120): lọc theo hợp đồng đang hiệu lực ngay trong SQL, trước phân trang/tính tổng.
+        var today = Today();
+        if (filter.HasActiveContract is { } hasActiveContract)
+        {
+            var activeTenantIds = ActiveTenantIds(db, today);
+            query = hasActiveContract
+                ? query.Where(t => activeTenantIds.Contains(t.Id))
+                : query.Where(t => !activeTenantIds.Contains(t.Id));
+        }
 
         var total = await query.CountAsync(ct);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
@@ -74,10 +81,20 @@ public sealed class TenantService(
             .Take(filter.PageSize)
             .ToListAsync(ct);
 
+        // Nạp hợp đồng hiện tại một lần cho cả trang (tránh N+1) rồi ghép phòng/trạng thái thuê thật.
+        var activeContracts = await LoadActiveContractsAsync(db, rows.Select(t => t.Id).ToArray(), today, ct);
+
         return new PagedResult<TenantListItemDto>
         {
-            Items = rows.Select(t => TenantMapping.ToListItem(
-                t, includeAccountStatus: caller.CanRevealIdNumber)).ToList(),
+            Items = rows.Select(t =>
+            {
+                var active = activeContracts.GetValueOrDefault(t.Id);
+                return TenantMapping.ToListItem(
+                    t,
+                    active is not null,
+                    caller.CanRevealIdNumber,
+                    active?.RoomCode);
+            }).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
             TotalCount = total,
@@ -635,7 +652,13 @@ public sealed class TenantService(
             .Take(request.Limit)
             .ToListAsync(ct);
 
-        return rows.Select(t => TenantMapping.ToPickerItem(t)).ToList();
+        // 2C (VHT-120): cùng nguồn hợp đồng đang hiệu lực như danh sách, nạp theo lô cho cả trang chọn.
+        var activeContracts = await LoadActiveContractsAsync(
+            db, rows.Select(t => t.Id).ToArray(), Today(), ct);
+
+        return rows
+            .Select(t => TenantMapping.ToPickerItem(t, activeContracts.ContainsKey(t.Id)))
+            .ToList();
     }
 
     // Phạm vi dữ liệu (theo dõi được, dùng cả cho ghi): Chủ trọ/Quản lý hiện xem toàn hệ thống
@@ -712,6 +735,56 @@ public sealed class TenantService(
             contract.SnapshotPrice,
             contract.DepositAmount,
             contract.Status);
+
+    // 2C (VHT-120) — hợp đồng đang hiệu lực của từng khách theo liên kết thật:
+    // Tenant -> ContractMember -> Contract -> Room, chỉ hợp đồng đã duyệt và hôm nay nằm trong [StartDate, EndDate].
+    // Tách riêng truy vấn chỉ trả TenantId để lọc danh sách trong SQL mà EF dịch được.
+    private static IQueryable<int> ActiveTenantIds(ApplicationDbContext db, DateTime today) =>
+        from member in db.ContractMembers.AsNoTracking()
+        join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+        where contract.Status == ContractStatus.Approved
+            && contract.StartDate <= today
+            && contract.EndDate >= today
+        select member.TenantId;
+
+    // Lọc theo danh sách khách ngay trong SQL (không lọc sau khi đã chiếu sang record,
+    // vì EF không dịch được Contains trên biểu thức dựng record).
+    private static IQueryable<TenantActiveContractRow> ActiveContractRows(
+        ApplicationDbContext db, int[] tenantIds, DateTime today) =>
+        from member in db.ContractMembers.AsNoTracking()
+        join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+        join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+        where tenantIds.Contains(member.TenantId)
+            && contract.Status == ContractStatus.Approved
+            && contract.StartDate <= today
+            && contract.EndDate >= today
+        select new TenantActiveContractRow(
+            member.TenantId,
+            contract.ContractId,
+            room.Code,
+            contract.StartDate);
+
+    // Nhiều hợp đồng cùng hiệu lực: chọn xác định theo StartDate mới nhất rồi ContractId,
+    // để danh sách/picker không đổi phòng theo thứ tự query.
+    private static async Task<Dictionary<int, TenantActiveContractRow>> LoadActiveContractsAsync(
+        ApplicationDbContext db, int[] tenantIds, DateTime today, CancellationToken ct)
+    {
+        if (tenantIds.Length == 0)
+        {
+            return [];
+        }
+
+        var rows = await ActiveContractRows(db, tenantIds, today).ToListAsync(ct);
+
+        return rows
+            .GroupBy(row => row.TenantId)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(row => row.StartDate)
+                    .ThenByDescending(row => row.ContractId)
+                    .First());
+    }
 
     private static TenantRentalContractDto ToRentalDto(
         TenantRentalRow row,
@@ -932,4 +1005,11 @@ public sealed class TenantService(
         decimal SnapshotPrice,
         decimal DepositAmount,
         ContractStatus Status);
+
+    /// <summary>Hợp đồng đang hiệu lực của một khách, kèm phòng để hiển thị danh sách/picker.</summary>
+    private sealed record TenantActiveContractRow(
+        int TenantId,
+        Guid ContractId,
+        string RoomCode,
+        DateTime StartDate);
 }

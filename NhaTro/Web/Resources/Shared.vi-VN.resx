@@ -737,6 +737,10 @@
   <data name="TenantAccountAll" xml:space="preserve"><value>Tất cả tài khoản</value></data>
   <data name="TenantAccountYes" xml:space="preserve"><value>Có tài khoản</value></data>
   <data name="TenantAccountNo" xml:space="preserve"><value>Chưa có tài khoản</value></data>
+  <data name="TenantRentalFilter" xml:space="preserve"><value>Tình trạng thuê</value></data>
+  <data name="TenantRentalAll" xml:space="preserve"><value>Tất cả tình trạng thuê</value></data>
+  <data name="TenantRentalActive" xml:space="preserve"><value>Đang thuê</value></data>
+  <data name="TenantRentalNone" xml:space="preserve"><value>Chưa thuê</value></data>
   <data name="TenantSort" xml:space="preserve"><value>Sắp xếp</value></data>
   <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Ngày tạo mới nhất</value></data>
   <data name="TenantSortNameAsc" xml:space="preserve"><value>Tên A–Z</value></data>
