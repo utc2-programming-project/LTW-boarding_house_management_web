@@ -144,6 +144,8 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 
 **Điều kiện xong 2C:** mọi PR migration P4/P5/P7 đã merge đều có kết quả script đạt; không còn migration pending; không có xung đột snapshot.
 
+**Trạng thái 02/11/2026:** 2C.4/2C.5 cho migration hóa đơn (`AddInvoices`, PR #55) đã xong, không blocker; kết quả chạy, ràng buộc đã xác nhận và delta ERD ghi tại [nhật ký rà soát migration](../design/database/nhat_ky_ra_soat_migration.md). P4/P5/P7 đã merge trước đó chưa có bản rà 2C riêng vì VHT-121 chỉ rà hóa đơn; script mới có pha nâng cấp thật từ lượt này.
+
 ### Đợt 2D — Cập nhật ERD phần đã merge (VHT-122)
 
 | # | Việc | Ai | Đầu ra |
