@@ -1,0 +1,83 @@
+@page "/contracts/{ContractId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractBusiness")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Web.Common.Utils
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Components
+@using Web.Features.Contracts.Services
+@using Web.Features.Contracts.Rules
+@using Web.Infrastructure.Time
+@using Web.Components.Shared.Feedback
+@inject ContractPageService Contracts
+@inject IStringLocalizer<ContractResources> L
+@inject ToastService Toasts
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TimeProvider Clock
+
+<PageTitle>@L["ContractDetailTitle"]</PageTitle>
+<section class="contract-detail-page" aria-labelledby="contract-detail-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractDetailTitle"]) })" />
+    @if (_loading) { <LoadingOverlay Visible="true" Text="@L["TableLoading"]" /> }
+    else if (_contract is null)
+    {
+        <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractLoadErrorDescription"]"><a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a></EmptyStateCard>
+    }
+    else
+    {
+        <header class="page-heading"><div><h1 id="contract-detail-title">@_contract.ContractNumber</h1><p>@_contract.PropertyName · @_contract.RoomCode</p></div><StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" /></header>
+        <dl class="contract-detail-grid">
+            <div><dt>@L["ContractTenantsLabel"]</dt><dd><ul>@foreach (var member in _contract.Members) { <li>@member.FullName @if (!string.IsNullOrWhiteSpace(member.Phone)) { <span>· @member.Phone</span> }</li> }</ul></dd></div>
+            <div><dt>@L["ContractTermLabel"]</dt><dd>@DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))</dd></div>
+            <div><dt>@L["ContractRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.SnapshotPrice)</dd></div>
+            <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.DepositAmount)</dd></div>
+            @if (!string.IsNullOrWhiteSpace(_contract.RejectReason)) { <div><dt>@L["ContractRejectReasonLabel"]</dt><dd>@_contract.RejectReason</dd></div> }
+        </dl>
+        <footer class="contract-detail-actions"><a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
+            @if (_canApprove && _contract.Status == ContractStatus.Pending) { <button class="btn btn-primary" @onclick="() => _decisionOpen = true">@L["ContractApproveAction"]</button> }
+        </footer>
+    }
+</section>
+<ContractApproveModal Visible="_decisionOpen" IsBusy="_decisionBusy" OnClose="CloseDecision" OnDecide="DecideAsync" />
+
+@code {
+    [Parameter] public Guid ContractId { get; set; }
+    private ContractDetailDto? _contract;
+    private bool _loading = true, _canApprove, _decisionOpen, _decisionBusy;
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _canApprove = auth.User.IsInRole("ChuTro");
+        try { _contract = await Contracts.GetAsync(ContractId); }
+        catch (Exception ex) { _contract = null; Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
+        finally { _loading = false; }
+    }
+    private Task CloseDecision() { if (!_decisionBusy) _decisionOpen = false; return Task.CompletedTask; }
+    private async Task DecideAsync(ApproveContractRequestDto request)
+    {
+        _decisionBusy = true;
+        try { await Contracts.DecideAsync(ContractId, request); Toasts.Success(L[request.IsApproved ? "ContractApproveSuccess" : "ContractRejectSuccess"]); _decisionOpen = false; await OnParametersSetAsync(); }
+        catch (Exception ex) { Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
+        finally { _decisionBusy = false; }
+    }
+    private string StatusLabel(ContractDetailDto item) => L[ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    {
+        ContractDisplayStatus.Pending => "ContractStatusPending",
+        ContractDisplayStatus.Upcoming => "ContractStatusUpcoming",
+        ContractDisplayStatus.Active => "ContractStatusActive",
+        ContractDisplayStatus.ExpiringSoon => "ContractStatusExpiringSoon",
+        ContractDisplayStatus.Expired => "ContractStatusExpired",
+        _ => "ContractStatusRejected",
+    }];
+    private BadgeTone StatusTone(ContractDetailDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    {
+        ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
+        ContractDisplayStatus.Upcoming => BadgeTone.Info,
+        ContractDisplayStatus.Active => BadgeTone.Success,
+        ContractDisplayStatus.Expired => BadgeTone.Neutral,
+        ContractDisplayStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Neutral,
+    };
+}

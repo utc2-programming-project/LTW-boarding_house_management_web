@@ -13,11 +13,17 @@ public static class ContractErrorCodes
     public const string PropertyUnavailable = nameof(PropertyUnavailable);
     public const string RoomUnderMaintenance = nameof(RoomUnderMaintenance);
     public const string ContractOverlap = nameof(ContractOverlap);
+    public const string InvalidDateRange = nameof(InvalidDateRange);
+    public const string TenantRequired = nameof(TenantRequired);
+    public const string TenantUnavailable = nameof(TenantUnavailable);
+    public const string RoomNotAvailable = nameof(RoomNotAvailable);
+    public const string RoomNotVacant = nameof(RoomNotVacant);
+    public const string FutureStartNotAllowed = nameof(FutureStartNotAllowed);
 }
 
 public static class ContractErrorMessages
 {
-    public const string Forbidden = "Chỉ Chủ trọ được duyệt hoặc từ chối hợp đồng.";
+    public const string Forbidden = "Bạn không có quyền thực hiện thao tác hợp đồng này.";
     public const string ContractNotFound = "Không tìm thấy hợp đồng.";
     public const string RoomNotFound = "Không tìm thấy phòng của hợp đồng.";
     public const string PropertyNotFound = "Không tìm thấy nhà trọ của phòng.";
@@ -29,6 +35,12 @@ public static class ContractErrorMessages
     public const string RoomUnderMaintenance = "Không thể duyệt hợp đồng cho phòng đang bảo trì.";
     public const string PropertyUnavailable = "Nhà trọ đã bị xóa, không thể duyệt hợp đồng.";
     public const string ContractOverlap = "Phòng đã có hợp đồng hiệu lực trong thời gian này.";
+    public const string InvalidDateRange = "Ngày bắt đầu phải trước ngày kết thúc.";
+    public const string TenantRequired = "Hợp đồng phải có ít nhất một khách thuê.";
+    public const string TenantUnavailable = "Một hoặc nhiều khách thuê không tồn tại hoặc không còn hoạt động.";
+    public const string RoomNotAvailable = "Phòng không tồn tại hoặc nằm ngoài phạm vi được phân công.";
+    public const string RoomNotVacant = "Chỉ có thể duyệt hợp đồng khi phòng đang trống.";
+    public const string FutureStartNotAllowed = "Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.";
 }
 
 public interface IContractServiceError

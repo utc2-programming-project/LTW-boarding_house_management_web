@@ -161,6 +161,16 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
     // Nghiep vu: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
+    options.AddPolicy("ContractBusiness", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) ||
+         context.User.IsInRole(Roles.QuanLy) ||
+         context.User.IsInRole(Roles.KhachThue))));
+    options.AddPolicy("ContractManage", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
     // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
     options.AddPolicy(Web.Features.Maintenance.IncidentDemoSession.Policy, p => p
         .RequireAuthenticatedUser()
@@ -189,6 +199,7 @@ builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<ContractPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
