@@ -1,0 +1,3 @@
+@inject IStringLocalizer<DashboardResource> L
+<div class="unwired"><p>@L["Unwired"]</p><small>@FilterDescription</small></div>
+@code { [Parameter] public string FilterDescription { get; set; } = ""; }
