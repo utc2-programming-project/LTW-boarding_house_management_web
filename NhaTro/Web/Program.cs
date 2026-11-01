@@ -16,6 +16,7 @@ using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
@@ -204,6 +205,11 @@ builder.Services.AddScoped<IManagerToggleReader>(sp => sp.GetRequiredService<Man
 builder.Services.AddScoped<ManagerTogglePolicy>();
 builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
+
+// VHT-96: hang doi duyet thao tac Quan ly. Chua dang ky applier nghiep vu nao:
+// mã SW chưa có applier sẽ bị chặn khi duyệt (fail closed).
+builder.Services.AddScoped<ManagerApprovalService>();
+builder.Services.AddScoped<IManagerApprovalService>(sp => sp.GetRequiredService<ManagerApprovalService>());
 
 // service khach thue, kiem quyen/pham vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
