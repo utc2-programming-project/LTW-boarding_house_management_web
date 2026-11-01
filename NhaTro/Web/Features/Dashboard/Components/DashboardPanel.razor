@@ -1,0 +1,25 @@
+@inject IStringLocalizer<DashboardResource> L
+<section class="dashboard-panel" aria-busy="@(State == DashboardLoadState.Loading)">
+<header><LucideIcon Name="@Icon" /><h2>@Title</h2></header>
+@if (State == DashboardLoadState.Loading)
+{
+    <div class="skeleton" role="status" aria-label="@L["Loading"]"></div>
+}
+else if (State is DashboardLoadState.Error or DashboardLoadState.Denied)
+{
+    <p class="feedback" role="status">@(State == DashboardLoadState.Denied ? DeniedText : L["Error"].Value)</p>
+    <button type="button" class="btn btn-secondary" @onclick="Retry">@L["Retry"]</button>
+}
+else
+{
+    @ChildContent
+}
+</section>
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "chart";
+    [Parameter] public DashboardLoadState State { get; set; } = DashboardLoadState.Loaded;
+    [Parameter] public string DeniedText { get; set; } = "";
+    [Parameter] public EventCallback Retry { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

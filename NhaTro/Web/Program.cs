@@ -188,6 +188,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
+builder.Services.AddScoped<ITenantReportService, TenantReportService>();
+builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();

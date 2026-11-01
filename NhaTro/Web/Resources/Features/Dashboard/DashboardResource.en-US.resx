@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Dashboard and reports</value></data>
+<data name="Subtitle" xml:space="preserve"><value>Property operations overview</value></data>
+<data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+<data name="Property" xml:space="preserve"><value>Property</value></data>
+<data name="AllProperties" xml:space="preserve"><value>All properties</value></data>
+<data name="Inactive" xml:space="preserve"><value>Inactive</value></data>
+<data name="Period" xml:space="preserve"><value>Reporting period</value></data>
+<data name="Month" xml:space="preserve"><value>This month</value></data>
+<data name="Quarter" xml:space="preserve"><value>This quarter</value></data>
+<data name="Year" xml:space="preserve"><value>This year</value></data>
+<data name="Updated" xml:space="preserve"><value>Last refreshed</value></data>
+<data name="Loading" xml:space="preserve"><value>Loading</value></data>
+<data name="Error" xml:space="preserve"><value>Unable to load data. Please retry.</value></data>
+<data name="Retry" xml:space="preserve"><value>Retry</value></data>
+<data name="Empty" xml:space="preserve"><value>No data</value></data>
+<data name="Unwired" xml:space="preserve"><value>Data source not connected</value></data>
+<data name="CurrentData" xml:space="preserve"><value>Current data</value></data>
+<data name="TotalRooms" xml:space="preserve"><value>Total active rooms</value></data>
+<data name="Occupancy" xml:space="preserve"><value>Occupancy rate</value></data>
+<data name="Revenue" xml:space="preserve"><value>Expected monthly revenue</value></data>
+<data name="Debt" xml:space="preserve"><value>Total outstanding debt</value></data>
+<data name="Incidents" xml:space="preserve"><value>Pending incidents</value></data>
+<data name="RoomsDenied" xml:space="preserve"><value>The owner has not permitted room reports</value></data>
+<data name="TenantsDenied" xml:space="preserve"><value>The owner has not permitted tenant reports</value></data>
+<data name="PropertiesDenied" xml:space="preserve"><value>Property access is not permitted</value></data>
+<data name="RoomStructure" xml:space="preserve"><value>Room structure</value></data>
+<data name="Available" xml:space="preserve"><value>Available</value></data>
+<data name="Rented" xml:space="preserve"><value>Rented</value></data>
+<data name="Maintenance" xml:space="preserve"><value>Maintenance</value></data>
+<data name="Tenants" xml:space="preserve"><value>Tenants</value></data>
+<data name="TenantPropertyUnavailable" xml:space="preserve"><value>Property-scoped data is not connected</value></data>
+<data name="TenantManagerUnavailable" xml:space="preserve"><value>Manager-scoped data is not connected</value></data>
+<data name="TenantGlobal" xml:space="preserve"><value>System-wide - P3 is not filtered by property</value></data>
+<data name="TenantTotal" xml:space="preserve"><value>Total profiles</value></data>
+<data name="TenantActive" xml:space="preserve"><value>Active profiles</value></data>
+<data name="TenantLinked" xml:space="preserve"><value>Linked accounts</value></data>
+<data name="ViewTenants" xml:space="preserve"><value>View tenants</value></data>
+<data name="RevenueChart" xml:space="preserve"><value>Six-month revenue</value></data>
+<data name="ExpiringContracts" xml:space="preserve"><value>Expiring contracts</value></data>
+<data name="RoomScopeNote" xml:space="preserve"><value>Only active rooms are counted. The room list includes inactive rooms by default.</value></data>
+<data name="RefreshSuccess" xml:space="preserve"><value>Data refreshed</value></data>
+</root>

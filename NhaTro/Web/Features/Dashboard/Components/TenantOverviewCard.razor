@@ -1,0 +1,32 @@
+@inject IStringLocalizer<DashboardResource> L
+@if (PropertySelected)
+{
+    <p>@L["TenantPropertyUnavailable"]</p>
+}
+else if (!IsOwner)
+{
+    <p>@L["TenantManagerUnavailable"]</p>
+}
+else
+{
+    <p>@L["TenantGlobal"]</p>
+    @if (Kpis?.Total == 0)
+    {
+        <EmptyStateCard Title="@L["Empty"]" />
+    }
+    else
+    {
+        <dl>
+            <dt>@L["TenantTotal"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.Total)</dd>
+            <dt>@L["TenantActive"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.Active)</dd>
+            <dt>@L["TenantLinked"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.LinkedAccountCount)</dd>
+        </dl>
+    }
+}
+<p>@L["CurrentData"]</p>
+<a href="/tenants">@L["ViewTenants"]</a>
+@code {
+    [Parameter] public bool IsOwner { get; set; }
+    [Parameter] public bool PropertySelected { get; set; }
+    [Parameter] public TenantReportKpis? Kpis { get; set; }
+}
