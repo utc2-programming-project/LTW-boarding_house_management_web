@@ -1,0 +1,252 @@
+@using Web.Common.Utils
+@using Web.Features.Utilities.DTOs
+@using Web.Features.Utilities.Services
+@using Web.Components.Shared
+@inject IStringLocalizer<Shared> L
+
+<div class="cost-table-card">
+    <div class="cost-card-header">
+        <h4 class="card-title">@L["MeterReadingCostDetailTitle"]</h4>
+        <span class="sparkle-badge">
+            <LucideIcon Name="sparkles" />
+            <span>@L["MeterReadingAutoCalculateTariff"]</span>
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="cost-table">
+            <thead>
+                <tr>
+                    <th>@L["MeterReadingTableColItem"]</th>
+                    <th class="text-right">@L["MeterReadingTableColUsage"]</th>
+                    <th class="text-right">@L["MeterReadingTableColRate"]</th>
+                    <th class="text-right">@L["MeterReadingTableColAmount"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Room rent -->
+                <tr>
+                    <td>
+                        <div class="cost-type-cell">
+                            <span class="cost-type-icon"><LucideIcon Name="home" /></span>
+                            <span>@string.Format(L["MeterReadingRentItem"], Room.RoomCode)</span>
+                        </div>
+                    </td>
+                    <td class="text-right tabular-nums">@L["MeterReadingOneMonthUnit"]</td>
+                    <td class="text-right tabular-nums">@MoneyFormatter.Format(Room.RoomRent)</td>
+                    <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(Room.RoomRent)</td>
+                </tr>
+
+                <!-- Electricity -->
+                @if (ElectricEnd is null)
+                {
+                    <tr class="row-missing">
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon electric-icon"><LucideIcon Name="zap" /></span>
+                                <div>
+                                    <span>@L["MeterReadingElectricCostItem"]</span>
+                                    <div class="cost-sub-missing">@L["MeterReadingMissingReadingHint"]</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell font-medium">@L["MeterReadingNoData"]</td>
+                    </tr>
+                }
+                else if (Breakdown is not null && Breakdown.ElectricTiers.Count > 0)
+                {
+                    @foreach (var tier in Breakdown.ElectricTiers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <span class="cost-type-icon electric-icon"><LucideIcon Name="zap" /></span>
+                                    <span>@string.Format(L["MeterReadingElectricTierItem"], tier.TierId)</span>
+                                </div>
+                            </td>
+                            <td class="text-right tabular-nums">@tier.Units.ToString("N0") kWh</td>
+                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Rate)</td>
+                            <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(tier.Amount)</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon electric-icon"><LucideIcon Name="zap" /></span>
+                                <span>@L["MeterReadingElectricCostZeroItem"]</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">0 kWh</td>
+                        <td class="text-right tabular-nums">—</td>
+                        <td class="text-right tabular-nums font-semibold">0 ₫</td>
+                    </tr>
+                }
+
+                <!-- Water -->
+                @if (WaterEnd is null)
+                {
+                    <tr class="row-missing">
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon water-icon"><LucideIcon Name="droplet" /></span>
+                                <div>
+                                    <span>@L["MeterReadingWaterCostItem"]</span>
+                                    <div class="cost-sub-missing">@L["MeterReadingMissingReadingHint"]</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell font-medium">@L["MeterReadingNoData"]</td>
+                    </tr>
+                }
+                else if (Breakdown is not null && Breakdown.WaterTiers.Count > 0)
+                {
+                    @foreach (var tier in Breakdown.WaterTiers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="cost-type-cell">
+                                    <span class="cost-type-icon water-icon"><LucideIcon Name="droplet" /></span>
+                                    <span>@string.Format(L["MeterReadingWaterTierItem"], tier.TierId)</span>
+                                </div>
+                            </td>
+                            <td class="text-right tabular-nums">@tier.Units.ToString("N0") m³</td>
+                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Rate)</td>
+                            <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(tier.Amount)</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon water-icon"><LucideIcon Name="droplet" /></span>
+                                <span>@L["MeterReadingWaterCostZeroItem"]</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">0 m³</td>
+                        <td class="text-right tabular-nums">—</td>
+                        <td class="text-right tabular-nums font-semibold">0 ₫</td>
+                    </tr>
+                }
+
+                <!-- Fixed services -->
+                @if (Room.InternetCost > 0)
+                {
+                    <tr>
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon"><LucideIcon Name="wifi" /></span>
+                                <span>@L["MeterReadingInternetServiceItem"]</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">@L["MeterReadingOneMonthUnit"]</td>
+                        <td class="text-right tabular-nums">@MoneyFormatter.Format(Room.InternetCost)</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(Room.InternetCost)</td>
+                    </tr>
+                }
+
+                @if (Room.CleaningCost > 0)
+                {
+                    <tr>
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon"><LucideIcon Name="trash-2" /></span>
+                                <span>@L["MeterReadingCleaningServiceItem"]</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">@L["MeterReadingOneMonthUnit"]</td>
+                        <td class="text-right tabular-nums">@MoneyFormatter.Format(Room.CleaningCost)</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(Room.CleaningCost)</td>
+                    </tr>
+                }
+
+                @if (Room.ParkingCost > 0)
+                {
+                    <tr>
+                        <td>
+                            <div class="cost-type-cell">
+                                <span class="cost-type-icon"><LucideIcon Name="package" /></span>
+                                <span>@L["MeterReadingParkingServiceItem"]</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">@L["MeterReadingOneMonthUnit"]</td>
+                        <td class="text-right tabular-nums">@MoneyFormatter.Format(Room.ParkingCost)</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(Room.ParkingCost)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Estimated total banner -->
+    <div class="cost-total-banner">
+        <div class="total-copy">
+            <span class="total-title">@L["MeterReadingTotalEstimated"]</span>
+            <span class="total-desc">
+                @if (ElectricEnd is null || WaterEnd is null)
+                {
+                    <span class="total-missing-warning">@string.Format(L["MeterReadingMissingTotalWarning"], MissingItemsText)</span>
+                }
+                else
+                {
+                    <span>@L["MeterReadingTotalDescriptionComplete"]</span>
+                }
+            </span>
+        </div>
+        <div class="total-number-box tabular-nums">
+            @ComputedTotal
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RoomReadingSampleDto Room { get; set; } = default!;
+    [Parameter] public decimal? ElectricEnd { get; set; }
+    [Parameter] public decimal? WaterEnd { get; set; }
+    [Parameter] public bool IsCalculating { get; set; }
+    [Parameter] public UtilityCostBreakdown? Breakdown { get; set; }
+
+    private string MissingItemsText
+    {
+        get
+        {
+            if (ElectricEnd is null && WaterEnd is null)
+            {
+                return L["MeterReadingBothElectricWater"];
+            }
+            if (ElectricEnd is null)
+            {
+                return L["MeterReadingElectricOnly"];
+            }
+            return L["MeterReadingWaterOnly"];
+        }
+    }
+
+    private string ComputedTotal
+    {
+        get
+        {
+            if (Breakdown is not null && ElectricEnd is not null && WaterEnd is not null)
+            {
+                return MoneyFormatter.Format(Breakdown.TotalCost);
+            }
+
+            // If missing readings, sum known items only (rent + services)
+            var baseTotal = Room.RoomRent + Room.InternetCost + Room.CleaningCost + Room.ParkingCost;
+            if (Breakdown is not null)
+            {
+                if (ElectricEnd is not null) baseTotal += Breakdown.ElectricityCost;
+                if (WaterEnd is not null) baseTotal += Breakdown.WaterCost;
+            }
+            return MoneyFormatter.Format(baseTotal);
+        }
+    }
+}
