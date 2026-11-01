@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
+using Web.Features.Approvals.Entities;
 using Web.Features.Contracts.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Settings.Entities;
@@ -27,6 +28,9 @@ namespace Web.Data
 
         // VHT-94: 21 cong tac Quan ly (SW-01..SW-16 + SW-15a..e).
         public DbSet<ManagerToggle> ManagerToggles => Set<ManagerToggle>();
+
+        // VHT-96: hang doi duyet thao tac Quan ly (NEW-03).
+        public DbSet<ManagerApprovalRequest> ManagerApprovalRequests => Set<ManagerApprovalRequest>();
         public DbSet<UtilityTariff> UtilityTariffs => Set<UtilityTariff>();
         public DbSet<UtilityTariffTier> UtilityTariffTiers => Set<UtilityTariffTier>();
         public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();

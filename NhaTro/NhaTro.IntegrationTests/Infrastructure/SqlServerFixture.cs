@@ -104,6 +104,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.UtilityBillingPeriodSnapshots.ExecuteDeleteAsync();
         await db.UtilityTariffTiers.Where(tier => tier.UtilityTariffId > 5).ExecuteDeleteAsync();
         await db.UtilityTariffs.Where(tariff => tariff.Id > 5).ExecuteDeleteAsync();
+        // VHT-96: hang doi duyet co FK toi Properties va AspNetUsers: xoa truoc ca hai.
+        await db.ManagerApprovalRequests.ExecuteDeleteAsync();
         // VHT-24: PropertyManagers co FK toi Properties va AspNetUsers: xoa truoc ca hai.
         await db.PropertyManagers.ExecuteDeleteAsync();
         // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
