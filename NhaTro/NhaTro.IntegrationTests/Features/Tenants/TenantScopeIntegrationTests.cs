@@ -258,6 +258,32 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task Ho_so_xoa_mem_khong_lot_vao_kho_chung()
+    {
+        var seed = await SeedAsync();
+
+        await using (var db = fixture.CreateContext())
+        {
+            var poolTenant = await db.Tenants.IgnoreQueryFilters()
+                .FirstAsync(t => t.Id == seed.PoolTenantId);
+            poolTenant.IsDeleted = true;
+            await db.SaveChangesAsync();
+        }
+
+        // IgnoreQueryFilters trong chuỗi hợp đồng không được kéo hồ sơ thùng rác vào phạm vi.
+        var page = await NewService().ListAsync(new TenantFilterRequest { PageSize = 100 }, OwnerA);
+        Assert.Equal(1, page.TotalCount);
+        Assert.DoesNotContain(page.Items, item => item.Id == seed.PoolTenantId);
+
+        var detail = await NewService().GetAsync(seed.PoolTenantId, OwnerA);
+        Assert.False(detail.Succeeded);
+        Assert.Equal(TenantErrorCodes.TenantNotFound, detail.ErrorCode);
+
+        var managerDetail = await NewService().GetAsync(seed.PoolTenantId, ManagerA);
+        Assert.Equal(TenantErrorCodes.TenantNotFound, managerDetail.ErrorCode);
+    }
+
+    [SqlServerFact]
     public async Task Ho_so_chua_gan_thay_ho_so_nhung_giay_to_van_None()
     {
         var seed = await SeedAsync();

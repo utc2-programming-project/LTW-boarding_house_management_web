@@ -26,9 +26,12 @@ public static class TenantVisibility
         }
 
         var linked = ContractLinkedTenantIds(db, userId, role);
+        // ContractLinkedTenantIds dùng IgnoreQueryFilters để giữ hợp đồng khi phòng/tòa xóa mềm,
+        // nhưng cờ đó tắt query filter của cả câu query — phải lọc lại thùng rác hồ sơ tại đây.
         return db.Tenants.Where(tenant =>
-            linked.Contains(tenant.Id)
-            || !db.ContractMembers.Any(member => member.TenantId == tenant.Id));
+            !tenant.IsDeleted
+            && (linked.Contains(tenant.Id)
+                || !db.ContractMembers.Any(member => member.TenantId == tenant.Id)));
     }
 
     /// <summary>
