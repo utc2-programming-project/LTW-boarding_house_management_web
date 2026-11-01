@@ -1,0 +1,217 @@
+@page "/invoices/{Id:int}"
+@page "/my-invoices/{Id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "InvoiceView")]
+@inject IInvoiceQueryService InvoiceQuery
+@inject P2CallerProvider CallerProvider
+@inject NavigationManager Navigation
+@inject IStringLocalizer<InvoiceResources> L
+
+<PageTitle>@L["DetailPageTitle"]</PageTitle>
+
+<div class="invoice-detail-page">
+    <BreadcrumbNav Items="@Breadcrumbs" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_notFound || _invoice is null)
+    {
+        <EmptyStateCard Title="@L["DetailNotFoundTitle"]" Description="@L["DetailNotFoundDesc"]">
+            <button type="button" class="btn btn-secondary" @onclick="BackToList">@L["BackToInvoices"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">@L["DetailHeading"] · HD-@Invoice.Id</h1>
+                <p class="page-subtitle">@L["DetailSubtitle"]</p>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                <LucideIcon Name="arrow-left" />
+                <span>@L["BackToList"]</span>
+            </button>
+        </header>
+
+        <section class="detail-card">
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailStatus"]</span>
+                    <StatusBadge Text="@StatusText(Invoice.Status)" Tone="@StatusTone(Invoice.Status)" />
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailPeriod"]</span>
+                    <span class="detail-value tabular-nums">@DateFormatter.Format(Invoice.PeriodStart) – @DateFormatter.Format(Invoice.PeriodEnd)</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailContract"]</span>
+                    <span class="detail-value">@Invoice.ContractNumber</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailProperty"]</span>
+                    <span class="detail-value">@Invoice.PropertyName</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailRoom"]</span>
+                    <span class="detail-value">@Invoice.RoomCode</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailTenants"]</span>
+                    <span class="detail-value">
+                        @if (Invoice.TenantNames.Count == 0)
+                        {
+                            <span class="muted">@L["NoTenants"]</span>
+                        }
+                        else
+                        {
+                            @string.Join(", ", Invoice.TenantNames)
+                        }
+                    </span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailCreatedAt"]</span>
+                    <span class="detail-value tabular-nums">@DateFormatter.FormatDateTime(Invoice.CreatedAt)</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailIssuedAt"]</span>
+                    <span class="detail-value tabular-nums">
+                        @(Invoice.IssuedAt is null ? L["DetailNotAvailable"] : DateFormatter.FormatDateTime(Invoice.IssuedAt))
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="items-card">
+            <h2 class="section-title">@L["ItemsHeading"]</h2>
+
+            @if (Invoice.Items.Count == 0)
+            {
+                <p class="muted">@L["NoItems"]</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>@L["ThItemType"]</th>
+                                <th>@L["ThDescription"]</th>
+                                <th>@L["ThUnit"]</th>
+                                <th class="text-right">@L["ThQuantity"]</th>
+                                <th class="text-right">@L["ThUnitPrice"]</th>
+                                <th class="text-right">@L["ThAmount"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Invoice.Items)
+                            {
+                                <tr>
+                                    <td>@ItemTypeText(item.ItemType)</td>
+                                    <td>@item.Description</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.Unit) ? "-" : item.Unit)</td>
+                                    <td class="text-right tabular-nums">@item.Quantity.ToString("0.##")</td>
+                                    <td class="text-right tabular-nums">@MoneyFormatter.Format(item.UnitPrice)</td>
+                                    <td class="text-right tabular-nums @(item.Amount < 0 ? "discount" : "")">
+                                        @MoneyFormatter.Format(item.Amount)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="summary-panel">
+                <div class="summary-row">
+                    <span>@L["SummaryTotal"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</strong>
+                </div>
+                <div class="summary-row">
+                    <span>@L["SummaryPaid"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.PaidAmount)</strong>
+                </div>
+                <div class="summary-row outstanding">
+                    <span>@L["SummaryOutstanding"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.OutstandingAmount)</strong>
+                </div>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private InvoiceDto? _invoice;
+    private bool _loading = true;
+    private bool _notFound;
+
+    // Chỉ dùng trong nhánh đã kiểm tra null; giữ markup gọn.
+    private InvoiceDto Invoice => _invoice!;
+
+    private bool IsMyInvoices =>
+        Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
+
+    private string ListPath => IsMyInvoices ? "/my-invoices" : "/invoices";
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => IsMyInvoices
+        ? [new(L["OverviewNav"], "/"), new(L["MyBreadcrumb"], ListPath), new(L["DetailBreadcrumb"])]
+        : [new(L["OverviewNav"], "/"), new(L["Breadcrumb"], ListPath), new(L["DetailBreadcrumb"])];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _notFound = false;
+        _invoice = null;
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            _invoice = await InvoiceQuery.GetInvoiceAsync(Id, caller);
+        }
+        catch (KeyNotFoundException)
+        {
+            // Không phân biệt "không tồn tại" với "ngoài phạm vi" để không lộ ID hóa đơn.
+            _notFound = true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _notFound = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BackToList() => Navigation.NavigateTo(ListPath);
+
+    private string StatusText(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => L["StatusDraft"],
+        InvoiceStatus.Issued => L["StatusIssued"],
+        InvoiceStatus.Paid => L["StatusPaid"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone StatusTone(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => BadgeTone.Neutral,
+        InvoiceStatus.Issued => BadgeTone.Info,
+        InvoiceStatus.Paid => BadgeTone.Success,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string ItemTypeText(InvoiceItemType type) => type switch
+    {
+        InvoiceItemType.Rent => L["ItemTypeRent"],
+        InvoiceItemType.Electric => L["ItemTypeElectric"],
+        InvoiceItemType.Water => L["ItemTypeWater"],
+        InvoiceItemType.Service => L["ItemTypeService"],
+        InvoiceItemType.Discount => L["ItemTypeDiscount"],
+        _ => L["StatusUnknown"],
+    };
+}

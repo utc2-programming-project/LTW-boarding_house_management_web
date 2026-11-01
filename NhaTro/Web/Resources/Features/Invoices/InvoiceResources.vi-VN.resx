@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="PageTitle" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="MyPageTitle" xml:space="preserve"><value>Hóa đơn của tôi</value></data>
+  <data name="Breadcrumb" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="MyBreadcrumb" xml:space="preserve"><value>Hóa đơn của tôi</value></data>
+  <data name="OverviewNav" xml:space="preserve"><value>Tổng quan</value></data>
+  <data name="Heading" xml:space="preserve"><value>Quản lý hóa đơn</value></data>
+  <data name="MyHeading" xml:space="preserve"><value>Hóa đơn của tôi</value></data>
+  <data name="Subtitle" xml:space="preserve"><value>Theo dõi hóa đơn theo kỳ, hợp đồng và trạng thái thanh toán.</value></data>
+  <data name="MySubtitle" xml:space="preserve"><value>Các hóa đơn thuộc hợp đồng có tên bạn.</value></data>
+
+  <data name="StatDraft" xml:space="preserve"><value>Nháp</value></data>
+  <data name="StatIssued" xml:space="preserve"><value>Đã phát hành</value></data>
+  <data name="StatPaid" xml:space="preserve"><value>Đã thanh toán</value></data>
+  <data name="StatOutstanding" xml:space="preserve"><value>Còn phải thu</value></data>
+
+  <data name="FilterYear" xml:space="preserve"><value>Năm</value></data>
+  <data name="FilterMonth" xml:space="preserve"><value>Tháng</value></data>
+  <data name="AllYears" xml:space="preserve"><value>Tất cả năm</value></data>
+  <data name="AllMonths" xml:space="preserve"><value>Tất cả tháng</value></data>
+  <data name="MonthValue" xml:space="preserve"><value>Tháng {0}</value></data>
+  <data name="FilterContract" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="AllContracts" xml:space="preserve"><value>Tất cả hợp đồng</value></data>
+  <data name="FilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="ResetFilter" xml:space="preserve"><value>Xóa lọc</value></data>
+
+  <data name="StatusDraft" xml:space="preserve"><value>Nháp</value></data>
+  <data name="StatusIssued" xml:space="preserve"><value>Đã phát hành</value></data>
+  <data name="StatusPaid" xml:space="preserve"><value>Đã thanh toán</value></data>
+  <data name="StatusUnknown" xml:space="preserve"><value>Không xác định</value></data>
+
+  <data name="ThInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="ThPeriod" xml:space="preserve"><value>Kỳ hóa đơn</value></data>
+  <data name="ThContract" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="ThRoomProperty" xml:space="preserve"><value>Phòng / Nhà</value></data>
+  <data name="ThTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="ThStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="ThTotal" xml:space="preserve"><value>Tổng tiền</value></data>
+  <data name="ThOutstanding" xml:space="preserve"><value>Còn phải thu</value></data>
+  <data name="ThActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="ViewDetail" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="NoTenants" xml:space="preserve"><value>Chưa có khách thuê</value></data>
+  <data name="EmptyTitle" xml:space="preserve"><value>Không có hóa đơn</value></data>
+  <data name="EmptyDesc" xml:space="preserve"><value>Thử đổi bộ lọc kỳ hoặc hợp đồng.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Đang tải hóa đơn...</value></data>
+  <data name="PageInfo" xml:space="preserve"><value>Trang {0}/{1} · {2} hóa đơn</value></data>
+  <data name="Previous" xml:space="preserve"><value>Trước</value></data>
+  <data name="Next" xml:space="preserve"><value>Sau</value></data>
+  <data name="ErrorLoad" xml:space="preserve"><value>Không tải được hóa đơn. Vui lòng thử lại.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+
+  <data name="DetailPageTitle" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
+  <data name="DetailBreadcrumb" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
+  <data name="DetailHeading" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
+  <data name="DetailSubtitle" xml:space="preserve"><value>Thông tin hóa đơn và các khoản đã chốt.</value></data>
+  <data name="BackToList" xml:space="preserve"><value>Danh sách hóa đơn</value></data>
+  <data name="DetailPeriod" xml:space="preserve"><value>Kỳ hóa đơn</value></data>
+  <data name="DetailCreatedAt" xml:space="preserve"><value>Ngày lập</value></data>
+  <data name="DetailIssuedAt" xml:space="preserve"><value>Ngày phát hành</value></data>
+  <data name="DetailContract" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="DetailRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="DetailProperty" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="DetailTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="DetailStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="DetailNotAvailable" xml:space="preserve"><value>Chưa phát hành</value></data>
+  <data name="ItemsHeading" xml:space="preserve"><value>Các khoản trong hóa đơn</value></data>
+  <data name="ThItemType" xml:space="preserve"><value>Loại</value></data>
+  <data name="ThDescription" xml:space="preserve"><value>Diễn giải</value></data>
+  <data name="ThUnit" xml:space="preserve"><value>Đơn vị</value></data>
+  <data name="ThQuantity" xml:space="preserve"><value>Số lượng</value></data>
+  <data name="ThUnitPrice" xml:space="preserve"><value>Đơn giá</value></data>
+  <data name="ThAmount" xml:space="preserve"><value>Thành tiền</value></data>
+  <data name="ItemTypeRent" xml:space="preserve"><value>Tiền thuê</value></data>
+  <data name="ItemTypeElectric" xml:space="preserve"><value>Điện</value></data>
+  <data name="ItemTypeWater" xml:space="preserve"><value>Nước</value></data>
+  <data name="ItemTypeService" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="ItemTypeDiscount" xml:space="preserve"><value>Giảm giá</value></data>
+  <data name="SummaryTotal" xml:space="preserve"><value>Tổng hóa đơn</value></data>
+  <data name="SummaryPaid" xml:space="preserve"><value>Đã thanh toán</value></data>
+  <data name="SummaryOutstanding" xml:space="preserve"><value>Còn phải thu</value></data>
+  <data name="NoItems" xml:space="preserve"><value>Hóa đơn chưa có khoản nào.</value></data>
+  <data name="DetailNotFoundTitle" xml:space="preserve"><value>Không tìm thấy hóa đơn</value></data>
+  <data name="DetailNotFoundDesc" xml:space="preserve"><value>Hóa đơn không tồn tại hoặc bạn không có quyền xem.</value></data>
+  <data name="BackToInvoices" xml:space="preserve"><value>Về danh sách hóa đơn</value></data>
+</root>

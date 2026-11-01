@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
 using Web.Features.Contracts.Entities;
+using Web.Features.Invoices.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
@@ -23,6 +24,8 @@ namespace Web.Data
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
+        public DbSet<Invoice> Invoices => Set<Invoice>();
+        public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
         public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
         public DbSet<FileAccessAuditLog> FileAccessAuditLogs => Set<FileAccessAuditLog>();
 
