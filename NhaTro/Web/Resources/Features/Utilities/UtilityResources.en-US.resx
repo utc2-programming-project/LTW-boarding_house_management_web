@@ -245,5 +245,7 @@
   <data name="ErrorPriceVersionConflict" xml:space="preserve"><value>This price milestone overlaps another version in the same scope.</value></data>
   <data name="ErrorRoomNotFound" xml:space="preserve"><value>The room was not found in your permitted scope.</value></data>
   <data name="ErrorUnknown" xml:space="preserve"><value>An error occurred. Please try again.</value></data>
+  <data name="ToggleActiveNotSupportedTooltip" xml:space="preserve"><value>Activating or deactivating services is not yet supported by the backend.</value></data>
+  <data name="WriteActionBlockedNotice" xml:space="preserve"><value>Write operations are currently unavailable pending backend support for Identity UserId mapping.</value></data>
 </root>
 

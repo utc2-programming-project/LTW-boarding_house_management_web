@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
 @inject IStringLocalizer<UtilityResources> L
-@inject UtilitySampleStateService StateService
+@inject ServiceCatalogPageService PageService
 @inject ToastService Toast
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
@@ -30,10 +30,20 @@
                 <h1 class="page-title">@L["CatalogHeading"]</h1>
             </div>
             <p class="page-subtitle">@L["CatalogSubtitle"]</p>
-            <div class="sample-data-note">
-                <span class="sample-data-badge">@L["SampleDataBadge"]</span>
-                <span>@L["SampleDataNotice"]</span>
-            </div>
+            @if (_isSampleData)
+            {
+                <div class="sample-data-note">
+                    <span class="sample-data-badge">@L["SampleDataBadge"] · VHT-32</span>
+                    <span>@L["SampleDataNotice"]</span>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_loadError))
+            {
+                <div class="sample-data-note" style="border-left: 3px solid #ef4444; background: #fef2f2; color: #991b1b;">
+                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">Lỗi SQL</span>
+                    <span>@_loadError</span>
+                </div>
+            }
         </div>
 
         <div class="header-actions">
@@ -261,9 +271,9 @@
                                                     role="switch"
                                                     aria-label="@L[service.Active ? "ActiveStatus" : "InactiveStatus"]"
                                                     aria-checked="@service.Active"
-                                                    disabled="@service.IsReadOnly"
-                                                    class="ui-switch @(service.Active ? "active" : "")"
-                                                    @onclick="() => HandleToggleActive(service.Id)">
+                                                    disabled="true"
+                                                    class="ui-switch @(service.Active ? "active" : "") disabled"
+                                                    title="@L["ToggleActiveNotSupportedTooltip"]">
                                                 <span class="ui-switch-thumb"></span>
                                             </button>
                                             @if (service.IsReadOnly)
@@ -347,9 +357,13 @@
     <Authorized>
         <ServicePriceModal IsOpen="@_isUpdateModalOpen"
                            Service="@_selectedService"
+                           Buildings="@_visibleBuildings"
+                           CanWrite="@_canWrite"
                            OnClose="() => _isUpdateModalOpen = false"
                            OnSave="HandleSavePrice" />
         <ServiceCreateModal IsOpen="@_isCreateModalOpen"
+                            Buildings="@_visibleBuildings"
+                            CanWrite="@_canWrite"
                             OnClose="() => _isCreateModalOpen = false"
                             OnCreate="HandleCreateService" />
     </Authorized>
@@ -360,6 +374,7 @@
                   OnClose="() => _isTierModalOpen = false" />
 
 @code {
+    private List<ServiceItemDto> _allServices = [];
     private List<ServiceItemDto> _filteredServices = [];
     private string _searchTerm = string.Empty;
     private string _selectedBuilding = "all";
@@ -367,9 +382,11 @@
     private string _selectedStatus = "all";
     private string _callerRole = string.Empty;
     private string _callerEmail = string.Empty;
-    private string _modifierName = string.Empty;
     private List<BuildingOptionDto> _visibleBuildings = [];
     private bool _isLoading = true;
+    private bool _isSampleData = false;
+    private bool _canWrite = false;
+    private string? _loadError;
 
     private int _totalCount;
     private int _activeCount;
@@ -384,48 +401,79 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.Yield();
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        _callerRole = UtilityDraftRules.ResolveRole(user);
-        _callerEmail = UtilityDraftRules.ResolveEmail(user);
-        _modifierName = user.Identity?.Name ?? string.Empty;
-        _visibleBuildings = StateService.GetBuildingsForCaller(_callerRole, _callerEmail).ToList();
-
-        StateService.OnChange += HandleStateChanged;
-        LoadData();
+        await LoadDataAsync();
         _isLoading = false;
     }
 
-    private void HandleStateChanged()
+    private async Task LoadDataAsync()
     {
-        InvokeAsync(() =>
+        try
         {
-            LoadData();
-            StateHasChanged();
-        });
-    }
+            _callerRole = await PageService.GetCurrentRoleAsync();
+            _callerEmail = await PageService.GetCurrentEmailAsync();
+            _visibleBuildings = (await PageService.GetBuildingsForCallerAsync()).ToList();
 
-    private void LoadData()
-    {
-        var allServices = StateService.GetServicesForCaller(_callerRole, _callerEmail);
-        _totalCount = allServices.Count;
-        _activeCount = allServices.Count(s => s.Active);
-        _pausedCount = allServices.Count(s => !s.Active);
-        _readOnlyCount = allServices.Count(s => s.IsReadOnly);
+            _allServices = (await PageService.GetServicesForCallerAsync()).ToList();
+            _totalCount = _allServices.Count;
+            _activeCount = _allServices.Count(s => s.Active);
+            _pausedCount = _allServices.Count(s => !s.Active);
+            _readOnlyCount = _allServices.Count(s => s.IsReadOnly);
 
-        ApplyFilters();
+            _isSampleData = PageService.IsSampleData;
+            _canWrite = PageService.CheckWriteSupport().CanWrite && string.Equals(_callerRole, Roles.ChuTro, StringComparison.OrdinalIgnoreCase);
+            _loadError = null;
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            _loadError = $"Không thể kết nối dịch vụ cơ sở dữ liệu: {ex.Message}";
+            _allServices = [];
+            _filteredServices = [];
+            _totalCount = 0;
+            _activeCount = 0;
+            _pausedCount = 0;
+            _readOnlyCount = 0;
+        }
     }
 
     private void ApplyFilters()
     {
-        _filteredServices = StateService.GetServicesForCaller(
-            _callerRole,
-            _callerEmail,
-            _selectedBuilding,
-            _selectedType,
-            _selectedStatus,
-            _searchTerm).ToList();
+        IEnumerable<ServiceItemDto> query = _allServices;
+
+        if (!string.IsNullOrWhiteSpace(_selectedBuilding) && _selectedBuilding != "all")
+        {
+            query = query.Where(s => s.BuildingId == "all" || s.BuildingId == _selectedBuilding);
+        }
+
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
+        {
+            query = query.Where(s =>
+                s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.Code.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(_selectedType) && _selectedType != "all")
+        {
+            query = _selectedType switch
+            {
+                "meter" => query.Where(s => s.Type == ServiceTypeCategory.Meter),
+                "fixed_monthly" => query.Where(s => s.Type == ServiceTypeCategory.FixedMonthly),
+                "custom" => query.Where(s => s.Type == ServiceTypeCategory.Custom),
+                _ => query,
+            };
+        }
+
+        if (!string.IsNullOrWhiteSpace(_selectedStatus) && _selectedStatus != "all")
+        {
+            query = _selectedStatus switch
+            {
+                "active" => query.Where(s => s.Active),
+                "inactive" => query.Where(s => !s.Active),
+                _ => query,
+            };
+        }
+
+        _filteredServices = query.ToList();
     }
 
     private void ResetFilters()
@@ -439,17 +487,13 @@
 
     private string GetCurrentBuildingName()
     {
-        var b = StateService.Buildings.FirstOrDefault(x => x.Id == _selectedBuilding);
+        var b = _visibleBuildings.FirstOrDefault(x => x.Id == _selectedBuilding);
         return b?.Name ?? L["AllBuildings"];
     }
 
     private void HandleToggleActive(string serviceId)
     {
-        var success = StateService.ToggleServiceActive(serviceId, _callerRole);
-        if (success)
-        {
-            Toast.Success(L["ToastServiceToggled"]);
-        }
+        Toast.Error("Thao tác thay đổi trạng thái kích hoạt chưa được backend hỗ trợ.");
     }
 
     private void OpenTierModal(string serviceName)
@@ -476,34 +520,34 @@
         }
     }
 
-    private Task HandleSavePrice(UpdatePriceRequest req)
+    private async Task HandleSavePrice(UpdatePriceRequest req)
     {
-        var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
+        var res = await PageService.UpdateServicePriceAsync(req);
         if (res.Success)
         {
+            await LoadDataAsync();
             Toast.Success(L["ToastPriceUpdatedSuccess"]);
             _isUpdateModalOpen = false;
         }
         else
         {
-            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
         }
-        return Task.CompletedTask;
     }
 
-    private Task HandleCreateService(CreateServiceRequest req)
+    private async Task HandleCreateService(CreateServiceRequest req)
     {
-        var res = StateService.AddService(req, _callerRole, _modifierName);
+        var res = await PageService.AddServiceAsync(req);
         if (res.Success)
         {
+            await LoadDataAsync();
             Toast.Success(L["ToastCreatedSuccess"]);
             _isCreateModalOpen = false;
         }
         else
         {
-            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
         }
-        return Task.CompletedTask;
     }
 
     private static string GetServiceTypeResourceKey(ServiceTypeCategory type) => type switch
@@ -537,10 +581,4 @@
         PriceVersionStatus.Upcoming => "price-status-upcoming",
         _ => "price-status-expired",
     };
-
-    public void Dispose()
-    {
-        StateService.OnChange -= HandleStateChanged;
-    }
 }
-

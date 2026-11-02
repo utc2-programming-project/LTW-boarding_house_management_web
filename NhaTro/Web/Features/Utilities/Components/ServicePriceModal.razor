@@ -1,5 +1,4 @@
 @inject IStringLocalizer<UtilityResources> L
-@inject UtilitySampleStateService StateService
 
 @if (IsOpen && Service is not null)
 {
@@ -68,7 +67,7 @@
                                 class="input @(_scopeError.HasValue ? "invalid" : "")"
                                 @bind="_buildingScope"
                                 @bind:after="ValidateScope">
-                            @foreach (var b in StateService.GetEditableBuildingScopes(Service))
+                            @foreach (var b in GetEditableBuildingScopes())
                             {
                                 <option value="@b.Id">@(b.Id == "all" ? L["AllBuildings"] : b.Name)</option>
                             }
@@ -118,13 +117,19 @@
                            @bind="_note"
                            placeholder="@L["NotePlaceholder"]" />
                 </div>
+                @if (!CanWrite)
+                {
+                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: #b45309; background-color: #fef3c7; border: 1px solid #fcd34d; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
+                        @L["WriteActionBlockedNotice"]
+                    </div>
+                }
             </div>
 
             <footer class="modal-footer">
                 <button type="button" class="btn btn-secondary" @onclick="HandleClose" disabled="@_isSaving">
                     @L["CancelBtn"]
                 </button>
-                <button type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@_isSaving">
+                <button type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@(!CanWrite || _isSaving)" title="@(!CanWrite ? L["WriteActionBlockedNotice"] : "")">
                     @if (_isSaving)
                     {
                         <span class="spinner" aria-hidden="true"></span>
@@ -146,6 +151,16 @@
     [Parameter] public ServiceItemDto? Service { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<UpdatePriceRequest> OnSave { get; set; }
+    [Parameter] public IReadOnlyList<BuildingOptionDto> Buildings { get; set; } = [];
+    [Parameter] public bool CanWrite { get; set; } = false;
+
+    private IEnumerable<BuildingOptionDto> GetEditableBuildingScopes()
+    {
+        if (Service is null) return [];
+        if (Service.BuildingId != "all")
+            return Buildings.Where(b => b.Id == Service.BuildingId);
+        return Buildings.Where(b => b.Id != "all");
+    }
 
     private decimal _newRate;
     private ServiceUnitCategory _unit = ServiceUnitCategory.Room;
@@ -175,9 +190,9 @@
         _newRate = Service.CurrentRate;
         _unit = Service.Unit;
         _buildingScope = Service.BuildingId == "all"
-            ? StateService.GetEditableBuildingScopes(Service).FirstOrDefault()?.Id ?? string.Empty
+            ? GetEditableBuildingScopes().FirstOrDefault()?.Id ?? string.Empty
             : Service.BuildingId;
-        _effectiveFrom = StateService.Today;
+        _effectiveFrom = DateOnly.FromDateTime(DateTime.Today);
         _effectiveTo = null;
         _note = string.Empty;
         _rateError = null;
@@ -199,7 +214,7 @@
 
     private void ValidateScope()
     {
-        _scopeError = Service is not null && StateService.GetEditableBuildingScopes(Service)
+        _scopeError = Service is not null && GetEditableBuildingScopes()
             .Any(building => building.Id == _buildingScope && building.Id != "all")
                 ? null
                 : UtilityErrorCode.InvalidBuildingScope;
@@ -211,7 +226,7 @@
         ValidateDates();
         ValidateScope();
 
-        if (_isSaving || _rateError.HasValue || _dateError.HasValue || _scopeError.HasValue)
+        if (!CanWrite || _isSaving || _rateError.HasValue || _dateError.HasValue || _scopeError.HasValue)
         {
             return;
         }

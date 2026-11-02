@@ -21,5 +21,5 @@ public sealed class ServicePriceHistory
 
     public DateTime CreatedAt { get; set; }
 
-    public int CreatedByUserId { get; set; }
+    public string? CreatedByUserId { get; set; }
 }

@@ -347,6 +347,7 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageServi
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();

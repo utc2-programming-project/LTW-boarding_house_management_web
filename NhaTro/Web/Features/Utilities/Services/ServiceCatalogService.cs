@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Enums;
+using Web.Features.Properties;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Rules;
@@ -19,13 +21,37 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    public async Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(string userRole)
+    public async Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(PropertyCaller caller)
     {
-        EnsureCanView(userRole);
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanView(caller.Role);
+
+        IQueryable<int> allowedPropertyIds;
+        if (caller.IsKhachThue || string.Equals(caller.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
+        {
+            var now = _timeProvider.UtcNow();
+            allowedPropertyIds = (from member in _context.ContractMembers
+                                  join tenant in _context.Tenants on member.TenantId equals tenant.Id
+                                  join contract in _context.Contracts on member.ContractId equals contract.ContractId
+                                  join room in _context.Rooms on contract.RoomId equals room.Id
+                                  where tenant.UserId == caller.UserId
+                                        && tenant.IsActive
+                                        && contract.Status == ContractStatus.Approved
+                                        && contract.StartDate <= now
+                                        && contract.EndDate >= now
+                                  select room.PropertyId).Distinct();
+        }
+        else
+        {
+            allowedPropertyIds = PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+                .Select(p => p.Id);
+        }
+
         var today = _timeProvider.TodayVietnam();
         var catalogs = await _context.ServiceCatalogs
             .AsNoTracking()
             .Include(catalog => catalog.PriceHistory)
+            .Where(catalog => catalog.PropertyId == null || allowedPropertyIds.Contains(catalog.PropertyId.Value))
             .OrderBy(catalog => catalog.PropertyId)
             .ThenBy(catalog => catalog.Id)
             .ToListAsync();
@@ -38,13 +64,31 @@ public sealed class ServiceCatalogService : IServiceCatalogService
 
     public async Task<ServiceCatalogDto> CreateOrUpdateServicePriceAsync(
         CreateServiceCatalogDto request,
-        int userId,
-        string userRole)
+        PropertyCaller caller)
     {
-        EnsureCanManage(userRole);
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(ServiceCatalogRules.Validate(request));
-        await ValidateScopeAsync(request.PropertyId);
+
+        if (!request.PropertyId.HasValue)
+        {
+            throw new ArgumentException("Bắt buộc phải chọn nhà trọ (PropertyId) khi tạo danh mục dịch vụ.", nameof(request.PropertyId));
+        }
+
+        var propertyExists = await _context.Properties.AnyAsync(property =>
+            property.Id == request.PropertyId.Value && property.IsActive && !property.IsDeleted);
+        if (!propertyExists)
+        {
+            throw new ArgumentException("Nhà trọ không tồn tại.", nameof(request.PropertyId));
+        }
+
+        var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .AnyAsync(property => property.Id == request.PropertyId.Value);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý nhà trọ này.");
+        }
 
         var catalog = new ServiceCatalog
         {
@@ -58,7 +102,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             request.CalculationMethod,
             request.UnitPrice,
             request.EffectiveDate,
-            userId));
+            caller.UserId));
 
         _context.ServiceCatalogs.Add(catalog);
         await _context.SaveChangesAsync();
@@ -68,10 +112,10 @@ public sealed class ServiceCatalogService : IServiceCatalogService
     public async Task<ServiceCatalogDto> CreateOrUpdateServicePriceAsync(
         int serviceCatalogId,
         UpdateServicePriceDto request,
-        int userId,
-        string userRole)
+        PropertyCaller caller)
     {
-        EnsureCanManage(userRole);
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(ServiceCatalogRules.Validate(request));
 
@@ -88,6 +132,18 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             throw new UnauthorizedAccessException("Biểu giá điện/nước chỉ được xem, không thể sửa.");
         }
 
+        if (!catalog.PropertyId.HasValue)
+        {
+            throw new UnauthorizedAccessException("Không thể cập nhật biểu giá danh mục hệ thống dùng chung.");
+        }
+
+        var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .AnyAsync(property => property.Id == catalog.PropertyId.Value && property.IsActive && !property.IsDeleted);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý danh mục của nhà trọ này.");
+        }
+
         if (catalog.PriceHistory.Any(version => version.EffectiveDate == request.EffectiveDate))
         {
             throw new InvalidOperationException("Đã có phiên bản giá cho ngày hiệu lực này.");
@@ -100,19 +156,10 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             request.CalculationMethod,
             request.UnitPrice,
             request.EffectiveDate,
-            userId));
+            caller.UserId));
 
         await _context.SaveChangesAsync();
         return ToDto(catalog, _timeProvider.TodayVietnam());
-    }
-
-    private async Task ValidateScopeAsync(int? propertyId)
-    {
-        if (propertyId.HasValue && !await _context.Properties.AnyAsync(property =>
-                property.Id == propertyId.Value && property.IsActive && !property.IsDeleted))
-        {
-            throw new ArgumentException("Nhà trọ không tồn tại.", nameof(propertyId));
-        }
     }
 
     private ServicePriceHistory CreateVersion(
@@ -121,7 +168,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         string calculationMethod,
         decimal unitPrice,
         DateOnly effectiveDate,
-        int userId) => new()
+        string? userId) => new()
     {
         Name = name.Trim(),
         Unit = unit.Trim(),
@@ -186,9 +233,9 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         throw new UnauthorizedAccessException("Vai trò này không được xem danh mục P5.");
     }
 
-    private static void EnsureCanManage(string userRole)
+    private static void EnsureCanManage(PropertyCaller caller)
     {
-        if (!IsRole(userRole, Roles.ChuTro, "Landlord"))
+        if (!IsRole(caller.Role, Roles.ChuTro, "Landlord"))
         {
             throw new UnauthorizedAccessException("Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ.");
         }

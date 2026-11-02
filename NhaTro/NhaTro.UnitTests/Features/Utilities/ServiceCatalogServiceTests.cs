@@ -1,3 +1,5 @@
+using Web.Features.Accounts;
+using Web.Features.Properties;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Services;
 
@@ -16,8 +18,7 @@ public sealed class ServiceCatalogServiceTests
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateOrUpdateServicePriceAsync(
             ValidCreateRequest(),
-            1,
-            role));
+            new PropertyCaller("user-1", role)));
     }
 
     [Theory]
@@ -31,8 +32,7 @@ public sealed class ServiceCatalogServiceTests
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateOrUpdateServicePriceAsync(
             1,
             ValidUpdateRequest(),
-            1,
-            role));
+            new PropertyCaller("user-1", role)));
     }
 
     [Fact]
@@ -45,8 +45,19 @@ public sealed class ServiceCatalogServiceTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
             request,
-            1,
-            "Landlord"));
+            new PropertyCaller("owner-1", Roles.ChuTro)));
+    }
+
+    [Fact]
+    public async Task CreateOrUpdateServicePriceAsync_RejectsMissingPropertyId()
+    {
+        var service = new ServiceCatalogService(null!);
+        var request = ValidCreateRequest();
+        request.PropertyId = null;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
+            request,
+            new PropertyCaller("owner-1", Roles.ChuTro)));
     }
 
     [Fact]
@@ -59,8 +70,7 @@ public sealed class ServiceCatalogServiceTests
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
             1,
             request,
-            1,
-            "Landlord"));
+            new PropertyCaller("owner-1", Roles.ChuTro)));
     }
 
     [Theory]
@@ -70,11 +80,13 @@ public sealed class ServiceCatalogServiceTests
     {
         var service = new ServiceCatalogService(null!);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetServiceCatalogsAsync(role));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.GetServiceCatalogsAsync(
+            new PropertyCaller("user-1", role)));
     }
 
     private static CreateServiceCatalogDto ValidCreateRequest() => new()
     {
+        PropertyId = 1,
         Name = "Internet",
         Unit = "phòng",
         CalculationMethod = "fixed-monthly",

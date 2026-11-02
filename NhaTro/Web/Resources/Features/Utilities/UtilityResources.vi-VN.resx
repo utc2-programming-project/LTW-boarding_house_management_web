@@ -245,5 +245,7 @@
   <data name="ErrorPriceVersionConflict" xml:space="preserve"><value>Mốc giá bị trùng hoặc chồng lấn với phiên bản khác trong cùng phạm vi.</value></data>
   <data name="ErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép.</value></data>
   <data name="ErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi. Vui lòng thử lại.</value></data>
+  <data name="ToggleActiveNotSupportedTooltip" xml:space="preserve"><value>Backend chưa hỗ trợ tính năng bật/tắt kích hoạt dịch vụ.</value></data>
+  <data name="WriteActionBlockedNotice" xml:space="preserve"><value>Chức năng ghi tạm thời chưa khả dụng do đang chờ backend hỗ trợ ánh xạ người dùng (Identity UserId mapping).</value></data>
 </root>
 
