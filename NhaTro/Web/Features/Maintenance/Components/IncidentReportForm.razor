@@ -14,7 +14,7 @@
             <fieldset disabled="@Busy">
                 <div class="form-grid">
                     <FormField TValue="int" Id="incident-property" Label="@L["Property"]" Required="true" For="() => _form.PropertyId">
-                        <InputSelect id="incident-property" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged" aria-describedby="incident-property-error">
+                        <InputSelect TValue="int" id="incident-property" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged" aria-describedby="incident-property-error" aria-invalid="@(_context.HasError(() => _form.PropertyId) ? "true" : "false")">
                             <option value="0">@L["SelectProperty"]</option>
                             @foreach (var property in Rooms.DistinctBy(r => r.PropertyId))
                             {
@@ -23,7 +23,7 @@
                         </InputSelect>
                     </FormField>
                     <FormField TValue="int" Id="incident-room" Label="@L["Room"]" Required="true" For="() => _form.RoomId">
-                        <InputSelect id="incident-room" @bind-Value="_form.RoomId" aria-describedby="incident-room-error">
+                        <InputSelect TValue="int" id="incident-room" @bind-Value="_form.RoomId" aria-describedby="incident-room-error" aria-invalid="@(_context.HasError(() => _form.RoomId) ? "true" : "false")">
                             <option value="0">@L["SelectRoom"]</option>
                             @foreach (var room in Rooms.Where(r => r.PropertyId == _form.PropertyId))
                             {
@@ -33,11 +33,11 @@
                     </FormField>
                     <div class="full-width">
                         <FormField TValue="string" Id="incident-title" Label="@L["Title"]" Required="true" For="() => _form.Title">
-                            <InputText id="incident-title" @bind-Value="_form.Title" aria-describedby="incident-title-error" />
+                            <InputText id="incident-title" @bind-Value="_form.Title" aria-describedby="incident-title-error" aria-invalid="@(_context.HasError(() => _form.Title) ? "true" : "false")" />
                         </FormField>
                     </div>
                     <FormField TValue="IncidentDemoCategory" Id="incident-category" Label="@L["Category"]" For="() => _form.Category">
-                        <InputSelect id="incident-category" @bind-Value="_form.Category" aria-describedby="incident-category-error">
+                        <InputSelect id="incident-category" @bind-Value="_form.Category" aria-describedby="incident-category-error" aria-invalid="@(_context.HasError(() => _form.Category) ? "true" : "false")">
                             @foreach (var value in Enum.GetValues<IncidentDemoCategory>())
                             {
                                 <option value="@value">@L[$"Category{value}"]</option>
@@ -45,7 +45,7 @@
                         </InputSelect>
                     </FormField>
                     <FormField TValue="IncidentDemoUrgency" Id="incident-urgency" Label="@L["Urgency"]" For="() => _form.Urgency">
-                        <InputSelect id="incident-urgency" @bind-Value="_form.Urgency" aria-describedby="incident-urgency-error">
+                        <InputSelect id="incident-urgency" @bind-Value="_form.Urgency" aria-describedby="incident-urgency-error" aria-invalid="@(_context.HasError(() => _form.Urgency) ? "true" : "false")">
                             @foreach (var value in Enum.GetValues<IncidentDemoUrgency>())
                             {
                                 <option value="@value">@L[$"Urgency{value}"]</option>
@@ -54,7 +54,7 @@
                     </FormField>
                     <div class="full-width">
                         <FormField TValue="string" Id="incident-description" Label="@L["Description"]" Required="true" For="() => _form.Description">
-                            <InputTextArea id="incident-description" rows="4" @bind-Value="_form.Description" aria-describedby="incident-description-error" />
+                            <InputTextArea id="incident-description" rows="4" @bind-Value="_form.Description" aria-describedby="incident-description-error" aria-invalid="@(_context.HasError(() => _form.Description) ? "true" : "false")" />
                         </FormField>
                     </div>
                     <div class="full-width">

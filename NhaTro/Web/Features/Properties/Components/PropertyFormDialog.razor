@@ -4,7 +4,7 @@
 
 <FeatureDialog @ref="_featureDialog" Visible="Visible" Title="@(IsEdit ? L["P2EditProperty"].Value : L["P2AddProperty"].Value)"
                CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose" CssClass="property-form-dialog">
-    <EditForm Model="_model" OnSubmit="HandleSubmitAsync">
+    <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync">
         <div class="p2-form-body">
             @if (!string.IsNullOrWhiteSpace(_error))
             {
@@ -25,12 +25,12 @@
                 <div class="p2-form-grid">
                     <div class="p2-field full">
                         <label for="property-name">@L["P2PropertyName"] <span class="required" aria-hidden="true">*</span></label>
-                        <InputText id="property-name" @bind-Value="_model.Name" maxlength="200" autocomplete="organization" aria-describedby="property-name-error" />
+                        <InputText id="property-name" @bind-Value="_model.Name" maxlength="200" autocomplete="organization" aria-describedby="property-name-error" aria-invalid="@(_editContext.HasError(() => _model.Name) ? "true" : "false")" />
                         <span class="p2-field-error" id="property-name-error" aria-live="polite">@ErrorFor(nameof(_model.Name))</span>
                     </div>
                     <div class="p2-field full">
                         <label for="property-address">@L["P2Address"]</label>
-                        <InputTextArea id="property-address" @bind-Value="_model.Address" maxlength="500" rows="3" aria-describedby="property-address-error" />
+                        <InputTextArea id="property-address" @bind-Value="_model.Address" maxlength="500" rows="3" aria-describedby="property-address-error" aria-invalid="@(_editContext.HasError(() => _model.Address) ? "true" : "false")" />
                         <span class="p2-field-error" id="property-address-error" aria-live="polite">@ErrorFor(nameof(_model.Address))</span>
                     </div>
                     <label class="p2-check-field" for="property-is-active">
@@ -60,12 +60,25 @@
 
     private FeatureDialog? _featureDialog;
     private PropertySave _model = new();
-    private readonly Dictionary<string, string> _errors = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
     private bool _loading;
     private bool _saving;
     private bool _loadFailed;
     private string? _error;
     private bool IsEdit => PropertyId.HasValue;
+
+    protected override void OnInitialized() => ResetValidation();
+    private void ResetValidation()
+    {
+        _editContext = new EditContext(_model);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,6 +100,7 @@
                 Address = result.Property.Address,
                 IsActive = result.Property.IsActive
             };
+            ResetValidation();
         }
         catch (Exception ex)
         {
@@ -100,19 +114,21 @@
         }
     }
 
-    private string? ErrorFor(string field) => _errors.GetValueOrDefault(field);
+    private string? ErrorFor(string field) => _messages[new FieldIdentifier(_model, field)].FirstOrDefault();
 
     private async Task HandleSubmitAsync(EditContext _)
     {
         if (_loading || _loadFailed || _saving) return;
 
-        _errors.Clear();
+        _messages.Clear();
+        _editContext.NotifyValidationStateChanged();
         _error = null;
         _model.Normalize();
-        if (string.IsNullOrWhiteSpace(_model.Name)) _errors[nameof(_model.Name)] = L["P2ValidationPropertyNameRequired"];
-        else if (_model.Name.Length > 200) _errors[nameof(_model.Name)] = L["P2ValidationNameLength"];
-        if ((_model.Address?.Length ?? 0) > 500) _errors[nameof(_model.Address)] = L["P2ValidationAddressLength"];
-        if (_errors.Count > 0) return;
+        if (string.IsNullOrWhiteSpace(_model.Name)) AddError(nameof(_model.Name), L["P2ValidationPropertyNameRequired"]);
+        else if (_model.Name.Length > 200) AddError(nameof(_model.Name), L["P2ValidationNameLength"]);
+        if ((_model.Address?.Length ?? 0) > 500) AddError(nameof(_model.Address), L["P2ValidationAddressLength"]);
+        _editContext.NotifyValidationStateChanged();
+        if (_editContext.GetValidationMessages().Any()) return;
 
         _saving = true;
         try
@@ -129,6 +145,7 @@
             }
 
             _error = MapError(result.ErrorCode);
+            _editContext.NotifyValidationStateChanged();
             _loadFailed = false;
         }
         catch (UnauthorizedAccessException)
@@ -172,6 +189,7 @@
                 return;
             }
             _model = new PropertySave { Name = result.Property.Name, Address = result.Property.Address, IsActive = result.Property.IsActive };
+            ResetValidation();
         }
         catch (Exception ex)
         {
@@ -181,6 +199,8 @@
         }
         finally { _loading = false; }
     }
+
+    private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_model, field), message);
 
     private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
 }
