@@ -315,8 +315,8 @@ builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
 
-// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit và điểm mở rộng phạm vi Quản lý theo tòa nhà (VHT-24).
-builder.Services.AddScoped<IManagerTenantScope, NoManagerTenantScope>();
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit. VHT-119: Quản lý theo phân công tòa nhà thật (VHT-24).
+builder.Services.AddScoped<IManagerTenantScope, ContractManagerTenantScope>();
 builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
 builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 

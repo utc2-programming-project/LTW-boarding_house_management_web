@@ -148,7 +148,7 @@
     {
         var state = await AuthState.GetAuthenticationStateAsync();
         _callerUserId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        _callerRole = Roles.All.FirstOrDefault(state.User.IsInRole) ?? string.Empty;
+        _callerRole = Roles.ResolvePrimaryRole(state.User);
 
         _assignableRoles = AccountPermissionRules.AssignableRoles(_callerRole);
         _filterRoles = AccountPermissionRules.VisibleRoles(_callerRole);

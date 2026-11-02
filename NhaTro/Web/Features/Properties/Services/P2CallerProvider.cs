@@ -18,11 +18,10 @@ public sealed class P2CallerProvider(AuthenticationStateProvider authenticationS
             throw new UnauthorizedAccessException("Authentication is required for P2 operations.");
         }
 
-        // Prefer the more restrictive role if an account has inconsistent multiple roles.
-        var role = new[] { Roles.Admin, Roles.KhachThue, Roles.QuanLy, Roles.ChuTro }
-            .FirstOrDefault(principal.IsInRole);
+        // VHT-119: dùng chung thứ tự vai trò với P3/storage (Chủ trọ thắng khi dữ liệu lệch).
+        var role = Roles.ResolvePrimaryRole(principal);
 
-        if (role is null)
+        if (string.IsNullOrEmpty(role))
         {
             throw new UnauthorizedAccessException("A supported P2 role is required.");
         }
