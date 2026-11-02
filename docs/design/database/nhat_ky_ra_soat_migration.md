@@ -66,3 +66,39 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 
 - Chạy tay trên DB `NhaTro_VHT121_invoices`: kiểm 2 bảng, FK, unique; mở `/invoices`, `/my-invoices` sau khi seed hóa đơn.
 - VHT-28 2A yêu cầu người thứ hai chạy script — chưa có.
+
+## Lượt 2D — ERD theo migration đã merge (VHT-122)
+
+**Nguồn rà:** `dev@12a7156`, 18 migration tới `20261101110944_AddManagerApprovalQueue`. Đối chiếu VHT-28 §3.2 và delta ERD của lượt 2C.
+
+**Kết luận: ERD khớp schema EF**, 0 khác biệt ở 4 nhóm `sys.*` trong phạm vi 19 bảng ERD + `AspNetUsers`.
+
+### Bằng chứng
+
+| Lệnh | Kết quả |
+| --- | --- |
+| `git diff --check` | Sạch (không khoảng trắng thừa) |
+| `sqlcmd -i <bản sao ERD SQL, DB NhaTro_ERD_sql>` chạy 2 lần | Lần 1 và 2 đều không lỗi; số bảng/khóa không đổi, seed không nhân đôi dòng |
+| `dotnet ef database update --project NhaTro/Web --connection "...Database=NhaTro_ERD_ef..."` | `Done.` |
+| `dotnet ef migrations has-pending-model-changes` | Không có thay đổi model |
+| Diff `sys.columns` | 184 / 184 dòng trùng (tên, kiểu, độ dài, precision/scale, nullable, identity, computed) |
+| Diff `sys.indexes` | 57 / 57 index trùng cả tên lẫn cột/unique/filter |
+| Diff `sys.foreign_keys` | 22 / 22 FK trùng tên, cột, bảng đích, `NO_ACTION` |
+| Diff `sys.check_constraints` | 29 / 29 CHECK trùng định nghĩa |
+| Diff `sys.triggers` | 1 / 1: `TR_Contracts_PreventApprovedOverlap` |
+
+### Khác biệt được giải thích (không phải lỗi)
+
+1. **Thứ tự cột** lệch ở `AspNetUsers` (`FullName` sau `AccessFailedCount`) và `Tenants` (`CreatedAt`… về cuối bảng) — do migration thêm cột bằng `ADD`, EF luôn nối cuối bảng; không ảnh hưởng schema.
+2. **Giá trị mặc định bit**: ERD ghi `((0))`/`((1))`, EF ghi `(CONVERT([bit],(0)))` — cùng một mặc định, chỉ khác cách SQL Server chuẩn hóa.
+3. **Bảng ngoài phạm vi**: `AspNetRoles/UserRoles/Claims/Logins/Tokens/Passkeys`, `__EFMigrationsHistory` không nằm trong ERD (đã ghi chú cuối hình SVG).
+
+### ERD đã cập nhật
+
+- `so_do_quan_he_vht5_schema.sql`: 19 `CREATE TABLE` (7 bảng VHT-5 + 12 bảng P4/P5/P6/P7), trigger chống chồng hợp đồng, seed công tắc + dữ liệu mẫu chạy lại được.
+- `so_do_quan_he_vht5.svg`: 19 bảng vẽ theo 5 cụm, ghi đủ `PK/FK/UQ/nullable` và nhãn `1—N` + `Restrict`.
+
+### Còn lại
+
+- 2D.4: chưa gửi Phúc bản ERD + ghi chú để ghép Word P1–P4.
+- VHT-28 2A yêu cầu người thứ hai chạy script — chưa có.
