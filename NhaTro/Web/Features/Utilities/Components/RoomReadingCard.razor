@@ -23,11 +23,18 @@
                             <span>@L["MeterReadingStatusLocked"]</span>
                         </span>
                     }
-                    else
+                    else if (_electricEnd.HasValue && _waterEnd.HasValue)
                     {
                         <span class="status-badge status-open">
                             <span class="pulse-dot"></span>
-                            <span>@L["MeterReadingStatusOpen"]</span>
+                            <span>@L["MeterReadingKpiRecorded"]</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-unrecorded">
+                            <span class="pulse-dot unrecorded-dot"></span>
+                            <span>@L["MeterReadingKpiUnrecorded"]</span>
                         </span>
                     }
                 </div>

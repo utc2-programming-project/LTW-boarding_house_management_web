@@ -1183,4 +1183,7 @@
   <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Sample data is currently only available for October 2026. Please select another period.</value></data>
   <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Room not found in your scope</value></data>
   <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Invalid request</value></data>
+  <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Month:</value></data>
+  <data name="MeterReadingYearFilter" xml:space="preserve"><value>Year:</value></data>
+  <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Month {0:00}</value></data>
 </root>

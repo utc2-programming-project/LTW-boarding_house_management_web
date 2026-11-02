@@ -100,6 +100,7 @@ public sealed class MeterReadingPageServiceTests
             reason: null);
 
         Assert.False(result.Success);
+        Assert.Equal(MeterReadingErrorCodes.ElectricEndLessThanStart, result.ErrorCode);
         Assert.Contains("lớn hơn hoặc bằng chỉ số cũ", result.ErrorMessage);
     }
 
@@ -117,6 +118,7 @@ public sealed class MeterReadingPageServiceTests
             reason: null);
 
         Assert.False(result.Success);
+        Assert.Equal(MeterReadingErrorCodes.NegativeReading, result.ErrorCode);
         Assert.Contains("không được là số âm", result.ErrorMessage);
     }
 
@@ -152,6 +154,26 @@ public sealed class MeterReadingPageServiceTests
         Assert.True(result.Success);
         Assert.NotNull(result.Room);
         Assert.Equal("locked", result.Room.Status);
+    }
+
+    [Fact]
+    public async Task CalculateCost_AbnormalUsageOver300Percent_SetsAbnormalFlags()
+    {
+        var service = CreateService(Roles.ChuTro, OwnerEmail);
+        var rooms = UtilitySampleData.CreateDefaultRoomReadings();
+        var p101 = rooms.First(r => r.Id == "room-101"); // PreviousElectricUsage = 100, PreviousWaterUsage = 5
+        var p102 = rooms.First(r => r.Id == "room-102"); // PreviousElectricUsage = 25, PreviousWaterUsage = 5
+
+        // P101: 120 kWh (120% <= 300%), 6 m3 (120% <= 300%) -> normal
+        var normalBreakdown = await service.CalculateCostAsync(p101, electricEnd: 1570m, waterEnd: 130m);
+        Assert.False(normalBreakdown.HasAbnormalElectricUsage);
+        Assert.False(normalBreakdown.HasAbnormalWaterUsage);
+
+        // P102: 1065 - 980 = 85 kWh vs prev 25 kWh (340% > 300%) -> abnormal electric
+        // Water: 105 - 85 = 20 m3 vs prev 5 m3 (400% > 300%) -> abnormal water
+        var abnormalBreakdown = await service.CalculateCostAsync(p102, electricEnd: 1065m, waterEnd: 105m);
+        Assert.True(abnormalBreakdown.HasAbnormalElectricUsage);
+        Assert.True(abnormalBreakdown.HasAbnormalWaterUsage);
     }
 
     private static MeterReadingPageService CreateService(string role, string email)

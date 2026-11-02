@@ -7,6 +7,7 @@
 @using Web.Components.Shared
 @using Web.Components.Shared.Feedback
 @using Web.Features.Accounts
+@using Web.Features.Invoices.Rules
 @using Web.Features.Utilities.Components
 @using Web.Features.Utilities.DTOs
 @using Web.Features.Utilities.MockData
@@ -21,6 +22,19 @@
 <div class="meter-reading-page">
     <BreadcrumbNav Items="@_breadcrumbs" />
 
+    <!-- Simulation Banner (Dữ liệu mẫu — Sprint 2C) -->
+    <div class="simulation-banner">
+        <div class="banner-left">
+            <LucideIcon Name="info" />
+            <div class="banner-text">
+                <div class="banner-title-row">
+                    <strong class="banner-title">@L["MeterReadingSampleBanner"]</strong>
+                    <span class="banner-chip">@L["MeterReadingSprint2C"]</span>
+                </div>
+                <p class="banner-desc">@L["MeterReadingSampleBannerDesc"]</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Header trang -->
     <header class="page-header">
@@ -93,7 +107,7 @@
             </div>
         </div>
 
-        <!-- Filters: Building & Period -->
+        <!-- Filters: Building & Month/Year Period Picker -->
         <div class="filters-container">
             <div class="filters-row">
                 <label class="filter-field wide">
@@ -111,15 +125,39 @@
                     </select>
                 </label>
 
+                <label class="filter-field">
+                    <span>@L["MeterReadingMonthFilter"]</span>
+                    <select id="select-period-month"
+                            class="input"
+                            value="@_selectedMonth"
+                            @onchange="HandleMonthChanged">
+                        @for (var m = 1; m <= 12; m++)
+                        {
+                            <option value="@m">@string.Format(L["MeterReadingMonthOptionFormat"], m)</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["MeterReadingYearFilter"]</span>
+                    <select id="select-period-year"
+                            class="input"
+                            value="@_selectedYear"
+                            @onchange="HandleYearChanged">
+                        @foreach (var y in AvailableYears)
+                        {
+                            <option value="@y">@y</option>
+                        }
+                    </select>
+                </label>
+
                 <label class="filter-field wide">
                     <span>@L["MeterReadingPeriodFilter"]</span>
-                    <select id="select-period"
-                            class="input"
-                            value="@_selectedPeriodKey"
-                            @onchange="HandlePeriodChanged">
-                        <option value="2026-10">@L["MeterReadingPeriodOct2026"]</option>
-                        <option value="2026-09">@L["MeterReadingPeriodSep2026"]</option>
-                    </select>
+                    <input id="select-period"
+                           type="month"
+                           class="input"
+                           value="@_selectedPeriodKey"
+                           @onchange="HandlePeriodChanged" />
                 </label>
 
                 <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRetry"]">
@@ -130,7 +168,7 @@
         </div>
 
         <!-- Empty states -->
-        @if (_callerRole == Roles.KhachThue && _filteredRooms.Count == 0)
+        @if (_callerRole == Roles.KhachThue && _filteredRooms.Count == 0 && !_periodHasNoData)
         {
             <div class="empty-state-box">
                 <div class="empty-icon-wrap">
@@ -205,11 +243,15 @@
     private string _callerEmail = string.Empty;
 
     private string _selectedBuildingId = "b1";
+    private int _selectedYear = 2026;
+    private int _selectedMonth = 10;
     private string _selectedPeriodKey = "2026-10";
     private bool _periodHasNoData;
     private string _periodLabel = "10/2026";
     private DateOnly _periodStart = new(2026, 10, 1);
     private DateOnly _periodEnd = new(2026, 10, 31);
+
+    private static readonly IReadOnlyList<int> AvailableYears = Enumerable.Range(2024, 5).Reverse().ToArray();
 
     private IReadOnlyList<BuildingOptionDto> _buildings = [];
     private List<RoomReadingSampleDto> _allRooms = [];
@@ -240,6 +282,7 @@
             new(L["MeterReadingNavReadings"], null)
         ];
 
+        UpdatePeriodRange(_selectedYear, _selectedMonth);
         await ReloadDataAsync();
     }
 
@@ -290,26 +333,53 @@
         ApplyFilters();
     }
 
-    private void HandlePeriodChanged(ChangeEventArgs e)
+    private void HandleMonthChanged(ChangeEventArgs e)
     {
-        _selectedPeriodKey = e.Value?.ToString() ?? "2026-10";
-        _draftReadings.Clear();
-        if (_selectedPeriodKey == "2026-10")
+        if (int.TryParse(e.Value?.ToString(), out var month) && month is >= 1 and <= 12)
         {
-            _periodStart = new(2026, 10, 1);
-            _periodEnd = new(2026, 10, 31);
-            _periodLabel = "10/2026";
-            _periodHasNoData = false;
+            _selectedMonth = month;
+            _draftReadings.Clear();
+            UpdatePeriodRange(_selectedYear, _selectedMonth);
             ApplyFilters();
         }
-        else
+    }
+
+    private void HandleYearChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var year) && year is >= 2000 and <= 2100)
         {
-            _periodStart = new(2026, 9, 1);
-            _periodEnd = new(2026, 9, 30);
-            _periodLabel = "09/2026";
-            _periodHasNoData = true;
-            _filteredRooms = [];
+            _selectedYear = year;
+            _draftReadings.Clear();
+            UpdatePeriodRange(_selectedYear, _selectedMonth);
+            ApplyFilters();
         }
+    }
+
+    private void HandlePeriodChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? string.Empty;
+        _draftReadings.Clear();
+
+        var parts = raw.Split('-');
+        if (parts.Length == 2 &&
+            int.TryParse(parts[0], out var year) &&
+            int.TryParse(parts[1], out var month) &&
+            month is >= 1 and <= 12)
+        {
+            _selectedYear = year;
+            _selectedMonth = month;
+            UpdatePeriodRange(year, month);
+            ApplyFilters();
+        }
+    }
+
+    private void UpdatePeriodRange(int year, int month)
+    {
+        var anchor = new DateOnly(year, month, 1);
+        _periodStart = InvoicePeriodRules.Start(anchor);
+        _periodEnd = InvoicePeriodRules.EndInclusive(anchor);
+        _selectedPeriodKey = $"{year:D4}-{month:D2}";
+        _periodLabel = $"{month:D2}/{year:D4}";
     }
 
     private void SelectFirstBuilding()
@@ -323,7 +393,11 @@
 
     private void ApplyFilters()
     {
-        if (_selectedPeriodKey != "2026-10")
+        var roomsInPeriod = _allRooms
+            .Where(r => r.PeriodStart == _periodStart && r.PeriodEnd == _periodEnd)
+            .ToList();
+
+        if (roomsInPeriod.Count == 0)
         {
             _periodHasNoData = true;
             _filteredRooms = [];
@@ -335,24 +409,24 @@
         if (_callerRole == Roles.KhachThue)
         {
             var allowedIds = UtilitySampleData.GetAllowedRoomIds(_callerRole, _callerEmail);
-            _filteredRooms = _allRooms.Where(r => allowedIds.Contains(r.Id)).ToList();
+            _filteredRooms = roomsInPeriod.Where(r => allowedIds.Contains(r.Id)).ToList();
             return;
         }
 
         if (string.IsNullOrWhiteSpace(_selectedBuildingId) || _selectedBuildingId == "all")
         {
-            _filteredRooms = _allRooms.ToList();
+            _filteredRooms = roomsInPeriod;
         }
         else
         {
-            _filteredRooms = _allRooms.Where(r => r.BuildingId == _selectedBuildingId).ToList();
+            _filteredRooms = roomsInPeriod.Where(r => r.BuildingId == _selectedBuildingId).ToList();
         }
     }
 
     private void HandleRoomReadingChanged((string RoomId, decimal? ElectricEnd, decimal? WaterEnd) payload)
     {
-        // Chá»‰ lÆ°u draft khi cÃ³ thay Ä‘á»•i thá»±c sá»± so vá»›i dá»¯ liá»‡u Ä‘Ã£ lÆ°u
-        // (trÃ¡nh KPI "ÄÃ£ ghi" tÄƒng vÃ´ lÃ½ khi user báº¥m "Há»§y" trÃªn phÃ²ng chÆ°a nháº­p)
+        // Chỉ lưu draft khi có thay đổi thực sự so với dữ liệu đã lưu
+        // (tránh KPI "Đã ghi" tăng vô lý khi user bấm "Hủy" trên phòng chưa nhập)
         var room = _allRooms.FirstOrDefault(r => r.Id == payload.RoomId);
         var hasRealChange = room is not null &&
             ((payload.ElectricEnd.HasValue && payload.ElectricEnd != room.ElectricEnd) ||
@@ -434,4 +508,3 @@
         StateHasChanged();
     }
 }
-

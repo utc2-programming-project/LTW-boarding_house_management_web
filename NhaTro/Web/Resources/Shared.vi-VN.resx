@@ -1183,4 +1183,7 @@
   <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Dữ liệu mẫu hiện chỉ có cho tháng 10/2026. Vui lòng chọn kỳ khác.</value></data>
   <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép</value></data>
   <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Dữ liệu gửi lên không hợp lệ</value></data>
+  <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Tháng:</value></data>
+  <data name="MeterReadingYearFilter" xml:space="preserve"><value>Năm:</value></data>
+  <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Tháng {0:00}</value></data>
 </root>
