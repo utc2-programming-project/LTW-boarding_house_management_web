@@ -6,7 +6,8 @@ using Web.Data;
 namespace NhaTro.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// SQL Server LocalDB thật cho integration test.
+/// SQL Server thật cho integration test: dùng server trong NHATRO_TEST_SQLSERVER nếu được đặt,
+/// nếu không thì dùng SQL Server LocalDB.
 /// Tech-stack quy định: dùng SQL Server database riêng, KHÔNG dùng EF InMemory (không chứng minh
 /// được rowversion/filtered index) và KHÔNG Docker/Testcontainers.
 /// Mỗi lần chạy tạo một database riêng, áp migration, xóa khi xong.
@@ -16,19 +17,39 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
     private const string LocalDbMaster =
         @"Server=(localdb)\MSSQLLocalDB;Database=master;Trusted_Connection=True;Connect Timeout=15";
 
+    private const string TestSqlServerEnvironmentVariable = "NHATRO_TEST_SQLSERVER";
+
     private readonly string _databaseName = $"NhaTro_It_{Guid.NewGuid():N}";
 
-    /// <summary>False khi máy/CI không có SQL Server LocalDB: mọi test đánh dấu Skip.</summary>
+    /// <summary>False khi SQL Server được cấu hình hoặc LocalDB mặc định không truy cập được; test sẽ Skip.</summary>
     public static bool Available { get; } = Probe();
 
-    public string ConnectionString =>
-        $@"Server=(localdb)\MSSQLLocalDB;Database={_databaseName};Trusted_Connection=True;MultipleActiveResultSets=true;Connect Timeout=15";
+    public string ConnectionString => new SqlConnectionStringBuilder(MasterConnectionString)
+    {
+        InitialCatalog = _databaseName,
+        MultipleActiveResultSets = true,
+    }.ConnectionString;
+
+    private static string MasterConnectionString
+    {
+        get
+        {
+            var configured = Environment.GetEnvironmentVariable(TestSqlServerEnvironmentVariable);
+            if (string.IsNullOrWhiteSpace(configured)) return LocalDbMaster;
+
+            var builder = new SqlConnectionStringBuilder(configured)
+            {
+                InitialCatalog = "master",
+            };
+            return builder.ConnectionString;
+        }
+    }
 
     private static bool Probe()
     {
         try
         {
-            using var connection = new SqlConnection(LocalDbMaster);
+            using var connection = new SqlConnection(MasterConnectionString);
             connection.Open();
             return true;
         }
@@ -63,7 +84,7 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         try
         {
             SqlConnection.ClearAllPools();
-            await using var connection = new SqlConnection(LocalDbMaster);
+            await using var connection = new SqlConnection(MasterConnectionString);
             await connection.OpenAsync();
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -109,6 +130,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.UtilityTariffs.Where(tariff => tariff.Id > 5).ExecuteDeleteAsync();
         // VHT-96: hang doi duyet co FK toi Properties va AspNetUsers: xoa truoc ca hai.
         await db.ManagerApprovalRequests.ExecuteDeleteAsync();
+        await db.MaintenanceIncidentHistories.ExecuteDeleteAsync();
+        await db.MaintenanceIncidents.ExecuteDeleteAsync();
         // VHT-24: PropertyManagers co FK toi Properties va AspNetUsers: xoa truoc ca hai.
         await db.PropertyManagers.ExecuteDeleteAsync();
         // Cong tac (VHT-94) tro tới AspNetUsers qua UpdatedByUserId: gỡ tham chiếu trước khi xóa user.
