@@ -21,7 +21,7 @@ public sealed class MaintenanceIncidentHistoryConfiguration : IEntityTypeConfigu
         builder.Property(history => history.Action).IsRequired();
         builder.Property(history => history.ToStatus).IsRequired();
         builder.Property(history => history.ActorUserId).HasMaxLength(450).IsRequired();
-        builder.Property(history => history.Note).HasMaxLength(1000);
+        builder.Property(history => history.Note).HasMaxLength(2000);
         builder.Property(history => history.CreatedAt).IsRequired();
         builder.HasIndex(history => history.IncidentId);
     }

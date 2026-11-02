@@ -740,8 +740,8 @@ namespace Web.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<int>("ToStatus")
                         .HasColumnType("int");

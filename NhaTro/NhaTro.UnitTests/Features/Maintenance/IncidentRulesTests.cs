@@ -75,6 +75,17 @@ public sealed class IncidentRulesTests
             IncidentRules.ValidateUpdate(new IncidentUpdateRequest { Status = IncidentStatus.InProgress, RepairCost = 1.5m }));
     }
 
+    [Fact]
+    public void UpdateRequest_RejectsTechnicalNotesLongerThan2000Characters()
+    {
+        Assert.Equal(IncidentErrorCodes.InvalidRequest,
+            IncidentRules.ValidateUpdate(new IncidentUpdateRequest
+            {
+                Status = IncidentStatus.InProgress,
+                TechnicalNotes = new string('x', 2001),
+            }));
+    }
+
     private static IncidentCreateRequest ValidCreate() => new()
     {
         RoomId = 7,

@@ -84,6 +84,33 @@ public sealed class IncidentServiceIntegrationTests(SqlServerFixture fixture) : 
     }
 
     [SqlServerFact]
+    public async Task Update_PersistsTechnicalNotesAtHistoryColumnBoundaries()
+    {
+        await fixture.ResetAsync();
+        var (roomId, _) = await SeedRoomAsync();
+        var service = new IncidentService(fixture, TimeProvider.System, null!, null!);
+        var owner = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var created = await service.CreateAsync(ValidRequest(roomId), owner);
+        var incidentId = Assert.IsType<IncidentDetailDto>(created.Incident).Id;
+
+        foreach (var length in new[] { 1000, 1001, 2000 })
+        {
+            var notes = new string('x', length);
+            var updated = await service.UpdateAsync(incidentId,
+                new IncidentUpdateRequest { Status = IncidentStatus.New, TechnicalNotes = notes }, owner);
+
+            Assert.True(updated.Succeeded, $"Update with {length} note characters failed: {updated.ErrorCode}");
+            await using var db = fixture.CreateContext();
+            var historyNote = await db.MaintenanceIncidentHistories.AsNoTracking()
+                .Where(item => item.IncidentId == incidentId)
+                .OrderByDescending(item => item.Id)
+                .Select(item => item.Note)
+                .FirstAsync();
+            Assert.Equal(notes, historyNote);
+        }
+    }
+
+    [SqlServerFact]
     public async Task TenantCreatesOnlyForOwnActiveContractRoomAndReceivesMaskedDetails()
     {
         await fixture.ResetAsync();
@@ -266,8 +293,9 @@ public sealed class IncidentServiceIntegrationTests(SqlServerFixture fixture) : 
         Assert.Equal(managerId, createdIncident.ReportedByUserId);
         Assert.Equal(2, await readDb.MaintenanceIncidentHistories.CountAsync());
 
+        var longNotes = new string('x', 2000);
         var pendingUpdate = await incidents.UpdateAsync(createdIncident.Id,
-            new IncidentUpdateRequest { Status = IncidentStatus.InProgress, AssigneeName = "Nhân viên" }, manager);
+            new IncidentUpdateRequest { Status = IncidentStatus.InProgress, AssigneeName = "Nhân viên", TechnicalNotes = longNotes }, manager);
         Assert.NotNull(pendingUpdate.ApprovalRequest);
         var updateDecision = await approvals.ApproveAsync(pendingUpdate.ApprovalRequest!.Id, owner);
         Assert.True(updateDecision.Succeeded);
@@ -280,8 +308,10 @@ public sealed class IncidentServiceIntegrationTests(SqlServerFixture fixture) : 
         Assert.Equal(4, history.Count);
         Assert.Equal(IncidentHistoryAction.StatusChanged, history[^2].Action);
         Assert.Equal(managerId, history[^2].ActorUserId);
+        Assert.Equal(longNotes, history[^2].Note);
         Assert.Equal(IncidentHistoryAction.Approved, history[^1].Action);
         Assert.Equal(OwnerId, history[^1].ActorUserId);
+        Assert.Equal(longNotes, history[^1].Note);
     }
 
     private async Task<(int RoomId, int PropertyId)> SeedRoomAsync()
