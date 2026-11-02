@@ -397,7 +397,7 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
         });
         Assert.False(s2);
         Assert.NotNull(err2);
-        Assert.Contains("Chủ trọ", err2);
+        Assert.Equal("ErrorOwnerOnlyService", err2);
     }
 
     [SqlServerFact]
@@ -456,6 +456,204 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
         Assert.Equal(120_000m, newV.UnitPrice);
     }
 
+    [SqlServerFact]
+    public async Task GetPriceVersionsForCallerAsync_ResolvesRealUserCreatorNameAndValidCreatedAt()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        // Update Owner1 User to have FullName
+        var ownerUser = await db.Users.FindAsync(Owner1Id);
+        if (ownerUser is not null)
+        {
+            ownerUser.FullName = "Nguyễn Văn Chủ Trọ";
+            await db.SaveChangesAsync();
+        }
+
+        var prop = new Property { Name = "Nhà Trọ Test Creator", OwnerId = Owner1Id, Address = "Addr", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var cat = new ServiceCatalog
+        {
+            PropertyId = prop.Id,
+            CreatedAt = FixedTestNow,
+            PriceHistory = new List<ServicePriceHistory>
+            {
+                new()
+                {
+                    Name = "Vệ sinh",
+                    Unit = "phòng",
+                    CalculationMethod = "fixed-monthly",
+                    UnitPrice = 30_000m,
+                    EffectiveDate = new DateOnly(2026, 11, 1),
+                    CreatedAt = FixedTestNow,
+                    CreatedByUserId = Owner1Id,
+                }
+            }
+        };
+        db.ServiceCatalogs.Add(cat);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var versions = await pageService.GetPriceVersionsForCallerAsync(cat.Id.ToString());
+
+        var v = Assert.Single(versions);
+        Assert.Equal("Nguyễn Văn Chủ Trọ", v.CreatedBy);
+        Assert.Equal(FixedTestNow, v.CreatedAt);
+        Assert.Equal("—", v.Note);
+    }
+
+    [SqlServerFact]
+    public async Task AddServiceAsync_RejectsZeroOrNegativeRateAndAllScope()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+
+        // Zero rate
+        var (sZero, errZero, _) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Wifi Free",
+            BuildingId = "1",
+            Rate = 0m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+        });
+        Assert.False(sZero);
+        Assert.Equal("ErrorPriceMustBePositive", errZero);
+
+        // Negative rate
+        var (sNeg, errNeg, _) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Wifi Âm",
+            BuildingId = "1",
+            Rate = -10_000m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+        });
+        Assert.False(sNeg);
+        Assert.Equal("ErrorPriceMustBePositive", errNeg);
+
+        // All building scope
+        var (sAll, errAll, _) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Wifi All",
+            BuildingId = "all",
+            Rate = 50_000m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+        });
+        Assert.False(sAll);
+        Assert.Equal("ErrorBuildingRequired", errAll);
+    }
+
+    [SqlServerFact]
+    public async Task ToggleServiceActiveAsync_Owner_SuccessfullyTogglesAndReReadsFromSql()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Toggle Page", OwnerId = Owner1Id, Address = "Addr", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var cat = new ServiceCatalog
+        {
+            PropertyId = prop.Id,
+            IsReadOnly = false,
+            IsActive = true,
+            CreatedAt = FixedTestNow,
+            PriceHistory = [new ServicePriceHistory
+            {
+                Name = "Giữ xe", Unit = "xe", CalculationMethod = "fixed-monthly", UnitPrice = 100_000m,
+                EffectiveDate = new DateOnly(2026, 1, 1), CreatedByUserId = Owner1Id
+            }]
+        };
+        db.ServiceCatalogs.Add(cat);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+
+        // Toggle to inactive
+        var (sOff, errOff) = await pageService.ToggleServiceActiveAsync(cat.Id.ToString());
+        Assert.True(sOff);
+        Assert.Null(errOff);
+
+        await db.Entry(cat).ReloadAsync();
+        Assert.False(cat.IsActive);
+
+        // Toggle back to active
+        var (sOn, errOn) = await pageService.ToggleServiceActiveAsync(cat.Id.ToString());
+        Assert.True(sOn);
+        Assert.Null(errOn);
+
+        await db.Entry(cat).ReloadAsync();
+        Assert.True(cat.IsActive);
+    }
+
+    [SqlServerFact]
+    public async Task ToggleServiceActiveAsync_TariffOrNonOwner_Rejected()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, Manager1Id, Roles.QuanLy);
+
+        var managerPageService = CreatePageService(Manager1Id, Roles.QuanLy);
+        var (sMgr, errMgr) = await managerPageService.ToggleServiceActiveAsync("1");
+        Assert.False(sMgr);
+        Assert.Equal("ErrorOwnerOnlyToggle", errMgr);
+
+        var ownerPageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (sTrf, errTrf) = await ownerPageService.ToggleServiceActiveAsync("tariff-1");
+        Assert.False(sTrf);
+        Assert.Equal("ErrorReadOnlyTariff", errTrf);
+    }
+
+    [SqlServerFact]
+    public async Task GetServicesForCallerAsync_IncludesUtilityTariffsAsReadOnly()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var services = await pageService.GetServicesForCallerAsync();
+
+        // Must include electricity and water tariffs from UtilityTariff table
+        var electric = services.FirstOrDefault(s => s.Id.StartsWith("tariff-") && s.Type == ServiceTypeCategory.Meter && s.Unit == ServiceUnitCategory.KilowattHour);
+        Assert.NotNull(electric);
+        Assert.True(electric.IsReadOnly);
+        Assert.True(electric.Active);
+        Assert.Equal("all", electric.BuildingId);
+
+        var water = services.FirstOrDefault(s => s.Id.StartsWith("tariff-") && s.Type == ServiceTypeCategory.Meter && s.Unit == ServiceUnitCategory.CubicMeter);
+        Assert.NotNull(water);
+        Assert.True(water.IsReadOnly);
+        Assert.True(water.Active);
+    }
+
+    [SqlServerFact]
+    public async Task UpdateServicePriceAsync_Tariff_Blocked()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (success, err, _) = await pageService.UpdateServicePriceAsync(new UpdatePriceRequest
+        {
+            ServiceId = "tariff-1",
+            NewRate = 5000m,
+            EffectiveFrom = new DateOnly(2026, 12, 1),
+        });
+
+        Assert.False(success);
+        Assert.Equal("ErrorReadOnlyTariff", err);
+    }
+
     private ServiceCatalogPageService CreatePageService(string userId, string role)
     {
         var identity = new ClaimsIdentity("TestAuth");
@@ -475,7 +673,168 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
             new SimpleTestAuthStateProvider(user),
             scopeFactory,
             TestClock,
-            NullLogger<ServiceCatalogPageService>.Instance);
+            NullLogger<ServiceCatalogPageService>.Instance,
+            new NhaTro.IntegrationTests.Infrastructure.UtilityKeyLocalizer());
+    }
+
+    [SqlServerFact]
+    public async Task AddServiceAsync_WithEffectiveTo_PersistsEffectiveToInSql()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà EffectiveTo UI", OwnerId = Owner1Id, Address = "EffectiveTo 1", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (success, error, item) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Dịch vụ có hạn",
+            Rate = 50_000m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+            EffectiveTo = new DateOnly(2026, 11, 30),
+            BuildingId = prop.Id.ToString(),
+        });
+        Assert.True(success, error);
+        Assert.NotNull(item);
+
+        await using var verifyDb = fixture.CreateContext();
+        var version = await verifyDb.ServicePriceHistories.SingleAsync(v => v.ServiceCatalogId == int.Parse(item.Id));
+        Assert.Equal(new DateOnly(2026, 11, 30), version.EffectiveTo);
+
+        var versions = await pageService.GetPriceVersionsForCallerAsync(item.Id);
+        Assert.Equal(new DateOnly(2026, 11, 30), Assert.Single(versions).EffectiveTo);
+    }
+
+    [SqlServerFact]
+    public async Task UpdateServicePriceAsync_InvalidDatesAndInactive_ReturnLocalizedKeys()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà lỗi ngày", OwnerId = Owner1Id, Address = "Err 1", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (created, createError, item) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Dịch vụ kiểm tra ngày",
+            Rate = 50_000m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+            BuildingId = prop.Id.ToString(),
+        });
+        Assert.True(created, createError);
+        Assert.NotNull(item);
+
+        var (sameOk, sameErr, _) = await pageService.UpdateServicePriceAsync(new UpdatePriceRequest
+        {
+            ServiceId = item.Id,
+            NewRate = 60_000m,
+            EffectiveFrom = new DateOnly(2026, 11, 1),
+        });
+        Assert.False(sameOk);
+        Assert.Equal("ErrorEffectiveDateNotAfterLatest", sameErr);
+
+        var (toOk, toErr, _) = await pageService.UpdateServicePriceAsync(new UpdatePriceRequest
+        {
+            ServiceId = item.Id,
+            NewRate = 60_000m,
+            EffectiveFrom = new DateOnly(2026, 12, 1),
+            EffectiveTo = new DateOnly(2026, 11, 15),
+        });
+        Assert.False(toOk);
+        Assert.Equal("ErrorEffectiveToMustBeAfterEffectiveFrom", toErr);
+
+        var (toggled, toggleErr) = await pageService.ToggleServiceActiveAsync(item.Id);
+        Assert.True(toggled, toggleErr);
+
+        var (inactiveOk, inactiveErr, _) = await pageService.UpdateServicePriceAsync(new UpdatePriceRequest
+        {
+            ServiceId = item.Id,
+            NewRate = 60_000m,
+            EffectiveFrom = new DateOnly(2026, 12, 1),
+        });
+        Assert.False(inactiveOk);
+        Assert.Equal("ErrorServiceInactive", inactiveErr);
+    }
+
+    [SqlServerFact]
+    public async Task AddServiceAsync_And_UpdateServicePriceAsync_WithNote_PersistsAndReadsBackFromSql()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Note UI Test", OwnerId = Owner1Id, Address = "Note 1", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (createOk, createErr, item) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Dịch vụ Gym",
+            Rate = 150_000m,
+            EffectiveFrom = new DateOnly(2026, 1, 1),
+            BuildingId = prop.Id.ToString(),
+            Note = "Ưu đãi cư dân ban đầu",
+        });
+        Assert.True(createOk, createErr);
+        Assert.NotNull(item);
+
+        var versionsV1 = await pageService.GetPriceVersionsForCallerAsync(item.Id);
+        Assert.Equal("Ưu đãi cư dân ban đầu", Assert.Single(versionsV1).Note);
+
+        var (updateOk, updateErr, _) = await pageService.UpdateServicePriceAsync(new UpdatePriceRequest
+        {
+            ServiceId = item.Id,
+            NewRate = 180_000m,
+            EffectiveFrom = new DateOnly(2026, 6, 1),
+            Note = "Điều chỉnh phí huấn luyện viên",
+        });
+        Assert.True(updateOk, updateErr);
+
+        var versionsV2 = await pageService.GetPriceVersionsForCallerAsync(item.Id);
+        Assert.Equal(2, versionsV2.Count);
+        var v1 = versionsV2.Single(v => v.EffectiveFrom == new DateOnly(2026, 1, 1));
+        var v2 = versionsV2.Single(v => v.EffectiveFrom == new DateOnly(2026, 6, 1));
+        Assert.Equal("Ưu đãi cư dân ban đầu", v1.Note);
+        Assert.Equal("Điều chỉnh phí huấn luyện viên", v2.Note);
+    }
+
+    [SqlServerFact]
+    public async Task GetPriceVersionsForCallerAsync_NullNoteDisplaysDash_AndUtilityTariffRetainsSourceName()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Note Dash Test", OwnerId = Owner1Id, Address = "Dash 1", CreatedAt = FixedTestNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var (ok, err, item) = await pageService.AddServiceAsync(new CreateServiceRequest
+        {
+            Name = "Dịch vụ Không Note",
+            Rate = 80_000m,
+            EffectiveFrom = new DateOnly(2026, 1, 1),
+            BuildingId = prop.Id.ToString(),
+            Note = null,
+        });
+        Assert.True(ok, err);
+
+        var versions = await pageService.GetPriceVersionsForCallerAsync(item!.Id);
+        Assert.Equal("—", Assert.Single(versions).Note);
+
+        // Utility tariffs retain SourceName without being overwritten
+        var allVersions = await pageService.GetPriceVersionsForCallerAsync("all");
+        var tariffVersions = allVersions.Where(v => v.ServiceId.StartsWith("tariff-")).ToList();
+        Assert.NotEmpty(tariffVersions);
+        Assert.All(tariffVersions, tv => Assert.False(string.IsNullOrWhiteSpace(tv.Note) || tv.Note == "—"));
     }
 
     private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider

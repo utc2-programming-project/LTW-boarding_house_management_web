@@ -19,7 +19,11 @@ public sealed class ServicePriceHistory
 
     public DateOnly EffectiveDate { get; set; }
 
+    public DateOnly? EffectiveTo { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public string? CreatedByUserId { get; set; }
+
+    public string? Note { get; set; }
 }

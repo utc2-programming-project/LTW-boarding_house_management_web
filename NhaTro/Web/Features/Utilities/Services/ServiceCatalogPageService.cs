@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Web.Data;
 using Web.Features.Accounts;
@@ -11,6 +12,7 @@ using Web.Features.Properties;
 using Web.Features.Properties.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.DTOs;
+using Web.Features.Utilities.Entities;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Utilities.Services;
@@ -25,9 +27,38 @@ public sealed class ServiceCatalogPageService(
     AuthenticationStateProvider authStateProvider,
     IServiceScopeFactory scopeFactory,
     TimeProvider? timeProvider,
-    ILogger<ServiceCatalogPageService> logger)
+    ILogger<ServiceCatalogPageService> logger,
+    IStringLocalizer<UtilityResources>? localizer = null)
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
+    /// <summary>Resolves a localized UI string; falls back to the key when no localizer is available.</summary>
+    private string T(string key, params object[] args)
+    {
+        if (localizer is null) return key;
+        return args.Length == 0 ? localizer[key].Value : localizer[key, args].Value;
+    }
+
+    /// <summary>
+    /// Converts a service-layer exception into a localized, user-facing message
+    /// (never leaks hard-coded or developer-facing text to the UI).
+    /// </summary>
+    private string LocalizeFailure(Exception ex)
+    {
+        if (ex.Data[ServiceCatalogErrorKeys.ResourceKey] is string key)
+        {
+            var args = ex.Data[ServiceCatalogErrorKeys.ResourceArgs] as object[] ?? [];
+            return T(key, args);
+        }
+
+        return ex switch
+        {
+            UnauthorizedAccessException => T("ErrorAccessDenied"),
+            KeyNotFoundException => T("ErrorServiceNotFound"),
+            ArgumentException => T("ErrorInvalidData"),
+            _ => T("ErrorUnknown"),
+        };
+    }
 
     /// <summary>
     /// Indicates whether the active service data source is mock/in-memory or persisted SQL Server.
@@ -68,6 +99,7 @@ public sealed class ServiceCatalogPageService(
 
     /// <summary>
     /// Loads service catalogs from SQL Server, enforcing role and property scope filtering.
+    /// Also aggregates system-locked UtilityTariffs (electricity/water) as read-only services.
     /// System catalogs (PropertyId == null) are visible to all authenticated roles.
     /// Property-scoped catalogs are strictly restricted to properties owned by ChuTro, assigned to QuanLy, or rented by KhachThue.
     /// </summary>
@@ -101,18 +133,63 @@ public sealed class ServiceCatalogPageService(
             .Where(p => propertyIdsToLookup.Contains(p.Id))
             .ToDictionaryAsync(p => p.Id, p => p.Name, ct);
 
-        // 2. Map to ServiceItemDto
+        // 2. Map ServiceCatalogs to ServiceItemDto
         var mappedServices = scopedCatalogs.Select(catalog =>
         {
             var propName = catalog.PropertyId.HasValue && propertyNameMap.TryGetValue(catalog.PropertyId.Value, out var name)
                 ? name
-                : (catalog.PropertyId.HasValue ? $"Nhà trọ #{catalog.PropertyId.Value}" : "Tất cả nhà trọ");
+                : (catalog.PropertyId.HasValue ? T("BuildingFallbackName", catalog.PropertyId.Value) : T("AllBuildings"));
 
             return MapToServiceItemDto(catalog, propName, Today);
         }).ToList();
 
-        // 3. Apply UI search & dropdown filters in memory
-        IEnumerable<ServiceItemDto> query = mappedServices;
+        // 3. TF-06: Aggregate system-locked UtilityTariffs (Option A - Read-only)
+        var tariffs = await db.UtilityTariffs
+            .AsNoTracking()
+            .Include(t => t.Tiers)
+            .ToListAsync(ct);
+
+        var tariffServices = tariffs
+            .GroupBy(t => (t.Type, t.ScopeCode))
+            .Select(g =>
+            {
+                var activeTariff = g.Where(t => t.EffectiveDate <= Today)
+                                    .OrderByDescending(t => t.EffectiveDate)
+                                    .FirstOrDefault() ?? g.OrderBy(t => t.EffectiveDate).First();
+
+                var isElectric = activeTariff.Type == TariffType.Electric;
+                var sName = isElectric ? T("TariffElectricName") : T("TariffWaterName");
+                var sCode = isElectric ? $"TRF-E{activeTariff.Id:D2}" : $"TRF-W{activeTariff.Id:D2}";
+                var basePrice = activeTariff.Tiers.OrderBy(t => t.TierNumber).FirstOrDefault()?.UnitPrice ?? 0m;
+                var unitEnum = MapUnit(activeTariff.Unit);
+
+                return new ServiceItemDto
+                {
+                    Id = $"tariff-{activeTariff.Id}",
+                    Name = sName,
+                    Code = sCode,
+                    Type = ServiceTypeCategory.Meter,
+                    Unit = unitEnum,
+                    RateType = ServiceRateType.Tiered,
+                    CurrentRate = basePrice,
+                    EffectiveFrom = activeTariff.EffectiveDate,
+                    EffectiveTo = null,
+                    PriceStatus = activeTariff.EffectiveDate > Today ? PriceVersionStatus.Upcoming : PriceVersionStatus.Active,
+                    Active = true,
+                    IsReadOnly = true,
+                    IsSessionCreated = false,
+                    BuildingId = "all",
+                    BuildingName = T("AllBuildings"),
+                    Description = activeTariff.SourceName,
+                    HistoryCount = activeTariff.Tiers.Count,
+                };
+            }).ToList();
+
+        // 4. Combine all services
+        var allServices = tariffServices.Concat(mappedServices);
+
+        // 5. Apply UI search & dropdown filters in memory
+        IEnumerable<ServiceItemDto> query = allServices;
 
         if (!string.IsNullOrWhiteSpace(buildingFilter) && buildingFilter != "all")
         {
@@ -152,6 +229,7 @@ public sealed class ServiceCatalogPageService(
 
     /// <summary>
     /// Loads price history versions for a given catalog or all catalogs within caller's scope.
+    /// Also supports UtilityTariff tier versions.
     /// </summary>
     public async Task<IReadOnlyList<PriceVersionDto>> GetPriceVersionsForCallerAsync(
         string? serviceId = null,
@@ -162,13 +240,57 @@ public sealed class ServiceCatalogPageService(
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
 
+        var list = new List<PriceVersionDto>();
+
+        // 1. TF-06: Check if querying UtilityTariff price versions
+        var tariffs = await db.UtilityTariffs
+            .AsNoTracking()
+            .Include(t => t.Tiers)
+            .ToListAsync(ct);
+
+        foreach (var tariff in tariffs)
+        {
+            var tariffStringId = $"tariff-{tariff.Id}";
+            if (!serviceIds.Contains(tariffStringId)) continue;
+            if (!string.IsNullOrWhiteSpace(serviceId) && serviceId != "all" && tariffStringId != serviceId) continue;
+
+            var isElectric = tariff.Type == TariffType.Electric;
+            var prefixName = isElectric ? T("TariffElectricShortName") : T("TariffWaterShortName");
+
+            foreach (var tier in tariff.Tiers.OrderBy(t => t.TierNumber))
+            {
+                list.Add(new PriceVersionDto
+                {
+                    Id = $"pv-trf-{tariff.Id}-{tier.Id}",
+                    ServiceId = tariffStringId,
+                    ServiceName = T("TariffTierServiceName", prefixName, tier.TierNumber, tier.To.HasValue ? $"{tier.From:N0} - {tier.To.Value:N0}" : $">{tier.From:N0}", tariff.Unit),
+                    Unit = MapUnit(tariff.Unit),
+                    Rate = tier.UnitPrice,
+                    RateType = ServiceRateType.Tiered,
+                    EffectiveFrom = tariff.EffectiveDate,
+                    EffectiveTo = null,
+                    Status = tariff.EffectiveDate > Today ? PriceVersionStatus.Upcoming : PriceVersionStatus.Active,
+                    BuildingScope = "all",
+                    BuildingName = T("AllBuildings"),
+                    CreatedAt = DateTime.MinValue,
+                    CreatedBy = T("SystemCreatorLabel"),
+                    Note = tariff.SourceName,
+                    IsSessionCreated = false,
+                });
+            }
+        }
+
+        // 2. Load ServiceCatalogs price versions
         var caller = new PropertyCaller(userId, role);
         var catalogs = await catalogService.GetServiceCatalogsAsync(caller);
 
-        var list = new List<PriceVersionDto>();
+        var userIds = catalogs.SelectMany(c => c.PriceHistory).Select(v => v.CreatedByUserId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var userMap = await db.Users.AsNoTracking().Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—"), ct);
+
         foreach (var catalog in catalogs)
         {
             var stringId = catalog.Id.ToString();
@@ -177,11 +299,12 @@ public sealed class ServiceCatalogPageService(
 
             var serviceItem = services.FirstOrDefault(s => s.Id == stringId);
             var buildingScope = catalog.PropertyId.HasValue ? catalog.PropertyId.Value.ToString() : "all";
-            var buildingName = serviceItem?.BuildingName ?? "Tất cả nhà trọ";
+            var buildingName = serviceItem?.BuildingName ?? T("AllBuildings");
 
             foreach (var version in catalog.PriceHistory)
             {
-                list.Add(MapToPriceVersionDto(catalog, version, buildingScope, buildingName, Today));
+                var creatorName = !string.IsNullOrEmpty(version.CreatedByUserId) && userMap.TryGetValue(version.CreatedByUserId, out var name) ? name : (version.CreatedByUserId ?? "—");
+                list.Add(MapToPriceVersionDto(catalog, version, buildingScope, buildingName, Today, creatorName));
             }
         }
 
@@ -213,7 +336,7 @@ public sealed class ServiceCatalogPageService(
         var result = new List<BuildingOptionDto>();
         if (role == Roles.ChuTro)
         {
-            result.Add(new BuildingOptionDto("all", "Tất cả nhà trọ", "Toàn bộ hệ thống", properties.Count, properties.Count));
+            result.Add(new BuildingOptionDto("all", T("AllBuildings"), T("AllBuildingsDescription"), properties.Count, properties.Count));
         }
 
         foreach (var p in properties)
@@ -260,22 +383,27 @@ public sealed class ServiceCatalogPageService(
 
         if (!caller.IsChuTro)
         {
-            return (false, "Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ.", null);
+            return (false, T("ErrorOwnerOnlyService"), null);
         }
 
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            return (false, "Tên dịch vụ không được để trống.", null);
+            return (false, T("ErrorNameIsRequired"), null);
         }
 
         if (string.IsNullOrWhiteSpace(request.BuildingId) || request.BuildingId == "all" || !int.TryParse(request.BuildingId, out var propertyId))
         {
-            return (false, "Bắt buộc phải chọn nhà trọ cụ thể khi tạo danh mục dịch vụ.", null);
+            return (false, T("ErrorBuildingRequired"), null);
         }
 
-        if (request.Rate < 0)
+        if (request.Rate <= 0)
         {
-            return (false, "Đơn giá không được âm.", null);
+            return (false, T("ErrorPriceMustBePositive"), null);
+        }
+
+        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value < request.EffectiveFrom)
+        {
+            return (false, T("ErrorEffectiveToMustBeAfterEffectiveFrom"), null);
         }
 
         var method = request.Type switch
@@ -304,6 +432,8 @@ public sealed class ServiceCatalogPageService(
             CalculationMethod = method,
             UnitPrice = request.Rate,
             EffectiveDate = request.EffectiveFrom == default ? Today : request.EffectiveFrom,
+            EffectiveTo = request.EffectiveTo,
+            Note = request.Note,
         };
 
         await using var scope = scopeFactory.CreateAsyncScope();
@@ -319,44 +449,49 @@ public sealed class ServiceCatalogPageService(
             var verified = verifyCatalogs.FirstOrDefault(c => c.Id == created.Id);
             if (verified is null)
             {
-                return (false, "Không thể xác minh dữ liệu đã lưu vào cơ sở dữ liệu.", null);
+                return (false, T("ErrorVerifyCreateFailed"), null);
             }
 
             var propName = await db.Properties
                 .Where(p => p.Id == propertyId)
                 .Select(p => p.Name)
-                .FirstOrDefaultAsync(ct) ?? $"Nhà trọ #{propertyId}";
+                .FirstOrDefaultAsync(ct) ?? T("BuildingFallbackName", propertyId);
 
             var item = MapToServiceItemDto(verified, propName, Today);
             return (true, null, item);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Lỗi khi tạo dịch vụ.");
-            return (false, ex.Message, null);
+            logger.LogError(ex, "Failed to create service catalog.");
+            return (false, LocalizeFailure(ex), null);
         }
     }
 
     public async Task<(bool Success, string? ErrorMessage, PriceVersionDto? Version)> UpdateServicePriceAsync(
         UpdatePriceRequest request, CancellationToken ct = default)
     {
+        if (request.ServiceId.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, T("ErrorReadOnlyTariff"), null);
+        }
+
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
         var caller = new PropertyCaller(userId, role);
 
         if (!caller.IsChuTro)
         {
-            return (false, "Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ.", null);
+            return (false, T("ErrorOwnerOnlyService"), null);
         }
 
         if (!int.TryParse(request.ServiceId, out var catalogId) || catalogId <= 0)
         {
-            return (false, "Mã dịch vụ không hợp lệ.", null);
+            return (false, T("ErrorInvalidServiceId"), null);
         }
 
-        if (request.NewRate < 0)
+        if (request.NewRate <= 0)
         {
-            return (false, "Đơn giá không được âm.", null);
+            return (false, T("ErrorPriceMustBePositive"), null);
         }
 
         await using var scope = scopeFactory.CreateAsyncScope();
@@ -367,7 +502,12 @@ public sealed class ServiceCatalogPageService(
         var targetCatalog = existingCatalogs.FirstOrDefault(c => c.Id == catalogId);
         if (targetCatalog is null)
         {
-            return (false, $"Không tìm thấy dịch vụ {catalogId} trong phạm vi quản lý của bạn.", null);
+            return (false, T("ErrorServiceNotFound"), null);
+        }
+
+        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value < request.EffectiveFrom)
+        {
+            return (false, T("ErrorEffectiveToMustBeAfterEffectiveFrom"), null);
         }
 
         var unitString = request.Unit switch
@@ -388,6 +528,8 @@ public sealed class ServiceCatalogPageService(
             CalculationMethod = targetCatalog.CalculationMethod,
             UnitPrice = request.NewRate,
             EffectiveDate = request.EffectiveFrom == default ? Today : request.EffectiveFrom,
+            EffectiveTo = request.EffectiveTo,
+            Note = request.Note,
         };
 
         try
@@ -400,21 +542,74 @@ public sealed class ServiceCatalogPageService(
             var verifiedVersion = verified?.PriceHistory.FirstOrDefault(v => v.EffectiveDate == updateDto.EffectiveDate);
             if (verifiedVersion is null)
             {
-                return (false, "Không thể xác minh đơn giá mới đã lưu vào cơ sở dữ liệu.", null);
+                return (false, T("ErrorVerifyPriceFailed"), null);
             }
 
             var propName = verified!.PropertyId.HasValue
-                ? await db.Properties.Where(p => p.Id == verified.PropertyId.Value).Select(p => p.Name).FirstOrDefaultAsync(ct) ?? $"Nhà trọ #{verified.PropertyId}"
-                : "Tất cả nhà trọ";
+                ? await db.Properties.Where(p => p.Id == verified.PropertyId.Value).Select(p => p.Name).FirstOrDefaultAsync(ct) ?? T("BuildingFallbackName", verified.PropertyId.Value)
+                : T("AllBuildings");
 
             var buildingScope = verified.PropertyId.HasValue ? verified.PropertyId.Value.ToString() : "all";
-            var versionDto = MapToPriceVersionDto(verified, verifiedVersion, buildingScope, propName, Today);
+            var creatorUser = !string.IsNullOrEmpty(verifiedVersion.CreatedByUserId)
+                ? await db.Users.AsNoTracking().Where(u => u.Id == verifiedVersion.CreatedByUserId).Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—")).FirstOrDefaultAsync(ct)
+                : "—";
+            var versionDto = MapToPriceVersionDto(verified, verifiedVersion, buildingScope, propName, Today, creatorUser);
             return (true, null, versionDto);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Lỗi khi cập nhật đơn giá dịch vụ.");
-            return (false, ex.Message, null);
+            logger.LogError(ex, "Failed to update service price.");
+            return (false, LocalizeFailure(ex), null);
+        }
+    }
+
+    /// <summary>
+    /// TF-01: Toggles the active/inactive state of a ServiceCatalog.
+    /// Re-reads from SQL Server to verify before returning success.
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> ToggleServiceActiveAsync(
+        string serviceId, CancellationToken ct = default)
+    {
+        if (serviceId.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, T("ErrorReadOnlyTariff"));
+        }
+
+        if (!int.TryParse(serviceId, out var catalogId) || catalogId <= 0)
+        {
+            return (false, T("ErrorInvalidServiceId"));
+        }
+
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        if (!caller.IsChuTro)
+        {
+            return (false, T("ErrorOwnerOnlyToggle"));
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            var updated = await catalogService.ToggleServiceCatalogStatusAsync(catalogId, caller);
+
+            // Re-read from SQL to verify persistence
+            var verifyCatalogs = await catalogService.GetServiceCatalogsAsync(caller);
+            var verified = verifyCatalogs.FirstOrDefault(c => c.Id == catalogId);
+            if (verified is null || verified.IsActive != updated.IsActive)
+            {
+                return (false, T("ErrorVerifyStatusFailed"));
+            }
+
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to toggle service status.");
+            return (false, LocalizeFailure(ex));
         }
     }
 
@@ -502,9 +697,7 @@ public sealed class ServiceCatalogPageService(
     {
         var (rateType, serviceType) = MapCalculationMethod(catalog.CalculationMethod);
         var unitEnum = MapUnit(catalog.Unit);
-        var priceStatus = catalog.EffectiveDate > today
-            ? PriceVersionStatus.Upcoming
-            : PriceVersionStatus.Active;
+        var priceStatus = catalog.EffectiveDate > today ? PriceVersionStatus.Upcoming : (catalog.EffectiveTo.HasValue && catalog.EffectiveTo.Value < today ? PriceVersionStatus.Expired : PriceVersionStatus.Active);
 
         return new ServiceItemDto
         {
@@ -516,9 +709,9 @@ public sealed class ServiceCatalogPageService(
             RateType = rateType,
             CurrentRate = catalog.UnitPrice,
             EffectiveFrom = catalog.EffectiveDate,
-            EffectiveTo = null, // Backend does not support EffectiveTo
+            EffectiveTo = catalog.EffectiveTo,
             PriceStatus = priceStatus,
-            Active = true, // Backend does not support IsActive, default true
+            Active = catalog.IsActive,
             IsReadOnly = catalog.IsReadOnly,
             IsSessionCreated = false,
             BuildingId = catalog.PropertyId.HasValue ? catalog.PropertyId.Value.ToString() : "all",
@@ -533,13 +726,12 @@ public sealed class ServiceCatalogPageService(
         ServicePriceVersionDto version,
         string buildingScope,
         string buildingName,
-        DateOnly today)
+        DateOnly today,
+        string? creatorName = null)
     {
         var (rateType, _) = MapCalculationMethod(version.CalculationMethod);
         var unitEnum = MapUnit(version.Unit);
-        var priceStatus = version.EffectiveDate > today
-            ? PriceVersionStatus.Upcoming
-            : PriceVersionStatus.Active;
+        var priceStatus = version.EffectiveDate > today ? PriceVersionStatus.Upcoming : (version.EffectiveTo.HasValue && version.EffectiveTo.Value < today ? PriceVersionStatus.Expired : PriceVersionStatus.Active);
 
         return new PriceVersionDto
         {
@@ -550,13 +742,13 @@ public sealed class ServiceCatalogPageService(
             Rate = version.UnitPrice,
             RateType = rateType,
             EffectiveFrom = version.EffectiveDate,
-            EffectiveTo = null, // Backend does not have EffectiveTo
+            EffectiveTo = version.EffectiveTo,
             Status = priceStatus,
             BuildingScope = buildingScope,
             BuildingName = buildingName,
-            CreatedAt = DateTime.MinValue, // DTO does not have CreatedAt
-            CreatedBy = "—", // DTO does not have CreatedBy
-            Note = string.Empty,
+            CreatedAt = version.CreatedAt,
+            CreatedBy = !string.IsNullOrWhiteSpace(creatorName) ? creatorName : (!string.IsNullOrWhiteSpace(version.CreatedByUserId) ? version.CreatedByUserId : "—"),
+            Note = string.IsNullOrWhiteSpace(version.Note) ? "—" : version.Note,
             IsSessionCreated = false,
         };
     }

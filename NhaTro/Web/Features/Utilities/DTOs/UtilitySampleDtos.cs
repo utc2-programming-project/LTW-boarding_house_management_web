@@ -232,6 +232,7 @@ public sealed class CreateServiceRequest
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
     public string? Description { get; set; }
+    public string? Note { get; set; }
 }
 
 public sealed record BuildingOptionDto(string Id, string Name, string Address, int TotalRooms, int OccupiedRooms);

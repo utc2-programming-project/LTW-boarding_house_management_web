@@ -75,7 +75,7 @@ public sealed class ServiceCatalogPageServiceTests
         Assert.False(success);
         Assert.Null(item);
         Assert.NotNull(error);
-        Assert.Contains("Chủ trọ", error);
+        Assert.Equal("ErrorOwnerOnlyService", error);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class ServiceCatalogPageServiceTests
         Assert.False(success);
         Assert.Null(item);
         Assert.NotNull(error);
-        Assert.Contains("nhà trọ cụ thể", error);
+        Assert.Equal("ErrorBuildingRequired", error);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class ServiceCatalogPageServiceTests
         Assert.False(success);
         Assert.Null(item);
         Assert.NotNull(error);
-        Assert.Contains("trống", error);
+        Assert.Equal("ErrorNameIsRequired", error);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public sealed class ServiceCatalogPageServiceTests
         Assert.False(success);
         Assert.Null(version);
         Assert.NotNull(error);
-        Assert.Contains("Chủ trọ", error);
+        Assert.Equal("ErrorOwnerOnlyService", error);
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public sealed class ServiceCatalogPageServiceTests
         Assert.False(success);
         Assert.Null(version);
         Assert.NotNull(error);
-        Assert.Contains("không hợp lệ", error);
+        Assert.Equal("ErrorInvalidServiceId", error);
     }
 
     [Fact]
@@ -304,7 +304,8 @@ public sealed class ServiceCatalogPageServiceTests
             authProvider,
             scopeFactory,
             TimeProvider.System,
-            NullLogger<ServiceCatalogPageService>.Instance);
+            NullLogger<ServiceCatalogPageService>.Instance,
+            new NhaTro.UnitTests.TestSupport.UtilityKeyLocalizer());
     }
 
     private sealed class TestAuthenticationStateProvider(ClaimsPrincipal user) : AuthenticationStateProvider

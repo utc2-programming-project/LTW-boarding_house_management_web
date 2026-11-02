@@ -8,26 +8,17 @@ namespace NhaTro.UnitTests.Features.Utilities;
 public sealed class ServiceCatalogServiceTests
 {
     [Theory]
-    [InlineData("Manager")]
-    [InlineData("Tenant")]
     [InlineData("Admin")]
+    [InlineData("QuanLy")]
+    [InlineData("KhachThue")]
     [InlineData("Unknown")]
-    public async Task CreateOrUpdateServicePriceAsync_RejectsNonLandlord(string role)
+    public async Task CreateOrUpdateServicePriceAsync_RejectsNonOwner(string role)
     {
         var service = new ServiceCatalogService(null!);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateOrUpdateServicePriceAsync(
             ValidCreateRequest(),
             new PropertyCaller("user-1", role)));
-    }
-
-    [Theory]
-    [InlineData("Manager")]
-    [InlineData("Tenant")]
-    [InlineData("Admin")]
-    public async Task CreateOrUpdateServicePriceAsync_UpdateRejectsNonLandlord(string role)
-    {
-        var service = new ServiceCatalogService(null!);
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.CreateOrUpdateServicePriceAsync(
             1,
@@ -35,16 +26,62 @@ public sealed class ServiceCatalogServiceTests
             new PropertyCaller("user-1", role)));
     }
 
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("QuanLy")]
+    [InlineData("KhachThue")]
+    [InlineData("Unknown")]
+    public async Task ToggleServiceCatalogStatusAsync_RejectsNonOwner(string role)
+    {
+        var service = new ServiceCatalogService(null!);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.ToggleServiceCatalogStatusAsync(
+            1,
+            new PropertyCaller("user-1", role)));
+    }
+
     [Fact]
-    public async Task CreateOrUpdateServicePriceAsync_RejectsInvalidCreateRequest()
+    public async Task CreateOrUpdateServicePriceAsync_RejectsNegativeUnitPrice()
     {
         var service = new ServiceCatalogService(null!);
         var request = ValidCreateRequest();
         request.UnitPrice = -1m;
-        request.Unit = " ";
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
             request,
+            new PropertyCaller("owner-1", Roles.ChuTro)));
+    }
+
+    [Fact]
+    public async Task CreateOrUpdateServicePriceAsync_RejectsZeroUnitPrice()
+    {
+        var service = new ServiceCatalogService(null!);
+        var request = ValidCreateRequest();
+        request.UnitPrice = 0m;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
+            request,
+            new PropertyCaller("owner-1", Roles.ChuTro)));
+    }
+
+    [Fact]
+    public async Task UpdateServicePriceAsync_RejectsZeroOrNegativeUnitPrice()
+    {
+        var service = new ServiceCatalogService(null!);
+        var zeroRequest = ValidUpdateRequest();
+        zeroRequest.UnitPrice = 0m;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
+            1,
+            zeroRequest,
+            new PropertyCaller("owner-1", Roles.ChuTro)));
+
+        var negativeRequest = ValidUpdateRequest();
+        negativeRequest.UnitPrice = -500m;
+
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(
+            1,
+            negativeRequest,
             new PropertyCaller("owner-1", Roles.ChuTro)));
     }
 

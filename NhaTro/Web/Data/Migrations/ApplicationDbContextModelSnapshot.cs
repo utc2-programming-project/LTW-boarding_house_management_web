@@ -1154,6 +1154,11 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("IsReadOnly")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1192,10 +1197,17 @@ namespace Web.Migrations
                     b.Property<DateOnly>("EffectiveDate")
                         .HasColumnType("date");
 
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("ServiceCatalogId")
                         .HasColumnType("int");
@@ -1221,6 +1233,8 @@ namespace Web.Migrations
                     b.ToTable("ServicePriceHistory", null, t =>
                         {
                             t.HasCheckConstraint("CK_ServicePriceHistory_CalculationMethod_NotBlank", "LEN(LTRIM(RTRIM([CalculationMethod]))) > 0");
+
+                            t.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_OnOrAfter_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] >= [EffectiveDate]");
 
                             t.HasCheckConstraint("CK_ServicePriceHistory_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
 

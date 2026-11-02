@@ -15,7 +15,9 @@ public sealed class ServiceCatalogService : IServiceCatalogService
     private readonly ApplicationDbContext _context;
     private readonly TimeProvider _timeProvider;
 
-    public ServiceCatalogService(ApplicationDbContext context, TimeProvider? timeProvider = null)
+    public ServiceCatalogService(
+        ApplicationDbContext context,
+        TimeProvider? timeProvider = null)
     {
         _context = context;
         _timeProvider = timeProvider ?? TimeProvider.System;
@@ -73,14 +75,14 @@ public sealed class ServiceCatalogService : IServiceCatalogService
 
         if (!request.PropertyId.HasValue)
         {
-            throw new ArgumentException("Bắt buộc phải chọn nhà trọ (PropertyId) khi tạo danh mục dịch vụ.", nameof(request.PropertyId));
+            throw WithKey(new ArgumentException("Bắt buộc phải chọn nhà trọ (PropertyId) khi tạo danh mục dịch vụ.", nameof(request.PropertyId)), "ErrorBuildingRequired");
         }
 
         var propertyExists = await _context.Properties.AnyAsync(property =>
             property.Id == request.PropertyId.Value && property.IsActive && !property.IsDeleted);
         if (!propertyExists)
         {
-            throw new ArgumentException("Nhà trọ không tồn tại.", nameof(request.PropertyId));
+            throw WithKey(new ArgumentException("Nhà trọ không tồn tại.", nameof(request.PropertyId)), "ErrorBuildingNotFound");
         }
 
         var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
@@ -94,6 +96,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         {
             PropertyId = request.PropertyId,
             IsReadOnly = false,
+            IsActive = true,
             CreatedAt = _timeProvider.UtcNow(),
         };
         catalog.PriceHistory.Add(CreateVersion(
@@ -102,7 +105,9 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             request.CalculationMethod,
             request.UnitPrice,
             request.EffectiveDate,
-            caller.UserId));
+            caller.UserId,
+            effectiveTo: request.EffectiveTo,
+            note: request.Note));
 
         _context.ServiceCatalogs.Add(catalog);
         await _context.SaveChangesAsync();
@@ -129,12 +134,12 @@ public sealed class ServiceCatalogService : IServiceCatalogService
 
         if (catalog.IsReadOnly)
         {
-            throw new UnauthorizedAccessException("Biểu giá điện/nước chỉ được xem, không thể sửa.");
+            throw WithKey(new UnauthorizedAccessException("Biểu giá điện/nước chỉ được xem, không thể sửa."), "ErrorReadOnlyTariff");
         }
 
         if (!catalog.PropertyId.HasValue)
         {
-            throw new UnauthorizedAccessException("Không thể cập nhật biểu giá danh mục hệ thống dùng chung.");
+            throw WithKey(new UnauthorizedAccessException("Không thể cập nhật biểu giá danh mục hệ thống dùng chung."), "ErrorSystemCatalogReadOnly");
         }
 
         var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
@@ -144,9 +149,29 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             throw new UnauthorizedAccessException("Bạn không có quyền quản lý danh mục của nhà trọ này.");
         }
 
-        if (catalog.PriceHistory.Any(version => version.EffectiveDate == request.EffectiveDate))
+        if (!catalog.IsActive)
         {
-            throw new InvalidOperationException("Đã có phiên bản giá cho ngày hiệu lực này.");
+            throw WithKey(new InvalidOperationException("Không thể tạo phiên bản giá mới cho danh mục đang ngưng hoạt động."), "ErrorServiceInactive");
+        }
+
+        var latestVersion = catalog.PriceHistory.OrderByDescending(v => v.EffectiveDate).FirstOrDefault();
+        if (latestVersion != null && request.EffectiveDate <= latestVersion.EffectiveDate)
+        {
+            throw WithKey(
+                new InvalidOperationException($"Ngày hiệu lực của phiên bản mới ({request.EffectiveDate:dd/MM/yyyy}) phải sau ngày hiệu lực của phiên bản mới nhất hiện có ({latestVersion.EffectiveDate:dd/MM/yyyy})."),
+                "ErrorEffectiveDateNotAfterLatest",
+                request.EffectiveDate.ToString("dd/MM/yyyy"),
+                latestVersion.EffectiveDate.ToString("dd/MM/yyyy"));
+        }
+
+        // Close out the previous version's EffectiveTo to D2.AddDays(-1) (never extend an earlier explicit end date)
+        if (latestVersion != null)
+        {
+            var closeAt = request.EffectiveDate.AddDays(-1);
+            if (latestVersion.EffectiveTo is null || latestVersion.EffectiveTo > closeAt)
+            {
+                latestVersion.EffectiveTo = closeAt;
+            }
         }
 
         // Add a new immutable row. Existing versions remain unchanged so invoices can retain their snapshots.
@@ -156,8 +181,47 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             request.CalculationMethod,
             request.UnitPrice,
             request.EffectiveDate,
-            caller.UserId));
+            caller.UserId,
+            effectiveTo: request.EffectiveTo,
+            note: request.Note));
 
+        await _context.SaveChangesAsync();
+        return ToDto(catalog, _timeProvider.TodayVietnam());
+    }
+
+    public async Task<ServiceCatalogDto> ToggleServiceCatalogStatusAsync(
+        int serviceCatalogId,
+        PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var catalog = await _context.ServiceCatalogs
+            .Include(item => item.PriceHistory)
+            .SingleOrDefaultAsync(item => item.Id == serviceCatalogId);
+        if (catalog is null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy danh mục dịch vụ {serviceCatalogId}.");
+        }
+
+        if (catalog.IsReadOnly)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể bật/tắt trạng thái của danh mục chỉ đọc."), "ErrorReadOnlyTariff");
+        }
+
+        if (!catalog.PropertyId.HasValue)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể bật/tắt trạng thái của danh mục hệ thống dùng chung."), "ErrorSystemCatalogReadOnly");
+        }
+
+        var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .AnyAsync(property => property.Id == catalog.PropertyId.Value && property.IsActive && !property.IsDeleted);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý danh mục của nhà trọ này.");
+        }
+
+        catalog.IsActive = !catalog.IsActive;
         await _context.SaveChangesAsync();
         return ToDto(catalog, _timeProvider.TodayVietnam());
     }
@@ -168,15 +232,19 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         string calculationMethod,
         decimal unitPrice,
         DateOnly effectiveDate,
-        string? userId) => new()
+        string? userId,
+        DateOnly? effectiveTo = null,
+        string? note = null) => new()
     {
         Name = name.Trim(),
         Unit = unit.Trim(),
         CalculationMethod = calculationMethod.Trim(),
         UnitPrice = unitPrice,
         EffectiveDate = effectiveDate,
+        EffectiveTo = effectiveTo,
         CreatedAt = _timeProvider.UtcNow(),
         CreatedByUserId = userId,
+        Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
     };
 
     private static ServiceCatalogDto ToDto(ServiceCatalog catalog, DateOnly today)
@@ -190,16 +258,20 @@ public sealed class ServiceCatalogService : IServiceCatalogService
                 version.Unit,
                 version.CalculationMethod,
                 version.UnitPrice,
-                version.EffectiveDate))
+                version.EffectiveDate,
+                version.EffectiveTo,
+                version.CreatedAt,
+                version.CreatedByUserId,
+                version.Note))
             .ToArray();
 
-        // If every version is scheduled for the future, expose the next scheduled version.
-        // Its EffectiveDate remains visible so callers can distinguish it from an active price.
+        // Lookup phiên bản hiện hành: EffectiveDate <= today && (EffectiveTo == null || EffectiveTo >= today)
         var current = history
-            .Where(version => version.EffectiveDate <= today)
+            .Where(version => version.EffectiveDate <= today && (version.EffectiveTo == null || version.EffectiveTo >= today))
             .OrderByDescending(version => version.EffectiveDate)
             .FirstOrDefault()
-            ?? history.OrderBy(version => version.EffectiveDate).First();
+            ?? history.Where(version => version.EffectiveDate > today).OrderBy(version => version.EffectiveDate).FirstOrDefault()
+            ?? history.First();
 
         return new ServiceCatalogDto(
             catalog.Id,
@@ -210,7 +282,21 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             current.UnitPrice,
             current.EffectiveDate,
             catalog.IsReadOnly,
-            history);
+            history,
+            catalog.IsActive,
+            current.EffectiveTo);
+    }
+
+    /// <summary>
+    /// Tags an exception with a UI resource key so the adapter can localize the failure
+    /// without parsing the (developer-facing) message.
+    /// </summary>
+    private static TException WithKey<TException>(TException exception, string resourceKey, params object[] args)
+        where TException : Exception
+    {
+        exception.Data[ServiceCatalogErrorKeys.ResourceKey] = resourceKey;
+        exception.Data[ServiceCatalogErrorKeys.ResourceArgs] = args;
+        return exception;
     }
 
     private static void ValidateRequest(IReadOnlyList<string> errors)
@@ -237,7 +323,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
     {
         if (!IsRole(caller.Role, Roles.ChuTro, "Landlord"))
         {
-            throw new UnauthorizedAccessException("Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ.");
+            throw WithKey(new UnauthorizedAccessException("Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ."), "ErrorOwnerOnlyService");
         }
     }
 

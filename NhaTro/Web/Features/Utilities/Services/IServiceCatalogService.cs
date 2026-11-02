@@ -15,4 +15,8 @@ public interface IServiceCatalogService
         int serviceCatalogId,
         UpdateServicePriceDto request,
         PropertyCaller caller);
+
+    Task<ServiceCatalogDto> ToggleServiceCatalogStatusAsync(
+        int serviceCatalogId,
+        PropertyCaller caller);
 }

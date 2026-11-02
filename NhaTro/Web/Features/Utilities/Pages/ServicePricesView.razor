@@ -41,7 +41,7 @@
             @if (!string.IsNullOrWhiteSpace(_loadError))
             {
                 <div class="sample-data-note" style="border-left: 3px solid #ef4444; background: #fef2f2; color: #991b1b;">
-                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">Lỗi SQL</span>
+                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">@L["SqlErrorBadge"]</span>
                     <span>@_loadError</span>
                 </div>
             }
@@ -113,7 +113,7 @@
                                     <div>@DateFormatter.Format(v.EffectiveFrom)</div>
                                     @if (_isSampleData)
                                     {
-                                        <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")">
+                                        <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")" style="white-space: normal; word-break: break-word;">
                                             @L[v.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
                                         </span>
                                     }
@@ -148,7 +148,7 @@
                                 <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
                                 <td class="text-slate-700 font-medium">@v.CreatedBy</td>
                                 <td class="tabular-nums text-slate-500 font-mono text-xs">
-                                    @DateFormatter.FormatDateTime(v.CreatedAt)
+                                    @(v.CreatedAt == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt))
                                 </td>
                                     <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? "—" : v.Note)</td>
                             </tr>
@@ -258,7 +258,7 @@
         }
         catch (Exception ex)
         {
-            _loadError = $"Không thể tải lịch sử giá từ cơ sở dữ liệu: {ex.Message}";
+            _loadError = L["SqlLoadPricesError", ex.Message];
             _services = [];
             _filteredVersions = [];
         }
@@ -275,7 +275,7 @@
         }
         catch (Exception ex)
         {
-            _loadError = $"Không thể tải phiên bản giá: {ex.Message}";
+            _loadError = L["SqlLoadVersionsError", ex.Message];
             _filteredVersions = [];
         }
     }
@@ -311,7 +311,7 @@
         if (res.Success)
         {
             await LoadDataAsync();
-            Toast.Success(L["ToastPriceUpdatedSuccess"]);
+            Toast.Success(_isSampleData ? L["ToastPriceUpdatedSuccess"] : L["ToastPriceUpdatedSuccessSql"]);
             _isPriceModalOpen = false;
         }
         else
