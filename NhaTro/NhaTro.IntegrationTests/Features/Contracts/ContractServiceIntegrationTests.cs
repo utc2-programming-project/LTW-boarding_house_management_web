@@ -216,7 +216,8 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var tenant = await AddTenantAsync(dbContext, "Tenant Sequential", "0900000097");
-        var service = new ContractService(dbContext);
+        var service = new ContractService(dbContext, new FixedTimeProvider(
+            new DateTimeOffset(2026, 11, 24, 12, 0, 0, TimeSpan.Zero)));
 
         await service.CreateContractAsync(Request(roomId, [tenant.Id]), OwnerCaller);
         await service.CreateContractAsync(
