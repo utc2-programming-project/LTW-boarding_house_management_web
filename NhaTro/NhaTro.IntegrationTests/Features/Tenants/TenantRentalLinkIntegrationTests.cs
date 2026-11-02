@@ -72,12 +72,20 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
         var tenantB = (await service.CreateAsync(NewTenant("Bình", "0902222222"), Owner)).Tenant!;
         var tenantC = (await service.CreateAsync(NewTenant("Cường", "0903333333"), Owner)).Tenant!;
 
-        var (_, roomsA) = await SeedPropertyWithRoomsAsync(db, "Nhà A", "room-a-current", "room-a-old");
+        var (propertyA, roomsA) = await SeedPropertyWithRoomsAsync(db, "Nhà A", "room-a-current", "room-a-old");
         var (_, roomsB) = await SeedPropertyWithRoomsAsync(db, "Nhà B", "room-b-old-1", "room-b-old-2");
 
         // Phòng của B đang Rented nhưng hợp đồng đã hết hạn: không được suy ra "đang thuê" từ Room.Status.
         roomsB[0].Status = RoomStatus.Rented;
         roomsB[1].Status = RoomStatus.Rented;
+
+        // VHT-119: Quản lý chỉ thấy hồ sơ trong tòa được phân công (VHT-24), không thấy toàn hệ thống.
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = propertyA.Id,
+            ManagerUserId = "manager-account",
+            AssignedByUserId = Owner.UserId,
+        });
         await db.SaveChangesAsync();
 
         await AddContractAsync(db, tenantA.Id, roomsA[0].Id, ContractStatus.Approved,

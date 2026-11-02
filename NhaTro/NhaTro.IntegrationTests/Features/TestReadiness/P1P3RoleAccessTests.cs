@@ -474,6 +474,11 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         Assert.True(linkedA.Succeeded, linkedA.ErrorMessage);
         Assert.True(linkedB.Succeeded, linkedB.ErrorMessage);
 
+        // VHT-119: gắn hồ sơ vào hợp đồng thật để phạm vi không chỉ dựa vào kho chưa gắn.
+        AddContract(db, tenantA.Tenant.Id, roomA.Room!.Id, "HD-P1-A");
+        AddContract(db, tenantB.Tenant.Id, roomB.Room!.Id, "HD-P1-B");
+        await db.SaveChangesAsync();
+
         return new SeedData(
             propertyA.Property.Id,
             propertyB.Property.Id,
@@ -481,6 +486,27 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
             roomB.Room!.Id,
             tenantA.Tenant.Id,
             tenantB.Tenant.Id);
+    }
+
+    private static void AddContract(
+        ApplicationDbContext db, int tenantId, int roomId, string contractNumber)
+    {
+        var contract = new Web.Features.Contracts.Entities.Contract
+        {
+            ContractNumber = contractNumber,
+            RoomId = roomId,
+            StartDate = DateTime.UtcNow.Date.AddDays(-5),
+            EndDate = DateTime.UtcNow.Date.AddDays(25),
+            SnapshotPrice = 1_000_000m,
+            DepositAmount = 200_000m,
+            Status = Web.Features.Contracts.Enums.ContractStatus.Approved,
+        };
+        db.Contracts.Add(contract);
+        db.ContractMembers.Add(new Web.Features.Contracts.Entities.ContractMember
+        {
+            ContractId = contract.ContractId,
+            TenantId = tenantId,
+        });
     }
 
     private FileService NewFileService(IFileStorage storage)

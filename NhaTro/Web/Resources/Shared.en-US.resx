@@ -1073,4 +1073,117 @@
   <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="MeterReadings" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
+  <data name="MeterReadingPageTitle" xml:space="preserve"><value>Record Meter Readings &amp; Period Costs</value></data>
+  <data name="MeterReadingElectricEnd" xml:space="preserve"><value>New electric reading</value></data>
+  <data name="MeterReadingWaterEnd" xml:space="preserve"><value>New water reading</value></data>
+  <data name="MeterReadingLockPeriod" xml:space="preserve"><value>Lock period</value></data>
+  <data name="MeterReadingSaveDraft" xml:space="preserve"><value>Save draft</value></data>
+  <data name="MeterReadingTotalEstimated" xml:space="preserve"><value>Estimated total</value></data>
+  <data name="MeterReadingSampleBanner" xml:space="preserve"><value>Sample data — Real SQL not yet connected (awaiting VHT-51)</value></data>
+  <data name="MeterReadingAdjustmentReason" xml:space="preserve"><value>Reason for reading adjustment</value></data>
+  <data name="MeterReadingSprint2C" xml:space="preserve"><value>Sprint 2C</value></data>
+  <data name="MeterReadingSampleBannerDesc" xml:space="preserve"><value>All saving and finalizing actions are stored in temporary memory (in-memory) for UI testing and tiered tariff calculation.</value></data>
+  <data name="MeterReadingPageSubtitle" xml:space="preserve"><value>Enter meter readings, verify tiered utility costs, and finalize period figures</value></data>
+  <data name="MeterReadingBuildingFilter" xml:space="preserve"><value>Property:</value></data>
+  <data name="MeterReadingSelectBuildingPrompt" xml:space="preserve"><value>-- Select property --</value></data>
+  <data name="MeterReadingRoomCountFormat" xml:space="preserve"><value>{0} rooms</value></data>
+  <data name="MeterReadingPeriodFilter" xml:space="preserve"><value>Billing Period:</value></data>
+  <data name="MeterReadingPeriodOct2026" xml:space="preserve"><value>October 2026 (01/10/2026 → 31/10/2026)</value></data>
+  <data name="MeterReadingPeriodSep2026" xml:space="preserve"><value>September 2026 (01/09/2026 → 30/09/2026)</value></data>
+  <data name="MeterReadingRetry" xml:space="preserve"><value>Retry</value></data>
+  <data name="MeterReadingKpiTotalRooms" xml:space="preserve"><value>Total Rooms</value></data>
+  <data name="MeterReadingKpiInPeriod" xml:space="preserve"><value>In period {0}</value></data>
+  <data name="MeterReadingKpiRecorded" xml:space="preserve"><value>Readings Recorded</value></data>
+  <data name="MeterReadingKpiRecordedSub" xml:space="preserve"><value>New readings entered this period</value></data>
+  <data name="MeterReadingKpiUnrecorded" xml:space="preserve"><value>Missing Readings</value></data>
+  <data name="MeterReadingKpiUnrecordedSub" xml:space="preserve"><value>Electric/water readings needed</value></data>
+  <data name="MeterReadingKpiLocked" xml:space="preserve"><value>Period Finalized</value></data>
+  <data name="MeterReadingKpiLockedSub" xml:space="preserve"><value>Costs locked</value></data>
+  <data name="MeterReadingEmptyTenantTitle" xml:space="preserve"><value>No Tenant Profile Found</value></data>
+  <data name="MeterReadingEmptyTenantDesc" xml:space="preserve"><value>Your account is not linked to an active lease contract or room in this period. Please contact your landlord to activate your profile.</value></data>
+  <data name="MeterReadingSelectBuildingTitle" xml:space="preserve"><value>Select Property and Billing Period</value></data>
+  <data name="MeterReadingSelectBuildingDesc" xml:space="preserve"><value>Please select a property above to view the rooms for meter reading and cost calculation.</value></data>
+  <data name="MeterReadingSelectFirstBuildingBtn" xml:space="preserve"><value>Select First Property</value></data>
+  <data name="MeterReadingEmptyRoomsTitle" xml:space="preserve"><value>No Rooms in This Period</value></data>
+  <data name="MeterReadingEmptyRoomsDesc" xml:space="preserve"><value>This property currently has no rooms or active lease contracts in the selected billing period.</value></data>
+  <data name="MeterReadingRefreshBtn" xml:space="preserve"><value>Refresh</value></data>
+  <data name="MeterReadingNavHome" xml:space="preserve"><value>Home</value></data>
+  <data name="MeterReadingNavServices" xml:space="preserve"><value>Services &amp; Utilities</value></data>
+  <data name="MeterReadingNavReadings" xml:space="preserve"><value>Meter Readings</value></data>
+  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Failed to load data: {0}</value></data>
+  <data name="MeterReadingSaveError" xml:space="preserve"><value>Failed to save meter reading.</value></data>
+  <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Successfully finalized period for room {0} in temporary memory (mock data).</value></data>
+  <data name="MeterReadingDraftSuccess" xml:space="preserve"><value>Draft saved for room {0} in temporary memory (mock data).</value></data>
+  <data name="MeterReadingStatusLocked" xml:space="preserve"><value>Period Finalized</value></data>
+  <data name="MeterReadingStatusOpen" xml:space="preserve"><value>Open for Entry</value></data>
+  <data name="MeterReadingTenantLabel" xml:space="preserve"><value>Tenant:</value></data>
+  <data name="MeterReadingContractCodeLabel" xml:space="preserve"><value>Contract:</value></data>
+  <data name="MeterReadingReadOnlyBadge" xml:space="preserve"><value>Read-only</value></data>
+  <data name="MeterReadingLockedBannerTitle" xml:space="preserve"><value>Room Period Has Been Finalized</value></data>
+  <data name="MeterReadingLockedBannerDesc" xml:space="preserve"><value>Data has been locked. To adjust readings for the previous period, a mandatory justification reason must be entered below.</value></data>
+  <data name="MeterReadingElectricMeter" xml:space="preserve"><value>Electricity Meter</value></data>
+  <data name="MeterReadingWaterMeter" xml:space="preserve"><value>Water Meter</value></data>
+  <data name="MeterReadingMeterCodeLabel" xml:space="preserve"><value>Meter Code: {0}</value></data>
+  <data name="MeterReadingStartLabel" xml:space="preserve"><value>Previous Reading</value></data>
+  <data name="MeterReadingStartPeriodHint" xml:space="preserve"><value>Start of period ({0})</value></data>
+  <data name="MeterReadingEndLabel" xml:space="preserve"><value>Current Reading</value></data>
+  <data name="MeterReadingEndPeriodHint" xml:space="preserve"><value>End of period ({0})</value></data>
+  <data name="MeterReadingInputPlaceholder" xml:space="preserve"><value>Enter new reading</value></data>
+  <data name="MeterReadingUsageCurrentPeriod" xml:space="preserve"><value>Period Consumption:</value></data>
+  <data name="MeterReadingAdjustmentReasonPlaceholder" xml:space="preserve"><value>Enter adjustment reason (e.g., misread meter, on-site reinspection...)</value></data>
+  <data name="MeterReadingAdjustmentReasonRequired" xml:space="preserve"><value>Please provide an adjustment reason.</value></data>
+  <data name="MeterReadingAuditLogTitle" xml:space="preserve"><value>Meter Reading Audit Log</value></data>
+  <data name="MeterReadingAuditEditCount" xml:space="preserve"><value>{0} edits</value></data>
+  <data name="MeterReadingAuditColModifier" xml:space="preserve"><value>Modified By</value></data>
+  <data name="MeterReadingAuditColTime" xml:space="preserve"><value>Timestamp</value></data>
+  <data name="MeterReadingAuditColChange" xml:space="preserve"><value>Changes</value></data>
+  <data name="MeterReadingAuditColReason" xml:space="preserve"><value>Justification Reason</value></data>
+  <data name="MeterReadingCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="MeterReadingCostDetailTitle" xml:space="preserve"><value>Period Cost Breakdown</value></data>
+  <data name="MeterReadingAutoCalculateTariff" xml:space="preserve"><value>Calculated automatically by tariff</value></data>
+  <data name="MeterReadingTableColItem" xml:space="preserve"><value>Item</value></data>
+  <data name="MeterReadingTableColUsage" xml:space="preserve"><value>Usage</value></data>
+  <data name="MeterReadingTableColRate" xml:space="preserve"><value>Unit Price</value></data>
+  <data name="MeterReadingTableColAmount" xml:space="preserve"><value>Amount</value></data>
+  <data name="MeterReadingRentItem" xml:space="preserve"><value>Room Rent ({0})</value></data>
+  <data name="MeterReadingOneMonthUnit" xml:space="preserve"><value>1 month</value></data>
+  <data name="MeterReadingElectricCostItem" xml:space="preserve"><value>Residential Electricity</value></data>
+  <data name="MeterReadingMissingReadingHint" xml:space="preserve"><value>Not calculated — missing current reading</value></data>
+  <data name="MeterReadingNoData" xml:space="preserve"><value>No data available</value></data>
+  <data name="MeterReadingElectricTierItem" xml:space="preserve"><value>Electricity Tier {0}</value></data>
+  <data name="MeterReadingElectricCostZeroItem" xml:space="preserve"><value>Residential Electricity (0 kWh)</value></data>
+  <data name="MeterReadingWaterCostItem" xml:space="preserve"><value>Residential Water</value></data>
+  <data name="MeterReadingWaterTierItem" xml:space="preserve"><value>Residential Water Tier {0}</value></data>
+  <data name="MeterReadingWaterCostZeroItem" xml:space="preserve"><value>Residential Water (0 m³)</value></data>
+  <data name="MeterReadingInternetServiceItem" xml:space="preserve"><value>Fiber Internet</value></data>
+  <data name="MeterReadingCleaningServiceItem" xml:space="preserve"><value>Cleaning &amp; Waste Fee</value></data>
+  <data name="MeterReadingParkingServiceItem" xml:space="preserve"><value>Parking Fee</value></data>
+  <data name="MeterReadingMissingTotalWarning" xml:space="preserve"><value>⚠️ {0} not calculated due to missing current reading</value></data>
+  <data name="MeterReadingBothElectricWater" xml:space="preserve"><value>electricity and water</value></data>
+  <data name="MeterReadingElectricOnly" xml:space="preserve"><value>electricity</value></data>
+  <data name="MeterReadingWaterOnly" xml:space="preserve"><value>water</value></data>
+  <data name="MeterReadingTotalDescriptionComplete" xml:space="preserve"><value>Includes room rent, tiered electricity/water, and service fees</value></data>
+  <data name="MeterReadingErrorNegative" xml:space="preserve"><value>Reading cannot be negative</value></data>
+  <data name="MeterReadingErrorElectricMustBeGreater" xml:space="preserve"><value>New reading ({0}) must be ≥ previous reading ({1})</value></data>
+  <data name="MeterReadingErrorWaterMustBeGreater" xml:space="preserve"><value>New reading ({0}) must be ≥ previous reading ({1})</value></data>
+  <data name="MeterReadingUpdateLocked" xml:space="preserve"><value>Update locked period</value></data>
+  <data name="MeterReadingLockedNoChangesHint" xml:space="preserve"><value>This period is locked. Edit the readings if you need to adjust.</value></data>
+  <data name="MeterReadingSummaryTableTitle" xml:space="preserve"><value>Room Readings &amp; Cost Summary Table</value></data>
+  <data name="MeterReadingSummaryColRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="MeterReadingSummaryColElectricReading" xml:space="preserve"><value>Electric (Start → End)</value></data>
+  <data name="MeterReadingSummaryColElectricUsage" xml:space="preserve"><value>Electric Usage</value></data>
+  <data name="MeterReadingSummaryColWaterReading" xml:space="preserve"><value>Water (Start → End)</value></data>
+  <data name="MeterReadingSummaryColWaterUsage" xml:space="preserve"><value>Water Usage</value></data>
+  <data name="MeterReadingSummaryColFixedServices" xml:space="preserve"><value>Fixed Services</value></data>
+  <data name="MeterReadingSummaryColTotalCost" xml:space="preserve"><value>Estimated Total</value></data>
+  <data name="MeterReadingSummaryColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="MeterReadingAbnormalUsageWarning" xml:space="preserve"><value>Abnormal usage ({0}% of previous period)</value></data>
+  <data name="MeterReadingEmptyPeriodTitle" xml:space="preserve"><value>No data available for this period</value></data>
+  <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Sample data is currently only available for October 2026. Please select another period.</value></data>
+  <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Room not found in your scope</value></data>
+  <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Invalid request</value></data>
+  <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Month:</value></data>
+  <data name="MeterReadingYearFilter" xml:space="preserve"><value>Year:</value></data>
+  <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Month {0:00}</value></data>
 </root>

@@ -232,6 +232,125 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Empty(afterDelete.Items);
     }
 
+    [SqlServerFact]
+    public async Task Chu_tro_khong_thao_tac_tep_phong_ngoai_toa()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-a", Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-b", Roles.ChuTro);
+
+        var roomA = await SeedRoomAsync(db, "Nhà A", "chu-tro-a");
+        var roomB = await SeedRoomAsync(db, "Nhà B", "chu-tro-b");
+
+        var service = NewFileService(
+            new TestDbContextFactory(fixture),
+            new MemoryFileStorage(),
+            Options.Create(new StorageOptions { RootPath = "memory" }),
+            new TenantDocumentScopeService(db, new NoManagerTenantScope()),
+            new FileAccessAuditWriter(
+                new TestDbContextFactory(fixture), TimeProvider.System,
+                NullLogger<FileAccessAuditWriter>.Instance));
+
+        var ownerA = new StorageCaller("chu-tro-a", Roles.ChuTro);
+        var ownerB = new StorageCaller("chu-tro-b", Roles.ChuTro);
+
+        // Chủ trọ B không upload/liệt kê/xóa được ảnh phòng của Chủ trọ A.
+        var crossUpload = await service.UploadAsync(NewRoomPhotoRequest(roomA), ownerB);
+        Assert.False(crossUpload.Succeeded);
+        Assert.Equal(StorageErrorCodes.Forbidden, crossUpload.ErrorCode);
+        Assert.Empty(await service.ListAsync(
+            RelatedEntityType.Room, roomA.ToString(), ownerB));
+
+        var ownUpload = await service.UploadAsync(NewRoomPhotoRequest(roomA), ownerA);
+        Assert.True(ownUpload.Succeeded, ownUpload.ErrorMessage);
+        Assert.Empty(await service.ListAsync(
+            RelatedEntityType.Room, roomA.ToString(), ownerB));
+        Assert.Null(await service.DownloadAsync(ownUpload.File!.Id, ownerB));
+        Assert.False(await service.DeleteAsync(ownUpload.File!.Id, ownerB));
+
+        // Chủ sở hữu vẫn thao tác bình thường trong tòa của mình.
+        Assert.Single(await service.ListAsync(RelatedEntityType.Room, roomA.ToString(), ownerA));
+        Assert.NotNull(await service.DownloadAsync(ownUpload.File.Id, ownerA));
+        Assert.True(await service.DeleteAsync(ownUpload.File.Id, ownerA));
+        Assert.True((await service.UploadAsync(NewRoomPhotoRequest(roomB), ownerB)).Succeeded);
+    }
+
+    [SqlServerFact]
+    public async Task Quan_ly_tep_phong_theo_phan_cong_va_thu_hoi_ngay()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-a", Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "ql-1", Roles.QuanLy);
+
+        var roomA = await SeedRoomAsync(db, "Nhà A", "chu-tro-a");
+        var roomB = await SeedRoomAsync(db, "Nhà B", "chu-tro-a");
+
+        var assignment = new PropertyManager
+        {
+            PropertyId = (await db.Rooms.AsNoTracking().FirstAsync(r => r.Id == roomA)).PropertyId,
+            ManagerUserId = "ql-1",
+            AssignedByUserId = "chu-tro-a",
+        };
+        db.PropertyManagers.Add(assignment);
+        await db.SaveChangesAsync();
+
+        var service = NewFileService(
+            new TestDbContextFactory(fixture),
+            new MemoryFileStorage(),
+            Options.Create(new StorageOptions { RootPath = "memory" }),
+            new TenantDocumentScopeService(db, new NoManagerTenantScope()),
+            new FileAccessAuditWriter(
+                new TestDbContextFactory(fixture), TimeProvider.System,
+                NullLogger<FileAccessAuditWriter>.Instance));
+        var manager = new StorageCaller("ql-1", Roles.QuanLy);
+
+        // Được giao tòa A: thao tác tệp phòng A, không đụng tòa B.
+        Assert.True((await service.UploadAsync(NewRoomPhotoRequest(roomA), manager)).Succeeded);
+        Assert.False((await service.UploadAsync(NewRoomPhotoRequest(roomB), manager)).Succeeded);
+        Assert.Single(await service.ListAsync(RelatedEntityType.Room, roomA.ToString(), manager));
+        Assert.Empty(await service.ListAsync(RelatedEntityType.Room, roomB.ToString(), manager));
+
+        // Thu hồi phân công: mất quyền ngay với tệp đã có và cả upload mới.
+        assignment.RevokedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        Assert.Empty(await service.ListAsync(RelatedEntityType.Room, roomA.ToString(), manager));
+        Assert.False((await service.UploadAsync(NewRoomPhotoRequest(roomA), manager)).Succeeded);
+    }
+
+    private static async Task<int> SeedRoomAsync(
+        ApplicationDbContext db, string propertyName, string ownerId)
+    {
+        var property = new Property { Name = propertyName, OwnerId = ownerId };
+        db.Properties.Add(property);
+        await db.SaveChangesAsync();
+
+        var room = new Room
+        {
+            PropertyId = property.Id,
+            Code = $"phong-{property.Id}",
+            StandardPrice = 1_000_000m,
+        };
+        db.Rooms.Add(room);
+        await db.SaveChangesAsync();
+        return room.Id;
+    }
+
+    private static UploadFileRequest NewRoomPhotoRequest(int roomId) => new()
+    {
+        File = new FormFile(
+            new MemoryStream([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]),
+            0,
+            12,
+            "file",
+            "phong.jpg"),
+        FileCategory = FileCategory.RoomPhoto,
+        RelatedEntityType = RelatedEntityType.Room,
+        RelatedEntityId = roomId.ToString(),
+    };
+
     private static FileService NewFileService(
         IDbContextFactory<ApplicationDbContext> factory,
         IFileStorage storage,

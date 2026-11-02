@@ -144,17 +144,21 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 
 **Điều kiện xong 2C:** mọi PR migration P4/P5/P7 đã merge đều có kết quả script đạt; không còn migration pending; không có xung đột snapshot.
 
+**Trạng thái 02/11/2026:** 2C.4/2C.5 cho migration hóa đơn (`AddInvoices`, PR #55) đã xong, không blocker; kết quả chạy, ràng buộc đã xác nhận và delta ERD ghi tại [nhật ký rà soát migration](../design/database/nhat_ky_ra_soat_migration.md). P4/P5/P7 đã merge trước đó chưa có bản rà 2C riêng vì VHT-121 chỉ rà hóa đơn; script mới có pha nâng cấp thật từ lượt này.
+
 ### Đợt 2D — Cập nhật ERD phần đã merge (VHT-122)
 
 | # | Việc | Ai | Đầu ra |
 | --- | --- | --- | --- |
-| 2D.1 | Bổ sung bảng P4/P5/P7 + quan hệ vào `so_do_quan_he_vht5_schema.sql` | Tính | SQL chạy lại được trên DB sạch, khớp EF |
-| 2D.2 | Vẽ lại SVG ERD (bố cục mới, không nhồi vào khung cũ) | Tính | `docs/design/database/so_do_quan_he_vht5.svg` |
-| 2D.3 | Ghi chú các điểm khác DTO/đề xuất (nếu có) ngay trên ERD/Word | Tính | Danh sách lệch kèm lý do |
+| 2D.1 | Bổ sung bảng P4/P5/P7 + quan hệ vào `so_do_quan_he_vht5_schema.sql` | Tính | SQL chạy lại được trên DB sạch, khớp EF (đã xong 02/11/2026) |
+| 2D.2 | Vẽ lại SVG ERD (bố cục mới, không nhồi vào khung cũ) | Tính | `docs/design/database/so_do_quan_he_vht5.svg` (đã xong 02/11/2026) |
+| 2D.3 | Ghi chú các điểm khác DTO/đề xuất (nếu có) ngay trên ERD/Word | Tính | Danh sách lệch kèm lý do (đã xong 02/11/2026) |
 | 2D.4 | Gửi Phúc bản ERD + ghi chú để ghép Word P1–P4 | Tính → Phúc | Tin nhắn kèm file, ngày gửi |
-| 2D.5 | Đối chiếu ERD với migration **đã merge**, không lấy nhánh chưa merge | Tính | Không vẽ bảng "dự kiến" |
+| 2D.5 | Đối chiếu ERD với migration **đã merge**, không lấy nhánh chưa merge | Tính | Không vẽ bảng "dự kiến" (đã xong 02/11/2026) |
 
 **Điều kiện xong 2D:** ERD có đủ bảng đã merge; mỗi quan hệ ghi đúng `PK/FK/nullable/unique/Restrict`; Phúc xác nhận đã nhận.
+
+**Trạng thái 02/11/2026: CHƯA ĐẠT.** 2D.1/2D.2/2D.3/2D.5 đã xong trên `dev@12a7156`: ERD SQL 19 bảng chạy 2 lần không lỗi, diff `sys.columns|sys.indexes|sys.foreign_keys|sys.check_constraints` với DB dựng từ EF migrations = 0 khác biệt; kết quả ghi tại [nhật ký rà soát migration](../design/database/nhat_ky_ra_soat_migration.md). Còn 2D.4 (gửi Phúc) chưa làm.
 
 ### Đợt 2E — Kiểm trên bản chung (VHT-123)
 

@@ -320,8 +320,8 @@ builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
 
-// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit và điểm mở rộng phạm vi Quản lý theo tòa nhà (VHT-24).
-builder.Services.AddScoped<IManagerTenantScope, NoManagerTenantScope>();
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit. VHT-119: Quản lý theo phân công tòa nhà thật (VHT-24).
+builder.Services.AddScoped<IManagerTenantScope, ContractManagerTenantScope>();
 builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
 builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 
@@ -348,6 +348,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();

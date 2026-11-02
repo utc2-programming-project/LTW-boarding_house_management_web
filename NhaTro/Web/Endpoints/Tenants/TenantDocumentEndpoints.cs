@@ -6,6 +6,7 @@ using Web.Features.Storage.Enums;
 using Web.Features.Storage.Rules;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Documents;
+using Web.Infrastructure.Security;
 
 namespace Web.Endpoints.Tenants;
 
@@ -19,7 +20,9 @@ public static class TenantDocumentEndpoints
     public static IEndpointRouteBuilder MapTenantDocumentEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/tenants/{tenantId:int}/documents")
-            .RequireAuthorization("Business");
+            .RequireAuthorization("Business")
+            // VHT-119: chung bucket IP với /api/files để endpoint giấy tờ không lách giới hạn upload.
+            .RequireRateLimiting(RateLimitPolicies.FileUpload);
 
         group.MapGet("/", ListAsync);
         group.MapGet("/{fileId:guid}", DownloadAsync);
@@ -160,7 +163,7 @@ public static class TenantDocumentEndpoints
         new(http.User.UserId() ?? string.Empty, RoleOf(http.User));
 
     private static string RoleOf(System.Security.Principal.IPrincipal user) =>
-        Web.Features.Accounts.Roles.All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+        Roles.ResolvePrimaryRole(user);
 
     private static IResult ToFailure(UploadResult result) => result.ErrorCode switch
     {

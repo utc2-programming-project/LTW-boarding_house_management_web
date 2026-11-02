@@ -37,6 +37,39 @@ function Invoke-Sql([string]$database, [string]$query) {
     return $output
 }
 
+function Get-DataCounts([string]$database) {
+    return (Invoke-Sql $database "SELECT (SELECT COUNT(*) FROM AspNetUsers), (SELECT COUNT(*) FROM Properties), (SELECT COUNT(*) FROM Rooms), (SELECT COUNT(*) FROM Tenants), (SELECT COUNT(*) FROM Contracts)")
+}
+
+function Expect-SqlFail([string]$database, [string]$label, [string]$query) {
+    $sqlArgs = @("-S", $Server, "-d", $database, "-b", "-h-1", "-W", "-Q", "SET NOCOUNT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON; $query")
+    $null = & sqlcmd @sqlArgs 2>&1
+    if ($LASTEXITCODE -eq 0) { Fail "$label (KHONG bi chan)" } else { Pass "$label (bi chan)" }
+}
+
+function Assert-InvoiceSchema([string]$database) {
+    $tables = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.tables WHERE name IN ('Invoices', 'InvoiceItems')")
+    if ($tables -eq 2) { Pass "Co bang Invoices va InvoiceItems" } else { Fail "Thieu bang hoa don ($tables/2)" }
+
+    $pk = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.tables t WHERE t.name IN ('Invoices', 'InvoiceItems') AND EXISTS (SELECT 1 FROM sys.indexes i WHERE i.object_id = t.object_id AND i.is_primary_key = 1)")
+    if ($pk -eq 2) { Pass "Hai bang hoa don co PK" } else { Fail "Bang hoa don thieu PK ($pk/2)" }
+
+    $fk = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.foreign_keys WHERE name IN ('FK_Invoices_Contracts_ContractId', 'FK_InvoiceItems_Invoices_InvoiceId') AND delete_referential_action_desc = 'NO_ACTION'")
+    if ($fk -eq 2) { Pass "FK hoa don dung NO_ACTION" } else { Fail "FK hoa don sai ($fk/2)" }
+
+    $unique = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'IX_Invoices_ContractId_PeriodStart' AND is_unique = 1 AND has_filter = 0")
+    if ($unique -eq 1) { Pass "Unique (ContractId, PeriodStart)" } else { Fail "Thieu unique (ContractId, PeriodStart)" }
+
+    $checks = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.check_constraints WHERE parent_object_id IN (OBJECT_ID('Invoices'), OBJECT_ID('InvoiceItems'))")
+    if ($checks -eq 6) { Pass "Du 6 check constraint hoa don" } else { Fail "Check hoa don thieu ($checks/6)" }
+
+    $dates = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.columns c JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID('Invoices') AND c.name IN ('PeriodStart', 'PeriodEnd') AND t.name = 'date'")
+    if ($dates -eq 2) { Pass "Ky hoa don kieu date" } else { Fail "Ky hoa don sai kieu ($dates/2)" }
+
+    $money = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.columns WHERE object_id IN (OBJECT_ID('Invoices'), OBJECT_ID('InvoiceItems')) AND name IN ('TotalAmount', 'Quantity', 'UnitPrice', 'Amount') AND precision = 18 AND scale = 2")
+    if ($money -eq 4) { Pass "Tien/so luong decimal(18,2)" } else { Fail "Tien/so luong sai precision ($money/4)" }
+}
+
 if (-not (Get-Command sqlcmd -ErrorAction SilentlyContinue)) { throw "Khong tim thay sqlcmd." }
 if (-not (Test-Path $projectPath)) { throw "Khong tim thay project: $projectPath" }
 
@@ -81,11 +114,26 @@ $checks = @(Invoke-Sql $Database "SELECT OBJECT_NAME(parent_object_id), name, de
 if ($checks.Count -gt 0) { Write-Host "  Check constraint:"; $checks | ForEach-Object { Write-Host "    $_" } }
 else { Write-Host "  Check constraint: (khong co)" }
 
-Write-Step "Nap du lieu mau toi thieu"
+Assert-InvoiceSchema $Database
+
+Write-Step "Kiem tra duong nang cap: DB cu + migration hoa don"
+& sqlcmd -S $Server -d master -b -Q "IF DB_ID(N'$Database') IS NOT NULL BEGIN ALTER DATABASE [$Database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$Database]; END" | Out-Null
+
+$migrationNames = @(& dotnet ef migrations list --project $projectPath 2>&1 | Where-Object { $_ -match '^\d{14}_' } | ForEach-Object { ($_ -split ' ')[0] })
+$invoiceMigration = @($migrationNames | Where-Object { $_ -match '_AddInvoices$' })[0]
+if (-not $invoiceMigration) { throw "Khong tim thay migration AddInvoices." }
+$invoiceIndex = [Array]::IndexOf($migrationNames, $invoiceMigration)
+if ($invoiceIndex -lt 1) { throw "Khong xac dinh duoc migration truoc AddInvoices." }
+$previousMigration = $migrationNames[$invoiceIndex - 1]
+Write-Host "  Ap migration truoc hoa don: $previousMigration"
+& dotnet ef database update $previousMigration --project $projectPath --connection $connection | Out-Host
+if ($LASTEXITCODE -ne 0) { throw "Khong ap duoc migration nen $previousMigration." }
+
+Write-Step "Nap du lieu cu truoc khi them bang hoa don"
 $seed = @"
 IF NOT EXISTS (SELECT 1 FROM AspNetUsers WHERE Id = N'vht28-owner')
-    INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, FullName, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount)
-    VALUES (N'vht28-owner', N'vht28@example.com', N'VHT28@EXAMPLE.COM', N'vht28@example.com', N'VHT28@EXAMPLE.COM', N'Chu tro VHT-28', 1, 0, 0, 1, 0);
+    INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, FullName, EmailConfirmed, PhoneNumberConfirmed, TwoFactorEnabled, LockoutEnabled, AccessFailedCount, ApprovedAt)
+    VALUES (N'vht28-owner', N'vht28@example.com', N'VHT28@EXAMPLE.COM', N'vht28@example.com', N'VHT28@EXAMPLE.COM', N'Chu tro VHT-28', 1, 0, 0, 1, 0, SYSUTCDATETIME());
 IF NOT EXISTS (SELECT 1 FROM Properties WHERE Name = N'VHT28 Clean')
     INSERT INTO Properties (Name, Address, OwnerId, IsActive, CreatedAt, IsDeleted)
     VALUES (N'VHT28 Clean', NULL, N'vht28-owner', 1, SYSUTCDATETIME(), 0);
@@ -95,15 +143,36 @@ IF NOT EXISTS (SELECT 1 FROM Rooms WHERE Code = N'VHT28-P1')
 IF NOT EXISTS (SELECT 1 FROM Tenants WHERE Phone = N'0900000028')
     INSERT INTO Tenants (FullName, Phone, Email, CitizenId, UserId, CreatedAt, IsDeleted, IsActive)
     VALUES (N'Khach VHT-28', N'0900000028', NULL, N'VHT28000000001', NULL, SYSUTCDATETIME(), 0, 1);
+IF NOT EXISTS (SELECT 1 FROM Contracts WHERE ContractNumber = N'VHT121-OLD')
+    INSERT INTO Contracts (ContractId, ContractNumber, RoomId, StartDate, EndDate, SnapshotPrice, DepositAmount, Status)
+    SELECT NEWID(), N'VHT121-OLD', Id, '2026-01-01', '2026-12-31', 2500000, 5000000, 0 FROM Rooms WHERE Code = N'VHT28-P1';
 "@
 Invoke-Sql $Database $seed | Out-Null
-Pass "Da nap du lieu mau (Users/Properties/Rooms/Tenants)"
+$countsBefore = Get-DataCounts $Database
+Pass "Da nap du lieu cu (Users|Properties|Rooms|Tenants|Contracts): $countsBefore"
 
-Write-Step "Chay lai migration tren DB co du lieu"
+Write-Step "Ap migration hoa don len DB co du lieu"
 & dotnet ef database update --project $projectPath --connection $connection | Out-Host
 if ($LASTEXITCODE -ne 0) { throw "database update tren DB co du lieu that bai." }
-$counts = @(Invoke-Sql $Database "SELECT (SELECT COUNT(*) FROM Properties), (SELECT COUNT(*) FROM Rooms), (SELECT COUNT(*) FROM Tenants)")
-Pass "Du lieu con nguyen (Properties|Rooms|Tenants): $($counts -join ' ')"
+$countsAfter = Get-DataCounts $Database
+if ($countsBefore -ne $countsAfter) { Fail "Du lieu cu bi thay doi: truoc=$countsBefore sau=$countsAfter" }
+else { Pass "Du lieu cu con nguyen (Users|Properties|Rooms|Tenants|Contracts): $countsAfter" }
+
+$afterUpgrade = & dotnet ef migrations list --project $projectPath --connection $connection 2>&1
+$pendingAfterUpgrade = @($afterUpgrade | Where-Object { $_ -match "\(Pending\)" })
+if ($pendingAfterUpgrade.Count -gt 0) { Fail "Con migration chua ap tren DB nang cap: $($pendingAfterUpgrade -join ', ')" }
+else { Pass "DB nang cap khong con migration pending" }
+
+Assert-InvoiceSchema $Database
+
+Write-Step "Kiem tra rang buoc hoa don bang du lieu that"
+Invoke-Sql $Database "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-10-01', '2026-10-31', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';" | Out-Null
+Pass "Them duoc hoa don hop le tren DB cu"
+Expect-SqlFail $Database "Unique chan trung (ContractId, PeriodStart)" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-10-01', '2026-10-31', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
+Expect-SqlFail $Database "FK chan hop dong khong ton tai" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) VALUES (NEWID(), '2026-11-01', '2026-11-30', 1, 0, SYSUTCDATETIME());"
+Expect-SqlFail $Database "Check chan ngay ket thuc truoc ngay bat dau" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-12-31', '2026-12-01', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
+Expect-SqlFail $Database "Check chan tong tien am" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2027-01-01', '2027-01-31', 1, -1, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
+Expect-SqlFail $Database "Check chan dong thuong co tien am" "INSERT INTO InvoiceItems (InvoiceId, ItemType, Description, Quantity, UnitPrice, Amount, DisplayOrder) SELECT TOP 1 Id, 0, N'Thu', 1, 0, -1, 1 FROM Invoices;"
 
 Write-Step "Kiem tra migration co the xuong (script Down)"
 Write-Host "  Bo qua tu dong: chi chay tren DB tam khi can kiem rollback, tranh mat du lieu ngoai y muon." -ForegroundColor Yellow
