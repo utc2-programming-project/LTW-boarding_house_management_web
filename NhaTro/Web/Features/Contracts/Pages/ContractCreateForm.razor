@@ -30,39 +30,39 @@
     }
     else
     {
-        <EditForm Model="_form" OnValidSubmit="SubmitAsync" class="contract-live-form-card">
+        <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync" class="contract-live-form-card">
             <DataAnnotationsValidator />
-            @if (_errors.Count > 0)
+            @if (ValidationErrors.Count > 0)
             {
-                <div class="contract-validation-summary" role="alert"><ul>@foreach (var error in _errors) { <li>@error</li> }</ul></div>
+                <div class="contract-validation-summary" role="alert"><ul>@foreach (var error in ValidationErrors) { <li>@error</li> }</ul></div>
             }
             <div class="contract-live-grid">
                 <div class="contract-field">
                     <label for="property-select">@L["ContractPropertyLabel"]</label>
-                    <InputSelect id="property-select" class="@FieldClass(_propertyError)" aria-invalid="@(_propertyError is not null ? "true" : "false")" aria-describedby="@(_propertyError is not null ? "property-error" : null)" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
+                    <InputSelect id="property-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.PropertyId) ? "true" : "false")" aria-describedby="property-error" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
                         <option value="">@L["ContractPropertyPlaceholder"]</option>
                         @foreach (var property in _options.Properties) { <option value="@property.Id">@property.Name</option> }
                     </InputSelect>
-                    @if (_propertyError is not null) { <small id="property-error" class="contract-field-error">@_propertyError</small> }
+                    <small id="property-error" class="contract-field-error">@ErrorFor(nameof(_form.PropertyId))</small>
                 </div>
                 <div class="contract-field">
                     <label for="room-select">@L["ContractRoomLabel"]</label>
-                    <InputSelect id="room-select" class="@FieldClass(_roomError)" aria-invalid="@(_roomError is not null ? "true" : "false")" aria-describedby="@(_roomError is not null ? "room-error" : null)" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
+                    <InputSelect id="room-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.RoomId) ? "true" : "false")" aria-describedby="room-error" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
                         <option value="">@L["ContractRoomPlaceholder"]</option>
                         @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
                     </InputSelect>
                     @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
-                    @if (_roomError is not null) { <small id="room-error" class="contract-field-error">@_roomError</small> }
+                    <small id="room-error" class="contract-field-error">@ErrorFor(nameof(_form.RoomId))</small>
                 </div>
                 <div class="contract-field">
                     <label for="start-date">@L["ContractStartDate"]</label>
-                    <InputDate id="start-date" class="@FieldClass(_startDateError)" aria-invalid="@(_startDateError is not null ? "true" : "false")" aria-describedby="@(_startDateError is not null ? "start-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.StartDate" />
-                    @if (_startDateError is not null) { <small id="start-date-error" class="contract-field-error">@_startDateError</small> }
+                    <InputDate id="start-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.StartDate) ? "true" : "false")" aria-describedby="start-date-error" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+                    <small id="start-date-error" class="contract-field-error">@ErrorFor(nameof(_form.StartDate))</small>
                 </div>
                 <div class="contract-field">
                     <label for="end-date">@L["ContractEndDate"]</label>
-                    <InputDate id="end-date" class="@FieldClass(_endDateError)" aria-invalid="@(_endDateError is not null ? "true" : "false")" aria-describedby="@(_endDateError is not null ? "end-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.EndDate" />
-                    @if (_endDateError is not null) { <small id="end-date-error" class="contract-field-error">@_endDateError</small> }
+                    <InputDate id="end-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.EndDate) ? "true" : "false")" aria-describedby="end-date-error" TValue="DateOnly?" @bind-Value="_form.EndDate" />
+                    <small id="end-date-error" class="contract-field-error">@ErrorFor(nameof(_form.EndDate))</small>
                 </div>
             </div>
             @if (SelectedRoom is { } selectedRoom)
@@ -96,17 +96,25 @@
     private ContractCreateOptionsDto _options = new([], [], []);
     private IReadOnlyList<ContractRoomOptionDto> RoomsForProperty => _form.PropertyId is int id ? _options.Rooms.Where(room => room.PropertyId == id).ToList() : [];
     private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? RoomsForProperty.FirstOrDefault(room => room.Id == id) : null;
-    private readonly List<string> _errors = [];
-    private string? _propertyError, _roomError, _startDateError, _endDateError, _tenantError;
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private string? _tenantError;
     private bool _loading = true, _failed, _submitting;
-
-    private static string FieldClass(string? error) => error is null ? "input" : "input is-invalid";
+    private IReadOnlyList<string> ValidationErrors => _editContext.GetValidationMessages()
+        .Concat(_tenantError is null ? Enumerable.Empty<string>() : new[] { _tenantError }).ToArray();
 
     protected override async Task OnInitializedAsync()
     {
         var today = Clock.TodayVietnam();
         _form.StartDate = today;
         _form.EndDate = today.AddMonths(6);
+        _editContext = new EditContext(_form);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
         await LoadOptionsAsync();
     }
 
@@ -126,23 +134,26 @@
         else if (!selected) _form.TenantIds.Remove(tenantId);
     }
 
+    private Task HandleSubmitAsync(EditContext _) => SubmitAsync();
+    private string? ErrorFor(string field) => _messages[new FieldIdentifier(_form, field)].FirstOrDefault();
+    private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_form, field), message);
+
     private async Task SubmitAsync()
     {
         if (_submitting) return;
-        _errors.Clear();
-        _propertyError = _roomError = _startDateError = _endDateError = _tenantError = null;
-        if (_form.PropertyId is null) _propertyError = L["ContractErrorPropertyRequired"];
-        if (_form.RoomId is null || SelectedRoom is null) _roomError = L["ContractErrorRoomRequired"];
-        if (_form.StartDate is null) _startDateError = L["ContractErrorStartDateRequired"];
-        if (_form.EndDate is null) _endDateError = L["ContractErrorEndDateRequired"];
-        else if (_form.StartDate is DateOnly start && _form.EndDate <= start) _endDateError = L["ContractErrorInvalidDateRange"];
+        _messages.Clear();
+        _tenantError = null;
+        _editContext.NotifyValidationStateChanged();
+        var today = Clock.TodayVietnam();
+        if (_form.PropertyId is null) AddError(nameof(_form.PropertyId), L["ContractErrorPropertyRequired"]);
+        if (_form.RoomId is null || SelectedRoom is null) AddError(nameof(_form.RoomId), L["ContractErrorRoomRequired"]);
+        if (_form.StartDate is null) AddError(nameof(_form.StartDate), L["ContractErrorStartDateRequired"]);
+        else if (_form.StartDate > today) AddError(nameof(_form.StartDate), L["ContractErrorFutureStartNotAllowed"]);
+        if (_form.EndDate is null) AddError(nameof(_form.EndDate), L["ContractErrorEndDateRequired"]);
+        else if (_form.StartDate is DateOnly start && _form.EndDate <= start) AddError(nameof(_form.EndDate), L["ContractErrorInvalidDateRange"]);
         if (_form.TenantIds.Count == 0) _tenantError = L["ContractErrorTenantRequired"];
-        if (_propertyError is not null) _errors.Add(_propertyError);
-        if (_roomError is not null) _errors.Add(_roomError);
-        if (_startDateError is not null) _errors.Add(_startDateError);
-        if (_endDateError is not null) _errors.Add(_endDateError);
-        if (_tenantError is not null) _errors.Add(_tenantError);
-        if (_errors.Count > 0) return;
+        _editContext.NotifyValidationStateChanged();
+        if (ValidationErrors.Count > 0) return;
 
         _submitting = true;
         try
@@ -158,7 +169,11 @@
         }
         catch (Exception ex)
         {
-            _errors.Add(ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"]);
+            var message = ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
+            var field = ex is IContractServiceError { ErrorCode: "ContractOverlap" or "PendingContractExists" or "RoomUnavailable" or "RoomNotAvailable" }
+                ? nameof(_form.RoomId) : string.Empty;
+            AddError(field, message);
+            _editContext.NotifyValidationStateChanged();
         }
         finally { _submitting = false; }
     }

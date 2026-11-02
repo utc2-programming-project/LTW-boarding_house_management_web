@@ -157,6 +157,7 @@
   <data name="ContractErrorTenantUnavailable" xml:space="preserve"><value>Một hoặc nhiều khách thuê không tồn tại hoặc không hoạt động.</value></data>
   <data name="ContractErrorRoomNotAvailable" xml:space="preserve"><value>Phòng không tồn tại hoặc ngoài phạm vi được phân công.</value></data>
   <data name="ContractErrorRoomNotVacant" xml:space="preserve"><value>Chỉ có thể duyệt hợp đồng khi phòng đang trống.</value></data>
+  <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.</value></data>
   <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>Phòng đã ngừng hoạt động, không thể tạo hoặc duyệt hợp đồng.</value></data>
   <data name="ContractErrorPendingContractExists" xml:space="preserve"><value>Phòng đã có hợp đồng đang chờ duyệt hoặc hiệu lực trong thời gian này.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>Hợp đồng sẽ được lưu ở trạng thái Chờ duyệt. Giá thuê và tiền cọc được chốt khi Chủ trọ duyệt.</value></data>

@@ -118,8 +118,11 @@
                                 <label for="incident-assignee">@L["Assignee"]</label>
                                 <input id="incident-assignee" maxlength="100" @bind="_assignee" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
                                 <label for="incident-repair-cost">@L["RepairCost"]</label>
-                                <input id="incident-repair-cost" inputmode="numeric" @bind="_repairCostText" aria-describedby="incident-repair-cost-hint" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                <CascadingValue Value="_repairCostContext" IsFixed="true">
+                                    <InputText id="incident-repair-cost" inputmode="numeric" @bind-Value="_repairCostText" aria-describedby="incident-repair-cost-hint incident-repair-cost-error" aria-invalid="@(_repairCostContext.HasError(() => _repairCostText) ? "true" : "false")" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)" />
+                                </CascadingValue>
                                 <p id="incident-repair-cost-hint" class="sample-note">@L["RepairCostHint"]</p>
+                                <p id="incident-repair-cost-error" role="status">@RepairCostError</p>
                                 @if (HasPendingUpdate) { <p>@L["AlreadyPending"]</p> }
                                 <button type="button" class="btn btn-primary" disabled="@(Busy || _updateMode == IncidentDemoMode.Deny || HasPendingUpdate)"
                                         aria-busy="@_saving" @onclick="UpdateAsync">
@@ -180,6 +183,8 @@
     private string _notes = "";
     private string _assignee = "";
     private string _repairCostText = "";
+    private EditContext _repairCostContext = default!;
+    private ValidationMessageStore _repairCostMessages = default!;
     private string? _error;
     private bool _loading = true;
     private bool _saving;
@@ -200,6 +205,17 @@
     }
 
     protected override Task OnInitializedAsync() => RefreshAsync();
+    protected override void OnInitialized()
+    {
+        _repairCostContext = new EditContext(this);
+        _repairCostMessages = new ValidationMessageStore(_repairCostContext);
+        _repairCostContext.OnFieldChanged += (_, args) =>
+        {
+            _repairCostMessages.Clear(args.FieldIdentifier);
+            _repairCostContext.NotifyValidationStateChanged();
+        };
+    }
+    private string? RepairCostError => _repairCostMessages[FieldIdentifier.Create(() => _repairCostText)].FirstOrDefault();
     private string Text(string text) => _item?.IsSeeded == true ? L[text] : text;
 
     private async Task RefreshAsync()
@@ -227,6 +243,8 @@
     private async Task UpdateAsync()
     {
         if (Busy || _item is null) return;
+        _repairCostMessages.Clear();
+        _repairCostContext.NotifyValidationStateChanged();
         _saving = true;
         _error = null;
         try
@@ -235,7 +253,11 @@
             if (!string.IsNullOrWhiteSpace(_repairCostText))
             {
                 if (!MoneyFormatter.TryParse(_repairCostText, out var amount) || amount < 0)
-                    throw new IncidentDemoException("RepairCostInvalid");
+                {
+                    _repairCostMessages.Add(FieldIdentifier.Create(() => _repairCostText), L["RepairCostInvalid"]);
+                    _repairCostContext.NotifyValidationStateChanged();
+                    return;
+                }
                 repairCost = amount;
             }
             var pending = await Session.UpdateAsync(IncidentId, NextStatus, _notes, _assignee, repairCost);

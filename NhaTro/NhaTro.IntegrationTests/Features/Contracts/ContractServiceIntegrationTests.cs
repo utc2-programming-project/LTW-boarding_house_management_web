@@ -216,7 +216,8 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var tenant = await AddTenantAsync(dbContext, "Tenant Sequential", "0900000097");
-        var service = new ContractService(dbContext);
+        var service = new ContractService(dbContext, new FixedTimeProvider(
+            new DateTimeOffset(2026, 11, 24, 12, 0, 0, TimeSpan.Zero)));
 
         await service.CreateContractAsync(Request(roomId, [tenant.Id]), OwnerCaller);
         await service.CreateContractAsync(
@@ -510,6 +511,30 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task ApproveContractAsync_RejectsFutureStartWithoutRentingRoom()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        var contract = TestContract(contractId, roomId, ContractStatus.Pending);
+        contract.StartDate = new DateTime(2026, 11, 2);
+        contract.EndDate = new DateTime(2027, 11, 1);
+        dbContext.Contracts.Add(contract);
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, new FixedTimeProvider(
+            new DateTimeOffset(2026, 11, 1, 12, 0, 0, TimeSpan.Zero)));
+
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.ApproveContractAsync(
+            contractId, new ApproveContractRequestDto { IsApproved = true }, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.FutureStartNotAllowed, exception.ErrorCode);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Pending, (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Available, (await reloadedDb.Rooms.SingleAsync(room => room.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
     public async Task ApproveContractAsync_SnapshotsCurrentRoomPriceAndDeposit()
     {
         await ResetDatabaseAsync();
@@ -793,4 +818,9 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
     private const string OtherTenantUserId = "contract-test-other-tenant-user";
     private const string OtherOwnerId = "contract-test-other-owner";
     private static PropertyCaller OwnerCaller => new(OwnerId, Roles.ChuTro);
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 }

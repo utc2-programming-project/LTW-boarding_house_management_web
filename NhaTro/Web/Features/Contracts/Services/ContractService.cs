@@ -9,14 +9,20 @@ using Web.Features.Properties;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
 
 public sealed class ContractService : IContractService
 {
     private readonly ApplicationDbContext _context;
+    private readonly TimeProvider _timeProvider;
 
-    public ContractService(ApplicationDbContext dbContext) => _context = dbContext;
+    public ContractService(ApplicationDbContext dbContext, TimeProvider? timeProvider = null)
+    {
+        _context = dbContext;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+    }
 
     public async Task<ContractCreateOptionsDto> GetCreateOptionsAsync(
         PropertyCaller caller,
@@ -337,6 +343,13 @@ public sealed class ContractService : IContractService
                         ContractErrorCodes.RoomUnderMaintenance);
                 }
 
+                if (DateOnly.FromDateTime(contract.StartDate) > _timeProvider.TodayVietnam())
+                {
+                    throw new ContractOperationException(
+                        ContractErrorMessages.FutureStartNotAllowed,
+                        ContractErrorCodes.FutureStartNotAllowed);
+                }
+
                 var hasOverlap = await _context.Contracts.AnyAsync(other =>
                     other.ContractId != contract.ContractId
                     && other.RoomId == contract.RoomId
@@ -399,6 +412,14 @@ public sealed class ContractService : IContractService
             throw new ContractValidationException(
                 ContractErrorMessages.InvalidDateRange,
                 ContractErrorCodes.InvalidDateRange,
+                nameof(request.StartDate));
+        }
+
+        if (DateOnly.FromDateTime(request.StartDate) > _timeProvider.TodayVietnam())
+        {
+            throw new ContractValidationException(
+                ContractErrorMessages.FutureStartNotAllowed,
+                ContractErrorCodes.FutureStartNotAllowed,
                 nameof(request.StartDate));
         }
 

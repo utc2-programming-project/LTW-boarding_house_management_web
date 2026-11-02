@@ -23,6 +23,20 @@ public sealed class ContractServiceTests
         Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
     }
 
+    [Fact]
+    public async Task CreateContractAsync_RejectsFutureStartDate()
+    {
+        var service = CreateService(new FixedTimeProvider(
+            new DateTimeOffset(2026, 11, 1, 12, 0, 0, TimeSpan.Zero)));
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.CreateContractAsync(
+            CreateRequest(new DateTime(2026, 11, 2), new DateTime(2027, 11, 1), [1]),
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.FutureStartNotAllowed, exception.ErrorCode);
+        Assert.Equal("StartDate", exception.ParamName);
+    }
+
     [Theory]
     [InlineData(Roles.Admin)]
     [InlineData("Unknown")]
@@ -178,10 +192,15 @@ public sealed class ContractServiceTests
 
     private static PropertyCaller OwnerCaller => new("owner-id", Roles.ChuTro);
 
-    private static ContractService CreateService() => new(null!);
+    private static ContractService CreateService(TimeProvider? clock = null) => new(null!, clock);
 
     private static CreateContractRequest CreateRequest(
         DateTime startDate,
         DateTime endDate,
         List<int> tenantIds) => new(1, startDate, endDate, tenantIds);
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 }

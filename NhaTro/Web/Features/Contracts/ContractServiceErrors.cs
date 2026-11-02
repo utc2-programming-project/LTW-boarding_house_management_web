@@ -19,6 +19,7 @@ public static class ContractErrorCodes
     public const string TenantRequired = nameof(TenantRequired);
     public const string TenantUnavailable = nameof(TenantUnavailable);
     public const string RoomNotAvailable = nameof(RoomNotAvailable);
+    public const string FutureStartNotAllowed = nameof(FutureStartNotAllowed);
 }
 
 public static class ContractErrorMessages
@@ -41,6 +42,7 @@ public static class ContractErrorMessages
     public const string TenantRequired = "Hợp đồng phải có ít nhất một khách thuê.";
     public const string TenantUnavailable = "Một hoặc nhiều khách thuê không tồn tại hoặc không còn hoạt động.";
     public const string RoomNotAvailable = "Phòng không tồn tại hoặc nằm ngoài phạm vi được phân công.";
+    public const string FutureStartNotAllowed = "Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.";
 }
 
 public interface IContractServiceError
