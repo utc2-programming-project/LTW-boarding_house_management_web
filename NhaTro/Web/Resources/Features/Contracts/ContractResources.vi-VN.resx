@@ -108,4 +108,60 @@
   <data name="ContractAccessDeniedTitle" xml:space="preserve"><value>Không có quyền truy cập</value></data>
   <data name="ContractAccessDeniedMessage" xml:space="preserve"><value>Bạn không được phép xem trang này. Chỉ Chủ trọ và Quản lý được tạo hợp đồng.</value></data>
   <data name="ContractDraftSnapshotSummary" xml:space="preserve"><value>Bản xem trước đang giữ giá thuê {0}, ngày bắt đầu {1} trong bộ nhớ phiên này.</value></data>
+  <data name="ContractListTitle" xml:space="preserve"><value>Danh sách hợp đồng</value></data>
+  <data name="ContractListDescription" xml:space="preserve"><value>Tra cứu hợp đồng theo phạm vi nhà trọ của bạn.</value></data>
+  <data name="ContractCreateAction" xml:space="preserve"><value>Tạo hợp đồng</value></data>
+  <data name="ContractSearchLabel" xml:space="preserve"><value>Tìm hợp đồng</value></data>
+  <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Mã hợp đồng, khách thuê, phòng hoặc nhà trọ</value></data>
+  <data name="ContractSearchAction" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="ContractLoadErrorTitle" xml:space="preserve"><value>Không tải được hợp đồng</value></data>
+  <data name="ContractLoadErrorDescription" xml:space="preserve"><value>Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.</value></data>
+  <data name="ContractRetry" xml:space="preserve"><value>Thử lại</value></data>
+  <data name="ContractEmptyTitle" xml:space="preserve"><value>Chưa có hợp đồng</value></data>
+  <data name="ContractEmptyDescription" xml:space="preserve"><value>Chưa tìm thấy hợp đồng phù hợp trong phạm vi của bạn.</value></data>
+  <data name="ContractNumberLabel" xml:space="preserve"><value>Mã hợp đồng</value></data>
+  <data name="ContractTenantsLabel" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="ContractTermLabel" xml:space="preserve"><value>Thời hạn</value></data>
+  <data name="ContractStatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="ContractActionsLabel" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="ContractViewAction" xml:space="preserve"><value>Xem</value></data>
+  <data name="ContractApproveAction" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="ContractRejectAction" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="ContractCancelAction" xml:space="preserve"><value>Hủy</value></data>
+  <data name="ContractProcessing" xml:space="preserve"><value>Đang xử lý…</value></data>
+  <data name="ContractDetailTitle" xml:space="preserve"><value>Chi tiết hợp đồng</value></data>
+  <data name="ContractBackToList" xml:space="preserve"><value>Về danh sách</value></data>
+  <data name="ContractDecisionTitle" xml:space="preserve"><value>Duyệt hoặc từ chối hợp đồng</value></data>
+  <data name="ContractDecisionDescription" xml:space="preserve"><value>Chỉ Chủ trọ được quyết định hợp đồng đang chờ duyệt.</value></data>
+  <data name="ContractRejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="ContractApproveSuccess" xml:space="preserve"><value>Đã duyệt hợp đồng.</value></data>
+  <data name="ContractRejectSuccess" xml:space="preserve"><value>Đã từ chối hợp đồng.</value></data>
+  <data name="ContractGenericError" xml:space="preserve"><value>Không thể hoàn tất thao tác hợp đồng.</value></data>
+  <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="ContractStatusUpcoming" xml:space="preserve"><value>Sắp hiệu lực</value></data>
+  <data name="ContractStatusActive" xml:space="preserve"><value>Hiệu lực</value></data>
+  <data name="ContractStatusExpiringSoon" xml:space="preserve"><value>Sắp hết hạn</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
+  <data name="ContractErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="ContractErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng.</value></data>
+  <data name="ContractErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng của hợp đồng.</value></data>
+  <data name="ContractErrorPropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ của hợp đồng.</value></data>
+  <data name="ContractErrorInvalidStatus" xml:space="preserve"><value>Chỉ hợp đồng đang chờ duyệt mới được xử lý.</value></data>
+  <data name="ContractErrorRejectReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+  <data name="ContractErrorRejectReasonTooLong" xml:space="preserve"><value>Lý do từ chối không được vượt quá 500 ký tự.</value></data>
+  <data name="ContractErrorPropertyUnavailable" xml:space="preserve"><value>Nhà trọ đã ngừng hoạt động.</value></data>
+  <data name="ContractErrorRoomUnderMaintenance" xml:space="preserve"><value>Không thể duyệt hợp đồng cho phòng đang bảo trì.</value></data>
+  <data name="ContractErrorContractOverlap" xml:space="preserve"><value>Phòng đã có hợp đồng trùng thời gian.</value></data>
+  <data name="ContractErrorInvalidDateRange" xml:space="preserve"><value>Ngày bắt đầu phải trước ngày kết thúc.</value></data>
+  <data name="ContractErrorTenantRequired" xml:space="preserve"><value>Hợp đồng phải có ít nhất một khách thuê.</value></data>
+  <data name="ContractErrorTenantUnavailable" xml:space="preserve"><value>Một hoặc nhiều khách thuê không tồn tại hoặc không hoạt động.</value></data>
+  <data name="ContractErrorRoomNotAvailable" xml:space="preserve"><value>Phòng không tồn tại hoặc ngoài phạm vi được phân công.</value></data>
+  <data name="ContractErrorRoomNotVacant" xml:space="preserve"><value>Chỉ có thể duyệt hợp đồng khi phòng đang trống.</value></data>
+  <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.</value></data>
+  <data name="ContractCreateDescription" xml:space="preserve"><value>Hợp đồng sẽ được lưu ở trạng thái Chờ duyệt. Giá thuê và tiền cọc được chốt khi Chủ trọ duyệt.</value></data>
+  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Giá chuẩn hiện tại (được chốt khi duyệt)</value></data>
+  <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
+  <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
+  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng ở trạng thái Chờ duyệt.</value></data>
 </root>
