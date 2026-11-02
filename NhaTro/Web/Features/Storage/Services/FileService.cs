@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 using Web.Data;
+using Web.Features.Properties;
+using Web.Features.Rooms;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
@@ -164,6 +166,17 @@ public sealed class FileService(
                     StorageErrorCodes.Forbidden,
                     "Bạn không có quyền thao tác giấy tờ của hồ sơ này.");
             }
+        }
+        // VHT-119: tệp phòng phải thuộc tòa người gọi quản lý (chặn chéo chủ qua /api/files).
+        else if (request.RelatedEntityType == RelatedEntityType.Room
+            && !await IsRoomInScopeAsync(db, relatedEntityId, caller, cancellationToken))
+        {
+            await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                request.RelatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
+            return UploadResult.Failure(
+                StorageErrorCodes.Forbidden,
+                "Bạn không có quyền thực hiện thao tác này.");
         }
         // Các loại khác: khách thuê chỉ được gắn tệp vào đối tượng thuộc phạm vi của mình.
         else if (caller.IsKhachThue
@@ -365,6 +378,16 @@ public sealed class FileService(
             return tenantFiles.Select(StoredFileMapping.ToMetadata).ToList();
         }
 
+        // VHT-119: phòng ngoài phạm vi coi như không có tệp (không lộ ảnh phòng chéo chủ).
+        if (relatedEntityType == RelatedEntityType.Room
+            && !await IsRoomInScopeAsync(db, relatedEntityId, caller, cancellationToken))
+        {
+            await AuditAsync(caller, FileAccessAction.List, null, null,
+                relatedEntityType, relatedEntityId, false,
+                StorageErrorCodes.Forbidden, cancellationToken);
+            return [];
+        }
+
         var query = db.StoredFiles.AsNoTracking()
             .Where(f => f.RelatedEntityType == relatedEntityType && f.RelatedEntityId == relatedEntityId);
 
@@ -418,7 +441,9 @@ public sealed class FileService(
             ? TenantDocumentPermissionRules.CanDelete(
                 await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken),
                 file.UploadedByUserId == caller.UserId)
-            : StoragePermissionRules.CanDelete(caller.Role);
+            : StoragePermissionRules.CanDelete(caller.Role)
+                && (file.RelatedEntityType != RelatedEntityType.Room
+                    || await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken));
 
         if (!allowed)
         {
@@ -448,6 +473,13 @@ public sealed class FileService(
         {
             var access = await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken);
             return TenantDocumentPermissionRules.CanDownload(access);
+        }
+
+        // VHT-119: tệp phòng ngoài phạm vi coi như không tồn tại (404, không lộ).
+        if (file.RelatedEntityType == RelatedEntityType.Room
+            && !await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken))
+        {
+            return false;
         }
 
         var isUploader = file.UploadedByUserId == caller.UserId;
@@ -511,6 +543,24 @@ public sealed class FileService(
             && await db.Tenants.AnyAsync(t => t.Id == tenantId, cancellationToken),
         _ => true,
     };
+
+    // VHT-119: phòng có thuộc tòa của Chủ trọ/Quản lý không (dùng chung RoomScope với P2).
+    // Khách thuê luôn false ở đây; nhánh giấy tờ hồ sơ của họ đi qua TenantDocumentScopeService.
+    private static async Task<bool> IsRoomInScopeAsync(
+        ApplicationDbContext db,
+        string entityId,
+        StorageCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (!int.TryParse(entityId, out var roomId))
+        {
+            return false;
+        }
+
+        var roomScope = RoomScope.Apply(
+            db.Rooms, db.Properties, db.PropertyManagers, new PropertyCaller(caller.UserId, caller.Role));
+        return await roomScope.AnyAsync(room => room.Id == roomId, cancellationToken);
+    }
 
     // Khách thuê có thuộc đối tượng liên quan không (các loại P4/P6/P7 chưa có bảng; Tenant dùng
     // TenantDocumentScopeService). Mặc định từ chối để không mở quyền sớm.
