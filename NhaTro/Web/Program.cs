@@ -24,6 +24,7 @@ using Web.Features.Reports;
 using Web.Features.Rooms;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings.Services;
+using Web.Features.Maintenance.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
@@ -200,6 +201,10 @@ builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IIncidentService, IncidentService>();
+builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
+builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();

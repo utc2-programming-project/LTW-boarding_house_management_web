@@ -15,6 +15,7 @@ using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
 using Web.Features.Storage.Services;
+using Web.Features.Maintenance.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.DTOs;
@@ -243,8 +244,15 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
             options,
             TimeProvider.System,
             scope,
+            new DenyIncidentFileScope(),
             audit,
             NullLogger<FileService>.Instance);
+
+    private sealed class DenyIncidentFileScope : IIncidentFileScope
+    {
+        public Task<IncidentFileAccess> ResolveAsync(int incidentId, StorageCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(IncidentFileAccess.None);
+    }
 
     private static UploadFileRequest NewRequest(int tenantId) => new()
     {

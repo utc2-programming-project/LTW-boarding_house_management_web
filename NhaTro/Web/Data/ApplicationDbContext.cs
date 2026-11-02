@@ -4,6 +4,7 @@ using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
 using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.Entities;
+using Web.Features.Maintenance.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
@@ -26,6 +27,8 @@ namespace Web.Data
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+        public DbSet<MaintenanceIncident> MaintenanceIncidents => Set<MaintenanceIncident>();
+        public DbSet<MaintenanceIncidentHistory> MaintenanceIncidentHistories => Set<MaintenanceIncidentHistory>();
         public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
         public DbSet<FileAccessAuditLog> FileAccessAuditLogs => Set<FileAccessAuditLog>();
 
