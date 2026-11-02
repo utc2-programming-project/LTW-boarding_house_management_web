@@ -1,8 +1,8 @@
 namespace Web.Features.Tenants.Documents;
 
 /// <summary>
-/// Mặc định deny-by-default khi chưa có dữ liệu phân công Quản lý theo tòa nhà (VHT-24 chưa bàn giao).
-/// Nhờ vậy giấy tờ không bị mở cho mọi Quản lý; khi VHT-24 có bảng phân công chỉ cần thay implementation.
+/// Fake deny-all giữ cho test (unit + integration) không phụ thuộc bảng phân công.
+/// Production dùng <see cref="ContractManagerTenantScope"/> (VHT-119).
 /// </summary>
 public sealed class NoManagerTenantScope : IManagerTenantScope
 {

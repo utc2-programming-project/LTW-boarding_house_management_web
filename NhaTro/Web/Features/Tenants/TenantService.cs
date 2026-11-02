@@ -661,10 +661,10 @@ public sealed class TenantService(
             .ToList();
     }
 
-    // Phạm vi dữ liệu (theo dõi được, dùng cả cho ghi): Chủ trọ/Quản lý hiện xem toàn hệ thống
-    // vì chưa có liên kết tòa nhà. Khi VHT-24/VHT-25 chốt phạm vi Quản lý, chỉ sửa tại đây;
-    // query đọc thêm .AsNoTracking() tại chỗ gọi.
-    private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) => db.Tenants;
+    // VHT-119 Q1-A: mọi truy vấn hồ sơ (đọc lẫn ghi) đi qua TenantVisibility;
+    // không tự dựng lại chuỗi hợp đồng ở chỗ khác. Query đọc thêm .AsNoTracking() tại chỗ gọi.
+    private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) =>
+        TenantVisibility.Apply(db, caller.UserId, caller.Role);
 
     // 2B (VHT-25) — truy vấn hợp đồng/phòng đang thuê theo liên kết thật.
     private async Task<TenantRentalResult> BuildRentalOverviewAsync(

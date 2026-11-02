@@ -470,6 +470,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "manager-account", Roles.QuanLy);
 
         var service = NewTenantService();
+        // Hồ sơ chưa gắn hợp đồng nằm trong kho dùng chung nên Quản lý xem được (VHT-119 Q1-A).
         var created = await service.CreateAsync(
             NewTenant("Nguyễn B", "0901234567", "079201004821"), Owner);
         Assert.True(created.Succeeded, created.ErrorMessage);

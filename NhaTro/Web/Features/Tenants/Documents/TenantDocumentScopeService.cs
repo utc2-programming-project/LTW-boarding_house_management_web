@@ -8,9 +8,11 @@ namespace Web.Features.Tenants.Documents;
 /// <list type="bullet">
 /// <item>Admin: luôn <see cref="TenantDocumentAccessLevel.None"/>.</item>
 /// <item>Khách thuê: chỉ hồ sơ có <c>UserId</c> của chính mình.</item>
-/// <item>Chủ trọ: hồ sơ còn tồn tại (chờ VHT-25 khóa theo chủ sở hữu/nhà).</item>
+/// <item>Chủ trọ: hồ sơ có hợp đồng tại tòa mình sở hữu.</item>
 /// <item>Quản lý: chỉ khi <see cref="IManagerTenantScope"/> xác nhận tòa nhà được giao (VHT-24).</item>
 /// </list>
+/// Chủ trọ lẫn Quản lý đều cần chuỗi hợp đồng: kho hồ sơ chưa gắn không mở giấy tờ,
+/// tránh lộ ảnh CCCD chéo chủ (VHT-119 Q1-A/Q2-A).
 /// </summary>
 public sealed class TenantDocumentScopeService(
     ApplicationDbContext db,

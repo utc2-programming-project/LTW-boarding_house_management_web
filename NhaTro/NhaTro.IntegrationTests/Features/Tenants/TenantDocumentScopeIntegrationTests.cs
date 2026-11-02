@@ -102,7 +102,7 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
             TenantDocumentAccessLevel.None,
             await scope.ResolveAsync(tenantId, new TenantCaller("ql-1", Roles.QuanLy)));
 
-        // VHT-42: implementation thật đọc bảng phân công VHT-24 thay vì deny-all.
+        // VHT-42: implementation thật đọc bảng phân công VHT-24 thay vì deny-all (VHT-119 dùng ContractManagerTenantScope).
         var assignment = new PropertyManager
         {
             PropertyId = property.Id,
@@ -111,7 +111,7 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         };
         db.PropertyManagers.Add(assignment);
         await db.SaveChangesAsync();
-        var assignedScope = new TenantDocumentScopeService(db, new PropertyManagerTenantScope(db));
+        var assignedScope = new TenantDocumentScopeService(db, new ContractManagerTenantScope(db));
         var assignedAccess = await assignedScope.ResolveAsync(
             tenantId, new TenantCaller("ql-1", Roles.QuanLy));
         Assert.True(TenantDocumentPermissionRules.CanView(assignedAccess));

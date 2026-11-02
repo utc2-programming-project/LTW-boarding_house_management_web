@@ -21,7 +21,7 @@ public sealed record StorageCaller(string UserId, string Role)
     /// <summary>Chuyển ClaimsPrincipal của request thành ngữ cảnh storage.</summary>
     public static StorageCaller FromPrincipal(IPrincipal user)
     {
-        var role = Roles.All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+        var role = Roles.ResolvePrimaryRole(user);
         return new StorageCaller(user.UserId() ?? string.Empty, role);
     }
 }
