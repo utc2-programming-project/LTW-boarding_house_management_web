@@ -89,7 +89,6 @@
   <data name="ContractValidationTitle" xml:space="preserve"><value>Vui lòng kiểm tra các trường sau:</value></data>
   <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
   <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Vui lòng chọn phòng.</value></data>
-  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>Phòng không còn trống hoặc không thuộc nhà trọ đã chọn.</value></data>
   <data name="ContractErrorRepresentativeRequired" xml:space="preserve"><value>Vui lòng chọn khách thuê đại diện.</value></data>
   <data name="ContractErrorStartDateRequired" xml:space="preserve"><value>Vui lòng chọn ngày bắt đầu.</value></data>
   <data name="ContractErrorEndDateRequired" xml:space="preserve"><value>Vui lòng chọn ngày kết thúc.</value></data>
@@ -158,7 +157,8 @@
   <data name="ContractErrorTenantUnavailable" xml:space="preserve"><value>Một hoặc nhiều khách thuê không tồn tại hoặc không hoạt động.</value></data>
   <data name="ContractErrorRoomNotAvailable" xml:space="preserve"><value>Phòng không tồn tại hoặc ngoài phạm vi được phân công.</value></data>
   <data name="ContractErrorRoomNotVacant" xml:space="preserve"><value>Chỉ có thể duyệt hợp đồng khi phòng đang trống.</value></data>
-  <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.</value></data>
+  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>Phòng đã ngừng hoạt động, không thể tạo hoặc duyệt hợp đồng.</value></data>
+  <data name="ContractErrorPendingContractExists" xml:space="preserve"><value>Phòng đã có hợp đồng đang chờ duyệt hoặc hiệu lực trong thời gian này.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>Hợp đồng sẽ được lưu ở trạng thái Chờ duyệt. Giá thuê và tiền cọc được chốt khi Chủ trọ duyệt.</value></data>
   <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Giá chuẩn hiện tại (được chốt khi duyệt)</value></data>
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>

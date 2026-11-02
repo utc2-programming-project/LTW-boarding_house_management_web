@@ -1073,4 +1073,5 @@
   <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="CloseNotification" xml:space="preserve"><value>Close notification</value></data>
 </root>

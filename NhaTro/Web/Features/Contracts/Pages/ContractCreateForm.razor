@@ -51,11 +51,12 @@
                         <option value="">@L["ContractRoomPlaceholder"]</option>
                         @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
                     </InputSelect>
+                    @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
                     @if (_roomError is not null) { <small id="room-error" class="contract-field-error">@_roomError</small> }
                 </div>
                 <div class="contract-field">
                     <label for="start-date">@L["ContractStartDate"]</label>
-                    <InputDate id="start-date" class="@FieldClass(_startDateError)" aria-invalid="@(_startDateError is not null ? "true" : "false")" aria-describedby="@(_startDateError is not null ? "start-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+                    <InputDate id="start-date" class="@FieldClass(_startDateError)" aria-invalid="@(_startDateError is not null ? "true" : "false")" aria-describedby="@(_startDateError is not null ? "start-date-error" : null)" TValue="DateOnly?" @bind-Value="_form.StartDate" />
                     @if (_startDateError is not null) { <small id="start-date-error" class="contract-field-error">@_startDateError</small> }
                 </div>
                 <div class="contract-field">
@@ -130,11 +131,9 @@
         if (_submitting) return;
         _errors.Clear();
         _propertyError = _roomError = _startDateError = _endDateError = _tenantError = null;
-        var today = Clock.TodayVietnam();
         if (_form.PropertyId is null) _propertyError = L["ContractErrorPropertyRequired"];
         if (_form.RoomId is null || SelectedRoom is null) _roomError = L["ContractErrorRoomRequired"];
         if (_form.StartDate is null) _startDateError = L["ContractErrorStartDateRequired"];
-        else if (_form.StartDate > today) _startDateError = L["ContractErrorFutureStartNotAllowed"];
         if (_form.EndDate is null) _endDateError = L["ContractErrorEndDateRequired"];
         else if (_form.StartDate is DateOnly start && _form.EndDate <= start) _endDateError = L["ContractErrorInvalidDateRange"];
         if (_form.TenantIds.Count == 0) _tenantError = L["ContractErrorTenantRequired"];

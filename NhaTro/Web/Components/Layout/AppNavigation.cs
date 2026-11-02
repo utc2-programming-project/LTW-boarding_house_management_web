@@ -12,7 +12,7 @@ public static class AppNavigation
         new("Properties", "building", "ChuTro,QuanLy", "/properties"),
         new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
         new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
-        new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
+        new("Contracts", "file", "ChuTro,QuanLy,KhachThue", "/contracts"),
         new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
         new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
         new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
