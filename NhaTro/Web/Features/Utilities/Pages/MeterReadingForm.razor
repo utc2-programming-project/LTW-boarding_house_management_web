@@ -21,6 +21,7 @@
 <div class="meter-reading-page">
     <BreadcrumbNav Items="@_breadcrumbs" />
 
+
     <!-- Header trang -->
     <header class="page-header">
         <div>
@@ -54,7 +55,7 @@
         </div>
 
         <div class="filters-container">
-            <div class="skeleton" style="height: 48px; border-radius: var(--radius-card, 12px);"></div>
+            <div class="skeleton kpi-card"></div>
         </div>
 
         <div class="room-cards-container">
@@ -152,6 +153,16 @@
                 </button>
             </div>
         }
+        else if (_periodHasNoData)
+        {
+            <div class="empty-state-box">
+                <div class="empty-icon-wrap">
+                    <LucideIcon Name="calendar" />
+                </div>
+                <h3 class="empty-title">@L["MeterReadingEmptyPeriodTitle"]</h3>
+                <p class="empty-desc">@L["MeterReadingEmptyPeriodDesc"]</p>
+            </div>
+        }
         else if (_filteredRooms.Count == 0)
         {
             <div class="empty-state-box">
@@ -168,6 +179,8 @@
         }
         else
         {
+            <RoomSummaryTable Rooms="@_filteredRooms" DraftReadings="@_draftReadings" />
+
             <!-- Room cards list -->
             <div class="room-cards-container">
                 @foreach (var room in _filteredRooms)
@@ -193,6 +206,7 @@
 
     private string _selectedBuildingId = "b1";
     private string _selectedPeriodKey = "2026-10";
+    private bool _periodHasNoData;
     private string _periodLabel = "10/2026";
     private DateOnly _periodStart = new(2026, 10, 1);
     private DateOnly _periodEnd = new(2026, 10, 31);
@@ -285,14 +299,17 @@
             _periodStart = new(2026, 10, 1);
             _periodEnd = new(2026, 10, 31);
             _periodLabel = "10/2026";
+            _periodHasNoData = false;
+            ApplyFilters();
         }
         else
         {
             _periodStart = new(2026, 9, 1);
             _periodEnd = new(2026, 9, 30);
             _periodLabel = "09/2026";
+            _periodHasNoData = true;
+            _filteredRooms = [];
         }
-        ApplyFilters();
     }
 
     private void SelectFirstBuilding()
@@ -306,6 +323,15 @@
 
     private void ApplyFilters()
     {
+        if (_selectedPeriodKey != "2026-10")
+        {
+            _periodHasNoData = true;
+            _filteredRooms = [];
+            return;
+        }
+
+        _periodHasNoData = false;
+
         if (_callerRole == Roles.KhachThue)
         {
             var allowedIds = UtilitySampleData.GetAllowedRoomIds(_callerRole, _callerEmail);
@@ -325,8 +351,8 @@
 
     private void HandleRoomReadingChanged((string RoomId, decimal? ElectricEnd, decimal? WaterEnd) payload)
     {
-        // Chỉ lưu draft khi có thay đổi thực sự so với dữ liệu đã lưu
-        // (tránh KPI "Đã ghi" tăng vô lý khi user bấm "Hủy" trên phòng chưa nhập)
+        // Chá»‰ lÆ°u draft khi cÃ³ thay Ä‘á»•i thá»±c sá»± so vá»›i dá»¯ liá»‡u Ä‘Ã£ lÆ°u
+        // (trÃ¡nh KPI "ÄÃ£ ghi" tÄƒng vÃ´ lÃ½ khi user báº¥m "Há»§y" trÃªn phÃ²ng chÆ°a nháº­p)
         var room = _allRooms.FirstOrDefault(r => r.Id == payload.RoomId);
         var hasRealChange = room is not null &&
             ((payload.ElectricEnd.HasValue && payload.ElectricEnd != room.ElectricEnd) ||
@@ -357,7 +383,24 @@
 
         if (!result.Success)
         {
-            Toast.Error(result.ErrorMessage ?? L["MeterReadingSaveError"]);
+            var roomRef = _allRooms.FirstOrDefault(r => r.Id == payload.RoomId);
+            var message = result.ErrorCode switch
+            {
+                MeterReadingErrorCodes.NegativeReading => L["MeterReadingErrorNegative"].ToString(),
+                MeterReadingErrorCodes.RoomNotFound => L["MeterReadingErrorRoomNotFound"].ToString(),
+                MeterReadingErrorCodes.ElectricEndLessThanStart => string.Format(
+                    L["MeterReadingErrorElectricMustBeGreater"],
+                    payload.ElectricEnd,
+                    roomRef?.ElectricStart ?? 0m),
+                MeterReadingErrorCodes.WaterEndLessThanStart => string.Format(
+                    L["MeterReadingErrorWaterMustBeGreater"],
+                    payload.WaterEnd,
+                    roomRef?.WaterStart ?? 0m),
+                MeterReadingErrorCodes.AdjustmentReasonRequired => L["MeterReadingAdjustmentReasonRequired"].ToString(),
+                MeterReadingErrorCodes.InvalidRequest => L["MeterReadingErrorInvalidRequest"].ToString(),
+                _ => result.ErrorMessage ?? L["MeterReadingSaveError"].ToString()
+            };
+            Toast.Error(message);
             return;
         }
 
@@ -391,3 +434,4 @@
         StateHasChanged();
     }
 }
+

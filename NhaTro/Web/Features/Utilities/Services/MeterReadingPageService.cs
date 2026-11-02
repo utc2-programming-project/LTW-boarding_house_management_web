@@ -10,7 +10,22 @@ using Web.Features.Utilities.Rules;
 
 namespace Web.Features.Utilities.Services;
 
-public sealed record SaveResult(bool Success, string? ErrorMessage = null, RoomReadingSampleDto? Room = null);
+public static class MeterReadingErrorCodes
+{
+    public const string NegativeReading = nameof(NegativeReading);
+    public const string RoomNotFound = nameof(RoomNotFound);
+    public const string ElectricEndLessThanStart = nameof(ElectricEndLessThanStart);
+    public const string WaterEndLessThanStart = nameof(WaterEndLessThanStart);
+    public const string AdjustmentReasonRequired = nameof(AdjustmentReasonRequired);
+    public const string InvalidRequest = nameof(InvalidRequest);
+    public const string SaveFailed = nameof(SaveFailed);
+}
+
+public sealed record SaveResult(
+    bool Success,
+    string? ErrorCode = null,
+    string? ErrorMessage = null,
+    RoomReadingSampleDto? Room = null);
 
 public sealed record UtilityCostBreakdown(
     decimal RoomRent,
@@ -24,7 +39,9 @@ public sealed record UtilityCostBreakdown(
     decimal CleaningCost,
     decimal ParkingCost,
     decimal ServiceCost,
-    decimal TotalCost);
+    decimal TotalCost,
+    bool HasAbnormalElectricUsage = false,
+    bool HasAbnormalWaterUsage = false);
 
 public sealed class MeterReadingPageService(
     AuthenticationStateProvider authState,
@@ -108,24 +125,30 @@ public sealed class MeterReadingPageService(
 
         if (electricEnd < 0m || waterEnd < 0m)
         {
-            return new SaveResult(false, "Chỉ số không được là số âm.");
+            return new SaveResult(false, MeterReadingErrorCodes.NegativeReading, "Chỉ số không được là số âm.");
         }
 
         var rooms = sampleState.GetRoomReadingsForCaller(role, email);
         var currentRoom = rooms.FirstOrDefault(r => r.Id == roomId);
         if (currentRoom is null)
         {
-            return new SaveResult(false, "Không tìm thấy phòng trong phạm vi được phép.");
+            return new SaveResult(false, MeterReadingErrorCodes.RoomNotFound, "Không tìm thấy phòng trong phạm vi được phép.");
         }
 
         if (electricEnd < currentRoom.ElectricStart)
         {
-            return new SaveResult(false, $"Chỉ số điện mới ({electricEnd}) phải lớn hơn hoặc bằng chỉ số cũ ({currentRoom.ElectricStart}).");
+            return new SaveResult(
+                false,
+                MeterReadingErrorCodes.ElectricEndLessThanStart,
+                $"Chỉ số điện mới ({electricEnd}) phải lớn hơn hoặc bằng chỉ số cũ ({currentRoom.ElectricStart}).");
         }
 
         if (waterEnd < currentRoom.WaterStart)
         {
-            return new SaveResult(false, $"Chỉ số nước mới ({waterEnd}) phải lớn hơn hoặc bằng chỉ số cũ ({currentRoom.WaterStart}).");
+            return new SaveResult(
+                false,
+                MeterReadingErrorCodes.WaterEndLessThanStart,
+                $"Chỉ số nước mới ({waterEnd}) phải lớn hơn hoặc bằng chỉ số cũ ({currentRoom.WaterStart}).");
         }
 
         var modifierName = string.IsNullOrWhiteSpace(email) ? "Quản lý" : email;
@@ -134,6 +157,13 @@ public sealed class MeterReadingPageService(
 
         if (!success || updatedRoom is null)
         {
+            var code = error switch
+            {
+                UtilityErrorCode.AdjustmentReasonIsRequired => MeterReadingErrorCodes.AdjustmentReasonRequired,
+                UtilityErrorCode.MeterReadingMustBeGreaterOrEqualStart => MeterReadingErrorCodes.InvalidRequest,
+                UtilityErrorCode.MeterReadingCannotBeNegative => MeterReadingErrorCodes.NegativeReading,
+                _ => MeterReadingErrorCodes.SaveFailed
+            };
             var msg = error switch
             {
                 UtilityErrorCode.AdjustmentReasonIsRequired => "Vui lòng nhập lý do điều chỉnh chỉ số khi sửa đổi.",
@@ -141,7 +171,7 @@ public sealed class MeterReadingPageService(
                 UtilityErrorCode.MeterReadingCannotBeNegative => "Chỉ số không được âm.",
                 _ => "Không thể lưu chỉ số phòng."
             };
-            return new SaveResult(false, msg);
+            return new SaveResult(false, code, msg);
         }
 
         if (isLock)
@@ -155,7 +185,7 @@ public sealed class MeterReadingPageService(
             }
         }
 
-        return new SaveResult(true, null, updatedRoom);
+        return new SaveResult(true, null, null, updatedRoom);
     }
 
     public async Task<UtilityCostBreakdown> CalculateCostAsync(
@@ -264,6 +294,9 @@ public sealed class MeterReadingPageService(
         var serviceCost = room.InternetCost + room.CleaningCost + room.ParkingCost;
         var totalCost = room.RoomRent + electricCost + waterCost + serviceCost;
 
+        var hasAbnormalElectric = room.PreviousElectricUsage is > 0m && electricUsage > 3m * room.PreviousElectricUsage.Value;
+        var hasAbnormalWater = room.PreviousWaterUsage is > 0m && waterUsage > 3m * room.PreviousWaterUsage.Value;
+
         return new UtilityCostBreakdown(
             room.RoomRent,
             electricUsage,
@@ -276,6 +309,8 @@ public sealed class MeterReadingPageService(
             room.CleaningCost,
             room.ParkingCost,
             serviceCost,
-            totalCost);
+            totalCost,
+            hasAbnormalElectric,
+            hasAbnormalWater);
     }
 }

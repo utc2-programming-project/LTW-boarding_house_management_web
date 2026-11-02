@@ -1169,4 +1169,18 @@
   <data name="MeterReadingErrorWaterMustBeGreater" xml:space="preserve"><value>Chỉ số mới ({0}) phải ≥ chỉ số cũ ({1})</value></data>
   <data name="MeterReadingUpdateLocked" xml:space="preserve"><value>Cập nhật kỳ đã chốt</value></data>
   <data name="MeterReadingLockedNoChangesHint" xml:space="preserve"><value>Kỳ này đã chốt. Chỉnh sửa số liệu nếu cần điều chỉnh.</value></data>
+  <data name="MeterReadingSummaryTableTitle" xml:space="preserve"><value>Bảng tổng hợp chỉ số &amp; chi phí các phòng</value></data>
+  <data name="MeterReadingSummaryColRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="MeterReadingSummaryColElectricReading" xml:space="preserve"><value>Điện (Cũ → Mới)</value></data>
+  <data name="MeterReadingSummaryColElectricUsage" xml:space="preserve"><value>Tiêu thụ điện</value></data>
+  <data name="MeterReadingSummaryColWaterReading" xml:space="preserve"><value>Nước (Cũ → Mới)</value></data>
+  <data name="MeterReadingSummaryColWaterUsage" xml:space="preserve"><value>Tiêu thụ nước</value></data>
+  <data name="MeterReadingSummaryColFixedServices" xml:space="preserve"><value>Dịch vụ cố định</value></data>
+  <data name="MeterReadingSummaryColTotalCost" xml:space="preserve"><value>Tổng tạm tính</value></data>
+  <data name="MeterReadingSummaryColStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="MeterReadingAbnormalUsageWarning" xml:space="preserve"><value>Lượng tiêu thụ bất thường ({0}% kỳ trước)</value></data>
+  <data name="MeterReadingEmptyPeriodTitle" xml:space="preserve"><value>Chưa có dữ liệu cho kỳ này</value></data>
+  <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Dữ liệu mẫu hiện chỉ có cho tháng 10/2026. Vui lòng chọn kỳ khác.</value></data>
+  <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép</value></data>
+  <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Dữ liệu gửi lên không hợp lệ</value></data>
 </root>

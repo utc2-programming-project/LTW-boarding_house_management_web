@@ -91,7 +91,8 @@
                     <div class="meter-col">
                         <label class="input-col-label" for="@($"electric-{Room.Id}")">@L["MeterReadingEndLabel"]</label>
                         <div class="input-with-affix">
-                            <input id="@($"electric-{Room.Id}")"
+                            <input @ref="_electricInputRef"
+                                   id="@($"electric-{Room.Id}")"
                                    type="text"
                                    inputmode="numeric"
                                    class="input @(ElectricError is not null ? "input-error" : "")"
@@ -99,7 +100,8 @@
                                    value="@ElectricInputString"
                                    disabled="@(CallerRole == Roles.KhachThue)"
                                    @oninput="HandleElectricInput"
-                                   @onblur="() => FormatElectricInput()" />
+                                   @onblur="() => FormatElectricInput()"
+                                   @onkeydown="OnElectricKeyDown" />
                             <span class="input-affix">kWh</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
@@ -127,6 +129,15 @@
                         }
                     </span>
                 </div>
+
+                @if (_electricEnd.HasValue && _costBreakdown?.HasAbnormalElectricUsage == true && Room.PreviousElectricUsage is > 0m)
+                {
+                    var elecPercent = (int)Math.Round((_costBreakdown.ElectricityUsage / Room.PreviousElectricUsage.Value) * 100m);
+                    <div class="abnormal-usage-badge">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], elecPercent)</span>
+                    </div>
+                }
             </div>
 
             <!-- Box Water -->
@@ -157,7 +168,8 @@
                     <div class="meter-col">
                         <label class="input-col-label" for="@($"water-{Room.Id}")">@L["MeterReadingEndLabel"]</label>
                         <div class="input-with-affix">
-                            <input id="@($"water-{Room.Id}")"
+                            <input @ref="_waterInputRef"
+                                   id="@($"water-{Room.Id}")"
                                    type="text"
                                    inputmode="numeric"
                                    class="input @(WaterError is not null ? "input-error" : "")"
@@ -165,7 +177,8 @@
                                    value="@WaterInputString"
                                    disabled="@(CallerRole == Roles.KhachThue)"
                                    @oninput="HandleWaterInput"
-                                   @onblur="() => FormatWaterInput()" />
+                                   @onblur="() => FormatWaterInput()"
+                                   @onkeydown="OnWaterKeyDown" />
                             <span class="input-affix">m³</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
@@ -193,6 +206,15 @@
                         }
                     </span>
                 </div>
+
+                @if (_waterEnd.HasValue && _costBreakdown?.HasAbnormalWaterUsage == true && Room.PreviousWaterUsage is > 0m)
+                {
+                    var waterPercent = (int)Math.Round((_costBreakdown.WaterUsage / Room.PreviousWaterUsage.Value) * 100m);
+                    <div class="abnormal-usage-badge">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], waterPercent)</span>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -283,34 +305,38 @@
     <!-- Action Bar -->
     @if (CallerRole != Roles.KhachThue)
     {
-        <div class="room-action-bar">
-            <div class="action-left">
-                <button type="button"
-                        class="btn btn-secondary"
-                        @onclick="HandleResetDraft">
-                    <LucideIcon Name="x" />
-                    <span>@L["MeterReadingCancel"]</span>
-                </button>
-            </div>
+        <AuthorizeView Roles="@($"{Roles.ChuTro},{Roles.QuanLy}")">
+            <Authorized>
+                <div class="room-action-bar">
+                    <div class="action-left">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                @onclick="HandleResetDraft">
+                            <LucideIcon Name="x" />
+                            <span>@L["MeterReadingCancel"]</span>
+                        </button>
+                    </div>
 
-            <div class="action-right">
-                <button type="button"
-                        class="btn btn-primary"
-                        disabled="@(HasValidationError || _isSaving)"
-                        @onclick="HandleSaveDraft">
-                    <LucideIcon Name="check" />
-                    <span>@L["MeterReadingSaveDraft"]</span>
-                </button>
+                    <div class="action-right">
+                        <button type="button"
+                                class="btn btn-primary"
+                                disabled="@(HasValidationError || _isSaving)"
+                                @onclick="HandleSaveDraft">
+                            <LucideIcon Name="check" />
+                            <span>@L["MeterReadingSaveDraft"]</span>
+                        </button>
 
-                <button type="button"
-                        class="btn btn-success"
-                        disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || _isSaving)"
-                        @onclick="HandleLockPeriod">
-                    <LucideIcon Name="@(IsLocked ? "refresh-cw" : "receipt")" />
-                    <span>@(IsLocked ? L["MeterReadingUpdateLocked"] : L["MeterReadingLockPeriod"])</span>
-                </button>
-            </div>
-        </div>
+                        <button type="button"
+                                class="btn btn-primary"
+                                disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || _isSaving)"
+                                @onclick="HandleLockPeriod">
+                            <LucideIcon Name="@(IsLocked ? "refresh-cw" : "receipt")" />
+                            <span>@(IsLocked ? L["MeterReadingUpdateLocked"] : L["MeterReadingLockPeriod"])</span>
+                        </button>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
     }
 </div>
 
@@ -323,6 +349,8 @@
     [Parameter] public EventCallback<(string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock)> OnSave { get; set; }
     [Inject] public MeterReadingPageService PageService { get; set; } = default!;
 
+    private ElementReference _electricInputRef;
+    private ElementReference _waterInputRef;
     private RoomReadingSampleDto? _lastRoomRef;
     private decimal _initialElectricEnd;
     private decimal _initialWaterEnd;
@@ -453,6 +481,22 @@
     private void FormatWaterInput()
     {
         WaterInputString = _waterEnd?.ToString("N0") ?? string.Empty;
+    }
+
+    private async Task OnElectricKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await _waterInputRef.FocusAsync();
+        }
+    }
+
+    private async Task OnWaterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await _electricInputRef.FocusAsync();
+        }
     }
 
     private async Task RecalculateBreakdownAsync()

@@ -1169,4 +1169,18 @@
   <data name="MeterReadingErrorWaterMustBeGreater" xml:space="preserve"><value>New reading ({0}) must be ≥ previous reading ({1})</value></data>
   <data name="MeterReadingUpdateLocked" xml:space="preserve"><value>Update locked period</value></data>
   <data name="MeterReadingLockedNoChangesHint" xml:space="preserve"><value>This period is locked. Edit the readings if you need to adjust.</value></data>
+  <data name="MeterReadingSummaryTableTitle" xml:space="preserve"><value>Room Readings &amp; Cost Summary Table</value></data>
+  <data name="MeterReadingSummaryColRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="MeterReadingSummaryColElectricReading" xml:space="preserve"><value>Electric (Start → End)</value></data>
+  <data name="MeterReadingSummaryColElectricUsage" xml:space="preserve"><value>Electric Usage</value></data>
+  <data name="MeterReadingSummaryColWaterReading" xml:space="preserve"><value>Water (Start → End)</value></data>
+  <data name="MeterReadingSummaryColWaterUsage" xml:space="preserve"><value>Water Usage</value></data>
+  <data name="MeterReadingSummaryColFixedServices" xml:space="preserve"><value>Fixed Services</value></data>
+  <data name="MeterReadingSummaryColTotalCost" xml:space="preserve"><value>Estimated Total</value></data>
+  <data name="MeterReadingSummaryColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="MeterReadingAbnormalUsageWarning" xml:space="preserve"><value>Abnormal usage ({0}% of previous period)</value></data>
+  <data name="MeterReadingEmptyPeriodTitle" xml:space="preserve"><value>No data available for this period</value></data>
+  <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Sample data is currently only available for October 2026. Please select another period.</value></data>
+  <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Room not found in your scope</value></data>
+  <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Invalid request</value></data>
 </root>

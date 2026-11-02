@@ -282,9 +282,11 @@ public static class UtilitySampleData
             ElectricMeterCode = "EM-101",
             ElectricStart = 1_450m,
             ElectricEnd = 1_570m, // Usage: 120 kWh
+            PreviousElectricUsage = 100m,
             WaterMeterCode = "WM-101",
             WaterStart = 124m,
             WaterEnd = 130m, // Usage: 6 m3
+            PreviousWaterUsage = 5m,
             WaterRate = 15_000m,
             InternetCost = 100_000m,
             CleaningCost = 30_000m,
@@ -323,9 +325,11 @@ public static class UtilitySampleData
             ElectricMeterCode = "EM-102",
             ElectricStart = 980m,
             ElectricEnd = 1_065m, // Usage: 85 kWh
+            PreviousElectricUsage = 25m, // >300% abnormal usage (340%)
             WaterMeterCode = "WM-102",
             WaterStart = 85m,
             WaterEnd = 91m, // Usage: 6 m3
+            PreviousWaterUsage = 5m,
             WaterRate = 15_000m,
             InternetCost = 100_000m,
             CleaningCost = 30_000m,
@@ -350,9 +354,11 @@ public static class UtilitySampleData
             ElectricMeterCode = "EM-201",
             ElectricStart = 2_110m,
             ElectricEnd = 2_200m, // Usage: 90 kWh
+            PreviousElectricUsage = 80m,
             WaterMeterCode = "WM-201",
             WaterStart = 160m,
             WaterEnd = 168m, // Usage: 8 m3
+            PreviousWaterUsage = 6m,
             WaterRate = 15_000m,
             InternetCost = 100_000m,
             CleaningCost = 30_000m,
@@ -377,9 +383,11 @@ public static class UtilitySampleData
             ElectricMeterCode = "EM-301",
             ElectricStart = 760m,
             ElectricEnd = 835m,
+            PreviousElectricUsage = 70m,
             WaterMeterCode = "WM-301",
             WaterStart = 42m,
             WaterEnd = 47m,
+            PreviousWaterUsage = 5m,
             WaterRate = 15_000m,
             InternetCost = 100_000m,
             CleaningCost = 30_000m,
