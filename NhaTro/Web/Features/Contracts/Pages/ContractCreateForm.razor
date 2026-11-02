@@ -51,6 +51,7 @@
                         <option value="">@L["ContractRoomPlaceholder"]</option>
                         @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
                     </InputSelect>
+                    @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
                     <small id="room-error" class="contract-field-error">@ErrorFor(nameof(_form.RoomId))</small>
                 </div>
                 <div class="contract-field">
@@ -169,7 +170,9 @@
         catch (Exception ex)
         {
             var message = ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
-            if (ex is IContractServiceError { ErrorCode: "ContractOverlap" }) AddError(nameof(_form.RoomId), message);
+            var field = ex is IContractServiceError { ErrorCode: "ContractOverlap" or "PendingContractExists" or "RoomUnavailable" or "RoomNotAvailable" }
+                ? nameof(_form.RoomId) : string.Empty;
+            AddError(field, message);
             _editContext.NotifyValidationStateChanged();
         }
         finally { _submitting = false; }

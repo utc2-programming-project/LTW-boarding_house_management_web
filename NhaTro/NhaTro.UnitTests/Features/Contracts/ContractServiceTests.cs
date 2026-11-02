@@ -12,7 +12,7 @@ public sealed class ContractServiceTests
     [InlineData(Roles.Admin)]
     [InlineData(Roles.KhachThue)]
     [InlineData("Unknown")]
-    public async Task CreateContractAsync_RejectsRolesWithoutCreateAccess(string role)
+    public async Task CreateContractAsync_RejectsRolesOtherThanChuTroOrQuanLy(string role)
     {
         var service = CreateService();
 

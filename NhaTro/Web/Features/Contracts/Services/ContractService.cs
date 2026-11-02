@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using Web.Common.Utils;
 using Web.Data;
-using Web.Features.Accounts;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
@@ -30,14 +29,18 @@ public sealed class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         EnsureCanCreate(caller);
-        var properties = await PropertyScope.Apply(
-                _context.Properties.AsNoTracking(), _context.PropertyManagers, caller)
+
+        var visibleProperties = PropertyScope.Apply(
+            _context.Properties.AsNoTracking(),
+            _context.PropertyManagers.AsNoTracking(),
+            caller);
+
+        var properties = await visibleProperties
             .Where(property => property.IsActive && !property.IsDeleted)
             .OrderBy(property => property.Name)
             .Select(property => new ContractPropertyOptionDto(property.Id, property.Name))
             .ToListAsync(cancellationToken);
-        var visibleProperties = PropertyScope.Apply(
-            _context.Properties.AsNoTracking(), _context.PropertyManagers, caller);
+
         var rooms = await (
             from room in _context.Rooms.AsNoTracking()
             join property in visibleProperties on room.PropertyId equals property.Id
@@ -45,6 +48,7 @@ public sealed class ContractService : IContractService
             orderby property.Name, room.Code
             select new ContractRoomOptionDto(room.Id, room.PropertyId, room.Code, room.StandardPrice))
             .ToListAsync(cancellationToken);
+
         var tenants = await _context.Tenants.AsNoTracking()
             .Where(tenant => tenant.IsActive && !tenant.IsDeleted)
             .OrderBy(tenant => tenant.FullName)
@@ -109,7 +113,9 @@ public sealed class ContractService : IContractService
             .ToListAsync(cancellationToken);
 
         var namesByContract = members.GroupBy(member => member.ContractId)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<string>)group.Select(member => member.FullName).ToList());
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<string>)group.Select(member => member.FullName).ToList());
 
         return rows.Select(row => new ContractListItemDto(
             row.ContractId,
@@ -192,75 +198,6 @@ public sealed class ContractService : IContractService
             contract.RejectReason,
             members);
     }
-
-    private IQueryable<Contract> ApplyCallerScope(IQueryable<Contract> contracts, PropertyCaller caller)
-    {
-        if (caller.IsChuTro)
-        {
-            return from contract in contracts
-                   join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                   join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
-                   where property.OwnerId == caller.UserId
-                   select contract;
-        }
-
-        if (caller.IsQuanLy)
-        {
-            return from contract in contracts
-                   join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                   where _context.PropertyManagers.Any(assignment =>
-                       assignment.PropertyId == room.PropertyId
-                       && assignment.ManagerUserId == caller.UserId
-                       && assignment.RevokedAt == null)
-                   select contract;
-        }
-
-        if (caller.IsKhachThue)
-        {
-            return from contract in contracts
-                   join member in _context.ContractMembers on contract.ContractId equals member.ContractId
-                   join tenant in _context.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
-                   where tenant.UserId == caller.UserId
-                   select contract;
-        }
-
-        return contracts.Where(_ => false);
-    }
-
-    private static void EnsureCanView(PropertyCaller caller)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        if (!caller.IsChuTro && !caller.IsQuanLy && !caller.IsKhachThue)
-        {
-            throw new ContractAuthorizationException(
-                ContractErrorMessages.Forbidden,
-                ContractErrorCodes.Forbidden);
-        }
-    }
-
-    private static void EnsureCanCreate(PropertyCaller caller)
-    {
-        ArgumentNullException.ThrowIfNull(caller);
-        if (!caller.IsChuTro && !caller.IsQuanLy)
-        {
-            throw new ContractAuthorizationException(
-                ContractErrorMessages.Forbidden,
-                ContractErrorCodes.Forbidden);
-        }
-    }
-
-    private sealed record ContractListRow(
-        Guid ContractId,
-        string ContractNumber,
-        string PropertyName,
-        string RoomCode,
-        DateTime StartDate,
-        DateTime EndDate,
-        decimal SnapshotPrice,
-        decimal DepositAmount,
-        ContractStatus Status);
-
-    private sealed record ContractMemberRow(Guid ContractId, string FullName, string Phone);
 
     public async Task<ContractResponseDto> ApproveContractAsync(
         Guid contractId,
@@ -494,7 +431,12 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var visibleProperties = PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller);
+        // Chỉ được tạo hợp đồng cho phòng thuộc nhà mình (Chủ trọ) hoặc nhà được phân công (Quản lý).
+        var visibleProperties = PropertyScope.Apply(
+            _context.Properties.AsNoTracking(),
+            _context.PropertyManagers.AsNoTracking(),
+            caller);
+
         var room = await (
             from candidate in _context.Rooms.AsNoTracking()
             join property in visibleProperties on candidate.PropertyId equals property.Id
@@ -549,6 +491,37 @@ public sealed class ContractService : IContractService
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            // Khóa phòng để hai yêu cầu tạo đồng thời không cùng lọt qua bước kiểm trùng.
+            var lockedRoom = await _context.Rooms
+                .FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {room.Id}")
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(cancellationToken);
+
+            if (lockedRoom is null
+                || lockedRoom.IsDeleted
+                || !lockedRoom.IsActive
+                || lockedRoom.Status != RoomStatus.Available)
+            {
+                throw new ContractOperationException(
+                    ContractErrorMessages.RoomUnavailable,
+                    ContractErrorCodes.RoomUnavailable);
+            }
+
+            var hasOverlappingPendingOrApproved = await _context.Contracts.AnyAsync(other =>
+                other.RoomId == room.Id
+                && (other.Status == ContractStatus.Pending || other.Status == ContractStatus.Approved)
+                && other.StartDate <= request.EndDate
+                && request.StartDate <= other.EndDate,
+                cancellationToken);
+
+            if (hasOverlappingPendingOrApproved)
+            {
+                throw new ContractOperationException(
+                    ContractErrorMessages.PendingContractExists,
+                    ContractErrorCodes.PendingContractExists);
+            }
+
             _context.Contracts.Add(contract);
             _context.ContractMembers.AddRange(requestedTenantIds.Select(tenantId => new ContractMember
             {
@@ -582,6 +555,62 @@ public sealed class ContractService : IContractService
             contract.DepositAmount,
             contract.Status,
             contract.RejectReason);
+    }
+
+    private IQueryable<Contract> ApplyCallerScope(IQueryable<Contract> contracts, PropertyCaller caller)
+    {
+        if (caller.IsChuTro)
+        {
+            return from contract in contracts
+                   join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                   join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                   where property.OwnerId == caller.UserId
+                   select contract;
+        }
+
+        if (caller.IsQuanLy)
+        {
+            return from contract in contracts
+                   join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                   where _context.PropertyManagers.Any(assignment =>
+                       assignment.PropertyId == room.PropertyId
+                       && assignment.ManagerUserId == caller.UserId
+                       && assignment.RevokedAt == null)
+                   select contract;
+        }
+
+        if (caller.IsKhachThue)
+        {
+            return from contract in contracts
+                   join member in _context.ContractMembers on contract.ContractId equals member.ContractId
+                   join tenant in _context.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+                   where tenant.UserId == caller.UserId
+                   select contract;
+        }
+
+        return contracts.Where(_ => false);
+    }
+
+    private static void EnsureCanView(PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro && !caller.IsQuanLy && !caller.IsKhachThue)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden,
+                ContractErrorCodes.Forbidden);
+        }
+    }
+
+    private static void EnsureCanCreate(PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro && !caller.IsQuanLy)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden,
+                ContractErrorCodes.Forbidden);
+        }
     }
 
     private static ContractResponseDto ToResponse(Contract contract) => new(
@@ -645,4 +674,17 @@ public sealed class ContractService : IContractService
 
         return false;
     }
+
+    private sealed record ContractListRow(
+        Guid ContractId,
+        string ContractNumber,
+        string PropertyName,
+        string RoomCode,
+        DateTime StartDate,
+        DateTime EndDate,
+        decimal SnapshotPrice,
+        decimal DepositAmount,
+        ContractStatus Status);
+
+    private sealed record ContractMemberRow(Guid ContractId, string FullName, string Phone);
 }

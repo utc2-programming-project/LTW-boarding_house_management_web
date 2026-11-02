@@ -89,7 +89,6 @@
   <data name="ContractValidationTitle" xml:space="preserve"><value>Please review these fields:</value></data>
   <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
   <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Select a room.</value></data>
-  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is no longer available or does not belong to the selected property.</value></data>
   <data name="ContractErrorRepresentativeRequired" xml:space="preserve"><value>Select the representative tenant.</value></data>
   <data name="ContractErrorStartDateRequired" xml:space="preserve"><value>Select a start date.</value></data>
   <data name="ContractErrorEndDateRequired" xml:space="preserve"><value>Select an end date.</value></data>
@@ -159,6 +158,8 @@
   <data name="ContractErrorRoomNotAvailable" xml:space="preserve"><value>The room does not exist or is outside your assigned scope.</value></data>
   <data name="ContractErrorRoomNotVacant" xml:space="preserve"><value>A contract can only be approved when the room is vacant.</value></data>
   <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Contracts cannot be created or approved with a future start date.</value></data>
+  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is inactive, so a contract cannot be created or approved.</value></data>
+  <data name="ContractErrorPendingContractExists" xml:space="preserve"><value>The room already has a pending or active contract for this period.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>The contract is saved as Pending approval. Rent and deposit are snapshotted when the owner approves it.</value></data>
   <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent (snapshotted on approval)</value></data>
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>

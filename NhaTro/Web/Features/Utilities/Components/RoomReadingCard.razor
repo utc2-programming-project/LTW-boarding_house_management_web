@@ -1,0 +1,591 @@
+@using Web.Common.Utils
+@using Web.Features.Accounts
+@using Web.Features.Utilities.DTOs
+@using Web.Features.Utilities.Services
+@using Web.Components.Shared
+@inject IStringLocalizer<Shared> L
+
+<div class="room-reading-card @(IsLocked ? "card-locked" : "")" id="@($"room-{Room.Id}")">
+    <!-- Room header -->
+    <div class="room-card-header">
+        <div class="room-identity-group">
+            <div class="room-icon-badge">
+                <LucideIcon Name="door" />
+            </div>
+            <div>
+                <div class="room-title-row">
+                    <h3 class="room-code-heading">@Room.RoomCode</h3>
+                    <span class="room-name-subtitle">(@Room.RoomName)</span>
+                    @if (IsLocked)
+                    {
+                        <span class="status-badge status-locked">
+                            <LucideIcon Name="check-circle-2" />
+                            <span>@L["MeterReadingStatusLocked"]</span>
+                        </span>
+                    }
+                    else if (_electricEnd.HasValue && _waterEnd.HasValue)
+                    {
+                        <span class="status-badge status-open">
+                            <span class="pulse-dot"></span>
+                            <span>@L["MeterReadingKpiRecorded"]</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="status-badge status-unrecorded">
+                            <span class="pulse-dot unrecorded-dot"></span>
+                            <span>@L["MeterReadingKpiUnrecorded"]</span>
+                        </span>
+                    }
+                </div>
+                <div class="room-meta-row">
+                    <span>@L["MeterReadingTenantLabel"] <strong>@Room.TenantName</strong> (@Room.TenantPhone)</span>
+                    <span class="meta-sep">•</span>
+                    <span>@L["MeterReadingContractCodeLabel"] <code>@Room.ContractCode</code></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="room-header-actions">
+            @if (CallerRole == Roles.KhachThue)
+            {
+                <span class="badge-readonly">@L["MeterReadingReadOnlyBadge"]</span>
+            }
+        </div>
+    </div>
+
+    @if (IsLocked)
+    {
+        <div class="locked-rule-banner">
+            <div class="locked-icon-box">
+                <LucideIcon Name="alert-triangle" />
+            </div>
+            <div class="locked-text">
+                <h4>@L["MeterReadingLockedBannerTitle"]</h4>
+                <p>@L["MeterReadingLockedBannerDesc"]</p>
+            </div>
+        </div>
+    }
+
+    <!-- 2 columns: Electric & Water -->
+    <div class="meters-section">
+        <div class="meters-grid">
+            <!-- Box Electric -->
+            <div class="meter-box">
+                <div class="meter-box-header">
+                    <div class="meter-info-group">
+                        <div class="meter-icon-box amber-box">
+                            <LucideIcon Name="zap" />
+                        </div>
+                        <div>
+                            <h4 class="meter-name">@L["MeterReadingElectricMeter"]</h4>
+                            <div class="meter-code-text">@string.Format(L["MeterReadingMeterCodeLabel"], Room.ElectricMeterCode)</div>
+                        </div>
+                    </div>
+                    <span class="meter-unit-badge">kWh</span>
+                </div>
+
+                <div class="meter-inputs-grid">
+                    <div class="meter-col">
+                        <label class="input-col-label">@L["MeterReadingStartLabel"]</label>
+                        <div class="readonly-reading-box tabular-nums">
+                            <span>@Room.ElectricStart.ToString("N0")</span>
+                            <span class="reading-unit">kWh</span>
+                        </div>
+                        <span class="input-sub-hint">@string.Format(L["MeterReadingStartPeriodHint"], PeriodStart.ToString("dd/MM/yyyy"))</span>
+                    </div>
+
+                    <div class="meter-col">
+                        <label class="input-col-label" for="@($"electric-{Room.Id}")">@L["MeterReadingEndLabel"]</label>
+                        <div class="input-with-affix">
+                            <input @ref="_electricInputRef"
+                                   id="@($"electric-{Room.Id}")"
+                                   type="text"
+                                   inputmode="numeric"
+                                   class="input @(ElectricError is not null ? "input-error" : "")"
+                                   placeholder="@L["MeterReadingInputPlaceholder"]"
+                                   value="@ElectricInputString"
+                                   disabled="@(CallerRole == Roles.KhachThue)"
+                                   @oninput="HandleElectricInput"
+                                   @onblur="() => FormatElectricInput()"
+                                   @onkeydown="OnElectricKeyDown" />
+                            <span class="input-affix">kWh</span>
+                        </div>
+                        <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
+                    </div>
+                </div>
+
+                @if (ElectricError is not null)
+                {
+                    <div class="meter-error-banner">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@ElectricError</span>
+                    </div>
+                }
+
+                <div class="calculated-usage-bar">
+                    <span class="usage-label">@L["MeterReadingUsageCurrentPeriod"]</span>
+                    <span class="usage-value tabular-nums">
+                        @if (_electricEnd is null)
+                        {
+                            <span class="cost-missing-cell">—</span>
+                        }
+                        else
+                        {
+                            <span>@Math.Max(0m, _electricEnd.Value - Room.ElectricStart).ToString("N0") <span class="usage-unit">kWh</span></span>
+                        }
+                    </span>
+                </div>
+
+                @if (_electricEnd.HasValue && _costBreakdown?.HasAbnormalElectricUsage == true && Room.PreviousElectricUsage is > 0m)
+                {
+                    var elecPercent = (int)Math.Round((_costBreakdown.ElectricityUsage / Room.PreviousElectricUsage.Value) * 100m);
+                    <div class="abnormal-usage-badge">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], elecPercent)</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Box Water -->
+            <div class="meter-box">
+                <div class="meter-box-header">
+                    <div class="meter-info-group">
+                        <div class="meter-icon-box blue-box">
+                            <LucideIcon Name="droplet" />
+                        </div>
+                        <div>
+                            <h4 class="meter-name">@L["MeterReadingWaterMeter"]</h4>
+                            <div class="meter-code-text">@string.Format(L["MeterReadingMeterCodeLabel"], Room.WaterMeterCode)</div>
+                        </div>
+                    </div>
+                    <span class="meter-unit-badge">m³</span>
+                </div>
+
+                <div class="meter-inputs-grid">
+                    <div class="meter-col">
+                        <label class="input-col-label">@L["MeterReadingStartLabel"]</label>
+                        <div class="readonly-reading-box tabular-nums">
+                            <span>@Room.WaterStart.ToString("N0")</span>
+                            <span class="reading-unit">m³</span>
+                        </div>
+                        <span class="input-sub-hint">@string.Format(L["MeterReadingStartPeriodHint"], PeriodStart.ToString("dd/MM/yyyy"))</span>
+                    </div>
+
+                    <div class="meter-col">
+                        <label class="input-col-label" for="@($"water-{Room.Id}")">@L["MeterReadingEndLabel"]</label>
+                        <div class="input-with-affix">
+                            <input @ref="_waterInputRef"
+                                   id="@($"water-{Room.Id}")"
+                                   type="text"
+                                   inputmode="numeric"
+                                   class="input @(WaterError is not null ? "input-error" : "")"
+                                   placeholder="@L["MeterReadingInputPlaceholder"]"
+                                   value="@WaterInputString"
+                                   disabled="@(CallerRole == Roles.KhachThue)"
+                                   @oninput="HandleWaterInput"
+                                   @onblur="() => FormatWaterInput()"
+                                   @onkeydown="OnWaterKeyDown" />
+                            <span class="input-affix">m³</span>
+                        </div>
+                        <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
+                    </div>
+                </div>
+
+                @if (WaterError is not null)
+                {
+                    <div class="meter-error-banner">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@WaterError</span>
+                    </div>
+                }
+
+                <div class="calculated-usage-bar">
+                    <span class="usage-label">@L["MeterReadingUsageCurrentPeriod"]</span>
+                    <span class="usage-value tabular-nums">
+                        @if (_waterEnd is null)
+                        {
+                            <span class="cost-missing-cell">—</span>
+                        }
+                        else
+                        {
+                            <span>@Math.Max(0m, _waterEnd.Value - Room.WaterStart).ToString("N0") <span class="usage-unit">m³</span></span>
+                        }
+                    </span>
+                </div>
+
+                @if (_waterEnd.HasValue && _costBreakdown?.HasAbnormalWaterUsage == true && Room.PreviousWaterUsage is > 0m)
+                {
+                    var waterPercent = (int)Math.Round((_costBreakdown.WaterUsage / Room.PreviousWaterUsage.Value) * 100m);
+                    <div class="abnormal-usage-badge">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], waterPercent)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Cost breakdown table -->
+    <MonthlyUtilityTable Room="Room"
+                         ElectricEnd="_electricEnd"
+                         WaterEnd="_waterEnd"
+                         Breakdown="_costBreakdown" />
+
+    <!-- Adjustment reason textarea: chỉ hiện khi có thay đổi thực sự so với dữ liệu đã lưu -->
+    @if (CallerRole != Roles.KhachThue && HasChangesFromInitial)
+    {
+        <div class="adjustment-reason-box">
+            <label class="field-label" for="@($"reason-{Room.Id}")">
+                <span>@L["MeterReadingAdjustmentReason"]</span>
+                <span class="required-star">*</span>
+            </label>
+            <textarea id="@($"reason-{Room.Id}")"
+                      class="input textarea @(string.IsNullOrWhiteSpace(_reason) && _showReasonError ? "input-error" : "")"
+                      rows="2"
+                      placeholder="@L["MeterReadingAdjustmentReasonPlaceholder"]"
+                      @bind="_reason"
+                      @bind:event="oninput"></textarea>
+            @if (string.IsNullOrWhiteSpace(_reason) && _showReasonError)
+            {
+                <span class="field-error-text">@L["MeterReadingAdjustmentReasonRequired"]</span>
+            }
+        </div>
+    }
+
+    @if (CallerRole != Roles.KhachThue && IsLocked && !HasChangesFromInitial)
+    {
+        <div class="locked-no-changes-hint">
+            <LucideIcon Name="info" />
+            <span>@L["MeterReadingLockedNoChangesHint"]</span>
+        </div>
+    }
+
+    <!-- Audit logs -->
+    @if (CallerRole != Roles.KhachThue && Room.AuditLogs.Count > 0)
+    {
+        <div class="audit-log-card">
+            <div class="audit-header">
+                <div class="audit-title-group">
+                    <LucideIcon Name="history" />
+                    <h3>@L["MeterReadingAuditLogTitle"]</h3>
+                </div>
+                <span class="audit-count-chip">@string.Format(L["MeterReadingAuditEditCount"], Room.AuditLogs.Count)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>@L["MeterReadingAuditColModifier"]</th>
+                            <th>@L["MeterReadingAuditColTime"]</th>
+                            <th>@L["MeterReadingAuditColChange"]</th>
+                            <th>@L["MeterReadingAuditColReason"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Room.AuditLogs)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="modifier-cell">
+                                        <span class="avatar-circle">@(string.IsNullOrWhiteSpace(log.Modifier) ? "QL" : log.Modifier.Substring(0, Math.Min(2, log.Modifier.Length)).ToUpperInvariant())</span>
+                                        <div>
+                                            <strong>@log.Modifier</strong>
+                                            <div class="text-muted">@log.Role</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="tabular-nums">@log.Timestamp.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="field-pill">@log.FieldChanged</span>:
+                                    <strong class="tabular-nums">@log.DetailDiff</strong>
+                                </td>
+                                <td>@log.Reason</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- Action Bar -->
+    @if (CallerRole != Roles.KhachThue)
+    {
+        <AuthorizeView Roles="@($"{Roles.ChuTro},{Roles.QuanLy}")">
+            <Authorized>
+                <div class="room-action-bar">
+                    <div class="action-left">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                @onclick="HandleResetDraft">
+                            <LucideIcon Name="x" />
+                            <span>@L["MeterReadingCancel"]</span>
+                        </button>
+                    </div>
+
+                    <div class="action-right">
+                        <button type="button"
+                                class="btn btn-primary"
+                                disabled="@(HasValidationError || _isSaving)"
+                                @onclick="HandleSaveDraft">
+                            <LucideIcon Name="check" />
+                            <span>@L["MeterReadingSaveDraft"]</span>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-primary"
+                                disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || _isSaving)"
+                                @onclick="HandleLockPeriod">
+                            <LucideIcon Name="@(IsLocked ? "refresh-cw" : "receipt")" />
+                            <span>@(IsLocked ? L["MeterReadingUpdateLocked"] : L["MeterReadingLockPeriod"])</span>
+                        </button>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RoomReadingSampleDto Room { get; set; } = default!;
+    [Parameter] public string CallerRole { get; set; } = string.Empty;
+    [Parameter] public DateOnly PeriodStart { get; set; }
+    [Parameter] public DateOnly PeriodEnd { get; set; }
+    [Parameter] public EventCallback<(string RoomId, decimal? ElectricEnd, decimal? WaterEnd)> OnChanged { get; set; }
+    [Parameter] public EventCallback<(string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock)> OnSave { get; set; }
+    [Inject] public MeterReadingPageService PageService { get; set; } = default!;
+
+    private ElementReference _electricInputRef;
+    private ElementReference _waterInputRef;
+    private RoomReadingSampleDto? _lastRoomRef;
+    private decimal _initialElectricEnd;
+    private decimal _initialWaterEnd;
+    private decimal? _electricEnd;
+    private decimal? _waterEnd;
+    private string ElectricInputString = string.Empty;
+    private string WaterInputString = string.Empty;
+    private string? ElectricError;
+    private string? WaterError;
+    private string? _reason;
+    private bool _showReasonError;
+    private bool _isSaving;
+    private UtilityCostBreakdown? _costBreakdown;
+
+    private bool IsLocked => string.Equals(Room.Status, "locked", StringComparison.OrdinalIgnoreCase);
+
+    private bool HasChangesFromInitial =>
+        (_electricEnd.HasValue && _electricEnd.Value != _initialElectricEnd) ||
+        (_waterEnd.HasValue && _waterEnd.Value != _initialWaterEnd);
+
+    private bool HasValidationError => ElectricError is not null || WaterError is not null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!ReferenceEquals(_lastRoomRef, Room))
+        {
+            _lastRoomRef = Room;
+            _initialElectricEnd = Room.ElectricEnd;
+            _initialWaterEnd = Room.WaterEnd;
+            _electricEnd = Room.ElectricEnd > 0 ? Room.ElectricEnd : null;
+            ElectricInputString = _electricEnd.HasValue ? _electricEnd.Value.ToString("G29") : string.Empty;
+            _waterEnd = Room.WaterEnd > 0 ? Room.WaterEnd : null;
+            WaterInputString = _waterEnd.HasValue ? _waterEnd.Value.ToString("G29") : string.Empty;
+            _reason = null;
+            _showReasonError = false;
+        }
+
+        ValidateElectric();
+        ValidateWater();
+        await RecalculateBreakdownAsync();
+    }
+
+    private void ValidateElectric()
+    {
+        ElectricError = null;
+        if (_electricEnd.HasValue)
+        {
+            if (_electricEnd.Value < 0)
+            {
+                ElectricError = L["MeterReadingErrorNegative"];
+            }
+            else if (_electricEnd.Value < Room.ElectricStart)
+            {
+                ElectricError = string.Format(L["MeterReadingErrorElectricMustBeGreater"], _electricEnd.Value, Room.ElectricStart);
+            }
+        }
+    }
+
+    private void ValidateWater()
+    {
+        WaterError = null;
+        if (_waterEnd.HasValue)
+        {
+            if (_waterEnd.Value < 0)
+            {
+                WaterError = L["MeterReadingErrorNegative"];
+            }
+            else if (_waterEnd.Value < Room.WaterStart)
+            {
+                WaterError = string.Format(L["MeterReadingErrorWaterMustBeGreater"], _waterEnd.Value, Room.WaterStart);
+            }
+        }
+    }
+
+    private async Task HandleElectricInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? string.Empty;
+        var clean = new string(raw.Where(char.IsDigit).ToArray());
+        ElectricInputString = clean;
+
+        if (string.IsNullOrWhiteSpace(clean))
+        {
+            _electricEnd = null;
+        }
+        else if (decimal.TryParse(clean, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            _electricEnd = parsed;
+        }
+        else
+        {
+            _electricEnd = null;
+        }
+
+        ValidateElectric();
+        await RecalculateBreakdownAsync();
+        await OnChanged.InvokeAsync((Room.Id, _electricEnd, _waterEnd));
+    }
+
+    private async Task HandleWaterInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? string.Empty;
+        var clean = new string(raw.Where(char.IsDigit).ToArray());
+        WaterInputString = clean;
+
+        if (string.IsNullOrWhiteSpace(clean))
+        {
+            _waterEnd = null;
+        }
+        else if (decimal.TryParse(clean, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+        {
+            _waterEnd = parsed;
+        }
+        else
+        {
+            _waterEnd = null;
+        }
+
+        ValidateWater();
+        await RecalculateBreakdownAsync();
+        await OnChanged.InvokeAsync((Room.Id, _electricEnd, _waterEnd));
+    }
+
+    private void FormatElectricInput()
+    {
+        ElectricInputString = _electricEnd?.ToString("N0") ?? string.Empty;
+    }
+
+    private void FormatWaterInput()
+    {
+        WaterInputString = _waterEnd?.ToString("N0") ?? string.Empty;
+    }
+
+    private async Task OnElectricKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await _waterInputRef.FocusAsync();
+        }
+    }
+
+    private async Task OnWaterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await _electricInputRef.FocusAsync();
+        }
+    }
+
+    private async Task RecalculateBreakdownAsync()
+    {
+        if (_electricEnd.HasValue && _waterEnd.HasValue)
+        {
+            _costBreakdown = await PageService.CalculateCostAsync(Room, _electricEnd.Value, _waterEnd.Value);
+        }
+        else if (_electricEnd.HasValue || _waterEnd.HasValue)
+        {
+            var eEnd = _electricEnd ?? Room.ElectricStart;
+            var wEnd = _waterEnd ?? Room.WaterStart;
+            _costBreakdown = await PageService.CalculateCostAsync(Room, eEnd, wEnd);
+        }
+        else
+        {
+            _costBreakdown = null;
+        }
+    }
+
+
+    private async Task HandleResetDraft()
+    {
+        _electricEnd = _initialElectricEnd > 0 ? _initialElectricEnd : null;
+        _waterEnd = _initialWaterEnd > 0 ? _initialWaterEnd : null;
+        ElectricInputString = _electricEnd.HasValue ? _electricEnd.Value.ToString("G29") : string.Empty;
+        WaterInputString = _waterEnd.HasValue ? _waterEnd.Value.ToString("G29") : string.Empty;
+        _reason = null;
+        _showReasonError = false;
+        ValidateElectric();
+        ValidateWater();
+        await RecalculateBreakdownAsync();
+        await OnChanged.InvokeAsync((Room.Id, _electricEnd, _waterEnd));
+    }
+
+    private async Task HandleSaveDraft()
+    {
+        if (HasValidationError) return;
+
+        // Chỉ bắt buộc nhập lý do khi có thay đổi thực sự
+        if (HasChangesFromInitial && string.IsNullOrWhiteSpace(_reason))
+        {
+            _showReasonError = true;
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var eEnd = _electricEnd ?? Room.ElectricStart;
+            var wEnd = _waterEnd ?? Room.WaterStart;
+            await OnSave.InvokeAsync((Room.Id, eEnd, wEnd, _reason, false));
+            _reason = null;
+            _showReasonError = false;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task HandleLockPeriod()
+    {
+        if (HasValidationError || _electricEnd is null || _waterEnd is null) return;
+
+        // Chỉ bắt buộc nhập lý do khi có thay đổi thực sự trên phòng đã chốt
+        if (HasChangesFromInitial && string.IsNullOrWhiteSpace(_reason))
+        {
+            _showReasonError = true;
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            await OnSave.InvokeAsync((Room.Id, _electricEnd.Value, _waterEnd.Value, _reason, true));
+            _reason = null;
+            _showReasonError = false;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+}

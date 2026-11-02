@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Dashboard và báo cáo</value></data>
+<data name="Subtitle" xml:space="preserve"><value>Tổng quan vận hành nhà trọ</value></data>
+<data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+<data name="Property" xml:space="preserve"><value>Nhà trọ</value></data>
+<data name="AllProperties" xml:space="preserve"><value>Tất cả nhà</value></data>
+<data name="Inactive" xml:space="preserve"><value>Tạm ngưng</value></data>
+<data name="Period" xml:space="preserve"><value>Kỳ báo cáo</value></data>
+<data name="Month" xml:space="preserve"><value>Tháng này</value></data>
+<data name="Quarter" xml:space="preserve"><value>Quý này</value></data>
+<data name="Year" xml:space="preserve"><value>Năm nay</value></data>
+<data name="Updated" xml:space="preserve"><value>Cập nhật lúc</value></data>
+<data name="Loading" xml:space="preserve"><value>Đang tải</value></data>
+<data name="Error" xml:space="preserve"><value>Không tải được dữ liệu. Vui lòng thử lại.</value></data>
+<data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+<data name="Empty" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+<data name="Unwired" xml:space="preserve"><value>Chưa ghép nguồn dữ liệu</value></data>
+<data name="CurrentData" xml:space="preserve"><value>Số liệu hiện tại</value></data>
+<data name="TotalRooms" xml:space="preserve"><value>Tổng phòng đang hoạt động</value></data>
+<data name="Occupancy" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
+<data name="Revenue" xml:space="preserve"><value>Doanh thu dự kiến tháng</value></data>
+<data name="Debt" xml:space="preserve"><value>Tổng công nợ</value></data>
+<data name="Incidents" xml:space="preserve"><value>Sự cố chờ xử lý</value></data>
+<data name="RoomsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Phòng</value></data>
+<data name="TenantsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Khách thuê</value></data>
+<data name="PropertiesDenied" xml:space="preserve"><value>Chưa được phép xem danh sách nhà</value></data>
+<data name="RoomStructure" xml:space="preserve"><value>Cơ cấu phòng</value></data>
+<data name="Available" xml:space="preserve"><value>Còn trống</value></data>
+<data name="Rented" xml:space="preserve"><value>Đang thuê</value></data>
+<data name="Maintenance" xml:space="preserve"><value>Bảo trì</value></data>
+<data name="Tenants" xml:space="preserve"><value>Khách thuê</value></data>
+<data name="TenantPropertyUnavailable" xml:space="preserve"><value>Chưa ghép nguồn theo nhà</value></data>
+<data name="TenantManagerUnavailable" xml:space="preserve"><value>Chưa ghép nguồn theo phạm vi quản lý</value></data>
+<data name="TenantGlobal" xml:space="preserve"><value>Toàn hệ thống - P3 chưa lọc theo nhà</value></data>
+<data name="TenantTotal" xml:space="preserve"><value>Tổng hồ sơ</value></data>
+<data name="TenantActive" xml:space="preserve"><value>Đang hoạt động</value></data>
+<data name="TenantLinked" xml:space="preserve"><value>Có tài khoản</value></data>
+<data name="ViewTenants" xml:space="preserve"><value>Xem khách thuê</value></data>
+<data name="RevenueChart" xml:space="preserve"><value>Doanh thu 6 tháng</value></data>
+<data name="ExpiringContracts" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
+<data name="RoomScopeNote" xml:space="preserve"><value>Chỉ thống kê phòng đang hoạt động. Danh sách phòng mặc định gồm cả phòng tạm ngưng.</value></data>
+<data name="RefreshSuccess" xml:space="preserve"><value>Đã làm mới dữ liệu</value></data>
+</root>

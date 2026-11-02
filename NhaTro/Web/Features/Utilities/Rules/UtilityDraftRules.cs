@@ -167,12 +167,8 @@ public static class UtilityDraftRules
         return issues;
     }
 
-    public static string ResolveRole(ClaimsPrincipal user)
-    {
-        // Match the restrictive role precedence used by the server caller providers.
-        return new[] { Roles.Admin, Roles.KhachThue, Roles.QuanLy, Roles.ChuTro }
-            .FirstOrDefault(user.IsInRole) ?? string.Empty;
-    }
+    public static string ResolveRole(ClaimsPrincipal user) =>
+        Roles.ResolvePrimaryRole(user);
 
     public static string ResolveEmail(ClaimsPrincipal user) =>
         user.FindFirst(ClaimTypes.Email)?.Value ?? user.Identity?.Name ?? string.Empty;

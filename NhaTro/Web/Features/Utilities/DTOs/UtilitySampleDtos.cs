@@ -156,9 +156,11 @@ public sealed class RoomReadingSampleDto
     public string ElectricMeterCode { get; set; } = string.Empty;
     public decimal ElectricStart { get; set; }
     public decimal ElectricEnd { get; set; }
+    public decimal? PreviousElectricUsage { get; set; }
     public string WaterMeterCode { get; set; } = string.Empty;
     public decimal WaterStart { get; set; }
     public decimal WaterEnd { get; set; }
+    public decimal? PreviousWaterUsage { get; set; }
     public decimal WaterRate { get; set; } = 15_000m;
     public decimal InternetCost { get; set; } = 100_000m;
     public decimal CleaningCost { get; set; } = 30_000m;
@@ -184,9 +186,11 @@ public sealed class RoomReadingSampleDto
         ElectricMeterCode = ElectricMeterCode,
         ElectricStart = ElectricStart,
         ElectricEnd = ElectricEnd,
+        PreviousElectricUsage = PreviousElectricUsage,
         WaterMeterCode = WaterMeterCode,
         WaterStart = WaterStart,
         WaterEnd = WaterEnd,
+        PreviousWaterUsage = PreviousWaterUsage,
         WaterRate = WaterRate,
         InternetCost = InternetCost,
         CleaningCost = CleaningCost,

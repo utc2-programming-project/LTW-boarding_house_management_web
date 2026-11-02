@@ -389,6 +389,13 @@
     line-height: 18px;
 }
 
+.contract-field-hint {
+    margin-top: 4px;
+    color: var(--text-muted, #64748B);
+    font-size: 12px;
+    line-height: 18px;
+}
+
 .contract-field-error:empty {
     display: none;
 }

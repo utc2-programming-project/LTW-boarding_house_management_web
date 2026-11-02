@@ -737,6 +737,10 @@
   <data name="TenantAccountAll" xml:space="preserve"><value>Tất cả tài khoản</value></data>
   <data name="TenantAccountYes" xml:space="preserve"><value>Có tài khoản</value></data>
   <data name="TenantAccountNo" xml:space="preserve"><value>Chưa có tài khoản</value></data>
+  <data name="TenantRentalFilter" xml:space="preserve"><value>Tình trạng thuê</value></data>
+  <data name="TenantRentalAll" xml:space="preserve"><value>Tất cả tình trạng thuê</value></data>
+  <data name="TenantRentalActive" xml:space="preserve"><value>Đang thuê</value></data>
+  <data name="TenantRentalNone" xml:space="preserve"><value>Chưa thuê</value></data>
   <data name="TenantSort" xml:space="preserve"><value>Sắp xếp</value></data>
   <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Ngày tạo mới nhất</value></data>
   <data name="TenantSortNameAsc" xml:space="preserve"><value>Tên A–Z</value></data>
@@ -1069,7 +1073,118 @@
   <data name="ContractStatusApproved" xml:space="preserve"><value>Đang hiệu lực</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
-  <data name="CloseNotification" xml:space="preserve">
-    <value>Đóng thông báo</value>
-  </data>
+  <data name="CloseNotification" xml:space="preserve"><value>Đóng thông báo</value></data>
+  <data name="MeterReadings" xml:space="preserve"><value>Điện nước &amp; Chi phí</value></data>
+  <data name="MeterReadingPageTitle" xml:space="preserve"><value>Ghi chỉ số điện nước &amp; Bảng chi phí kỳ</value></data>
+  <data name="MeterReadingElectricEnd" xml:space="preserve"><value>Chỉ số điện mới</value></data>
+  <data name="MeterReadingWaterEnd" xml:space="preserve"><value>Chỉ số nước mới</value></data>
+  <data name="MeterReadingLockPeriod" xml:space="preserve"><value>Chốt kỳ</value></data>
+  <data name="MeterReadingSaveDraft" xml:space="preserve"><value>Lưu nháp</value></data>
+  <data name="MeterReadingTotalEstimated" xml:space="preserve"><value>Tổng tạm tính</value></data>
+  <data name="MeterReadingSampleBanner" xml:space="preserve"><value>Dữ liệu mẫu — Chưa ghép SQL thật (chờ VHT-51)</value></data>
+  <data name="MeterReadingAdjustmentReason" xml:space="preserve"><value>Lý do điều chỉnh chỉ số</value></data>
+  <data name="MeterReadingSprint2C" xml:space="preserve"><value>Sprint 2C</value></data>
+  <data name="MeterReadingSampleBannerDesc" xml:space="preserve"><value>Mọi thao tác lưu và chốt chỉ số được lưu trong bộ nhớ tạm (in-memory) phục vụ kiểm thử giao diện &amp; tính toán biểu giá bậc thang.</value></data>
+  <data name="MeterReadingPageSubtitle" xml:space="preserve"><value>Nhập chỉ số điện nước, kiểm tra bảng chi phí bậc thang và thực hiện chốt số liệu kỳ</value></data>
+  <data name="MeterReadingBuildingFilter" xml:space="preserve"><value>Nhà trọ:</value></data>
+  <data name="MeterReadingSelectBuildingPrompt" xml:space="preserve"><value>-- Chọn nhà trọ --</value></data>
+  <data name="MeterReadingRoomCountFormat" xml:space="preserve"><value>{0} phòng</value></data>
+  <data name="MeterReadingPeriodFilter" xml:space="preserve"><value>Kỳ tính tiền:</value></data>
+  <data name="MeterReadingPeriodOct2026" xml:space="preserve"><value>Tháng 10/2026 (01/10/2026 → 31/10/2026)</value></data>
+  <data name="MeterReadingPeriodSep2026" xml:space="preserve"><value>Tháng 09/2026 (01/09/2026 → 30/09/2026)</value></data>
+  <data name="MeterReadingRetry" xml:space="preserve"><value>Thử lại</value></data>
+  <data name="MeterReadingKpiTotalRooms" xml:space="preserve"><value>Tổng số phòng</value></data>
+  <data name="MeterReadingKpiInPeriod" xml:space="preserve"><value>Trong kỳ {0}</value></data>
+  <data name="MeterReadingKpiRecorded" xml:space="preserve"><value>Đã ghi chỉ số</value></data>
+  <data name="MeterReadingKpiRecordedSub" xml:space="preserve"><value>Đã nhập số mới kỳ này</value></data>
+  <data name="MeterReadingKpiUnrecorded" xml:space="preserve"><value>Chưa ghi chỉ số</value></data>
+  <data name="MeterReadingKpiUnrecordedSub" xml:space="preserve"><value>Cần bổ sung số điện/nước</value></data>
+  <data name="MeterReadingKpiLocked" xml:space="preserve"><value>Đã chốt kỳ</value></data>
+  <data name="MeterReadingKpiLockedSub" xml:space="preserve"><value>Đã cố định chi phí</value></data>
+  <data name="MeterReadingEmptyTenantTitle" xml:space="preserve"><value>Bạn chưa có hồ sơ khách thuê</value></data>
+  <data name="MeterReadingEmptyTenantDesc" xml:space="preserve"><value>Tài khoản của bạn chưa được liên kết với hợp đồng hoặc phòng thuê đang hoạt động trong kỳ này. Vui lòng liên hệ chủ trọ để kích hoạt hồ sơ.</value></data>
+  <data name="MeterReadingSelectBuildingTitle" xml:space="preserve"><value>Chọn nhà trọ và kỳ tính tiền</value></data>
+  <data name="MeterReadingSelectBuildingDesc" xml:space="preserve"><value>Vui lòng chọn tòa nhà trọ ở phía trên để hiển thị danh sách phòng cần ghi chỉ số và tính chi phí.</value></data>
+  <data name="MeterReadingSelectFirstBuildingBtn" xml:space="preserve"><value>Chọn tòa nhà đầu tiên</value></data>
+  <data name="MeterReadingEmptyRoomsTitle" xml:space="preserve"><value>Không có phòng nào trong kỳ này</value></data>
+  <data name="MeterReadingEmptyRoomsDesc" xml:space="preserve"><value>Tòa nhà này hiện chưa có phòng hoặc chưa có hợp đồng thuê nào đang có hiệu lực trong kỳ tính tiền đã chọn.</value></data>
+  <data name="MeterReadingRefreshBtn" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="MeterReadingNavHome" xml:space="preserve"><value>Trang chủ</value></data>
+  <data name="MeterReadingNavServices" xml:space="preserve"><value>Dịch vụ &amp; Tiện ích</value></data>
+  <data name="MeterReadingNavReadings" xml:space="preserve"><value>Ghi chỉ số điện nước</value></data>
+  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu: {0}</value></data>
+  <data name="MeterReadingSaveError" xml:space="preserve"><value>Không thể lưu chỉ số.</value></data>
+  <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Đã chốt kỳ thành công cho phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>
+  <data name="MeterReadingDraftSuccess" xml:space="preserve"><value>Đã lưu nháp chỉ số phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>
+  <data name="MeterReadingStatusLocked" xml:space="preserve"><value>Đã chốt kỳ</value></data>
+  <data name="MeterReadingStatusOpen" xml:space="preserve"><value>Chưa chốt số</value></data>
+  <data name="MeterReadingTenantLabel" xml:space="preserve"><value>Khách thuê:</value></data>
+  <data name="MeterReadingContractCodeLabel" xml:space="preserve"><value>HĐ:</value></data>
+  <data name="MeterReadingReadOnlyBadge" xml:space="preserve"><value>Chỉ xem</value></data>
+  <data name="MeterReadingLockedBannerTitle" xml:space="preserve"><value>Phòng đã chốt kỳ tính tiền</value></data>
+  <data name="MeterReadingLockedBannerDesc" xml:space="preserve"><value>Số liệu đã được cố định. Để điều chỉnh chỉ số kỳ liền trước, vui lòng nhập lý do giải trình bắt buộc bên dưới.</value></data>
+  <data name="MeterReadingElectricMeter" xml:space="preserve"><value>Đồng hồ điện</value></data>
+  <data name="MeterReadingWaterMeter" xml:space="preserve"><value>Đồng hồ nước</value></data>
+  <data name="MeterReadingMeterCodeLabel" xml:space="preserve"><value>Mã ĐH: {0}</value></data>
+  <data name="MeterReadingStartLabel" xml:space="preserve"><value>Chỉ số cũ</value></data>
+  <data name="MeterReadingStartPeriodHint" xml:space="preserve"><value>Đầu kỳ ({0})</value></data>
+  <data name="MeterReadingEndLabel" xml:space="preserve"><value>Chỉ số mới</value></data>
+  <data name="MeterReadingEndPeriodHint" xml:space="preserve"><value>Cuối kỳ ({0})</value></data>
+  <data name="MeterReadingInputPlaceholder" xml:space="preserve"><value>Nhập số mới</value></data>
+  <data name="MeterReadingUsageCurrentPeriod" xml:space="preserve"><value>Tiêu thụ kỳ này:</value></data>
+  <data name="MeterReadingAdjustmentReasonPlaceholder" xml:space="preserve"><value>Nhập lý do thay đổi chỉ số (ví dụ: Ghi nhầm số đồng hồ, kiểm tra lại thực tế...)</value></data>
+  <data name="MeterReadingAdjustmentReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do điều chỉnh chỉ số.</value></data>
+  <data name="MeterReadingAuditLogTitle" xml:space="preserve"><value>Nhật ký kiểm toán chỉ số</value></data>
+  <data name="MeterReadingAuditEditCount" xml:space="preserve"><value>{0} lượt sửa</value></data>
+  <data name="MeterReadingAuditColModifier" xml:space="preserve"><value>Người sửa</value></data>
+  <data name="MeterReadingAuditColTime" xml:space="preserve"><value>Thời gian</value></data>
+  <data name="MeterReadingAuditColChange" xml:space="preserve"><value>Nội dung thay đổi</value></data>
+  <data name="MeterReadingAuditColReason" xml:space="preserve"><value>Lý do giải trình</value></data>
+  <data name="MeterReadingCancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="MeterReadingCostDetailTitle" xml:space="preserve"><value>Chi tiết chi phí kỳ</value></data>
+  <data name="MeterReadingAutoCalculateTariff" xml:space="preserve"><value>Tự động tính theo biểu giá</value></data>
+  <data name="MeterReadingTableColItem" xml:space="preserve"><value>Khoản mục</value></data>
+  <data name="MeterReadingTableColUsage" xml:space="preserve"><value>Sử dụng</value></data>
+  <data name="MeterReadingTableColRate" xml:space="preserve"><value>Đơn giá</value></data>
+  <data name="MeterReadingTableColAmount" xml:space="preserve"><value>Thành tiền</value></data>
+  <data name="MeterReadingRentItem" xml:space="preserve"><value>Tiền thuê phòng ({0})</value></data>
+  <data name="MeterReadingOneMonthUnit" xml:space="preserve"><value>1 tháng</value></data>
+  <data name="MeterReadingElectricCostItem" xml:space="preserve"><value>Tiền điện sinh hoạt</value></data>
+  <data name="MeterReadingMissingReadingHint" xml:space="preserve"><value>Chưa tính — thiếu chỉ số mới</value></data>
+  <data name="MeterReadingNoData" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+  <data name="MeterReadingElectricTierItem" xml:space="preserve"><value>Điện bậc {0}</value></data>
+  <data name="MeterReadingElectricCostZeroItem" xml:space="preserve"><value>Tiền điện sinh hoạt (0 kWh)</value></data>
+  <data name="MeterReadingWaterCostItem" xml:space="preserve"><value>Tiền nước sinh hoạt</value></data>
+  <data name="MeterReadingWaterTierItem" xml:space="preserve"><value>Nước sinh hoạt bậc {0}</value></data>
+  <data name="MeterReadingWaterCostZeroItem" xml:space="preserve"><value>Tiền nước sinh hoạt (0 m³)</value></data>
+  <data name="MeterReadingInternetServiceItem" xml:space="preserve"><value>Internet cáp quang</value></data>
+  <data name="MeterReadingCleaningServiceItem" xml:space="preserve"><value>Phí vệ sinh &amp; rác thải</value></data>
+  <data name="MeterReadingParkingServiceItem" xml:space="preserve"><value>Phí giữ xe</value></data>
+  <data name="MeterReadingMissingTotalWarning" xml:space="preserve"><value>⚠️ Chưa tính tiền {0} do thiếu chỉ số mới</value></data>
+  <data name="MeterReadingBothElectricWater" xml:space="preserve"><value>điện và nước</value></data>
+  <data name="MeterReadingElectricOnly" xml:space="preserve"><value>điện</value></data>
+  <data name="MeterReadingWaterOnly" xml:space="preserve"><value>nước</value></data>
+  <data name="MeterReadingTotalDescriptionComplete" xml:space="preserve"><value>Bao gồm tiền phòng, điện nước theo bậc thang và phí dịch vụ</value></data>
+  <data name="MeterReadingErrorNegative" xml:space="preserve"><value>Chỉ số không được âm</value></data>
+  <data name="MeterReadingErrorElectricMustBeGreater" xml:space="preserve"><value>Chỉ số mới ({0}) phải ≥ chỉ số cũ ({1})</value></data>
+  <data name="MeterReadingErrorWaterMustBeGreater" xml:space="preserve"><value>Chỉ số mới ({0}) phải ≥ chỉ số cũ ({1})</value></data>
+  <data name="MeterReadingUpdateLocked" xml:space="preserve"><value>Cập nhật kỳ đã chốt</value></data>
+  <data name="MeterReadingLockedNoChangesHint" xml:space="preserve"><value>Kỳ này đã chốt. Chỉnh sửa số liệu nếu cần điều chỉnh.</value></data>
+  <data name="MeterReadingSummaryTableTitle" xml:space="preserve"><value>Bảng tổng hợp chỉ số &amp; chi phí các phòng</value></data>
+  <data name="MeterReadingSummaryColRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="MeterReadingSummaryColElectricReading" xml:space="preserve"><value>Điện (Cũ → Mới)</value></data>
+  <data name="MeterReadingSummaryColElectricUsage" xml:space="preserve"><value>Tiêu thụ điện</value></data>
+  <data name="MeterReadingSummaryColWaterReading" xml:space="preserve"><value>Nước (Cũ → Mới)</value></data>
+  <data name="MeterReadingSummaryColWaterUsage" xml:space="preserve"><value>Tiêu thụ nước</value></data>
+  <data name="MeterReadingSummaryColFixedServices" xml:space="preserve"><value>Dịch vụ cố định</value></data>
+  <data name="MeterReadingSummaryColTotalCost" xml:space="preserve"><value>Tổng tạm tính</value></data>
+  <data name="MeterReadingSummaryColStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="MeterReadingAbnormalUsageWarning" xml:space="preserve"><value>Lượng tiêu thụ bất thường ({0}% kỳ trước)</value></data>
+  <data name="MeterReadingEmptyPeriodTitle" xml:space="preserve"><value>Chưa có dữ liệu cho kỳ này</value></data>
+  <data name="MeterReadingEmptyPeriodDesc" xml:space="preserve"><value>Dữ liệu mẫu hiện chỉ có cho tháng 10/2026. Vui lòng chọn kỳ khác.</value></data>
+  <data name="MeterReadingErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép</value></data>
+  <data name="MeterReadingErrorInvalidRequest" xml:space="preserve"><value>Dữ liệu gửi lên không hợp lệ</value></data>
+  <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Tháng:</value></data>
+  <data name="MeterReadingYearFilter" xml:space="preserve"><value>Năm:</value></data>
+  <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Tháng {0:00}</value></data>
 </root>

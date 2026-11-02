@@ -1,0 +1,179 @@
+@using Web.Common.Utils
+@using Web.Components.Shared
+@using Web.Features.Utilities.DTOs
+@using Web.Features.Utilities.Services
+@inject MeterReadingPageService PageService
+@inject IStringLocalizer<Shared> L
+
+<div class="summary-table-card">
+    <div class="summary-card-header">
+        <div class="summary-title-group">
+            <LucideIcon Name="file" />
+            <h3 class="summary-title">@L["MeterReadingSummaryTableTitle"]</h3>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>@L["MeterReadingSummaryColRoom"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColElectricReading"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColElectricUsage"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColWaterReading"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColWaterUsage"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColFixedServices"]</th>
+                    <th class="text-right">@L["MeterReadingSummaryColTotalCost"]</th>
+                    <th>@L["MeterReadingSummaryColStatus"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in _rows)
+                {
+                    <tr>
+                        <td>
+                            <div class="room-cell">
+                                <span class="room-code-bold">@row.Room.RoomCode</span>
+                                <span class="room-tenant-sub">@row.Room.TenantName</span>
+                            </div>
+                        </td>
+                        <td class="text-right tabular-nums">
+                            <span>@row.Room.ElectricStart.ToString("N0")</span>
+                            <span class="arrow-sep">→</span>
+                            <span class="font-semibold">@(row.ElectricEnd.HasValue ? row.ElectricEnd.Value.ToString("N0") : "—")</span>
+                        </td>
+                        <td class="text-right tabular-nums">
+                            @if (row.ElectricEnd.HasValue)
+                            {
+                                <div class="usage-cell">
+                                    <span>@row.ElectricUsage.ToString("N0") kWh</span>
+                                    @if (row.HasAbnormalElectric && row.ElectricPercent.HasValue)
+                                    {
+                                        <span class="abnormal-mini-badge" title="@string.Format(L["MeterReadingAbnormalUsageWarning"], row.ElectricPercent.Value)">
+                                            <LucideIcon Name="alert-triangle" />
+                                            <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], row.ElectricPercent.Value)</span>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="missing-dash">—</span>
+                            }
+                        </td>
+                        <td class="text-right tabular-nums">
+                            <span>@row.Room.WaterStart.ToString("N0")</span>
+                            <span class="arrow-sep">→</span>
+                            <span class="font-semibold">@(row.WaterEnd.HasValue ? row.WaterEnd.Value.ToString("N0") : "—")</span>
+                        </td>
+                        <td class="text-right tabular-nums">
+                            @if (row.WaterEnd.HasValue)
+                            {
+                                <div class="usage-cell">
+                                    <span>@row.WaterUsage.ToString("N0") m³</span>
+                                    @if (row.HasAbnormalWater && row.WaterPercent.HasValue)
+                                    {
+                                        <span class="abnormal-mini-badge" title="@string.Format(L["MeterReadingAbnormalUsageWarning"], row.WaterPercent.Value)">
+                                            <LucideIcon Name="alert-triangle" />
+                                            <span>@string.Format(L["MeterReadingAbnormalUsageWarning"], row.WaterPercent.Value)</span>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="missing-dash">—</span>
+                            }
+                        </td>
+                        <td class="text-right tabular-nums">@MoneyFormatter.Format(row.FixedServiceCost)</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(row.TotalCost)</td>
+                        <td>
+                            @if (row.IsLocked)
+                            {
+                                <span class="summary-status-chip locked">@L["MeterReadingStatusLocked"]</span>
+                            }
+                            else if (row.ElectricEnd.HasValue && row.WaterEnd.HasValue)
+                            {
+                                <span class="summary-status-chip recorded">@L["MeterReadingKpiRecorded"]</span>
+                            }
+                            else
+                            {
+                                <span class="summary-status-chip open">@L["MeterReadingKpiUnrecorded"]</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<RoomReadingSampleDto> Rooms { get; set; } = [];
+    [Parameter] public IReadOnlyDictionary<string, (decimal? ElectricEnd, decimal? WaterEnd)> DraftReadings { get; set; } =
+        new Dictionary<string, (decimal?, decimal?)>();
+
+    private List<SummaryRowViewModel> _rows = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var list = new List<SummaryRowViewModel>(Rooms.Count);
+        foreach (var room in Rooms)
+        {
+            decimal? electricEnd = room.ElectricEnd > 0m ? room.ElectricEnd : null;
+            decimal? waterEnd = room.WaterEnd > 0m ? room.WaterEnd : null;
+
+            if (DraftReadings.TryGetValue(room.Id, out var draft))
+            {
+                electricEnd = draft.ElectricEnd;
+                waterEnd = draft.WaterEnd;
+            }
+
+            var eForCalc = electricEnd ?? room.ElectricStart;
+            var wForCalc = waterEnd ?? room.WaterStart;
+            var breakdown = await PageService.CalculateCostAsync(room, eForCalc, wForCalc);
+
+            var fixedCost = room.InternetCost + room.CleaningCost + room.ParkingCost;
+            var totalCost = room.RoomRent + fixedCost;
+            if (electricEnd.HasValue) totalCost += breakdown.ElectricityCost;
+            if (waterEnd.HasValue) totalCost += breakdown.WaterCost;
+
+            int? elecPercent = room.PreviousElectricUsage is > 0m && electricEnd.HasValue
+                ? (int)Math.Round((breakdown.ElectricityUsage / room.PreviousElectricUsage.Value) * 100m)
+                : null;
+            int? waterPercent = room.PreviousWaterUsage is > 0m && waterEnd.HasValue
+                ? (int)Math.Round((breakdown.WaterUsage / room.PreviousWaterUsage.Value) * 100m)
+                : null;
+
+            list.Add(new SummaryRowViewModel(
+                room,
+                electricEnd,
+                breakdown.ElectricityUsage,
+                electricEnd.HasValue && breakdown.HasAbnormalElectricUsage,
+                elecPercent,
+                waterEnd,
+                breakdown.WaterUsage,
+                waterEnd.HasValue && breakdown.HasAbnormalWaterUsage,
+                waterPercent,
+                fixedCost,
+                totalCost,
+                string.Equals(room.Status, "locked", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        _rows = list;
+    }
+
+    private sealed record SummaryRowViewModel(
+        RoomReadingSampleDto Room,
+        decimal? ElectricEnd,
+        decimal ElectricUsage,
+        bool HasAbnormalElectric,
+        int? ElectricPercent,
+        decimal? WaterEnd,
+        decimal WaterUsage,
+        bool HasAbnormalWater,
+        int? WaterPercent,
+        decimal FixedServiceCost,
+        decimal TotalCost,
+        bool IsLocked);
+}

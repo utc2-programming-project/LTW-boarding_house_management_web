@@ -1,0 +1,38 @@
+@inject IStringLocalizer<DashboardResource> L
+<div class="kpi-grid">
+@foreach (var key in Keys)
+{
+    var isRoom = key is "TotalRooms" or "Occupancy";
+    <article class="kpi-card">
+        <h2>@L[key]</h2>
+        @if (!isRoom)
+        {
+            <UnwiredNotice FilterDescription="@FilterDescription" />
+        }
+        else if (State == DashboardLoadState.Loading)
+        {
+            <p class="skeleton" role="status">@L["Loading"]</p>
+        }
+        else if (State is DashboardLoadState.Error or DashboardLoadState.Denied)
+        {
+            <p class="value">—</p>
+            <p>@L[State == DashboardLoadState.Denied ? "RoomsDenied" : "Error"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="Retry">@L["Retry"]</button>
+        }
+        else
+        {
+            <a class="value" href="@RoomsHref">@(key == "TotalRooms" ? DashboardFormat.FormatNumber(Kpis?.Total) : DashboardFormat.FormatOccupancy(Kpis is null ? null : DashboardFormat.OccupancyPercent(Kpis.Rented, Kpis.Total, Kpis.Maintenance)))</a>
+            <p>@L["CurrentData"]</p>
+        }
+    </article>
+}
+</div>
+@code {
+    [Parameter] public bool IsOwner { get; set; }
+    [Parameter] public RoomReportKpis? Kpis { get; set; }
+    [Parameter] public DashboardLoadState State { get; set; }
+    [Parameter] public EventCallback Retry { get; set; }
+    [Parameter] public string RoomsHref { get; set; } = "/rooms";
+    [Parameter] public string FilterDescription { get; set; } = "";
+    private string[] Keys => IsOwner ? ["TotalRooms", "Occupancy", "Revenue", "Debt", "Incidents"] : ["TotalRooms", "Occupancy", "Incidents"];
+}

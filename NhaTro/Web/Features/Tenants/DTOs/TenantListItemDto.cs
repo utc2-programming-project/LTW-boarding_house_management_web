@@ -20,12 +20,15 @@ public class TenantListItemDto
     /// <summary>Null khi vai trò không được xem trạng thái tài khoản app (D9).</summary>
     public required bool? HasAccount { get; init; }
 
-    /// <summary>Chờ hợp đồng (mục 6.1); hiện luôn false khi chưa có bảng hợp đồng.</summary>
+    /// <summary>
+    /// Có hợp đồng thuê đang hiệu lực (đã duyệt, hôm nay nằm trong thời hạn) theo liên kết thật
+    /// Tenant -> ContractMember -> Contract.
+    /// </summary>
     public required bool HasActiveContract { get; init; }
 
     /// <summary>
-    /// Tên phòng đang thuê (D9: Quản lý được xem cột "phòng"). Hiện luôn null vì <c>Tenant</c> chưa liên kết tới
-    /// phòng/hợp đồng (VHT-24/VHT-25); khi có liên kết chỉ cần gán giá trị này trong <c>TenantMapping.ToListItem</c>.
+    /// Tên phòng đang thuê (D9: Quản lý được xem cột "phòng"), lấy từ hợp đồng đang hiệu lực.
+    /// Null khi khách chưa thuê.
     /// </summary>
     public string? RoomName { get; init; }
 }
