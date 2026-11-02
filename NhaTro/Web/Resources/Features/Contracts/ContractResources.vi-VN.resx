@@ -165,4 +165,5 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng ở trạng thái Chờ duyệt.</value></data>
+  <data name="TableLoading" xml:space="preserve"><value>Đang tải…</value></data>
 </root>
