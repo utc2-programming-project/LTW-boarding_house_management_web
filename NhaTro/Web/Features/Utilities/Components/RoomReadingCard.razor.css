@@ -1,0 +1,23 @@
+.abnormal-usage-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-text);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.status-badge.status-unrecorded {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-border);
+    color: var(--warning-text);
+}
+
+.pulse-dot.unrecorded-dot {
+    background: var(--warning-text);
+}
