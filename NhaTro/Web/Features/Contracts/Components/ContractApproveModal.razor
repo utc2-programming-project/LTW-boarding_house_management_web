@@ -1,0 +1,49 @@
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts
+@inject IStringLocalizer<ContractResources> L
+
+@if (Visible)
+{
+    <div class="contract-modal-backdrop" role="presentation" @onclick="CloseAsync">
+        <section class="contract-modal" role="dialog" aria-modal="true" aria-labelledby="contract-decision-title" @onclick:stopPropagation>
+            <h2 id="contract-decision-title">@L["ContractDecisionTitle"]</h2>
+            <p>@L["ContractDecisionDescription"]</p>
+            <label for="contract-reject-reason">@L["ContractRejectReasonLabel"]</label>
+            <textarea id="contract-reject-reason" class="input" maxlength="500" @bind="_reason" disabled="@IsBusy"></textarea>
+            @if (_showReasonError) { <p class="contract-field-error" role="alert">@L["ContractErrorRejectReasonRequired"]</p> }
+            <footer>
+                <button type="button" class="btn btn-secondary" disabled="@IsBusy" @onclick="CloseAsync">@L["ContractCancelAction"]</button>
+                <button type="button" class="btn btn-danger" disabled="@IsBusy" @onclick="RejectAsync">@L["ContractRejectAction"]</button>
+                <button type="button" class="btn btn-primary" disabled="@IsBusy" @onclick="ApproveAsync">@L[IsBusy ? "ContractProcessing" : "ContractApproveAction"]</button>
+            </footer>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ApproveContractRequestDto> OnDecide { get; set; }
+    private string? _reason;
+    private bool _showReasonError;
+    private bool _wasVisible;
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _reason = null;
+            _showReasonError = false;
+        }
+        _wasVisible = Visible;
+    }
+
+    private Task CloseAsync() => IsBusy ? Task.CompletedTask : OnClose.InvokeAsync();
+    private Task ApproveAsync() => OnDecide.InvokeAsync(new ApproveContractRequestDto { IsApproved = true });
+    private Task RejectAsync()
+    {
+        _showReasonError = string.IsNullOrWhiteSpace(_reason);
+        return _showReasonError ? Task.CompletedTask : OnDecide.InvokeAsync(new ApproveContractRequestDto { IsApproved = false, RejectReason = _reason });
+    }
+}

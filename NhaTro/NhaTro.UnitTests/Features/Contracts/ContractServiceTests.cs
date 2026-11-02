@@ -9,6 +9,47 @@ namespace NhaTro.UnitTests.Features.Contracts;
 public sealed class ContractServiceTests
 {
     [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.KhachThue)]
+    [InlineData("Unknown")]
+    public async Task CreateContractAsync_RejectsRolesOtherThanChuTroOrQuanLy(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() =>
+            service.CreateContractAsync(CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), [1]),
+                new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData("Unknown")]
+    public async Task ListAsync_RejectsRolesWithoutContractAccess(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() =>
+            service.ListAsync(null, new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData("Unknown")]
+    public async Task GetAsync_RejectsRolesWithoutContractAccess(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() =>
+            service.GetAsync(Guid.NewGuid(), new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [Theory]
     [InlineData(2026, 10, 22, 2026, 10, 22)]
     [InlineData(2026, 10, 23, 2026, 10, 22)]
     public async Task CreateContractAsync_RejectsStartDateThatIsNotBeforeEndDate(
@@ -21,7 +62,7 @@ public sealed class ContractServiceTests
             new DateTime(endYear, endMonth, endDay),
             [1]);
 
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.CreateContractAsync(request, OwnerCaller));
 
         Assert.Equal("StartDate", exception.ParamName);
     }
@@ -32,7 +73,7 @@ public sealed class ContractServiceTests
         var service = CreateService();
         var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), null!);
 
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.CreateContractAsync(request, OwnerCaller));
 
         Assert.Equal("TenantIds", exception.ParamName);
     }
@@ -43,7 +84,7 @@ public sealed class ContractServiceTests
         var service = CreateService();
         var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), []);
 
-        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateContractAsync(request));
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.CreateContractAsync(request, OwnerCaller));
 
         Assert.Equal("TenantIds", exception.ParamName);
     }
@@ -53,7 +94,7 @@ public sealed class ContractServiceTests
     {
         var service = CreateService();
 
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateContractAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.CreateContractAsync(null!, OwnerCaller));
     }
 
     [Theory]

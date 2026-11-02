@@ -1,0 +1,142 @@
+@page "/contracts"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractBusiness")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Web.Common.Utils
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Components
+@using Web.Features.Contracts.Services
+@using Web.Features.Contracts.Rules
+@using Web.Infrastructure.Time
+@using Web.Components.Shared.Feedback
+@inject ContractPageService Contracts
+@inject IStringLocalizer<ContractResources> L
+@inject ToastService Toasts
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TimeProvider Clock
+
+<PageTitle>@L["ContractListTitle"]</PageTitle>
+
+<section class="contract-list-page" aria-labelledby="contract-list-title">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractListTitle"]) })" />
+    <header class="page-heading">
+        <div><h1 id="contract-list-title">@L["ContractListTitle"]</h1><p>@L["ContractListDescription"]</p></div>
+        <AuthorizeView Roles="ChuTro,QuanLy">
+            <Authorized><a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a></Authorized>
+        </AuthorizeView>
+    </header>
+
+    <form class="contract-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+        <label for="contract-keyword">@L["ContractSearchLabel"]</label>
+        <div><input id="contract-keyword" class="input" @bind="_keyword" placeholder="@L["ContractSearchPlaceholder"]" />
+            <button class="btn btn-secondary" type="submit"><LucideIcon Name="search" />@L["ContractSearchAction"]</button></div>
+    </form>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractLoadErrorDescription"]">
+            <button class="btn btn-secondary" @onclick="LoadAsync">@L["ContractRetry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["ContractEmptyTitle"]" Description="@L["ContractEmptyDescription"]">
+            <AuthorizeView Roles="ChuTro,QuanLy"><Authorized><a class="btn btn-primary" href="/contracts/create">@L["ContractCreateAction"]</a></Authorized></AuthorizeView>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="contract-table-wrap">
+            <table class="contract-table">
+                <thead><tr>
+                    <th>@L["ContractNumberLabel"]</th><th>@L["ContractTenantsLabel"]</th><th>@L["ContractRoomLabel"]</th><th>@L["ContractPropertyLabel"]</th>
+                    <th>@L["ContractTermLabel"]</th><th class="numeric">@L["ContractRentLabel"]</th><th class="numeric">@L["ContractDepositLabel"]</th><th>@L["ContractStatusLabel"]</th><th>@L["ContractActionsLabel"]</th>
+                </tr></thead>
+                <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
+                        <td>@string.Join(", ", item.TenantNames)</td><td>@item.RoomCode</td><td>@item.PropertyName</td>
+                        <td>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</td>
+                        <td class="numeric tabular-nums">@MoneyFormatter.Format(item.SnapshotPrice)</td><td class="numeric tabular-nums">@MoneyFormatter.Format(item.DepositAmount)</td>
+                        <td><StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" /></td>
+                        <td class="contract-row-actions"><a class="btn btn-secondary" href="@($"/contracts/{item.ContractId}")">@L["ContractViewAction"]</a>
+                            @if (_canApprove && item.Status == ContractStatus.Pending)
+                            { <button class="btn btn-primary" @onclick="() => OpenDecision(item.ContractId)">@L["ContractApproveAction"]</button> }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<ContractApproveModal Visible="_decisionOpen" IsBusy="_decisionBusy" OnClose="CloseDecision" OnDecide="DecideAsync" />
+
+@code {
+    private IReadOnlyList<ContractListItemDto> _items = [];
+    private string? _keyword;
+    private bool _loading = true;
+    private bool _failed;
+    private bool _canApprove;
+    private bool _decisionOpen;
+    private bool _decisionBusy;
+    private Guid _decisionContractId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _canApprove = auth.User.IsInRole("ChuTro");
+        await LoadAsync();
+    }
+
+    private async Task SearchAsync() => await LoadAsync();
+    private async Task LoadAsync()
+    {
+        _loading = true; _failed = false;
+        try { _items = await Contracts.ListAsync(_keyword); }
+        catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
+        finally { _loading = false; }
+    }
+    private void OpenDecision(Guid id) { _decisionContractId = id; _decisionOpen = true; }
+    private Task CloseDecision() { if (!_decisionBusy) _decisionOpen = false; return Task.CompletedTask; }
+    private async Task DecideAsync(ApproveContractRequestDto request)
+    {
+        _decisionBusy = true;
+        try
+        {
+            await Contracts.DecideAsync(_decisionContractId, request);
+            Toasts.Success(L[request.IsApproved ? "ContractApproveSuccess" : "ContractRejectSuccess"]);
+            _decisionOpen = false;
+            await LoadAsync();
+        }
+        catch (Exception ex) { Toasts.Error(ErrorText(ex)); }
+        finally { _decisionBusy = false; }
+    }
+    private string ErrorText(Exception ex) => ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
+    private string StatusLabel(ContractListItemDto item) => L[ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    {
+        ContractDisplayStatus.Pending => "ContractStatusPending",
+        ContractDisplayStatus.Upcoming => "ContractStatusUpcoming",
+        ContractDisplayStatus.Active => "ContractStatusActive",
+        ContractDisplayStatus.ExpiringSoon => "ContractStatusExpiringSoon",
+        ContractDisplayStatus.Expired => "ContractStatusExpired",
+        _ => "ContractStatusRejected",
+    }];
+    private BadgeTone StatusTone(ContractListItemDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    {
+        ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
+        ContractDisplayStatus.Upcoming => BadgeTone.Info,
+        ContractDisplayStatus.Active => BadgeTone.Success,
+        ContractDisplayStatus.Expired => BadgeTone.Neutral,
+        ContractDisplayStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Neutral,
+    };
+}
