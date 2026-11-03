@@ -1,4 +1,4 @@
-﻿namespace Web.Components.Layout;
+namespace Web.Components.Layout;
 
 public static class AppNavigation
 {
@@ -19,10 +19,10 @@ public static class AppNavigation
         new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
         new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
         new("Reports", "chart", "ChuTro"),
-        new("ManagerSwitches", "settings", "ChuTro"),
-        new("Approvals", "check", "ChuTro"),
+        new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
+        new("Approvals", "check", "ChuTro", "/approvals"),
         new("Trash", "trash", "ChuTro"),
-        new("MyRequests", "file", "QuanLy"),
+        new("MyRequests", "file", "QuanLy", "/my-requests"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
         new("MyInvoices", "receipt", "KhachThue", "/my-invoices"),
