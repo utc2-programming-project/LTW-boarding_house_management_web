@@ -31,4 +31,22 @@ public sealed class ContractPageService(P2CallerProvider callerProvider, IContra
             request,
             await callerProvider.GetCallerAsync(),
             cancellationToken);
+
+    public async Task<ContractActionResultDto> RenewAsync(
+        Guid contractId,
+        RenewContractRequestDto request,
+        CancellationToken cancellationToken = default) =>
+        await contracts.RenewContractAsync(
+            contractId,
+            request,
+            await callerProvider.GetCallerAsync(),
+            cancellationToken);
+
+    public async Task<ContractActionResultDto> LiquidateAsync(
+        Guid contractId,
+        CancellationToken cancellationToken = default) =>
+        await contracts.LiquidateContractAsync(
+            contractId,
+            await callerProvider.GetCallerAsync(),
+            cancellationToken);
 }

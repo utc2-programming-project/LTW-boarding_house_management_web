@@ -1,27 +1,46 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
+using System.Text.Json;
 using Web.Common.Utils;
 using Web.Data;
+using Web.Features.Approvals;
+using Web.Features.Approvals.DTOs;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
+using Web.Features.Contracts.Rules;
 using Web.Features.Properties;
 using Web.Features.Properties.Entities;
+using Web.Features.Rooms;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
 
 public sealed class ContractService : IContractService
 {
+    private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
+
     private readonly ApplicationDbContext _context;
     private readonly TimeProvider _timeProvider;
+    private readonly IManagerTogglePolicy? _togglePolicy;
+    private readonly IManagerApprovalService? _approvals;
 
-    public ContractService(ApplicationDbContext dbContext, TimeProvider? timeProvider = null)
+    public ContractService(
+        ApplicationDbContext dbContext,
+        TimeProvider? timeProvider = null,
+        IManagerTogglePolicy? togglePolicy = null,
+        IManagerApprovalService? approvals = null)
     {
         _context = dbContext;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _togglePolicy = togglePolicy;
+        _approvals = approvals;
     }
 
     public async Task<ContractCreateOptionsDto> GetCreateOptionsAsync(
@@ -144,6 +163,7 @@ public sealed class ContractService : IContractService
             {
                 item.ContractId,
                 item.ContractNumber,
+                item.RoomId,
                 item.StartDate,
                 item.EndDate,
                 item.SnapshotPrice,
@@ -185,6 +205,22 @@ public sealed class ContractService : IContractService
                 caller.IsKhachThue && tenant.UserId != caller.UserId ? string.Empty : tenant.Phone))
             .ToListAsync(cancellationToken);
 
+        var canRenew = false;
+        var canLiquidate = false;
+        var today = _timeProvider.TodayVietnam();
+        if ((caller.IsChuTro || caller.IsQuanLy)
+            && ContractLifecycleOperations.IsActionable(
+                contract.Status, contract.StartDate, contract.EndDate, today))
+        {
+            var decision = await EvaluateSw07Async(caller, cancellationToken);
+            if (decision != RoomChangeDecision.Denied)
+            {
+                canLiquidate = true;
+                canRenew = !await ContractLifecycleOperations.HasApprovedSuccessorAsync(
+                    _context, contract.ContractId, contract.RoomId, contract.StartDate, cancellationToken);
+            }
+        }
+
         return new ContractDetailDto(
             contract.ContractId,
             contract.ContractNumber,
@@ -196,7 +232,9 @@ public sealed class ContractService : IContractService
             contract.DepositAmount,
             contract.Status,
             contract.RejectReason,
-            members);
+            members,
+            canRenew,
+            canLiquidate);
     }
 
     public async Task<ContractResponseDto> ApproveContractAsync(
@@ -397,6 +435,79 @@ public sealed class ContractService : IContractService
 
             throw;
         }
+    }
+
+    public async Task<ContractActionResultDto> RenewContractAsync(
+        Guid contractId,
+        RenewContractRequestDto request,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        EnsureCanManage(caller);
+
+        var today = _timeProvider.TodayVietnam();
+        var (contract, room, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        var decision = await EvaluateSw07Async(caller, cancellationToken);
+
+        if (decision == RoomChangeDecision.Denied)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ApprovalDenied,
+                ContractErrorCodes.ApprovalDenied);
+        }
+
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            await EnsureRenewalAllowedAsync(
+                contract, room, property, request.EndDate, today, cancellationToken);
+
+            var approval = await CreateApprovalRequestAsync(
+                contract,
+                property.Id,
+                new ContractApprovalPayload(ContractApprovalActions.Renew, request.EndDate.Date),
+                caller,
+                cancellationToken);
+
+            return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
+        }
+
+        return await ApplyRenewalAsync(contract, room, property, request.EndDate.Date, cancellationToken);
+    }
+
+    public async Task<ContractActionResultDto> LiquidateContractAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCanManage(caller);
+
+        var today = _timeProvider.TodayVietnam();
+        var (contract, room, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        var decision = await EvaluateSw07Async(caller, cancellationToken);
+
+        if (decision == RoomChangeDecision.Denied)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ApprovalDenied,
+                ContractErrorCodes.ApprovalDenied);
+        }
+
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            EnsureLiquidationAllowed(contract, room, property, today);
+
+            var approval = await CreateApprovalRequestAsync(
+                contract,
+                property.Id,
+                new ContractApprovalPayload(ContractApprovalActions.Liquidate, null),
+                caller,
+                cancellationToken);
+
+            return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
+        }
+
+        return await ApplyLiquidationAsync(contract, room, property, today, cancellationToken);
     }
 
     public async Task<ContractResponseDto> CreateContractAsync(
@@ -612,6 +723,289 @@ public sealed class ContractService : IContractService
                 ContractErrorCodes.Forbidden);
         }
     }
+
+    private static void EnsureCanManage(PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro && !caller.IsQuanLy)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden,
+                ContractErrorCodes.Forbidden);
+        }
+    }
+
+    private async Task<RoomChangeDecision> EvaluateSw07Async(
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (!caller.IsQuanLy)
+        {
+            return RoomChangeDecision.Allowed;
+        }
+
+        return _togglePolicy is null
+            ? RoomChangeDecision.RequiresApproval
+            : await _togglePolicy.EvaluateAsync(ManagerAction.SW07, caller.Role, cancellationToken);
+    }
+
+    private async Task<(Contract Contract, Room Room, Property Property)> LoadLifecycleTargetAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        var contract = await _context.Contracts
+            .SingleOrDefaultAsync(item => item.ContractId == contractId, cancellationToken);
+        if (contract is null)
+        {
+            throw new ContractNotFoundException(
+                ContractErrorMessages.ContractNotFound,
+                ContractErrorCodes.ContractNotFound);
+        }
+
+        var room = await _context.Rooms
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == contract.RoomId, cancellationToken);
+        if (room is null)
+        {
+            throw new ContractNotFoundException(
+                ContractErrorMessages.RoomNotFound,
+                ContractErrorCodes.RoomNotFound);
+        }
+
+        var property = await PropertyScope.Apply(
+                _context.Properties.IgnoreQueryFilters().AsNoTracking(),
+                _context.PropertyManagers.AsNoTracking(),
+                caller)
+            .SingleOrDefaultAsync(item => item.Id == room.PropertyId, cancellationToken);
+        if (property is null)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.OutsideOwnerScope,
+                ContractErrorCodes.Forbidden);
+        }
+
+        return (contract, room, property);
+    }
+
+    private async Task<ApprovalRequestDto> CreateApprovalRequestAsync(
+        Contract contract,
+        int propertyId,
+        ContractApprovalPayload payload,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (_approvals is null)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ApprovalFailed,
+                ContractErrorCodes.ApprovalFailed);
+        }
+
+        var approval = await _approvals.CreateAsync(
+            new CreateApprovalRequest
+            {
+                OperationCode = "SW-07",
+                TargetType = ApprovalTargetType.Contract,
+                TargetKey = contract.ContractId.ToString("D"),
+                PropertyId = propertyId,
+                PayloadJson = JsonSerializer.Serialize(payload, PayloadJsonOptions),
+            },
+            new ApprovalCaller(caller.UserId, caller.Role),
+            cancellationToken);
+
+        if (approval.Succeeded && approval.Request is not null)
+        {
+            return approval.Request;
+        }
+
+        if (approval.ErrorCode == ApprovalErrorCodes.DuplicatePendingRequest)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.DuplicatePendingRequest,
+                ContractErrorCodes.DuplicatePendingRequest);
+        }
+
+        throw new ContractOperationException(
+            ContractErrorMessages.ApprovalFailed,
+            ContractErrorCodes.ApprovalFailed);
+    }
+
+    private async Task EnsureRenewalAllowedAsync(
+        Contract contract,
+        Room room,
+        Property property,
+        DateTime newEndDate,
+        DateOnly today,
+        CancellationToken cancellationToken)
+    {
+        EnsureLifecycleEligible(contract, room, property, today);
+        ContractLifecycleOperations.EnsureRenewalEndDate(contract.EndDate, newEndDate);
+
+        if (await ContractLifecycleOperations.HasApprovedSuccessorAsync(
+                _context, contract.ContractId, contract.RoomId, contract.StartDate, cancellationToken))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ContractAlreadyRenewed,
+                ContractErrorCodes.ContractAlreadyRenewed);
+        }
+
+        if (await ContractLifecycleOperations.HasOverlappingApprovedAsync(
+                _context, contract.RoomId, contract.EndDate.AddDays(1), newEndDate, cancellationToken))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ContractOverlap,
+                ContractErrorCodes.ContractOverlap);
+        }
+    }
+
+    private static void EnsureLiquidationAllowed(
+        Contract contract,
+        Room room,
+        Property property,
+        DateOnly today) =>
+        EnsureLifecycleEligible(contract, room, property, today);
+
+    private static void EnsureLifecycleEligible(
+        Contract contract,
+        Room room,
+        Property property,
+        DateOnly today)
+    {
+        if (!ContractLifecycleOperations.IsActionable(
+                contract.Status, contract.StartDate, contract.EndDate, today))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ContractNotActive,
+                ContractErrorCodes.ContractNotActive);
+        }
+
+        if (property.IsDeleted)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.PropertyUnavailable,
+                ContractErrorCodes.PropertyUnavailable);
+        }
+
+        if (room.IsDeleted || !room.IsActive)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.RoomUnavailable,
+                ContractErrorCodes.RoomUnavailable);
+        }
+    }
+
+    private async Task<ContractActionResultDto> ApplyRenewalAsync(
+        Contract contract,
+        Room room,
+        Property property,
+        DateTime newEndDate,
+        CancellationToken cancellationToken)
+    {
+        var today = _timeProvider.TodayVietnam();
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        Room? lockedRoom = null;
+        try
+        {
+            lockedRoom = await LockRoomAsync(room.Id, cancellationToken);
+            if (lockedRoom is null)
+            {
+                throw new ContractNotFoundException(
+                    ContractErrorMessages.RoomNotFound,
+                    ContractErrorCodes.RoomNotFound);
+            }
+
+            if (await LockContractAsync(contract.ContractId, cancellationToken) is null)
+            {
+                throw new ContractNotFoundException(
+                    ContractErrorMessages.ContractNotFound,
+                    ContractErrorCodes.ContractNotFound);
+            }
+
+            await _context.Entry(contract).ReloadAsync(cancellationToken);
+            await EnsureRenewalAllowedAsync(
+                contract, lockedRoom, property, newEndDate, today, cancellationToken);
+
+            var renewal = await ContractLifecycleOperations.CreateRenewalAsync(
+                _context, contract, lockedRoom, newEndDate, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new ContractActionResultDto(ContractActionOutcome.Applied, renewal.ContractId, null);
+        }
+        catch (Exception exception) when (IsContractOverlapConstraint(exception))
+        {
+            await TryRollbackAndReloadAsync(transaction, contract, lockedRoom);
+            throw new ContractOperationException(
+                ContractErrorMessages.ContractOverlap,
+                ContractErrorCodes.ContractOverlap,
+                exception);
+        }
+        catch
+        {
+            await TryRollbackAndReloadAsync(transaction, contract, lockedRoom);
+            throw;
+        }
+    }
+
+    private async Task<ContractActionResultDto> ApplyLiquidationAsync(
+        Contract contract,
+        Room room,
+        Property property,
+        DateOnly today,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        Room? lockedRoom = null;
+        try
+        {
+            lockedRoom = await LockRoomAsync(room.Id, cancellationToken);
+            if (lockedRoom is null)
+            {
+                throw new ContractNotFoundException(
+                    ContractErrorMessages.RoomNotFound,
+                    ContractErrorCodes.RoomNotFound);
+            }
+
+            if (await LockContractAsync(contract.ContractId, cancellationToken) is null)
+            {
+                throw new ContractNotFoundException(
+                    ContractErrorMessages.ContractNotFound,
+                    ContractErrorCodes.ContractNotFound);
+            }
+
+            await _context.Entry(contract).ReloadAsync(cancellationToken);
+            EnsureLiquidationAllowed(contract, lockedRoom, property, today);
+
+            await ContractLifecycleOperations.LiquidateAsync(
+                _context, contract, lockedRoom, today, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return new ContractActionResultDto(ContractActionOutcome.Applied, contract.ContractId, null);
+        }
+        catch
+        {
+            await TryRollbackAndReloadAsync(transaction, contract, lockedRoom);
+            throw;
+        }
+    }
+
+    private Task<Room?> LockRoomAsync(int roomId, CancellationToken cancellationToken) =>
+        _context.Rooms
+            .FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {roomId}")
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(cancellationToken);
+
+    private Task<Contract?> LockContractAsync(Guid contractId, CancellationToken cancellationToken) =>
+        _context.Contracts
+            .FromSqlInterpolated(
+                $"SELECT * FROM [Contracts] WITH (UPDLOCK, HOLDLOCK) WHERE [ContractId] = {contractId}")
+            .AsNoTracking()
+            .SingleOrDefaultAsync(cancellationToken);
 
     private static ContractResponseDto ToResponse(Contract contract) => new(
         contract.ContractId,

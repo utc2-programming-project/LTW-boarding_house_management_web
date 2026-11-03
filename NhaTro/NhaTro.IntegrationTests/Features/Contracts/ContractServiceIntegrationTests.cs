@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Web.Data;
 using Web.Data.Migrations;
 using Web.Features.Accounts;
+using Web.Features.Approvals;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts;
 using Microsoft.Data.SqlClient;
 using Web.Features.Contracts.DTOs;
@@ -10,8 +14,11 @@ using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.Entities;
+using Web.Features.Rooms;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Features.Tenants.Entities;
 using NhaTro.IntegrationTests.Infrastructure;
 
@@ -753,6 +760,269 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             (await reloadedDb.Rooms.SingleAsync(room => room.Id == roomId)).Status);
     }
 
+    [SqlServerFact]
+    public async Task GetAsync_ExposesLifecycleActionsForEligibleOwnerContract()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, LifecycleClock);
+
+        var detail = await service.GetAsync(contractId, OwnerCaller);
+
+        Assert.True(detail.CanRenew);
+        Assert.True(detail.CanLiquidate);
+    }
+
+    [SqlServerFact]
+    public async Task GetAsync_HidesLifecycleActionsForPendingContract()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Pending));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, LifecycleClock);
+
+        var detail = await service.GetAsync(contractId, OwnerCaller);
+
+        Assert.False(detail.CanRenew);
+        Assert.False(detail.CanLiquidate);
+    }
+
+    [SqlServerFact]
+    public async Task GetAsync_HidesLifecycleActionsWhenSw07DeniesManager()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        await AssignManagerAsync(dbContext, roomId);
+        var service = new ContractService(dbContext, LifecycleClock, new FixedTogglePolicy(RoomChangeDecision.Denied));
+
+        var detail = await service.GetAsync(contractId, new PropertyCaller(ManagerId, Roles.QuanLy));
+
+        Assert.False(detail.CanRenew);
+        Assert.False(detail.CanLiquidate);
+    }
+
+    [SqlServerFact]
+    public async Task RenewContractAsync_CreatesApprovedSuccessorAndKeepsHistory()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var tenant = await AddTenantAsync(dbContext, "Tenant Renew", "0900000101");
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        dbContext.ContractMembers.Add(new ContractMember { ContractId = contractId, TenantId = tenant.Id });
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, LifecycleClock);
+
+        var result = await service.RenewContractAsync(
+            contractId,
+            new RenewContractRequestDto { EndDate = new DateTime(2028, 10, 21) },
+            OwnerCaller);
+
+        Assert.Equal(ContractActionOutcome.Applied, result.Outcome);
+        Assert.NotNull(result.ContractId);
+        Assert.Null(result.ApprovalRequestId);
+
+        await using var reloadedDb = fixture.CreateContext();
+        var renewal = await reloadedDb.Contracts.SingleAsync(item => item.ContractId == result.ContractId);
+        Assert.Equal(ContractStatus.Approved, renewal.Status);
+        Assert.Equal(new DateTime(2027, 10, 22), renewal.StartDate);
+        Assert.Equal(new DateTime(2028, 10, 21), renewal.EndDate);
+        Assert.Equal(1_000_000m, renewal.SnapshotPrice);
+        Assert.Equal(200_000m, renewal.DepositAmount);
+        Assert.Equal(tenant.Id, (await reloadedDb.ContractMembers
+            .SingleAsync(member => member.ContractId == renewal.ContractId)).TenantId);
+        Assert.Equal(ContractStatus.Approved,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Rented,
+            (await reloadedDb.Rooms.SingleAsync(room => room.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
+    public async Task RenewContractAsync_RejectsEndDateNotAfterCurrentEndDate()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, LifecycleClock);
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() => service.RenewContractAsync(
+            contractId,
+            new RenewContractRequestDto { EndDate = new DateTime(2027, 10, 21) },
+            OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.InvalidRenewalEndDate, exception.ErrorCode);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Single(await reloadedDb.Contracts.ToListAsync());
+    }
+
+    [SqlServerFact]
+    public async Task LiquidateContractAsync_MarksLiquidatedAndFreesRoom()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        var service = new ContractService(dbContext, LifecycleClock);
+
+        var result = await service.LiquidateContractAsync(contractId, OwnerCaller);
+
+        Assert.Equal(ContractActionOutcome.Applied, result.Outcome);
+        Assert.Equal(contractId, result.ContractId);
+
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Liquidated,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Equal(RoomStatus.Available,
+            (await reloadedDb.Rooms.SingleAsync(room => room.Id == roomId)).Status);
+    }
+
+    [SqlServerFact]
+    public async Task ManagerRenewal_RequiresOwnerApprovalThenCreatesSuccessor()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var tenant = await AddTenantAsync(dbContext, "Tenant Manager Renew", "0900000102");
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        dbContext.ContractMembers.Add(new ContractMember { ContractId = contractId, TenantId = tenant.Id });
+        await dbContext.SaveChangesAsync();
+        await AssignManagerAsync(dbContext, roomId);
+
+        var approvals = new ManagerApprovalService(
+            dbContext,
+            LifecycleClock,
+            [new ContractApprovalApplier(LifecycleClock)],
+            NullLogger<ManagerApprovalService>.Instance);
+        var service = new ContractService(
+            dbContext,
+            LifecycleClock,
+            new FixedTogglePolicy(RoomChangeDecision.RequiresApproval),
+            approvals);
+
+        var result = await service.RenewContractAsync(
+            contractId,
+            new RenewContractRequestDto { EndDate = new DateTime(2028, 10, 21) },
+            new PropertyCaller(ManagerId, Roles.QuanLy));
+
+        Assert.Equal(ContractActionOutcome.PendingApproval, result.Outcome);
+        Assert.NotNull(result.ApprovalRequestId);
+        await using (var beforeApprovalDb = fixture.CreateContext())
+        {
+            Assert.Single(await beforeApprovalDb.Contracts.ToListAsync());
+            var pending = await beforeApprovalDb.ManagerApprovalRequests.SingleAsync();
+            Assert.Equal("SW-07", pending.OperationCode);
+            Assert.Equal(ApprovalTargetType.Contract, pending.TargetType);
+            Assert.Equal(contractId.ToString("D"), pending.TargetKey);
+        }
+
+        var decision = await approvals.ApproveAsync(
+            result.ApprovalRequestId!.Value,
+            new ApprovalCaller(OwnerId, Roles.ChuTro));
+
+        Assert.True(decision.Succeeded);
+        await using var afterApprovalDb = fixture.CreateContext();
+        var contracts = await afterApprovalDb.Contracts.OrderBy(item => item.StartDate).ToListAsync();
+        Assert.Equal(2, contracts.Count);
+        var renewal = contracts[^1];
+        Assert.Equal(ContractStatus.Approved, renewal.Status);
+        Assert.Equal(new DateTime(2027, 10, 22), renewal.StartDate);
+        Assert.Equal(new DateTime(2028, 10, 21), renewal.EndDate);
+        Assert.Equal(tenant.Id, (await afterApprovalDb.ContractMembers
+            .SingleAsync(member => member.ContractId == renewal.ContractId)).TenantId);
+    }
+
+    [SqlServerFact]
+    public async Task ManagerLiquidation_RequiresOwnerApprovalThenFreesRoom()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        await AssignManagerAsync(dbContext, roomId);
+
+        var approvals = new ManagerApprovalService(
+            dbContext,
+            LifecycleClock,
+            [new ContractApprovalApplier(LifecycleClock)],
+            NullLogger<ManagerApprovalService>.Instance);
+        var service = new ContractService(
+            dbContext,
+            LifecycleClock,
+            new FixedTogglePolicy(RoomChangeDecision.RequiresApproval),
+            approvals);
+
+        var result = await service.LiquidateContractAsync(
+            contractId,
+            new PropertyCaller(ManagerId, Roles.QuanLy));
+
+        Assert.Equal(ContractActionOutcome.PendingApproval, result.Outcome);
+        Assert.NotNull(result.ApprovalRequestId);
+        await using (var beforeApprovalDb = fixture.CreateContext())
+        {
+            Assert.Equal(ContractStatus.Approved,
+                (await beforeApprovalDb.Contracts.SingleAsync()).Status);
+            Assert.Equal(RoomStatus.Rented,
+                (await beforeApprovalDb.Rooms.SingleAsync()).Status);
+        }
+
+        var decision = await approvals.ApproveAsync(
+            result.ApprovalRequestId!.Value,
+            new ApprovalCaller(OwnerId, Roles.ChuTro));
+
+        Assert.True(decision.Succeeded);
+        await using var afterApprovalDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Liquidated,
+            (await afterApprovalDb.Contracts.SingleAsync()).Status);
+        Assert.Equal(RoomStatus.Available,
+            (await afterApprovalDb.Rooms.SingleAsync()).Status);
+    }
+
+    [SqlServerFact]
+    public async Task ManagerRenewal_IsBlockedWhenSw07Denies()
+    {
+        await ResetDatabaseAsync();
+        var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Rented);
+        await using var dbContext = db;
+        var contractId = Guid.NewGuid();
+        dbContext.Contracts.Add(TestContract(contractId, roomId, ContractStatus.Approved));
+        await dbContext.SaveChangesAsync();
+        await AssignManagerAsync(dbContext, roomId);
+        var service = new ContractService(
+            dbContext, LifecycleClock, new FixedTogglePolicy(RoomChangeDecision.Denied));
+
+        var exception = await Assert.ThrowsAsync<ContractOperationException>(() => service.LiquidateContractAsync(
+            contractId,
+            new PropertyCaller(ManagerId, Roles.QuanLy)));
+
+        Assert.Equal(ContractErrorCodes.ApprovalDenied, exception.ErrorCode);
+        await using var reloadedDb = fixture.CreateContext();
+        Assert.Equal(ContractStatus.Approved,
+            (await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId)).Status);
+        Assert.Empty(await reloadedDb.ManagerApprovalRequests.ToListAsync());
+    }
+
     private async Task<(ApplicationDbContext Db, int RoomId)> CreateDatabaseWithRoomAsync(RoomStatus roomStatus)
     {
         var db = fixture.CreateContext();
@@ -811,6 +1081,36 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         new DateTime(2026, 10, 22),
         new DateTime(2026, 11, 22),
         tenantIds);
+
+    private static async Task AssignManagerAsync(ApplicationDbContext db, int roomId)
+    {
+        await SqlServerFixture.SeedAccountAsync(db, ManagerId, Roles.QuanLy);
+        var propertyId = await db.Rooms
+            .Where(room => room.Id == roomId)
+            .Select(room => room.PropertyId)
+            .SingleAsync();
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = propertyId,
+            ManagerUserId = ManagerId,
+            AssignedByUserId = OwnerId,
+        });
+        await db.SaveChangesAsync();
+    }
+
+    private static TimeProvider LifecycleClock => new FixedTimeProvider(
+        new DateTimeOffset(2026, 11, 1, 12, 0, 0, TimeSpan.Zero));
+
+    private sealed class FixedTogglePolicy(RoomChangeDecision decision) : IManagerTogglePolicy
+    {
+        public Task<RoomChangeDecision> EvaluateAsync(
+            ManagerAction action, string role, CancellationToken ct = default) =>
+            Task.FromResult(decision);
+
+        public Task<RoomChangeDecision> EvaluateAsync(
+            string code, string role, CancellationToken ct = default) =>
+            Task.FromResult(decision);
+    }
 
     private const string OwnerId = "contract-test-owner";
     private const string ManagerId = "contract-test-manager";
