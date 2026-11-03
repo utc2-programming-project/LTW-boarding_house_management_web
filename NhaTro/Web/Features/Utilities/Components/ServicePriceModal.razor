@@ -1,5 +1,4 @@
 @inject IStringLocalizer<UtilityResources> L
-@inject UtilitySampleStateService StateService
 
 @if (IsOpen && Service is not null)
 {
@@ -63,20 +62,13 @@
                     </div>
 
                     <div class="form-field-group">
-                        <label class="field-label" for="building-scope-select">@L["BuildingScopeLabel"]</label>
-                        <select id="building-scope-select"
-                                class="input @(_scopeError.HasValue ? "invalid" : "")"
-                                @bind="_buildingScope"
-                                @bind:after="ValidateScope">
-                            @foreach (var b in StateService.GetEditableBuildingScopes(Service))
-                            {
-                                <option value="@b.Id">@(b.Id == "all" ? L["AllBuildings"] : b.Name)</option>
-                            }
-                        </select>
-                        @if (_scopeError.HasValue)
-                        {
-                            <span class="field-error-text" role="alert">@L[$"Error{_scopeError.Value}"]</span>
-                        }
+                        <label class="field-label" for="building-scope-readonly">@L["BuildingScopeLabel"]</label>
+                        <input id="building-scope-readonly"
+                               type="text"
+                               class="input"
+                               readonly
+                               disabled
+                               value="@(Service?.BuildingName ?? (Service?.BuildingId == "all" ? L["AllBuildings"] : string.Empty))" />
                     </div>
                 </div>
 
@@ -116,15 +108,22 @@
                            type="text"
                            class="input"
                            @bind="_note"
+                           maxlength="500"
                            placeholder="@L["NotePlaceholder"]" />
                 </div>
+                @if (!CanWrite)
+                {
+                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: #b45309; background-color: #fef3c7; border: 1px solid #fcd34d; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
+                        @L["WriteActionBlockedNotice"]
+                    </div>
+                }
             </div>
 
             <footer class="modal-footer">
                 <button type="button" class="btn btn-secondary" @onclick="HandleClose" disabled="@_isSaving">
                     @L["CancelBtn"]
                 </button>
-                <button type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@_isSaving">
+                <button id="service-price-save-submit-btn" type="button" class="btn btn-primary" @onclick="HandleSubmit" disabled="@(!CanWrite || _isSaving)" title="@(!CanWrite ? L["WriteActionBlockedNotice"] : "")">
                     @if (_isSaving)
                     {
                         <span class="spinner" aria-hidden="true"></span>
@@ -146,17 +145,16 @@
     [Parameter] public ServiceItemDto? Service { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<UpdatePriceRequest> OnSave { get; set; }
+    [Parameter] public bool CanWrite { get; set; } = false;
 
     private decimal _newRate;
     private ServiceUnitCategory _unit = ServiceUnitCategory.Room;
-    private string _buildingScope = "all";
     private DateOnly _effectiveFrom;
     private DateOnly? _effectiveTo;
     private string? _note;
     private bool _isSaving;
     private UtilityErrorCode? _rateError;
     private UtilityErrorCode? _dateError;
-    private UtilityErrorCode? _scopeError;
     private string? _initializedServiceId;
     private bool _wasOpen;
 
@@ -174,15 +172,11 @@
         _initializedServiceId = Service.Id;
         _newRate = Service.CurrentRate;
         _unit = Service.Unit;
-        _buildingScope = Service.BuildingId == "all"
-            ? StateService.GetEditableBuildingScopes(Service).FirstOrDefault()?.Id ?? string.Empty
-            : Service.BuildingId;
-        _effectiveFrom = StateService.Today;
+        _effectiveFrom = DateOnly.FromDateTime(DateTime.Today);
         _effectiveTo = null;
         _note = string.Empty;
         _rateError = null;
         _dateError = null;
-        _scopeError = null;
     }
 
     private void ValidateRate()
@@ -197,21 +191,12 @@
             .FirstOrDefault(issue => issue.Error is UtilityErrorCode.EffectiveFromIsRequired or UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom)?.Error;
     }
 
-    private void ValidateScope()
-    {
-        _scopeError = Service is not null && StateService.GetEditableBuildingScopes(Service)
-            .Any(building => building.Id == _buildingScope && building.Id != "all")
-                ? null
-                : UtilityErrorCode.InvalidBuildingScope;
-    }
-
     private async Task HandleSubmit()
     {
         ValidateRate();
         ValidateDates();
-        ValidateScope();
 
-        if (_isSaving || _rateError.HasValue || _dateError.HasValue || _scopeError.HasValue)
+        if (!CanWrite || _isSaving || _rateError.HasValue || _dateError.HasValue)
         {
             return;
         }
@@ -240,7 +225,6 @@
         ServiceId = Service?.Id ?? string.Empty,
         NewRate = _newRate,
         Unit = _unit,
-        BuildingScope = _buildingScope,
         EffectiveFrom = _effectiveFrom,
         EffectiveTo = _effectiveTo,
         Note = _note,
@@ -257,4 +241,3 @@
         _ => "NoData",
     };
 }
-

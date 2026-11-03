@@ -386,6 +386,84 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecidedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DecisionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte[]>("ExpectedToken")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("OperationCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("RequestedByUserId", "Status");
+
+                    b.HasIndex("Status", "RequestedAt");
+
+                    b.HasIndex("OperationCode", "TargetType", "TargetKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ManagerApprovalRequests_Pending")
+                        .HasFilter("[Status] = 0");
+
+                    b.ToTable("ManagerApprovalRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ManagerApprovalRequests_Status", "[Status] IN (0, 1, 2, 3)");
+                        });
+                });
+
             modelBuilder.Entity("Web.Features.Contracts.Entities.Contract", b =>
                 {
                     b.Property<Guid>("ContractId")
@@ -556,6 +634,157 @@ namespace Web.Migrations
                             t.HasCheckConstraint("CK_InvoiceItems_Quantity", "[Quantity] > 0");
 
                             t.HasCheckConstraint("CK_InvoiceItems_UnitPrice", "[UnitPrice] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
+                {
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApprovalRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("IncidentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.HasKey("FileId");
+
+                    b.HasIndex("ApprovalRequestId");
+
+                    b.HasIndex("IncidentId", "Kind");
+
+                    b.ToTable("IncidentPhotoAttachments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_IncidentPhotoAttachments_Kind", "[Kind] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_IncidentPhotoAttachments_Target", "[IncidentId] IS NOT NULL OR [ApprovalRequestId] IS NOT NULL");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssigneeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<decimal?>("RepairCost")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<string>("ReportedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TechnicalNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Urgency")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportedByUserId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("MaintenanceIncidents", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MaintenanceIncidents_Category", "[Category] BETWEEN 0 AND 4");
+
+                            t.HasCheckConstraint("CK_MaintenanceIncidents_RepairCost", "[RepairCost] IS NULL OR [RepairCost] >= 0");
+
+                            t.HasCheckConstraint("CK_MaintenanceIncidents_Status", "[Status] BETWEEN 0 AND 2");
+
+                            t.HasCheckConstraint("CK_MaintenanceIncidents_Urgency", "[Urgency] BETWEEN 0 AND 2");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncidentHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ActorUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IncidentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ToStatus")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IncidentId");
+
+                    b.ToTable("MaintenanceIncidentHistories", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MaintenanceIncidentHistories_Action", "[Action] BETWEEN 0 AND 4");
+
+                            t.HasCheckConstraint("CK_MaintenanceIncidentHistories_FromStatus", "[FromStatus] IS NULL OR [FromStatus] BETWEEN 0 AND 2");
+
+                            t.HasCheckConstraint("CK_MaintenanceIncidentHistories_ToStatus", "[ToStatus] BETWEEN 0 AND 2");
                         });
                 });
 
@@ -995,6 +1224,13 @@ namespace Web.Migrations
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -1056,6 +1292,8 @@ namespace Web.Migrations
 
                     b.HasIndex("FullName");
 
+                    b.HasIndex("IsDeleted");
+
                     b.HasIndex("Phone");
 
                     b.HasIndex("UserId")
@@ -1075,6 +1313,15 @@ namespace Web.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsReadOnly")
                         .ValueGeneratedOnAdd()
@@ -1107,16 +1354,24 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
                         .HasColumnType("date");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("ServiceCatalogId")
                         .HasColumnType("int");
@@ -1132,6 +1387,8 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("EffectiveDate", "ServiceCatalogId");
 
                     b.HasIndex("ServiceCatalogId", "EffectiveDate")
@@ -1141,9 +1398,11 @@ namespace Web.Migrations
                         {
                             t.HasCheckConstraint("CK_ServicePriceHistory_CalculationMethod_NotBlank", "LEN(LTRIM(RTRIM([CalculationMethod]))) > 0");
 
+                            t.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] > [EffectiveDate]");
+
                             t.HasCheckConstraint("CK_ServicePriceHistory_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
 
-                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_Positive", "[UnitPrice] > 0");
 
                             t.HasCheckConstraint("CK_ServicePriceHistory_Unit_NotBlank", "LEN(LTRIM(RTRIM([Unit]))) > 0");
                         });
@@ -1641,6 +1900,25 @@ namespace Web.Migrations
                     b.Navigation("TariffVersion");
                 });
 
+            modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Contracts.Entities.Contract", b =>
                 {
                     b.HasOne("Web.Features.Rooms.Entities.Room", null)
@@ -1683,6 +1961,55 @@ namespace Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
+                {
+                    b.HasOne("Web.Features.Approvals.Entities.ManagerApprovalRequest", "ApprovalRequest")
+                        .WithMany()
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Storage.Entities.StoredFile", "File")
+                        .WithOne()
+                        .HasForeignKey("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", "FileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Maintenance.Entities.MaintenanceIncident", "Incident")
+                        .WithMany()
+                        .HasForeignKey("IncidentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApprovalRequest");
+
+                    b.Navigation("File");
+
+                    b.Navigation("Incident");
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncidentHistory", b =>
+                {
+                    b.HasOne("Web.Features.Maintenance.Entities.MaintenanceIncident", null)
+                        .WithMany("History")
+                        .HasForeignKey("IncidentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.Property", b =>
@@ -1764,6 +2091,11 @@ namespace Web.Migrations
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServicePriceHistory", b =>
                 {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Web.Features.Utilities.Entities.ServiceCatalog", "ServiceCatalog")
                         .WithMany("PriceHistory")
                         .HasForeignKey("ServiceCatalogId")
@@ -1799,6 +2131,11 @@ namespace Web.Migrations
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>
+                {
+                    b.Navigation("History");
+                });
+
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
                 {
                     b.Navigation("PriceHistory");
@@ -1807,103 +2144,6 @@ namespace Web.Migrations
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
                 {
                     b.Navigation("Tiers");
-                });
-
-            modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("DecidedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DecidedByUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("DecisionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<byte[]>("ExpectedToken")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("OperationCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("PayloadJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RequestedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TargetKey")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("TargetType")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DecidedByUserId");
-
-                    b.HasIndex("PropertyId");
-
-                    b.HasIndex("RequestedByUserId", "Status");
-
-                    b.HasIndex("Status", "RequestedAt");
-
-                    b.HasIndex("OperationCode", "TargetType", "TargetKey")
-                        .IsUnique()
-                        .HasDatabaseName("UX_ManagerApprovalRequests_Pending")
-                        .HasFilter("[Status] = 0");
-
-                    b.ToTable("ManagerApprovalRequests", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_ManagerApprovalRequests_Status", "[Status] IN (0, 1, 2, 3)");
-                        });
-                });
-
-            modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
-                {
-                    b.HasOne("Web.Data.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("DecidedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Web.Features.Properties.Entities.Property", null)
-                        .WithMany()
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Web.Data.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("RequestedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

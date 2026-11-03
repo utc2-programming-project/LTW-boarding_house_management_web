@@ -8,7 +8,7 @@
                 <FormField TValue="string" Id="tenant-full-name" Label="@L["TenantFullName"]" Required="true"
                            For="() => _form.FullName">
                     <InputText id="tenant-full-name" class="input" @bind-Value="_form.FullName" maxlength="200"
-                               autocomplete="name" aria-describedby="tenant-full-name-error" />
+                               autocomplete="name" aria-describedby="tenant-full-name-error" aria-invalid="@(_editContext.HasError(() => _form.FullName) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -16,14 +16,14 @@
                 <FormField TValue="string" Id="tenant-phone" Label="@L["TenantPhone"]" Required="true"
                            Hint="@L["TenantValidationPhone"]" For="() => _form.PhoneNumber">
                     <InputText id="tenant-phone" class="input" @bind-Value="_form.PhoneNumber" maxlength="20"
-                               inputmode="tel" autocomplete="tel" aria-describedby="tenant-phone-hint tenant-phone-error" />
+                               inputmode="tel" autocomplete="tel" aria-describedby="tenant-phone-hint tenant-phone-error" aria-invalid="@(_editContext.HasError(() => _form.PhoneNumber) ? "true" : "false")" />
                 </FormField>
             </div>
 
             <div class="tenant-form-field tenant-form-email">
                 <FormField TValue="string" Id="tenant-email" Label="@L["TenantEmail"]" For="() => _form.Email">
                     <InputText id="tenant-email" class="input" @bind-Value="_form.Email" maxlength="256"
-                               type="email" autocomplete="email" aria-describedby="tenant-email-error" />
+                               type="email" autocomplete="email" aria-describedby="tenant-email-error" aria-invalid="@(_editContext.HasError(() => _form.Email) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -33,7 +33,7 @@
                            For="() => _form.IdNumber">
                     <InputText id="tenant-id-number" class="input tenant-mono" @bind-Value="_form.IdNumber" maxlength="20"
                                autocomplete="off" placeholder="@(IdNumberPlaceholder)"
-                               aria-describedby="@(CanRevealIdNumber ? "tenant-id-number-error" : "tenant-id-number-hint tenant-id-number-error")" />
+                               aria-describedby="@(CanRevealIdNumber ? "tenant-id-number-error" : "tenant-id-number-hint tenant-id-number-error")" aria-invalid="@(_editContext.HasError(() => _form.IdNumber) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -41,13 +41,13 @@
                 <FormField TValue="DateOnly?" Id="tenant-date-of-birth" Label="@L["TenantDateOfBirth"]"
                            For="() => _form.DateOfBirth">
                     <InputDate id="tenant-date-of-birth" class="input" @bind-Value="_form.DateOfBirth"
-                               aria-describedby="tenant-date-of-birth-error" />
+                               aria-describedby="tenant-date-of-birth-error" aria-invalid="@(_editContext.HasError(() => _form.DateOfBirth) ? "true" : "false")" />
                 </FormField>
             </div>
 
             <div class="tenant-form-field tenant-form-gender">
                 <FormField TValue="Gender?" Id="tenant-gender" Label="@L["TenantGender"]" For="() => _form.Gender">
-                    <InputSelect id="tenant-gender" class="input" @bind-Value="_form.Gender">
+                    <InputSelect id="tenant-gender" class="input" @bind-Value="_form.Gender" aria-invalid="@(_editContext.HasError(() => _form.Gender) ? "true" : "false")">
                         <option value="">@L["NoData"]</option>
                         <option value="Male">@L["TenantGenderMale"]</option>
                         <option value="Female">@L["TenantGenderFemale"]</option>
@@ -60,7 +60,7 @@
                 <FormField TValue="DateOnly?" Id="tenant-id-issued-date" Label="@L["TenantIdIssuedDate"]"
                            For="() => _form.IdIssuedDate">
                     <InputDate id="tenant-id-issued-date" class="input" @bind-Value="_form.IdIssuedDate"
-                               aria-describedby="tenant-id-issued-date-error" />
+                               aria-describedby="tenant-id-issued-date-error" aria-invalid="@(_editContext.HasError(() => _form.IdIssuedDate) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -68,7 +68,7 @@
                 <FormField TValue="string" Id="tenant-id-issued-place" Label="@L["TenantIdIssuedPlace"]"
                            For="() => _form.IdIssuedPlace">
                     <InputText id="tenant-id-issued-place" class="input" @bind-Value="_form.IdIssuedPlace" maxlength="200"
-                               aria-describedby="tenant-id-issued-place-error" />
+                               aria-describedby="tenant-id-issued-place-error" aria-invalid="@(_editContext.HasError(() => _form.IdIssuedPlace) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -76,7 +76,7 @@
                 <FormField TValue="string" Id="tenant-address" Label="@L["TenantPermanentAddress"]"
                            For="() => _form.PermanentAddress">
                     <InputTextArea id="tenant-address" class="input tenant-textarea" @bind-Value="_form.PermanentAddress"
-                                   maxlength="300" aria-describedby="tenant-address-error" />
+                                   maxlength="300" aria-describedby="tenant-address-error" aria-invalid="@(_editContext.HasError(() => _form.PermanentAddress) ? "true" : "false")" />
                 </FormField>
             </div>
 
@@ -85,7 +85,7 @@
                 <div class="tenant-form-field tenant-form-note">
                     <FormField TValue="string" Id="tenant-note" Label="@L["TenantInternalNote"]" For="() => _form.Note">
                         <InputTextArea id="tenant-note" class="input tenant-textarea" @bind-Value="_form.Note"
-                                       maxlength="500" aria-describedby="tenant-note-error" />
+                                       maxlength="500" aria-describedby="tenant-note-error" aria-invalid="@(_editContext.HasError(() => _form.Note) ? "true" : "false")" />
                     </FormField>
                 </div>
             }

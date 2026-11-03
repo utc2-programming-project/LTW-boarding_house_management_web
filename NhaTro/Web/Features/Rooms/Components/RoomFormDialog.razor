@@ -4,7 +4,7 @@
 
 <FeatureDialog @ref="_featureDialog" Visible="Visible" Title="@(IsEdit ? L["P2EditRoom"].Value : L["P2AddRoom"].Value)"
                CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose" CssClass="room-form-dialog">
-    <EditForm Model="_model" OnSubmit="HandleSubmitAsync" novalidate>
+    <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync" novalidate>
         <div class="p2-form-body">
             @if (!string.IsNullOrWhiteSpace(_error))
             {
@@ -32,7 +32,7 @@
                 <div class="p2-form-grid">
                     <div class="p2-field">
                         <label for="room-property-select">@L["P2Property"] <span class="required" aria-hidden="true">*</span></label>
-                        <InputSelect id="room-property-select" @bind-Value="_model.PropertyId" aria-describedby="room-property-error">
+                        <InputSelect id="room-property-select" @bind-Value="_model.PropertyId" aria-describedby="room-property-error" aria-invalid="@(_editContext.HasError(() => _model.PropertyId) ? "true" : "false")">
                             <option value="0">@L["P2SelectProperty"]</option>
                             @foreach (var property in Properties)
                             {
@@ -43,28 +43,28 @@
                     </div>
                     <div class="p2-field">
                         <label for="room-code">@L["P2RoomCode"] <span class="required" aria-hidden="true">*</span></label>
-                        <InputText id="room-code" @bind-Value="_model.Code" maxlength="50" autocomplete="off" aria-describedby="room-code-error" />
+                        <InputText id="room-code" @bind-Value="_model.Code" maxlength="50" autocomplete="off" aria-describedby="room-code-error" aria-invalid="@(_editContext.HasError(() => _model.Code) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-code-error" aria-live="polite">@ErrorFor(nameof(_model.Code))</span>
                     </div>
                     <div class="p2-field">
                         <label for="room-floor">@L["P2Floor"]</label>
-                        <InputNumber id="room-floor" @bind-Value="_model.Floor" min="0" max="1000" aria-describedby="room-floor-error" />
+                        <InputNumber id="room-floor" @bind-Value="_model.Floor" min="0" max="1000" aria-describedby="room-floor-error" aria-invalid="@(_editContext.HasError(() => _model.Floor) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-floor-error" aria-live="polite">@ErrorFor(nameof(_model.Floor))</span>
                     </div>
                     <div class="p2-field">
                         <label for="room-area">@L["P2Area"] (@L["P2SquareMeter"])</label>
-                        <InputNumber id="room-area" @bind-Value="_model.AreaM2" min="0" max="100000" step="0.01" inputmode="decimal" aria-describedby="room-area-error" />
+                        <InputNumber id="room-area" @bind-Value="_model.AreaM2" min="0" max="100000" step="0.01" inputmode="decimal" aria-describedby="room-area-error" aria-invalid="@(_editContext.HasError(() => _model.AreaM2) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-area-error" aria-live="polite">@ErrorFor(nameof(_model.AreaM2))</span>
                     </div>
                     <div class="p2-field">
                         <label for="room-standard-price">@L["P2StandardPrice"] <span class="required" aria-hidden="true">*</span></label>
-                        <InputNumber id="room-standard-price" @bind-Value="_model.StandardPrice" min="0" max="9999999999999999.99" step="any" inputmode="numeric" aria-describedby="room-price-hint room-price-error" />
+                        <InputNumber id="room-standard-price" @bind-Value="_model.StandardPrice" min="0" max="9999999999999999.99" step="any" inputmode="numeric" aria-describedby="room-price-hint room-price-error" aria-invalid="@(_editContext.HasError(() => _model.StandardPrice) ? "true" : "false")" />
                         <span class="p2-field-hint" id="room-price-hint">@L["P2PriceInputHint"]</span>
                         <span class="p2-field-error" id="room-price-error" aria-live="polite">@ErrorFor(nameof(_model.StandardPrice))</span>
                     </div>
                     <div class="p2-field">
                         <label for="room-status-select">@L["P2Status"]</label>
-                        <InputSelect id="room-status-select" @bind-Value="_model.Status" aria-describedby="room-status-error">
+                        <InputSelect id="room-status-select" @bind-Value="_model.Status" aria-describedby="room-status-error" aria-invalid="@(_editContext.HasError(() => _model.Status) ? "true" : "false")">
                             <option value="@RoomStatus.Available">@L["P2StatusAvailable"]</option>
                             <option value="@RoomStatus.Rented">@L["P2StatusRented"]</option>
                             <option value="@RoomStatus.Maintenance">@L["P2StatusMaintenance"]</option>
@@ -101,13 +101,26 @@
 
     private FeatureDialog? _featureDialog;
     private RoomSave _model = new();
-    private readonly Dictionary<string, string> _errors = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
     private string? _error;
     private bool _loading;
     private bool _saving;
     private bool _loadFailed;
     private bool _approvalPending;
     private bool IsEdit => RoomId.HasValue;
+
+    protected override void OnInitialized() => ResetValidation();
+    private void ResetValidation()
+    {
+        _editContext = new EditContext(_model);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,6 +151,7 @@
                 Status = result.Room.Status,
                 IsActive = result.Room.IsActive
             };
+            ResetValidation();
         }
         catch (Exception ex)
         {
@@ -148,28 +162,30 @@
         finally { _loading = false; }
     }
 
-    private string? ErrorFor(string field) => _errors.GetValueOrDefault(field);
+    private string? ErrorFor(string field) => _messages[new FieldIdentifier(_model, field)].FirstOrDefault();
 
     private async Task HandleSubmitAsync(EditContext _)
     {
         if (_loading || _loadFailed || _saving) return;
 
-        _errors.Clear();
+        _messages.Clear();
+        _editContext.NotifyValidationStateChanged();
         _error = null;
         _approvalPending = false;
         _model.Normalize();
         if (_model.PropertyId <= 0 || !Properties.Any(property => property.Id == _model.PropertyId))
-            _errors[nameof(_model.PropertyId)] = L["P2ValidationPropertyRequired"];
-        if (string.IsNullOrWhiteSpace(_model.Code)) _errors[nameof(_model.Code)] = L["P2ValidationRoomCodeRequired"];
-        else if (_model.Code.Length > 50) _errors[nameof(_model.Code)] = L["P2ValidationRoomCodeLength"];
-        if (_model.Floor is < 0 or > 1000) _errors[nameof(_model.Floor)] = L["P2ValidationFloor"];
-        if (_model.AreaM2 is < 0 or > 100000) _errors[nameof(_model.AreaM2)] = L["P2ValidationArea"];
-        if (_model.StandardPrice < 0) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceNegative"];
-        if (_model.StandardPrice > 9_999_999_999_999_999.99m) _errors[nameof(_model.StandardPrice)] = L["P2ValidationPriceMax"];
-        if (!Enum.IsDefined(_model.Status)) _errors[nameof(_model.Status)] = L["P2ValidationStatus"];
+            AddError(nameof(_model.PropertyId), L["P2ValidationPropertyRequired"]);
+        if (string.IsNullOrWhiteSpace(_model.Code)) AddError(nameof(_model.Code), L["P2ValidationRoomCodeRequired"]);
+        else if (_model.Code.Length > 50) AddError(nameof(_model.Code), L["P2ValidationRoomCodeLength"]);
+        if (_model.Floor is < 0 or > 1000) AddError(nameof(_model.Floor), L["P2ValidationFloor"]);
+        if (_model.AreaM2 is < 0 or > 100000) AddError(nameof(_model.AreaM2), L["P2ValidationArea"]);
+        if (_model.StandardPrice < 0) AddError(nameof(_model.StandardPrice), L["P2ValidationPriceNegative"]);
+        if (_model.StandardPrice > 9_999_999_999_999_999.99m) AddError(nameof(_model.StandardPrice), L["P2ValidationPriceMax"]);
+        if (!Enum.IsDefined(_model.Status)) AddError(nameof(_model.Status), L["P2ValidationStatus"]);
         else if (!_model.IsActive && _model.Status != RoomStatus.Available)
-            _errors[nameof(_model.Status)] = L["P2ValidationInactiveRoomStatus"];
-        if (_errors.Count > 0) return;
+            AddError(nameof(_model.Status), L["P2ValidationInactiveRoomStatus"]);
+        _editContext.NotifyValidationStateChanged();
+        if (_editContext.GetValidationMessages().Any()) return;
         if (!IsEdit && !IsOwner) { _error = L["P2Forbidden"]; return; }
 
         _saving = true;
@@ -192,6 +208,8 @@
             }
 
             _error = MapError(result.ErrorCode);
+            if (result.ErrorCode == RoomErrorCodes.DuplicateRoomCode) AddError(nameof(_model.Code), _error);
+            _editContext.NotifyValidationStateChanged();
             _loadFailed = false;
         }
         catch (UnauthorizedAccessException)
@@ -244,6 +262,7 @@
                 Status = result.Room.Status,
                 IsActive = result.Room.IsActive
             };
+            ResetValidation();
         }
         catch (Exception ex)
         {
@@ -253,6 +272,8 @@
         }
         finally { _loading = false; }
     }
+
+    private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_model, field), message);
 
     private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
 }

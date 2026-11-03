@@ -1,0 +1,90 @@
+@page "/manager-switches"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
+@using System.Security.Claims
+@using Web.Features.Settings
+@using Web.Features.Settings.DTOs
+@using Web.Features.Settings.Enums
+@using Web.Features.Settings.Services
+@inject AuthenticationStateProvider Auth
+@inject IManagerToggleService Toggles
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["ManagerSwitches"]</PageTitle>
+<h1>@L["ManagerSwitches"]</h1>
+
+@if (_error)
+{
+    <p role="alert">@L["ApprovalUiError"]</p>
+}
+@if (_items is null && !_error)
+{
+    <p role="status">@L["ApprovalUiLoading"]</p>
+}
+else if (_items is { Count: 0 })
+{
+    <p>@L["ApprovalUiEmpty"]</p>
+}
+else if (_items is not null)
+{
+    <table class="table">
+        <thead><tr><th scope="col">@L["ApprovalUiAction"]</th><th scope="col">@L["ApprovalUiMode"]</th></tr></thead>
+        <tbody>
+            @foreach (var item in _items.OrderBy(item => item.Code, StringComparer.OrdinalIgnoreCase))
+            {
+                <tr @key="item.Code">
+                    <th scope="row"><label for="@item.Code">@item.Code · @L[item.Code]</label></th>
+                    <td>
+                        <select @key="_renderVersion" id="@item.Code" value="@item.Mode" disabled="@_saving"
+                                @onchange="args => SaveAsync(item, args)">
+                            @foreach (var mode in item.AllowedModes)
+                            {
+                                <option value="@mode">@L[$"ApprovalUiMode{mode}"]</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<ManagerToggleItem>? _items;
+    private ManagerToggleCaller _caller = default!;
+    private bool _saving;
+    private bool _error;
+    private int _renderVersion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await Auth.GetAuthenticationStateAsync()).User;
+        _caller = new(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", user.IsInRole("ChuTro") ? "ChuTro" : "");
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var result = await Toggles.GetAllAsync(_caller);
+        _error = !result.Succeeded;
+        _items = result.Succeeded ? result.Items : null;
+    }
+
+    private async Task SaveAsync(ManagerToggleItem item, ChangeEventArgs args)
+    {
+        if (_saving || !Enum.TryParse<ManagerToggleMode>(args.Value?.ToString(), out var mode))
+            return;
+
+        _saving = true;
+        try
+        {
+            var result = await Toggles.SetAsync(item.Code, mode, _caller);
+            await LoadAsync();
+            _error |= !result.Succeeded;
+        }
+        finally
+        {
+            _renderVersion++;
+            _saving = false;
+        }
+    }
+}

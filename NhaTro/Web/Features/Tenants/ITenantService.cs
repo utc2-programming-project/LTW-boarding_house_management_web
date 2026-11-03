@@ -34,6 +34,25 @@ public interface ITenantService
         int id, bool isActive, string rowVersion, TenantCaller caller, CancellationToken ct = default);
 
     /// <summary>
+    /// VHT-99 — đưa hồ sơ vào thùng rác (xóa mềm), không xóa cứng và không xóa tệp giấy tờ.
+    /// Chặn khi còn hợp đồng đang hiệu lực. Chủ trọ xóa ngay; Quản lý đi theo công tắc SW-06:
+    /// Không thể = 403, Duyệt = tạo yêu cầu chờ duyệt, Cho phép = xóa ngay.
+    /// </summary>
+    Task<TenantResult> DeleteAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default);
+
+    /// <summary>
+    /// VHT-99 — khôi phục hồ sơ khỏi thùng rác. Chỉ Chủ trọ; giữ nguyên liên kết tài khoản
+    /// và các tệp giấy tờ đã lưu.
+    /// </summary>
+    Task<TenantResult> RestoreAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default);
+
+    /// <summary>Danh sách hồ sơ trong thùng rác thuộc phạm vi Chủ trọ (VHT-99).</summary>
+    Task<PagedResult<TenantTrashItemDto>> ListTrashAsync(
+        TenantTrashFilterRequest filter, TenantCaller caller, CancellationToken ct = default);
+
+    /// <summary>
     /// Gắn tài khoản đăng nhập (vai trò Khách thuê) vào hồ sơ. Chặn liên kết nhầm:
     /// tài khoản phải tồn tại, đúng vai trò Khách thuê, chưa gắn hồ sơ khác.
     /// Một tài khoản tối đa một hồ sơ (mục 1, đang chờ Đào/Phát chốt).

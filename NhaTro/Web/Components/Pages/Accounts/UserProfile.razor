@@ -71,7 +71,7 @@
                             <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
                                        For="() => _form.FullName">
                                 <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
-                                           aria-describedby="profile-fullname-error" />
+                                           aria-describedby="profile-fullname-error" aria-invalid="@(_editContext.HasError(() => _form.FullName) ? "true" : "false")" />
                             </FormField>
                         </div>
 
@@ -79,7 +79,7 @@
                             <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
                                        Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
                                 <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
-                                           aria-describedby="profile-phone-hint profile-phone-error" />
+                                           aria-describedby="profile-phone-hint profile-phone-error" aria-invalid="@(_editContext.HasError(() => _form.PhoneNumber) ? "true" : "false")" />
                             </FormField>
                         </div>
 
@@ -123,6 +123,7 @@
     private bool _saving;
 
     private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
     private ProfileForm _form = new();
     private string _emailReadonly = string.Empty;
 
@@ -197,7 +198,7 @@
     private EditContext CreateEditContext()
     {
         var context = new EditContext(_form);
-        var messages = new ValidationMessageStore(context);
+        var messages = _messages = new ValidationMessageStore(context);
         context.OnValidationRequested += (_, _) =>
         {
             messages.Clear();
@@ -243,6 +244,11 @@
                 userId);
             if (!result.Succeeded)
             {
+                if (result.ErrorCode == AccountErrorCodes.InvalidPhone)
+                {
+                    _messages.Add(new FieldIdentifier(_form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
+                    _editContext.NotifyValidationStateChanged();
+                }
                 Toasts.Error(MessageFor(result.ErrorCode));
                 return;
             }

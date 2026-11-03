@@ -25,6 +25,7 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         await fixture.ResetAsync();
         await using var db = fixture.CreateContext();
         await SqlServerFixture.SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-2", Roles.ChuTro);
         await SqlServerFixture.SeedAccountAsync(db, "ql-1", Roles.QuanLy);
         await SqlServerFixture.SeedAccountAsync(db, "khach-1", Roles.KhachThue);
         await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
@@ -85,6 +86,10 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         Assert.Equal(
             TenantDocumentAccessLevel.None,
             await scope.ResolveAsync(tenantId, new TenantCaller("khach-2", Roles.KhachThue)));
+        // Chủ trọ khác không được xem hồ sơ của khách không thuộc nhà mình.
+        Assert.Equal(
+            TenantDocumentAccessLevel.None,
+            await scope.ResolveAsync(tenantId, new TenantCaller("chu-tro-2", Roles.ChuTro)));
         Assert.Equal(
             TenantDocumentAccessLevel.None,
             await scope.ResolveAsync(tenantId, new TenantCaller("admin-1", Roles.Admin)));
@@ -96,6 +101,28 @@ public sealed class TenantDocumentScopeIntegrationTests(SqlServerFixture fixture
         Assert.Equal(
             TenantDocumentAccessLevel.None,
             await scope.ResolveAsync(tenantId, new TenantCaller("ql-1", Roles.QuanLy)));
+
+        // VHT-42: implementation thật đọc bảng phân công VHT-24 thay vì deny-all (VHT-119 dùng ContractManagerTenantScope).
+        var assignment = new PropertyManager
+        {
+            PropertyId = property.Id,
+            ManagerUserId = "ql-1",
+            AssignedByUserId = Manager.UserId,
+        };
+        db.PropertyManagers.Add(assignment);
+        await db.SaveChangesAsync();
+        var assignedScope = new TenantDocumentScopeService(db, new ContractManagerTenantScope(db));
+        var assignedAccess = await assignedScope.ResolveAsync(
+            tenantId, new TenantCaller("ql-1", Roles.QuanLy));
+        Assert.True(TenantDocumentPermissionRules.CanView(assignedAccess));
+        Assert.False(TenantDocumentPermissionRules.CanExport(assignedAccess));
+
+        // Bỏ gán: mất quyền ngay, không cần đăng nhập lại.
+        assignment.RevokedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        Assert.Equal(
+            TenantDocumentAccessLevel.None,
+            await assignedScope.ResolveAsync(tenantId, new TenantCaller("ql-1", Roles.QuanLy)));
 
         // Khi VHT-24 cung cấp phạm vi, Quản lý được giao tòa nhà thấy giấy tờ nhưng không xuất.
         var managerWithAssignment = new TenantDocumentScopeService(db, new AllowManagerScope());

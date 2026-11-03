@@ -73,19 +73,19 @@
                                        Hint="@L["TenantValidationPhone"]" For="() => _form.PhoneNumber">
                                 <InputText id="tenant-own-phone" class="input" @bind-Value="_form.PhoneNumber"
                                            maxlength="20" inputmode="tel" autocomplete="tel"
-                                           aria-describedby="tenant-own-phone-hint tenant-own-phone-error" />
+                                           aria-describedby="tenant-own-phone-hint tenant-own-phone-error" aria-invalid="@(_editContext.HasError(() => _form.PhoneNumber) ? "true" : "false")" />
                             </FormField>
                             <FormField TValue="string" Id="tenant-own-email" Label="@L["TenantEmail"]"
                                        For="() => _form.Email">
                                 <InputText id="tenant-own-email" class="input" @bind-Value="_form.Email"
                                            maxlength="256" type="email" autocomplete="email"
-                                           aria-describedby="tenant-own-email-error" />
+                                           aria-describedby="tenant-own-email-error" aria-invalid="@(_editContext.HasError(() => _form.Email) ? "true" : "false")" />
                             </FormField>
                             <FormField TValue="string" Id="tenant-own-address" Label="@L["TenantPermanentAddress"]"
                                        For="() => _form.PermanentAddress">
                                 <InputTextArea id="tenant-own-address" class="input tenant-profile-address"
                                                @bind-Value="_form.PermanentAddress" maxlength="300"
-                                               aria-describedby="tenant-own-address-error" />
+                                               aria-describedby="tenant-own-address-error" aria-invalid="@(_editContext.HasError(() => _form.PermanentAddress) ? "true" : "false")" />
                             </FormField>
                         </div>
                         <div class="form-actions">
@@ -225,9 +225,12 @@
                 return;
             }
 
-            Toasts.Error(result.ErrorCode == TenantErrorCodes.InvalidRequest
-                ? L["TenantValidationPhone"]
-                : L["TenantErrorGeneric"]);
+            if (result.ErrorCode == TenantErrorCodes.InvalidRequest)
+            {
+                Add(nameof(_form.PhoneNumber), L["TenantValidationPhone"]);
+                _editContext.NotifyValidationStateChanged();
+            }
+            Toasts.Error(result.ErrorCode == TenantErrorCodes.InvalidRequest ? L["TenantValidationPhone"] : L["TenantErrorGeneric"]);
             return;
         }
 

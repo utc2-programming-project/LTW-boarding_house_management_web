@@ -30,4 +30,5 @@ public enum ApprovalTargetType
     Tenant = 2,
     Contract = 3,
     UtilityPeriod = 4,
+    Incident = 5,
 }

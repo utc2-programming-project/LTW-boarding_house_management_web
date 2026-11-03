@@ -1,4 +1,4 @@
-﻿namespace Web.Components.Layout;
+namespace Web.Components.Layout;
 
 public static class AppNavigation
 {
@@ -12,17 +12,18 @@ public static class AppNavigation
         new("Properties", "building", "ChuTro,QuanLy", "/properties"),
         new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
         new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
-        new("Contracts", "file", "ChuTro,QuanLy", "/contracts/create"),
+        new("Contracts", "file", "ChuTro,QuanLy,KhachThue", "/contracts"),
         new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
         new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
         new("MeterReadings", "zap", "ChuTro,QuanLy,KhachThue", "/meter-readings"),
         new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
         new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
         new("Reports", "chart", "ChuTro"),
-        new("ManagerSwitches", "settings", "ChuTro"),
-        new("Approvals", "check", "ChuTro"),
-        new("Trash", "trash", "ChuTro"),
-        new("MyRequests", "file", "QuanLy"),
+        new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
+        new("Approvals", "check", "ChuTro", "/approvals"),
+        // VHT-99: thùng rác hồ sơ khách thuê (VHT-98 thùng rác phòng sẽ bổ sung cùng trang).
+        new("Trash", "trash", "ChuTro", "/trash"),
+        new("MyRequests", "file", "QuanLy", "/my-requests"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
         new("MyInvoices", "receipt", "KhachThue", "/my-invoices"),

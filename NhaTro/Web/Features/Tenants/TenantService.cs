@@ -1,10 +1,18 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.Json;
 using Web.Data;
+using Web.Features.Approvals;
+using Web.Features.Approvals.DTOs;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Enums;
 using Web.Features.Rooms;
+using Web.Features.Settings;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
+using Web.Features.Storage.Enums;
 using Web.Features.Tenants.DTOs;
 using Web.Features.Tenants.Entities;
 using Web.Features.Tenants.Enums;
@@ -19,8 +27,10 @@ namespace Web.Features.Tenants;
 public sealed class TenantService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     TimeProvider clock,
-    IManagerTogglePolicy togglePolicy) : ITenantService
+    IManagerTogglePolicy togglePolicy,
+    IManagerApprovalService? approvals = null) : ITenantService
 {
+    private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
     public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
@@ -528,9 +538,169 @@ public sealed class TenantService(
             revealIdNumber: caller.CanRevealIdNumber, includeAccountStatus: caller.CanRevealIdNumber));
     }
 
-    public async Task<TenantResult> LinkAccountAsync(
-        int id, string accountUserId, string rowVersion, TenantCaller caller, CancellationToken ct = default)
+    public async Task<TenantResult> DeleteAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
+        EnsureManager(caller);
+
+        // Kiểm công tắc trước khi đọc dữ liệu: người bị chặn không dò được hồ sơ có tồn tại.
+        var decision = await togglePolicy.EvaluateAsync(ManagerAction.SW06, caller.Role, ct);
+        if (decision == RoomChangeDecision.Denied)
+        {
+            throw Forbidden(caller);
+        }
+
+        if (!TryParseRowVersion(rowVersion, out var expectedVersion))
+        {
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        // VHT-99: không cho xóa hồ sơ còn hợp đồng đang hiệu lực.
+        if (await HasActiveContractAsync(db, id, Today(), ct))
+        {
+            return TenantResult.Failure(TenantErrorCodes.TenantInUse, TenantErrorMessages.TenantInUse);
+        }
+
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            return await CreateDeleteApprovalAsync(db, entity, expectedVersion, caller, ct);
+        }
+
+        db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
+        var now = clock.GetUtcNow().UtcDateTime;
+        entity.IsDeleted = true;
+        entity.DeletedAt = now;
+        entity.DeletedByUserId = caller.UserId;
+        entity.UpdatedAt = now;
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
+        }
+
+        return TenantResult.Success();
+    }
+
+    public async Task<TenantResult> RestoreAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default)
+    {
+        // VHT-99: chỉ Chủ trọ được khôi phục.
+        EnsureOwner(caller);
+
+        if (!TryParseRowVersion(rowVersion, out var expectedVersion))
+        {
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await TrashScopeQuery(db, caller)
+            .FirstOrDefaultAsync(t => t.Id == id && t.IsDeleted, ct);
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        // Khôi phục không được phá chỉ mục duy nhất của hồ sơ đang hoạt động.
+        if (!string.IsNullOrEmpty(entity.CitizenId)
+            && await db.Tenants.AnyAsync(
+                t => !t.IsDeleted && t.IsActive && t.CitizenId == entity.CitizenId && t.Id != id, ct))
+        {
+            return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
+        }
+
+        if (entity.UserId is not null
+            && await db.Tenants.AnyAsync(t => !t.IsDeleted && t.UserId == entity.UserId && t.Id != id, ct))
+        {
+            return TenantResult.Failure(
+                TenantErrorCodes.AccountAlreadyLinked, TenantErrorMessages.AccountAlreadyLinked);
+        }
+
+        db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedByUserId = null;
+        entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            return TenantResult.Failure(TenantErrorCodes.DuplicateTenant, TenantErrorMessages.DuplicateTenant);
+        }
+
+        return TenantResult.Success(TenantMapping.ToDetail(entity, includeNote: true,
+            revealIdNumber: true, includeAccountStatus: true));
+    }
+
+    public async Task<PagedResult<TenantTrashItemDto>> ListTrashAsync(
+        TenantTrashFilterRequest filter, TenantCaller caller, CancellationToken ct = default)
+    {
+        // Thùng rác chỉ Chủ trọ xem/khôi phục; Quản lý xóa qua công tắc SW-06.
+        EnsureOwner(caller);
+        filter.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var query = ApplyKeyword(TrashScopeQuery(db, caller).AsNoTracking(), filter.Keyword);
+        var total = await query.CountAsync(ct);
+        var skip = (long)(filter.Page - 1) * filter.PageSize;
+        var rows = await query
+            .OrderByDescending(t => t.DeletedAt)
+            .ThenByDescending(t => t.Id)
+            .Skip((int)Math.Min(skip, int.MaxValue))
+            .Take(filter.PageSize)
+            .ToListAsync(ct);
+
+        // Đếm tệp giấy tờ còn giữ theo lô; không xóa tệp khi hồ sơ vào thùng rác.
+        var keys = rows.Select(t => t.Id.ToString(CultureInfo.InvariantCulture)).ToArray();
+        var documentCounts = keys.Length == 0
+            ? new Dictionary<string, int>(StringComparer.Ordinal)
+            : await db.StoredFiles.AsNoTracking()
+                .Where(file => file.RelatedEntityType == RelatedEntityType.Tenant
+                    && keys.Contains(file.RelatedEntityId))
+                .GroupBy(file => file.RelatedEntityId)
+                .Select(group => new { group.Key, Count = group.Count() })
+                .ToDictionaryAsync(row => row.Key, row => row.Count, ct);
+
+        return new PagedResult<TenantTrashItemDto>
+        {
+            Items = rows.Select(t => new TenantTrashItemDto
+            {
+                Id = t.Id,
+                FullName = t.FullName,
+                PhoneNumber = t.Phone,
+                IdNumberMasked = TenantNormalizer.MaskIdNumber(t.CitizenId),
+                IsActive = t.IsActive,
+                HasAccount = t.UserId is not null,
+                DocumentCount = documentCounts.GetValueOrDefault(
+                    t.Id.ToString(CultureInfo.InvariantCulture)),
+                DeletedAt = t.DeletedAt is { } deletedAt ? new DateTimeOffset(DateTime.SpecifyKind(deletedAt, DateTimeKind.Utc)) : null,
+                RowVersion = Convert.ToBase64String(t.RowVersion),
+            }).ToList(),
+            Page = filter.Page,
+            PageSize = filter.PageSize,
+            TotalCount = total,
+        };
+    }
+
+    public async Task<TenantResult> LinkAccountAsync(
+        int id, string accountUserId, string rowVersion, TenantCaller caller, CancellationToken ct = default)    {
         EnsureOwner(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
@@ -666,6 +836,88 @@ public sealed class TenantService(
     private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) =>
         TenantVisibility.Apply(db, caller.UserId, caller.Role);
 
+    // VHT-99: cùng phạm vi hồ sơ như danh sách nhưng lấy các hồ sơ đã xóa mềm.
+    private static IQueryable<Tenant> TrashScopeQuery(ApplicationDbContext db, TenantCaller caller)
+    {
+        var linked = TenantVisibility.ContractLinkedTenantIds(db, caller.UserId, caller.Role);
+        return db.Tenants.IgnoreQueryFilters().Where(tenant =>
+            tenant.IsDeleted
+            && (linked.Contains(tenant.Id)
+                || !db.ContractMembers.Any(member => member.TenantId == tenant.Id)));
+    }
+
+    // Tạo yêu cầu SW-06 khi Quản lý xóa hồ sơ ở chế độ "Duyệt".
+    private async Task<TenantResult> CreateDeleteApprovalAsync(
+        ApplicationDbContext db,
+        Tenant tenant,
+        byte[] expectedVersion,
+        TenantCaller caller,
+        CancellationToken ct)
+    {
+        if (approvals is null)
+        {
+            return TenantResult.Failure(TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired);
+        }
+
+        var payload = JsonSerializer.Serialize(
+            new TenantDeletePayload(tenant.Id, tenant.FullName), PayloadJsonOptions);
+        var propertyId = await ApprovalPropertyIdAsync(db, tenant.Id, caller, ct);
+
+        var approval = await approvals.CreateAsync(new CreateApprovalRequest
+        {
+            OperationCode = ManagerToggleCatalog.ToCode(ManagerAction.SW06),
+            TargetType = ApprovalTargetType.Tenant,
+            TargetKey = tenant.Id.ToString(CultureInfo.InvariantCulture),
+            PropertyId = propertyId,
+            PayloadJson = payload,
+            ExpectedToken = expectedVersion,
+        }, new ApprovalCaller(caller.UserId, caller.Role), ct);
+
+        return approval.Succeeded
+            ? TenantResult.Failure(TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired)
+            : TenantResult.Failure(
+                approval.ErrorCode ?? TenantErrorCodes.TenantOperationFailed,
+                approval.ErrorMessage ?? TenantErrorMessages.TenantOperationFailed);
+    }
+
+    // Chọn tòa để Chủ trọ thấy yêu cầu: ưu tiên tòa Quản lý đang được phân công có hợp đồng
+    // của hồ sơ; hồ sơ chưa gắn hợp đồng để null và hàng đợi xét phân công của người gửi.
+    private static async Task<int?> ApprovalPropertyIdAsync(
+        ApplicationDbContext db, int tenantId, TenantCaller caller, CancellationToken ct)
+    {
+        if (caller.IsQuanLy)
+        {
+            var managedPropertyId = await (
+                from member in db.ContractMembers.AsNoTracking()
+                join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                join assignment in db.PropertyManagers.AsNoTracking() on room.PropertyId equals assignment.PropertyId
+                where member.TenantId == tenantId
+                    && assignment.ManagerUserId == caller.UserId
+                    && assignment.RevokedAt == null
+                select (int?)room.PropertyId
+            ).FirstOrDefaultAsync(ct);
+
+            if (managedPropertyId is not null)
+            {
+                return managedPropertyId;
+            }
+        }
+
+        return await (
+            from member in db.ContractMembers.AsNoTracking()
+            join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+            join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+            where member.TenantId == tenantId
+            select (int?)room.PropertyId
+        ).FirstOrDefaultAsync(ct);
+    }
+
+    // VHT-99: hồ sơ có hợp đồng đang hiệu lực thì không được xóa mềm.
+    internal static async Task<bool> HasActiveContractAsync(
+        ApplicationDbContext db, int tenantId, DateTime today, CancellationToken ct) =>
+        await ActiveTenantIds(db, today).AnyAsync(id => id == tenantId, ct);
+
     // 2B (VHT-25) — truy vấn hợp đồng/phòng đang thuê theo liên kết thật.
     private async Task<TenantRentalResult> BuildRentalOverviewAsync(
         ApplicationDbContext db, Tenant tenant, CancellationToken ct)
@@ -739,7 +991,7 @@ public sealed class TenantService(
     // 2C (VHT-120) — hợp đồng đang hiệu lực của từng khách theo liên kết thật:
     // Tenant -> ContractMember -> Contract -> Room, chỉ hợp đồng đã duyệt và hôm nay nằm trong [StartDate, EndDate].
     // Tách riêng truy vấn chỉ trả TenantId để lọc danh sách trong SQL mà EF dịch được.
-    private static IQueryable<int> ActiveTenantIds(ApplicationDbContext db, DateTime today) =>
+    internal static IQueryable<int> ActiveTenantIds(ApplicationDbContext db, DateTime today) =>
         from member in db.ContractMembers.AsNoTracking()
         join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
         where contract.Status == ContractStatus.Approved
@@ -822,7 +1074,8 @@ public sealed class TenantService(
             tenant, includeNote: false, revealIdNumber: true));
     }
 
-    private static IQueryable<Tenant> ApplyKeyword(IQueryable<Tenant> query, string? keyword)
+    // Dùng chung cho nguồn báo cáo P8 (VHT-46) để từ khóa khớp đúng danh sách P3.
+    internal static IQueryable<Tenant> ApplyKeyword(IQueryable<Tenant> query, string? keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {
