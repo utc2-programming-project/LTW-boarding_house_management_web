@@ -1,0 +1,10 @@
+.incident-approvals { margin-top: 24px; }
+article { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 20px; margin-top: 16px; overflow-wrap: anywhere; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+figure { margin: 0; }
+img { width: 100%; max-height: 200px; object-fit: contain; }
+.preserve-text { white-space: pre-wrap; }
+label { display: block; margin-bottom: 8px; }
+input { box-sizing: border-box; width: 100%; min-height: 40px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+@media (max-width: 767px) { input, button { min-height: 44px; } article { padding: 16px; } }

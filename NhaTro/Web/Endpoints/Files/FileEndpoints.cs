@@ -67,6 +67,8 @@ public static class FileEndpoints
         {
             return InvalidRequest();
         }
+        if (!string.IsNullOrWhiteSpace(form["approvalRequestId"]) && !Guid.TryParse(form["approvalRequestId"], out _)) return InvalidRequest();
+        if (!string.IsNullOrWhiteSpace(form["expectedPhotoCount"]) && !int.TryParse(form["expectedPhotoCount"], out _)) return InvalidRequest();
 
         var request = new UploadFileRequest
         {
@@ -75,6 +77,12 @@ public static class FileEndpoints
             RelatedEntityId = form["relatedEntityId"].ToString(),
             RelatedEntityType = entityType,
             Description = form["description"].ToString(),
+            IncidentPhotoKind = string.IsNullOrWhiteSpace(form["incidentPhotoKind"])
+                ? Web.Features.Maintenance.Enums.IncidentPhotoKind.Report
+                : Enum.TryParse<Web.Features.Maintenance.Enums.IncidentPhotoKind>(form["incidentPhotoKind"], true, out var photoKind)
+                    ? photoKind : (Web.Features.Maintenance.Enums.IncidentPhotoKind)(-1),
+            ApprovalRequestId = Guid.TryParse(form["approvalRequestId"], out var approvalId) ? approvalId : null,
+            ExpectedPhotoCount = int.TryParse(form["expectedPhotoCount"], out var expectedPhotoCount) ? expectedPhotoCount : 1,
         };
 
         var result = await service.UploadAsync(request, http.User, cancellationToken);

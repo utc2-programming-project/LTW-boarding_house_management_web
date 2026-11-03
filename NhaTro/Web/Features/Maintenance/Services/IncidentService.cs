@@ -28,6 +28,31 @@ public sealed class IncidentService(
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
 
+    public async Task<IReadOnlyList<IncidentRoomDto>> RoomsAsync(PropertyCaller caller, CancellationToken cancellationToken = default)
+    {
+        if (!CanCreate(caller)) return [];
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var candidates = db.Rooms.AsNoTracking().Where(r => r.IsActive && !r.IsDeleted);
+        if (caller.IsKhachThue)
+        {
+            var today = Today();
+            var rooms = from member in db.ContractMembers.AsNoTracking()
+                        join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
+                        join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                        where tenant.UserId == caller.UserId && contract.Status == ContractStatus.Approved
+                            && contract.StartDate <= today && contract.EndDate >= today
+                        select contract.RoomId;
+            candidates = candidates.Where(r => rooms.Contains(r.Id));
+        }
+        else
+        {
+            var properties = PropertyScope.Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(), caller);
+            candidates = candidates.Where(r => properties.Any(p => p.Id == r.PropertyId));
+        }
+        return await (from room in candidates join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+            orderby property.Name, room.Code select new IncidentRoomDto(room.Id, property.Id, property.Name, room.Code)).ToListAsync(cancellationToken);
+    }
+
     public async Task<IncidentResult> CreateAsync(
         IncidentCreateRequest request,
         PropertyCaller caller,
@@ -69,7 +94,7 @@ public sealed class IncidentService(
             if (decision == RoomChangeDecision.RequiresApproval)
             {
                 var payload = JsonSerializer.Serialize(new IncidentCreatePayload(
-                    request.Title.Trim(), request.Description.Trim(), request.Category, request.Urgency), PayloadJsonOptions);
+                    request.Title.Trim(), request.Description.Trim(), request.Category, request.Urgency, request.ExpectedPhotoCount), PayloadJsonOptions);
                 var approval = await approvals.CreateAsync(new CreateApprovalRequest
                 {
                     OperationCode = "SW-12",
