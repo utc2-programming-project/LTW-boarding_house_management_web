@@ -133,7 +133,7 @@
     <value>View details: {0}</value>
   </data>
   <data name="DetailTitle" xml:space="preserve">
-    <value>Sample incident details</value>
+    <value>Incident details</value>
   </data>
   <data name="TechnicalNotes" xml:space="preserve">
     <value>Technical notes (internal)</value>
@@ -154,7 +154,7 @@
     <value>Pending approval</value>
   </data>
   <data name="ApprovalNotice" xml:space="preserve">
-    <value>This is a sample approval request. The proposed change has not been applied to the report or its status; the actual approval queue is not connected.</value>
+    <value>The request awaits the owner&apos;s approval. Changes have not been applied.</value>
   </data>
   <data name="ActionCreate" xml:space="preserve">
     <value>SW-12 · Create report</value>
@@ -232,7 +232,7 @@
     <value>Reported issue photo</value>
   </data>
   <data name="SaveResultPhotos" xml:space="preserve">
-    <value>Submit sample result photos</value>
+    <value>Submit result photos</value>
   </data>
   <data name="PendingPhotoCount" xml:space="preserve">
     <value>{0} photos await approval and have not been applied to the report.</value>
@@ -295,10 +295,10 @@
     <value>The ventilation fan did not run when switched on. This sample report is now complete.</value>
   </data>
   <data name="TitleInvalid" xml:space="preserve">
-    <value>The title must contain at least 5 characters after trimming.</value>
+    <value>The trimmed title must contain 5 to 200 characters.</value>
   </data>
   <data name="DescriptionInvalid" xml:space="preserve">
-    <value>The description must contain at least 10 characters after trimming.</value>
+    <value>The trimmed description must contain 10 to 2000 characters.</value>
   </data>
   <data name="PropertyRequired" xml:space="preserve">
     <value>Select a property within your scope.</value>
@@ -325,13 +325,13 @@
     <value>The session account has changed. Please reload the page.</value>
   </data>
   <data name="NotFound" xml:space="preserve">
-    <value>The report was not found within your permitted scope.</value>
+    <value>The request was not found within your scope.</value>
   </data>
   <data name="NoData" xml:space="preserve">
     <value>No data</value>
   </data>
   <data name="EmptyDescription" xml:space="preserve">
-    <value>There are no reports in this scope. You can create a new sample report.</value>
+    <value>There are no reports in this scope. You can create a report.</value>
   </data>
   <data name="NoResults" xml:space="preserve">
     <value>No matching results</value>
@@ -343,7 +343,7 @@
     <value>Loading…</value>
   </data>
   <data name="LoadFailed" xml:space="preserve">
-    <value>The list could not be loaded. If the sample error scenario is selected, switch back to Sample records.</value>
+    <value>Unable to load data. Please retry.</value>
   </data>
   <data name="Retry" xml:space="preserve">
     <value>Retry</value>
@@ -373,7 +373,7 @@
     <value>Showing {0}–{1} of {2}</value>
   </data>
   <data name="ListCaption" xml:space="preserve">
-    <value>Sample incidents within your scope</value>
+    <value>Incidents within your scope</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
@@ -400,4 +400,52 @@
   <data name="SampleLoadError" xml:space="preserve">
     <value>A sample list loading error is being simulated. Select “Sample records” to leave the error scenario.</value>
   </data>
+  <data name="LiveStaffSubtitle" xml:space="preserve"><value>Track and resolve incidents within your scope.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Unable to complete the action. Check its result before retrying.</value></data>
+  <data name="SubmitAction" xml:space="preserve"><value>Submit report</value></data>
+  <data name="RequestAction" xml:space="preserve"><value>Request approval</value></data>
+  <data name="UpdateAction" xml:space="preserve"><value>Update progress</value></data>
+  <data name="IncidentCreated" xml:space="preserve"><value>Incident report saved.</value></data>
+  <data name="IncidentUpdated" xml:space="preserve"><value>Incident report updated.</value></data>
+  <data name="RequestCreated" xml:space="preserve"><value>Approval request submitted.</value></data>
+  <data name="PhotosSaved" xml:space="preserve"><value>Photos saved.</value></data>
+  <data name="IncidentSavedPhotosFailed" xml:space="preserve"><value>The report is saved, but some photos failed. Retry uploads only; a second report will not be created.</value></data>
+  <data name="RequestSavedPhotosFailed" xml:space="preserve"><value>The request is saved, but some photos failed. Retry missing photos before approval, or cancel the request.</value></data>
+  <data name="SavedRetryPhotos" xml:space="preserve"><value>The report or request has been saved. Its fields are locked; you can retry missing photos.</value></data>
+  <data name="RetryPhotos" xml:space="preserve"><value>Retry photo uploads</value></data>
+  <data name="PhotosPartiallyFailed" xml:space="preserve"><value>Some photos failed. Saved photos are retained; retry missing photos only. Approval requires all selected photos.</value></data>
+  <data name="ApprovalQueue" xml:space="preserve"><value>Incident approval requests</value></data>
+  <data name="RefreshQueue" xml:space="preserve"><value>Refresh requests</value></data>
+  <data name="RejectReason" xml:space="preserve"><value>Rejection reason (required to reject)</value></data>
+  <data name="ApproveAction" xml:space="preserve"><value>Approve</value></data>
+  <data name="RejectAction" xml:space="preserve"><value>Reject</value></data>
+  <data name="CancelRequest" xml:space="preserve"><value>Cancel request</value></data>
+  <data name="RequestCancelled" xml:space="preserve"><value>Approval request cancelled.</value></data>
+  <data name="RequestApproved" xml:space="preserve"><value>Request approved and applied.</value></data>
+  <data name="RequestRejected" xml:space="preserve"><value>Request rejected.</value></data>
+  <data name="ApprovalPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ApprovalApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="ApprovalRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ApprovalCancelled" xml:space="preserve"><value>Request cancelled</value></data>
+  <data name="HistoryCreated" xml:space="preserve"><value>Report created</value></data>
+  <data name="HistoryStatusChanged" xml:space="preserve"><value>Status changed</value></data>
+  <data name="HistoryApproved" xml:space="preserve"><value>Request approved</value></data>
+  <data name="HistoryRejected" xml:space="preserve"><value>Request rejected</value></data>
+  <data name="HistoryUpdated" xml:space="preserve"><value>Details updated</value></data>
+  <data name="Forbidden" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
+  <data name="IncidentNotFound" xml:space="preserve"><value>The incident was not found within your scope.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>The room is no longer available or is outside your scope.</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>Invalid input. Check the fields and retry.</value></data>
+  <data name="Conflict" xml:space="preserve"><value>The data has changed. Refresh before continuing.</value></data>
+  <data name="ApprovalFailed" xml:space="preserve"><value>Unable to submit the approval request. Please retry.</value></data>
+  <data name="ApprovalPhotosIncomplete" xml:space="preserve"><value>Some selected photos are missing. The sender must retry missing photos or cancel the request.</value></data>
+  <data name="DuplicatePendingRequest" xml:space="preserve"><value>An approval request already exists for this action. Check the requests list.</value></data>
+  <data name="RejectReasonRequired" xml:space="preserve"><value>Enter a rejection reason.</value></data>
+  <data name="RejectReasonTooLong" xml:space="preserve"><value>The rejection reason cannot exceed 500 characters.</value></data>
+  <data name="AlreadyDecided" xml:space="preserve"><value>This request has already been processed. Refresh the list.</value></data>
+  <data name="FileCountExceeded" xml:space="preserve"><value>Each report allows 3 report photos and 3 result photos, including pending photos.</value></data>
+  <data name="InvalidFileType" xml:space="preserve"><value>Photos must be valid JPG/JPEG/PNG files.</value></data>
+  <data name="FileSizeExceeded" xml:space="preserve"><value>Photos must not be empty or exceed 5 MB.</value></data>
+  <data name="UploadFailed" xml:space="preserve"><value>Photo upload failed. Please retry.</value></data>
+  <data name="PendingPhotosMissing" xml:space="preserve"><value>Some photos are missing. Select the missing photos to complete this request.</value></data>
 </root>

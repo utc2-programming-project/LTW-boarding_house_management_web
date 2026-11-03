@@ -1,0 +1,136 @@
+@using Web.Features.Approvals.DTOs
+@using Web.Features.Approvals.Enums
+@using System.Text.Json
+@inject IStringLocalizer<IncidentResource> L
+@inject ToastService Toasts
+
+<section class="incident-approvals" aria-label="@L["ApprovalQueue"]">
+    <h2>@L["ApprovalQueue"]</h2>
+    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="RefreshAsync">@L["RefreshQueue"]</button>
+    @if (_error is not null) { <p role="alert">@_error</p> }
+    @if (_requests.Count == 0) { <p>@L["NoData"]</p> }
+    @foreach (var request in _requests)
+    {
+        <article @key="request.Id">
+            <h3>@L[request.OperationCode switch { "SW-12" => "ActionCreate", "SW-13" => "ActionUpdate", _ => "ActionResultPhoto" }]</h3>
+            <p class="tabular-nums">@DateFormatter.FormatDateTime(request.RequestedAt)</p>
+            <p>@L[$"Approval{request.Status}"] · @L["PropertyRoom"]: @_roomLabels.GetValueOrDefault(request.Id, L["NoData"].Value)</p>
+            @if (request.OperationCode == "SW-12" && CreatePayload(request) is { } creation)
+            {
+                <h4>@creation.Title</h4><p class="preserve-text">@creation.Description</p>
+                <p>@L[$"Category{creation.Category}"] · @L[$"Urgency{creation.Urgency}"]</p>
+            }
+            @if (request.OperationCode == "SW-13" && UpdatePayload(request) is { } update)
+            {
+                <p>@L["ProposedStatus"]: @L[$"Status{update.Status}"]</p>
+                <p>@L["Assignee"]: @update.AssigneeName</p><p class="preserve-text">@update.TechnicalNotes</p>
+                <p class="tabular-nums">@L["RepairCost"]: @MoneyFormatter.Format(update.RepairCost)</p>
+            }
+            @if (_images.TryGetValue(request.Id, out var images))
+            {
+                <div class="photo-grid">
+                    @foreach (var photo in images)
+                    {
+                        <figure><a href="@photo.Url" target="_blank" rel="noopener"><img src="@photo.Url" alt="@photo.Name" /></a><figcaption>@photo.Name</figcaption></figure>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(request.DecisionReason)) { <p>@request.DecisionReason</p> }
+            @if (request.Status == ApprovalRequestStatus.Pending)
+            {
+                @if (_owner)
+                {
+                    <label for="@($"reason-{request.Id}")">@L["RejectReason"]</label>
+                    <input id="@($"reason-{request.Id}")" maxlength="500" @bind="_reasons[request.Id]" disabled="@_busy" />
+                    <div class="approval-actions">
+                        <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, true)">@L["ApproveAction"]</button>
+                        <button class="btn btn-secondary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, false)">@L["RejectAction"]</button>
+                    </div>
+                }
+                else
+                {
+                    @if (MissingPhotos(request) > 0)
+                    {
+                        <IncidentApprovalPhotoRetry @key="request.Id" Session="Session" RequestId="request.Id"
+                            IncidentId="@(request.OperationCode == "SW-14" && int.TryParse(request.TargetKey, out var incidentId) ? (int?)incidentId : null)"
+                            Capacity="MissingPhotos(request)" OnChanged="RefreshAsync" />
+                    }
+                    <button class="btn btn-secondary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, null)">@L["CancelRequest"]</button>
+                }
+            }
+        </article>
+    }
+</section>
+@code {
+    [Parameter, EditorRequired] public IncidentPageService Session { get; set; } = default!;
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private IReadOnlyList<ApprovalRequestDto> _requests = [];
+    private readonly Dictionary<Guid, IReadOnlyList<IncidentStoredPhoto>> _images = [];
+    private readonly Dictionary<Guid, string> _reasons = [];
+    private readonly Dictionary<Guid, string> _roomLabels = [];
+    private bool _owner;
+    private bool _busy;
+    private string? _error;
+    protected override Task OnParametersSetAsync() => RefreshAsync();
+    private async Task RefreshAsync()
+    {
+        if (_busy) return;
+        _busy = true;
+        _error = null;
+        try
+        {
+            _owner = (await Session.CallerAsync()).IsChuTro;
+            _requests = await Session.RequestsAsync();
+            _images.Clear();
+            _roomLabels.Clear();
+            foreach (var request in _requests)
+            {
+                _reasons.TryAdd(request.Id, "");
+                _roomLabels[request.Id] = await Session.RequestRoomLabelAsync(request);
+                if (request.Status != ApprovalRequestStatus.Pending) continue;
+                if (request.OperationCode == "SW-12") _images[request.Id] = await Session.PhotosAsync(null, request.Id);
+                else if (request.OperationCode == "SW-14" && int.TryParse(request.TargetKey, out var id))
+                    _images[request.Id] = (await Session.PhotosAsync(id, null)).Where(p => p.Pending).ToArray();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException) { _requests = []; _images.Clear(); _error = L[ex is IncidentPageException ? ex.Message : "LoadFailed"]; }
+        finally { _busy = false; }
+    }
+    private async Task DecideAsync(Guid id, bool? approve)
+    {
+        if (_busy) return;
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Session.DecideAsync(id, approve, _reasons.GetValueOrDefault(id, ""));
+            Toasts.Success(L[approve is null ? "RequestCancelled" : approve.Value ? "RequestApproved" : "RequestRejected"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException) { _error = L[ex is IncidentPageException ? ex.Message : "SaveFailed"]; Toasts.Error(_error); return; }
+        finally { _busy = false; }
+        await RefreshAsync();
+        await OnChanged.InvokeAsync();
+    }
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static IncidentCreatePayload? CreatePayload(ApprovalRequestDto r)
+    {
+        try { return JsonSerializer.Deserialize<IncidentCreatePayload>(r.PayloadJson, JsonOptions); }
+        catch (JsonException) { return null; }
+    }
+    private static IncidentUpdatePayload? UpdatePayload(ApprovalRequestDto r)
+    {
+        try { return JsonSerializer.Deserialize<IncidentUpdatePayload>(r.PayloadJson, JsonOptions); }
+        catch (JsonException) { return null; }
+    }
+    private int MissingPhotos(ApprovalRequestDto request)
+    {
+        if (request.OperationCode is not ("SW-12" or "SW-14")) return 0;
+        try
+        {
+            var expected = request.OperationCode == "SW-12" ? CreatePayload(request)?.ExpectedPhotoCount ?? 0
+                : JsonSerializer.Deserialize<IncidentResultPhotoPayload>(request.PayloadJson, JsonOptions)?.ExpectedPhotoCount ?? 0;
+            return Math.Clamp(expected - (_images.GetValueOrDefault(request.Id)?.Count ?? 0), 0, 3);
+        }
+        catch (JsonException) { return 0; }
+    }
+}

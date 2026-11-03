@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -7,11 +9,20 @@ using NhaTro.IntegrationTests.TestSupport;
 using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Approvals;
+using Web.Features.Approvals.Services;
+using Web.Features.Maintenance.DTOs;
+using Web.Features.Properties;
+using Web.Features.Rooms;
+using Web.Features.Settings.Services;
+using Web.Features.Settings.Enums;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Maintenance.Entities;
 using Web.Features.Maintenance.Enums;
 using Web.Features.Maintenance.Services;
+using Web.Features.Maintenance.Models;
+using Web.Features.Maintenance;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Storage;
@@ -102,8 +113,15 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
         var audit = new FileAccessAuditWriter(factory, TimeProvider.System,
             NullLogger<FileAccessAuditWriter>.Instance);
         var tenantScope = new TenantDocumentScopeService(db, new NoManagerTenantScope());
+        var incidentScope = new IncidentFileScope(factory, TimeProvider.System);
+        var toggle = new PhotoTogglePolicy();
+        var approvals = new ManagerApprovalService(db, TimeProvider.System,
+            [new IncidentCreateApprovalApplier(TimeProvider.System), new IncidentResultPhotoApprovalApplier(incidentScope)],
+            NullLogger<ManagerApprovalService>.Instance);
+        var photoService = new IncidentPhotoService(factory, memoryStorage, incidentScope, toggle, approvals, options,
+            TimeProvider.System, audit, NullLogger<IncidentPhotoService>.Instance);
         var service = new FileService(factory, memoryStorage, options, TimeProvider.System, tenantScope,
-            new IncidentFileScope(factory, TimeProvider.System), audit, NullLogger<FileService>.Instance);
+            incidentScope, audit, NullLogger<FileService>.Instance, photoService);
         var owner = new StorageCaller(ownerId, Roles.ChuTro);
         var manager = new StorageCaller(managerId, Roles.QuanLy);
         var outOfScopeManager = new StorageCaller(otherManagerId, Roles.QuanLy);
@@ -140,6 +158,103 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
         Assert.True(await service.DeleteAsync(first.File.Id, owner));
         Assert.Null(await service.DownloadAsync(first.File.Id, owner));
         Assert.Equal(2, (await service.ListAsync(RelatedEntityType.MaintenanceIncident, "7", owner)).Count);
+
+        // Gọi thẳng storage không vượt được SW-14 hoặc giả nhóm Report của phiếu người khác.
+        toggle.Decision = RoomChangeDecision.Denied;
+        Assert.Equal(StorageErrorCodes.Forbidden, (await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), manager)).ErrorCode);
+        Assert.Equal(StorageErrorCodes.Forbidden, (await service.UploadAsync(PhotoRequest("7"), manager)).ErrorCode);
+        Assert.Equal(StorageErrorCodes.Forbidden, (await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), tenantCaller)).ErrorCode);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.UploadAsync(PhotoRequest("7"), new StorageCaller(ownerId, Roles.Admin)));
+
+        // Hai ảnh cùng một đề xuất: không thể duyệt giữa chừng hoặc lộ ảnh chờ cho khách.
+        toggle.Decision = RoomChangeDecision.RequiresApproval;
+        var pending = await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result, expected: 2), manager);
+        Assert.True(pending.Succeeded, pending.ErrorMessage);
+        var pendingId = pending.ApprovalRequestId!.Value;
+        Assert.Null(await service.DownloadAsync(pending.File!.Id, tenantCaller));
+        Assert.NotNull(await service.DownloadAsync(pending.File.Id, owner));
+        Assert.False(await service.DeleteAsync(pending.File.Id, owner));
+        var incomplete = await approvals.ApproveAsync(pendingId, new(ownerId, Roles.ChuTro));
+        Assert.Equal("ApprovalPhotosIncomplete", incomplete.ErrorCode);
+        var secondResult = await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result, pendingId, 2), manager);
+        Assert.True(secondResult.Succeeded, secondResult.ErrorMessage);
+        Assert.True((await approvals.ApproveAsync(pendingId, new(ownerId, Roles.ChuTro))).Succeeded);
+        Assert.NotNull(await service.DownloadAsync(pending.File.Id, tenantCaller));
+        Assert.False((await approvals.ApproveAsync(pendingId, new(ownerId, Roles.ChuTro))).Succeeded);
+
+        // Ảnh bị từ chối/hủy không còn tải được và không chiếm quota.
+        var rejected = await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), manager);
+        Assert.True(rejected.Succeeded, rejected.ErrorMessage);
+        Assert.True((await approvals.RejectAsync(rejected.ApprovalRequestId!.Value, new() { Reason = "Ảnh không phù hợp" }, new(ownerId, Roles.ChuTro))).Succeeded);
+        Assert.Null(await service.DownloadAsync(rejected.File!.Id, manager));
+        var cancelled = await service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), manager);
+        Assert.True(cancelled.Succeeded, cancelled.ErrorMessage);
+        Assert.True((await approvals.CancelAsync(cancelled.ApprovalRequestId!.Value, new(managerId, Roles.QuanLy))).Succeeded);
+        Assert.Null(await service.DownloadAsync(cancelled.File!.Id, owner));
+
+        // Còn đúng một slot kết quả: upload đồng thời chỉ một lần thắng; nhóm báo độc lập.
+        var racing = await Task.WhenAll(Enumerable.Range(0, 3).Select(_ => service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), owner)));
+        Assert.Single(racing.Where(r => r.Succeeded));
+        Assert.All(racing.Where(r => !r.Succeeded), r => Assert.Equal(StorageErrorCodes.FileCountExceeded, r.ErrorCode));
+        Assert.True((await service.UploadAsync(PhotoRequest("7"), owner)).Succeeded);
+        Assert.Equal(6, (await service.ListAsync(RelatedEntityType.MaintenanceIncident, "7", tenantCaller)).Count);
+
+        // SW-12 giữ ảnh ngoài phiếu cho tới khi đủ ảnh và duyệt; sau duyệt ảnh nằm đúng phiếu SQL.
+        var incidents = new IncidentService(factory, TimeProvider.System, toggle, approvals);
+        var creation = await incidents.CreateAsync(new IncidentCreateRequest
+        {
+            RoomId = ownerRoom.Id, Title = "Sự cố cần kiểm tra", Description = "Thông tin sự cố và ảnh để kiểm tra.",
+            ExpectedPhotoCount = 1
+        }, new PropertyCaller(managerId, Roles.QuanLy));
+        Assert.True(creation.Succeeded);
+        Assert.Null(creation.Incident);
+        var creationId = creation.ApprovalRequest!.Id;
+        Assert.Equal("ApprovalPhotosIncomplete", (await approvals.ApproveAsync(creationId, new(ownerId, Roles.ChuTro))).ErrorCode);
+        var creationPhoto = await service.UploadAsync(PhotoRequest(creationId.ToString("D"), related: RelatedEntityType.IncidentApproval), manager);
+        Assert.True(creationPhoto.Succeeded, creationPhoto.ErrorMessage);
+        Assert.Null(await service.DownloadAsync(creationPhoto.File!.Id, tenantCaller));
+        Assert.NotNull(await service.DownloadAsync(creationPhoto.File.Id, owner));
+        Assert.True((await approvals.ApproveAsync(creationId, new(ownerId, Roles.ChuTro))).Succeeded);
+        Assert.NotNull(await service.DownloadAsync(creationPhoto.File.Id, tenantCaller));
+        await using var verified = fixture.CreateContext();
+        var createdIncidentId = await verified.IncidentPhotoAttachments.Where(p => p.FileId == creationPhoto.File.Id).Select(p => p.IncidentId).SingleAsync();
+        Assert.NotNull(createdIncidentId);
+        Assert.Contains(await service.ListAsync(RelatedEntityType.MaintenanceIncident, createdIncidentId.Value.ToString(), tenantCaller), f => f.Id == creationPhoto.File.Id);
+        Assert.True((await incidents.GetAsync(createdIncidentId.Value, new(tenantId, Roles.KhachThue))).Succeeded);
+
+        // Lỗi ghi private storage giữ request ID để retry, không tạo đề xuất trùng.
+        memoryStorage.FailNextWrite = true;
+        var failedPhoto = await service.UploadAsync(PhotoRequest(createdIncidentId.Value.ToString(), IncidentPhotoKind.Result), manager);
+        Assert.Equal(StorageErrorCodes.UploadFailed, failedPhoto.ErrorCode);
+        Assert.NotNull(failedPhoto.ApprovalRequestId);
+        var retriedPhoto = await service.UploadAsync(PhotoRequest(createdIncidentId.Value.ToString(), IncidentPhotoKind.Result, failedPhoto.ApprovalRequestId), manager);
+        Assert.True(retriedPhoto.Succeeded, retriedPhoto.ErrorMessage);
+        Assert.Equal(failedPhoto.ApprovalRequestId, retriedPhoto.ApprovalRequestId);
+        Assert.True((await approvals.ApproveAsync(retriedPhoto.ApprovalRequestId!.Value, new(ownerId, Roles.ChuTro))).Succeeded);
+
+        toggle.Decision = RoomChangeDecision.Allowed;
+        var allowedPhoto = await service.UploadAsync(PhotoRequest(createdIncidentId.Value.ToString(), IncidentPhotoKind.Result), manager);
+        Assert.True(allowedPhoto.Succeeded, allowedPhoto.ErrorMessage);
+        Assert.Null(allowedPhoto.ApprovalRequestId);
+        Assert.NotNull(await service.DownloadAsync(allowedPhoto.File!.Id, tenantCaller));
+
+        // Adapter form retry ảnh sau khi đã lưu phiếu: chỉ có một phiếu SQL cho cả hai lần gửi.
+        var page = new IncidentPageService(new TestAuthentication(tenantId, Roles.KhachThue), incidents, photoService, toggle, approvals);
+        var form = new IncidentForm
+        {
+            PropertyId = ownerProperty.Id, RoomId = ownerRoom.Id, Title = "Vòi nước cần thay",
+            Description = "Vòi nước bị rò rỉ và cần được thay thế.",
+            Photos = [new("report.png", Convert.FromHexString("89504E470D0A1A0A00000000"))]
+        };
+        var countBefore = await verified.MaintenanceIncidents.CountAsync();
+        memoryStorage.FailNextWrite = true;
+        await Assert.ThrowsAsync<IncidentPageException>(() => page.CreateAsync(form));
+        Assert.NotNull(form.SavedIncidentId);
+        Assert.Single(form.Photos);
+        Assert.False(await page.CreateAsync(form));
+        Assert.Empty(form.Photos);
+        Assert.Equal(countBefore + 1, await verified.MaintenanceIncidents.CountAsync());
+        Assert.Single(await page.PhotosAsync(form.SavedIncidentId, null));
     }
 
     private static Contract NewApprovedContract(int roomId, string number, DateTime today) => new()
@@ -153,15 +268,17 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
         Status = ContractStatus.Approved,
     };
 
-    private static UploadFileRequest PhotoRequest(string relatedId)
+    private static UploadFileRequest PhotoRequest(string relatedId, IncidentPhotoKind kind = IncidentPhotoKind.Report,
+        Guid? approvalId = null, int expected = 1, RelatedEntityType related = RelatedEntityType.MaintenanceIncident)
     {
         var bytes = Convert.FromHexString("89504E470D0A1A0A00000000");
         return new UploadFileRequest
         {
             File = new FormFile(new MemoryStream(bytes), 0, bytes.Length, "file", "incident.png"),
             FileCategory = FileCategory.IncidentPhoto,
-            RelatedEntityType = RelatedEntityType.MaintenanceIncident,
+            RelatedEntityType = related,
             RelatedEntityId = relatedId,
+            IncidentPhotoKind = kind, ApprovalRequestId = approvalId, ExpectedPhotoCount = expected,
         };
     }
 
@@ -174,9 +291,23 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
             Task.FromResult(CreateDbContext());
     }
 
+    private sealed class PhotoTogglePolicy : IManagerTogglePolicy
+    {
+        public RoomChangeDecision Decision { get; set; } = RoomChangeDecision.Allowed;
+        public Task<RoomChangeDecision> EvaluateAsync(ManagerAction action, string role, CancellationToken ct = default) => Task.FromResult(Decision);
+        public Task<RoomChangeDecision> EvaluateAsync(string code, string role, CancellationToken ct = default) => Task.FromResult(Decision);
+    }
+
+    private sealed class TestAuthentication(string userId, string role) : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync() => Task.FromResult(new AuthenticationState(
+            new ClaimsPrincipal(new ClaimsIdentity([new(ClaimTypes.NameIdentifier, userId), new(ClaimTypes.Role, role)], "test"))));
+    }
+
     private sealed class MemoryFileStorage : IFileStorage
     {
         private readonly Dictionary<string, byte[]> _files = new(StringComparer.Ordinal);
+        public bool FailNextWrite { get; set; }
 
         public Task<StoredFileWriteResult> SaveAsync(
             ReadOnlyMemory<byte> content,
@@ -184,6 +315,7 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
             DateTimeOffset uploadedAt,
             CancellationToken cancellationToken = default)
         {
+            if (FailNextWrite) { FailNextWrite = false; throw new IOException("Simulated storage failure"); }
             var name = Guid.NewGuid().ToString("N") + extension;
             var path = $"memory/{name}";
             _files[path] = content.ToArray();

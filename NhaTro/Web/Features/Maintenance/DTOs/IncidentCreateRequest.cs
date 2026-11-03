@@ -5,6 +5,7 @@ namespace Web.Features.Maintenance.DTOs;
 
 public sealed record IncidentCreateRequest
 {
+    public int ExpectedPhotoCount { get; init; }
     public int RoomId { get; init; }
 
     [Required, StringLength(200, MinimumLength = 5)]
