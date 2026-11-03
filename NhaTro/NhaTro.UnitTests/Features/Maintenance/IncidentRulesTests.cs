@@ -7,6 +7,13 @@ namespace NhaTro.UnitTests.Features.Maintenance;
 
 public sealed class IncidentRulesTests
 {
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(4)]
+    public void PendingCreationCannotDeclarePhotoCountOutsideReportQuota(int count)
+    {
+        Assert.Equal(IncidentErrorCodes.InvalidRequest, IncidentRules.ValidateCreate(ValidCreate() with { ExpectedPhotoCount = count }));
+    }
     [Fact]
     public void CreateRequest_IsValidWhenRequiredFieldsAndEnumsAreValid()
     {

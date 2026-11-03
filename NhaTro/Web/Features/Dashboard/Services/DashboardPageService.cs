@@ -40,13 +40,14 @@ public sealed class DashboardPageService(P2CallerProvider callers, IPropertyServ
         finally { reportGate.Release(); }
     }
 
-    public async Task<TenantReportKpis> GetTenantKpisAsync(CancellationToken ct = default)
+    public async Task<TenantReportKpis> GetTenantKpisAsync(int? propertyId, CancellationToken ct = default)
     {
         await reportGate.WaitAsync(ct);
         try
         {
             var caller = await callers.GetCallerAsync();
-            return await tenants.GetAsync(new TenantCaller(caller.UserId, caller.Role), ct);
+            return (await tenants.GetAsync(new TenantReportFilter { PropertyId = propertyId, PageSize = 1 },
+                new TenantCaller(caller.UserId, caller.Role), ct)).Kpis;
         }
         finally { reportGate.Release(); }
     }

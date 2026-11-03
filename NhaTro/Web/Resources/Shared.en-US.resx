@@ -802,6 +802,33 @@
   <data name="TenantCreated" xml:space="preserve"><value>Tenant record created</value></data>
   <data name="TenantUpdated" xml:space="preserve"><value>Tenant record updated</value></data>
   <data name="TenantStatusUpdated" xml:space="preserve"><value>Record status updated</value></data>
+  <!-- VHT-99: tenant profile trash -->
+  <data name="TenantDelete" xml:space="preserve"><value>Delete record</value></data>
+  <data name="TenantDeleting" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="TenantDeleteTitle" xml:space="preserve"><value>Move this record to trash?</value></data>
+  <data name="TenantDeleteMessage" xml:space="preserve"><value>The record is soft-deleted and can be restored. Account links and document files are kept. A tenant with an active contract cannot be deleted.</value></data>
+  <data name="TenantDeleted" xml:space="preserve"><value>Tenant record moved to trash</value></data>
+  <data name="TenantDeleteApprovalSubmitted" xml:space="preserve"><value>Delete request submitted and waiting for the owner's approval</value></data>
+  <data name="TenantErrorInUse" xml:space="preserve"><value>This tenant has an active contract and cannot be deleted.</value></data>
+  <data name="TenantTrashTitle" xml:space="preserve"><value>Tenant profile trash</value></data>
+  <data name="TenantTrashSubtitle" xml:space="preserve"><value>Soft-deleted records can be restored without losing account links or document files.</value></data>
+  <data name="TenantTrashBack" xml:space="preserve"><value>Back to tenants</value></data>
+  <data name="TenantTrashOpen" xml:space="preserve"><value>Trash</value></data>
+  <data name="TenantTrashRetentionNote" xml:space="preserve"><value>Records and document files in trash are retained under the SW-06 retention policy; this scope never hard-deletes them.</value></data>
+  <data name="TenantTrashSearch" xml:space="preserve"><value>Search trash</value></data>
+  <data name="TenantTrashSearchHint" xml:space="preserve"><value>Search by name, phone or identity number</value></data>
+  <data name="TenantTrashCount" xml:space="preserve"><value>{0} records in trash</value></data>
+  <data name="TenantTrashColumnDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="TenantTrashColumnDocuments" xml:space="preserve"><value>Retained documents</value></data>
+  <data name="TenantTrashEmptyTitle" xml:space="preserve"><value>Trash is empty</value></data>
+  <data name="TenantTrashEmptyDescription" xml:space="preserve"><value>No tenant record has been soft-deleted.</value></data>
+  <data name="TenantTrashLoadFailed" xml:space="preserve"><value>Could not load the tenant profile trash.</value></data>
+  <data name="TenantTrashRestore" xml:space="preserve"><value>Restore</value></data>
+  <data name="TenantTrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
+  <data name="TenantTrashRestoreTitle" xml:space="preserve"><value>Restore this tenant record?</value></data>
+  <data name="TenantTrashRestoreMessage" xml:space="preserve"><value>The record returns to the tenant list with its account link and document files intact.</value></data>
+  <data name="TenantTrashRestored" xml:space="preserve"><value>Tenant record restored</value></data>
+  <data name="TenantTrashRestoreFailed" xml:space="preserve"><value>Could not restore the record. Please try again.</value></data>
   <data name="TenantAccountLinked" xml:space="preserve"><value>Tenant account linked</value></data>
   <data name="TenantAccountUnlinked" xml:space="preserve"><value>Account unlinked</value></data>
   <data name="TenantUnlinkTitle" xml:space="preserve"><value>Unlink this account?</value></data>
@@ -1187,4 +1214,46 @@
   <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Month:</value></data>
   <data name="MeterReadingYearFilter" xml:space="preserve"><value>Year:</value></data>
   <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Month {0:00}</value></data>
+  <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
+  <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>
+  <data name="ApprovalUiAction" xml:space="preserve"><value>Action</value></data>
+  <data name="ApprovalUiMode" xml:space="preserve"><value>Mode</value></data>
+  <data name="ApprovalUiModeAllow" xml:space="preserve"><value>Allow</value></data>
+  <data name="ApprovalUiModeApprove" xml:space="preserve"><value>Require approval</value></data>
+  <data name="ApprovalUiModeDeny" xml:space="preserve"><value>Deny</value></data>
+  <data name="ApprovalUiStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ApprovalUiStatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="ApprovalUiStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ApprovalUiStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ApprovalUiReason" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="ApprovalUiApprove" xml:space="preserve"><value>Approve</value></data>
+  <data name="ApprovalUiReject" xml:space="preserve"><value>Reject</value></data>
+  <data name="ApprovalUiTargetUnknown" xml:space="preserve"><value>Target</value></data>
+  <data name="ApprovalUiTargetRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="ApprovalUiTargetTenant" xml:space="preserve"><value>Tenant</value></data>
+  <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Contract</value></data>
+  <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Meter reading period</value></data>
+  <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Incident</value></data>
+  <data name="SW-01" xml:space="preserve"><value>Edit room details</value></data>
+  <data name="SW-02" xml:space="preserve"><value>Set room rate</value></data>
+  <data name="SW-03" xml:space="preserve"><value>Change room status</value></data>
+  <data name="SW-04" xml:space="preserve"><value>Create tenant profile</value></data>
+  <data name="SW-05" xml:space="preserve"><value>Edit tenant profile</value></data>
+  <data name="SW-06" xml:space="preserve"><value>Delete tenant profile</value></data>
+  <data name="SW-07" xml:space="preserve"><value>Extend or terminate contract</value></data>
+  <data name="SW-08" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="SW-09" xml:space="preserve"><value>Edit previous meter readings</value></data>
+  <data name="SW-10" xml:space="preserve"><value>Create invoice</value></data>
+  <data name="SW-11" xml:space="preserve"><value>Issue invoice</value></data>
+  <data name="SW-12" xml:space="preserve"><value>Create maintenance ticket</value></data>
+  <data name="SW-13" xml:space="preserve"><value>Update incident status</value></data>
+  <data name="SW-14" xml:space="preserve"><value>Attach result photos</value></data>
+  <data name="SW-15" xml:space="preserve"><value>View reports</value></data>
+  <data name="SW-16" xml:space="preserve"><value>Export reports to Excel</value></data>
+  <data name="SW-15a" xml:space="preserve"><value>View room report</value></data>
+  <data name="SW-15b" xml:space="preserve"><value>View tenant report</value></data>
+  <data name="SW-15c" xml:space="preserve"><value>View contract report</value></data>
+  <data name="SW-15d" xml:space="preserve"><value>View invoice report</value></data>
+  <data name="SW-15e" xml:space="preserve"><value>View revenue and receivables report</value></data>
 </root>

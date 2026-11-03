@@ -85,7 +85,7 @@ public sealed class PriceVersionDto
     public PriceVersionStatus Status { get; set; } = PriceVersionStatus.Active;
     public string BuildingScope { get; set; } = "all";
     public string BuildingName { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
     public string? Note { get; set; }
     public bool IsSessionCreated { get; set; }
@@ -216,7 +216,6 @@ public sealed class UpdatePriceRequest
     public string ServiceId { get; set; } = string.Empty;
     public decimal NewRate { get; set; }
     public ServiceUnitCategory Unit { get; set; } = ServiceUnitCategory.Room;
-    public string BuildingScope { get; set; } = "all";
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
     public string? Note { get; set; }
@@ -232,6 +231,7 @@ public sealed class CreateServiceRequest
     public DateOnly EffectiveFrom { get; set; }
     public DateOnly? EffectiveTo { get; set; }
     public string? Description { get; set; }
+    public string? Note { get; set; }
 }
 
 public sealed record BuildingOptionDto(string Id, string Name, string Address, int TotalRooms, int OccupiedRooms);

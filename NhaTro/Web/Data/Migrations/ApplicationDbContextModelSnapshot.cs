@@ -637,6 +637,34 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
+                {
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApprovalRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("IncidentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.HasKey("FileId");
+
+                    b.HasIndex("ApprovalRequestId");
+
+                    b.HasIndex("IncidentId", "Kind");
+
+                    b.ToTable("IncidentPhotoAttachments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_IncidentPhotoAttachments_Kind", "[Kind] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_IncidentPhotoAttachments_Target", "[IncidentId] IS NOT NULL OR [ApprovalRequestId] IS NOT NULL");
+                        });
+                });
+
             modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>
                 {
                     b.Property<int>("Id")
@@ -1196,6 +1224,13 @@ namespace Web.Migrations
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -1257,6 +1292,8 @@ namespace Web.Migrations
 
                     b.HasIndex("FullName");
 
+                    b.HasIndex("IsDeleted");
+
                     b.HasIndex("Phone");
 
                     b.HasIndex("UserId")
@@ -1276,6 +1313,15 @@ namespace Web.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("IsReadOnly")
                         .ValueGeneratedOnAdd()
@@ -1308,16 +1354,24 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
                         .HasColumnType("date");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("ServiceCatalogId")
                         .HasColumnType("int");
@@ -1333,6 +1387,8 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("EffectiveDate", "ServiceCatalogId");
 
                     b.HasIndex("ServiceCatalogId", "EffectiveDate")
@@ -1342,9 +1398,11 @@ namespace Web.Migrations
                         {
                             t.HasCheckConstraint("CK_ServicePriceHistory_CalculationMethod_NotBlank", "LEN(LTRIM(RTRIM([CalculationMethod]))) > 0");
 
+                            t.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] > [EffectiveDate]");
+
                             t.HasCheckConstraint("CK_ServicePriceHistory_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
 
-                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_Positive", "[UnitPrice] > 0");
 
                             t.HasCheckConstraint("CK_ServicePriceHistory_Unit_NotBlank", "LEN(LTRIM(RTRIM([Unit]))) > 0");
                         });
@@ -1905,6 +1963,31 @@ namespace Web.Migrations
                     b.Navigation("Invoice");
                 });
 
+            modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
+                {
+                    b.HasOne("Web.Features.Approvals.Entities.ManagerApprovalRequest", "ApprovalRequest")
+                        .WithMany()
+                        .HasForeignKey("ApprovalRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Storage.Entities.StoredFile", "File")
+                        .WithOne()
+                        .HasForeignKey("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", "FileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Maintenance.Entities.MaintenanceIncident", "Incident")
+                        .WithMany()
+                        .HasForeignKey("IncidentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApprovalRequest");
+
+                    b.Navigation("File");
+
+                    b.Navigation("Incident");
+                });
+
             modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>
                 {
                     b.HasOne("Web.Data.ApplicationUser", null)
@@ -2008,6 +2091,11 @@ namespace Web.Migrations
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServicePriceHistory", b =>
                 {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Web.Features.Utilities.Entities.ServiceCatalog", "ServiceCatalog")
                         .WithMany("PriceHistory")
                         .HasForeignKey("ServiceCatalogId")

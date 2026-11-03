@@ -5,6 +5,7 @@ namespace Web.Features.Maintenance.Services;
 
 public interface IIncidentService
 {
+    Task<IReadOnlyList<IncidentRoomDto>> RoomsAsync(PropertyCaller caller, CancellationToken cancellationToken = default);
     Task<IncidentResult> CreateAsync(
         IncidentCreateRequest request, PropertyCaller caller, CancellationToken cancellationToken = default);
 

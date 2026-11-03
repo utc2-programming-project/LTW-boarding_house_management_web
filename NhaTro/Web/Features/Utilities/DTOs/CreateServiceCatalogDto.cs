@@ -12,6 +12,13 @@ public sealed class CreateServiceCatalogDto
 
     public DateOnly EffectiveDate { get; set; }
 
+    /// <summary>Optional last day the new price version applies; null means open-ended.</summary>
+    public DateOnly? EffectiveTo { get; set; }
+
     /// <summary>Null means the price applies to every property.</summary>
     public int? PropertyId { get; set; }
+
+    /// <summary>Optional note for this initial price version.</summary>
+    public string? Note { get; set; }
+    public string? Description { get; set; }
 }

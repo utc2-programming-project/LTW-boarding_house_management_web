@@ -1,0 +1,254 @@
+@page "/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject TenantPageService TenantPages
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["TenantTrashTitle"] · @L["AppName"]</PageTitle>
+
+<section class="tenant-trash-page" aria-labelledby="tenant-trash-title">
+    <header class="tenant-trash-heading">
+        <div>
+            <h1 id="tenant-trash-title">@L["TenantTrashTitle"]</h1>
+            <p>@L["TenantTrashSubtitle"]</p>
+        </div>
+        <a class="btn btn-secondary" href="/tenants">
+            <LucideIcon Name="arrow-left" /> @L["TenantTrashBack"]
+        </a>
+    </header>
+
+    <div class="tenant-trash-note" role="note">
+        <LucideIcon Name="shield-check" />
+        <span>@L["TenantTrashRetentionNote"]</span>
+    </div>
+
+    <div class="tenant-trash-toolbar">
+        <div class="tenant-trash-search">
+            <label class="sr-only" for="tenant-trash-search">@L["TenantTrashSearch"]</label>
+            <span class="tenant-trash-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+            <InputText id="tenant-trash-search" class="input" @bind-Value="_keyword"
+                       @bind-Value:after="SearchAsync" placeholder="@L["TenantTrashSearchHint"]" autocomplete="off" />
+        </div>
+        <span class="tenant-trash-count">@string.Format(L["TenantTrashCount"], _total)</span>
+    </div>
+
+    @if (_error)
+    {
+        <div class="tenant-trash-alert" role="alert">
+            <span>@L["TenantTrashLoadFailed"]</span>
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_loading)
+    {
+        <div class="tenant-trash-loading">
+            <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["TenantTrashEmptyTitle"]" Description="@L["TenantTrashEmptyDescription"]" />
+    }
+    else
+    {
+        <div class="tenant-trash-table-wrap">
+            <table class="tenant-trash-table">
+                <caption class="sr-only">@L["TenantTrashTitle"]</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">@L["TenantColumnName"]</th>
+                        <th scope="col">@L["TenantColumnPhone"]</th>
+                        <th scope="col">@L["TenantTrashColumnDeletedAt"]</th>
+                        <th scope="col">@L["TenantColumnAccount"]</th>
+                        <th scope="col">@L["TenantTrashColumnDocuments"]</th>
+                        <th scope="col">@L["TenantColumnActions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr @key="item.Id">
+                            <td>
+                                <div class="tenant-trash-name">
+                                    <span class="tenant-trash-avatar" aria-hidden="true">@Initial(item.FullName)</span>
+                                    <span>
+                                        <strong>@item.FullName</strong>
+                                        <small>@string.Format(L["TenantRecordNumber"], item.Id)</small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="tenant-trash-mono">@item.PhoneNumber</td>
+                            <td>@DateFormatter.FormatDateTime(item.DeletedAt?.UtcDateTime)</td>
+                            <td>
+                                <StatusBadge Tone="@(item.HasAccount ? BadgeTone.Info : BadgeTone.Neutral)"
+                                             Text="@(item.HasAccount ? L["TenantAccountYes"] : L["TenantAccountNo"])" />
+                            </td>
+                            <td>@item.DocumentCount</td>
+                            <td>
+                                <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RequestRestore(item)">
+                                    <LucideIcon Name="refresh" /> @L["TenantTrashRestore"]
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (PageCount > 1)
+        {
+            <nav class="tenant-trash-pager" aria-label="@L["TablePagination"]">
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="PreviousPageAsync">
+                    <LucideIcon Name="chevron-left" /> @L["TablePreviousPage"]
+                </button>
+                <span>@L["TablePage"] @_page / @PageCount</span>
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= PageCount)" @onclick="NextPageAsync">
+                    @L["TableNextPage"] <LucideIcon Name="chevron-right" />
+                </button>
+            </nav>
+        }
+    }
+</section>
+
+<ConfirmDialog Visible="_showRestoreConfirm" Title="@L["TenantTrashRestoreTitle"]"
+               Message="@L["TenantTrashRestoreMessage"]" ConfirmText="@L["TenantTrashRestore"]"
+               CancelText="@L["Cancel"]" BusyText="@L["TenantTrashRestoring"]"
+               OnConfirm="ConfirmRestoreAsync" OnCancel="CancelRestore" />
+
+@code {
+    private IReadOnlyList<TenantTrashItemDto> _items = [];
+    private TenantTrashItemDto? _restoreTarget;
+    private string? _keyword;
+    private int _page = 1;
+    private int _pageSize = 20;
+    private int _total;
+    private bool _loading = true;
+    private bool _error;
+    private bool _showRestoreConfirm;
+
+    private int PageCount => Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = false;
+        try
+        {
+            var result = await TenantPages.ListTrashAsync(new TenantTrashFilterRequest
+            {
+                Keyword = _keyword,
+                Page = _page,
+                PageSize = _pageSize,
+            });
+            _items = result.Items;
+            _total = result.TotalCount;
+
+            // Dữ liệu co lại (vd. vừa khôi phục dòng cuối): lùi về trang còn dữ liệu.
+            if (_items.Count == 0 && _page > 1)
+            {
+                _page = PageCount;
+                await LoadAsync();
+                return;
+            }
+        }
+        catch
+        {
+            _error = true;
+            _items = [];
+            _total = 0;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task SearchAsync()
+    {
+        _page = 1;
+        return LoadAsync();
+    }
+
+    private Task PreviousPageAsync()
+    {
+        if (_page <= 1) return Task.CompletedTask;
+        _page--;
+        return LoadAsync();
+    }
+
+    private Task NextPageAsync()
+    {
+        if (_page >= PageCount) return Task.CompletedTask;
+        _page++;
+        return LoadAsync();
+    }
+
+    private Task RequestRestore(TenantTrashItemDto item)
+    {
+        _restoreTarget = item;
+        _showRestoreConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelRestore()
+    {
+        _showRestoreConfirm = false;
+        _restoreTarget = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmRestoreAsync()
+    {
+        if (_restoreTarget is null)
+        {
+            _showRestoreConfirm = false;
+            return;
+        }
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.RestoreAsync(_restoreTarget.Id, _restoreTarget.RowVersion);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _showRestoreConfirm = false;
+            Toasts.Error(L["TenantErrorForbidden"]);
+            return;
+        }
+        catch
+        {
+            _showRestoreConfirm = false;
+            Toasts.Error(L["TenantTrashRestoreFailed"]);
+            return;
+        }
+
+        _showRestoreConfirm = false;
+        if (!result.Succeeded)
+        {
+            Toasts.Error(result.ErrorCode switch
+            {
+                TenantErrorCodes.TenantNotFound => L["TenantErrorNotFound"],
+                TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+                TenantErrorCodes.DuplicateTenant => L["TenantErrorDuplicateId"],
+                TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
+                TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
+                _ => L["TenantTrashRestoreFailed"],
+            });
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict) await LoadAsync();
+            return;
+        }
+
+        Toasts.Success(L["TenantTrashRestored"]);
+        _restoreTarget = null;
+        await LoadAsync();
+    }
+
+    private static string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value)
+            ? "?"
+            : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
+}

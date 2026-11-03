@@ -18,5 +18,6 @@ public enum RelatedEntityType
     Invoice = 2,
     Tenant = 3,
     MaintenanceIncident = 4,
-    Payment = 5
+    Payment = 5,
+    IncidentApproval = 6
 }

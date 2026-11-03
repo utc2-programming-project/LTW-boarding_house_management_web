@@ -11,6 +11,7 @@ public static class IncidentRules
     public static string? ValidateCreate(IncidentCreateRequest? request)
     {
         if (request is null
+            || request.ExpectedPhotoCount is < 0 or > 3
             || request.RoomId <= 0
             || string.IsNullOrWhiteSpace(request.Title)
             || request.Title.Trim().Length < MinTitleLength

@@ -175,9 +175,9 @@ builder.Services.AddAuthorization(options =>
         !context.User.IsInRole(Roles.Admin) &&
         (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
     // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
-    options.AddPolicy(Web.Features.Maintenance.IncidentDemoSession.Policy, p => p
+    options.AddPolicy(Web.Features.Maintenance.IncidentAccess.Policy, p => p
         .RequireAuthenticatedUser()
-        .RequireAssertion(context => Web.Features.Maintenance.IncidentDemoSession.IsAllowed(context.User)));
+        .RequireAssertion(context => Web.Features.Maintenance.IncidentAccess.IsAllowed(context.User)));
     options.AddPolicy("UtilityBusiness", p => p.RequireAssertion(context =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
@@ -213,10 +213,15 @@ builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
+builder.Services.AddScoped<IncidentPhotoService>();
+builder.Services.AddScoped<IncidentPageService>();
+builder.Services.AddScoped<IApprovalApplier, IncidentResultPhotoApprovalApplier>();
 builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
+// VHT-99: duyệt yêu cầu SW-06 của Quản lý = đưa hồ sơ khách thuê vào thùng rác.
+builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
@@ -365,6 +370,7 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageServi
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
+builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();

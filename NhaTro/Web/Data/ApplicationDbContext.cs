@@ -29,6 +29,7 @@ namespace Web.Data
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
         public DbSet<MaintenanceIncident> MaintenanceIncidents => Set<MaintenanceIncident>();
         public DbSet<MaintenanceIncidentHistory> MaintenanceIncidentHistories => Set<MaintenanceIncidentHistory>();
+        public DbSet<IncidentPhotoAttachment> IncidentPhotoAttachments => Set<IncidentPhotoAttachment>();
         public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
         public DbSet<FileAccessAuditLog> FileAccessAuditLogs => Set<FileAccessAuditLog>();
 

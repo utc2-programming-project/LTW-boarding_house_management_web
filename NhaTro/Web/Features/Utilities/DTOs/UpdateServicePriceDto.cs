@@ -11,4 +11,10 @@ public sealed class UpdateServicePriceDto
     public decimal UnitPrice { get; set; }
 
     public DateOnly EffectiveDate { get; set; }
+
+    /// <summary>Optional last day the new price version applies; null means open-ended.</summary>
+    public DateOnly? EffectiveTo { get; set; }
+
+    /// <summary>Optional note for this new price version.</summary>
+    public string? Note { get; set; }
 }

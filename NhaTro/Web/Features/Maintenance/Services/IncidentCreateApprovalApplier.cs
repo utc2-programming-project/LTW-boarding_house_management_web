@@ -39,6 +39,7 @@ public sealed class IncidentCreateApprovalApplier(TimeProvider clock) : IApprova
             Description = payload.Description,
             Category = payload.Category,
             Urgency = payload.Urgency,
+            ExpectedPhotoCount = payload.ExpectedPhotoCount,
         };
         if (IncidentRules.ValidateCreate(input) is not null) throw Invalid("Dữ liệu phiếu sự cố không hợp lệ.");
 
@@ -73,6 +74,13 @@ public sealed class IncidentCreateApprovalApplier(TimeProvider clock) : IApprova
             CreatedAt = now,
         });
         db.MaintenanceIncidents.Add(incident);
+        // Request đã bị queue khóa; ảnh chỉ gắn vào phiếu trong cùng transaction duyệt.
+        var photos = await db.IncidentPhotoAttachments.Include(p => p.File)
+            .Where(p => p.ApprovalRequestId == request.Id).ToListAsync(ct);
+        if (photos.Count(p => !p.File.IsDeleted) != payload.ExpectedPhotoCount
+            || photos.Any(p => p.Kind != IncidentPhotoKind.Report || p.IncidentId != null))
+            throw new ApprovalApplyException("ApprovalPhotosIncomplete", "Cần tải đủ ảnh của yêu cầu trước khi duyệt.");
+        foreach (var photo in photos) photo.Incident = incident;
     }
 
     private static ApprovalApplyException Invalid(string message) =>

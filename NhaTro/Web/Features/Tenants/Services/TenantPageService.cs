@@ -52,6 +52,27 @@ public sealed class TenantPageService(AuthenticationStateProvider authentication
         int id, bool isActive, string rowVersion, CancellationToken ct = default) =>
         CallAsync(caller => tenants.SetActiveAsync(id, isActive, rowVersion, caller, ct));
 
+    public Task<TenantResult> DeleteAsync(
+        int id, string rowVersion, CancellationToken ct = default) =>
+        CallAsync(caller => tenants.DeleteAsync(id, rowVersion, caller, ct));
+
+    public Task<TenantResult> RestoreAsync(
+        int id, string rowVersion, CancellationToken ct = default) =>
+        CallAsync(caller => tenants.RestoreAsync(id, rowVersion, caller, ct));
+
+    public async Task<Web.Common.Models.PagedResult<TenantTrashItemDto>> ListTrashAsync(
+        TenantTrashFilterRequest filter, CancellationToken ct = default)
+    {
+        var result = await tenants.ListTrashAsync(filter, await GetCallerAsync(), ct);
+        return new Web.Common.Models.PagedResult<TenantTrashItemDto>
+        {
+            Items = result.Items,
+            Page = result.Page,
+            PageSize = result.PageSize,
+            TotalCount = result.TotalCount,
+        };
+    }
+
     public Task<TenantResult> LinkAccountAsync(
         int id, string accountUserId, string rowVersion, CancellationToken ct = default) =>
         CallAsync(caller => tenants.LinkAccountAsync(id, accountUserId, rowVersion, caller, ct));
