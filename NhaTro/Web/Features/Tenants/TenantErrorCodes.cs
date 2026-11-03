@@ -33,7 +33,7 @@ public static class TenantErrorMessages
     public const string DuplicateTenant = "Đã có khách thuê với số giấy tờ này";
     public const string DuplicatePhone = "Đã có khách thuê với số điện thoại này, xác nhận để tiếp tục";
     public const string ConcurrencyConflict = "Hồ sơ vừa được cập nhật, vui lòng tải lại";
-    public const string TenantInUse = "Khách thuê đang có hợp đồng, không thể ngừng sử dụng";
+    public const string TenantInUse = "Khách thuê đang có hợp đồng hiệu lực, không thể xóa hồ sơ";
     public const string AccountAlreadyLinked = "Tài khoản này đã được gắn với một hồ sơ khác";
     public const string TenantOperationFailed = "Không thể thực hiện, vui lòng thử lại";
     public const string InvalidPhone = "Số điện thoại không hợp lệ (10-11 chữ số, bắt đầu bằng 0)";

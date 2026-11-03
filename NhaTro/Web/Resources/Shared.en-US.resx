@@ -802,6 +802,33 @@
   <data name="TenantCreated" xml:space="preserve"><value>Tenant record created</value></data>
   <data name="TenantUpdated" xml:space="preserve"><value>Tenant record updated</value></data>
   <data name="TenantStatusUpdated" xml:space="preserve"><value>Record status updated</value></data>
+  <!-- VHT-99: tenant profile trash -->
+  <data name="TenantDelete" xml:space="preserve"><value>Delete record</value></data>
+  <data name="TenantDeleting" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="TenantDeleteTitle" xml:space="preserve"><value>Move this record to trash?</value></data>
+  <data name="TenantDeleteMessage" xml:space="preserve"><value>The record is soft-deleted and can be restored. Account links and document files are kept. A tenant with an active contract cannot be deleted.</value></data>
+  <data name="TenantDeleted" xml:space="preserve"><value>Tenant record moved to trash</value></data>
+  <data name="TenantDeleteApprovalSubmitted" xml:space="preserve"><value>Delete request submitted and waiting for the owner's approval</value></data>
+  <data name="TenantErrorInUse" xml:space="preserve"><value>This tenant has an active contract and cannot be deleted.</value></data>
+  <data name="TenantTrashTitle" xml:space="preserve"><value>Tenant profile trash</value></data>
+  <data name="TenantTrashSubtitle" xml:space="preserve"><value>Soft-deleted records can be restored without losing account links or document files.</value></data>
+  <data name="TenantTrashBack" xml:space="preserve"><value>Back to tenants</value></data>
+  <data name="TenantTrashOpen" xml:space="preserve"><value>Trash</value></data>
+  <data name="TenantTrashRetentionNote" xml:space="preserve"><value>Records and document files in trash are retained under the SW-06 retention policy; this scope never hard-deletes them.</value></data>
+  <data name="TenantTrashSearch" xml:space="preserve"><value>Search trash</value></data>
+  <data name="TenantTrashSearchHint" xml:space="preserve"><value>Search by name, phone or identity number</value></data>
+  <data name="TenantTrashCount" xml:space="preserve"><value>{0} records in trash</value></data>
+  <data name="TenantTrashColumnDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="TenantTrashColumnDocuments" xml:space="preserve"><value>Retained documents</value></data>
+  <data name="TenantTrashEmptyTitle" xml:space="preserve"><value>Trash is empty</value></data>
+  <data name="TenantTrashEmptyDescription" xml:space="preserve"><value>No tenant record has been soft-deleted.</value></data>
+  <data name="TenantTrashLoadFailed" xml:space="preserve"><value>Could not load the tenant profile trash.</value></data>
+  <data name="TenantTrashRestore" xml:space="preserve"><value>Restore</value></data>
+  <data name="TenantTrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
+  <data name="TenantTrashRestoreTitle" xml:space="preserve"><value>Restore this tenant record?</value></data>
+  <data name="TenantTrashRestoreMessage" xml:space="preserve"><value>The record returns to the tenant list with its account link and document files intact.</value></data>
+  <data name="TenantTrashRestored" xml:space="preserve"><value>Tenant record restored</value></data>
+  <data name="TenantTrashRestoreFailed" xml:space="preserve"><value>Could not restore the record. Please try again.</value></data>
   <data name="TenantAccountLinked" xml:space="preserve"><value>Tenant account linked</value></data>
   <data name="TenantAccountUnlinked" xml:space="preserve"><value>Account unlinked</value></data>
   <data name="TenantUnlinkTitle" xml:space="preserve"><value>Unlink this account?</value></data>

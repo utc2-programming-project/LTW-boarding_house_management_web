@@ -1224,6 +1224,13 @@ namespace Web.Migrations
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -1284,6 +1291,8 @@ namespace Web.Migrations
                         .HasFilter("[CitizenId] IS NOT NULL AND [IsDeleted] = 0 AND [IsActive] = 1");
 
                     b.HasIndex("FullName");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("Phone");
 
