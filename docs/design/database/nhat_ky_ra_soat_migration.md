@@ -102,3 +102,51 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 
 - 2D.4: chưa gửi Phúc bản ERD + ghi chú để ghép Word P1–P4.
 - VHT-28 2A yêu cầu người thứ hai chạy script — chưa có.
+
+## Lượt 2E — kiểm trên bản chung (VHT-123)
+
+**Nguồn rà:** `dev@951ab06`, 21 migration tới `20261103080000_AddIncidentPhotoAttachments`. Nhánh làm việc `VHT-123-kiểm-migration-va-erd-tren-bản-chung` (base `951ab06`).
+
+**Kết luận: ERD khớp schema EF và script kiểm đạt trên cả DB sạch lẫn DB nâng cấp.** Không phát hiện blocker migration; không sửa migration/entity.
+
+### Bằng chứng
+
+| Lệnh | Kết quả |
+| --- | --- |
+| `dotnet ef migrations has-pending-model-changes --project NhaTro/Web` | `No changes have been made to the model since the last migration.` |
+| `powershell -File scripts/database/kiem_tra_migration.ps1 -Database NhaTro_VHT123_2E -KeepDatabase` | `KET QUA: DAT` — 21 migration, 0 pending |
+| `sqlcmd -i <bản sao ERD SQL, DB NhaTro_VHT123_erd>` chạy 2 lần | Lần 1 tạo 21 bảng nghiệp vụ; lần 2 `(0 rows affected)`, không lỗi, seed không nhân đôi (21 `ManagerToggles`) |
+| `dotnet ef database update --project NhaTro/Web --connection "...Database=NhaTro_VHT123_ef..."` | `Done.` |
+| `git diff --check` | Sạch sau khi chuẩn hóa xuống dòng SVG (`CRCRLF` → `LF`) |
+
+### Diff ERD SQL vs EF migrations (5 nhóm `sys.*`, bỏ bảng `AspNet*` phụ)
+
+| Nhóm | ERD | EF | Khác |
+| --- | --- | --- | --- |
+| `sys.columns` (tên, kiểu, độ dài, precision/scale, nullable, identity, computed) | 195 | 195 | 0 |
+| `sys.indexes` (tên, loại, unique, PK, filter, cột theo thứ tự) | 64 | 64 | 0 |
+| `sys.foreign_keys` (tên, cha→con, hành vi xóa, disabled) | 30 | 30 | 0 |
+| `sys.check_constraints` (tên, định nghĩa) | 40 | 40 | 0 |
+| `sys.triggers` | 3 | 3 | 0 |
+
+### Delta ERD bổ sung ở 2E
+
+| Bảng | Nội dung |
+| --- | --- |
+| `MaintenanceIncidents` | 14 cột; PK `Id`; FK `RoomId`, `ReportedByUserId` (Restrict); 4 CHECK (Category 0..4, Urgency 0..2, Status 0..2, `RepairCost >= 0`); 2 index; `RepairCost decimal(18,0)` |
+| `MaintenanceIncidentHistories` | 8 cột; PK `Id bigint`; FK `IncidentId` (Restrict); 3 CHECK; `Note nvarchar(2000)` sau `20261102125721`; `ActorUserId` là liên kết mềm, không FK |
+| `IncidentPhotoAttachments` | PK `FileId` (1 tệp = 1 ảnh); FK `FileId`, `IncidentId`, `ApprovalRequestId` (Restrict); 2 CHECK (`Kind IN (0,1)`, phải có ít nhất một đích); index `(IncidentId, Kind)`, `(ApprovalRequestId)` |
+
+- SVG thêm 3 khung P7 nối `Rooms`/`AspNetUsers`/`StoredFiles`/`ManagerApprovalRequests`; footer viết lại đúng UTF-8, thêm dòng enum + check P7.
+
+### Kiểm ràng buộc P7 bằng dữ liệu thật (pha nâng cấp `NhaTro_VHT123_2E`)
+
+- 3 bảng P7 rỗng sau khi nâng cấp DB cũ → không làm méo dữ liệu có sẵn.
+- Thêm được sự cố, lịch sử, ảnh trỏ tệp + sự cố.
+- Bị chặn đúng: ảnh không có đích; `Kind` ngoài 0..1; `IncidentId` không tồn tại; `FileId` không tồn tại; `ApprovalRequestId` không tồn tại.
+
+### Còn lại
+
+- 2E.5: gửi Phúc bản ERD cuối + ghi chú để ghép Word/slide.
+- VHT-28 2A yêu cầu người thứ hai chạy script — vẫn chưa có.
+- SHA sẽ đổi khi VHT-124/126 merge → chạy lại TASK-02/04/06 (script + diff) trước khi publish.
