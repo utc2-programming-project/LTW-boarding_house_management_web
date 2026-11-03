@@ -10,6 +10,7 @@ using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
 using Web.Features.Storage.Mapping;
 using Web.Features.Storage.Rules;
+using Web.Features.Maintenance.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Documents;
 using Web.Infrastructure.Storage;
@@ -27,8 +28,10 @@ public sealed class FileService(
     IOptions<StorageOptions> options,
     TimeProvider timeProvider,
     ITenantDocumentScopeService tenantDocumentScope,
+    IIncidentFileScope incidentFileScope,
     IFileAccessAuditWriter audit,
-    ILogger<FileService> logger)
+    ILogger<FileService> logger,
+    IncidentPhotoService? incidentPhotos = null)
 {
     private StorageOptions Options => options.Value;
 
@@ -49,6 +52,12 @@ public sealed class FileService(
         CancellationToken cancellationToken = default)
     {
         EnsureBusinessAllowed(caller);
+
+        if (request.FileCategory == FileCategory.IncidentPhoto
+            || request.RelatedEntityType == RelatedEntityType.IncidentApproval)
+            return incidentPhotos is null
+                ? UploadResult.Failure(StorageErrorCodes.Forbidden, StorageErrorCodes.Forbidden)
+                : await incidentPhotos.UploadAsync(request, caller, cancellationToken);
 
         if (request.File is null
             || !Enum.IsDefined(request.FileCategory)
@@ -165,6 +174,16 @@ public sealed class FileService(
                 return UploadResult.Failure(
                     StorageErrorCodes.Forbidden,
                     "Bạn không có quyền thao tác giấy tờ của hồ sơ này.");
+            }
+        }
+        else if (request.RelatedEntityType == RelatedEntityType.MaintenanceIncident)
+        {
+            var access = await ResolveIncidentAccessAsync(relatedEntityId, caller, cancellationToken);
+            if (access == IncidentFileAccess.None)
+            {
+                await AuditAsync(caller, FileAccessAction.Upload, null, request.FileCategory,
+                    request.RelatedEntityType, relatedEntityId, false, StorageErrorCodes.Forbidden, cancellationToken);
+                return UploadResult.Failure(StorageErrorCodes.Forbidden, "Bạn không có quyền thao tác sự cố này.");
             }
         }
         // VHT-119: tệp phòng phải thuộc tòa người gọi quản lý (chặn chéo chủ qua /api/files).
@@ -287,6 +306,7 @@ public sealed class FileService(
         EnsureBusinessAllowed(caller);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
         var file = await db.StoredFiles.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
         if (file is null)
         {
@@ -302,6 +322,18 @@ public sealed class FileService(
                 file.RelatedEntityType, file.RelatedEntityId, false,
                 StorageErrorCodes.FileNotFound, cancellationToken);
             return null;
+        }
+
+        if (file.RelatedEntityType == RelatedEntityType.MaintenanceIncident && file.FileCategory != FileCategory.IncidentPhoto)
+        {
+            if (!TryCanonicalizeRelatedEntityId(file.RelatedEntityType, file.RelatedEntityId, out var canonicalId)
+                || !await RelatedEntityExistsAsync(db, file.RelatedEntityType, canonicalId, cancellationToken)
+                || await ResolveIncidentAccessAsync(canonicalId, caller, cancellationToken) == IncidentFileAccess.None)
+            {
+                await AuditAsync(caller, FileAccessAction.Download, file.Id, file.FileCategory,
+                    file.RelatedEntityType, file.RelatedEntityId, false, StorageErrorCodes.Forbidden, cancellationToken);
+                return null;
+            }
         }
 
         var allowed = await CanDownloadAsync(db, file, caller, cancellationToken);
@@ -355,6 +387,33 @@ public sealed class FileService(
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
+        if ((relatedEntityType is RelatedEntityType.MaintenanceIncident or RelatedEntityType.IncidentApproval) && incidentPhotos is not null)
+        {
+            int? incidentId = relatedEntityType == RelatedEntityType.MaintenanceIncident && int.TryParse(relatedEntityId, out var id) ? id : null;
+            Guid? approvalId = relatedEntityType == RelatedEntityType.IncidentApproval && Guid.TryParse(relatedEntityId, out var pending) ? pending : null;
+            if (incidentId is null && approvalId is null) return [];
+            var photos = await incidentPhotos.ListAsync(incidentId, approvalId, caller, cancellationToken);
+            return photos.Select(p => StoredFileMapping.ToMetadata(p.File)).ToArray();
+        }
+        if (relatedEntityType == RelatedEntityType.IncidentApproval) return [];
+
+        if (string.IsNullOrWhiteSpace(relatedEntityId)
+            || !TryCanonicalizeRelatedEntityId(relatedEntityType, relatedEntityId.Trim(), out relatedEntityId))
+        {
+            return [];
+        }
+
+        if (relatedEntityType == RelatedEntityType.MaintenanceIncident)
+        {
+            var access = await ResolveIncidentAccessAsync(relatedEntityId, caller, cancellationToken);
+            if (access == IncidentFileAccess.None)
+            {
+                await AuditAsync(caller, FileAccessAction.List, null, FileCategory.IncidentPhoto,
+                    relatedEntityType, relatedEntityId, false, StorageErrorCodes.Forbidden, cancellationToken);
+                return [];
+            }
+        }
+
         // Giấy tờ P3: kiểm phạm vi hồ sơ trước; ngoài phạm vi trả danh sách rỗng (không lộ tệp).
         if (relatedEntityType == RelatedEntityType.Tenant)
         {
@@ -390,8 +449,10 @@ public sealed class FileService(
 
         var query = db.StoredFiles.AsNoTracking()
             .Where(f => f.RelatedEntityType == relatedEntityType && f.RelatedEntityId == relatedEntityId);
+        if (relatedEntityType == RelatedEntityType.MaintenanceIncident && incidentPhotos is null)
+            query = query.Where(f => !db.IncidentPhotoAttachments.Any(p => p.FileId == f.Id));
 
-        if (caller.IsKhachThue)
+        if (caller.IsKhachThue && relatedEntityType != RelatedEntityType.MaintenanceIncident)
         {
             var inScope = await IsRelatedEntityInScopeAsync(
                 db, relatedEntityType, relatedEntityId, caller.UserId, cancellationToken);
@@ -437,13 +498,32 @@ public sealed class FileService(
             return false;
         }
 
+        // Ảnh đề xuất không được chỉnh qua DELETE chung trong lúc chờ quyết định.
+        var photo = await db.IncidentPhotoAttachments.Include(p => p.ApprovalRequest).SingleOrDefaultAsync(p => p.FileId == id, cancellationToken);
+        if (photo is not null)
+        {
+            if (!caller.IsChuTro || incidentPhotos is null
+                || !Web.Features.Maintenance.Rules.IncidentPhotoRules.IsPublished(photo.ApprovalRequest?.Status)
+                || !await incidentPhotos.CanReadAsync(db, file, caller, cancellationToken)) return false;
+            file.IsDeleted = true;
+            await db.SaveChangesAsync(cancellationToken);
+            await AuditAsync(caller, FileAccessAction.Delete, file.Id, file.FileCategory,
+                file.RelatedEntityType, file.RelatedEntityId, true, null, cancellationToken);
+            return true;
+        }
+        if (file.RelatedEntityType == RelatedEntityType.IncidentApproval) return false;
         var allowed = file.RelatedEntityType == RelatedEntityType.Tenant
             ? TenantDocumentPermissionRules.CanDelete(
                 await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken),
                 file.UploadedByUserId == caller.UserId)
-            : StoragePermissionRules.CanDelete(caller.Role)
-                && (file.RelatedEntityType != RelatedEntityType.Room
-                    || await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken));
+            : file.RelatedEntityType == RelatedEntityType.MaintenanceIncident
+                ? TryCanonicalizeRelatedEntityId(file.RelatedEntityType, file.RelatedEntityId, out var canonicalIncidentId)
+                    && await RelatedEntityExistsAsync(db, file.RelatedEntityType, canonicalIncidentId, cancellationToken)
+                    && await CanManageIncidentFileAsync(canonicalIncidentId, caller, cancellationToken)
+                    && StoragePermissionRules.CanDelete(caller.Role)
+                : StoragePermissionRules.CanDelete(caller.Role)
+                    && (file.RelatedEntityType != RelatedEntityType.Room
+                        || await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken));
 
         if (!allowed)
         {
@@ -468,6 +548,13 @@ public sealed class FileService(
         StorageCaller caller,
         CancellationToken cancellationToken)
     {
+        if (file.FileCategory == FileCategory.IncidentPhoto)
+            return incidentPhotos is not null
+                ? await incidentPhotos.CanReadAsync(db, file, caller, cancellationToken)
+                : file.RelatedEntityType == RelatedEntityType.MaintenanceIncident
+                    && !await db.IncidentPhotoAttachments.AnyAsync(p => p.FileId == file.Id, cancellationToken)
+                    && await CanReadIncidentFileAsync(file.RelatedEntityId, caller, cancellationToken);
+        if (file.RelatedEntityType == RelatedEntityType.IncidentApproval) return false;
         // Giấy tờ P3: phạm vi hồ sơ khách thuê (Admin = None, Quản lý ngoài tòa nhà = None).
         if (file.RelatedEntityType == RelatedEntityType.Tenant)
         {
@@ -483,6 +570,10 @@ public sealed class FileService(
         }
 
         var isUploader = file.UploadedByUserId == caller.UserId;
+        if (file.RelatedEntityType == RelatedEntityType.MaintenanceIncident)
+        {
+            return await CanReadIncidentFileAsync(file.RelatedEntityId, caller, cancellationToken);
+        }
         var inScope = !caller.IsKhachThue
             || await IsRelatedEntityInScopeAsync(
                 db, file.RelatedEntityType, file.RelatedEntityId, caller.UserId, cancellationToken);
@@ -541,6 +632,8 @@ public sealed class FileService(
             && await db.Rooms.AnyAsync(r => r.Id == roomId, cancellationToken),
         RelatedEntityType.Tenant => int.TryParse(entityId, out var tenantId)
             && await db.Tenants.AnyAsync(t => t.Id == tenantId, cancellationToken),
+        RelatedEntityType.MaintenanceIncident => int.TryParse(entityId, out var incidentId)
+            && await db.MaintenanceIncidents.AnyAsync(i => i.Id == incidentId, cancellationToken),
         _ => true,
     };
 
@@ -588,7 +681,7 @@ public sealed class FileService(
         out string canonical)
     {
         canonical = raw;
-        if (type is not (RelatedEntityType.Room or RelatedEntityType.Tenant))
+        if (type is not (RelatedEntityType.Room or RelatedEntityType.Tenant or RelatedEntityType.MaintenanceIncident))
         {
             return true;
         }
@@ -603,6 +696,21 @@ public sealed class FileService(
         canonical = id.ToString(System.Globalization.CultureInfo.InvariantCulture);
         return true;
     }
+
+    private async Task<IncidentFileAccess> ResolveIncidentAccessAsync(
+        string relatedEntityId, StorageCaller caller, CancellationToken ct)
+    {
+        if (!int.TryParse(relatedEntityId, System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out var id) || id <= 0)
+            return IncidentFileAccess.None;
+        return await incidentFileScope.ResolveAsync(id, caller, ct);
+    }
+
+    private async Task<bool> CanReadIncidentFileAsync(string relatedEntityId, StorageCaller caller, CancellationToken ct) =>
+        await ResolveIncidentAccessAsync(relatedEntityId, caller, ct) is not IncidentFileAccess.None;
+
+    private async Task<bool> CanManageIncidentFileAsync(string relatedEntityId, StorageCaller caller, CancellationToken ct) =>
+        await ResolveIncidentAccessAsync(relatedEntityId, caller, ct) is IncidentFileAccess.Manage;
 
     private void TryDeletePhysical(string relativePath)
     {

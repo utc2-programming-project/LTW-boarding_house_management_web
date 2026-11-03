@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections;
 using System.Resources;
 using System.Text.Json;
 using Web.Common.Utils;
@@ -140,6 +141,23 @@ public sealed class ContractDraftRulesTests
         Assert.Equal("Create a new rental contract",
             resources.GetString("ContractCreateHeading", CultureInfo.GetCultureInfo("en-US")));
         Assert.Equal("4.500.000 ₫", MoneyFormatter.Format(4_500_000m));
+    }
+
+    [Fact]
+    public void ContractResources_HaveMatchingVietnameseAndEnglishKeys()
+    {
+        var resources = new ResourceManager(
+            "Web.Resources.Features.Contracts.ContractResources",
+            typeof(ContractResources).Assembly);
+        var vi = resources.GetResourceSet(CultureInfo.GetCultureInfo("vi-VN"), true, false)!;
+        var en = resources.GetResourceSet(CultureInfo.GetCultureInfo("en-US"), true, false)!;
+        var viKeys = vi.Cast<DictionaryEntry>().Select(entry => (string)entry.Key).ToHashSet(StringComparer.Ordinal);
+        var enKeys = en.Cast<DictionaryEntry>().Select(entry => (string)entry.Key).ToHashSet(StringComparer.Ordinal);
+
+        Assert.Equal(viKeys.OrderBy(key => key), enKeys.OrderBy(key => key));
+        Assert.Contains("ContractListTitle", viKeys);
+        Assert.Contains("ContractDetailTitle", viKeys);
+        Assert.Contains("ContractDecisionTitle", viKeys);
     }
 
     private static RentalContractDraft ValidDraft() => new()

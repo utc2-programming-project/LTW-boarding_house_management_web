@@ -1,0 +1,40 @@
+@inject IStringLocalizer<IncidentResource> L
+
+<div>
+    <p>@L["PendingPhotosMissing"]</p>
+    <IncidentPhotoPicker @bind-Photos="_photos" Capacity="Capacity" Disabled="_saving" BusyChanged="value => _reading = value" />
+    @foreach (var error in _errors) { <p role="alert">@error</p> }
+    <button type="button" class="btn btn-secondary" disabled="@(_saving || _reading || _photos.Count == 0)" @onclick="UploadAsync">@L[_saving ? "Saving" : "RetryPhotos"]</button>
+</div>
+@code {
+    [Parameter, EditorRequired] public IncidentPageService Session { get; set; } = default!;
+    [Parameter] public Guid RequestId { get; set; }
+    [Parameter] public int? IncidentId { get; set; }
+    [Parameter] public int Capacity { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    private IReadOnlyList<IncidentSelectedPhoto> _photos = [];
+    private readonly List<string> _errors = [];
+    private bool _saving;
+    private bool _reading;
+    private async Task UploadAsync()
+    {
+        if (_saving || _reading) return;
+        _saving = true;
+        _errors.Clear();
+        try
+        {
+            var remaining = _photos.ToList();
+            foreach (var photo in _photos.ToArray())
+            {
+                var result = await Session.UploadAsync(IncidentId, RequestId,
+                    IncidentId is null ? IncidentPhotoKind.Report : IncidentPhotoKind.Result, photo);
+                if (result.Succeeded) remaining.Remove(photo);
+                else _errors.Add($"{photo.Name}: {L[result.ErrorCode ?? "UploadFailed"]}");
+                _photos = remaining.ToArray();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException) { _errors.Add(L["SaveFailed"]); }
+        finally { _saving = false; }
+        await OnChanged.InvokeAsync();
+    }
+}

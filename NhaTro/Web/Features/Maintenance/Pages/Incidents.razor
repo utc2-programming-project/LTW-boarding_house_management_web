@@ -1,187 +1,70 @@
 @page "/incidents"
 @rendermode InteractiveServer
-@attribute [Authorize(Policy = IncidentDemoSession.Policy)]
-@implements IDisposable
-@inject AuthenticationStateProvider Authentication
-@inject TimeProvider Time
+@attribute [Authorize(Policy = IncidentAccess.Policy)]
+@inject IncidentPageService Session
 @inject IStringLocalizer<IncidentResource> L
-@inject ToastService Toasts
 
 <PageTitle>@L["PageTitle"]</PageTitle>
-
 <div class="incidents-page">
     <BreadcrumbNav Items="Breadcrumbs" />
     <div class="page-heading">
-        <div>
-            <h1>@L[_tenant ? "TenantHeading" : "PageTitle"]</h1>
-            <p>@L[_tenant ? "TenantSubtitle" : "StaffSubtitle"]</p>
-        </div>
-        @if (_session is not null && _error is null && !_loading)
+        <div><h1>@L[_tenant ? "TenantHeading" : "PageTitle"]</h1><p>@L[_tenant ? "TenantSubtitle" : "LiveStaffSubtitle"]</p></div>
+        @if (!_loading && _error is null)
         {
-            <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentDemoMode.Deny)" @onclick="OpenCreate">
+            <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentMode.Deny || _rooms.Count == 0)" @onclick="() => _creating = true">
                 <LucideIcon Name="plus" /> @L["CreateIncident"]
             </button>
         }
     </div>
-    <div class="sample-banner" role="note">
-        <span class="preview-badge">@L["SampleBadge"]</span>
-        <p>@L["SampleNotice"]</p>
-        <p>@L["ScopeNotice"]</p>
-    </div>
-
-    @if (_loading)
-    {
-        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
-    }
+    @if (_loading) { <LoadingOverlay Visible="true" Text="@L["Loading"]" /> }
     else if (_error is not null)
     {
-        <div class="page-error" role="alert">
-            <p>@_error</p>
-            <button type="button" class="btn btn-secondary" @onclick="InitializeAsync">@L["Retry"]</button>
-        </div>
+        <div role="alert"><p>@_error</p><button class="btn btn-secondary" @onclick="InitializeAsync">@L["Retry"]</button></div>
     }
-    else if (_session is not null)
+    else
     {
-        <details class="demo-controls">
-            <summary>@L["DemoControls"]</summary>
-            <p>@L["DemoControlsNotice"]</p>
-            <p>@L["DemoWorkflowNotice"]</p>
-            @if (_owner)
-            {
-                <button type="button" class="btn btn-secondary" disabled="@_approvalSamplesAdded" @onclick="AddApprovalSamplesAsync">@L["AddApprovalSamples"]</button>
-            }
-            <div class="demo-grid">
-                @if (_manager)
-                {
-                    @foreach (var action in Enum.GetValues<IncidentDemoAction>())
-                    {
-                        <div>
-                            <label for="@($"demo-mode-{action}")">@L[$"Action{action}"]</label>
-                            <select id="@($"demo-mode-{action}")" value="@_modes[action]" @onchange="args => ChangeModeAsync(action, args)">
-                                @foreach (var mode in Enum.GetValues<IncidentDemoMode>())
-                                {
-                                    <option value="@mode">@L[$"Mode{mode}"]</option>
-                                }
-                            </select>
-                        </div>
-                    }
-                }
-                <div>
-                    <label for="incident-scenario">@L["DataScenario"]</label>
-                    <select id="incident-scenario" @bind="_scenario">
-                        <option value="Normal">@L["ScenarioNormal"]</option>
-                        <option value="Empty">@L["ScenarioEmpty"]</option>
-                        <option value="Error">@L["ScenarioError"]</option>
-                    </select>
-                </div>
-            </div>
-        </details>
-        @if (_createMode == IncidentDemoMode.Deny)
+        @if (_createMode == IncidentMode.Deny) { <p>@L["ActionDenied"]</p> }
+        <IncidentListView @ref="_list" Session="Session" Rooms="_rooms" CanCreate="@(_createMode != IncidentMode.Deny && _rooms.Count > 0)"
+                          OnCreate="() => _creating = true" OnDetail="id => _detailId = id" />
+        @if (!_tenant) { <IncidentApprovalPanel Session="Session" OnChanged="ReloadAsync" /> }
+        @if (_creating) { <IncidentReportForm Session="Session" Rooms="_rooms" Mode="_createMode" OnClose="CloseCreateAsync" OnSaved="CloseCreateAsync" /> }
+        @if (_detailId is int id)
         {
-            <p class="permission-note">@L["ActionDenied"]</p>
-        }
-        <IncidentListView @ref="_list" Session="_session" Rooms="_rooms" Scenario="@_scenario"
-                          CanCreate="@(_createMode != IncidentDemoMode.Deny)" OnCreate="OpenCreate" OnDetail="OpenDetailAsync" />
-        @if (_creating)
-        {
-            <IncidentReportForm Session="_session" Rooms="_rooms" Mode="_createMode" OnClose="CloseCreate" OnSaved="CreatedAsync" />
-        }
-        @if (_detailId is not null)
-        {
-            <IncidentDetailModal @key="_detailId" Session="_session" IncidentId="_detailId.Value" Rooms="_rooms"
-                                 TenantView="_tenant" OnClose="CloseDetail" OnChanged="ReloadAsync" />
+            <IncidentDetailModal @key="id" Session="Session" IncidentId="id" Rooms="_rooms" TenantView="_tenant" OnClose="CloseDetailAsync" OnChanged="ReloadAsync" />
         }
     }
 </div>
-
 @code {
-    private IncidentDemoSession? _session;
     private IncidentListView? _list;
-    private IReadOnlyList<IncidentDemoRoom> _rooms = [];
-    private readonly Dictionary<IncidentDemoAction, IncidentDemoMode> _modes = [];
-    private IncidentDemoMode _createMode;
-    private string _scenario = "Normal";
-    private bool _tenant;
-    private bool _manager;
-    private bool _owner;
-    private bool _approvalSamplesAdded;
+    private IReadOnlyList<IncidentRoomDto> _rooms = [];
+    private IncidentMode _createMode;
     private bool _loading = true;
+    private bool _tenant;
     private bool _creating;
     private int? _detailId;
     private string? _error;
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs =>
-        [new(L["Home"], "/"), new(L["PageTitle"])];
-
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Home"], "/"), new(L["PageTitle"])];
     protected override Task OnInitializedAsync() => InitializeAsync();
-
     private async Task InitializeAsync()
     {
         _loading = true;
         _error = null;
         try
         {
-            var user = (await Authentication.GetAuthenticationStateAsync()).User;
-            if (!IncidentDemoSession.IsAllowed(user)) throw new IncidentDemoException("AccessDenied");
-            _tenant = !user.IsInRole(Roles.ChuTro) && !user.IsInRole(Roles.QuanLy);
-            _manager = user.IsInRole(Roles.QuanLy) && !user.IsInRole(Roles.ChuTro);
-            _owner = user.IsInRole(Roles.ChuTro);
-            _session ??= new(Authentication, Time);
-            await _session.InitializeAsync();
-            _rooms = await _session.RoomsAsync();
-            foreach (var action in Enum.GetValues<IncidentDemoAction>()) _modes[action] = await _session.ModeAsync(action);
-            _createMode = _modes[IncidentDemoAction.Create];
+            var caller = await Session.CallerAsync();
+            _tenant = caller.IsKhachThue;
+            _rooms = await Session.RoomsAsync();
+            _createMode = await Session.ModeAsync(IncidentAction.Create);
         }
-        catch (IncidentDemoException ex) { _error = L[ex.Message]; }
+        catch (Exception ex) when (ex is not OperationCanceledException) { _error = L[ex is IncidentPageException ? ex.Message : "LoadFailed"]; }
         finally { _loading = false; }
     }
-
-    private void OpenCreate() { if (_createMode != IncidentDemoMode.Deny) _creating = true; }
-    private void CloseCreate() => _creating = false;
-    private async Task CloseDetail()
-    {
-        var closedId = _detailId;
-        _detailId = null;
-        if (closedId is not null && _list is not null)
-            await _list.RestoreDetailFocusAsync(closedId.Value);
-    }
-    private Task OpenDetailAsync(int id) { _detailId = id; return Task.CompletedTask; }
-    private async Task CreatedAsync()
-    {
-        _creating = false;
-        // Đổi scenario sẽ khiến list tự reload qua OnParametersSetAsync.
-        if (_scenario != "Normal") _scenario = "Normal";
-        else await ReloadAsync();
-    }
     private Task ReloadAsync() => _list?.ReloadAsync() ?? Task.CompletedTask;
-
-    private async Task AddApprovalSamplesAsync()
+    private async Task CloseCreateAsync() { _creating = false; await ReloadAsync(); }
+    private async Task CloseDetailAsync()
     {
-        if (_session is null || _approvalSamplesAdded) return;
-        try
-        {
-            await _session.AddApprovalSamplesAsync();
-            _approvalSamplesAdded = true;
-            if (_scenario != "Normal") _scenario = "Normal";
-            else await ReloadAsync();
-            Toasts.Success(L["ApprovalSamplesReady"]);
-        }
-        catch (IncidentDemoException ex) { Toasts.Error(L[ex.Message]); }
-    }
-
-    private async Task ChangeModeAsync(IncidentDemoAction action, ChangeEventArgs args)
-    {
-        if (_session is null || !Enum.TryParse<IncidentDemoMode>(args.Value?.ToString(), out var mode) || !Enum.IsDefined(mode)) return;
-        try
-        {
-            await _session.SetModeAsync(action, mode);
-            _modes[action] = mode;
-            _createMode = _modes[IncidentDemoAction.Create];
-        }
-        catch (IncidentDemoException ex) { Toasts.Error(L[ex.Message]); }
-    }
-
-    public void Dispose()
-    {
-        _session = null;
+        var id = _detailId;
+        _detailId = null;
+        if (id is not null && _list is not null) await _list.RestoreDetailFocusAsync(id.Value);
     }
 }

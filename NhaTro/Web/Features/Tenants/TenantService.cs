@@ -822,7 +822,8 @@ public sealed class TenantService(
             tenant, includeNote: false, revealIdNumber: true));
     }
 
-    private static IQueryable<Tenant> ApplyKeyword(IQueryable<Tenant> query, string? keyword)
+    // Dùng chung cho nguồn báo cáo P8 (VHT-46) để từ khóa khớp đúng danh sách P3.
+    internal static IQueryable<Tenant> ApplyKeyword(IQueryable<Tenant> query, string? keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {

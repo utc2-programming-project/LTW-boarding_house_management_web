@@ -89,7 +89,6 @@
   <data name="ContractValidationTitle" xml:space="preserve"><value>Please review these fields:</value></data>
   <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
   <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Select a room.</value></data>
-  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is no longer available or does not belong to the selected property.</value></data>
   <data name="ContractErrorRepresentativeRequired" xml:space="preserve"><value>Select the representative tenant.</value></data>
   <data name="ContractErrorStartDateRequired" xml:space="preserve"><value>Select a start date.</value></data>
   <data name="ContractErrorEndDateRequired" xml:space="preserve"><value>Select an end date.</value></data>
@@ -108,4 +107,62 @@
   <data name="ContractAccessDeniedTitle" xml:space="preserve"><value>Access denied</value></data>
   <data name="ContractAccessDeniedMessage" xml:space="preserve"><value>You cannot view this page. Only owners and managers can create contracts.</value></data>
   <data name="ContractDraftSnapshotSummary" xml:space="preserve"><value>This preview session holds rent {0} and a start date of {1} in memory.</value></data>
+  <data name="ContractListTitle" xml:space="preserve"><value>Contracts</value></data>
+  <data name="ContractListDescription" xml:space="preserve"><value>Browse contracts within your property access.</value></data>
+  <data name="ContractCreateAction" xml:space="preserve"><value>Create contract</value></data>
+  <data name="ContractSearchLabel" xml:space="preserve"><value>Find a contract</value></data>
+  <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Contract number, tenant, room, or property</value></data>
+  <data name="ContractSearchAction" xml:space="preserve"><value>Search</value></data>
+  <data name="ContractLoadErrorTitle" xml:space="preserve"><value>Could not load contracts</value></data>
+  <data name="ContractLoadErrorDescription" xml:space="preserve"><value>An error occurred while loading data. Please try again.</value></data>
+  <data name="ContractRetry" xml:space="preserve"><value>Try again</value></data>
+  <data name="ContractEmptyTitle" xml:space="preserve"><value>No contracts</value></data>
+  <data name="ContractEmptyDescription" xml:space="preserve"><value>No matching contracts were found in your access scope.</value></data>
+  <data name="ContractNumberLabel" xml:space="preserve"><value>Contract number</value></data>
+  <data name="ContractTenantsLabel" xml:space="preserve"><value>Tenants</value></data>
+  <data name="ContractTermLabel" xml:space="preserve"><value>Term</value></data>
+  <data name="ContractStatusLabel" xml:space="preserve"><value>Status</value></data>
+  <data name="ContractActionsLabel" xml:space="preserve"><value>Actions</value></data>
+  <data name="ContractViewAction" xml:space="preserve"><value>View</value></data>
+  <data name="ContractApproveAction" xml:space="preserve"><value>Approve</value></data>
+  <data name="ContractRejectAction" xml:space="preserve"><value>Reject</value></data>
+  <data name="ContractCancelAction" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ContractProcessing" xml:space="preserve"><value>Processing…</value></data>
+  <data name="ContractDetailTitle" xml:space="preserve"><value>Contract details</value></data>
+  <data name="ContractBackToList" xml:space="preserve"><value>Back to contracts</value></data>
+  <data name="ContractDecisionTitle" xml:space="preserve"><value>Approve or reject contract</value></data>
+  <data name="ContractDecisionDescription" xml:space="preserve"><value>Only the owner can decide a contract awaiting approval.</value></data>
+  <data name="ContractRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="ContractApproveSuccess" xml:space="preserve"><value>Contract approved.</value></data>
+  <data name="ContractRejectSuccess" xml:space="preserve"><value>Contract rejected.</value></data>
+  <data name="ContractGenericError" xml:space="preserve"><value>The contract action could not be completed.</value></data>
+  <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ContractStatusUpcoming" xml:space="preserve"><value>Upcoming</value></data>
+  <data name="ContractStatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="ContractStatusExpiringSoon" xml:space="preserve"><value>Expiring soon</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ContractErrorForbidden" xml:space="preserve"><value>You are not allowed to perform this contract action.</value></data>
+  <data name="ContractErrorContractNotFound" xml:space="preserve"><value>Contract not found.</value></data>
+  <data name="ContractErrorRoomNotFound" xml:space="preserve"><value>The contract room was not found.</value></data>
+  <data name="ContractErrorPropertyNotFound" xml:space="preserve"><value>The contract property was not found.</value></data>
+  <data name="ContractErrorInvalidStatus" xml:space="preserve"><value>Only contracts awaiting approval can be decided.</value></data>
+  <data name="ContractErrorRejectReasonRequired" xml:space="preserve"><value>Enter a rejection reason.</value></data>
+  <data name="ContractErrorRejectReasonTooLong" xml:space="preserve"><value>The rejection reason cannot exceed 500 characters.</value></data>
+  <data name="ContractErrorPropertyUnavailable" xml:space="preserve"><value>The property is inactive.</value></data>
+  <data name="ContractErrorRoomUnderMaintenance" xml:space="preserve"><value>A contract cannot be approved for a room under maintenance.</value></data>
+  <data name="ContractErrorContractOverlap" xml:space="preserve"><value>The room has an overlapping contract.</value></data>
+  <data name="ContractErrorInvalidDateRange" xml:space="preserve"><value>The start date must be before the end date.</value></data>
+  <data name="ContractErrorTenantRequired" xml:space="preserve"><value>A contract must have at least one tenant.</value></data>
+  <data name="ContractErrorTenantUnavailable" xml:space="preserve"><value>One or more tenants do not exist or are inactive.</value></data>
+  <data name="ContractErrorRoomNotAvailable" xml:space="preserve"><value>The room does not exist or is outside your assigned scope.</value></data>
+  <data name="ContractErrorRoomNotVacant" xml:space="preserve"><value>A contract can only be approved when the room is vacant.</value></data>
+  <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Contracts cannot be created or approved with a future start date.</value></data>
+  <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is inactive, so a contract cannot be created or approved.</value></data>
+  <data name="ContractErrorPendingContractExists" xml:space="preserve"><value>The room already has a pending or active contract for this period.</value></data>
+  <data name="ContractCreateDescription" xml:space="preserve"><value>The contract is saved as Pending approval. Rent and deposit are snapshotted when the owner approves it.</value></data>
+  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent (snapshotted on approval)</value></data>
+  <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
+  <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
+  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
 </root>

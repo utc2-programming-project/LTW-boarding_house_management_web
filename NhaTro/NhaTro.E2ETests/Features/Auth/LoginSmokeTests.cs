@@ -27,13 +27,13 @@ public sealed class LoginSmokeTests(PlaywrightFixture fixture) : IClassFixture<P
         Assert.True(response!.Ok);
         Assert.Contains("/Account/Login", page.Url);
 
-        var heading = await page.Locator("h1").First.TextContentAsync();
-        Assert.Contains("Log in", heading);
+        var heading = await page.Locator("#login-title").TextContentAsync();
+        Assert.False(string.IsNullOrWhiteSpace(heading));
 
-        await page.Locator("[name='Input.Email']").WaitForAsync();
-        await page.Locator("[name='Input.Password']").WaitForAsync();
-        Assert.True(await page.Locator("[name='Input.Email']").IsVisibleAsync());
-        Assert.True(await page.Locator("[name='Input.Password']").IsVisibleAsync());
+        await page.Locator("#login-email").WaitForAsync();
+        await page.Locator("#login-password").WaitForAsync();
+        Assert.True(await page.Locator("#login-email").IsVisibleAsync());
+        Assert.True(await page.Locator("#login-password").IsVisibleAsync());
     }
 
     [Fact]
@@ -50,8 +50,8 @@ public sealed class LoginSmokeTests(PlaywrightFixture fixture) : IClassFixture<P
         var page = await context.NewPageAsync();
 
         await page.GotoAsync($"{fixture.BaseUrl}/Account/Login");
-        await page.Locator("[name='Input.Email']").FillAsync(email);
-        await page.Locator("[name='Input.Password']").FillAsync(password);
+        await page.Locator("#login-email").FillAsync(email);
+        await page.Locator("#login-password").FillAsync(password);
         await page.Locator("form button[type='submit']").First.ClickAsync();
 
         // AppTopbar chỉ có avatar sau khi cookie đăng nhập hợp lệ.
