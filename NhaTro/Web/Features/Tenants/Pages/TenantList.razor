@@ -19,6 +19,9 @@
         <div class="tenant-page-actions">
             @if (_canRevealIdNumber)
             {
+                <a class="btn btn-secondary" href="/trash">
+                    <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
+                </a>
                 <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
                     @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
                     else { <LucideIcon Name="download" /> }
@@ -148,6 +151,7 @@
 <TenantDetailsDialog Visible="_showDetails" Tenant="_selectedTenant" CanManage="true"
                      CanViewAccount="_canRevealIdNumber"
                      OnClose="CloseDetailsAsync" OnEdit="OpenEditAsync" OnSetActive="RequestStatusChangeAsync"
+                     OnDelete="RequestDeleteAsync"
                      OnLinkAccount="OpenLinkAccountAsync" OnUnlinkAccount="RequestUnlinkAccountAsync" />
 <TenantFormDialog Visible="_showForm" Tenant="_formTenant" CanManage="true"
                    CanRevealIdNumber="_canRevealIdNumber" OnClose="CloseFormAsync" OnSaved="RefreshAsync" />
@@ -163,6 +167,10 @@
                Message="@L["TenantUnlinkMessage"]" ConfirmText="@L["TenantUnlinkAccount"]"
                CancelText="@L["Cancel"]" Danger="true"
                OnConfirm="ConfirmUnlinkAccountAsync" OnCancel="CancelUnlinkAccountAsync" />
+<ConfirmDialog Visible="_showDeleteConfirm" Title="@L["TenantDeleteTitle"]"
+               Message="@L["TenantDeleteMessage"]" ConfirmText="@L["TenantDelete"]"
+               CancelText="@L["Cancel"]" BusyText="@L["TenantDeleting"]" Danger="true"
+               OnConfirm="ConfirmDeleteAsync" OnCancel="CancelDeleteAsync" />
 
 @code {
     private const int ExportPageSize = 100;
@@ -187,6 +195,7 @@
     private bool _showLinkAccount;
     private bool _showStatusConfirm;
     private bool _showUnlinkConfirm;
+    private bool _showDeleteConfirm;
     private bool _nextIsActive;
 
     protected override async Task OnInitializedAsync()
@@ -268,6 +277,11 @@
                         aria-label="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"]): @tenant.FullName"
                         @onclick="() => OpenStatusFromListAsync(tenant.Id, !tenant.IsActive)">
                     <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
+                </button>
+                <button type="button" class="tenant-icon-button tenant-icon-danger"
+                        title="@L["TenantDelete"]" aria-label="@L["TenantDelete"]: @tenant.FullName"
+                        @onclick="() => OpenDeleteFromListAsync(tenant.Id)">
+                    <LucideIcon Name="trash" />
                 </button>
             </span>,
         });
@@ -525,6 +539,75 @@
         return Task.CompletedTask;
     }
 
+    private async Task OpenDeleteFromListAsync(int id)
+    {
+        if (await LoadDetailAsync(id))
+        {
+            _showDeleteConfirm = true;
+        }
+    }
+
+    private Task RequestDeleteAsync(TenantDetailDto tenant)
+    {
+        _selectedTenant = tenant;
+        _showDetails = false;
+        _showDeleteConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_selectedTenant is null)
+        {
+            _showDeleteConfirm = false;
+            return;
+        }
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.DeleteAsync(_selectedTenant.Id, _selectedTenant.RowVersion);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _showDeleteConfirm = false;
+            Toasts.Error(L["TenantErrorForbidden"]);
+            return;
+        }
+        catch
+        {
+            _showDeleteConfirm = false;
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+
+        _showDeleteConfirm = false;
+
+        if (!result.Succeeded)
+        {
+            if (result.ErrorCode == TenantErrorCodes.ApprovalRequired)
+            {
+                // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
+                Toasts.Success(L["TenantDeleteApprovalSubmitted"]);
+                return;
+            }
+
+            Toasts.Error(ErrorMessage(result.ErrorCode));
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict) await RefreshDetailsAsync();
+            return;
+        }
+
+        Toasts.Success(L["TenantDeleted"]);
+        _selectedTenant = null;
+        await RefreshAsync();
+    }
+
+    private Task CancelDeleteAsync()
+    {
+        _showDeleteConfirm = false;
+        return Task.CompletedTask;
+    }
+
     private async Task ExportAsync()
     {
         if (_exporting) return;
@@ -582,6 +665,7 @@
         TenantErrorCodes.TenantNotFound => L["TenantErrorNotFound"],
         TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
         TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+        TenantErrorCodes.TenantInUse => L["TenantErrorInUse"],
         TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
         _ => L["TenantErrorGeneric"],
     };

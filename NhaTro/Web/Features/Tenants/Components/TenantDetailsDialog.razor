@@ -119,6 +119,9 @@
         {
             @if (CanManage)
             {
+                <button type="button" class="btn btn-danger" @onclick="() => OnDelete.InvokeAsync(Tenant)">
+                    <LucideIcon Name="trash" /> @L["TenantDelete"]
+                </button>
                 <button type="button" class="btn btn-secondary" @onclick="() => OnSetActive.InvokeAsync(!Tenant.IsActive)">
                     <LucideIcon Name="@(Tenant.IsActive ? "lock" : "unlock")" />
                     @(Tenant.IsActive ? L["TenantDeactivateButton"] : L["TenantActivateButton"])
@@ -139,6 +142,7 @@
     [Parameter] public bool CanViewAccount { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<TenantDetailDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<TenantDetailDto> OnDelete { get; set; }
     [Parameter] public EventCallback<bool> OnSetActive { get; set; }
     [Parameter] public EventCallback OnLinkAccount { get; set; }
     [Parameter] public EventCallback OnUnlinkAccount { get; set; }

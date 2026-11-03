@@ -21,7 +21,8 @@ public static class AppNavigation
         new("Reports", "chart", "ChuTro"),
         new("ManagerSwitches", "settings", "ChuTro"),
         new("Approvals", "check", "ChuTro"),
-        new("Trash", "trash", "ChuTro"),
+        // VHT-99: thùng rác hồ sơ khách thuê (VHT-98 thùng rác phòng sẽ bổ sung cùng trang).
+        new("Trash", "trash", "ChuTro", "/trash"),
         new("MyRequests", "file", "QuanLy"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
