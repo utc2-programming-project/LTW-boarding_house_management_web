@@ -2,7 +2,7 @@
 @using Microsoft.JSInterop
 
 <div class="incident-list" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
-<DataTable @ref="_table" TItem="IncidentDemoItem" Columns="_columns" ItemsProvider="LoadAsync"
+<DataTable @ref="_table" TItem="IncidentItem" Columns="_columns" ItemsProvider="LoadAsync"
            Labels="Labels" Caption="@L["ListCaption"]" PageSize="5">
     <EmptyActions>
         @if (CanCreate)
@@ -14,24 +14,22 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public IncidentDemoSession Session { get; set; } = default!;
-    [Parameter] public IReadOnlyList<IncidentDemoRoom> Rooms { get; set; } = [];
+    [Parameter, EditorRequired] public IncidentPageService Session { get; set; } = default!;
+    [Parameter] public IReadOnlyList<IncidentRoomDto> Rooms { get; set; } = [];
     [Parameter] public EventCallback<int> OnDetail { get; set; }
     [Parameter] public EventCallback OnCreate { get; set; }
     [Parameter] public bool CanCreate { get; set; }
-    [Parameter] public string Scenario { get; set; } = "Normal";
-    private DataTable<IncidentDemoItem>? _table;
+    private DataTable<IncidentItem>? _table;
     private ElementReference _listRegion;
     private readonly Dictionary<int, ElementReference> _detailButtons = [];
     private int? _focusAfterRender;
-    private string? _previousScenario;
-    private IReadOnlyList<DataTableColumn<IncidentDemoItem>> _columns = [];
+    private IReadOnlyList<DataTableColumn<IncidentItem>> _columns = [];
 
     private DataTableLabels Labels => new()
     {
         Loading = L["Loading"], EmptyTitle = L["NoData"], EmptyDescription = L["EmptyDescription"],
         NoResultsTitle = L["NoResults"], ClearFilters = L["ClearFilters"],
-        LoadFailed = L[Scenario == "Error" ? "SampleLoadError" : "LoadFailed"],
+        LoadFailed = L["LoadFailed"],
         Retry = L["Retry"], FilterBy = L["FilterBy"], Pagination = L["Pagination"],
         FirstPage = L["FirstPage"], PreviousPage = L["PreviousPage"], NextPage = L["NextPage"],
         LastPage = L["LastPage"], Page = L["Page"], Summary = L["PageSummary"]
@@ -46,10 +44,7 @@
             new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Filterable = true },
             new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Filterable = true },
             new() { Key = "Status", Title = L["Status"], Filterable = true, Template = i => @<div>
-                @if (!i.AwaitingCreation)
-                {
-                    <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentDemoStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
-                }
+                    <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
                 @if (i.Pending.Count > 0)
                 {
                     <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
@@ -62,13 +57,7 @@
         ];
     }
 
-    private string Text(IncidentDemoItem item, string text) => item.IsSeeded ? L[text] : text;
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_previousScenario == Scenario) return;
-        _previousScenario = Scenario;
-        if (_table is not null) await _table.ReloadAsync();
-    }
+    private static string Text(IncidentItem item, string text) => text;
 
     // Bảng có thể thay DOM nút khi reload; focus nút hiện hành sau render, không dùng reference cũ của dialog.
     public Task RestoreDetailFocusAsync(int id)
@@ -86,27 +75,24 @@
         catch (JSDisconnectedException) { }
     }
 
-    private string RoomText(IncidentDemoItem item)
+    private string RoomText(IncidentItem item)
     {
         var room = Rooms.FirstOrDefault(r => r.Id == item.RoomId);
-        return room is null ? L["NoData"] : $"{room.PropertyName} / {room.Name}";
+        return room is null ? item.RoomLabel : $"{room.PropertyName} / {room.Name}";
     }
 
-    private async Task<PagedResult<IncidentDemoItem>> LoadAsync(DataTableRequest request)
+    private async Task<PagedResult<IncidentItem>> LoadAsync(DataTableRequest request)
     {
         _detailButtons.Clear();
-        // Kịch bản mô phỏng có nhãn; không giả làm lỗi service thật hoặc fallback sang mẫu.
-        await Task.Yield();
         var scoped = await Session.ListAsync();
-        if (Scenario == "Error") throw new IncidentDemoException("SampleLoadError");
-        IEnumerable<IncidentDemoItem> items = Scenario == "Empty" ? [] : scoped;
+        IEnumerable<IncidentItem> items = scoped;
         foreach (var filter in request.Filters)
         {
             items = items.Where(i => (filter.Key switch
             {
                 "Title" => Text(i, i.Title), "Room" => RoomText(i),
                 "Category" => L[$"Category{i.Category}"].Value, "Urgency" => L[$"Urgency{i.Urgency}"].Value,
-                "Status" => (i.AwaitingCreation ? "" : L[$"Status{i.Status}"].Value) + (i.Pending.Count > 0 ? " " + L["PendingApproval"] : ""),
+                "Status" => L[$"Status{i.Status}"].Value,
                 _ => ""
             }).Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase));
         }

@@ -133,7 +133,7 @@
     <value>Xem chi tiết: {0}</value>
   </data>
   <data name="DetailTitle" xml:space="preserve">
-    <value>Chi tiết sự cố mẫu</value>
+    <value>Chi tiết sự cố</value>
   </data>
   <data name="TechnicalNotes" xml:space="preserve">
     <value>Ghi chú kỹ thuật (nội bộ)</value>
@@ -154,7 +154,7 @@
     <value>Chờ duyệt</value>
   </data>
   <data name="ApprovalNotice" xml:space="preserve">
-    <value>Đây là đề xuất chờ duyệt mẫu. Phiếu và trạng thái hiện hành chưa được áp dụng thay đổi; chưa ghép hàng đợi duyệt thật.</value>
+    <value>Yêu cầu đang chờ Chủ trọ duyệt. Thay đổi chưa được áp dụng.</value>
   </data>
   <data name="ActionCreate" xml:space="preserve">
     <value>SW-12 · Tạo phiếu</value>
@@ -232,7 +232,7 @@
     <value>Ảnh báo sự cố</value>
   </data>
   <data name="SaveResultPhotos" xml:space="preserve">
-    <value>Gửi ảnh kết quả mẫu</value>
+    <value>Gửi ảnh kết quả</value>
   </data>
   <data name="PendingPhotoCount" xml:space="preserve">
     <value>{0} ảnh đang chờ duyệt, chưa áp dụng vào phiếu.</value>
@@ -295,10 +295,10 @@
     <value>Quạt thông gió không hoạt động khi bật công tắc. Phiếu mẫu đã hoàn thành.</value>
   </data>
   <data name="TitleInvalid" xml:space="preserve">
-    <value>Tiêu đề phải có ít nhất 5 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
+    <value>Tiêu đề phải có từ 5 đến 200 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
   </data>
   <data name="DescriptionInvalid" xml:space="preserve">
-    <value>Mô tả phải có ít nhất 10 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
+    <value>Mô tả phải có từ 10 đến 2000 ký tự sau khi bỏ khoảng trắng đầu/cuối.</value>
   </data>
   <data name="PropertyRequired" xml:space="preserve">
     <value>Vui lòng chọn nhà trọ trong phạm vi của bạn.</value>
@@ -325,13 +325,13 @@
     <value>Tài khoản của phiên đã thay đổi. Vui lòng tải lại trang.</value>
   </data>
   <data name="NotFound" xml:space="preserve">
-    <value>Không tìm thấy phiếu trong phạm vi được phép xem.</value>
+    <value>Không tìm thấy yêu cầu trong phạm vi của bạn.</value>
   </data>
   <data name="NoData" xml:space="preserve">
     <value>Chưa có dữ liệu</value>
   </data>
   <data name="EmptyDescription" xml:space="preserve">
-    <value>Chưa có phiếu trong phạm vi này. Bạn có thể tạo phiếu mẫu mới.</value>
+    <value>Chưa có phiếu trong phạm vi này. Bạn có thể tạo phiếu mới.</value>
   </data>
   <data name="NoResults" xml:space="preserve">
     <value>Không có kết quả phù hợp</value>
@@ -343,7 +343,7 @@
     <value>Đang tải…</value>
   </data>
   <data name="LoadFailed" xml:space="preserve">
-    <value>Không tải được danh sách. Nếu đang bật kịch bản lỗi mẫu, hãy chuyển về Có dữ liệu mẫu.</value>
+    <value>Không tải được dữ liệu. Vui lòng thử lại.</value>
   </data>
   <data name="Retry" xml:space="preserve">
     <value>Thử lại</value>
@@ -373,7 +373,7 @@
     <value>Hiển thị {0}–{1} / {2}</value>
   </data>
   <data name="ListCaption" xml:space="preserve">
-    <value>Danh sách sự cố mẫu trong phạm vi của bạn</value>
+    <value>Danh sách sự cố trong phạm vi của bạn</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Hủy nhập</value>
@@ -400,4 +400,52 @@
   <data name="SampleLoadError" xml:space="preserve">
     <value>Đang mô phỏng lỗi tải danh sách mẫu. Chọn “Có dữ liệu mẫu” để kết thúc kịch bản lỗi.</value>
   </data>
+  <data name="LiveStaffSubtitle" xml:space="preserve"><value>Theo dõi và xử lý sự cố trong phạm vi của bạn.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Không thể hoàn tất thao tác. Hãy kiểm tra kết quả trước khi thử lại.</value></data>
+  <data name="SubmitAction" xml:space="preserve"><value>Gửi phiếu</value></data>
+  <data name="RequestAction" xml:space="preserve"><value>Gửi yêu cầu duyệt</value></data>
+  <data name="UpdateAction" xml:space="preserve"><value>Cập nhật xử lý</value></data>
+  <data name="IncidentCreated" xml:space="preserve"><value>Đã lưu phiếu sự cố.</value></data>
+  <data name="IncidentUpdated" xml:space="preserve"><value>Đã cập nhật phiếu sự cố.</value></data>
+  <data name="RequestCreated" xml:space="preserve"><value>Đã gửi yêu cầu chờ duyệt.</value></data>
+  <data name="PhotosSaved" xml:space="preserve"><value>Đã lưu ảnh.</value></data>
+  <data name="IncidentSavedPhotosFailed" xml:space="preserve"><value>Phiếu đã lưu nhưng còn ảnh chưa tải được. Thử lại chỉ tải các ảnh còn thiếu, không tạo thêm phiếu.</value></data>
+  <data name="RequestSavedPhotosFailed" xml:space="preserve"><value>Yêu cầu đã lưu nhưng còn ảnh chưa tải được. Hãy thử lại ảnh còn thiếu trước khi duyệt, hoặc hủy yêu cầu.</value></data>
+  <data name="SavedRetryPhotos" xml:space="preserve"><value>Phiếu hoặc yêu cầu đã được lưu. Nội dung được giữ nguyên; bạn có thể thử tải lại ảnh còn thiếu.</value></data>
+  <data name="RetryPhotos" xml:space="preserve"><value>Thử tải lại ảnh</value></data>
+  <data name="PhotosPartiallyFailed" xml:space="preserve"><value>Còn ảnh chưa tải được. Ảnh đã lưu được giữ lại; chỉ thử lại các ảnh còn thiếu. Yêu cầu chỉ duyệt được khi đủ ảnh.</value></data>
+  <data name="ApprovalQueue" xml:space="preserve"><value>Yêu cầu duyệt sự cố</value></data>
+  <data name="RefreshQueue" xml:space="preserve"><value>Tải lại yêu cầu</value></data>
+  <data name="RejectReason" xml:space="preserve"><value>Lý do từ chối (bắt buộc khi từ chối)</value></data>
+  <data name="ApproveAction" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="RejectAction" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="CancelRequest" xml:space="preserve"><value>Hủy yêu cầu</value></data>
+  <data name="RequestCancelled" xml:space="preserve"><value>Đã hủy yêu cầu duyệt.</value></data>
+  <data name="RequestApproved" xml:space="preserve"><value>Đã duyệt và áp dụng yêu cầu.</value></data>
+  <data name="RequestRejected" xml:space="preserve"><value>Đã từ chối yêu cầu.</value></data>
+  <data name="ApprovalPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="ApprovalApproved" xml:space="preserve"><value>Đã duyệt</value></data>
+  <data name="ApprovalRejected" xml:space="preserve"><value>Đã từ chối</value></data>
+  <data name="ApprovalCancelled" xml:space="preserve"><value>Đã hủy yêu cầu</value></data>
+  <data name="HistoryCreated" xml:space="preserve"><value>Đã tạo phiếu</value></data>
+  <data name="HistoryStatusChanged" xml:space="preserve"><value>Đã chuyển trạng thái</value></data>
+  <data name="HistoryApproved" xml:space="preserve"><value>Đã duyệt yêu cầu</value></data>
+  <data name="HistoryRejected" xml:space="preserve"><value>Đã từ chối yêu cầu</value></data>
+  <data name="HistoryUpdated" xml:space="preserve"><value>Đã cập nhật thông tin</value></data>
+  <data name="Forbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="IncidentNotFound" xml:space="preserve"><value>Không tìm thấy phiếu trong phạm vi của bạn.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>Phòng không còn hợp lệ hoặc nằm ngoài phạm vi của bạn.</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>Dữ liệu không hợp lệ. Hãy kiểm tra các trường và thử lại.</value></data>
+  <data name="Conflict" xml:space="preserve"><value>Dữ liệu đã thay đổi. Hãy tải lại trước khi thao tác tiếp.</value></data>
+  <data name="ApprovalFailed" xml:space="preserve"><value>Không gửi được yêu cầu duyệt. Vui lòng thử lại.</value></data>
+  <data name="ApprovalPhotosIncomplete" xml:space="preserve"><value>Chưa tải đủ ảnh đã chọn. Người gửi cần thử lại ảnh còn thiếu hoặc hủy yêu cầu.</value></data>
+  <data name="DuplicatePendingRequest" xml:space="preserve"><value>Đã có yêu cầu đang chờ duyệt cho thao tác này. Hãy xem danh sách yêu cầu.</value></data>
+  <data name="RejectReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+  <data name="RejectReasonTooLong" xml:space="preserve"><value>Lý do từ chối tối đa 500 ký tự.</value></data>
+  <data name="AlreadyDecided" xml:space="preserve"><value>Yêu cầu đã được xử lý. Hãy tải lại danh sách.</value></data>
+  <data name="FileCountExceeded" xml:space="preserve"><value>Mỗi phiếu tối đa 3 ảnh báo và 3 ảnh kết quả, gồm ảnh chờ duyệt.</value></data>
+  <data name="InvalidFileType" xml:space="preserve"><value>Ảnh phải là JPG/JPEG/PNG với nội dung hợp lệ.</value></data>
+  <data name="FileSizeExceeded" xml:space="preserve"><value>Ảnh phải không rỗng và không quá 5 MB.</value></data>
+  <data name="UploadFailed" xml:space="preserve"><value>Không tải được ảnh. Vui lòng thử lại.</value></data>
+  <data name="PendingPhotosMissing" xml:space="preserve"><value>Còn ảnh chưa tải xong. Bạn có thể chọn lại ảnh còn thiếu để hoàn tất yêu cầu này.</value></data>
 </root>

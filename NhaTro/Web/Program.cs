@@ -175,9 +175,9 @@ builder.Services.AddAuthorization(options =>
         !context.User.IsInRole(Roles.Admin) &&
         (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
     // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
-    options.AddPolicy(Web.Features.Maintenance.IncidentDemoSession.Policy, p => p
+    options.AddPolicy(Web.Features.Maintenance.IncidentAccess.Policy, p => p
         .RequireAuthenticatedUser()
-        .RequireAssertion(context => Web.Features.Maintenance.IncidentDemoSession.IsAllowed(context.User)));
+        .RequireAssertion(context => Web.Features.Maintenance.IncidentAccess.IsAllowed(context.User)));
     options.AddPolicy("UtilityBusiness", p => p.RequireAssertion(context =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
@@ -213,6 +213,9 @@ builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
+builder.Services.AddScoped<IncidentPhotoService>();
+builder.Services.AddScoped<IncidentPageService>();
+builder.Services.AddScoped<IApprovalApplier, IncidentResultPhotoApprovalApplier>();
 builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();

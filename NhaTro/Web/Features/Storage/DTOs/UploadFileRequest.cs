@@ -7,6 +7,9 @@ namespace Web.Features.Storage.DTOs;
 /// </summary>
 public class UploadFileRequest
 {
+    public Web.Features.Maintenance.Enums.IncidentPhotoKind IncidentPhotoKind { get; init; }
+    public Guid? ApprovalRequestId { get; init; }
+    public int ExpectedPhotoCount { get; init; } = 1;
     /// <summary>File gốc gửi lên.</summary>
     public required IFormFile File { get; init; }
 
