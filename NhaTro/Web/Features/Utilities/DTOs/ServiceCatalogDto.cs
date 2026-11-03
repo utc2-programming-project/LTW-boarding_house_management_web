@@ -6,7 +6,11 @@ public sealed record ServicePriceVersionDto(
     string Unit,
     string CalculationMethod,
     decimal UnitPrice,
-    DateOnly EffectiveDate);
+    DateOnly EffectiveDate,
+    DateOnly? EffectiveTo = null,
+    DateTime CreatedAt = default,
+    string? CreatedByUserId = null,
+    string? Note = null);
 
 public sealed record ServiceCatalogDto(
     int Id,
@@ -17,4 +21,7 @@ public sealed record ServiceCatalogDto(
     decimal UnitPrice,
     DateOnly EffectiveDate,
     bool IsReadOnly,
-    IReadOnlyList<ServicePriceVersionDto> PriceHistory);
+    IReadOnlyList<ServicePriceVersionDto> PriceHistory,
+    bool IsActive = true,
+    DateOnly? EffectiveTo = null,
+    string? Description = null);

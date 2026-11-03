@@ -1314,6 +1314,15 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("IsReadOnly")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1345,16 +1354,24 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
                         .HasColumnType("date");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("ServiceCatalogId")
                         .HasColumnType("int");
@@ -1370,6 +1387,8 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.HasIndex("EffectiveDate", "ServiceCatalogId");
 
                     b.HasIndex("ServiceCatalogId", "EffectiveDate")
@@ -1379,9 +1398,11 @@ namespace Web.Migrations
                         {
                             t.HasCheckConstraint("CK_ServicePriceHistory_CalculationMethod_NotBlank", "LEN(LTRIM(RTRIM([CalculationMethod]))) > 0");
 
+                            t.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] > [EffectiveDate]");
+
                             t.HasCheckConstraint("CK_ServicePriceHistory_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
 
-                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+                            t.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_Positive", "[UnitPrice] > 0");
 
                             t.HasCheckConstraint("CK_ServicePriceHistory_Unit_NotBlank", "LEN(LTRIM(RTRIM([Unit]))) > 0");
                         });
@@ -2070,6 +2091,11 @@ namespace Web.Migrations
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServicePriceHistory", b =>
                 {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Web.Features.Utilities.Entities.ServiceCatalog", "ServiceCatalog")
                         .WithMany("PriceHistory")
                         .HasForeignKey("ServiceCatalogId")

@@ -1214,4 +1214,46 @@
   <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Month:</value></data>
   <data name="MeterReadingYearFilter" xml:space="preserve"><value>Year:</value></data>
   <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Month {0:00}</value></data>
+  <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
+  <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>
+  <data name="ApprovalUiAction" xml:space="preserve"><value>Action</value></data>
+  <data name="ApprovalUiMode" xml:space="preserve"><value>Mode</value></data>
+  <data name="ApprovalUiModeAllow" xml:space="preserve"><value>Allow</value></data>
+  <data name="ApprovalUiModeApprove" xml:space="preserve"><value>Require approval</value></data>
+  <data name="ApprovalUiModeDeny" xml:space="preserve"><value>Deny</value></data>
+  <data name="ApprovalUiStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="ApprovalUiStatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="ApprovalUiStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ApprovalUiStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ApprovalUiReason" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="ApprovalUiApprove" xml:space="preserve"><value>Approve</value></data>
+  <data name="ApprovalUiReject" xml:space="preserve"><value>Reject</value></data>
+  <data name="ApprovalUiTargetUnknown" xml:space="preserve"><value>Target</value></data>
+  <data name="ApprovalUiTargetRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="ApprovalUiTargetTenant" xml:space="preserve"><value>Tenant</value></data>
+  <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Contract</value></data>
+  <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Meter reading period</value></data>
+  <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Incident</value></data>
+  <data name="SW-01" xml:space="preserve"><value>Edit room details</value></data>
+  <data name="SW-02" xml:space="preserve"><value>Set room rate</value></data>
+  <data name="SW-03" xml:space="preserve"><value>Change room status</value></data>
+  <data name="SW-04" xml:space="preserve"><value>Create tenant profile</value></data>
+  <data name="SW-05" xml:space="preserve"><value>Edit tenant profile</value></data>
+  <data name="SW-06" xml:space="preserve"><value>Delete tenant profile</value></data>
+  <data name="SW-07" xml:space="preserve"><value>Extend or terminate contract</value></data>
+  <data name="SW-08" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="SW-09" xml:space="preserve"><value>Edit previous meter readings</value></data>
+  <data name="SW-10" xml:space="preserve"><value>Create invoice</value></data>
+  <data name="SW-11" xml:space="preserve"><value>Issue invoice</value></data>
+  <data name="SW-12" xml:space="preserve"><value>Create maintenance ticket</value></data>
+  <data name="SW-13" xml:space="preserve"><value>Update incident status</value></data>
+  <data name="SW-14" xml:space="preserve"><value>Attach result photos</value></data>
+  <data name="SW-15" xml:space="preserve"><value>View reports</value></data>
+  <data name="SW-16" xml:space="preserve"><value>Export reports to Excel</value></data>
+  <data name="SW-15a" xml:space="preserve"><value>View room report</value></data>
+  <data name="SW-15b" xml:space="preserve"><value>View tenant report</value></data>
+  <data name="SW-15c" xml:space="preserve"><value>View contract report</value></data>
+  <data name="SW-15d" xml:space="preserve"><value>View invoice report</value></data>
+  <data name="SW-15e" xml:space="preserve"><value>View revenue and receivables report</value></data>
 </root>
