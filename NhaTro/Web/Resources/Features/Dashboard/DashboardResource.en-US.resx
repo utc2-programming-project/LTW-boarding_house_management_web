@@ -43,4 +43,6 @@
 <data name="ExpiringContracts" xml:space="preserve"><value>Expiring contracts</value></data>
 <data name="RoomScopeNote" xml:space="preserve"><value>Only active rooms are counted. The room list includes inactive rooms by default.</value></data>
 <data name="RefreshSuccess" xml:space="preserve"><value>Data refreshed</value></data>
+<data name="TenantRenting" xml:space="preserve"><value>Current renters</value></data>
+<data name="TenantCurrentData" xml:space="preserve"><value>Current figures reflect the property filter regardless of the reporting period.</value></data>
 </root>
