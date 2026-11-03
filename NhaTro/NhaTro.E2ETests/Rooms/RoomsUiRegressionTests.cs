@@ -141,11 +141,17 @@ public sealed class E2EFactAttribute : FactAttribute
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("E2E_BASE_URL"))
         && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("E2E_PASSWORD"));
 
-    public E2EFactAttribute()
+    public E2EFactAttribute(string? requiredEnvironmentVariable = null)
     {
         if (!Configured)
         {
             Skip = "Chưa đặt E2E_BASE_URL và E2E_PASSWORD (bỏ qua test E2E).";
+        }
+
+        if (Configured && !string.IsNullOrWhiteSpace(requiredEnvironmentVariable)
+            && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(requiredEnvironmentVariable)))
+        {
+            Skip = $"Missing required E2E setting: {requiredEnvironmentVariable}.";
         }
     }
 }

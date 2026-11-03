@@ -1,19 +1,22 @@
+using Web.Features.Properties;
 using Web.Features.Utilities.DTOs;
 
 namespace Web.Features.Utilities.Services;
 
 public interface IServiceCatalogService
 {
-    Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(string userRole);
+    Task<IReadOnlyList<ServiceCatalogDto>> GetServiceCatalogsAsync(PropertyCaller caller);
 
     Task<ServiceCatalogDto> CreateOrUpdateServicePriceAsync(
         CreateServiceCatalogDto request,
-        int userId,
-        string userRole);
+        PropertyCaller caller);
 
     Task<ServiceCatalogDto> CreateOrUpdateServicePriceAsync(
         int serviceCatalogId,
         UpdateServicePriceDto request,
-        int userId,
-        string userRole);
+        PropertyCaller caller);
+
+    Task<ServiceCatalogDto> ToggleServiceCatalogStatusAsync(
+        int serviceCatalogId,
+        PropertyCaller caller);
 }
