@@ -1,0 +1,238 @@
+@using System.Security.Claims
+@using System.Globalization
+@using Web.Features.Approvals
+@using Web.Features.Approvals.DTOs
+@using Web.Features.Approvals.Enums
+@using Web.Features.Approvals.Services
+@using Web.Features.Maintenance.DTOs
+@using Web.Features.Maintenance.Enums
+@using Web.Features.Maintenance.Rules
+@using Web.Features.Maintenance.Services
+@using Web.Features.Properties
+@using Web.Features.Rooms
+@using Web.Features.Rooms.DTOs
+@inject AuthenticationStateProvider Authentication
+@inject IIncidentService Incidents
+@inject IRoomService Rooms
+@inject IManagerApprovalService Approvals
+@inject IStringLocalizer<IncidentResource> L
+@inject IStringLocalizer<Web.Shared> SharedText
+@inject ILogger<IncidentWorkflow> Logger
+
+<section aria-labelledby="incident-workflow-heading">
+    <h2 id="incident-workflow-heading">@L["PageTitle"]</h2>
+    @if (_error is not null)
+    {
+        <p role="alert">@_error</p>
+    }
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_ready)
+    {
+        <form @onsubmit="CreateAsync" @onsubmit:preventDefault>
+            <fieldset disabled="@_busy">
+                <legend>@L["CreateIncident"]</legend>
+                <label for="live-incident-room">@L["Room"]</label>
+                <select id="live-incident-room" @bind="_roomId" required>
+                    <option value="">@L["SelectRoom"]</option>
+                    @foreach (var room in _rooms)
+                    {
+                        <option value="@room.Id">@room.PropertyName · @room.Code</option>
+                    }
+                </select>
+                <label for="live-incident-title">@L["Title"]</label>
+                <input id="live-incident-title" @bind="_title" required minlength="5" maxlength="200" />
+                <label for="live-incident-description">@L["Description"]</label>
+                <textarea id="live-incident-description" @bind="_description" required minlength="10" maxlength="2000"></textarea>
+                <label for="live-incident-category">@L["Category"]</label>
+                <select id="live-incident-category" @bind="_category">
+                    @foreach (var category in Enum.GetValues<IncidentCategory>())
+                    {
+                        <option value="@category">@L[$"Category{category}"]</option>
+                    }
+                </select>
+                <label for="live-incident-urgency">@L["Urgency"]</label>
+                <select id="live-incident-urgency" @bind="_urgency">
+                    @foreach (var urgency in Enum.GetValues<IncidentUrgency>())
+                    {
+                        <option value="@urgency">@L[$"Urgency{urgency}"]</option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-primary" disabled="@(_roomId is null || IsPending("SW-12", _roomId.Value))">
+                    @L["CreateIncident"]
+                </button>
+            </fieldset>
+        </form>
+
+        @foreach (var request in _pending.Where(request => request.OperationCode == "SW-12"))
+        {
+            var room = _rooms.FirstOrDefault(room => Key(room.Id) == request.TargetKey);
+            <p @key="request.Id">
+                @L["CreateIncident"] · @(room?.Code ?? request.TargetKey)
+                <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
+            </p>
+        }
+
+        @if (_items.Count == 0)
+        {
+            <p>@SharedText["ApprovalUiEmpty"]</p>
+        }
+
+        @foreach (var incident in _items)
+        {
+            var next = (IncidentStatus)((int)incident.Status + 1);
+            <article @key="incident.Id" class="card p-3 mb-3">
+                <h3>@incident.Title</h3>
+                <p>@incident.PropertyName · @incident.RoomCode · @L[$"Status{incident.Status}"]</p>
+                @if (IsPending("SW-13", incident.Id))
+                {
+                    <p>@L["ActionUpdate"] <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" /></p>
+                }
+                else if (IncidentRules.CanTransition(incident.Status, next))
+                {
+                    <button type="button" class="btn btn-secondary" disabled="@_busy"
+                            @onclick="() => UpdateAsync(incident.Id, next)">
+                        @L["NextStatus"] · @L[$"Status{next}"]
+                    </button>
+                }
+            </article>
+        }
+    }
+</section>
+
+@code {
+    private readonly List<RoomListItem> _rooms = [];
+    private IReadOnlyList<IncidentListItemDto> _items = [];
+    private IReadOnlyList<ApprovalRequestDto> _pending = [];
+    private PropertyCaller _caller = default!;
+    private int? _roomId;
+    private string _title = "";
+    private string _description = "";
+    private IncidentCategory _category = IncidentCategory.Other;
+    private IncidentUrgency _urgency = IncidentUrgency.Normal;
+    private string? _error;
+    private bool _loading = true;
+    private bool _ready;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var user = (await Authentication.GetAuthenticationStateAsync()).User;
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId) || !(user.IsInRole(Roles.ChuTro) || user.IsInRole(Roles.QuanLy)))
+                return;
+
+            _caller = new(userId, user.IsInRole(Roles.ChuTro) ? Roles.ChuTro : Roles.QuanLy);
+            var filter = new RoomFilter { PageSize = 100, IsActive = true };
+            while (true)
+            {
+                var page = await Rooms.ListAsync(filter, _caller);
+                _rooms.AddRange(page.Items);
+                if (page.Items.Count == 0 || filter.Page * filter.PageSize >= page.TotalCount)
+                    break;
+                filter.Page++;
+            }
+
+            await ReloadAsync();
+            _ready = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Could not load incident workflow");
+            _error = SharedText["ApprovalUiError"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string Key(int id) => id.ToString(CultureInfo.InvariantCulture);
+
+    private bool IsPending(string code, int id) =>
+        _pending.Any(request => request.OperationCode == code && request.TargetKey == Key(id));
+
+    private async Task ReloadAsync()
+    {
+        _items = await Incidents.ListAsync(_caller);
+        if (_caller.IsQuanLy)
+        {
+            var result = await Approvals.ListMineAsync(new ApprovalCaller(_caller.UserId, _caller.Role));
+            if (!result.Succeeded)
+            {
+                _error = SharedText["ApprovalUiError"];
+                return;
+            }
+            _pending = result.Items.Where(request =>
+                request.Status == ApprovalRequestStatus.Pending &&
+                request.OperationCode is "SW-12" or "SW-13").ToArray();
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (_roomId is not int roomId || IsPending("SW-12", roomId))
+            return;
+
+        var request = new IncidentCreateRequest
+        {
+            RoomId = roomId,
+            Title = _title,
+            Description = _description,
+            Category = _category,
+            Urgency = _urgency
+        };
+        if (await SaveAsync(() => Incidents.CreateAsync(request, _caller)))
+        {
+            _title = "";
+            _description = "";
+        }
+    }
+
+    private Task UpdateAsync(int id, IncidentStatus next) =>
+        SaveAsync(() => Incidents.UpdateAsync(id, new IncidentUpdateRequest { Status = next }, _caller));
+
+    private async Task<bool> SaveAsync(Func<Task<IncidentResult>> save)
+    {
+        if (_busy)
+            return false;
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await save();
+            if (!result.Succeeded)
+            {
+                _error = result.ErrorCode switch
+                {
+                    IncidentErrorCodes.Forbidden => L["ActionDenied"],
+                    IncidentErrorCodes.InvalidRequest => L["TitleInvalid"] + " " + L["DescriptionInvalid"],
+                    IncidentErrorCodes.InvalidTransition => L["TransitionInvalid"],
+                    _ => SharedText["ApprovalUiError"]
+                };
+                return false;
+            }
+
+            if (result.ApprovalRequest is { } request)
+                _pending = [.. _pending, request];
+
+            await ReloadAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Could not save incident workflow");
+            _error = SharedText["ApprovalUiError"];
+            return false;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,4 @@
+@page "/my-requests"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "QuanLy")]
+
+<ApprovalRequests Mine="true" />

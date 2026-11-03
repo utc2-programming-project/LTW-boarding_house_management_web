@@ -16,17 +16,22 @@
             <h1>@L[_tenant ? "TenantHeading" : "PageTitle"]</h1>
             <p>@L[_tenant ? "TenantSubtitle" : "StaffSubtitle"]</p>
         </div>
+    </div>
+    @if (_manager || _owner)
+    {
+        <IncidentWorkflow />
+    }
+
+    <div class="sample-banner" role="note">
+        <span class="preview-badge">@L["SampleBadge"]</span>
+        <p>@L["SampleNotice"]</p>
+        <p>@L["ScopeNotice"]</p>
         @if (_session is not null && _error is null && !_loading)
         {
             <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentDemoMode.Deny)" @onclick="OpenCreate">
                 <LucideIcon Name="plus" /> @L["CreateIncident"]
             </button>
         }
-    </div>
-    <div class="sample-banner" role="note">
-        <span class="preview-badge">@L["SampleBadge"]</span>
-        <p>@L["SampleNotice"]</p>
-        <p>@L["ScopeNotice"]</p>
     </div>
 
     @if (_loading)
