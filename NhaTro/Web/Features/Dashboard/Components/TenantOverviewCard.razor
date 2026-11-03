@@ -1,32 +1,22 @@
 @inject IStringLocalizer<DashboardResource> L
-@if (PropertySelected)
+@if (Kpis is { Total: 0 })
 {
-    <p>@L["TenantPropertyUnavailable"]</p>
+    <EmptyStateCard Title="@L["Empty"]" />
 }
-else if (!IsOwner)
+else if (Kpis is not null)
 {
-    <p>@L["TenantManagerUnavailable"]</p>
+    <dl>
+        <dt>@L["TenantTotal"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Total)</dd>
+        <dt>@L["TenantActive"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Active)</dd>
+        <dt>@L["TenantRenting"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Renting)</dd>
+        @if (Kpis.LinkedAccountCount is int linked)
+        {
+            <dt>@L["TenantLinked"]</dt><dd>@DashboardFormat.FormatNumber(linked)</dd>
+        }
+    </dl>
 }
-else
-{
-    <p>@L["TenantGlobal"]</p>
-    @if (Kpis?.Total == 0)
-    {
-        <EmptyStateCard Title="@L["Empty"]" />
-    }
-    else
-    {
-        <dl>
-            <dt>@L["TenantTotal"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.Total)</dd>
-            <dt>@L["TenantActive"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.Active)</dd>
-            <dt>@L["TenantLinked"]</dt><dd>@DashboardFormat.FormatNumber(Kpis?.LinkedAccountCount)</dd>
-        </dl>
-    }
-}
-<p>@L["CurrentData"]</p>
+<p>@L["TenantCurrentData"]</p>
 <a href="/tenants">@L["ViewTenants"]</a>
 @code {
-    [Parameter] public bool IsOwner { get; set; }
-    [Parameter] public bool PropertySelected { get; set; }
     [Parameter] public TenantReportKpis? Kpis { get; set; }
 }

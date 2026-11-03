@@ -36,23 +36,17 @@ public sealed class DashboardComponentTests : BunitContext
     }
 
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    public void Unavailable_tenant_scope_never_renders_numbers(bool owner, bool selected)
+    [InlineData(null, 3)]
+    [InlineData(4, 4)]
+    public void Tenant_summary_only_shows_linked_accounts_when_available(int? linked, int count)
     {
-        var component = Render<TenantOverviewCard>(p => p.Add(c => c.IsOwner, owner)
-            .Add(c => c.PropertySelected, selected).Add(c => c.Kpis, new TenantReportKpis { Total = 987, Active = 654, LinkedAccountCount = 321 }));
-        Assert.Empty(component.FindAll("dd"));
-        Assert.DoesNotContain("987", component.Markup);
-        Assert.Equal("/tenants", component.Find("a").GetAttribute("href"));
-    }
-
-    [Fact]
-    public void Owner_renders_tenant_summary()
-    {
-        var component = Render<TenantOverviewCard>(p => p.Add(c => c.IsOwner, true)
-            .Add(c => c.Kpis, new TenantReportKpis { Total = 12, Active = 10, LinkedAccountCount = 4 }));
-        Assert.Equal(new[] { "12", "10", "4" }, component.FindAll("dd").Select(e => e.TextContent));
+        var component = Render<TenantOverviewCard>(p => p.Add(c => c.Kpis,
+            new TenantReportKpis { Total = 12, Active = 10, Renting = 8, LinkedAccountCount = linked }));
+        var values = component.FindAll("dd").Select(e => e.TextContent).ToArray();
+        Assert.Equal(count, values.Length);
+        Assert.Equal(new[] { "12", "10", "8" }, values[..3]);
+        if (linked.HasValue)
+            Assert.Equal("4", values[3]);
     }
 
     [Fact]

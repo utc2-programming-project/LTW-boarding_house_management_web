@@ -48,7 +48,7 @@
             @if (Rooms is not null) { <RoomStructureChart Kpis="@Rooms" /> }
         </DashboardPanel>
         <DashboardPanel Title="@L["Tenants"]" Icon="users" State="@TenantState" DeniedText="@L["TenantsDenied"]" Retry="LoadTenantsAsync">
-            <TenantOverviewCard IsOwner="@IsOwner" PropertySelected="@(Filter.PropertyId.HasValue)" Kpis="@Tenants" />
+            <TenantOverviewCard Kpis="@Tenants" />
         </DashboardPanel>
         @if (IsOwner)
         {
@@ -134,9 +134,7 @@
     {
         TenantState = DashboardLoadState.Loading;
         Tenants = null;
-        // P3 chưa có phạm vi nhà: tuyệt đối không gán số toàn hệ thống cho một nhà.
-        if (Filter.PropertyId.HasValue) { TenantState = DashboardLoadState.Loaded; return; }
-        try { Tenants = await PageService.GetTenantKpisAsync(); TenantState = DashboardLoadState.Loaded; }
+        try { Tenants = await PageService.GetTenantKpisAsync(Filter.PropertyId); TenantState = DashboardLoadState.Loaded; }
         catch (UnauthorizedAccessException) { TenantState = DashboardLoadState.Denied; }
         catch (Exception ex) { TenantState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard tenants failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
         finally { await InvokeAsync(StateHasChanged); }
