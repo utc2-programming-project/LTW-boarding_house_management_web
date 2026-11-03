@@ -150,7 +150,7 @@
                                 <td class="tabular-nums text-slate-500 font-mono text-xs">
                                     @(!v.CreatedAt.HasValue || v.CreatedAt.Value == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt.Value))
                                 </td>
-                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? "—" : v.Note)</td>
+                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? L["NoData"].Value : v.Note)</td>
                             </tr>
                         }
                     </tbody>

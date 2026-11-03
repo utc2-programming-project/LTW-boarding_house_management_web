@@ -13,6 +13,7 @@ public sealed record DataTableLabels
     public string? NoResultsDescription { get; init; }
     public string ClearFilters { get; init; } = "Xóa bộ lọc";
     public string LoadFailed { get; init; } = "Không tải được dữ liệu.";
+    public string NoData { get; init; } = "Chưa có dữ liệu";
     public string Retry { get; init; } = "Thử lại";
     public string FilterBy { get; init; } = "Lọc theo";
     public string Pagination { get; init; } = "Phân trang";

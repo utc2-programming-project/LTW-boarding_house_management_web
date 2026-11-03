@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject TenantDocumentPageService DocumentService
 @inject ToastService Toasts
+@inject ILogger<TenantDocumentsView> Logger
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["TenantDocumentsTitle"] · @L["AppName"]</PageTitle>
@@ -31,7 +32,7 @@
         <div class="doc-actions-row">
             @if (_documentsList?.CanExport == true && (_documentsList?.Items.Count ?? 0) > 0)
             {
-                <button type="button" class="doc-btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
+                <button type="button" class="btn btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
                     @if (_exporting)
                     {
                         <span class="spinner" aria-hidden="true"></span>
@@ -85,7 +86,7 @@
                         </div>
                         <div class="doc-bento-value-row">
                             <span class="doc-bento-big-num">@TotalStorageMb</span>
-                            <span class="doc-bento-unit">/ 100 MB</span>
+                            <span class="doc-bento-unit">@StorageLimitText</span>
                         </div>
                         <div class="doc-progress-track">
                             <div class="doc-progress-bar" style="width: @(PercentStorageUsed)%;"></div>
@@ -102,7 +103,7 @@
                         </div>
                         <div class="doc-bento-value-row">
                             <span class="doc-bento-big-num">
-                                @(_documentsList?.Items.Count ?? 0) @L["OfWord"] @Math.Max(4, _documentsList?.Items.Count ?? 0)
+                                @(_documentsList?.Items.Count ?? 0) @L["OfWord"] @TenantDocumentTypeRules.RequiredTypeCount
                             </span>
                         </div>
                         <div class="doc-bento-footer-status">
@@ -199,6 +200,7 @@
                            value="@_searchKeyword"
                            @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
                            placeholder="@L["SearchDocumentsPlaceholder"]"
+                           aria-label="@L["SearchDocumentsPlaceholder"]"
                            class="doc-search-input" />
                 </div>
 
@@ -262,7 +264,7 @@
                         {
                             @foreach (var doc in FilteredDocuments)
                             {
-                                <tr @onclick="() => OpenPreviewModal(doc)">
+                                <tr @onclick="() => OpenPreviewModal(doc)" @onkeydown="@((KeyboardEventArgs e) => HandleDocumentRowKeyDown(e, doc))" tabindex="0" role="button" aria-label="@L["DocumentPreview"]">
                                     <!-- Column 1: Document Type Badge -->
                                     <td data-label="@L["DocumentType"]">
                                         <span class="doc-type-pill @GetCategoryPillClass(doc.Description)">
@@ -311,6 +313,7 @@
                                             <button type="button"
                                                     @onclick="() => OpenPreviewModal(doc)"
                                                     title="@L["DocumentPreview"]"
+                                                    aria-label="@L["DocumentPreview"]"
                                                     class="doc-icon-btn">
                                                 <LucideIcon Name="eye" />
                                             </button>
@@ -330,6 +333,7 @@
                                                 <button type="button"
                                                         @onclick="() => ConfirmDelete(doc)"
                                                         title="@L["Delete"]"
+                                                        aria-label="@L["Delete"]"
                                                         class="doc-icon-btn doc-icon-btn-danger">
                                                     <LucideIcon Name="trash-2" />
                                                 </button>
@@ -349,17 +353,6 @@
                     @string.Format(L["ShowingDocuments"], FilteredDocuments.Count, _documentsList?.Items.Count ?? 0)
                 </span>
 
-                <div class="doc-pagination-group">
-                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
-                        <LucideIcon Name="chevron-left" />
-                    </button>
-                    <button type="button" class="doc-page-btn doc-page-btn-active">
-                        1
-                    </button>
-                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
-                        <LucideIcon Name="chevron-right" />
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -538,7 +531,8 @@
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["DocumentDeleteFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document delete failed");
+            Toasts.Error(L["DocumentDeleteFailed"]);
         }
         finally
         {
@@ -589,24 +583,39 @@
         try
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"{L["DocumentCode"]},{L["DocumentFileName"]},{L["ContentType"]},{L["DocumentSize"]},{L["DocumentUploadedAt"]},{L["DocumentDescription"]}");
+            sb.AppendLine($"{EscapeCsvField(L["DocumentCode"])},{EscapeCsvField(L["DocumentFileName"])},{EscapeCsvField(L["ContentType"])},{EscapeCsvField(L["DocumentSize"])},{EscapeCsvField(L["DocumentUploadedAt"])},{EscapeCsvField(L["DocumentDescription"])}");
             foreach (var item in _documentsList.Items)
             {
-                sb.AppendLine($"\"{item.Id}\",\"{item.FileName}\",\"{item.ContentType}\",{item.FileSizeBytes},\"{item.UploadedAt:yyyy-MM-dd HH:mm:ss}\",\"{item.Description?.Replace("\"", "\"\"")}\"");
+                // Ngày giờ lưu trong CSV theo giờ địa phương VN (dd/MM/yyyy HH:mm), không dùng UTC thô.
+                var uploadedAt = DateFormatter.FormatDateTime(item.UploadedAt.UtcDateTime);
+                sb.AppendLine($"{item.Id},{EscapeCsvField(item.FileName)},{EscapeCsvField(item.ContentType)},{item.FileSizeBytes},{EscapeCsvField(uploadedAt)},{EscapeCsvField(item.Description)}");
             }
 
-            var fileName = $"documents-tenant-{_activeTenantId}-{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+            var exportedAt = Web.Infrastructure.Time.VietnamTime.ToVietnam(DateTime.UtcNow);
+            var fileName = $"documents-tenant-{_activeTenantId}-{exportedAt:yyyyMMddHHmmss}.csv";
             await JS.InvokeVoidAsync("appTenantExport.download", fileName, sb.ToString());
             Toasts.Success(L["ExportSuccess"]);
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["ExportFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document export failed");
+            Toasts.Error(L["ExportFailed"]);
         }
         finally
         {
             _exporting = false;
         }
+    }
+
+    private Task HandleDocumentRowKeyDown(KeyboardEventArgs e, TenantDocumentMetadataDto doc)
+    {
+        // Hàng bảng mở preview: hỗ trợ Enter / Space như một nút bấm.
+        if (e.Key is "Enter" or " " or "Spacebar")
+        {
+            OpenPreviewModal(doc);
+        }
+
+        return Task.CompletedTask;
     }
 
     private IReadOnlyList<TenantDocumentMetadataDto> FilteredDocuments
@@ -657,6 +666,10 @@
             return (bytes / (1024.0 * 1024.0)).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
         }
     }
+
+    // Giới hạn lưu trữ lấy từ FileTypeRules (cấu hình mặc định) và format qua resource, không hard-code.
+    private string StorageLimitText =>
+        string.Format(L["StorageLimitMb"], Web.Features.Storage.Rules.FileTypeRules.DescribeMegabytes(Web.Features.Storage.Rules.FileTypeRules.MaxDefaultBytes()));
 
     private int PercentStorageUsed
     {
@@ -719,5 +732,18 @@
         if (bytes < 1024) return $"{bytes} B";
         if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
         return $"{bytes / (1024.0 * 1024.0):F2} MB";
+    }
+
+    /// <summary>
+    /// Escape giá trị ô CSV: bao quanh bằng dấu ngoặc kép và thay dấu " bằng "" (nếu có).
+    /// Ngay cả đầu chuỗi =, +, -, @ được prefix thêm dấu ' để chống CSV/formula injection khi mở Excel.
+    /// </summary>
+    private static string EscapeCsvField(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var safe = value.Replace("\"", "\"\"");
+        if ("=+-@".IndexOf(safe[0]) >= 0) safe = $"'{safe}";
+        return $"\"{safe}\"";
     }
 }

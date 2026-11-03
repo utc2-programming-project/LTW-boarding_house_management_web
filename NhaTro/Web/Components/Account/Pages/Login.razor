@@ -181,6 +181,7 @@
                 _submitting = false;
                 errorMessage = L["CaptchaInvalid"];
                 _captchaChallenge = CaptchaVerifier.CreateChallenge();
+                Input.CaptchaAnswer = string.Empty;
                 return;
             }
         }
@@ -228,6 +229,7 @@
         if (await IsCaptchaRequiredAsync())
         {
             _captchaChallenge = CaptchaVerifier.CreateChallenge();
+            Input.CaptchaAnswer = string.Empty;
         }
     }
 

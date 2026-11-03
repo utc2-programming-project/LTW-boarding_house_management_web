@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
 using Web.Common.Utils;
 using Web.Features.Accounts;
 using Web.Features.Utilities.DTOs;
@@ -48,7 +49,8 @@ public sealed class MeterReadingPageService(
     UtilitySampleStateService sampleState,
     IUtilityTariffService tariffService,
     IServiceScopeFactory scopeFactory,
-    ILogger<MeterReadingPageService> logger)
+    ILogger<MeterReadingPageService> logger,
+    IStringLocalizer<Shared> localizer)
 {
     // EVN 6-tier household rates (Decision 1279 / Seed Tariff Id = 1)
     public static readonly IReadOnlyList<ElectricTierDto> EvnElectricTiers =
@@ -151,9 +153,11 @@ public sealed class MeterReadingPageService(
                 $"Chỉ số nước mới ({waterEnd}) phải lớn hơn hoặc bằng chỉ số cũ ({currentRoom.WaterStart}).");
         }
 
-        var modifierName = string.IsNullOrWhiteSpace(email) ? "Quản lý" : email;
+        // Khi không xác định được email người thực hiện (vd. hệ thống/giả lập quản lý),
+        // lấy tên người dùng từ localizer theo ngôn ngữ giao diện, không hard-code tiếng Việt.
+        var modifierName = string.IsNullOrWhiteSpace(email) ? localizer["ManagerDisplayName"].Value : email;
         var (success, error, updatedRoom) = sampleState.SaveRoomReading(
-            roomId, electricEnd, waterEnd, periodStart, periodEnd, reason, role, email, modifierName);
+            roomId, electricEnd, waterEnd, periodStart, periodEnd, reason, role, email, modifierName, isLock);
 
         if (!success || updatedRoom is null)
         {
@@ -172,17 +176,6 @@ public sealed class MeterReadingPageService(
                 _ => "Không thể lưu chỉ số phòng."
             };
             return new SaveResult(false, code, msg);
-        }
-
-        if (isLock)
-        {
-            // Cập nhật trạng thái chốt kỳ
-            updatedRoom.Status = "locked";
-            var inMemoryRoom = rooms.FirstOrDefault(r => r.Id == roomId);
-            if (inMemoryRoom is not null)
-            {
-                inMemoryRoom.Status = "locked";
-            }
         }
 
         return new SaveResult(true, null, null, updatedRoom);

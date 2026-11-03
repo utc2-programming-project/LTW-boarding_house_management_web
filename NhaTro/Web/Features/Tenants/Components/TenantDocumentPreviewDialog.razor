@@ -34,12 +34,13 @@
 
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <a href="/api/tenants/@TenantId/documents/@Document.Id" target="_blank" download="@Document.FileName"
-                       style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; background-color: var(--primary); color: var(--surface); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                       style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 8px; background-color: var(--primary); color: var(--surface); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                         <LucideIcon Name="download" />
                         <span>@L["DownloadDocumentSecure"]</span>
                     </a>
                     <button type="button"
-                            style="width: 32px; height: 32px; border-radius: 8px; color: var(--text-muted); background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                            style="width: 44px; height: 44px; border-radius: 8px; color: var(--text-muted); background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                            aria-label="@L["Close"]"
                             @onclick="OnClose">
                         <LucideIcon Name="x" />
                     </button>
@@ -75,17 +76,17 @@
                             <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
                                 <div>
                                     <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["PreviewFullNameLabel"]:</span>
-                                    <span style="font-weight: 700; color: var(--text-primary);">@(TenantName ?? "NGUYỄN VĂN A")</span>
+                                    <span style="font-weight: 700; color: var(--text-primary);">@(string.IsNullOrWhiteSpace(TenantName) ? L["NoData"].Value : TenantName)</span>
                                 </div>
                                 <div>
                                     <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["CitizenIdLabel"]:</span>
                                     <span style="font-family: monospace; font-weight: 600; color: var(--text-primary); letter-spacing: 0.05em;">
-                                        @(CitizenId ?? "079095012345")
+                                        @(string.IsNullOrWhiteSpace(CitizenId) ? L["NoData"].Value : CitizenId)
                                     </span>
                                 </div>
                                 <div>
                                     <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["ResidenceAddressLabel"]:</span>
-                            <span style="color: var(--text-secondary);">@(ResidenceAddress ?? L["SampleResidentAddress"].Value)</span>
+                            <span style="color: var(--text-secondary);">@(string.IsNullOrWhiteSpace(ResidenceAddress) ? L["NoData"].Value : ResidenceAddress)</span>
                                 </div>
                             </div>
                         </div>
@@ -120,7 +121,7 @@
             <div style="background-color: var(--page-bg); padding: 12px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
                 <span>@L["DocumentCode"]: @Document.Id.ToString()[..8].ToUpperInvariant()</span>
                 <button type="button"
-                        style="padding: 6px 16px; border-radius: 8px; background-color: var(--surface); border: 1px solid var(--neutral-border); color: var(--text-secondary); font-weight: 500; cursor: pointer;"
+                        style="min-height: 44px; padding: 6px 16px; border-radius: 8px; background-color: var(--surface); border: 1px solid var(--neutral-border); color: var(--text-secondary); font-weight: 500; cursor: pointer;"
                         @onclick="OnClose">
                     @L["Close"]
                 </button>

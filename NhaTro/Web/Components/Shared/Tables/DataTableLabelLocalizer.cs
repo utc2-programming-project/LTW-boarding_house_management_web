@@ -16,6 +16,7 @@ public static class DataTableLabelLocalizer
         NoResultsDescription = localizer["TableNoResultsDescription"],
         ClearFilters = localizer["TableClearFilters"],
         LoadFailed = localizer["TableLoadFailed"],
+        NoData = localizer["NoData"],
         Retry = localizer["TableRetry"],
         FilterBy = localizer["TableFilterBy"],
         Pagination = localizer["TablePagination"],

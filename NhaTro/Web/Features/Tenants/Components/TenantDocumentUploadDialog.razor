@@ -3,6 +3,7 @@
 @inject IStringLocalizer<Shared> L
 @inject TenantDocumentPageService DocumentService
 @inject ToastService Toasts
+@inject ILogger<TenantDocumentUploadDialog> Logger
 
 @if (Visible)
 {
@@ -878,7 +879,8 @@
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["DocumentUploadFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document upload failed");
+            Toasts.Error(L["DocumentUploadFailed"]);
         }
         finally
         {

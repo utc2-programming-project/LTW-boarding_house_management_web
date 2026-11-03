@@ -156,10 +156,12 @@ public sealed class RoomReadingSampleDto
     public string ElectricMeterCode { get; set; } = string.Empty;
     public decimal ElectricStart { get; set; }
     public decimal ElectricEnd { get; set; }
+    public bool HasElectricReading { get; set; }
     public decimal? PreviousElectricUsage { get; set; }
     public string WaterMeterCode { get; set; } = string.Empty;
     public decimal WaterStart { get; set; }
     public decimal WaterEnd { get; set; }
+    public bool HasWaterReading { get; set; }
     public decimal? PreviousWaterUsage { get; set; }
     public decimal WaterRate { get; set; } = 15_000m;
     public decimal InternetCost { get; set; } = 100_000m;
@@ -186,10 +188,12 @@ public sealed class RoomReadingSampleDto
         ElectricMeterCode = ElectricMeterCode,
         ElectricStart = ElectricStart,
         ElectricEnd = ElectricEnd,
+        HasElectricReading = HasElectricReading,
         PreviousElectricUsage = PreviousElectricUsage,
         WaterMeterCode = WaterMeterCode,
         WaterStart = WaterStart,
         WaterEnd = WaterEnd,
+        HasWaterReading = HasWaterReading,
         PreviousWaterUsage = PreviousWaterUsage,
         WaterRate = WaterRate,
         InternetCost = InternetCost,

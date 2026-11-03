@@ -6,7 +6,7 @@
     <div role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title"
          class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in"
          style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background-color: var(--overlay);"
-         @onclick="OnClose">
+         @onclick="CloseBackdrop">
         <div class="w-[400px] max-w-full bg-[var(--surface)] rounded-[16px] p-[24px] shadow-[0_24px_64px_var(--shadow-dialog)] flex flex-col"
              style="width: 400px; max-width: 100%; background: var(--surface); border-radius: 16px; padding: 24px; box-shadow: 0 24px 64px var(--shadow-dialog); display: flex; flex-direction: column;"
              @onclick:stopPropagation="true">
@@ -44,12 +44,12 @@
             <!-- Actions -->
             <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 24px;">
                 <button type="button" disabled="@_isDeleting"
-                        style="height: 40px; padding: 0 16px; border-radius: 8px; background: var(--surface); border: 1px solid var(--text-muted); color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer;"
+                        style="min-height: 44px; padding: 0 16px; border-radius: 8px; background: var(--surface); border: 1px solid var(--text-muted); color: var(--text-secondary); font-size: 14px; font-weight: 500; cursor: pointer;"
                         @onclick="OnClose">
                     @L["Cancel"]
                 </button>
                 <button type="button" disabled="@_isDeleting"
-                        style="height: 40px; padding: 0 18px; border-radius: 8px; background: var(--error-text); border: none; color: var(--surface); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
+                        style="min-height: 44px; padding: 0 18px; border-radius: 8px; background: var(--error-text); border: none; color: var(--surface); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
                         @onclick="ConfirmDeleteAsync">
                     @if (_isDeleting)
                     {
@@ -74,6 +74,8 @@
     [Parameter] public EventCallback OnConfirm { get; set; }
 
     private bool _isDeleting;
+
+    private Task CloseBackdrop() => _isDeleting ? Task.CompletedTask : OnClose.InvokeAsync();
 
     private async Task ConfirmDeleteAsync()
     {
