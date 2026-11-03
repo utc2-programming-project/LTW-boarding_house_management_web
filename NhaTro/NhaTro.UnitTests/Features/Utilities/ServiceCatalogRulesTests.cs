@@ -27,7 +27,7 @@ public sealed class ServiceCatalogRulesTests
     }
 
     [Fact]
-    public void CreateValidation_AcceptsOpenEndedAndSameDayEffectiveTo()
+    public void CreateValidation_AcceptsOpenEndedAndStrictlyAfterEffectiveTo()
     {
         var request = ValidCreateRequest();
         request.EffectiveDate = new DateOnly(2026, 6, 1);
@@ -35,8 +35,23 @@ public sealed class ServiceCatalogRulesTests
         request.EffectiveTo = null;
         Assert.DoesNotContain(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
 
-        request.EffectiveTo = new DateOnly(2026, 6, 1);
+        request.EffectiveTo = new DateOnly(2026, 6, 2);
         Assert.DoesNotContain(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+
+        // TF-12: EffectiveTo <= EffectiveDate is rejected
+        request.EffectiveTo = new DateOnly(2026, 6, 1);
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void CreateValidation_ValidatesDescriptionLength()
+    {
+        var request = ValidCreateRequest();
+        request.Description = new string('D', 501);
+        Assert.Contains(nameof(request.Description), ServiceCatalogRules.Validate(request));
+
+        request.Description = new string('D', 500);
+        Assert.DoesNotContain(nameof(request.Description), ServiceCatalogRules.Validate(request));
     }
 
     [Fact]
@@ -51,6 +66,15 @@ public sealed class ServiceCatalogRulesTests
             EffectiveDate = new DateOnly(2026, 6, 1),
             EffectiveTo = new DateOnly(2026, 5, 1),
         };
+
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void UpdateValidation_RejectsEffectiveToEqualEffectiveDate()
+    {
+        var request = ValidUpdateRequest();
+        request.EffectiveTo = request.EffectiveDate;
 
         Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
     }

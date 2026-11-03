@@ -276,7 +276,7 @@ public sealed class ServiceCatalogPageService(
                     Status = tariff.EffectiveDate > Today ? PriceVersionStatus.Upcoming : PriceVersionStatus.Active,
                     BuildingScope = "all",
                     BuildingName = T("AllBuildings"),
-                    CreatedAt = DateTime.MinValue,
+                    CreatedAt = null,
                     CreatedBy = T("SystemCreatorLabel"),
                     Note = tariff.SourceName,
                     IsSessionCreated = false,
@@ -401,7 +401,7 @@ public sealed class ServiceCatalogPageService(
             return (false, T("ErrorPriceMustBePositive"), null);
         }
 
-        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value < request.EffectiveFrom)
+        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value <= request.EffectiveFrom)
         {
             return (false, T("ErrorEffectiveToMustBeAfterEffectiveFrom"), null);
         }
@@ -434,6 +434,7 @@ public sealed class ServiceCatalogPageService(
             EffectiveDate = request.EffectiveFrom == default ? Today : request.EffectiveFrom,
             EffectiveTo = request.EffectiveTo,
             Note = request.Note,
+            Description = request.Description,
         };
 
         await using var scope = scopeFactory.CreateAsyncScope();
@@ -505,7 +506,7 @@ public sealed class ServiceCatalogPageService(
             return (false, T("ErrorServiceNotFound"), null);
         }
 
-        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value < request.EffectiveFrom)
+        if (request.EffectiveTo.HasValue && request.EffectiveFrom != default && request.EffectiveTo.Value <= request.EffectiveFrom)
         {
             return (false, T("ErrorEffectiveToMustBeAfterEffectiveFrom"), null);
         }
@@ -716,7 +717,7 @@ public sealed class ServiceCatalogPageService(
             IsSessionCreated = false,
             BuildingId = catalog.PropertyId.HasValue ? catalog.PropertyId.Value.ToString() : "all",
             BuildingName = propertyName,
-            Description = string.Empty,
+            Description = catalog.Description ?? string.Empty,
             HistoryCount = catalog.PriceHistory.Count,
         };
     }

@@ -132,7 +132,6 @@ public sealed class ServiceCatalogPageServiceTests
             Unit = ServiceUnitCategory.KilowattHour,
             NewRate = 3500m,
             EffectiveFrom = new DateOnly(2026, 12, 1),
-            BuildingScope = "1",
         };
 
         var (success, error, version) = await service.UpdateServicePriceAsync(request);
@@ -153,7 +152,6 @@ public sealed class ServiceCatalogPageServiceTests
             Unit = ServiceUnitCategory.KilowattHour,
             NewRate = 3500m,
             EffectiveFrom = new DateOnly(2026, 12, 1),
-            BuildingScope = "1",
         };
 
         var (success, error, version) = await service.UpdateServicePriceAsync(request);

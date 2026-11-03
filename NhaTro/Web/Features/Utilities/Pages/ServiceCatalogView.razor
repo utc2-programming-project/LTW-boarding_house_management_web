@@ -5,7 +5,7 @@
 @inject ServiceCatalogPageService PageService
 @inject ToastService Toast
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<ServiceCatalogView> Logger
 
 <PageTitle>@L["CatalogPageTitle"]</PageTitle>
 
@@ -57,7 +57,7 @@
             </button>
             <AuthorizeView Policy="UtilityManage">
                 <Authorized>
-                    <button type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
+                    <button id="service-create-open-btn" type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
                         <LucideIcon Name="plus" />
                         <span>@L["AddNewServiceBtn"]</span>
                     </button>
@@ -155,7 +155,7 @@
                 <option value="custom">@L["CustomType"]</option>
             </select>
 
-            <select class="input select-filter" @bind="_selectedStatus" @bind:after="ApplyFilters">
+            <select id="service-status-filter" class="input select-filter" @bind="_selectedStatus" @bind:after="ApplyFilters">
                 <option value="all">@L["AllStatuses"]</option>
                 <option value="active">@L["ActiveStatus"]</option>
                 <option value="inactive">@L["InactiveStatus"]</option>
@@ -202,11 +202,15 @@
                     <tbody>
                         @foreach (var service in _filteredServices)
                         {
-                            <tr class="service-row">
+                            <tr class="service-row" data-service-id="@service.Id">
                                 <!-- Tên dịch vụ -->
                                 <td class="cell-name">
                                     <div class="service-name-cell">
                                         <span class="service-name font-semibold text-indigo-900">@service.Name</span>
+                                        @if (!string.IsNullOrWhiteSpace(service.Description))
+                                        {
+                                            <span class="service-description">@service.Description</span>
+                                        }
                                         @if (_isSampleData)
                                         {
                                             <span class="record-origin-badge @(service.IsSessionCreated ? "session" : "")" style="white-space: normal; word-break: break-word;">
@@ -274,7 +278,7 @@
                                             <button type="button"
                                                     role="switch"
                                                     aria-label="@L[service.Active ? "ActiveStatus" : "InactiveStatus"]"
-                                                    aria-checked="@service.Active"
+                                                    aria-checked="@(service.Active ? "true" : "false")"
                                                     disabled="@(service.IsReadOnly || !_canWrite)"
                                                     class="ui-switch @(service.Active ? "active" : "") @(service.IsReadOnly || !_canWrite ? "disabled" : "")"
                                                     title="@(service.IsReadOnly ? L["ReadOnlyTitle"] : (!_canWrite ? L["WriteActionBlockedNotice"] : (service.Active ? L["ActiveStatus"] : L["InactiveStatus"])) )"
@@ -316,6 +320,7 @@
                                                 <Authorized>
                                                     <button type="button"
                                                             class="icon-action-btn edit-action-btn"
+                                                            data-action="edit-price"
                                                             title="@L["EditPriceTooltip"]"
                                                             aria-label="@L["EditPriceTooltip"]"
                                                             @onclick="() => OpenUpdateModal(service)">
@@ -361,7 +366,6 @@
     <Authorized>
         <ServicePriceModal IsOpen="@_isUpdateModalOpen"
                            Service="@_selectedService"
-                           Buildings="@_visibleBuildings"
                            CanWrite="@_canWrite"
                            OnClose="() => _isUpdateModalOpen = false"
                            OnSave="HandleSavePrice" />
@@ -385,7 +389,6 @@
     private string _selectedType = "all";
     private string _selectedStatus = "all";
     private string _callerRole = string.Empty;
-    private string _callerEmail = string.Empty;
     private List<BuildingOptionDto> _visibleBuildings = [];
     private bool _isLoading = true;
     private bool _isSampleData = false;
@@ -414,7 +417,6 @@
         try
         {
             _callerRole = await PageService.GetCurrentRoleAsync();
-            _callerEmail = await PageService.GetCurrentEmailAsync();
             _visibleBuildings = (await PageService.GetBuildingsForCallerAsync()).ToList();
 
             _allServices = (await PageService.GetServicesForCallerAsync()).ToList();
@@ -430,7 +432,8 @@
         }
         catch (Exception ex)
         {
-            _loadError = L["SqlLoadServicesError", ex.Message];
+            Logger.LogError(ex, "Failed to load the service catalog page.");
+            _loadError = L["SqlLoadServicesError"];
             _allServices = [];
             _filteredServices = [];
             _totalCount = 0;

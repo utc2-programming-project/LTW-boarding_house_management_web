@@ -23,4 +23,5 @@ public sealed record ServiceCatalogDto(
     bool IsReadOnly,
     IReadOnlyList<ServicePriceVersionDto> PriceHistory,
     bool IsActive = true,
-    DateOnly? EffectiveTo = null);
+    DateOnly? EffectiveTo = null,
+    string? Description = null);

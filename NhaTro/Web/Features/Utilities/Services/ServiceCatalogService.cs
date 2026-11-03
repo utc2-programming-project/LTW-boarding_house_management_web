@@ -50,10 +50,19 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         }
 
         var today = _timeProvider.TodayVietnam();
-        var catalogs = await _context.ServiceCatalogs
+        var query = _context.ServiceCatalogs
             .AsNoTracking()
             .Include(catalog => catalog.PriceHistory)
-            .Where(catalog => catalog.PropertyId == null || allowedPropertyIds.Contains(catalog.PropertyId.Value))
+            .Where(catalog => catalog.PropertyId == null || allowedPropertyIds.Contains(catalog.PropertyId.Value));
+
+        // TF-13: ChuTro sees both Active and Inactive to toggle them back.
+        // Manager and Tenant only see Active services.
+        if (!caller.IsChuTro)
+        {
+            query = query.Where(catalog => catalog.IsActive);
+        }
+
+        var catalogs = await query
             .OrderBy(catalog => catalog.PropertyId)
             .ThenBy(catalog => catalog.Id)
             .ToListAsync();
@@ -97,6 +106,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             PropertyId = request.PropertyId,
             IsReadOnly = false,
             IsActive = true,
+            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
             CreatedAt = _timeProvider.UtcNow(),
         };
         catalog.PriceHistory.Add(CreateVersion(
@@ -168,6 +178,21 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         if (latestVersion != null)
         {
             var closeAt = request.EffectiveDate.AddDays(-1);
+            if (closeAt <= latestVersion.EffectiveDate &&
+                (!latestVersion.EffectiveTo.HasValue || latestVersion.EffectiveTo.Value >= request.EffectiveDate))
+            {
+                throw WithKey(
+                    new InvalidOperationException("Ngày áp dụng giá mới khiến phiên bản hiện tại không còn đủ khoảng hiệu lực hợp lệ."),
+                    "ErrorPriceVersionTooShort");
+            }
+
+            if (latestVersion.EffectiveTo.HasValue && latestVersion.EffectiveTo.Value < request.EffectiveDate.AddDays(-1))
+            {
+                throw WithKey(
+                    new InvalidOperationException("Phiên bản giá mới phải bắt đầu liền sau ngày kết thúc của phiên bản gần nhất."),
+                    "ErrorPriceVersionGap");
+            }
+
             if (latestVersion.EffectiveTo is null || latestVersion.EffectiveTo > closeAt)
             {
                 latestVersion.EffectiveTo = closeAt;
@@ -284,7 +309,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             catalog.IsReadOnly,
             history,
             catalog.IsActive,
-            current.EffectiveTo);
+            current.EffectiveTo,
+            catalog.Description);
     }
 
     /// <summary>

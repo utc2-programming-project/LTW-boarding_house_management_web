@@ -437,7 +437,6 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
             NewRate = 120_000m,
             Unit = ServiceUnitCategory.Vehicle,
             EffectiveFrom = new DateOnly(2026, 12, 1),
-            BuildingScope = prop.Id.ToString(),
         });
 
         Assert.True(success, error);
@@ -828,13 +827,19 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
         Assert.True(ok, err);
 
         var versions = await pageService.GetPriceVersionsForCallerAsync(item!.Id);
-        Assert.Equal("—", Assert.Single(versions).Note);
+        var catalogVersion = Assert.Single(versions);
+        Assert.Equal("—", catalogVersion.Note);
+        Assert.True(catalogVersion.CreatedAt.HasValue);
+        Assert.NotEqual(default, catalogVersion.CreatedAt.Value);
+        Assert.False(string.IsNullOrWhiteSpace(catalogVersion.CreatedBy) || catalogVersion.CreatedBy == "—");
 
         // Utility tariffs retain SourceName without being overwritten
         var allVersions = await pageService.GetPriceVersionsForCallerAsync("all");
         var tariffVersions = allVersions.Where(v => v.ServiceId.StartsWith("tariff-")).ToList();
         Assert.NotEmpty(tariffVersions);
         Assert.All(tariffVersions, tv => Assert.False(string.IsNullOrWhiteSpace(tv.Note) || tv.Note == "—"));
+        Assert.All(tariffVersions, tv => Assert.Null(tv.CreatedAt));
+        Assert.All(tariffVersions, tv => Assert.False(string.IsNullOrWhiteSpace(tv.CreatedBy) || tv.CreatedBy == "—"));
     }
 
     private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider

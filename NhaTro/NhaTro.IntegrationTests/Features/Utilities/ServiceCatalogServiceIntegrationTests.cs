@@ -6,6 +6,7 @@ using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms;
+using Web.Features.Rooms.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
@@ -775,7 +776,7 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         var created = await service.CreateOrUpdateServicePriceAsync(request, caller);
         Assert.Equal(new DateOnly(2026, 3, 31), Assert.Single(created.PriceHistory).EffectiveTo);
 
-        var update = UpdateRequest("Gửi xe", "xe", "fixed-monthly", 90_000m, new DateOnly(2026, 6, 1));
+        var update = UpdateRequest("Gửi xe", "xe", "fixed-monthly", 90_000m, new DateOnly(2026, 4, 1));
         update.EffectiveTo = new DateOnly(2026, 8, 31);
         await service.CreateOrUpdateServicePriceAsync(created.Id, update, caller);
 
@@ -786,7 +787,7 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
             .ToListAsync();
 
         Assert.Equal(2, versions.Count);
-        // The earlier explicit end date (03-31) must not be extended to 05-31 by the later version.
+        // The earlier explicit end date (03-31) must stay 03-31 (the later version starts contiguously on 04-01).
         Assert.Equal(new DateOnly(2026, 3, 31), versions[0].EffectiveTo);
         Assert.Equal(new DateOnly(2026, 8, 31), versions[1].EffectiveTo);
     }
@@ -808,6 +809,11 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         var request = CreateRequest(prop.Id, "Vệ sinh", "phòng", "fixed-monthly", 30_000m, new DateOnly(2026, 1, 1));
         request.EffectiveTo = new DateOnly(2026, 12, 31);
         var created = await service.CreateOrUpdateServicePriceAsync(request, caller);
+
+        var tooSoon = UpdateRequest("Vệ sinh", "phòng", "fixed-monthly", 35_000m, new DateOnly(2026, 1, 2));
+        var tooSoonError = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.CreateOrUpdateServicePriceAsync(created.Id, tooSoon, caller));
+        Assert.Equal("ErrorPriceVersionTooShort", tooSoonError.Data[ServiceCatalogErrorKeys.ResourceKey]);
 
         await service.CreateOrUpdateServicePriceAsync(
             created.Id,
@@ -1016,4 +1022,161 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
     {
         public override DateTimeOffset GetUtcNow() => utcNow;
     }
+
+    [SqlServerFact]
+    public async Task CreateServiceCatalog_WithDescription_PersistsAndReadsBackFromSql()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Description Test", OwnerId = OwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var caller = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+
+        var request = CreateRequest(prop.Id, "Internet Cáp Quang VIP", "phòng", "fixed-monthly", 150_000m, new DateOnly(2026, 1, 1), note: "Note v1");
+        request.Description = "Mô tả gói internet 100Mbps dùng chung cả phòng";
+
+        var created = await service.CreateOrUpdateServicePriceAsync(request, caller);
+        Assert.Equal("Mô tả gói internet 100Mbps dùng chung cả phòng", created.Description);
+
+        await using var verifyDb = fixture.CreateContext();
+        var entity = await verifyDb.ServiceCatalogs.SingleAsync(c => c.Id == created.Id);
+        Assert.Equal("Mô tả gói internet 100Mbps dùng chung cả phòng", entity.Description);
+    }
+
+    [SqlServerFact]
+    public async Task CreateServiceCatalog_WhitespaceDescription_NormalizesToNull()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Whitespace Desc", OwnerId = OwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var caller = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+
+        var request = CreateRequest(prop.Id, "Dịch vụ Gym", "người", "fixed-monthly", 50_000m, new DateOnly(2026, 1, 1));
+        request.Description = "   ";
+
+        var created = await service.CreateOrUpdateServicePriceAsync(request, caller);
+        Assert.Null(created.Description);
+
+        await using var verifyDb = fixture.CreateContext();
+        var entity = await verifyDb.ServiceCatalogs.SingleAsync(c => c.Id == created.Id);
+        Assert.Null(entity.Description);
+    }
+
+    [SqlServerFact]
+    public async Task CreateServiceCatalog_RejectsEffectiveToEqualOrBeforeEffectiveDate()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà TF12 Test", OwnerId = OwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var caller = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+
+        // Same day: EffectiveTo == EffectiveDate -> REJECTED
+        var reqSame = CreateRequest(prop.Id, "Internet Same Day", "phòng", "fixed-monthly", 100_000m, new DateOnly(2026, 5, 1));
+        reqSame.EffectiveTo = new DateOnly(2026, 5, 1);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(reqSame, caller));
+
+        // Before day: EffectiveTo < EffectiveDate -> REJECTED
+        var reqBefore = CreateRequest(prop.Id, "Internet Before Day", "phòng", "fixed-monthly", 100_000m, new DateOnly(2026, 5, 1));
+        reqBefore.EffectiveTo = new DateOnly(2026, 4, 30);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateOrUpdateServicePriceAsync(reqBefore, caller));
+
+        // After day: EffectiveTo > EffectiveDate -> ACCEPTED
+        var reqAfter = CreateRequest(prop.Id, "Internet After Day", "phòng", "fixed-monthly", 100_000m, new DateOnly(2026, 5, 1));
+        reqAfter.EffectiveTo = new DateOnly(2026, 5, 2);
+        var created = await service.CreateOrUpdateServicePriceAsync(reqAfter, caller);
+        Assert.Equal(new DateOnly(2026, 5, 2), created.EffectiveTo);
+    }
+
+    [SqlServerFact]
+    public async Task GetServiceCatalogsAsync_TF13_OwnerSeesInactive_ManagerAndTenantOnlySeeActive()
+    {
+        await fixture.ResetAsync();
+        var now = new DateTime(2026, 11, 2, 12, 0, 0, DateTimeKind.Utc);
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, ManagerId, Roles.QuanLy);
+        await SqlServerFixture.SeedAccountAsync(db, TenantId, Roles.KhachThue);
+
+        var prop = new Property { Name = "Nhà TF13 Test", OwnerId = OwnerId, IsActive = true, CreatedAt = now };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = prop.Id,
+            ManagerUserId = ManagerId,
+            AssignedByUserId = OwnerId,
+            AssignedAt = now,
+        });
+
+        var room = new Room { PropertyId = prop.Id, Code = "R1", StandardPrice = 3000000m, CreatedAt = now };
+        db.Rooms.Add(room);
+        await db.SaveChangesAsync();
+
+        var tenant = new Tenant { UserId = TenantId, FullName = "Tenant 1", CitizenId = "0123456789", Phone = "0900000000", CreatedAt = now, IsActive = true };
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        var contract = new Contract
+        {
+            RoomId = room.Id,
+            ContractNumber = "HD-TF13",
+            StartDate = now.AddMonths(-1),
+            EndDate = now.AddMonths(5),
+            SnapshotPrice = 3000000m,
+            DepositAmount = 3000000m,
+            Status = ContractStatus.Approved,
+        };
+        db.Contracts.Add(contract);
+        await db.SaveChangesAsync();
+        db.ContractMembers.Add(new ContractMember { ContractId = contract.ContractId, TenantId = tenant.Id });
+        await db.SaveChangesAsync();
+
+        var callerOwner = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+
+        // Catalog 1: Active
+        var activeCatalog = await service.CreateOrUpdateServicePriceAsync(
+            CreateRequest(prop.Id, "Dịch vụ Đang Chạy", "phòng", "fixed-monthly", 50_000m, new DateOnly(2026, 1, 1)), callerOwner);
+
+        // Catalog 2: Inactive
+        var inactiveCatalog = await service.CreateOrUpdateServicePriceAsync(
+            CreateRequest(prop.Id, "Dịch vụ Tạm Dừng", "phòng", "fixed-monthly", 60_000m, new DateOnly(2026, 1, 1)), callerOwner);
+        await service.ToggleServiceCatalogStatusAsync(inactiveCatalog.Id, callerOwner);
+
+        // 1. Owner sees both Active and Inactive
+        var ownerCatalogs = await service.GetServiceCatalogsAsync(callerOwner);
+        Assert.Contains(ownerCatalogs, c => c.Id == activeCatalog.Id && c.IsActive);
+        Assert.Contains(ownerCatalogs, c => c.Id == inactiveCatalog.Id && !c.IsActive);
+
+        // 2. Manager only sees Active
+        var callerManager = new PropertyCaller(ManagerId, Roles.QuanLy);
+        var managerCatalogs = await service.GetServiceCatalogsAsync(callerManager);
+        Assert.Contains(managerCatalogs, c => c.Id == activeCatalog.Id);
+        Assert.DoesNotContain(managerCatalogs, c => c.Id == inactiveCatalog.Id);
+
+        // 3. Tenant only sees Active
+        var callerTenant = new PropertyCaller(TenantId, Roles.KhachThue);
+        var tenantCatalogs = await service.GetServiceCatalogsAsync(callerTenant);
+        Assert.Contains(tenantCatalogs, c => c.Id == activeCatalog.Id);
+        Assert.DoesNotContain(tenantCatalogs, c => c.Id == inactiveCatalog.Id);
+    }
+
 }

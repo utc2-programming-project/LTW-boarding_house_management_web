@@ -11,11 +11,11 @@ public sealed class ServicePriceHistoryConfiguration : IEntityTypeConfiguration<
     {
         builder.ToTable("ServicePriceHistory", table =>
         {
-            table.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_NonNegative", "[UnitPrice] >= 0");
+            table.HasCheckConstraint("CK_ServicePriceHistory_UnitPrice_Positive", "[UnitPrice] > 0");
             table.HasCheckConstraint("CK_ServicePriceHistory_Name_NotBlank", "LEN(LTRIM(RTRIM([Name]))) > 0");
             table.HasCheckConstraint("CK_ServicePriceHistory_Unit_NotBlank", "LEN(LTRIM(RTRIM([Unit]))) > 0");
             table.HasCheckConstraint("CK_ServicePriceHistory_CalculationMethod_NotBlank", "LEN(LTRIM(RTRIM([CalculationMethod]))) > 0");
-            table.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_OnOrAfter_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] >= [EffectiveDate]");
+            table.HasCheckConstraint("CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate", "[EffectiveTo] IS NULL OR [EffectiveTo] > [EffectiveDate]");
         });
 
         builder.HasKey(version => version.Id);

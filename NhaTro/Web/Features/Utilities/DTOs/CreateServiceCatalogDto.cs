@@ -20,4 +20,5 @@ public sealed class CreateServiceCatalogDto
 
     /// <summary>Optional note for this initial price version.</summary>
     public string? Note { get; set; }
+    public string? Description { get; set; }
 }

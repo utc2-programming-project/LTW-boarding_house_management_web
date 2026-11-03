@@ -355,6 +355,13 @@
     color: var(--primary, #4F46E5);
 }
 
+.service-description {
+    flex-basis: 100%;
+    color: var(--text-secondary, #64748B);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 .readonly-badge {
     display: inline-flex;
     align-items: center;

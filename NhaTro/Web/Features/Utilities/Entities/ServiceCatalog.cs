@@ -13,6 +13,7 @@ public sealed class ServiceCatalog
 
     /// <summary>Indicates whether this service catalog is active for usage and new pricing.</summary>
     public bool IsActive { get; set; } = true;
+    public string? Description { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -234,6 +234,8 @@
   <data name="ErrorInvalidServiceUnit" xml:space="preserve"><value>Select a valid unit.</value></data>
   <data name="ErrorEffectiveFromIsRequired" xml:space="preserve"><value>Select an effective start date.</value></data>
   <data name="ErrorEffectiveToMustBeAfterEffectiveFrom" xml:space="preserve"><value>The effective end date must be after the start date.</value></data>
+  <data name="ErrorPriceVersionGap" xml:space="preserve"><value>The new price must start immediately after the current price ends.</value></data>
+  <data name="ErrorPriceVersionTooShort" xml:space="preserve"><value>The new price starts too soon; the current version must end after its start date.</value></data>
   <data name="ErrorInvalidBuildingScope" xml:space="preserve"><value>Select a valid property or building scope.</value></data>
   <data name="ErrorMeterReadingMustBeGreaterOrEqualStart" xml:space="preserve"><value>The end reading must be greater than or equal to the start reading.</value></data>
   <data name="ErrorMeterReadingCannotBeNegative" xml:space="preserve"><value>The end reading cannot be negative.</value></data>
@@ -251,9 +253,9 @@
   <data name="ToastPriceUpdatedSuccessSql" xml:space="preserve"><value>The service price was updated successfully and saved to the database.</value></data>
   <data name="SqlErrorBadge" xml:space="preserve"><value>SQL Error</value></data>
   <data name="SelectPropertyPrompt" xml:space="preserve"><value>-- Select a property --</value></data>
-  <data name="SqlLoadServicesError" xml:space="preserve"><value>Could not load service list from database: {0}</value></data>
-  <data name="SqlLoadPricesError" xml:space="preserve"><value>Could not load price history from database: {0}</value></data>
-  <data name="SqlLoadVersionsError" xml:space="preserve"><value>Could not load price versions: {0}</value></data>
+  <data name="SqlLoadServicesError" xml:space="preserve"><value>Could not load the service list from the database. Please try again.</value></data>
+  <data name="SqlLoadPricesError" xml:space="preserve"><value>Could not load price history from the database. Please try again.</value></data>
+  <data name="SqlLoadVersionsError" xml:space="preserve"><value>Could not load price versions. Please try again.</value></data>
   <data name="ToastServiceToggledSuccessSql" xml:space="preserve"><value>The service status was updated successfully and saved to the database.</value></data>
   <data name="ErrorOwnerOnlyService" xml:space="preserve"><value>Only the Owner can set up service catalogs and rates.</value></data>
   <data name="ErrorOwnerOnlyToggle" xml:space="preserve"><value>Only the Owner can activate or deactivate a service.</value></data>
@@ -276,4 +278,3 @@
   <data name="BuildingFallbackName" xml:space="preserve"><value>Property #{0}</value></data>
   <data name="AllBuildingsDescription" xml:space="preserve"><value>Entire system</value></data>
 </root>
-

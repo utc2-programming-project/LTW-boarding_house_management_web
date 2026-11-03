@@ -5,7 +5,7 @@
 @inject ServiceCatalogPageService PageService
 @inject ToastService Toast
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<ServicePricesView> Logger
 
 <PageTitle>@L["PricesPageTitle"]</PageTitle>
 
@@ -148,7 +148,7 @@
                                 <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
                                 <td class="text-slate-700 font-medium">@v.CreatedBy</td>
                                 <td class="tabular-nums text-slate-500 font-mono text-xs">
-                                    @(v.CreatedAt == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt))
+                                    @(!v.CreatedAt.HasValue || v.CreatedAt.Value == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt.Value))
                                 </td>
                                     <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? "—" : v.Note)</td>
                             </tr>
@@ -202,7 +202,6 @@
     <Authorized>
         <ServicePriceModal IsOpen="@_isPriceModalOpen"
                            Service="@_currentSelectedService"
-                           Buildings="@_visibleBuildings"
                            CanWrite="@_canWrite"
                            OnClose="() => _isPriceModalOpen = false"
                            OnSave="HandleSavePrice" />
@@ -214,9 +213,7 @@
     private List<PriceVersionDto> _filteredVersions = [];
     private string _selectedServiceId = string.Empty;
     private ServiceItemDto? _currentSelectedService;
-    private List<BuildingOptionDto> _visibleBuildings = [];
     private string _callerRole = string.Empty;
-    private string _callerEmail = string.Empty;
     private bool _isPriceModalOpen;
     private bool _isLoading = true;
     private bool _isSampleData = false;
@@ -237,8 +234,6 @@
         try
         {
             _callerRole = await PageService.GetCurrentRoleAsync();
-            _callerEmail = await PageService.GetCurrentEmailAsync();
-            _visibleBuildings = (await PageService.GetBuildingsForCallerAsync()).ToList();
             _services = (await PageService.GetServicesForCallerAsync()).ToList();
 
             if (!string.IsNullOrWhiteSpace(ServiceId) && _services.Any(service => service.Id == ServiceId))
@@ -258,7 +253,8 @@
         }
         catch (Exception ex)
         {
-            _loadError = L["SqlLoadPricesError", ex.Message];
+            Logger.LogError(ex, "Failed to load service price history page.");
+            _loadError = L["SqlLoadPricesError"];
             _services = [];
             _filteredVersions = [];
         }
@@ -275,7 +271,8 @@
         }
         catch (Exception ex)
         {
-            _loadError = L["SqlLoadVersionsError", ex.Message];
+            Logger.LogError(ex, "Failed to load service price versions.");
+            _loadError = L["SqlLoadVersionsError"];
             _filteredVersions = [];
         }
     }
