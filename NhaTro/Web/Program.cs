@@ -379,6 +379,9 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
 // VHT-53: lập/phát hành hóa đơn từ nguồn chi phí đã chốt, chống trùng kỳ.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
     Web.Features.Invoices.Services.InvoiceService>();
+// VHT-54: gửi/xác nhận/từ chối thanh toán, ghi tiền và audit trong một transaction.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
+    Web.Features.Invoices.Services.PaymentService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();

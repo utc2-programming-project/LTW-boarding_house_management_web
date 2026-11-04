@@ -9,8 +9,11 @@ using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
+using Web.Features.Invoices.Entities;
+using Web.Features.Invoices.Enums;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
+using Web.Features.Tenants.Entities;
 using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
 using Web.Features.Storage.Enums;
@@ -390,6 +393,89 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Empty(await service.ListAsync(RelatedEntityType.Room, roomA.ToString(), manager));
         Assert.False((await service.UploadAsync(NewRoomPhotoRequest(roomA), manager)).Succeeded);
     }
+
+    [SqlServerFact]
+    public async Task Minh_chung_thanh_toan_chi_thuoc_hoa_don_va_dung_pham_vi_khach()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "ql-1", Roles.QuanLy);
+        await SqlServerFixture.SeedAccountAsync(db, "khach-1", Roles.KhachThue);
+        await SqlServerFixture.SeedAccountAsync(db, "khach-2", Roles.KhachThue);
+
+        var tenant = new Tenant
+        {
+            FullName = "Khách thuê A",
+            Phone = "0901000001",
+            CitizenId = "079201000001",
+            UserId = "khach-1",
+        };
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        await SeedOwnerContractAsync(db, tenant.Id, "chu-tro-1");
+        var contract = await db.Contracts.SingleAsync();
+        var invoice = new Invoice
+        {
+            ContractId = contract.ContractId,
+            PeriodStart = new DateOnly(2026, 10, 1),
+            PeriodEnd = new DateOnly(2026, 10, 31),
+            Status = InvoiceStatus.Issued,
+            TotalAmount = 1_000_000m,
+            CreatedAt = DateTime.UtcNow,
+            IssuedAt = DateTime.UtcNow,
+        };
+        db.Invoices.Add(invoice);
+        await db.SaveChangesAsync();
+
+        var service = NewFileService(
+            new TestDbContextFactory(fixture),
+            new MemoryFileStorage(),
+            Options.Create(new StorageOptions { RootPath = "memory" }),
+            new TenantDocumentScopeService(db, new NoManagerTenantScope()),
+            new FileAccessAuditWriter(
+                new TestDbContextFactory(fixture), TimeProvider.System,
+                NullLogger<FileAccessAuditWriter>.Instance));
+
+        var tenantCaller = new StorageCaller("khach-1", Roles.KhachThue);
+        var otherTenant = new StorageCaller("khach-2", Roles.KhachThue);
+        var owner = new StorageCaller("chu-tro-1", Roles.ChuTro);
+        var manager = new StorageCaller("ql-1", Roles.QuanLy);
+
+        var upload = await service.UploadAsync(
+            NewPaymentProofRequest(invoice.Id), tenantCaller);
+        Assert.True(upload.Succeeded, upload.ErrorMessage);
+
+        // Minh chứng gắn với hóa đơn của khách khác thì không upload được.
+        var foreignUpload = await service.UploadAsync(
+            NewPaymentProofRequest(invoice.Id), otherTenant);
+        Assert.False(foreignUpload.Succeeded);
+        Assert.Equal(StorageErrorCodes.Forbidden, foreignUpload.ErrorCode);
+
+        // Chủ trọ/Quản lý chưa được phép nhập hộ minh chứng (deny-by-default).
+        Assert.False((await service.UploadAsync(NewPaymentProofRequest(invoice.Id), owner)).Succeeded);
+        Assert.False((await service.UploadAsync(NewPaymentProofRequest(invoice.Id), manager)).Succeeded);
+
+        await AssertDownloadedAsync(service, upload.File!.Id, tenantCaller);
+        await AssertDownloadedAsync(service, upload.File.Id, owner);
+        Assert.Null(await service.DownloadAsync(upload.File.Id, otherTenant));
+        Assert.Single(await service.ListAsync(
+            RelatedEntityType.Payment, invoice.Id.ToString(), tenantCaller));
+    }
+
+    private static UploadFileRequest NewPaymentProofRequest(int invoiceId) => new()
+    {
+        File = new FormFile(
+            new MemoryStream([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01]),
+            0,
+            12,
+            "file",
+            "minh-chung.jpg"),
+        FileCategory = FileCategory.PaymentProof,
+        RelatedEntityType = RelatedEntityType.Payment,
+        RelatedEntityId = invoiceId.ToString(),
+    };
 
     private static async Task<int> SeedRoomAsync(
         ApplicationDbContext db, string propertyName, string ownerId)

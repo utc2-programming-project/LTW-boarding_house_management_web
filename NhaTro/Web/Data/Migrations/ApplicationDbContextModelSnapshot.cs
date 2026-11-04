@@ -506,7 +506,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts", null, t =>
+                    b.ToTable("Contracts", t =>
                         {
                             t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
                         });
@@ -526,7 +526,7 @@ namespace Web.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("ContractMembers", (string)null);
+                    b.ToTable("ContractMembers");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
@@ -685,6 +685,146 @@ namespace Web.Migrations
 
                             t.HasCheckConstraint("CK_InvoiceItems_UnitPrice", "[UnitPrice] >= 0");
                         });
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("TransferredAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId", "Status")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Payments_InvoiceStatus")
+                        .HasFilter("[Status] IN (0, 1)");
+
+                    b.HasIndex("InvoiceId", "Status", "RequestedAt");
+
+                    b.ToTable("Payments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Payments_Amount", "[Amount] > 0");
+
+                            t.HasCheckConstraint("CK_Payments_RejectionReason", "([Status] <> 2 AND [RejectionReason] IS NULL) OR ([Status] = 2 AND [RejectionReason] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Payments_ReviewedAt", "([Status] = 0 AND [ReviewedAt] IS NULL) OR ([Status] <> 0 AND [ReviewedAt] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Payments_Status", "[Status] IN (0, 1, 2)");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.PaymentAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ActorRole")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ActorUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("FromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToStatus")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId", "OccurredAt");
+
+                    b.HasIndex("PaymentId", "OccurredAt");
+
+                    b.ToTable("PaymentAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.PaymentProof", b =>
+                {
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("PaymentId", "FileId");
+
+                    b.HasIndex("FileId")
+                        .IsUnique();
+
+                    b.ToTable("PaymentProofs", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
@@ -876,7 +1016,7 @@ namespace Web.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Properties", (string)null);
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.PropertyManager", b =>
@@ -924,7 +1064,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[RevokedAt] IS NULL");
 
-                    b.ToTable("PropertyManagers", (string)null);
+                    b.ToTable("PropertyManagers");
                 });
 
             modelBuilder.Entity("Web.Features.Rooms.Entities.Room", b =>
@@ -982,7 +1122,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Web.Features.Settings.Entities.ManagerToggle", b =>
@@ -1197,7 +1337,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId", "OccurredAt");
 
-                    b.ToTable("FileAccessAuditLogs", (string)null);
+                    b.ToTable("FileAccessAuditLogs");
                 });
 
             modelBuilder.Entity("Web.Features.Storage.Entities.StoredFile", b =>
@@ -1260,7 +1400,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("StoredFiles", (string)null);
+                    b.ToTable("StoredFiles");
                 });
 
             modelBuilder.Entity("Web.Features.Tenants.Entities.Tenant", b =>
@@ -1357,7 +1497,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
-                    b.ToTable("Tenants", (string)null);
+                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
@@ -1900,7 +2040,7 @@ namespace Web.Migrations
 
                             b1.HasKey("IdentityUserPasskeyCredentialId");
 
-                            b1.ToTable("AspNetUserPasskeys", (string)null);
+                            b1.ToTable("AspNetUserPasskeys");
 
                             b1
                                 .ToJson("Data")
@@ -2033,6 +2173,47 @@ namespace Web.Migrations
                         .IsRequired();
 
                     b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.Payment", b =>
+                {
+                    b.HasOne("Web.Features.Invoices.Entities.Invoice", "Invoice")
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.PaymentAuditLog", b =>
+                {
+                    b.HasOne("Web.Features.Invoices.Entities.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.PaymentProof", b =>
+                {
+                    b.HasOne("Web.Features.Storage.Entities.StoredFile", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Invoices.Entities.Payment", "Payment")
+                        .WithMany("Proofs")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("Web.Features.Maintenance.Entities.IncidentPhotoAttachment", b =>
@@ -2201,6 +2382,11 @@ namespace Web.Migrations
             modelBuilder.Entity("Web.Features.Invoices.Entities.Invoice", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Web.Features.Invoices.Entities.Payment", b =>
+                {
+                    b.Navigation("Proofs");
                 });
 
             modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncident", b =>

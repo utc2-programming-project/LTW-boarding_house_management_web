@@ -118,6 +118,10 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await using var db = CreateContext();
         // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
         await db.IncidentPhotoAttachments.ExecuteDeleteAsync();
+        // VHT-54: audit/proof/payment tham chiếu Payments, Invoices va StoredFiles bang Restrict.
+        await db.PaymentAuditLogs.ExecuteDeleteAsync();
+        await db.PaymentProofs.ExecuteDeleteAsync();
+        await db.Payments.ExecuteDeleteAsync();
         await db.StoredFiles.ExecuteDeleteAsync();
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
         await db.InvoiceItems.ExecuteDeleteAsync();
