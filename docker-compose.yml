@@ -1,0 +1,95 @@
+name: nhatro
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?dat MSSQL_SA_PASSWORD trong .env (copy tu .env.example)}
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -Q "SELECT 1" -o /dev/null;
+          else
+          /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -b -Q "SELECT 1" -o /dev/null;
+          fi
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 25s
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: NhaTro/Web/Dockerfile
+      target: migrate
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: >-
+        Server=db,1433;Database=${DB_NAME:-NhaTro_VHT130_2E};
+        User Id=sa;Password=${MSSQL_SA_PASSWORD:?thieu MSSQL_SA_PASSWORD};
+        Encrypt=True;TrustServerCertificate=True
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  db-grant:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        SQLCMD=/opt/mssql-tools18/bin/sqlcmd
+        [ -x "$$SQLCMD" ] || SQLCMD=/opt/mssql-tools/bin/sqlcmd
+        exec "$$SQLCMD" -S db -U sa -P "$$MSSQL_SA_PASSWORD" -C -b \
+          -i /sql/grant_app_login.sql \
+          -v APP_LOGIN="$$APP_LOGIN" APP_PASSWORD="$$APP_DB_PASSWORD" DB_NAME="$$DB_NAME"
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?thieu MSSQL_SA_PASSWORD}
+      APP_LOGIN: ${APP_LOGIN:-nhatro_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?dat APP_DB_PASSWORD trong .env}
+      DB_NAME: ${DB_NAME:-NhaTro_VHT130_2E}
+    volumes:
+      - ./deploy/sql/grant_app_login.sql:/sql/grant_app_login.sql:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  web:
+    build:
+      context: .
+      dockerfile: NhaTro/Web/Dockerfile
+      target: runtime
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: >-
+        Server=db,1433;Database=${DB_NAME:-NhaTro_VHT130_2E};
+        User Id=${APP_LOGIN:-nhatro_app};Password=${APP_DB_PASSWORD:?thieu APP_DB_PASSWORD};
+        Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True
+      Storage__RootPath: /app/storage
+      Security__DataProtectionKeysPath: /app/keys
+      Security__ProtectKeysWithDpapi: "false"
+      Logging__Directory: /app/logs
+    ports:
+      - "8080:8080"
+    volumes:
+      - storage:/app/storage
+      - keys:/app/keys
+      - logs:/app/logs
+    depends_on:
+      db-grant:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+  storage:
+  keys:
+  logs:

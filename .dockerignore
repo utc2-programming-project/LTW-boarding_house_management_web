@@ -1,0 +1,14 @@
+.git/
+.gitignore
+.env
+*.env
+.vs/
+.idea/
+outputs/
+**/bin/
+**/obj/
+**/TestResults/
+**/*.user
+docs/
+README.md
+scripts/

@@ -22,11 +22,12 @@
 5. [Cấu hình và secrets](#cấu-hình-và-secrets)
 6. [Cơ sở dữ liệu](#cơ-sở-dữ-liệu)
 7. [Chạy ứng dụng](#chạy-ứng-dụng)
-8. [Kiểm thử và CI](#kiểm-thử-và-ci)
-9. [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-10. [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
-11. [Tài liệu và quy tắc làm việc](#tài-liệu-và-quy-tắc-làm-việc)
-12. [Xác nhận setup](#xác-nhận-setup)
+8. [Chạy bằng Docker](#chạy-bằng-docker)
+9. [Kiểm thử và CI](#kiểm-thử-và-ci)
+10. [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+11. [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
+12. [Tài liệu và quy tắc làm việc](#tài-liệu-và-quy-tắc-làm-việc)
+13. [Xác nhận setup](#xác-nhận-setup)
 
 ### Hiện trạng
 
@@ -169,6 +170,33 @@ Trong Visual Studio, chọn profile `https` rồi nhấn F5 hoặc Ctrl+F5.
 3. Đăng nhập tại `/Account/Login`.
 
 Hệ thống đang bật `RequireConfirmedAccount`, nên bỏ qua bước 2 sẽ không đăng nhập được. Tài khoản này chưa có vai trò vì phân quyền chưa được triển khai.
+
+### Chạy bằng Docker
+
+Không cần cài SQL Server, .NET SDK hay IIS; máy nào có Docker cũng chạy giống nhau:
+
+```bash
+cp .env.example .env        # đổi mật khẩu trong .env (file này không commit)
+docker compose up --build   # tạo DB + áp migration + chạy web
+```
+
+| Mục | Giá trị |
+| --- | --- |
+| Web | http://localhost:8080 |
+| SQL Server | container `mcr.microsoft.com/mssql/server:2022-latest`, dữ liệu ở volume `sqldata` |
+| Tài khoản mẫu (chỉ Development) | `admin@nhatro.local` / `DevAdmin!234`; `chutro@`, `quanly@`, `khachthue@nhatro.local` / `DevAccounts!234` |
+
+```bash
+docker compose logs -f web        # xem log web
+docker compose down               # dừng, giữ nguyên dữ liệu
+docker compose down -v            # dừng và xoá sạch dữ liệu
+docker compose run --rm migrate   # áp migration mới sau khi pull code
+```
+
+- Migration chạy bằng service `migrate` với login `sa`; web chạy bằng login `nhatro_app` chỉ có `db_datareader`/`db_datawriter`, ghi `__EFMigrationsHistory` bị `DENY`.
+- Image web là Linux nên `Security__ProtectKeysWithDpapi` phải là `false` (compose đã đặt); khoá bảo vệ và file tải lên nằm trong volume `keys`/`storage`/`logs`.
+- Lần đầu build khá lâu; container SQL cần khoảng 2 GB RAM. Máy Apple Silicon cần thêm `platform: linux/amd64` cho service `db`.
+- Đây là môi trường dev/demo: HTTP không TLS, mật khẩu nằm trong `.env`.
 
 ### Kiểm thử và CI
 
@@ -321,9 +349,10 @@ Ai chạy xong từ bản clone sạch thì ghi tên và ngày vào PR hoặc nh
 5. [Configuration and secrets](#configuration-and-secrets)
 6. [Database](#database)
 7. [Run](#run)
-8. [Tests and CI](#tests-and-ci)
-9. [Troubleshooting](#troubleshooting)
-10. [Setup checklist](#setup-checklist)
+8. [Run with Docker](#run-with-docker)
+9. [Tests and CI](#tests-and-ci)
+10. [Troubleshooting](#troubleshooting)
+11. [Setup checklist](#setup-checklist)
 
 ### Status
 
@@ -454,6 +483,33 @@ In Visual Studio, select the `https` profile and press F5 or Ctrl+F5. **Logs** g
 3. Sign in at `/Account/Login`.
 
 `RequireConfirmedAccount` is enabled, so skipping step 2 prevents sign-in. The account has no role because authorization is not implemented yet.
+
+### Run with Docker
+
+No SQL Server, .NET SDK or IIS needed; every machine runs the same stack:
+
+```bash
+cp .env.example .env        # change the passwords (this file is not committed)
+docker compose up --build   # creates the DB, applies migrations, starts the web app
+```
+
+| Item | Value |
+| --- | --- |
+| Web | http://localhost:8080 |
+| SQL Server | `mcr.microsoft.com/mssql/server:2022-latest` container, data in volume `sqldata` |
+| Sample accounts (Development only) | `admin@nhatro.local` / `DevAdmin!234`; `chutro@`, `quanly@`, `khachthue@nhatro.local` / `DevAccounts!234` |
+
+```bash
+docker compose logs -f web        # follow web logs
+docker compose down               # stop, keep the data
+docker compose down -v            # stop and delete all data
+docker compose run --rm migrate   # apply new migrations after pulling code
+```
+
+- Migrations run in the `migrate` service as `sa`; the web app connects as `nhatro_app` with `db_datareader`/`db_datawriter` only, and writes to `__EFMigrationsHistory` are `DENY`ed.
+- The web image is Linux, so `Security__ProtectKeysWithDpapi` must be `false` (already set in compose); keys and uploads live in the `keys`/`storage`/`logs` volumes.
+- The first build takes a while; the SQL container needs about 2 GB RAM. On Apple Silicon add `platform: linux/amd64` to the `db` service.
+- This is a dev/demo setup: plain HTTP, passwords in `.env`.
 
 ### Tests and CI
 
