@@ -1459,6 +1459,8 @@
   <data name="InvalidPasswordResetText" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ.</value></data>
   <data name="InvalidUserTitle" xml:space="preserve"><value>Tài khoản không hợp lệ</value></data>
   <data name="UsernamePlaceholder" xml:space="preserve"><value>Chọn tên người dùng.</value></data>
+  <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Đăng nhập bằng tài khoản {0} của bạn</value></data>
+  <data name="NoExternalAuthServices" xml:space="preserve"><value>Không có dịch vụ xác thực ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">bài viết</a> về thiết lập ứng dụng ASP.NET hỗ trợ đăng nhập qua dịch vụ ngoài.</value></data>
   <data name="ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
   <data name="DepositPaidDateLabel" xml:space="preserve"><value>Ngày đóng cọc</value></data>
   <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>

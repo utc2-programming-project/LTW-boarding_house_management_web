@@ -68,7 +68,7 @@
                                    class="input tabular-nums @(_rateError.HasValue ? "invalid" : "")"
                                    @bind="_rate"
                                    @bind:after="ValidateRate"
-                                   placeholder="50000" />
+                                   placeholder="" />
                             <span class="input-affix">₫</span>
                         </div>
                         @if (_rateError.HasValue)

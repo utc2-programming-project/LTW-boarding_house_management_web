@@ -278,7 +278,7 @@
                         {
                             @foreach (var doc in FilteredDocuments)
                             {
-                                <tr @onclick="() => OpenPreviewModal(doc)">
+                                <tr @onclick="() => OpenPreviewModal(doc)" @onkeydown="@((KeyboardEventArgs e) => HandleDocumentRowKeyDown(e, doc))" tabindex="0" role="button" aria-label="@L["DocumentPreview"]">
                                     <!-- Column 1: Document Type Badge -->
                                     <td data-label="@L["DocumentType"]">
                                         <span class="doc-type-pill @GetCategoryPillClass(doc.Description)">
@@ -632,6 +632,17 @@
         {
             _exporting = false;
         }
+    }
+
+    private Task HandleDocumentRowKeyDown(KeyboardEventArgs e, TenantDocumentMetadataDto doc)
+    {
+        // Hàng bảng mở preview: hỗ trợ Enter / Space như một nút bấm.
+        if (e.Key is "Enter" or " " or "Spacebar")
+        {
+            OpenPreviewModal(doc);
+        }
+
+        return Task.CompletedTask;
     }
 
     private IReadOnlyList<TenantDocumentMetadataDto> FilteredDocuments
