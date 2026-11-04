@@ -692,6 +692,19 @@ AdminSeed__Password=<mật khẩu mạnh, đặt tạm>
 Lưu ý về ``AdminSeed__*``: Production không tự tạo admin. Đặt hai biến này trước lần khởi động đầu,
 đăng nhập kiểm tra user thuộc role ``Admin``, rồi gỡ hai biến đi. Mật khẩu không nằm trong artifact này.
 
+## Nếu IIS không nằm trên máy đã tạo database này
+
+Database và login ``$LoginName`` vừa tạo chỉ có hiệu lực trên máy ``$($Info.ServerName)``, vì ``IIS APPPOOL\...``
+là tài khoản ảo cục bộ của Windows, mỗi máy sinh một danh tính khác nhau.
+
+- **IIS cùng máy với SQL**: dùng nguyên chuỗi kết nối ở trên.
+- **IIS ở máy khác, SQL cài cùng máy IIS**: tạo app pool ``$AppPoolName`` trên máy IIS trước, chép thư mục
+  evidence sang đó, rồi chạy ``chuan_bi_db_vht130.ps1 -Mode Apply -Server "." -Database $Database``
+  **trên máy IIS** để tạo DB + login đúng máy đó.
+- **SQL để ở máy này, IIS ở máy khác**: phải đổi cách xác thực — tạo SQL login kèm mật khẩu (hoặc tài khoản
+  domain), mở TCP 1433 + firewall, bỏ ``Trusted_Connection=True`` và thay ``Server=.`` bằng tên máy/instance
+  truy cập được. Trường hợp này nằm ngoài phạm vi script hiện tại.
+
 ## Điều kiện trước khi Apply (nếu chưa chạy)
 
 1. SQL Server đã cài, instance ``$Server`` truy cập được, tài khoản chạy script có quyền tạo DB + login.
