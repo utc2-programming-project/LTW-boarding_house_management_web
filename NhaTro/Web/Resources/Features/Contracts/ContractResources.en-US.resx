@@ -184,5 +184,7 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
+  <data name="ContractUnsavedChanges" xml:space="preserve"><value>This form has unsaved changes.</value></data>
+  <data name="ContractConfirmLeave" xml:space="preserve"><value>Leave the form and discard unsaved changes?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Loading.</value></data>
 </root>
