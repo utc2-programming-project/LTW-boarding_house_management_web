@@ -55,6 +55,33 @@ Trong Explorer → Security → Advanced, tạo/kiểm ACL cho từng đường 
 3. Identity app không được ghi vào bản publish. Tệp upload không được đặt trong site; thử URL trực tiếp tới tệp phải không tải được.
 4. Kiểm không có tài khoản app khác được đọc keys/private storage. Không thay ACL đệ quy trên ổ đĩa hoặc thư mục dùng chung.
 
+### Script cấp và kiểm quyền thư mục
+
+`scripts/database/cap_quyen_thu_muc_iis.ps1` làm bốn bước trên trên máy chủ. Mặc định ba thư mục dữ liệu là `D:\App_Data\NhaTro\storage`, `...\keys`, `...\logs`; truyền tham số nếu server dùng đường dẫn khác.
+
+```powershell
+# 1. Chỉ đọc, không cần quyền admin: xem hiện trạng và các cảnh báo
+powershell -File scripts/database/cap_quyen_thu_muc_iis.ps1 -Mode Check `
+    -PublishPath "D:\Sites\NhaTro\releases\<SHA>"
+
+# 2. Xem trước thay đổi (không đổi ACL)
+powershell -File scripts/database/cap_quyen_thu_muc_iis.ps1 -Mode Apply -DryRun `
+    -PublishPath "D:\Sites\NhaTro\releases\<SHA>"
+
+# 3. Cấp quyền trong PowerShell quản trị; -CreateMissing tạo thư mục dữ liệu nếu chưa có
+powershell -File scripts/database/cap_quyen_thu_muc_iis.ps1 -Mode Apply -CreateMissing `
+    -PublishPath "D:\Sites\NhaTro\releases\<SHA>"
+
+# 4. Gỡ quyền rộng trên storage/keys/log (chỉ ba thư mục dữ liệu)
+powershell -File scripts/database/cap_quyen_thu_muc_iis.ps1 -Mode Apply -RemoveBroadRights `
+    -PublishPath "D:\Sites\NhaTro\releases\<SHA>"
+```
+
+- Publish: identity chỉ được `Read & Execute`. Script báo lỗi nếu identity hoặc nhóm rộng (Users/Authenticated Users) đang có quyền ghi vào publish.
+- Storage/keys/log: identity được `Modify`. `-RemoveBroadRights` bỏ toàn bộ ACE kế thừa rồi cấp lại Administrators (Full), SYSTEM (Full), identity app (Modify); chỉ dùng trên thư mục dữ liệu chuyên dụng đã xác minh.
+- Script chặn khi storage/keys/log nằm trong cây publish, vì tệp upload có thể tải trực tiếp qua URL.
+- Exit code: `0` đạt (có thể còn cảnh báo), `2` thiếu điều kiện (đường dẫn, quyền admin, app pool), `3` còn lỗi quyền, `4` không phân giải được identity, `5` icacls lỗi. Log ghi vào `outputs/iis-handoff/acl-<ts>.log` khi chạy trong repo.
+
 ### Keys qua lần phát hành
 
 `Security__ProtectKeysWithDpapi=true` mã hóa **keys mới** theo Windows user hiện tại. Giữ cùng máy, identity/profile, đường dẫn keys và application name `NhaTro.Web`. Không chuyển keys dev sang IIS và không xóa keys cũ để xử lý lỗi cookie. Các key cũ dạng plaintext không được tự mã hóa lại bởi tùy chọn này; nếu server đã có key ring cũ, Tính cần đánh giá và lập phương án chuyển đổi riêng, giữ khả năng đọc cookie hiện có.
