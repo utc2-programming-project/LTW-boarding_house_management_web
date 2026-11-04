@@ -1,0 +1,116 @@
+@using System.Security.Claims
+@using Web.Components.Shared.Feedback
+@using Web.Features.Approvals
+@using Web.Features.Approvals.DTOs
+@using Web.Features.Approvals.Enums
+@using Web.Features.Approvals.Services
+@inject AuthenticationStateProvider Auth
+@inject IManagerApprovalService Approvals
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@Title</PageTitle>
+<h1>@Title</h1>
+
+@if (_error)
+{
+    <p role="alert">@L["ApprovalUiError"]</p>
+}
+@if (_items is null && !_error)
+{
+    <p role="status">@L["ApprovalUiLoading"]</p>
+}
+else if (_items is { Count: 0 })
+{
+    <p>@L["ApprovalUiEmpty"]</p>
+}
+else if (_items is not null)
+{
+    @foreach (var item in _items)
+    {
+        <section @key="item.Id" class="card p-3 mb-3">
+            <h2>@item.OperationCode · @L[item.OperationCode]</h2>
+            <p>@L[$"ApprovalUiTarget{item.TargetType}"] @item.TargetKey</p>
+            <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
+                         Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
+            @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+            {
+                <p>@L["ApprovalUiReason"] · @item.DecisionReason</p>
+            }
+            @if (!Mine)
+            {
+                <div class="mt-2">
+                    <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
+                    @if (_rejecting == item.Id)
+                    {
+                        <label for="approval-reason">@L["ApprovalUiReason"]</label>
+                        <textarea id="approval-reason" maxlength="@RejectApprovalRequest.MaxReasonLength"
+                                  @bind="_reason" @bind:event="oninput" disabled="@_busy"></textarea>
+                        <button class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reason))"
+                                @onclick="() => DecideAsync(item.Id, _reason.Trim())">@L["ApprovalUiReject"]</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-secondary" disabled="@_busy" @onclick="() => StartReject(item.Id)">@L["ApprovalUiReject"]</button>
+                    }
+                </div>
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter] public bool Mine { get; set; }
+
+    private string Title => L[Mine ? "MyRequests" : "Approvals"];
+    private ApprovalCaller _caller = default!;
+    private IReadOnlyList<ApprovalRequestDto>? _items;
+    private Guid? _rejecting;
+    private string _reason = "";
+    private bool _error;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await Auth.GetAuthenticationStateAsync()).User;
+        var role = Mine ? "QuanLy" : "ChuTro";
+        _caller = new(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", user.IsInRole(role) ? role : "");
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var result = Mine ? await Approvals.ListMineAsync(_caller) : await Approvals.ListInboxAsync(_caller);
+        _error = !result.Succeeded;
+        _items = result.Succeeded ? result.Items : null;
+    }
+
+    private void StartReject(Guid id)
+    {
+        _rejecting = id;
+        _reason = "";
+    }
+
+    private async Task DecideAsync(Guid id, string? reason)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        try
+        {
+            var result = reason is null
+                ? await Approvals.ApproveAsync(id, _caller)
+                : await Approvals.RejectAsync(id, new() { Reason = reason }, _caller);
+
+            if (result.Succeeded)
+                _rejecting = null;
+
+            await LoadAsync();
+            _error |= !result.Succeeded;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

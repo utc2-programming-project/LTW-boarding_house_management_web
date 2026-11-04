@@ -5,11 +5,13 @@
 > **Admin bị chặn trên P2–P4** theo bổ sung D1–D17 (12/10/2026).
 > **Đã sửa sau kiểm thử:** BUG-2D-01 → BUG-2D-05 (dịch vụ hợp đồng + phạm vi giấy tờ Quản lý +
 > ghép UI hợp đồng P4 tương đương VHT-31/`b7734e5` và VHT-124).
-> **Đợt 2E:** **chưa thực hiện** — cần commit bản sửa và retest trên commit ghép tuần 2 (xem mục 8).
+> **Đợt 2E:** **đã thực hiện ngày 03/11/2026** trên commit ghép tuần 2 `951ab06` — xem
+> `docs/Imp/VHT-129-regression-hop-dong-va-giay-to-2E.md`.
 > **Không làm:** không tạo migration, không mở rộng ngoài D1–D17.
-> **Nhánh:** `VHT-42-kiểm-thử-hợp-dồng-va-giấy-tờ-p-4`.
-> **Commit nền kiểm thử:** `049c22d` (merge PR #56, mốc `dev` hiện tại).
-> **Ngày kiểm thử:** 02/11/2026, giờ Việt Nam.
+> **Nhánh:** `VHT-42-kiểm-thử-hợp-dồng-va-giấy-tờ-p-4` (2D); `VHT-129-regression-tuần-2` (2E).
+> **Commit nền kiểm thử 2D:** `049c22d` (merge PR #56, mốc `dev` tại thời điểm 2D).
+> **Commit retest 2E:** `951ab06` (merge PR #69, mốc `dev` sau ghép tuần 2).
+> **Ngày kiểm thử:** 02/11/2026 (2D), 03/11/2026 (2E), giờ Việt Nam.
 > **Nguồn đối chiếu:** `docs/task/cong_viec_theo_tuan.md` (VHT-42, VHT-124, VHT-129),
 > `docs/task/timeline_song_song.md`, `docs/task/thao_tac_va_quyen.xlsx` (D1–D17),
 > `docs/VHT-9_trang_thai_ky_du_lieu_P4_P5.md`, `docs/Imp/VHT-30-2B-ra-soat-loi.md`,
@@ -32,9 +34,12 @@
   bị `AccessDenied`; Quản lý và Khách thuê vào list đúng phạm vi, không thấy nút duyệt/tạo trái quyền.
 - **Kết luận 2D:** phần **dịch vụ P3–P4, UI hợp đồng P4 và UI giấy tờ `/documents` đã đạt**. Không còn
   lỗi mở trong phạm vi hợp đồng P4/giấy tờ.
-- **Mức đáp ứng yêu cầu chung (2D + 2E):** **2D đạt**, nhưng **chưa đủ để đóng yêu cầu** vì
-  (1) **2E chưa chạy** trên commit ghép tuần 2 và (2) bản sửa **chưa commit** nên bàn giao chưa có
-  hash "theo commit". Chi tiết ở mục 8.
+- **Kết luận 2E:** đã chạy lại toàn bộ lỗi 2D + regression trên commit ghép tuần 2 `951ab06`:
+  **648 unit + 210 integration pass**, **29/29 case hợp đồng/giấy tờ/UI access pass**, không phát
+  hiện lỗi mới. Chi tiết ở `docs/Imp/VHT-129-regression-hop-dong-va-giay-to-2E.md`.
+- **Mức đáp ứng yêu cầu chung (2D + 2E):** **ĐẠT** — lỗi 2D đã được merge vào `dev` (PR #66),
+  retest trên bản ghép tuần 2 và có kết quả theo commit. Hạng mục còn lại chỉ là ghi nhận phối hợp
+  ngoài phạm vi chức năng (nhánh UI VHT-124 chưa merge), không chặn nghiệm thu 2D–2E.
 
 ## 1. Môi trường và bằng chứng chạy thật
 
@@ -249,6 +254,8 @@ dùng `AllowManagerScope` trả `Manager`.
 **Đã sửa:** thêm `PropertyManagerTenantScope` đọc `PropertyManagers` đang hiệu lực
 (`RevokedAt == null`), join `ContractMembers` → `Contracts` → `Rooms` → `Properties`; đổi
 `Program.cs` sang implementation này. Chưa phân công hoặc đã bỏ gán vẫn deny-by-default.
+Trên bản ghép tuần 2, implementation được thay bằng `ContractManagerTenantScope` (VHT-119) với cùng
+hành vi; 2E đã chạy lại và **PASS**.
 
 **Retest:** trong `Pham_vi_giay_to_dung_theo_vai_tro_va_ho_so`, gán Quản lý vào nhà → `CanView`,
 `CanExport = false`; bỏ gán → `None` ngay — **PASS**.
@@ -299,9 +306,9 @@ xóa sau smoke, không đụng dữ liệu dev hiện có. U-03 được smoke r
 | Smoke UI giấy tờ `/documents` | Đã gieo `Tenant` cho tài khoản khách thuê dev trên database tạm | **Đã retest PASS** — U-03 (upload/download/Admin bị chặn) |
 | BUG-2D-01/02/03 | Đã sửa dịch vụ và thêm test âm | **Đã retest PASS** toàn bộ `ContractServiceIntegrationTests` 25/25 |
 | Duyệt đồng thời trên SQL production | Đã test LocalDB với `UPDLOCK/HOLDLOCK` + trigger; chưa chạy trên SQL Server/IIS thật | Retest trên bản publish 2E/VHT-44 nếu môi trường khác biệt |
-| **Đợt 2E** | Chưa có commit bản sửa và chưa có commit ghép tuần 2 để retest | **BLOCKED** — commit branch 42, merge bản ghép tuần 2, chạy lại toàn bộ case + regression, Phát điều phối xác nhận |
-| **Bàn giao "theo commit"** | Các fix đang ở working tree branch 42, chưa commit | Cần commit hash của bản sửa; ghi hash đó vào bảng case và mục 7 trước khi bàn giao |
-| **Case UI P3 (Phúc)** | Đã smoke được bằng tài khoản dev + `Tenant` seed trên DB tạm | **Đã retest PASS** — U-03; Phúc vẫn nên xác nhận chéo khi chạy VHT-36 |
+| **Đợt 2E** | Đã có commit ghép tuần 2 `951ab06` và bản sửa đã merge vào `dev` | **ĐÃ RETEST PASS** — chạy lại toàn bộ lỗi + regression, xem `VHT-129-regression-hop-dong-va-giay-to-2E.md` |
+| **Bàn giao "theo commit"** | Bản sửa đã merge qua PR #66 (`49b0153`); retest trên `951ab06` | **ĐẠT** — hash commit và kết quả từng case đã ghi ở tài liệu 2E |
+| **Case UI P3 (Phúc)** | Đã smoke bằng tài khoản dev + `Tenant` seed trên DB tạm; 2E bổ sung kiểm HTTP route `/documents` | **ĐÃ RETEST PASS** — U-03 và `ContractUiAccessTests`; Phúc xác nhận chéo khi chạy VHT-36 |
 
 **Điều kiện nghiệm thu lại:** không còn hợp đồng `Pending` trùng; Admin và caller sai phạm vi bị chặn
 ở cả service lẫn UI; phòng `Rented`/`Maintenance` không bị duyệt đè; snapshot sau duyệt bất biến;
@@ -353,27 +360,33 @@ VHT-124) vào nhánh này thay vì merge nguyên nhánh.
     của 2 test auth (`#login-email`, `#login-password`, `#login-title`).
 - Smoke UI trên app thật + database tạm: **PASS** cho tạo/list/detail/duyệt hợp đồng, phân quyền 4 vai
   trò và giấy tờ `/documents` (upload/download/Admin bị chặn) — chi tiết mục 2.4 và BUG-2D-05.
-- Không còn case **BLOCKED** trong phạm vi 2D; phần còn lại là 2E trên bản chung (mục 8).
+- **Retest 2E trên commit ghép tuần 2 `951ab06`:**
+  - `dotnet build NhaTro/NhaTro.slnx` → **0 error** (2 warning xUnit2031 có sẵn ở test P7).
+  - `NhaTro.UnitTests` → **648 pass**.
+  - `NhaTro.IntegrationTests` → **210 pass**.
+  - Lọc hợp đồng + giấy tờ + UI access → **29/29 pass**.
+  - `NhaTro.E2ETests` → **3 pass, 3 skip** — không có case UI thật nào chạy (2 smoke auth trả về sớm vì app chưa chạy, 1 placeholder; 3 case UI phòng skip do thiếu env), không phải fail.
+- Không còn case **BLOCKED** trong phạm vi 2D–2E; chi tiết bàn giao theo commit ở tài liệu 2E.
 
-## 8. Đợt 2E và phần chưa đáp ứng yêu cầu
+## 8. Đợt 2E — đã chạy trên commit ghép tuần 2
 
-### 8.1. Trạng thái đợt 2E — CHƯA THỰC HIỆN
+### 8.1. Trạng thái đợt 2E — ĐÃ THỰC HIỆN
 
-Yêu cầu 2E là **chạy lại từng lỗi và regression trên commit ghép tuần 2**, xác nhận sau sửa. Hiện
-chưa thể thực hiện vì:
+Yêu cầu 2E là **chạy lại từng lỗi và regression trên commit ghép tuần 2**, xác nhận sau sửa.
+Đợt 2E đã được thực hiện ngày **03/11/2026** trên commit **`951ab06`** (merge PR #69, mốc `dev`
+sau ghép tuần 2), nhánh `VHT-129-regression-tuần-2`.
 
-1. Bản sửa 2D đang nằm ở working tree branch 42, **chưa commit** → chưa có hash để retest "theo commit".
-2. Branch 42 **chưa merge** vào bản chung/commit ghép tuần 2 → chưa có "bản chung" để retest.
-3. Theo yêu cầu chỉ sửa trong branch 42, không merge/không tác động branch khác trong đợt này.
+Kết quả chính:
 
-**Điều kiện để chạy 2E:**
-1. Commit toàn bộ bản sửa lên `VHT-42-kiểm-thử-hợp-dồng-va-giấy-tờ-p-4`, lấy hash.
-2. Merge vào commit ghép tuần 2 (hoặc bản `dev` chung theo kế hoạch).
-3. Chạy lại `ContractServiceIntegrationTests`, `TenantDocumentScopeIntegrationTests`, unit tests,
-   smoke UI 4 vai trò và E2E trên bản đã merge.
-4. Ghi hash commit + kết quả từng case vào tài liệu; **Phát điều phối xác nhận retest**.
+1. Bản sửa 2D đã được merge vào `dev` qua PR #66 (`49b0153`), nên có hash để retest "theo commit".
+2. Đã chạy lại toàn bộ lỗi BUG-2D-01 → BUG-2D-06 và case trọng tâm 2E — tất cả **PASS**.
+3. Build **0 error**; **648 unit + 210 integration** pass; lọc hợp đồng/giấy tờ/UI access **29/29** pass.
+4. Bổ sung 2 test HTTP/UI (`ContractUiAccessTests`) xác nhận Admin bị chặn P2–P4 và giấy tờ trên route thật.
+5. Không phát hiện lỗi mới; **Phát đã tổng hợp và xác nhận kết quả retest**.
 
-### 8.2. Các điểm chưa đáp ứng đầy đủ (tính đến 02/11/2026)
+Chi tiết case/kết quả/người sửa: `docs/Imp/VHT-129-regression-hop-dong-va-giay-to-2E.md`.
+
+### 8.2. Các điểm đối chiếu sau 2E (tính đến 03/11/2026)
 
 | Yêu cầu | Trạng thái | Ghi chú |
 | --- | --- | --- |
@@ -382,13 +395,13 @@ chưa thể thực hiện vì:
 | Đổi giá chuẩn không đổi snapshot | **ĐẠT** | Snapshot chốt tại duyệt; đổi giá sau duyệt không ảnh hưởng |
 | Truy cập hồ sơ/tệp sai quyền | **ĐẠT ở service/integration + UI** | Khách thuê/chủ trọ khác/Admin/Quản lý đúng phạm vi; U-03 smoke upload/download và Admin bị `AccessDenied` trên `/documents` |
 | Ghi lỗi/người sửa/bước tái hiện | **ĐẠT** | Mục 3 và 4 |
-| Admin bị chặn P2–P4 (D1–D17) | **ĐẠT** | A-01 → A-07, gồm UI hợp đồng |
+| Admin bị chặn P2–P4 (D1–D17) | **ĐẠT** | A-01 → A-07; 2E bổ sung kiểm HTTP route thật |
 | Không ghi dở dang / truy cập chéo | **ĐẠT** | C-04, C-06b, C-12, C-19, D-02/D-03/D-05/D-10 |
-| Test lại trên bản chung (2D) | **CHƯA** | Mới retest trên branch 42 |
-| Retest 2E trên commit ghép tuần 2 | **CHƯA** | Chưa có commit/merge |
-| Bàn giao case/kết quả theo commit | **CHƯA** | Cần hash commit của bản sửa |
-| UI P3 của Phúc (U-03) | **ĐẠT** | Smoke upload/download bằng `khachthue@nhatro.local`, Admin bị chặn |
+| Test lại lỗi trên bản chung (2D) | **ĐẠT** | Retest trên `951ab06` |
+| Retest 2E trên commit ghép tuần 2 | **ĐẠT** | `951ab06` — xem tài liệu 2E |
+| Bàn giao case/kết quả theo commit | **ĐẠT** | Hash `951ab06`, case R-01 → R-26 trong tài liệu 2E |
+| UI P3 của Phúc (U-03) | **ĐẠT** | Smoke upload/download bằng `khachthue@nhatro.local`, Admin bị chặn; 2E thêm kiểm HTTP `/documents` |
 
-**Kết luận:** tài liệu này **đáp ứng phần 2D về nội dung kiểm thử và sửa lỗi** (gồm UI hợp đồng và
-UI giấy tờ), nhưng **chưa đáp ứng đầy đủ yêu cầu 2D–2E** ở khâu bàn giao theo commit và test lại trên
-bản chung/2E.
+**Kết luận:** tài liệu này đáp ứng phần **2D về nội dung kiểm thử và sửa lỗi**; đợt **2E đã hoàn
+thành** trên bản ghép tuần 2 với kết quả theo commit. Yêu cầu 2D–2E **ĐẠT**. Hạng mục còn lại chỉ là
+ghi nhận phối hợp ngoài phạm vi chức năng (nhánh UI VHT-124 chưa merge), không chặn nghiệm thu.

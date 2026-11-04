@@ -161,7 +161,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             BuildingName = newService.BuildingName,
             CreatedAt = _timeProvider.UtcNow(),
             CreatedBy = modifierName,
-            Note = request.Description,
+            Note = request.Note,
             IsSessionCreated = true,
         });
 
@@ -197,14 +197,30 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             return (false, UtilityErrorCode.ReadOnlyTariff, null);
         }
 
-        if (!IsValidScopeForService(service, request.BuildingScope))
+        var buildingScope = service.BuildingId;
+        if (string.IsNullOrWhiteSpace(buildingScope) ||
+            !UtilitySampleData.Buildings.Any(option => option.Id == buildingScope))
         {
             return (false, UtilityErrorCode.InvalidBuildingScope, null);
         }
 
         var sameScopeVersions = _priceVersions
-            .Where(version => version.ServiceId == request.ServiceId && version.BuildingScope == request.BuildingScope)
+            .Where(version => version.ServiceId == request.ServiceId && version.BuildingScope == buildingScope)
             .ToList();
+        var latestVersion = sameScopeVersions.OrderByDescending(version => version.EffectiveFrom).FirstOrDefault();
+        if (latestVersion is not null &&
+            request.EffectiveFrom.DayNumber - latestVersion.EffectiveFrom.DayNumber <= 1 &&
+            (!latestVersion.EffectiveTo.HasValue || latestVersion.EffectiveTo.Value >= request.EffectiveFrom))
+        {
+            return (false, UtilityErrorCode.PriceVersionConflict, null);
+        }
+
+        if (latestVersion?.EffectiveTo is { } latestEffectiveTo &&
+            latestEffectiveTo < request.EffectiveFrom.AddDays(-1))
+        {
+            return (false, UtilityErrorCode.PriceVersionConflict, null);
+        }
+
         var overlapsLaterVersion = sameScopeVersions.Any(version =>
             version.EffectiveFrom >= request.EffectiveFrom &&
             (!request.EffectiveTo.HasValue || version.EffectiveFrom <= request.EffectiveTo.Value));
@@ -222,7 +238,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
         }
 
         var buildingName = UtilitySampleData.Buildings
-            .First(option => option.Id == request.BuildingScope).Name;
+            .First(option => option.Id == buildingScope).Name;
         var newVersion = new PriceVersionDto
         {
             Id = $"pv-{request.ServiceId}-{_priceVersions.Count + 1}",
@@ -234,7 +250,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             EffectiveFrom = request.EffectiveFrom,
             EffectiveTo = request.EffectiveTo,
             Status = GetStatus(request.EffectiveFrom, request.EffectiveTo),
-            BuildingScope = request.BuildingScope,
+            BuildingScope = buildingScope,
             BuildingName = buildingName,
             CreatedAt = _timeProvider.UtcNow(),
             CreatedBy = modifierName,
@@ -244,7 +260,7 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
 
         _priceVersions.Insert(0, newVersion);
         service.HistoryCount = _priceVersions.Count(version => version.ServiceId == service.Id);
-        RefreshCurrentPrices(request.BuildingScope);
+        RefreshCurrentPrices(buildingScope);
         NotifyStateChanged();
         return (true, null, newVersion.Copy());
     }
@@ -360,11 +376,6 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
         NotifyStateChanged();
         return (true, null, room.Copy());
     }
-
-    private bool IsValidScopeForService(ServiceItemDto service, string buildingScope) =>
-        service.BuildingId == "all"
-            ? UtilitySampleData.Buildings.Any(building => building.Id == buildingScope)
-            : buildingScope == service.BuildingId;
 
     private PriceVersionStatus GetStatus(DateOnly start, DateOnly? end)
     {
