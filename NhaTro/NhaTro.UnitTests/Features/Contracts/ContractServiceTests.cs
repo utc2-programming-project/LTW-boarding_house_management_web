@@ -190,6 +190,68 @@ public sealed class ContractServiceTests
             OwnerCaller));
     }
 
+    [Fact]
+    public async Task RenewContractAsync_RejectsNullRequest()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.RenewContractAsync(
+            Guid.NewGuid(),
+            null!,
+            OwnerCaller));
+    }
+
+    [Fact]
+    public async Task RenewContractAsync_RejectsNullCaller()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.RenewContractAsync(
+            Guid.NewGuid(),
+            new RenewContractRequestDto { EndDate = new DateTime(2027, 12, 31) },
+            null!));
+    }
+
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.KhachThue)]
+    [InlineData("Unknown")]
+    public async Task RenewContractAsync_RejectsRolesOtherThanChuTroOrQuanLy(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() => service.RenewContractAsync(
+            Guid.NewGuid(),
+            new RenewContractRequestDto { EndDate = new DateTime(2027, 12, 31) },
+            new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
+    [Fact]
+    public async Task LiquidateContractAsync_RejectsNullCaller()
+    {
+        var service = CreateService();
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.LiquidateContractAsync(
+            Guid.NewGuid(),
+            null!));
+    }
+
+    [Theory]
+    [InlineData(Roles.Admin)]
+    [InlineData(Roles.KhachThue)]
+    [InlineData("Unknown")]
+    public async Task LiquidateContractAsync_RejectsRolesOtherThanChuTroOrQuanLy(string role)
+    {
+        var service = CreateService();
+
+        var exception = await Assert.ThrowsAsync<ContractAuthorizationException>(() =>
+            service.LiquidateContractAsync(Guid.NewGuid(), new PropertyCaller("caller-id", role)));
+
+        Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
+    }
+
     private static PropertyCaller OwnerCaller => new("owner-id", Roles.ChuTro);
 
     private static ContractService CreateService(TimeProvider? clock = null) => new(null!, clock);

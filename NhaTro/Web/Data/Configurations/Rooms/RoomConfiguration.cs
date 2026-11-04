@@ -12,6 +12,9 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
         builder.Property(r => r.StandardPrice).HasPrecision(18, 2);
         builder.Property(r => r.AreaM2).HasPrecision(10, 2);
 
+        // VHT-98: cùng độ dài khóa tài khoản để truy vết người xóa ở thùng rác phòng.
+        builder.Property(r => r.DeletedBy).HasMaxLength(450);
+
         builder.HasIndex(r => new { r.PropertyId, r.Code })
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");

@@ -20,15 +20,15 @@ public static class TenantDocumentEndpoints
     public static IEndpointRouteBuilder MapTenantDocumentEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/tenants/{tenantId:int}/documents")
-            .RequireAuthorization("Business")
-            // VHT-119: chung bucket IP với /api/files để endpoint giấy tờ không lách giới hạn upload.
-            .RequireRateLimiting(RateLimitPolicies.FileUpload);
+            .RequireAuthorization("Business");
 
+        // VHT-119: bucket IP chỉ giới hạn thao tác ghi (chung policy với /api/files) để không lách
+        // giới hạn upload. Đọc/danh sách/tải không được tính vào quota upload.
         group.MapGet("/", ListAsync);
         group.MapGet("/{fileId:guid}", DownloadAsync);
-        group.MapPost("/", UploadAsync).DisableAntiforgery();
-        group.MapPut("/{fileId:guid}", ReplaceAsync).DisableAntiforgery();
-        group.MapDelete("/{fileId:guid}", DeleteAsync).DisableAntiforgery();
+        group.MapPost("/", UploadAsync).DisableAntiforgery().RequireRateLimiting(RateLimitPolicies.FileUpload);
+        group.MapPut("/{fileId:guid}", ReplaceAsync).DisableAntiforgery().RequireRateLimiting(RateLimitPolicies.FileUpload);
+        group.MapDelete("/{fileId:guid}", DeleteAsync).DisableAntiforgery().RequireRateLimiting(RateLimitPolicies.FileUpload);
 
         return endpoints;
     }

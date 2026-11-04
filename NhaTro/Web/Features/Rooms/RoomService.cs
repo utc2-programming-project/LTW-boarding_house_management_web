@@ -211,17 +211,49 @@ public sealed class RoomService(
             return NotFound();
         }
 
-        // Không xóa phòng còn hợp đồng hiệu lực (VHT-98 nối kiểm tra thật).
+        // Không xóa phòng còn hợp đồng hiệu lực (VHT-98).
         if (await usageChecker.HasActiveContractAsync(id, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.RoomInUse, RoomErrorMessages.RoomInUse);
         }
 
         entity.IsDeleted = true;
+        entity.DeletedAt = clock.GetUtcNow().UtcDateTime;
+        entity.DeletedBy = caller.UserId;
         entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
 
         return RoomResult.Success();
+    }
+
+    public async Task<PagedResult<RoomTrashItem>> ListDeletedAsync(
+        RoomFilter filter, PropertyCaller caller, CancellationToken ct = default)
+    {
+        // Ma trận #16: thùng rác phòng chỉ Chủ trọ.
+        EnsureCanManage(caller);
+        filter.Normalize();
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var query = ApplyFilter(
+            ScopeRooms(db, caller, includeDeleted: true).Where(r => r.IsDeleted), filter);
+
+        var total = await query.CountAsync(ct);
+        var skip = (long)(filter.Page - 1) * filter.PageSize;
+        var rows = await query
+            .OrderByDescending(r => r.DeletedAt)
+            .ThenByDescending(r => r.Id)
+            .Skip((int)Math.Min(skip, int.MaxValue))
+            .Take(filter.PageSize)
+            .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
+            .ToListAsync(ct);
+
+        return new PagedResult<RoomTrashItem>
+        {
+            Items = rows.Select(x => RoomMapping.ToTrashItem(x.Room, x.PropertyName)).ToList(),
+            Page = filter.Page,
+            PageSize = filter.PageSize,
+            TotalCount = total,
+        };
     }
 
     public async Task<RoomResult> RestoreAsync(
@@ -245,6 +277,8 @@ public sealed class RoomService(
         }
 
         entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedBy = null;
         entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
 
         try

@@ -29,4 +29,15 @@ public interface IContractService
         ApproveContractRequestDto request,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
+
+    Task<ContractActionResultDto> RenewContractAsync(
+        Guid contractId,
+        RenewContractRequestDto request,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<ContractActionResultDto> LiquidateContractAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
 }

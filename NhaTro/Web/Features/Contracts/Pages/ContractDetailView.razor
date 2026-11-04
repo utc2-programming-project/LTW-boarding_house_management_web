@@ -35,16 +35,24 @@
             @if (!string.IsNullOrWhiteSpace(_contract.RejectReason)) { <div><dt>@L["ContractRejectReasonLabel"]</dt><dd>@_contract.RejectReason</dd></div> }
         </dl>
         <footer class="contract-detail-actions"><a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
+            @if (_contract.CanRenew) { <button type="button" class="btn btn-secondary" @onclick="() => OpenLifecycle(true)">@L["ContractRenewAction"]</button> }
+            @if (_contract.CanLiquidate) { <button type="button" class="btn btn-danger" @onclick="() => OpenLifecycle(false)">@L["ContractLiquidateAction"]</button> }
             @if (_canApprove && _contract.Status == ContractStatus.Pending) { <button class="btn btn-primary" @onclick="() => _decisionOpen = true">@L["ContractApproveAction"]</button> }
         </footer>
     }
 </section>
 <ContractApproveModal Visible="_decisionOpen" IsBusy="_decisionBusy" OnClose="CloseDecision" OnDecide="DecideAsync" />
+@if (_contract is not null)
+{
+    <ContractLifecycleModal Visible="_lifecycleOpen" IsBusy="_lifecycleBusy" IsRenewal="_lifecycleIsRenewal"
+                           EndDate="_contract.EndDate" OnClose="CloseLifecycle" OnConfirm="ConfirmLifecycleAsync" />
+}
 
 @code {
     [Parameter] public Guid ContractId { get; set; }
     private ContractDetailDto? _contract;
     private bool _loading = true, _canApprove, _decisionOpen, _decisionBusy;
+    private bool _lifecycleOpen, _lifecycleBusy, _lifecycleIsRenewal;
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
@@ -62,6 +70,26 @@
         catch (Exception ex) { Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
         finally { _decisionBusy = false; }
     }
+    private void OpenLifecycle(bool isRenewal) { _lifecycleIsRenewal = isRenewal; _lifecycleOpen = true; }
+    private Task CloseLifecycle() { if (!_lifecycleBusy) _lifecycleOpen = false; return Task.CompletedTask; }
+    private async Task ConfirmLifecycleAsync(DateTime? endDate)
+    {
+        var isRenewal = _lifecycleIsRenewal;
+        _lifecycleBusy = true;
+        try
+        {
+            var result = isRenewal
+                ? await Contracts.RenewAsync(ContractId, new RenewContractRequestDto { EndDate = endDate!.Value })
+                : await Contracts.LiquidateAsync(ContractId);
+            _lifecycleOpen = false;
+            Toasts.Success(L[result.Outcome == ContractActionOutcome.PendingApproval
+                ? (isRenewal ? "ContractRenewPendingApproval" : "ContractLiquidatePendingApproval")
+                : (isRenewal ? "ContractRenewSuccess" : "ContractLiquidateSuccess")]);
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex) { Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
+        finally { _lifecycleBusy = false; }
+    }
     private string StatusLabel(ContractDetailDto item) => L[ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
     {
         ContractDisplayStatus.Pending => "ContractStatusPending",
@@ -69,6 +97,8 @@
         ContractDisplayStatus.Active => "ContractStatusActive",
         ContractDisplayStatus.ExpiringSoon => "ContractStatusExpiringSoon",
         ContractDisplayStatus.Expired => "ContractStatusExpired",
+        ContractDisplayStatus.Rejected => "ContractStatusRejected",
+        ContractDisplayStatus.Liquidated => "ContractStatusLiquidated",
         _ => "ContractStatusRejected",
     }];
     private BadgeTone StatusTone(ContractDetailDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
@@ -76,7 +106,7 @@
         ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
         ContractDisplayStatus.Upcoming => BadgeTone.Info,
         ContractDisplayStatus.Active => BadgeTone.Success,
-        ContractDisplayStatus.Expired => BadgeTone.Neutral,
+        ContractDisplayStatus.Expired or ContractDisplayStatus.Liquidated => BadgeTone.Neutral,
         ContractDisplayStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };

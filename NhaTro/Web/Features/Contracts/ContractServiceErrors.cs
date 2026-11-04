@@ -20,6 +20,12 @@ public static class ContractErrorCodes
     public const string TenantUnavailable = nameof(TenantUnavailable);
     public const string RoomNotAvailable = nameof(RoomNotAvailable);
     public const string FutureStartNotAllowed = nameof(FutureStartNotAllowed);
+    public const string ContractNotActive = nameof(ContractNotActive);
+    public const string InvalidRenewalEndDate = nameof(InvalidRenewalEndDate);
+    public const string ContractAlreadyRenewed = nameof(ContractAlreadyRenewed);
+    public const string ApprovalDenied = nameof(ApprovalDenied);
+    public const string ApprovalFailed = nameof(ApprovalFailed);
+    public const string DuplicatePendingRequest = nameof(DuplicatePendingRequest);
 }
 
 public static class ContractErrorMessages
@@ -43,6 +49,12 @@ public static class ContractErrorMessages
     public const string TenantUnavailable = "Một hoặc nhiều khách thuê không tồn tại hoặc không còn hoạt động.";
     public const string RoomNotAvailable = "Phòng không tồn tại hoặc nằm ngoài phạm vi được phân công.";
     public const string FutureStartNotAllowed = "Không thể tạo hoặc duyệt hợp đồng có ngày bắt đầu trong tương lai.";
+    public const string ContractNotActive = "Chỉ hợp đồng đang hiệu lực mới được gia hạn hoặc thanh lý.";
+    public const string InvalidRenewalEndDate = "Ngày kết thúc mới phải sau ngày kết thúc hiện tại.";
+    public const string ContractAlreadyRenewed = "Hợp đồng đã được gia hạn.";
+    public const string ApprovalDenied = "Công tắc SW-07 đang chặn thao tác gia hạn / thanh lý hợp đồng.";
+    public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";
+    public const string DuplicatePendingRequest = "Đã có yêu cầu chờ duyệt cho hợp đồng này.";
 }
 
 public interface IContractServiceError

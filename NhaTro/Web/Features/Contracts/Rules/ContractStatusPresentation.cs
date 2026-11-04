@@ -10,6 +10,7 @@ public enum ContractDisplayStatus
     ExpiringSoon,
     Expired,
     Rejected,
+    Liquidated,
 }
 
 /// <summary>Derives date-based labels without adding persisted contract states.</summary>
@@ -25,6 +26,7 @@ public static class ContractStatusPresentation
     {
         if (status == ContractStatus.Pending) return ContractDisplayStatus.Pending;
         if (status == ContractStatus.Rejected) return ContractDisplayStatus.Rejected;
+        if (status == ContractStatus.Liquidated) return ContractDisplayStatus.Liquidated;
 
         var start = DateOnly.FromDateTime(startDate);
         var end = DateOnly.FromDateTime(endDate);

@@ -220,6 +220,10 @@ public class RoomComponentTests : BunitContext
         public Task<RoomResult> RestoreAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
+        public Task<PagedResult<RoomTrashItem>> ListDeletedAsync(
+            RoomFilter filter, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<List<RoomOption>> SearchForPickerAsync(
             RoomOptionRequest request, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();

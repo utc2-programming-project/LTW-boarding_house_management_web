@@ -663,10 +663,10 @@
         SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
     };
 
-    private string SummaryValue(int? value) => value?.ToString("N0", CultureInfo.CurrentCulture) ?? L["NoData"].Value;
+    private string SummaryValue(int? value) => value?.ToString("N0", NumberFormatter.Display) ?? L["NoData"].Value;
 
     private string Percent(int? value, int? total) =>
-        total is > 0 && value is not null ? ((double)value.Value / total.Value * 100).ToString("0.#", CultureInfo.CurrentCulture) : "0";
+        total is > 0 && value is not null ? NumberFormatter.Trimmed((double)value.Value / total.Value * 100) : "0";
 
     private static string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();

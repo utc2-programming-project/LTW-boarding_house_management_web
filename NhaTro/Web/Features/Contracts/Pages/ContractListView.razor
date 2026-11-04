@@ -128,6 +128,7 @@
         ContractDisplayStatus.Active => "ContractStatusActive",
         ContractDisplayStatus.ExpiringSoon => "ContractStatusExpiringSoon",
         ContractDisplayStatus.Expired => "ContractStatusExpired",
+        ContractDisplayStatus.Liquidated => "ContractStatusLiquidated",
         _ => "ContractStatusRejected",
     }];
     private BadgeTone StatusTone(ContractListItemDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
@@ -135,7 +136,7 @@
         ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
         ContractDisplayStatus.Upcoming => BadgeTone.Info,
         ContractDisplayStatus.Active => BadgeTone.Success,
-        ContractDisplayStatus.Expired => BadgeTone.Neutral,
+        ContractDisplayStatus.Expired or ContractDisplayStatus.Liquidated => BadgeTone.Neutral,
         ContractDisplayStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };

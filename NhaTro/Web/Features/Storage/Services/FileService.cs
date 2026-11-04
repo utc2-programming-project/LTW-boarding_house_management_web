@@ -514,8 +514,7 @@ public sealed class FileService(
         if (file.RelatedEntityType == RelatedEntityType.IncidentApproval) return false;
         var allowed = file.RelatedEntityType == RelatedEntityType.Tenant
             ? TenantDocumentPermissionRules.CanDelete(
-                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken),
-                file.UploadedByUserId == caller.UserId)
+                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken))
             : file.RelatedEntityType == RelatedEntityType.MaintenanceIncident
                 ? TryCanonicalizeRelatedEntityId(file.RelatedEntityType, file.RelatedEntityId, out var canonicalIncidentId)
                     && await RelatedEntityExistsAsync(db, file.RelatedEntityType, canonicalIncidentId, cancellationToken)

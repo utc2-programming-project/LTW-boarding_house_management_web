@@ -212,6 +212,8 @@ builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+// VHT-125 (2D): khách thuê gửi yêu cầu gia hạn từ trang "Phòng đang thuê".
+builder.Services.AddScoped<IContractRenewalService, ContractRenewalService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IncidentPhotoService>();
 builder.Services.AddScoped<IncidentPageService>();
@@ -219,12 +221,13 @@ builder.Services.AddScoped<IApprovalApplier, IncidentResultPhotoApprovalApplier>
 builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
 // VHT-99: duyệt yêu cầu SW-06 của Quản lý = đưa hồ sơ khách thuê vào thùng rác.
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
-builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
+builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
@@ -373,6 +376,9 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageSer
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();
+// VHT-53: lập/phát hành hóa đơn từ nguồn chi phí đã chốt, chống trùng kỳ.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
+    Web.Features.Invoices.Services.InvoiceService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
