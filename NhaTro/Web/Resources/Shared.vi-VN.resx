@@ -711,6 +711,16 @@
   <data name="P2RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng hoặc bạn không có quyền truy cập.</value></data>
   <data name="P2DuplicateRoomCode" xml:space="preserve"><value>Mã phòng đã tồn tại trong nhà trọ này.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>Xem danh sách phòng</value></data>
+  <data name="P2TrashTitle" xml:space="preserve"><value>Thùng rác phòng</value></data>
+  <data name="P2TrashSubtitle" xml:space="preserve"><value>Phòng đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
+  <data name="P2TrashTable" xml:space="preserve"><value>Danh sách phòng trong thùng rác</value></data>
+  <data name="P2TrashDeletedAt" xml:space="preserve"><value>Ngày xóa</value></data>
+  <data name="P2TrashRestoreTitle" xml:space="preserve"><value>Khôi phục phòng?</value></data>
+  <data name="P2TrashRestoreConfirm" xml:space="preserve"><value>Phòng {0} sẽ trở lại danh sách phòng.</value></data>
+  <data name="P2TrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
+  <data name="P2TrashRestored" xml:space="preserve"><value>Đã khôi phục phòng.</value></data>
+  <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được phòng. Vui lòng thử lại.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác nên không thể khôi phục.</value></data>
 
   <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>

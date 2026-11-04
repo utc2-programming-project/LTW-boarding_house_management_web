@@ -21,7 +21,7 @@ public static class AppNavigation
         new("Reports", "chart", "ChuTro"),
         new("ManagerSwitches", "settings", "ChuTro"),
         new("Approvals", "check", "ChuTro"),
-        new("Trash", "trash", "ChuTro"),
+        new("Trash", "trash", "ChuTro", "/trash"),
         new("MyRequests", "file", "QuanLy"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),

@@ -711,6 +711,16 @@
   <data name="P2RoomNotFound" xml:space="preserve"><value>Room not found or access is not allowed.</value></data>
   <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in the property.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>View rooms</value></data>
+  <data name="P2TrashTitle" xml:space="preserve"><value>Room trash</value></data>
+  <data name="P2TrashSubtitle" xml:space="preserve"><value>Soft-deleted rooms. Only the owner can view and restore them.</value></data>
+  <data name="P2TrashTable" xml:space="preserve"><value>Rooms in trash</value></data>
+  <data name="P2TrashDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="P2TrashRestoreTitle" xml:space="preserve"><value>Restore this room?</value></data>
+  <data name="P2TrashRestoreConfirm" xml:space="preserve"><value>Room {0} will return to the room list.</value></data>
+  <data name="P2TrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
+  <data name="P2TrashRestored" xml:space="preserve"><value>Room restored.</value></data>
+  <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Could not restore the room. Please try again.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>The room code is already used by another room, so it cannot be restored.</value></data>
 
   <!-- VHT-17: tenant management and tenant profile P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>
