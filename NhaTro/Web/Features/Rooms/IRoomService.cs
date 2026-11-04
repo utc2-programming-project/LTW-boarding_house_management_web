@@ -31,6 +31,10 @@ public interface IRoomService
     Task<RoomResult> DeleteAsync(
         int id, Properties.PropertyCaller caller, CancellationToken ct = default);
 
+    /// <summary>Danh sách phòng trong thùng rác. Chỉ Chủ trọ; giữ phạm vi nhà của người gọi.</summary>
+    Task<PagedResult<RoomTrashItem>> ListDeletedAsync(
+        RoomFilter filter, Properties.PropertyCaller caller, CancellationToken ct = default);
+
     /// <summary>Khôi phục phòng từ thùng rác. Chỉ Chủ trọ; chặn khi mã phòng đã bị dùng lại.</summary>
     Task<RoomResult> RestoreAsync(
         int id, Properties.PropertyCaller caller, CancellationToken ct = default);

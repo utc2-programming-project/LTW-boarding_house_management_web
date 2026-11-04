@@ -44,6 +44,19 @@ public static class RoomMapping
         Status = e.Status,
     };
 
+    // VHT-98: dòng thùng rác cần thêm dấu vết xóa.
+    public static RoomTrashItem ToTrashItem(Room e, string propertyName) => new()
+    {
+        Id = e.Id,
+        PropertyId = e.PropertyId,
+        PropertyName = propertyName,
+        Code = e.Code,
+        Floor = e.Floor,
+        StandardPrice = e.StandardPrice,
+        Status = e.Status,
+        DeletedAt = e.DeletedAt,
+    };
+
     public static void ApplySave(RoomSave dto, Room e)
     {
         dto.Normalize();

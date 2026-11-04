@@ -2,11 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Entities;
+using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
+using Web.Features.Reports;
+using Web.Features.Reports.DTOs;
 using Web.Features.Rooms;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Rooms.Enums;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 
 namespace NhaTro.IntegrationTests.Features.Properties;
 
@@ -459,6 +465,213 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
 
         Assert.False(deleted.Succeeded);
         Assert.Equal(RoomErrorCodes.RoomInUse, deleted.ErrorCode);
+    }
+
+    // ---------- VHT-98: thùng rác phòng ----------
+
+    [SqlServerFact]
+    public async Task Checker_hop_dong_hieu_luc_theo_trang_thai_va_khoang_ngay()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomServiceWithRealChecker(db);
+
+        var inRange = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var pending = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P102", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var expired = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P103", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var future = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P104", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var rejected = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P105", StandardPrice = 1_000_000m,
+        }, ChuTro);
+
+        var today = FixedNow.UtcDateTime.Date;
+        AddContract(db, inRange.Room!.Id, ContractStatus.Approved, today.AddDays(-5), today.AddDays(25));
+        AddContract(db, pending.Room!.Id, ContractStatus.Pending, today.AddDays(-5), today.AddDays(25));
+        AddContract(db, expired.Room!.Id, ContractStatus.Approved, today.AddDays(-40), today.AddDays(-10));
+        AddContract(db, future.Room!.Id, ContractStatus.Approved, today.AddDays(10), today.AddDays(40));
+        AddContract(db, rejected.Room!.Id, ContractStatus.Rejected, today.AddDays(-5), today.AddDays(25));
+        await db.SaveChangesAsync();
+
+        var blocked = await service.DeleteAsync(inRange.Room.Id, ChuTro);
+        Assert.False(blocked.Succeeded);
+        Assert.Equal(RoomErrorCodes.RoomInUse, blocked.ErrorCode);
+
+        foreach (var room in new[] { pending, expired, future, rejected })
+        {
+            var deleted = await service.DeleteAsync(room.Room!.Id, ChuTro);
+            Assert.True(deleted.Succeeded, $"{room.Room.Code}: {deleted.ErrorMessage}");
+        }
+    }
+
+    [SqlServerFact]
+    public async Task Xoa_mem_ghi_audit_va_an_khoi_list_bao_cao_picker()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var room = await NewRoomService(db).CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P101", StandardPrice = 1_500_000m,
+        }, ChuTro);
+
+        var deleted = await NewRoomServiceWithRealChecker(db).DeleteAsync(room.Room!.Id, ChuTro);
+        Assert.True(deleted.Succeeded, deleted.ErrorMessage);
+
+        await using var afterDb = fixture.CreateContext();
+        var stored = await afterDb.Rooms.IgnoreQueryFilters().SingleAsync(r => r.Id == room.Room.Id);
+        Assert.True(stored.IsDeleted);
+        Assert.Equal(FixedNow.UtcDateTime, stored.DeletedAt);
+        Assert.Equal(ChuTro.UserId, stored.DeletedBy);
+
+        var service = NewRoomServiceWithRealChecker(afterDb);
+        Assert.Equal(0, (await service.ListAsync(new RoomFilter(), ChuTro)).TotalCount);
+        Assert.Equal(0, (await service.GetSummaryAsync(ChuTro)).Total);
+        Assert.Empty(await service.SearchForPickerAsync(new RoomOptionRequest { IncludeUnavailable = true }, ChuTro));
+
+        var report = await new RoomReportService(
+            CreateContextFactory(afterDb), new AllowAllTogglePolicy())
+            .GetAsync(new RoomReportFilter(), ChuTro);
+        Assert.Equal(0, report.Kpis.Total);
+        Assert.Equal(0, report.Rooms.TotalCount);
+    }
+
+    [SqlServerFact]
+    public async Task Thung_rac_chi_tra_phong_da_xoa_trong_pham_vi_va_chi_chu_tro()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var myProperty = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var otherProperty = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ B" }, ChuTroKhac);
+        var service = NewRoomServiceWithRealChecker(db);
+
+        var kept = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = myProperty.Property!.Id, Code = "P101", StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var mine = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = myProperty.Property!.Id, Code = "P102", StandardPrice = 1_200_000m,
+        }, ChuTro);
+        var other = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = otherProperty.Property!.Id, Code = "P201", StandardPrice = 900_000m,
+        }, ChuTroKhac);
+
+        Assert.True((await service.DeleteAsync(mine.Room!.Id, ChuTro)).Succeeded);
+        Assert.True((await service.DeleteAsync(other.Room!.Id, ChuTroKhac)).Succeeded);
+
+        var trash = await service.ListDeletedAsync(new RoomFilter(), ChuTro);
+        var item = Assert.Single(trash.Items);
+        Assert.Equal("P102", item.Code);
+        Assert.Equal("Trọ A", item.PropertyName);
+        Assert.Equal(FixedNow.UtcDateTime, item.DeletedAt);
+        Assert.Equal(1, trash.TotalCount);
+
+        // Chủ trọ khác chỉ thấy phòng đã xóa của chính mình, không thấy P102.
+        var otherTrash = await service.ListDeletedAsync(new RoomFilter(), ChuTroKhac);
+        var otherItem = Assert.Single(otherTrash.Items);
+        Assert.Equal("P201", otherItem.Code);
+        Assert.Equal(0, (await service.ListDeletedAsync(
+            new RoomFilter { Keyword = "P102" }, ChuTroKhac)).TotalCount);
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.ListDeletedAsync(new RoomFilter(), QuanLy));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.RestoreAsync(mine.Room.Id, QuanLy));
+
+        var stillThere = await service.GetAsync(kept.Room!.Id, ChuTro);
+        Assert.True(stillThere.Succeeded, stillThere.ErrorMessage);
+    }
+
+    [SqlServerFact]
+    public async Task Khoi_phuc_tra_lai_du_lieu_va_xoa_dau_vet()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var service = NewRoomServiceWithRealChecker(db);
+        var room = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = property.Property!.Id, Code = "P101", Floor = 2, AreaM2 = 25m, StandardPrice = 1_500_000m,
+        }, ChuTro);
+
+        Assert.True((await service.DeleteAsync(room.Room!.Id, ChuTro)).Succeeded);
+
+        var restored = await service.RestoreAsync(room.Room.Id, ChuTro);
+        Assert.True(restored.Succeeded, restored.ErrorMessage);
+
+        await using var afterDb = fixture.CreateContext();
+        var stored = await afterDb.Rooms.IgnoreQueryFilters().SingleAsync(r => r.Id == room.Room.Id);
+        Assert.False(stored.IsDeleted);
+        Assert.Null(stored.DeletedAt);
+        Assert.Null(stored.DeletedBy);
+        Assert.Equal("P101", stored.Code);
+        Assert.Equal(2, stored.Floor);
+        Assert.Equal(25m, stored.AreaM2);
+        Assert.Equal(1_500_000m, stored.StandardPrice);
+
+        var listed = await service.ListAsync(new RoomFilter { Keyword = "P101" }, ChuTro);
+        Assert.Equal(1, listed.TotalCount);
+
+        var again = await service.RestoreAsync(room.Room.Id, ChuTro);
+        Assert.Equal(RoomErrorCodes.RoomNotFound, again.ErrorCode);
+    }
+
+    private static readonly DateTimeOffset FixedNow = new(2026, 11, 4, 12, 0, 0, TimeSpan.Zero);
+
+    private static RoomService NewRoomServiceWithRealChecker(ApplicationDbContext db) =>
+        new(
+            CreateContextFactory(db),
+            new FixedTimeProvider(FixedNow),
+            new RoomChangePolicyStub(),
+            new ActiveContractRoomUsageChecker(
+                CreateContextFactory(db), new FixedTimeProvider(FixedNow)));
+
+    private static void AddContract(
+        ApplicationDbContext db,
+        int roomId,
+        ContractStatus status,
+        DateTime startDate,
+        DateTime endDate) =>
+        db.Contracts.Add(new Contract
+        {
+            ContractNumber = $"HD-{roomId}-{Guid.NewGuid():N}"[..20],
+            RoomId = roomId,
+            StartDate = startDate,
+            EndDate = endDate,
+            SnapshotPrice = 1_000_000m,
+            DepositAmount = 200_000m,
+            Status = status,
+        });
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
+
+    private sealed class AllowAllTogglePolicy : IManagerTogglePolicy
+    {
+        public Task<RoomChangeDecision> EvaluateAsync(
+            ManagerAction action, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
+
+        public Task<RoomChangeDecision> EvaluateAsync(
+            string code, string role, CancellationToken ct = default) =>
+            Task.FromResult(RoomChangeDecision.Allowed);
     }
 
     // ---------- Dữ liệu chọn phòng (bàn giao Đào) ----------
