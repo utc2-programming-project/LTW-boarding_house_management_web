@@ -1056,6 +1056,11 @@ public sealed class TenantService(
         EndDate = DateOnly.FromDateTime(row.EndDate),
         SnapshotPrice = row.SnapshotPrice,
         DepositAmount = row.DepositAmount,
+        // Chưa có chứng từ thu cọc trong schema (P4/VHT-50, công tắc SW-08): hợp đồng chỉ lưu
+        // cọc thỏa thuận ở DepositAmount nên không có số tiền/ngày đã đóng để trả về.
+        // UI phải hiển thị "Chưa có dữ liệu" chứ không suy ra số đã đóng.
+        PaidDepositAmount = null,
+        DepositPaidDate = null,
         Status = row.Status,
         IsCurrent = row.Status == ContractStatus.Approved
             && row.StartDate <= today

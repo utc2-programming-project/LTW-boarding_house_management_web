@@ -283,6 +283,7 @@
                                                     class="ui-switch @(service.Active ? "active" : "") @(service.IsReadOnly || !_canWrite ? "disabled" : "")"
                                                     title="@(service.IsReadOnly ? L["ReadOnlyTitle"] : (!_canWrite ? L["WriteActionBlockedNotice"] : (service.Active ? L["ActiveStatus"] : L["InactiveStatus"])) )"
                                                     @onclick="() => HandleToggleActive(service.Id)">
+                                                <span class="ui-switch-thumb" aria-hidden="true"></span>
                                             </button>
                                             @if (service.IsReadOnly)
                                             {

@@ -919,13 +919,14 @@
   <data name="DocTypeOther" xml:space="preserve"><value>Other document</value></data>
   <data name="DocumentFile" xml:space="preserve"><value>Document file</value></data>
   <data name="FileRequired" xml:space="preserve"><value>Please select a file.</value></data>
-  <data name="FileTypeNotAllowed" xml:space="preserve"><value>Only PDF, JPG, JPEG, or PNG files are accepted.</value></data>
-  <data name="FileSizeExceeded" xml:space="preserve"><value>File size exceeds the allowed 10 MB limit.</value></data>
   <data name="EmptyFile" xml:space="preserve"><value>The file is empty. Please choose another file.</value></data>
   <data name="DocumentAccessDenied" xml:space="preserve"><value>You do not have permission to access this document.</value></data>
   <data name="DocumentDownloadFailed" xml:space="preserve"><value>Could not download the document. Please try again.</value></data>
   <data name="ClickOrDragToUpload" xml:space="preserve"><value>Click to choose file or drag &amp; drop here</value></data>
-  <data name="UploadFileAllowedFormats" xml:space="preserve"><value>Supported formats: PDF, JPG, PNG (Max 10 MB)</value></data>
+  <data name="UploadFileAllowedFormatsFormat" xml:space="preserve"><value>Supported formats: {0} (max {1})</value></data>
+  <data name="FileTypeNotAllowedFormat" xml:space="preserve"><value>Unsupported file type. Accepted formats: {0}.</value></data>
+  <data name="FileSizeExceededFormat" xml:space="preserve"><value>File size exceeds the allowed {0} limit.</value></data>
+  <data name="FileCountExceededFormat" xml:space="preserve"><value>This profile already holds the maximum of {0} document files. Remove an existing file before uploading another.</value></data>
   <data name="DocumentDescription" xml:space="preserve"><value>Description / Note</value></data>
   <data name="DocumentDescriptionPlaceholder" xml:space="preserve"><value>Optional notes for this file...</value></data>
   <data name="DocumentFileName" xml:space="preserve"><value>File name</value></data>
@@ -935,7 +936,6 @@
   <data name="DocumentPreview" xml:space="preserve"><value>View details</value></data>
   <data name="DocumentPreviewTitle" xml:space="preserve"><value>Document details</value></data>
   <data name="DocumentMimeType" xml:space="preserve"><value>MIME type</value></data>
-  <data name="DocumentSecureStorageNotice" xml:space="preserve"><value>File is safely kept in a private encrypted vault with protected stream download URLs.</value></data>
   <data name="DocumentUploadSuccess" xml:space="preserve"><value>Document uploaded successfully.</value></data>
   <data name="DocumentUploadFailed" xml:space="preserve"><value>Document upload failed. Please try again.</value></data>
   <data name="DeleteDocumentConfirmTitle" xml:space="preserve"><value>Confirm document removal</value></data>
@@ -980,9 +980,9 @@
   <data name="ResidenceAddressLabel" xml:space="preserve"><value>PLACE OF RESIDENCE</value></data>
   <data name="Notes" xml:space="preserve"><value>Notes</value></data>
   <data name="DocumentCode" xml:space="preserve"><value>Document ID</value></data>
-  <data name="ShowingDocuments" xml:space="preserve"><value>Showing 1–{0} of {1} documents</value></data>
+  <data name="ShowingDocuments" xml:space="preserve"><value>Showing {0} of {1} documents</value></data>
   <data name="FileStandardsTitle" xml:space="preserve"><value>Supported File Standards</value></data>
-  <data name="FileStandardsDesc" xml:space="preserve"><value>Upload clear scans in PDF, JPG, or PNG formats up to 10 MB each. Make sure identity numbers and stamps are legible.</value></data>
+  <data name="FileStandardsDescFormat" xml:space="preserve"><value>Upload clear scans in {0} formats up to {1} each. Make sure identity numbers and stamps are legible.</value></data>
   <data name="ViewDetailsGuide" xml:space="preserve"><value>View Requirements</value></data>
   <data name="HideDetailsGuide" xml:space="preserve"><value>Hide Requirements</value></data>
   <data name="ExportFailed" xml:space="preserve"><value>Export failed.</value></data>
@@ -1011,7 +1011,6 @@
   <data name="FireSafetyRuleDesc" xml:space="preserve"><value>Tenants must strictly maintain unobstructed emergency exit routes and refrain from charging EV battery packs inside living quarters.</value></data>
   <data name="TerminationNoticeTitle" xml:space="preserve"><value>Termination Notice Period</value></data>
   <data name="TerminationNoticeDesc" xml:space="preserve"><value>Provide at least 30 days prior written notice to management for move-out inspection and deposit settlement.</value></data>
-  <data name="ContractVaultSyncedNotice" xml:space="preserve"><value>This contract is digitally verified and safely mirrored in your resident document vault.</value></data>
   <data name="ViewContractScan" xml:space="preserve"><value>My documents</value></data>
   <data name="RenewContract" xml:space="preserve"><value>Request renewal</value></data>
   <data name="RenewContractTitle" xml:space="preserve"><value>Request Lease Renewal</value></data>
@@ -1029,7 +1028,6 @@
   <data name="PreviewStateLoading" xml:space="preserve"><value>Loading skeleton</value></data>
   <data name="PreviewStateError" xml:space="preserve"><value>Error state</value></data>
   <data name="DocumentsLoadFailedDescription" xml:space="preserve"><value>An unexpected error occurred while loading your documents. Please try again.</value></data>
-  <data name="LoadFailedCode" xml:space="preserve"><value>Error code: LOAD_FAILED</value></data>
   <data name="Retrying" xml:space="preserve"><value>Retrying…</value></data>
   <data name="EmptyDocumentsDescription" xml:space="preserve"><value>Upload ID cards, contracts or temporary residence permits to manage them in one place.</value></data>
   <data name="UploadFirstDocument" xml:space="preserve"><value>Upload first document</value></data>
@@ -1037,8 +1035,7 @@
   <data name="DocumentsLoading" xml:space="preserve"><value>Loading document data…</value></data>
   <data name="BrowseFile" xml:space="preserve"><value>browse</value></data>
   <data name="DragAndDropOr" xml:space="preserve"><value>Drag and drop file here, or</value></data>
-  <data name="Max10MB" xml:space="preserve"><value>up to 10 MB</value></data>
-  <data name="Tls13EncryptedNotice" xml:space="preserve"><value>Data is encrypted in transit with TLS 1.3 and stored securely in the building vault.</value></data>
+  <data name="SecureTransferNotice" xml:space="preserve"><value>Files travel over an HTTPS connection and are only accessible to accounts granted the matching permissions.</value></data>
   <data name="ChangeFile" xml:space="preserve"><value>Choose another file</value></data>
   <data name="Invalid" xml:space="preserve"><value>Invalid</value></data>
   <data name="InvalidSubmissionNotice" xml:space="preserve"><value>Some information is invalid. Review the fields marked in red.</value></data>
@@ -1053,9 +1050,10 @@
   <data name="TenantDocumentsUnavailable" xml:space="preserve"><value>Documents are unavailable within your assigned access scope.</value></data>
   <data name="DuplicateDocumentType" xml:space="preserve"><value>This document type already has a file. Choose another type or delete the existing file and try again.</value></data>
   <data name="FileUnitSingular" xml:space="preserve"><value>file</value></data>
-  <data name="EncryptionMethodLabel" xml:space="preserve"><value>256-bit AES encryption</value></data>
-  <data name="VerificationStatusLabel" xml:space="preserve"><value>VERIFICATION STATUS</value></data>
-  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Documents verified</value></data>
+  <data name="EncryptionMethodLabel" xml:space="preserve"><value>HTTPS-encrypted transfer</value></data>
+  <data name="VerificationStatusLabel" xml:space="preserve"><value>DOCUMENT STATUS</value></data>
+  <data name="VerificationCompleteLabel" xml:space="preserve"><value>All required documents provided</value></data>
+  <data name="MissingRequiredDocumentsLabel" xml:space="preserve"><value>Required documents missing</value></data>
   <data name="OfWord" xml:space="preserve"><value>of</value></data>
   <data name="IdentityCardHint" xml:space="preserve"><value>ID card front and back</value></data>
   <data name="LeaseTermTitle" xml:space="preserve"><value>LEASE TERM</value></data>
@@ -1069,10 +1067,7 @@
   <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Employment contract or student ID for long-term residents.</value></data>
   <data name="PreviewDocumentIssuer" xml:space="preserve"><value>SOCIALIST REPUBLIC OF VIETNAM</value></data>
   <data name="PhotoLabel" xml:space="preserve"><value>PHOTO</value></data>
-  <data name="VerifiedTlsLabel" xml:space="preserve"><value>TLS 1.3 verified</value></data>
   <data name="SampleResidentAddress" xml:space="preserve"><value>Ben Thanh Ward, District 1, Ho Chi Minh City</value></data>
-  <data name="GenericFileType" xml:space="preserve"><value>FILE</value></data>
-  <data name="PersonalDocumentLabel" xml:space="preserve"><value>Personal document</value></data>
   <data name="ContentType" xml:space="preserve"><value>Content type</value></data>
   <data name="Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="Deleting" xml:space="preserve"><value>Deleting...</value></data>
@@ -1088,14 +1083,34 @@
   <data name="IssuedByManagement" xml:space="preserve"><value>Issued by property management</value></data>
   <data name="MonthlyRentLabel" xml:space="preserve"><value>Monthly rent</value></data>
   <data name="MonthUnit" xml:space="preserve"><value>month</value></data>
+  <data name="MonthlyRentNote" xml:space="preserve"><value>Applicable per agreed rate in contract</value></data>
+  <data name="ContractTermsAndRulesLabel" xml:space="preserve"><value>Terms &amp; Residency Rules</value></data>
+  <data name="ContractTermsAndRulesDesc" xml:space="preserve"><value>Detailed terms, residency rules, and annexes are specified in contract no. {0}.</value></data>
+  <data name="RenewNotice" xml:space="preserve"><value>The request is recorded as Pending; property management reviews it and updates the contract end date after approval.</value></data>
+  <data name="RenewMonthsLabel" xml:space="preserve"><value>Renewal duration (months)</value></data>
+  <data name="RenewMonthsHint" xml:space="preserve"><value>From {0} to {1} months.</value></data>
+  <data name="RenewMonthsRequired" xml:space="preserve"><value>Please enter a renewal duration greater than 0 months.</value></data>
+  <data name="RenewMonthsTooLarge" xml:space="preserve"><value>The renewal duration cannot exceed {0} months.</value></data>
+  <data name="RenewNoteLabel" xml:space="preserve"><value>Message to management</value></data>
+  <data name="RenewSubmit" xml:space="preserve"><value>Send request</value></data>
+  <data name="RenewSubmitting" xml:space="preserve"><value>Sending…</value></data>
+  <data name="RenewRequestSuccess" xml:space="preserve"><value>Renewal request for {0} months sent. Status: Pending.</value></data>
+  <data name="RenewRequestFailed" xml:space="preserve"><value>The renewal request could not be sent. Please try again.</value></data>
+  <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Status</value></data>
+  <data name="RenewStatusPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Sent on</value></data>
+  <data name="RenewErrorForbidden" xml:space="preserve"><value>You are not allowed to send a renewal request for this contract.</value></data>
+  <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Lease contract not found.</value></data>
+  <data name="RenewErrorInvalidStatus" xml:space="preserve"><value>Only an active contract can be renewed.</value></data>
+  <data name="RenewErrorNoteTooLong" xml:space="preserve"><value>The message to management is too long.</value></data>
+  <data name="RenewErrorDuplicatePending" xml:space="preserve"><value>This contract already has a pending renewal request.</value></data>
   <data name="MonthlyPaymentDue" xml:space="preserve"><value>Payment due: the 5th of each month.</value></data>
-  <data name="RoomDeposit" xml:space="preserve"><value>Room deposit</value></data>
-  <data name="DepositPaidOn" xml:space="preserve"><value>Paid and recorded on {0}.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Contract deposit</value></data>
   <data name="SecurityAndFireSafety" xml:space="preserve"><value>Security and fire safety</value></data>
   <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>The tenant must keep emergency exits clear and must not charge electric vehicles in sleeping areas.</value></data>
   <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Early termination policy</value></data>
   <data name="EarlyTerminationDescription" xml:space="preserve"><value>Give the landlord at least 30 days' notice to inventory the property and process the deposit refund.</value></data>
-  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease is securely verified and audited in the resident's personal data archive.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease was issued by property management, is stored in the system and is visible only to your account and to authorized management staff.</value></data>
   <data name="RoomLabel" xml:space="preserve"><value>Room {0}</value></data>
   <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
@@ -1280,6 +1295,9 @@
   <data name="TenantValidationIssuedDateFuture" xml:space="preserve"><value>Issue date cannot be in the future.</value></data>
   <data name="ManagerDisplayName" xml:space="preserve"><value>Manager</value></data>
   <data name="StorageLimitMb" xml:space="preserve"><value>/ {0} MB</value></data>
+  <data name="StorageUnlimitedLabel" xml:space="preserve"><value>Unlimited</value></data>
+  <data name="LeaseStartDateLabel" xml:space="preserve"><value>Lease start date</value></data>
+  <data name="LeaseEndDateLabel" xml:space="preserve"><value>Contract expiry date</value></data>
   <data name="MeterReadingCalculating" xml:space="preserve"><value>Calculating…</value></data>
   <data name="ManageAccountTitle" xml:space="preserve"><value>Manage account</value></data>
   <data name="ManageAccountSubtitle" xml:space="preserve"><value>Account settings</value></data>
@@ -1428,4 +1446,11 @@
   <data name="InvalidPasswordResetText" xml:space="preserve"><value>The password reset link is invalid.</value></data>
   <data name="InvalidUserTitle" xml:space="preserve"><value>Invalid user</value></data>
   <data name="UsernamePlaceholder" xml:space="preserve"><value>Choose your username.</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="DepositPaidDateLabel" xml:space="preserve"><value>Deposit payment date</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Simulated preview</value></data>
+  <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Simulated file preview. Please download the original file to view the full scanned document.</value></data>
+  <data name="PreviewNotAvailable" xml:space="preserve"><value>Direct preview is not available for this file type. Please download the file to view its full content.</value></data>
 </root>

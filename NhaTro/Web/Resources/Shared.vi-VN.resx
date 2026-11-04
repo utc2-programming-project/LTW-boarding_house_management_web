@@ -919,13 +919,14 @@
   <data name="DocTypeOther" xml:space="preserve"><value>Giấy tờ khác</value></data>
   <data name="DocumentFile" xml:space="preserve"><value>Tệp giấy tờ</value></data>
   <data name="FileRequired" xml:space="preserve"><value>Vui lòng chọn một tệp giấy tờ.</value></data>
-  <data name="FileTypeNotAllowed" xml:space="preserve"><value>Chỉ chấp nhận các tệp định dạng PDF, JPG, JPEG hoặc PNG.</value></data>
-  <data name="FileSizeExceeded" xml:space="preserve"><value>Kích thước tệp vượt quá giới hạn 10 MB cho phép.</value></data>
   <data name="EmptyFile" xml:space="preserve"><value>Tệp không có nội dung. Vui lòng chọn tệp khác.</value></data>
   <data name="DocumentAccessDenied" xml:space="preserve"><value>Bạn không có quyền truy cập giấy tờ này.</value></data>
   <data name="DocumentDownloadFailed" xml:space="preserve"><value>Không thể tải giấy tờ. Vui lòng thử lại.</value></data>
   <data name="ClickOrDragToUpload" xml:space="preserve"><value>Nhấp để chọn tệp hoặc kéo thả vào đây</value></data>
-  <data name="UploadFileAllowedFormats" xml:space="preserve"><value>Định dạng hỗ trợ: PDF, JPG, PNG (Tối đa 10 MB)</value></data>
+  <data name="UploadFileAllowedFormatsFormat" xml:space="preserve"><value>Định dạng hỗ trợ: {0} (tối đa {1})</value></data>
+  <data name="FileTypeNotAllowedFormat" xml:space="preserve"><value>Định dạng tệp không được hỗ trợ. Chỉ chấp nhận: {0}.</value></data>
+  <data name="FileSizeExceededFormat" xml:space="preserve"><value>Kích thước tệp vượt quá giới hạn {0} cho phép.</value></data>
+  <data name="FileCountExceededFormat" xml:space="preserve"><value>Hồ sơ này đã đủ {0} tệp giấy tờ theo giới hạn của hệ thống. Hãy xóa tệp cũ trước khi tải thêm.</value></data>
   <data name="DocumentDescription" xml:space="preserve"><value>Ghi chú / Mô tả</value></data>
   <data name="DocumentDescriptionPlaceholder" xml:space="preserve"><value>Nhập thông tin ghi chú cho tệp giấy tờ (tùy chọn)...</value></data>
   <data name="DocumentFileName" xml:space="preserve"><value>Tên tệp</value></data>
@@ -935,7 +936,6 @@
   <data name="DocumentPreview" xml:space="preserve"><value>Xem chi tiết</value></data>
   <data name="DocumentPreviewTitle" xml:space="preserve"><value>Chi tiết tệp giấy tờ</value></data>
   <data name="DocumentMimeType" xml:space="preserve"><value>Định dạng tệp</value></data>
-  <data name="DocumentSecureStorageNotice" xml:space="preserve"><value>Tệp được lưu trữ an toàn trong kho bảo mật private, URL tải luồng bảo vệ không lộ đường dẫn thật.</value></data>
   <data name="DocumentUploadSuccess" xml:space="preserve"><value>Tải lên giấy tờ thành công.</value></data>
   <data name="DocumentUploadFailed" xml:space="preserve"><value>Tải lên giấy tờ thất bại. Vui lòng kiểm tra lại.</value></data>
   <data name="DeleteDocumentConfirmTitle" xml:space="preserve"><value>Xác nhận xóa giấy tờ</value></data>
@@ -980,9 +980,9 @@
   <data name="ResidenceAddressLabel" xml:space="preserve"><value>NƠI THƯỜNG TRÚ / PLACE OF RESIDENCE</value></data>
   <data name="Notes" xml:space="preserve"><value>Ghi chú</value></data>
   <data name="DocumentCode" xml:space="preserve"><value>Mã tài liệu</value></data>
-  <data name="ShowingDocuments" xml:space="preserve"><value>Hiển thị 1–{0} / {1} giấy tờ</value></data>
+  <data name="ShowingDocuments" xml:space="preserve"><value>Hiển thị {0} / {1} giấy tờ</value></data>
   <data name="FileStandardsTitle" xml:space="preserve"><value>Quy chuẩn định dạng tệp hồ sơ</value></data>
-  <data name="FileStandardsDesc" xml:space="preserve"><value>Tải lên ảnh chụp hoặc bản scan sắc nét định dạng PDF, JPG hoặc PNG tối đa 10 MB. Đảm bảo rõ số định danh cá nhân và dấu giáp lai.</value></data>
+  <data name="FileStandardsDescFormat" xml:space="preserve"><value>Tải lên ảnh chụp hoặc bản scan sắc nét định dạng {0} tối đa {1}. Đảm bảo rõ số định danh cá nhân và dấu giáp lai.</value></data>
   <data name="ViewDetailsGuide" xml:space="preserve"><value>Xem hướng dẫn chi tiết</value></data>
   <data name="HideDetailsGuide" xml:space="preserve"><value>Ẩn hướng dẫn</value></data>
   <data name="ExportFailed" xml:space="preserve"><value>Xuất danh sách thất bại.</value></data>
@@ -1011,7 +1011,6 @@
   <data name="FireSafetyRuleDesc" xml:space="preserve"><value>Bên thuê tuân thủ nghiêm ngặt quy định không để vật dụng cản trở lối thoát hiểm, không sạc pin xe điện trong phòng ngủ.</value></data>
   <data name="TerminationNoticeTitle" xml:space="preserve"><value>Chính sách trả phòng trước hạn</value></data>
   <data name="TerminationNoticeDesc" xml:space="preserve"><value>Báo trước tối thiểu 30 ngày cho bên cho thuê để tiến hành kiểm kê tài sản và hoàn cọc theo hợp đồng.</value></data>
-  <data name="ContractVaultSyncedNotice" xml:space="preserve"><value>Hợp đồng đã được xác thực bảo mật và đồng bộ trong kho lưu trữ hồ sơ giấy tờ cá nhân của bạn.</value></data>
   <data name="ViewContractScan" xml:space="preserve"><value>Xem hồ sơ giấy tờ</value></data>
   <data name="RenewContract" xml:space="preserve"><value>Yêu cầu gia hạn</value></data>
   <data name="RenewContractTitle" xml:space="preserve"><value>Yêu cầu gia hạn hợp đồng thuê</value></data>
@@ -1029,7 +1028,6 @@
   <data name="PreviewStateLoading" xml:space="preserve"><value>Khung xương đang tải</value></data>
   <data name="PreviewStateError" xml:space="preserve"><value>Trạng thái lỗi</value></data>
   <data name="DocumentsLoadFailedDescription" xml:space="preserve"><value>Đã xảy ra lỗi khi tải danh sách giấy tờ. Vui lòng thử lại.</value></data>
-  <data name="LoadFailedCode" xml:space="preserve"><value>Mã lỗi: LOAD_FAILED</value></data>
   <data name="Retrying" xml:space="preserve"><value>Đang thử lại…</value></data>
   <data name="EmptyDocumentsDescription" xml:space="preserve"><value>Tải lên CCCD, hợp đồng hoặc giấy tạm trú để quản lý tập trung.</value></data>
   <data name="UploadFirstDocument" xml:space="preserve"><value>Tải lên giấy tờ đầu tiên</value></data>
@@ -1037,8 +1035,7 @@
   <data name="DocumentsLoading" xml:space="preserve"><value>Đang tải dữ liệu hồ sơ…</value></data>
   <data name="BrowseFile" xml:space="preserve"><value>chọn tệp</value></data>
   <data name="DragAndDropOr" xml:space="preserve"><value>Kéo thả tệp vào đây hoặc</value></data>
-  <data name="Max10MB" xml:space="preserve"><value>tối đa 10 MB</value></data>
-  <data name="Tls13EncryptedNotice" xml:space="preserve"><value>Dữ liệu được mã hóa khi truyền tải bằng TLS 1.3 và lưu trữ an toàn trong kho dữ liệu của tòa nhà.</value></data>
+  <data name="SecureTransferNotice" xml:space="preserve"><value>Tệp được truyền qua kết nối HTTPS và chỉ những tài khoản được phân quyền mới truy cập được.</value></data>
   <data name="ChangeFile" xml:space="preserve"><value>Chọn tệp khác</value></data>
   <data name="Invalid" xml:space="preserve"><value>Không hợp lệ</value></data>
   <data name="InvalidSubmissionNotice" xml:space="preserve"><value>Thông tin tải lên chưa hợp lệ. Vui lòng kiểm tra các trường được đánh dấu đỏ.</value></data>
@@ -1053,9 +1050,10 @@
   <data name="TenantDocumentsUnavailable" xml:space="preserve"><value>Không thể tải hồ sơ giấy tờ trong phạm vi được cấp.</value></data>
   <data name="DuplicateDocumentType" xml:space="preserve"><value>Loại giấy tờ này đã có tệp. Vui lòng chọn loại khác hoặc xóa tệp cũ rồi thử lại.</value></data>
   <data name="FileUnitSingular" xml:space="preserve"><value>tệp</value></data>
-  <data name="EncryptionMethodLabel" xml:space="preserve"><value>Mã hóa AES 256-bit</value></data>
-  <data name="VerificationStatusLabel" xml:space="preserve"><value>TÌNH TRẠNG XÁC THỰC</value></data>
-  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Hồ sơ đã kiểm duyệt đầy đủ</value></data>
+  <data name="EncryptionMethodLabel" xml:space="preserve"><value>Truyền tải qua HTTPS</value></data>
+  <data name="VerificationStatusLabel" xml:space="preserve"><value>TÌNH TRẠNG HỒ SƠ</value></data>
+  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Đã cung cấp đủ hồ sơ bắt buộc</value></data>
+  <data name="MissingRequiredDocumentsLabel" xml:space="preserve"><value>Còn thiếu hồ sơ bắt buộc</value></data>
   <data name="OfWord" xml:space="preserve"><value>trên</value></data>
   <data name="IdentityCardHint" xml:space="preserve"><value>CCCD mặt trước và mặt sau</value></data>
   <data name="LeaseTermTitle" xml:space="preserve"><value>THỜI HẠN LƯU TRÚ</value></data>
@@ -1069,10 +1067,7 @@
   <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Hợp đồng lao động hoặc thẻ sinh viên đối với người lưu trú dài hạn.</value></data>
   <data name="PreviewDocumentIssuer" xml:space="preserve"><value>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</value></data>
   <data name="PhotoLabel" xml:space="preserve"><value>ẢNH</value></data>
-  <data name="VerifiedTlsLabel" xml:space="preserve"><value>Đã xác thực TLS 1.3</value></data>
   <data name="SampleResidentAddress" xml:space="preserve"><value>Phường Bến Thành, Quận 1, TP. Hồ Chí Minh</value></data>
-  <data name="GenericFileType" xml:space="preserve"><value>TỆP</value></data>
-  <data name="PersonalDocumentLabel" xml:space="preserve"><value>Giấy tờ tùy thân</value></data>
   <data name="ContentType" xml:space="preserve"><value>Loại nội dung</value></data>
   <data name="Actions" xml:space="preserve"><value>Thao tác</value></data>
   <data name="Deleting" xml:space="preserve"><value>Đang xóa...</value></data>
@@ -1088,14 +1083,34 @@
   <data name="IssuedByManagement" xml:space="preserve"><value>Ban quản lý nhà trọ ban hành</value></data>
   <data name="MonthlyRentLabel" xml:space="preserve"><value>Giá thuê định kỳ hàng tháng</value></data>
   <data name="MonthUnit" xml:space="preserve"><value>tháng</value></data>
+  <data name="MonthlyRentNote" xml:space="preserve"><value>Áp dụng theo đơn giá thỏa thuận trong hợp đồng</value></data>
+  <data name="ContractTermsAndRulesLabel" xml:space="preserve"><value>Điều khoản &amp; Quy chế cư trú</value></data>
+  <data name="ContractTermsAndRulesDesc" xml:space="preserve"><value>Các điều khoản chi tiết, quy định an toàn và phụ lục được ghi nhận tại hợp đồng số {0}.</value></data>
+  <data name="RenewNotice" xml:space="preserve"><value>Yêu cầu được ghi nhận ở trạng thái Chờ xử lý; Ban quản lý sẽ xem xét và cập nhật ngày kết thúc hợp đồng sau khi duyệt.</value></data>
+  <data name="RenewMonthsLabel" xml:space="preserve"><value>Số tháng gia hạn</value></data>
+  <data name="RenewMonthsHint" xml:space="preserve"><value>Từ {0} đến {1} tháng.</value></data>
+  <data name="RenewMonthsRequired" xml:space="preserve"><value>Vui lòng nhập số tháng gia hạn lớn hơn 0.</value></data>
+  <data name="RenewMonthsTooLarge" xml:space="preserve"><value>Số tháng gia hạn không được vượt quá {0} tháng.</value></data>
+  <data name="RenewNoteLabel" xml:space="preserve"><value>Ghi gửi Ban quản lý</value></data>
+  <data name="RenewSubmit" xml:space="preserve"><value>Gửi yêu cầu</value></data>
+  <data name="RenewSubmitting" xml:space="preserve"><value>Đang gửi…</value></data>
+  <data name="RenewRequestSuccess" xml:space="preserve"><value>Đã gửi yêu cầu gia hạn {0} tháng. Trạng thái: Chờ xử lý.</value></data>
+  <data name="RenewRequestFailed" xml:space="preserve"><value>Không gửi được yêu cầu gia hạn. Vui lòng thử lại.</value></data>
+  <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="RenewStatusPending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Gửi ngày</value></data>
+  <data name="RenewErrorForbidden" xml:space="preserve"><value>Bạn không có quyền gửi yêu cầu gia hạn cho hợp đồng này.</value></data>
+  <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng thuê.</value></data>
+  <data name="RenewErrorInvalidStatus" xml:space="preserve"><value>Chỉ hợp đồng đang hiệu lực mới được gửi yêu cầu gia hạn.</value></data>
+  <data name="RenewErrorNoteTooLong" xml:space="preserve"><value>Ghi gửi Ban quản lý vượt quá độ dài cho phép.</value></data>
+  <data name="RenewErrorDuplicatePending" xml:space="preserve"><value>Hợp đồng này đã có yêu cầu gia hạn đang chờ xử lý.</value></data>
   <data name="MonthlyPaymentDue" xml:space="preserve"><value>Hạn đóng tiền: Ngày 05 hàng tháng.</value></data>
-  <data name="RoomDeposit" xml:space="preserve"><value>Tiền đặt cọc phòng</value></data>
-  <data name="DepositPaidOn" xml:space="preserve"><value>Đã thanh toán và ghi nhận ngày {0}.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Tiền cọc theo hợp đồng</value></data>
   <data name="SecurityAndFireSafety" xml:space="preserve"><value>Cam kết an ninh và PCCC</value></data>
   <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>Bên thuê tuân thủ nghiêm ngặt quy định, không để vật dụng cản trở lối thoát hiểm và không sạc xe điện trong phòng ngủ.</value></data>
   <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Chính sách trả phòng trước hạn</value></data>
   <data name="EarlyTerminationDescription" xml:space="preserve"><value>Báo trước tối thiểu 30 ngày cho bên cho thuê để kiểm kê tài sản và hoàn cọc.</value></data>
-  <data name="ContractVerifiedNotice" xml:space="preserve"><value>Hợp đồng đã được xác thực bảo mật và lưu vết trong kho dữ liệu cá nhân của cư dân.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>Hợp đồng do Ban quản lý phát hành, được lưu trên hệ thống và chỉ hiển thị với tài khoản của bạn cùng Ban quản lý được phân quyền.</value></data>
   <data name="RoomLabel" xml:space="preserve"><value>Phòng {0}</value></data>
   <data name="ContractStatusApproved" xml:space="preserve"><value>Đang hiệu lực</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
@@ -1280,6 +1295,9 @@
   <data name="TenantValidationIssuedDateFuture" xml:space="preserve"><value>Ngày cấp không được là ngày trong tương lai.</value></data>
   <data name="ManagerDisplayName" xml:space="preserve"><value>Quản lý</value></data>
   <data name="StorageLimitMb" xml:space="preserve"><value>/ {0} MB</value></data>
+  <data name="StorageUnlimitedLabel" xml:space="preserve"><value>Không giới hạn</value></data>
+  <data name="LeaseStartDateLabel" xml:space="preserve"><value>Ngày bắt đầu thuê</value></data>
+  <data name="LeaseEndDateLabel" xml:space="preserve"><value>Ngày hết hạn hợp đồng</value></data>
   <data name="MeterReadingCalculating" xml:space="preserve"><value>Đang tính toán…</value></data>
   <data name="ManageAccountTitle" xml:space="preserve"><value>Quản lý tài khoản</value></data>
   <data name="ManageAccountSubtitle" xml:space="preserve"><value>Cài đặt tài khoản</value></data>
@@ -1428,4 +1446,11 @@
   <data name="InvalidPasswordResetText" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ.</value></data>
   <data name="InvalidUserTitle" xml:space="preserve"><value>Tài khoản không hợp lệ</value></data>
   <data name="UsernamePlaceholder" xml:space="preserve"><value>Chọn tên người dùng.</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
+  <data name="DepositPaidDateLabel" xml:space="preserve"><value>Ngày đóng cọc</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
+  <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Bản xem trước mô phỏng</value></data>
+  <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
+  <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
 </root>

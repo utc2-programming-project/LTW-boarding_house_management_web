@@ -24,4 +24,10 @@ public sealed class TenantDocumentListDto
     public required long MaxFileSizeBytes { get; init; }
 
     public required IReadOnlyList<string> AllowedExtensions { get; init; }
+
+    /// <summary>
+    /// Số tệp tối đa cho mỗi hồ sơ theo cấu hình storage; <c>null</c> = chưa chốt/không giới hạn.
+    /// Dùng để UI chỉ hiển thị hạn mức khi thực sự có cấu hình, không tự nhân số loại giấy tờ.
+    /// </summary>
+    public int? MaxFilesPerEntity { get; init; }
 }

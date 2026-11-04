@@ -6,6 +6,16 @@
     color: var(--text-primary);
 }
 
+.breadcrumb-title-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.breadcrumb-title-stack > ::deep .breadcrumb {
+    margin-bottom: 0;
+}
+
 .leased-room-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -203,6 +213,16 @@
     overflow-wrap: anywhere;
 }
 
+.leased-room-date-range {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.leased-room-date-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 .leased-room-panel {
     width: 100%;
     padding: 20px;
@@ -254,6 +274,11 @@
     font-size: 16px;
     line-height: 24px;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.leased-room-term-numeric {
+    text-align: right;
     font-variant-numeric: tabular-nums;
 }
 
@@ -387,7 +412,12 @@
 }
 
 .leased-room-dialog {
+    position: relative;
+    z-index: 410;
     width: min(100%, 480px);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -423,6 +453,21 @@
     display: grid;
     gap: 20px;
     padding: 24px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.renew-unavailable-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    border-left: 4px solid var(--info-border);
+    border-radius: 8px;
+    background: var(--info-bg);
+    color: var(--info-text);
+    font-size: 13px;
+    line-height: 20px;
 }
 
 .leased-room-dialog-field {
@@ -442,6 +487,108 @@
     min-height: 112px;
     padding: 12px;
     resize: vertical;
+}
+
+.leased-room-dialog-input,
+.leased-room-dialog-note {
+    width: 100%;
+    border: 1px solid var(--neutral-border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 20px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.leased-room-dialog-input {
+    height: 40px;
+    padding: 0 12px;
+}
+
+.leased-room-dialog-input:focus,
+.leased-room-dialog-note:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--focus-ring-soft, rgba(79, 70, 229, .2));
+}
+
+.leased-room-dialog-input:disabled,
+.leased-room-dialog-note:disabled {
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+}
+
+.leased-room-dialog-hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.leased-room-dialog-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0;
+    color: var(--error-text);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.required-star {
+    color: var(--error-text);
+    font-weight: 700;
+}
+
+.optional-hint {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.renew-pending-card {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-subtle);
+}
+
+.renew-pending-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.renew-pending-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.renew-pending-value {
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    text-align: right;
+}
+
+.renew-pending-note {
+    display: grid;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+}
+
+.renew-pending-note p {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 13px;
+    line-height: 20px;
+    white-space: pre-line;
 }
 
 .leased-room-dialog-actions {
@@ -476,7 +623,7 @@
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767.98px) {
     .leased-room-page {
         gap: 20px;
     }

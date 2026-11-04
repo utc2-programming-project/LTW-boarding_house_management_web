@@ -506,7 +506,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts", t =>
+                    b.ToTable("Contracts", null, t =>
                         {
                             t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
                         });
@@ -526,7 +526,57 @@ namespace Web.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("ContractMembers");
+                    b.ToTable("ContractMembers", (string)null);
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RequestedByTenantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestedMonths")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ContractRenewalRequests_Pending")
+                        .HasFilter("[Status] = 0");
+
+                    b.HasIndex("RequestedByTenantId", "Status");
+
+                    b.HasIndex("Status", "RequestedAt");
+
+                    b.ToTable("ContractRenewalRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ContractRenewalRequests_Months", "[RequestedMonths] BETWEEN 1 AND 120");
+
+                            t.HasCheckConstraint("CK_ContractRenewalRequests_Status", "[Status] IN (0, 1, 2)");
+                        });
                 });
 
             modelBuilder.Entity("Web.Features.Invoices.Entities.Invoice", b =>
@@ -826,7 +876,7 @@ namespace Web.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Properties");
+                    b.ToTable("Properties", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.PropertyManager", b =>
@@ -874,7 +924,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[RevokedAt] IS NULL");
 
-                    b.ToTable("PropertyManagers");
+                    b.ToTable("PropertyManagers", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Rooms.Entities.Room", b =>
@@ -925,7 +975,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Settings.Entities.ManagerToggle", b =>
@@ -1140,7 +1190,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId", "OccurredAt");
 
-                    b.ToTable("FileAccessAuditLogs");
+                    b.ToTable("FileAccessAuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Storage.Entities.StoredFile", b =>
@@ -1203,7 +1253,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("StoredFiles");
+                    b.ToTable("StoredFiles", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Tenants.Entities.Tenant", b =>
@@ -1300,7 +1350,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
-                    b.ToTable("Tenants");
+                    b.ToTable("Tenants", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
@@ -1843,7 +1893,7 @@ namespace Web.Migrations
 
                             b1.HasKey("IdentityUserPasskeyCredentialId");
 
-                            b1.ToTable("AspNetUserPasskeys");
+                            b1.ToTable("AspNetUserPasskeys", (string)null);
 
                             b1
                                 .ToJson("Data")
@@ -1939,6 +1989,21 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByTenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

@@ -64,6 +64,7 @@
 .tenant-documents-file strong { overflow-wrap: anywhere; font-size: .875rem; }
 .tenant-documents-file span, .tenant-documents-message { color: var(--text-secondary); font-size: .8125rem; }
 .tenant-documents-message { margin: 0; }
+.tenant-documents-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .tenant-detail-grid {
     display: grid;
