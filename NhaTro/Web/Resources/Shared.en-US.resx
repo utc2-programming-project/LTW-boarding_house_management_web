@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -1428,4 +1428,6 @@
   <data name="InvalidPasswordResetText" xml:space="preserve"><value>The password reset link is invalid.</value></data>
   <data name="InvalidUserTitle" xml:space="preserve"><value>Invalid user</value></data>
   <data name="UsernamePlaceholder" xml:space="preserve"><value>Choose your username.</value></data>
+  <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Log in using your {0} account</value></data>
+  <data name="NoExternalAuthServices" xml:space="preserve"><value>There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article</a> about setting up this ASP.NET application to support logging in via external services.</value></data>
 </root>

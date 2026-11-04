@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -1428,4 +1428,6 @@
   <data name="InvalidPasswordResetText" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ.</value></data>
   <data name="InvalidUserTitle" xml:space="preserve"><value>Tài khoản không hợp lệ</value></data>
   <data name="UsernamePlaceholder" xml:space="preserve"><value>Chọn tên người dùng.</value></data>
+  <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Đăng nhập bằng tài khoản {0} của bạn</value></data>
+  <data name="NoExternalAuthServices" xml:space="preserve"><value>Không có dịch vụ xác thực ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">bài viết</a> về thiết lập ứng dụng ASP.NET hỗ trợ đăng nhập qua dịch vụ ngoài.</value></data>
 </root>
