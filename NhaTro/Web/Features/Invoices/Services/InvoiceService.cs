@@ -87,6 +87,13 @@ public sealed class InvoiceService : IInvoiceService
         }
         catch (DbUpdateException exception)
         {
+            // Gỡ từng dòng trước khi gỡ hóa đơn: đặt hóa đơn sang Detached khi các dòng
+            // còn tracked sẽ khiến EF cố xóa FK bắt buộc và ném lỗi che mất lỗi trùng kỳ.
+            foreach (var item in invoice.Items.ToList())
+            {
+                _context.Entry(item).State = EntityState.Detached;
+            }
+
             _context.Entry(invoice).State = EntityState.Detached;
 
             var duplicate = await FindByPeriodAsync(
