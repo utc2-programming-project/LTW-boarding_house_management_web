@@ -172,6 +172,18 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 
 **Điều kiện xong 2E:** script đạt trên `dev` chung; ERD khớp schema; có ghi chú rollback; Phúc nhận bản cuối.
 
+**Trạng thái 03/11/2026 — ĐẠT phần kiểm, còn bàn giao.** Trên `dev@951ab06` (21 migration tới `20261103080000_AddIncidentPhotoAttachments`):
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| 2E.1 script trên DB sạch + DB có dữ liệu | `KET QUA: DAT` với `-Database NhaTro_VHT123_2E -KeepDatabase`; 0 migration pending; `has-pending-model-changes` sạch |
+| 2E.2 ERD vs schema chung | 0 khác biệt ở 5 nhóm `sys.columns/indexes/foreign_keys/check_constraints/triggers` (195/64/30/40/3); ERD SQL chạy 2 lần không lỗi, 21 bảng nghiệp vụ |
+| 2E.3 migration phá dữ liệu cũ | Không: 3 migration P7 chỉ thêm bảng + nới `Note` 1000→2000; DB nâng cấp giữ nguyên `1\|1\|1\|1\|1` |
+| 2E.4 rollback | Đã điền bảng 5 migration ở mục 7.3 |
+| 2E.5 bàn giao Phúc | **Chưa** |
+
+Chi tiết số liệu + delta ERD P7 ở [nhật ký rà soát migration](../design/database/nhat_ky_ra_soat_migration.md) mục "Lượt 2E". Rủi ro còn lại: SHA `dev` đổi khi VHT-124/126 merge → phải chạy lại script + diff trước khi publish.
+
 ## 5. Checklist review migration (bắt buộc, dùng cho mọi PR)
 
 ### 5.1 Cấu trúc PR
@@ -281,6 +293,20 @@ Mục tiêu đợt: Đào/Phát viết entity/EF/migration độc lập; Tính c
 
 Mỗi migration mới ghi: `Down` làm gì, mất dữ liệu gì, có cần backup không. Không tự chạy `database update 0` trên DB thật.
 
+Bảng dưới đây điền cho 5 migration mới nhất trên `dev@951ab06`; thứ tự Down là **ngược** thứ tự Up.
+
+| Migration | `Down` làm gì | Mất dữ liệu gì | Backup trước? | Điều kiện / cảnh báo |
+| --- | --- | --- | --- | --- |
+| `20261031120915_AddInvoices` | Drop `InvoiceItems`, rồi `Invoices` | Toàn bộ hóa đơn + dòng hóa đơn | **Bắt buộc** | Đã phát hành/đã thu thì không rollback; P6 chưa dùng cho thu tiền thật ở 2E |
+| `20261101110944_AddManagerApprovalQueue` | Drop `ManagerApprovalRequests` | Hàng đợi duyệt, gồm cả yêu cầu đã duyệt (audit) | Bắt buộc nếu bảng có dòng | `IncidentPhotoAttachments.ApprovalRequestId` trỏ vào đây → phải Down migration ảnh trước |
+| `20261102082053_AddMaintenanceIncidents` | Drop `MaintenanceIncidentHistories`, rồi `MaintenanceIncidents` | Toàn bộ sự cố + lịch sử xử lý | **Bắt buộc** | FK từ `IncidentPhotoAttachments.IncidentId` → phải Down migration ảnh trước |
+| `20261102125721_ExpandIncidentHistoryNoteTo2000` | Alter `Note` về `nvarchar(1000)` | Không mất nếu mọi dòng ≤ 1000 ký tự; **fail** nếu có dòng dài hơn | Backup nếu đã có lịch sử | SQL Server không tự cắt: rollback lỗi giữa đường → phải `UPDATE` cắt bớt hoặc bỏ qua rollback |
+| `20261103080000_AddIncidentPhotoAttachments` | Drop `IncidentPhotoAttachments` | Liên kết ảnh ↔ sự cố/yêu cầu duyệt | Không cần schema | Tệp trong `StoredFiles` + storage **vẫn còn**, thành mồ côi; phải dọn thủ công nếu cần |
+
+- Không rollback nào ở trên xóa `StoredFiles` hay tệp trên đĩa → rollback schema không giải phóng storage.
+- Migration mới hơn (P7) phụ thuộc migration cũ (hóa đơn, yêu cầu duyệt): Down sai thứ tự sẽ bị FK chặn, không tự chạy.
+- Chỉ chạy thử Down trên DB kiểm `NhaTro_VHT123_*`; script `kiem_tra_migration.ps1` cố ý không tự chạy Down.
+
 ## 8. Điểm chưa thống nhất (không tự quyết)
 
 | # | Điểm | Ảnh hưởng schema | Ai chốt |
@@ -305,12 +331,12 @@ Mỗi migration mới ghi: `Down` làm gì, mất dữ liệu gì, có cần bac
 
 ## 10. Checklist hoàn thành task
 
-- [ ] ERD SQL khớp schema đã merge; chạy lại được trên DB sạch (đã đạt ở 2A, lặp lại sau mỗi đợt).
+- [x] ERD SQL khớp schema đã merge; chạy lại được trên DB sạch (đã đạt ở 2A, lặp lại sau mỗi đợt; lần cuối 03/11/2026 trên `dev@951ab06`).
 - [ ] Script `kiem_tra_migration.ps1` chạy đạt trên máy ít nhất 2 người.
 - [ ] Mọi PR migration P4/P5/P7 có kết quả DB sạch + DB có dữ liệu.
-- [ ] Không có FK nghiệp vụ `Cascade`, không bảng thiếu PK, unique có filter xóa mềm.
+- [x] Không có FK nghiệp vụ `Cascade`, không bảng thiếu PK, unique có filter xóa mềm.
 - [ ] Snapshot không lệch phạm vi PR.
-- [ ] ERD SVG vẽ lại theo bảng đã merge và đã gửi Phúc.
-- [ ] Ghi chú rollback cho từng migration mới.
+- [x] ERD SVG vẽ lại theo bảng đã merge và đã gửi Phúc. (vẽ lại: xong; gửi Phúc: **chưa**)
+- [x] Ghi chú rollback cho từng migration mới.
 - [ ] Các điểm mục 8 có quyết định hoặc được ghi rõ "chưa chốt, chưa làm".
 - [ ] Không push/merge khi chưa hỏi.

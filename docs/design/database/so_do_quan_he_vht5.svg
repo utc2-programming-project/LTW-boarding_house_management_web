@@ -1,5 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2212 2300" width="2212" height="2300" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">
-<rect width="2212" height="2300" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2212 2752" width="2212" height="2752" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">
+<rect width="2212" height="2752" fill="#ffffff"/>
+<polyline points="604,290 530,290 530,2050 260,2050 260,2098" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="592" y="302" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="272" y="2076" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="537" y="1170" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">RoomId</text>
+<polyline points="140,390 140,368 20,368 20,2130 40,2130" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="152" y="380" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="34" y="2062" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="26" y="1250" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ReportedByUserId</text>
+<polyline points="480,2140 604,2140" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="493" y="2152" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="591" y="2152" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="542" y="2112" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">IncidentId</text>
+<polyline points="1044,1100 1120,1100 1120,2130 1168,2130" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1057" y="1112" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1156" y="2142" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1127" y="1600" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">FileId</text>
+<polyline points="1300,2214 1300,2360 480,2360" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="492" y="2372" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1312" y="2227" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="890" y="2352" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">IncidentId</text>
+<polyline points="1608,2150 1660,2150 1660,1434 1608,1434" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1619" y="1446" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1621" y="2162" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1667" y="1500" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ApprovalRequestId</text>
 <polyline points="260.0,390.0 260.0,244.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
 <text x="272.0" y="377.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="272.0" y="257.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
@@ -741,13 +765,110 @@
 <line x1="1732.0" y1="1908.0" x2="2172.0" y2="1908.0" stroke="#8c959f" opacity=".16"/>
 <text x="1764.0" y="1923.0" font-size="11" fill="#1f2328">Amount</text>
 <text x="2164.0" y="1923.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,4) NOT NULL</text>
-<text x="40" y="2114" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">CÃ¡ch Ä‘á»c: "1" vÃ  "N" á»Ÿ hai Ä‘áº§u Ä‘Æ°á»ng ná»‘i (N = tá»« 0 trá»Ÿ lÃªn). NhÃ£n trÃªn Ä‘Æ°á»ng lÃ  cá»™t khÃ³a ngoáº¡i. PK khÃ³a chÃ­nh, FK khÃ³a ngoáº¡i, UQ khÃ´ng Ä‘Æ°á»£c trÃ¹ng.</text>
-<text x="40" y="2132" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Má»i FK Ä‘á»u Restrict (NO ACTION): cáº¥m xÃ³a tháº­t báº£ng cha khi cÃ²n dÃ²ng con, ká»ƒ cáº£ con Ä‘Ã£ xÃ³a má»m.</text>
-<text x="40" y="2150" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">XÃ³a má»m (IsDeleted): Properties, Rooms, Tenants, StoredFiles. Invoices KHÃ”NG cÃ³ IsDeleted vÃ¬ D13 khÃ´ng cho há»§y hÃ³a Ä‘Æ¡n trong v1.0.</text>
-<text x="40" y="2168" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Tiá»n: hÃ³a Ä‘Æ¡n vÃ  dá»‹ch vá»¥ decimal(18,2); biá»ƒu giÃ¡ Ä‘iá»‡n nÆ°á»›c vÃ  chi phÃ­ P5 decimal(18,4). Thá»i gian: date cho ká»³, datetime2/datetimeoffset cho má»‘c thao tÃ¡c (UTC).</text>
-<text x="40" y="2186" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">LiÃªn káº¿t má»m (khÃ´ng FK, kiá»ƒm khi ghi): StoredFiles.RelatedEntityId, FileAccessAuditLogs.ActorUserId/FileId, UtilityBillingPeriodSnapshots.BillingPeriodId, ServicePriceHistory.CreatedByUserId.</text>
-<text x="40" y="2204" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Trigger TR_Contracts_PreventApprovedOverlap cháº·n 2 há»£p Ä‘á»“ng Status = 1 chá»“ng khoáº£ng ngÃ y trÃªn cÃ¹ng má»™t phÃ²ng.</text>
-<text x="40" y="2222" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum lÆ°u int: Contracts.Status 0/1/2 (Chá» duyá»‡t/ÄÃ£ duyá»‡t/Tá»« chá»‘i); Invoices.Status 0/1/2 (NhÃ¡p/ÄÃ£ phÃ¡t hÃ nh/ÄÃ£ thu); InvoiceItems.ItemType 0/1/2/3/4; UtilityTariffs.Type 0 Ä‘iá»‡n, 1 nÆ°á»›c; ManagerApprovalRequests.Status 0..3.</text>
-<text x="40" y="2240" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">UQ cÃ³ Ä‘iá»u kiá»‡n: Rooms(PropertyId,Code) khi chÆ°a xÃ³a má»m; Tenants.CitizenId khi cÃ³ vÃ  IsActive = 1; Tenants.UserId khi cÃ³; PropertyManagers(PropertyId,ManagerUserId) khi RevokedAt NULL; 1 yÃªu cáº§u chá» duyá»‡t cho má»—i (OperationCode,TargetType,TargetKey).</text>
-<text x="40" y="2258" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Báº£ng Identity phá»¥ (AspNetRoles, AspNetRoleClaims, AspNetUserRoles, AspNetUserClaims, AspNetUserLogins, AspNetUserTokens, AspNetUserPasskeys) khÃ´ng váº½ trong ERD.</text>
+<rect x="40.0" y="2098.0" width="440" height="336" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M40.0 2126.0V2104.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V2126.0Z" fill="#dbe7fb"/>
+<text x="50.0" y="2117.0" font-size="14" font-weight="700" fill="#1f2328">MaintenanceIncidents</text>
+<line x1="40.0" y1="2126.0" x2="480.0" y2="2126.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2141.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="2141.0" font-size="11" fill="#1f2328">Id</text>
+<text x="472.0" y="2141.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="40.0" y1="2148.0" x2="480.0" y2="2148.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2163.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="2163.0" font-size="11" fill="#1f2328">RoomId</text>
+<text x="472.0" y="2163.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2170.0" x2="480.0" y2="2170.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2185.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="2185.0" font-size="11" fill="#1f2328">ReportedByUserId</text>
+<text x="472.0" y="2185.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="40.0" y1="2192.0" x2="480.0" y2="2192.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2207.0" font-size="11" fill="#1f2328">Title</text>
+<text x="472.0" y="2207.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(200) NOT NULL</text>
+<line x1="40.0" y1="2214.0" x2="480.0" y2="2214.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2229.0" font-size="11" fill="#1f2328">Description</text>
+<text x="472.0" y="2229.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(2000) NOT NULL</text>
+<line x1="40.0" y1="2236.0" x2="480.0" y2="2236.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2251.0" font-size="11" fill="#1f2328">Category</text>
+<text x="472.0" y="2251.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2258.0" x2="480.0" y2="2258.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2273.0" font-size="11" fill="#1f2328">Urgency</text>
+<text x="472.0" y="2273.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2280.0" x2="480.0" y2="2280.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2295.0" font-size="11" fill="#1f2328">Status</text>
+<text x="472.0" y="2295.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2302.0" x2="480.0" y2="2302.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2317.0" font-size="11" fill="#1f2328">AssigneeName</text>
+<text x="472.0" y="2317.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(100)</text>
+<line x1="40.0" y1="2324.0" x2="480.0" y2="2324.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2339.0" font-size="11" fill="#1f2328">TechnicalNotes</text>
+<text x="472.0" y="2339.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(2000)</text>
+<line x1="40.0" y1="2346.0" x2="480.0" y2="2346.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2361.0" font-size="11" fill="#1f2328">RepairCost</text>
+<text x="472.0" y="2361.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,0)</text>
+<line x1="40.0" y1="2368.0" x2="480.0" y2="2368.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2383.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="472.0" y="2383.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="40.0" y1="2390.0" x2="480.0" y2="2390.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2405.0" font-size="11" fill="#1f2328">UpdatedAt</text>
+<text x="472.0" y="2405.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="40.0" y1="2412.0" x2="480.0" y2="2412.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2427.0" font-size="11" fill="#1f2328">RowVersion</text>
+<text x="472.0" y="2427.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
+<rect x="604.0" y="2098.0" width="440" height="204" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M604.0 2126.0V2104.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V2126.0Z" fill="#dbe7fb"/>
+<text x="614.0" y="2117.0" font-size="14" font-weight="700" fill="#1f2328">MaintenanceIncidentHistories</text>
+<line x1="604.0" y1="2126.0" x2="1044.0" y2="2126.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="2141.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="636.0" y="2141.0" font-size="11" fill="#1f2328">Id</text>
+<text x="1036.0" y="2141.0" text-anchor="end" font-size="10" fill="#656d76">bigint identity NOT NULL</text>
+<line x1="604.0" y1="2148.0" x2="1044.0" y2="2148.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="2163.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="636.0" y="2163.0" font-size="11" fill="#1f2328">IncidentId</text>
+<text x="1036.0" y="2163.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="604.0" y1="2170.0" x2="1044.0" y2="2170.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2185.0" font-size="11" fill="#1f2328">Action</text>
+<text x="1036.0" y="2185.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="604.0" y1="2192.0" x2="1044.0" y2="2192.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2207.0" font-size="11" fill="#1f2328">FromStatus</text>
+<text x="1036.0" y="2207.0" text-anchor="end" font-size="10" fill="#656d76">int</text>
+<line x1="604.0" y1="2214.0" x2="1044.0" y2="2214.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2229.0" font-size="11" fill="#1f2328">ToStatus</text>
+<text x="1036.0" y="2229.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="604.0" y1="2236.0" x2="1044.0" y2="2236.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2251.0" font-size="11" fill="#1f2328">ActorUserId</text>
+<text x="1036.0" y="2251.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="604.0" y1="2258.0" x2="1044.0" y2="2258.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2273.0" font-size="11" fill="#1f2328">Note</text>
+<text x="1036.0" y="2273.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(2000)</text>
+<line x1="604.0" y1="2280.0" x2="1044.0" y2="2280.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2295.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="1036.0" y="2295.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<rect x="1168.0" y="2098.0" width="440" height="116" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M1168.0 2126.0V2104.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V2126.0Z" fill="#dbe7fb"/>
+<text x="1178.0" y="2117.0" font-size="14" font-weight="700" fill="#1f2328">IncidentPhotoAttachments</text>
+<line x1="1168.0" y1="2126.0" x2="1608.0" y2="2126.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2141.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="1200.0" y="2141.0" font-size="11" fill="#1f2328">FileId</text>
+<text x="1600.0" y="2141.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier NOT NULL</text>
+<line x1="1168.0" y1="2148.0" x2="1608.0" y2="2148.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2163.0" font-size="11" fill="#1f2328">Kind</text>
+<text x="1600.0" y="2163.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1168.0" y1="2170.0" x2="1608.0" y2="2170.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2185.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1200.0" y="2185.0" font-size="11" fill="#1f2328">IncidentId</text>
+<text x="1600.0" y="2185.0" text-anchor="end" font-size="10" fill="#656d76">int</text>
+<line x1="1168.0" y1="2192.0" x2="1608.0" y2="2192.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2207.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1200.0" y="2207.0" font-size="11" fill="#1f2328">ApprovalRequestId</text>
+<text x="1600.0" y="2207.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier</text>
+<text x="40" y="2530" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Cách đọc: "1" và "N" ở hai đầu đường nối (N = từ 0 trở lên). Nhãn trên đường là cột khóa ngoại. PK khóa chính, FK khóa ngoại, UQ không được trùng.</text>
+<text x="40" y="2548" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Mọi FK đều Restrict (NO ACTION): cấm xóa thật bảng cha khi còn dòng con, kể cả con đã xóa mềm. 3 bảng P7 dùng cùng quy tắc.</text>
+<text x="40" y="2566" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Xóa mềm (IsDeleted): Properties, Rooms, Tenants, StoredFiles. Invoices KHÔNG có IsDeleted vì D13 không cho hủy hóa đơn trong v1.0.</text>
+<text x="40" y="2584" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Tiền: hóa đơn và dịch vụ decimal(18,2); biểu giá điện nước và chi phí P5 decimal(18,4); MaintenanceIncidents.RepairCost decimal(18,0). Thời gian: date cho kỳ, datetime2/datetimeoffset cho mốc thao tác (UTC).</text>
+<text x="40" y="2602" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Liên kết mềm (không FK, kiểm khi ghi): StoredFiles.RelatedEntityId, FileAccessAuditLogs.ActorUserId/FileId, UtilityBillingPeriodSnapshots.BillingPeriodId, ServicePriceHistory.CreatedByUserId, MaintenanceIncidentHistories.ActorUserId.</text>
+<text x="40" y="2620" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Trigger TR_Contracts_PreventApprovedOverlap chặn 2 hợp đồng Status = 1 chồng khoảng ngày trên cùng một phòng.</text>
+<text x="40" y="2638" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum lưu int: Contracts.Status 0/1/2 (Chờ duyệt/Đã duyệt/Từ chối); Invoices.Status 0/1/2 (Nháp/Đã phát hành/Đã thu); InvoiceItems.ItemType 0/1/2/3/4; UtilityTariffs.Type 0 điện, 1 nước; ManagerApprovalRequests.Status 0..3.</text>
+<text x="40" y="2656" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum P7: MaintenanceIncidents.Category 0..4 (điện/nước/nội thất/vệ sinh/khác), Urgency 0..2 (Thấp/Trung bình/Cao), Status 0..2 (Mới/Đang xử lý/Đã xong); MaintenanceIncidentHistories.Action 0..4; IncidentPhotoAttachments.Kind 0/1.</text>
+<text x="40" y="2674" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Check P7: Category/Urgency/Status theo khoảng; RepairCost NULL hoặc >= 0; FromStatus NULL hoặc 0..2; mỗi ảnh sự cố phải có IncidentId hoặc ApprovalRequestId (CK_IncidentPhotoAttachments_Target).</text>
+<text x="40" y="2692" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">UQ có điều kiện: Rooms(PropertyId,Code) khi chưa xóa mềm; Tenants.CitizenId khi có và IsActive = 1; Tenants.UserId khi có; PropertyManagers(PropertyId,ManagerUserId) khi RevokedAt NULL; 1 yêu cầu chờ duyệt cho mỗi (OperationCode,TargetType,TargetKey).</text>
+<text x="40" y="2710" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Bảng Identity phụ (AspNetRoles, AspNetRoleClaims, AspNetUserRoles, AspNetUserClaims, AspNetUserLogins, AspNetUserTokens, AspNetUserPasskeys) không vẽ trong ERD.</text>
 </svg>

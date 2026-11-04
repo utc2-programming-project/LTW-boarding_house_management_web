@@ -224,7 +224,7 @@ builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
-builder.Services.AddScoped<IRoomUsageChecker, NoActiveContractRoomUsageChecker>();
+builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();

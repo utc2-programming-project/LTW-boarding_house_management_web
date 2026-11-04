@@ -1,9 +1,9 @@
 -- Tạo cơ sở dữ liệu NhaTro (chạy lại nhiều lần không lỗi)
 --
--- ĐỒNG BỘ VHT-28 (đợt 2D / VHT-122, 02/11/2026): file này cập nhật theo TOÀN BỘ migration
--- đã merge trên `dev` tới 20261101110944_AddManagerApprovalQueue. Không vẽ bảng "dự kiến":
+-- ĐỒNG BỘ VHT-28 (đợt 2E / VHT-123, 03/11/2026): file này cập nhật theo TOÀN BỘ migration
+-- đã merge trên `dev@951ab06` tới 20261103080000_AddIncidentPhotoAttachments. Không vẽ bảng "dự kiến":
 -- mọi bảng dưới đây đều đã có migration + entity + configuration trên `dev`.
--- Phạm vi: 19 bảng nghiệp vụ + AspNetUsers. Bảng Identity phụ (Roles, UserRoles, Claims,
+-- Phạm vi: 21 bảng nghiệp vụ + AspNetUsers (22 bảng vẽ trong hình). Bảng Identity phụ (Roles, UserRoles, Claims,
 -- Logins, Tokens, Passkeys) không thuộc ERD, xem ghi chú cuối hình SVG.
 -- Delta đã bổ sung so với bản VHT-5 (đợt 2A):
 --   * AspNetUsers: + FullName (VHT-8), + ApprovedAt (VHT-95).
@@ -17,6 +17,10 @@
 --   * UtilityTariffs + UtilityTariffTiers (VHT-100); UtilityBillingPeriodSnapshots +
 --     UtilityBillingCostLineSnapshots (P5).
 --   * Invoices + InvoiceItems (P6); ManagerApprovalRequests (VHT-96).
+-- Delta đợt 2E (VHT-123, 03/11/2026):
+--   * MaintenanceIncidents + MaintenanceIncidentHistories (P7, VHT-33); Note lịch sử 2000 ký tự.
+--   * IncidentPhotoAttachments (VHT-127), PK là FileId, luôn trỏ StoredFiles và phải có đích.
+--   * Không đổi bảng/cột cũ: 3 migration P7 chỉ thêm bảng + nới Note 1000 → 2000.
 IF DB_ID(N'NhaTro') IS NULL
     CREATE DATABASE NhaTro;
 GO
@@ -683,6 +687,96 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ManagerApprovalReques
     CREATE INDEX IX_ManagerApprovalRequests_Status_RequestedAt ON ManagerApprovalRequests(Status, RequestedAt);
 GO
 
+-- ============================================================================
+-- VHT-33/VHT-127 (P7) — Sự cố bảo trì, lịch sử xử lý và ảnh đính kèm
+-- Bản ghi sự cố do khách/quản lý tạo; lịch sử là append-only (không sửa/xóa).
+-- Ảnh đính kèm trỏ StoredFiles (PK là FileId) và phải có ít nhất một đích:
+-- sự cố đã duyệt hoặc yêu cầu chờ duyệt (CK_IncidentPhotoAttachments_Target).
+-- ActorUserId của lịch sử là liên kết mềm, không đặt FK (xem ghi chú cuối hình).
+-- ============================================================================
+IF OBJECT_ID(N'dbo.MaintenanceIncidents', N'U') IS NULL
+BEGIN
+    CREATE TABLE MaintenanceIncidents
+    (
+        Id INT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_MaintenanceIncidents PRIMARY KEY,
+        RoomId INT NOT NULL,  -- phòng gặp sự cố, trỏ tới Rooms.Id
+        ReportedByUserId NVARCHAR(450) NOT NULL,  -- người báo, trỏ tới AspNetUsers.Id
+        Title NVARCHAR(200) NOT NULL,
+        Description NVARCHAR(2000) NOT NULL,
+        Category INT NOT NULL,  -- 0..4: điện, nước, nội thất, vệ sinh, khác
+        Urgency INT NOT NULL,  -- 0 Thấp, 1 Trung bình, 2 Cao
+        Status INT NOT NULL,  -- 0 Mới, 1 Đang xử lý, 2 Đã xong
+        AssigneeName NVARCHAR(100),  -- người/nhóm sửa, nhập tay
+        TechnicalNotes NVARCHAR(2000),
+        RepairCost DECIMAL(18, 0),  -- chi phí sửa; làm tròn đồng, không âm
+        CreatedAt DATETIME2 NOT NULL,
+        UpdatedAt DATETIME2,
+        RowVersion ROWVERSION NOT NULL,
+        CONSTRAINT FK_MaintenanceIncidents_Rooms_RoomId FOREIGN KEY (RoomId) REFERENCES Rooms(Id),  -- Restrict
+        CONSTRAINT FK_MaintenanceIncidents_AspNetUsers_ReportedByUserId FOREIGN KEY (ReportedByUserId) REFERENCES AspNetUsers(Id),  -- Restrict
+        CONSTRAINT CK_MaintenanceIncidents_Category CHECK (Category BETWEEN 0 AND 4),
+        CONSTRAINT CK_MaintenanceIncidents_Urgency CHECK (Urgency BETWEEN 0 AND 2),
+        CONSTRAINT CK_MaintenanceIncidents_Status CHECK (Status BETWEEN 0 AND 2),
+        CONSTRAINT CK_MaintenanceIncidents_RepairCost CHECK (RepairCost IS NULL OR RepairCost >= 0)
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_MaintenanceIncidents_RoomId' AND object_id = OBJECT_ID(N'dbo.MaintenanceIncidents'))
+    CREATE INDEX IX_MaintenanceIncidents_RoomId ON MaintenanceIncidents(RoomId);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_MaintenanceIncidents_ReportedByUserId' AND object_id = OBJECT_ID(N'dbo.MaintenanceIncidents'))
+    CREATE INDEX IX_MaintenanceIncidents_ReportedByUserId ON MaintenanceIncidents(ReportedByUserId);
+GO
+
+IF OBJECT_ID(N'dbo.MaintenanceIncidentHistories', N'U') IS NULL
+BEGIN
+    CREATE TABLE MaintenanceIncidentHistories
+    (
+        Id BIGINT IDENTITY(1, 1) NOT NULL CONSTRAINT PK_MaintenanceIncidentHistories PRIMARY KEY,
+        IncidentId INT NOT NULL,  -- trỏ tới MaintenanceIncidents.Id
+        Action INT NOT NULL,  -- 0..4: tạo, đổi trạng thái, gán người, ghi chú, duyệt
+        FromStatus INT,  -- NULL khi là thao tác đầu tiên
+        ToStatus INT NOT NULL,
+        ActorUserId NVARCHAR(450) NOT NULL,  -- liên kết mềm tới AspNetUsers.Id
+        Note NVARCHAR(2000),  -- VHT-33 nâng từ 1000 lên 2000 ký tự (20261102125721)
+        CreatedAt DATETIME2 NOT NULL,
+        CONSTRAINT FK_MaintenanceIncidentHistories_MaintenanceIncidents_IncidentId FOREIGN KEY (IncidentId) REFERENCES MaintenanceIncidents(Id),  -- Restrict
+        CONSTRAINT CK_MaintenanceIncidentHistories_Action CHECK (Action BETWEEN 0 AND 4),
+        CONSTRAINT CK_MaintenanceIncidentHistories_FromStatus CHECK (FromStatus IS NULL OR FromStatus BETWEEN 0 AND 2),
+        CONSTRAINT CK_MaintenanceIncidentHistories_ToStatus CHECK (ToStatus BETWEEN 0 AND 2)
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_MaintenanceIncidentHistories_IncidentId' AND object_id = OBJECT_ID(N'dbo.MaintenanceIncidentHistories'))
+    CREATE INDEX IX_MaintenanceIncidentHistories_IncidentId ON MaintenanceIncidentHistories(IncidentId);
+GO
+
+IF OBJECT_ID(N'dbo.IncidentPhotoAttachments', N'U') IS NULL
+BEGIN
+    CREATE TABLE IncidentPhotoAttachments
+    (
+        FileId UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_IncidentPhotoAttachments PRIMARY KEY,  -- 1 tệp chỉ thuộc 1 ảnh sự cố
+        Kind INT NOT NULL,  -- 0 ảnh khách/quản lý gửi, 1 ảnh chờ duyệt kèm yêu cầu
+        IncidentId INT,  -- sự cố đã tồn tại; NULL khi ảnh gắn với yêu cầu chờ duyệt
+        ApprovalRequestId UNIQUEIDENTIFIER,  -- trỏ tới ManagerApprovalRequests.Id
+        CONSTRAINT FK_IncidentPhotoAttachments_StoredFiles_FileId FOREIGN KEY (FileId) REFERENCES StoredFiles(Id),  -- Restrict
+        CONSTRAINT FK_IncidentPhotoAttachments_MaintenanceIncidents_IncidentId FOREIGN KEY (IncidentId) REFERENCES MaintenanceIncidents(Id),  -- Restrict
+        CONSTRAINT FK_IncidentPhotoAttachments_ManagerApprovalRequests_ApprovalRequestId FOREIGN KEY (ApprovalRequestId) REFERENCES ManagerApprovalRequests(Id),  -- Restrict
+        CONSTRAINT CK_IncidentPhotoAttachments_Kind CHECK (Kind IN (0, 1)),
+        CONSTRAINT CK_IncidentPhotoAttachments_Target CHECK (IncidentId IS NOT NULL OR ApprovalRequestId IS NOT NULL)
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_IncidentPhotoAttachments_IncidentId_Kind' AND object_id = OBJECT_ID(N'dbo.IncidentPhotoAttachments'))
+    CREATE INDEX IX_IncidentPhotoAttachments_IncidentId_Kind ON IncidentPhotoAttachments(IncidentId, Kind);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_IncidentPhotoAttachments_ApprovalRequestId' AND object_id = OBJECT_ID(N'dbo.IncidentPhotoAttachments'))
+    CREATE INDEX IX_IncidentPhotoAttachments_ApprovalRequestId ON IncidentPhotoAttachments(ApprovalRequestId);
+GO
+
 -- Nạp 21 công tắc mặc định (chạy lại không nhân đôi). Mặc định Duyệt, riêng SW-15* mặc định Cho phép.
 INSERT INTO ManagerToggles (Code, Mode, UpdatedAt, UpdatedByUserId)
 SELECT v.Code, v.Mode, CAST('2026-01-01T00:00:00+00:00' AS DATETIMEOFFSET), NULL
@@ -700,7 +794,9 @@ GO
 -- khách → hợp đồng → hóa đơn, cộng dữ liệu tham chiếu bắt buộc (21 công tắc,
 -- biểu giá điện/nước, danh mục dịch vụ).
 -- KHÔNG nạp: UtilityBillingPeriodSnapshots / UtilityBillingCostLineSnapshots (chỉ sinh
--- khi chốt kỳ trên app) và ManagerApprovalRequests (chỉ sinh khi Quản lý gửi thao tác).
+-- khi chốt kỳ trên app), ManagerApprovalRequests (chỉ sinh khi Quản lý gửi thao tác) và
+-- 3 bảng P7 MaintenanceIncidents / MaintenanceIncidentHistories / IncidentPhotoAttachments
+-- (chỉ sinh khi báo sự cố trên app).
 -- Tài khoản mẫu không có mật khẩu nên không đăng nhập được.
 -- ============================================================================
 IF NOT EXISTS (SELECT 1 FROM AspNetUsers WHERE Id = N'mau-chu-tro')

@@ -1,0 +1,172 @@
+@page "/rooms/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject RoomPageService PageService
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<RoomTrash> Logger
+
+<PageTitle>@L["P2TrashTitle"] · @L["AppName"]</PageTitle>
+
+<div class="p2-page">
+    <header class="p2-heading">
+        <div>
+            <h1>@L["P2TrashTitle"]</h1>
+            <p>@L["P2TrashSubtitle"]</p>
+        </div>
+        <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
+            <LucideIcon Name="door" />@L["P2RoomsTitle"]
+        </button>
+    </header>
+
+    <DataTable @ref="_table" TItem="RoomTrashItem" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["P2TrashTable"]" Labels="_tableLabels">
+        <EmptyActions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToRooms">@L["P2RoomsTitle"]</button>
+        </EmptyActions>
+    </DataTable>
+
+    <div class="p2-table-options">
+        <label for="trash-page-size">@L["P2RowsPerPage"]</label>
+        <select id="trash-page-size" value="@_pageSize" @onchange="ChangePageSize">
+            <option value="10">10</option><option value="20">20</option><option value="50">50</option>
+        </select>
+    </div>
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["P2TrashRestoreTitle"]"
+               Message="@L["P2TrashRestoreConfirm", _restoreRoom?.Code ?? string.Empty]"
+               ConfirmText="@L["Restore"]" CancelText="@L["Cancel"]"
+               BusyText="@L["P2TrashRestoring"]"
+               OnConfirm="RestoreAsync" OnCancel="CancelRestore" />
+
+@code {
+    private DataTable<RoomTrashItem>? _table;
+    private IReadOnlyList<DataTableColumn<RoomTrashItem>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private RoomTrashItem? _restoreRoom;
+    private bool _restoreVisible;
+    private int _pageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<RoomTrashItem>> BuildColumns()
+    {
+        RenderFragment<RoomTrashItem> status = item =>
+            @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
+        RenderFragment<RoomTrashItem> actions = item => @<div class="p2-row-actions">
+            <button class="btn btn-secondary" type="button" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "code", Title = L["P2RoomCode"], Value = item => item.Code },
+            new() { Key = "property", Title = L["P2Property"], Value = item => item.PropertyName },
+            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
+            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
+            new() { Key = "status", Title = L["P2Status"], Template = status },
+            new() { Key = "deletedAt", Title = L["P2TrashDeletedAt"], Value = item => DateFormatter.FormatDateTime(item.DeletedAt) },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+        ];
+    }
+
+    private async Task<PagedResult<RoomTrashItem>> LoadDeletedAsync(DataTableRequest request) =>
+        await PageService.ListDeletedAsync(new RoomFilter
+        {
+            Page = request.Page,
+            PageSize = request.PageSize
+        });
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(RoomTrashItem item)
+    {
+        _restoreRoom = item;
+        _restoreVisible = true;
+    }
+
+    private void CancelRestore()
+    {
+        _restoreVisible = false;
+        _restoreRoom = null;
+    }
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreRoom is null)
+        {
+            CancelRestore();
+            return;
+        }
+
+        try
+        {
+            var result = await PageService.RestoreAsync(_restoreRoom.Id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["P2TrashRestored"]);
+                CancelRestore();
+                if (_table is not null)
+                {
+                    await _table.ReloadAsync();
+                }
+
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode switch
+            {
+                RoomErrorCodes.DuplicateRoomCode => L["P2RestoreDuplicateCode"],
+                RoomErrorCodes.Forbidden => L["P2Forbidden"],
+                RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
+                _ => L["P2TrashRestoreFailed"]
+            });
+            CancelRestore();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["P2Forbidden"]);
+            CancelRestore();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 room restore failed");
+            Toasts.Error(L["P2TrashRestoreFailed"]);
+            CancelRestore();
+        }
+    }
+
+    private void GoToRooms() => Navigation.NavigateTo("/rooms");
+
+    private string StatusText(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => L["P2StatusAvailable"],
+        RoomStatus.Rented => L["P2StatusRented"],
+        RoomStatus.Maintenance => L["P2StatusMaintenance"],
+        _ => L["P2StatusUnknown"]
+    };
+
+    private static BadgeTone StatusTone(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => BadgeTone.Success,
+        RoomStatus.Rented => BadgeTone.Info,
+        RoomStatus.Maintenance => BadgeTone.Warning,
+        _ => BadgeTone.Neutral
+    };
+}
