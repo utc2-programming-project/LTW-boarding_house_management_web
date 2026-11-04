@@ -373,6 +373,9 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageSer
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();
+// VHT-53: lập/phát hành hóa đơn từ nguồn chi phí đã chốt, chống trùng kỳ.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
+    Web.Features.Invoices.Services.InvoiceService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();
