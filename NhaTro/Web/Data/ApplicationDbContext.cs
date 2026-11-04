@@ -25,6 +25,8 @@ namespace Web.Data
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
+        // VHT-125 (2D): yeu cau gia han hop dong do khach thue gui tu "Phong dang thue".
+        public DbSet<ContractRenewalRequest> ContractRenewalRequests => Set<ContractRenewalRequest>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
         public DbSet<MaintenanceIncident> MaintenanceIncidents => Set<MaintenanceIncident>();

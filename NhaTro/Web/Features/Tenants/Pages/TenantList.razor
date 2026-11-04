@@ -11,6 +11,11 @@
 <section class="tenant-list-page" aria-labelledby="tenants-title">
     <header class="tenant-page-heading">
         <div>
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["Dashboard"], "/"),
+                new(L["TenantsTitle"])
+            })" />
             <div class="tenant-title-row">
                 <h1 id="tenants-title">@L["TenantsTitle"]</h1>
             </div>
@@ -42,31 +47,38 @@
         </div>
     }
 
-    <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
-            <div class="tenant-stat-value">@SummaryValue(_summary?.TotalCount)<small>@L["TenantPeople"]</small></div>
-            <p>@L["TenantAllRecordsHint"]</p>
-        </article>
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
-            <div class="tenant-stat-value">@SummaryValue(_summary?.ActiveCount)<small>@L["TenantRecords"]</small></div>
-            <p>@Percent(_summary?.ActiveCount, _summary?.TotalCount) @L["TenantActiveRateHint"]</p>
-        </article>
-        @if (_canRevealIdNumber)
-        {
+    @if (!_summaryError && _summary is null)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (!_summaryError)
+    {
+        <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
             <article class="tenant-stat-card">
-                <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
-                <div class="tenant-stat-value">@SummaryValue(_summary?.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
-                <p>@Percent(_summary?.LinkedAccountCount, _summary?.TotalCount) @L["TenantAccountRateHint"]</p>
+                <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
+                <div class="tenant-stat-value">@SummaryValue(_summary!.TotalCount)<small>@L["TenantPeople"]</small></div>
+                <p>@L["TenantAllRecordsHint"]</p>
             </article>
-        }
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
-            <div class="tenant-stat-value">@Percent(_summary?.WithIdNumberCount, _summary?.TotalCount)<small>%</small></div>
-            <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
-        </article>
-    </section>
+            <article class="tenant-stat-card">
+                <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
+                <div class="tenant-stat-value">@SummaryValue(_summary!.ActiveCount)<small>@L["TenantRecords"]</small></div>
+                <p>@Percent(_summary!.ActiveCount, _summary!.TotalCount) @L["TenantActiveRateHint"]</p>
+            </article>
+            @if (_canRevealIdNumber)
+            {
+                <article class="tenant-stat-card">
+                    <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
+                    <div class="tenant-stat-value">@SummaryValue(_summary!.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
+                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount) @L["TenantAccountRateHint"]</p>
+                </article>
+            }
+            <article class="tenant-stat-card">
+                <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
+                <div class="tenant-stat-value">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></div>
+                <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
+            </article>
+        </section>
+    }
 
     @if (_loadingDetail)
     {
@@ -651,10 +663,10 @@
         SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
     };
 
-    private string SummaryValue(int? value) => value?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+    private string SummaryValue(int? value) => value?.ToString("N0", NumberFormatter.Display) ?? L["NoData"].Value;
 
     private string Percent(int? value, int? total) =>
-        total is > 0 && value is not null ? ((double)value.Value / total.Value * 100).ToString("0.#", CultureInfo.CurrentCulture) : "0";
+        total is > 0 && value is not null ? NumberFormatter.Trimmed((double)value.Value / total.Value * 100) : "0";
 
     private static string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();

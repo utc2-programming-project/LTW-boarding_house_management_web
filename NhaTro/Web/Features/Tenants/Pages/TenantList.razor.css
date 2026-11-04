@@ -1,7 +1,7 @@
 .tenant-list-page { display: flex; flex-direction: column; gap: 24px; }
 .tenant-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .tenant-page-heading p { margin: 8px 0 0; }
-.tenant-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.tenant-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 .tenant-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .tenant-page-actions .btn { min-height: 44px; }
 
@@ -54,16 +54,17 @@
     .tenant-filter-select { flex: 1 1 150px; }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
     .tenant-list-page { gap: 16px; }
-    .tenant-page-heading { align-items: stretch; flex-direction: column; gap: 14px; }
+    .tenant-page-heading { align-items: stretch; flex-direction: column; gap: 16px; }
     .tenant-page-actions { justify-content: stretch; }
     .tenant-page-actions .btn { flex: 1; min-height: 44px; }
-    .tenant-stats { gap: 10px; }
+    .tenant-stats { grid-template-columns: 1fr; gap: 10px; }
     .tenant-stat-card { padding: 14px; }
     .tenant-stat-top { align-items: flex-start; font-size: .6875rem; }
     .tenant-stat-value { font-size: 1.625rem; }
     .tenant-stat-icon { width: 32px; height: 32px; }
+    .tenant-icon-button { width: 44px; height: 44px; }
     .tenant-filter-card { padding: 12px; }
     .tenant-filter-row { align-items: stretch; gap: 8px; }
     .tenant-search-field { flex: 1 1 100%; }

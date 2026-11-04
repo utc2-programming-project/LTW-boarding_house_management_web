@@ -1,0 +1,11 @@
+@page "/services/readings"
+@page "/services/meter-reading"
+@inject NavigationManager Navigation
+
+@code {
+    // Route cũ của module chỉ số điện/nước: chuyển về trang chính /meter-readings.
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateTo("/meter-readings", forceLoad: true);
+    }
+}

@@ -1,27 +1,38 @@
 @page "/tenant/my-room"
 @attribute [Authorize(Roles = Roles.KhachThue)]
 @rendermode InteractiveServer
+@using Web.Features.Contracts
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Rules
+@using Web.Features.Contracts.Services
 @inject TenantDocumentPageService DocumentService
+@inject IContractRenewalService RenewalService
 @inject ToastService Toasts
+@inject ILogger<MyLeasedRoomView> Logger
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["MyRoomTitle"] · @L["AppName"]</PageTitle>
 
 <div class="leased-room-page">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-    {
-        new(L["Dashboard"], "/"),
-        new(L["MyRoomTitle"])
-    })" />
-
     @if (_loading)
     {
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+        {
+            new(L["Dashboard"], "/"),
+            new(L["MyRoomTitle"])
+        })" />
         <div class="leased-room-state">
             <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
         </div>
     }
     else if (_loadFailed)
     {
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+        {
+            new(L["Dashboard"], "/"),
+            new(L["MyRoomTitle"])
+        })" />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["MyRoomTitle"]" Description="@L["MyRoomLoadFailed"]">
                 <button type="button" class="btn btn-secondary" @onclick="LoadRoomAsync">@L["Retry"]</button>
@@ -30,43 +41,69 @@
     }
     else if (_leasedRoom is null)
     {
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+        {
+            new(L["Dashboard"], "/"),
+            new(L["MyRoomTitle"])
+        })" />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["EmptyMyRoomTitle"]" Description="@L["EmptyMyRoomDesc"]">
-                <a href="/tenant/profile" class="btn btn-secondary">
-                    <LucideIcon Name="user" />
-                    @L["MyTenantProfile"]
-                </a>
+                <Icon>
+                    <LucideIcon Name="home" />
+                </Icon>
+                <ChildContent>
+                    <a href="/tenant/profile" class="btn btn-secondary">
+                        <LucideIcon Name="user" />
+                        @L["MyTenantProfile"]
+                    </a>
+                </ChildContent>
             </EmptyStateCard>
         </div>
     }
     else
     {
-        <header class="leased-room-header">
+        <div class="breadcrumb-title-stack">
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["Dashboard"], "/"),
+                new(L["MyRoomTitle"])
+            })" />
+
+            <header class="leased-room-header">
             <div class="leased-room-title-block">
                 <div class="leased-room-title-row">
                     <h1 id="leased-room-title">@L["LeasedRoomContractHeading"]</h1>
                     <span class="leased-room-status-badge">@GetContractStatusLabel()</span>
                 </div>
                 <p class="leased-room-subtitle">
-                    @L["LeasedRoomContractDescription", _leasedRoom.RoomCode, _leasedRoom.PropertyName]
+                    @L["LeasedRoomContractDescription",
+                       !string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value,
+                       !string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value]
                 </p>
             </div>
 
             <div class="leased-room-actions">
+                <a href="@($"/contracts/{_leasedRoom.ContractId}")"
+                   class="btn btn-secondary">
+                    <LucideIcon Name="file-text" />
+                    <span>@L["P2ViewDetails"]</span>
+                </a>
+
                 <button type="button"
                         class="btn btn-secondary"
                         @onclick="OpenRenewModal">
                     <LucideIcon Name="refresh-cw" />
-                    @L["RenewContract"]
+                    <span>@L["RenewContract"]</span>
                 </button>
 
                 <a href="/documents"
                    class="btn btn-primary">
-                    <LucideIcon Name="download" />
-                    @L["DownloadFullContractPdf"]
+                    <LucideIcon Name="folder" />
+                    <span>@L["TenantDocumentsTitle"]</span>
                 </a>
             </div>
         </header>
+        </div>
 
         <div class="leased-room-banner">
             <div class="leased-room-banner-copy">
@@ -85,15 +122,31 @@
                     <span class="leased-room-bento-label">@L["LeasedRoomInfo"]</span>
                     <span class="leased-room-bento-icon leased-room-icon-indigo"><LucideIcon Name="home" /></span>
                 </div>
-                <div class="leased-room-bento-value">@_leasedRoom.RoomCode · @_leasedRoom.PropertyName</div>
+                <div class="leased-room-bento-value">@(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value) · @(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)</div>
                 <div class="leased-room-bento-footer">
+                    @if (_leasedRoom.Floor.HasValue)
+                    {
+                        <span>@L["RoomFloor"]: <span class="tabular-nums">@_leasedRoom.Floor.Value</span> · </span>
+                    }
+                    else
+                    {
+                        <span>@L["RoomFloor"]: @L["NoData"] · </span>
+                    }
                     @if (_leasedRoom.AreaM2.HasValue)
                     {
-                        <span>@L["RoomAreaWithValue", _leasedRoom.AreaM2.Value.ToString("0.##")].Value</span>
+                        <span>@L["RoomArea"]: <span class="tabular-nums">@NumberFormatter.Trimmed(_leasedRoom.AreaM2.Value)</span> m²</span>
+                    }
+                    else
+                    {
+                        <span>@L["RoomArea"]: @L["NoData"]</span>
                     }
                     @if (!string.IsNullOrWhiteSpace(_leasedRoom.PropertyAddress))
                     {
-                        <span>@_leasedRoom.PropertyAddress</span>
+                        <span> · @_leasedRoom.PropertyAddress</span>
+                    }
+                    else
+                    {
+                        <span> · @L["NoData"]</span>
                     }
                 </div>
             </article>
@@ -104,7 +157,11 @@
                     <span class="leased-room-bento-icon leased-room-icon-green"><LucideIcon Name="check-circle-2" /></span>
                 </div>
                 <div class="leased-room-bento-value leased-room-status-value">@GetContractStatusLabel()</div>
-                <div class="leased-room-bento-footer">@L["ContractNumberLabel", _leasedRoom.ContractNumber]</div>
+                <div class="leased-room-bento-footer">
+                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="leased-room-contract-link">
+                        @L["ContractNumberLabel", _leasedRoom.ContractNumber]
+                    </a>
+                </div>
             </article>
 
             <article class="leased-room-bento-card">
@@ -113,10 +170,24 @@
                     <span class="leased-room-bento-icon leased-room-icon-blue"><LucideIcon Name="calendar" /></span>
                 </div>
                 <div class="leased-room-bento-value">
-                    @L["DurationInMonths", GetDurationMonths(_leasedRoom.StartDate, _leasedRoom.EndDate)]
+                    @if (GetDurationMonths(_leasedRoom.StartDate, _leasedRoom.EndDate) is { } durationMonths)
+                    {
+                        <span class="tabular-nums">@L["DurationInMonths", durationMonths]</span>
+                    }
+                    else
+                    {
+                        @L["NoData"]
+                    }
                 </div>
-                <div class="leased-room-bento-footer">
-                    @DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.EndDate))
+                <div class="leased-room-bento-footer leased-room-date-range">
+                    <span>
+                        <span class="leased-room-date-label">@L["LeaseStartDateLabel"]:</span>
+                        <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate))</span>
+                    </span>
+                    <span>
+                        <span class="leased-room-date-label">@L["LeaseEndDateLabel"]:</span>
+                        <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.EndDate))</span>
+                    </span>
                 </div>
             </article>
         </section>
@@ -124,34 +195,54 @@
         <section class="leased-room-panel" aria-labelledby="leased-room-terms-title">
             <div class="leased-room-panel-header">
                 <h2 id="leased-room-terms-title">@L["CoreAgreementTerms"]</h2>
-                <span>@L["ContractNumberLabel", _leasedRoom.ContractNumber]</span>
+                <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="leased-room-contract-link">
+                    @L["ContractNumberLabel", _leasedRoom.ContractNumber]
+                </a>
             </div>
 
             <div class="leased-room-terms-grid">
                 <div class="leased-room-term">
                     <span class="leased-room-term-label">@L["MonthlyRentLabel"]</span>
-                    <p class="leased-room-term-value">
+                    <p class="leased-room-term-value leased-room-term-numeric">
                         @MoneyFormatter.Format(_leasedRoom.MonthlyRent) / @L["MonthUnit"]
                     </p>
-                    <p class="leased-room-term-note">@L["MonthlyPaymentDue"]</p>
+                    <p class="leased-room-term-note">@L["MonthlyRentNote"]</p>
                 </div>
 
                 <div class="leased-room-term">
                     <span class="leased-room-term-label">@L["RoomDeposit"]</span>
-                    <p class="leased-room-term-value">@MoneyFormatter.Format(_leasedRoom.DepositAmount)</p>
+                    <p class="leased-room-term-value leased-room-term-numeric">@MoneyFormatter.Format(_leasedRoom.DepositAmount)</p>
                     <p class="leased-room-term-note">
-                        @L["DepositPaidOn", DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate))]
+                        @L["DepositAmount"]:
+                        @if (_leasedRoom.PaidDepositAmount is { } paidDeposit)
+                        {
+                            <span class="tabular-nums">@MoneyFormatter.Format(paidDeposit)</span>
+                        }
+                        else
+                        {
+                            @L["NoData"].Value
+                        }
+                    </p>
+                    <p class="leased-room-term-note">
+                        @L["DepositPaidDateLabel"]:
+                        @if (_leasedRoom.DepositPaidDate is { } paidDate)
+                        {
+                            <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(paidDate))</span>
+                        }
+                        else
+                        {
+                            @L["NoData"].Value
+                        }
                     </p>
                 </div>
 
-                <div class="leased-room-term">
-                    <span class="leased-room-term-label">@L["SecurityAndFireSafety"]</span>
-                    <p class="leased-room-description">@L["SecurityAndFireSafetyDescription"]</p>
-                </div>
-
-                <div class="leased-room-term">
-                    <span class="leased-room-term-label">@L["EarlyTerminationPolicy"]</span>
-                    <p class="leased-room-description">@L["EarlyTerminationDescription"]</p>
+                <div class="leased-room-term" style="grid-column: 1 / -1;">
+                    <span class="leased-room-term-label">@L["ContractTermsAndRulesLabel"]</span>
+                    <p class="leased-room-description">@L["ContractTermsAndRulesDesc", _leasedRoom.ContractNumber]</p>
+                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="btn btn-secondary btn-sm" style="margin-top: 8px; width: fit-content;">
+                        <LucideIcon Name="file-text" />
+                        <span>@L["P2ViewDetails"]</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -162,7 +253,7 @@
                     <h2 id="leased-room-roommates-title">@L["Roommates"]</h2>
                     <p>@L["RoommatesDesc"]</p>
                 </div>
-                <span class="leased-room-count">@_leasedRoom.Roommates.Count @L["TenantPeople"]</span>
+                <span class="leased-room-count"><span class="tabular-nums">@_leasedRoom.Roommates.Count</span> @L["TenantPeople"]</span>
             </div>
 
             @if (_leasedRoom.Roommates.Count == 0)
@@ -178,13 +269,13 @@
                             <div class="leased-room-avatar" aria-hidden="true">@Initial(mate.FullName)</div>
                             <div class="leased-room-roommate-details">
                                 <div class="leased-room-roommate-name">
-                                    <span>@mate.FullName</span>
+                                    <span>@(!string.IsNullOrWhiteSpace(mate.FullName) ? mate.FullName : L["NoData"].Value)</span>
                                     @if (mate.IsCurrentUser)
                                     {
                                         <span class="leased-room-self">@L["ThisIsYou"]</span>
                                     }
                                 </div>
-                                <span class="leased-room-roommate-phone">@mate.PhoneNumber</span>
+                                <span class="leased-room-roommate-phone tabular-nums">@(!string.IsNullOrWhiteSpace(mate.PhoneNumber) ? mate.PhoneNumber : L["NoData"].Value)</span>
                             </div>
                         </div>
                     }
@@ -195,76 +286,143 @@
 </div>
 
 <!-- Renew Modal Popup -->
-@if (_renewModalOpen)
+@if (_renewModalOpen && _leasedRoom is not null)
 {
-    <div class="leased-room-dialog-overlay" role="presentation"
-         @onclick="() => _renewModalOpen = false">
+    <div class="leased-room-dialog-overlay" role="presentation" data-dialog-dismiss
+         @onclick="CloseRenewModal">
         <div class="leased-room-dialog" role="dialog" aria-modal="true" aria-labelledby="renew-contract-title"
              @onclick:stopPropagation="true">
             <div class="leased-room-dialog-header">
                 <div>
                     <h2 id="renew-contract-title">@L["RenewContractTitle"]</h2>
-                    <p>@L["RoomLabel", _leasedRoom?.RoomCode ?? string.Empty]</p>
+                    <p>@L["RoomLabel", _leasedRoom.RoomCode]</p>
                 </div>
-                <button type="button" class="icon-button"
-                        @onclick="() => _renewModalOpen = false">
+                <button type="button" class="icon-button" aria-label="@L["Close"]"
+                        disabled="@_renewSubmitting"
+                        @onclick="CloseRenewModal">
                     <LucideIcon Name="x" />
                 </button>
             </div>
 
             <div class="leased-room-dialog-body">
-                <div class="leased-room-dialog-field">
-                    <label for="renew-duration">
-                        @L["RenewDuration"]
-                    </label>
-                    <select id="renew-duration" class="input" @bind="_renewMonths">
-                        <option value="6">6 @L["Months"]</option>
-                        <option value="12">12 @L["Months"]</option>
-                        <option value="24">24 @L["Months"]</option>
-                    </select>
+                <div class="renew-unavailable-notice" role="note">
+                    <LucideIcon Name="info" />
+                    <span>@L["RenewNotice"]</span>
                 </div>
 
-                <div class="leased-room-dialog-field">
-                    <label for="renew-note">
-                        @L["RenewNote"]
-                    </label>
-                    <textarea id="renew-note" class="input leased-room-dialog-note" @bind="_renewNote" rows="3"
-                              placeholder="@L["RenewNotePlaceholder"]"></textarea>
-                </div>
+                @if (_pendingRenewal is { } pendingRenewal)
+                {
+                    <div class="renew-pending-card">
+                        <div class="renew-pending-row">
+                            <span class="renew-pending-label">@L["RenewPendingStatusLabel"]</span>
+                            <span class="renew-pending-value">@L["RenewStatusPending"]</span>
+                        </div>
+                        <div class="renew-pending-row">
+                            <span class="renew-pending-label">@L["RenewMonthsLabel"]</span>
+                            <span class="renew-pending-value tabular-nums">@L["DurationInMonths", pendingRenewal.RequestedMonths]</span>
+                        </div>
+                        <div class="renew-pending-row">
+                            <span class="renew-pending-label">@L["RenewPendingSentAtLabel"]</span>
+                            <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(pendingRenewal.RequestedAt))</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(pendingRenewal.Note))
+                        {
+                            <div class="renew-pending-note">
+                                <span class="renew-pending-label">@L["RenewNoteLabel"]</span>
+                                <p>@pendingRenewal.Note</p>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="leased-room-dialog-field">
+                        <label for="renew-months">@L["RenewMonthsLabel"] <span class="required-star">*</span></label>
+                        <input id="renew-months" class="leased-room-dialog-input"
+                               type="number" inputmode="numeric" step="1"
+                               min="@ContractRenewalRules.MinRequestedMonths" max="@MaxRenewMonths"
+                               aria-describedby="renew-months-hint"
+                               disabled="@_renewSubmitting"
+                               @bind="_renewMonthsText" @bind:event="oninput" />
+                        <p id="renew-months-hint" class="leased-room-dialog-hint">
+                            @L["RenewMonthsHint", ContractRenewalRules.MinRequestedMonths, MaxRenewMonths]
+                        </p>
+                        @if (_renewMonthsError is not null)
+                        {
+                            <p class="leased-room-dialog-error" role="alert">
+                                <LucideIcon Name="alert" />
+                                <span>@_renewMonthsError</span>
+                            </p>
+                        }
+                    </div>
+
+                    <div class="leased-room-dialog-field">
+                        <label for="renew-note">@L["RenewNoteLabel"] <span class="optional-hint">(@L["Optional"])</span></label>
+                        <textarea id="renew-note" class="leased-room-dialog-note" rows="3"
+                                  maxlength="@ContractRenewalRules.MaxNoteLength"
+                                  disabled="@_renewSubmitting"
+                                  @bind="_renewNote" @bind:event="oninput"></textarea>
+                    </div>
+
+                    @if (_renewSubmitError is not null)
+                    {
+                        <p class="leased-room-dialog-error" role="alert">
+                            <LucideIcon Name="alert" />
+                            <span>@_renewSubmitError</span>
+                        </p>
+                    }
+                }
             </div>
 
             <div class="leased-room-dialog-actions">
                 <button type="button" class="btn btn-secondary"
-                        @onclick="() => _renewModalOpen = false">
-                    @L["Cancel"]
+                        disabled="@_renewSubmitting"
+                        @onclick="CloseRenewModal">
+                    @L["Close"]
                 </button>
-                <button type="button" class="btn btn-primary" disabled="@_submittingRenew"
-                        @onclick="SubmitRenewAsync">
-                    @if (_submittingRenew)
-                    {
-                        <span class="spinner" aria-hidden="true"></span>
-                        <span>@L["Sending"]</span>
-                    }
-                    else
-                    {
-                        <LucideIcon Name="send" />
-                        <span>@L["SendRenewRequest"]</span>
-                    }
-                </button>
+                @if (_pendingRenewal is null)
+                {
+                    <button type="button" class="btn btn-primary"
+                            disabled="@_renewSubmitting"
+                            @onclick="SubmitRenewAsync">
+                        @if (_renewSubmitting)
+                        {
+                            <span class="spinner" aria-hidden="true"></span>
+                            <span>@L["RenewSubmitting"]</span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="send" />
+                            <span>@L["RenewSubmit"]</span>
+                        }
+                    </button>
+                }
+                else
+                {
+                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="btn btn-primary">
+                        <LucideIcon Name="file-text" />
+                        <span>@L["P2ViewDetails"]</span>
+                    </a>
+                }
             </div>
         </div>
     </div>
 }
 
 @code {
+    private const int MaxRenewMonths = ContractRenewalRules.MaxRequestedMonths;
+
     private bool _loading = true;
     private bool _loadFailed;
     private LeasedRoomDetailDto? _leasedRoom;
 
     private bool _renewModalOpen;
-    private int _renewMonths = 12;
+    private string _renewMonthsText = string.Empty;
     private string? _renewNote;
-    private bool _submittingRenew;
+    private string? _renewMonthsError;
+    private string? _renewSubmitError;
+    private bool _renewSubmitting;
+    private ContractRenewalRequestDto? _pendingRenewal;
 
     protected override async Task OnInitializedAsync()
     {
@@ -278,10 +436,11 @@
         try
         {
             _leasedRoom = await DocumentService.GetMyLeasedRoomAsync();
+            await LoadPendingRenewalAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
+            Logger.LogError(ex, "Failed to load the current leased room.");
             _loadFailed = true;
         }
         finally
@@ -289,41 +448,121 @@
             _loading = false;
         }
     }
+
+    private async Task LoadPendingRenewalAsync()
+    {
+        _pendingRenewal = null;
+        if (_leasedRoom is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var caller = await DocumentService.GetCallerAsync();
+            var result = await RenewalService.GetPendingAsync(caller, _leasedRoom.ContractId);
+            _pendingRenewal = result.Request;
+        }
+        catch (Exception ex)
+        {
+            // Trạng thái yêu cầu chỉ bổ sung thông tin; không làm hỏng trang phòng đang thuê.
+            Logger.LogError(ex, "Failed to load the pending renewal request.");
+        }
+    }
+
     private void OpenRenewModal()
     {
-        _renewMonths = 12;
-        _renewNote = null;
+        _renewMonthsError = null;
+        _renewSubmitError = null;
         _renewModalOpen = true;
+    }
+
+    private void CloseRenewModal()
+    {
+        if (!_renewSubmitting)
+        {
+            _renewModalOpen = false;
+        }
     }
 
     private async Task SubmitRenewAsync()
     {
-        _submittingRenew = true;
+        if (_leasedRoom is null || _renewSubmitting)
+        {
+            return;
+        }
+
+        _renewMonthsError = null;
+        _renewSubmitError = null;
+
+        if (!int.TryParse(_renewMonthsText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var requestedMonths)
+            || requestedMonths < ContractRenewalRules.MinRequestedMonths)
+        {
+            _renewMonthsError = L["RenewMonthsRequired"].Value;
+            return;
+        }
+
+        if (requestedMonths > MaxRenewMonths)
+        {
+            _renewMonthsError = L["RenewMonthsTooLarge", MaxRenewMonths].Value;
+            return;
+        }
+
+        _renewSubmitting = true;
         try
         {
-            await Task.Delay(400);
-            Toasts.Success(L["RenewContractSuccess"]);
-            _renewModalOpen = false;
+            var caller = await DocumentService.GetCallerAsync();
+            var result = await RenewalService.SubmitAsync(
+                caller, _leasedRoom.ContractId, requestedMonths, _renewNote);
+
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["RenewRequestSuccess", requestedMonths].Value);
+                _pendingRenewal = result.Request;
+                _renewMonthsText = string.Empty;
+                _renewNote = null;
+                return;
+            }
+
+            _renewSubmitError = RenewErrorText(result);
+            if (result.ErrorCode == ContractRenewalErrorCodes.DuplicatePending)
+            {
+                await LoadPendingRenewalAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to submit a contract renewal request.");
+            _renewSubmitError = L["RenewRequestFailed"].Value;
         }
         finally
         {
-            _submittingRenew = false;
+            _renewSubmitting = false;
         }
     }
 
-    private static int GetDurationMonths(DateTime start, DateTime end)
+    private string RenewErrorText(ContractRenewalResult result) => result.ErrorCode switch
     {
-        var months = ((end.Year - start.Year) * 12) + end.Month - start.Month;
-        return months > 0 ? months : 12;
-    }
+        ContractRenewalErrorCodes.Forbidden => L["RenewErrorForbidden"].Value,
+        ContractRenewalErrorCodes.ContractNotFound => L["RenewErrorContractNotFound"].Value,
+        ContractRenewalErrorCodes.InvalidStatus => L["RenewErrorInvalidStatus"].Value,
+        ContractRenewalErrorCodes.InvalidMonths => L["RenewMonthsRequired"].Value,
+        ContractRenewalErrorCodes.NoteTooLong => L["RenewErrorNoteTooLong"].Value,
+        ContractRenewalErrorCodes.DuplicatePending => L["RenewErrorDuplicatePending"].Value,
+        _ => L["RenewRequestFailed"].Value
+    };
+
+    private static int? GetDurationMonths(DateTime start, DateTime end) =>
+        LeaseDurationRules.FullMonths(start, end);
 
     private string GetContractStatusLabel() => _leasedRoom?.StatusLabel switch
     {
-        "Approved" => L["ContractStatusApproved"],
-        "Pending" => L["ContractStatusPending"],
+        "Approved" or "Active" => L["ContractStatusApproved"],
+        "Pending" or "PendingApproval" => L["ContractStatusPending"],
         "Rejected" => L["ContractStatusRejected"],
-        var status when !string.IsNullOrWhiteSpace(status) => status,
-        _ => string.Empty
+        "Expired" or "Liquidated" => L["ContractStatusExpired"],
+        "Cancelled" => L["ContractStatusCancelled"],
+        _ => L["NoData"]
     };
 
     private static string Initial(string fullName)

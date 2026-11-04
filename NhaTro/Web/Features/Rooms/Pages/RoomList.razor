@@ -12,6 +12,11 @@
 <div class="p2-page">
     <header class="p2-heading">
         <div>
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["Dashboard"], "/"),
+                new(L["P2RoomsTitle"])
+            })" />
             <h1>@L["P2RoomsTitle"]</h1>
             <p>@L["P2RoomsSubtitle"]</p>
         </div>
@@ -23,7 +28,13 @@
         }
     </header>
 
-    @if (_summaryError is not null)
+    @if (_summaryLoading)
+    {
+        <div class="p2-alert warning" role="status">
+            <span class="p2-alert-message">@L["Retrying"]</span>
+        </div>
+    }
+    else if (_summaryError is not null)
     {
         <div class="p2-alert warning" role="status">
             <span>@_summaryError</span>
@@ -71,6 +82,10 @@
             <span>@_propertyLoadError</span>
             <button class="btn btn-secondary" type="button" @onclick="InitializeAsync">@L["Retry"]</button>
         </div>
+    }
+    else if (_initializing)
+    {
+        <LoadingOverlay Visible="true" Text="@L["P2Loading"]" />
     }
     else if (_ready)
     {
@@ -200,8 +215,10 @@
     private string? _filterError;
     private string? _propertyLoadError;
     private string? _summaryError;
+    private bool _summaryLoading;
     private bool _onlyAvailable;
     private bool _ready;
+    private bool _initializing = true;
     private bool _isOwner;
     private bool _formVisible;
     private bool _deleteVisible;
@@ -241,6 +258,8 @@
 
     private async Task InitializeAsync()
     {
+        _initializing = true;
+        _ready = false;
         _propertyLoadError = null;
         try
         {
@@ -261,14 +280,18 @@
         }
         catch (Exception ex)
         {
-            _ready = false;
             _propertyLoadError = L["P2LoadFailed"];
             Logger.LogError(ex, "P2 room page initialization failed");
+        }
+        finally
+        {
+            _initializing = false;
         }
     }
 
     private async Task LoadSummaryAsync()
     {
+        _summaryLoading = true;
         _summaryError = null;
         try { _summary = await PageService.GetSummaryAsync(); }
         catch (Exception ex)
@@ -276,6 +299,10 @@
             _summary = null;
             _summaryError = L["P2LoadSummaryFailed"];
             Logger.LogError(ex, "P2 room summary load failed");
+        }
+        finally
+        {
+            _summaryLoading = false;
         }
     }
 

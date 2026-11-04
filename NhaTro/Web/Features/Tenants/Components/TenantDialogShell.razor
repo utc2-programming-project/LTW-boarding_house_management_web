@@ -13,7 +13,7 @@
                     <p>@Subtitle</p>
                 }
             </div>
-            <button type="button" class="icon-button" aria-label="@L["Close"]" @onclick="CloseAsync">
+            <button type="button" class="icon-button" aria-label="@L["Close"]" disabled="@Busy" @onclick="CloseAsync">
                 <LucideIcon Name="close" />
             </button>
         </header>
@@ -48,6 +48,11 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? Footer { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+    /// <summary>
+    /// Khi dialog đang trong luồng lưu (vd. TenantFormDialog), chặn mọi đường đóng
+    /// (nút X, click backdrop, phím Escape) để không huỷ vòng lưu đang chạy.
+    /// </summary>
+    [Parameter] public bool Busy { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -64,7 +69,7 @@
         _openInDom = Visible;
     }
 
-    private Task CloseAsync() => OnClose.InvokeAsync();
+    private Task CloseAsync() => Busy ? Task.CompletedTask : OnClose.InvokeAsync();
 
     [JSInvokable]
     public Task RequestCloseAsync() => InvokeAsync(CloseAsync);

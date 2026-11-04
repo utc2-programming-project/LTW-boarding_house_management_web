@@ -1,8 +1,26 @@
 <TenantDialogShell Visible="Visible" Title="@(Tenant is null ? L["TenantCreateTitle"] : L["TenantUpdateTitle"])"
                    Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
-                   CssClass="tenant-form-dialog" OnClose="OnClose">
+                   CssClass="tenant-form-dialog" Busy="@_saving" OnClose="OnClose">
     <ChildContent>
     <EditForm EditContext="_editContext" OnSubmit="HandleFormSubmitAsync" novalidate>
+        @if (_hasConflict)
+        {
+            <div class="tenant-conflict-alert" role="alert">
+                <p>@L["TenantErrorConflict"]</p>
+                <button type="button" class="btn btn-secondary" disabled="@_reloadingConflict" @onclick="ReloadAfterConflictAsync">
+                    @if (_reloadingConflict)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@L["Retrying"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="refresh-cw" />
+                        <span>@L["Reload"]</span>
+                    }
+                </button>
+            </div>
+        }
         <div class="tenant-form-grid">
             <div class="tenant-form-field tenant-form-name">
                 <FormField TValue="string" Id="tenant-full-name" Label="@L["TenantFullName"]" Required="true"
@@ -96,7 +114,7 @@
 
     <Footer>
         <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="OnClose">@L["Cancel"]</button>
-        <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SubmitAsync">
+        <button type="button" class="btn btn-primary" disabled="@(_saving || _hasConflict)" @onclick="SubmitAsync">
             @if (_saving)
             {
                 <span class="spinner" aria-hidden="true"></span>
@@ -142,8 +160,12 @@
     private bool _saving;
     private bool _wasVisible;
     private int? _currentTenantId;
+    private string? _rowVersion;
     private bool _confirmDuplicatePhone;
     private IReadOnlyList<TenantListItemDto> _possibleDuplicates = [];
+    private bool _hasConflict;
+    private bool _reloadingConflict;
+    private TenantDetailDto? _latestConflictTenant;
 
     private sealed class TenantFormModel
     {
@@ -172,22 +194,32 @@
 
     private void ResetForm()
     {
-        _form = Tenant is null
+        _hasConflict = false;
+        _latestConflictTenant = null;
+        _confirmDuplicatePhone = false;
+        _possibleDuplicates = [];
+        ApplyTenant(Tenant);
+    }
+
+    private void ApplyTenant(TenantDetailDto? tenant)
+    {
+        _form = tenant is null
             ? new TenantFormModel()
             : new TenantFormModel
             {
-                FullName = Tenant.FullName,
-                PhoneNumber = Tenant.PhoneNumber,
-                Email = Tenant.Email,
+                FullName = tenant.FullName,
+                PhoneNumber = tenant.PhoneNumber,
+                Email = tenant.Email,
                 // Quản lý chỉ nhận chuỗi che: để trống ô nhập (chuỗi che hiện ở placeholder) để không ai sửa dở chuỗi che.
-                IdNumber = CanRevealIdNumber ? Tenant.IdNumber : null,
-                DateOfBirth = Tenant.DateOfBirth,
-                Gender = Tenant.Gender,
-                PermanentAddress = Tenant.PermanentAddress,
-                IdIssuedDate = Tenant.IdIssuedDate,
-                IdIssuedPlace = Tenant.IdIssuedPlace,
-                Note = Tenant.Note,
+                IdNumber = CanRevealIdNumber ? tenant.IdNumber : null,
+                DateOfBirth = tenant.DateOfBirth,
+                Gender = tenant.Gender,
+                PermanentAddress = tenant.PermanentAddress,
+                IdIssuedDate = tenant.IdIssuedDate,
+                IdIssuedPlace = tenant.IdIssuedPlace,
+                Note = tenant.Note,
             };
+        _rowVersion = tenant?.RowVersion;
 
         _editContext = new EditContext(_form);
         _messages = new ValidationMessageStore(_editContext);
@@ -201,7 +233,7 @@
     private async Task SubmitAsync()
     {
         _confirmDuplicatePhone = false;
-        if (_saving || !ValidateForm()) return;
+        if (_saving || _hasConflict || !ValidateForm()) return;
 
         TenantResult result;
         _saving = true;
@@ -236,9 +268,7 @@
 
         if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
         {
-            Toasts.Error(L["TenantErrorConflict"]);
-            await OnClose.InvokeAsync();
-            await OnSaved.InvokeAsync();
+            await HandleConcurrencyConflictAsync();
             return;
         }
 
@@ -281,13 +311,79 @@
             IdIssuedPlace = _form.IdIssuedPlace,
             Note = _form.Note,
             ConfirmDuplicatePhone = confirmDuplicatePhone,
-            RowVersion = Tenant.RowVersion,
+            RowVersion = _rowVersion ?? Tenant.RowVersion,
         });
+    }
+
+    // Dữ liệu đã đổi ở nơi khác: không tự làm mới RowVersion rồi cho gửi lại dữ liệu cũ,
+    // vì như vậy sẽ ghi đè thay đổi của người khác. Giữ nguyên dữ liệu người dùng đang nhập
+    // và bắt buộc họ chọn tải bản mới trước khi lưu tiếp.
+    private async Task HandleConcurrencyConflictAsync()
+    {
+        _hasConflict = true;
+        _latestConflictTenant = null;
+        Toasts.Error(L["TenantErrorConflict"]);
+
+        if (Tenant is not null)
+        {
+            try
+            {
+                var latest = await TenantPages.GetAsync(Tenant.Id);
+                if (latest.Succeeded)
+                {
+                    _latestConflictTenant = latest.Tenant;
+                }
+            }
+            catch
+            {
+                // Vẫn giữ form và dữ liệu đang nhập; người dùng có thể bấm tải lại sau.
+            }
+        }
+
+        await OnSaved.InvokeAsync();
+    }
+
+    private async Task ReloadAfterConflictAsync()
+    {
+        if (_reloadingConflict) return;
+
+        _reloadingConflict = true;
+        try
+        {
+            if (_latestConflictTenant is null && Tenant is not null)
+            {
+                var latest = await TenantPages.GetAsync(Tenant.Id);
+                if (latest.Succeeded)
+                {
+                    _latestConflictTenant = latest.Tenant;
+                }
+            }
+
+            if (_latestConflictTenant is null)
+            {
+                Toasts.Error(L["TenantErrorGeneric"]);
+                return;
+            }
+
+            ApplyTenant(_latestConflictTenant);
+            _hasConflict = false;
+            _latestConflictTenant = null;
+            await OnSaved.InvokeAsync();
+        }
+        catch
+        {
+            Toasts.Error(L["TenantErrorGeneric"]);
+        }
+        finally
+        {
+            _reloadingConflict = false;
+        }
     }
 
     private async Task ConfirmDuplicatePhoneAsync()
     {
         _confirmDuplicatePhone = false;
+        if (_hasConflict) return;
         TenantResult result;
         _saving = true;
         try
@@ -306,6 +402,12 @@
 
         if (!result.Succeeded)
         {
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
+            {
+                await HandleConcurrencyConflictAsync();
+                return;
+            }
+
             Toasts.Error(ErrorMessage(result.ErrorCode));
             return;
         }
@@ -342,7 +444,7 @@
             Add(nameof(_form.Email), L["TenantValidationEmail"]);
             valid = false;
         }
-        if (_form.DateOfBirth is { } dob && dob > DateOnly.FromDateTime(DateTime.UtcNow))
+        if (_form.DateOfBirth is { } dob && dob > DateOnly.FromDateTime(DateTime.Today))
         {
             Add(nameof(_form.DateOfBirth), L["TenantValidationBirthDate"]);
             valid = false;
@@ -350,6 +452,12 @@
         if (_form.IdIssuedDate is { } issued && _form.DateOfBirth is { } birth && issued < birth)
         {
             Add(nameof(_form.IdIssuedDate), L["TenantValidationIssuedDate"]);
+            valid = false;
+        }
+        if (_form.IdIssuedDate is { } issuedDate && issuedDate > DateOnly.FromDateTime(DateTime.Today))
+        {
+            // Ngày cấp CCCD không được trong tương lai so với ngày hiện tại (giờ địa phương VN).
+            Add(nameof(_form.IdIssuedDate), L["TenantValidationIssuedDateFuture"]);
             valid = false;
         }
 

@@ -27,7 +27,14 @@ public sealed class LeasedRoomDetailDto
 
     public required decimal MonthlyRent { get; init; }
 
+    /// <summary>Tiền đặt cọc theo thỏa thuận trong hợp đồng.</summary>
     public required decimal DepositAmount { get; init; }
+
+    /// <summary>Tiền cọc thực tế đã thanh toán (null khi chưa có chứng từ/biên lai thanh toán từ backend).</summary>
+    public decimal? PaidDepositAmount { get; init; }
+
+    /// <summary>Ngày thanh toán tiền cọc (null khi chưa có chứng từ thanh toán).</summary>
+    public DateTime? DepositPaidDate { get; init; }
 
     public required string StatusLabel { get; init; }
 

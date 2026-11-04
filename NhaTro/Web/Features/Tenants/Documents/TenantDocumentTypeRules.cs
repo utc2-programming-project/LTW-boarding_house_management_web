@@ -3,6 +3,20 @@ namespace Web.Features.Tenants.Documents;
 /// <summary>Stable document type keys used to prevent duplicate active files per tenant.</summary>
 public static class TenantDocumentTypeRules
 {
+    /// <summary>
+    /// Danh sách loại giấy tờ bắt buộc tối thiểu của một hồ sơ (CCCD trước/sau, hợp đồng, tạm trú).
+    /// Các loại sau "Other" là giấy tờ hỗ trợ, không bắt buộc.
+    /// </summary>
+    public static readonly IReadOnlyList<string> RequiredTypeCodes =
+    [
+        "CCCD_Front",
+        "CCCD_Back",
+        "Contract_Scan",
+        "Temporary_Residence",
+    ];
+
+    public static int RequiredTypeCount => RequiredTypeCodes.Count;
+
     public static readonly string[] TypeCodes =
     [
         "CCCD_Front",

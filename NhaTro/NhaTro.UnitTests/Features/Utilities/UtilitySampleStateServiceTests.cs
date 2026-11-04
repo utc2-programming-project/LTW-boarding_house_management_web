@@ -244,6 +244,35 @@ public sealed class UtilitySampleStateServiceTests
     }
 
     [Fact]
+    public void SaveRoomReading_WithLockPersistsStatusAcrossReload()
+    {
+        var state = CreateState();
+
+        var (success, error, saved) = state.SaveRoomReading(
+            roomId: "room-101",
+            electricEnd: 1_570m,
+            waterEnd: 130m,
+            periodStart: new DateOnly(2026, 10, 1),
+            periodEnd: new DateOnly(2026, 10, 31),
+            reason: null,
+            callerRole: Roles.QuanLy,
+            callerEmail: ManagerEmail,
+            modifierName: "Manager",
+            isLock: true);
+
+        Assert.True(success);
+        Assert.Null(error);
+        Assert.NotNull(saved);
+        Assert.Equal("locked", saved.Status);
+
+        // Bản ghi trả về chỉ là bản sao; trạng thái chốt phải nằm trong state gốc
+        // để lần tải lại trang vẫn thấy "locked".
+        var reloaded = state.GetRoomReadingsForCaller(Roles.QuanLy, ManagerEmail)
+            .Single(room => room.Id == "room-101");
+        Assert.Equal("locked", reloaded.Status);
+    }
+
+    [Fact]
     public void SaveRoomReading_TenantAdminAndOutOfScopeRoomAreRejected()
     {
         var state = CreateState();

@@ -16,8 +16,9 @@
 @inject ToastService Toast
 @inject IStringLocalizer<Shared> L
 @inject NavigationManager Navigation
+@inject ILogger<MeterReadingForm> Logger
 
-<PageTitle>@L["MeterReadingPageTitle"] | NhaTro</PageTitle>
+<PageTitle>@L["MeterReadingPageTitle"] · @L["AppName"]</PageTitle>
 
 <div class="meter-reading-page">
     <BreadcrumbNav Items="@_breadcrumbs" />
@@ -44,20 +45,6 @@
         </div>
     </header>
 
-    @if (_errorMessage is not null)
-    {
-        <div class="error-banner">
-            <div class="error-banner-content">
-                <LucideIcon Name="alert-triangle" />
-                <span>@_errorMessage</span>
-            </div>
-            <button type="button" class="btn btn-secondary" @onclick="ReloadDataAsync">
-                <LucideIcon Name="refresh-cw" />
-                <span>@L["MeterReadingRetry"]</span>
-            </button>
-        </div>
-    }
-
     @if (_isLoading)
     {
         <!-- Skeleton Loading 4 KPI + Filters + 3 Room Cards -->
@@ -76,6 +63,19 @@
             <div class="skeleton room-card-skeleton"></div>
             <div class="skeleton room-card-skeleton"></div>
             <div class="skeleton room-card-skeleton"></div>
+        </div>
+    }
+    else if (_errorMessage is not null)
+    {
+        <div class="empty-state-box" role="alert">
+            <div class="empty-icon-wrap">
+                <LucideIcon Name="alert-triangle" />
+            </div>
+            <h3 class="empty-title">@L["MeterReadingLoadDataError"]</h3>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadDataAsync">
+                <LucideIcon Name="refresh-cw" />
+                <span>@L["MeterReadingRetry"]</span>
+            </button>
         </div>
     }
     else
@@ -160,9 +160,9 @@
                            @onchange="HandlePeriodChanged" />
                 </label>
 
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRetry"]">
+                <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRefreshBtn"]">
                     <LucideIcon Name="refresh-cw" />
-                    <span>@L["MeterReadingRetry"]</span>
+                    <span>@L["MeterReadingRefreshBtn"]</span>
                 </button>
             </div>
         </div>
@@ -176,6 +176,10 @@
                 </div>
                 <h3 class="empty-title">@L["MeterReadingEmptyTenantTitle"]</h3>
                 <p class="empty-desc">@L["MeterReadingEmptyTenantDesc"]</p>
+                <button type="button" class="btn btn-secondary" @onclick="ReloadDataAsync">
+                    <LucideIcon Name="refresh-cw" />
+                    <span>@L["MeterReadingRefreshBtn"]</span>
+                </button>
             </div>
         }
         else if (string.IsNullOrWhiteSpace(_selectedBuildingId))
@@ -199,6 +203,10 @@
                 </div>
                 <h3 class="empty-title">@L["MeterReadingEmptyPeriodTitle"]</h3>
                 <p class="empty-desc">@L["MeterReadingEmptyPeriodDesc"]</p>
+                <button type="button" class="btn btn-secondary" @onclick="ReloadDataAsync">
+                    <LucideIcon Name="refresh-cw" />
+                    <span>@L["MeterReadingRefreshBtn"]</span>
+                </button>
             </div>
         }
         else if (_filteredRooms.Count == 0)
@@ -267,9 +275,9 @@
         if (string.Equals(r.Status, "locked", StringComparison.OrdinalIgnoreCase)) return false;
         if (_draftReadings.TryGetValue(r.Id, out var draft))
         {
-            return (draft.ElectricEnd ?? 0m) > 0m && (draft.WaterEnd ?? 0m) > 0m;
+            return draft.ElectricEnd.HasValue && draft.WaterEnd.HasValue;
         }
-        return r.ElectricEnd > 0m && r.WaterEnd > 0m;
+        return r.HasElectricReading && r.HasWaterReading;
     });
     private int UnrecordedRoomsCount => Math.Max(0, TotalRoomsCount - RecordedRoomsCount - LockedRoomsCount);
 
@@ -314,11 +322,15 @@
         }
         catch (UnauthorizedAccessException ex)
         {
-            _errorMessage = ex.Message;
+            _errorMessage = L["MeterReadingLoadDataError"];
+            ClearReadingState();
+            Logger.LogWarning(ex, "P5 meter readings access denied");
         }
         catch (Exception ex)
         {
-            _errorMessage = string.Format(L["MeterReadingLoadDataError"], ex.Message);
+            _errorMessage = L["MeterReadingLoadDataError"];
+            ClearReadingState();
+            Logger.LogError(ex, "P5 meter readings load failed");
         }
         finally
         {
@@ -428,9 +440,10 @@
         // Chỉ lưu draft khi có thay đổi thực sự so với dữ liệu đã lưu
         // (tránh KPI "Đã ghi" tăng vô lý khi user bấm "Hủy" trên phòng chưa nhập)
         var room = _allRooms.FirstOrDefault(r => r.Id == payload.RoomId);
+        var savedElectric = room is { HasElectricReading: true } ? room.ElectricEnd : (decimal?)null;
+        var savedWater = room is { HasWaterReading: true } ? room.WaterEnd : (decimal?)null;
         var hasRealChange = room is not null &&
-            ((payload.ElectricEnd.HasValue && payload.ElectricEnd != room.ElectricEnd) ||
-             (payload.WaterEnd.HasValue && payload.WaterEnd != room.WaterEnd));
+            (payload.ElectricEnd != savedElectric || payload.WaterEnd != savedWater);
 
         if (hasRealChange)
         {
@@ -444,16 +457,34 @@
         StateHasChanged();
     }
 
-    private async Task HandleRoomSave((string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock) payload)
+    private void ClearReadingState()
     {
-        var result = await PageService.SaveReadingAsync(
-            payload.RoomId,
-            payload.ElectricEnd,
-            payload.WaterEnd,
-            _periodStart,
-            _periodEnd,
-            payload.Reason,
-            payload.IsLock);
+        _allRooms = [];
+        _filteredRooms = [];
+        _draftReadings.Clear();
+        _periodHasNoData = false;
+    }
+
+    private async Task<bool> HandleRoomSave((string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock) payload)
+    {
+        SaveResult result;
+        try
+        {
+            result = await PageService.SaveReadingAsync(
+                payload.RoomId,
+                payload.ElectricEnd,
+                payload.WaterEnd,
+                _periodStart,
+                _periodEnd,
+                payload.Reason,
+                payload.IsLock);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P5 meter reading save failed for room {RoomId}", payload.RoomId);
+            Toast.Error(L["MeterReadingSaveError"]);
+            return false;
+        }
 
         if (!result.Success)
         {
@@ -472,10 +503,10 @@
                     roomRef?.WaterStart ?? 0m),
                 MeterReadingErrorCodes.AdjustmentReasonRequired => L["MeterReadingAdjustmentReasonRequired"].ToString(),
                 MeterReadingErrorCodes.InvalidRequest => L["MeterReadingErrorInvalidRequest"].ToString(),
-                _ => result.ErrorMessage ?? L["MeterReadingSaveError"].ToString()
+                _ => L["MeterReadingSaveError"].ToString()
             };
             Toast.Error(message);
-            return;
+            return false;
         }
 
         _draftReadings.Remove(payload.RoomId);
@@ -506,5 +537,6 @@
         }
 
         StateHasChanged();
+        return true;
     }
 }

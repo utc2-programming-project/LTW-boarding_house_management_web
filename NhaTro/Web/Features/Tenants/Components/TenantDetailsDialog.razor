@@ -69,16 +69,25 @@
                             <li>
                                 <div class="tenant-documents-file">
                                     <strong>@document.FileName</strong>
-                                    <span>@DateFormatter.FormatDateTime(document.UploadedAt.UtcDateTime)</span>
+                                    <span>@CategoryLabel(document.Description) · @NumberFormatter.FileSize(document.FileSizeBytes) · @DateFormatter.FormatDateTime(document.UploadedAt.UtcDateTime)</span>
                                 </div>
-                                @if (_documents.CanDownload)
-                                {
-                                    <a class="btn btn-secondary btn-sm"
-                                       href="/api/tenants/@Tenant.Id/documents/@document.Id"
-                                       download="@document.FileName">
-                                        <LucideIcon Name="download" /> @L["DownloadDocumentSecure"]
-                                    </a>
-                                }
+                                <div class="tenant-documents-actions">
+                                    @if (_documents.CanDownload)
+                                    {
+                                        <a class="btn btn-secondary btn-sm"
+                                           href="/api/tenants/@Tenant.Id/documents/@document.Id"
+                                           download="@document.FileName">
+                                            <LucideIcon Name="download" /> @L["DownloadDocumentSecure"]
+                                        </a>
+                                    }
+                                    @if (_documents.CanDelete)
+                                    {
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                                @onclick="() => ConfirmDocumentDelete(document)">
+                                            <LucideIcon Name="trash-2" /> @L["Delete"]
+                                        </button>
+                                    }
+                                </div>
                             </li>
                         }
                     </ul>
@@ -135,6 +144,11 @@
     </Footer>
 </TenantDialogShell>
 
+<ConfirmDialog Visible="_deleteDocumentVisible" Title="@L["DeleteDocumentConfirmTitle"]"
+               Message="@DeleteDocumentMessage" ConfirmText="@L["Delete"]"
+               CancelText="@L["Cancel"]" Danger="true"
+               OnConfirm="ConfirmDocumentDeleteAsync" OnCancel="CancelDocumentDelete" />
+
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public TenantDetailDto? Tenant { get; set; }
@@ -149,12 +163,19 @@
 
     [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
     [Inject] private TenantDocumentPageService DocumentService { get; set; } = default!;
+    [Inject] private ILogger<TenantDetailsDialog> Logger { get; set; } = default!;
+    [Inject] private ToastService Toasts { get; set; } = default!;
 
     private TenantDocumentListDto? _documents;
     private bool _documentsLoading;
     private bool _documentsUnavailable;
     private bool _wasVisible;
     private int? _loadedTenantId;
+    private TenantDocumentMetadataDto? _documentToDelete;
+    private bool _deleteDocumentVisible;
+
+    private string DeleteDocumentMessage =>
+        $"{L["DocumentPrefix"]} {_documentToDelete?.FileName ?? string.Empty} {L["DeleteDocumentConfirmMessageTail"]}";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -171,16 +192,23 @@
 
         _wasVisible = true;
         _loadedTenantId = Tenant.Id;
+        await LoadDocumentsAsync();
+    }
+
+    private async Task LoadDocumentsAsync()
+    {
+        var tenantId = Tenant?.Id ?? 0;
         _documents = null;
         _documentsUnavailable = false;
         _documentsLoading = true;
         try
         {
-            _documents = await DocumentService.GetDocumentsAsync(Tenant.Id);
+            _documents = await DocumentService.GetDocumentsAsync(tenantId);
             _documentsUnavailable = _documents is null;
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Tenant documents failed to load in details dialog for tenant {TenantId}", tenantId);
             _documentsUnavailable = true;
         }
         finally
@@ -188,6 +216,53 @@
             _documentsLoading = false;
         }
     }
+
+    private void ConfirmDocumentDelete(TenantDocumentMetadataDto document)
+    {
+        _documentToDelete = document;
+        _deleteDocumentVisible = true;
+    }
+
+    private void CancelDocumentDelete()
+    {
+        _deleteDocumentVisible = false;
+        _documentToDelete = null;
+    }
+
+    private async Task ConfirmDocumentDeleteAsync()
+    {
+        if (_documentToDelete is null || Tenant is null)
+        {
+            _deleteDocumentVisible = false;
+            return;
+        }
+
+        try
+        {
+            var deleted = await DocumentService.DeleteDocumentAsync(Tenant.Id, _documentToDelete.Id);
+            if (deleted)
+            {
+                Toasts.Success(L["DocumentDeleteSuccess"]);
+                await LoadDocumentsAsync();
+            }
+            else
+            {
+                Toasts.Error(L["DocumentDeleteFailed"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Tenant document delete failed for document {DocumentId}", _documentToDelete.Id);
+            Toasts.Error(L["DocumentDeleteFailed"]);
+        }
+        finally
+        {
+            CancelDocumentDelete();
+        }
+    }
+
+    private string CategoryLabel(string? description) =>
+        L[TenantDocumentCategoryRules.LabelResourceKey(description)];
 
     private string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();

@@ -932,13 +932,14 @@
   <data name="DocTypeOther" xml:space="preserve"><value>Other document</value></data>
   <data name="DocumentFile" xml:space="preserve"><value>Document file</value></data>
   <data name="FileRequired" xml:space="preserve"><value>Please select a file.</value></data>
-  <data name="FileTypeNotAllowed" xml:space="preserve"><value>Only PDF, JPG, JPEG, or PNG files are accepted.</value></data>
-  <data name="FileSizeExceeded" xml:space="preserve"><value>File size exceeds the allowed 10 MB limit.</value></data>
   <data name="EmptyFile" xml:space="preserve"><value>The file is empty. Please choose another file.</value></data>
   <data name="DocumentAccessDenied" xml:space="preserve"><value>You do not have permission to access this document.</value></data>
   <data name="DocumentDownloadFailed" xml:space="preserve"><value>Could not download the document. Please try again.</value></data>
   <data name="ClickOrDragToUpload" xml:space="preserve"><value>Click to choose file or drag &amp; drop here</value></data>
-  <data name="UploadFileAllowedFormats" xml:space="preserve"><value>Supported formats: PDF, JPG, PNG (Max 10 MB)</value></data>
+  <data name="UploadFileAllowedFormatsFormat" xml:space="preserve"><value>Supported formats: {0} (max {1})</value></data>
+  <data name="FileTypeNotAllowedFormat" xml:space="preserve"><value>Unsupported file type. Accepted formats: {0}.</value></data>
+  <data name="FileSizeExceededFormat" xml:space="preserve"><value>File size exceeds the allowed {0} limit.</value></data>
+  <data name="FileCountExceededFormat" xml:space="preserve"><value>This profile already holds the maximum of {0} document files. Remove an existing file before uploading another.</value></data>
   <data name="DocumentDescription" xml:space="preserve"><value>Description / Note</value></data>
   <data name="DocumentDescriptionPlaceholder" xml:space="preserve"><value>Optional notes for this file...</value></data>
   <data name="DocumentFileName" xml:space="preserve"><value>File name</value></data>
@@ -948,7 +949,6 @@
   <data name="DocumentPreview" xml:space="preserve"><value>View details</value></data>
   <data name="DocumentPreviewTitle" xml:space="preserve"><value>Document details</value></data>
   <data name="DocumentMimeType" xml:space="preserve"><value>MIME type</value></data>
-  <data name="DocumentSecureStorageNotice" xml:space="preserve"><value>File is safely kept in a private encrypted vault with protected stream download URLs.</value></data>
   <data name="DocumentUploadSuccess" xml:space="preserve"><value>Document uploaded successfully.</value></data>
   <data name="DocumentUploadFailed" xml:space="preserve"><value>Document upload failed. Please try again.</value></data>
   <data name="DeleteDocumentConfirmTitle" xml:space="preserve"><value>Confirm document removal</value></data>
@@ -993,9 +993,9 @@
   <data name="ResidenceAddressLabel" xml:space="preserve"><value>PLACE OF RESIDENCE</value></data>
   <data name="Notes" xml:space="preserve"><value>Notes</value></data>
   <data name="DocumentCode" xml:space="preserve"><value>Document ID</value></data>
-  <data name="ShowingDocuments" xml:space="preserve"><value>Showing 1–{0} of {1} documents</value></data>
+  <data name="ShowingDocuments" xml:space="preserve"><value>Showing {0} of {1} documents</value></data>
   <data name="FileStandardsTitle" xml:space="preserve"><value>Supported File Standards</value></data>
-  <data name="FileStandardsDesc" xml:space="preserve"><value>Upload clear scans in PDF, JPG, or PNG formats up to 10 MB each. Make sure identity numbers and stamps are legible.</value></data>
+  <data name="FileStandardsDescFormat" xml:space="preserve"><value>Upload clear scans in {0} formats up to {1} each. Make sure identity numbers and stamps are legible.</value></data>
   <data name="ViewDetailsGuide" xml:space="preserve"><value>View Requirements</value></data>
   <data name="HideDetailsGuide" xml:space="preserve"><value>Hide Requirements</value></data>
   <data name="ExportFailed" xml:space="preserve"><value>Export failed.</value></data>
@@ -1024,7 +1024,6 @@
   <data name="FireSafetyRuleDesc" xml:space="preserve"><value>Tenants must strictly maintain unobstructed emergency exit routes and refrain from charging EV battery packs inside living quarters.</value></data>
   <data name="TerminationNoticeTitle" xml:space="preserve"><value>Termination Notice Period</value></data>
   <data name="TerminationNoticeDesc" xml:space="preserve"><value>Provide at least 30 days prior written notice to management for move-out inspection and deposit settlement.</value></data>
-  <data name="ContractVaultSyncedNotice" xml:space="preserve"><value>This contract is digitally verified and safely mirrored in your resident document vault.</value></data>
   <data name="ViewContractScan" xml:space="preserve"><value>My documents</value></data>
   <data name="RenewContract" xml:space="preserve"><value>Request renewal</value></data>
   <data name="RenewContractTitle" xml:space="preserve"><value>Request Lease Renewal</value></data>
@@ -1042,7 +1041,6 @@
   <data name="PreviewStateLoading" xml:space="preserve"><value>Loading skeleton</value></data>
   <data name="PreviewStateError" xml:space="preserve"><value>Error state</value></data>
   <data name="DocumentsLoadFailedDescription" xml:space="preserve"><value>An unexpected error occurred while loading your documents. Please try again.</value></data>
-  <data name="LoadFailedCode" xml:space="preserve"><value>Error code: LOAD_FAILED</value></data>
   <data name="Retrying" xml:space="preserve"><value>Retrying…</value></data>
   <data name="EmptyDocumentsDescription" xml:space="preserve"><value>Upload ID cards, contracts or temporary residence permits to manage them in one place.</value></data>
   <data name="UploadFirstDocument" xml:space="preserve"><value>Upload first document</value></data>
@@ -1050,8 +1048,7 @@
   <data name="DocumentsLoading" xml:space="preserve"><value>Loading document data…</value></data>
   <data name="BrowseFile" xml:space="preserve"><value>browse</value></data>
   <data name="DragAndDropOr" xml:space="preserve"><value>Drag and drop file here, or</value></data>
-  <data name="Max10MB" xml:space="preserve"><value>up to 10 MB</value></data>
-  <data name="Tls13EncryptedNotice" xml:space="preserve"><value>Data is encrypted in transit with TLS 1.3 and stored securely in the building vault.</value></data>
+  <data name="SecureTransferNotice" xml:space="preserve"><value>Files travel over an HTTPS connection and are only accessible to accounts granted the matching permissions.</value></data>
   <data name="ChangeFile" xml:space="preserve"><value>Choose another file</value></data>
   <data name="Invalid" xml:space="preserve"><value>Invalid</value></data>
   <data name="InvalidSubmissionNotice" xml:space="preserve"><value>Some information is invalid. Review the fields marked in red.</value></data>
@@ -1066,9 +1063,10 @@
   <data name="TenantDocumentsUnavailable" xml:space="preserve"><value>Documents are unavailable within your assigned access scope.</value></data>
   <data name="DuplicateDocumentType" xml:space="preserve"><value>This document type already has a file. Choose another type or delete the existing file and try again.</value></data>
   <data name="FileUnitSingular" xml:space="preserve"><value>file</value></data>
-  <data name="EncryptionMethodLabel" xml:space="preserve"><value>256-bit AES encryption</value></data>
-  <data name="VerificationStatusLabel" xml:space="preserve"><value>VERIFICATION STATUS</value></data>
-  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Documents verified</value></data>
+  <data name="EncryptionMethodLabel" xml:space="preserve"><value>HTTPS-encrypted transfer</value></data>
+  <data name="VerificationStatusLabel" xml:space="preserve"><value>DOCUMENT STATUS</value></data>
+  <data name="VerificationCompleteLabel" xml:space="preserve"><value>All required documents provided</value></data>
+  <data name="MissingRequiredDocumentsLabel" xml:space="preserve"><value>Required documents missing</value></data>
   <data name="OfWord" xml:space="preserve"><value>of</value></data>
   <data name="IdentityCardHint" xml:space="preserve"><value>ID card front and back</value></data>
   <data name="LeaseTermTitle" xml:space="preserve"><value>LEASE TERM</value></data>
@@ -1082,10 +1080,7 @@
   <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Employment contract or student ID for long-term residents.</value></data>
   <data name="PreviewDocumentIssuer" xml:space="preserve"><value>SOCIALIST REPUBLIC OF VIETNAM</value></data>
   <data name="PhotoLabel" xml:space="preserve"><value>PHOTO</value></data>
-  <data name="VerifiedTlsLabel" xml:space="preserve"><value>TLS 1.3 verified</value></data>
   <data name="SampleResidentAddress" xml:space="preserve"><value>Ben Thanh Ward, District 1, Ho Chi Minh City</value></data>
-  <data name="GenericFileType" xml:space="preserve"><value>FILE</value></data>
-  <data name="PersonalDocumentLabel" xml:space="preserve"><value>Personal document</value></data>
   <data name="ContentType" xml:space="preserve"><value>Content type</value></data>
   <data name="Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="Deleting" xml:space="preserve"><value>Deleting...</value></data>
@@ -1101,14 +1096,34 @@
   <data name="IssuedByManagement" xml:space="preserve"><value>Issued by property management</value></data>
   <data name="MonthlyRentLabel" xml:space="preserve"><value>Monthly rent</value></data>
   <data name="MonthUnit" xml:space="preserve"><value>month</value></data>
+  <data name="MonthlyRentNote" xml:space="preserve"><value>Applicable per agreed rate in contract</value></data>
+  <data name="ContractTermsAndRulesLabel" xml:space="preserve"><value>Terms &amp; Residency Rules</value></data>
+  <data name="ContractTermsAndRulesDesc" xml:space="preserve"><value>Detailed terms, residency rules, and annexes are specified in contract no. {0}.</value></data>
+  <data name="RenewNotice" xml:space="preserve"><value>The request is recorded as Pending; property management reviews it and updates the contract end date after approval.</value></data>
+  <data name="RenewMonthsLabel" xml:space="preserve"><value>Renewal duration (months)</value></data>
+  <data name="RenewMonthsHint" xml:space="preserve"><value>From {0} to {1} months.</value></data>
+  <data name="RenewMonthsRequired" xml:space="preserve"><value>Please enter a renewal duration greater than 0 months.</value></data>
+  <data name="RenewMonthsTooLarge" xml:space="preserve"><value>The renewal duration cannot exceed {0} months.</value></data>
+  <data name="RenewNoteLabel" xml:space="preserve"><value>Message to management</value></data>
+  <data name="RenewSubmit" xml:space="preserve"><value>Send request</value></data>
+  <data name="RenewSubmitting" xml:space="preserve"><value>Sending…</value></data>
+  <data name="RenewRequestSuccess" xml:space="preserve"><value>Renewal request for {0} months sent. Status: Pending.</value></data>
+  <data name="RenewRequestFailed" xml:space="preserve"><value>The renewal request could not be sent. Please try again.</value></data>
+  <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Status</value></data>
+  <data name="RenewStatusPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Sent on</value></data>
+  <data name="RenewErrorForbidden" xml:space="preserve"><value>You are not allowed to send a renewal request for this contract.</value></data>
+  <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Lease contract not found.</value></data>
+  <data name="RenewErrorInvalidStatus" xml:space="preserve"><value>Only an active contract can be renewed.</value></data>
+  <data name="RenewErrorNoteTooLong" xml:space="preserve"><value>The message to management is too long.</value></data>
+  <data name="RenewErrorDuplicatePending" xml:space="preserve"><value>This contract already has a pending renewal request.</value></data>
   <data name="MonthlyPaymentDue" xml:space="preserve"><value>Payment due: the 5th of each month.</value></data>
-  <data name="RoomDeposit" xml:space="preserve"><value>Room deposit</value></data>
-  <data name="DepositPaidOn" xml:space="preserve"><value>Paid and recorded on {0}.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Contract deposit</value></data>
   <data name="SecurityAndFireSafety" xml:space="preserve"><value>Security and fire safety</value></data>
   <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>The tenant must keep emergency exits clear and must not charge electric vehicles in sleeping areas.</value></data>
   <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Early termination policy</value></data>
   <data name="EarlyTerminationDescription" xml:space="preserve"><value>Give the landlord at least 30 days' notice to inventory the property and process the deposit refund.</value></data>
-  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease is securely verified and audited in the resident's personal data archive.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>This lease was issued by property management, is stored in the system and is visible only to your account and to authorized management staff.</value></data>
   <data name="RoomLabel" xml:space="preserve"><value>Room {0}</value></data>
   <data name="ContractStatusApproved" xml:space="preserve"><value>Active</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Pending approval</value></data>
@@ -1152,7 +1167,7 @@
   <data name="MeterReadingNavHome" xml:space="preserve"><value>Home</value></data>
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Services &amp; Utilities</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Meter Readings</value></data>
-  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Failed to load data: {0}</value></data>
+  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Could not load data. Please try again.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Failed to save meter reading.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Successfully finalized period for room {0} in temporary memory (mock data).</value></data>
   <data name="MeterReadingDraftSuccess" xml:space="preserve"><value>Draft saved for room {0} in temporary memory (mock data).</value></data>
@@ -1269,4 +1284,186 @@
   <data name="SW-15c" xml:space="preserve"><value>View contract report</value></data>
   <data name="SW-15d" xml:space="preserve"><value>View invoice report</value></data>
   <data name="SW-15e" xml:space="preserve"><value>View revenue and receivables report</value></data>
+  <data name="ForgotPasswordTitle" xml:space="preserve"><value>Forgot your password?</value></data>
+  <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Enter your email address.</value></data>
+  <data name="ResetPasswordButton" xml:space="preserve"><value>Reset password</value></data>
+  <data name="RecoveryCodeTitle" xml:space="preserve"><value>Recovery code verification</value></data>
+  <data name="RecoveryCodePlaceholder" xml:space="preserve"><value>Recovery code</value></data>
+  <data name="RecoveryCodeLabel" xml:space="preserve"><value>Recovery code</value></data>
+  <data name="GenerateRecoveryCodes" xml:space="preserve"><value>Generate recovery codes</value></data>
+  <data name="ResetPasswordTitle" xml:space="preserve"><value>Reset password</value></data>
+  <data name="ResetPasswordPrompt" xml:space="preserve"><value>Choose a new password for your account.</value></data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve"><value>Confirm your password</value></data>
+  <data name="ConfirmPasswordLabel" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="RecoveryCodeExplanation" xml:space="preserve"><value>You requested to sign in with a recovery code. This sign-in will not be remembered until you provide an authenticator app code or disable two-factor authentication and sign in again.</value></data>
+  <data name="GenerateRecoveryCodesTitle" xml:space="preserve"><value>Generate two-factor authentication recovery codes</value></data>
+  <data name="TwoFactorLoginTitle" xml:space="preserve"><value>Two-factor authentication</value></data>
+  <data name="TwoFactorLoginDescription" xml:space="preserve"><value>Your account is protected with an authenticator app. Enter your authenticator code below.</value></data>
+  <data name="AuthenticatorCodeLabel" xml:space="preserve"><value>Authenticator code</value></data>
+  <data name="LoginWithRecoveryCodeLink" xml:space="preserve"><value>sign in with a recovery code</value></data>
+  <data name="RememberThisMachine" xml:space="preserve"><value>Remember this machine</value></data>
+  <data name="TwoFactorNoDevice" xml:space="preserve"><value>Don't have access to your authenticator device? You can </value></data>
+  <data name="InvalidAuthenticatorCode" xml:space="preserve"><value>The authenticator code is invalid.</value></data>
+  <data name="InvalidRecoveryCode" xml:space="preserve"><value>The recovery code is invalid.</value></data>
+  <data name="TenantValidationIssuedDateFuture" xml:space="preserve"><value>Issue date cannot be in the future.</value></data>
+  <data name="ManagerDisplayName" xml:space="preserve"><value>Manager</value></data>
+  <data name="StorageLimitMb" xml:space="preserve"><value>/ {0} MB</value></data>
+  <data name="StorageUnlimitedLabel" xml:space="preserve"><value>Unlimited</value></data>
+  <data name="LeaseStartDateLabel" xml:space="preserve"><value>Lease start date</value></data>
+  <data name="LeaseEndDateLabel" xml:space="preserve"><value>Contract expiry date</value></data>
+  <data name="MeterReadingCalculating" xml:space="preserve"><value>Calculating…</value></data>
+  <data name="ManageAccountTitle" xml:space="preserve"><value>Manage account</value></data>
+  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Account settings</value></data>
+  <data name="ManageNavExternalLogins" xml:space="preserve"><value>External logins</value></data>
+  <data name="ManageNavPasskeys" xml:space="preserve"><value>Passkeys</value></data>
+  <data name="ManageNavPersonalData" xml:space="preserve"><value>Personal data</value></data>
+  <data name="UsernameLabel" xml:space="preserve"><value>Username</value></data>
+  <data name="CurrentPasswordLabel" xml:space="preserve"><value>Current password</value></data>
+  <data name="CurrentPasswordPlaceholder" xml:space="preserve"><value>Enter your current password</value></data>
+  <data name="NewPasswordLabel" xml:space="preserve"><value>New password</value></data>
+  <data name="NewPasswordPlaceholder" xml:space="preserve"><value>Enter a new password</value></data>
+  <data name="UpdatePasswordAction" xml:space="preserve"><value>Update password</value></data>
+  <data name="SetPasswordTitle" xml:space="preserve"><value>Set password</value></data>
+  <data name="SetPasswordDescription" xml:space="preserve"><value>You do not have a local password. Add one to sign in without an external login.</value></data>
+  <data name="SetPasswordAction" xml:space="preserve"><value>Set password</value></data>
+  <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Could not update the phone number.</value></data>
+  <data name="ManageEmailTitle" xml:space="preserve"><value>Manage email</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>Enter your email</value></data>
+  <data name="SendVerificationEmailAction" xml:space="preserve"><value>Send verification email</value></data>
+  <data name="NewEmailLabel" xml:space="preserve"><value>New email</value></data>
+  <data name="NewEmailPlaceholder" xml:space="preserve"><value>Enter a new email</value></data>
+  <data name="ChangeEmailAction" xml:space="preserve"><value>Change email</value></data>
+  <data name="EmailUnchanged" xml:space="preserve"><value>Your email is unchanged.</value></data>
+  <data name="ChangeEmailConfirmationSent" xml:space="preserve"><value>A confirmation link was sent to change your email. Please check your inbox.</value></data>
+  <data name="VerificationEmailSent" xml:space="preserve"><value>A verification email was sent. Please check your inbox.</value></data>
+  <data name="PersonalDataTitle" xml:space="preserve"><value>Personal data</value></data>
+  <data name="PersonalDataDescription" xml:space="preserve"><value>Your account contains personal data you provided. You can download or delete it here.</value></data>
+  <data name="PersonalDataDeleteWarning" xml:space="preserve"><value>Deleting this data permanently removes your account and cannot be undone.</value></data>
+  <data name="DownloadAction" xml:space="preserve"><value>Download</value></data>
+  <data name="DeleteAction" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeletePersonalDataTitle" xml:space="preserve"><value>Delete personal data</value></data>
+  <data name="DeleteAccountAction" xml:space="preserve"><value>Delete data and close my account</value></data>
+  <data name="IncorrectPassword" xml:space="preserve"><value>The password is incorrect.</value></data>
+  <data name="LastAdminDeleteBlocked" xml:space="preserve"><value>The last admin account cannot be deleted. Create another admin first.</value></data>
+  <data name="AccountDeleteRelatedDataBlocked" xml:space="preserve"><value>This account still has related data, so it cannot be deleted.</value></data>
+  <data name="ManageExternalLoginsTitle" xml:space="preserve"><value>Manage external logins</value></data>
+  <data name="RegisteredLoginsTitle" xml:space="preserve"><value>Registered logins</value></data>
+  <data name="RemoveExternalLoginTitle" xml:space="preserve"><value>Remove the {0} login from your account</value></data>
+  <data name="RemoveAction" xml:space="preserve"><value>Remove</value></data>
+  <data name="AddExternalLoginPrompt" xml:space="preserve"><value>Add another sign-in service</value></data>
+  <data name="LoginWithProviderTitle" xml:space="preserve"><value>Sign in with your {0} account</value></data>
+  <data name="ExternalLoginRemoveFailed" xml:space="preserve"><value>The external login could not be removed.</value></data>
+  <data name="ExternalLoginRemoved" xml:space="preserve"><value>The external login was removed.</value></data>
+  <data name="ExternalLoginInfoLoadFailed" xml:space="preserve"><value>Could not load external login information.</value></data>
+  <data name="ExternalLoginAdded" xml:space="preserve"><value>The external login was added.</value></data>
+  <data name="ExternalLoginAddFailed" xml:space="preserve"><value>The external login could not be added. Each login can be linked to only one account.</value></data>
+  <data name="DisableTwoFactorTitle" xml:space="preserve"><value>Disable two-factor authentication (2FA)</value></data>
+  <data name="DisableTwoFactorWarning" xml:space="preserve"><value>This action only disables 2FA.</value></data>
+  <data name="DisableTwoFactorDescription" xml:space="preserve"><value>Disabling 2FA does not change authenticator keys. To change the key,</value></data>
+  <data name="ResetAuthenticatorKeysAction" xml:space="preserve"><value>reset your authenticator keys.</value></data>
+  <data name="DisableTwoFactorAction" xml:space="preserve"><value>Disable 2FA</value></data>
+  <data name="TwoFactorDisabledStatus" xml:space="preserve"><value>2FA has been disabled. You can enable it again when you set up an authenticator app.</value></data>
+  <data name="ResetAuthenticatorTitle" xml:space="preserve"><value>Reset authenticator key</value></data>
+  <data name="ResetAuthenticatorWarning" xml:space="preserve"><value>If you reset the key, your authenticator app will stop working until reconfigured.</value></data>
+  <data name="ResetAuthenticatorDescription" xml:space="preserve"><value>This disables 2FA until you verify your app. You may lose account access if you do not complete setup.</value></data>
+  <data name="ResetAuthenticatorAction" xml:space="preserve"><value>Reset authenticator key</value></data>
+  <data name="AuthenticatorKeyResetStatus" xml:space="preserve"><value>The authenticator key was reset. Configure your app using the new key.</value></data>
+  <data name="RecoveryCodesNoneLeft" xml:space="preserve"><value>You have no recovery codes left.</value></data>
+  <data name="RecoveryCodesMustGenerate" xml:space="preserve"><value>You must</value></data>
+  <data name="RecoveryCodesBeforeLogin" xml:space="preserve"><value>before you can sign in with a recovery code.</value></data>
+  <data name="GenerateRecoveryCodesAction" xml:space="preserve"><value>generate a new set of recovery codes</value></data>
+  <data name="RecoveryCodesOneLeft" xml:space="preserve"><value>You have 1 recovery code left.</value></data>
+  <data name="RecoveryCodesCanGenerate" xml:space="preserve"><value>You can</value></data>
+  <data name="RecoveryCodesCountLeft" xml:space="preserve"><value>You have {0} recovery codes left.</value></data>
+  <data name="RecoveryCodesShouldGenerate" xml:space="preserve"><value>You should</value></data>
+  <data name="ForgetThisBrowserAction" xml:space="preserve"><value>Forget this browser</value></data>
+  <data name="ResetRecoveryCodesAction" xml:space="preserve"><value>Reset recovery codes</value></data>
+  <data name="AuthenticatorAppTitle" xml:space="preserve"><value>Authenticator app</value></data>
+  <data name="AddAuthenticatorAppAction" xml:space="preserve"><value>Add authenticator app</value></data>
+  <data name="SetupAuthenticatorAppAction" xml:space="preserve"><value>Set up authenticator app</value></data>
+  <data name="ResetAuthenticatorAppAction" xml:space="preserve"><value>Reset authenticator app</value></data>
+  <data name="TrackingConsentRequiredTitle" xml:space="preserve"><value>Privacy and cookie policy have not been accepted.</value></data>
+  <data name="TrackingConsentRequiredDescription" xml:space="preserve"><value>You must accept the policy before enabling two-factor authentication.</value></data>
+  <data name="BrowserForgottenStatus" xml:space="preserve"><value>This browser has been forgotten. You will be prompted for a 2FA code next time.</value></data>
+  <data name="RecoveryCodesTitle" xml:space="preserve"><value>Recovery codes</value></data>
+  <data name="RecoveryCodesSafePlace" xml:space="preserve"><value>Put these codes in a safe place.</value></data>
+  <data name="RecoveryCodesLostDevice" xml:space="preserve"><value>If you lose your device without recovery codes, you will lose access to your account.</value></data>
+  <data name="GenerateRecoveryCodesDescription" xml:space="preserve"><value>Generating new recovery codes does not change authenticator keys. To change the key,</value></data>
+  <data name="RecoveryCodesGeneratedStatus" xml:space="preserve"><value>You have generated new recovery codes.</value></data>
+  <data name="ConfigureAuthenticatorTitle" xml:space="preserve"><value>Configure authenticator app</value></data>
+  <data name="ConfigureAuthenticatorIntro" xml:space="preserve"><value>To use an authenticator app, follow these steps:</value></data>
+  <data name="ConfigureAuthenticatorStepDownload" xml:space="preserve"><value>Download a two-factor authenticator app such as</value></data>
+  <data name="ForPlatform" xml:space="preserve"><value>the platform</value></data>
+  <data name="Or" xml:space="preserve"><value>or</value></data>
+  <data name="ConfigureAuthenticatorScan" xml:space="preserve"><value>Scan the QR code or enter this key</value></data>
+  <data name="ConfigureAuthenticatorKeyHint" xml:space="preserve"><value>in your authenticator app. Spaces and letter casing do not matter.</value></data>
+  <data name="ConfigureAuthenticatorQrHelp" xml:space="preserve"><value>Learn how to</value></data>
+  <data name="EnableQrGenerationAction" xml:space="preserve"><value>enable QR code generation</value></data>
+  <data name="ConfigureAuthenticatorStepVerify" xml:space="preserve"><value>After scanning the QR code or entering the key, your authenticator app will provide a one-time code. Enter it below.</value></data>
+  <data name="EnterCodePlaceholder" xml:space="preserve"><value>Enter the code</value></data>
+  <data name="VerifyAction" xml:space="preserve"><value>Verify</value></data>
+  <data name="AuthenticatorAppVerifiedStatus" xml:space="preserve"><value>Your authenticator app has been verified.</value></data>
+  <data name="ManagePasskeysTitle" xml:space="preserve"><value>Manage passkeys</value></data>
+  <data name="UnnamedPasskey" xml:space="preserve"><value>Unnamed passkey</value></data>
+  <data name="RenamePasskeyTitle" xml:space="preserve"><value>Rename passkey</value></data>
+  <data name="RenameAction" xml:space="preserve"><value>Rename</value></data>
+  <data name="RemovePasskeyTitle" xml:space="preserve"><value>Remove this passkey from your account</value></data>
+  <data name="NoPasskeysRegistered" xml:space="preserve"><value>No passkeys are registered.</value></data>
+  <data name="MaximumPasskeysReached" xml:space="preserve"><value>You have reached the maximum number of passkeys. Delete one before adding another.</value></data>
+  <data name="AddPasskeyAction" xml:space="preserve"><value>Add a new passkey</value></data>
+  <data name="BrowserPasskeyMissing" xml:space="preserve"><value>The browser did not provide a passkey.</value></data>
+  <data name="AddPasskeyFailed" xml:space="preserve"><value>Could not add the passkey: {0}</value></data>
+  <data name="PasskeyAddFailed" xml:space="preserve"><value>The passkey could not be added to your account.</value></data>
+  <data name="PasskeyUnknownAction" xml:space="preserve"><value>Unknown action: {0}.</value></data>
+  <data name="PasskeyIdInvalid" xml:space="preserve"><value>The passkey ID has an invalid format.</value></data>
+  <data name="PasskeyDeleteFailed" xml:space="preserve"><value>The passkey could not be deleted.</value></data>
+  <data name="PasskeyDeletedStatus" xml:space="preserve"><value>Passkey deleted successfully.</value></data>
+  <data name="NamePasskeyPrompt" xml:space="preserve"><value>Enter a name for your passkey</value></data>
+  <data name="RenamePasskeyPrompt" xml:space="preserve"><value>Enter a new name for your “{0}” passkey</value></data>
+  <data name="PasskeyNamePlaceholder" xml:space="preserve"><value>My passkey</value></data>
+  <data name="PasskeyNameLabel" xml:space="preserve"><value>Passkey name</value></data>
+  <data name="ContinueAction" xml:space="preserve"><value>Continue</value></data>
+  <data name="PasskeyNotFound" xml:space="preserve"><value>The specified passkey could not be found.</value></data>
+  <data name="PasskeyUpdateFailed" xml:space="preserve"><value>The passkey could not be updated.</value></data>
+  <data name="PasskeyUpdatedStatus" xml:space="preserve"><value>Passkey updated successfully.</value></data>
+  <data name="ConfirmEmailTitle" xml:space="preserve"><value>Confirm email</value></data>
+  <data name="ConfirmEmailUserNotFound" xml:space="preserve"><value>Could not find the account for email confirmation.</value></data>
+  <data name="ConfirmEmailSuccess" xml:space="preserve"><value>Thank you for confirming your email.</value></data>
+  <data name="ConfirmEmailFailed" xml:space="preserve"><value>Could not confirm your email.</value></data>
+  <data name="ConfirmEmailChangeTitle" xml:space="preserve"><value>Confirm email change</value></data>
+  <data name="InvalidEmailChangeLink" xml:space="preserve"><value>The email change confirmation link is invalid.</value></data>
+  <data name="ConfirmEmailChangeFailed" xml:space="preserve"><value>Could not change the email.</value></data>
+  <data name="ConfirmEmailChangeUsernameFailed" xml:space="preserve"><value>Could not update the username.</value></data>
+  <data name="ConfirmEmailChangeSuccess" xml:space="preserve"><value>Thank you for confirming your email change.</value></data>
+  <data name="RegisterTitle" xml:space="preserve"><value>Register</value></data>
+  <data name="ExternalLoginAssociateTitle" xml:space="preserve"><value>Associate your {0} account</value></data>
+  <data name="ExternalLoginInstructions" xml:space="preserve"><value>You authenticated with {0}. Enter an email address for this site to finish signing in.</value></data>
+  <data name="ExternalProviderError" xml:space="preserve"><value>External provider error: {0}</value></data>
+  <data name="ExternalLoginInfoConfirmationFailed" xml:space="preserve"><value>Could not load external login information for confirmation.</value></data>
+  <data name="RegisterConfirmationTitle" xml:space="preserve"><value>Register confirmation</value></data>
+  <data name="RegisterConfirmationSenderNotice" xml:space="preserve"><value>This app does not have an email sender configured.</value></data>
+  <data name="RegisterConfirmationDocs" xml:space="preserve"><value>see the configuration guide</value></data>
+  <data name="RegisterConfirmationLinkHint" xml:space="preserve"><value>Normally this link would be sent by email:</value></data>
+  <data name="ConfirmAccountAction" xml:space="preserve"><value>Click here to confirm your account</value></data>
+  <data name="RegisterConfirmationCheckEmail" xml:space="preserve"><value>Please check your email to confirm your account.</value></data>
+  <data name="RegisterConfirmationUserNotFound" xml:space="preserve"><value>Could not find an account for that email.</value></data>
+  <data name="ResendEmailConfirmationTitle" xml:space="preserve"><value>Resend email confirmation</value></data>
+  <data name="EmailPrompt" xml:space="preserve"><value>Enter your email.</value></data>
+  <data name="ResendAction" xml:space="preserve"><value>Resend</value></data>
+  <data name="ResetPasswordConfirmationTitle" xml:space="preserve"><value>Reset password confirmation</value></data>
+  <data name="ResetPasswordConfirmationText" xml:space="preserve"><value>Your password has been reset. Please</value></data>
+  <data name="ClickToLoginAction" xml:space="preserve"><value>click here to log in</value></data>
+  <data name="ForgotPasswordConfirmationTitle" xml:space="preserve"><value>Forgot password confirmation</value></data>
+  <data name="ForgotPasswordConfirmationText" xml:space="preserve"><value>Please check your email to reset your password.</value></data>
+  <data name="InvalidPasswordResetTitle" xml:space="preserve"><value>Invalid password reset</value></data>
+  <data name="InvalidPasswordResetText" xml:space="preserve"><value>The password reset link is invalid.</value></data>
+  <data name="InvalidUserTitle" xml:space="preserve"><value>Invalid user</value></data>
+  <data name="UsernamePlaceholder" xml:space="preserve"><value>Choose your username.</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="DepositPaidDateLabel" xml:space="preserve"><value>Deposit payment date</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Simulated preview</value></data>
+  <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Simulated file preview. Please download the original file to view the full scanned document.</value></data>
+  <data name="PreviewNotAvailable" xml:space="preserve"><value>Direct preview is not available for this file type. Please download the file to view its full content.</value></data>
 </root>

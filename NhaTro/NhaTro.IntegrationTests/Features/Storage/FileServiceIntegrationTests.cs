@@ -233,6 +233,77 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task Replace_khong_duoc_doi_loai_hoac_trung_loai_vs_tep_khac()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, "chu-tro-1", Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "khach-1", Roles.KhachThue);
+
+        var owner = new TenantCaller("chu-tro-1", Roles.ChuTro);
+        var tenantService = new TenantService(
+            fixture, TimeProvider.System, new AllowAllManagerTogglePolicy());
+        var created = await tenantService.CreateAsync(new CreateTenantRequest
+        {
+            FullName = "An",
+            PhoneNumber = "0901234567",
+        }, owner);
+        Assert.True(created.Succeeded, created.ErrorMessage);
+        var tenantId = created.Tenant!.Id;
+        await SeedOwnerContractAsync(db, tenantId, owner.UserId);
+
+        var factory = new TestDbContextFactory(fixture);
+        var options = Options.Create(new StorageOptions { RootPath = "memory" });
+        var audit = new FileAccessAuditWriter(
+            factory, TimeProvider.System, NullLogger<FileAccessAuditWriter>.Instance);
+        var scope = new TenantDocumentScopeService(db, new NoManagerTenantScope());
+        var service = new TenantDocumentService(
+            db,
+            NewFileService(factory, new MemoryFileStorage(), options, scope, audit),
+            scope,
+            options,
+            audit,
+            NullLogger<TenantDocumentService>.Instance);
+
+        var front = await service.UploadAsync(
+            tenantId, NewRequest(tenantId, "CCCD_Front"), owner);
+        Assert.True(front.Succeeded, front.ErrorMessage);
+        var frontId = front.File!.Id;
+
+        // Thay CCCD mặt trước bằng mặt sau: phải bị chặn, không được âm thầm đổi loại.
+        var wrongType = await service.ReplaceAsync(
+            tenantId, frontId, NewRequest(tenantId, "CCCD_Back"), owner);
+        Assert.False(wrongType.Succeeded);
+        Assert.Equal(StorageErrorCodes.InvalidRequest, wrongType.ErrorCode);
+
+        // Thay đúng loại vẫn thành công: ngoại lệ exceptFileId không tự coi chính nó là trùng.
+        var sameType = await service.ReplaceAsync(
+            tenantId, frontId, NewRequest(tenantId, "CCCD_Front"), owner);
+        Assert.True(sameType.Succeeded, sameType.ErrorMessage);
+        var renewedId = sameType.File!.Id;
+        Assert.NotEqual(frontId, renewedId);
+
+        // Tệp legacy không nhận diện được loại (description cũ) vẫn phải bị chặn trùng loại.
+        var legacy = await service.UploadAsync(tenantId, NewRequest(tenantId, "Other"), owner);
+        Assert.True(legacy.Succeeded, legacy.ErrorMessage);
+        var legacyId = legacy.File!.Id;
+        var legacyRow = await db.StoredFiles.FirstAsync(file => file.Id == legacyId);
+        legacyRow.Description = "Giấy tờ tải lên từ trước VHT-26";
+        await db.SaveChangesAsync();
+
+        var legacyToExistingType = await service.ReplaceAsync(
+            tenantId, legacyId, NewRequest(tenantId, "CCCD_Front"), owner);
+        Assert.False(legacyToExistingType.Succeeded);
+        Assert.Equal(StorageErrorCodes.DuplicateDocumentType, legacyToExistingType.ErrorCode);
+
+        var list = await service.ListAsync(tenantId, owner);
+        Assert.NotNull(list);
+        Assert.Contains(list.Items, item => item.Id == renewedId);
+        Assert.Contains(list.Items, item => item.Id == legacyId);
+        Assert.DoesNotContain(list.Items, item => item.Id == frontId);
+    }
+
+    [SqlServerFact]
     public async Task Chu_tro_khong_thao_tac_tep_phong_ngoai_toa()
     {
         await fixture.ResetAsync();
@@ -373,7 +444,9 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
             Task.FromResult(IncidentFileAccess.None);
     }
 
-    private static UploadFileRequest NewRequest(int tenantId) => new()
+    private static UploadFileRequest NewRequest(int tenantId) => NewRequest(tenantId, "CCCD_Front");
+
+    private static UploadFileRequest NewRequest(int tenantId, string documentType) => new()
     {
         File = new FormFile(
             new MemoryStream("%PDF-1.4\nVHT-26 test"u8.ToArray()),
@@ -384,7 +457,7 @@ public sealed class FileServiceIntegrationTests(SqlServerFixture fixture)
         FileCategory = FileCategory.IdentityDocument,
         RelatedEntityType = RelatedEntityType.Tenant,
         RelatedEntityId = tenantId.ToString(),
-        DocumentType = "CCCD_Front",
+        DocumentType = documentType,
         Description = "CCCD",
     };
 

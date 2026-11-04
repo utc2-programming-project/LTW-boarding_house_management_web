@@ -325,7 +325,8 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
         string? reason,
         string? callerRole,
         string? callerEmail,
-        string modifierName)
+        string modifierName,
+        bool isLock = false)
     {
         if (!UtilityDraftRules.CanRecordMeterReadings(callerRole))
         {
@@ -371,6 +372,16 @@ public sealed class UtilitySampleStateService(TimeProvider? timeProvider = null)
             room.AuditLogs.Insert(0, CreateReadingAudit(
                 callerRole!, modifierName, "WaterMeterReading", room.WaterEnd, waterEnd, "m³", reason));
             room.WaterEnd = waterEnd;
+        }
+
+        // Chỉ số đã được ghi nhận (kể cả giá trị 0 hợp lệ) phải được đánh dấu rõ ràng,
+        // vì ElectricEnd/WaterEnd mặc định là 0 không thể phân biệt "chưa nhập" với "bằng 0".
+        room.HasElectricReading = true;
+        room.HasWaterReading = true;
+
+        if (isLock)
+        {
+            room.Status = "locked";
         }
 
         NotifyStateChanged();
