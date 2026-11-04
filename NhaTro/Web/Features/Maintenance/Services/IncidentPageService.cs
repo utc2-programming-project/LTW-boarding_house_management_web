@@ -87,7 +87,7 @@ public sealed class IncidentPageService(AuthenticationStateProvider authenticati
         }).ToArray();
         return new(i.Id, i.RoomId, i.Title, i.Description, i.Category, i.Urgency, i.Status, i.CreatedAt, i.TechnicalNotes ?? "",
             images.Where(p => !p.Pending).ToArray(), i.History.Select(h => new IncidentHistory(h.CreatedAt,
-                "ActorSystem", $"History{h.Action}")).ToArray(), pending, i.AssigneeName ?? "", i.RepairCost, $"{i.PropertyName} / {i.RoomCode}");
+                "ActorSystem", $"History{h.Action}", h.ToStatus == IncidentStatus.Completed ? h.FromStatus : null)).ToArray(), pending, i.AssigneeName ?? "", i.RepairCost, $"{i.PropertyName} / {i.RoomCode}");
     }
 
     public async Task<bool> CreateAsync(IncidentForm form)

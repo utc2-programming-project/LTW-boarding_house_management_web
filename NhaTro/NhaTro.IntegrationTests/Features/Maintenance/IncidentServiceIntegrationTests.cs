@@ -164,6 +164,29 @@ public sealed class IncidentServiceIntegrationTests(SqlServerFixture fixture) : 
         Assert.Equal(IncidentErrorCodes.Forbidden,
             (await service.UpdateAsync(existingId, new IncidentUpdateRequest { Status = IncidentStatus.InProgress }, activeCaller)).ErrorCode);
 
+        var owner = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var reportedId = created.Incident.Id;
+        var started = await service.UpdateAsync(reportedId, new IncidentUpdateRequest
+        {
+            Status = IncidentStatus.InProgress,
+            AssigneeName = "Technician A",
+            TechnicalNotes = "Inspection in progress"
+        }, owner);
+        Assert.True(started.Succeeded);
+        Assert.Null((await service.GetAsync(reportedId, activeCaller)).Incident!.TechnicalNotes);
+
+        var completed = await service.UpdateAsync(reportedId, new IncidentUpdateRequest
+        {
+            Status = IncidentStatus.Completed,
+            TechnicalNotes = "Replaced the faulty part"
+        }, owner);
+        Assert.True(completed.Succeeded);
+        var resolution = (await service.GetAsync(reportedId, activeCaller)).Incident!;
+        Assert.Equal("Technician A", resolution.AssigneeName);
+        Assert.Equal("Replaced the faulty part", resolution.TechnicalNotes);
+        Assert.Null(resolution.RepairCost);
+        Assert.All(resolution.History, history => Assert.Null(history.Note));
+
         var expired = await service.CreateAsync(ValidRequest(activeRoomId), new PropertyCaller(expiredUser, Roles.KhachThue));
         var pending = await service.CreateAsync(ValidRequest(activeRoomId), new PropertyCaller(pendingUser, Roles.KhachThue));
         var otherRoom = await service.CreateAsync(ValidRequest(otherRoomId), activeCaller);
