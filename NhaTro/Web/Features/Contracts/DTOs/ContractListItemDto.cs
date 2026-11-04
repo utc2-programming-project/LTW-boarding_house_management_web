@@ -25,6 +25,8 @@ public sealed record ContractDetailDto(
     decimal DepositAmount,
     ContractStatus Status,
     string? RejectReason,
-    IReadOnlyList<ContractMemberListItemDto> Members);
+    IReadOnlyList<ContractMemberListItemDto> Members,
+    bool CanRenew,
+    bool CanLiquidate);
 
 public sealed record ContractMemberListItemDto(int TenantId, string FullName, string Phone);

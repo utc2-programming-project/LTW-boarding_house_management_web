@@ -221,6 +221,7 @@ builder.Services.AddScoped<IApprovalApplier, IncidentResultPhotoApprovalApplier>
 builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
 // VHT-99: duyệt yêu cầu SW-06 của Quản lý = đưa hồ sơ khách thuê vào thùng rác.
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
