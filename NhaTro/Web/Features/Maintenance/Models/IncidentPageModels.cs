@@ -7,7 +7,7 @@ namespace Web.Features.Maintenance.Models;
 
 public enum IncidentMode { Allow, Approval, Deny }
 public enum IncidentAction { Create, Update, ResultPhoto }
-public sealed record IncidentHistory(DateTime AtUtc, string ActorKey, string EventKey);
+public sealed record IncidentHistory(DateTime AtUtc, string ActorKey, string EventKey, IncidentStatus? CompletedFromStatus = null);
 public sealed record IncidentPending(IncidentAction Action, IncidentStatus? ProposedStatus, string Notes,
     IReadOnlyList<IncidentStoredPhoto> Photos, DateTime AtUtc, string Assignee = "", decimal? RepairCost = null, int ExpectedPhotoCount = 0)
 {
@@ -15,6 +15,7 @@ public sealed record IncidentPending(IncidentAction Action, IncidentStatus? Prop
 }
 public sealed record IncidentStoredPhoto(Guid Id, string Name, bool IsResult, bool Pending)
 {
+    public string PreviewUrl => $"{Url}?inline=true";
     public string Url => $"/api/files/{Id:D}";
 }
 public sealed record IncidentItem(int Id, int RoomId, string Title, string Description,
