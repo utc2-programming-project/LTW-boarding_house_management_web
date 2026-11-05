@@ -113,6 +113,17 @@ public sealed class ContractApprovalApplier(TimeProvider clock) : IApprovalAppli
                 await ContractLifecycleOperations.LiquidateAsync(db, contract, room, today, ct);
                 break;
 
+            case ContractApprovalActions.UpdateDeposit:
+                if (payload.DepositAmount is null || payload.DepositAmount < 0m)
+                {
+                    throw Invalid(
+                        ContractErrorCodes.InvalidDepositAmount,
+                        "Tiền cọc phải là số không âm.");
+                }
+
+                contract.DepositAmount = Web.Common.Utils.MoneyFormatter.RoundVnd(payload.DepositAmount.Value);
+                break;
+
             default:
                 throw Invalid(ContractErrorCodes.InvalidStatus, ContractErrorMessages.InvalidStatus);
         }

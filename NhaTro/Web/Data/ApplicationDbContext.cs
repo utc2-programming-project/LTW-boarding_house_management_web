@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
+using Web.Features.Audit.Entities;
+using Web.Features.Payments.Entities;
 using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.Entities;
 using Web.Features.Maintenance.Entities;
@@ -48,10 +50,73 @@ namespace Web.Data
         public DbSet<ServiceCatalog> ServiceCatalogs => Set<ServiceCatalog>();
         public DbSet<ServicePriceHistory> ServicePriceHistories => Set<ServicePriceHistory>();
 
+        // D16: nhật ký thao tác tách sổ hệ thống (Admin) và sổ nghiệp vụ theo tòa nhà (Chủ trọ).
+        public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
+        // P5: chỉ số điện/nước bền vững + lịch sử sửa (D10).
+        public DbSet<UtilityReading> UtilityReadings => Set<UtilityReading>();
+        public DbSet<UtilityReadingAudit> UtilityReadingAudits => Set<UtilityReadingAudit>();
+
+        // P6: yêu cầu thanh toán và minh chứng (OP37/OP38).
+        public DbSet<Payment> Payments => Set<Payment>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            builder.Entity<AuditLogEntry>(entity =>
+            {
+                entity.Property(item => item.Action).HasMaxLength(200);
+                entity.Property(item => item.ActorUserId).HasMaxLength(450);
+                entity.Property(item => item.Metadata).HasMaxLength(1000);
+                entity.HasIndex(item => new { item.Category, item.OccurredAt });
+                entity.HasIndex(item => item.PropertyId);
+            });
+
+            builder.Entity<UtilityReading>(entity =>
+            {
+                entity.Property(item => item.RowVersion).IsRowVersion();
+                entity.Property(item => item.ElectricStart).HasPrecision(18, 2);
+                entity.Property(item => item.ElectricEnd).HasPrecision(18, 2);
+                entity.Property(item => item.WaterStart).HasPrecision(18, 2);
+                entity.Property(item => item.WaterEnd).HasPrecision(18, 2);
+                entity.HasIndex(item => new { item.RoomId, item.PeriodStart }).IsUnique();
+                entity.HasOne<Web.Features.Rooms.Entities.Room>()
+                    .WithMany()
+                    .HasForeignKey(item => item.RoomId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasMany(item => item.Audits)
+                    .WithOne()
+                    .HasForeignKey(audit => audit.UtilityReadingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<UtilityReadingAudit>(entity =>
+            {
+                entity.Property(item => item.Reason).HasMaxLength(500);
+                entity.Property(item => item.ChangedByUserId).HasMaxLength(450);
+                entity.Property(item => item.OldElectricEnd).HasPrecision(18, 2);
+                entity.Property(item => item.NewElectricEnd).HasPrecision(18, 2);
+                entity.Property(item => item.OldWaterEnd).HasPrecision(18, 2);
+                entity.Property(item => item.NewWaterEnd).HasPrecision(18, 2);
+                entity.HasIndex(item => item.UtilityReadingId);
+            });
+
+            builder.Entity<Payment>(entity =>
+            {
+                entity.Property(item => item.RowVersion).IsRowVersion();
+                entity.Property(item => item.Amount).HasPrecision(18, 2);
+                entity.Property(item => item.ProofFileIdsJson).HasMaxLength(2000);
+                entity.Property(item => item.TransactionCode).HasMaxLength(100);
+                entity.Property(item => item.RejectionReason).HasMaxLength(500);
+                entity.Property(item => item.SubmittedByUserId).HasMaxLength(450);
+                entity.HasIndex(item => item.InvoiceId);
+                entity.HasOne<Invoice>()
+                    .WithMany()
+                    .HasForeignKey(item => item.InvoiceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

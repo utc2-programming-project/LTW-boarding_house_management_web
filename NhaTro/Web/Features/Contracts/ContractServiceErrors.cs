@@ -26,6 +26,7 @@ public static class ContractErrorCodes
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
     public const string DuplicatePendingRequest = nameof(DuplicatePendingRequest);
+    public const string InvalidDepositAmount = nameof(InvalidDepositAmount);
 }
 
 public static class ContractErrorMessages

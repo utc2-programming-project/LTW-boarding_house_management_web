@@ -119,9 +119,16 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
         await db.IncidentPhotoAttachments.ExecuteDeleteAsync();
         await db.StoredFiles.ExecuteDeleteAsync();
+        // Thanh toán tham chiếu Invoices bằng Restrict: xóa trước hóa đơn.
+        await db.Payments.ExecuteDeleteAsync();
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
         await db.InvoiceItems.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
+        // P5 (D10): lịch sử sửa chỉ số xóa trước chỉ số; chỉ số tham chiếu Rooms.
+        await db.UtilityReadingAudits.ExecuteDeleteAsync();
+        await db.UtilityReadings.ExecuteDeleteAsync();
+        // D16: nhật ký thao tác độc lập, xóa trước Users/Properties.
+        await db.AuditLogEntries.ExecuteDeleteAsync();
         // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.
         await db.ContractMembers.ExecuteDeleteAsync();
         await db.Contracts.ExecuteDeleteAsync();

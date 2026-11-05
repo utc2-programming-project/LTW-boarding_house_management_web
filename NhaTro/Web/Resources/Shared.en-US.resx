@@ -1263,6 +1263,7 @@
   <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Contract</value></data>
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Meter reading period</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Incident</value></data>
+  <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Invoice</value></data>
   <data name="SW-01" xml:space="preserve"><value>Edit room details</value></data>
   <data name="SW-02" xml:space="preserve"><value>Set room rate</value></data>
   <data name="SW-03" xml:space="preserve"><value>Change room status</value></data>
