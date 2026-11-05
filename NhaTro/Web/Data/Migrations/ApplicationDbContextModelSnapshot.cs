@@ -1465,6 +1465,95 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReadingPeriod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("ElectricEnd")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ElectricStart")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("HasReadings")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<int>("ResidentCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("WaterEnd")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("WaterStart")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("RoomId");
+
+                    b.HasIndex("ContractId", "PeriodEnd");
+
+                    b.HasIndex("ContractId", "PeriodStart")
+                        .IsUnique();
+
+                    b.ToTable("UtilityReadingPeriods", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_Electric", "[ElectricStart] >= 0 AND [ElectricEnd] >= [ElectricStart]");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_InvoicedHasInvoice", "[Status] = 0 OR [InvoiceId] IS NOT NULL");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_InvoicedHasReadings", "[Status] = 0 OR [HasReadings] = 1");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_Period", "[PeriodEnd] >= [PeriodStart]");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_ResidentCount", "[ResidentCount] > 0");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_Status", "[Status] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_Water", "[WaterStart] >= 0 AND [WaterEnd] >= [WaterStart]");
+                        });
+                });
+
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
                 {
                     b.Property<int>("Id")
@@ -2175,6 +2264,26 @@ namespace Web.Migrations
                         .IsRequired();
 
                     b.Navigation("ServiceCatalog");
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReadingPeriod", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Invoices.Entities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariffTier", b =>
