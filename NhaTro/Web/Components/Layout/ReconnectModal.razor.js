@@ -10,7 +10,11 @@ resumeButton.addEventListener("click", resume);
 
 function handleReconnectStateChanged(event) {
     if (event.detail.state === "show") {
-        reconnectModal.showModal();
+        const warning = document.getElementById("components-reconnect-unsaved");
+        warning.hidden = !document.querySelector("[data-unsaved-form]");
+        if (!reconnectModal.open) {
+            reconnectModal.showModal();
+        }
     } else if (event.detail.state === "hide") {
         reconnectModal.close();
     } else if (event.detail.state === "failed") {
