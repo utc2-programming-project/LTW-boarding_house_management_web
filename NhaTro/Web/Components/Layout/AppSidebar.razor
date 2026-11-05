@@ -10,7 +10,7 @@
                            Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
                 @if (item.Href is not null)
                 {
-                    <NavLink href="@item.Href" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
+                    <NavLink href="@item.Href" Match="@(item.Href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
                 }
                 else
                 {
@@ -18,6 +18,5 @@
                 }
             </AuthorizeView>
         }
-        <NavLink href="/" Match="NavLinkMatch.All" class="nav-item" aria-label="@L["LayoutPreview"]" title="@L["LayoutPreview"]"><LucideIcon Name="home" /><span class="sidebar-label">@L["LayoutPreview"]</span></NavLink>
     </nav>
 </aside>

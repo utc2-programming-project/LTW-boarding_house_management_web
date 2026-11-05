@@ -113,6 +113,63 @@ public sealed class AccountService(
         };
     }
 
+    /// <summary>Trang chủ Admin: đếm theo trạng thái và vài tài khoản chờ duyệt mới nhất.</summary>
+    public async Task<AccountSummaryDto> GetSummaryAsync(
+        string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin)
+        {
+            return AccountSummaryDto.Empty;
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var rows = await (
+                from user in db.Users.AsNoTracking()
+                join userRole in db.UserRoles on user.Id equals userRole.UserId
+                join role in db.Roles on userRole.RoleId equals role.Id
+                select new
+                {
+                    user.Id,
+                    user.UserName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.FullName,
+                    user.LockoutEnd,
+                    user.ApprovedAt,
+                    Role = role.Name!,
+                })
+            .ToListAsync(ct);
+
+        var statuses = rows
+            .Select(row => new { Row = row, Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd) })
+            .ToList();
+
+        var pending = statuses
+            .Where(item => item.Status == AccountStatus.Pending)
+            .OrderBy(item => item.Row.UserName)
+            .Take(5)
+            .Select(item => new AccountListItemDto
+            {
+                Id = item.Row.Id,
+                UserName = item.Row.UserName ?? string.Empty,
+                Email = item.Row.Email,
+                PhoneNumber = item.Row.PhoneNumber,
+                FullName = item.Row.FullName,
+                Role = item.Row.Role,
+                IsLocked = AccountStatusRules.IsPermanentlyLocked(item.Row.LockoutEnd),
+                LockoutEnd = item.Row.LockoutEnd,
+                Status = item.Status,
+                ApprovedAt = item.Row.ApprovedAt,
+            })
+            .ToList();
+
+        return new AccountSummaryDto(
+            statuses.Count(item => item.Status == AccountStatus.Active),
+            statuses.Count(item => item.Status == AccountStatus.Pending),
+            statuses.Count(item => item.Status == AccountStatus.Locked),
+            pending);
+    }
+
     public async Task<AccountResultOf<MyProfileDto>> GetMyProfileAsync(
         string callerUserId, CancellationToken ct = default)
     {

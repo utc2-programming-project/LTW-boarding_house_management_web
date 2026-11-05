@@ -88,9 +88,6 @@
   <data name="ToggleNavigation" xml:space="preserve">
     <value>Toggle navigation</value>
   </data>
-  <data name="LayoutPreview" xml:space="preserve">
-    <value>Layout preview</value>
-  </data>
   <data name="Unavailable" xml:space="preserve">
     <value>Not available yet</value>
   </data>
@@ -184,32 +181,8 @@
   <data name="ReportIncident" xml:space="preserve">
     <value>Report an incident</value>
   </data>
-  <data name="PreviewDescription" xml:space="preserve">
-    <value>A shared layout with navigation, language selection, and light and dark themes.</value>
-  </data>
-  <data name="SampleData" xml:space="preserve">
-    <value>Sample data</value>
-  </data>
-  <data name="DisplayExamples" xml:space="preserve">
-    <value>Display format examples</value>
-  </data>
-  <data name="SampleDisclaimer" xml:space="preserve">
-    <value>The values below demonstrate the interface and are not operational data.</value>
-  </data>
-  <data name="SampleDate" xml:space="preserve">
-    <value>Example date</value>
-  </data>
-  <data name="SampleAmount" xml:space="preserve">
-    <value>Example amount</value>
-  </data>
   <data name="NoData" xml:space="preserve">
     <value>No data</value>
-  </data>
-  <data name="ModulesPending" xml:space="preserve">
-    <value>Modules will become available as they are integrated. Unavailable items cannot be opened yet.</value>
-  </data>
-  <data name="BackToPreview" xml:space="preserve">
-    <value>Back to preview</value>
   </data>
   <data name="AccountStatusPendingApproval" xml:space="preserve">
     <value>Pending approval</value>
@@ -228,6 +201,9 @@
   </data>
   <data name="Restore" xml:space="preserve">
     <value>Restore</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
   </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>

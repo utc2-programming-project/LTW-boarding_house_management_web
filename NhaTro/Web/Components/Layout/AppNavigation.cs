@@ -5,6 +5,7 @@ public static class AppNavigation
     // Chỉ gắn route khi module có trang thật và đã bảo vệ quyền.
     public static readonly NavigationItem[] Items =
     [
+        new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/"),
         new("Dashboard", "chart", "ChuTro,QuanLy", "/dashboard"),
         // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
         new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
