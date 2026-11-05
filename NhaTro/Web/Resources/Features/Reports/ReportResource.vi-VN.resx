@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Báo cáo vận hành</value></data>
+<data name="CurrentData" xml:space="preserve"><value>Số liệu hiện trạng từ dữ liệu vận hành, cập nhật khi làm mới.</value></data>
+<data name="ScopeNote" xml:space="preserve"><value>Phòng được lọc theo nhà trọ và trạng thái. Khách được lọc theo hồ sơ có hợp đồng ở nhà đã chọn, gồm mọi trạng thái hợp đồng. Khi chọn tất cả nhà, nguồn khách còn gồm hồ sơ chưa gắn hợp đồng trong phạm vi được phép.</value></data>
+<data name="UnavailableProperty" xml:space="preserve"><value>Nhà trọ không tồn tại hoặc nằm ngoài phạm vi được phép.</value></data>
+<data name="ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
+<data name="RoomReport" xml:space="preserve"><value>Báo cáo phòng</value></data>
+<data name="TenantReport" xml:space="preserve"><value>Báo cáo khách thuê</value></data>
+<data name="RoomActivity" xml:space="preserve"><value>Hoạt động của phòng</value></data>
+<data name="ActiveRooms" xml:space="preserve"><value>Phòng đang hoạt động</value></data>
+<data name="InactiveRooms" xml:space="preserve"><value>Phòng tạm ngưng</value></data>
+<data name="RoomStatus" xml:space="preserve"><value>Trạng thái phòng</value></data>
+<data name="AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+<data name="RoomTotal" xml:space="preserve"><value>Tổng phòng theo bộ lọc</value></data>
+<data name="RoomCode" xml:space="preserve"><value>Mã phòng</value></data>
+<data name="StandardPrice" xml:space="preserve"><value>Giá phòng tiêu chuẩn</value></data>
+<data name="TenantActivity" xml:space="preserve"><value>Trạng thái hồ sơ</value></data>
+<data name="RentalStatus" xml:space="preserve"><value>Tình trạng thuê</value></data>
+<data name="Renting" xml:space="preserve"><value>Đang thuê</value></data>
+<data name="NotRenting" xml:space="preserve"><value>Chưa có hợp đồng hiệu lực</value></data>
+<data name="CurrentProperty" xml:space="preserve"><value>Nhà trọ đang thuê</value></data>
+<data name="CurrentRoom" xml:space="preserve"><value>Phòng đang thuê</value></data>
+<data name="FullName" xml:space="preserve"><value>Họ tên</value></data>
+<data name="Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+<data name="Yes" xml:space="preserve"><value>Có</value></data>
+<data name="No" xml:space="preserve"><value>Không</value></data>
+<data name="EmptyDescription" xml:space="preserve"><value>Không có dữ liệu phù hợp trong phạm vi được phép. Bạn có thể xóa bộ lọc để xem lại.</value></data>
+<data name="OccupancyNote" xml:space="preserve"><value>Tỷ lệ lấp đầy = phòng đang thuê / (tổng phòng − phòng bảo trì) trong bộ lọc hiện tại. Nếu mẫu số bằng 0, hiển thị —.</value></data>
+<data name="PageSummary" xml:space="preserve"><value>Trang {0} / {1} · Tổng {2}</value></data>
+<data name="Previous" xml:space="preserve"><value>Trang trước</value></data>
+<data name="Next" xml:space="preserve"><value>Trang sau</value></data>
+</root>
