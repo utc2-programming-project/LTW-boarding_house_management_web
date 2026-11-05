@@ -1229,4 +1229,6 @@
   <data name="SW-15c" xml:space="preserve"><value>View contract report</value></data>
   <data name="SW-15d" xml:space="preserve"><value>View invoice report</value></data>
   <data name="SW-15e" xml:space="preserve"><value>View revenue and receivables report</value></data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve"><value>Choose which actions property managers can perform.</value></data>
+  <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Changes are saved automatically. Report viewing only supports Allow or Deny.</value></data>
 </root>

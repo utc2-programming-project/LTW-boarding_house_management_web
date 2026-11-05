@@ -1229,4 +1229,6 @@
   <data name="SW-15c" xml:space="preserve"><value>Xem báo cáo — mục Hợp đồng</value></data>
   <data name="SW-15d" xml:space="preserve"><value>Xem báo cáo — mục Hóa đơn</value></data>
   <data name="SW-15e" xml:space="preserve"><value>Xem báo cáo — mục Doanh thu / công nợ</value></data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve"><value>Thiết lập quyền thực hiện các thao tác của Quản lý.</value></data>
+  <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Các mục xem báo cáo chỉ có chế độ Cho phép hoặc Không thể.</value></data>
 </root>
