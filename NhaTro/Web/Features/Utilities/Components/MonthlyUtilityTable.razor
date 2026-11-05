@@ -3,10 +3,18 @@
 @using Web.Features.Utilities.Services
 @using Web.Components.Shared
 @inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<UtilityResources> UL
 
 <div class="cost-table-card">
     <div class="cost-card-header">
         <h4 class="card-title">@L["MeterReadingCostDetailTitle"]</h4>
+        @if (IsCalculating)
+        {
+            <span class="cost-calc-indicator">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>@L["MeterReadingCalculating"]</span>
+            </span>
+        }
         <span class="sparkle-badge">
             <LucideIcon Name="sparkles" />
             <span>@L["MeterReadingAutoCalculateTariff"]</span>
@@ -50,8 +58,8 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-right cost-missing-cell">—</td>
-                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell">@L["MeterReadingNoData"]</td>
+                        <td class="text-right cost-missing-cell">@L["MeterReadingNoData"]</td>
                         <td class="text-right cost-missing-cell font-medium">@L["MeterReadingNoData"]</td>
                     </tr>
                 }
@@ -66,7 +74,7 @@
                                     <span>@string.Format(L["MeterReadingElectricTierItem"], tier.TierId)</span>
                                 </div>
                             </td>
-                            <td class="text-right tabular-nums">@tier.Units.ToString("N0") kWh</td>
+                            <td class="text-right tabular-nums">@FormatUsage(tier.Units, "UnitKwh")</td>
                             <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Rate)</td>
                             <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(tier.Amount)</td>
                         </tr>
@@ -81,9 +89,9 @@
                                 <span>@L["MeterReadingElectricCostZeroItem"]</span>
                             </div>
                         </td>
-                        <td class="text-right tabular-nums">0 kWh</td>
+                        <td class="text-right tabular-nums">@FormatUsage(0m, "UnitKwh")</td>
                         <td class="text-right tabular-nums">—</td>
-                        <td class="text-right tabular-nums font-semibold">0 ₫</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(0m)</td>
                     </tr>
                 }
 
@@ -100,8 +108,8 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="text-right cost-missing-cell">—</td>
-                        <td class="text-right cost-missing-cell">—</td>
+                        <td class="text-right cost-missing-cell">@L["MeterReadingNoData"]</td>
+                        <td class="text-right cost-missing-cell">@L["MeterReadingNoData"]</td>
                         <td class="text-right cost-missing-cell font-medium">@L["MeterReadingNoData"]</td>
                     </tr>
                 }
@@ -116,7 +124,7 @@
                                     <span>@string.Format(L["MeterReadingWaterTierItem"], tier.TierId)</span>
                                 </div>
                             </td>
-                            <td class="text-right tabular-nums">@tier.Units.ToString("N0") m³</td>
+                            <td class="text-right tabular-nums">@FormatUsage(tier.Units, "UnitM3")</td>
                             <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Rate)</td>
                             <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(tier.Amount)</td>
                         </tr>
@@ -131,9 +139,9 @@
                                 <span>@L["MeterReadingWaterCostZeroItem"]</span>
                             </div>
                         </td>
-                        <td class="text-right tabular-nums">0 m³</td>
+                        <td class="text-right tabular-nums">@FormatUsage(0m, "UnitM3")</td>
                         <td class="text-right tabular-nums">—</td>
-                        <td class="text-right tabular-nums font-semibold">0 ₫</td>
+                        <td class="text-right tabular-nums font-semibold">@MoneyFormatter.Format(0m)</td>
                     </tr>
                 }
 
@@ -248,5 +256,12 @@
             }
             return MoneyFormatter.Format(baseTotal);
         }
+    }
+
+    // Đơn vị theo ngôn ngữ (kWh / m³) qua localizer, số định dạng dùng invariant culture.
+    private string FormatUsage(decimal usage, string unitKey)
+    {
+        var formatted = usage.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+        return $"{formatted} {UL[unitKey].Value}";
     }
 }

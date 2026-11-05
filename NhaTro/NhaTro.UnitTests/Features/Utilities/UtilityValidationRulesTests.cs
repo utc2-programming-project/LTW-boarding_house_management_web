@@ -216,7 +216,6 @@ public sealed class UtilityValidationRulesTests
         ServiceId = "srv-3",
         NewRate = 120_000m,
         Unit = ServiceUnitCategory.Room,
-        BuildingScope = "b1",
         EffectiveFrom = new DateOnly(2026, 10, 25),
     };
 }

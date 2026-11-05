@@ -22,10 +22,19 @@ public static class DevAccountSeeder
     public static async Task EnsureAsync(IServiceProvider services, IConfiguration config, ILogger logger)
     {
         var password = config["DevAccounts:Password"];
+        var env = services.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
         if (string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning("Chua cau hinh DevAccounts:Password nen bo qua gieo 4 user mau (role van duoc gieo).");
-            return;
+            if (env.IsDevelopment())
+            {
+                logger.LogWarning("DevAccounts:Password not configured; creating development users with a temporary password. Change via user-secrets or environment variables.");
+                password = "DevAccounts!234";
+            }
+            else
+            {
+                logger.LogWarning("Chua cau hinh DevAccounts:Password nen bo qua gieo 4 user mau (role van duoc gieo).");
+                return;
+            }
         }
 
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();

@@ -62,11 +62,16 @@ public sealed class UtilitySampleStateServiceTests
         Assert.Equal(UtilityErrorCode.InvalidBuildingScope, invalidScopeError);
 
         request.BuildingId = "b2";
+        request.Description = "Laundry service description";
+        request.Note = "Initial laundry price note";
         var (success, error, created) = state.AddService(request, Roles.ChuTro, "Owner");
         Assert.True(success);
         Assert.Null(error);
         Assert.NotNull(created);
+        Assert.Equal("Laundry service description", created.Description);
         Assert.Equal(PriceVersionStatus.Active, created.PriceStatus);
+        var createdVersion = Assert.Single(state.GetPriceVersionsForCaller(Roles.ChuTro, OwnerEmail, created.Id));
+        Assert.Equal("Initial laundry price note", createdVersion.Note);
         Assert.Contains(state.GetServicesForCaller(Roles.ChuTro, OwnerEmail), item => item.Id == created.Id);
         Assert.DoesNotContain(state.GetServicesForCaller(Roles.QuanLy, ManagerEmail), item => item.Id == created.Id);
 
@@ -110,14 +115,9 @@ public sealed class UtilitySampleStateServiceTests
     }
 
     [Fact]
-    public void UpdateServicePrice_RejectsInvalidScopeAndConflictingDate()
+    public void UpdateServicePrice_UsesCatalogScopeAndRejectsConflictingDate()
     {
         var state = CreateState();
-        var invalidScope = ValidPriceRequest("srv-3", new DateOnly(2026, 12, 1));
-        invalidScope.BuildingScope = "b2";
-        var (_, scopeError, _) = state.UpdateServicePrice(invalidScope, Roles.ChuTro, "Owner");
-        Assert.Equal(UtilityErrorCode.InvalidBuildingScope, scopeError);
-
         var first = ValidPriceRequest("srv-3", new DateOnly(2026, 12, 1));
         var (success, _, _) = state.UpdateServicePrice(first, Roles.ChuTro, "Owner");
         Assert.True(success);
@@ -126,6 +126,22 @@ public sealed class UtilitySampleStateServiceTests
         var (duplicateSuccess, duplicateError, _) = state.UpdateServicePrice(duplicate, Roles.ChuTro, "Owner");
         Assert.False(duplicateSuccess);
         Assert.Equal(UtilityErrorCode.PriceVersionConflict, duplicateError);
+    }
+
+    [Fact]
+    public void UpdateServicePrice_RejectsNextDayStartThatWouldCreateSameDayVersion()
+    {
+        var state = CreateState();
+        var latestVersion = state.GetPriceVersionsForCaller(Roles.ChuTro, OwnerEmail, "srv-3")
+            .Where(version => version.BuildingScope == "b1")
+            .MaxBy(version => version.EffectiveFrom);
+        Assert.NotNull(latestVersion);
+
+        var request = ValidPriceRequest("srv-3", latestVersion.EffectiveFrom.AddDays(1));
+        var (success, error, _) = state.UpdateServicePrice(request, Roles.ChuTro, "Owner");
+
+        Assert.False(success);
+        Assert.Equal(UtilityErrorCode.PriceVersionConflict, error);
     }
 
     [Fact]
@@ -228,6 +244,35 @@ public sealed class UtilitySampleStateServiceTests
     }
 
     [Fact]
+    public void SaveRoomReading_WithLockPersistsStatusAcrossReload()
+    {
+        var state = CreateState();
+
+        var (success, error, saved) = state.SaveRoomReading(
+            roomId: "room-101",
+            electricEnd: 1_570m,
+            waterEnd: 130m,
+            periodStart: new DateOnly(2026, 10, 1),
+            periodEnd: new DateOnly(2026, 10, 31),
+            reason: null,
+            callerRole: Roles.QuanLy,
+            callerEmail: ManagerEmail,
+            modifierName: "Manager",
+            isLock: true);
+
+        Assert.True(success);
+        Assert.Null(error);
+        Assert.NotNull(saved);
+        Assert.Equal("locked", saved.Status);
+
+        // Bản ghi trả về chỉ là bản sao; trạng thái chốt phải nằm trong state gốc
+        // để lần tải lại trang vẫn thấy "locked".
+        var reloaded = state.GetRoomReadingsForCaller(Roles.QuanLy, ManagerEmail)
+            .Single(room => room.Id == "room-101");
+        Assert.Equal("locked", reloaded.Status);
+    }
+
+    [Fact]
     public void SaveRoomReading_TenantAdminAndOutOfScopeRoomAreRejected()
     {
         var state = CreateState();
@@ -294,7 +339,6 @@ public sealed class UtilitySampleStateServiceTests
         ServiceId = serviceId,
         NewRate = 120_000m,
         Unit = ServiceUnitCategory.Room,
-        BuildingScope = "b1",
         EffectiveFrom = effectiveFrom,
     };
 

@@ -11,6 +11,10 @@ public sealed class ServiceCatalog
     /// <summary>Used for system supplied electricity/water tariffs which users may only view.</summary>
     public bool IsReadOnly { get; set; }
 
+    /// <summary>Indicates whether this service catalog is active for usage and new pricing.</summary>
+    public bool IsActive { get; set; } = true;
+    public string? Description { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<ServicePriceHistory> PriceHistory { get; set; } = new List<ServicePriceHistory>();

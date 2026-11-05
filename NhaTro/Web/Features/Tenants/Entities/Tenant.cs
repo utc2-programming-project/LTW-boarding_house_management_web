@@ -52,5 +52,13 @@ public class Tenant
     // Chong ghi de dong thoi (muc 5.3). EF map rowversion.
     public byte[] RowVersion { get; set; } = [];
 
+    // Thung rac (VHT-99): xoa mem, khong xoa cung. Giu nguyen UserId va tep giay to
+    // de khoi phuc lai duoc dung lien ket; han luu do Chinh sach SW-06 quy dinh.
     public bool IsDeleted { get; set; }
+
+    /// <summary>UTC — thoi diem dua ho so vao thung rac; null khi con hoat dong.</summary>
+    public DateTime? DeletedAt { get; set; }
+
+    /// <summary>Nguoi dua ho so vao thung rac (Chu tro hoac Quan ly gui yeu cau duoc duyet).</summary>
+    public string? DeletedByUserId { get; set; }
 }

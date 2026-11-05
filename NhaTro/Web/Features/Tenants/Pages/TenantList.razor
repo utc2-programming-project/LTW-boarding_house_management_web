@@ -11,6 +11,11 @@
 <section class="tenant-list-page" aria-labelledby="tenants-title">
     <header class="tenant-page-heading">
         <div>
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["Dashboard"], "/"),
+                new(L["TenantsTitle"])
+            })" />
             <div class="tenant-title-row">
                 <h1 id="tenants-title">@L["TenantsTitle"]</h1>
             </div>
@@ -19,6 +24,9 @@
         <div class="tenant-page-actions">
             @if (_canRevealIdNumber)
             {
+                <a class="btn btn-secondary" href="/trash">
+                    <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
+                </a>
                 <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
                     @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
                     else { <LucideIcon Name="download" /> }
@@ -39,31 +47,38 @@
         </div>
     }
 
-    <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
-            <div class="tenant-stat-value">@SummaryValue(_summary?.TotalCount)<small>@L["TenantPeople"]</small></div>
-            <p>@L["TenantAllRecordsHint"]</p>
-        </article>
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
-            <div class="tenant-stat-value">@SummaryValue(_summary?.ActiveCount)<small>@L["TenantRecords"]</small></div>
-            <p>@Percent(_summary?.ActiveCount, _summary?.TotalCount) @L["TenantActiveRateHint"]</p>
-        </article>
-        @if (_canRevealIdNumber)
-        {
+    @if (!_summaryError && _summary is null)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (!_summaryError)
+    {
+        <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
             <article class="tenant-stat-card">
-                <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
-                <div class="tenant-stat-value">@SummaryValue(_summary?.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
-                <p>@Percent(_summary?.LinkedAccountCount, _summary?.TotalCount) @L["TenantAccountRateHint"]</p>
+                <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
+                <div class="tenant-stat-value">@SummaryValue(_summary!.TotalCount)<small>@L["TenantPeople"]</small></div>
+                <p>@L["TenantAllRecordsHint"]</p>
             </article>
-        }
-        <article class="tenant-stat-card">
-            <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
-            <div class="tenant-stat-value">@Percent(_summary?.WithIdNumberCount, _summary?.TotalCount)<small>%</small></div>
-            <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
-        </article>
-    </section>
+            <article class="tenant-stat-card">
+                <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
+                <div class="tenant-stat-value">@SummaryValue(_summary!.ActiveCount)<small>@L["TenantRecords"]</small></div>
+                <p>@Percent(_summary!.ActiveCount, _summary!.TotalCount) @L["TenantActiveRateHint"]</p>
+            </article>
+            @if (_canRevealIdNumber)
+            {
+                <article class="tenant-stat-card">
+                    <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
+                    <div class="tenant-stat-value">@SummaryValue(_summary!.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
+                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount) @L["TenantAccountRateHint"]</p>
+                </article>
+            }
+            <article class="tenant-stat-card">
+                <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
+                <div class="tenant-stat-value">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></div>
+                <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
+            </article>
+        </section>
+    }
 
     @if (_loadingDetail)
     {
@@ -148,6 +163,7 @@
 <TenantDetailsDialog Visible="_showDetails" Tenant="_selectedTenant" CanManage="true"
                      CanViewAccount="_canRevealIdNumber"
                      OnClose="CloseDetailsAsync" OnEdit="OpenEditAsync" OnSetActive="RequestStatusChangeAsync"
+                     OnDelete="RequestDeleteAsync"
                      OnLinkAccount="OpenLinkAccountAsync" OnUnlinkAccount="RequestUnlinkAccountAsync" />
 <TenantFormDialog Visible="_showForm" Tenant="_formTenant" CanManage="true"
                    CanRevealIdNumber="_canRevealIdNumber" OnClose="CloseFormAsync" OnSaved="RefreshAsync" />
@@ -163,6 +179,10 @@
                Message="@L["TenantUnlinkMessage"]" ConfirmText="@L["TenantUnlinkAccount"]"
                CancelText="@L["Cancel"]" Danger="true"
                OnConfirm="ConfirmUnlinkAccountAsync" OnCancel="CancelUnlinkAccountAsync" />
+<ConfirmDialog Visible="_showDeleteConfirm" Title="@L["TenantDeleteTitle"]"
+               Message="@L["TenantDeleteMessage"]" ConfirmText="@L["TenantDelete"]"
+               CancelText="@L["Cancel"]" BusyText="@L["TenantDeleting"]" Danger="true"
+               OnConfirm="ConfirmDeleteAsync" OnCancel="CancelDeleteAsync" />
 
 @code {
     private const int ExportPageSize = 100;
@@ -187,6 +207,7 @@
     private bool _showLinkAccount;
     private bool _showStatusConfirm;
     private bool _showUnlinkConfirm;
+    private bool _showDeleteConfirm;
     private bool _nextIsActive;
 
     protected override async Task OnInitializedAsync()
@@ -268,6 +289,11 @@
                         aria-label="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"]): @tenant.FullName"
                         @onclick="() => OpenStatusFromListAsync(tenant.Id, !tenant.IsActive)">
                     <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
+                </button>
+                <button type="button" class="tenant-icon-button tenant-icon-danger"
+                        title="@L["TenantDelete"]" aria-label="@L["TenantDelete"]: @tenant.FullName"
+                        @onclick="() => OpenDeleteFromListAsync(tenant.Id)">
+                    <LucideIcon Name="trash" />
                 </button>
             </span>,
         });
@@ -525,6 +551,75 @@
         return Task.CompletedTask;
     }
 
+    private async Task OpenDeleteFromListAsync(int id)
+    {
+        if (await LoadDetailAsync(id))
+        {
+            _showDeleteConfirm = true;
+        }
+    }
+
+    private Task RequestDeleteAsync(TenantDetailDto tenant)
+    {
+        _selectedTenant = tenant;
+        _showDetails = false;
+        _showDeleteConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_selectedTenant is null)
+        {
+            _showDeleteConfirm = false;
+            return;
+        }
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.DeleteAsync(_selectedTenant.Id, _selectedTenant.RowVersion);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _showDeleteConfirm = false;
+            Toasts.Error(L["TenantErrorForbidden"]);
+            return;
+        }
+        catch
+        {
+            _showDeleteConfirm = false;
+            Toasts.Error(L["TenantErrorGeneric"]);
+            return;
+        }
+
+        _showDeleteConfirm = false;
+
+        if (!result.Succeeded)
+        {
+            if (result.ErrorCode == TenantErrorCodes.ApprovalRequired)
+            {
+                // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
+                Toasts.Success(L["TenantDeleteApprovalSubmitted"]);
+                return;
+            }
+
+            Toasts.Error(ErrorMessage(result.ErrorCode));
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict) await RefreshDetailsAsync();
+            return;
+        }
+
+        Toasts.Success(L["TenantDeleted"]);
+        _selectedTenant = null;
+        await RefreshAsync();
+    }
+
+    private Task CancelDeleteAsync()
+    {
+        _showDeleteConfirm = false;
+        return Task.CompletedTask;
+    }
+
     private async Task ExportAsync()
     {
         if (_exporting) return;
@@ -568,10 +663,10 @@
         SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
     };
 
-    private string SummaryValue(int? value) => value?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+    private string SummaryValue(int? value) => value?.ToString("N0", NumberFormatter.Display) ?? L["NoData"].Value;
 
     private string Percent(int? value, int? total) =>
-        total is > 0 && value is not null ? ((double)value.Value / total.Value * 100).ToString("0.#", CultureInfo.CurrentCulture) : "0";
+        total is > 0 && value is not null ? NumberFormatter.Trimmed((double)value.Value / total.Value * 100) : "0";
 
     private static string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();
@@ -582,6 +677,7 @@
         TenantErrorCodes.TenantNotFound => L["TenantErrorNotFound"],
         TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
         TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+        TenantErrorCodes.TenantInUse => L["TenantErrorInUse"],
         TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
         _ => L["TenantErrorGeneric"],
     };

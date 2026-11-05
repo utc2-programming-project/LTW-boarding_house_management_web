@@ -142,7 +142,26 @@
   <data name="ContractStatusExpiringSoon" xml:space="preserve"><value>Sắp hết hạn</value></data>
   <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
+  <data name="ContractStatusLiquidated" xml:space="preserve"><value>Đã thanh lý</value></data>
+  <data name="ContractRenewAction" xml:space="preserve"><value>Gia hạn</value></data>
+  <data name="ContractLiquidateAction" xml:space="preserve"><value>Thanh lý</value></data>
+  <data name="ContractRenewTitle" xml:space="preserve"><value>Gia hạn hợp đồng</value></data>
+  <data name="ContractLiquidateTitle" xml:space="preserve"><value>Thanh lý hợp đồng</value></data>
+  <data name="ContractRenewDescription" xml:space="preserve"><value>Hợp đồng mới bắt đầu ngay sau ngày kết thúc hiện tại, giữ nguyên khách thuê và chốt giá thuê hiện tại. Hợp đồng cũ được giữ lại làm lịch sử.</value></data>
+  <data name="ContractLiquidateDescription" xml:space="preserve"><value>Hợp đồng sẽ chuyển sang trạng thái Đã thanh lý và không thể chuyển tiếp.</value></data>
+  <data name="ContractRenewEndDateLabel" xml:space="preserve"><value>Ngày kết thúc mới</value></data>
+  <data name="ContractRenewStartHint" xml:space="preserve"><value>Hợp đồng mới bắt đầu từ {0}.</value></data>
+  <data name="ContractRenewSuccess" xml:space="preserve"><value>Đã gia hạn hợp đồng.</value></data>
+  <data name="ContractRenewPendingApproval" xml:space="preserve"><value>Đã gửi yêu cầu gia hạn để Chủ trọ duyệt.</value></data>
+  <data name="ContractLiquidateSuccess" xml:space="preserve"><value>Đã thanh lý hợp đồng.</value></data>
+  <data name="ContractLiquidatePendingApproval" xml:space="preserve"><value>Đã gửi yêu cầu thanh lý để Chủ trọ duyệt.</value></data>
   <data name="ContractErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="ContractErrorContractNotActive" xml:space="preserve"><value>Chỉ hợp đồng đang hiệu lực mới được gia hạn hoặc thanh lý.</value></data>
+  <data name="ContractErrorInvalidRenewalEndDate" xml:space="preserve"><value>Ngày kết thúc mới phải sau ngày kết thúc hiện tại.</value></data>
+  <data name="ContractErrorContractAlreadyRenewed" xml:space="preserve"><value>Hợp đồng đã được gia hạn.</value></data>
+  <data name="ContractErrorApprovalDenied" xml:space="preserve"><value>Chủ trọ đang chặn thao tác gia hạn / thanh lý hợp đồng.</value></data>
+  <data name="ContractErrorApprovalFailed" xml:space="preserve"><value>Không thể gửi yêu cầu duyệt. Vui lòng thử lại.</value></data>
+  <data name="ContractErrorDuplicatePendingRequest" xml:space="preserve"><value>Đã có yêu cầu chờ duyệt cho hợp đồng này.</value></data>
   <data name="ContractErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng.</value></data>
   <data name="ContractErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng của hợp đồng.</value></data>
   <data name="ContractErrorPropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ của hợp đồng.</value></data>
@@ -165,4 +184,7 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng ở trạng thái Chờ duyệt.</value></data>
+  <data name="ContractUnsavedChanges" xml:space="preserve"><value>Biểu mẫu có thay đổi chưa lưu.</value></data>
+  <data name="ContractConfirmLeave" xml:space="preserve"><value>Rời biểu mẫu và bỏ các thay đổi chưa lưu?</value></data>
+  <data name="TableLoading" xml:space="preserve"><value>Đang tải…</value></data>
 </root>

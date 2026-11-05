@@ -169,6 +169,9 @@
   <data name="Trash" xml:space="preserve">
     <value>Thùng rác</value>
   </data>
+  <data name="RoomTrash" xml:space="preserve">
+    <value>Thùng rác phòng</value>
+  </data>
   <data name="MyRequests" xml:space="preserve">
     <value>Yêu cầu của tôi</value>
   </data>
@@ -711,6 +714,16 @@
   <data name="P2RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng hoặc bạn không có quyền truy cập.</value></data>
   <data name="P2DuplicateRoomCode" xml:space="preserve"><value>Mã phòng đã tồn tại trong nhà trọ này.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>Xem danh sách phòng</value></data>
+  <data name="P2TrashTitle" xml:space="preserve"><value>Thùng rác phòng</value></data>
+  <data name="P2TrashSubtitle" xml:space="preserve"><value>Phòng đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
+  <data name="P2TrashTable" xml:space="preserve"><value>Danh sách phòng trong thùng rác</value></data>
+  <data name="P2TrashDeletedAt" xml:space="preserve"><value>Ngày xóa</value></data>
+  <data name="P2TrashRestoreTitle" xml:space="preserve"><value>Khôi phục phòng?</value></data>
+  <data name="P2TrashRestoreConfirm" xml:space="preserve"><value>Phòng {0} sẽ trở lại danh sách phòng.</value></data>
+  <data name="P2TrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
+  <data name="P2TrashRestored" xml:space="preserve"><value>Đã khôi phục phòng.</value></data>
+  <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được phòng. Vui lòng thử lại.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác nên không thể khôi phục.</value></data>
 
   <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
@@ -802,6 +815,33 @@
   <data name="TenantCreated" xml:space="preserve"><value>Đã tiếp nhận hồ sơ khách thuê</value></data>
   <data name="TenantUpdated" xml:space="preserve"><value>Đã cập nhật hồ sơ khách thuê</value></data>
   <data name="TenantStatusUpdated" xml:space="preserve"><value>Đã cập nhật trạng thái hồ sơ</value></data>
+  <!-- VHT-99: thùng rác hồ sơ khách thuê -->
+  <data name="TenantDelete" xml:space="preserve"><value>Xóa hồ sơ</value></data>
+  <data name="TenantDeleting" xml:space="preserve"><value>Đang xóa…</value></data>
+  <data name="TenantDeleteTitle" xml:space="preserve"><value>Đưa hồ sơ vào thùng rác?</value></data>
+  <data name="TenantDeleteMessage" xml:space="preserve"><value>Hồ sơ sẽ được xóa mềm và có thể khôi phục. Liên kết tài khoản và tệp giấy tờ được giữ lại. Không thể xóa khi khách còn hợp đồng hiệu lực.</value></data>
+  <data name="TenantDeleted" xml:space="preserve"><value>Đã đưa hồ sơ vào thùng rác</value></data>
+  <data name="TenantDeleteApprovalSubmitted" xml:space="preserve"><value>Đã gửi yêu cầu xóa hồ sơ, đang chờ Chủ trọ duyệt</value></data>
+  <data name="TenantErrorInUse" xml:space="preserve"><value>Khách thuê đang có hợp đồng hiệu lực, không thể xóa hồ sơ.</value></data>
+  <data name="TenantTrashTitle" xml:space="preserve"><value>Thùng rác hồ sơ khách thuê</value></data>
+  <data name="TenantTrashSubtitle" xml:space="preserve"><value>Hồ sơ đã xóa mềm có thể khôi phục mà không mất liên kết tài khoản hay tệp giấy tờ.</value></data>
+  <data name="TenantTrashBack" xml:space="preserve"><value>Về danh sách khách thuê</value></data>
+  <data name="TenantTrashOpen" xml:space="preserve"><value>Thùng rác</value></data>
+  <data name="TenantTrashRetentionNote" xml:space="preserve"><value>Hồ sơ và tệp giấy tờ trong thùng rác được giữ theo hạn lưu của chính sách SW-06; hệ thống không xóa cứng trong phạm vi này.</value></data>
+  <data name="TenantTrashSearch" xml:space="preserve"><value>Tìm trong thùng rác</value></data>
+  <data name="TenantTrashSearchHint" xml:space="preserve"><value>Tìm theo họ tên, số điện thoại hoặc CCCD</value></data>
+  <data name="TenantTrashCount" xml:space="preserve"><value>{0} hồ sơ trong thùng rác</value></data>
+  <data name="TenantTrashColumnDeletedAt" xml:space="preserve"><value>Đã xóa lúc</value></data>
+  <data name="TenantTrashColumnDocuments" xml:space="preserve"><value>Giấy tờ lưu</value></data>
+  <data name="TenantTrashEmptyTitle" xml:space="preserve"><value>Thùng rác đang trống</value></data>
+  <data name="TenantTrashEmptyDescription" xml:space="preserve"><value>Chưa có hồ sơ khách thuê nào bị xóa mềm.</value></data>
+  <data name="TenantTrashLoadFailed" xml:space="preserve"><value>Không tải được thùng rác hồ sơ khách thuê.</value></data>
+  <data name="TenantTrashRestore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="TenantTrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
+  <data name="TenantTrashRestoreTitle" xml:space="preserve"><value>Khôi phục hồ sơ khách thuê?</value></data>
+  <data name="TenantTrashRestoreMessage" xml:space="preserve"><value>Hồ sơ sẽ trở lại danh sách khách thuê, giữ nguyên liên kết tài khoản và tệp giấy tờ.</value></data>
+  <data name="TenantTrashRestored" xml:space="preserve"><value>Đã khôi phục hồ sơ khách thuê</value></data>
+  <data name="TenantTrashRestoreFailed" xml:space="preserve"><value>Không thể khôi phục hồ sơ. Vui lòng thử lại.</value></data>
   <data name="TenantAccountLinked" xml:space="preserve"><value>Đã liên kết tài khoản khách thuê</value></data>
   <data name="TenantAccountUnlinked" xml:space="preserve"><value>Đã gỡ liên kết tài khoản</value></data>
   <data name="TenantUnlinkTitle" xml:space="preserve"><value>Gỡ liên kết tài khoản?</value></data>
@@ -892,13 +932,14 @@
   <data name="DocTypeOther" xml:space="preserve"><value>Giấy tờ khác</value></data>
   <data name="DocumentFile" xml:space="preserve"><value>Tệp giấy tờ</value></data>
   <data name="FileRequired" xml:space="preserve"><value>Vui lòng chọn một tệp giấy tờ.</value></data>
-  <data name="FileTypeNotAllowed" xml:space="preserve"><value>Chỉ chấp nhận các tệp định dạng PDF, JPG, JPEG hoặc PNG.</value></data>
-  <data name="FileSizeExceeded" xml:space="preserve"><value>Kích thước tệp vượt quá giới hạn 10 MB cho phép.</value></data>
   <data name="EmptyFile" xml:space="preserve"><value>Tệp không có nội dung. Vui lòng chọn tệp khác.</value></data>
   <data name="DocumentAccessDenied" xml:space="preserve"><value>Bạn không có quyền truy cập giấy tờ này.</value></data>
   <data name="DocumentDownloadFailed" xml:space="preserve"><value>Không thể tải giấy tờ. Vui lòng thử lại.</value></data>
   <data name="ClickOrDragToUpload" xml:space="preserve"><value>Nhấp để chọn tệp hoặc kéo thả vào đây</value></data>
-  <data name="UploadFileAllowedFormats" xml:space="preserve"><value>Định dạng hỗ trợ: PDF, JPG, PNG (Tối đa 10 MB)</value></data>
+  <data name="UploadFileAllowedFormatsFormat" xml:space="preserve"><value>Định dạng hỗ trợ: {0} (tối đa {1})</value></data>
+  <data name="FileTypeNotAllowedFormat" xml:space="preserve"><value>Định dạng tệp không được hỗ trợ. Chỉ chấp nhận: {0}.</value></data>
+  <data name="FileSizeExceededFormat" xml:space="preserve"><value>Kích thước tệp vượt quá giới hạn {0} cho phép.</value></data>
+  <data name="FileCountExceededFormat" xml:space="preserve"><value>Hồ sơ này đã đủ {0} tệp giấy tờ theo giới hạn của hệ thống. Hãy xóa tệp cũ trước khi tải thêm.</value></data>
   <data name="DocumentDescription" xml:space="preserve"><value>Ghi chú / Mô tả</value></data>
   <data name="DocumentDescriptionPlaceholder" xml:space="preserve"><value>Nhập thông tin ghi chú cho tệp giấy tờ (tùy chọn)...</value></data>
   <data name="DocumentFileName" xml:space="preserve"><value>Tên tệp</value></data>
@@ -908,7 +949,6 @@
   <data name="DocumentPreview" xml:space="preserve"><value>Xem chi tiết</value></data>
   <data name="DocumentPreviewTitle" xml:space="preserve"><value>Chi tiết tệp giấy tờ</value></data>
   <data name="DocumentMimeType" xml:space="preserve"><value>Định dạng tệp</value></data>
-  <data name="DocumentSecureStorageNotice" xml:space="preserve"><value>Tệp được lưu trữ an toàn trong kho bảo mật private, URL tải luồng bảo vệ không lộ đường dẫn thật.</value></data>
   <data name="DocumentUploadSuccess" xml:space="preserve"><value>Tải lên giấy tờ thành công.</value></data>
   <data name="DocumentUploadFailed" xml:space="preserve"><value>Tải lên giấy tờ thất bại. Vui lòng kiểm tra lại.</value></data>
   <data name="DeleteDocumentConfirmTitle" xml:space="preserve"><value>Xác nhận xóa giấy tờ</value></data>
@@ -953,9 +993,9 @@
   <data name="ResidenceAddressLabel" xml:space="preserve"><value>NƠI THƯỜNG TRÚ / PLACE OF RESIDENCE</value></data>
   <data name="Notes" xml:space="preserve"><value>Ghi chú</value></data>
   <data name="DocumentCode" xml:space="preserve"><value>Mã tài liệu</value></data>
-  <data name="ShowingDocuments" xml:space="preserve"><value>Hiển thị 1–{0} / {1} giấy tờ</value></data>
+  <data name="ShowingDocuments" xml:space="preserve"><value>Hiển thị {0} / {1} giấy tờ</value></data>
   <data name="FileStandardsTitle" xml:space="preserve"><value>Quy chuẩn định dạng tệp hồ sơ</value></data>
-  <data name="FileStandardsDesc" xml:space="preserve"><value>Tải lên ảnh chụp hoặc bản scan sắc nét định dạng PDF, JPG hoặc PNG tối đa 10 MB. Đảm bảo rõ số định danh cá nhân và dấu giáp lai.</value></data>
+  <data name="FileStandardsDescFormat" xml:space="preserve"><value>Tải lên ảnh chụp hoặc bản scan sắc nét định dạng {0} tối đa {1}. Đảm bảo rõ số định danh cá nhân và dấu giáp lai.</value></data>
   <data name="ViewDetailsGuide" xml:space="preserve"><value>Xem hướng dẫn chi tiết</value></data>
   <data name="HideDetailsGuide" xml:space="preserve"><value>Ẩn hướng dẫn</value></data>
   <data name="ExportFailed" xml:space="preserve"><value>Xuất danh sách thất bại.</value></data>
@@ -984,7 +1024,6 @@
   <data name="FireSafetyRuleDesc" xml:space="preserve"><value>Bên thuê tuân thủ nghiêm ngặt quy định không để vật dụng cản trở lối thoát hiểm, không sạc pin xe điện trong phòng ngủ.</value></data>
   <data name="TerminationNoticeTitle" xml:space="preserve"><value>Chính sách trả phòng trước hạn</value></data>
   <data name="TerminationNoticeDesc" xml:space="preserve"><value>Báo trước tối thiểu 30 ngày cho bên cho thuê để tiến hành kiểm kê tài sản và hoàn cọc theo hợp đồng.</value></data>
-  <data name="ContractVaultSyncedNotice" xml:space="preserve"><value>Hợp đồng đã được xác thực bảo mật và đồng bộ trong kho lưu trữ hồ sơ giấy tờ cá nhân của bạn.</value></data>
   <data name="ViewContractScan" xml:space="preserve"><value>Xem hồ sơ giấy tờ</value></data>
   <data name="RenewContract" xml:space="preserve"><value>Yêu cầu gia hạn</value></data>
   <data name="RenewContractTitle" xml:space="preserve"><value>Yêu cầu gia hạn hợp đồng thuê</value></data>
@@ -1002,7 +1041,6 @@
   <data name="PreviewStateLoading" xml:space="preserve"><value>Khung xương đang tải</value></data>
   <data name="PreviewStateError" xml:space="preserve"><value>Trạng thái lỗi</value></data>
   <data name="DocumentsLoadFailedDescription" xml:space="preserve"><value>Đã xảy ra lỗi khi tải danh sách giấy tờ. Vui lòng thử lại.</value></data>
-  <data name="LoadFailedCode" xml:space="preserve"><value>Mã lỗi: LOAD_FAILED</value></data>
   <data name="Retrying" xml:space="preserve"><value>Đang thử lại…</value></data>
   <data name="EmptyDocumentsDescription" xml:space="preserve"><value>Tải lên CCCD, hợp đồng hoặc giấy tạm trú để quản lý tập trung.</value></data>
   <data name="UploadFirstDocument" xml:space="preserve"><value>Tải lên giấy tờ đầu tiên</value></data>
@@ -1010,8 +1048,7 @@
   <data name="DocumentsLoading" xml:space="preserve"><value>Đang tải dữ liệu hồ sơ…</value></data>
   <data name="BrowseFile" xml:space="preserve"><value>chọn tệp</value></data>
   <data name="DragAndDropOr" xml:space="preserve"><value>Kéo thả tệp vào đây hoặc</value></data>
-  <data name="Max10MB" xml:space="preserve"><value>tối đa 10 MB</value></data>
-  <data name="Tls13EncryptedNotice" xml:space="preserve"><value>Dữ liệu được mã hóa khi truyền tải bằng TLS 1.3 và lưu trữ an toàn trong kho dữ liệu của tòa nhà.</value></data>
+  <data name="SecureTransferNotice" xml:space="preserve"><value>Tệp được truyền qua kết nối HTTPS và chỉ những tài khoản được phân quyền mới truy cập được.</value></data>
   <data name="ChangeFile" xml:space="preserve"><value>Chọn tệp khác</value></data>
   <data name="Invalid" xml:space="preserve"><value>Không hợp lệ</value></data>
   <data name="InvalidSubmissionNotice" xml:space="preserve"><value>Thông tin tải lên chưa hợp lệ. Vui lòng kiểm tra các trường được đánh dấu đỏ.</value></data>
@@ -1026,9 +1063,10 @@
   <data name="TenantDocumentsUnavailable" xml:space="preserve"><value>Không thể tải hồ sơ giấy tờ trong phạm vi được cấp.</value></data>
   <data name="DuplicateDocumentType" xml:space="preserve"><value>Loại giấy tờ này đã có tệp. Vui lòng chọn loại khác hoặc xóa tệp cũ rồi thử lại.</value></data>
   <data name="FileUnitSingular" xml:space="preserve"><value>tệp</value></data>
-  <data name="EncryptionMethodLabel" xml:space="preserve"><value>Mã hóa AES 256-bit</value></data>
-  <data name="VerificationStatusLabel" xml:space="preserve"><value>TÌNH TRẠNG XÁC THỰC</value></data>
-  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Hồ sơ đã kiểm duyệt đầy đủ</value></data>
+  <data name="EncryptionMethodLabel" xml:space="preserve"><value>Truyền tải qua HTTPS</value></data>
+  <data name="VerificationStatusLabel" xml:space="preserve"><value>TÌNH TRẠNG HỒ SƠ</value></data>
+  <data name="VerificationCompleteLabel" xml:space="preserve"><value>Đã cung cấp đủ hồ sơ bắt buộc</value></data>
+  <data name="MissingRequiredDocumentsLabel" xml:space="preserve"><value>Còn thiếu hồ sơ bắt buộc</value></data>
   <data name="OfWord" xml:space="preserve"><value>trên</value></data>
   <data name="IdentityCardHint" xml:space="preserve"><value>CCCD mặt trước và mặt sau</value></data>
   <data name="LeaseTermTitle" xml:space="preserve"><value>THỜI HẠN LƯU TRÚ</value></data>
@@ -1042,10 +1080,7 @@
   <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Hợp đồng lao động hoặc thẻ sinh viên đối với người lưu trú dài hạn.</value></data>
   <data name="PreviewDocumentIssuer" xml:space="preserve"><value>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</value></data>
   <data name="PhotoLabel" xml:space="preserve"><value>ẢNH</value></data>
-  <data name="VerifiedTlsLabel" xml:space="preserve"><value>Đã xác thực TLS 1.3</value></data>
   <data name="SampleResidentAddress" xml:space="preserve"><value>Phường Bến Thành, Quận 1, TP. Hồ Chí Minh</value></data>
-  <data name="GenericFileType" xml:space="preserve"><value>TỆP</value></data>
-  <data name="PersonalDocumentLabel" xml:space="preserve"><value>Giấy tờ tùy thân</value></data>
   <data name="ContentType" xml:space="preserve"><value>Loại nội dung</value></data>
   <data name="Actions" xml:space="preserve"><value>Thao tác</value></data>
   <data name="Deleting" xml:space="preserve"><value>Đang xóa...</value></data>
@@ -1061,14 +1096,34 @@
   <data name="IssuedByManagement" xml:space="preserve"><value>Ban quản lý nhà trọ ban hành</value></data>
   <data name="MonthlyRentLabel" xml:space="preserve"><value>Giá thuê định kỳ hàng tháng</value></data>
   <data name="MonthUnit" xml:space="preserve"><value>tháng</value></data>
+  <data name="MonthlyRentNote" xml:space="preserve"><value>Áp dụng theo đơn giá thỏa thuận trong hợp đồng</value></data>
+  <data name="ContractTermsAndRulesLabel" xml:space="preserve"><value>Điều khoản &amp; Quy chế cư trú</value></data>
+  <data name="ContractTermsAndRulesDesc" xml:space="preserve"><value>Các điều khoản chi tiết, quy định an toàn và phụ lục được ghi nhận tại hợp đồng số {0}.</value></data>
+  <data name="RenewNotice" xml:space="preserve"><value>Yêu cầu được ghi nhận ở trạng thái Chờ xử lý; Ban quản lý sẽ xem xét và cập nhật ngày kết thúc hợp đồng sau khi duyệt.</value></data>
+  <data name="RenewMonthsLabel" xml:space="preserve"><value>Số tháng gia hạn</value></data>
+  <data name="RenewMonthsHint" xml:space="preserve"><value>Từ {0} đến {1} tháng.</value></data>
+  <data name="RenewMonthsRequired" xml:space="preserve"><value>Vui lòng nhập số tháng gia hạn lớn hơn 0.</value></data>
+  <data name="RenewMonthsTooLarge" xml:space="preserve"><value>Số tháng gia hạn không được vượt quá {0} tháng.</value></data>
+  <data name="RenewNoteLabel" xml:space="preserve"><value>Ghi gửi Ban quản lý</value></data>
+  <data name="RenewSubmit" xml:space="preserve"><value>Gửi yêu cầu</value></data>
+  <data name="RenewSubmitting" xml:space="preserve"><value>Đang gửi…</value></data>
+  <data name="RenewRequestSuccess" xml:space="preserve"><value>Đã gửi yêu cầu gia hạn {0} tháng. Trạng thái: Chờ xử lý.</value></data>
+  <data name="RenewRequestFailed" xml:space="preserve"><value>Không gửi được yêu cầu gia hạn. Vui lòng thử lại.</value></data>
+  <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="RenewStatusPending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Gửi ngày</value></data>
+  <data name="RenewErrorForbidden" xml:space="preserve"><value>Bạn không có quyền gửi yêu cầu gia hạn cho hợp đồng này.</value></data>
+  <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng thuê.</value></data>
+  <data name="RenewErrorInvalidStatus" xml:space="preserve"><value>Chỉ hợp đồng đang hiệu lực mới được gửi yêu cầu gia hạn.</value></data>
+  <data name="RenewErrorNoteTooLong" xml:space="preserve"><value>Ghi gửi Ban quản lý vượt quá độ dài cho phép.</value></data>
+  <data name="RenewErrorDuplicatePending" xml:space="preserve"><value>Hợp đồng này đã có yêu cầu gia hạn đang chờ xử lý.</value></data>
   <data name="MonthlyPaymentDue" xml:space="preserve"><value>Hạn đóng tiền: Ngày 05 hàng tháng.</value></data>
-  <data name="RoomDeposit" xml:space="preserve"><value>Tiền đặt cọc phòng</value></data>
-  <data name="DepositPaidOn" xml:space="preserve"><value>Đã thanh toán và ghi nhận ngày {0}.</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Tiền cọc theo hợp đồng</value></data>
   <data name="SecurityAndFireSafety" xml:space="preserve"><value>Cam kết an ninh và PCCC</value></data>
   <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>Bên thuê tuân thủ nghiêm ngặt quy định, không để vật dụng cản trở lối thoát hiểm và không sạc xe điện trong phòng ngủ.</value></data>
   <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Chính sách trả phòng trước hạn</value></data>
   <data name="EarlyTerminationDescription" xml:space="preserve"><value>Báo trước tối thiểu 30 ngày cho bên cho thuê để kiểm kê tài sản và hoàn cọc.</value></data>
-  <data name="ContractVerifiedNotice" xml:space="preserve"><value>Hợp đồng đã được xác thực bảo mật và lưu vết trong kho dữ liệu cá nhân của cư dân.</value></data>
+  <data name="ContractVerifiedNotice" xml:space="preserve"><value>Hợp đồng do Ban quản lý phát hành, được lưu trên hệ thống và chỉ hiển thị với tài khoản của bạn cùng Ban quản lý được phân quyền.</value></data>
   <data name="RoomLabel" xml:space="preserve"><value>Phòng {0}</value></data>
   <data name="ContractStatusApproved" xml:space="preserve"><value>Đang hiệu lực</value></data>
   <data name="ContractStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
@@ -1112,7 +1167,7 @@
   <data name="MeterReadingNavHome" xml:space="preserve"><value>Trang chủ</value></data>
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Dịch vụ &amp; Tiện ích</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Ghi chỉ số điện nước</value></data>
-  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu: {0}</value></data>
+  <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu. Vui lòng thử lại.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Không thể lưu chỉ số.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Đã chốt kỳ thành công cho phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>
   <data name="MeterReadingDraftSuccess" xml:space="preserve"><value>Đã lưu nháp chỉ số phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>
@@ -1208,6 +1263,7 @@
   <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Hợp đồng</value></data>
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Kỳ chỉ số</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Sự cố</value></data>
+  <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
   <data name="SW-01" xml:space="preserve"><value>Sửa thông tin phòng</value></data>
   <data name="SW-02" xml:space="preserve"><value>Thiết lập / đổi giá phòng</value></data>
   <data name="SW-03" xml:space="preserve"><value>Đổi trạng thái phòng</value></data>
@@ -1229,6 +1285,190 @@
   <data name="SW-15c" xml:space="preserve"><value>Xem báo cáo — mục Hợp đồng</value></data>
   <data name="SW-15d" xml:space="preserve"><value>Xem báo cáo — mục Hóa đơn</value></data>
   <data name="SW-15e" xml:space="preserve"><value>Xem báo cáo — mục Doanh thu / công nợ</value></data>
+  <data name="ForgotPasswordTitle" xml:space="preserve"><value>Quên mật khẩu?</value></data>
+  <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Nhập email của bạn.</value></data>
+  <data name="ResetPasswordButton" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="RecoveryCodeTitle" xml:space="preserve"><value>Xác minh mã khôi phục</value></data>
+  <data name="RecoveryCodePlaceholder" xml:space="preserve"><value>Mã khôi phục</value></data>
+  <data name="RecoveryCodeLabel" xml:space="preserve"><value>Mã khôi phục</value></data>
+  <data name="GenerateRecoveryCodes" xml:space="preserve"><value>Tạo mã khôi phục</value></data>
+  <data name="ResetPasswordTitle" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="ResetPasswordPrompt" xml:space="preserve"><value>Đặt mật khẩu mới cho tài khoản của bạn.</value></data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve"><value>Nhập lại mật khẩu</value></data>
+  <data name="ConfirmPasswordLabel" xml:space="preserve"><value>Xác nhận mật khẩu</value></data>
+  <data name="RecoveryCodeExplanation" xml:space="preserve"><value>Bạn đã chọn đăng nhập bằng mã khôi phục. Phiên đăng nhập sẽ không được ghi nhớ cho đến khi bạn nhập mã ứng dụng xác thực hoặc tắt xác thực hai yếu tố rồi đăng nhập lại.</value></data>
+  <data name="GenerateRecoveryCodesTitle" xml:space="preserve"><value>Tạo mã khôi phục xác thực hai yếu tố</value></data>
+  <data name="TwoFactorLoginTitle" xml:space="preserve"><value>Xác thực hai yếu tố</value></data>
+  <data name="TwoFactorLoginDescription" xml:space="preserve"><value>Tài khoản được bảo vệ bằng ứng dụng xác thực. Nhập mã xác thực bên dưới.</value></data>
+  <data name="AuthenticatorCodeLabel" xml:space="preserve"><value>Mã xác thực</value></data>
+  <data name="LoginWithRecoveryCodeLink" xml:space="preserve"><value>đăng nhập bằng mã khôi phục</value></data>
+  <data name="RememberThisMachine" xml:space="preserve"><value>Ghi nhớ thiết bị này</value></data>
+  <data name="TwoFactorNoDevice" xml:space="preserve"><value>Bạn không thể truy cập thiết bị xác thực? Hãy </value></data>
+  <data name="InvalidAuthenticatorCode" xml:space="preserve"><value>Mã xác thực không hợp lệ.</value></data>
+  <data name="InvalidRecoveryCode" xml:space="preserve"><value>Mã khôi phục không hợp lệ.</value></data>
+  <data name="TenantValidationIssuedDateFuture" xml:space="preserve"><value>Ngày cấp không được là ngày trong tương lai.</value></data>
+  <data name="ManagerDisplayName" xml:space="preserve"><value>Quản lý</value></data>
+  <data name="StorageLimitMb" xml:space="preserve"><value>/ {0} MB</value></data>
+  <data name="StorageUnlimitedLabel" xml:space="preserve"><value>Không giới hạn</value></data>
+  <data name="LeaseStartDateLabel" xml:space="preserve"><value>Ngày bắt đầu thuê</value></data>
+  <data name="LeaseEndDateLabel" xml:space="preserve"><value>Ngày hết hạn hợp đồng</value></data>
+  <data name="MeterReadingCalculating" xml:space="preserve"><value>Đang tính toán…</value></data>
+  <data name="ManageAccountTitle" xml:space="preserve"><value>Quản lý tài khoản</value></data>
+  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Cài đặt tài khoản</value></data>
+  <data name="ManageNavExternalLogins" xml:space="preserve"><value>Đăng nhập bên ngoài</value></data>
+  <data name="ManageNavPasskeys" xml:space="preserve"><value>Khóa truy cập</value></data>
+  <data name="ManageNavPersonalData" xml:space="preserve"><value>Dữ liệu cá nhân</value></data>
+  <data name="UsernameLabel" xml:space="preserve"><value>Tên người dùng</value></data>
+  <data name="CurrentPasswordLabel" xml:space="preserve"><value>Mật khẩu hiện tại</value></data>
+  <data name="CurrentPasswordPlaceholder" xml:space="preserve"><value>Nhập mật khẩu hiện tại</value></data>
+  <data name="NewPasswordLabel" xml:space="preserve"><value>Mật khẩu mới</value></data>
+  <data name="NewPasswordPlaceholder" xml:space="preserve"><value>Nhập mật khẩu mới</value></data>
+  <data name="UpdatePasswordAction" xml:space="preserve"><value>Cập nhật mật khẩu</value></data>
+  <data name="SetPasswordTitle" xml:space="preserve"><value>Đặt mật khẩu</value></data>
+  <data name="SetPasswordDescription" xml:space="preserve"><value>Tài khoản chưa có mật khẩu riêng. Hãy thêm mật khẩu để đăng nhập mà không cần dịch vụ bên ngoài.</value></data>
+  <data name="SetPasswordAction" xml:space="preserve"><value>Đặt mật khẩu</value></data>
+  <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Không thể cập nhật số điện thoại.</value></data>
+  <data name="ManageEmailTitle" xml:space="preserve"><value>Quản lý email</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>Nhập email</value></data>
+  <data name="SendVerificationEmailAction" xml:space="preserve"><value>Gửi email xác minh</value></data>
+  <data name="NewEmailLabel" xml:space="preserve"><value>Email mới</value></data>
+  <data name="NewEmailPlaceholder" xml:space="preserve"><value>Nhập email mới</value></data>
+  <data name="ChangeEmailAction" xml:space="preserve"><value>Đổi email</value></data>
+  <data name="EmailUnchanged" xml:space="preserve"><value>Email không thay đổi.</value></data>
+  <data name="ChangeEmailConfirmationSent" xml:space="preserve"><value>Đã gửi liên kết xác nhận đổi email. Vui lòng kiểm tra hộp thư.</value></data>
+  <data name="VerificationEmailSent" xml:space="preserve"><value>Đã gửi email xác minh. Vui lòng kiểm tra hộp thư.</value></data>
+  <data name="PersonalDataTitle" xml:space="preserve"><value>Dữ liệu cá nhân</value></data>
+  <data name="PersonalDataDescription" xml:space="preserve"><value>Tài khoản có dữ liệu cá nhân do bạn cung cấp. Bạn có thể tải xuống hoặc xóa dữ liệu tại đây.</value></data>
+  <data name="PersonalDataDeleteWarning" xml:space="preserve"><value>Xóa dữ liệu sẽ xóa vĩnh viễn tài khoản và không thể khôi phục.</value></data>
+  <data name="DownloadAction" xml:space="preserve"><value>Tải xuống</value></data>
+  <data name="DeleteAction" xml:space="preserve"><value>Xóa</value></data>
+  <data name="DeletePersonalDataTitle" xml:space="preserve"><value>Xóa dữ liệu cá nhân</value></data>
+  <data name="DeleteAccountAction" xml:space="preserve"><value>Xóa dữ liệu và đóng tài khoản</value></data>
+  <data name="IncorrectPassword" xml:space="preserve"><value>Mật khẩu không chính xác.</value></data>
+  <data name="LastAdminDeleteBlocked" xml:space="preserve"><value>Không thể xóa tài khoản quản trị viên cuối cùng. Hãy tạo quản trị viên khác trước.</value></data>
+  <data name="AccountDeleteRelatedDataBlocked" xml:space="preserve"><value>Tài khoản còn dữ liệu liên quan nên không thể xóa.</value></data>
+  <data name="ManageExternalLoginsTitle" xml:space="preserve"><value>Quản lý đăng nhập bên ngoài</value></data>
+  <data name="RegisteredLoginsTitle" xml:space="preserve"><value>Đăng nhập đã liên kết</value></data>
+  <data name="RemoveExternalLoginTitle" xml:space="preserve"><value>Gỡ đăng nhập {0} khỏi tài khoản</value></data>
+  <data name="RemoveAction" xml:space="preserve"><value>Gỡ bỏ</value></data>
+  <data name="AddExternalLoginPrompt" xml:space="preserve"><value>Thêm dịch vụ đăng nhập khác</value></data>
+  <data name="LoginWithProviderTitle" xml:space="preserve"><value>Đăng nhập bằng tài khoản {0}</value></data>
+  <data name="ExternalLoginRemoveFailed" xml:space="preserve"><value>Không thể gỡ đăng nhập bên ngoài.</value></data>
+  <data name="ExternalLoginRemoved" xml:space="preserve"><value>Đã gỡ đăng nhập bên ngoài.</value></data>
+  <data name="ExternalLoginInfoLoadFailed" xml:space="preserve"><value>Không thể tải thông tin đăng nhập bên ngoài.</value></data>
+  <data name="ExternalLoginAdded" xml:space="preserve"><value>Đã thêm đăng nhập bên ngoài.</value></data>
+  <data name="ExternalLoginAddFailed" xml:space="preserve"><value>Không thể thêm đăng nhập bên ngoài. Mỗi đăng nhập chỉ liên kết được với một tài khoản.</value></data>
+  <data name="DisableTwoFactorTitle" xml:space="preserve"><value>Tắt xác thực hai yếu tố (2FA)</value></data>
+  <data name="DisableTwoFactorWarning" xml:space="preserve"><value>Thao tác này chỉ tắt 2FA.</value></data>
+  <data name="DisableTwoFactorDescription" xml:space="preserve"><value>Tắt 2FA không đổi khóa ứng dụng xác thực. Nếu muốn đổi khóa, hãy</value></data>
+  <data name="ResetAuthenticatorKeysAction" xml:space="preserve"><value>đặt lại khóa xác thực.</value></data>
+  <data name="DisableTwoFactorAction" xml:space="preserve"><value>Tắt 2FA</value></data>
+  <data name="TwoFactorDisabledStatus" xml:space="preserve"><value>Đã tắt 2FA. Bạn có thể bật lại khi thiết lập ứng dụng xác thực.</value></data>
+  <data name="ResetAuthenticatorTitle" xml:space="preserve"><value>Đặt lại khóa xác thực</value></data>
+  <data name="ResetAuthenticatorWarning" xml:space="preserve"><value>Nếu đặt lại khóa, ứng dụng xác thực sẽ ngừng hoạt động cho đến khi bạn cấu hình lại.</value></data>
+  <data name="ResetAuthenticatorDescription" xml:space="preserve"><value>Thao tác này tắt 2FA cho đến khi bạn xác minh ứng dụng. Nếu không hoàn tất cấu hình, bạn có thể mất quyền truy cập tài khoản.</value></data>
+  <data name="ResetAuthenticatorAction" xml:space="preserve"><value>Đặt lại khóa xác thực</value></data>
+  <data name="AuthenticatorKeyResetStatus" xml:space="preserve"><value>Đã đặt lại khóa ứng dụng xác thực. Hãy cấu hình ứng dụng bằng khóa mới.</value></data>
+  <data name="RecoveryCodesNoneLeft" xml:space="preserve"><value>Bạn không còn mã khôi phục nào.</value></data>
+  <data name="RecoveryCodesMustGenerate" xml:space="preserve"><value>Bạn phải</value></data>
+  <data name="RecoveryCodesBeforeLogin" xml:space="preserve"><value>trước khi có thể đăng nhập bằng mã khôi phục.</value></data>
+  <data name="GenerateRecoveryCodesAction" xml:space="preserve"><value>tạo bộ mã khôi phục mới</value></data>
+  <data name="RecoveryCodesOneLeft" xml:space="preserve"><value>Bạn chỉ còn 1 mã khôi phục.</value></data>
+  <data name="RecoveryCodesCanGenerate" xml:space="preserve"><value>Bạn có thể</value></data>
+  <data name="RecoveryCodesCountLeft" xml:space="preserve"><value>Bạn còn {0} mã khôi phục.</value></data>
+  <data name="RecoveryCodesShouldGenerate" xml:space="preserve"><value>Bạn nên</value></data>
+  <data name="ForgetThisBrowserAction" xml:space="preserve"><value>Quên trình duyệt này</value></data>
+  <data name="ResetRecoveryCodesAction" xml:space="preserve"><value>Đặt lại mã khôi phục</value></data>
+  <data name="AuthenticatorAppTitle" xml:space="preserve"><value>Ứng dụng xác thực</value></data>
+  <data name="AddAuthenticatorAppAction" xml:space="preserve"><value>Thêm ứng dụng xác thực</value></data>
+  <data name="SetupAuthenticatorAppAction" xml:space="preserve"><value>Thiết lập ứng dụng xác thực</value></data>
+  <data name="ResetAuthenticatorAppAction" xml:space="preserve"><value>Đặt lại ứng dụng xác thực</value></data>
+  <data name="TrackingConsentRequiredTitle" xml:space="preserve"><value>Chưa chấp nhận chính sách quyền riêng tư và cookie.</value></data>
+  <data name="TrackingConsentRequiredDescription" xml:space="preserve"><value>Bạn cần chấp nhận chính sách trước khi bật xác thực hai yếu tố.</value></data>
+  <data name="BrowserForgottenStatus" xml:space="preserve"><value>Đã quên trình duyệt này. Lần đăng nhập tiếp theo sẽ yêu cầu mã 2FA.</value></data>
+  <data name="RecoveryCodesTitle" xml:space="preserve"><value>Mã khôi phục</value></data>
+  <data name="RecoveryCodesSafePlace" xml:space="preserve"><value>Hãy cất các mã này ở nơi an toàn.</value></data>
+  <data name="RecoveryCodesLostDevice" xml:space="preserve"><value>Nếu mất thiết bị và không có mã khôi phục, bạn sẽ mất quyền truy cập tài khoản.</value></data>
+  <data name="GenerateRecoveryCodesDescription" xml:space="preserve"><value>Tạo mã khôi phục mới không đổi khóa ứng dụng xác thực. Nếu muốn đổi khóa, hãy</value></data>
+  <data name="RecoveryCodesGeneratedStatus" xml:space="preserve"><value>Bạn đã tạo mã khôi phục mới.</value></data>
+  <data name="ConfigureAuthenticatorTitle" xml:space="preserve"><value>Cấu hình ứng dụng xác thực</value></data>
+  <data name="ConfigureAuthenticatorIntro" xml:space="preserve"><value>Để sử dụng ứng dụng xác thực, hãy làm theo các bước sau:</value></data>
+  <data name="ConfigureAuthenticatorStepDownload" xml:space="preserve"><value>Tải ứng dụng xác thực hai yếu tố như</value></data>
+  <data name="ForPlatform" xml:space="preserve"><value>nền tảng</value></data>
+  <data name="Or" xml:space="preserve"><value>hoặc</value></data>
+  <data name="ConfigureAuthenticatorScan" xml:space="preserve"><value>Quét mã QR hoặc nhập khóa này</value></data>
+  <data name="ConfigureAuthenticatorKeyHint" xml:space="preserve"><value>vào ứng dụng xác thực. Không phân biệt khoảng trắng và chữ hoa/thường.</value></data>
+  <data name="ConfigureAuthenticatorQrHelp" xml:space="preserve"><value>Tìm hiểu cách</value></data>
+  <data name="EnableQrGenerationAction" xml:space="preserve"><value>bật tạo mã QR</value></data>
+  <data name="ConfigureAuthenticatorStepVerify" xml:space="preserve"><value>Sau khi quét mã QR hoặc nhập khóa, ứng dụng xác thực sẽ tạo mã dùng một lần. Hãy nhập mã vào ô bên dưới.</value></data>
+  <data name="EnterCodePlaceholder" xml:space="preserve"><value>Nhập mã</value></data>
+  <data name="VerifyAction" xml:space="preserve"><value>Xác minh</value></data>
+  <data name="AuthenticatorAppVerifiedStatus" xml:space="preserve"><value>Ứng dụng xác thực đã được xác minh.</value></data>
+  <data name="ManagePasskeysTitle" xml:space="preserve"><value>Quản lý khóa truy cập</value></data>
+  <data name="UnnamedPasskey" xml:space="preserve"><value>Khóa truy cập chưa đặt tên</value></data>
+  <data name="RenamePasskeyTitle" xml:space="preserve"><value>Đổi tên khóa truy cập</value></data>
+  <data name="RenameAction" xml:space="preserve"><value>Đổi tên</value></data>
+  <data name="RemovePasskeyTitle" xml:space="preserve"><value>Gỡ khóa truy cập này khỏi tài khoản</value></data>
+  <data name="NoPasskeysRegistered" xml:space="preserve"><value>Chưa đăng ký khóa truy cập nào.</value></data>
+  <data name="MaximumPasskeysReached" xml:space="preserve"><value>Đã đạt số lượng khóa truy cập tối đa. Hãy xóa một khóa trước khi thêm khóa mới.</value></data>
+  <data name="AddPasskeyAction" xml:space="preserve"><value>Thêm khóa truy cập</value></data>
+  <data name="BrowserPasskeyMissing" xml:space="preserve"><value>Trình duyệt không cung cấp khóa truy cập.</value></data>
+  <data name="AddPasskeyFailed" xml:space="preserve"><value>Không thể thêm khóa truy cập: {0}</value></data>
+  <data name="PasskeyAddFailed" xml:space="preserve"><value>Không thể thêm khóa truy cập vào tài khoản.</value></data>
+  <data name="PasskeyUnknownAction" xml:space="preserve"><value>Thao tác không xác định: {0}.</value></data>
+  <data name="PasskeyIdInvalid" xml:space="preserve"><value>Mã khóa truy cập không đúng định dạng.</value></data>
+  <data name="PasskeyDeleteFailed" xml:space="preserve"><value>Không thể xóa khóa truy cập.</value></data>
+  <data name="PasskeyDeletedStatus" xml:space="preserve"><value>Đã xóa khóa truy cập.</value></data>
+  <data name="NamePasskeyPrompt" xml:space="preserve"><value>Nhập tên cho khóa truy cập</value></data>
+  <data name="RenamePasskeyPrompt" xml:space="preserve"><value>Nhập tên mới cho khóa truy cập “{0}”</value></data>
+  <data name="PasskeyNamePlaceholder" xml:space="preserve"><value>Khóa truy cập của tôi</value></data>
+  <data name="PasskeyNameLabel" xml:space="preserve"><value>Tên khóa truy cập</value></data>
+  <data name="ContinueAction" xml:space="preserve"><value>Tiếp tục</value></data>
+  <data name="PasskeyNotFound" xml:space="preserve"><value>Không tìm thấy khóa truy cập.</value></data>
+  <data name="PasskeyUpdateFailed" xml:space="preserve"><value>Không thể cập nhật khóa truy cập.</value></data>
+  <data name="PasskeyUpdatedStatus" xml:space="preserve"><value>Đã cập nhật khóa truy cập.</value></data>
+  <data name="ConfirmEmailTitle" xml:space="preserve"><value>Xác nhận email</value></data>
+  <data name="ConfirmEmailUserNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản để xác nhận email.</value></data>
+  <data name="ConfirmEmailSuccess" xml:space="preserve"><value>Cảm ơn bạn đã xác nhận email.</value></data>
+  <data name="ConfirmEmailFailed" xml:space="preserve"><value>Không thể xác nhận email.</value></data>
+  <data name="ConfirmEmailChangeTitle" xml:space="preserve"><value>Xác nhận đổi email</value></data>
+  <data name="InvalidEmailChangeLink" xml:space="preserve"><value>Liên kết xác nhận đổi email không hợp lệ.</value></data>
+  <data name="ConfirmEmailChangeFailed" xml:space="preserve"><value>Không thể đổi email.</value></data>
+  <data name="ConfirmEmailChangeUsernameFailed" xml:space="preserve"><value>Không thể cập nhật tên đăng nhập.</value></data>
+  <data name="ConfirmEmailChangeSuccess" xml:space="preserve"><value>Cảm ơn bạn đã xác nhận đổi email.</value></data>
+  <data name="RegisterTitle" xml:space="preserve"><value>Đăng ký</value></data>
+  <data name="ExternalLoginAssociateTitle" xml:space="preserve"><value>Liên kết tài khoản {0}</value></data>
+  <data name="ExternalLoginInstructions" xml:space="preserve"><value>Bạn đã xác thực bằng {0}. Nhập email cho trang này để hoàn tất đăng nhập.</value></data>
+  <data name="ExternalProviderError" xml:space="preserve"><value>Lỗi từ nhà cung cấp đăng nhập ngoài: {0}</value></data>
+  <data name="ExternalLoginInfoConfirmationFailed" xml:space="preserve"><value>Không thể tải thông tin đăng nhập ngoài để xác nhận.</value></data>
+  <data name="RegisterConfirmationTitle" xml:space="preserve"><value>Xác nhận đăng ký</value></data>
+  <data name="RegisterConfirmationSenderNotice" xml:space="preserve"><value>Ứng dụng chưa cấu hình dịch vụ gửi email.</value></data>
+  <data name="RegisterConfirmationDocs" xml:space="preserve"><value>xem hướng dẫn cấu hình</value></data>
+  <data name="RegisterConfirmationLinkHint" xml:space="preserve"><value>Thông thường liên kết này sẽ được gửi qua email:</value></data>
+  <data name="ConfirmAccountAction" xml:space="preserve"><value>Nhấn vào đây để xác nhận tài khoản</value></data>
+  <data name="RegisterConfirmationCheckEmail" xml:space="preserve"><value>Vui lòng kiểm tra email để xác nhận tài khoản.</value></data>
+  <data name="RegisterConfirmationUserNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản tương ứng với email.</value></data>
+  <data name="ResendEmailConfirmationTitle" xml:space="preserve"><value>Gửi lại email xác nhận</value></data>
+  <data name="EmailPrompt" xml:space="preserve"><value>Nhập email của bạn.</value></data>
+  <data name="ResendAction" xml:space="preserve"><value>Gửi lại</value></data>
+  <data name="ResetPasswordConfirmationTitle" xml:space="preserve"><value>Xác nhận đặt lại mật khẩu</value></data>
+  <data name="ResetPasswordConfirmationText" xml:space="preserve"><value>Mật khẩu đã được đặt lại. Vui lòng</value></data>
+  <data name="ClickToLoginAction" xml:space="preserve"><value>nhấn vào đây để đăng nhập</value></data>
+  <data name="ForgotPasswordConfirmationTitle" xml:space="preserve"><value>Xác nhận quên mật khẩu</value></data>
+  <data name="ForgotPasswordConfirmationText" xml:space="preserve"><value>Vui lòng kiểm tra email để đặt lại mật khẩu.</value></data>
+  <data name="InvalidPasswordResetTitle" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ</value></data>
+  <data name="InvalidPasswordResetText" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ.</value></data>
+  <data name="InvalidUserTitle" xml:space="preserve"><value>Tài khoản không hợp lệ</value></data>
+  <data name="UsernamePlaceholder" xml:space="preserve"><value>Chọn tên người dùng.</value></data>
+  <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Đăng nhập bằng tài khoản {0} của bạn</value></data>
+  <data name="NoExternalAuthServices" xml:space="preserve"><value>Không có dịch vụ xác thực ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">bài viết</a> về thiết lập ứng dụng ASP.NET hỗ trợ đăng nhập qua dịch vụ ngoài.</value></data>
+  <data name="ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
+  <data name="DepositPaidDateLabel" xml:space="preserve"><value>Ngày đóng cọc</value></data>
+  <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
+  <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Bản xem trước mô phỏng</value></data>
+  <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
+  <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
   <data name="ManagerSwitchesSubtitle" xml:space="preserve"><value>Thiết lập quyền thực hiện các thao tác của Quản lý.</value></data>
   <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Các mục xem báo cáo chỉ có chế độ Cho phép hoặc Không thể.</value></data>
 </root>

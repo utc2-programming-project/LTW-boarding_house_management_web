@@ -10,6 +10,7 @@ public sealed class ContractStatusPresentationTests
     [Theory]
     [InlineData(ContractStatus.Pending, ContractDisplayStatus.Pending)]
     [InlineData(ContractStatus.Rejected, ContractDisplayStatus.Rejected)]
+    [InlineData(ContractStatus.Liquidated, ContractDisplayStatus.Liquidated)]
     public void GetDisplayStatus_PreservesStoredTerminalOrPendingStatus(
         ContractStatus status,
         ContractDisplayStatus expected)

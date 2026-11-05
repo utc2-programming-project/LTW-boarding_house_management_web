@@ -4,6 +4,7 @@
 @using Web.Features.Utilities.Services
 @inject MeterReadingPageService PageService
 @inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<UtilityResources> UL
 
 <div class="summary-table-card">
     <div class="summary-card-header">
@@ -40,13 +41,13 @@
                         <td class="text-right tabular-nums">
                             <span>@row.Room.ElectricStart.ToString("N0")</span>
                             <span class="arrow-sep">→</span>
-                            <span class="font-semibold">@(row.ElectricEnd.HasValue ? row.ElectricEnd.Value.ToString("N0") : "—")</span>
+                            <span class="font-semibold">@(row.ElectricEnd.HasValue ? row.ElectricEnd.Value.ToString("N0") : L["NoData"].Value)</span>
                         </td>
                         <td class="text-right tabular-nums">
                             @if (row.ElectricEnd.HasValue)
                             {
                                 <div class="usage-cell">
-                                    <span>@row.ElectricUsage.ToString("N0") kWh</span>
+                                    <span>@FormatUsage(row.ElectricUsage, "UnitKwh")</span>
                                     @if (row.HasAbnormalElectric && row.ElectricPercent.HasValue)
                                     {
                                         <span class="abnormal-mini-badge" title="@string.Format(L["MeterReadingAbnormalUsageWarning"], row.ElectricPercent.Value)">
@@ -58,19 +59,19 @@
                             }
                             else
                             {
-                                <span class="missing-dash">—</span>
+                                <span class="missing-dash">@L["NoData"]</span>
                             }
                         </td>
                         <td class="text-right tabular-nums">
                             <span>@row.Room.WaterStart.ToString("N0")</span>
                             <span class="arrow-sep">→</span>
-                            <span class="font-semibold">@(row.WaterEnd.HasValue ? row.WaterEnd.Value.ToString("N0") : "—")</span>
+                            <span class="font-semibold">@(row.WaterEnd.HasValue ? row.WaterEnd.Value.ToString("N0") : L["NoData"].Value)</span>
                         </td>
                         <td class="text-right tabular-nums">
                             @if (row.WaterEnd.HasValue)
                             {
                                 <div class="usage-cell">
-                                    <span>@row.WaterUsage.ToString("N0") m³</span>
+                                    <span>@FormatUsage(row.WaterUsage, "UnitM3")</span>
                                     @if (row.HasAbnormalWater && row.WaterPercent.HasValue)
                                     {
                                         <span class="abnormal-mini-badge" title="@string.Format(L["MeterReadingAbnormalUsageWarning"], row.WaterPercent.Value)">
@@ -82,7 +83,7 @@
                             }
                             else
                             {
-                                <span class="missing-dash">—</span>
+                                <span class="missing-dash">@L["NoData"]</span>
                             }
                         </td>
                         <td class="text-right tabular-nums">@MoneyFormatter.Format(row.FixedServiceCost)</td>
@@ -120,8 +121,8 @@
         var list = new List<SummaryRowViewModel>(Rooms.Count);
         foreach (var room in Rooms)
         {
-            decimal? electricEnd = room.ElectricEnd > 0m ? room.ElectricEnd : null;
-            decimal? waterEnd = room.WaterEnd > 0m ? room.WaterEnd : null;
+            decimal? electricEnd = room.HasElectricReading ? room.ElectricEnd : null;
+            decimal? waterEnd = room.HasWaterReading ? room.WaterEnd : null;
 
             if (DraftReadings.TryGetValue(room.Id, out var draft))
             {
@@ -176,4 +177,10 @@
         decimal FixedServiceCost,
         decimal TotalCost,
         bool IsLocked);
+
+    private string FormatUsage(decimal usage, string unitKey)
+    {
+        var formatted = usage.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+        return $"{formatted} {UL[unitKey].Value}";
+    }
 }

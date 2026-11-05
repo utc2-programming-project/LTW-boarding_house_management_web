@@ -18,10 +18,13 @@ public static class AppNavigation
         new("MeterReadings", "zap", "ChuTro,QuanLy,KhachThue", "/meter-readings"),
         new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
         new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
-        new("Reports", "chart", "ChuTro"),
+        new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
         new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
         new("Approvals", "check", "ChuTro", "/approvals"),
-        new("Trash", "trash", "ChuTro"),
+        // VHT-99: thùng rác hồ sơ khách thuê.
+        new("Trash", "trash", "ChuTro", "/trash"),
+        // VHT-98: thùng rác phòng tách route để không trùng /trash.
+        new("RoomTrash", "trash", "ChuTro", "/rooms/trash"),
         new("MyRequests", "file", "QuanLy", "/my-requests"),
         new("MyDocuments", "file-text", "KhachThue", "/documents"),
         new("MyRoom", "door", "KhachThue", "/tenant/my-room"),

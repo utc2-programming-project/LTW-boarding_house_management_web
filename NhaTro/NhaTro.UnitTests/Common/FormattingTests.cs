@@ -122,3 +122,51 @@ public class DateAndTimeTests
         Assert.Equal("—", DateFormatter.FormatDateTime(null));
     }
 }
+
+public class NumberFormatterTests
+{
+    [Theory]
+    [InlineData(512L, "512 B")]
+    [InlineData(1024L, "1,0 KB")]
+    [InlineData(1536L, "1,5 KB")]
+    [InlineData(1572864L, "1,50 MB")]
+    [InlineData(0L, "0 B")]
+    public void FileSize_dau_thap_phan_la_dau_phay(long bytes, string expected) =>
+        Assert.Equal(expected, NumberFormatter.FileSize(bytes));
+
+    [Fact]
+    public void FileSize_khong_doi_theo_culture_cua_yeu_cau()
+    {
+        var original = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = new CultureInfo("en-US");
+            Assert.Equal("1,50 MB", NumberFormatter.FileSize(1572864));
+            Assert.Equal("1,5", NumberFormatter.Megabytes(1.5));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+
+    [Theory]
+    [InlineData(30d, "30")]
+    [InlineData(30.5d, "30,5")]
+    [InlineData(62.25d, "62,3")]
+    public void Trimmed_gon_so_khong_phai_thuoc_culture(double value, string expected) =>
+        Assert.Equal(expected, NumberFormatter.Trimmed(value));
+
+    [Theory]
+    [InlineData(30, "30")]
+    [InlineData(30.5, "30,5")]
+    public void Trimmed_decimal(double value, string expected) =>
+        Assert.Equal(expected, NumberFormatter.Trimmed((decimal)value));
+
+    [Fact]
+    public void Megabytes_va_FileSize_trung_cach_dinh_dang()
+    {
+        Assert.Equal("1,5", NumberFormatter.Megabytes(1.5));
+        Assert.Equal("0", NumberFormatter.Trimmed(0d));
+    }
+}

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Web.Features.Tenants.DTOs;
 
@@ -13,14 +13,14 @@ namespace Web.Features.Tenants.DTOs;
 public sealed class UpdateOwnProfileRequest
 {
     [Required(ErrorMessage = "Nhập số điện thoại.")]
-    [MaxLength(20, ErrorMessage = "Số điện thoại tối đa 20 ký tự.")]
+    [MaxLength(20)]
     public string PhoneNumber { get; set; } = string.Empty;
 
     [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-    [MaxLength(256, ErrorMessage = "Email tối đa 256 ký tự.")]
+    [MaxLength(256)]
     public string? Email { get; set; }
 
-    [MaxLength(300, ErrorMessage = "Địa chỉ tối đa 300 ký tự.")]
+    [MaxLength(300)]
     public string? PermanentAddress { get; set; }
 
     /// <summary>Bắt buộc: chống ghi đè đồng thời (mục 5.3).</summary>

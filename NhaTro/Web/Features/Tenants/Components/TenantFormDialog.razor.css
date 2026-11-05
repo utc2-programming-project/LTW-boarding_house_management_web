@@ -8,7 +8,25 @@
         "issued-date issued-place"
         "address note";
     column-gap: 24px;
-    row-gap: 18px;
+    row-gap: 20px;
+}
+
+.tenant-conflict-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--error-border, #B91C1C);
+    border-radius: 8px;
+    background: var(--error-bg, #FEF2F2);
+    color: var(--error-text, #B91C1C);
+}
+
+.tenant-conflict-alert p {
+    margin: 0;
 }
 
 .tenant-form-field {
@@ -69,7 +87,7 @@
     .tenant-form-grid {
         grid-template-columns: minmax(0, 1fr);
         grid-template-areas: none;
-        gap: 14px;
+        gap: 20px;
     }
 
     .tenant-form-field {

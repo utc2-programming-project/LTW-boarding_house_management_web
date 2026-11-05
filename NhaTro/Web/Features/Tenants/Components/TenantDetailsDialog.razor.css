@@ -64,6 +64,7 @@
 .tenant-documents-file strong { overflow-wrap: anywhere; font-size: .875rem; }
 .tenant-documents-file span, .tenant-documents-message { color: var(--text-secondary); font-size: .8125rem; }
 .tenant-documents-message { margin: 0; }
+.tenant-documents-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .tenant-detail-grid {
     display: grid;
@@ -120,7 +121,7 @@
 .tenant-detail-dates strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .tenant-dialog-footer { flex-wrap: wrap; }
 
-@media (max-width: 520px) {
+@media (max-width: 767.98px) {
     .tenant-detail-grid { grid-template-columns: 1fr; }
     .tenant-detail-grid .tenant-detail-wide { grid-column: auto; }
     .tenant-account-section { align-items: flex-start; flex-direction: column; }

@@ -8,7 +8,7 @@ else
     <div class="room-chart">
         <MudChart T="int" ChartType="ChartType.Pie" ChartSeries="@Series" ChartLabels="@Labels" ChartOptions="@Options" LegendPosition="Position.Bottom" Height="100%" Width="100%" />
     </div>
-    <p>@L["TotalRooms"]: @DashboardFormat.FormatNumber(Kpis.Total)</p>
+    <p>@(TotalLabel ?? L["TotalRooms"].Value): @DashboardFormat.FormatNumber(Kpis.Total)</p>
     <ul class="chart-values">
         <li>@L["Available"]: @DashboardFormat.FormatNumber(Kpis.Available)</li>
         <li>@L["Rented"]: @DashboardFormat.FormatNumber(Kpis.Rented)</li>
@@ -17,6 +17,7 @@ else
 }
 @code {
     [Parameter, EditorRequired] public RoomReportKpis Kpis { get; set; } = new();
+    [Parameter] public string? TotalLabel { get; set; }
     private string[] Labels => [L["Available"], L["Rented"], L["Maintenance"]];
     private List<ChartSeries<int>> Series => [new() { Name = L["RoomStructure"], Data = new ChartData<int>(new int[] { Kpis.Available, Kpis.Rented, Kpis.Maintenance }) }];
     private readonly ChartOptions Options = new() { ChartPalette = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"] };

@@ -63,6 +63,7 @@ public sealed class TenantDocumentService(
             CanExport = TenantDocumentPermissionRules.CanExport(access),
             MaxFileSizeBytes = maxBytes,
             AllowedExtensions = FileTypeRules.AllowedExtensions(IdentityDocument),
+            MaxFilesPerEntity = StorageLimits.MaxFilesPerEntity(options, IdentityDocument),
         };
     }
 
@@ -131,6 +132,31 @@ public sealed class TenantDocumentService(
             await AuditAsync(caller, FileAccessAction.Replace, tenantId, fileId, false,
                 StorageErrorCodes.FileNotFound, cancellationToken);
             return FileNotFound();
+        }
+
+        // Tệp thay thế phải cùng loại với tệp bị thay: nếu không, thay CCCD mặt trước bằng
+        // CCCD mặt sau sẽ hợp lệ và hồ sơ rơi lại vào trạng thái trùng loại mà Upload đã chặn.
+        var replacedType = await GetActiveDocumentTypeAsync(tenantId, fileId, cancellationToken);
+        var requestedType = TenantDocumentTypeRules.NormalizeTypeCode(request.DocumentType);
+        if (replacedType is not null && requestedType is not null
+            && !string.Equals(replacedType, requestedType, StringComparison.OrdinalIgnoreCase))
+        {
+            await AuditAsync(caller, FileAccessAction.Replace, tenantId, fileId, false,
+                StorageErrorCodes.InvalidRequest, cancellationToken);
+            return UploadResult.Failure(
+                StorageErrorCodes.InvalidRequest,
+                "Tệp thay thế phải cùng loại giấy tờ với tệp đang thay.");
+        }
+
+        // Loại cũ không nhận diện được (dữ liệu legacy) thì vẫn phải chặn trùng loại với tệp khác.
+        if (requestedType is not null
+            && await HasActiveDocumentTypeAsync(tenantId, requestedType, cancellationToken, exceptFileId: fileId))
+        {
+            await AuditAsync(caller, FileAccessAction.Replace, tenantId, fileId, false,
+                StorageErrorCodes.DuplicateDocumentType, cancellationToken);
+            return UploadResult.Failure(
+                StorageErrorCodes.DuplicateDocumentType,
+                "Loại giấy tờ này đã có tệp khác. Hãy xóa tệp đó trước khi thay.");
         }
 
         var normalized = NormalizeForTenant(tenantId, request);
@@ -230,7 +256,7 @@ public sealed class TenantDocumentService(
     {
         var access = await scopeService.ResolveAsync(tenantId, caller, cancellationToken);
         if (!TenantDocumentPermissionRules.CanDelete(access)
-            || !await IsTenantFileUploadedByCallerAsync(tenantId, fileId, caller.UserId, cancellationToken))
+            || !await IsTenantFileAsync(tenantId, fileId, cancellationToken))
         {
             await AuditAsync(caller, FileAccessAction.Delete, tenantId, fileId, false,
                 StorageErrorCodes.FileNotFound, cancellationToken);
@@ -273,18 +299,41 @@ public sealed class TenantDocumentService(
     private async Task<bool> HasActiveDocumentTypeAsync(
         int tenantId,
         string documentType,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Guid? exceptFileId = null)
     {
         var tenantIdText = TenantId(tenantId);
         var descriptions = await db.StoredFiles.AsNoTracking()
             .Where(file => !file.IsDeleted
                 && file.FileCategory == IdentityDocument
                 && file.RelatedEntityType == TenantEntity
-                && file.RelatedEntityId == tenantIdText)
+                && file.RelatedEntityId == tenantIdText
+                && (exceptFileId == null || file.Id != exceptFileId))
             .Select(file => file.Description)
             .ToListAsync(cancellationToken);
 
         return descriptions.Any(description => TenantDocumentTypeRules.DescriptionMatches(description, documentType));
+    }
+
+    /// <summary>Loại giấy tờ của một tệp hiện hành trong hồ sơ; null nếu tệp không còn hoặc không nhận diện được loại.</summary>
+    private async Task<string?> GetActiveDocumentTypeAsync(
+        int tenantId,
+        Guid fileId,
+        CancellationToken cancellationToken)
+    {
+        var tenantIdText = TenantId(tenantId);
+        var description = await db.StoredFiles.AsNoTracking()
+            .Where(file => !file.IsDeleted
+                && file.Id == fileId
+                && file.FileCategory == IdentityDocument
+                && file.RelatedEntityType == TenantEntity
+                && file.RelatedEntityId == tenantIdText)
+            .Select(file => file.Description)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return description is null
+            ? null
+            : TenantDocumentTypeRules.TypeCodes.FirstOrDefault(code => TenantDocumentTypeRules.DescriptionMatches(description, code));
     }
 
     // Ép mọi yêu cầu qua service P3 đúng loại tệp/đối tượng; không cho client đổi relatedEntityId

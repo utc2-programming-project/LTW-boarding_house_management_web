@@ -45,4 +45,7 @@
 <data name="RefreshSuccess" xml:space="preserve"><value>Data refreshed</value></data>
 <data name="TenantRenting" xml:space="preserve"><value>Current renters</value></data>
 <data name="TenantCurrentData" xml:space="preserve"><value>Current figures reflect the property filter regardless of the reporting period.</value></data>
+<data name="PendingPeriod" xml:space="preserve"><value>Period for time-based reports</value></data>
+<data name="CurrentPeriodNote" xml:space="preserve"><value>Room and tenant figures reflect the current property scope. The reporting period applies to time-based reports when available.</value></data>
+<data name="ViewReports" xml:space="preserve"><value>View room and tenant reports</value></data>
 </root>

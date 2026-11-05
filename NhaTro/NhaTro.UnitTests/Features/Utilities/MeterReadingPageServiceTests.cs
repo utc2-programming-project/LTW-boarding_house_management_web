@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Web.Common.Utils;
 using Web.Features.Accounts;
@@ -189,7 +190,18 @@ public sealed class MeterReadingPageServiceTests
             sampleState,
             new DummyUtilityTariffService(),
             scopeFactory,
-            NullLogger<MeterReadingPageService>.Instance);
+            NullLogger<MeterReadingPageService>.Instance,
+            new KeySharedLocalizer());
+    }
+
+    /// <summary>Trả lại chính key làm văn bản, đủ để test service không cần file .resx.</summary>
+    private sealed class KeySharedLocalizer : IStringLocalizer<Web.Shared>
+    {
+        public LocalizedString this[string name] => new(name, name);
+
+        public LocalizedString this[string name, params object[] arguments] => new(name, name);
+
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => [];
     }
 
     private sealed class TestAuthStateProvider(string role, string email) : AuthenticationStateProvider

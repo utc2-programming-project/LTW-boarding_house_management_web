@@ -15,6 +15,7 @@ public class TenantDocumentPermissionRulesTests
         Assert.False(TenantDocumentPermissionRules.CanUpload(access));
         Assert.False(TenantDocumentPermissionRules.CanDelete(access));
         Assert.False(TenantDocumentPermissionRules.CanReplace(access));
+        Assert.False(TenantDocumentPermissionRules.CanDownload(access));
         Assert.False(TenantDocumentPermissionRules.CanExport(access));
     }
 
@@ -33,6 +34,7 @@ public class TenantDocumentPermissionRulesTests
 
         Assert.True(TenantDocumentPermissionRules.CanView(access));
         Assert.True(TenantDocumentPermissionRules.CanUpload(access));
+        Assert.True(TenantDocumentPermissionRules.CanDownload(access));
         Assert.False(TenantDocumentPermissionRules.CanDelete(access));
         Assert.False(TenantDocumentPermissionRules.CanReplace(access));
         Assert.False(TenantDocumentPermissionRules.CanExport(access));
@@ -45,6 +47,7 @@ public class TenantDocumentPermissionRulesTests
 
         Assert.True(TenantDocumentPermissionRules.CanView(access));
         Assert.True(TenantDocumentPermissionRules.CanUpload(access));
+        Assert.True(TenantDocumentPermissionRules.CanDownload(access));
         Assert.True(TenantDocumentPermissionRules.CanDelete(access));
         Assert.True(TenantDocumentPermissionRules.CanReplace(access));
         Assert.True(TenantDocumentPermissionRules.CanExport(access));
@@ -56,6 +59,7 @@ public class TenantDocumentPermissionRulesTests
         var access = TenantDocumentAccessLevel.Manager;
 
         Assert.True(TenantDocumentPermissionRules.CanView(access));
+        Assert.True(TenantDocumentPermissionRules.CanDownload(access));
         Assert.False(TenantDocumentPermissionRules.CanUpload(access));
         Assert.False(TenantDocumentPermissionRules.CanDelete(access));
         Assert.False(TenantDocumentPermissionRules.CanReplace(access));
@@ -69,6 +73,7 @@ public class TenantDocumentPermissionRulesTests
 
         Assert.False(TenantDocumentPermissionRules.CanView(access));
         Assert.False(TenantDocumentPermissionRules.CanUpload(access));
+        Assert.False(TenantDocumentPermissionRules.CanDownload(access));
         Assert.False(TenantDocumentPermissionRules.CanDelete(access));
         Assert.False(TenantDocumentPermissionRules.CanReplace(access));
         Assert.False(TenantDocumentPermissionRules.CanExport(access));

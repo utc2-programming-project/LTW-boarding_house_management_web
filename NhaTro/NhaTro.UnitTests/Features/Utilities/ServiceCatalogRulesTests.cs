@@ -17,6 +17,103 @@ public sealed class ServiceCatalogRulesTests
     }
 
     [Fact]
+    public void CreateValidation_RejectsEffectiveToBeforeEffectiveDate()
+    {
+        var request = ValidCreateRequest();
+        request.EffectiveDate = new DateOnly(2026, 6, 1);
+        request.EffectiveTo = new DateOnly(2026, 5, 31);
+
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void CreateValidation_AcceptsOpenEndedAndStrictlyAfterEffectiveTo()
+    {
+        var request = ValidCreateRequest();
+        request.EffectiveDate = new DateOnly(2026, 6, 1);
+
+        request.EffectiveTo = null;
+        Assert.DoesNotContain(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+
+        request.EffectiveTo = new DateOnly(2026, 6, 2);
+        Assert.DoesNotContain(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+
+        // TF-12: EffectiveTo <= EffectiveDate is rejected
+        request.EffectiveTo = new DateOnly(2026, 6, 1);
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void CreateValidation_ValidatesDescriptionLength()
+    {
+        var request = ValidCreateRequest();
+        request.Description = new string('D', 501);
+        Assert.Contains(nameof(request.Description), ServiceCatalogRules.Validate(request));
+
+        request.Description = new string('D', 500);
+        Assert.DoesNotContain(nameof(request.Description), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void UpdateValidation_RejectsEffectiveToBeforeEffectiveDate()
+    {
+        var request = new UpdateServicePriceDto
+        {
+            Name = "Internet",
+            Unit = "phòng",
+            CalculationMethod = "fixed-monthly",
+            UnitPrice = 100_000m,
+            EffectiveDate = new DateOnly(2026, 6, 1),
+            EffectiveTo = new DateOnly(2026, 5, 1),
+        };
+
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void UpdateValidation_RejectsEffectiveToEqualEffectiveDate()
+    {
+        var request = ValidUpdateRequest();
+        request.EffectiveTo = request.EffectiveDate;
+
+        Assert.Contains(nameof(request.EffectiveTo), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void CreateValidation_RejectsNoteExceeding500Characters()
+    {
+        var request = ValidCreateRequest();
+        request.Note = new string('A', 501);
+
+        Assert.Contains(nameof(request.Note), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void CreateValidation_AcceptsNoteWithin500Characters()
+    {
+        var request = ValidCreateRequest();
+        request.Note = new string('A', 500);
+
+        Assert.DoesNotContain(nameof(request.Note), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
+    public void UpdateValidation_RejectsNoteExceeding500Characters()
+    {
+        var request = new UpdateServicePriceDto
+        {
+            Name = "WiFi",
+            Unit = "phòng",
+            CalculationMethod = "fixed-monthly",
+            UnitPrice = 100_000m,
+            EffectiveDate = new DateOnly(2026, 6, 1),
+            Note = new string('B', 501),
+        };
+
+        Assert.Contains(nameof(request.Note), ServiceCatalogRules.Validate(request));
+    }
+
+    [Fact]
     public void CreateValidation_RejectsMissingUnit()
     {
         var request = ValidCreateRequest();
@@ -35,23 +132,46 @@ public sealed class ServiceCatalogRulesTests
     }
 
     [Fact]
-    public void CreateValidation_AllowsZeroPrice()
+    public void CreateValidation_RejectsZeroPrice()
     {
         var request = ValidCreateRequest();
         request.UnitPrice = 0m;
+
+        Assert.Contains(nameof(request.UnitPrice), ServiceCatalogRules.Validate(request));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(100_000)]
+    public void CreateValidation_AllowsPositivePrice(decimal unitPrice)
+    {
+        var request = ValidCreateRequest();
+        request.UnitPrice = unitPrice;
 
         Assert.Empty(ServiceCatalogRules.Validate(request));
     }
 
     [Theory]
+    [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
-    public void UpdateValidation_RejectsNegativeUnitPrice(decimal unitPrice)
+    public void UpdateValidation_RejectsNonPositiveUnitPrice(decimal unitPrice)
     {
         var request = ValidUpdateRequest();
         request.UnitPrice = unitPrice;
 
         Assert.Contains(nameof(request.UnitPrice), ServiceCatalogRules.Validate(request));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(120_000)]
+    public void UpdateValidation_AllowsPositiveUnitPrice(decimal unitPrice)
+    {
+        var request = ValidUpdateRequest();
+        request.UnitPrice = unitPrice;
+
+        Assert.Empty(ServiceCatalogRules.Validate(request));
     }
 
     [Fact]

@@ -25,4 +25,9 @@ public class Room
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsDeleted { get; set; }
+
+    // VHT-98: dấu vết xóa mềm cho thùng rác phòng. Dữ liệu xóa trước VHT-98 có thể để trống.
+    public DateTime? DeletedAt { get; set; }
+
+    public string? DeletedBy { get; set; }
 }

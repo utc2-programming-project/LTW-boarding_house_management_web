@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Web.Features.Rooms.Enums;
 
 namespace Web.Features.Rooms.DTOs;
@@ -9,23 +9,23 @@ namespace Web.Features.Rooms.DTOs;
 // Trung (PropertyId, Code) voi phong chua xoa mem se do service 1C kiem (unique filter [IsDeleted]=0).
 public sealed class RoomSave
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Chon nha tro.")]
+    [Range(1, int.MaxValue)]
     public int PropertyId { get; set; }
 
     [Required(ErrorMessage = "Nhap ma phong.")]
-    [MaxLength(50, ErrorMessage = "Ma phong toi da 50 ky tu.")]
+    [MaxLength(50)]
     public string Code { get; set; } = string.Empty;
 
-    [Range(0, 1000, ErrorMessage = "Tang khong hop le.")]
+    [Range(0, 1000)]
     public int? Floor { get; set; }
 
-    [Range(0, 100000, ErrorMessage = "Dien tich khong hop le.")]
+    [Range(0, 100000)]
     public decimal? AreaM2 { get; set; }
 
-    [Range(0, (double)decimal.MaxValue, ErrorMessage = "Gia phong khong duoc am.")]
+    [Range(0, (double)decimal.MaxValue)]
     public decimal StandardPrice { get; set; }
 
-    [EnumDataType(typeof(RoomStatus), ErrorMessage = "Trang thai phong khong hop le.")]
+    [EnumDataType(typeof(RoomStatus))]
     public RoomStatus Status { get; set; } = RoomStatus.Available;
 
     public bool IsActive { get; set; } = true;
