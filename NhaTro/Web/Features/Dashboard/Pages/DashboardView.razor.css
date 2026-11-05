@@ -1,4 +1,4 @@
-.dashboard-page { display:flex; flex-direction:column; gap:24px; max-width:1440px; margin:auto; }
+.dashboard-page { display:flex; flex-direction:column; gap:24px; }
 .page-header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; }
 .breadcrumb-title-stack { display:flex; flex-direction:column; gap:8px; }
 h1 { font-size:1.75rem; line-height:2.25rem; margin:0; letter-spacing:-.02em; }

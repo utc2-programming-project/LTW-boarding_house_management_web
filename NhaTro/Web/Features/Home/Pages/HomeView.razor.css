@@ -1,4 +1,4 @@
-.home-page { display:flex; flex-direction:column; gap:24px; max-width:1440px; margin:auto; }
+.home-page { display:flex; flex-direction:column; gap:24px; }
 .home-header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; }
 .home-title-stack { display:flex; flex-direction:column; gap:8px; min-width:0; }
 h1 { margin:0; font-size:1.75rem; line-height:2.25rem; letter-spacing:-.02em; overflow-wrap:anywhere; }
