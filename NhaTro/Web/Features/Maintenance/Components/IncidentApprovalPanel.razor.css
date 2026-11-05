@@ -1,4 +1,10 @@
 .incident-approvals { margin-top: 24px; }
+/* Tiêu đề và thao tác cùng hàng; màn hình nhỏ xếp dọc theo chuẩn đầu vùng. */
+.approval-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.approval-heading h2 { margin: 0; font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; }
+.refresh-requests { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 40px; white-space: nowrap; }
+.refresh-requests ::deep svg { width: 20px; height: 20px; flex-shrink: 0; }
+@media (max-width: 767px) { .approval-heading { flex-direction: column; align-items: flex-start; } }
 article { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 20px; margin-top: 16px; overflow-wrap: anywhere; }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
 figure { margin: 0; }
