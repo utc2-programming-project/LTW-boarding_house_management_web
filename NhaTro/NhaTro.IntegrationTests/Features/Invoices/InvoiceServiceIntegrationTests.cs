@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Approvals;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices;
@@ -10,6 +14,9 @@ using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
 using Web.Features.Invoices.Services;
 using Web.Features.Properties;
+using Web.Features.Rooms;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 
 namespace NhaTro.IntegrationTests.Features.Invoices;
 
@@ -282,6 +289,110 @@ public sealed class InvoiceServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal(InvoiceErrorCodes.InvoiceNotFound, exception.ErrorCode);
     }
 
+    /// <summary>
+    /// SW-10 ở chế độ Duyệt: Quản lý chỉ xin tạo hóa đơn, DB chưa có dòng nào; hóa đơn chỉ vào sổ
+    /// khi Chủ trọ duyệt yêu cầu (applier chạy trong transaction duyệt).
+    /// </summary>
+    [SqlServerFact]
+    public async Task CreateDraftAsync_SwitchDuyet_QueuesRequest_AndApprovalWritesDraft()
+    {
+        var data = await SeedApprovedContractAsync();
+
+        await using var db = fixture.CreateContext();
+        var requestId = Guid.NewGuid();
+        var service = new InvoiceService(
+            db,
+            new InvoiceQueryService(db),
+            TimeProvider.System,
+            new FixedTogglePolicy(RoomChangeDecision.RequiresApproval),
+            Approvals(db, new InvoiceCreateApprovalApplier(TimeProvider.System)));
+
+        var error = await Assert.ThrowsAsync<InvoiceOperationException>(() =>
+            service.CreateDraftAsync(
+                Request(data.ContractId, [RentItem(3_000_000m)]),
+                new PropertyCaller(data.QuanLyId, Roles.QuanLy)));
+        Assert.Equal(InvoiceErrorCodes.ApprovalRequired, error.ErrorCode);
+
+        await using (var verify = fixture.CreateContext())
+        {
+            Assert.Equal(0, await verify.Invoices.CountAsync());
+            var pending = await verify.ManagerApprovalRequests.SingleAsync();
+            requestId = pending.Id;
+            Assert.Equal("SW-10", pending.OperationCode);
+            Assert.Equal(ApprovalTargetType.Contract, pending.TargetType);
+            Assert.Equal(ApprovalRequestStatus.Pending, pending.Status);
+            Assert.Equal(data.ContractId.ToString("D"), pending.TargetKey);
+        }
+
+        await using (var approveDb = fixture.CreateContext())
+        {
+            var approved = await Approvals(approveDb, new InvoiceCreateApprovalApplier(TimeProvider.System))
+                .ApproveAsync(requestId, new ApprovalCaller(data.ChuTroAId, Roles.ChuTro));
+            Assert.True(approved.Succeeded, approved.ErrorMessage ?? approved.ErrorCode);
+        }
+
+        await using var after = fixture.CreateContext();
+        var invoice = await after.Invoices.Include(item => item.Items).SingleAsync();
+        Assert.Equal(data.ContractId, invoice.ContractId);
+        Assert.Equal(InvoiceStatus.Draft, invoice.Status);
+        Assert.Equal(3_000_000m, invoice.TotalAmount);
+        Assert.Equal(["Tiền thuê"], invoice.Items.Select(item => item.Description).ToArray());
+    }
+
+    /// <summary>
+    /// SW-11 ở chế độ Duyệt: nháp vẫn là nháp cho tới khi Chủ trọ duyệt, và bản được duyệt
+    /// khớp đúng những gì Quản lý đã xin phát hành.
+    /// </summary>
+    [SqlServerFact]
+    public async Task IssueAsync_SwitchDuyet_QueuesRequest_AndApprovalIssuesDraft()
+    {
+        var data = await SeedApprovedContractAsync();
+
+        await using var db = fixture.CreateContext();
+        var invoiceId = (await new InvoiceService(db, new InvoiceQueryService(db))
+            .CreateDraftAsync(Request(data.ContractId, [RentItem(3_000_000m)]), Owner(data))).Id;
+
+        var service = new InvoiceService(
+            db,
+            new InvoiceQueryService(db),
+            TimeProvider.System,
+            new FixedTogglePolicy(RoomChangeDecision.RequiresApproval),
+            Approvals(db, new InvoiceIssueApprovalApplier(TimeProvider.System)));
+
+        var error = await Assert.ThrowsAsync<InvoiceOperationException>(() =>
+            service.IssueAsync(invoiceId, new PropertyCaller(data.QuanLyId, Roles.QuanLy)));
+        Assert.Equal(InvoiceErrorCodes.ApprovalRequired, error.ErrorCode);
+
+        var requestId = Guid.NewGuid();
+        await using (var verify = fixture.CreateContext())
+        {
+            Assert.Equal(InvoiceStatus.Draft,
+                (await verify.Invoices.SingleAsync(item => item.Id == invoiceId)).Status);
+            var pending = await verify.ManagerApprovalRequests.SingleAsync();
+            requestId = pending.Id;
+            Assert.Equal("SW-11", pending.OperationCode);
+            Assert.Equal(ApprovalTargetType.Invoice, pending.TargetType);
+            Assert.Equal(invoiceId.ToString(System.Globalization.CultureInfo.InvariantCulture), pending.TargetKey);
+            Assert.NotEmpty(pending.ExpectedToken ?? []);
+        }
+
+        await using (var approveDb = fixture.CreateContext())
+        {
+            var approved = await Approvals(approveDb, new InvoiceIssueApprovalApplier(TimeProvider.System))
+                .ApproveAsync(requestId, new ApprovalCaller(data.ChuTroAId, Roles.ChuTro));
+            Assert.True(approved.Succeeded, approved.ErrorMessage ?? approved.ErrorCode);
+        }
+
+        await using var after = fixture.CreateContext();
+        var issued = await after.Invoices.SingleAsync(item => item.Id == invoiceId);
+        Assert.Equal(InvoiceStatus.Issued, issued.Status);
+        Assert.NotNull(issued.IssuedAt);
+    }
+
+    private static ManagerApprovalService Approvals(
+        ApplicationDbContext db, IApprovalApplier applier) =>
+        new(db, TimeProvider.System, [applier], NullLogger<ManagerApprovalService>.Instance);
+
     private static InvoiceService NewService(ApplicationDbContext db, TimeProvider? clock = null) =>
         new(db, new InvoiceQueryService(db), clock ?? TimeProvider.System);
 
@@ -382,6 +493,7 @@ public sealed class InvoiceServiceIntegrationTests(SqlServerFixture fixture)
             ids.ChuTroAId,
             ids.ChuTroBId,
             ids.KhachThueId,
+            ids.QuanLyId,
             contract.ContractId);
     }
 
@@ -390,7 +502,20 @@ public sealed class InvoiceServiceIntegrationTests(SqlServerFixture fixture)
         string ChuTroAId,
         string ChuTroBId,
         string KhachThueId,
+        string QuanLyId,
         Guid ContractId);
+
+    /// <summary>Chính sách cố định một quyết định để test hai nhánh hàng đợi mà không cần dựng công tắc.</summary>
+    private sealed class FixedTogglePolicy(RoomChangeDecision decision) : IManagerTogglePolicy
+    {
+        public Task<RoomChangeDecision> EvaluateAsync(
+            ManagerAction action, string role, CancellationToken ct = default) =>
+            Task.FromResult(role == Roles.QuanLy ? decision : RoomChangeDecision.Allowed);
+
+        public Task<RoomChangeDecision> EvaluateAsync(
+            string code, string role, CancellationToken ct = default) =>
+            Task.FromResult(role == Roles.QuanLy ? decision : RoomChangeDecision.Allowed);
+    }
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

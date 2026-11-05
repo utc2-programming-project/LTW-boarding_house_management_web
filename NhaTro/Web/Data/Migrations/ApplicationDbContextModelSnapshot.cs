@@ -464,6 +464,45 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Audit.Entities.AuditLogEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ActorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Metadata")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("Category", "OccurredAt");
+
+                    b.ToTable("AuditLogEntries");
+                });
+
             modelBuilder.Entity("Web.Features.Contracts.Entities.Contract", b =>
                 {
                     b.Property<Guid>("ContractId")
@@ -506,7 +545,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts", null, t =>
+                    b.ToTable("Contracts", t =>
                         {
                             t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
                         });
@@ -526,7 +565,7 @@ namespace Web.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("ContractMembers", (string)null);
+                    b.ToTable("ContractMembers");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
@@ -838,6 +877,64 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Payments.Entities.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProofFileIdsJson")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubmittedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TransactionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("TransferredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("Web.Features.Properties.Entities.Property", b =>
                 {
                     b.Property<int>("Id")
@@ -876,7 +973,7 @@ namespace Web.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Properties", (string)null);
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.PropertyManager", b =>
@@ -924,7 +1021,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[RevokedAt] IS NULL");
 
-                    b.ToTable("PropertyManagers", (string)null);
+                    b.ToTable("PropertyManagers");
                 });
 
             modelBuilder.Entity("Web.Features.Rooms.Entities.Room", b =>
@@ -982,7 +1079,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Web.Features.Settings.Entities.ManagerToggle", b =>
@@ -1197,7 +1294,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId", "OccurredAt");
 
-                    b.ToTable("FileAccessAuditLogs", (string)null);
+                    b.ToTable("FileAccessAuditLogs");
                 });
 
             modelBuilder.Entity("Web.Features.Storage.Entities.StoredFile", b =>
@@ -1260,7 +1357,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("StoredFiles", (string)null);
+                    b.ToTable("StoredFiles");
                 });
 
             modelBuilder.Entity("Web.Features.Tenants.Entities.Tenant", b =>
@@ -1357,7 +1454,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
-                    b.ToTable("Tenants", (string)null);
+                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
@@ -1463,6 +1560,110 @@ namespace Web.Migrations
 
                             t.HasCheckConstraint("CK_ServicePriceHistory_Unit_NotBlank", "LEN(LTRIM(RTRIM([Unit]))) > 0");
                         });
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("ElectricEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ElectricStart")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date");
+
+                    b.Property<string>("RecordedByUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("WaterEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("WaterStart")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId", "PeriodStart")
+                        .IsUnique();
+
+                    b.ToTable("UtilityReadings");
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReadingAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ChangedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("NewElectricEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("NewWaterEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OldElectricEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("OldWaterEnd")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("UtilityReadingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilityReadingId");
+
+                    b.ToTable("UtilityReadingAudits");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
@@ -1900,7 +2101,7 @@ namespace Web.Migrations
 
                             b1.HasKey("IdentityUserPasskeyCredentialId");
 
-                            b1.ToTable("AspNetUserPasskeys", (string)null);
+                            b1.ToTable("AspNetUserPasskeys");
 
                             b1
                                 .ToJson("Data")
@@ -2084,6 +2285,15 @@ namespace Web.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Web.Features.Payments.Entities.Payment", b =>
+                {
+                    b.HasOne("Web.Features.Invoices.Entities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Properties.Entities.Property", b =>
                 {
                     b.HasOne("Web.Data.ApplicationUser", null)
@@ -2177,6 +2387,24 @@ namespace Web.Migrations
                     b.Navigation("ServiceCatalog");
                 });
 
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReading", b =>
+                {
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReadingAudit", b =>
+                {
+                    b.HasOne("Web.Features.Utilities.Entities.UtilityReading", null)
+                        .WithMany("Audits")
+                        .HasForeignKey("UtilityReadingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariffTier", b =>
                 {
                     b.HasOne("Web.Features.Utilities.Entities.UtilityTariff", "UtilityTariff")
@@ -2211,6 +2439,11 @@ namespace Web.Migrations
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
                 {
                     b.Navigation("PriceHistory");
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReading", b =>
+                {
+                    b.Navigation("Audits");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>

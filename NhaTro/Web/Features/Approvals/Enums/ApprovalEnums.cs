@@ -31,4 +31,8 @@ public enum ApprovalTargetType
     Contract = 3,
     UtilityPeriod = 4,
     Incident = 5,
+    Invoice = 6,
+
+    /// <summary>SW-16: yêu cầu xuất báo cáo của Quản lý (không gắn một bản ghi nghiệp vụ).</summary>
+    Report = 7,
 }

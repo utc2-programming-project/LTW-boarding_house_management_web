@@ -40,4 +40,11 @@ public interface IContractService
         Guid contractId,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
+
+    /// <summary>OP27 / SW-08: ghi nhận tiền cọc; Quản lý đi qua công tắc, Chủ trọ áp dụng ngay.</summary>
+    Task<ContractActionResultDto> UpdateDepositAsync(
+        Guid contractId,
+        decimal depositAmount,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
 }

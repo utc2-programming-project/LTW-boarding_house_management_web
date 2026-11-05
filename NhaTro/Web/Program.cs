@@ -224,6 +224,9 @@ builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
 // VHT-99: duyệt yêu cầu SW-06 của Quản lý = đưa hồ sơ khách thuê vào thùng rác.
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
+// SW-10/SW-11: hóa đơn chỉ vào sổ / chỉ phát hành sau khi Chủ trọ duyệt yêu cầu của Quản lý.
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceCreateApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceIssueApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
@@ -373,6 +376,17 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
+// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
+builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
+// P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
+builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
+// P6: gửi/xác nhận thanh toán (OP37/OP38) và báo cáo doanh thu/công nợ (OP39).
+builder.Services.AddScoped<Web.Features.Payments.Services.PaymentService>();
+builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
+// D8: xuất Excel P8 + SW-16.
+builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Reports.Services.ReportExportApprovalApplier>();
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();

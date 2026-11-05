@@ -1263,6 +1263,7 @@
   <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Hợp đồng</value></data>
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Kỳ chỉ số</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Sự cố</value></data>
+  <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
   <data name="SW-01" xml:space="preserve"><value>Sửa thông tin phòng</value></data>
   <data name="SW-02" xml:space="preserve"><value>Thiết lập / đổi giá phòng</value></data>
   <data name="SW-03" xml:space="preserve"><value>Đổi trạng thái phòng</value></data>
