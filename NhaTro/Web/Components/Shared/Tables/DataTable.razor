@@ -4,6 +4,38 @@
 <div class="table-card">
     <div role="status" class="visually-hidden">@(_loading ? Labels.Loading : null)</div>
 
+    @if (UseFilterToolbar)
+    {
+        <div class="filter-toolbar">
+            @foreach (var col in Columns.Where(c => c.Filterable))
+            {
+                var fieldId = $"{_filterId}-{col.Key}";
+                <div class="filter-field">
+                    <label for="@fieldId">@col.Title</label>
+                    @if (col.FilterOptions is { } options)
+                    {
+                        <select id="@fieldId" class="filter-input" value="@(_filters.GetValueOrDefault(col.Key) ?? "")"
+                                @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())">
+                            @foreach (var option in options)
+                            {
+                                <option value="@option.Value">@option.Label</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <input id="@fieldId" type="text" class="filter-input" placeholder="@col.FilterPlaceholder"
+                               value="@_filters.GetValueOrDefault(col.Key)"
+                               @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())" />
+                    }
+                </div>
+            }
+            <div class="filter-toolbar-actions">
+                <button type="button" class="btn btn-secondary" disabled="@(!HasFilters)" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
+            </div>
+        </div>
+    }
+
     <div class="table-scroll" aria-busy="@(_loading ? "true" : null)">
         <table>
             @if (!string.IsNullOrWhiteSpace(Caption))
@@ -40,7 +72,7 @@
                         </th>
                     }
                 </tr>
-                @if (Columns.Any(c => c.Filterable))
+                @if (!UseFilterToolbar && Columns.Any(c => c.Filterable))
                 {
                     <tr class="filter-row">
                         @foreach (var col in Columns)
@@ -89,7 +121,10 @@
                             @if (HasFilters)
                             {
                                 <EmptyStateCard Title="@Labels.NoResultsTitle" Description="@Labels.NoResultsDescription">
-                                    <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
+                                    @if (!UseFilterToolbar)
+                                    {
+                                        <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
+                                    }
                                 </EmptyStateCard>
                             }
                             else
@@ -167,6 +202,7 @@
 
 @code {
     private const int SkeletonRows = 5;
+    private readonly string _filterId = $"table-filter-{Guid.NewGuid():N}";
 
     private readonly Dictionary<string, string> _filters = new();
     private IReadOnlyList<TItem> _items = [];
@@ -191,6 +227,10 @@
 
     [Parameter]
     public int PageSize { get; set; } = 10;
+
+    /// <summary>Hiển thị bộ lọc có nhãn phía trên bảng thay cho hàng lọc trong bảng.</summary>
+    [Parameter]
+    public bool UseFilterToolbar { get; set; }
 
     /// <summary>Mô tả bảng cho trình đọc màn hình (không hiển thị).</summary>
     [Parameter]
