@@ -32,10 +32,22 @@ public static class AdminSeeder
 
         var email = config["AdminSeed:Email"];
         var password = config["AdminSeed:Password"];
+
+        // If running locally and no admin credentials are configured, create a safe development default
+        var env = services.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            logger.LogWarning("Chua cau hinh AdminSeed nen chua co Admin. Cau hinh bang User Secrets (dev) hoac bien moi truong (prod).");
-            return;
+            if (env.IsDevelopment())
+            {
+                logger.LogWarning("AdminSeed not configured; creating a development admin account with a temporary password. Change via user-secrets or environment variables.");
+                email ??= "admin@nhatro.local";
+                password ??= "DevAdmin!234"; // development-only default
+            }
+            else
+            {
+                logger.LogWarning("Chua cau hinh AdminSeed nen chua co Admin. Cau hinh bang User Secrets (dev) hoac bien moi truong (prod).");
+                return;
+            }
         }
 
         // VHT-95: tai khoan seed phai duoc duyet, neu khong se bi chan dang nhap.

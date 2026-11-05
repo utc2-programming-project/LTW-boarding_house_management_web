@@ -19,6 +19,8 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.PermanentAddress).HasMaxLength(300);
         builder.Property(t => t.IdIssuedPlace).HasMaxLength(200);
         builder.Property(t => t.Note).HasMaxLength(500);
+        // Thung rac (VHT-99): nguoi xoa mem de truy vet; ten cot khop AspNetUsers.Id.
+        builder.Property(t => t.DeletedByUserId).HasMaxLength(450);
         // Gender: ERD chua co. Luu chuoi cho de doc/on dinh khi doi thu tu enum (DTO da serialize chuoi).
         builder.Property(t => t.Gender).HasConversion<string>().HasMaxLength(10);
         // IsActive: ERD chua co; mac dinh 1 (dang su dung) theo muc 8. Khac IsDeleted (thung rac).
@@ -45,6 +47,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         // Thung rac (VHT-99): ho so da xoa mem khong hien ra truy van thuong.
         builder.HasQueryFilter(t => !t.IsDeleted);
+        builder.HasIndex(t => t.IsDeleted);
 
         // FK toi tai khoan dang nhap; Restrict de khong xoa nham user khi con ho so (chong lien ket nham).
         builder.HasOne<Data.ApplicationUser>()

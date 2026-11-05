@@ -2,10 +2,10 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
 @inject IStringLocalizer<UtilityResources> L
-@inject UtilitySampleStateService StateService
+@inject ServiceCatalogPageService PageService
 @inject ToastService Toast
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<ServicePricesView> Logger
 
 <PageTitle>@L["PricesPageTitle"]</PageTitle>
 
@@ -31,10 +31,20 @@
                 <h1 class="page-title">@L["PricesHeading"]</h1>
             </div>
             <p class="page-subtitle">@L["PricesSubtitle"]</p>
-            <div class="sample-data-note">
-                <span class="sample-data-badge">@L["SampleDataBadge"]</span>
-                <span>@L["SampleDataNotice"]</span>
-            </div>
+            @if (_isSampleData)
+            {
+                <div class="sample-data-note">
+                    <span class="sample-data-badge">@L["SampleDataBadge"] · VHT-32</span>
+                    <span>@L["SampleDataNotice"]</span>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_loadError))
+            {
+                <div class="sample-data-note" style="border-left: 3px solid #ef4444; background: #fef2f2; color: #991b1b;">
+                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">@L["SqlErrorBadge"]</span>
+                    <span>@_loadError</span>
+                </div>
+            }
         </div>
 
         <div class="header-actions">
@@ -101,9 +111,12 @@
                             <tr class="version-row">
                                 <td class="tabular-nums font-semibold text-slate-800">
                                     <div>@DateFormatter.Format(v.EffectiveFrom)</div>
-                                    <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")">
-                                        @L[v.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
-                                    </span>
+                                    @if (_isSampleData)
+                                    {
+                                        <span class="record-origin-badge @(v.IsSessionCreated ? "session" : "")" style="white-space: normal; word-break: break-word;">
+                                            @L[v.IsSessionCreated ? "RecordCreatedStatus" : "RecordSampleStatus"]
+                                        </span>
+                                    }
                                 </td>
                                 <td class="tabular-nums">
                                     @if (v.EffectiveTo.HasValue)
@@ -135,9 +148,9 @@
                                 <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
                                 <td class="text-slate-700 font-medium">@v.CreatedBy</td>
                                 <td class="tabular-nums text-slate-500 font-mono text-xs">
-                                    @DateFormatter.FormatDateTime(v.CreatedAt)
+                                    @(!v.CreatedAt.HasValue || v.CreatedAt.Value == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt.Value))
                                 </td>
-                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? "—" : v.Note)</td>
+                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? L["NoData"].Value : v.Note)</td>
                             </tr>
                         }
                     </tbody>
@@ -189,6 +202,7 @@
     <Authorized>
         <ServicePriceModal IsOpen="@_isPriceModalOpen"
                            Service="@_currentSelectedService"
+                           CanWrite="@_canWrite"
                            OnClose="() => _isPriceModalOpen = false"
                            OnSave="HandleSavePrice" />
     </Authorized>
@@ -200,56 +214,67 @@
     private string _selectedServiceId = string.Empty;
     private ServiceItemDto? _currentSelectedService;
     private string _callerRole = string.Empty;
-    private string _callerEmail = string.Empty;
-    private string _modifierName = string.Empty;
     private bool _isPriceModalOpen;
     private bool _isLoading = true;
+    private bool _isSampleData = false;
+    private bool _canWrite = false;
+    private string? _loadError;
 
     [Parameter, SupplyParameterFromQuery(Name = "serviceId")]
     public string? ServiceId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.Yield();
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        _callerRole = UtilityDraftRules.ResolveRole(user);
-        _callerEmail = UtilityDraftRules.ResolveEmail(user);
-        _modifierName = user.Identity?.Name ?? string.Empty;
-
-        StateService.OnChange += HandleStateChanged;
-        LoadData();
+        await LoadDataAsync();
         _isLoading = false;
     }
 
-    private void HandleStateChanged()
+    private async Task LoadDataAsync()
     {
-        InvokeAsync(() =>
+        try
         {
-            LoadData();
-            StateHasChanged();
-        });
+            _callerRole = await PageService.GetCurrentRoleAsync();
+            _services = (await PageService.GetServicesForCallerAsync()).ToList();
+
+            if (!string.IsNullOrWhiteSpace(ServiceId) && _services.Any(service => service.Id == ServiceId))
+            {
+                _selectedServiceId = ServiceId;
+            }
+            else if (!_services.Any(service => service.Id == _selectedServiceId))
+            {
+                _selectedServiceId = _services.FirstOrDefault()?.Id ?? string.Empty;
+            }
+
+            await SelectServiceTab(_selectedServiceId);
+
+            _isSampleData = PageService.IsSampleData;
+            _canWrite = PageService.CheckWriteSupport().CanWrite && string.Equals(_callerRole, Roles.ChuTro, StringComparison.OrdinalIgnoreCase);
+            _loadError = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load service price history page.");
+            _loadError = L["SqlLoadPricesError"];
+            _services = [];
+            _filteredVersions = [];
+        }
     }
 
-    private void LoadData()
-    {
-        _services = StateService.GetServicesForCaller(_callerRole, _callerEmail).ToList();
-        if (!string.IsNullOrWhiteSpace(ServiceId) && _services.Any(service => service.Id == ServiceId))
-        {
-            _selectedServiceId = ServiceId;
-        }
-        else if (!_services.Any(service => service.Id == _selectedServiceId))
-        {
-            _selectedServiceId = _services.FirstOrDefault()?.Id ?? string.Empty;
-        }
-        SelectServiceTab(_selectedServiceId);
-    }
-
-    private void SelectServiceTab(string serviceId)
+    private async Task SelectServiceTab(string serviceId)
     {
         _selectedServiceId = serviceId;
         _currentSelectedService = _services.FirstOrDefault(s => s.Id == serviceId);
-        _filteredVersions = StateService.GetPriceVersionsForCaller(_callerRole, _callerEmail, serviceId).ToList();
+        try
+        {
+            var versions = await PageService.GetPriceVersionsForCallerAsync(serviceId);
+            _filteredVersions = versions.ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load service price versions.");
+            _loadError = L["SqlLoadVersionsError"];
+            _filteredVersions = [];
+        }
     }
 
     private static string GetStatusBadgeClass(PriceVersionStatus status) => status switch
@@ -277,24 +302,18 @@
         _ => "NoData",
     };
 
-    private Task HandleSavePrice(UpdatePriceRequest req)
+    private async Task HandleSavePrice(UpdatePriceRequest req)
     {
-        var res = StateService.UpdateServicePrice(req, _callerRole, _modifierName);
+        var res = await PageService.UpdateServicePriceAsync(req);
         if (res.Success)
         {
-            Toast.Success(L["ToastPriceUpdatedSuccess"]);
+            await LoadDataAsync();
+            Toast.Success(_isSampleData ? L["ToastPriceUpdatedSuccess"] : L["ToastPriceUpdatedSuccessSql"]);
             _isPriceModalOpen = false;
         }
         else
         {
-            Toast.Error(res.Error.HasValue ? L[$"Error{res.Error.Value}"] : L["ErrorUnknown"]);
+            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
         }
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        StateService.OnChange -= HandleStateChanged;
     }
 }
-

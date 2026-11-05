@@ -136,7 +136,7 @@ public sealed class IncidentService(
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller.IsKhachThue, cancellationToken));
+        return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
     }
 
     public async Task<IReadOnlyList<IncidentListItemDto>> ListAsync(
@@ -186,7 +186,7 @@ public sealed class IncidentService(
         var exists = await InScopeIncidents(db, caller, Today())
             .AnyAsync(incident => incident.Id == incidentId, cancellationToken);
         return exists
-            ? IncidentResult.Success(await ToDetailAsync(db, incidentId, caller.IsKhachThue, cancellationToken))
+            ? IncidentResult.Success(await ToDetailAsync(db, incidentId, caller, cancellationToken))
             : IncidentResult.Failure(IncidentErrorCodes.NotFound);
     }
 
@@ -299,7 +299,7 @@ public sealed class IncidentService(
             return IncidentResult.Failure(IncidentErrorCodes.Conflict);
         }
 
-        return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller.IsKhachThue, cancellationToken));
+        return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
     }
 
     private static bool CanCreate(PropertyCaller caller) =>
@@ -398,7 +398,7 @@ public sealed class IncidentService(
     }
 
     private async Task<IncidentDetailDto> ToDetailAsync(
-        ApplicationDbContext db, int incidentId, bool maskInternalFields, CancellationToken ct)
+        ApplicationDbContext db, int incidentId, PropertyCaller caller, CancellationToken ct)
     {
         var row = await (
             from item in db.MaintenanceIncidents.AsNoTracking()
@@ -414,6 +414,7 @@ public sealed class IncidentService(
                 RoomCode = room.Code,
             })
             .SingleAsync(ct);
+        var maskInternalFields = caller.IsKhachThue;
         var history = await db.MaintenanceIncidentHistories.AsNoTracking()
             .Where(item => item.IncidentId == incidentId)
             .OrderBy(item => item.Id)
@@ -424,12 +425,14 @@ public sealed class IncidentService(
                 item.CreatedAt))
             .ToListAsync(ct);
         var incident = row.Incident;
+        var canReadResolution = !maskInternalFields ||
+            (incident.Status == IncidentStatus.Completed && incident.ReportedByUserId == caller.UserId);
 
         return new IncidentDetailDto(
             incident.Id, row.RoomId, row.PropertyId, row.PropertyName, row.RoomCode, incident.ReportedByUserId,
             incident.Title, incident.Description, incident.Category, incident.Urgency, incident.Status,
-            maskInternalFields ? null : incident.AssigneeName,
-            maskInternalFields ? null : incident.TechnicalNotes,
+            canReadResolution ? incident.AssigneeName : null,
+            canReadResolution ? incident.TechnicalNotes : null,
             maskInternalFields ? null : incident.RepairCost,
             incident.CreatedAt, incident.UpdatedAt, incident.RowVersion, history);
     }

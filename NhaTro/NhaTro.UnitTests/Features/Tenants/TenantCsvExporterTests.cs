@@ -62,5 +62,30 @@ public class TenantCsvExporterTests
         Assert.DoesNotContain("********", csv);
     }
 
+    // P2-12: Excel bỏ khoảng trắng đầu ô trước khi nhận diện công thức, nên "= + - @" đứng sau
+    // khoảng trắng/tab/xuống dòng vẫn phải bị vô hại.
+    [Theory]
+    [InlineData("  =cmd|calc")]
+    [InlineData("\t+SUM(1+1)")]
+    [InlineData("\r\n@SUM(1+1)")]
+    [InlineData(" \u000B-2+3")]
+    public void Build_vo_hai_ky_tu_cong_thuc_dau_chu_sau_khoang_trang(string malicious)
+    {
+        var tenant = new TenantListItemDto
+        {
+            Id = 3,
+            FullName = malicious,
+            PhoneNumber = "0912345678",
+            IdNumberMasked = null,
+            IsActive = true,
+            HasAccount = false,
+            HasActiveContract = false,
+        };
+
+        var csv = TenantCsvExporter.Build([tenant], includeAccount: false, Localize);
+
+        Assert.Contains("\"'" + malicious + "\"", csv);
+    }
+
     private static string Localize(string key) => key;
 }

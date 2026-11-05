@@ -4,6 +4,7 @@
 @using Web.Features.Utilities.Services
 @using Web.Components.Shared
 @inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<UtilityResources> UL
 
 <div class="room-reading-card @(IsLocked ? "card-locked" : "")" id="@($"room-{Room.Id}")">
     <!-- Room header -->
@@ -82,7 +83,7 @@
                             <div class="meter-code-text">@string.Format(L["MeterReadingMeterCodeLabel"], Room.ElectricMeterCode)</div>
                         </div>
                     </div>
-                    <span class="meter-unit-badge">kWh</span>
+                    <span class="meter-unit-badge">@UL["UnitKwh"]</span>
                 </div>
 
                 <div class="meter-inputs-grid">
@@ -90,7 +91,7 @@
                         <label class="input-col-label">@L["MeterReadingStartLabel"]</label>
                         <div class="readonly-reading-box tabular-nums">
                             <span>@Room.ElectricStart.ToString("N0")</span>
-                            <span class="reading-unit">kWh</span>
+                            <span class="reading-unit">@UL["UnitKwh"]</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingStartPeriodHint"], PeriodStart.ToString("dd/MM/yyyy"))</span>
                     </div>
@@ -106,10 +107,12 @@
                                    placeholder="@L["MeterReadingInputPlaceholder"]"
                                    value="@ElectricInputString"
                                    disabled="@(CallerRole == Roles.KhachThue)"
+                                   aria-invalid="@(ElectricError is not null ? "true" : "false")"
+                                   aria-describedby="@(ElectricError is not null ? $"electric-{Room.Id}-error" : null)"
                                    @oninput="HandleElectricInput"
                                    @onblur="() => FormatElectricInput()"
                                    @onkeydown="OnElectricKeyDown" />
-                            <span class="input-affix">kWh</span>
+                            <span class="input-affix">@UL["UnitKwh"]</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
                     </div>
@@ -117,7 +120,7 @@
 
                 @if (ElectricError is not null)
                 {
-                    <div class="meter-error-banner">
+                    <div class="meter-error-banner" id="@($"electric-{Room.Id}-error")" role="alert">
                         <LucideIcon Name="alert-triangle" />
                         <span>@ElectricError</span>
                     </div>
@@ -128,11 +131,11 @@
                     <span class="usage-value tabular-nums">
                         @if (_electricEnd is null)
                         {
-                            <span class="cost-missing-cell">—</span>
+                            <span class="cost-missing-cell">@L["NoData"]</span>
                         }
                         else
                         {
-                            <span>@Math.Max(0m, _electricEnd.Value - Room.ElectricStart).ToString("N0") <span class="usage-unit">kWh</span></span>
+                            <span>@Math.Max(0m, _electricEnd.Value - Room.ElectricStart).ToString("N0") <span class="usage-unit">@UL["UnitKwh"]</span></span>
                         }
                     </span>
                 </div>
@@ -159,7 +162,7 @@
                             <div class="meter-code-text">@string.Format(L["MeterReadingMeterCodeLabel"], Room.WaterMeterCode)</div>
                         </div>
                     </div>
-                    <span class="meter-unit-badge">m³</span>
+                    <span class="meter-unit-badge">@UL["UnitM3"]</span>
                 </div>
 
                 <div class="meter-inputs-grid">
@@ -167,7 +170,7 @@
                         <label class="input-col-label">@L["MeterReadingStartLabel"]</label>
                         <div class="readonly-reading-box tabular-nums">
                             <span>@Room.WaterStart.ToString("N0")</span>
-                            <span class="reading-unit">m³</span>
+                            <span class="reading-unit">@UL["UnitM3"]</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingStartPeriodHint"], PeriodStart.ToString("dd/MM/yyyy"))</span>
                     </div>
@@ -183,10 +186,12 @@
                                    placeholder="@L["MeterReadingInputPlaceholder"]"
                                    value="@WaterInputString"
                                    disabled="@(CallerRole == Roles.KhachThue)"
+                                   aria-invalid="@(WaterError is not null ? "true" : "false")"
+                                   aria-describedby="@(WaterError is not null ? $"water-{Room.Id}-error" : null)"
                                    @oninput="HandleWaterInput"
                                    @onblur="() => FormatWaterInput()"
                                    @onkeydown="OnWaterKeyDown" />
-                            <span class="input-affix">m³</span>
+                            <span class="input-affix">@UL["UnitM3"]</span>
                         </div>
                         <span class="input-sub-hint">@string.Format(L["MeterReadingEndPeriodHint"], PeriodEnd.ToString("dd/MM/yyyy"))</span>
                     </div>
@@ -194,7 +199,7 @@
 
                 @if (WaterError is not null)
                 {
-                    <div class="meter-error-banner">
+                    <div class="meter-error-banner" id="@($"water-{Room.Id}-error")" role="alert">
                         <LucideIcon Name="alert-triangle" />
                         <span>@WaterError</span>
                     </div>
@@ -205,11 +210,11 @@
                     <span class="usage-value tabular-nums">
                         @if (_waterEnd is null)
                         {
-                            <span class="cost-missing-cell">—</span>
+                            <span class="cost-missing-cell">@L["NoData"]</span>
                         }
                         else
                         {
-                            <span>@Math.Max(0m, _waterEnd.Value - Room.WaterStart).ToString("N0") <span class="usage-unit">m³</span></span>
+                            <span>@Math.Max(0m, _waterEnd.Value - Room.WaterStart).ToString("N0") <span class="usage-unit">@UL["UnitM3"]</span></span>
                         }
                     </span>
                 </div>
@@ -230,7 +235,8 @@
     <MonthlyUtilityTable Room="Room"
                          ElectricEnd="_electricEnd"
                          WaterEnd="_waterEnd"
-                         Breakdown="_costBreakdown" />
+                         Breakdown="_costBreakdown"
+                         IsCalculating="@_isCalculatingCost" />
 
     <!-- Adjustment reason textarea: chỉ hiện khi có thay đổi thực sự so với dữ liệu đã lưu -->
     @if (CallerRole != Roles.KhachThue && HasChangesFromInitial)
@@ -244,11 +250,13 @@
                       class="input textarea @(string.IsNullOrWhiteSpace(_reason) && _showReasonError ? "input-error" : "")"
                       rows="2"
                       placeholder="@L["MeterReadingAdjustmentReasonPlaceholder"]"
+                      aria-invalid="@(string.IsNullOrWhiteSpace(_reason) && _showReasonError ? "true" : "false")"
+                      aria-describedby="@(string.IsNullOrWhiteSpace(_reason) && _showReasonError ? $"reason-{Room.Id}-error" : null)"
                       @bind="_reason"
                       @bind:event="oninput"></textarea>
             @if (string.IsNullOrWhiteSpace(_reason) && _showReasonError)
             {
-                <span class="field-error-text">@L["MeterReadingAdjustmentReasonRequired"]</span>
+                <span class="field-error-text" id="@($"reason-{Room.Id}-error")">@L["MeterReadingAdjustmentReasonRequired"]</span>
             }
         </div>
     }
@@ -291,13 +299,13 @@
                                         <span class="avatar-circle">@(string.IsNullOrWhiteSpace(log.Modifier) ? "QL" : log.Modifier.Substring(0, Math.Min(2, log.Modifier.Length)).ToUpperInvariant())</span>
                                         <div>
                                             <strong>@log.Modifier</strong>
-                                            <div class="text-muted">@log.Role</div>
+                                            <div class="text-muted">@RoleLabel(log.Role)</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="tabular-nums">@log.Timestamp.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="tabular-nums">@DateFormatter.FormatDateTime(log.Timestamp)</td>
                                 <td>
-                                    <span class="field-pill">@log.FieldChanged</span>:
+                                    <span class="field-pill">@UtilityAuditLogDisplay.FieldLabel(UL, log.FieldChanged)</span>:
                                     <strong class="tabular-nums">@log.DetailDiff</strong>
                                 </td>
                                 <td>@log.Reason</td>
@@ -318,6 +326,7 @@
                     <div class="action-left">
                         <button type="button"
                                 class="btn btn-secondary"
+                                disabled="@IsSaving"
                                 @onclick="HandleResetDraft">
                             <LucideIcon Name="x" />
                             <span>@L["MeterReadingCancel"]</span>
@@ -327,18 +336,34 @@
                     <div class="action-right">
                         <button type="button"
                                 class="btn btn-primary"
-                                disabled="@(HasValidationError || _isSaving)"
+                                disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || IsSaving)"
                                 @onclick="HandleSaveDraft">
-                            <LucideIcon Name="check" />
-                            <span>@L["MeterReadingSaveDraft"]</span>
+                            @if (IsSavingDraft)
+                            {
+                                <span class="spinner" aria-hidden="true"></span>
+                                <span>@UL["SavingBtn"]</span>
+                            }
+                            else
+                            {
+                                <LucideIcon Name="check" />
+                                <span>@L["MeterReadingSaveDraft"]</span>
+                            }
                         </button>
 
                         <button type="button"
                                 class="btn btn-primary"
-                                disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || _isSaving)"
+                                disabled="@(HasValidationError || _electricEnd is null || _waterEnd is null || IsSaving)"
                                 @onclick="HandleLockPeriod">
-                            <LucideIcon Name="@(IsLocked ? "refresh-cw" : "receipt")" />
-                            <span>@(IsLocked ? L["MeterReadingUpdateLocked"] : L["MeterReadingLockPeriod"])</span>
+                            @if (IsSavingLock)
+                            {
+                                <span class="spinner" aria-hidden="true"></span>
+                                <span>@UL["SavingBtn"]</span>
+                            }
+                            else
+                            {
+                                <LucideIcon Name="@(IsLocked ? "refresh-cw" : "receipt")" />
+                                <span>@(IsLocked ? L["MeterReadingUpdateLocked"] : L["MeterReadingLockPeriod"])</span>
+                            }
                         </button>
                     </div>
                 </div>
@@ -353,14 +378,14 @@
     [Parameter] public DateOnly PeriodStart { get; set; }
     [Parameter] public DateOnly PeriodEnd { get; set; }
     [Parameter] public EventCallback<(string RoomId, decimal? ElectricEnd, decimal? WaterEnd)> OnChanged { get; set; }
-    [Parameter] public EventCallback<(string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock)> OnSave { get; set; }
+    [Parameter, EditorRequired] public Func<(string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock), Task<bool>> OnSave { get; set; } = default!;
     [Inject] public MeterReadingPageService PageService { get; set; } = default!;
 
     private ElementReference _electricInputRef;
     private ElementReference _waterInputRef;
     private RoomReadingSampleDto? _lastRoomRef;
-    private decimal _initialElectricEnd;
-    private decimal _initialWaterEnd;
+    private decimal? _initialElectricEnd;
+    private decimal? _initialWaterEnd;
     private decimal? _electricEnd;
     private decimal? _waterEnd;
     private string ElectricInputString = string.Empty;
@@ -369,27 +394,31 @@
     private string? WaterError;
     private string? _reason;
     private bool _showReasonError;
-    private bool _isSaving;
+    private string? _savingAction;
     private UtilityCostBreakdown? _costBreakdown;
+    private bool _isCalculatingCost;
 
     private bool IsLocked => string.Equals(Room.Status, "locked", StringComparison.OrdinalIgnoreCase);
 
     private bool HasChangesFromInitial =>
-        (_electricEnd.HasValue && _electricEnd.Value != _initialElectricEnd) ||
-        (_waterEnd.HasValue && _waterEnd.Value != _initialWaterEnd);
+        _electricEnd != _initialElectricEnd ||
+        _waterEnd != _initialWaterEnd;
 
     private bool HasValidationError => ElectricError is not null || WaterError is not null;
+    private bool IsSaving => _savingAction is not null;
+    private bool IsSavingDraft => _savingAction == "draft";
+    private bool IsSavingLock => _savingAction == "lock";
 
     protected override async Task OnParametersSetAsync()
     {
         if (!ReferenceEquals(_lastRoomRef, Room))
         {
             _lastRoomRef = Room;
-            _initialElectricEnd = Room.ElectricEnd;
-            _initialWaterEnd = Room.WaterEnd;
-            _electricEnd = Room.ElectricEnd > 0 ? Room.ElectricEnd : null;
+            _initialElectricEnd = Room.HasElectricReading ? Room.ElectricEnd : null;
+            _initialWaterEnd = Room.HasWaterReading ? Room.WaterEnd : null;
+            _electricEnd = _initialElectricEnd;
             ElectricInputString = _electricEnd.HasValue ? _electricEnd.Value.ToString("G29") : string.Empty;
-            _waterEnd = Room.WaterEnd > 0 ? Room.WaterEnd : null;
+            _waterEnd = _initialWaterEnd;
             WaterInputString = _waterEnd.HasValue ? _waterEnd.Value.ToString("G29") : string.Empty;
             _reason = null;
             _showReasonError = false;
@@ -510,25 +539,33 @@
     {
         if (_electricEnd.HasValue && _waterEnd.HasValue)
         {
+            _isCalculatingCost = true;
+            StateHasChanged();
             _costBreakdown = await PageService.CalculateCostAsync(Room, _electricEnd.Value, _waterEnd.Value);
-        }
-        else if (_electricEnd.HasValue || _waterEnd.HasValue)
-        {
-            var eEnd = _electricEnd ?? Room.ElectricStart;
-            var wEnd = _waterEnd ?? Room.WaterStart;
-            _costBreakdown = await PageService.CalculateCostAsync(Room, eEnd, wEnd);
+            _isCalculatingCost = false;
         }
         else
         {
+            // Không tự ý lấy chỉ số đầu kỳ thay cho chỉ số cuối chưa nhập.
             _costBreakdown = null;
         }
     }
 
 
+    private string RoleLabel(string role) => role?.Trim() switch
+    {
+        "Chủ trọ" or Roles.ChuTro => L["RoleChuTro"].Value,
+        "Quản lý" or Roles.QuanLy => L["RoleQuanLy"].Value,
+        "Khách thuê" or Roles.KhachThue => L["RoleKhachThue"].Value,
+        "Quản trị viên" or Roles.Admin => L["RoleAdmin"].Value,
+        null or "" => string.Empty,
+        _ => role,
+    };
+
     private async Task HandleResetDraft()
     {
-        _electricEnd = _initialElectricEnd > 0 ? _initialElectricEnd : null;
-        _waterEnd = _initialWaterEnd > 0 ? _initialWaterEnd : null;
+        _electricEnd = _initialElectricEnd;
+        _waterEnd = _initialWaterEnd;
         ElectricInputString = _electricEnd.HasValue ? _electricEnd.Value.ToString("G29") : string.Empty;
         WaterInputString = _waterEnd.HasValue ? _waterEnd.Value.ToString("G29") : string.Empty;
         _reason = null;
@@ -541,7 +578,7 @@
 
     private async Task HandleSaveDraft()
     {
-        if (HasValidationError) return;
+        if (HasValidationError || _electricEnd is null || _waterEnd is null) return;
 
         // Chỉ bắt buộc nhập lý do khi có thay đổi thực sự
         if (HasChangesFromInitial && string.IsNullOrWhiteSpace(_reason))
@@ -550,18 +587,23 @@
             return;
         }
 
-        _isSaving = true;
+        _savingAction = "draft";
         try
         {
-            var eEnd = _electricEnd ?? Room.ElectricStart;
-            var wEnd = _waterEnd ?? Room.WaterStart;
-            await OnSave.InvokeAsync((Room.Id, eEnd, wEnd, _reason, false));
-            _reason = null;
-            _showReasonError = false;
+            var saved = await OnSave((Room.Id, _electricEnd.Value, _waterEnd.Value, _reason, false));
+            if (saved)
+            {
+                _reason = null;
+                _showReasonError = false;
+            }
+        }
+        catch
+        {
+            // Preserve readings and reason so the user can retry after a save failure.
         }
         finally
         {
-            _isSaving = false;
+            _savingAction = null;
         }
     }
 
@@ -576,16 +618,23 @@
             return;
         }
 
-        _isSaving = true;
+        _savingAction = "lock";
         try
         {
-            await OnSave.InvokeAsync((Room.Id, _electricEnd.Value, _waterEnd.Value, _reason, true));
-            _reason = null;
-            _showReasonError = false;
+            var saved = await OnSave((Room.Id, _electricEnd.Value, _waterEnd.Value, _reason, true));
+            if (saved)
+            {
+                _reason = null;
+                _showReasonError = false;
+            }
+        }
+        catch
+        {
+            // Preserve readings and reason so the user can retry after a save failure.
         }
         finally
         {
-            _isSaving = false;
+            _savingAction = null;
         }
     }
 }

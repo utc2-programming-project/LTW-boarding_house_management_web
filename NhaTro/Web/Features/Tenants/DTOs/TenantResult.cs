@@ -29,6 +29,10 @@ public class TenantResult
     public static TenantResult Success(TenantDetailDto tenant) =>
         new() { Succeeded = true, Tenant = tenant };
 
+    /// <summary>Thành công nhưng không cần trả chi tiết (ví dụ xóa mềm vào thùng rác).</summary>
+    public static TenantResult Success() =>
+        new() { Succeeded = true };
+
     public static TenantResult Failure(string errorCode, string errorMessage) =>
         new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
 

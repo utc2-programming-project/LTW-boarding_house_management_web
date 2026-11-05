@@ -37,6 +37,13 @@ public sealed class TenantRentalContractDto
 
     public required decimal DepositAmount { get; init; }
 
+    /// <summary>
+    /// Tiền cọc đã đóng thực tế và ngày thanh toán (null khi chưa có biên lai/chứng từ ghi nhận).
+    /// </summary>
+    public decimal? PaidDepositAmount { get; init; }
+
+    public DateOnly? DepositPaidDate { get; init; }
+
     public required ContractStatus Status { get; init; }
 
     /// <summary>

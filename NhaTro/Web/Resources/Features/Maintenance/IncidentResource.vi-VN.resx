@@ -451,4 +451,12 @@
   <data name="AllFilterValues" xml:space="preserve"><value>Tất cả</value></data>
   <data name="SearchTitle" xml:space="preserve"><value>Nhập tiêu đề sự cố</value></data>
   <data name="SearchRoom" xml:space="preserve"><value>Nhập tên nhà trọ hoặc phòng</value></data>
+  <data name="Resolution" xml:space="preserve"><value>Kết quả xử lý</value></data>
+  <data name="CompletedAt" xml:space="preserve"><value>Thời gian hoàn thành</value></data>
+  <data name="ImageViewer" xml:space="preserve"><value>Xem ảnh</value></data>
+  <data name="BackToIncident" xml:space="preserve"><value>Quay lại sự cố</value></data>
+  <data name="ZoomOut" xml:space="preserve"><value>Thu nhỏ</value></data>
+  <data name="ZoomIn" xml:space="preserve"><value>Phóng to</value></data>
+  <data name="RotateImage" xml:space="preserve"><value>Xoay ảnh</value></data>
+  <data name="DownloadResultPhoto" xml:space="preserve"><value>Tải ảnh sau xử lý</value></data>
 </root>

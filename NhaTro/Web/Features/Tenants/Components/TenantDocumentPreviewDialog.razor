@@ -3,10 +3,10 @@
 
 @if (Visible && Document is not null)
 {
-    <div role="dialog" aria-modal="true" aria-labelledby="preview-title"
-         style="position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background-color: var(--overlay);"
+    <div role="dialog" aria-modal="true" aria-labelledby="preview-title" data-dialog-dismiss
+         style="position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: 1rem; background-color: var(--overlay);"
          @onclick="OnClose">
-        <div style="width: 100%; max-width: 680px; background-color: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px var(--shadow-dialog); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;"
+        <div style="position: relative; z-index: 410; width: 100%; max-width: 680px; background-color: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px var(--shadow-dialog); overflow: hidden; display: flex; flex-direction: column; max-height: 90vh;"
              @onclick:stopPropagation="true">
             
             <!-- Header -->
@@ -27,100 +27,65 @@
                             @Document.FileName
                         </h3>
                         <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
-                            @GetCategoryName(Document.Description) · @FormatFileSize(Document.FileSizeBytes)
+                            @GetCategoryName(Document.Description) · @NumberFormatter.FileSize(Document.FileSizeBytes)
                         </p>
                     </div>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <a href="/api/tenants/@TenantId/documents/@Document.Id" target="_blank" download="@Document.FileName"
-                       style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; background-color: var(--primary); color: var(--surface); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                        <LucideIcon Name="download" />
-                        <span>@L["DownloadDocumentSecure"]</span>
-                    </a>
+                    @if (CanDownload)
+                    {
+                        <a href="/api/tenants/@TenantId/documents/@Document.Id" target="_blank" rel="noopener noreferrer" download="@Document.FileName"
+                           style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 8px; background-color: var(--primary); color: var(--surface); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <LucideIcon Name="download" />
+                            <span>@L["DownloadDocumentSecure"]</span>
+                        </a>
+                    }
                     <button type="button"
-                            style="width: 32px; height: 32px; border-radius: 8px; color: var(--text-muted); background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                            style="width: 44px; height: 44px; border-radius: 8px; color: var(--text-muted); background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                            aria-label="@L["Close"]"
                             @onclick="OnClose">
                         <LucideIcon Name="x" />
                     </button>
                 </div>
             </div>
 
-            <!-- Simulated Document Preview Area -->
-            <div style="padding: 24px; overflow-y: auto; background-color: rgba(241, 245, 249, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <div style="width: 100%; max-width: 500px; background-color: var(--surface); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); border: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                    
-                    <!-- Header of mock ID card or Doc -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="color: var(--primary); display: flex; align-items: center;">
-                                <LucideIcon Name="shield" />
-                            </div>
-                            <span style="font-size: 12px; font-weight: 600; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">
-                                @L["PreviewDocumentIssuer"]
-                            </span>
+            <!-- Preview Area -->
+            <div style="padding: 24px; overflow-y: auto; background-color: var(--surface-subtle); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+                @if (!string.IsNullOrWhiteSpace(DocumentUrl) && IsImage(Document.FileName))
+                {
+                    <img src="@DocumentUrl"
+                         alt="@Document.FileName"
+                         style="max-width: 100%; max-height: 65vh; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); background-color: var(--surface);" />
+                }
+                else
+                {
+                    <div style="width: 100%; max-width: 500px; min-height: 220px; background-color: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;">
+                        <div style="width: 56px; height: 56px; border-radius: 12px; background-color: var(--accent-soft); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                            <LucideIcon Name="file-text" />
                         </div>
-                        <span style="padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; background-color: var(--success-bg); color: var(--success-text);">
-                            @L["VerifiedStatusLabel"]
-                        </span>
+                        <p style="margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere;">
+                            @Document.FileName
+                        </p>
+                        <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+                            @L["PreviewNotAvailable"]
+                        </p>
                     </div>
+                }
 
-                    <!-- Simulated Content -->
-                    <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
-                        <div style="display: flex; align-items: flex-start; gap: 16px;">
-                            <div style="width: 80px; height: 96px; border-radius: 8px; background-color: var(--surface-subtle); border: 1px solid var(--neutral-border); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-disabled); flex-shrink: 0;">
-                                <LucideIcon Name="user" />
-                                <span style="font-size: 10px; margin-top: 4px; font-weight: 500;">@L["PhotoLabel"]</span>
-                            </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
-                                <div>
-                                    <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["PreviewFullNameLabel"]:</span>
-                                    <span style="font-weight: 700; color: var(--text-primary);">@(TenantName ?? "NGUYỄN VĂN A")</span>
-                                </div>
-                                <div>
-                                    <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["CitizenIdLabel"]:</span>
-                                    <span style="font-family: monospace; font-weight: 600; color: var(--text-primary); letter-spacing: 0.05em;">
-                                        @(CitizenId ?? "079095012345")
-                                    </span>
-                                </div>
-                                <div>
-                                    <span style="color: var(--text-muted); font-size: 11px; display: block;">@L["ResidenceAddressLabel"]:</span>
-                            <span style="color: var(--text-secondary);">@(ResidenceAddress ?? L["SampleResidentAddress"].Value)</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(Document.Description))
-                        {
-                            <div style="margin-top: 12px; padding: 12px; border-radius: 8px; background-color: var(--page-bg); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary);">
-                                <span style="font-weight: 600; color: var(--text-primary);">@L["Notes"]:</span> @Document.Description
-                            </div>
-                        }
+                @if (NoteText is { } note)
+                {
+                    <div style="width: 100%; max-width: 500px; padding: 12px; border-radius: 8px; background-color: var(--page-bg); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary);">
+                        <span style="font-weight: 600; color: var(--text-primary);">@L["Notes"]:</span> @note
                     </div>
-
-                    <!-- Metadata Footer -->
-                    <div style="padding-top: 12px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 11px; color: var(--text-muted);">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <LucideIcon Name="calendar" />
-                            <span>@DateFormatter.FormatDateTime(Document.UploadedAt.UtcDateTime)</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <LucideIcon Name="hard-drive" />
-                            <span>@FormatFileSize(Document.FileSizeBytes)</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px; color: var(--success-text);">
-                            <LucideIcon Name="shield-check" />
-                            <span>@L["VerifiedTlsLabel"]</span>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
 
             <!-- Modal Footer -->
             <div style="background-color: var(--page-bg); padding: 12px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
                 <span>@L["DocumentCode"]: @Document.Id.ToString()[..8].ToUpperInvariant()</span>
                 <button type="button"
-                        style="padding: 6px 16px; border-radius: 8px; background-color: var(--surface); border: 1px solid var(--neutral-border); color: var(--text-secondary); font-weight: 500; cursor: pointer;"
+                        style="min-height: 44px; padding: 6px 16px; border-radius: 8px; background-color: var(--surface); border: 1px solid var(--neutral-border); color: var(--text-secondary); font-weight: 500; cursor: pointer;"
                         @onclick="OnClose">
                     @L["Close"]
                 </button>
@@ -132,11 +97,31 @@
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public int TenantId { get; set; }
+    [Parameter] public bool CanDownload { get; set; } = true;
     [Parameter] public TenantDocumentMetadataDto? Document { get; set; }
-    [Parameter] public string? TenantName { get; set; }
-    [Parameter] public string? CitizenId { get; set; }
-    [Parameter] public string? ResidenceAddress { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+
+    private string DocumentUrl =>
+        TenantId > 0 && Document is not null
+            ? $"/api/tenants/{TenantId}/documents/{Document.Id}"
+            : string.Empty;
+
+    private string? NoteText
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Document?.Description)) return null;
+
+            var text = Document!.Description.Trim();
+            if (text.StartsWith('['))
+            {
+                var end = text.IndexOf(']');
+                if (end > 1) text = text[(end + 1)..].Trim();
+            }
+
+            return string.IsNullOrWhiteSpace(text) ? null : text;
+        }
+    }
 
     private static bool IsImage(string fileName)
     {
@@ -144,28 +129,6 @@
         return ext is ".jpg" or ".jpeg" or ".png";
     }
 
-    private string GetCategoryName(string? description)
-    {
-        var label = string.IsNullOrWhiteSpace(description) ? string.Empty : description;
-        if (label.StartsWith('['))
-        {
-            var endIndex = label.IndexOf(']');
-            if (endIndex > 1) label = label[1..endIndex];
-        }
-
-        var normalized = label.Trim().ToLowerInvariant();
-        if (normalized.Contains("front") || normalized.Contains("mặt trước")) return L["DocTypeCccdFront"];
-        if (normalized.Contains("back") || normalized.Contains("mặt sau")) return L["DocTypeCccdBack"];
-        if (normalized.Contains("contract") || normalized.Contains("hợp đồng")) return L["DocTypeContractScan"];
-        if (normalized.Contains("residen") || normalized.Contains("tạm trú") || normalized.Contains("ct07") || normalized.Contains("ct08")) return L["DocTypeResidence"];
-        if (normalized.Contains("identity") || normalized.Contains("định danh") || normalized.Contains("cccd")) return L["DocTypeIdentity"];
-        return L["PersonalDocumentLabel"];
-    }
-
-    private static string FormatFileSize(long bytes)
-    {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024.0):F2} MB";
-    }
+    private string GetCategoryName(string? description) =>
+        L[TenantDocumentCategoryRules.LabelResourceKey(description)];
 }

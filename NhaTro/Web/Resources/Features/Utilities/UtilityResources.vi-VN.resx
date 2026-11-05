@@ -234,6 +234,8 @@
   <data name="ErrorInvalidServiceUnit" xml:space="preserve"><value>Đơn vị tính không hợp lệ.</value></data>
   <data name="ErrorEffectiveFromIsRequired" xml:space="preserve"><value>Vui lòng chọn ngày bắt đầu hiệu lực.</value></data>
   <data name="ErrorEffectiveToMustBeAfterEffectiveFrom" xml:space="preserve"><value>Ngày hết hiệu lực phải sau ngày bắt đầu hiệu lực.</value></data>
+  <data name="ErrorPriceVersionGap" xml:space="preserve"><value>Ngày bắt đầu giá mới phải liền sau ngày kết thúc của giá hiện tại.</value></data>
+  <data name="ErrorPriceVersionTooShort" xml:space="preserve"><value>Ngày áp dụng giá mới quá gần; phiên bản giá hiện tại phải có ngày kết thúc sau ngày bắt đầu.</value></data>
   <data name="ErrorInvalidBuildingScope" xml:space="preserve"><value>Phạm vi nhà trọ hoặc tòa nhà không hợp lệ.</value></data>
   <data name="ErrorMeterReadingMustBeGreaterOrEqualStart" xml:space="preserve"><value>Chỉ số cuối kỳ phải lớn hơn hoặc bằng chỉ số đầu kỳ.</value></data>
   <data name="ErrorMeterReadingCannotBeNegative" xml:space="preserve"><value>Chỉ số cuối kỳ không thể là số âm.</value></data>
@@ -245,5 +247,34 @@
   <data name="ErrorPriceVersionConflict" xml:space="preserve"><value>Mốc giá bị trùng hoặc chồng lấn với phiên bản khác trong cùng phạm vi.</value></data>
   <data name="ErrorRoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong phạm vi được phép.</value></data>
   <data name="ErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi. Vui lòng thử lại.</value></data>
+  <data name="ToggleActiveNotSupportedTooltip" xml:space="preserve"><value>Backend chưa hỗ trợ tính năng bật/tắt kích hoạt dịch vụ.</value></data>
+  <data name="WriteActionBlockedNotice" xml:space="preserve"><value>Chức năng ghi tạm thời chưa khả dụng do đang chờ backend hỗ trợ ánh xạ người dùng (Identity UserId mapping).</value></data>
+  <data name="ToastCreatedSuccessSql" xml:space="preserve"><value>Dịch vụ đã được tạo thành công và lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ToastPriceUpdatedSuccessSql" xml:space="preserve"><value>Đơn giá đã được cập nhật thành công và lưu vào cơ sở dữ liệu.</value></data>
+  <data name="SqlErrorBadge" xml:space="preserve"><value>Lỗi SQL</value></data>
+  <data name="SelectPropertyPrompt" xml:space="preserve"><value>-- Chọn nhà trọ --</value></data>
+  <data name="SqlLoadServicesError" xml:space="preserve"><value>Không thể tải danh sách dịch vụ từ cơ sở dữ liệu. Vui lòng thử lại.</value></data>
+  <data name="SqlLoadPricesError" xml:space="preserve"><value>Không thể tải lịch sử giá từ cơ sở dữ liệu. Vui lòng thử lại.</value></data>
+  <data name="SqlLoadVersionsError" xml:space="preserve"><value>Không thể tải phiên bản giá. Vui lòng thử lại.</value></data>
+  <data name="ToastServiceToggledSuccessSql" xml:space="preserve"><value>Trạng thái dịch vụ đã được cập nhật thành công và lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ErrorOwnerOnlyService" xml:space="preserve"><value>Chỉ Chủ trọ được thiết lập danh mục và đơn giá dịch vụ.</value></data>
+  <data name="ErrorOwnerOnlyToggle" xml:space="preserve"><value>Chỉ Chủ trọ được bật/tắt trạng thái dịch vụ.</value></data>
+  <data name="ErrorBuildingRequired" xml:space="preserve"><value>Vui lòng chọn một nhà trọ cụ thể khi tạo dịch vụ.</value></data>
+  <data name="ErrorBuildingNotFound" xml:space="preserve"><value>Nhà trọ không tồn tại hoặc đã ngừng hoạt động.</value></data>
+  <data name="ErrorInvalidServiceId" xml:space="preserve"><value>Mã dịch vụ không hợp lệ.</value></data>
+  <data name="ErrorVerifyCreateFailed" xml:space="preserve"><value>Không thể xác minh dịch vụ đã lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ErrorVerifyPriceFailed" xml:space="preserve"><value>Không thể xác minh đơn giá mới đã lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ErrorVerifyStatusFailed" xml:space="preserve"><value>Không thể xác minh trạng thái dịch vụ đã lưu vào cơ sở dữ liệu.</value></data>
+  <data name="ErrorServiceInactive" xml:space="preserve"><value>Dịch vụ đang ngừng sử dụng, không thể tạo phiên bản giá mới. Hãy bật lại dịch vụ trước.</value></data>
+  <data name="ErrorEffectiveDateNotAfterLatest" xml:space="preserve"><value>Ngày hiệu lực mới ({0}) phải sau ngày hiệu lực của phiên bản giá mới nhất hiện có ({1}).</value></data>
+  <data name="ErrorSystemCatalogReadOnly" xml:space="preserve"><value>Danh mục hệ thống dùng chung không thể chỉnh sửa hoặc đổi trạng thái.</value></data>
+  <data name="ErrorInvalidData" xml:space="preserve"><value>Dữ liệu dịch vụ hoặc đơn giá không hợp lệ.</value></data>
+  <data name="TariffElectricName" xml:space="preserve"><value>Điện sinh hoạt (Bậc thang EVN)</value></data>
+  <data name="TariffWaterName" xml:space="preserve"><value>Nước sinh hoạt (Bậc thang)</value></data>
+  <data name="TariffElectricShortName" xml:space="preserve"><value>Điện sinh hoạt</value></data>
+  <data name="TariffWaterShortName" xml:space="preserve"><value>Nước sinh hoạt</value></data>
+  <data name="TariffTierServiceName" xml:space="preserve"><value>{0} - Bậc {1} ({2} {3})</value></data>
+  <data name="SystemCreatorLabel" xml:space="preserve"><value>Hệ thống</value></data>
+  <data name="BuildingFallbackName" xml:space="preserve"><value>Nhà trọ #{0}</value></data>
+  <data name="AllBuildingsDescription" xml:space="preserve"><value>Toàn bộ hệ thống</value></data>
 </root>
-

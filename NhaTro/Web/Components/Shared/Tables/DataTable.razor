@@ -157,7 +157,7 @@
                                     }
                                     else
                                     {
-                                        @(col.Value?.Invoke(item) ?? "—")
+                                        @(col.Value?.Invoke(item) ?? (col.IsNumeric ? string.Empty : Labels.NoData))
                                     }
                                 </td>
                             }

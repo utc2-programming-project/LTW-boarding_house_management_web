@@ -30,7 +30,7 @@
             else if (!_loadFailed)
             {
                 <div class="p2-form-grid">
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.PropertyId))">
                         <label for="room-property-select">@L["P2Property"] <span class="required" aria-hidden="true">*</span></label>
                         <InputSelect id="room-property-select" @bind-Value="_model.PropertyId" aria-describedby="room-property-error" aria-invalid="@(_editContext.HasError(() => _model.PropertyId) ? "true" : "false")">
                             <option value="0">@L["P2SelectProperty"]</option>
@@ -41,28 +41,28 @@
                         </InputSelect>
                         <span class="p2-field-error" id="room-property-error" aria-live="polite">@ErrorFor(nameof(_model.PropertyId))</span>
                     </div>
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.Code))">
                         <label for="room-code">@L["P2RoomCode"] <span class="required" aria-hidden="true">*</span></label>
                         <InputText id="room-code" @bind-Value="_model.Code" maxlength="50" autocomplete="off" aria-describedby="room-code-error" aria-invalid="@(_editContext.HasError(() => _model.Code) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-code-error" aria-live="polite">@ErrorFor(nameof(_model.Code))</span>
                     </div>
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.Floor))">
                         <label for="room-floor">@L["P2Floor"]</label>
                         <InputNumber id="room-floor" @bind-Value="_model.Floor" min="0" max="1000" aria-describedby="room-floor-error" aria-invalid="@(_editContext.HasError(() => _model.Floor) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-floor-error" aria-live="polite">@ErrorFor(nameof(_model.Floor))</span>
                     </div>
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.AreaM2))">
                         <label for="room-area">@L["P2Area"] (@L["P2SquareMeter"])</label>
                         <InputNumber id="room-area" @bind-Value="_model.AreaM2" min="0" max="100000" step="0.01" inputmode="decimal" aria-describedby="room-area-error" aria-invalid="@(_editContext.HasError(() => _model.AreaM2) ? "true" : "false")" />
                         <span class="p2-field-error" id="room-area-error" aria-live="polite">@ErrorFor(nameof(_model.AreaM2))</span>
                     </div>
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.StandardPrice))">
                         <label for="room-standard-price">@L["P2StandardPrice"] <span class="required" aria-hidden="true">*</span></label>
                         <InputNumber id="room-standard-price" @bind-Value="_model.StandardPrice" min="0" max="9999999999999999.99" step="any" inputmode="numeric" aria-describedby="room-price-hint room-price-error" aria-invalid="@(_editContext.HasError(() => _model.StandardPrice) ? "true" : "false")" />
                         <span class="p2-field-hint" id="room-price-hint">@L["P2PriceInputHint"]</span>
                         <span class="p2-field-error" id="room-price-error" aria-live="polite">@ErrorFor(nameof(_model.StandardPrice))</span>
                     </div>
-                    <div class="p2-field">
+                    <div class="@FieldClass(nameof(_model.Status))">
                         <label for="room-status-select">@L["P2Status"]</label>
                         <InputSelect id="room-status-select" @bind-Value="_model.Status" aria-describedby="room-status-error" aria-invalid="@(_editContext.HasError(() => _model.Status) ? "true" : "false")">
                             <option value="@RoomStatus.Available">@L["P2StatusAvailable"]</option>
@@ -83,7 +83,15 @@
             <footer class="p2-form-footer">
                 <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="CloseDialogAsync">@L["Cancel"]</button>
                 <button class="btn btn-primary" type="submit" disabled="@(_loading || _loadFailed || _saving)" aria-busy="@(_saving ? "true" : null)">
-                    @(_saving ? L["P2Saving"] : L["Save"])
+                    @if (_saving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        @L["P2Saving"]
+                    }
+                    else
+                    {
+                        @L["Save"]
+                    }
                 </button>
             </footer>
         }
@@ -163,6 +171,7 @@
     }
 
     private string? ErrorFor(string field) => _messages[new FieldIdentifier(_model, field)].FirstOrDefault();
+    private string FieldClass(string field) => ErrorFor(field) is null ? "p2-field" : "p2-field has-error";
 
     private async Task HandleSubmitAsync(EditContext _)
     {

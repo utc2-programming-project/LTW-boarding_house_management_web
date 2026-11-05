@@ -42,7 +42,9 @@ public static class TenantCsvExporter
     private static string Csv(string? value)
     {
         var text = value ?? string.Empty;
-        if (text.Length > 0 && text[0] is '=' or '+' or '-' or '@') text = "'" + text;
+        // Excel bỏ khoảng trắng đầu ô trước khi nhận diện công thức nên phải kiểm sau khi trim.
+        var probe = text.TrimStart(' ', '\t', '\r', '\n', '\u000B', '\u000C');
+        if (probe.Length > 0 && probe[0] is '=' or '+' or '-' or '@') text = "'" + text;
         return $"\"{text.Replace("\"", "\"\"")}\"";
     }
 }

@@ -20,7 +20,7 @@ namespace NhaTro.UnitTests.Components;
 public sealed class DashboardPageTests : BunitContext
 {
     private readonly List<int?> RoomRequests = [];
-    private int TenantRequests;
+    private readonly List<int?> TenantRequests = [];
     private bool DenyRooms;
 
     private void Configure(string role)
@@ -41,8 +41,11 @@ public sealed class DashboardPageTests : BunitContext
         });
         var tenants = Proxy<ITenantReportService>((method, args) =>
         {
-            TenantRequests++;
-            return Task.FromResult(new TenantReportKpis { Total = 15, Active = 12, LinkedAccountCount = 5 });
+            TenantRequests.Add(((TenantReportFilter)args![0]!).PropertyId);
+            return Task.FromResult(new TenantReportResult
+            {
+                Kpis = new() { Total = 15, Active = 12, Renting = 8, LinkedAccountCount = 5 }
+            });
         });
         Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)), properties, rooms, tenants, TimeProvider.System));
         ComponentFactories.AddStub<RoomStructureChart>();
@@ -56,8 +59,8 @@ public sealed class DashboardPageTests : BunitContext
         page.WaitForAssertion(() => Assert.Single(RoomRequests));
         page.FindAll("select")[0].Change("7");
         page.WaitForAssertion(() => Assert.Equal(7, RoomRequests.Last()));
-        Assert.Equal(1, TenantRequests);
-        Assert.Empty(page.FindAll("dd"));
+        page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7 }, TenantRequests));
+        Assert.Equal("15", page.FindAll("dd")[0].TextContent);
         Assert.All(page.FindAll(".kpi-card a"), a => Assert.Equal("/rooms?propertyId=7", a.GetAttribute("href")));
         var count = RoomRequests.Count;
         page.FindAll("select")[1].Change("Year");
@@ -65,6 +68,7 @@ public sealed class DashboardPageTests : BunitContext
         page.Find(".page-header button").Click();
         page.WaitForAssertion(() => Assert.Equal(count + 1, RoomRequests.Count));
         Assert.Equal(7, RoomRequests.Last());
+        page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7, 7 }, TenantRequests));
         Assert.Equal("Year", page.FindAll("select")[1].GetAttribute("value"));
     }
 
@@ -74,7 +78,7 @@ public sealed class DashboardPageTests : BunitContext
         DenyRooms = true;
         Configure(Roles.ChuTro);
         var page = Render<DashboardView>();
-        page.WaitForAssertion(() => Assert.Equal(3, page.FindAll("dd").Count));
+        page.WaitForAssertion(() => Assert.Equal(4, page.FindAll("dd").Count));
         Assert.Empty(page.FindAll(".kpi-card a"));
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);
     }

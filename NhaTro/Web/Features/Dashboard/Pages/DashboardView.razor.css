@@ -7,6 +7,7 @@ p { margin:0; color:var(--text-secondary); }
 label { display:flex; flex-direction:column; gap:8px; font-size:.875rem; font-weight:500; }
 select { min-height:44px; max-width:100%; padding:0 12px; border:1px solid var(--control-border); border-radius:8px; background:var(--surface); color:var(--text-primary); }
 .updated,.scope-note { font-size:.75rem; line-height:1.125rem; }
+.reports-link { display:inline-flex; align-items:center; min-height:44px; width:fit-content; }
 .panel-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
 .chart-placeholder { height:280px; display:flex; align-items:center; }
 .table-scroll { overflow-x:auto; }

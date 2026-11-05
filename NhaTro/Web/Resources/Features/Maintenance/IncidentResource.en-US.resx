@@ -451,4 +451,12 @@
   <data name="AllFilterValues" xml:space="preserve"><value>All</value></data>
   <data name="SearchTitle" xml:space="preserve"><value>Search incident titles</value></data>
   <data name="SearchRoom" xml:space="preserve"><value>Search properties or rooms</value></data>
+  <data name="Resolution" xml:space="preserve"><value>Resolution</value></data>
+  <data name="CompletedAt" xml:space="preserve"><value>Completed at</value></data>
+  <data name="ImageViewer" xml:space="preserve"><value>Image viewer</value></data>
+  <data name="BackToIncident" xml:space="preserve"><value>Back to incident</value></data>
+  <data name="ZoomOut" xml:space="preserve"><value>Zoom out</value></data>
+  <data name="ZoomIn" xml:space="preserve"><value>Zoom in</value></data>
+  <data name="RotateImage" xml:space="preserve"><value>Rotate</value></data>
+  <data name="DownloadResultPhoto" xml:space="preserve"><value>Download result photo</value></data>
 </root>

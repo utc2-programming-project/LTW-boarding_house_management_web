@@ -1,5 +1,3 @@
-@page "/services/readings"
-@page "/services/meter-reading"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
 @inject IStringLocalizer<UtilityResources> L
@@ -369,7 +367,7 @@
                                             @DateFormatter.FormatDateTime(log.Timestamp)
                                         </td>
                                         <td>
-                                            <code class="field-pill">@L[$"Audit{log.FieldChanged}"]</code>
+                                            <code class="field-pill">@UtilityAuditLogDisplay.FieldLabel(L, log.FieldChanged)</code>
                                         </td>
                                         <td class="tabular-nums font-mono font-medium text-slate-800">
                                             @log.DetailDiff
@@ -408,6 +406,10 @@
             <div class="empty-icon-wrap"><LucideIcon Name="search" Class="empty-state-icon" /></div>
             <h3 class="empty-title">@L["ReadingsEmptyTitle"]</h3>
             <p class="empty-desc">@L["ReadingsEmptyDescription"]</p>
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
+                <LucideIcon Name="arrow-left" />
+                <span>@L["BackToCatalogBtn"]</span>
+            </button>
         </div>
     }
     }

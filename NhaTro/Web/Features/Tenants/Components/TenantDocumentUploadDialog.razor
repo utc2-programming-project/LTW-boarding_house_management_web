@@ -3,10 +3,12 @@
 @inject IStringLocalizer<Shared> L
 @inject TenantDocumentPageService DocumentService
 @inject ToastService Toasts
+@inject ILogger<TenantDocumentUploadDialog> Logger
+@inject IJSRuntime JS
 
 @if (Visible)
 {
-    <div role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title"
+    <div role="dialog" aria-modal="true" aria-labelledby="upload-dialog-title" data-dialog-dismiss
          class="upload-modal-backdrop" @onclick="HandleClose">
         <div class="upload-modal-container" @onclick:stopPropagation="true">
             <!-- Header: Background var(--surface-subtle), px 24px, py 20px -->
@@ -20,7 +22,7 @@
                             @L["UploadDocument"]
                         </h2>
                         <p class="modal-subtitle">
-                            @L["UploadFileAllowedFormats"]
+                            @AllowedFormatsText
                         </p>
                     </div>
                 </div>
@@ -86,13 +88,18 @@
                     </div>
 
                     <!-- Hidden InputFile -->
-                    <InputFile @key="_fileInputKey" id="doc-file-input" OnChange="HandleFileSelected" accept=".pdf,.png,.jpg,.jpeg"
+                    <InputFile @key="_fileInputKey" id="doc-file-input" OnChange="HandleFileSelected" accept="@AcceptAttribute"
                                class="hidden-native-input" disabled="@_isUploading" />
 
                     @if (_selectedFile is null)
                     {
-                        <!-- Drop Zone -->
-                        <label for="doc-file-input" class="drop-zone-card @(_fileError is not null ? "drop-zone-error" : null)">
+                        <!-- Drop Zone: nút thật để hỗ trợ bàn phím (Enter/Space kích hoạt click),
+                             kéo-thả do appDocumentUpload.watchDropZone ghi tệp vào input -->
+                        <button type="button" id="doc-drop-zone"
+                                aria-controls="doc-file-input"
+                                disabled="@_isUploading"
+                                @onclick="OpenFilePickerAsync"
+                                class="drop-zone-card @(_fileError is not null ? "drop-zone-error" : null)">
                             <div class="drop-cloud-icon">
                                 <LucideIcon Name="upload" />
                             </div>
@@ -100,9 +107,9 @@
                                 @L["DragAndDropOr"] <span class="browse-link">@L["BrowseFile"]</span>
                             </p>
                             <p class="drop-secondary-text">
-                                PDF, JPG, JPEG, PNG — @L["Max10MB"]
+                                @AllowedFormatsText
                             </p>
-                        </label>
+                        </button>
                     }
                     else
                     {
@@ -165,7 +172,7 @@
                 <!-- Footnote on encryption -->
                 <div class="security-footnote">
                     <LucideIcon Name="circle-check" />
-                    <p>@L["Tls13EncryptedNotice"]</p>
+                    <p>@L["SecureTransferNotice"]</p>
                 </div>
             </div>
 
@@ -204,7 +211,7 @@
 .upload-modal-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 500;
+    z-index: 400;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,6 +223,8 @@
 .upload-modal-container {
     width: 100%;
     max-width: 560px;
+    position: relative;
+    z-index: 410;
     background-color: var(--surface);
     border-radius: 16px;
     overflow: hidden;
@@ -272,8 +281,10 @@
 }
 
 .btn-close {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     border-radius: 8px;
     color: var(--text-muted);
     background: transparent;
@@ -317,7 +328,7 @@
 .form-field-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .field-label {
@@ -409,6 +420,16 @@
 .drop-zone-card:hover {
     border-color: var(--primary);
     background-color: rgba(238, 242, 255, 0.4);
+}
+
+.drop-zone-card.drop-zone-active {
+    border-color: var(--primary);
+    background-color: var(--accent-soft);
+}
+
+.drop-zone-card:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 .drop-zone-card.drop-zone-error {
@@ -659,7 +680,7 @@
     animation: spin 0.8s linear infinite;
 }
 
-@@media (max-width: 767px) {
+@@media (max-width: 767.98px) {
     .upload-modal-backdrop { padding: 8px; align-items: flex-end; }
     .upload-modal-container { width: 100%; max-width: none; max-height: calc(100dvh - 16px); border-radius: 16px 16px 0 0; }
     .modal-header { padding: 16px; }
@@ -710,6 +731,24 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnUploadSuccess { get; set; }
 
+    /// <summary>
+    /// Giới hạn dung lượng do backend/storage cấu hình. Null hoặc &lt;= 0 thì dùng mặc định
+    /// của <c>FileTypeRules</c> để dialog không tự đặt ra con số khác với server.
+    /// </summary>
+    [Parameter] public long? MaxFileSizeBytes { get; set; }
+
+    /// <summary>
+    /// Danh sách đuôi tệp do backend/storage cấu hình. Null hoặc rỗng thì dùng mặc định
+    /// của <c>FileTypeRules</c>.
+    /// </summary>
+    [Parameter] public IReadOnlyList<string>? AllowedExtensions { get; set; }
+
+    /// <summary>
+    /// Giới hạn số tệp mỗi hồ sơ do storage cấu hình. Null hoặc &lt;= 0 nghĩa là không giới hạn,
+    /// dialog không tự đặt ra con số khác server.
+    /// </summary>
+    [Parameter] public int? MaxFilesPerEntity { get; set; }
+
     private string _selectedCategory = "CCCD_Front";
     private string? _description;
     private IBrowserFile? _selectedFile;
@@ -720,10 +759,40 @@
     private int _fileInputKey;
     private bool _wasVisible;
     private int? _loadedTenantId;
+    private int _existingFileCount;
+    private bool _dropZoneArmed;
     private readonly HashSet<string> _existingTypeCodes = new(StringComparer.OrdinalIgnoreCase);
 
-    private static readonly string[] ValidExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
-    private const long MaxSizeBytes = 10L * 1024 * 1024; // 10MB
+    private static readonly IReadOnlyList<string> DefaultAllowedExtensions =
+        Web.Features.Storage.Rules.FileTypeRules.AllowedExtensions(Web.Features.Storage.Enums.FileCategory.IdentityDocument);
+    private static readonly long DefaultMaxSizeBytes =
+        Web.Features.Storage.Rules.FileTypeRules.MaxDefaultBytes();
+
+    private long EffectiveMaxSizeBytes =>
+        MaxFileSizeBytes is > 0 ? MaxFileSizeBytes.Value : DefaultMaxSizeBytes;
+
+    private IReadOnlyList<string> EffectiveAllowedExtensions =>
+        AllowedExtensions is { Count: > 0 } ? AllowedExtensions : DefaultAllowedExtensions;
+
+    private int? EffectiveMaxFilesPerEntity => MaxFilesPerEntity is > 0 ? MaxFilesPerEntity : null;
+
+    private bool IsFileCountReached =>
+        EffectiveMaxFilesPerEntity is { } max && _existingFileCount >= max;
+
+    private string FileCountLimitMessage =>
+        L["FileCountExceededFormat", EffectiveMaxFilesPerEntity ?? 0].Value;
+
+    /// <summary>Ví dụ "PDF, JPG, JPEG, PNG" — lấy từ cấu hình, không hard-code.</summary>
+    private string AllowedExtensionsDisplay => string.Join(
+        ", ",
+        EffectiveAllowedExtensions.Select(extension => extension.TrimStart('.').ToUpperInvariant()));
+
+    private string AcceptAttribute => string.Join(",", EffectiveAllowedExtensions);
+
+    private string AllowedFormatsText => L[
+        "UploadFileAllowedFormatsFormat",
+        AllowedExtensionsDisplay,
+        FormatFileSize(EffectiveMaxSizeBytes)].Value;
 
     private string CurrentFileName => _selectedFile?.Name ?? string.Empty;
     private long CurrentFileSize => _selectedFile?.Size ?? 0;
@@ -740,6 +809,7 @@
         if (!Visible)
         {
             _wasVisible = false;
+            _dropZoneArmed = false;
             return;
         }
 
@@ -751,9 +821,11 @@
         _wasVisible = true;
         _loadedTenantId = TenantId;
         _existingTypeCodes.Clear();
+        _existingFileCount = 0;
         try
         {
             var documents = await DocumentService.GetDocumentsAsync(TenantId);
+            _existingFileCount = documents?.Items.Count ?? 0;
             foreach (var document in documents?.Items ?? [])
             {
                 var typeCode = TenantDocumentTypeRules.TypeCodes.FirstOrDefault(code =>
@@ -764,9 +836,10 @@
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Backend still enforces the duplicate rule if this pre-check cannot load.
+            // Backend vẫn kiểm trùng loại khi pre-check không đọc được danh sách giấy tờ.
+            Logger.LogWarning(ex, "Tenant document duplicate pre-check failed for tenant {TenantId}", TenantId);
         }
 
         UpdateDuplicateWarning();
@@ -778,6 +851,7 @@
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         _selectedFile = e.File;
+        _dropZoneArmed = false;
         ValidateFile();
     }
 
@@ -786,6 +860,7 @@
         _selectedFile = null;
         _fileError = null;
         _fileInputKey++;
+        _dropZoneArmed = false;
     }
 
     private bool ValidateFile()
@@ -805,21 +880,27 @@
         }
 
         var ext = Path.GetExtension(name).ToLowerInvariant();
-        if (!ValidExtensions.Contains(ext))
+        if (!EffectiveAllowedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
         {
-            _fileError = L["FileTypeNotAllowed"].Value;
+            _fileError = L["FileTypeNotAllowedFormat", AllowedExtensionsDisplay].Value;
             return false;
         }
 
-        if (size > MaxSizeBytes)
+        if (size > EffectiveMaxSizeBytes)
         {
-            _fileError = L["FileSizeExceeded"].Value;
+            _fileError = L["FileSizeExceededFormat", FormatFileSize(EffectiveMaxSizeBytes)].Value;
             return false;
         }
 
         if (size == 0)
         {
             _fileError = L["EmptyFile"].Value;
+            return false;
+        }
+
+        if (IsFileCountReached)
+        {
+            _fileError = FileCountLimitMessage;
             return false;
         }
 
@@ -864,21 +945,25 @@
                 }
                 else
                 {
-                    var messageKey = result.ErrorCode switch
+                    var message = result.ErrorCode switch
                     {
-                        StorageErrorCodes.InvalidFileType => "FileTypeNotAllowed",
-                        StorageErrorCodes.FileSizeExceeded => "FileSizeExceeded",
-                        StorageErrorCodes.EmptyFile => "EmptyFile",
-                        StorageErrorCodes.Forbidden => "DocumentAccessDenied",
-                        _ => "DocumentUploadFailed"
+                        StorageErrorCodes.InvalidFileType =>
+                            L["FileTypeNotAllowedFormat", AllowedExtensionsDisplay].Value,
+                        StorageErrorCodes.FileSizeExceeded =>
+                            L["FileSizeExceededFormat", FormatFileSize(EffectiveMaxSizeBytes)].Value,
+                        StorageErrorCodes.EmptyFile => L["EmptyFile"].Value,
+                        StorageErrorCodes.FileCountExceeded => FileCountLimitMessage,
+                        StorageErrorCodes.Forbidden => L["DocumentAccessDenied"].Value,
+                        _ => L["DocumentUploadFailed"].Value
                     };
-                    Toasts.Error(L[messageKey].Value);
+                    Toasts.Error(message);
                 }
             }
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["DocumentUploadFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document upload failed");
+            Toasts.Error(L["DocumentUploadFailed"]);
         }
         finally
         {
@@ -903,13 +988,26 @@
         _fileError = null;
         _hasSubmitted = false;
         _isUploading = false;
+        // Reset cả input gốc để chọn lại đúng tệp vừa upload vẫn phát sinh OnChange.
+        _fileInputKey++;
+        _dropZoneArmed = false;
     }
 
-    private static string FormatFileSize(long bytes)
+    private static string FormatFileSize(long bytes) =>
+        bytes <= 0 ? "0 B" : NumberFormatter.FileSize(bytes);
+
+    private async Task OpenFilePickerAsync()
     {
-        if (bytes <= 0) return "0 B";
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+        if (_isUploading) return;
+
+        await JS.InvokeVoidAsync("appDocumentUpload.openFilePicker", "doc-file-input");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Visible || _selectedFile is not null || _dropZoneArmed) return;
+
+        _dropZoneArmed = true;
+        await JS.InvokeVoidAsync("appDocumentUpload.watchDropZone", "doc-drop-zone", "doc-file-input");
     }
 }

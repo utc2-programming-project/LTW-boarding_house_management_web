@@ -70,6 +70,26 @@ function Assert-InvoiceSchema([string]$database) {
     if ($money -eq 4) { Pass "Tien/so luong decimal(18,2)" } else { Fail "Tien/so luong sai precision ($money/4)" }
 }
 
+function Assert-IncidentSchema([string]$database) {
+    $tables = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.tables WHERE name IN ('MaintenanceIncidents', 'MaintenanceIncidentHistories', 'IncidentPhotoAttachments')")
+    if ($tables -eq 3) { Pass "Co 3 bang su co P7" } else { Fail "Thieu bang su co P7 ($tables/3)" }
+
+    $fk = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.foreign_keys WHERE name IN ('FK_MaintenanceIncidents_Rooms_RoomId', 'FK_MaintenanceIncidents_AspNetUsers_ReportedByUserId', 'FK_MaintenanceIncidentHistories_MaintenanceIncidents_IncidentId', 'FK_IncidentPhotoAttachments_StoredFiles_FileId', 'FK_IncidentPhotoAttachments_MaintenanceIncidents_IncidentId', 'FK_IncidentPhotoAttachments_ManagerApprovalRequests_ApprovalRequestId') AND delete_referential_action_desc = 'NO_ACTION'")
+    if ($fk -eq 6) { Pass "FK su co P7 dung NO_ACTION" } else { Fail "FK su co P7 sai ($fk/6)" }
+
+    $checks = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.check_constraints WHERE name IN ('CK_MaintenanceIncidents_Category', 'CK_MaintenanceIncidents_Urgency', 'CK_MaintenanceIncidents_Status', 'CK_MaintenanceIncidents_RepairCost', 'CK_MaintenanceIncidentHistories_Action', 'CK_MaintenanceIncidentHistories_FromStatus', 'CK_MaintenanceIncidentHistories_ToStatus', 'CK_IncidentPhotoAttachments_Kind', 'CK_IncidentPhotoAttachments_Target')")
+    if ($checks -eq 9) { Pass "Du 9 check constraint su co P7" } else { Fail "Check su co P7 thieu ($checks/9)" }
+
+    $indexes = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name IN ('IX_MaintenanceIncidents_RoomId', 'IX_MaintenanceIncidents_ReportedByUserId', 'IX_MaintenanceIncidentHistories_IncidentId', 'IX_IncidentPhotoAttachments_IncidentId_Kind', 'IX_IncidentPhotoAttachments_ApprovalRequestId')")
+    if ($indexes -eq 5) { Pass "Du 5 index su co P7" } else { Fail "Index su co P7 thieu ($indexes/5)" }
+
+    $note = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.columns c JOIN sys.types t ON c.user_type_id = t.user_type_id WHERE c.object_id = OBJECT_ID('MaintenanceIncidentHistories') AND c.name = 'Note' AND t.name = 'nvarchar' AND c.max_length = 4000")
+    if ($note -eq 1) { Pass "Note lich su su co la nvarchar(2000)" } else { Fail "Note lich su su co sai do dai (phai 2000)" }
+
+    $cost = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('MaintenanceIncidents') AND name = 'RepairCost' AND precision = 18 AND scale = 0")
+    if ($cost -eq 1) { Pass "RepairCost decimal(18,0)" } else { Fail "RepairCost sai precision/scale" }
+}
+
 if (-not (Get-Command sqlcmd -ErrorAction SilentlyContinue)) { throw "Khong tim thay sqlcmd." }
 if (-not (Test-Path $projectPath)) { throw "Khong tim thay project: $projectPath" }
 
@@ -115,6 +135,7 @@ if ($checks.Count -gt 0) { Write-Host "  Check constraint:"; $checks | ForEach-O
 else { Write-Host "  Check constraint: (khong co)" }
 
 Assert-InvoiceSchema $Database
+Assert-IncidentSchema $Database
 
 Write-Step "Kiem tra duong nang cap: DB cu + migration hoa don"
 & sqlcmd -S $Server -d master -b -Q "IF DB_ID(N'$Database') IS NOT NULL BEGIN ALTER DATABASE [$Database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$Database]; END" | Out-Null
@@ -164,6 +185,7 @@ if ($pendingAfterUpgrade.Count -gt 0) { Fail "Con migration chua ap tren DB nang
 else { Pass "DB nang cap khong con migration pending" }
 
 Assert-InvoiceSchema $Database
+Assert-IncidentSchema $Database
 
 Write-Step "Kiem tra rang buoc hoa don bang du lieu that"
 Invoke-Sql $Database "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-10-01', '2026-10-31', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';" | Out-Null
@@ -173,6 +195,26 @@ Expect-SqlFail $Database "FK chan hop dong khong ton tai" "INSERT INTO Invoices 
 Expect-SqlFail $Database "Check chan ngay ket thuc truoc ngay bat dau" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-12-31', '2026-12-01', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
 Expect-SqlFail $Database "Check chan tong tien am" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2027-01-01', '2027-01-31', 1, -1, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
 Expect-SqlFail $Database "Check chan dong thuong co tien am" "INSERT INTO InvoiceItems (InvoiceId, ItemType, Description, Quantity, UnitPrice, Amount, DisplayOrder) SELECT TOP 1 Id, 0, N'Thu', 1, 0, -1, 1 FROM Invoices;"
+
+Write-Step "Kiem tra rang buoc su co P7 bang du lieu that"
+$p7Rows = [int](Invoke-Sql $Database "SELECT (SELECT COUNT(*) FROM MaintenanceIncidents) + (SELECT COUNT(*) FROM MaintenanceIncidentHistories) + (SELECT COUNT(*) FROM IncidentPhotoAttachments)")
+if ($p7Rows -eq 0) { Pass "Bang su co P7 rong sau khi nang cap (khong lam meo du lieu cu)" } else { Fail "Bang su co P7 co du lieu la ($p7Rows dong)" }
+
+Invoke-Sql $Database "INSERT INTO MaintenanceIncidents (RoomId, ReportedByUserId, Title, Description, Category, Urgency, Status, CreatedAt) SELECT TOP 1 Id, N'vht28-owner', N'Su co VHT-123', N'Mo ta kiem tra', 0, 0, 0, SYSUTCDATETIME() FROM Rooms WHERE Code = N'VHT28-P1';" | Out-Null
+Pass "Them duoc su co hop le tren DB cu"
+
+Invoke-Sql $Database "INSERT INTO MaintenanceIncidentHistories (IncidentId, Action, FromStatus, ToStatus, ActorUserId, Note, CreatedAt) SELECT TOP 1 Id, 0, NULL, 0, N'vht28-owner', N'Ghi chu kiem tra', SYSUTCDATETIME() FROM MaintenanceIncidents;" | Out-Null
+Pass "Them duoc lich su su co"
+
+Invoke-Sql $Database "INSERT INTO StoredFiles (Id, FileName, StoredFileName, RelativePath, ContentType, FileSizeBytes, FileCategory, UploadedByUserId, UploadedAt, RelatedEntityId, RelatedEntityType, IsDeleted) VALUES (N'11111111-1111-1111-1111-111111111111', N'vht123.jpg', N'vht123.jpg', N'incident/vht123.jpg', N'image/jpeg', 10, 4, N'vht28-owner', SYSDATETIMEOFFSET(), N'1', 4, 0);" | Out-Null
+Invoke-Sql $Database "INSERT INTO IncidentPhotoAttachments (FileId, Kind, IncidentId) SELECT N'11111111-1111-1111-1111-111111111111', 0, Id FROM MaintenanceIncidents;" | Out-Null
+Pass "Them duoc anh su co tro toi tep va su co"
+
+Expect-SqlFail $Database "Check chan anh khong co dich (IncidentId va ApprovalRequestId deu NULL)" "INSERT INTO IncidentPhotoAttachments (FileId, Kind) VALUES (N'11111111-1111-1111-1111-111111111111', 0);"
+Expect-SqlFail $Database "Check chan Kind ngoai 0..1" "INSERT INTO IncidentPhotoAttachments (FileId, Kind, IncidentId) SELECT N'11111111-1111-1111-1111-111111111111', 2, Id FROM MaintenanceIncidents;"
+Expect-SqlFail $Database "FK chan su co khong ton tai" "INSERT INTO IncidentPhotoAttachments (FileId, Kind, IncidentId) VALUES (N'11111111-1111-1111-1111-111111111111', 1, 2147483647);"
+Expect-SqlFail $Database "FK chan tep khong ton tai" "INSERT INTO IncidentPhotoAttachments (FileId, Kind, IncidentId) SELECT NEWID(), 0, Id FROM MaintenanceIncidents;"
+Expect-SqlFail $Database "FK chan yeu cau duyet khong ton tai" "INSERT INTO IncidentPhotoAttachments (FileId, Kind, ApprovalRequestId) VALUES (N'11111111-1111-1111-1111-111111111111', 1, NEWID());"
 
 Write-Step "Kiem tra migration co the xuong (script Down)"
 Write-Host "  Bo qua tu dong: chi chay tren DB tam khi can kiem rollback, tranh mat du lieu ngoai y muon." -ForegroundColor Yellow

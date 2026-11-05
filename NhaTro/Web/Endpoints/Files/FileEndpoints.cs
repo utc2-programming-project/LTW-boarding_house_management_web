@@ -114,11 +114,15 @@ public static class FileEndpoints
         // Không để trình duyệt tự đoán MIME (dữ liệu người dùng tải lên).
         http.Response.Headers["X-Content-Type-Options"] = "nosniff";
 
+        http.Response.Headers["Cache-Control"] = "private, no-store";
+
         // Results.Stream tự dọn luồng sau khi trả xong.
         return Results.Stream(
             response.FileStream,
             response.ContentType,
-            response.FileName,
+            http.Request.Query["inline"] == "true" && response.ContentType is "image/jpeg" or "image/png" or "image/webp"
+                ? null
+                : response.FileName,
             enableRangeProcessing: true);
     }
 

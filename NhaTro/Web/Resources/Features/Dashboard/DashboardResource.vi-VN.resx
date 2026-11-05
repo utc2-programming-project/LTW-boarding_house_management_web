@@ -43,4 +43,9 @@
 <data name="ExpiringContracts" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
 <data name="RoomScopeNote" xml:space="preserve"><value>Chỉ thống kê phòng đang hoạt động. Danh sách phòng mặc định gồm cả phòng tạm ngưng.</value></data>
 <data name="RefreshSuccess" xml:space="preserve"><value>Đã làm mới dữ liệu</value></data>
+<data name="TenantRenting" xml:space="preserve"><value>Khách đang thuê</value></data>
+<data name="TenantCurrentData" xml:space="preserve"><value>Số liệu hiện tại theo nhà trọ đã chọn, không tính theo kỳ báo cáo.</value></data>
+<data name="PendingPeriod" xml:space="preserve"><value>Kỳ cho báo cáo theo thời gian</value></data>
+<data name="CurrentPeriodNote" xml:space="preserve"><value>Phòng và khách thuê là số liệu hiện trạng theo nhà trọ. Kỳ báo cáo áp dụng cho các báo cáo theo thời gian khi khả dụng.</value></data>
+<data name="ViewReports" xml:space="preserve"><value>Xem báo cáo phòng và khách thuê</value></data>
 </root>

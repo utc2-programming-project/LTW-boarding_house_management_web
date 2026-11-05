@@ -5,25 +5,30 @@
 @inject IJSRuntime JS
 @inject TenantDocumentPageService DocumentService
 @inject ToastService Toasts
+@inject ILogger<TenantDocumentsView> Logger
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["TenantDocumentsTitle"] · @L["AppName"]</PageTitle>
 
 <div class="doc-page-container">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-    {
-        new(L["Dashboard"], "/"),
-        new(L["TenantDocumentsTitle"])
-    })" />
+    <div class="breadcrumb-title-stack">
+        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+        {
+            new(L["Dashboard"], "/"),
+            new(L["TenantDocumentsTitle"])
+        })" />
 
-    <!-- 1. Header Row -->
-    <div class="doc-header-row">
+        <!-- 1. Header Row -->
+        <div class="doc-header-row">
         <div class="doc-title-block">
             <div class="doc-title-row">
                 <h1 class="doc-main-title">@L["TenantDocumentsTitle"]</h1>
-                <span class="doc-count-badge">
-                    @(_documentsList?.Items.Count ?? 0) @((_documentsList?.Items.Count ?? 0) == 1 ? L["FileUnitSingular"] : L["FilesUnit"])
-                </span>
+                @if (_documentsList is not null)
+                {
+                    <span class="doc-count-badge">
+                        @(_documentsList.Items.Count) @(_documentsList.Items.Count == 1 ? L["FileUnitSingular"] : L["FilesUnit"])
+                    </span>
+                }
             </div>
             <p class="doc-subtitle">@L["TenantDocumentsSubtitle"]</p>
         </div>
@@ -31,7 +36,7 @@
         <div class="doc-actions-row">
             @if (_documentsList?.CanExport == true && (_documentsList?.Items.Count ?? 0) > 0)
             {
-                <button type="button" class="doc-btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
+                <button type="button" class="btn btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
                     @if (_exporting)
                     {
                         <span class="spinner" aria-hidden="true"></span>
@@ -52,6 +57,7 @@
                 </button>
             }
         </div>
+    </div>
     </div>
 
     <!-- 2. Privacy Banner -->
@@ -85,11 +91,14 @@
                         </div>
                         <div class="doc-bento-value-row">
                             <span class="doc-bento-big-num">@TotalStorageMb</span>
-                            <span class="doc-bento-unit">/ 100 MB</span>
+                            <span class="doc-bento-unit">@StorageLimitText</span>
                         </div>
-                        <div class="doc-progress-track">
-                            <div class="doc-progress-bar" style="width: @(PercentStorageUsed)%;"></div>
-                        </div>
+                        @if (HasStorageQuota)
+                        {
+                            <div class="doc-progress-track">
+                                <div class="doc-progress-bar" style="width: @(PercentStorageUsed)%;"></div>
+                            </div>
+                        }
                     </div>
         
                     <!-- 2. Verification State -->
@@ -102,12 +111,12 @@
                         </div>
                         <div class="doc-bento-value-row">
                             <span class="doc-bento-big-num">
-                                @(_documentsList?.Items.Count ?? 0) @L["OfWord"] @Math.Max(4, _documentsList?.Items.Count ?? 0)
+                                @ProvidedRequiredCount @L["OfWord"] @TenantDocumentTypeRules.RequiredTypeCount
                             </span>
                         </div>
                         <div class="doc-bento-footer-status">
-                            <span class="doc-status-dot"></span>
-                            <span>@L["VerificationCompleteLabel"]</span>
+                            <span class="doc-status-dot @(ProvidedRequiredCount >= TenantDocumentTypeRules.RequiredTypeCount ? "doc-dot-success" : "doc-dot-warning")"></span>
+                            <span>@(ProvidedRequiredCount >= TenantDocumentTypeRules.RequiredTypeCount ? L["VerificationCompleteLabel"] : L["MissingRequiredDocumentsLabel"])</span>
                         </div>
                     </div>
         
@@ -127,19 +136,19 @@
                         </div>
                     </div>
         
-                    <!-- 4. Lease & Residence Term -->
+                    <!-- 4. Total Documents -->
                     <div class="doc-bento-card">
                         <div class="doc-bento-header">
-                        <span class="doc-bento-label">@L["LeaseTermTitle"]</span>
+                            <span class="doc-bento-label">@L["TotalDocuments"]</span>
                             <div class="doc-bento-icon-box doc-bento-icon-green">
-                                <LucideIcon Name="file-signature" />
+                                <LucideIcon Name="file-text" />
                             </div>
                         </div>
                         <div class="doc-bento-value-row">
-                        <span class="doc-bento-big-num">@L["LeaseActiveStatus"]</span>
+                            <span class="doc-bento-big-num">@(_documentsList?.Items.Count ?? 0) @(((_documentsList?.Items.Count ?? 0) == 1) ? L["FileUnitSingular"] : L["FilesUnit"])</span>
                         </div>
                         <div class="doc-bento-footer-text">
-                            @L["LeaseActiveHint"]
+                            @L["TotalDocumentsHint"]
                         </div>
                     </div>
                 </div>
@@ -159,7 +168,6 @@
                 <LucideIcon Name="refresh-cw" />
                 <span>@(_retrying ? L["Retrying"] : L["Retry"])</span>
             </button>
-            <span class="doc-error-code">@L["LoadFailedCode"]</span>
         </div>
     }
     else if (_noTenantLinked)
@@ -199,6 +207,7 @@
                            value="@_searchKeyword"
                            @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
                            placeholder="@L["SearchDocumentsPlaceholder"]"
+                           aria-label="@L["SearchDocumentsPlaceholder"]"
                            class="doc-search-input" />
                 </div>
 
@@ -210,6 +219,7 @@
                             <option value="identity">@L["CategoryIdentity"]</option>
                             <option value="contract">@L["CategoryContract"]</option>
                             <option value="residence">@L["CategoryResidence"]</option>
+                            <option value="other">@L["CategoryOther"]</option>
                         </select>
                         <span class="doc-filter-icon-left">
                             <LucideIcon Name="filter" />
@@ -254,7 +264,13 @@
                         {
                             <tr>
                                 <td colspan="5" class="doc-empty-table-cell">
-                                    @L["NoDocumentsMatchFilters"]
+                                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 0;">
+                                        <p style="margin: 0; color: var(--text-secondary);">@L["NoDocumentsMatchFilters"]</p>
+                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="ResetFilters">
+                                            <LucideIcon Name="filter-x" />
+                                            <span>@L["ClearFilters"]</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -262,7 +278,7 @@
                         {
                             @foreach (var doc in FilteredDocuments)
                             {
-                                <tr @onclick="() => OpenPreviewModal(doc)">
+                                <tr @onclick="() => OpenPreviewModal(doc)" @onkeydown="@((KeyboardEventArgs e) => HandleDocumentRowKeyDown(e, doc))" tabindex="0" role="button" aria-label="@L["DocumentPreview"]">
                                     <!-- Column 1: Document Type Badge -->
                                     <td data-label="@L["DocumentType"]">
                                         <span class="doc-type-pill @GetCategoryPillClass(doc.Description)">
@@ -296,7 +312,7 @@
 
                                     <!-- Column 3: File Size -->
                                     <td data-label="@L["DocumentSize"]" class="text-right tabular-nums doc-meta-cell">
-                                        @FormatFileSize(doc.FileSizeBytes)
+                                        @NumberFormatter.FileSize(doc.FileSizeBytes)
                                     </td>
 
                                     <!-- Column 4: Uploaded At -->
@@ -305,31 +321,38 @@
                                     </td>
 
                                     <!-- Column 5: Action buttons -->
-                                    <td data-label="@L["Actions"]" class="text-right" @onclick:stopPropagation="true">
+                                    <td data-label="@L["Actions"]" class="text-right" @onclick:stopPropagation="true" @onkeydown:stopPropagation="true">
                                         <div class="doc-action-btn-group">
                                             <!-- Preview button -->
                                             <button type="button"
                                                     @onclick="() => OpenPreviewModal(doc)"
+                                                    @onkeydown:stopPropagation="true"
                                                     title="@L["DocumentPreview"]"
+                                                    aria-label="@L["DocumentPreview"]"
                                                     class="doc-icon-btn">
                                                 <LucideIcon Name="eye" />
                                             </button>
 
-                                            <!-- Download button -->
-                                            <button type="button" @onclick="() => DownloadDocumentAsync(doc)"
-                                                    title="@L["DownloadDocumentSecure"]"
-                                                    aria-label="@L["DownloadDocumentSecure"]"
-                                                    class="doc-icon-btn" disabled="@_downloadingDocumentIds.Contains(doc.Id)">
-                                                <LucideIcon Name="download" />
-                                            </button>
+                                            <!-- Download button (P2-05 check CanDownload, P2-09 stopPropagation) -->
+                                            @if (_documentsList?.CanDownload == true)
+                                            {
+                                                <button type="button" @onclick="() => DownloadDocumentAsync(doc)"
+                                                        @onkeydown:stopPropagation="true"
+                                                        title="@L["DownloadDocumentSecure"]"
+                                                        aria-label="@L["DownloadDocumentSecure"]"
+                                                        class="doc-icon-btn" disabled="@_downloadingDocumentIds.Contains(doc.Id)">
+                                                    <LucideIcon Name="download" />
+                                                </button>
+                                            }
 
                                             <!-- Delete button -->
-                                            @if (_documentsList?.CanDelete == true
-                                                && string.Equals(doc.UploadedByUserId, _currentUserId, StringComparison.Ordinal))
+                                            @if (_documentsList?.CanDelete == true)
                                             {
                                                 <button type="button"
                                                         @onclick="() => ConfirmDelete(doc)"
+                                                        @onkeydown:stopPropagation="true"
                                                         title="@L["Delete"]"
+                                                        aria-label="@L["Delete"]"
                                                         class="doc-icon-btn doc-icon-btn-danger">
                                                     <LucideIcon Name="trash-2" />
                                                 </button>
@@ -349,17 +372,6 @@
                     @string.Format(L["ShowingDocuments"], FilteredDocuments.Count, _documentsList?.Items.Count ?? 0)
                 </span>
 
-                <div class="doc-pagination-group">
-                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
-                        <LucideIcon Name="chevron-left" />
-                    </button>
-                    <button type="button" class="doc-page-btn doc-page-btn-active">
-                        1
-                    </button>
-                    <button type="button" disabled class="doc-page-btn doc-page-btn-disabled">
-                        <LucideIcon Name="chevron-right" />
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -371,7 +383,7 @@
                 </div>
                 <div>
                     <h4 class="doc-guidelines-title">@L["FileStandardsTitle"]</h4>
-                    <p class="doc-guidelines-desc">@L["FileStandardsDesc"]</p>
+                    <p class="doc-guidelines-desc">@FileStandardsDescFormatted</p>
                 </div>
             </div>
 
@@ -399,6 +411,9 @@
 <!-- Upload Modal -->
 <TenantDocumentUploadDialog Visible="_uploadModalOpen"
                             TenantId="_activeTenantId"
+                            MaxFileSizeBytes="_documentsList?.MaxFileSizeBytes"
+                            MaxFilesPerEntity="_documentsList?.MaxFilesPerEntity"
+                            AllowedExtensions="_documentsList?.AllowedExtensions"
                             OnClose="() => _uploadModalOpen = false"
                             OnUploadSuccess="OnDocumentUploaded" />
 
@@ -406,9 +421,7 @@
 <TenantDocumentPreviewDialog Visible="_previewModalOpen"
                              TenantId="_activeTenantId"
                              Document="_previewDoc"
-                             TenantName="@_activeTenantName"
-                             CitizenId="@_activeTenantCitizenId"
-                             ResidenceAddress="@_activeTenantAddress"
+                             CanDownload="_documentsList?.CanDownload ?? true"
                              OnClose="() => _previewModalOpen = false" />
 
 <!-- Delete Modal -->
@@ -428,9 +441,6 @@
     private readonly HashSet<Guid> _downloadingDocumentIds = [];
     private int _activeTenantId;
     private string _currentUserId = string.Empty;
-    private string? _activeTenantName;
-    private string? _activeTenantCitizenId;
-    private string? _activeTenantAddress;
     private TenantDocumentListDto? _documentsList;
 
     private string _searchKeyword = string.Empty;
@@ -455,6 +465,11 @@
         _loadFailed = false;
         _noTenantLinked = false;
 
+        // Xóa dữ liệu lần tải trước ngay từ đầu: nếu tải lại thất bại, header/bento không được
+        // giữ lại số tệp và nút hành động của lần tải thành công cũ.
+        _documentsList = null;
+        _activeTenantId = 0;
+
         try
         {
             var caller = await DocumentService.GetCallerAsync();
@@ -464,13 +479,9 @@
             _noTenantLinked = pageResult.NoTenantLinked;
             var myTenant = pageResult.Tenant;
             _activeTenantId = myTenant?.Id ?? 0;
-            _activeTenantName = myTenant?.FullName;
-            _activeTenantCitizenId = myTenant?.CitizenId;
-            _activeTenantAddress = myTenant?.PermanentAddress;
 
             if (_noTenantLinked)
             {
-                _documentsList = null;
                 return;
             }
 
@@ -480,8 +491,9 @@
                 _loadFailed = true;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Tenant documents page load failed for user {UserId}", _currentUserId);
             _loadFailed = true;
         }
         finally
@@ -505,6 +517,13 @@
     }
 
     private void OpenUploadModal() => _uploadModalOpen = true;
+
+    private void ResetFilters()
+    {
+        _searchKeyword = string.Empty;
+        _selectedCategoryFilter = "all";
+        _sortOption = "newest";
+    }
 
     private void OpenPreviewModal(TenantDocumentMetadataDto doc)
     {
@@ -538,7 +557,8 @@
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["DocumentDeleteFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document delete failed");
+            Toasts.Error(L["DocumentDeleteFailed"]);
         }
         finally
         {
@@ -571,8 +591,9 @@
                 await JS.InvokeVoidAsync("appTenantExport.downloadStream", download.FileName, download.ContentType, streamReference);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Tenant document download failed for document {DocumentId}", document.Id);
             Toasts.Error(L["DocumentDownloadFailed"].Value);
         }
         finally
@@ -589,24 +610,39 @@
         try
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"{L["DocumentCode"]},{L["DocumentFileName"]},{L["ContentType"]},{L["DocumentSize"]},{L["DocumentUploadedAt"]},{L["DocumentDescription"]}");
+            sb.AppendLine($"{EscapeCsvField(L["DocumentCode"])},{EscapeCsvField(L["DocumentFileName"])},{EscapeCsvField(L["ContentType"])},{EscapeCsvField(L["DocumentSize"])},{EscapeCsvField(L["DocumentUploadedAt"])},{EscapeCsvField(L["DocumentDescription"])}");
             foreach (var item in _documentsList.Items)
             {
-                sb.AppendLine($"\"{item.Id}\",\"{item.FileName}\",\"{item.ContentType}\",{item.FileSizeBytes},\"{item.UploadedAt:yyyy-MM-dd HH:mm:ss}\",\"{item.Description?.Replace("\"", "\"\"")}\"");
+                // Ngày giờ lưu trong CSV theo giờ địa phương VN (dd/MM/yyyy HH:mm), không dùng UTC thô.
+                var uploadedAt = DateFormatter.FormatDateTime(item.UploadedAt.UtcDateTime);
+                sb.AppendLine($"{item.Id},{EscapeCsvField(item.FileName)},{EscapeCsvField(item.ContentType)},{item.FileSizeBytes},{EscapeCsvField(uploadedAt)},{EscapeCsvField(item.Description)}");
             }
 
-            var fileName = $"documents-tenant-{_activeTenantId}-{DateTime.UtcNow:yyyyMMddHHmmss}.csv";
+            var exportedAt = Web.Infrastructure.Time.VietnamTime.ToVietnam(DateTime.UtcNow);
+            var fileName = $"documents-tenant-{_activeTenantId}-{exportedAt:yyyyMMddHHmmss}.csv";
             await JS.InvokeVoidAsync("appTenantExport.download", fileName, sb.ToString());
             Toasts.Success(L["ExportSuccess"]);
         }
         catch (Exception ex)
         {
-            Toasts.Error($"{L["ExportFailed"]}: {ex.Message}");
+            Logger.LogError(ex, "Tenant document export failed");
+            Toasts.Error(L["ExportFailed"]);
         }
         finally
         {
             _exporting = false;
         }
+    }
+
+    private Task HandleDocumentRowKeyDown(KeyboardEventArgs e, TenantDocumentMetadataDto doc)
+    {
+        // Hàng bảng mở preview: hỗ trợ Enter / Space như một nút bấm.
+        if (e.Key is "Enter" or " " or "Spacebar")
+        {
+            OpenPreviewModal(doc);
+        }
+
+        return Task.CompletedTask;
     }
 
     private IReadOnlyList<TenantDocumentMetadataDto> FilteredDocuments
@@ -619,18 +655,18 @@
 
             if (!string.IsNullOrWhiteSpace(_searchKeyword))
             {
-                var kw = _searchKeyword.Trim();
-                items = items.Where(d => d.FileName.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                                         (d.Description?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false));
+                items = items.Where(d => TextSearchNormalizer.Contains(d.FileName, _searchKeyword) ||
+                                         TextSearchNormalizer.Contains(d.Description, _searchKeyword));
             }
 
             if (_selectedCategoryFilter != "all")
             {
                 var categoryClass = _selectedCategoryFilter switch
                 {
-                    "identity" => "doc-type-pill-identity",
-                    "contract" => "doc-type-pill-contract",
-                    "residence" => "doc-type-pill-residence",
+                    "identity" => TenantDocumentCategoryRules.Identity,
+                    "contract" => TenantDocumentCategoryRules.Contract,
+                    "residence" => TenantDocumentCategoryRules.Residence,
+                    "other" => TenantDocumentCategoryRules.Other,
                     _ => string.Empty
                 };
                 items = items.Where(d => GetCategoryPillClass(d.Description) == categoryClass);
@@ -652,22 +688,57 @@
     {
         get
         {
-            if (_documentsList is null || _documentsList.Items.Count == 0) return "0.0";
+            if (_documentsList is null || _documentsList.Items.Count == 0) return "0";
             var bytes = _documentsList.Items.Sum(d => d.FileSizeBytes);
-            return (bytes / (1024.0 * 1024.0)).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+            return NumberFormatter.Megabytes(bytes / (1024.0 * 1024.0));
         }
     }
+
+    // Hạn mức chỉ tồn tại khi storage cấu hình MaxFilesPerEntity. Không nhân số loại giấy tờ
+    // để tự tạo ra một "quota" không có thật trên hệ thống.
+    private long StorageQuotaBytes
+    {
+        get
+        {
+            var maxFiles = _documentsList?.MaxFilesPerEntity;
+            if (maxFiles is not > 0)
+            {
+                return 0;
+            }
+
+            var maxPerFile = _documentsList?.MaxFileSizeBytes is > 0
+                ? _documentsList.MaxFileSizeBytes
+                : Web.Features.Storage.Rules.FileTypeRules.MaxDefaultBytes();
+
+            return maxPerFile * maxFiles.Value;
+        }
+    }
+
+    private bool HasStorageQuota => StorageQuotaBytes > 0;
+
+    private string StorageLimitText => HasStorageQuota
+        ? string.Format(
+            L["StorageLimitMb"],
+            Web.Features.Storage.Rules.FileTypeRules.DescribeMegabytes(StorageQuotaBytes))
+        : L["StorageUnlimitedLabel"].Value;
 
     private int PercentStorageUsed
     {
         get
         {
-            if (_documentsList is null || _documentsList.Items.Count == 0) return 0;
+            if (!HasStorageQuota || _documentsList is null || _documentsList.Items.Count == 0)
+            {
+                return 0;
+            }
+
             var bytes = _documentsList.Items.Sum(d => d.FileSizeBytes);
-            var mb = bytes / (1024.0 * 1024.0);
-            return Math.Min(100, (int)Math.Round((mb / 100.0) * 100));
+            return Math.Min(100, (int)Math.Round((double)bytes / StorageQuotaBytes * 100));
         }
     }
+
+    private int ProvidedRequiredCount =>
+        TenantDocumentTypeRules.RequiredTypeCodes.Count(code =>
+            _documentsList?.Items.Any(item => TenantDocumentTypeRules.DescriptionMatches(item.Description, code)) == true);
 
     private int IdentityCount =>
         _documentsList?.Items.Count(d => GetCategoryPillClass(d.Description) == "doc-type-pill-identity") ?? 0;
@@ -678,46 +749,41 @@
         return ext is ".jpg" or ".jpeg" or ".png";
     }
 
-    private string GetCategoryLabel(string? description)
-    {
-        var label = ExtractCategoryLabel(description);
-        var normalized = label.Trim().ToLowerInvariant();
+    private string GetCategoryLabel(string? description) =>
+        L[TenantDocumentCategoryRules.LabelResourceKey(description)];
 
-        if (normalized.Contains("front") || normalized.Contains("mặt trước")) return L["DocTypeCccdFront"];
-        if (normalized.Contains("back") || normalized.Contains("mặt sau")) return L["DocTypeCccdBack"];
-        if (normalized.Contains("contract") || normalized.Contains("hợp đồng")) return L["DocTypeContractScan"];
-        if (normalized.Contains("residen") || normalized.Contains("tạm trú") || normalized.Contains("ct07") || normalized.Contains("ct08")) return L["DocTypeResidence"];
-        if (normalized.Contains("identity") || normalized.Contains("định danh") || normalized.Contains("cccd")) return L["DocTypeIdentity"];
-        return L["PersonalDocumentLabel"];
-    }
+    private static string GetCategoryPillClass(string? description) =>
+        TenantDocumentCategoryRules.PillClass(description);
 
-    private static string ExtractCategoryLabel(string? description)
-    {
-        if (string.IsNullOrWhiteSpace(description)) return string.Empty;
-        if (description.StartsWith('['))
-        {
-            var endIndex = description.IndexOf(']');
-            if (endIndex > 1) return description[1..endIndex];
-        }
-        return description;
-    }
+    private long MaxAllowedFileSizeBytes =>
+        _documentsList?.MaxFileSizeBytes is > 0
+            ? _documentsList.MaxFileSizeBytes
+            : Web.Features.Storage.Rules.FileTypeRules.MaxDefaultBytes();
 
-    private static string GetCategoryPillClass(string? description)
-    {
-        var label = ExtractCategoryLabel(description).Trim().ToLowerInvariant();
-        if (label.Contains("citizen id") || label.Contains("identity") || label.Contains("cccd") || label.Contains("định danh"))
-            return "doc-type-pill-identity";
-        if (label.Contains("contract") || label.Contains("hợp đồng"))
-            return "doc-type-pill-contract";
-        if (label.Contains("residen") || label.Contains("tạm trú") || label.Contains("ct07") || label.Contains("ct08"))
-            return "doc-type-pill-residence";
-        return "doc-type-pill-other";
-    }
+    private string AllowedExtensionsDisplay => string.Join(
+        ", ",
+        (_documentsList?.AllowedExtensions is { Count: > 0 } exts
+            ? exts
+            : Web.Features.Storage.Rules.FileTypeRules.AllowedExtensions(Web.Features.Storage.Enums.FileCategory.IdentityDocument))
+        .Select(extension => extension.TrimStart('.').ToUpperInvariant()));
 
-    private static string FormatFileSize(long bytes)
+    private string FileStandardsDescFormatted => L[
+        "FileStandardsDescFormat",
+        AllowedExtensionsDisplay,
+        NumberFormatter.FileSize(MaxAllowedFileSizeBytes)].Value;
+
+    /// <summary>
+    /// Escape giá trị ô CSV: bao quanh bằng dấu ngoặc kép và thay dấu " bằng "" (nếu có).
+    /// Chuỗi bắt đầu bằng =, +, -, @ (kể cả sau khoảng trắng/tab điều khiển) được prefix thêm ' để
+    /// chống CSV/formula injection khi mở Excel — Excel bỏ qua khoảng trắng đầu ô trước khi nhận diện công thức.
+    /// </summary>
+    private static string EscapeCsvField(string? value)
     {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var safe = value.Replace("\"", "\"\"");
+        var probe = safe.TrimStart(' ', '\t', '\r', '\n', '\u000B', '\u000C');
+        if (probe.Length > 0 && "=+-@".IndexOf(probe[0]) >= 0) safe = $"'{safe}";
+        return $"\"{safe}\"";
     }
 }

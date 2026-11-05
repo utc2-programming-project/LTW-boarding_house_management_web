@@ -28,7 +28,10 @@ public sealed class LoginSmokeTests(PlaywrightFixture fixture) : IClassFixture<P
         Assert.Contains("/Account/Login", page.Url);
 
         var heading = await page.Locator("#login-title").TextContentAsync();
-        Assert.False(string.IsNullOrWhiteSpace(heading));
+        Assert.True(
+            heading?.Contains("Log in", StringComparison.OrdinalIgnoreCase) == true
+            || heading?.Contains("Đăng nhập", StringComparison.OrdinalIgnoreCase) == true,
+            $"Unexpected localized login heading: {heading}");
 
         await page.Locator("#login-email").WaitForAsync();
         await page.Locator("#login-password").WaitForAsync();
@@ -52,7 +55,8 @@ public sealed class LoginSmokeTests(PlaywrightFixture fixture) : IClassFixture<P
         await page.GotoAsync($"{fixture.BaseUrl}/Account/Login");
         await page.Locator("#login-email").FillAsync(email);
         await page.Locator("#login-password").FillAsync(password);
-        await page.Locator("form button[type='submit']").First.ClickAsync();
+        var loginForm = page.Locator("#login-password").Locator("xpath=ancestor::form");
+        await loginForm.Locator("button[type='submit']").ClickAsync();
 
         // AppTopbar chỉ có avatar sau khi cookie đăng nhập hợp lệ.
         await page.Locator("a.avatar").WaitForAsync(new LocatorWaitForOptions { Timeout = 15_000 });

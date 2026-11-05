@@ -142,7 +142,26 @@
   <data name="ContractStatusExpiringSoon" xml:space="preserve"><value>Expiring soon</value></data>
   <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ContractStatusLiquidated" xml:space="preserve"><value>Liquidated</value></data>
+  <data name="ContractRenewAction" xml:space="preserve"><value>Renew</value></data>
+  <data name="ContractLiquidateAction" xml:space="preserve"><value>Liquidate</value></data>
+  <data name="ContractRenewTitle" xml:space="preserve"><value>Renew contract</value></data>
+  <data name="ContractLiquidateTitle" xml:space="preserve"><value>Liquidate contract</value></data>
+  <data name="ContractRenewDescription" xml:space="preserve"><value>The new contract starts right after the current end date, keeps the same tenants and snapshots the current rent. The old contract stays as history.</value></data>
+  <data name="ContractLiquidateDescription" xml:space="preserve"><value>The contract moves to Liquidated and cannot transition again.</value></data>
+  <data name="ContractRenewEndDateLabel" xml:space="preserve"><value>New end date</value></data>
+  <data name="ContractRenewStartHint" xml:space="preserve"><value>The new contract starts on {0}.</value></data>
+  <data name="ContractRenewSuccess" xml:space="preserve"><value>Contract renewed.</value></data>
+  <data name="ContractRenewPendingApproval" xml:space="preserve"><value>Renewal request sent for owner approval.</value></data>
+  <data name="ContractLiquidateSuccess" xml:space="preserve"><value>Contract liquidated.</value></data>
+  <data name="ContractLiquidatePendingApproval" xml:space="preserve"><value>Liquidation request sent for owner approval.</value></data>
   <data name="ContractErrorForbidden" xml:space="preserve"><value>You are not allowed to perform this contract action.</value></data>
+  <data name="ContractErrorContractNotActive" xml:space="preserve"><value>Only active contracts can be renewed or liquidated.</value></data>
+  <data name="ContractErrorInvalidRenewalEndDate" xml:space="preserve"><value>The new end date must be after the current end date.</value></data>
+  <data name="ContractErrorContractAlreadyRenewed" xml:space="preserve"><value>The contract has already been renewed.</value></data>
+  <data name="ContractErrorApprovalDenied" xml:space="preserve"><value>The owner is blocking contract renewal / liquidation.</value></data>
+  <data name="ContractErrorApprovalFailed" xml:space="preserve"><value>The approval request could not be sent. Please try again.</value></data>
+  <data name="ContractErrorDuplicatePendingRequest" xml:space="preserve"><value>There is already a pending request for this contract.</value></data>
   <data name="ContractErrorContractNotFound" xml:space="preserve"><value>Contract not found.</value></data>
   <data name="ContractErrorRoomNotFound" xml:space="preserve"><value>The contract room was not found.</value></data>
   <data name="ContractErrorPropertyNotFound" xml:space="preserve"><value>The contract property was not found.</value></data>
@@ -165,4 +184,7 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
+  <data name="ContractUnsavedChanges" xml:space="preserve"><value>This form has unsaved changes.</value></data>
+  <data name="ContractConfirmLeave" xml:space="preserve"><value>Leave the form and discard unsaved changes?</value></data>
+  <data name="TableLoading" xml:space="preserve"><value>Loading.</value></data>
 </root>
