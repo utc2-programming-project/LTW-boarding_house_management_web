@@ -8,23 +8,18 @@
 
 <PageTitle>@L["PersonalDataTitle"]</PageTitle>
 
+<h2 class="account-section">@L["PersonalDataTitle"]</h2>
 <StatusMessage />
-<h3>@L["PersonalDataTitle"]</h3>
 
-<div class="row">
-    <div class="col-md-6">
-        <p>@L["PersonalDataDescription"]</p>
-        <p>
-            <strong>@L["PersonalDataDeleteWarning"]</strong>
-        </p>
-        <form action="Account/Manage/DownloadPersonalData" method="post">
-            <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">@L["DownloadAction"]</button>
-        </form>
-        <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">@L["DeleteAction"]</a>
-        </p>
-    </div>
+<p>@L["PersonalDataDescription"]</p>
+<p><strong>@L["PersonalDataDeleteWarning"]</strong></p>
+
+<div class="account-actions">
+    <form action="Account/Manage/DownloadPersonalData" method="post">
+        <AntiforgeryToken />
+        <button class="btn btn-primary" type="submit">@L["DownloadAction"]</button>
+    </form>
+    <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">@L["DeleteAction"]</a>
 </div>
 
 @code {

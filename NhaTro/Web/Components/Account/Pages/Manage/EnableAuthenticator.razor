@@ -5,6 +5,7 @@
 @using System.Text
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Forms
 @using Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -21,10 +22,10 @@
 else
 {
     <StatusMessage Message="@message" />
-    <h3>@L["ConfigureAuthenticatorTitle"]</h3>
+    <h2 class="account-section">@L["ConfigureAuthenticatorTitle"]</h2>
     <div>
         <p>@L["ConfigureAuthenticatorIntro"]</p>
-        <ol class="list">
+        <ol class="account-steps">
             <li>
                 <p>
                     @L["ConfigureAuthenticatorStepDownload"] Microsoft Authenticator for
@@ -35,8 +36,8 @@ else
                 </p>
             </li>
             <li>
-                <p>@L["ConfigureAuthenticatorScan"] <kbd>@sharedKey</kbd> @L["ConfigureAuthenticatorKeyHint"]</p>
-                <div class="alert alert-info">@L["ConfigureAuthenticatorQrHelp"] <a href="https://go.microsoft.com/fwlink/?Linkid=852423">@L["EnableQrGenerationAction"]</a>.</div>
+                <p>@L["ConfigureAuthenticatorScan"] <code class="account-code">@sharedKey</code> @L["ConfigureAuthenticatorKeyHint"]</p>
+                <p class="account-hint">@L["ConfigureAuthenticatorQrHelp"] <a href="https://go.microsoft.com/fwlink/?Linkid=852423">@L["EnableQrGenerationAction"]</a>.</p>
                 <div></div>
                 <div data-url="@authenticatorUri"></div>
             </li>
@@ -44,20 +45,22 @@ else
                 <p>
                     @L["ConfigureAuthenticatorStepVerify"]
                 </p>
-                <div class="row">
-                    <div class="col-xl-6">
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
-                            <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="@L["EnterCodePlaceholder"]" />
-                                <label for="Input.Code" class="control-label form-label">@L["AuthenticatorCodeLabel"]</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
-                            </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">@L["VerifyAction"]</button>
-                            <ValidationSummary class="text-danger" role="alert" />
-                        </EditForm>
+                <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="account-form">
+                        <FormField TValue="string" Id="Input.Code" Label="@L["AuthenticatorCodeLabel"]" Required="true"
+                                   For="() => Input.Code">
+                            <InputText @bind-Value="Input.Code" id="Input.Code" autocomplete="off"
+                                       inputmode="numeric" aria-describedby="Input.Code-error"
+                                       placeholder="@L["EnterCodePlaceholder"]" />
+                        </FormField>
+
+                        <div class="account-actions">
+                            <button type="submit" class="btn btn-primary">@L["VerifyAction"]</button>
+                        </div>
                     </div>
-                </div>
+                </EditForm>
             </li>
         </ol>
     </div>

@@ -160,6 +160,9 @@
   <data name="ManagerSwitches" xml:space="preserve">
     <value>Manager permissions</value>
   </data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve">
+    <value>Choose how each workflow is handled: manual approval, automatic, or off.</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Approval queue</value>
   </data>
@@ -1306,6 +1309,7 @@
   <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Could not update the phone number.</value></data>
   <data name="ManageEmailTitle" xml:space="preserve"><value>Manage email</value></data>
   <data name="EmailPlaceholder" xml:space="preserve"><value>Enter your email</value></data>
+  <data name="EmailConfirmedLabel" xml:space="preserve"><value>Verified</value></data>
   <data name="SendVerificationEmailAction" xml:space="preserve"><value>Send verification email</value></data>
   <data name="NewEmailLabel" xml:space="preserve"><value>New email</value></data>
   <data name="NewEmailPlaceholder" xml:space="preserve"><value>Enter a new email</value></data>

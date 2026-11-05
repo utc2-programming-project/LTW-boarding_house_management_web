@@ -160,6 +160,9 @@
   <data name="ManagerSwitches" xml:space="preserve">
     <value>Công tắc Quản lý</value>
   </data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve">
+    <value>Chọn cách hệ thống xử lý từng nghiệp vụ: duyệt tay, tự động hoặc tắt.</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Hàng đợi duyệt</value>
   </data>
@@ -1306,6 +1309,7 @@
   <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Không thể cập nhật số điện thoại.</value></data>
   <data name="ManageEmailTitle" xml:space="preserve"><value>Quản lý email</value></data>
   <data name="EmailPlaceholder" xml:space="preserve"><value>Nhập email</value></data>
+  <data name="EmailConfirmedLabel" xml:space="preserve"><value>Đã xác minh</value></data>
   <data name="SendVerificationEmailAction" xml:space="preserve"><value>Gửi email xác minh</value></data>
   <data name="NewEmailLabel" xml:space="preserve"><value>Email mới</value></data>
   <data name="NewEmailPlaceholder" xml:space="preserve"><value>Nhập email mới</value></data>

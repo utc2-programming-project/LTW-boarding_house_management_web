@@ -45,3 +45,4 @@ docs/Imp/*
 scripts/*
 !scripts/database/
 !scripts/database/*.ps1   
+docs/imp/
