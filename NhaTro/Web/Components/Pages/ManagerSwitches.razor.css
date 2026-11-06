@@ -1,0 +1,72 @@
+.switches-card {
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+
+.switches-note, .switches-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px;
+    font-size: .875rem;
+}
+
+.switches-note {
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+}
+
+.switches-error {
+    margin-bottom: 16px;
+    color: var(--error-text);
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    border-radius: var(--radius-control);
+}
+
+.switches-loading { padding: 24px; }
+.switches-table-wrap { overflow-x: auto; }
+.switches-table { width: 100%; border-collapse: collapse; text-align: left; }
+.switches-table th {
+    height: 44px;
+    padding: 12px 16px;
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.switches-table td { padding: 12px 16px; border-top: 1px solid var(--border); }
+.switches-table tbody tr:hover { background: var(--hover-bg); }
+.switches-table th:last-child { width: 208px; }
+.switches-action { display: flex; align-items: center; gap: 16px; font-weight: 400; }
+.switches-code {
+    flex: 0 0 64px;
+    color: var(--text-muted);
+    font-size: .75rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.switches-mode { min-width: 160px; }
+.switches-mode:disabled { background: var(--disabled-bg); color: var(--text-disabled); cursor: wait; }
+.switches-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    .switches-table th, .switches-table td { padding: 12px; }
+    .switches-table th:last-child { width: 144px; }
+    .switches-action { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .switches-code { flex-basis: auto; }
+    .switches-mode { min-width: 120px; font-size: 1rem; }
+}

@@ -448,6 +448,9 @@
   <data name="FileSizeExceeded" xml:space="preserve"><value>Ảnh phải không rỗng và không quá 5 MB.</value></data>
   <data name="UploadFailed" xml:space="preserve"><value>Không tải được ảnh. Vui lòng thử lại.</value></data>
   <data name="PendingPhotosMissing" xml:space="preserve"><value>Còn ảnh chưa tải xong. Bạn có thể chọn lại ảnh còn thiếu để hoàn tất yêu cầu này.</value></data>
+  <data name="AllFilterValues" xml:space="preserve"><value>Tất cả</value></data>
+  <data name="SearchTitle" xml:space="preserve"><value>Nhập tiêu đề sự cố</value></data>
+  <data name="SearchRoom" xml:space="preserve"><value>Nhập tên nhà trọ hoặc phòng</value></data>
   <data name="Resolution" xml:space="preserve"><value>Kết quả xử lý</value></data>
   <data name="CompletedAt" xml:space="preserve"><value>Thời gian hoàn thành</value></data>
   <data name="ImageViewer" xml:space="preserve"><value>Xem ảnh</value></data>

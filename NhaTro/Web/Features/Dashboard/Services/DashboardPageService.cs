@@ -30,24 +30,28 @@ public sealed class DashboardPageService(P2CallerProvider callers, IPropertyServ
     }
 
     public async Task<RoomReportKpis> GetRoomKpisAsync(int? propertyId, CancellationToken ct = default)
+        => (await GetRoomReportAsync(new RoomReportFilter { PropertyId = propertyId, PageSize = 1 }, ct)).Kpis;
+
+    public async Task<RoomReportResult> GetRoomReportAsync(RoomReportFilter filter, CancellationToken ct = default)
     {
         await reportGate.WaitAsync(ct);
         try
         {
-            return (await rooms.GetAsync(new RoomReportFilter { PropertyId = propertyId, IsActive = true, PageSize = 1 },
-                await callers.GetCallerAsync(), ct)).Kpis;
+            return await rooms.GetAsync(filter, await callers.GetCallerAsync(), ct);
         }
         finally { reportGate.Release(); }
     }
 
     public async Task<TenantReportKpis> GetTenantKpisAsync(int? propertyId, CancellationToken ct = default)
+        => (await GetTenantReportAsync(new TenantReportFilter { PropertyId = propertyId, PageSize = 1 }, ct)).Kpis;
+
+    public async Task<TenantReportResult> GetTenantReportAsync(TenantReportFilter filter, CancellationToken ct = default)
     {
         await reportGate.WaitAsync(ct);
         try
         {
             var caller = await callers.GetCallerAsync();
-            return (await tenants.GetAsync(new TenantReportFilter { PropertyId = propertyId, PageSize = 1 },
-                new TenantCaller(caller.UserId, caller.Role), ct)).Kpis;
+            return await tenants.GetAsync(filter, new TenantCaller(caller.UserId, caller.Role), ct);
         }
         finally { reportGate.Release(); }
     }
