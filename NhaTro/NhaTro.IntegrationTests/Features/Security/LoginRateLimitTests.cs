@@ -3,11 +3,14 @@ using NhaTro.IntegrationTests.Infrastructure;
 
 namespace NhaTro.IntegrationTests.Features.Security;
 
-/// <summary>Giới hạn tần suất đăng nhập trả 429 (mỗi lớp test có app riêng nên không ảnh hưởng test khác).</summary>
+/// <summary>
+/// Giới hạn tần suất đăng nhập: POST vượt ngưỡng được chuyển về form đăng nhập kèm cờ
+/// <c>tooManyRequests=1</c> để hiện thông báo, không trả text thô trên trang trắng.
+/// </summary>
 public sealed class LoginRateLimitTests(WebAppFixture fixture) : IClassFixture<WebAppFixture>
 {
     [WebAppFact]
-    public async Task Dang_nhap_qua_nhieu_lan_tra_429()
+    public async Task Dang_nhap_qua_nhieu_lan_dua_ve_form_co_thong_bao()
     {
         using var client = fixture.CreateClient(allowAutoRedirect: false);
 
@@ -15,17 +18,19 @@ public sealed class LoginRateLimitTests(WebAppFixture fixture) : IClassFixture<W
         for (var attempt = 1; attempt <= 12; attempt++)
         {
             var response = await client.PostAsync(
-                "/Account/Login",
+                "/Account/Login?ReturnUrl=%2F",
                 new FormUrlEncodedContent(new Dictionary<string, string>
                 {
                     ["Input.Email"] = TestDataSeeder.AdminEmail,
                     ["Input.Password"] = "SaiMatKhau123!",
                 }));
 
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            if (response.StatusCode == HttpStatusCode.SeeOther)
             {
-                Assert.Equal("Bạn thao tác quá nhanh. Vui lòng thử lại sau.",
-                    (await response.Content.ReadAsStringAsync()).Trim());
+                var location = response.Headers.Location?.ToString();
+                Assert.NotNull(location);
+                Assert.StartsWith("/login?tooManyRequests=1", location);
+                Assert.Contains("ReturnUrl=%2F", location);
 
                 // Đường dẫn có dấu '/' cuối không được lách giới hạn (cùng IP, cùng bộ đếm).
                 var bypass = await client.PostAsync(
@@ -36,11 +41,11 @@ public sealed class LoginRateLimitTests(WebAppFixture fixture) : IClassFixture<W
                         ["Input.Password"] = "SaiMatKhau123!",
                     }));
 
-                Assert.Equal(HttpStatusCode.TooManyRequests, bypass.StatusCode);
+                Assert.Equal(HttpStatusCode.SeeOther, bypass.StatusCode);
                 return;
             }
         }
 
-        Assert.Fail("Không nhận được 429 sau 12 lần đăng nhập liên tiếp.");
+        Assert.Fail("Không nhận được chuyển hướng sau 12 lần đăng nhập liên tiếp.");
     }
 }

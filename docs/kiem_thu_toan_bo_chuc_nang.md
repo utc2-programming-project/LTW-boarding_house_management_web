@@ -168,20 +168,25 @@ Ký hiệu vai trò: `AD` = Admin, `CT` = Chủ trọ, `QL` = Quản lý, `KT` =
 
 ## 5. Kiểm thử xuyên suốt (cross-cutting)
 
-### 5.1. Đăng nhập, khóa tài khoản, captcha
+### 5.1. Đăng nhập, chặn IP, captcha
 
 **Code**: `Login.razor` → `AccountSignInManager.CanSignInAsync` (`Components/Account/AccountSignInManager.cs`) → Identity.
-**Cấu hình**: `Program.cs:142-155` (mật khẩu ≥ 8, có số/hoa/thường; lockout 5 lần / 15 phút; email duy nhất).
+**Cấu hình**: `Program.cs:142-155` (mật khẩu ≥ 8, có số/hoa/thường; email duy nhất; **không auto-lock tài khoản**).
+**Chống dò mật khẩu**: `Infrastructure/Security/LoginAttemptGuard.cs` + `Security:LoginGuard` trong `appsettings.json`
+(mặc định: sai 10 lần/15 phút từ cùng IP → chặn IP 15 phút; sai 3 lần → bắt CAPTCHA).
 
 | Mã | Vai trò | Thao tác | Kết quả mong đợi |
 |---|---|---|---|
 | X-01 | — | Sai mật khẩu 1 lần | Báo lỗi, không vào được |
-| X-02 | — | Sai 5 lần | Tài khoản bị khóa tạm 15 phút (`Lockout`) |
-| X-03 | — | Sai nhiều lần liên tiếp | Hiện captcha số học; nhập đúng mới thử tiếp |
+| X-02 | — | Sai 5 lần cùng tài khoản | **Tài khoản KHÔNG bị khóa** (chỉ tăng bộ đếm để bắt CAPTCHA). Đăng nhập đúng vẫn vào được ngay |
+| X-03 | — | Sai 3 lần liên tiếp | Hiện captcha số học; nhập đúng mới thử tiếp |
 | X-04 | — | Đăng nhập tài khoản `ApprovedAt = NULL` | Bị chặn bởi `AccountSignInManager` |
-| X-05 | — | Đăng nhập tài khoản bị Admin khóa vĩnh viễn | Bị chặn |
+| X-05 | — | Đăng nhập tài khoản bị Admin khóa vĩnh viễn | Bị chặn (`LockoutEnd` do quản trị đặt) |
 | X-06 | — | Đăng xuất rồi mở `/admin/users` | Redirect về `/login?ReturnUrl=...` |
 | X-07 | — | Mở `/login` khi đã đăng nhập | Chuyển về trang chủ |
+| X-08 | — | Sai mật khẩu quá ngưỡng tần suất (mặc định 10 lần/phút) | **Chuyển về `/login?tooManyRequests=1`** và hiện banner "Bạn thao tác quá nhanh. Vui lòng thử lại sau." trên form — không còn trang trắng chỉ có text thô |
+| X-08a | — | Sau 10 lần thử thất bại từ cùng IP (sai mật khẩu hoặc trả lời CAPTCHA sai, kể cả đổi email) | IP bị chặn 15 phút; form hiện "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau {n} phút." Tài khoản mục tiêu **vẫn đăng nhập được từ IP khác** |
+| X-08b | — | Đăng nhập đúng sau vài lần sai | Bộ đếm CAPTCHA của tài khoản được xóa; IP không bị ảnh hưởng nếu chưa tới ngưỡng |
 
 **SQL**:
 ```sql
@@ -1471,6 +1476,8 @@ dotnet test NhaTro/NhaTro.E2ETests/NhaTro.E2ETests.csproj
 | 8 | Hợp đồng/hóa đơn/chỉ số = 0 sau khi dọn | Không thể test ngay | Chạy kịch bản E2E mục 8 |
 | 9 | Chưa có code chuyển `Invoices.Status → Paid` sau khi xác nhận thanh toán | Hóa đơn vẫn `Issued`; `PaidAmount` trên UI = 0 dù đã có payment Confirmed | Ghi nhận; doanh thu vẫn đúng vì báo cáo cộng `Payments.Confirmed` |
 | 10 | Chưa chặn trùng tên dịch vụ trong cùng nhà | Có thể tạo 2 `ServiceCatalogs` cùng tên | Ghi nhận, không báo bug |
+| 11 | Bộ đếm chặn IP không áp cho bước nhập mã 2FA | Chỉ đếm sai ở bước mật khẩu; rate limiter 10 POST/phút vẫn áp cho `/Account/LoginWith2fa` | Ghi nhận; muốn siết thì bổ sung đếm ở trang 2FA |
+| 12 | Bộ đếm chặn IP lưu trong bộ nhớ tiến trình | Restart app hoặc chạy nhiều instance thì bộ đếm reset/không chia sẻ | Với 1 server (hiện tại) là đủ; scale-out cần cache phân tán |
 
 ---
 
@@ -1498,7 +1505,7 @@ dotnet test NhaTro/NhaTro.E2ETests/NhaTro.E2ETests.csproj
 - [ ] P8 Duyệt: inbox/my-requests/approve/reject/fail-closed + 21 công tắc
 - [ ] P9 Báo cáo/Dashboard/Home: KPI/lọc/phân trang/doanh thu
 - [ ] P10 Giấy tờ: upload/tải/xóa/quyền/rate limit/audit
-- [ ] Bảo mật: captcha/lockout/rate limit/health/log
+- [ ] Bảo mật: captcha/chặn IP/rate limit/health/log
 
 ### 13.3. Sau khi test
 

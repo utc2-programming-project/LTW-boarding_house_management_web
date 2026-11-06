@@ -146,7 +146,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredUniqueChars = 1;
 
-        // Khoa tam thoi khi dang nhap sai nhieu lan (khac voi khoa tai khoan do quan tri - ).
+        // Khong tu khoa tai khoan khi sai mat khau: ke tan cong chi can go sai vai lan la
+        // khoa duoc tai khoan chu tro (DoS). Chong do mat khau bang LoginAttemptGuard chan IP;
+        // khoa tai khoan chi do quan tri chu dong (AccountService.LockAsync).
+        // Giu cau hinh Lockout de khoa thu cong van hoat dong.
         options.Lockout.AllowedForNewUsers = true;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -293,6 +296,9 @@ if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
 
 // CAPTCHA sau nhieu lan dang nhap sai. Giai doan 1 dung thach thuc cuc bo (khong them phu thuoc).
 builder.Services.AddSingleton<ICaptchaVerifier, LocalCaptchaVerifier>();
+
+// Chong do mat khau: dem so lan sai theo IP (chan IP tam thoi) thay vi khoa tai khoan.
+builder.Services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
 
 // health live/ready. Ready kiem ket noi DB qua goi EF HealthChecks.
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database", tags: [HealthEndpoints.ReadyTag]);

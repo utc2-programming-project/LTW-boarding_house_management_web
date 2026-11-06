@@ -921,6 +921,9 @@
   <data name="TooManyRequests" xml:space="preserve">
     <value>Bạn thao tác quá nhanh. Vui lòng thử lại sau.</value>
   </data>
+  <data name="LoginIpBlocked" xml:space="preserve">
+    <value>Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau {0} phút.</value>
+  </data>
   <data name="CaptchaRequired" xml:space="preserve">
     <value>Vì bạn đã nhập sai nhiều lần, vui lòng trả lời câu hỏi xác minh.</value>
   </data>
