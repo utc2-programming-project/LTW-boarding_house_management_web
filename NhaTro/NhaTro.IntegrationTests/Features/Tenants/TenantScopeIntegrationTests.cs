@@ -29,34 +29,35 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
         new(fixture, TimeProvider.System, new AllowAllManagerTogglePolicy());
 
     [SqlServerFact]
-    public async Task Chu_tro_chi_thay_ho_so_gan_toa_minh_cong_kho_chua_gan()
+    public async Task Chu_tro_chi_thay_ho_so_minh_so_huu_hoac_gan_toa_minh()
     {
         var seed = await SeedAsync();
 
         var page = await NewService().ListAsync(
             new TenantFilterRequest { PageSize = 100 }, OwnerA);
 
-        Assert.Equal(2, page.TotalCount);
+        // PLAN-005: hồ sơ "kho chung" (OwnerId null) không còn hiện cho chủ trọ.
+        Assert.Equal(1, page.TotalCount);
         Assert.Contains(page.Items, item => item.Id == seed.TenantAId);
-        Assert.Contains(page.Items, item => item.Id == seed.PoolTenantId);
+        Assert.DoesNotContain(page.Items, item => item.Id == seed.PoolTenantId);
         Assert.DoesNotContain(page.Items, item => item.Id == seed.TenantBId);
 
         var summary = await NewService().GetSummaryAsync(OwnerA);
-        Assert.Equal(2, summary.TotalCount);
-        Assert.Equal(2, summary.ActiveCount);
+        Assert.Equal(1, summary.TotalCount);
+        Assert.Equal(1, summary.ActiveCount);
     }
 
     [SqlServerFact]
-    public async Task Quan_ly_chi_thay_ho_so_toa_duoc_phan_cong_cong_kho_chua_gan()
+    public async Task Quan_ly_chi_thay_ho_so_toa_duoc_phan_cong()
     {
         var seed = await SeedAsync();
 
         var page = await NewService().ListAsync(
             new TenantFilterRequest { PageSize = 100 }, ManagerA);
 
-        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(1, page.TotalCount);
         Assert.Contains(page.Items, item => item.Id == seed.TenantAId);
-        Assert.Contains(page.Items, item => item.Id == seed.PoolTenantId);
+        Assert.DoesNotContain(page.Items, item => item.Id == seed.PoolTenantId);
         Assert.DoesNotContain(page.Items, item => item.Id == seed.TenantBId);
 
         // D9: Quản lý xem chi tiết nhưng số CCCD luôn bị che.
@@ -80,8 +81,7 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
 
         var page = await NewService().ListAsync(
             new TenantFilterRequest { PageSize = 100 }, ManagerA);
-        Assert.Equal(1, page.TotalCount);
-        Assert.Equal(seed.PoolTenantId, page.Items[0].Id);
+        Assert.Equal(0, page.TotalCount);
 
         var detail = await NewService().GetAsync(seed.TenantAId, ManagerA);
         Assert.False(detail.Succeeded);
@@ -155,17 +155,17 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
         var service = NewService();
 
         var pickerA = await service.SearchForPickerAsync(new TenantPickerRequest(), OwnerA);
-        Assert.Equal(2, pickerA.Count);
+        Assert.Equal(1, pickerA.Count);
         Assert.Contains(pickerA, item => item.Id == seed.TenantAId);
-        Assert.Contains(pickerA, item => item.Id == seed.PoolTenantId);
+        Assert.DoesNotContain(pickerA, item => item.Id == seed.PoolTenantId);
         Assert.DoesNotContain(pickerA, item => item.Id == seed.TenantBId);
 
         var pickerManager = await service.SearchForPickerAsync(new TenantPickerRequest(), ManagerA);
-        Assert.Equal(2, pickerManager.Count);
+        Assert.Equal(1, pickerManager.Count);
 
         var pickerB = await service.SearchForPickerAsync(new TenantPickerRequest(), OwnerB);
         Assert.Contains(pickerB, item => item.Id == seed.TenantBId);
-        Assert.Contains(pickerB, item => item.Id == seed.PoolTenantId);
+        Assert.DoesNotContain(pickerB, item => item.Id == seed.PoolTenantId);
         Assert.DoesNotContain(pickerB, item => item.Id == seed.TenantAId);
     }
 
@@ -186,7 +186,7 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
         Assert.Equal(TenantErrorCodes.DuplicateTenant, outOfScope.ErrorCode);
         Assert.Null(outOfScope.PossibleDuplicates);
 
-        // Hồ sơ trong kho chung vẫn hiện gợi ý (Q1b: chấp nhận rủi ro dùng chung).
+        // Hồ sơ trong "kho chung" (OwnerId null) nay ngoài phạm vi mọi chủ trọ: không gợi ý.
         var inScope = await service.CreateAsync(new CreateTenantRequest
         {
             FullName = "Khách mới 2",
@@ -196,8 +196,7 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
 
         Assert.False(inScope.Succeeded);
         Assert.Equal(TenantErrorCodes.DuplicateTenant, inScope.ErrorCode);
-        Assert.Single(inScope.PossibleDuplicates!);
-        Assert.Equal(seed.PoolTenantId, inScope.PossibleDuplicates![0].Id);
+        Assert.Null(inScope.PossibleDuplicates);
     }
 
     [SqlServerFact]
@@ -220,10 +219,9 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
             PhoneNumber = seed.PoolPhone,
             IdNumber = "079201000092",
         }, OwnerA);
-        Assert.False(inScope.Succeeded);
-        Assert.Equal(TenantErrorCodes.DuplicatePhone, inScope.ErrorCode);
-        Assert.Single(inScope.PossibleDuplicates!);
-        Assert.Equal(seed.PoolTenantId, inScope.PossibleDuplicates![0].Id);
+
+        // PLAN-005: hồ sơ kho chung ngoài phạm vi nên không chặn trùng số điện thoại.
+        Assert.True(inScope.Succeeded, inScope.ErrorMessage);
     }
 
     [SqlServerFact]
@@ -284,13 +282,43 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
-    public async Task Ho_so_chua_gan_thay_ho_so_nhung_giay_to_van_None()
+    public async Task Ho_so_khong_thuoc_chu_tro_nao_thi_chu_tro_khong_thay()
+    {
+        var seed = await SeedAsync();
+
+        var detail = await NewService().GetAsync(seed.PoolTenantId, OwnerA);
+        Assert.False(detail.Succeeded);
+        Assert.Equal(TenantErrorCodes.TenantNotFound, detail.ErrorCode);
+
+        // Hồ sơ có chủ nhưng chưa có hợp đồng vẫn phải thấy: đây là điểm khác cốt lõi so với trước.
+        var ownerWithoutContract = await CreateOwnedTenantAsync(OwnerA);
+        var visible = await NewService().GetAsync(ownerWithoutContract, OwnerA);
+        Assert.True(visible.Succeeded, visible.ErrorMessage);
+
+        var crossOwner = await NewService().GetAsync(ownerWithoutContract, OwnerB);
+        Assert.Equal(TenantErrorCodes.TenantNotFound, crossOwner.ErrorCode);
+    }
+
+    private async Task<int> CreateOwnedTenantAsync(TenantCaller caller)
+    {
+        var created = await NewService().CreateAsync(new CreateTenantRequest
+        {
+            FullName = "Khách chưa hợp đồng",
+            PhoneNumber = "0901000099",
+            IdNumber = "079201000099",
+        }, caller);
+
+        Assert.True(created.Succeeded, created.ErrorMessage);
+        return created.Tenant!.Id;
+    }
+
+    [SqlServerFact]
+    public async Task Ho_so_chua_gan_khong_con_hien_giay_to_van_None()
     {
         var seed = await SeedAsync();
         await using var db = fixture.CreateContext();
         var scope = new TenantDocumentScopeService(db, new ContractManagerTenantScope(db));
 
-        Assert.Equal(seed.PoolTenantId, (await NewService().GetAsync(seed.PoolTenantId, OwnerA)).Tenant!.Id);
         Assert.Equal(
             TenantDocumentAccessLevel.None,
             await scope.ResolveAsync(seed.PoolTenantId, OwnerA));
@@ -371,10 +399,26 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
         const string poolCitizenId = "079201000003";
         const string poolPhone = "0901000003";
 
-        var tenantA = new Tenant { FullName = "Khách A", Phone = "0901000001", CitizenId = tenantACitizenId };
-        var tenantB = new Tenant { FullName = "Khách B", Phone = tenantBPhone, CitizenId = tenantBCitizenId };
+        var tenantA = new Tenant
+        {
+            FullName = "Khách A",
+            Phone = "0901000001",
+            CitizenId = tenantACitizenId,
+        };
+        var tenantB = new Tenant
+        {
+            FullName = "Khách B",
+            Phone = tenantBPhone,
+            CitizenId = tenantBCitizenId,
+        };
+        // "Kho chung": hồ sơ chưa liên kết chủ trọ nào (PLAN-005: chỉ người tạo/mời mới thấy).
         var poolTenant = new Tenant { FullName = "Khách kho", Phone = poolPhone, CitizenId = poolCitizenId };
         db.Tenants.AddRange(tenantA, tenantB, poolTenant);
+        await db.SaveChangesAsync();
+
+        db.TenantOwnerLinks.AddRange(
+            new TenantOwnerLink { TenantId = tenantA.Id, OwnerId = OwnerA.UserId },
+            new TenantOwnerLink { TenantId = tenantB.Id, OwnerId = OwnerB.UserId });
         await db.SaveChangesAsync();
 
         AddContract(db, tenantA.Id, roomA.Id, ContractStatus.Approved, "HD-A");

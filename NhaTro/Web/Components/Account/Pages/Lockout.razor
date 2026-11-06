@@ -1,9 +1,10 @@
 ﻿@page "/Account/Lockout"
 @layout Layout.AuthLayout
 
-@inject IStringLocalizer<Shared> L
+@* Trang báo tài khoản đang bị khóa (quản trị khóa, không phải do gõ sai mật khẩu),
+   hướng dẫn liên hệ người quản lý tài khoản. Dùng khung AuthLayout. *@
 
-@* VHT-95: trang bao tai khoan bi khoa (Admin khoa vinh vien hoac sai mat khau qua nhieu lan). *@
+@inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["LockoutTitle"] · @L["AppName"]</PageTitle>
 

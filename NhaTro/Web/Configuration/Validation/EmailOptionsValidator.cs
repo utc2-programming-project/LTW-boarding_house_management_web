@@ -1,3 +1,4 @@
+// Validate cấu hình "Email" ngay lúc khởi động để lỗi hiện sớm.
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;

@@ -47,6 +47,22 @@ public interface IAccountService
     Task<AccountResult> CreateAsync(
         CreateAccountRequest request, string callerUserId, string callerRole, CancellationToken ct = default);
 
+    /// <summary>PLAN-008: chang tro tu dang ky, cho Admin duyet truoc khi dang nhap.</summary>
+    Task<AccountResult> RegisterOwnerAsync(
+        RegisterOwnerRequest request, CancellationToken ct = default);
+
+    /// <summary>Xoá tài khoản (Admin, hoặc Chủ trọ với Quản lý/Khách thuê trong phạm vi).</summary>
+    Task<AccountResult> DeleteAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>Khôi phục tài khoản đã xoá mềm; báo lỗi nếu email đã bị dùng lại.</summary>
+    Task<AccountResult> RestoreAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>Danh sách tài khoản trong thùng rác (Admin).</summary>
+    Task<IReadOnlyList<DeletedAccountDto>> ListDeletedAsync(
+        string callerRole, CancellationToken ct = default);
+
     /// <summary>VHT-95: duyet tai khoan dang Cho duyet (o #6).</summary>
     Task<AccountResult> ApproveAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);

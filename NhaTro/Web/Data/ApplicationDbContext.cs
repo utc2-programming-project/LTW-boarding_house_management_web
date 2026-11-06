@@ -25,6 +25,12 @@ namespace Web.Data
 
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
+
+        // PLAN-006: lời mời khách thuê qua email.
+        public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
+
+        // PLAN-005: hồ sơ khách ↔ chủ trọ (nhiều-nhiều, một khách có thể thuộc nhiều chủ trọ).
+        public DbSet<TenantOwnerLink> TenantOwnerLinks => Set<TenantOwnerLink>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
         // VHT-125 (2D): yeu cau gia han hop dong do khach thue gui tu "Phong dang thue".

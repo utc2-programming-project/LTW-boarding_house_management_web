@@ -1,3 +1,5 @@
+// Unit test cho EmailRecipientResolver: kiểm tra thứ tự ưu tiên giữa bảng chuyển hướng,
+// chế độ demo và địa chỉ gốc của người nhận.
 using System.Globalization;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;

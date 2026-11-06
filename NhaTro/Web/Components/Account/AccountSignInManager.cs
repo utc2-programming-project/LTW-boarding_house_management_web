@@ -31,6 +31,12 @@ public sealed class AccountSignInManager : SignInManager<ApplicationUser>
             return false;
         }
 
+        // Tài khoản trong thùng rác không được đăng nhập.
+        if (user.IsDeleted)
+        {
+            return false;
+        }
+
         return user.ApprovedAt is not null;
     }
 }

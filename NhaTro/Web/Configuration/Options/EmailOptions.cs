@@ -1,3 +1,4 @@
+// Option cấu hình gửi thư, bind từ section "Email" trong appsettings.
 namespace Web.Configuration.Options;
 
 /// <summary>

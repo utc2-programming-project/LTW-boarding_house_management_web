@@ -1,3 +1,5 @@
+// Điểm khởi động của web: đăng ký DI (Blazor, Identity + cookie, EF Core, dịch vụ nghiệp vụ,
+// email/SMTP, localization, rate limit), cấu hình middleware, seed vai trò/tài khoản mẫu rồi map endpoint.
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.Features;
@@ -69,7 +71,7 @@ catch (Exception ex) when (ex is ArgumentException or NotSupportedException or P
 
 Directory.CreateDirectory(logDirectory);
 
-// log ở đây nè, công dụng của serilog đó.
+// Serilog: ghi console + file xoay theo ngày (giữ 7 ngày), đã lọc dữ liệu nhạy cảm.
 builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
     // che cac thuoc tinh nhay cam (mat khau, token, CCCD...) truoc khi ghi log.
     .Enrich.With<SensitiveDataScrubber>()
@@ -133,8 +135,8 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        // tam thoi tat xac thuc email (chua cau hinh SMTP - lam sau).
-        // Bat lai khi co IEmailSender that, neu khong tai khoan do quan tri tao se khong dang nhap duoc.
+        // Tài khoản do quản trị tạo không qua bước xác nhận email nên không bắt buộc xác nhận;
+        // bật lại nếu muốn chặn đăng nhập khi email chưa xác nhận.
         options.SignIn.RequireConfirmedAccount = false;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
 
@@ -206,10 +208,10 @@ builder.Services.AddAuthorization(options =>
          context.User.IsInRole(Roles.KhachThue))));
 });
 builder.Services.AddScoped<RoleService>();
-// service tai khoan (ho so ca nhan + quan tri tai khoan theo ).
+// Dịch vụ tài khoản: hồ sơ cá nhân + quản trị tài khoản (VHT-95), tự kiểm quyền ở server.
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-// SQL services. Approval policy and active-contract checks are extension points.
+// Các service nghiệp vụ đọc/ghi SQL; policy duyệt và kiểm hợp đồng đang hiệu lực là điểm mở rộng.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
@@ -341,7 +343,17 @@ builder.Services.AddRateLimiter(rateLimiter =>
                     Window = TimeSpan.FromSeconds(securityOptions.RateLimit.LoginWindowSeconds),
                     QueueLimit = 0,
                 })
-            : RateLimitPartition.GetNoLimiter("no-limit"));
+            // PLAN-008: chặn spam đăng ký chủ trọ (5 lần/giờ/IP).
+            : RateLimitPolicies.IsRegisterRequest(http)
+                ? RateLimitPartition.GetFixedWindowLimiter(
+                    "register:" + RateLimitPolicies.ClientKey(http),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromHours(1),
+                        QueueLimit = 0,
+                    })
+                : RateLimitPartition.GetNoLimiter("no-limit"));
 
     rateLimiter.OnRejected = RateLimitPolicies.WriteRejectionAsync;
 });
@@ -371,9 +383,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.DefaultRequestCulture = new RequestCulture("vi-VN");
     options.SupportedCultures = supported;
     options.SupportedUICultures = supported;
-    // Chỉ dùng lựa chọn cookie; chưa chọn thì dùng VI, không theo query/trình duyệt.
-    options.RequestCultureProviders.Clear();
-    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
     // Chỉ dùng cookie của selector; chưa chọn ngôn ngữ thì mặc định tiếng Việt.
     options.RequestCultureProviders = [new CookieRequestCultureProvider()];
 });
@@ -389,12 +398,18 @@ var emailSettings = builder.Configuration.GetSection(EmailOptions.SectionName).G
     ?? new EmailOptions();
 if (emailSettings.Smtp.IsConfigured)
 {
-    builder.Services.AddSingleton<IEmailSender<ApplicationUser>, SmtpEmailSender>();
+    builder.Services.AddSingleton<SmtpEmailSender>();
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>>(sp => sp.GetRequiredService<SmtpEmailSender>());
+    builder.Services.AddSingleton<IOutboundEmailSender>(sp => sp.GetRequiredService<SmtpEmailSender>());
 }
 else
 {
     builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+    builder.Services.AddSingleton<IOutboundEmailSender, LogOnlyOutboundEmailSender>();
 }
+
+// PLAN-006: lời mời khách thuê qua email.
+builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
@@ -504,9 +519,9 @@ app.Use(async (context, next) =>
 
 app.UseAntiforgery();
 
-// endpoint cho selector cua Phu.
-// Dat cookie chuan ".AspNetCore.Culture", song sau reload/dang nhap (1 nam).
-// Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture.
+// Endpoint đổi ngôn ngữ (VI/EN) cho bộ chọn culture ở topbar và trang auth.
+// Đặt cookie chuẩn ".AspNetCore.Culture", sống sau reload/đăng nhập (1 năm).
+// Chỉ nhận vi-VN/en-US; tiền VND và logic tính không đổi theo culture.
 app.MapPost("/culture/set", async Task<IResult> (HttpContext http, string culture, IAntiforgery antiforgery) =>
 {
     // Xác thực trước khi ghi cookie, kể cả endpoint chỉ nhận culture từ query.

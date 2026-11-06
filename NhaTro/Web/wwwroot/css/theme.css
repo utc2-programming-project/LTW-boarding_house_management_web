@@ -1,4 +1,5 @@
-/* Token dùng chung theo docs/design/phong_cach_giao_dien.md. */
+/* Token dùng chung theo docs/design/phong_cach_giao_dien.md: biến màu - khoảng cách - chữ cho toàn app,
+   kèm layout khung (topbar, sidebar chia nhóm) và style các component dùng chung. */
 @font-face {
  font-family:Inter;
  font-style:normal;

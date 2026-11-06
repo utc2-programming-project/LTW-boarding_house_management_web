@@ -688,6 +688,31 @@ public sealed class ContractService : IContractService
                 TenantId = tenantId,
             }));
 
+            // PLAN-005 (điều chỉnh): hợp đồng ở tòa của chủ trọ nào thì chủ trọ đó được xem hồ sơ khách,
+            // kể cả khách đã thuộc chủ trọ khác — mỗi khách có thể có nhiều liên kết chủ trọ.
+            var propertyOwnerId = await _context.Properties.AsNoTracking()
+                .Where(property => property.Id == room.PropertyId)
+                .Select(property => property.OwnerId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(propertyOwnerId))
+            {
+                var linkedTenantIds = await _context.TenantOwnerLinks
+                    .Where(link => link.OwnerId == propertyOwnerId && requestedTenantIds.Contains(link.TenantId))
+                    .Select(link => link.TenantId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var tenantId in requestedTenantIds.Except(linkedTenantIds))
+                {
+                    _context.TenantOwnerLinks.Add(new Web.Features.Tenants.Entities.TenantOwnerLink
+                    {
+                        TenantId = tenantId,
+                        OwnerId = propertyOwnerId,
+                        CreatedAt = DateTime.UtcNow,
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }

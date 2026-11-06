@@ -34,6 +34,15 @@ public static class AccountErrorCodes
     /// <summary>Chi duyet duoc tai khoan dang Cho duyet.</summary>
     public const string NotPendingApproval = nameof(NotPendingApproval);
 
+    /// <summary>Không cho tự xoá tài khoản đang đăng nhập.</summary>
+    public const string CannotDeleteSelf = nameof(CannotDeleteSelf);
+
+    /// <summary>Không cho xoá Admin cuối cùng của hệ thống.</summary>
+    public const string CannotDeleteLastAdmin = nameof(CannotDeleteLastAdmin);
+
+    /// <summary>Tài khoản còn dữ liệu nghiệp vụ tham chiếu (hồ sơ khách) nên không xoá được.</summary>
+    public const string AccountInUse = nameof(AccountInUse);
+
     /// <summary>Key .resx de UI hien thi thong bao da dich cho ma loi.</summary>
     public static string ResourceKey(string? code) => code switch
     {
@@ -56,6 +65,9 @@ public static class AccountErrorCodes
         TenantAlreadyLinked => "ErrorTenantAlreadyLinked",
         RoleLinkedToTenant => "ErrorRoleLinkedToTenant",
         NotPendingApproval => "ErrorNotPendingApproval",
+        CannotDeleteSelf => "ErrorCannotDeleteSelf",
+        CannotDeleteLastAdmin => "ErrorCannotDeleteLastAdmin",
+        AccountInUse => "ErrorAccountInUse",
         _ => "ErrorGeneric",
     };
 }

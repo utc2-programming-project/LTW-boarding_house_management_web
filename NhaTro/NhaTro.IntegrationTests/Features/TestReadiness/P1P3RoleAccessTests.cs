@@ -514,20 +514,20 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
             FullName = "Nguyễn Văn An",
             PhoneNumber = "0901111111",
             IdNumber = "079201004821",
-        }, TenantManager);
+        }, TenantOwner);
         var tenantB = await tenants.CreateAsync(new CreateTenantRequest
         {
             FullName = "Trần Thị Bình",
             PhoneNumber = "0902222222",
             IdNumber = "079201004822",
-        }, TenantManager);
+        }, new TenantCaller("owner-b", Roles.ChuTro));
         Assert.True(tenantA.Succeeded, tenantA.ErrorMessage);
         Assert.True(tenantB.Succeeded, tenantB.ErrorMessage);
 
         var linkedA = await tenants.LinkAccountAsync(
             tenantA.Tenant!.Id, "khach-1", tenantA.Tenant.RowVersion, TenantOwner);
         var linkedB = await tenants.LinkAccountAsync(
-            tenantB.Tenant!.Id, "khach-2", tenantB.Tenant.RowVersion, TenantOwner);
+            tenantB.Tenant!.Id, "khach-2", tenantB.Tenant.RowVersion, new TenantCaller("owner-b", Roles.ChuTro));
         Assert.True(linkedA.Succeeded, linkedA.ErrorMessage);
         Assert.True(linkedB.Succeeded, linkedB.ErrorMessage);
 
