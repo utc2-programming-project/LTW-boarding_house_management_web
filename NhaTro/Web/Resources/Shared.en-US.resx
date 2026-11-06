@@ -921,6 +921,9 @@
   <data name="TooManyRequests" xml:space="preserve">
     <value>Too many requests. Please try again later.</value>
   </data>
+  <data name="LoginIpBlocked" xml:space="preserve">
+    <value>Too many failed sign-in attempts. Please try again in {0} minute(s).</value>
+  </data>
   <data name="CaptchaRequired" xml:space="preserve">
     <value>Because of repeated failed attempts, please answer the verification question.</value>
   </data>
