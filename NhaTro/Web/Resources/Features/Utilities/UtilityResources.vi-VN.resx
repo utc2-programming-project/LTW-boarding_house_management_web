@@ -274,7 +274,16 @@
   <data name="TariffElectricShortName" xml:space="preserve"><value>Điện sinh hoạt</value></data>
   <data name="TariffWaterShortName" xml:space="preserve"><value>Nước sinh hoạt</value></data>
   <data name="TariffTierServiceName" xml:space="preserve"><value>{0} - Bậc {1} ({2} {3})</value></data>
+  <data name="TariffTierRangeLabel" xml:space="preserve"><value>Bậc {0}: {1} {2}</value></data>
   <data name="SystemCreatorLabel" xml:space="preserve"><value>Hệ thống</value></data>
   <data name="BuildingFallbackName" xml:space="preserve"><value>Nhà trọ #{0}</value></data>
   <data name="AllBuildingsDescription" xml:space="preserve"><value>Toàn bộ hệ thống</value></data>
+  <data name="DeleteServiceTooltip" xml:space="preserve"><value>Xóa dịch vụ</value></data>
+  <data name="DeleteServiceTitle" xml:space="preserve"><value>Xóa dịch vụ</value></data>
+  <data name="DeleteServiceConfirm" xml:space="preserve"><value>Xóa dịch vụ "{0}"? Dịch vụ sẽ không còn hiển thị trong danh mục; lịch sử giá vẫn được giữ lại.</value></data>
+  <data name="DeleteServiceAction" xml:space="preserve"><value>Xóa</value></data>
+  <data name="DeletingService" xml:space="preserve"><value>Đang xóa…</value></data>
+  <data name="ToastServiceDeletedSuccess" xml:space="preserve"><value>Đã xóa dịch vụ.</value></data>
+  <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Chỉ Chủ trọ được xóa dịch vụ.</value></data>
+  <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Đã xóa nhưng chưa xác minh được. Vui lòng tải lại trang.</value></data>
 </root>

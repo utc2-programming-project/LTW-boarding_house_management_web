@@ -24,6 +24,16 @@ public sealed class PropertyPageService(
     public async Task<PropertyResult> UpdateAsync(int id, PropertySave request, CancellationToken ct = default) =>
         await properties.UpdateAsync(id, request, await callerProvider.GetCallerAsync(), ct);
 
+    public async Task<PropertyResult> DeleteAsync(int id, CancellationToken ct = default) =>
+        await properties.DeleteAsync(id, await callerProvider.GetCallerAsync(), ct);
+
+    public async Task<PagedResult<PropertyTrashItem>> ListDeletedAsync(
+        PropertyFilter filter, CancellationToken ct = default) =>
+        await properties.ListDeletedAsync(filter, await callerProvider.GetCallerAsync(), ct);
+
+    public async Task<PropertyResult> RestoreAsync(int id, CancellationToken ct = default) =>
+        await properties.RestoreAsync(id, await callerProvider.GetCallerAsync(), ct);
+
     public async Task<PropertyManagerListResult> ListManagersAsync(
         int propertyId, bool includeHistory = false, CancellationToken ct = default) =>
         await propertyManagers.ListAssignmentsAsync(
@@ -57,4 +67,12 @@ public sealed class PropertyPageService(
     public async Task<ManagerOwnerResult> GetManagerOwnerAsync(CancellationToken ct = default) =>
         await propertyManagers.GetOwnerForManagerAsync(
             await callerProvider.GetCallerAsync(), ct);
+
+    public async Task<PropertyManagerListResult> GetManagerAssignmentsAsync(
+        int propertyId, CancellationToken ct = default) =>
+        await propertyManagers.ListAssignmentsAsync(propertyId, await callerProvider.GetCallerAsync(), ct: ct);
+
+    public async Task<PropertyManagerCandidateResult> GetAssignableManagersAsync(
+        int propertyId, CancellationToken ct = default) =>
+        await propertyManagers.ListAssignableManagersAsync(propertyId, await callerProvider.GetCallerAsync(), ct);
 }

@@ -90,6 +90,9 @@ public sealed class PriceVersionDto
     public string? Note { get; set; }
     public bool IsSessionCreated { get; set; }
 
+    /// <summary>Nhãn bậc thang (vd "Bậc 1: 0 - 50 kWh"); null với dịch vụ tính giá cố định.</summary>
+    public string? TierLabel { get; set; }
+
     public PriceVersionDto Copy() => new()
     {
         Id = Id,
@@ -107,6 +110,7 @@ public sealed class PriceVersionDto
         CreatedBy = CreatedBy,
         Note = Note,
         IsSessionCreated = IsSessionCreated,
+        TierLabel = TierLabel,
     };
 }
 

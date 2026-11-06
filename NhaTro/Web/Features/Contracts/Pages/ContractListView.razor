@@ -23,7 +23,12 @@
     <header class="page-heading">
         <div><h1 id="contract-list-title">@L["ContractListTitle"]</h1><p>@L["ContractListDescription"]</p></div>
         <AuthorizeView Roles="ChuTro,QuanLy">
-            <Authorized><a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a></Authorized>
+            <Authorized>
+                <div class="contract-heading-actions">
+                    <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
+                    <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
+                </div>
+            </Authorized>
         </AuthorizeView>
     </header>
 

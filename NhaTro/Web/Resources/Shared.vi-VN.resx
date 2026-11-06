@@ -727,6 +727,29 @@
   <data name="P2RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng hoặc bạn không có quyền truy cập.</value></data>
   <data name="P2DuplicateRoomCode" xml:space="preserve"><value>Mã phòng đã tồn tại trong nhà trọ này.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>Xem danh sách phòng</value></data>
+  <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Phân công Quản lý</value></data>
+  <data name="P2ManagerPanelHint" xml:space="preserve"><value>Quản lý chỉ thấy nhà trọ và phòng được phân công đang hiệu lực.</value></data>
+  <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>Chưa có Quản lý nào được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Phân công từ</value></data>
+  <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Chọn tài khoản Quản lý</value></data>
+  <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Chọn tài khoản Quản lý —</value></data>
+  <data name="P2ManagerOperationFailed" xml:space="preserve"><value>Không thể thực hiện, vui lòng thử lại.</value></data>
+  <data name="P2DeleteProperty" xml:space="preserve"><value>Xóa nhà trọ</value></data>
+  <data name="P2DeletePropertyTitle" xml:space="preserve"><value>Chuyển nhà trọ vào thùng rác?</value></data>
+  <data name="P2DeletePropertyConfirm" xml:space="preserve"><value>Nhà trọ '{0}' sẽ được chuyển vào thùng rác. Bạn có thể khôi phục lại cùng các phòng chưa bị xóa.</value></data>
+  <data name="P2PropertyDeleted" xml:space="preserve"><value>Đã chuyển nhà trọ vào thùng rác.</value></data>
+  <data name="P2PropertyHasRooms" xml:space="preserve"><value>Nhà trọ còn phòng. Hãy chuyển toàn bộ phòng sang thùng rác trước khi xóa.</value></data>
+  <data name="P2PropertyTrashOpen" xml:space="preserve"><value>Thùng rác</value></data>
+  <data name="P2PropertyTrashTitle" xml:space="preserve"><value>Thùng rác nhà trọ</value></data>
+  <data name="P2PropertyTrashSubtitle" xml:space="preserve"><value>Nhà trọ đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
+  <data name="P2PropertyTrashTable" xml:space="preserve"><value>Danh sách nhà trọ trong thùng rác</value></data>
+  <data name="P2PropertyTrashRoomCount" xml:space="preserve"><value>Phòng chờ khôi phục</value></data>
+  <data name="P2PropertyTrashRestoreTitle" xml:space="preserve"><value>Khôi phục nhà trọ?</value></data>
+  <data name="P2PropertyTrashRestoreConfirm" xml:space="preserve"><value>Nhà trọ '{0}' sẽ hiện lại trong danh sách cùng các phòng chưa bị xóa.</value></data>
+  <data name="P2PropertyTrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
+  <data name="P2PropertyTrashRestored" xml:space="preserve"><value>Đã khôi phục nhà trọ.</value></data>
+  <data name="P2PropertyTrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được nhà trọ.</value></data>
+  <data name="P2RoomTrashOpen" xml:space="preserve"><value>Thùng rác</value></data>
   <data name="P2TrashTitle" xml:space="preserve"><value>Thùng rác phòng</value></data>
   <data name="P2TrashSubtitle" xml:space="preserve"><value>Phòng đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
   <data name="P2TrashTable" xml:space="preserve"><value>Danh sách phòng trong thùng rác</value></data>
@@ -736,7 +759,8 @@
   <data name="P2TrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
   <data name="P2TrashRestored" xml:space="preserve"><value>Đã khôi phục phòng.</value></data>
   <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được phòng. Vui lòng thử lại.</value></data>
-  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác nên không thể khôi phục.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác trong cùng nhà trọ nên không thể khôi phục.</value></data>
+  <data name="P2RestorePropertyDeleted" xml:space="preserve"><value>Nhà trọ của phòng này đã bị xóa nên không khôi phục được phòng.</value></data>
 
   <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
@@ -1127,6 +1151,15 @@
   <data name="RenewRequestFailed" xml:space="preserve"><value>Không gửi được yêu cầu gia hạn. Vui lòng thử lại.</value></data>
   <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="RenewStatusPending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="RenewStatusApproved" xml:space="preserve"><value>Đã chấp thuận</value></data>
+  <data name="RenewStatusRejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="RenewDecidedAtLabel" xml:space="preserve"><value>Ngày trả lời</value></data>
+  <data name="RenewRejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="RenewTabsLabel" xml:space="preserve"><value>Nội dung yêu cầu gia hạn</value></data>
+  <data name="RenewTabRequest" xml:space="preserve"><value>Gửi yêu cầu</value></data>
+  <data name="RenewTabHistory" xml:space="preserve"><value>Kết quả &amp; lịch sử</value></data>
+  <data name="RenewPendingBlocksNew" xml:space="preserve"><value>Yêu cầu mới nhất của bạn vẫn đang chờ Ban quản lý xử lý, chưa gửi thêm được.</value></data>
+  <data name="RenewHistoryEmpty" xml:space="preserve"><value>Bạn chưa gửi yêu cầu gia hạn nào cho hợp đồng này.</value></data>
   <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Gửi ngày</value></data>
   <data name="RenewErrorForbidden" xml:space="preserve"><value>Bạn không có quyền gửi yêu cầu gia hạn cho hợp đồng này.</value></data>
   <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng thuê.</value></data>
@@ -1487,4 +1520,23 @@
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
   <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Các mục xem báo cáo chỉ có chế độ Cho phép hoặc Không thể.</value></data>
+  <data name="RoomPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
+  <data name="RoomCodeRequired" xml:space="preserve"><value>Vui lòng nhập mã phòng.</value></data>
+  <data name="RoomCodeMaxLength" xml:space="preserve"><value>Mã phòng không được vượt quá 50 ký tự.</value></data>
+  <data name="RoomFloorInvalid" xml:space="preserve"><value>Tầng phải nằm trong khoảng từ 0 đến 1000.</value></data>
+  <data name="RoomAreaInvalid" xml:space="preserve"><value>Diện tích phải nằm trong khoảng từ 0 đến 100000 m².</value></data>
+  <data name="RoomPriceInvalid" xml:space="preserve"><value>Giá thuê không hợp lệ.</value></data>
+  <data name="RoomStatusInvalid" xml:space="preserve"><value>Trạng thái phòng không hợp lệ.</value></data>
+  <data name="TenantFullNameRequired" xml:space="preserve"><value>Vui lòng nhập họ tên.</value></data>
+  <data name="TenantFullNameMaxLength" xml:space="preserve"><value>Họ tên không được vượt quá 200 ký tự.</value></data>
+  <data name="TenantPhoneRequired" xml:space="preserve"><value>Vui lòng nhập số điện thoại.</value></data>
+  <data name="TenantPhoneMaxLength" xml:space="preserve"><value>Số điện thoại không được vượt quá 20 ký tự.</value></data>
+  <data name="TenantEmailInvalid" xml:space="preserve"><value>Email không hợp lệ.</value></data>
+  <data name="TenantEmailMaxLength" xml:space="preserve"><value>Email không được vượt quá 256 ký tự.</value></data>
+  <data name="TenantIdNumberMaxLength" xml:space="preserve"><value>Số CCCD/CMND không được vượt quá 20 ký tự.</value></data>
+  <data name="TenantGenderInvalid" xml:space="preserve"><value>Giới tính không hợp lệ.</value></data>
+  <data name="TenantAddressMaxLength" xml:space="preserve"><value>Địa chỉ không được vượt quá 300 ký tự.</value></data>
+  <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Nơi cấp không được vượt quá 200 ký tự.</value></data>
+  <data name="TenantNoteMaxLength" xml:space="preserve"><value>Ghi chú không được vượt quá 500 ký tự.</value></data>
+  <data name="TenantRowVersionRequired" xml:space="preserve"><value>Thiếu RowVersion.</value></data>
 </root>

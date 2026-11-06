@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Web.Resources;
 
 namespace Web.Features.Properties.DTOs;
 
@@ -7,11 +8,17 @@ namespace Web.Features.Properties.DTOs;
 // Gioi han khop DB: Name nvarchar(200) NOT NULL, Address nvarchar(500) NULL.
 public sealed class PropertySave
 {
-    [Required(ErrorMessage = "Nhap ten nha tro.")]
-    [MaxLength(200, ErrorMessage = "Ten nha tro toi da 200 ky tu.")]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.PropertyNameRequired))]
+    [MaxLength(200,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.PropertyNameMaxLength))]
     public string Name { get; set; } = string.Empty;
 
-    [MaxLength(500, ErrorMessage = "Dia chi toi da 500 ky tu.")]
+    [MaxLength(500,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.PropertyAddressMaxLength))]
     public string? Address { get; set; }
 
     public bool IsActive { get; set; } = true;

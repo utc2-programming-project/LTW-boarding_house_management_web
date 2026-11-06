@@ -15,6 +15,8 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
         // VHT-98: cùng độ dài khóa tài khoản để truy vết người xóa ở thùng rác phòng.
         builder.Property(r => r.DeletedBy).HasMaxLength(450);
 
+        // Mã phòng chỉ duy nhất trong từng nhà trọ (ERD VHT-5: IX_Rooms_PropertyId_Code),
+        // vì hai nhà khác nhau được phép trùng số phòng.
         builder.HasIndex(r => new { r.PropertyId, r.Code })
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");

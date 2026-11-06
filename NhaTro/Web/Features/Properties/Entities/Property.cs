@@ -17,4 +17,7 @@ public class Property
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsDeleted { get; set; }
+
+    /// <summary>Thời điểm chuyển vào thùng rác; null khi nhà trọ đang hoạt động.</summary>
+    public DateTime? DeletedAt { get; set; }
 }

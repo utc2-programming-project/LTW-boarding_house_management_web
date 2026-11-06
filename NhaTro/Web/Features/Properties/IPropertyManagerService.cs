@@ -34,6 +34,15 @@ public interface IPropertyManagerService
         PropertyCaller caller,
         CancellationToken ct = default);
 
+    /// <summary>
+    /// Danh sách tài khoản đang giữ vai trò Quản lý, đã duyệt và chưa bị khóa,
+    /// kèm cờ đã phân công cho tòa nhà này (Chủ trọ sở hữu tòa nhà mới đọc được).
+    /// </summary>
+    Task<PropertyManagerCandidateResult> ListAssignableManagersAsync(
+        int propertyId,
+        PropertyCaller caller,
+        CancellationToken ct = default);
+
     /// <summary>Bỏ gán (giữ lịch sử: set RevokedAt). Phân công không còn hiệu lực ngay.</summary>
     Task<PropertyManagerResult> RevokeAsync(
         int propertyId,

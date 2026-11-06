@@ -147,7 +147,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
         await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.ServicePriceHistories.ExecuteDeleteAsync();
-        await db.ServiceCatalogs.ExecuteDeleteAsync();
+        // Xóa mềm dịch vụ vẫn còn dòng trong bảng: bỏ qua query filter để dọn sạch.
+        await db.ServiceCatalogs.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();

@@ -1841,7 +1841,7 @@ public static class PermissionMatrixProbeExecutor
                 {
                     await utilities.ViewAsync(caller, roomId: world.Data.RoomBId);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     otherDenied = true;
                 }
@@ -2017,7 +2017,7 @@ public static class PermissionMatrixProbeExecutor
                 {
                     await utilities.HistoryAsync(roomBReading.Id, caller);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     outsideDenied = true;
                 }
