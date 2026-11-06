@@ -118,6 +118,9 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "stale")]
+    private string? StaleForm { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
@@ -131,6 +134,13 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
+            // Program.cs doi POST co token cu (tab khac da dang nhap / phien het han)
+            // thanh redirect ve day de tai lai form voi token moi.
+            if (StaleForm == "1")
+            {
+                errorMessage = L["LoginFormStale"];
+            }
+
             // Xoa cookie dang nhap ngoai (neu co) de bat dau luong dang nhap sach.
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }

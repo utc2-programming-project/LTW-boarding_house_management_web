@@ -225,6 +225,9 @@
   <data name="LoginInvalid" xml:space="preserve">
     <value>Incorrect email or password.</value>
   </data>
+  <data name="LoginFormStale" xml:space="preserve">
+    <value>The sign-in page is out of date or the session has expired. Please try again.</value>
+  </data>
   <data name="LoginPendingApproval" xml:space="preserve">
     <value>This account is pending approval. Please contact your account manager.</value>
   </data>

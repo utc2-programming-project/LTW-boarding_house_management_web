@@ -225,6 +225,9 @@
   <data name="LoginInvalid" xml:space="preserve">
     <value>Email hoặc mật khẩu không đúng.</value>
   </data>
+  <data name="LoginFormStale" xml:space="preserve">
+    <value>Trang đăng nhập đã cũ hoặc phiên đã hết hạn. Vui lòng thử lại.</value>
+  </data>
   <data name="LoginPendingApproval" xml:space="preserve">
     <value>Tài khoản đang chờ duyệt, vui lòng liên hệ người quản lý tài khoản.</value>
   </data>

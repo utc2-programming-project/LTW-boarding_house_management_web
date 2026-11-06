@@ -426,6 +426,43 @@ app.UseRequestLocalization();
 // gioi han tan suat (global chi ap cho POST dang nhap; policy rieng gan theo endpoint).
 app.UseRateLimiter();
 
+// Token antiforgery gan voi trang thai dang nhap: form login mo truoc khi tab khac dang nhap
+// (hoac phien het han) se bi tu choi 400 text tho. Doi thanh redirect de tai lai form + token moi.
+app.Use(async (context, next) =>
+{
+    var isLoginPost = HttpMethods.IsPost(context.Request.Method)
+        && (context.Request.Path.Equals("/login", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase));
+
+    if (!isLoginPost)
+    {
+        await next();
+        return;
+    }
+
+    var originalBody = context.Response.Body;
+    await using var buffer = new MemoryStream();
+    context.Response.Body = buffer;
+    try
+    {
+        await next();
+
+        if (context.Response.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            context.Response.Headers.Clear();
+            context.Response.Redirect("/login?stale=1");
+            return;
+        }
+
+        buffer.Position = 0;
+        await buffer.CopyToAsync(originalBody);
+    }
+    finally
+    {
+        context.Response.Body = originalBody;
+    }
+});
+
 app.UseAntiforgery();
 
 // endpoint cho selector cua Phu.
