@@ -18,9 +18,9 @@ public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture
     }
 
     [WebAppFact]
-    public async Task Post_dang_nhap_thieu_antiforgery_tra_400()
+    public async Task Post_dang_nhap_thieu_antiforgery_redirect_ve_form_moi()
     {
-        using var client = fixture.CreateClient();
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
 
         var response = await client.PostAsync(
             "/Account/Login",
@@ -30,7 +30,8 @@ public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture
                 ["Input.Password"] = TestDataSeeder.Password,
             }));
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/login?stale=1", response.Headers.Location?.OriginalString);
     }
 
     [WebAppFact]
