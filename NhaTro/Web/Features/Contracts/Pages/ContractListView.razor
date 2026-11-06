@@ -57,23 +57,33 @@
     else
     {
         <div class="contract-table-wrap">
-            <table class="contract-table">
+            <table class="contract-table" role="table" aria-label="@L["ContractListTitle"]">
                 <thead><tr>
-                    <th>@L["ContractNumberLabel"]</th><th>@L["ContractTenantsLabel"]</th><th>@L["ContractRoomLabel"]</th><th>@L["ContractPropertyLabel"]</th>
-                    <th>@L["ContractTermLabel"]</th><th class="numeric">@L["ContractRentLabel"]</th><th class="numeric">@L["ContractDepositLabel"]</th><th>@L["ContractStatusLabel"]</th><th>@L["ContractActionsLabel"]</th>
+                    <th scope="col">@L["ContractNumberLabel"]</th><th scope="col">@L["ContractTenantsLabel"]</th><th scope="col">@L["ContractRoomPropertyLabel"]</th>
+                    <th scope="col">@L["ContractTermLabel"]</th><th scope="col" class="numeric">@L["ContractFinanceLabel"]</th><th scope="col">@L["ContractStatusActionsLabel"]</th>
                 </tr></thead>
                 <tbody>
                 @foreach (var item in _items)
                 {
-                    <tr>
-                        <td><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
-                        <td>@string.Join(", ", item.TenantNames)</td><td>@item.RoomCode</td><td>@item.PropertyName</td>
-                        <td>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</td>
-                        <td class="numeric tabular-nums">@MoneyFormatter.Format(item.SnapshotPrice)</td><td class="numeric tabular-nums">@MoneyFormatter.Format(item.DepositAmount)</td>
-                        <td><StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" /></td>
-                        <td class="contract-row-actions"><a class="btn btn-secondary" href="@($"/contracts/{item.ContractId}")">@L["ContractViewAction"]</a>
+                    <tr role="row">
+                        <td role="cell" data-label="@L["ContractNumberLabel"]"><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
+                        <td role="cell" data-label="@L["ContractTenantsLabel"]">@string.Join(", ", item.TenantNames)</td>
+                        <td role="cell" data-label="@L["ContractRoomPropertyLabel"]"><div class="contract-cell-stack"><strong>@item.RoomCode</strong><span class="contract-cell-secondary">@item.PropertyName</span></div></td>
+                        <td role="cell" data-label="@L["ContractTermLabel"]"><div class="contract-cell-stack contract-term"><span>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))</span><span>– @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</span></div></td>
+                        <td role="cell" data-label="@L["ContractFinanceLabel"]">
+                            <dl class="contract-finance tabular-nums">
+                                <div><dt>@L["ContractMonthlyRentShort"]</dt><dd>@MoneyFormatter.Format(item.SnapshotPrice)</dd></div>
+                                <div><dt>@L["ContractDepositShort"]</dt><dd>@MoneyFormatter.Format(item.DepositAmount)</dd></div>
+                            </dl>
+                        </td>
+                        <td role="cell" data-label="@L["ContractStatusActionsLabel"]">
+                            <div class="contract-cell-stack">
+                                <StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" />
+                                <div class="contract-row-actions"><a class="btn btn-secondary" href="@($"/contracts/{item.ContractId}")">@L["ContractViewAction"]</a>
                             @if (_canApprove && item.Status == ContractStatus.Pending)
                             { <button class="btn btn-primary" @onclick="() => OpenDecision(item.ContractId)">@L["ContractApproveAction"]</button> }
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 }

@@ -222,4 +222,9 @@
   <data name="RenewalErrorAlreadyRenewed" xml:space="preserve"><value>This contract has already been renewed, so the old request can no longer be approved.</value></data>
   <data name="RenewalErrorDateOverlap" xml:space="preserve"><value>The room already has an active contract during the extended period.</value></data>
   <data name="RenewalErrorEndDateInvalid" xml:space="preserve"><value>The new end date must be later than the current end date.</value></data>
+  <data name="ContractRoomPropertyLabel" xml:space="preserve"><value>Room / Property</value></data>
+  <data name="ContractFinanceLabel" xml:space="preserve"><value>Finances</value></data>
+  <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Status / Actions</value></data>
+  <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
+  <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
 </root>
