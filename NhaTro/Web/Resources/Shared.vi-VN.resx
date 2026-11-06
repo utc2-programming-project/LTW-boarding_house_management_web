@@ -88,9 +88,6 @@
   <data name="ToggleNavigation" xml:space="preserve">
     <value>Đóng hoặc mở thanh điều hướng</value>
   </data>
-  <data name="LayoutPreview" xml:space="preserve">
-    <value>Trang mẫu giao diện</value>
-  </data>
   <data name="Unavailable" xml:space="preserve">
     <value>Chưa khả dụng</value>
   </data>
@@ -163,6 +160,9 @@
   <data name="ManagerSwitches" xml:space="preserve">
     <value>Công tắc Quản lý</value>
   </data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve">
+    <value>Chọn cách hệ thống xử lý từng nghiệp vụ: duyệt tay, tự động hoặc tắt.</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Hàng đợi duyệt</value>
   </data>
@@ -184,32 +184,8 @@
   <data name="ReportIncident" xml:space="preserve">
     <value>Báo sự cố</value>
   </data>
-  <data name="PreviewDescription" xml:space="preserve">
-    <value>Khung giao diện dùng chung với điều hướng, ngôn ngữ và chế độ sáng/tối.</value>
-  </data>
-  <data name="SampleData" xml:space="preserve">
-    <value>Dữ liệu mẫu</value>
-  </data>
-  <data name="DisplayExamples" xml:space="preserve">
-    <value>Ví dụ định dạng hiển thị</value>
-  </data>
-  <data name="SampleDisclaimer" xml:space="preserve">
-    <value>Các giá trị dưới đây chỉ dùng minh họa giao diện, không phải dữ liệu nghiệp vụ.</value>
-  </data>
-  <data name="SampleDate" xml:space="preserve">
-    <value>Ngày minh họa</value>
-  </data>
-  <data name="SampleAmount" xml:space="preserve">
-    <value>Số tiền minh họa</value>
-  </data>
   <data name="NoData" xml:space="preserve">
     <value>Chưa có dữ liệu</value>
-  </data>
-  <data name="ModulesPending" xml:space="preserve">
-    <value>Các phân hệ sẽ xuất hiện khi được tích hợp. Mục chưa khả dụng chưa thể mở.</value>
-  </data>
-  <data name="BackToPreview" xml:space="preserve">
-    <value>Về trang mẫu</value>
   </data>
   <data name="AccountStatusPendingApproval" xml:space="preserve">
     <value>Chờ duyệt</value>
@@ -228,6 +204,9 @@
   </data>
   <data name="Restore" xml:space="preserve">
     <value>Khôi phục</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Trang chủ</value>
   </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Tổng quan</value>
@@ -1330,6 +1309,7 @@
   <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Không thể cập nhật số điện thoại.</value></data>
   <data name="ManageEmailTitle" xml:space="preserve"><value>Quản lý email</value></data>
   <data name="EmailPlaceholder" xml:space="preserve"><value>Nhập email</value></data>
+  <data name="EmailConfirmedLabel" xml:space="preserve"><value>Đã xác minh</value></data>
   <data name="SendVerificationEmailAction" xml:space="preserve"><value>Gửi email xác minh</value></data>
   <data name="NewEmailLabel" xml:space="preserve"><value>Email mới</value></data>
   <data name="NewEmailPlaceholder" xml:space="preserve"><value>Nhập email mới</value></data>
@@ -1469,6 +1449,5 @@
   <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Bản xem trước mô phỏng</value></data>
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
-  <data name="ManagerSwitchesSubtitle" xml:space="preserve"><value>Thiết lập quyền thực hiện các thao tác của Quản lý.</value></data>
   <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Các mục xem báo cáo chỉ có chế độ Cho phép hoặc Không thể.</value></data>
 </root>

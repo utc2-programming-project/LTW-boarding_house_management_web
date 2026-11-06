@@ -10,62 +10,78 @@
 
 <PageTitle>@L["TwoFactorLoginTitle"]</PageTitle>
 
+<h2 class="account-section">@L["TwoFactorLoginTitle"]</h2>
 <StatusMessage />
-<h3>@L["TwoFactorLoginTitle"]</h3>
+
 @if (canTrack)
 {
     if (is2faEnabled)
     {
         if (recoveryCodesLeft == 0)
         {
-            <div class="alert alert-danger">
-                <strong>@L["RecoveryCodesNoneLeft"]</strong>
-                <p>@L["RecoveryCodesMustGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a> @L["RecoveryCodesBeforeLogin"]</p>
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <div>
+                    <strong>@L["RecoveryCodesNoneLeft"]</strong>
+                    <p>@L["RecoveryCodesMustGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a> @L["RecoveryCodesBeforeLogin"]</p>
+                </div>
             </div>
         }
         else if (recoveryCodesLeft == 1)
         {
-            <div class="alert alert-danger">
-                <strong>@L["RecoveryCodesOneLeft"]</strong>
-                <p>@L["RecoveryCodesCanGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a>.</p>
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <div>
+                    <strong>@L["RecoveryCodesOneLeft"]</strong>
+                    <p>@L["RecoveryCodesCanGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a>.</p>
+                </div>
             </div>
         }
         else if (recoveryCodesLeft <= 3)
         {
-            <div class="alert alert-warning">
-                <strong>@L["RecoveryCodesCountLeft", recoveryCodesLeft]</strong>
-                <p>@L["RecoveryCodesShouldGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a>.</p>
+            <div class="form-alert warning" role="alert">
+                <LucideIcon Name="alert" />
+                <div>
+                    <strong>@L["RecoveryCodesCountLeft", recoveryCodesLeft]</strong>
+                    <p>@L["RecoveryCodesShouldGenerate"] <a href="Account/Manage/GenerateRecoveryCodes">@L["GenerateRecoveryCodesAction"]</a>.</p>
+                </div>
             </div>
         }
 
-        if (isMachineRemembered)
+        <div class="account-actions">
+            @if (isMachineRemembered)
+            {
+                <form @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn btn-secondary">@L["ForgetThisBrowserAction"]</button>
+                </form>
+            }
+            <a href="Account/Manage/Disable2fa" class="btn btn-danger">@L["DisableTwoFactorAction"]</a>
+            <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-secondary">@L["ResetRecoveryCodesAction"]</a>
+        </div>
+    }
+
+    <h3 class="account-subsection">@L["AuthenticatorAppTitle"]</h3>
+    <div class="account-actions">
+        @if (!hasAuthenticator)
         {
-            <form style="display: inline-block" @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
-                <AntiforgeryToken />
-                <button type="submit" class="btn btn-primary">@L["ForgetThisBrowserAction"]</button>
-            </form>
+            <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">@L["AddAuthenticatorAppAction"]</a>
         }
-
-        <a href="Account/Manage/Disable2fa" class="btn btn-primary">@L["DisableTwoFactorAction"]</a>
-        <a href="Account/Manage/GenerateRecoveryCodes" class="btn btn-primary">@L["ResetRecoveryCodesAction"]</a>
-    }
-
-    <h4>@L["AuthenticatorAppTitle"]</h4>
-    @if (!hasAuthenticator)
-    {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">@L["AddAuthenticatorAppAction"]</a>
-    }
-    else
-    {
-        <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">@L["SetupAuthenticatorAppAction"]</a>
-        <a href="Account/Manage/ResetAuthenticator" class="btn btn-primary">@L["ResetAuthenticatorAppAction"]</a>
-    }
+        else
+        {
+            <a href="Account/Manage/EnableAuthenticator" class="btn btn-primary">@L["SetupAuthenticatorAppAction"]</a>
+            <a href="Account/Manage/ResetAuthenticator" class="btn btn-secondary">@L["ResetAuthenticatorAppAction"]</a>
+        }
+    </div>
 }
 else
 {
-    <div class="alert alert-danger">
-        <strong>@L["TrackingConsentRequiredTitle"]</strong>
-        <p>@L["TrackingConsentRequiredDescription"]</p>
+    <div class="form-alert" role="alert">
+        <LucideIcon Name="alert" />
+        <div>
+            <strong>@L["TrackingConsentRequiredTitle"]</strong>
+            <p>@L["TrackingConsentRequiredDescription"]</p>
+        </div>
     </div>
 }
 

@@ -16,20 +16,22 @@
 }
 else
 {
-    <h3>@L["GenerateRecoveryCodesTitle"]</h3>
-    <div class="alert alert-warning" role="alert">
-        <p>
-            <LucideIcon Name="alert" />
-            <strong>@L["RecoveryCodesSafePlace"]</strong>
-        </p>
-        <p>
-            @L["RecoveryCodesLostDevice"]
-        </p>
-        <p>
-            @L["GenerateRecoveryCodesDescription"] <a href="Account/Manage/ResetAuthenticator">@L["ResetAuthenticatorKeysAction"]</a>
-        </p>
+    <h2 class="account-section">@L["GenerateRecoveryCodesTitle"]</h2>
+    <div class="form-alert warning" role="alert">
+        <LucideIcon Name="alert" />
+        <div>
+            <p>
+                <strong>@L["RecoveryCodesSafePlace"]</strong>
+            </p>
+            <p>
+                @L["RecoveryCodesLostDevice"]
+            </p>
+            <p>
+                @L["GenerateRecoveryCodesDescription"] <a href="Account/Manage/ResetAuthenticator">@L["ResetAuthenticatorKeysAction"]</a>
+            </p>
+        </div>
     </div>
-    <div>
+    <div class="account-actions">
         <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
             <AntiforgeryToken />
             <button class="btn btn-danger" type="submit">@L["GenerateRecoveryCodes"]</button>

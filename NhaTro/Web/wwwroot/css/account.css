@@ -1,0 +1,62 @@
+/* PLAN-001: giao diện khu /Account/Manage và trang Công tắc Quản lý.
+   Chỉ dùng class prefix .account- (trừ .switches-page) để không đụng trang khác. */
+
+.account-shell { display:block; min-width:0; }
+.account-shell .page-heading { margin-bottom:24px; }
+.account-body { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; align-items:start; }
+
+.account-nav { display:flex; flex-direction:column; gap:4px; padding:8px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+.account-nav a { display:block; padding:10px 12px; border-radius:8px; color:var(--text-secondary)!important; text-decoration:none; font-size:.875rem; font-weight:500; line-height:1.429; }
+.account-nav a:hover { background:var(--hover-bg); }
+.account-nav a.active { background:var(--accent-soft); color:var(--accent-text)!important; font-weight:600; }
+
+.account-panel { min-width:0; padding:24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+.account-section { margin:0 0 16px; font-size:1.125rem; line-height:1.44; font-weight:600; color:var(--text-primary); }
+.account-panel > .account-section + .account-subsection { margin-top:8px; }
+.account-subsection { margin:24px 0 12px; font-size:1rem; line-height:1.5; font-weight:600; color:var(--text-primary); }
+.account-hint { margin:8px 0 0; color:var(--text-secondary); font-size:.8125rem; line-height:1.538; }
+
+.account-form { max-width:480px; }
+.account-field { display:flex; flex-direction:column; margin-bottom:20px; }
+.account-field-label { margin-bottom:8px; font-size:14px; line-height:20px; font-weight:500; color:var(--text-primary); }
+.account-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; }
+.account-readonly { padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface-subtle); color:var(--text-secondary); overflow-wrap:anywhere; }
+.account-status { display:inline-flex; align-items:center; gap:4px; margin-top:8px; color:var(--success-text,#15803D); font-size:.8125rem; font-weight:600; }
+.account-check { display:flex; align-items:flex-start; gap:8px; font-size:.875rem; line-height:1.5; }
+.account-check .checkbox { margin-top:2px; }
+
+.account-code { display:inline-block; padding:6px 10px; border-radius:6px; background:var(--surface-subtle); font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.875rem; letter-spacing:.04em; }
+.account-codes { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; margin:12px 0 0; }
+.account-steps { margin:12px 0 0; padding-left:20px; }
+.account-steps li + li { margin-top:6px; }
+
+.table-scroll { overflow-x:auto; }
+.account-table { width:100%; border-collapse:collapse; font-size:.875rem; }
+.account-table th, .account-table td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:middle; }
+.account-table th { background:var(--surface-subtle); color:var(--text-secondary); font-weight:600; white-space:nowrap; }
+.account-table tbody tr:last-child td { border-bottom:0; }
+.account-table .actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+.account-table .actions .btn { min-height:36px; padding:4px 12px; }
+.account-table .input { max-width:240px; }
+
+.switches-page .page-heading { margin-bottom:24px; }
+
+.form-alert.warning { background:var(--warning-bg,#FFFBEB); border-color:var(--warning-border,#FDE68A); color:var(--warning-text,#92400E); }
+.form-alert.success { background:var(--success-bg,#F0FDF4); border-color:var(--success-border,#BBF7D0); color:var(--success-text,#15803D); }
+
+@media (max-width:900px) {
+    .account-body { grid-template-columns:minmax(0,1fr); }
+    .account-nav { flex-direction:row; overflow-x:auto; }
+    .account-nav a { white-space:nowrap; }
+}
+@media (max-width:600px) {
+    .account-panel { padding:16px; }
+    .switches-page .account-table thead { display:none; }
+    .switches-page .account-table, .switches-page .account-table tbody, .switches-page .account-table tr { display:block; }
+    .switches-page .account-table tr { padding:12px 0; border-bottom:1px solid var(--border); }
+    .switches-page .account-table tr:last-child { border-bottom:0; }
+    .switches-page .account-table th, .switches-page .account-table td { display:block; padding:0; border:0; }
+    .switches-page .account-table th { background:transparent; }
+    .switches-page .account-table td { margin-top:8px; }
+    .switches-page .account-table .input { max-width:none; }
+}
