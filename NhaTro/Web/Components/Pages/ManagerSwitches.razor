@@ -11,60 +11,46 @@
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["ManagerSwitches"] · @L["AppName"]</PageTitle>
+
 <section class="switches-page" aria-labelledby="switches-title">
     <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ManagerSwitches"]) })" />
+
     <header class="page-heading">
         <div>
             <h1 id="switches-title">@L["ManagerSwitches"]</h1>
             <p>@L["ManagerSwitchesSubtitle"]</p>
         </div>
     </header>
+
     @if (_error)
     {
-        <div class="switches-error" role="alert">
+        <div class="form-alert" role="alert">
             <LucideIcon Name="alert" />
             <span>@L["ApprovalUiError"]</span>
         </div>
     }
-    <div class="switches-card" aria-busy="@(_saving ? "true" : null)">
-        @if (_items is null && !_error)
-        {
-            <div class="switches-loading">
-                <LoadingOverlay Visible="true" Text="@L["ApprovalUiLoading"]" />
-            </div>
-        }
-        else if (_items is { Count: 0 })
-        {
-            <EmptyStateCard Title="@L["ApprovalUiEmpty"]" />
-        }
-        else if (_items is not null)
-        {
-            <div class="switches-note">
-                <LucideIcon Name="info" />
-                <span>@L["ManagerSwitchesSaveHint"]</span>
-            </div>
-            <div class="switches-table-wrap">
-                <table class="switches-table">
-                    <caption class="switches-caption">@L["ManagerSwitches"]</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">@L["ApprovalUiAction"]</th>
-                            <th scope="col">@L["ApprovalUiMode"]</th>
-                        </tr>
-                    </thead>
+    @if (_items is null && !_error)
+    {
+        <p class="account-hint" role="status">@L["ApprovalUiLoading"]</p>
+    }
+    else if (_items is { Count: 0 })
+    {
+        <EmptyStateCard Title="@L["ApprovalUiEmpty"]" />
+    }
+    else if (_items is not null)
+    {
+        <div class="account-panel">
+            <p class="account-hint">@L["ManagerSwitchesSaveHint"]</p>
+            <div class="table-scroll">
+                <table class="account-table">
+                    <thead><tr><th scope="col">@L["ApprovalUiAction"]</th><th scope="col">@L["ApprovalUiMode"]</th></tr></thead>
                     <tbody>
                         @foreach (var item in _items.OrderBy(item => item.Code, StringComparer.OrdinalIgnoreCase))
                         {
                             <tr @key="item.Code">
+                                <th scope="row"><label for="@item.Code">@item.Code · @L[item.Code]</label></th>
                                 <td>
-                                    <label class="switches-action" for="@item.Code">
-                                        <span class="switches-code">@item.Code</span>
-                                        <span>@L[item.Code]</span>
-                                    </label>
-                                </td>
-                                <td>
-                                    <select class="input switches-mode" @key="_renderVersion" id="@item.Code"
-                                            value="@item.Mode" disabled="@_saving"
+                                    <select @key="_renderVersion" id="@item.Code" class="input" value="@item.Mode" disabled="@_saving"
                                             @onchange="args => SaveAsync(item, args)">
                                         @foreach (var mode in item.AllowedModes)
                                         {
@@ -77,9 +63,10 @@
                     </tbody>
                 </table>
             </div>
-        }
-    </div>
+        </div>
+    }
 </section>
+
 @code {
     private IReadOnlyList<ManagerToggleItem>? _items;
     private ManagerToggleCaller _caller = default!;
