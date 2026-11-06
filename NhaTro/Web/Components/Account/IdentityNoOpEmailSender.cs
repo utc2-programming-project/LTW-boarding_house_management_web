@@ -1,21 +1,47 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Web.Data;
 
-namespace Web.Components.Account
+namespace Web.Components.Account;
+
+/// <summary>
+/// Sender dự phòng khi chưa cấu hình SMTP. Ở Development, nội dung thư (kèm liên kết đặt lại
+/// mật khẩu) được ghi ra terminal để vẫn test được luồng quên mật khẩu mà không cần hộp thư thật.
+/// </summary>
+/// <remarks>
+/// Xóa nhánh <c>else if (EmailSender is IdentityNoOpEmailSender)</c> trong RegisterConfirmation.razor
+/// khi đã có sender thật.
+/// </remarks>
+internal sealed class IdentityNoOpEmailSender(
+    IHostEnvironment environment,
+    ILogger<IdentityNoOpEmailSender> logger) : IEmailSender<ApplicationUser>
 {
-    // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
-    internal sealed class IdentityNoOpEmailSender : IEmailSender<ApplicationUser>
+    public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink) =>
+        SendAsync(email, "Confirm your email",
+            $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
+
+    public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink) =>
+        SendAsync(email, "Reset your password",
+            $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
+
+    public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode) =>
+        SendAsync(email, "Reset your password",
+            $"Please reset your password using the following code: {resetCode}");
+
+    private Task SendAsync(string email, string subject, string html)
     {
-        private readonly IEmailSender emailSender = new NoOpEmailSender();
+        if (environment.IsDevelopment())
+        {
+            // Chỉ ở Development: in cả nội dung để lấy được link đặt lại mật khẩu từ terminal.
+            logger.LogWarning(
+                "[MAIL][NoOp] Chưa cấu hình SMTP, không gửi thật. Tới: {Email} | Tiêu đề: {Subject} | Nội dung: {Body}",
+                email, subject, html);
+        }
+        else
+        {
+            logger.LogWarning(
+                "[MAIL][NoOp] Bỏ qua thư '{Subject}' tới {Email}: chưa cấu hình SMTP.", subject, email);
+        }
 
-        public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink) =>
-            emailSender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
-
-        public Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink) =>
-            emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
-
-        public Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode) =>
-            emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password using the following code: {resetCode}");
+        return Task.CompletedTask;
     }
 }

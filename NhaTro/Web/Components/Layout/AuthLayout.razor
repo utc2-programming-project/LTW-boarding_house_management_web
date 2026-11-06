@@ -1,0 +1,33 @@
+@inherits LayoutComponentBase
+@inject IStringLocalizer<Shared> L
+
+@* Khung tối giản cho các trang trước khi đăng nhập: chỉ logo, đổi sáng/tối và VI/EN.
+   Sidebar + topbar của hệ thống chỉ xuất hiện sau khi đã đăng nhập (MainLayout). *@
+<a class="skip-link" href="#main-content">@L["SkipContent"]</a>
+<div class="auth-shell">
+    <header class="auth-shell-bar">
+        <a class="auth-brand" href="/">
+            <span class="app-logo"><LucideIcon Name="building" /></span>
+            <span>@L["AppName"]</span>
+        </a>
+        <div class="topbar-actions">
+            <button class="icon-button" type="button" data-theme-toggle aria-label="@L["ToggleTheme"]" aria-pressed="false"><span class="light-icon"><LucideIcon Name="moon" /></span><span class="dark-icon"><LucideIcon Name="sun" /></span></button>
+            <div class="culture-control">
+                <AntiforgeryToken />
+                <span class="sr-only" id="culture-label">@L["Language"]</span>
+                <div role="group" aria-labelledby="culture-label">
+                    <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
+                    <button type="button" class="culture-button" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
+                </div>
+                <span class="culture-error" role="alert" hidden data-culture-error>@L["CultureError"]</span>
+                <span class="sr-only" role="status" data-culture-status data-loading-label="@L["Loading"]"></span>
+            </div>
+        </div>
+    </header>
+    <main id="main-content" class="auth-main" tabindex="-1">@Body</main>
+</div>
+<div id="blazor-error-ui" data-nosnippet role="alert">
+    <span>@L["ConnectionError"]</span>
+    <a href="" class="reload">@L["Reload"]</a>
+    <button type="button" class="dismiss icon-button" aria-label="@L["Close"]"><LucideIcon Name="close" /></button>
+</div>

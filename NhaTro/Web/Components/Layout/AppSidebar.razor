@@ -4,18 +4,30 @@
     <a class="app-brand" href="/" aria-label="@L["AppName"]" title="@L["AppName"]"><span class="app-logo"><LucideIcon Name="building" /></span><span class="sidebar-label">@L["AppName"]</span></a>
     <button class="icon-button drawer-close" type="button" data-drawer-close aria-label="@L["CloseNavigation"]"><LucideIcon Name="close" /></button>
     <nav class="sidebar-menu" aria-label="@L["Navigation"]">
-        @foreach (var item in AppNavigation.Items)
+        @foreach (var group in AppNavigation.Groups)
         {
-            <AuthorizeView Roles="@item.Roles" Context="menuAuth"
-                           Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
-                @if (item.Href is not null)
-                {
-                    <NavLink href="@item.Href" Match="@(item.Href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
-                }
-                else
-                {
-                    <div class="nav-item unavailable" aria-disabled="true" aria-label="@(L[item.Key] + " — " + L["Unavailable"])" title="@(L[item.Key] + " — " + L["Unavailable"])"><LucideIcon Name="@item.Icon" /><span class="sidebar-label"><span>@L[item.Key]</span><small>@L["Unavailable"]</small></span></div>
-                }
+            <AuthorizeView Roles="@group.Roles" Context="groupAuth">
+                <Authorized>
+                    <div class="sidebar-group">
+                        <p class="sidebar-group-title sidebar-label">@L[group.Key]</p>
+                        <div class="sidebar-group-items">
+                            @foreach (var item in group.Items)
+                            {
+                                <AuthorizeView Roles="@item.Roles" Context="menuAuth"
+                                               Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
+                                    @if (item.Href is not null)
+                                    {
+                                        <NavLink href="@item.Href" Match="@(item.Href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
+                                    }
+                                    else
+                                    {
+                                        <div class="nav-item unavailable" aria-disabled="true" aria-label="@(L[item.Key] + " — " + L["Unavailable"])" title="@(L[item.Key] + " — " + L["Unavailable"])"><LucideIcon Name="@item.Icon" /><span class="sidebar-label"><span>@L[item.Key]</span><small>@L["Unavailable"]</small></span></div>
+                                    }
+                                </AuthorizeView>
+                            }
+                        </div>
+                    </div>
+                </Authorized>
             </AuthorizeView>
         }
     </nav>
