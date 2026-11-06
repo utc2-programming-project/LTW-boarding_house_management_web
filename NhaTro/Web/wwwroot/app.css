@@ -1,3 +1,5 @@
+/* Style dùng chung toàn ứng dụng: trạng thái validation, nút/ô nhập lẻ, khung auth (.auth-shell,
+   .auth-page, .auth-card) và các màn đăng nhập - hồ sơ - quản trị tài khoản. Token màu ở css/theme.css. */
 h1:focus {
     outline: none;
 }
@@ -628,3 +630,7 @@ h1:focus {
             padding-right: 52px;
         }
 }
+
+/* Nhóm nút hành động ở góc phải page-heading (Tạo tài khoản + Thùng rác). */
+.page-heading-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+

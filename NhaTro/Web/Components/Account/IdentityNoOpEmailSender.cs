@@ -1,3 +1,4 @@
+// Sender email dự phòng (NoOp) dùng khi chưa cấu hình SMTP.
 using Microsoft.AspNetCore.Identity;
 using Web.Data;
 

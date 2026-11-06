@@ -1,3 +1,4 @@
+// Khuôn (template) thư HTML dùng chung cho các thư hệ thống.
 using System.Globalization;
 using System.Net;
 
@@ -5,7 +6,8 @@ namespace Web.Infrastructure.Email;
 
 /// <summary>
 /// Nội dung thư HTML tối giản (CSS inline) cho các thư hệ thống: xác nhận tài khoản,
-/// đặt lại mật khẩu. Không phụ thuộc file ngoài để hộp thư hiển thị giống nhau mọi nơi.
+/// đặt lại mật khẩu, mã đặt lại mật khẩu và mời khách thuê.
+/// Không phụ thuộc file ngoài để hộp thư hiển thị giống nhau mọi nơi.
 /// </summary>
 public static class EmailTemplates
 {
@@ -119,6 +121,47 @@ public static class EmailTemplates
                         <p style="margin:0 0 16px">Dùng mã dưới đây để đặt lại mật khẩu cho
                         <strong>{account}</strong>.</p>
                         <p style="margin:0 0 16px;font-size:26px;font-weight:700;letter-spacing:4px">{code}</p>
+                        """));
+    }
+
+    /// <summary>Thư mời khách thuê đặt mật khẩu để tham gia hệ thống (PLAN-006).</summary>
+    public static EmailContent TenantInvitation(
+        string? displayName,
+        string accountEmail,
+        EmailRecipient recipient,
+        string inviteLink,
+        string ownerName)
+    {
+        var name = string.IsNullOrWhiteSpace(displayName) ? accountEmail : displayName.Trim();
+        var account = WebUtility.HtmlEncode(accountEmail);
+        var owner = WebUtility.HtmlEncode(ownerName);
+
+        return IsEnglish
+            ? new EmailContent(
+                Prefix(recipient) + $"Invitation to join the boarding-house system ({accountEmail})",
+                Layout(
+                    heading: "You are invited",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Hi <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px"><strong>{owner}</strong> invited you to the boarding-house
+                        system with the account <strong>{account}</strong>.</p>
+                        {Button("Set your password", inviteLink)}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">The invitation expires in 72 hours.
+                        If you did not expect this email, you can ignore it.</p>
+                        """))
+            : new EmailContent(
+                Prefix(recipient) + $"Lời mời tham gia hệ thống nhà trọ ({accountEmail})",
+                Layout(
+                    heading: "Bạn được mời tham gia",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Xin chào <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px"><strong>{owner}</strong> mời bạn tham gia hệ thống quản lý
+                        nhà trọ với tài khoản <strong>{account}</strong>.</p>
+                        {Button("Đặt mật khẩu", inviteLink)}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Lời mời hết hạn sau 72 giờ.
+                        Nếu bạn không mong đợi thư này, hãy bỏ qua.</p>
                         """));
     }
 

@@ -34,6 +34,35 @@ public static class AccountPermissionRules
     /// <summary>Chi Admin duoc doi vai tro (D1: ChuTro "KHONG doi vai tro").</summary>
     public static bool CanChangeRole(string callerRole) => callerRole == Roles.Admin;
 
+    /// <summary>
+    /// Luật xoá tài khoản: không tự xoá mình, không xoá Admin cuối cùng,
+    /// và chỉ xoá vai trò mà người gọi được quản lý (cùng tập với khoá tài khoản).
+    /// </summary>
+    public static string? CheckDelete(
+        string callerRole,
+        string callerUserId,
+        string targetUserId,
+        string targetRole,
+        bool targetIsLastAdmin)
+    {
+        if (string.Equals(callerUserId, targetUserId, StringComparison.Ordinal))
+        {
+            return AccountErrorCodes.CannotDeleteSelf;
+        }
+
+        if (!LockableRoles(callerRole).Contains(targetRole))
+        {
+            return AccountErrorCodes.Forbidden;
+        }
+
+        if (targetRole == Roles.Admin && targetIsLastAdmin)
+        {
+            return AccountErrorCodes.CannotDeleteLastAdmin;
+        }
+
+        return null;
+    }
+
     /// <summary>Vai tro ma nguoi goi duoc phep khoa/mo khoa.</summary>
     public static IReadOnlyList<string> LockableRoles(string callerRole) => callerRole switch
     {

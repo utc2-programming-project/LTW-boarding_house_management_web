@@ -1,3 +1,4 @@
+// Test tích hợp vòng đời tài khoản trên SQL Server thật.
 using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

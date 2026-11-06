@@ -1,3 +1,4 @@
+// Test tích hợp luồng quên mật khẩu qua HTTP.
 using System.Net;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;

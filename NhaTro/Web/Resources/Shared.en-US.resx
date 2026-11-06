@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- English UI strings; key set must match Shared.vi-VN.resx. -->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -1360,6 +1361,48 @@
   <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Enter your email address.</value></data>
   <data name="ResetPasswordButton" xml:space="preserve"><value>Reset password</value></data>
   <data name="BackToLogin" xml:space="preserve"><value>Back to sign in</value></data>
+  <data name="InviteTenantButton" xml:space="preserve"><value>Invite tenant</value></data>
+  <data name="InviteTenantTitle" xml:space="preserve"><value>Invite a tenant</value></data>
+  <data name="InviteTenantEmailHint" xml:space="preserve"><value>The invitation is sent to this email.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>The tenant opens the email and sets a password; the profile belongs to your account.</value></data>
+  <data name="InviteTenantSend" xml:space="preserve"><value>Send invitation</value></data>
+  <data name="InviteTenantSent" xml:space="preserve"><value>Invitation sent by email.</value></data>
+  <data name="InviteTenantEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="InviteTenantForbidden" xml:space="preserve"><value>You are not assigned to any owner.</value></data>
+  <data name="InviteTenantFailed" xml:space="preserve"><value>Could not send the invitation.</value></data>
+  <data name="InviteAcceptTitle" xml:space="preserve"><value>Join the boarding-house system</value></data>
+  <data name="InviteAcceptAccount" xml:space="preserve"><value>Account: {0}</value></data>
+  <data name="InviteAcceptPasswordHint" xml:space="preserve"><value>At least 8 characters.</value></data>
+  <data name="InviteAcceptSubmit" xml:space="preserve"><value>Set password and join</value></data>
+  <data name="InviteAcceptSuccess" xml:space="preserve"><value>Account created. Sign in with your email and the new password.</value></data>
+  <data name="InviteAcceptInvalid" xml:space="preserve"><value>The link is invalid, already used, or expired.</value></data>
+  <data name="InviteAcceptExpired" xml:space="preserve"><value>The invitation has expired. Please contact the landlord.</value></data>
+  <data name="InviteAcceptUsed" xml:space="preserve"><value>The invitation has already been used.</value></data>
+  <data name="InviteAcceptEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="InviteAcceptFailed" xml:space="preserve"><value>Could not create the account. Check the password.</value></data>
+  <data name="RegisterOwnerTitle" xml:space="preserve"><value>Register as a landlord</value></data>
+  <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Create a landlord account to manage your boarding houses.</value></data>
+  <data name="RegisterOwnerButton" xml:space="preserve"><value>Submit registration</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>An administrator must approve your account before you can sign in.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Registration submitted. Your account is waiting for administrator approval; check your email to confirm the address.</value></data>
+  <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="RegisterOwnerFailed" xml:space="preserve"><value>Registration failed. Check your details and password (at least 8 characters with upper case, lower case and a digit).</value></data>
+  <data name="RegisterOwnerLogin" xml:space="preserve"><value>Already have an account? Sign in</value></data>
+  <data name="RegisterOwnerLink" xml:space="preserve"><value>No account yet? Register as a landlord</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeleteAccountTitle" xml:space="preserve"><value>Delete account</value></data>
+  <data name="DeleteAccountMessage" xml:space="preserve"><value>Permanently delete account {0}? This cannot be undone.</value></data>
+  <data name="DeleteAccountConfirm" xml:space="preserve"><value>Delete account</value></data>
+  <data name="AccountDeleted" xml:space="preserve"><value>Account deleted.</value></data>
+  <data name="ErrorCannotDeleteSelf" xml:space="preserve"><value>You cannot delete the account you are signed in with.</value></data>
+  <data name="ErrorCannotDeleteLastAdmin" xml:space="preserve"><value>The last administrator cannot be deleted.</value></data>
+  <data name="ErrorAccountInUse" xml:space="preserve"><value>The account is linked to a tenant profile. Unlink it first.</value></data>
+  <data name="AccountTrash" xml:space="preserve"><value>Trash</value></data>
+  <data name="AccountTrashTitle" xml:space="preserve"><value>Deleted accounts</value></data>
+  <data name="AccountTrashEmpty" xml:space="preserve"><value>Trash is empty.</value></data>
+  <data name="AccountDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="AccountRestore" xml:space="preserve"><value>Restore</value></data>
+  <data name="AccountRestored" xml:space="preserve"><value>Account restored.</value></data>
   <data name="ForgotPasswordHint" xml:space="preserve"><value>Enter your registered email and we will send a password reset link.</value></data>
   <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>If the email exists in the system, you will receive a link within a few minutes. Remember to check the Spam folder.</value></data>
   <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Use the email of the account you are resetting.</value></data>
