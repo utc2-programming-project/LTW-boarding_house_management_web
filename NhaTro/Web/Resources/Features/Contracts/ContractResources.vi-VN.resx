@@ -222,4 +222,9 @@
   <data name="RenewalErrorAlreadyRenewed" xml:space="preserve"><value>Hợp đồng này đã được gia hạn rồi, không duyệt yêu cầu cũ nữa.</value></data>
   <data name="RenewalErrorDateOverlap" xml:space="preserve"><value>Phòng đã có hợp đồng hiệu lực trong khoảng thời gian gia hạn.</value></data>
   <data name="RenewalErrorEndDateInvalid" xml:space="preserve"><value>Ngày kết thúc mới phải sau ngày kết thúc hiện tại.</value></data>
+  <data name="ContractRoomPropertyLabel" xml:space="preserve"><value>Phòng / Nhà trọ</value></data>
+  <data name="ContractFinanceLabel" xml:space="preserve"><value>Tài chính</value></data>
+  <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Trạng thái / Thao tác</value></data>
+  <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Thuê/tháng</value></data>
+  <data name="ContractDepositShort" xml:space="preserve"><value>Đặt cọc</value></data>
 </root>
