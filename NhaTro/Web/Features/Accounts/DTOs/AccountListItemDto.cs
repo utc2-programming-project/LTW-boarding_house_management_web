@@ -31,4 +31,20 @@ public sealed class AccountListItemDto
 
     /// <summary>Null = Cho duyet.</summary>
     public DateTime? ApprovedAt { get; init; }
+
+    /// <summary>
+    /// VHT-24: Chủ trọ mà tài khoản Quản lý đang trực thuộc.
+    /// Null với vai trò khác hoặc Quản lý chưa được phân công tòa nhà nào.
+    /// </summary>
+    public string? OwnerUserId { get; init; }
+
+    public string? OwnerName { get; init; }
+
+    public string? OwnerEmail { get; init; }
+
+    /// <summary>Các tòa nhà đang được phân công (chỉ có ý nghĩa với vai trò Quản lý).</summary>
+    public IReadOnlyList<AccountAssignedProperty> AssignedProperties { get; init; } = [];
 }
+
+/// <summary>Một tòa nhà đang gán cho Quản lý, hiển thị ở trang Quản trị tài khoản.</summary>
+public sealed record AccountAssignedProperty(int Id, string Name, string? Address);

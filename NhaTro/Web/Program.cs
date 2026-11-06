@@ -519,6 +519,14 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
+// Chay dev: ap migration con thieu de schema DB luon khop voi model.
+if (app.Environment.IsDevelopment())
+{
+    await using var migrationScope = app.Services.CreateAsyncScope();
+    var migrationDb = migrationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await migrationDb.Database.MigrateAsync();
+}
+
 // gieo role, Admin dau tien tu secret, roi den user mau dev.
 using (var scope = app.Services.CreateScope())
 {

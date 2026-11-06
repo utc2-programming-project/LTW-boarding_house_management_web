@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Web.Features.Accounts;
+using Web.Features.Properties.Entities;
 
 namespace Web.Data.Seeding;
 
@@ -99,5 +101,61 @@ public static class DevAccountSeeder
                 await userManager.AddToRoleAsync(user, role);
             }
         }
+
+        if (env.IsDevelopment())
+        {
+            await EnsureManagerAssignmentAsync(services, logger);
+        }
+    }
+
+    /// <summary>
+    /// VHT-24: nối sẵn Quản lý mẫu vào nhà trọ đầu tiên của Chủ trọ mẫu để test luồng
+    /// "Quản lý thấy Chủ trọ / thấy phòng". Chỉ thêm khi chưa có phân công nào.
+    /// </summary>
+    private static async Task EnsureManagerAssignmentAsync(IServiceProvider services, ILogger logger)
+    {
+        var dbFactory = services.GetService<IDbContextFactory<ApplicationDbContext>>();
+        if (dbFactory is null)
+        {
+            return;
+        }
+
+        await using var db = await dbFactory.CreateDbContextAsync();
+        if (await db.PropertyManagers.AnyAsync(assignment => assignment.RevokedAt == null))
+        {
+            return;
+        }
+
+        var ownerEmail = Accounts.First(account => account.Role == Roles.ChuTro).Email;
+        var managerEmail = Accounts.First(account => account.Role == Roles.QuanLy).Email;
+
+        var owner = await db.Users.FirstOrDefaultAsync(user => user.Email == ownerEmail);
+        var manager = await db.Users.FirstOrDefaultAsync(user => user.Email == managerEmail);
+        if (owner is null || manager is null)
+        {
+            return;
+        }
+
+        var property = await db.Properties
+            .Where(item => item.OwnerId == owner.Id && !item.IsDeleted)
+            .OrderBy(item => item.Id)
+            .FirstOrDefaultAsync();
+        if (property is null)
+        {
+            return;
+        }
+
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = property.Id,
+            ManagerUserId = manager.Id,
+            AssignedAt = DateTime.UtcNow,
+            AssignedByUserId = owner.Id,
+        });
+        await db.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Da noi Quan ly mau {ManagerEmail} vao nha tro {PropertyName} cua {OwnerEmail}.",
+            managerEmail, property.Name, ownerEmail);
     }
 }
