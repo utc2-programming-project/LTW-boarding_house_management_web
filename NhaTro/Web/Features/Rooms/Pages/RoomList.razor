@@ -22,9 +22,14 @@
         </div>
         @if (_isOwner)
         {
-            <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                <LucideIcon Name="plus" />@L["P2AddRoom"]
-            </button>
+            <div class="p2-page-actions">
+                <a class="btn btn-secondary" href="/rooms/trash">
+                    <LucideIcon Name="trash" />@L["P2RoomTrashOpen"]
+                </a>
+                <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" />@L["P2AddRoom"]
+                </button>
+            </div>
         }
     </header>
 

@@ -194,6 +194,13 @@ UI cần map mã lỗi sang `IncidentResource` key (đã có? cần kiểm tra).
 
 **Key đề xuất (Phúc tự thêm vào Shared/feature resx):** `RoomPropertyRequired`, `RoomCodeRequired`, `RoomCodeMaxLength`, `RoomFloorInvalid`, `RoomAreaInvalid`, `RoomPriceInvalid`, `RoomStatusInvalid`, `TenantFullNameRequired`, `TenantFullNameMaxLength`, `TenantPhoneRequired`, `TenantPhoneMaxLength`, `TenantEmailInvalid`, `TenantEmailMaxLength`, `TenantIdNumberMaxLength`, `TenantGenderInvalid`, `TenantAddressMaxLength`, `TenantIdIssuedPlaceMaxLength`, `TenantNoteMaxLength`, `TenantRowVersionRequired`, `TenantPhoneInvalid`.
 
+**Trạng thái (đã sửa trên nhánh `bugfix/sua-loi-cac-nhanh-cua-phuc`):**
+
+- Đã thêm 19 key trên vào `Shared.vi-VN.resx` + `Shared.en-US.resx` (parity 1084/1084).
+- Thêm `Web/Resources/ValidationMessages.cs` (đọc resource `Web.Resources.Shared`, fallback VI) và chuyển toàn bộ `ErrorMessage` cứng sang `ErrorMessageResourceType` / `ErrorMessageResourceName` trong `RoomSave`, `PropertySave`, `CreateTenantRequest`, `UpdateTenantRequest`, `UpdateOwnProfileRequest`.
+- `PropertySave` dùng lại 3 key sẵn có `P2ValidationPropertyNameRequired`, `P2ValidationNameLength`, `P2ValidationAddressLength` để không nhân đôi chuỗi dịch.
+- Đã smoke bằng test tạm: `Validator.TryValidateObject` trả đúng thông điệp VI và EN theo `CurrentUICulture` (test tạm đã xóa sau khi chạy).
+
 ### VHT43-PHUC-02 — Placeholder cứng P5
 
 `ServiceCreateModal.razor:71` placeholder="50000", `ServicePriceModal.razor:44` placeholder="100000".  

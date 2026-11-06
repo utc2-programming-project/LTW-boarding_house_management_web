@@ -232,6 +232,8 @@ builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceIssueApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
+// VHT-125 (2E): Chủ trọ / Quản lý duyệt yêu cầu gia hạn do khách thuê gửi.
+builder.Services.AddScoped<ContractRenewalPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();

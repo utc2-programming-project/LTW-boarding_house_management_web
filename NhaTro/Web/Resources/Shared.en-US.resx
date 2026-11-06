@@ -725,8 +725,31 @@
   <data name="P2RoomMovedToTrash" xml:space="preserve"><value>Room moved to trash.</value></data>
   <data name="P2RoomInUse" xml:space="preserve"><value>This room has an active contract and cannot be deleted.</value></data>
   <data name="P2RoomNotFound" xml:space="preserve"><value>Room not found or access is not allowed.</value></data>
-  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in the property.</value></data>
+  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in this property.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>View rooms</value></data>
+  <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Manager assignment</value></data>
+  <data name="P2ManagerPanelHint" xml:space="preserve"><value>A manager only sees the properties and rooms actively assigned to them.</value></data>
+  <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>No manager is assigned to this property yet.</value></data>
+  <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Assigned since</value></data>
+  <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Select a manager account</value></data>
+  <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Select a manager account —</value></data>
+  <data name="P2ManagerOperationFailed" xml:space="preserve"><value>The action could not be completed. Please try again.</value></data>
+  <data name="P2DeleteProperty" xml:space="preserve"><value>Delete property</value></data>
+  <data name="P2DeletePropertyTitle" xml:space="preserve"><value>Move this property to the trash?</value></data>
+  <data name="P2DeletePropertyConfirm" xml:space="preserve"><value>Property '{0}' will be moved to the trash. You can restore it together with its non-deleted rooms.</value></data>
+  <data name="P2PropertyDeleted" xml:space="preserve"><value>Property moved to trash.</value></data>
+  <data name="P2PropertyHasRooms" xml:space="preserve"><value>This property still has rooms. Move all rooms to the trash before deleting it.</value></data>
+  <data name="P2PropertyTrashOpen" xml:space="preserve"><value>Trash</value></data>
+  <data name="P2PropertyTrashTitle" xml:space="preserve"><value>Property trash</value></data>
+  <data name="P2PropertyTrashSubtitle" xml:space="preserve"><value>Soft-deleted properties. Only the owner can view and restore them.</value></data>
+  <data name="P2PropertyTrashTable" xml:space="preserve"><value>Properties in trash</value></data>
+  <data name="P2PropertyTrashRoomCount" xml:space="preserve"><value>Rooms awaiting restore</value></data>
+  <data name="P2PropertyTrashRestoreTitle" xml:space="preserve"><value>Restore this property?</value></data>
+  <data name="P2PropertyTrashRestoreConfirm" xml:space="preserve"><value>Property '{0}' will return to the list together with its non-deleted rooms.</value></data>
+  <data name="P2PropertyTrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
+  <data name="P2PropertyTrashRestored" xml:space="preserve"><value>Property restored.</value></data>
+  <data name="P2PropertyTrashRestoreFailed" xml:space="preserve"><value>The property could not be restored.</value></data>
+  <data name="P2RoomTrashOpen" xml:space="preserve"><value>Trash</value></data>
   <data name="P2TrashTitle" xml:space="preserve"><value>Room trash</value></data>
   <data name="P2TrashSubtitle" xml:space="preserve"><value>Soft-deleted rooms. Only the owner can view and restore them.</value></data>
   <data name="P2TrashTable" xml:space="preserve"><value>Rooms in trash</value></data>
@@ -736,7 +759,8 @@
   <data name="P2TrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
   <data name="P2TrashRestored" xml:space="preserve"><value>Room restored.</value></data>
   <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Could not restore the room. Please try again.</value></data>
-  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>The room code is already used by another room, so it cannot be restored.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>The room code is already used by another room in this property, so it cannot be restored.</value></data>
+  <data name="P2RestorePropertyDeleted" xml:space="preserve"><value>This room's property has been deleted, so the room cannot be restored.</value></data>
 
   <!-- VHT-17: tenant management and tenant profile P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>
@@ -1127,6 +1151,15 @@
   <data name="RenewRequestFailed" xml:space="preserve"><value>The renewal request could not be sent. Please try again.</value></data>
   <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Status</value></data>
   <data name="RenewStatusPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="RenewStatusApproved" xml:space="preserve"><value>Accepted</value></data>
+  <data name="RenewStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="RenewDecidedAtLabel" xml:space="preserve"><value>Replied on</value></data>
+  <data name="RenewRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="RenewTabsLabel" xml:space="preserve"><value>Renewal request sections</value></data>
+  <data name="RenewTabRequest" xml:space="preserve"><value>Send request</value></data>
+  <data name="RenewTabHistory" xml:space="preserve"><value>Result &amp; history</value></data>
+  <data name="RenewPendingBlocksNew" xml:space="preserve"><value>Your latest request is still awaiting management, so no new request can be sent.</value></data>
+  <data name="RenewHistoryEmpty" xml:space="preserve"><value>You have not sent any renewal request for this contract.</value></data>
   <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Sent on</value></data>
   <data name="RenewErrorForbidden" xml:space="preserve"><value>You are not allowed to send a renewal request for this contract.</value></data>
   <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Lease contract not found.</value></data>
@@ -1487,4 +1520,23 @@
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Simulated file preview. Please download the original file to view the full scanned document.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Direct preview is not available for this file type. Please download the file to view its full content.</value></data>
   <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Changes are saved automatically. Report viewing only supports Allow or Deny.</value></data>
+  <data name="RoomPropertyRequired" xml:space="preserve"><value>Please select a property.</value></data>
+  <data name="RoomCodeRequired" xml:space="preserve"><value>Please enter a room code.</value></data>
+  <data name="RoomCodeMaxLength" xml:space="preserve"><value>Room code must not exceed 50 characters.</value></data>
+  <data name="RoomFloorInvalid" xml:space="preserve"><value>Floor must be between 0 and 1000.</value></data>
+  <data name="RoomAreaInvalid" xml:space="preserve"><value>Area must be between 0 and 100000 m².</value></data>
+  <data name="RoomPriceInvalid" xml:space="preserve"><value>Rent price is invalid.</value></data>
+  <data name="RoomStatusInvalid" xml:space="preserve"><value>Room status is invalid.</value></data>
+  <data name="TenantFullNameRequired" xml:space="preserve"><value>Please enter the full name.</value></data>
+  <data name="TenantFullNameMaxLength" xml:space="preserve"><value>Full name must not exceed 200 characters.</value></data>
+  <data name="TenantPhoneRequired" xml:space="preserve"><value>Please enter a phone number.</value></data>
+  <data name="TenantPhoneMaxLength" xml:space="preserve"><value>Phone number must not exceed 20 characters.</value></data>
+  <data name="TenantEmailInvalid" xml:space="preserve"><value>Email is not valid.</value></data>
+  <data name="TenantEmailMaxLength" xml:space="preserve"><value>Email must not exceed 256 characters.</value></data>
+  <data name="TenantIdNumberMaxLength" xml:space="preserve"><value>ID number must not exceed 20 characters.</value></data>
+  <data name="TenantGenderInvalid" xml:space="preserve"><value>Gender is invalid.</value></data>
+  <data name="TenantAddressMaxLength" xml:space="preserve"><value>Address must not exceed 300 characters.</value></data>
+  <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Place of issue must not exceed 200 characters.</value></data>
+  <data name="TenantNoteMaxLength" xml:space="preserve"><value>Note must not exceed 500 characters.</value></data>
+  <data name="TenantRowVersionRequired" xml:space="preserve"><value>RowVersion is missing.</value></data>
 </root>

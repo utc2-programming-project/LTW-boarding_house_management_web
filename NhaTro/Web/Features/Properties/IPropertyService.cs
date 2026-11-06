@@ -23,4 +23,16 @@ public interface IPropertyService
     /// <summary>Sửa nhà trọ trong phạm vi. Không cho đổi chủ sở hữu qua DTO.</summary>
     Task<PropertyResult> UpdateAsync(
         int id, PropertySave request, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Xóa mềm nhà trọ (chỉ Chủ trọ). Chặn khi nhà còn phòng chưa vào thùng rác.</summary>
+    Task<PropertyResult> DeleteAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Nhà trọ của chính người gọi đang nằm trong thùng rác.</summary>
+    Task<PagedResult<PropertyTrashItem>> ListDeletedAsync(
+        PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Đưa nhà trọ ra khỏi thùng rác (chỉ Chủ trọ). Các phòng chưa xóa mềm hiện lại.</summary>
+    Task<PropertyResult> RestoreAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default);
 }

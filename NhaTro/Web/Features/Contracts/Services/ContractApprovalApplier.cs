@@ -6,6 +6,7 @@ using Web.Features.Approvals.Entities;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Rules;
 using Web.Infrastructure.Time;
 
@@ -107,6 +108,7 @@ public sealed class ContractApprovalApplier(TimeProvider clock) : IApprovalAppli
                 }
 
                 await ContractLifecycleOperations.CreateRenewalAsync(db, contract, room, payload.EndDate.Value, ct);
+                await SettlePendingRenewalRequestAsync(db, request, contractId, ct);
                 break;
 
             case ContractApprovalActions.Liquidate:
@@ -131,4 +133,28 @@ public sealed class ContractApprovalApplier(TimeProvider clock) : IApprovalAppli
 
     private static ApprovalApplyException Invalid(string errorCode, string message) =>
         new(errorCode, message);
+
+    /// <summary>
+    /// Chủ trọ duyệt bản ghi SW-07 do Quản lý gửi ⇒ chốt yêu cầu gia hạn của khách (nếu có)
+    /// nhân danh chính Chủ trọ vừa duyệt, không để khách chờ mãi.
+    /// </summary>
+    private static async Task SettlePendingRenewalRequestAsync(
+        ApplicationDbContext db,
+        ManagerApprovalRequest approval,
+        Guid contractId,
+        CancellationToken ct)
+    {
+        var renewalRequest = await db.ContractRenewalRequests
+            .FirstOrDefaultAsync(item => item.ContractId == contractId
+                && item.Status == RenewalRequestStatus.Pending, ct);
+
+        if (renewalRequest is null)
+        {
+            return;
+        }
+
+        renewalRequest.Status = RenewalRequestStatus.Approved;
+        renewalRequest.DecidedAt = approval.DecidedAt;
+        renewalRequest.DecidedByUserId = approval.DecidedByUserId;
+    }
 }

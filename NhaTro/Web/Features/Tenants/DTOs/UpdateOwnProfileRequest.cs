@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Web.Resources;
 
 namespace Web.Features.Tenants.DTOs;
 
@@ -12,19 +13,31 @@ namespace Web.Features.Tenants.DTOs;
 /// </remarks>
 public sealed class UpdateOwnProfileRequest
 {
-    [Required(ErrorMessage = "Nhập số điện thoại.")]
-    [MaxLength(20)]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantPhoneRequired))]
+    [MaxLength(20,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantPhoneMaxLength))]
     public string PhoneNumber { get; set; } = string.Empty;
 
-    [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-    [MaxLength(256)]
+    [EmailAddress(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantEmailInvalid))]
+    [MaxLength(256,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantEmailMaxLength))]
     public string? Email { get; set; }
 
-    [MaxLength(300)]
+    [MaxLength(300,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantAddressMaxLength))]
     public string? PermanentAddress { get; set; }
 
     /// <summary>Bắt buộc: chống ghi đè đồng thời (mục 5.3).</summary>
-    [Required(ErrorMessage = "Thiếu RowVersion.")]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantRowVersionRequired))]
     public string RowVersion { get; set; } = string.Empty;
 
     public void Normalize()

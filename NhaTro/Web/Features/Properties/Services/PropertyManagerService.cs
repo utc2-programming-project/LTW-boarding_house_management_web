@@ -354,6 +354,49 @@ public sealed class PropertyManagerService(
             new ManagerOwnerInfo(first.Id, first.FullName, first.Email, rows.Count));
     }
 
+    public async Task<PropertyManagerCandidateResult> ListAssignableManagersAsync(
+        int propertyId,
+        PropertyCaller caller,
+        CancellationToken ct = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            return PropertyManagerCandidateResult.Failure(
+                PropertyManagerErrorCodes.Forbidden, PropertyManagerErrorMessages.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await OwnsPropertyAsync(db, propertyId, caller.UserId, ct))
+        {
+            return PropertyManagerCandidateResult.Failure(
+                PropertyManagerErrorCodes.PropertyNotFound, PropertyManagerErrorMessages.PropertyNotFound);
+        }
+
+        // Danh sách tài khoản ở đây không đi qua phạm vi AccountService (Chủ trọ chỉ thấy Quản lý
+        // đã được phân công) nên phải truy vấn trực tiếp, nếu không không thể gán Quản lý đầu tiên.
+        var lockoutFloor = AccountStatusRules.PermanentLockout - TimeSpan.FromMinutes(1);
+        var assignedIds = db.PropertyManagers
+            .Where(a => a.PropertyId == propertyId && a.RevokedAt == null)
+            .Select(a => a.ManagerUserId);
+
+        var candidates = await (
+                from userRole in db.UserRoles.AsNoTracking()
+                join user in db.Users.AsNoTracking() on userRole.UserId equals user.Id
+                join role in db.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                where role.Name == Roles.QuanLy
+                      && user.ApprovedAt != null
+                      && (user.LockoutEnd == null || user.LockoutEnd < lockoutFloor)
+                orderby user.Email
+                select new ManagerCandidateDto(
+                    user.Id,
+                    user.Email ?? user.UserName ?? "—",
+                    user.FullName,
+                    assignedIds.Contains(user.Id)))
+            .ToListAsync(ct);
+
+        return PropertyManagerCandidateResult.Success(candidates);
+    }
+
     private static Task<bool> OwnsPropertyAsync(
         ApplicationDbContext db, int propertyId, string ownerUserId, CancellationToken ct) =>
         db.Properties.AnyAsync(p => p.Id == propertyId && p.OwnerId == ownerUserId, ct);

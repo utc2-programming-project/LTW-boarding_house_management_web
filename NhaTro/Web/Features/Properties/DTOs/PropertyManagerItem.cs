@@ -143,3 +143,35 @@ public sealed class ManagerOwnerResult
     public static ManagerOwnerResult Failure(string errorCode, string errorMessage) =>
         new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
 }
+
+/// <summary>Tài khoản Quản lý đủ điều kiện nhận phân công (đã duyệt, chưa bị khóa).</summary>
+public sealed record ManagerCandidateDto(
+    string UserId,
+    string Email,
+    string? FullName,
+    bool IsAssigned)
+{
+    public string Display => string.IsNullOrWhiteSpace(FullName) ? Email : $"{FullName} ({Email})";
+}
+
+/// <summary>Kết quả đọc danh sách tài khoản Quản lý có thể phân công cho một tòa nhà.</summary>
+public sealed class PropertyManagerCandidateResult
+{
+    private PropertyManagerCandidateResult()
+    {
+    }
+
+    public required bool Succeeded { get; init; }
+
+    public IReadOnlyList<ManagerCandidateDto> Items { get; init; } = [];
+
+    public string? ErrorCode { get; init; }
+
+    public string? ErrorMessage { get; init; }
+
+    public static PropertyManagerCandidateResult Success(IReadOnlyList<ManagerCandidateDto> items) =>
+        new() { Succeeded = true, Items = items };
+
+    public static PropertyManagerCandidateResult Failure(string errorCode, string errorMessage) =>
+        new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
+}

@@ -27,6 +27,15 @@ public sealed class ContractRenewalRequest
     /// <summary>UTC — lấy từ <c>TimeProvider</c>, không dùng giờ hệ thống trực tiếp.</summary>
     public DateTime RequestedAt { get; set; }
 
+    /// <summary>UTC thời điểm Ban quản lý quyết định; null khi còn chờ xử lý.</summary>
+    public DateTime? DecidedAt { get; set; }
+
+    /// <summary>Tài khoản Chủ trọ/Quản lý đã chấp thuận hoặc từ chối; null khi còn chờ xử lý.</summary>
+    public string? DecidedByUserId { get; set; }
+
+    /// <summary>Lý do từ chối, bắt buộc khi trạng thái là Từ chối; khách thuê thấy trường này.</summary>
+    public string? RejectReason { get; set; }
+
     /// <summary>Chống hai luồng xử lý cùng một yêu cầu ở tầng ghi.</summary>
     public byte[] RowVersion { get; set; } = [];
 }

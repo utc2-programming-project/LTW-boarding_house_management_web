@@ -129,7 +129,14 @@
                                     }
                                 </td>
                                 <td class="text-right tabular-nums font-bold text-slate-900">
-                                    @if (v.RateType == ServiceRateType.Tiered)
+                                    @if (v.RateType == ServiceRateType.Tiered && !string.IsNullOrWhiteSpace(v.TierLabel))
+                                    {
+                                        <div class="tier-range-label">@v.TierLabel</div>
+                                        <span>@MoneyFormatter.Format(v.Rate)</span>
+                                        <span> / </span>
+                                        <span>@L[GetUnitResourceKey(v.Unit)]</span>
+                                    }
+                                    else if (v.RateType == ServiceRateType.Tiered)
                                     {
                                         @L["TieredTariffLabel"]
                                     }
