@@ -9,19 +9,22 @@
 
 <PageTitle>@L["DisableTwoFactorTitle"]</PageTitle>
 
+<h2 class="account-section">@L["DisableTwoFactorTitle"]</h2>
 <StatusMessage />
-<h3>@L["DisableTwoFactorTitle"]</h3>
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>@L["DisableTwoFactorWarning"]</strong>
-    </p>
-    <p>
-        @L["DisableTwoFactorDescription"] <a href="Account/Manage/ResetAuthenticator">@L["ResetAuthenticatorKeysAction"]</a>
-    </p>
+<div class="form-alert warning" role="alert">
+    <LucideIcon Name="alert" />
+    <div>
+        <p>
+            <strong>@L["DisableTwoFactorWarning"]</strong>
+        </p>
+        <p>
+            @L["DisableTwoFactorDescription"] <a href="Account/Manage/ResetAuthenticator">@L["ResetAuthenticatorKeysAction"]</a>
+        </p>
+    </div>
 </div>
 
-<div>
+<div class="account-actions">
     <form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post">
         <AntiforgeryToken />
         <button class="btn btn-danger" type="submit">@L["DisableTwoFactorAction"]</button>

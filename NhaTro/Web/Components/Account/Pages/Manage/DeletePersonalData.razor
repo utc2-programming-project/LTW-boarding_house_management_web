@@ -2,6 +2,7 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Forms
 @using Web.Data
 @using Web.Features.Accounts
 
@@ -10,33 +11,39 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
 
-<PageTitle>Delete Personal Data</PageTitle>
+<PageTitle>@L["DeletePersonalDataTitle"]</PageTitle>
+
+<h2 class="account-section">@L["DeletePersonalDataTitle"]</h2>
 
 <StatusMessage Message="@message" />
 
-<h3>Delete Personal Data</h3>
-
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
+<div class="form-alert warning" role="alert">
+    <LucideIcon Name="alert" />
+    <div>
+        <strong>@L["PersonalDataDeleteWarning"]</strong>
+    </div>
 </div>
 
-<div>
-    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
+<EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="account-form">
         @if (requirePassword)
         {
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label for="Input.Password" class="form-label">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
+            <FormField TValue="string" Id="Input.Password" Label="@L["PasswordLabel"]" Required="true"
+                       For="() => Input.Password">
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password"
+                           autocomplete="current-password" aria-required="true"
+                           aria-describedby="Input.Password-error" />
+            </FormField>
         }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
-    </EditForm>
-</div>
+
+        <div class="account-actions">
+            <button class="btn btn-danger" type="submit">@L["DeleteAccountAction"]</button>
+        </div>
+    </div>
+</EditForm>
 
 @code {
     private string? message;
@@ -72,7 +79,7 @@
 
         if (requirePassword && !await UserManager.CheckPasswordAsync(user, Input.Password))
         {
-            message = "Error: Incorrect password.";
+            message = $"Error: {L["IncorrectPassword"]}";
             return;
         }
 
@@ -85,7 +92,7 @@
         if (AccountPermissionRules.CheckSelfDelete(isAdmin, isLastAdmin) is not null)
         {
             Logger.LogWarning("Chan xoa Admin cuoi cung {UserId}.", userId);
-            message = "Error: The last admin account cannot be deleted. Create another admin first.";
+            message = $"Error: {L["LastAdminDeleteBlocked"]}";
             return;
         }
 
@@ -98,7 +105,7 @@
                 "Xoa tai khoan {UserId} that bai: {Errors}",
                 userId,
                 string.Join(", ", result.Errors.Select(e => e.Description)));
-            message = "Error: This account still has related data, so it cannot be deleted.";
+            message = $"Error: {L["AccountDeleteRelatedDataBlocked"]}";
             return;
         }
 

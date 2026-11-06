@@ -11,53 +11,56 @@
 
 <PageTitle>@L["ManageExternalLoginsTitle"]</PageTitle>
 
+<h2 class="account-section">@L["ManageExternalLoginsTitle"]</h2>
 <StatusMessage />
+
 @if (currentLogins?.Count > 0)
 {
-    <h3>@L["RegisteredLoginsTitle"]</h3>
-    <table class="table">
-        <tbody>
-            @foreach (var login in currentLogins)
-            {
+    <h3 class="account-subsection">@L["RegisteredLoginsTitle"]</h3>
+    <div class="table-scroll">
+        <table class="account-table">
+            <thead>
                 <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
-                        @if (showRemoveButton)
-                        {
-                            <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <div>
+                    <th scope="col">@L["ManageNavExternalLogins"]</th>
+                    <th scope="col">@L["Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var login in currentLogins)
+                {
+                    <tr>
+                        <td>@login.ProviderDisplayName</td>
+                        <td>
+                            @if (showRemoveButton)
+                            {
+                                <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
+                                    <AntiforgeryToken />
                                     <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
                                     <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="@L["RemoveExternalLoginTitle", login.ProviderDisplayName ?? login.LoginProvider]">@L["RemoveAction"]</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                                    <div class="actions">
+                                        <button type="submit" class="btn btn-danger" title="@L["RemoveExternalLoginTitle", login.ProviderDisplayName ?? login.LoginProvider]">@L["RemoveAction"]</button>
+                                    </div>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 @if (otherLogins?.Count > 0)
 {
-    <h4>@L["AddExternalLoginPrompt"]</h4>
-    <hr />
-    <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
+    <h3 class="account-subsection">@L["AddExternalLoginPrompt"]</h3>
+    <form action="Account/Manage/LinkExternalLogin" method="post">
         <AntiforgeryToken />
-        <div>
-            <p>
-                @foreach (var provider in otherLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="@L["LoginWithProviderTitle", provider.DisplayName ?? provider.Name]">
-                        @provider.DisplayName
-                    </button>
-                }
-            </p>
+        <div class="account-actions">
+            @foreach (var provider in otherLogins)
+            {
+                <button type="submit" class="btn btn-secondary" name="Provider" value="@provider.Name" title="@L["LoginWithProviderTitle", provider.DisplayName ?? provider.Name]">
+                    @provider.DisplayName
+                </button>
+            }
         </div>
     </form>
 }

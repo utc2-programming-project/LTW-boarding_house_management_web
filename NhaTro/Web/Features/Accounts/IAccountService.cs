@@ -18,6 +18,10 @@ public interface IAccountService
         string? keyword, string? roleFilter, int page, int pageSize,
         string callerUserId, string callerRole, CancellationToken ct = default);
 
+    /// <summary>So lieu nhanh cho trang chu Admin; vai tro khac nhan ban rong.</summary>
+    Task<AccountSummaryDto> GetSummaryAsync(
+        string callerUserId, string callerRole, CancellationToken ct = default);
+
     /// <summary>Ho so cua chinh nguoi dang dang nhap.</summary>
     Task<AccountResultOf<MyProfileDto>> GetMyProfileAsync(
         string callerUserId, CancellationToken ct = default);

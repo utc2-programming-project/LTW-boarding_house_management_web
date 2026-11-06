@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Trang chủ</value></data>
+<data name="GreetingMorning" xml:space="preserve"><value>Chào buổi sáng</value></data>
+<data name="GreetingAfternoon" xml:space="preserve"><value>Chào buổi chiều</value></data>
+<data name="GreetingEvening" xml:space="preserve"><value>Chào buổi tối</value></data>
+<data name="RoleChuTro" xml:space="preserve"><value>Chủ trọ</value></data>
+<data name="RoleQuanLy" xml:space="preserve"><value>Quản lý</value></data>
+<data name="RoleAdmin" xml:space="preserve"><value>Quản trị viên</value></data>
+<data name="RoleKhachThue" xml:space="preserve"><value>Khách thuê</value></data>
+<data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+<data name="Updated" xml:space="preserve"><value>Cập nhật lúc</value></data>
+<data name="Loading" xml:space="preserve"><value>Đang tải</value></data>
+<data name="Error" xml:space="preserve"><value>Không tải được dữ liệu. Vui lòng thử lại.</value></data>
+<data name="Denied" xml:space="preserve"><value>Bạn không có quyền xem mục này.</value></data>
+<data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+<data name="Empty" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+<data name="ViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
+<data name="KpiTitle" xml:space="preserve"><value>Tổng quan hôm nay</value></data>
+<data name="KpiUnavailable" xml:space="preserve"><value>Không tải được số liệu</value></data>
+<data name="ActionsTitle" xml:space="preserve"><value>Việc cần làm</value></data>
+<data name="ActionsEmpty" xml:space="preserve"><value>Không có việc nào cần xử lý.</value></data>
+<data name="QuickActionsTitle" xml:space="preserve"><value>Lối tắt</value></data>
+<data name="OpenInvoicesTitle" xml:space="preserve"><value>Hoá đơn chưa thu</value></data>
+<data name="OpenInvoicesEmpty" xml:space="preserve"><value>Không có hoá đơn chưa thu.</value></data>
+<data name="ExpiringTitle" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
+<data name="ExpiringEmpty" xml:space="preserve"><value>Không có hợp đồng nào hết hạn trong 30 ngày tới.</value></data>
+<data name="PendingAccountsTitle" xml:space="preserve"><value>Tài khoản chờ duyệt</value></data>
+<data name="PendingAccountsEmpty" xml:space="preserve"><value>Không có tài khoản chờ duyệt.</value></data>
+<data name="Room" xml:space="preserve"><value>Phòng</value></data>
+<data name="Property" xml:space="preserve"><value>Nhà trọ</value></data>
+<data name="Tenants" xml:space="preserve"><value>Khách thuê</value></data>
+<data name="EndDate" xml:space="preserve"><value>Ngày kết thúc</value></data>
+<data name="DaysLeft" xml:space="preserve"><value>Còn lại</value></data>
+<data name="DaysLeftValue" xml:space="preserve"><value>Còn {0} ngày</value></data>
+<data name="Period" xml:space="preserve"><value>Kỳ</value></data>
+<data name="Outstanding" xml:space="preserve"><value>Còn nợ</value></data>
+<data name="Account" xml:space="preserve"><value>Tài khoản</value></data>
+<data name="Role" xml:space="preserve"><value>Vai trò</value></data>
+<data name="HomeKpiRented" xml:space="preserve"><value>Phòng đang thuê</value></data>
+<data name="HomeKpiTotalRooms" xml:space="preserve"><value>Tổng phòng</value></data>
+<data name="HomeKpiAvailable" xml:space="preserve"><value>Phòng trống</value></data>
+<data name="HomeKpiMaintenance" xml:space="preserve"><value>Phòng bảo trì</value></data>
+<data name="HomeKpiTenants" xml:space="preserve"><value>Khách đang thuê</value></data>
+<data name="HomeKpiTenantTotal" xml:space="preserve"><value>Tổng hồ sơ</value></data>
+<data name="HomeKpiRevenue" xml:space="preserve"><value>Doanh thu tháng</value></data>
+<data name="HomeKpiOutstanding" xml:space="preserve"><value>Công nợ</value></data>
+<data name="HomeKpiExpiring" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
+<data name="HomeKpiExpiringHint" xml:space="preserve"><value>Trong 30 ngày tới</value></data>
+<data name="HomeKpiAccountActive" xml:space="preserve"><value>Tài khoản hoạt động</value></data>
+<data name="HomeKpiAccountPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+<data name="HomeKpiAccountLocked" xml:space="preserve"><value>Bị khoá</value></data>
+<data name="HomeKpiAccountTotal" xml:space="preserve"><value>Tổng tài khoản</value></data>
+<data name="HomeKpiUnpaidInvoices" xml:space="preserve"><value>Hoá đơn chưa thanh toán</value></data>
+<data name="HomeKpiOutstandingAmount" xml:space="preserve"><value>Số tiền còn nợ</value></data>
+<data name="HomeKpiOpenIncidents" xml:space="preserve"><value>Sự cố đang xử lý</value></data>
+<data name="HomeKpiContractDaysLeft" xml:space="preserve"><value>Hợp đồng còn</value></data>
+<data name="HomeKpiContractEnd" xml:space="preserve"><value>Ngày kết thúc</value></data>
+<data name="HomeKpiNoContract" xml:space="preserve"><value>Chưa có hợp đồng đang hiệu lực</value></data>
+<data name="HomeActionUnpaidInvoices" xml:space="preserve"><value>Hoá đơn chưa thu</value></data>
+<data name="HomeActionPendingApprovals" xml:space="preserve"><value>Yêu cầu chờ duyệt</value></data>
+<data name="HomeActionExpiringContracts" xml:space="preserve"><value>Hợp đồng sắp hết hạn (30 ngày)</value></data>
+<data name="HomeActionOpenIncidents" xml:space="preserve"><value>Sự cố đang mở</value></data>
+<data name="HomeActionPendingAccounts" xml:space="preserve"><value>Tài khoản chờ duyệt</value></data>
+<data name="HomeActionLockedAccounts" xml:space="preserve"><value>Tài khoản bị khoá</value></data>
+<data name="QuickRecordReading" xml:space="preserve"><value>Ghi chỉ số</value></data>
+<data name="QuickCreateInvoice" xml:space="preserve"><value>Lập hoá đơn</value></data>
+<data name="QuickNewContract" xml:space="preserve"><value>Tạo hợp đồng</value></data>
+<data name="QuickAddTenant" xml:space="preserve"><value>Thêm khách thuê</value></data>
+<data name="QuickReportIncident" xml:space="preserve"><value>Gửi sự cố</value></data>
+<data name="QuickViewInvoices" xml:space="preserve"><value>Xem hoá đơn</value></data>
+<data name="QuickOpenDashboard" xml:space="preserve"><value>Mở dashboard</value></data>
+<data name="QuickManageAccounts" xml:space="preserve"><value>Quản lý tài khoản</value></data>
+<data name="QuickViewRoom" xml:space="preserve"><value>Phòng của tôi</value></data>
+<data name="QuickMyRequests" xml:space="preserve"><value>Yêu cầu của tôi</value></data>
+<data name="QuickPermissions" xml:space="preserve"><value>Phân quyền</value></data>
+<data name="ComingSoon" xml:space="preserve"><value>Đang hoàn thiện</value></data>
+</root>

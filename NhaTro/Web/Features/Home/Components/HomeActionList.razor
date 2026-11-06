@@ -1,0 +1,27 @@
+@inject IStringLocalizer<HomeResource> L
+
+@if (OpenItems.Count == 0)
+{
+    <EmptyStateCard Title="@L["ActionsEmpty"]" />
+}
+else
+{
+    <ul class="action-list">
+        @foreach (var action in OpenItems)
+        {
+            <li>
+                <a href="@action.Href">
+                    <span class="action-label">@L[action.Key]</span>
+                    <span class="action-count">@action.Count.ToString("N0", NumberFormatter.Display)</span>
+                </a>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public HomeSection<HomeAction> Section { get; set; } = HomeSection<HomeAction>.Loading();
+
+    private IReadOnlyList<HomeAction> OpenItems =>
+        Section.Items.Where(action => action.Count > 0).ToList();
+}

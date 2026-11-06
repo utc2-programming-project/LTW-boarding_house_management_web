@@ -211,6 +211,7 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
+builder.Services.AddScoped<Web.Features.Home.Services.HomePageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
 // VHT-125 (2D): khách thuê gửi yêu cầu gia hạn từ trang "Phòng đang thuê".
 builder.Services.AddScoped<IContractRenewalService, ContractRenewalService>();

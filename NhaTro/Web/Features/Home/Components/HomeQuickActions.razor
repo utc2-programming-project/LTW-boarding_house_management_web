@@ -1,0 +1,63 @@
+@inject IStringLocalizer<HomeResource> L
+
+<section class="quick-actions" aria-labelledby="quick-actions-heading">
+    <h2 id="quick-actions-heading">@L["QuickActionsTitle"]</h2>
+    <div class="quick-grid">
+        @foreach (var action in Items)
+        {
+            @if (action.Href is null)
+            {
+                <div class="quick-action disabled" aria-disabled="true">
+                    <LucideIcon Name="@action.Icon" />
+                    <span>@L[action.Key]</span>
+                    <small>@L["ComingSoon"]</small>
+                </div>
+            }
+            else
+            {
+                <a class="quick-action" href="@action.Href">
+                    <LucideIcon Name="@action.Icon" />
+                    <span>@L[action.Key]</span>
+                </a>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Role { get; set; } = "";
+
+    private IReadOnlyList<QuickAction> Items => Role switch
+    {
+        Roles.ChuTro =>
+        [
+            new("QuickRecordReading", "zap", "/meter-readings"),
+            new("QuickCreateInvoice", "receipt", "/invoices"),
+            new("QuickNewContract", "file", "/contracts"),
+            new("QuickAddTenant", "users", "/tenants"),
+            new("QuickOpenDashboard", "chart", "/dashboard"),
+        ],
+        Roles.QuanLy =>
+        [
+            new("QuickRecordReading", "zap", "/meter-readings"),
+            new("QuickCreateInvoice", "receipt", "/invoices"),
+            new("QuickNewContract", "file", "/contracts"),
+            new("QuickAddTenant", "users", "/tenants"),
+            new("QuickMyRequests", "check", "/my-requests"),
+        ],
+        Roles.Admin =>
+        [
+            new("QuickManageAccounts", "users", "/admin/users"),
+            new("QuickPermissions", "shield", null),
+        ],
+        Roles.KhachThue =>
+        [
+            new("QuickViewRoom", "door", "/tenant/my-room"),
+            new("QuickViewInvoices", "receipt", "/my-invoices"),
+            new("QuickReportIncident", "wrench", "/incidents"),
+        ],
+        _ => [],
+    };
+
+    private sealed record QuickAction(string Key, string Icon, string? Href);
+}

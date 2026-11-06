@@ -1,0 +1,250 @@
+@page "/"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject HomePageService PageService
+@inject IStringLocalizer<HomeResource> L
+@inject TimeProvider Time
+@inject ILogger<HomeView> Logger
+
+<PageTitle>@L["Title"]</PageTitle>
+
+<div class="home-page">
+    <header class="home-header">
+        <div class="home-title-stack">
+            <BreadcrumbNav Items="@Breadcrumbs" />
+            <h1>@Greeting@(string.IsNullOrEmpty(DisplayName) ? "" : $", {DisplayName}")</h1>
+            <p class="home-meta">
+                @if (Snapshot is { } roleSnapshot)
+                {
+                    <span class="role-badge">@RoleLabel(roleSnapshot.Role)</span>
+                }
+                <span>@DateFormatter.Format(Time.TodayVietnam())</span>
+                @if (LastRefreshed is { } refreshed)
+                {
+                    <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
+                }
+            </p>
+        </div>
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
+            <LucideIcon Name="refresh" />@L["Refresh"]
+        </button>
+    </header>
+
+    @if (PageState == HomeLoadState.Loading)
+    {
+        <p class="page-feedback" role="status">@L["Loading"]</p>
+    }
+    else if (PageState is HomeLoadState.Error or HomeLoadState.Denied)
+    {
+        <div class="page-feedback" role="alert">
+            <p>@L[PageState == HomeLoadState.Denied ? "Denied" : "Error"]</p>
+            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (Snapshot is { } snapshot)
+    {
+        <section class="home-section" aria-labelledby="kpi-heading">
+            <h2 id="kpi-heading" class="section-label">@L["KpiTitle"]</h2>
+            <HomeKpiGrid Section="@snapshot.Kpis" Retry="LoadAsync" />
+        </section>
+
+        <HomeQuickActions Role="@snapshot.Role" />
+
+        <div class="home-grid">
+            <HomePanel Title="@L["ActionsTitle"]" Icon="check" State="@snapshot.Actions.State" Retry="LoadAsync">
+                <HomeActionList Section="@snapshot.Actions" />
+            </HomePanel>
+
+            @if (snapshot.Role == Roles.Admin)
+            {
+                <HomePanel Title="@L["PendingAccountsTitle"]" Icon="users" Href="/admin/users"
+                           State="@snapshot.PendingAccounts.State" Retry="LoadAsync">
+                    @if (snapshot.PendingAccounts.Items.Count == 0)
+                    {
+                        <EmptyStateCard Title="@L["PendingAccountsEmpty"]" />
+                    }
+                    else
+                    {
+                        <div class="table-scroll">
+                            <table class="home-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">@L["Account"]</th>
+                                        <th scope="col">@L["Role"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var account in snapshot.PendingAccounts.Items)
+                                    {
+                                        <tr>
+                                            <td>@account.DisplayName</td>
+                                            <td>@RoleLabel(account.Role)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </HomePanel>
+            }
+            else
+            {
+                <HomePanel Title="@L["OpenInvoicesTitle"]" Icon="receipt" Href="@InvoicesHref"
+                           State="@snapshot.OpenInvoices.State" Retry="LoadAsync">
+                    @if (snapshot.OpenInvoices.Items.Count == 0)
+                    {
+                        <EmptyStateCard Title="@L["OpenInvoicesEmpty"]" />
+                    }
+                    else
+                    {
+                        <div class="table-scroll">
+                            <table class="home-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">@L["Room"]</th>
+                                        <th scope="col">@L["Period"]</th>
+                                        <th scope="col" class="num">@L["Outstanding"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var invoice in snapshot.OpenInvoices.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @invoice.RoomCode
+                                                <span class="muted">@invoice.PropertyName</span>
+                                            </td>
+                                            <td>@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
+                                            <td class="num">@MoneyFormatter.Format(invoice.Outstanding)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </HomePanel>
+
+                <HomePanel Title="@L["ExpiringTitle"]" Icon="calendar" Href="/contracts"
+                           State="@snapshot.ExpiringContracts.State" Retry="LoadAsync">
+                    @if (snapshot.ExpiringContracts.Items.Count == 0)
+                    {
+                        <EmptyStateCard Title="@L["ExpiringEmpty"]" />
+                    }
+                    else
+                    {
+                        <div class="table-scroll">
+                            <table class="home-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">@L["Room"]</th>
+                                        <th scope="col">@L["Tenants"]</th>
+                                        <th scope="col">@L["EndDate"]</th>
+                                        <th scope="col">@L["DaysLeft"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var contract in snapshot.ExpiringContracts.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @contract.RoomCode
+                                                <span class="muted">@contract.PropertyName</span>
+                                            </td>
+                                            <td>@contract.TenantNames</td>
+                                            <td>@DateFormatter.Format(contract.EndDate)</td>
+                                            <td>@L["DaysLeftValue", contract.DaysLeft]</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </HomePanel>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    // Giữ ảnh chụp của lượt prerender để lượt interactive không tải lại từ đầu (tránh nháy "Đang tải").
+    // [PersistentState] chỉ chấp nhận property public.
+    [PersistentState]
+    public HomeSnapshot? Snapshot { get; set; }
+
+    [PersistentState]
+    public DateTime? LastRefreshed { get; set; }
+
+    private HomeLoadState PageState = HomeLoadState.Loading;
+    private bool Busy;
+
+    private string DisplayName => Snapshot?.DisplayName ?? "";
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Title"])];
+
+    private string Greeting
+    {
+        get
+        {
+            var hour = VietnamTime.ToVietnam(Time.UtcNow()).Hour;
+            return hour < 12 ? L["GreetingMorning"].Value
+                : hour < 18 ? L["GreetingAfternoon"].Value
+                : L["GreetingEvening"].Value;
+        }
+    }
+
+    private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my-invoices" : "/invoices";
+
+    private string RoleLabel(string role) => role switch
+    {
+        Roles.Admin => L["RoleAdmin"].Value,
+        Roles.ChuTro => L["RoleChuTro"].Value,
+        Roles.QuanLy => L["RoleQuanLy"].Value,
+        Roles.KhachThue => L["RoleKhachThue"].Value,
+        _ => role,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Snapshot is not null)
+        {
+            PageState = HomeLoadState.Loaded;
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (Busy) return;
+        Busy = true;
+        if (Snapshot is null)
+        {
+            PageState = HomeLoadState.Loading;
+            StateHasChanged();
+        }
+
+        try
+        {
+            Snapshot = await PageService.LoadAsync();
+            PageState = HomeLoadState.Loaded;
+            LastRefreshed = VietnamTime.ToVietnam(Time.UtcNow());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Logger.LogWarning(ex, "Home page denied for current user");
+            Snapshot = null;
+            PageState = HomeLoadState.Denied;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Home page failed to load");
+            Snapshot = null;
+            PageState = HomeLoadState.Error;
+        }
+        finally
+        {
+            Busy = false;
+        }
+    }
+}
