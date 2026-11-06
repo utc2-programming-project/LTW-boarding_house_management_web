@@ -1449,4 +1449,5 @@
   <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Bản xem trước mô phỏng</value></data>
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
+  <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Các mục xem báo cáo chỉ có chế độ Cho phép hoặc Không thể.</value></data>
 </root>
