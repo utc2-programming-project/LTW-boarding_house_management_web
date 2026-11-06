@@ -168,9 +168,66 @@ public sealed class P1P3RoleAccessTests(SqlServerFixture fixture)
         var wrongRole = await managers.AssignAsync(data.PropertyA, "owner-b", OwnerA);
         Assert.Equal(PropertyManagerErrorCodes.InvalidManagerRole, wrongRole.ErrorCode);
 
+        // Danh sách ứng viên chỉ Chủ trọ đọc được và chưa chứa Quản lý đã gán.
+        var candidatesBefore = await managers.ListCandidatesAsync(data.PropertyA, OwnerA);
+        Assert.True(candidatesBefore.Succeeded, candidatesBefore.ErrorMessage);
+        Assert.Contains(candidatesBefore.Items, candidate => candidate.UserId == "manager-1");
+        Assert.Equal(
+            PropertyManagerErrorCodes.Forbidden,
+            (await managers.ListCandidatesAsync(data.PropertyA, Manager)).ErrorCode);
+
+        // Chưa phân công: Quản lý chưa có Chủ trọ; danh sách tòa nhà để gán của Chủ trọ A có nhà A.
+        var ownerBefore = await managers.GetOwnerForManagerAsync(Manager);
+        Assert.True(ownerBefore.Succeeded, ownerBefore.ErrorMessage);
+        Assert.Null(ownerBefore.Owner);
+        Assert.Equal(
+            PropertyManagerErrorCodes.Forbidden,
+            (await managers.GetOwnerForManagerAsync(OwnerA)).ErrorCode);
+
+        var assignableBefore = await managers.ListAssignablePropertiesAsync("manager-1", OwnerA);
+        Assert.True(assignableBefore.Succeeded, assignableBefore.ErrorMessage);
+        Assert.Contains(assignableBefore.Items, property => property.Id == data.PropertyA);
+        Assert.Equal(
+            PropertyManagerErrorCodes.Forbidden,
+            (await managers.ListAssignablePropertiesAsync("manager-1", Manager)).ErrorCode);
+
         // Gán manager-1 -> nhà A.
         var assigned = await managers.AssignAsync(data.PropertyA, "manager-1", OwnerA);
         Assert.True(assigned.Succeeded, assigned.ErrorMessage);
+
+        // Sau khi gán: Quản lý thấy đúng Chủ trọ và tòa nhà của mình.
+        var ownerAfter = await managers.GetOwnerForManagerAsync(Manager);
+        Assert.True(ownerAfter.Succeeded, ownerAfter.ErrorMessage);
+        Assert.NotNull(ownerAfter.Owner);
+        Assert.Equal(OwnerA.UserId, ownerAfter.Owner!.OwnerUserId);
+        Assert.Equal(1, ownerAfter.Owner.PropertyCount);
+
+        var managerAssignments = await managers.ListAssignmentsForManagerAsync("manager-1", OwnerA);
+        Assert.True(managerAssignments.Succeeded, managerAssignments.ErrorMessage);
+        var managerAssignment = Assert.Single(managerAssignments.Items);
+        Assert.Equal(data.PropertyA, managerAssignment.PropertyId);
+        Assert.False(string.IsNullOrWhiteSpace(managerAssignment.PropertyName));
+
+        // Chủ trọ B không thấy phân công của Chủ trọ A.
+        var otherOwnerView = await managers.ListAssignmentsForManagerAsync("manager-1", OwnerB);
+        Assert.True(otherOwnerView.Succeeded, otherOwnerView.ErrorMessage);
+        Assert.Empty(otherOwnerView.Items);
+
+        // Đã gán nhà A nên nhà A không còn trong danh sách trống của Chủ trọ A.
+        var assignableAfter = await managers.ListAssignablePropertiesAsync("manager-1", OwnerA);
+        Assert.True(assignableAfter.Succeeded, assignableAfter.ErrorMessage);
+        Assert.DoesNotContain(assignableAfter.Items, property => property.Id == data.PropertyA);
+
+        var candidatesAfter = await managers.ListCandidatesAsync(data.PropertyA, OwnerA);
+        Assert.True(candidatesAfter.Succeeded, candidatesAfter.ErrorMessage);
+        Assert.DoesNotContain(candidatesAfter.Items, candidate => candidate.UserId == "manager-1");
+
+        // Quản lý chỉ thuộc một Chủ trọ: Chủ trọ B không gán lại được manager-1.
+        var crossOwner = await managers.AssignAsync(data.PropertyB, "manager-1", OwnerB);
+        Assert.Equal(PropertyManagerErrorCodes.ManagerOwnedByAnotherOwner, crossOwner.ErrorCode);
+        var candidatesForOwnerB = await managers.ListCandidatesAsync(data.PropertyB, OwnerB);
+        Assert.True(candidatesForOwnerB.Succeeded, candidatesForOwnerB.ErrorMessage);
+        Assert.DoesNotContain(candidatesForOwnerB.Items, candidate => candidate.UserId == "manager-1");
 
         // Quản lý chỉ thấy nhà A/phòng A.
         var props = await properties.ListAsync(new PropertyFilter(), Manager);

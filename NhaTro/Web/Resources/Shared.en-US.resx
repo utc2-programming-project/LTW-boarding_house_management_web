@@ -632,6 +632,37 @@
   <data name="P2ValidationAddressLength" xml:space="preserve"><value>Address must be 500 characters or fewer.</value></data>
   <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Some of the entered data is invalid. Please review it.</value></data>
   <data name="P2PropertyNotFound" xml:space="preserve"><value>Property not found or access is not allowed.</value></data>
+  <data name="P2ManagersTitle" xml:space="preserve"><value>Assigned managers</value></data>
+  <data name="P2ManagersSubtitle" xml:space="preserve"><value>Assign manager accounts to this property.</value></data>
+  <data name="P2NoManagers" xml:space="preserve"><value>No managers are assigned yet.</value></data>
+  <data name="P2SelectManager" xml:space="preserve"><value>Select a manager</value></data>
+  <data name="P2AssignManager" xml:space="preserve"><value>Assign manager</value></data>
+  <data name="P2RevokeManager" xml:space="preserve"><value>Revoke</value></data>
+  <data name="P2AssignedAt" xml:space="preserve"><value>Assigned at</value></data>
+  <data name="P2ManagerAssigned" xml:space="preserve"><value>Manager assigned.</value></data>
+  <data name="P2ManagerRevoked" xml:space="preserve"><value>Manager revoked.</value></data>
+  <data name="P2ManagerSaveFailed" xml:space="preserve"><value>Could not update the assignment. Please try again.</value></data>
+  <data name="P2NoAvailableManagers" xml:space="preserve"><value>No manager accounts are available to assign.</value></data>
+  <data name="P2ManagerAlreadyAssigned" xml:space="preserve"><value>This manager is already assigned to the property.</value></data>
+  <data name="P2ManagerNotAssigned" xml:space="preserve"><value>This manager is not assigned to the property.</value></data>
+  <data name="P2ManagerInvalidRole" xml:space="preserve"><value>The selected account is not a manager.</value></data>
+  <data name="P2ManagerNotFound" xml:space="preserve"><value>Manager account not found.</value></data>
+  <data name="P2ManagerOwnedByAnotherOwner" xml:space="preserve"><value>This manager already belongs to another owner.</value></data>
+  <data name="ColumnOwner" xml:space="preserve"><value>Owner</value></data>
+  <data name="OwnerUnassigned" xml:space="preserve"><value>No owner</value></data>
+  <data name="AssignProperties" xml:space="preserve"><value>Assign buildings</value></data>
+  <data name="AssignPropertiesTitle" xml:space="preserve"><value>Assign buildings</value></data>
+  <data name="AssignedProperties" xml:space="preserve"><value>Assigned buildings</value></data>
+  <data name="NoAssignedProperties" xml:space="preserve"><value>No buildings assigned yet.</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Select a building</value></data>
+  <data name="AssignProperty" xml:space="preserve"><value>Assign</value></data>
+  <data name="RevokeProperty" xml:space="preserve"><value>Revoke</value></data>
+  <data name="PropertyAssigned" xml:space="preserve"><value>Building assigned.</value></data>
+  <data name="PropertyRevoked" xml:space="preserve"><value>Building revoked.</value></data>
+  <data name="NoAvailableProperties" xml:space="preserve"><value>No buildings left to assign.</value></data>
+  <data name="ManagerOwnerBanner" xml:space="preserve"><value>Your owner: {0}</value></data>
+  <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>You have not been assigned to any owner yet. Contact your owner to be assigned a building.</value></data>
+  <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Could not load owner information.</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Rooms</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Track rooms, rental prices, and occupancy status</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Add room</value></data>

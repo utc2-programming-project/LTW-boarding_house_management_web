@@ -632,6 +632,37 @@
   <data name="P2ValidationAddressLength" xml:space="preserve"><value>Địa chỉ không được vượt quá 500 ký tự.</value></data>
   <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Dữ liệu nhập chưa hợp lệ. Vui lòng kiểm tra lại.</value></data>
   <data name="P2PropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ hoặc bạn không có quyền truy cập.</value></data>
+  <data name="P2ManagersTitle" xml:space="preserve"><value>Quản lý được phân công</value></data>
+  <data name="P2ManagersSubtitle" xml:space="preserve"><value>Gán tài khoản Quản lý vào nhà trọ này.</value></data>
+  <data name="P2NoManagers" xml:space="preserve"><value>Chưa có Quản lý nào được phân công.</value></data>
+  <data name="P2SelectManager" xml:space="preserve"><value>Chọn Quản lý</value></data>
+  <data name="P2AssignManager" xml:space="preserve"><value>Gán Quản lý</value></data>
+  <data name="P2RevokeManager" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="P2AssignedAt" xml:space="preserve"><value>Ngày gán</value></data>
+  <data name="P2ManagerAssigned" xml:space="preserve"><value>Đã gán Quản lý.</value></data>
+  <data name="P2ManagerRevoked" xml:space="preserve"><value>Đã thu hồi Quản lý.</value></data>
+  <data name="P2ManagerSaveFailed" xml:space="preserve"><value>Không thể cập nhật phân công. Vui lòng thử lại.</value></data>
+  <data name="P2NoAvailableManagers" xml:space="preserve"><value>Không còn tài khoản Quản lý nào để gán.</value></data>
+  <data name="P2ManagerAlreadyAssigned" xml:space="preserve"><value>Quản lý đã được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerNotAssigned" xml:space="preserve"><value>Quản lý chưa được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerInvalidRole" xml:space="preserve"><value>Tài khoản được chọn không phải Quản lý.</value></data>
+  <data name="P2ManagerNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản Quản lý.</value></data>
+  <data name="P2ManagerOwnedByAnotherOwner" xml:space="preserve"><value>Quản lý này đã thuộc một chủ trọ khác.</value></data>
+  <data name="ColumnOwner" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="OwnerUnassigned" xml:space="preserve"><value>Chưa có chủ trọ</value></data>
+  <data name="AssignProperties" xml:space="preserve"><value>Phân công tòa nhà</value></data>
+  <data name="AssignPropertiesTitle" xml:space="preserve"><value>Phân công tòa nhà</value></data>
+  <data name="AssignedProperties" xml:space="preserve"><value>Tòa nhà đang được phân công</value></data>
+  <data name="NoAssignedProperties" xml:space="preserve"><value>Chưa được phân công tòa nhà nào.</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Chọn tòa nhà</value></data>
+  <data name="AssignProperty" xml:space="preserve"><value>Phân công</value></data>
+  <data name="RevokeProperty" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="PropertyAssigned" xml:space="preserve"><value>Đã phân công tòa nhà.</value></data>
+  <data name="PropertyRevoked" xml:space="preserve"><value>Đã thu hồi tòa nhà.</value></data>
+  <data name="NoAvailableProperties" xml:space="preserve"><value>Không còn tòa nhà nào để phân công.</value></data>
+  <data name="ManagerOwnerBanner" xml:space="preserve"><value>Chủ trọ của bạn: {0}</value></data>
+  <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>Bạn chưa được phân công cho Chủ trọ nào. Vui lòng liên hệ Chủ trọ để được phân công tòa nhà.</value></data>
+  <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Không tải được thông tin Chủ trọ.</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Phòng</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Theo dõi phòng, giá thuê và trạng thái sử dụng</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Thêm phòng</value></data>

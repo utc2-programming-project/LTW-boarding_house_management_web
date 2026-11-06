@@ -88,19 +88,62 @@ public sealed class AccountService(
             })
             .ToListAsync(ct);
 
+        var managerUserIds = rows
+            .Where(row => row.Role == Roles.QuanLy)
+            .Select(row => row.Id)
+            .ToList();
+
+        var assignmentRows = new List<ManagerAssignmentRow>();
+        if (managerUserIds.Count > 0)
+        {
+            assignmentRows = await (
+                    from assignment in db.PropertyManagers.AsNoTracking()
+                    join property in db.Properties.AsNoTracking() on assignment.PropertyId equals property.Id
+                    join owner in db.Users.AsNoTracking() on property.OwnerId equals owner.Id
+                    where assignment.RevokedAt == null && managerUserIds.Contains(assignment.ManagerUserId)
+                    orderby property.Name
+                    select new ManagerAssignmentRow(
+                        assignment.ManagerUserId,
+                        property.Id,
+                        property.Name,
+                        property.Address,
+                        owner.Id,
+                        owner.FullName,
+                        owner.Email))
+                .ToListAsync(ct);
+        }
+
+        var assignmentsByManager = assignmentRows
+            .GroupBy(row => row.ManagerUserId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
         var items = rows
-            .Select(row => new AccountListItemDto
+            .Select(row =>
             {
-                Id = row.Id,
-                UserName = row.UserName ?? string.Empty,
-                Email = row.Email,
-                PhoneNumber = row.PhoneNumber,
-                FullName = row.FullName,
-                Role = row.Role,
-                IsLocked = AccountStatusRules.IsPermanentlyLocked(row.LockoutEnd),
-                LockoutEnd = row.LockoutEnd,
-                Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd),
-                ApprovedAt = row.ApprovedAt,
+                assignmentsByManager.TryGetValue(row.Id, out var assigned);
+                var owner = assigned?.FirstOrDefault();
+
+                return new AccountListItemDto
+                {
+                    Id = row.Id,
+                    UserName = row.UserName ?? string.Empty,
+                    Email = row.Email,
+                    PhoneNumber = row.PhoneNumber,
+                    FullName = row.FullName,
+                    Role = row.Role,
+                    IsLocked = AccountStatusRules.IsPermanentlyLocked(row.LockoutEnd),
+                    LockoutEnd = row.LockoutEnd,
+                    Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd),
+                    ApprovedAt = row.ApprovedAt,
+                    OwnerUserId = owner?.OwnerUserId,
+                    OwnerName = owner?.OwnerName,
+                    OwnerEmail = owner?.OwnerEmail,
+                    AssignedProperties = assigned is null
+                        ? new List<AccountAssignedProperty>()
+                        : assigned
+                            .Select(item => new AccountAssignedProperty(item.PropertyId, item.PropertyName, item.PropertyAddress))
+                            .ToList(),
+                };
             })
             .ToList();
 
@@ -731,4 +774,14 @@ public sealed class AccountService(
 
     private static string CollapseSpaces(string value) =>
         string.Join(' ', value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    /// <summary>Dòng phân công Quản lý → tòa nhà, kèm Chủ trọ sở hữu tòa.</summary>
+    private sealed record ManagerAssignmentRow(
+        string ManagerUserId,
+        int PropertyId,
+        string PropertyName,
+        string? PropertyAddress,
+        string OwnerUserId,
+        string? OwnerName,
+        string? OwnerEmail);
 }

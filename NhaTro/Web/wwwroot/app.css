@@ -499,6 +499,23 @@ h1:focus {
     line-height: 18px;
 }
 
+/* Cột "Chủ trọ" của tài khoản Quản lý (VHT-24). */
+.account-owner {
+    display: flex;
+    flex-direction: column;
+}
+
+.owner-badge.unassigned {
+    display: inline-flex;
+    width: fit-content;
+    padding: 2px 8px;
+    border: 1px solid var(--control-border, #CBD5E1);
+    border-radius: 999px;
+    color: var(--text-muted, #64748B);
+    font-size: 12px;
+    line-height: 18px;
+}
+
 .row-actions {
     display: inline-flex;
     flex-wrap: wrap;

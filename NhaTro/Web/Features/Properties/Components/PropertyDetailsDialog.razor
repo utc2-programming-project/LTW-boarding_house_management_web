@@ -1,3 +1,4 @@
+@using Web.Features.Properties
 @inject IStringLocalizer<Shared> L
 @inject PropertyPageService PageService
 @inject ILogger<PropertyDetailsDialog> Logger
@@ -30,6 +31,74 @@
                     <div><dt>@L["P2UpdatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.UpdatedAt)</dd></div>
                 }
             </dl>
+            @if (IsOwner)
+            {
+                <section class="p2-managers" aria-labelledby="property-managers-title">
+                    <div class="p2-managers-heading">
+                        <div>
+                            <h3 id="property-managers-title">@L["P2ManagersTitle"]</h3>
+                            <p>@L["P2ManagersSubtitle"]</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_managerMessage))
+                    {
+                        <div class="p2-alert success" role="status">@_managerMessage</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_managerError))
+                    {
+                        <div class="p2-alert error" role="alert">@_managerError</div>
+                    }
+
+                    @if (_managersLoading)
+                    {
+                        <div class="p2-inline-loading" role="status">@L["P2Loading"]</div>
+                    }
+                    else if (_managers.Count == 0)
+                    {
+                        <p class="p2-manager-empty">@L["P2NoManagers"]</p>
+                    }
+                    else
+                    {
+                        <ul class="p2-manager-list">
+                            @foreach (var manager in _managers)
+                            {
+                                <li @key="manager.ManagerUserId">
+                                    <div class="p2-manager-info">
+                                        <strong>@ManagerLabel(manager)</strong>
+                                        <span>@L["P2AssignedAt"]: @DateFormatter.FormatDateTime(manager.AssignedAt)</span>
+                                    </div>
+                                    <button class="btn btn-secondary" type="button" disabled="@_managerBusy"
+                                            @onclick="() => RevokeManagerAsync(manager.ManagerUserId)">
+                                        @L["P2RevokeManager"]
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="p2-manager-form">
+                        <label for="manager-candidate">@L["P2SelectManager"]</label>
+                        <select id="manager-candidate" class="input" @bind="_selectedManagerId"
+                                disabled="@(_managerBusy || _candidates.Count == 0)">
+                            <option value="">@L["P2SelectManager"]</option>
+                            @foreach (var candidate in _candidates)
+                            {
+                                <option value="@candidate.UserId">@CandidateLabel(candidate)</option>
+                            }
+                        </select>
+                        <button class="btn btn-primary" type="button"
+                                disabled="@(_managerBusy || string.IsNullOrWhiteSpace(_selectedManagerId))"
+                                @onclick="AssignManagerAsync">
+                            @L["P2AssignManager"]
+                        </button>
+                    </div>
+                    @if (!_managersLoading && _candidates.Count == 0)
+                    {
+                        <p class="p2-manager-empty">@L["P2NoAvailableManagers"]</p>
+                    }
+                </section>
+            }
             <div class="p2-details-actions">
                 <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2ViewRooms"]</button>
                 @if (IsOwner)
@@ -52,10 +121,20 @@
     private PropertyDetail? _detail;
     private string? _error;
     private bool _loading = true;
+    private IReadOnlyList<PropertyManagerItem> _managers = [];
+    private IReadOnlyList<PropertyManagerCandidate> _candidates = [];
+    private string? _selectedManagerId;
+    private string? _managerError;
+    private string? _managerMessage;
+    private bool _managersLoading;
+    private bool _managerBusy;
     private string DialogTitle => _detail?.Name ?? Property.Name;
 
     protected override async Task OnInitializedAsync()
-        => await LoadAsync();
+    {
+        await LoadAsync();
+        if (IsOwner) await LoadManagersAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -84,4 +163,121 @@
         if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
         await OnViewRooms.InvokeAsync(Property.Id);
     }
+
+    private async Task LoadManagersAsync()
+    {
+        _managersLoading = true;
+        _managerError = null;
+        try
+        {
+            var assignments = await PageService.ListManagersAsync(Property.Id);
+            if (!assignments.Succeeded)
+            {
+                _managerError = ManagerError(assignments.ErrorCode);
+                return;
+            }
+
+            var candidates = await PageService.ListManagerCandidatesAsync(Property.Id);
+            if (!candidates.Succeeded)
+            {
+                _managerError = ManagerError(candidates.ErrorCode);
+                return;
+            }
+
+            _managers = assignments.Items;
+            _candidates = candidates.Items;
+            if (_candidates.All(candidate => candidate.UserId != _selectedManagerId))
+            {
+                _selectedManagerId = _candidates.FirstOrDefault()?.UserId;
+            }
+        }
+        catch (Exception ex)
+        {
+            _managerError = L["P2ManagerSaveFailed"];
+            Logger.LogError(ex, "P2 property manager list load failed");
+        }
+        finally
+        {
+            _managersLoading = false;
+        }
+    }
+
+    private async Task AssignManagerAsync()
+    {
+        if (_managerBusy || string.IsNullOrWhiteSpace(_selectedManagerId)) return;
+        _managerBusy = true;
+        _managerError = null;
+        _managerMessage = null;
+        try
+        {
+            var result = await PageService.AssignManagerAsync(Property.Id, _selectedManagerId);
+            if (!result.Succeeded)
+            {
+                _managerError = ManagerError(result.ErrorCode);
+                return;
+            }
+
+            _managerMessage = L["P2ManagerAssigned"];
+            _selectedManagerId = null;
+            await LoadManagersAsync();
+        }
+        catch (Exception ex)
+        {
+            _managerError = L["P2ManagerSaveFailed"];
+            Logger.LogError(ex, "P2 property manager assign failed");
+        }
+        finally
+        {
+            _managerBusy = false;
+        }
+    }
+
+    private async Task RevokeManagerAsync(string managerUserId)
+    {
+        if (_managerBusy || string.IsNullOrWhiteSpace(managerUserId)) return;
+        _managerBusy = true;
+        _managerError = null;
+        _managerMessage = null;
+        try
+        {
+            var result = await PageService.RevokeManagerAsync(Property.Id, managerUserId);
+            if (!result.Succeeded)
+            {
+                _managerError = ManagerError(result.ErrorCode);
+                return;
+            }
+
+            _managerMessage = L["P2ManagerRevoked"];
+            await LoadManagersAsync();
+        }
+        catch (Exception ex)
+        {
+            _managerError = L["P2ManagerSaveFailed"];
+            Logger.LogError(ex, "P2 property manager revoke failed");
+        }
+        finally
+        {
+            _managerBusy = false;
+        }
+    }
+
+    private string ManagerError(string? errorCode) => errorCode switch
+    {
+        PropertyManagerErrorCodes.Forbidden => L["P2Forbidden"],
+        PropertyManagerErrorCodes.PropertyNotFound => L["P2PropertyNotFound"],
+        PropertyManagerErrorCodes.AlreadyAssigned => L["P2ManagerAlreadyAssigned"],
+        PropertyManagerErrorCodes.NotAssigned => L["P2ManagerNotAssigned"],
+        PropertyManagerErrorCodes.InvalidManagerRole => L["P2ManagerInvalidRole"],
+        PropertyManagerErrorCodes.ManagerNotFound => L["P2ManagerNotFound"],
+        PropertyManagerErrorCodes.ManagerOwnedByAnotherOwner => L["P2ManagerOwnedByAnotherOwner"],
+        _ => L["P2ManagerSaveFailed"]
+    };
+
+    private static string ManagerLabel(PropertyManagerItem manager) =>
+        manager.ManagerEmail ?? manager.ManagerUserId;
+
+    private static string CandidateLabel(PropertyManagerCandidate candidate) =>
+        string.IsNullOrWhiteSpace(candidate.FullName)
+            ? candidate.Email ?? candidate.UserId
+            : $"{candidate.FullName} ({candidate.Email ?? candidate.UserId})";
 }
