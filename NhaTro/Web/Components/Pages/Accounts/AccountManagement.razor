@@ -210,24 +210,32 @@
             new DataTableColumn<AccountListItemDto>
             {
                 Key = "owner",
-                Title = L["ColumnOwner"],
+                Title = L["ColumnOwnerOrProperty"],
                 Template = user => @<span class="account-owner">
-                    @if (user.Role != Roles.QuanLy)
-                    {
-                        <span class="note">@L["NoData"]</span>
-                    }
-                    else if (string.IsNullOrWhiteSpace(user.OwnerName)
-                             && string.IsNullOrWhiteSpace(user.OwnerEmail))
+                    @if (user.Role == Roles.QuanLy
+                         && string.IsNullOrWhiteSpace(user.OwnerName)
+                         && string.IsNullOrWhiteSpace(user.OwnerEmail))
                     {
                         <span class="owner-badge unassigned">@L["OwnerUnassigned"]</span>
                     }
-                    else
+                    else if (user.Role == Roles.QuanLy)
                     {
                         <span class="account-name">@(string.IsNullOrWhiteSpace(user.OwnerName) ? user.OwnerEmail : user.OwnerName)</span>
                         @if (user.AssignedProperties.Count > 0)
                         {
                             <small class="account-sub">@string.Join(", ", user.AssignedProperties.Select(property => property.Name))</small>
                         }
+                    }
+                    else if (user.Role == Roles.ChuTro)
+                    {
+                        <span class="account-name">@L["OwnerSelf"]</span>
+                        <small class="account-sub">@(user.OwnedProperties.Count > 0
+                            ? string.Join(", ", user.OwnedProperties.Select(property => property.Name))
+                            : L["OwnerNoProperty"].Value)</small>
+                    }
+                    else
+                    {
+                        <span class="note">@L["NotApplicable"]</span>
                     }
                 </span>,
             },

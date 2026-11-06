@@ -211,6 +211,24 @@
   <data name="Dashboard" xml:space="preserve">
     <value>Tổng quan</value>
   </data>
+  <data name="NavGroupOverview" xml:space="preserve">
+    <value>Tổng quan</value>
+  </data>
+  <data name="NavGroupProperty" xml:space="preserve">
+    <value>Nhà trọ &amp; hợp đồng</value>
+  </data>
+  <data name="NavGroupFinance" xml:space="preserve">
+    <value>Tài chính</value>
+  </data>
+  <data name="NavGroupOperations" xml:space="preserve">
+    <value>Vận hành</value>
+  </data>
+  <data name="NavGroupAdmin" xml:space="preserve">
+    <value>Quản trị</value>
+  </data>
+  <data name="NavGroupPersonal" xml:space="preserve">
+    <value>Cá nhân</value>
+  </data>
 
   <!-- VHT-8: dang nhap -->
   <data name="LoginTitle" xml:space="preserve">
@@ -649,7 +667,11 @@
   <data name="P2ManagerNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản Quản lý.</value></data>
   <data name="P2ManagerOwnedByAnotherOwner" xml:space="preserve"><value>Quản lý này đã thuộc một chủ trọ khác.</value></data>
   <data name="ColumnOwner" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="ColumnOwnerOrProperty" xml:space="preserve"><value>Chủ trọ / Nhà trọ</value></data>
   <data name="OwnerUnassigned" xml:space="preserve"><value>Chưa có chủ trọ</value></data>
+  <data name="OwnerSelf" xml:space="preserve"><value>Chính chủ</value></data>
+  <data name="OwnerNoProperty" xml:space="preserve"><value>Chưa có nhà trọ</value></data>
+  <data name="NotApplicable" xml:space="preserve"><value>—</value></data>
   <data name="AssignProperties" xml:space="preserve"><value>Phân công tòa nhà</value></data>
   <data name="AssignPropertiesTitle" xml:space="preserve"><value>Phân công tòa nhà</value></data>
   <data name="AssignedProperties" xml:space="preserve"><value>Tòa nhà đang được phân công</value></data>
@@ -1337,6 +1359,13 @@
   <data name="ForgotPasswordTitle" xml:space="preserve"><value>Quên mật khẩu?</value></data>
   <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Nhập email của bạn.</value></data>
   <data name="ResetPasswordButton" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="BackToLogin" xml:space="preserve"><value>Quay lại đăng nhập</value></data>
+  <data name="ForgotPasswordHint" xml:space="preserve"><value>Nhập email đã đăng ký. Hệ thống sẽ gửi liên kết đặt lại mật khẩu.</value></data>
+  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết trong vài phút. Nhớ kiểm tra cả thư mục Spam.</value></data>
+  <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Dùng đúng email của tài khoản cần đặt lại.</value></data>
+  <data name="ResetPasswordConfirmationHint" xml:space="preserve"><value>Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.</value></data>
+  <data name="ResetPasswordError" xml:space="preserve"><value>Không đặt lại được mật khẩu: {0}</value></data>
+  <data name="ResetPasswordInvalidToken" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.</value></data>
   <data name="RecoveryCodeTitle" xml:space="preserve"><value>Xác minh mã khôi phục</value></data>
   <data name="RecoveryCodePlaceholder" xml:space="preserve"><value>Mã khôi phục</value></data>
   <data name="RecoveryCodeLabel" xml:space="preserve"><value>Mã khôi phục</value></data>
