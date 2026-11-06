@@ -206,10 +206,61 @@ h1:focus {
     }
 }
 
+/* Khung trang trước khi đăng nhập: không có sidebar/topbar của hệ thống. */
+.auth-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: var(--page-bg, #F8FAFC);
+}
+
+.auth-shell-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+}
+
+.auth-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    color: var(--text-primary, #0D131B);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-brand:hover {
+    color: var(--text-primary, #0D131B);
+}
+
+.auth-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 16px 64px;
+}
+
+@media (min-width: 768px) {
+    .auth-shell-bar {
+        padding: 16px 24px;
+    }
+
+    .auth-main {
+        padding: 24px 32px 96px;
+    }
+}
+
 /* Trang đăng nhập căn giữa. */
 .auth-page {
     display: flex;
     justify-content: center;
+    width: 100%;
 }
 
 .auth-card {

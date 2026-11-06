@@ -143,6 +143,37 @@ public sealed class AccountLifecycleTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task Cot_chu_tro_hien_dung_du_lieu_cho_tung_vai_tro()
+    {
+        await fixture.ResetAsync();
+        var data = await SeedScopeAsync();
+        var service = NewAccountService();
+
+        var page = await service.ListAsync(null, null, 1, 50, data.AdminId, Roles.Admin);
+        var byId = page.Items.ToDictionary(item => item.Id);
+
+        // Chủ trọ: cột hiển thị "chính chủ" + nhà trọ mình sở hữu (không còn "chưa có dữ liệu").
+        var owner = byId[data.OwnerAId];
+        Assert.Equal(Roles.ChuTro, owner.Role);
+        Assert.Empty(owner.AssignedProperties);
+        var owned = Assert.Single(owner.OwnedProperties);
+        Assert.Equal(data.PropertyAId, owned.Id);
+        Assert.Equal("Nhà A", owned.Name);
+
+        // Quản lý: vẫn hiện chủ trọ + tòa được phân công.
+        var manager = byId[data.ManagerId];
+        Assert.Equal(data.OwnerAId, manager.OwnerUserId);
+        Assert.Equal(data.PropertyAId, Assert.Single(manager.AssignedProperties).Id);
+
+        // Vai trò khác: cả hai danh sách đều rỗng (UI hiện dấu "—").
+        foreach (var id in new[] { data.AdminId, data.KhachAId })
+        {
+            Assert.Empty(byId[id].OwnedProperties);
+            Assert.Empty(byId[id].AssignedProperties);
+        }
+    }
+
+    [SqlServerFact]
     public async Task Duyet_tai_khoan_cho_duyet_theo_pham_vi()
     {
         await fixture.ResetAsync();

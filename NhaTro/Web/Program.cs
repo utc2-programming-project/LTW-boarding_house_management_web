@@ -30,6 +30,7 @@ using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
+using Web.Infrastructure.Email;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -375,7 +376,23 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders = [new CookieRequestCultureProvider()];
 });
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+// Gửi thư: SMTP Gmail (App Password trong User Secrets). Thiếu cấu hình thì lùi về NoOp
+// để dev vẫn chạy được, khi đó link đặt lại mật khẩu chỉ nằm trong log.
+builder.Services.AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<EmailOptions>, EmailOptionsValidator>();
+builder.Services.AddSingleton<EmailRecipientResolver>();
+var emailSettings = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+    ?? new EmailOptions();
+if (emailSettings.Smtp.IsConfigured)
+{
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>, SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+}
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
@@ -408,6 +425,20 @@ app.UseSerilogRequestLogging();
 // map loi 413 cua Kestrel/multipart ve cung cau truc JSON FileSizeExceeded.
 app.UseMiddleware<FileUploadExceptionMiddleware>();
 app.Logger.LogInformation("Web vận hành nhà trọ đã khởi động");
+
+var smtpForLog = app.Services.GetRequiredService<IOptions<EmailOptions>>().Value.Smtp;
+if (smtpForLog.IsConfigured)
+{
+    app.Logger.LogInformation(
+        "Gửi thư qua SMTP {Host}:{Port}, người gửi {From}.",
+        smtpForLog.Host, smtpForLog.Port, smtpForLog.EffectiveFromAddress);
+}
+else
+{
+    app.Logger.LogWarning(
+        "Chưa cấu hình Email:Smtp (thiếu UserName/Password/FromAddress). " +
+        "Thư hệ thống sẽ chỉ ghi log, không gửi thật.");
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

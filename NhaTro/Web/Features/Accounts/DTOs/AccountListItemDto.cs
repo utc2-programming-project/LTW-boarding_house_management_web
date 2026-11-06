@@ -44,6 +44,12 @@ public sealed class AccountListItemDto
 
     /// <summary>Các tòa nhà đang được phân công (chỉ có ý nghĩa với vai trò Quản lý).</summary>
     public IReadOnlyList<AccountAssignedProperty> AssignedProperties { get; init; } = [];
+
+    /// <summary>
+    /// Các tòa nhà tài khoản Chủ trọ sở hữu (chỉ có ý nghĩa với vai trò Chủ trọ).
+    /// Nhờ vậy cột "Chủ trọ / Nhà trọ" không hiện "chưa có dữ liệu" ngay trên chính chủ sở hữu.
+    /// </summary>
+    public IReadOnlyList<AccountAssignedProperty> OwnedProperties { get; init; } = [];
 }
 
 /// <summary>Một tòa nhà đang gán cho Quản lý, hiển thị ở trang Quản trị tài khoản.</summary>

@@ -82,7 +82,10 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .lucide-icon { display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle; }
 .lucide-icon.empty-state-icon { width:48px;height:48px;flex-basis:48px; }
 .app-logo .lucide-icon { width:24px;height:24px; }
-.sidebar-menu { display:flex;flex-direction:column;gap:4px; }
+.sidebar-menu { display:flex;flex-direction:column;gap:0; }
+.sidebar-group + .sidebar-group { margin-top:14px;padding-top:14px;border-top:1px solid var(--border); }
+.sidebar-group-title { margin:0 0 6px;padding:0 12px;font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted); }
+.sidebar-group-items { display:flex;flex-direction:column;gap:4px; }
 .sidebar-menu .nav-item { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:8px;font-size:.875rem;font-weight:500;line-height:1.429;color:var(--text-secondary)!important;text-decoration:none;overflow-wrap:anywhere; }
 .sidebar-menu .nav-item[href]:hover { background:var(--hover-bg); }
 .sidebar-menu .nav-item.active { background:var(--accent-soft);color:var(--accent-text)!important;font-weight:600; }

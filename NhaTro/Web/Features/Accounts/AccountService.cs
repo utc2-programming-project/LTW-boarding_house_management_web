@@ -117,11 +117,38 @@ public sealed class AccountService(
             .GroupBy(row => row.ManagerUserId)
             .ToDictionary(group => group.Key, group => group.ToList());
 
+        // VHT-24: tài khoản Chủ trọ — lấy các tòa nhà họ sở hữu để cột "Chủ trọ / Nhà trọ"
+        // có nghĩa (trước đây mọi vai trò khác Quản lý đều hiện "Chưa có dữ liệu").
+        var ownerUserIds = rows
+            .Where(row => row.Role == Roles.ChuTro)
+            .Select(row => row.Id)
+            .ToList();
+
+        var ownedRows = new List<OwnedPropertyRow>();
+        if (ownerUserIds.Count > 0)
+        {
+            ownedRows = await (
+                    from property in db.Properties.AsNoTracking()
+                    where ownerUserIds.Contains(property.OwnerId) && !property.IsDeleted
+                    orderby property.Name
+                    select new OwnedPropertyRow(
+                        property.OwnerId,
+                        property.Id,
+                        property.Name,
+                        property.Address))
+                .ToListAsync(ct);
+        }
+
+        var ownedByOwner = ownedRows
+            .GroupBy(row => row.OwnerUserId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
         var items = rows
             .Select(row =>
             {
                 assignmentsByManager.TryGetValue(row.Id, out var assigned);
                 var owner = assigned?.FirstOrDefault();
+                ownedByOwner.TryGetValue(row.Id, out var owned);
 
                 return new AccountListItemDto
                 {
@@ -141,6 +168,11 @@ public sealed class AccountService(
                     AssignedProperties = assigned is null
                         ? new List<AccountAssignedProperty>()
                         : assigned
+                            .Select(item => new AccountAssignedProperty(item.PropertyId, item.PropertyName, item.PropertyAddress))
+                            .ToList(),
+                    OwnedProperties = owned is null
+                        ? new List<AccountAssignedProperty>()
+                        : owned
                             .Select(item => new AccountAssignedProperty(item.PropertyId, item.PropertyName, item.PropertyAddress))
                             .ToList(),
                 };
@@ -784,4 +816,11 @@ public sealed class AccountService(
         string OwnerUserId,
         string? OwnerName,
         string? OwnerEmail);
+
+    /// <summary>Tòa nhà thuộc sở hữu của một tài khoản Chủ trọ (dùng cho cột "Chủ trọ / Nhà trọ").</summary>
+    private sealed record OwnedPropertyRow(
+        string OwnerUserId,
+        int PropertyId,
+        string PropertyName,
+        string? PropertyAddress);
 }
