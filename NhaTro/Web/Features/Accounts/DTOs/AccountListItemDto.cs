@@ -1,3 +1,4 @@
+// DTO một dòng trong danh sách tài khoản (/admin/users).
 namespace Web.Features.Accounts.DTOs;
 
 /// <summary>

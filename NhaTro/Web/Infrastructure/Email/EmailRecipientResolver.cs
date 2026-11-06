@@ -1,3 +1,4 @@
+// Quyết định địa chỉ nhận thư thật cho một email người dùng.
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 

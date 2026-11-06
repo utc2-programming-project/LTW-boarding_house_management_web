@@ -1,3 +1,4 @@
+// Danh mục điều hướng của sidebar; AppSidebar và bài test đọc danh sách từ đây.
 namespace Web.Components.Layout;
 
 public static class AppNavigation

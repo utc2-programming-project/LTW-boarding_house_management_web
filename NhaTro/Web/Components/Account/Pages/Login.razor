@@ -2,6 +2,9 @@
 @page "/Account/Login"
 @layout Layout.AuthLayout
 
+@* Trang đăng nhập theo chuẩn phong_cach_giao_dien.md.
+   Giữ static SSR + form POST vì Identity ghi cookie qua HTTP, không làm được trong circuit Blazor. *@
+
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using Web.Components.Shared.Forms
@@ -15,9 +18,6 @@
 @inject IStringLocalizer<Shared> L
 @inject ICaptchaVerifier CaptchaVerifier
 @inject ILoginAttemptGuard AttemptGuard
-
-@* Trang đăng nhập theo chuẩn phong_cach_giao_dien.md.
-   Giữ static SSR + form POST vì Identity ghi cookie qua HTTP, không làm được trong circuit Blazor. *@
 
 <PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
 
@@ -93,6 +93,10 @@
                 @L["LoginButton"]
             </button>
         </EditForm>
+
+        <p class="hint">
+            <a href="Account/RegisterOwner">@L["RegisterOwnerLink"]</a>
+        </p>
 
         @* Chi hien o Development khi da co mat khau dev (xem DevQuickLogin.razor). *@
         <DevQuickLogin />

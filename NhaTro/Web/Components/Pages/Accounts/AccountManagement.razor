@@ -2,6 +2,9 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 
+@* Trang quản lý tài khoản (/admin/users): xem/lọc danh sách, tạo tài khoản theo phạm vi
+   tòa nhà, duyệt - đổi vai trò - khóa/mở khóa. *@
+
 @using Microsoft.AspNetCore.Authorization
 @using Web.Common.Models
 @using Web.Common.Utils
@@ -18,8 +21,7 @@
 @inject IStringLocalizer<Shared> L
 @inject ToastService Toasts
 
-@* VHT-95: quan tri tai khoan (/admin/users) cho Admin, ChuTro, QuanLy.
-   Pham vi du lieu va quyen thao tac do AccountService tu kiem; UI chi hien nut theo quyen. *@
+@* VHT-95: quyền và phạm vi thao tác do AccountService kiểm ở server; UI chỉ hiện nút theo quyền. *@
 
 <PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
 
@@ -31,12 +33,20 @@
             <h1 id="accounts-title">@L["AccountsTitle"]</h1>
             <p>@L["AccountsSubtitle"]</p>
         </div>
-        @if (_assignableRoles.Count > 0)
-        {
-            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
-                <LucideIcon Name="plus" /> @L["CreateAccount"]
-            </button>
-        }
+        <div class="page-heading-actions">
+            @if (_assignableRoles.Count > 0)
+            {
+                <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" /> @L["CreateAccount"]
+                </button>
+            }
+            @if (_callerRole == Roles.Admin)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="OpenTrash">
+                    <LucideIcon Name="trash" /> @L["AccountTrash"]
+                </button>
+            }
+        </div>
     </header>
 
     <div class="toolbar" role="search">
@@ -71,6 +81,9 @@
     </DataTable>
 </section>
 
+<AccountTrashDialog Visible="_showTrash" CallerUserId="@_callerUserId" CallerRole="@_callerRole"
+                      OnClose="CloseTrash" />
+
 <CreateAccountDialog Visible="_createVisible" CallerUserId="@_callerUserId" CallerRole="@_callerRole"
                      AssignableRoles="_assignableRoles"
                      OnClose="CloseCreate" OnCreated="OnAccountCreated" />
@@ -95,8 +108,12 @@
     <p class="note">@L["ChangeRoleWarning"]</p>
 </ConfirmDialog>
 
-<ConfirmDialog Visible="_confirmLock.Visible" Title="@(_confirmLock.Lock ? L["LockTitle"] : L["UnlockTitle"])"
-               Message="@LockMessage()"
+<ConfirmDialog Visible="_confirmDelete.Visible" Title="@L["DeleteAccountTitle"]"
+               Message="@string.Format(L["DeleteAccountMessage"], _confirmDelete.UserName)"
+               ConfirmText="@L["DeleteAccountConfirm"]" CancelText="@L["Cancel"]" Danger="true"
+               OnConfirm="ConfirmDeleteAsync" OnCancel="CancelDelete" />
+
+<ConfirmDialog Visible="_confirmLock.Visible" Title="@(_confirmLock.Lock ? L["LockTitle"] : L["UnlockTitle"])"               Message="@LockMessage()"
                ConfirmText="@(_confirmLock.Lock ? L["LockConfirm"] : L["UnlockConfirm"])"
                CancelText="@L["Cancel"]" Danger="_confirmLock.Lock"
                OnConfirm="ConfirmLockAsync" OnCancel="CancelLock" />
@@ -129,6 +146,8 @@
     private ApproveState _confirmApprove = new();
     private RoleChangeState _confirmRole = new();
     private LockState _confirmLock = new();
+    private DeleteState _confirmDelete = new();
+    private bool _showTrash;
     private ManagerAssignState _assignManager = new();
 
     private sealed class ApproveState
@@ -150,6 +169,13 @@
     {
         public bool Visible { get; set; }
         public bool Lock { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+    }
+
+    private sealed class DeleteState
+    {
+        public bool Visible { get; set; }
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
     }
@@ -276,6 +302,10 @@
                                     @onclick="() => OpenLock(user)">
                                 @(user.IsLocked ? L["Unlock"] : L["Lock"])
                             </button>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    @onclick="() => OpenDelete(user)">
+                                @L["DeleteAccount"]
+                            </button>
                         }
                         @if (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy)
                         {
@@ -377,6 +407,43 @@
         }
 
         Toasts.Success(L["RoleChanged"]);
+        await ReloadAsync();
+    }
+
+    private void OpenTrash() => _showTrash = true;
+
+    private Task CloseTrash()
+    {
+        _showTrash = false;
+        return ReloadAsync();
+    }
+
+    private void OpenDelete(AccountListItemDto user)
+    {
+        _confirmDelete = new DeleteState
+        {
+            Visible = true,
+            UserId = user.Id,
+            UserName = DisplayName(user),
+        };
+    }
+
+    private void CancelDelete() => _confirmDelete.Visible = false;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        var result = await Accounts.DeleteAsync(
+            _confirmDelete.UserId, _callerUserId, _callerRole);
+
+        _confirmDelete.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["AccountDeleted"]);
         await ReloadAsync();
     }
 

@@ -1,3 +1,4 @@
+// Gửi thư thật qua SMTP khi cấu hình Email:Smtp đã đủ.
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -19,8 +20,12 @@ namespace Web.Infrastructure.Email;
 public sealed class SmtpEmailSender(
     IOptions<EmailOptions> options,
     EmailRecipientResolver recipientResolver,
-    ILogger<SmtpEmailSender> logger) : IEmailSender<ApplicationUser>
+    ILogger<SmtpEmailSender> logger) : IEmailSender<ApplicationUser>, IOutboundEmailSender
 {
+    /// <summary>Gửi thư tự do (lời mời khách thuê). Nội dung HTML do nơi gọi dựng.</summary>
+    public Task SendAsync(string toEmail, string subject, string html, CancellationToken ct = default) =>
+        SendAsync(recipientResolver.Resolve(toEmail), new EmailTemplates.EmailContent(subject, html));
+
     public Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
     {
         var recipient = recipientResolver.Resolve(email);

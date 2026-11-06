@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Chuỗi giao diện tiếng Việt (mặc định) của toàn ứng dụng: nhãn, nút, thông báo và điều hướng. -->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -1360,6 +1361,48 @@
   <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Nhập email của bạn.</value></data>
   <data name="ResetPasswordButton" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
   <data name="BackToLogin" xml:space="preserve"><value>Quay lại đăng nhập</value></data>
+  <data name="InviteTenantButton" xml:space="preserve"><value>Mời khách thuê</value></data>
+  <data name="InviteTenantTitle" xml:space="preserve"><value>Mời khách thuê</value></data>
+  <data name="InviteTenantEmailHint" xml:space="preserve"><value>Lời mời sẽ được gửi tới email này.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>Khách mở email, đặt mật khẩu; hồ sơ tạo ra sẽ thuộc chủ trọ của bạn.</value></data>
+  <data name="InviteTenantSend" xml:space="preserve"><value>Gửi lời mời</value></data>
+  <data name="InviteTenantSent" xml:space="preserve"><value>Đã gửi lời mời qua email.</value></data>
+  <data name="InviteTenantEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="InviteTenantForbidden" xml:space="preserve"><value>Bạn chưa được gán cho chủ trọ nào.</value></data>
+  <data name="InviteTenantFailed" xml:space="preserve"><value>Không gửi được lời mời.</value></data>
+  <data name="InviteAcceptTitle" xml:space="preserve"><value>Tham gia hệ thống nhà trọ</value></data>
+  <data name="InviteAcceptAccount" xml:space="preserve"><value>Tài khoản: {0}</value></data>
+  <data name="InviteAcceptPasswordHint" xml:space="preserve"><value>Mật khẩu tối thiểu 8 ký tự.</value></data>
+  <data name="InviteAcceptSubmit" xml:space="preserve"><value>Đặt mật khẩu và tham gia</value></data>
+  <data name="InviteAcceptSuccess" xml:space="preserve"><value>Đã tạo tài khoản. Hãy đăng nhập bằng email và mật khẩu vừa đặt.</value></data>
+  <data name="InviteAcceptInvalid" xml:space="preserve"><value>Liên kết không hợp lệ, đã dùng hoặc đã hết hạn.</value></data>
+  <data name="InviteAcceptExpired" xml:space="preserve"><value>Lời mời đã hết hạn. Vui lòng liên hệ chủ trọ.</value></data>
+  <data name="InviteAcceptUsed" xml:space="preserve"><value>Lời mời đã được sử dụng.</value></data>
+  <data name="InviteAcceptEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="InviteAcceptFailed" xml:space="preserve"><value>Không tạo được tài khoản. Vui lòng kiểm tra mật khẩu.</value></data>
+  <data name="RegisterOwnerTitle" xml:space="preserve"><value>Đăng ký chủ trọ</value></data>
+  <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Tạo tài khoản chủ trọ để tự quản lý nhà trọ của bạn.</value></data>
+  <data name="RegisterOwnerButton" xml:space="preserve"><value>Gửi đăng ký</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>Sau khi gửi, quản trị viên sẽ duyệt tài khoản trước khi bạn đăng nhập được.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Đã gửi yêu cầu đăng ký. Tài khoản đang chờ quản trị viên duyệt; hãy kiểm tra email để xác nhận địa chỉ.</value></data>
+  <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="RegisterOwnerFailed" xml:space="preserve"><value>Không đăng ký được. Kiểm tra lại thông tin và mật khẩu (tối thiểu 8 ký tự, có chữ hoa, chữ thường và số).</value></data>
+  <data name="RegisterOwnerLogin" xml:space="preserve"><value>Đã có tài khoản? Đăng nhập</value></data>
+  <data name="RegisterOwnerLink" xml:space="preserve"><value>Chưa có tài khoản? Đăng ký làm chủ trọ</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Xóa</value></data>
+  <data name="DeleteAccountTitle" xml:space="preserve"><value>Xóa tài khoản</value></data>
+  <data name="DeleteAccountMessage" xml:space="preserve"><value>Xóa vĩnh viễn tài khoản {0}? Hành động này không hoàn tác được.</value></data>
+  <data name="DeleteAccountConfirm" xml:space="preserve"><value>Xóa tài khoản</value></data>
+  <data name="AccountDeleted" xml:space="preserve"><value>Đã xóa tài khoản.</value></data>
+  <data name="ErrorCannotDeleteSelf" xml:space="preserve"><value>Không thể xóa tài khoản đang đăng nhập.</value></data>
+  <data name="ErrorCannotDeleteLastAdmin" xml:space="preserve"><value>Không thể xóa Admin cuối cùng của hệ thống.</value></data>
+  <data name="ErrorAccountInUse" xml:space="preserve"><value>Tài khoản còn gắn hồ sơ khách thuê. Hãy bỏ liên kết trước khi xóa.</value></data>
+  <data name="AccountTrash" xml:space="preserve"><value>Thùng rác</value></data>
+  <data name="AccountTrashTitle" xml:space="preserve"><value>Tài khoản đã xóa</value></data>
+  <data name="AccountTrashEmpty" xml:space="preserve"><value>Thùng rác trống.</value></data>
+  <data name="AccountDeletedAt" xml:space="preserve"><value>Đã xóa lúc</value></data>
+  <data name="AccountRestore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="AccountRestored" xml:space="preserve"><value>Đã khôi phục tài khoản.</value></data>
   <data name="ForgotPasswordHint" xml:space="preserve"><value>Nhập email đã đăng ký. Hệ thống sẽ gửi liên kết đặt lại mật khẩu.</value></data>
   <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết trong vài phút. Nhớ kiểm tra cả thư mục Spam.</value></data>
   <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Dùng đúng email của tài khoản cần đặt lại.</value></data>

@@ -13,6 +13,16 @@ namespace Web.Data
         // VHT-95: null = Cho duyet; co gia tri = da duoc duyet (Hoạt động neu khong bi khoa).
         // Trang thai hien thi suy tu cot nay + LockoutEnd, khong them cot Status rieng.
         public DateTime? ApprovedAt { get; set; }
+
+        // Xoá mềm: tài khoản vào thùng rác, có thể khôi phục. Email gốc lưu ở OriginalEmail
+        // để nhả email cho người mới đăng ký; khôi phục sẽ báo lỗi nếu email đã bị dùng lại.
+        public bool IsDeleted { get; set; }
+
+        public DateTime? DeletedAt { get; set; }
+
+        public string? DeletedByUserId { get; set; }
+
+        public string? OriginalEmail { get; set; }
     }
 
 }

@@ -301,12 +301,26 @@ public sealed class TenantService(
         TenantMapping.ApplyCreate(request, entity);
         entity.CreatedAt = clock.GetUtcNow().UtcDateTime;
 
+        // PLAN-005 (điều chỉnh): hồ sơ có thể thuộc nhiều chủ trọ; người tạo tạo liên kết đầu tiên.
+        var ownerId = await ResolveOwnerIdAsync(db, caller, ct);
+
         db.Tenants.Add(entity);
 
         // Bắt vi phạm chỉ mục duy nhất khi hai request đồng thời cùng qua bước kiểm trùng.
         try
         {
             await db.SaveChangesAsync(ct);
+
+            if (!string.IsNullOrWhiteSpace(ownerId))
+            {
+                db.TenantOwnerLinks.Add(new TenantOwnerLink
+                {
+                    TenantId = entity.Id,
+                    OwnerId = ownerId,
+                    CreatedAt = entity.CreatedAt,
+                });
+                await db.SaveChangesAsync(ct);
+            }
         }
         catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
@@ -398,6 +412,7 @@ public sealed class TenantService(
             }
         }
 
+        
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = rowVersion;
         TenantMapping.ApplyUpdate(request, entity);
         entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
@@ -836,9 +851,62 @@ public sealed class TenantService(
     private static IQueryable<Tenant> ScopeQuery(ApplicationDbContext db, TenantCaller caller) =>
         TenantVisibility.Apply(db, caller.UserId, caller.Role);
 
+    /// <summary>
+    /// Chu tro so huu ho so moi: chu tro tao thi chinh minh; quan ly tao thi chu tro cua toa
+    /// quan ly dang duoc giao; vai tro khac (quan tri) de null.
+    /// </summary>
+    private static async Task<string?> ResolveOwnerIdAsync(
+        ApplicationDbContext db, TenantCaller caller, CancellationToken ct)
+    {
+        if (caller.IsChuTro)
+        {
+            return caller.UserId;
+        }
+
+        if (!caller.IsQuanLy)
+        {
+            return null;
+        }
+
+        return await (
+            from assignment in db.PropertyManagers.AsNoTracking()
+            join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+            where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+            orderby property.Id
+            select (string?)property.OwnerId
+        ).FirstOrDefaultAsync(ct);
+    }
+
     // VHT-99: cùng phạm vi hồ sơ như danh sách nhưng lấy các hồ sơ đã xóa mềm.
     private static IQueryable<Tenant> TrashScopeQuery(ApplicationDbContext db, TenantCaller caller)
     {
+        if (caller.IsChuTro)
+        {
+            var ownerId = caller.UserId;
+            var myTenantIds = db.TenantOwnerLinks
+                .Where(link => link.OwnerId == ownerId)
+                .Select(link => link.TenantId);
+
+            return db.Tenants.IgnoreQueryFilters()
+                .Where(tenant => tenant.IsDeleted && myTenantIds.Contains(tenant.Id));
+        }
+
+        if (caller.IsQuanLy)
+        {
+            var ownerIds =
+                from assignment in db.PropertyManagers
+                join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                select property.OwnerId;
+
+            var ownedTenantIds = db.TenantOwnerLinks
+                .Where(link => ownerIds.Contains(link.OwnerId))
+                .Select(link => link.TenantId);
+
+            return db.Tenants.IgnoreQueryFilters()
+                .Where(tenant => tenant.IsDeleted && ownedTenantIds.Contains(tenant.Id));
+        }
+
         var linked = TenantVisibility.ContractLinkedTenantIds(db, caller.UserId, caller.Role);
         return db.Tenants.IgnoreQueryFilters().Where(tenant =>
             tenant.IsDeleted

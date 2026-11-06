@@ -62,6 +62,13 @@ public static class RateLimitPolicies
         return LoginPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
     }
 
+    // PLAN-008: chặn spam đăng ký chủ trọ từ một IP.
+    private static readonly string[] RegisterPaths = ["/account/registerowner"];
+
+    public static bool IsRegisterRequest(HttpContext http) =>
+        HttpMethods.IsPost(http.Request.Method)
+        && RegisterPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Bỏ '/' cuối để "/Account/Login/" không lách được giới hạn; "/" giữ nguyên.
     /// </summary>

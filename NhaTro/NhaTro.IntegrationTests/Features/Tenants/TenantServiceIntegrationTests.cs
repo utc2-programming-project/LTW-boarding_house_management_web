@@ -28,6 +28,35 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         IManagerTogglePolicy? policy = null) =>
         new(fixture, TimeProvider.System, policy ?? new AllowAllTogglePolicy());
 
+    /// <summary>
+    /// PLAN-005: hồ sơ thuộc chủ trọ nào thì quản lý của tòa đó mới thấy. Test cũ dùng
+    /// caller giả "ql-1" nên phải gieo chủ trọ + tòa + phân công trước khi kiểm phạm vi.
+    /// </summary>
+    private async Task SeedOwnerPropertyForManagerAsync(string managerUserId)
+    {
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner.UserId, Roles.ChuTro);
+        if (!await db.Users.AnyAsync(u => u.Id == managerUserId))
+        {
+            await SqlServerFixture.SeedAccountAsync(db, managerUserId, Roles.QuanLy);
+        }
+        db.Properties.Add(new Web.Features.Properties.Entities.Property
+        {
+            Name = "Nhà test",
+            OwnerId = Owner.UserId,
+        });
+        await db.SaveChangesAsync();
+
+        var property = await db.Properties.SingleAsync(p => p.OwnerId == Owner.UserId);
+        db.PropertyManagers.Add(new Web.Features.Properties.Entities.PropertyManager
+        {
+            PropertyId = property.Id,
+            ManagerUserId = managerUserId,
+            AssignedByUserId = Owner.UserId,
+        });
+        await db.SaveChangesAsync();
+    }
+
     // Policy thật + reader giả: kiểm đúng D4 (Chủ trọ luôn Allowed) và ánh xạ mã công tắc.
     private static ManagerTogglePolicy NewTogglePolicy(
         params (string Code, ManagerToggleMode Mode)[] modes) =>
@@ -355,6 +384,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Quan_ly_bi_che_so_cccd_va_khong_ghi_de_bang_chuoi_che()
     {
         await fixture.ResetAsync();
+        await SeedOwnerPropertyForManagerAsync("ql-1");
         var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
@@ -403,6 +433,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Quan_ly_tao_ho_so_nhap_cccd_day_du_thi_luu_that_va_chi_thay_chuoi_che()
     {
         await fixture.ResetAsync();
+        await SeedOwnerPropertyForManagerAsync("ql-1");
         var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
@@ -423,6 +454,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
     public async Task Cccd_bi_che_sua_do_hoac_qua_ngan_bi_tu_choi_va_khong_ghi_de_so_that()
     {
         await fixture.ResetAsync();
+        await SeedOwnerPropertyForManagerAsync("ql-1");
         var service = NewTenantService();
         var quanLy = new TenantCaller("ql-1", Roles.QuanLy);
 
@@ -468,6 +500,7 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
         await SeedAccountAsync(db, "tenant-linked", Roles.KhachThue);
         await SeedAccountAsync(db, "tenant-free", Roles.KhachThue);
         await SeedAccountAsync(db, "manager-account", Roles.QuanLy);
+        await SeedOwnerPropertyForManagerAsync("manager-account");
 
         var service = NewTenantService();
         // Hồ sơ chưa gắn hợp đồng nằm trong kho dùng chung nên Quản lý xem được (VHT-119 Q1-A).

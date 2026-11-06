@@ -28,10 +28,33 @@ public static class TenantVisibility
         var linked = ContractLinkedTenantIds(db, userId, role);
         // ContractLinkedTenantIds dùng IgnoreQueryFilters để giữ hợp đồng khi phòng/tòa xóa mềm,
         // nhưng cờ đó tắt query filter của cả câu query — phải lọc lại thùng rác hồ sơ tại đây.
+        if (role == Roles.QuanLy)
+        {
+            // Quan ly: ho so thuoc chu tro cua toa minh duoc giao, hoac da gan hop dong o toa minh quan ly.
+            var ownerIds =
+                from assignment in db.PropertyManagers
+                join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == userId && assignment.RevokedAt == null
+                select property.OwnerId;
+
+            var ownedTenantIds = db.TenantOwnerLinks
+                .Where(link => ownerIds.Contains(link.OwnerId))
+                .Select(link => link.TenantId);
+
+            return db.Tenants.Where(tenant =>
+                !tenant.IsDeleted
+                && (ownedTenantIds.Contains(tenant.Id) || linked.Contains(tenant.Id)));
+        }
+
+        // Chu tro: chi thay ho so co lien ket voi minh hoac da gan hop dong o toa minh so huu.
+        // Mot khach co the co lien ket voi nhieu chu tro (thue nhieu noi) — lien ket nam o bang TenantOwnerLinks.
+        var myTenantIds = db.TenantOwnerLinks
+            .Where(link => link.OwnerId == userId)
+            .Select(link => link.TenantId);
+
         return db.Tenants.Where(tenant =>
             !tenant.IsDeleted
-            && (linked.Contains(tenant.Id)
-                || !db.ContractMembers.Any(member => member.TenantId == tenant.Id)));
+            && (myTenantIds.Contains(tenant.Id) || linked.Contains(tenant.Id)));
     }
 
     /// <summary>
