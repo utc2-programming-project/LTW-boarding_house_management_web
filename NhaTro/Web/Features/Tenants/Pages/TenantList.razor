@@ -72,7 +72,7 @@
                 <article class="tenant-stat-card">
                     <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
                     <div class="tenant-stat-value">@SummaryValue(_summary!.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
-                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount) @L["TenantAccountRateHint"]</p>
+                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount)% @L["TenantAccountRateHint"]</p>
                 </article>
             }
             <article class="tenant-stat-card">
