@@ -83,15 +83,15 @@ Cách tính điện/nước (biểu giá seed sẵn, đã gồm VAT theo quy đ�
 
 ## 7. Chạy web trên DB demo
 
-Script chỉ seed rồi thoát. Để mở web với DB demo, đặt cùng connection string và tắt 4 tài khoản dev:
+Script chỉ seed rồi thoát. Profile `http`/`https` trong `launchSettings.json` đã trỏ sẵn `NhaTro_Demo_3A` và đặt `DemoSeed__SkipDevAccounts=true`:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection="Server=(localdb)\MSSQLLocalDB;Database=NhaTro_Demo_3A;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;Application Name=NhaTro-Demo-3A"
-$env:DemoSeed__SkipDevAccounts="true"
-dotnet run --project NhaTro/Web
+dotnet run --project NhaTro/Web --launch-profile http
 ```
 
-Nếu không đặt `DemoSeed__SkipDevAccounts=true`, `DevAccountSeeder` sẽ thêm 4 tài khoản `@nhatro.local` vào DB demo.
+Mở http://localhost:5177 (hoặc https://localhost:7260). Trong Visual Studio chọn profile `http` hoặc `https` rồi F5.
+
+Profile `dev` (http://localhost:5178) giữ hành vi cũ: dùng `DefaultConnection` trong `appsettings.json` và seed 4 tài khoản dev. Nếu chạy tay bằng `Web.exe` mà không qua launch profile, phải tự đặt `ConnectionStrings__DefaultConnection` và `DemoSeed__SkipDevAccounts=true` như trên.
 
 ## 8. Reset và idempotent
 
