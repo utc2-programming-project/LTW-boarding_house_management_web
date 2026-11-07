@@ -26,6 +26,7 @@ public static class AppNavigation
             new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
             new("MeterReadings", "zap", "ChuTro,QuanLy,KhachThue", "/meter-readings"),
             new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
+            new("PaymentRequests", "check", "ChuTro,QuanLy", "/payment-requests"),
             new("MyInvoices", "receipt", "KhachThue", "/my-invoices"),
         ]),
         new("NavGroupOperations", "ChuTro,QuanLy,KhachThue",

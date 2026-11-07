@@ -202,6 +202,11 @@ builder.Services.AddAuthorization(options =>
         (context.User.IsInRole(Roles.ChuTro) ||
          context.User.IsInRole(Roles.QuanLy) ||
          context.User.IsInRole(Roles.KhachThue))));
+    // VHT-56: chỉ Quản lý/Chủ trọ được vào hàng đợi xác nhận thanh toán.
+    options.AddPolicy("PaymentReview", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
 });
 
 // ── 6. Service nghiệp vụ (đọc/ghi SQL, tự kiểm quyền và phạm vi) ───────────
@@ -440,6 +445,10 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
     Web.Features.Invoices.Services.PaymentService>();
 // VHT-55: adapter UI khách gửi yêu cầu thanh toán + minh chứng, tra kết quả trước khi thử lại.
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
+// VHT-56: hàng đợi đọc theo phạm vi + adapter UI Quản lý xác nhận/từ chối và tra kết quả.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQueryService,
+    Web.Features.Invoices.Services.PaymentReviewQueryService>();
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();

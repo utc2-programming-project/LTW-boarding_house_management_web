@@ -65,6 +65,75 @@ public sealed class InvoiceResourceTests
         }
     }
 
+    [Fact]
+    public void Payment_review_keys_exist_in_both_languages()
+    {
+        var vi = Read("vi-VN");
+        var en = Read("en-US");
+
+        string[] keys =
+        [
+            "ReviewPageTitle",
+            "ReviewHeading",
+            "ReviewSubtitle",
+            "ReviewStatPending",
+            "ReviewStatConfirmed",
+            "ReviewStatRejected",
+            "ReviewStatPendingAmount",
+            "ReviewFilterStatus",
+            "ReviewAllStatuses",
+            "ReviewThRequest",
+            "ReviewThInvoice",
+            "ReviewThRoomProperty",
+            "ReviewThTenants",
+            "ReviewThPeriod",
+            "ReviewThAmount",
+            "ReviewThStatus",
+            "ReviewViewDetail",
+            "ReviewDetailPageTitle",
+            "ReviewDetailHeading",
+            "ReviewDetailSubtitle",
+            "ReviewBackToList",
+            "ReviewInvoiceHeading",
+            "ReviewPaymentHeading",
+            "ReviewConfirmAction",
+            "ReviewRejectAction",
+            "ReviewConfirmTitle",
+            "ReviewConfirmMessage",
+            "ReviewConfirmText",
+            "ReviewConfirmSuccess",
+            "ReviewRejectTitle",
+            "ReviewRejectReasonLabel",
+            "ReviewRejectReasonPlaceholder",
+            "ReviewRejectSubmit",
+            "ReviewRejectSuccess",
+            "ReviewResultUnknown",
+            "ReviewCheckResult",
+            "ReviewChecking",
+            "ReviewProcessing",
+            "ReviewResultChecked",
+            "ReviewConfirmedNotice",
+            "ReviewRejectedNotice",
+            "ReviewNotPendingNotice",
+            "ReviewDetailNotFoundTitle",
+            "ReviewDetailNotFoundDesc",
+            "ReviewErrorForbidden",
+            "ReviewErrorInvoiceAlreadyPaid",
+            "ReviewErrorInvalidStatus",
+            "ReviewErrorPaymentNotFound",
+            "ReviewErrorRejectionReasonRequired",
+            "ReviewErrorRejectionReasonTooLong",
+            "ReviewErrorConcurrency",
+            "ReviewErrorUnknown",
+        ];
+
+        foreach (var key in keys)
+        {
+            Assert.True(vi.ContainsKey(key), $"Thiếu khóa VI: {key}");
+            Assert.True(en.ContainsKey(key), $"Thiếu khóa EN: {key}");
+        }
+    }
+
     private static Dictionary<string, string> Read(string culture)
     {
         // Không dispose: ResourceManager có thể trả về resource set dùng chung cho lần đọc sau.

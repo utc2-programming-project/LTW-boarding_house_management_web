@@ -155,4 +155,72 @@
   <data name="PayErrorRelatedEntityNotFound" xml:space="preserve"><value>The invoice for this proof could not be found.</value></data>
   <data name="PayErrorUploadInvalidRequest" xml:space="preserve"><value>The upload request is not valid.</value></data>
   <data name="PayErrorUploadUnknown" xml:space="preserve"><value>Something went wrong while uploading the proof. Please try again.</value></data>
+
+  <!-- VHT-56: manager payment review -->
+  <data name="ReviewPageTitle" xml:space="preserve"><value>Payment review</value></data>
+  <data name="ReviewBreadcrumb" xml:space="preserve"><value>Payment review</value></data>
+  <data name="ReviewHeading" xml:space="preserve"><value>Payment requests</value></data>
+  <data name="ReviewSubtitle" xml:space="preserve"><value>Check the customer's proof. Only confirm after receiving the full amount; a pending request is not recorded as paid.</value></data>
+  <data name="ReviewStatPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="ReviewStatConfirmed" xml:space="preserve"><value>Confirmed</value></data>
+  <data name="ReviewStatRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Pending amount</value></data>
+  <data name="ReviewFilterStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="ReviewAllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="ReviewRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="ReviewThRequest" xml:space="preserve"><value>Request</value></data>
+  <data name="ReviewThInvoice" xml:space="preserve"><value>Invoice</value></data>
+  <data name="ReviewThRoomProperty" xml:space="preserve"><value>Room / property</value></data>
+  <data name="ReviewThTenants" xml:space="preserve"><value>Tenants</value></data>
+  <data name="ReviewThPeriod" xml:space="preserve"><value>Invoice period</value></data>
+  <data name="ReviewThRequestedAt" xml:space="preserve"><value>Submitted at</value></data>
+  <data name="ReviewThAmount" xml:space="preserve"><value>Amount</value></data>
+  <data name="ReviewThStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="ReviewThActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="ReviewViewDetail" xml:space="preserve"><value>View details</value></data>
+  <data name="ReviewEmptyTitle" xml:space="preserve"><value>No payment requests</value></data>
+  <data name="ReviewEmptyDesc" xml:space="preserve"><value>No request matches the current filter.</value></data>
+  <data name="ReviewLoadError" xml:space="preserve"><value>Could not load the payment requests.</value></data>
+  <data name="ReviewRetry" xml:space="preserve"><value>Try again</value></data>
+
+  <data name="ReviewDetailPageTitle" xml:space="preserve"><value>Payment request details</value></data>
+  <data name="ReviewDetailHeading" xml:space="preserve"><value>Payment request</value></data>
+  <data name="ReviewDetailSubtitle" xml:space="preserve"><value>Check the amount, transfer time and proof before deciding.</value></data>
+  <data name="ReviewBackToList" xml:space="preserve"><value>Back to list</value></data>
+  <data name="ReviewInvoiceHeading" xml:space="preserve"><value>Invoice information</value></data>
+  <data name="ReviewPaymentHeading" xml:space="preserve"><value>Transaction information</value></data>
+  <data name="ReviewPaymentId" xml:space="preserve"><value>Request ID</value></data>
+  <data name="ReviewOpenInvoice" xml:space="preserve"><value>Open invoice</value></data>
+  <data name="ReviewConfirmAction" xml:space="preserve"><value>Confirm payment received</value></data>
+  <data name="ReviewRejectAction" xml:space="preserve"><value>Reject proof</value></data>
+  <data name="ReviewConfirmTitle" xml:space="preserve"><value>Confirm the full amount was received?</value></data>
+  <data name="ReviewConfirmMessage" xml:space="preserve"><value>The invoice will become Paid and the amount will be recorded once. This cannot be undone.</value></data>
+  <data name="ReviewConfirmText" xml:space="preserve"><value>Confirm</value></data>
+  <data name="ReviewConfirmSuccess" xml:space="preserve"><value>Payment confirmed and recorded.</value></data>
+  <data name="ReviewRejectTitle" xml:space="preserve"><value>Reject payment proof</value></data>
+  <data name="ReviewRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="ReviewRejectReasonPlaceholder" xml:space="preserve"><value>For example: the image is blurry and the amount or transaction code cannot be read.</value></data>
+  <data name="ReviewRejectSubmit" xml:space="preserve"><value>Reject</value></data>
+  <data name="ReviewRejectSubmitting" xml:space="preserve"><value>Rejecting...</value></data>
+  <data name="ReviewRejectSuccess" xml:space="preserve"><value>The proof was rejected. The customer can submit a new request.</value></data>
+  <data name="ReviewRejectCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ReviewResultUnknown" xml:space="preserve"><value>The action result is unknown. Check the result before confirming or rejecting again.</value></data>
+  <data name="ReviewCheckResult" xml:space="preserve"><value>Check result</value></data>
+  <data name="ReviewChecking" xml:space="preserve"><value>Checking...</value></data>
+  <data name="ReviewProcessing" xml:space="preserve"><value>Processing...</value></data>
+  <data name="ReviewResultChecked" xml:space="preserve"><value>The latest result was refreshed from the server.</value></data>
+  <data name="ReviewConfirmedNotice" xml:space="preserve"><value>This payment is confirmed and counted as paid.</value></data>
+  <data name="ReviewRejectedNotice" xml:space="preserve"><value>This payment was rejected and is not counted as paid.</value></data>
+  <data name="ReviewNotPendingNotice" xml:space="preserve"><value>Only pending requests can be confirmed or rejected.</value></data>
+  <data name="ReviewDetailNotFoundTitle" xml:space="preserve"><value>Request not found</value></data>
+  <data name="ReviewDetailNotFoundDesc" xml:space="preserve"><value>The request does not exist or is outside the properties you manage.</value></data>
+  <data name="ReviewDetailLoadError" xml:space="preserve"><value>Could not load the payment request details.</value></data>
+  <data name="ReviewErrorForbidden" xml:space="preserve"><value>You do not have permission to confirm or reject this payment.</value></data>
+  <data name="ReviewErrorInvoiceAlreadyPaid" xml:space="preserve"><value>The invoice is already paid.</value></data>
+  <data name="ReviewErrorInvalidStatus" xml:space="preserve"><value>The request status changed. Check the latest result.</value></data>
+  <data name="ReviewErrorPaymentNotFound" xml:space="preserve"><value>The payment request was not found in your scope.</value></data>
+  <data name="ReviewErrorRejectionReasonRequired" xml:space="preserve"><value>Please enter a rejection reason.</value></data>
+  <data name="ReviewErrorRejectionReasonTooLong" xml:space="preserve"><value>The rejection reason is limited to 500 characters.</value></data>
+  <data name="ReviewErrorConcurrency" xml:space="preserve"><value>The data just changed. Check the result before trying again.</value></data>
+  <data name="ReviewErrorUnknown" xml:space="preserve"><value>Something went wrong while processing the payment request.</value></data>
 </root>

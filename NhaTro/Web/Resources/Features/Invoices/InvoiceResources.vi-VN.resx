@@ -155,4 +155,72 @@
   <data name="PayErrorRelatedEntityNotFound" xml:space="preserve"><value>Không tìm thấy hóa đơn để gắn minh chứng.</value></data>
   <data name="PayErrorUploadInvalidRequest" xml:space="preserve"><value>Yêu cầu tải tệp không hợp lệ.</value></data>
   <data name="PayErrorUploadUnknown" xml:space="preserve"><value>Đã xảy ra lỗi khi tải minh chứng. Vui lòng thử lại.</value></data>
+
+  <!-- VHT-56: Quản lý xác nhận/từ chối giao dịch thanh toán -->
+  <data name="ReviewPageTitle" xml:space="preserve"><value>Xác nhận thanh toán</value></data>
+  <data name="ReviewBreadcrumb" xml:space="preserve"><value>Xác nhận thanh toán</value></data>
+  <data name="ReviewHeading" xml:space="preserve"><value>Yêu cầu thanh toán</value></data>
+  <data name="ReviewSubtitle" xml:space="preserve"><value>Đối chiếu minh chứng khách gửi. Chỉ xác nhận khi đã nhận đủ tiền; yêu cầu đang chờ không được tính là tiền đã thu.</value></data>
+  <data name="ReviewStatPending" xml:space="preserve"><value>Đang chờ</value></data>
+  <data name="ReviewStatConfirmed" xml:space="preserve"><value>Đã xác nhận</value></data>
+  <data name="ReviewStatRejected" xml:space="preserve"><value>Đã từ chối</value></data>
+  <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Tiền đang chờ</value></data>
+  <data name="ReviewFilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="ReviewAllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="ReviewRefresh" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="ReviewThRequest" xml:space="preserve"><value>Yêu cầu</value></data>
+  <data name="ReviewThInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="ReviewThRoomProperty" xml:space="preserve"><value>Phòng / Nhà trọ</value></data>
+  <data name="ReviewThTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="ReviewThPeriod" xml:space="preserve"><value>Kỳ hóa đơn</value></data>
+  <data name="ReviewThRequestedAt" xml:space="preserve"><value>Gửi lúc</value></data>
+  <data name="ReviewThAmount" xml:space="preserve"><value>Số tiền</value></data>
+  <data name="ReviewThStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="ReviewThActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="ReviewViewDetail" xml:space="preserve"><value>Xem chi tiết</value></data>
+  <data name="ReviewEmptyTitle" xml:space="preserve"><value>Không có yêu cầu thanh toán</value></data>
+  <data name="ReviewEmptyDesc" xml:space="preserve"><value>Chưa có yêu cầu nào khớp bộ lọc hiện tại.</value></data>
+  <data name="ReviewLoadError" xml:space="preserve"><value>Không tải được danh sách yêu cầu thanh toán.</value></data>
+  <data name="ReviewRetry" xml:space="preserve"><value>Thử lại</value></data>
+
+  <data name="ReviewDetailPageTitle" xml:space="preserve"><value>Chi tiết yêu cầu thanh toán</value></data>
+  <data name="ReviewDetailHeading" xml:space="preserve"><value>Yêu cầu thanh toán</value></data>
+  <data name="ReviewDetailSubtitle" xml:space="preserve"><value>Kiểm tra số tiền, thời điểm chuyển khoản và minh chứng trước khi quyết định.</value></data>
+  <data name="ReviewBackToList" xml:space="preserve"><value>Về danh sách</value></data>
+  <data name="ReviewInvoiceHeading" xml:space="preserve"><value>Thông tin hóa đơn</value></data>
+  <data name="ReviewPaymentHeading" xml:space="preserve"><value>Thông tin giao dịch</value></data>
+  <data name="ReviewPaymentId" xml:space="preserve"><value>Mã yêu cầu</value></data>
+  <data name="ReviewOpenInvoice" xml:space="preserve"><value>Mở hóa đơn</value></data>
+  <data name="ReviewConfirmAction" xml:space="preserve"><value>Xác nhận đã thu tiền</value></data>
+  <data name="ReviewRejectAction" xml:space="preserve"><value>Từ chối minh chứng</value></data>
+  <data name="ReviewConfirmTitle" xml:space="preserve"><value>Xác nhận đã thu đủ tiền?</value></data>
+  <data name="ReviewConfirmMessage" xml:space="preserve"><value>Hóa đơn sẽ chuyển sang Đã thanh toán và số tiền được ghi nhận một lần. Không thể hoàn tác.</value></data>
+  <data name="ReviewConfirmText" xml:space="preserve"><value>Xác nhận</value></data>
+  <data name="ReviewConfirmSuccess" xml:space="preserve"><value>Đã xác nhận thanh toán và ghi nhận tiền thu.</value></data>
+  <data name="ReviewRejectTitle" xml:space="preserve"><value>Từ chối minh chứng thanh toán</value></data>
+  <data name="ReviewRejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="ReviewRejectReasonPlaceholder" xml:space="preserve"><value>Ví dụ: Ảnh mờ, không đọc được số tiền hoặc mã giao dịch.</value></data>
+  <data name="ReviewRejectSubmit" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="ReviewRejectSubmitting" xml:space="preserve"><value>Đang từ chối...</value></data>
+  <data name="ReviewRejectSuccess" xml:space="preserve"><value>Đã từ chối minh chứng. Khách có thể gửi lại yêu cầu mới.</value></data>
+  <data name="ReviewRejectCancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="ReviewResultUnknown" xml:space="preserve"><value>Chưa xác định được kết quả thao tác. Hãy kiểm tra kết quả trước khi xác nhận hoặc từ chối lại.</value></data>
+  <data name="ReviewCheckResult" xml:space="preserve"><value>Kiểm tra kết quả</value></data>
+  <data name="ReviewChecking" xml:space="preserve"><value>Đang kiểm tra...</value></data>
+  <data name="ReviewProcessing" xml:space="preserve"><value>Đang xử lý...</value></data>
+  <data name="ReviewResultChecked" xml:space="preserve"><value>Đã cập nhật kết quả mới nhất từ máy chủ.</value></data>
+  <data name="ReviewConfirmedNotice" xml:space="preserve"><value>Giao dịch đã được xác nhận và cộng vào tiền đã thu.</value></data>
+  <data name="ReviewRejectedNotice" xml:space="preserve"><value>Giao dịch đã bị từ chối, không cộng vào tiền đã thu.</value></data>
+  <data name="ReviewNotPendingNotice" xml:space="preserve"><value>Chỉ yêu cầu đang chờ mới có thể xác nhận hoặc từ chối.</value></data>
+  <data name="ReviewDetailNotFoundTitle" xml:space="preserve"><value>Không tìm thấy yêu cầu</value></data>
+  <data name="ReviewDetailNotFoundDesc" xml:space="preserve"><value>Yêu cầu không tồn tại hoặc nằm ngoài phạm vi nhà trọ bạn quản lý.</value></data>
+  <data name="ReviewDetailLoadError" xml:space="preserve"><value>Không tải được chi tiết yêu cầu thanh toán.</value></data>
+  <data name="ReviewErrorForbidden" xml:space="preserve"><value>Bạn không có quyền xác nhận hoặc từ chối giao dịch này.</value></data>
+  <data name="ReviewErrorInvoiceAlreadyPaid" xml:space="preserve"><value>Hóa đơn đã được thanh toán.</value></data>
+  <data name="ReviewErrorInvalidStatus" xml:space="preserve"><value>Trạng thái yêu cầu đã thay đổi. Hãy kiểm tra kết quả mới nhất.</value></data>
+  <data name="ReviewErrorPaymentNotFound" xml:space="preserve"><value>Không tìm thấy yêu cầu thanh toán trong phạm vi của bạn.</value></data>
+  <data name="ReviewErrorRejectionReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+  <data name="ReviewErrorRejectionReasonTooLong" xml:space="preserve"><value>Lý do từ chối tối đa 500 ký tự.</value></data>
+  <data name="ReviewErrorConcurrency" xml:space="preserve"><value>Dữ liệu vừa thay đổi. Hãy kiểm tra kết quả trước khi thử lại.</value></data>
+  <data name="ReviewErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi khi xử lý yêu cầu thanh toán.</value></data>
 </root>
