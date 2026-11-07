@@ -1,6 +1,4 @@
 .service-catalog-page {
-    max-width: 1440px;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -512,6 +510,15 @@
 .edit-action-btn:hover {
     background: var(--accent-soft, #EEF2FF);
     color: var(--primary-hover, #4338CA);
+}
+
+.delete-action-btn {
+    color: var(--danger, #DC2626);
+}
+
+.delete-action-btn:hover {
+    background: #FEF2F2;
+    color: #B91C1C;
 }
 
 .icon-action-btn .lucide-icon {

@@ -1,0 +1,8 @@
+h3 { overflow-wrap: anywhere; }
+.image-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.image-controls .btn { min-height: 40px; }
+.image-stage { overflow: auto; max-height: 55vh; background: var(--surface-subtle); }
+.image-stage img { display: block; max-width: 100%; max-height: 52vh; margin-inline: auto; transform-origin: center; }
+@media (max-width: 767px) {
+    .image-controls .btn { min-height: 44px; }
+}

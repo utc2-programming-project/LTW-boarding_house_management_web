@@ -33,6 +33,9 @@
                     @L["TenantExport"]
                 </button>
             }
+            <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
+                <LucideIcon Name="mail" /> @L["InviteTenantButton"]
+            </button>
             <button type="button" class="btn btn-primary" @onclick="OpenCreate">
                 <LucideIcon Name="plus" /> @L["TenantAdd"]
             </button>
@@ -62,14 +65,14 @@
             <article class="tenant-stat-card">
                 <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
                 <div class="tenant-stat-value">@SummaryValue(_summary!.ActiveCount)<small>@L["TenantRecords"]</small></div>
-                <p>@Percent(_summary!.ActiveCount, _summary!.TotalCount) @L["TenantActiveRateHint"]</p>
+                <p>@L["TenantActiveRateHint"]: @Percent(_summary!.ActiveCount, _summary!.TotalCount)%</p>
             </article>
             @if (_canRevealIdNumber)
             {
                 <article class="tenant-stat-card">
                     <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
                     <div class="tenant-stat-value">@SummaryValue(_summary!.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
-                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount) @L["TenantAccountRateHint"]</p>
+                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount)% @L["TenantAccountRateHint"]</p>
                 </article>
             }
             <article class="tenant-stat-card">
@@ -169,6 +172,7 @@
                    CanRevealIdNumber="_canRevealIdNumber" OnClose="CloseFormAsync" OnSaved="RefreshAsync" />
 <TenantAccountLinkDialog Visible="_showLinkAccount" Tenant="_selectedTenant"
                           OnClose="CloseLinkAccountAsync" OnLinked="RefreshDetailsAsync" />
+<TenantInviteDialog Visible="_showInvite" OnClose="CloseInvite" OnSent="RefreshAsync" />
 
 <ConfirmDialog Visible="_showStatusConfirm"
                Title="@(_nextIsActive ? L["TenantActivateTitle"] : L["TenantDeactivateTitle"])"
@@ -205,6 +209,7 @@
     private bool _showDetails;
     private bool _showForm;
     private bool _showLinkAccount;
+    private bool _showInvite;
     private bool _showStatusConfirm;
     private bool _showUnlinkConfirm;
     private bool _showDeleteConfirm;
@@ -365,6 +370,14 @@
     {
         _formTenant = null;
         _showForm = true;
+    }
+
+    private void OpenInvite() => _showInvite = true;
+
+    private Task CloseInvite()
+    {
+        _showInvite = false;
+        return Task.CompletedTask;
     }
 
     private async Task OpenEditFromListAsync(int id)

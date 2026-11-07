@@ -449,12 +449,63 @@
     line-height: 18px;
 }
 
+.renew-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 20px 24px 0;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-subtle);
+}
+
+.renew-tab {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.renew-tab-active {
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
 .leased-room-dialog-body {
     display: grid;
     gap: 20px;
     padding: 24px;
     overflow-y: auto;
     min-height: 0;
+}
+
+/* Hai tab dùng chung một ô grid nên chiều cao hộp thoại chỉ do panel "Gửi yêu cầu"
+   quyết định: panel lịch sử tự đặt height:0 (không đóng góp vào cỡ ô) rồi
+   min-height:100% để chiếm đúng chiều cao panel kia đã định và cuộn trong đó. */
+.renew-panel {
+    grid-area: 1 / 1;
+    min-width: 0;
+}
+
+.renew-panel-history {
+    height: 0;
+    min-height: 100%;
+    overflow-y: auto;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+}
+
+/* Vẫn giữ panel gửi yêu cầu trong dòng (để nó làm khung định chiều cao) nhưng ẩn khỏi
+   màn hình và khỏi thứ tự tab khi người dùng đang xem tab lịch sử. */
+.renew-panel-hidden {
+    visibility: hidden;
 }
 
 .renew-unavailable-notice {
@@ -669,6 +720,10 @@
     .leased-room-dialog-header,
     .leased-room-dialog-body {
         padding: 16px;
+    }
+
+    .renew-tabs {
+        margin: 16px 16px 0;
     }
 
     .leased-room-dialog-actions {

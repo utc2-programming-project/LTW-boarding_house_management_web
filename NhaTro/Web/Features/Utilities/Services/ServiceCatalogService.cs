@@ -251,6 +251,45 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         return ToDto(catalog, _timeProvider.TodayVietnam());
     }
 
+    public async Task DeleteServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var catalog = await _context.ServiceCatalogs
+            .SingleOrDefaultAsync(item => item.Id == serviceCatalogId);
+        if (catalog is null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy danh mục dịch vụ {serviceCatalogId}.");
+        }
+
+        if (catalog.IsReadOnly)
+        {
+            throw WithKey(new UnauthorizedAccessException("Biểu giá điện/nước chỉ được xem, không thể xóa."), "ErrorReadOnlyTariff");
+        }
+
+        if (!catalog.PropertyId.HasValue)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể xóa danh mục hệ thống dùng chung."), "ErrorSystemCatalogReadOnly");
+        }
+
+        var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .AnyAsync(property => property.Id == catalog.PropertyId.Value && property.IsActive && !property.IsDeleted);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý danh mục của nhà trọ này.");
+        }
+
+        // Xóa mềm: giữ danh mục + lịch sử giá để đối soát hóa đơn cũ, chỉ ẩn khỏi danh mục.
+        catalog.IsDeleted = true;
+        catalog.DeletedAt = _timeProvider.UtcNow();
+        catalog.DeletedBy = caller.UserId;
+        catalog.IsActive = false;
+        await _context.SaveChangesAsync();
+    }
+
     private ServicePriceHistory CreateVersion(
         string name,
         string unit,

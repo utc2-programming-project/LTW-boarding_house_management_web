@@ -1,0 +1,22 @@
+.manager-assign-body { padding: 24px; }
+.manager-assign-loading { padding: 16px 0; color: var(--text-secondary); }
+.manager-assign-alert { margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-control); }
+.manager-assign-alert.error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-text); }
+.manager-assign-alert.success { border-color: var(--success-border); background: var(--success-bg); color: var(--success-text); }
+.manager-assign-heading { margin: 0 0 12px; font-size: 1rem; }
+.manager-assign-list { display: grid; gap: 10px; margin: 0 0 20px; padding: 0; list-style: none; }
+.manager-assign-list > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-control); }
+.manager-assign-info { display: grid; gap: 4px; min-width: 0; }
+.manager-assign-info strong { overflow-wrap: anywhere; }
+.manager-assign-info span { color: var(--text-secondary); font-size: .875rem; overflow-wrap: anywhere; }
+.manager-assign-empty { margin: 0 0 16px; color: var(--text-secondary); font-size: .875rem; }
+.manager-assign-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; padding-top: 16px; border-top: 1px solid var(--control-border); }
+.manager-assign-form label { grid-column: 1 / -1; font-weight: 600; }
+.manager-assign-form select { min-height: 44px; }
+
+@media (max-width: 560px) {
+    .manager-assign-body { padding: 16px; }
+    .manager-assign-list > li { align-items: flex-start; flex-direction: column; }
+    .manager-assign-form { grid-template-columns: minmax(0, 1fr); }
+    .manager-assign-form select, .manager-assign-form button { width: 100%; }
+}

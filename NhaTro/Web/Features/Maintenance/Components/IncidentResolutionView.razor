@@ -1,0 +1,24 @@
+@inject IStringLocalizer<IncidentResource> L
+
+<section>
+    <h3>@L["Resolution"]</h3>
+    <dl>
+        <dt>@L["CompletedAt"]</dt>
+        <dd class="tabular-nums">@(CompletedAt is { } at ? DateFormatter.FormatDateTime(at) : L["NoData"].Value)</dd>
+        <dt>@L["Assignee"]</dt>
+        <dd>@Display(Item.Assignee)</dd>
+        <dt>@L["TechnicalNotes"]</dt>
+        <dd class="solution">@Display(Item.TechnicalNotes)</dd>
+    </dl>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IncidentItem Item { get; set; } = default!;
+
+    private DateTime? CompletedAt => Item.Status == IncidentStatus.Completed
+        ? Item.History.Where(entry => entry.CompletedFromStatus is not null and not IncidentStatus.Completed)
+            .Max(entry => (DateTime?)entry.AtUtc)
+        : null;
+
+    private string Display(string value) => string.IsNullOrWhiteSpace(value) ? L["NoData"].Value : value;
+}

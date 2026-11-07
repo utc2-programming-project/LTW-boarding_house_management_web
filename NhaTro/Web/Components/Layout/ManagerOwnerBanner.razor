@@ -1,0 +1,57 @@
+@using Web.Features.Accounts
+@using Web.Features.Properties.DTOs
+@using Web.Features.Properties.Services
+@inject PropertyPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<ManagerOwnerBanner> Logger
+
+@* VHT-24: Quản lý luôn thấy Chủ trọ của mình; nếu chưa được phân công thì chỉ cảnh báo,
+   không chặn truy cập (theo yêu cầu nghiệp vụ). *@
+@if (_visible)
+{
+    <div class="manager-owner-banner @(_owner is null ? "warning" : "info")" role="status">
+        <LucideIcon Name="@(_owner is null ? "alert-triangle" : "user-check")" />
+        <span>@_text</span>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private ManagerOwnerInfo? _owner;
+    private string _text = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (await PageService.GetCurrentRoleAsync() != Roles.QuanLy)
+            {
+                return;
+            }
+
+            var result = await PageService.GetManagerOwnerAsync();
+            if (!result.Succeeded)
+            {
+                _visible = true;
+                _text = L["ManagerOwnerLoadFailed"];
+                return;
+            }
+
+            _owner = result.Owner;
+            _visible = true;
+            _text = _owner is null
+                ? L["ManagerNoOwnerBanner"]
+                : string.Format(L["ManagerOwnerBanner"], OwnerLabel(_owner));
+        }
+        catch (Exception ex)
+        {
+            // Trang chưa đăng nhập (login) hoặc circuit chưa có danh tính: không hiện banner.
+            Logger.LogDebug(ex, "Manager owner banner skipped");
+        }
+    }
+
+    private static string OwnerLabel(ManagerOwnerInfo owner) =>
+        string.IsNullOrWhiteSpace(owner.OwnerName)
+            ? owner.OwnerEmail ?? owner.OwnerUserId
+            : owner.OwnerName!;
+}

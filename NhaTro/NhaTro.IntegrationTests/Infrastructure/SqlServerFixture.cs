@@ -123,9 +123,16 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.PaymentProofs.ExecuteDeleteAsync();
         await db.Payments.ExecuteDeleteAsync();
         await db.StoredFiles.ExecuteDeleteAsync();
+        // Thanh toán tham chiếu Invoices bằng Restrict: xóa trước hóa đơn.
+        await db.Payments.ExecuteDeleteAsync();
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
         await db.InvoiceItems.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
+        // P5 (D10): lịch sử sửa chỉ số xóa trước chỉ số; chỉ số tham chiếu Rooms.
+        await db.UtilityReadingAudits.ExecuteDeleteAsync();
+        await db.UtilityReadings.ExecuteDeleteAsync();
+        // D16: nhật ký thao tác độc lập, xóa trước Users/Properties.
+        await db.AuditLogEntries.ExecuteDeleteAsync();
         // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.
         await db.ContractMembers.ExecuteDeleteAsync();
         await db.Contracts.ExecuteDeleteAsync();
@@ -144,7 +151,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
         await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.ServicePriceHistories.ExecuteDeleteAsync();
-        await db.ServiceCatalogs.ExecuteDeleteAsync();
+        // Xóa mềm dịch vụ vẫn còn dòng trong bảng: bỏ qua query filter để dọn sạch.
+        await db.ServiceCatalogs.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();

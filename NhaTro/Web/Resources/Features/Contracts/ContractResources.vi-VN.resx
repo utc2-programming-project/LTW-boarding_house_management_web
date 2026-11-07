@@ -184,5 +184,47 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng ở trạng thái Chờ duyệt.</value></data>
+  <data name="ContractUnsavedChanges" xml:space="preserve"><value>Biểu mẫu có thay đổi chưa lưu.</value></data>
+  <data name="ContractConfirmLeave" xml:space="preserve"><value>Rời biểu mẫu và bỏ các thay đổi chưa lưu?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Đang tải…</value></data>
+  <data name="RenewalQueueTitle" xml:space="preserve"><value>Yêu cầu gia hạn phòng</value></data>
+  <data name="RenewalQueueDescription" xml:space="preserve"><value>Khách thuê gửi yêu cầu từ trang Phòng đang thuê. Chấp thuận sẽ gia hạn hợp đồng thêm đúng số tháng khách xin.</value></data>
+  <data name="RenewalQueueNavLabel" xml:space="preserve"><value>Yêu cầu gia hạn</value></data>
+  <data name="RenewalQueueLoadErrorTitle" xml:space="preserve"><value>Không tải được yêu cầu gia hạn</value></data>
+  <data name="RenewalQueueLoadErrorDescription" xml:space="preserve"><value>Đã xảy ra lỗi khi tải danh sách yêu cầu. Vui lòng thử lại.</value></data>
+  <data name="RenewalQueueEmptyTitle" xml:space="preserve"><value>Không còn yêu cầu chờ xử lý</value></data>
+  <data name="RenewalQueueEmptyDescription" xml:space="preserve"><value>Mọi yêu cầu gia hạn trong phạm vi nhà trọ của bạn đều đã được xử lý.</value></data>
+  <data name="RenewalRequesterLabel" xml:space="preserve"><value>Khách gửi yêu cầu</value></data>
+  <data name="RenewalMonthsLabel" xml:space="preserve"><value>Số tháng xin gia hạn</value></data>
+  <data name="RenewalMonthsValue" xml:space="preserve"><value>{0} tháng</value></data>
+  <data name="RenewalCurrentEndLabel" xml:space="preserve"><value>Kết thúc hiện tại</value></data>
+  <data name="RenewalProposedEndLabel" xml:space="preserve"><value>Kết thúc đề xuất</value></data>
+  <data name="RenewalSentAtLabel" xml:space="preserve"><value>Gửi lúc</value></data>
+  <data name="RenewalNoteLabel" xml:space="preserve"><value>Lời nhắn của khách</value></data>
+  <data name="RenewalDecideAction" xml:space="preserve"><value>Duyệt yêu cầu</value></data>
+  <data name="ContractCloseAction" xml:space="preserve"><value>Đóng hộp thoại</value></data>
+  <data name="RenewalAcceptAction" xml:space="preserve"><value>Chấp thuận</value></data>
+  <data name="RenewalDecisionTitle" xml:space="preserve"><value>Duyệt yêu cầu gia hạn</value></data>
+  <data name="RenewalDecisionDescription" xml:space="preserve"><value>Chấp thuận tạo hợp đồng mới bắt đầu ngay sau ngày kết thúc hiện tại. Từ chối cần kèm lý do để khách thuê nhìn thấy.</value></data>
+  <data name="RenewalAcceptSuccess" xml:space="preserve"><value>Đã chấp thuận và gia hạn hợp đồng.</value></data>
+  <data name="RenewalRejectSuccess" xml:space="preserve"><value>Đã từ chối yêu cầu gia hạn.</value></data>
+  <data name="RenewalPendingOwnerApproval" xml:space="preserve"><value>Đã gửi yêu cầu để Chủ trọ duyệt; yêu cầu của khách vẫn đang chờ.</value></data>
+  <data name="RenewalGenericError" xml:space="preserve"><value>Không thể xử lý yêu cầu gia hạn.</value></data>
+  <data name="RenewalErrorForbidden" xml:space="preserve"><value>Bạn không có quyền duyệt yêu cầu gia hạn này.</value></data>
+  <data name="RenewalErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng của yêu cầu.</value></data>
+  <data name="RenewalErrorInvalidStatus" xml:space="preserve"><value>Hợp đồng không còn đang hiệu lực nên không gia hạn được.</value></data>
+  <data name="RenewalErrorRequestNotFound" xml:space="preserve"><value>Không tìm thấy yêu cầu gia hạn.</value></data>
+  <data name="RenewalErrorAlreadyDecided" xml:space="preserve"><value>Yêu cầu này đã được xử lý.</value></data>
+  <data name="RenewalErrorRejectReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+  <data name="RenewalErrorReasonTooLong" xml:space="preserve"><value>Lý do từ chối không được vượt quá 500 ký tự.</value></data>
+  <data name="RenewalErrorApprovalDenied" xml:space="preserve"><value>Chủ trọ đang chặn thao tác gia hạn hợp đồng.</value></data>
+  <data name="RenewalErrorRenewApplyFailed" xml:space="preserve"><value>Không gia hạn được hợp đồng. Vui lòng kiểm tra lại hợp đồng và thử lại.</value></data>
+  <data name="RenewalErrorAlreadyRenewed" xml:space="preserve"><value>Hợp đồng này đã được gia hạn rồi, không duyệt yêu cầu cũ nữa.</value></data>
+  <data name="RenewalErrorDateOverlap" xml:space="preserve"><value>Phòng đã có hợp đồng hiệu lực trong khoảng thời gian gia hạn.</value></data>
+  <data name="RenewalErrorEndDateInvalid" xml:space="preserve"><value>Ngày kết thúc mới phải sau ngày kết thúc hiện tại.</value></data>
+  <data name="ContractRoomPropertyLabel" xml:space="preserve"><value>Phòng / Nhà trọ</value></data>
+  <data name="ContractFinanceLabel" xml:space="preserve"><value>Tài chính</value></data>
+  <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Trạng thái / Thao tác</value></data>
+  <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Thuê/tháng</value></data>
+  <data name="ContractDepositShort" xml:space="preserve"><value>Đặt cọc</value></data>
 </root>

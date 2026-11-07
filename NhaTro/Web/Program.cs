@@ -1,3 +1,5 @@
+// Điểm khởi động của web: đăng ký DI (Blazor, Identity + cookie, EF Core, dịch vụ nghiệp vụ,
+// email/SMTP, localization, rate limit), cấu hình middleware, seed vai trò/tài khoản mẫu rồi map endpoint.
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.Features;
@@ -30,6 +32,7 @@ using Web.Features.Tenants.Documents;
 using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
+using Web.Infrastructure.Email;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -43,12 +46,13 @@ using Web.Infrastructure.Logging;
 using Web.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
-// IIS co the dat log ngoai thu muc publish; dev giu duong dan mac dinh.
+// ── 1. Ghi log (Serilog) ───────────────────────────────────────────────────
+// IIS có thể đặt log ngoài thư mục publish; chạy dev thì dùng LocalApplicationData.
 var configuredLogDirectory = builder.Configuration["Logging:Directory"] ?? string.Empty;
 string logDirectory;
 try
 {
-    // Windows co the cat chuoi tai NUL khi mo rong bien; phai chan truoc buoc nay.
+    // Windows có thể cắt chuỗi tại NUL khi mở rộng biến môi trường; phải chặn trước khi dùng path.
     if (configuredLogDirectory.Contains('\0'))
     {
         throw new ArgumentException();
@@ -62,17 +66,16 @@ try
 }
 catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
 {
-    // Chi neu ten cau hinh, khong dua gia tri duong dan vao loi startup.
+    // Chỉ nêu tên cấu hình, không đưa giá trị đường dẫn vào lỗi khởi động.
     throw new InvalidOperationException("Logging:Directory must be a valid directory path.");
 }
 
 Directory.CreateDirectory(logDirectory);
 
-// log ở đây nè, công dụng của serilog đó.
+// Console + file xoay theo ngày (giữ 7 ngày). Scrubber che thuộc tính nhạy cảm (mật khẩu, token,
+// CCCD) và SafeExceptionEnricher làm sạch exception trước khi ghi để không lộ connection string/SQL.
 builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
-    // che cac thuoc tinh nhay cam (mat khau, token, CCCD...) truoc khi ghi log.
     .Enrich.With<SensitiveDataScrubber>()
-    // exception chi ghi dang da lam sach (khong lo connection string/SQL/duong dan may).
     .Enrich.With<SafeExceptionEnricher>()
     .WriteTo.Console(outputTemplate: LogTemplates.Console)
     .WriteTo.File(
@@ -81,7 +84,7 @@ builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumL
         retainedFileCountLimit: 7,
         outputTemplate: LogTemplates.File));
 
-// Add services to the container.
+// ── 2. Blazor Server + Identity: xác thực và cookie ────────────────────────
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
@@ -94,7 +97,7 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     }).AddIdentityCookies();
 
-// endpoint /api tra 401/403 dung hop dong muc 5, khong chuyen huong trang dang nhap.
+// /api trả 401/403 đúng hợp đồng mục 5, không chuyển hướng về trang đăng nhập.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     var redirectToLogin = options.Events.OnRedirectToLogin;
@@ -122,6 +125,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+// ── 3. EF Core ─────────────────────────────────────────────────────────────
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -130,15 +134,14 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(
     ServiceLifetime.Scoped);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// ── 4. Identity: đăng nhập, mật khẩu, khóa tài khoản ───────────────────────
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
     {
-        // tam thoi tat xac thuc email (chua cau hinh SMTP - lam sau).
-        // Bat lai khi co IEmailSender that, neu khong tai khoan do quan tri tao se khong dang nhap duoc.
+        // Tài khoản do quản trị tạo không qua bước xác nhận email nên không bắt buộc xác nhận.
         options.SignIn.RequireConfirmedAccount = false;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
 
-        // Do manh mat khau theo dac ta: toi thieu 8 ky tu, co chu hoa, chu thuong, so.
-        // Dac ta KHONG yeu cau ky tu dac biet nen tat de tranh bao loi kho hieu.
+        // Theo đặc tả: tối thiểu 8 ký tự, có chữ hoa/thường/số; không bắt ký tự đặc biệt.
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
@@ -146,24 +149,26 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredUniqueChars = 1;
 
-        // Khoa tam thoi khi dang nhap sai nhieu lan (khac voi khoa tai khoan do quan tri - ).
+        // Không tự khóa khi gõ sai mật khẩu (kẻ tấn công có thể khóa tài khoản chủ trọ = DoS):
+        // chống dò mật khẩu bằng LoginAttemptGuard chặn theo IP, khóa tài khoản chỉ do quản trị chủ động.
         options.Lockout.AllowedForNewUsers = true;
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 
-        // Ten dang nhap = email: khong cho trung email.
+        // Tên đăng nhập là email nên cấm trùng email.
         options.User.RequireUniqueEmail = true;
     }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
-      // VHT-95: SignInManager rieng chan tai khoan Chờ duyệt.
+      // VHT-95: SignInManager riêng chặn tài khoản "Chờ duyệt".
       .AddSignInManager<AccountSignInManager>()
       .AddDefaultTokenProviders();
 
+// ── 5. Policy phân quyền ───────────────────────────────────────────────────
+// Policy nghiệp vụ loại trừ Admin ngay từ endpoint (kể cả tài khoản có thêm vai trò nghiệp vụ);
+// service gọi BusinessGuard để chặn lớp 2 và tự lọc phạm vi dữ liệu theo vai trò.
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", p => p.RequireRole(Roles.Admin));
-    // Nghiep vu: tu choi Admin ngay tu endpoint, service goi BusinessGuard de chan them lop 2.
     options.AddPolicy("Business", p => p.RequireRole(Roles.ChuTro, Roles.QuanLy, Roles.KhachThue));
-    // VHT-31: Admin bị chặn ngay từ route hợp đồng; phạm vi từng vai trò do ContractService lọc.
     options.AddPolicy("ContractBusiness", p => p.RequireAssertion(context =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
@@ -174,7 +179,6 @@ builder.Services.AddAuthorization(options =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
         (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
-    // P7 mẫu: chặn Admin kể cả khi tài khoản có thêm vai trò nghiệp vụ.
     options.AddPolicy(Web.Features.Maintenance.IncidentAccess.Policy, p => p
         .RequireAuthenticatedUser()
         .RequireAssertion(context => Web.Features.Maintenance.IncidentAccess.IsAllowed(context.User)));
@@ -192,8 +196,6 @@ builder.Services.AddAuthorization(options =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
         (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
-    // VHT-35: P6 #34 xem hóa đơn; phạm vi từng vai trò do InvoiceQueryService lọc.
-    // Admin bị chặn ngay từ trang, kể cả khi tài khoản có thêm vai trò nghiệp vụ.
     options.AddPolicy("InvoiceView", p => p.RequireAssertion(context =>
         context.User.Identity?.IsAuthenticated == true &&
         !context.User.IsInRole(Roles.Admin) &&
@@ -201,30 +203,38 @@ builder.Services.AddAuthorization(options =>
          context.User.IsInRole(Roles.QuanLy) ||
          context.User.IsInRole(Roles.KhachThue))));
 });
+
+// ── 6. Service nghiệp vụ (đọc/ghi SQL, tự kiểm quyền và phạm vi) ───────────
 builder.Services.AddScoped<RoleService>();
-// service tai khoan (ho so ca nhan + quan tri tai khoan theo ).
+// VHT-95: hồ sơ cá nhân + quản trị tài khoản; quyền kiểm ở server.
 builder.Services.AddScoped<IAccountService, AccountService>();
 
-// SQL services. Approval policy and active-contract checks are extension points.
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<ITenantReportService, TenantReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
+builder.Services.AddScoped<Web.Features.Home.Services.HomePageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
-// VHT-125 (2D): khách thuê gửi yêu cầu gia hạn từ trang "Phòng đang thuê".
+// VHT-125: khách thuê gửi yêu cầu gia hạn.
 builder.Services.AddScoped<IContractRenewalService, ContractRenewalService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
 builder.Services.AddScoped<IncidentPhotoService>();
 builder.Services.AddScoped<IncidentPageService>();
+// Mỗi loại yêu cầu duyệt có một IApprovalApplier; loại chưa có applier sẽ bị chặn (fail closed).
 builder.Services.AddScoped<IApprovalApplier, IncidentResultPhotoApprovalApplier>();
 builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
-// VHT-99: duyệt yêu cầu SW-06 của Quản lý = đưa hồ sơ khách thuê vào thùng rác.
+// VHT-99: duyệt SW-06 = đưa hồ sơ khách thuê vào thùng rác.
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
+// SW-10/SW-11: chờ Chủ trọ duyệt trước khi vào sổ / phát hành hóa đơn.
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceCreateApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceIssueApprovalApplier>();
 builder.Services.AddScoped<ContractPageService>();
+// VHT-125: Chủ trọ / Quản lý duyệt yêu cầu gia hạn.
+builder.Services.AddScoped<ContractRenewalPageService>();
 // VHT-24: phân công Quản lý theo tòa nhà (Chủ trọ sở hữu gán/bỏ gán).
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
@@ -232,8 +242,8 @@ builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
 
-// 21 cong tac Quan ly luu SQL (khong dat trong appsettings) + policy handler dung chung.
-// Service doc/ghi chi cho Chu tro; policy chi doc de quyet dinh thay Quan ly.
+// 21 công tắc Quản lý lưu trong SQL (không đặt ở appsettings). Service ghi chỉ dành cho Chủ trọ;
+// policy chỉ đọc, dùng chung để quyết định có thay Quản lý hay không.
 builder.Services.AddScoped<ManagerToggleService>();
 builder.Services.AddScoped<IManagerToggleService>(sp => sp.GetRequiredService<ManagerToggleService>());
 builder.Services.AddScoped<IManagerToggleReader>(sp => sp.GetRequiredService<ManagerToggleService>());
@@ -241,27 +251,28 @@ builder.Services.AddScoped<ManagerTogglePolicy>();
 builder.Services.AddScoped<IManagerTogglePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<ManagerTogglePolicy>());
 
-// VHT-96: hang doi duyet thao tac Quan ly. Chua dang ky applier nghiep vu nao:
-// mã SW chưa có applier sẽ bị chặn khi duyệt (fail closed).
+// VHT-96: hàng đợi duyệt thao tác Quản lý; mã SW chưa có applier sẽ bị chặn khi duyệt.
 builder.Services.AddScoped<ManagerApprovalService>();
 builder.Services.AddScoped<IManagerApprovalService>(sp => sp.GetRequiredService<ManagerApprovalService>());
 
-// service khach thue, kiem quyen/pham vi trong service.
+// Khách thuê + tài liệu thuê: kiểm quyền và phạm vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<TenantPageService>();
 builder.Services.AddScoped<TenantDocumentPageService>();
 
-// chan client gui truong la ngoai DTO (do truong nhay cam nhu UserId/OwnerId tu form).
-// Ap cho JSON cua HTTP endpoint; Blazor Server goi service noi bo (khong qua JSON) nen khong anh huong.
+// ── 7. Chặn trường lạ trong JSON của HTTP endpoint ─────────────────────────
+// Không cho client tự gửi trường nhạy cảm (UserId/OwnerId).
+// Blazor Server gọi service trực tiếp (không qua JSON) nên không bị ảnh hưởng.
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.UnmappedMemberHandling =
         System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow);
 
-// bao mat nen tang. Moi nguong doc tu cau hinh "Security", co mac dinh an toan neu thieu.
+// ── 8. Bảo mật nền tảng, health, rate limit ────────────────────────────────
+// Ngưỡng đọc từ section "Security"; thiếu cấu hình thì dùng mặc định an toàn.
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>()
     ?? new SecurityOptions();
 
-// Khong am tham bo qua DPAPI khi nguoi van hanh chua dat duong dan keys.
+// Bật DPAPI mà chưa đặt đường dẫn keys là cấu hình sai: báo lỗi ngay, không âm thầm bỏ qua.
 if (securityOptions.ProtectKeysWithDpapi &&
     string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
 {
@@ -269,13 +280,13 @@ if (securityOptions.ProtectKeysWithDpapi &&
         "Security:ProtectKeysWithDpapi requires Security:DataProtectionKeysPath.");
 }
 
-// Giu khoa Data Protection ngoai thu muc publish de cookie dang nhap khong bi mat khi trien khai lai.
+// Giữ khóa Data Protection ngoài thư mục publish để cookie đăng nhập không mất khi triển khai lại.
 if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
 {
     var dataProtection = builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
             Environment.ExpandEnvironmentVariables(securityOptions.DataProtectionKeysPath))).SetApplicationName("NhaTro.Web");
 
-    // IIS mot may: chi identity Windows hien tai giai ma duoc keys moi; khong doi keys cu.
+    // IIS một máy: chỉ identity Windows hiện tại giải mã được keys mới; không đổi keys cũ.
     if (securityOptions.ProtectKeysWithDpapi)
     {
         if (!OperatingSystem.IsWindows())
@@ -287,13 +298,16 @@ if (!string.IsNullOrWhiteSpace(securityOptions.DataProtectionKeysPath))
     }
 }
 
-// CAPTCHA sau nhieu lan dang nhap sai. Giai doan 1 dung thach thuc cuc bo (khong them phu thuoc).
+// CAPTCHA sau nhiều lần đăng nhập sai; giai đoạn 1 dùng thử thách cục bộ, không thêm phụ thuộc.
 builder.Services.AddSingleton<ICaptchaVerifier, LocalCaptchaVerifier>();
 
-// health live/ready. Ready kiem ket noi DB qua goi EF HealthChecks.
+// Chống dò mật khẩu: đếm số lần sai theo IP và chặn IP tạm thời thay vì khóa tài khoản.
+builder.Services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
+
+// Health live/ready; ready kiểm kết nối DB qua EF HealthChecks.
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database", tags: [HealthEndpoints.ReadyTag]);
 
-// rate limiting. Global chi ap cho POST dang nhap; policy rieng cho /api/files va /culture/set.
+// Rate limit: limiter toàn cục chỉ áp POST đăng nhập; /api/files và /culture/set có policy riêng.
 builder.Services.AddRateLimiter(rateLimiter =>
 {
     rateLimiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -328,28 +342,40 @@ builder.Services.AddRateLimiter(rateLimiter =>
                     Window = TimeSpan.FromSeconds(securityOptions.RateLimit.LoginWindowSeconds),
                     QueueLimit = 0,
                 })
-            : RateLimitPartition.GetNoLimiter("no-limit"));
+            // PLAN-008: chặn spam đăng ký chủ trọ (5 lần/giờ/IP).
+            : RateLimitPolicies.IsRegisterRequest(http)
+                ? RateLimitPartition.GetFixedWindowLimiter(
+                    "register:" + RateLimitPolicies.ClientKey(http),
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromHours(1),
+                        QueueLimit = 0,
+                    })
+                : RateLimitPartition.GetNoLimiter("no-limit"));
 
     rateLimiter.OnRejected = RateLimitPolicies.WriteRejectionAsync;
 });
 
-// storage dung chung. Gioi han doc tu cau hinh, kiem tra ngay khi khoi dong.
+// ── 9. Lưu trữ tệp + giới hạn upload ───────────────────────────────────────
+// Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
 
-// VHT-26: giấy tờ P3 — phạm vi hồ sơ, audit. VHT-119: Quản lý theo phân công tòa nhà thật (VHT-24).
+// VHT-26: giấy tờ P3 — phạm vi hồ sơ + audit; Quản lý theo phân công tòa nhà (VHT-24).
 builder.Services.AddScoped<IManagerTenantScope, ContractManagerTenantScope>();
 builder.Services.AddScoped<ITenantDocumentScopeService, TenantDocumentScopeService>();
 builder.Services.AddScoped<ITenantDocumentService, TenantDocumentService>();
 
-// Chan o tang server truoc khi vao service: lon hon gioi han cao nhat mot chut (10 MB + overhead multipart).
+// Chặn ở tầng server: 10 MB + overhead multipart (12 MB), trước khi request vào service.
 const long maxUploadRequestBytes = 12L * 1024 * 1024;
 builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = maxUploadRequestBytes);
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = maxUploadRequestBytes);
 
+// ── 10. Localization + antiforgery ─────────────────────────────────────────
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -358,14 +384,34 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.DefaultRequestCulture = new RequestCulture("vi-VN");
     options.SupportedCultures = supported;
     options.SupportedUICultures = supported;
-    // Chỉ dùng lựa chọn cookie; chưa chọn thì dùng VI, không theo query/trình duyệt.
-    options.RequestCultureProviders.Clear();
-    options.RequestCultureProviders.Add(new CookieRequestCultureProvider());
     // Chỉ dùng cookie của selector; chưa chọn ngôn ngữ thì mặc định tiếng Việt.
     options.RequestCultureProviders = [new CookieRequestCultureProvider()];
 });
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+// ── 11. Gửi thư: SMTP hoặc dự phòng NoOp ───────────────────────────────────
+// SMTP Gmail (App Password trong User Secrets); thiếu cấu hình thì thư chỉ ghi log để dev vẫn chạy.
+builder.Services.AddOptions<EmailOptions>()
+    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<EmailOptions>, EmailOptionsValidator>();
+builder.Services.AddSingleton<EmailRecipientResolver>();
+var emailSettings = builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+    ?? new EmailOptions();
+if (emailSettings.Smtp.IsConfigured)
+{
+    builder.Services.AddSingleton<SmtpEmailSender>();
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>>(sp => sp.GetRequiredService<SmtpEmailSender>());
+    builder.Services.AddSingleton<IOutboundEmailSender>(sp => sp.GetRequiredService<SmtpEmailSender>());
+}
+else
+{
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+    builder.Services.AddSingleton<IOutboundEmailSender, LogOnlyOutboundEmailSender>();
+}
+
+// ── 12. Service còn lại: tiện ích, hóa đơn, báo cáo, audit, UI ─────────────
+// PLAN-006: lời mời khách thuê qua email.
+builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationService>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
@@ -373,6 +419,16 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
+// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
+builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
+// P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
+builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
+// P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
+builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
+// D8: xuất Excel P8 + SW-16.
+builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Reports.Services.ReportExportApprovalApplier>();
 // VHT-35: query hóa đơn P6 tự giới hạn phạm vi theo vai trò người gọi.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
     Web.Features.Invoices.Services.InvoiceQueryService>();
@@ -385,27 +441,41 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
 // VHT-55: adapter UI khách gửi yêu cầu thanh toán + minh chứng, tra kết quả trước khi thử lại.
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
 builder.Services.AddMudServices();
-builder.Services.AddSingleton(TimeProvider.System);  
+builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();
 
+// ── 13. Pipeline: log, lỗi, culture, rate limit, antiforgery ───────────────
 app.UseSerilogRequestLogging();
-// map loi 413 cua Kestrel/multipart ve cung cau truc JSON FileSizeExceeded.
+// Đổi lỗi 413 của Kestrel/multipart về cùng cấu trúc JSON FileSizeExceeded.
 app.UseMiddleware<FileUploadExceptionMiddleware>();
 app.Logger.LogInformation("Web vận hành nhà trọ đã khởi động");
-// Configure the HTTP request pipeline.
+
+var smtpForLog = app.Services.GetRequiredService<IOptions<EmailOptions>>().Value.Smtp;
+if (smtpForLog.IsConfigured)
+{
+    app.Logger.LogInformation(
+        "Gửi thư qua SMTP {Host}:{Port}, người gửi {From}.",
+        smtpForLog.Host, smtpForLog.Port, smtpForLog.EffectiveFromAddress);
+}
+else
+{
+    app.Logger.LogWarning(
+        "Chưa cấu hình Email:Smtp (thiếu UserName/Password/FromAddress). " +
+        "Thư hệ thống sẽ chỉ ghi log, không gửi thật.");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
 }
 else
 {
-    // loi ngoai du kien o /api tra JSON an toan, khong lo chi tiet/stack trace.
+    // Lỗi ngoài dự kiến ở /api trả JSON an toàn, không lộ chi tiết/stack trace.
     app.UseWhen(
         context => context.Request.Path.StartsWithSegments("/api"),
         apiApp => apiApp.UseMiddleware<ApiExceptionHandlerMiddleware>());
 
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
@@ -413,14 +483,50 @@ app.UseHttpsRedirection();
 
 app.UseRequestLocalization();
 
-// gioi han tan suat (global chi ap cho POST dang nhap; policy rieng gan theo endpoint).
 app.UseRateLimiter();
+
+// Token antiforgery gắn với trạng thái đăng nhập: form login mở trước khi tab khác đăng nhập
+// (hoặc phiên hết hạn) sẽ bị từ chối 400 text thô. Đổi thành redirect để tải lại form + token mới.
+app.Use(async (context, next) =>
+{
+    var isLoginPost = HttpMethods.IsPost(context.Request.Method)
+        && (context.Request.Path.Equals("/login", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase));
+
+    if (!isLoginPost)
+    {
+        await next();
+        return;
+    }
+
+    var originalBody = context.Response.Body;
+    await using var buffer = new MemoryStream();
+    context.Response.Body = buffer;
+    try
+    {
+        await next();
+
+        if (context.Response.StatusCode == StatusCodes.Status400BadRequest)
+        {
+            context.Response.Headers.Clear();
+            context.Response.Redirect("/login?stale=1");
+            return;
+        }
+
+        buffer.Position = 0;
+        await buffer.CopyToAsync(originalBody);
+    }
+    finally
+    {
+        context.Response.Body = originalBody;
+    }
+});
 
 app.UseAntiforgery();
 
-// endpoint cho selector cua Phu.
-// Dat cookie chuan ".AspNetCore.Culture", song sau reload/dang nhap (1 nam).
-// Chi nhan vi-VN/en-US; tien VND va logic tinh khong doi theo culture.
+// ── 14. Endpoint ───────────────────────────────────────────────────────────
+// Đổi ngôn ngữ (VI/EN) cho bộ chọn ở topbar và trang auth: ghi cookie ".AspNetCore.Culture"
+// sống 1 năm, chỉ nhận vi-VN/en-US; tiền VND và logic tính không đổi theo culture.
 app.MapPost("/culture/set", async Task<IResult> (HttpContext http, string culture, IAntiforgery antiforgery) =>
 {
     // Xác thực trước khi ghi cookie, kể cả endpoint chỉ nhận culture từ query.
@@ -460,19 +566,28 @@ app.MapGet("/culture/current", (HttpContext http) =>
 });
 
 app.MapStaticAssets();
-// endpoint tep dung chung, da kiem quyen trong service va chan Admin o policy "Business".
+// Tệp dùng chung: kiểm quyền trong service, chặn Admin bằng policy "Business".
 app.MapFileEndpoints();
-// health live/ready (an danh, chi tra trang thai).
+// Health live/ready (ẩn danh, chỉ trả trạng thái).
 app.MapHealthEndpoints();
-// VHT-26: endpoint giay to P3 (metadata, upload, tai, thay, xoa mem) co kiem pham vi ho so.
+// VHT-26: giấy tờ P3 (metadata, upload, tải, thay, xóa mềm) có kiểm phạm vi hồ sơ.
 app.MapTenantDocumentEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Add additional endpoints required by the Identity /Account Razor components.
+// Endpoint bổ sung cho các Razor component Identity /Account.
 app.MapAdditionalIdentityEndpoints();
 
-// gieo role, Admin dau tien tu secret, roi den user mau dev.
+// ── 15. Khởi tạo dữ liệu ───────────────────────────────────────────────────
+// Chạy dev: áp migration còn thiếu để schema DB khớp model.
+if (app.Environment.IsDevelopment())
+{
+    await using var migrationScope = app.Services.CreateAsyncScope();
+    var migrationDb = migrationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await migrationDb.Database.MigrateAsync();
+}
+
+// Gieo vai trò, Admin đầu tiên (từ secret), rồi tài khoản mẫu dev.
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -493,5 +608,5 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
-// VHT-14: WebApplicationFactory can resolve the entry-point assembly for HTTP/auth integration tests.
+// VHT-14: WebApplicationFactory cần class Program công khai để test tích hợp HTTP/auth tìm được assembly.
 public partial class Program { }

@@ -304,73 +304,123 @@
                 </button>
             </div>
 
-            <div class="leased-room-dialog-body">
-                <div class="renew-unavailable-notice" role="note">
-                    <LucideIcon Name="info" />
-                    <span>@L["RenewNotice"]</span>
-                </div>
+            <div class="renew-tabs" role="tablist" aria-label="@L["RenewTabsLabel"]">
+                <button type="button" role="tab" id="renew-tab-request" aria-controls="renew-panel-request"
+                        class="renew-tab @(_onHistoryTab ? string.Empty : "renew-tab-active")"
+                        aria-selected="@(!_onHistoryTab)" @onclick="ShowRequestTab">
+                    @L["RenewTabRequest"]
+                </button>
+                <button type="button" role="tab" id="renew-tab-history" aria-controls="renew-panel-history"
+                        class="renew-tab @(_onHistoryTab ? "renew-tab-active" : string.Empty)"
+                        aria-selected="@_onHistoryTab" @onclick="ShowHistoryTab">
+                    @L["RenewTabHistory"]
+                </button>
+            </div>
 
-                @if (_pendingRenewal is { } pendingRenewal)
-                {
-                    <div class="renew-pending-card">
-                        <div class="renew-pending-row">
-                            <span class="renew-pending-label">@L["RenewPendingStatusLabel"]</span>
-                            <span class="renew-pending-value">@L["RenewStatusPending"]</span>
-                        </div>
-                        <div class="renew-pending-row">
-                            <span class="renew-pending-label">@L["RenewMonthsLabel"]</span>
-                            <span class="renew-pending-value tabular-nums">@L["DurationInMonths", pendingRenewal.RequestedMonths]</span>
-                        </div>
-                        <div class="renew-pending-row">
-                            <span class="renew-pending-label">@L["RenewPendingSentAtLabel"]</span>
-                            <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(pendingRenewal.RequestedAt))</span>
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(pendingRenewal.Note))
-                        {
-                            <div class="renew-pending-note">
-                                <span class="renew-pending-label">@L["RenewNoteLabel"]</span>
-                                <p>@pendingRenewal.Note</p>
-                            </div>
-                        }
+            <div class="leased-room-dialog-body">
+                @* Panel gửi yêu cầu luôn nằm trong DOM để làm khung định chiều cao hộp thoại;
+                   sang tab lịch sử nó chỉ bị visibility:hidden, nhờ vậy hộp thoại không dài thêm.
+                   Cơ chế cuộn nằm ở .renew-panel / .renew-panel-history trong file CSS. *@
+                <div role="tabpanel" id="renew-panel-request" aria-labelledby="renew-tab-request"
+                     class="renew-panel @(_onHistoryTab ? "renew-panel-hidden" : string.Empty)">
+                    <div class="renew-unavailable-notice" role="note">
+                        <LucideIcon Name="info" />
+                        <span>@L["RenewNotice"]</span>
                     </div>
-                }
-                else
-                {
-                    <div class="leased-room-dialog-field">
-                        <label for="renew-months">@L["RenewMonthsLabel"] <span class="required-star">*</span></label>
-                        <input id="renew-months" class="leased-room-dialog-input"
-                               type="number" inputmode="numeric" step="1"
-                               min="@ContractRenewalRules.MinRequestedMonths" max="@MaxRenewMonths"
-                               aria-describedby="renew-months-hint"
-                               disabled="@_renewSubmitting"
-                               @bind="_renewMonthsText" @bind:event="oninput" />
-                        <p id="renew-months-hint" class="leased-room-dialog-hint">
-                            @L["RenewMonthsHint", ContractRenewalRules.MinRequestedMonths, MaxRenewMonths]
-                        </p>
-                        @if (_renewMonthsError is not null)
+
+                    @if (HasPendingRenewal)
+                    {
+                        <p class="leased-room-dialog-hint">@L["RenewPendingBlocksNew"]</p>
+                    }
+                    else
+                    {
+                        <div class="leased-room-dialog-field">
+                            <label for="renew-months">@L["RenewMonthsLabel"] <span class="required-star">*</span></label>
+                            <input id="renew-months" class="leased-room-dialog-input"
+                                   type="number" inputmode="numeric" step="1"
+                                   min="@ContractRenewalRules.MinRequestedMonths" max="@MaxRenewMonths"
+                                   aria-describedby="renew-months-hint"
+                                   disabled="@_renewSubmitting"
+                                   @bind="_renewMonthsText" @bind:event="oninput" />
+                            <p id="renew-months-hint" class="leased-room-dialog-hint">
+                                @L["RenewMonthsHint", ContractRenewalRules.MinRequestedMonths, MaxRenewMonths]
+                            </p>
+                            @if (_renewMonthsError is not null)
+                            {
+                                <p class="leased-room-dialog-error" role="alert">
+                                    <LucideIcon Name="alert" />
+                                    <span>@_renewMonthsError</span>
+                                </p>
+                            }
+                        </div>
+
+                        <div class="leased-room-dialog-field">
+                            <label for="renew-note">@L["RenewNoteLabel"] <span class="optional-hint">(@L["Optional"])</span></label>
+                            <textarea id="renew-note" class="leased-room-dialog-note" rows="3"
+                                      maxlength="@ContractRenewalRules.MaxNoteLength"
+                                      disabled="@_renewSubmitting"
+                                      @bind="_renewNote" @bind:event="oninput"></textarea>
+                        </div>
+
+                        @if (_renewSubmitError is not null)
                         {
                             <p class="leased-room-dialog-error" role="alert">
                                 <LucideIcon Name="alert" />
-                                <span>@_renewMonthsError</span>
+                                <span>@_renewSubmitError</span>
                             </p>
                         }
-                    </div>
-
-                    <div class="leased-room-dialog-field">
-                        <label for="renew-note">@L["RenewNoteLabel"] <span class="optional-hint">(@L["Optional"])</span></label>
-                        <textarea id="renew-note" class="leased-room-dialog-note" rows="3"
-                                  maxlength="@ContractRenewalRules.MaxNoteLength"
-                                  disabled="@_renewSubmitting"
-                                  @bind="_renewNote" @bind:event="oninput"></textarea>
-                    </div>
-
-                    @if (_renewSubmitError is not null)
-                    {
-                        <p class="leased-room-dialog-error" role="alert">
-                            <LucideIcon Name="alert" />
-                            <span>@_renewSubmitError</span>
-                        </p>
                     }
+                </div>
+
+                @if (_onHistoryTab)
+                {
+                    <div role="tabpanel" id="renew-panel-history" aria-labelledby="renew-tab-history" class="renew-panel renew-panel-history">
+                        @if (_renewalHistory.Count == 0)
+                        {
+                            <p class="leased-room-dialog-hint">@L["RenewHistoryEmpty"]</p>
+                        }
+                        else
+                        {
+                            @foreach (var item in _renewalHistory)
+                            {
+                                <div class="renew-pending-card">
+                                    <div class="renew-pending-row">
+                                        <span class="renew-pending-label">@L["RenewPendingStatusLabel"]</span>
+                                        <span class="renew-pending-value">@RenewalStatusLabel(item)</span>
+                                    </div>
+                                    <div class="renew-pending-row">
+                                        <span class="renew-pending-label">@L["RenewMonthsLabel"]</span>
+                                        <span class="renew-pending-value tabular-nums">@L["DurationInMonths", item.RequestedMonths]</span>
+                                    </div>
+                                    <div class="renew-pending-row">
+                                        <span class="renew-pending-label">@L["RenewPendingSentAtLabel"]</span>
+                                        <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.RequestedAt))</span>
+                                    </div>
+                                    @if (item.DecidedAt is { } decidedAt)
+                                    {
+                                        <div class="renew-pending-row">
+                                            <span class="renew-pending-label">@L["RenewDecidedAtLabel"]</span>
+                                            <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(decidedAt))</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.RejectReason))
+                                    {
+                                        <div class="renew-pending-note">
+                                            <span class="renew-pending-label">@L["RenewRejectReasonLabel"]</span>
+                                            <p>@item.RejectReason</p>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(item.Note))
+                                    {
+                                        <div class="renew-pending-note">
+                                            <span class="renew-pending-label">@L["RenewNoteLabel"]</span>
+                                            <p>@item.Note</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
             </div>
 
@@ -380,7 +430,7 @@
                         @onclick="CloseRenewModal">
                     @L["Close"]
                 </button>
-                @if (_pendingRenewal is null)
+                @if (!_onHistoryTab && !HasPendingRenewal)
                 {
                     <button type="button" class="btn btn-primary"
                             disabled="@_renewSubmitting"
@@ -397,12 +447,12 @@
                         }
                     </button>
                 }
-                else
+                else if (!_onHistoryTab)
                 {
-                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="btn btn-primary">
+                    <button type="button" class="btn btn-primary" @onclick="ShowHistoryTab">
                         <LucideIcon Name="file-text" />
-                        <span>@L["P2ViewDetails"]</span>
-                    </a>
+                        <span>@L["RenewTabHistory"]</span>
+                    </button>
                 }
             </div>
         </div>
@@ -422,7 +472,10 @@
     private string? _renewMonthsError;
     private string? _renewSubmitError;
     private bool _renewSubmitting;
-    private ContractRenewalRequestDto? _pendingRenewal;
+    private IReadOnlyList<ContractRenewalRequestDto> _renewalHistory = [];
+    private bool _onHistoryTab;
+
+    private bool HasPendingRenewal => _renewalHistory.Any(request => request.IsPending);
 
     protected override async Task OnInitializedAsync()
     {
@@ -436,7 +489,6 @@
         try
         {
             _leasedRoom = await DocumentService.GetMyLeasedRoomAsync();
-            await LoadPendingRenewalAsync();
         }
         catch (Exception ex)
         {
@@ -449,9 +501,9 @@
         }
     }
 
-    private async Task LoadPendingRenewalAsync()
+    private async Task LoadRenewalHistoryAsync()
     {
-        _pendingRenewal = null;
+        _renewalHistory = [];
         if (_leasedRoom is null)
         {
             return;
@@ -460,22 +512,36 @@
         try
         {
             var caller = await DocumentService.GetCallerAsync();
-            var result = await RenewalService.GetPendingAsync(caller, _leasedRoom.ContractId);
-            _pendingRenewal = result.Request;
+            var result = await RenewalService.ListForContractAsync(caller, _leasedRoom.ContractId);
+            _renewalHistory = result.Succeeded ? result.Items : [];
         }
         catch (Exception ex)
         {
-            // Trạng thái yêu cầu chỉ bổ sung thông tin; không làm hỏng trang phòng đang thuê.
-            Logger.LogError(ex, "Failed to load the pending renewal request.");
+            // Lịch sử chỉ bổ sung thông tin; không làm hỏng trang phòng đang thuê.
+            Logger.LogError(ex, "Failed to load the renewal request history.");
         }
     }
 
-    private void OpenRenewModal()
+    private string RenewalStatusLabel(ContractRenewalRequestDto request) => request.Status switch
+    {
+        RenewalRequestStatus.Approved => L["RenewStatusApproved"].Value,
+        RenewalRequestStatus.Rejected => L["RenewStatusRejected"].Value,
+        _ => L["RenewStatusPending"].Value,
+    };
+
+    private async Task OpenRenewModal()
     {
         _renewMonthsError = null;
         _renewSubmitError = null;
+        await LoadRenewalHistoryAsync();
+        // Đã từng gửi thì mở sẵn tab kết quả để khách thấy ngay trạng thái cũ.
+        _onHistoryTab = _renewalHistory.Count > 0;
         _renewModalOpen = true;
     }
+
+    private void ShowRequestTab() => _onHistoryTab = false;
+
+    private void ShowHistoryTab() => _onHistoryTab = true;
 
     private void CloseRenewModal()
     {
@@ -518,7 +584,8 @@
             if (result.Succeeded)
             {
                 Toasts.Success(L["RenewRequestSuccess", requestedMonths].Value);
-                _pendingRenewal = result.Request;
+                await LoadRenewalHistoryAsync();
+                _onHistoryTab = true;
                 _renewMonthsText = string.Empty;
                 _renewNote = null;
                 return;
@@ -527,7 +594,8 @@
             _renewSubmitError = RenewErrorText(result);
             if (result.ErrorCode == ContractRenewalErrorCodes.DuplicatePending)
             {
-                await LoadPendingRenewalAsync();
+                await LoadRenewalHistoryAsync();
+                _onHistoryTab = true;
             }
         }
         catch (Exception ex)

@@ -2,6 +2,11 @@
 
 <dialog id="components-reconnect-modal" data-nosnippet>
     <div class="components-reconnect-container">
+        <p id="components-reconnect-unsaved" hidden role="status">
+            @(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "vi"
+                ? "Biểu mẫu có thay đổi chưa lưu. Tải lại trang có thể làm mất các thay đổi."
+                : "This form has unsaved changes. Reloading the page may discard them.")
+        </p>
         <div class="components-rejoining-animation" aria-hidden="true">
             <div></div>
             <div></div>

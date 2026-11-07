@@ -252,35 +252,70 @@ public sealed class ServiceCatalogPageService(
             .Include(t => t.Tiers)
             .ToListAsync(ct);
 
-        foreach (var tariff in tariffs)
+        // Tab dịch vụ chỉ trỏ tới biểu giá đang áp dụng; để hiển thị đúng "theo kỳ",
+        // mọi phiên bản cùng loại/scope của biểu giá đó đều được nạp (kể cả kỳ cũ/sắp tới).
+        var visibleTariffGroups = new HashSet<(TariffType, string)>();
+        foreach (var tariffServiceId in serviceIds.Where(id => id.StartsWith("tariff-", StringComparison.Ordinal)))
         {
-            var tariffStringId = $"tariff-{tariff.Id}";
-            if (!serviceIds.Contains(tariffStringId)) continue;
-            if (!string.IsNullOrWhiteSpace(serviceId) && serviceId != "all" && tariffStringId != serviceId) continue;
+            if (!int.TryParse(tariffServiceId["tariff-".Length..], out var visibleId)) continue;
+            var visibleTariff = tariffs.FirstOrDefault(t => t.Id == visibleId);
+            if (visibleTariff is not null) visibleTariffGroups.Add((visibleTariff.Type, visibleTariff.ScopeCode));
+        }
 
-            var isElectric = tariff.Type == TariffType.Electric;
-            var prefixName = isElectric ? T("TariffElectricShortName") : T("TariffWaterShortName");
+        (TariffType Type, string ScopeCode)? selectedTariffGroup = null;
+        if (!string.IsNullOrWhiteSpace(serviceId) && serviceId.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(serviceId["tariff-".Length..], out var selectedTariffId))
+        {
+            var selectedTariff = tariffs.FirstOrDefault(t => t.Id == selectedTariffId);
+            if (selectedTariff is not null) selectedTariffGroup = (selectedTariff.Type, selectedTariff.ScopeCode);
+        }
 
-            foreach (var tier in tariff.Tiers.OrderBy(t => t.TierNumber))
+        foreach (var group in tariffs.GroupBy(t => (t.Type, t.ScopeCode)))
+        {
+            if (!visibleTariffGroups.Contains(group.Key)) continue;
+            if (!string.IsNullOrWhiteSpace(serviceId) && serviceId != "all" && selectedTariffGroup != group.Key) continue;
+
+            var versions = group.OrderBy(t => t.EffectiveDate).ToList();
+
+            for (var index = 0; index < versions.Count; index++)
             {
-                list.Add(new PriceVersionDto
+                var tariff = versions[index];
+                var tariffStringId = $"tariff-{tariff.Id}";
+
+                // Phiên bản kế tiếp cùng loại/scope xác định ngày hết hiệu lực của phiên bản này.
+                var effectiveTo = index + 1 < versions.Count ? versions[index + 1].EffectiveDate.AddDays(-1) : (DateOnly?)null;
+                var status = tariff.EffectiveDate > Today
+                    ? PriceVersionStatus.Upcoming
+                    : effectiveTo.HasValue && effectiveTo.Value < Today
+                        ? PriceVersionStatus.Expired
+                        : PriceVersionStatus.Active;
+
+                var isElectric = tariff.Type == TariffType.Electric;
+                var prefixName = isElectric ? T("TariffElectricShortName") : T("TariffWaterShortName");
+
+                foreach (var tier in tariff.Tiers.OrderBy(t => t.TierNumber))
                 {
-                    Id = $"pv-trf-{tariff.Id}-{tier.Id}",
-                    ServiceId = tariffStringId,
-                    ServiceName = T("TariffTierServiceName", prefixName, tier.TierNumber, tier.To.HasValue ? $"{tier.From:N0} - {tier.To.Value:N0}" : $">{tier.From:N0}", tariff.Unit),
-                    Unit = MapUnit(tariff.Unit),
-                    Rate = tier.UnitPrice,
-                    RateType = ServiceRateType.Tiered,
-                    EffectiveFrom = tariff.EffectiveDate,
-                    EffectiveTo = null,
-                    Status = tariff.EffectiveDate > Today ? PriceVersionStatus.Upcoming : PriceVersionStatus.Active,
-                    BuildingScope = "all",
-                    BuildingName = T("AllBuildings"),
-                    CreatedAt = null,
-                    CreatedBy = T("SystemCreatorLabel"),
-                    Note = tariff.SourceName,
-                    IsSessionCreated = false,
-                });
+                    var rangeText = tier.To.HasValue ? $"{tier.From:N0} - {tier.To.Value:N0}" : $">{tier.From:N0}";
+                    list.Add(new PriceVersionDto
+                    {
+                        Id = $"pv-trf-{tariff.Id}-{tier.Id}",
+                        ServiceId = tariffStringId,
+                        ServiceName = T("TariffTierServiceName", prefixName, tier.TierNumber, rangeText, tariff.Unit),
+                        Unit = MapUnit(tariff.Unit),
+                        Rate = tier.UnitPrice,
+                        RateType = ServiceRateType.Tiered,
+                        EffectiveFrom = tariff.EffectiveDate,
+                        EffectiveTo = effectiveTo,
+                        Status = status,
+                        BuildingScope = "all",
+                        BuildingName = T("AllBuildings"),
+                        CreatedAt = null,
+                        CreatedBy = T("SystemCreatorLabel"),
+                        Note = tariff.SourceName,
+                        IsSessionCreated = false,
+                        TierLabel = T("TariffTierRangeLabel", tier.TierNumber, rangeText, tariff.Unit),
+                    });
+                }
             }
         }
 
@@ -310,7 +345,8 @@ public sealed class ServiceCatalogPageService(
 
         return list
             .OrderByDescending(v => v.EffectiveFrom)
-            .ThenByDescending(v => v.Id)
+            .ThenBy(v => v.ServiceId, StringComparer.Ordinal)
+            .ThenBy(v => v.Id, StringComparer.Ordinal)
             .ToArray();
     }
 
@@ -610,6 +646,54 @@ public sealed class ServiceCatalogPageService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to toggle service status.");
+            return (false, LocalizeFailure(ex));
+        }
+    }
+
+    /// <summary>
+    /// Xóa mềm dịch vụ tự tạo. Dịch vụ hệ thống (điện/nước bậc thang) không xóa được.
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> DeleteServiceAsync(
+        string serviceId, CancellationToken ct = default)
+    {
+        if (serviceId.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase))
+        {
+            return (false, T("ErrorReadOnlyTariff"));
+        }
+
+        if (!int.TryParse(serviceId, out var catalogId) || catalogId <= 0)
+        {
+            return (false, T("ErrorInvalidServiceId"));
+        }
+
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        if (!caller.IsChuTro)
+        {
+            return (false, T("ErrorOwnerOnlyDelete"));
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            await catalogService.DeleteServiceCatalogAsync(catalogId, caller);
+
+            // Xác minh đã ẩn khỏi danh mục sau khi ghi.
+            var remaining = await catalogService.GetServiceCatalogsAsync(caller);
+            if (remaining.Any(catalog => catalog.Id == catalogId))
+            {
+                return (false, T("ErrorVerifyDeleteFailed"));
+            }
+
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to delete service catalog.");
             return (false, LocalizeFailure(ex));
         }
     }

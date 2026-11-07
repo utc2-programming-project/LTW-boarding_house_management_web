@@ -17,5 +17,12 @@ public sealed class ServiceCatalog
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>Xóa mềm: ẩn khỏi danh mục nhưng giữ lịch sử giá để đối soát hóa đơn cũ.</summary>
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedAt { get; set; }
+
+    public string? DeletedBy { get; set; }
+
     public ICollection<ServicePriceHistory> PriceHistory { get; set; } = new List<ServicePriceHistory>();
 }

@@ -10,18 +10,20 @@
 
 <PageTitle>@L["ResetAuthenticatorTitle"]</PageTitle>
 
+<h2 class="account-section">@L["ResetAuthenticatorTitle"]</h2>
 <StatusMessage />
-<h3>@L["ResetAuthenticatorTitle"]</h3>
-<div class="alert alert-warning" role="alert">
-    <p>
-        <LucideIcon Name="alert" />
-        <strong>@L["ResetAuthenticatorWarning"]</strong>
-    </p>
-    <p>
-        @L["ResetAuthenticatorDescription"]
-    </p>
+<div class="form-alert warning" role="alert">
+    <LucideIcon Name="alert" />
+    <div>
+        <p>
+            <strong>@L["ResetAuthenticatorWarning"]</strong>
+        </p>
+        <p>
+            @L["ResetAuthenticatorDescription"]
+        </p>
+    </div>
 </div>
-<div>
+<div class="account-actions">
     <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
         <AntiforgeryToken />
         <button class="btn btn-danger" type="submit">@L["ResetAuthenticatorAction"]</button>

@@ -1,0 +1,43 @@
+.contract-modal {
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-dialog);
+    overflow: hidden;
+}
+
+.contract-modal::backdrop { background: rgba(15, 23, 42, .4); }
+
+.contract-modal-panel {
+    max-height: calc(100vh - 48px);
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.contract-modal h2 { margin: 0 0 8px; font-size: 18px; }
+.contract-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.contract-modal-header h2 { margin: 0; }
+.contract-modal p { color: var(--text-secondary); }
+.contract-modal label { display: block; margin: 16px 0 8px; font-weight: 600; }
+.contract-modal textarea { width: 100%; min-height: 112px; resize: vertical; }
+.contract-modal footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.contract-modal .btn-danger { background: #B91C1C; color: #fff; }
+.contract-field-error { color: #B91C1C; font-size: 12px; }
+
+.renewal-decision-summary { display: grid; gap: 8px; margin: 16px 0 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); }
+.renewal-decision-summary > div { display: flex; gap: 12px; justify-content: space-between; }
+.renewal-decision-summary dt { color: var(--text-secondary); font-size: 13px; }
+.renewal-decision-summary dd { margin: 0; font-weight: 600; text-align: right; }
+.renewal-decision-note { flex-direction: column; gap: 4px; }
+.renewal-decision-note dd { text-align: left; font-weight: 400; }
+
+@media (max-width: 767px) {
+    .contract-modal-panel { padding: 16px; }
+    .contract-modal footer { flex-wrap: wrap; }
+    .contract-modal footer .btn { min-height: 44px; flex: 1; }
+}

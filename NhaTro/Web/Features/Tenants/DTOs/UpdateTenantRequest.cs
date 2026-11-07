@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Web.Features.Tenants.Enums;
+using Web.Resources;
 
 namespace Web.Features.Tenants.DTOs;
 
@@ -13,42 +14,66 @@ namespace Web.Features.Tenants.DTOs;
 /// </remarks>
 public sealed class UpdateTenantRequest
 {
-    [Required(ErrorMessage = "Nhập họ tên.")]
-    [MaxLength(200)]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantFullNameRequired))]
+    [MaxLength(200,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantFullNameMaxLength))]
     public string FullName { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Nhập số điện thoại.")]
-    [MaxLength(20)]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantPhoneRequired))]
+    [MaxLength(20,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantPhoneMaxLength))]
     public string PhoneNumber { get; set; } = string.Empty;
 
-    [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-    [MaxLength(256)]
+    [EmailAddress(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantEmailInvalid))]
+    [MaxLength(256,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantEmailMaxLength))]
     public string? Email { get; set; }
 
-    [MaxLength(20)]
+    [MaxLength(20,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantIdNumberMaxLength))]
     public string? IdNumber { get; set; }
 
     public DateOnly? DateOfBirth { get; set; }
 
-    [EnumDataType(typeof(Gender))]
+    [EnumDataType(typeof(Gender),
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantGenderInvalid))]
     public Gender? Gender { get; set; }
 
-    [MaxLength(300)]
+    [MaxLength(300,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantAddressMaxLength))]
     public string? PermanentAddress { get; set; }
 
     public DateOnly? IdIssuedDate { get; set; }
 
-    [MaxLength(200)]
+    [MaxLength(200,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantIdIssuedPlaceMaxLength))]
     public string? IdIssuedPlace { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(500,
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantNoteMaxLength))]
     public string? Note { get; set; }
 
     /// <summary>Mặc định false; true để sửa dù nghi trùng số điện thoại (mục 3).</summary>
     public bool ConfirmDuplicatePhone { get; set; }
 
     /// <summary>Bắt buộc: chống ghi đè đồng thời (mục 5.3).</summary>
-    [Required(ErrorMessage = "Thiếu RowVersion.")]
+    [Required(
+        ErrorMessageResourceType = typeof(ValidationMessages),
+        ErrorMessageResourceName = nameof(ValidationMessages.TenantRowVersionRequired))]
     public string RowVersion { get; set; } = string.Empty;
 
     public void Normalize()

@@ -53,8 +53,8 @@ public static class ManagerToggleCatalog
         new("SW-15a", "Xem báo cáo — mục Phòng", "P8", ManagerToggleMode.Allow, TwoModes),
         new("SW-15b", "Xem báo cáo — mục Khách thuê", "P8", ManagerToggleMode.Allow, TwoModes),
         new("SW-15c", "Xem báo cáo — mục Hợp đồng", "P8", ManagerToggleMode.Allow, TwoModes),
-        new("SW-15d", "Xem báo cáo — mục Hóa đơn", "P8", ManagerToggleMode.Allow, TwoModes),
-        new("SW-15e", "Xem báo cáo — mục Doanh thu / công nợ", "P8", ManagerToggleMode.Allow, TwoModes),
+        new("SW-15d", "Xem báo cáo — mục Điện nước & dịch vụ", "P8", ManagerToggleMode.Allow, TwoModes),
+        new("SW-15e", "Xem báo cáo — mục Sự cố", "P8", ManagerToggleMode.Allow, TwoModes),
     ];
 
     private static readonly Dictionary<string, Definition> ByCode =

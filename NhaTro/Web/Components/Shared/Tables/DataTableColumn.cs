@@ -23,4 +23,11 @@ public sealed class DataTableColumn<TItem>
     public bool Sortable { get; init; }
 
     public bool Filterable { get; init; }
+
+    /// <summary>Các lựa chọn cho bộ lọc dạng select; null giữ ô nhập văn bản.</summary>
+    public IReadOnlyList<DataTableFilterOption>? FilterOptions { get; init; }
+
+    public string? FilterPlaceholder { get; init; }
 }
+
+public sealed record DataTableFilterOption(string Value, string Label);

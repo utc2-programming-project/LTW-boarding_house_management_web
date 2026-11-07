@@ -96,7 +96,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [],
             CurrentRental = null
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), null!, pageService);
 
         var room = await service.GetMyLeasedRoomAsync();
@@ -109,7 +109,7 @@ public class TenantDocumentPageServiceTests
     {
         var authStateProvider = new FakeAuthStateProvider(Roles.KhachThue, "tenant-1");
         var fakeTenantService = new FakeRentalTenantService(null, TenantErrorCodes.TenantNotFound);
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         await using var db = CreateInMemoryDbContext();
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
@@ -123,7 +123,7 @@ public class TenantDocumentPageServiceTests
     {
         var authStateProvider = new FakeAuthStateProvider(Roles.KhachThue, "tenant-1");
         var fakeTenantService = new FakeRentalTenantService(null, TenantErrorCodes.TenantOperationFailed);
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), null!, pageService);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetMyLeasedRoomAsync());
@@ -170,7 +170,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [currentRental],
             CurrentRental = currentRental
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         await using var db = CreateInMemoryDbContext();
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
@@ -219,7 +219,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [currentRental],
             CurrentRental = currentRental
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         await using var db = CreateInMemoryDbContext();
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
@@ -255,7 +255,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [currentRental],
             CurrentRental = currentRental
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
         var room = await service.GetMyLeasedRoomAsync();
@@ -289,7 +289,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [currentRental],
             CurrentRental = currentRental
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
         var room = await service.GetMyLeasedRoomAsync();
@@ -312,7 +312,7 @@ public class TenantDocumentPageServiceTests
             Rentals = [currentRental],
             CurrentRental = currentRental
         });
-        var pageService = new TenantPageService(authStateProvider, fakeTenantService);
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var service = new TenantDocumentPageService(authStateProvider, new FakeTenantDocumentService(), db, pageService);
 
         var room = await service.GetMyLeasedRoomAsync();

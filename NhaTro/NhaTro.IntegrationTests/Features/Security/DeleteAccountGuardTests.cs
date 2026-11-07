@@ -34,9 +34,10 @@ public sealed class DeleteAccountGuardTests(WebAppFixture fixture) : IClassFixtu
         var response = await client.PostAsync(DeletePath, new FormUrlEncodedContent(fields));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
         Assert.Contains(
-            "last admin",
-            await response.Content.ReadAsStringAsync(),
+            "quản trị viên cuối cùng",
+            html,
             StringComparison.OrdinalIgnoreCase);
     }
 }

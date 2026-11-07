@@ -9,7 +9,11 @@ namespace Web.Features.Tenants.Services;
 /// Adapter riêng cho màn hình P3: tạo TenantCaller từ phiên đăng nhập và gọi service nghiệp vụ.
 /// Component không tự dựng danh tính, truy cập DbContext hay chuyển đổi DTO phân trang.
 /// </summary>
-public sealed class TenantPageService(AuthenticationStateProvider authenticationState, ITenantService tenants)
+public sealed class TenantPageService(
+    AuthenticationStateProvider authenticationState,
+    ITenantService tenants,
+    Web.Features.Tenants.Invitations.TenantInvitationService invitations,
+    Microsoft.AspNetCore.Components.NavigationManager navigation)
 {
     public async Task<string> GetCurrentRoleAsync()
     {
@@ -41,6 +45,18 @@ public sealed class TenantPageService(AuthenticationStateProvider authentication
 
     public Task<TenantResult> CreateAsync(CreateTenantRequest request, CancellationToken ct = default) =>
         CallAsync(caller => tenants.CreateAsync(request, caller, ct));
+
+    // PLAN-006: mời khách thuê qua email (liên kết dựng từ BaseUri hiện tại).
+    public async Task<Web.Features.Tenants.Invitations.TenantInvitationResult> CreateInvitationAsync(
+        Web.Features.Tenants.Invitations.CreateTenantInvitationRequest request, CancellationToken ct = default) =>
+        await invitations.CreateAsync(request, await GetCallerAsync(), navigation.BaseUri, ct);
+
+    public async Task<IReadOnlyList<Web.Features.Tenants.Invitations.TenantInvitationDto>> ListInvitationsAsync(
+        CancellationToken ct = default) =>
+        await invitations.ListAsync(await GetCallerAsync(), ct);
+
+    public async Task<bool> RevokeInvitationAsync(int id, CancellationToken ct = default) =>
+        await invitations.RevokeAsync(id, await GetCallerAsync(), ct);
 
     public Task<TenantResult> UpdateAsync(int id, UpdateTenantRequest request, CancellationToken ct = default) =>
         CallAsync(caller => tenants.UpdateAsync(id, request, caller, ct));

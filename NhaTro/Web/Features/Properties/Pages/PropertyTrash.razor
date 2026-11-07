@@ -1,0 +1,156 @@
+@page "/properties/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject PropertyPageService PageService
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertyTrash> Logger
+
+<PageTitle>@L["P2PropertyTrashTitle"] · @L["AppName"]</PageTitle>
+
+<div class="p2-page">
+    <header class="p2-heading">
+        <div>
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["P2PropertiesTitle"], "/properties"),
+                new(L["P2PropertyTrashTitle"])
+            })" />
+            <h1>@L["P2PropertyTrashTitle"]</h1>
+            <p>@L["P2PropertyTrashSubtitle"]</p>
+        </div>
+        <button class="btn btn-secondary" type="button" @onclick="GoToProperties">
+            <LucideIcon Name="building" />@L["P2PropertiesTitle"]
+        </button>
+    </header>
+
+    <DataTable @ref="_table" TItem="PropertyTrashItem" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["P2PropertyTrashTable"]" Labels="_tableLabels">
+        <EmptyActions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToProperties">@L["P2PropertiesTitle"]</button>
+        </EmptyActions>
+    </DataTable>
+
+    <div class="p2-table-options">
+        <label for="property-trash-page-size">@L["P2RowsPerPage"]</label>
+        <select id="property-trash-page-size" value="@_pageSize" @onchange="ChangePageSize">
+            <option value="10">10</option><option value="20">20</option><option value="50">50</option>
+        </select>
+    </div>
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["P2PropertyTrashRestoreTitle"]"
+               Message="@L["P2PropertyTrashRestoreConfirm", _restoreProperty?.Name ?? string.Empty]"
+               ConfirmText="@L["Restore"]" CancelText="@L["Cancel"]"
+               BusyText="@L["P2PropertyTrashRestoring"]"
+               OnConfirm="RestoreAsync" OnCancel="CancelRestore" />
+
+@code {
+    private DataTable<PropertyTrashItem>? _table;
+    private IReadOnlyList<DataTableColumn<PropertyTrashItem>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private PropertyTrashItem? _restoreProperty;
+    private bool _restoreVisible;
+    private int _pageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<PropertyTrashItem>> BuildColumns()
+    {
+        RenderFragment<PropertyTrashItem> actions = item => @<div class="p2-row-actions">
+            <button class="btn btn-secondary" type="button" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "name", Title = L["P2PropertyName"], Value = item => item.Name },
+            new() { Key = "address", Title = L["P2Address"], Value = item => string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address },
+            new() { Key = "trashedRooms", Title = L["P2PropertyTrashRoomCount"], Value = item => item.TrashedRoomCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true },
+            new() { Key = "deletedAt", Title = L["P2TrashDeletedAt"], Value = item => DateFormatter.FormatDateTime(item.DeletedAt) },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+        ];
+    }
+
+    private async Task<PagedResult<PropertyTrashItem>> LoadDeletedAsync(DataTableRequest request) =>
+        await PageService.ListDeletedAsync(new PropertyFilter
+        {
+            Page = request.Page,
+            PageSize = request.PageSize
+        });
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(PropertyTrashItem item)
+    {
+        _restoreProperty = item;
+        _restoreVisible = true;
+    }
+
+    private void CancelRestore()
+    {
+        _restoreVisible = false;
+        _restoreProperty = null;
+    }
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreProperty is null)
+        {
+            CancelRestore();
+            return;
+        }
+
+        try
+        {
+            var result = await PageService.RestoreAsync(_restoreProperty.Id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["P2PropertyTrashRestored"]);
+                CancelRestore();
+                if (_table is not null)
+                {
+                    await _table.ReloadAsync();
+                }
+
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode switch
+            {
+                PropertyErrorCodes.Forbidden => L["P2Forbidden"],
+                PropertyErrorCodes.PropertyNotFound => L["P2PropertyNotFound"],
+                _ => L["P2PropertyTrashRestoreFailed"]
+            });
+            CancelRestore();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["P2Forbidden"]);
+            CancelRestore();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 property restore failed");
+            Toasts.Error(L["P2PropertyTrashRestoreFailed"]);
+            CancelRestore();
+        }
+    }
+
+    private void GoToProperties() => Navigation.NavigateTo("/properties");
+}

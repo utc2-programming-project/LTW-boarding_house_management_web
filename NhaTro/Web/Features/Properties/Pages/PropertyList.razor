@@ -12,14 +12,24 @@
 <div class="p2-page">
     <header class="p2-heading">
         <div>
+            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
+            {
+                new(L["Dashboard"], "/"),
+                new(L["P2PropertiesTitle"])
+            })" />
             <h1>@L["P2PropertiesTitle"]</h1>
             <p>@L["P2PropertiesSubtitle"]</p>
         </div>
         @if (_isOwner)
         {
-            <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                <LucideIcon Name="plus" />@L["P2AddProperty"]
-            </button>
+            <div class="p2-page-actions">
+                <a class="btn btn-secondary" href="/properties/trash">
+                    <LucideIcon Name="trash" />@L["P2PropertyTrashOpen"]
+                </a>
+                <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" />@L["P2AddProperty"]
+                </button>
+            </div>
         }
     </header>
 
@@ -86,6 +96,10 @@
     <PropertyDetailsDialog Property="_selectedProperty" IsOwner="_isOwner"
                            OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms" />
 }
+<ConfirmDialog Visible="_deleteVisible" Title="@L["P2DeletePropertyTitle"]"
+               Message="@L["P2DeletePropertyConfirm", _deleteProperty?.Name ?? string.Empty]"
+               ConfirmText="@L["P2MoveToTrash"]" CancelText="@L["Cancel"]" BusyText="@L["Deleting"]"
+               Danger="true" OnConfirm="DeletePropertyAsync" OnCancel="CancelDelete" />
 
 @code {
     private DataTable<PropertyListItem>? _table;
@@ -100,6 +114,8 @@
     private int _pageSize = 20;
     private int? _formPropertyId;
     private bool _formVisible;
+    private bool _deleteVisible;
+    private PropertyListItem? _deleteProperty;
     private bool _ready;
     private bool _isOwner;
     private bool _hasActiveFilters;
@@ -143,6 +159,7 @@
             @if (_isOwner)
             {
                 <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
+                <button class="icon-button danger-action" type="button" aria-label="@L["P2DeleteProperty"]" title="@L["P2DeleteProperty"]" @onclick="() => RequestDelete(item)"><LucideIcon Name="trash" /></button>
             }
         </div>;
 
@@ -215,5 +232,60 @@
         _formVisible = false;
         Toasts.Success(L["P2SaveSucceeded"]);
         if (_table is not null) await _table.ReloadAsync();
+    }
+
+    private void RequestDelete(PropertyListItem item)
+    {
+        if (!_isOwner) return;
+        _deleteProperty = item;
+        _deleteVisible = true;
+        _selectedProperty = null;
+    }
+
+    private void CancelDelete()
+    {
+        _deleteVisible = false;
+        _deleteProperty = null;
+    }
+
+    private async Task DeletePropertyAsync()
+    {
+        if (!_isOwner || _deleteProperty is null)
+        {
+            CancelDelete();
+            return;
+        }
+
+        try
+        {
+            var result = await PageService.DeleteAsync(_deleteProperty.Id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["P2PropertyDeleted"]);
+                CancelDelete();
+                if (_table is not null) await _table.ReloadAsync();
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode switch
+            {
+                PropertyErrorCodes.PropertyHasRooms => L["P2PropertyHasRooms"],
+                PropertyErrorCodes.Forbidden => L["P2Forbidden"],
+                PropertyErrorCodes.PropertyNotFound => L["P2PropertyNotFound"],
+                _ => L["P2SaveFailed"]
+            });
+            CancelDelete();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["P2Forbidden"]);
+            CancelDelete();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 property delete failed");
+            Toasts.Error(L["P2SaveFailed"]);
+            CancelDelete();
+        }
     }
 }

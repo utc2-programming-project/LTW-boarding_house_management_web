@@ -1,4 +1,8 @@
 ﻿@page "/Account/InvalidUser"
+@layout Layout.AuthLayout
+
+@* Trang báo tài khoản không hợp lệ khi luồng xác nhận email hoặc quản lý tài khoản
+   không tìm thấy người dùng tương ứng. Dùng khung AuthLayout. *@
 
 @inject IStringLocalizer<Shared> L
 <PageTitle>@L["InvalidUserTitle"]</PageTitle>

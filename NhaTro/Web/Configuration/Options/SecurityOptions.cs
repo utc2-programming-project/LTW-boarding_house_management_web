@@ -24,6 +24,8 @@ public sealed class SecurityOptions
 
     public CaptchaOptions Captcha { get; set; } = new();
 
+    public LoginGuardOptions LoginGuard { get; set; } = new();
+
     public RateLimitOptions RateLimit { get; set; } = new();
 }
 
@@ -35,6 +37,23 @@ public sealed class CaptchaOptions
 
     /// <summary>Thời gian sống (phút) của một thử thách CAPTCHA cục bộ.</summary>
     public int ChallengeLifetimeMinutes { get; set; } = 5;
+}
+
+/// <summary>
+/// Chống dò mật khẩu bằng cách chặn theo IP thay vì khoá tài khoản.
+/// Khoá tài khoản tự động sẽ bị lợi dụng để khoá người dùng hợp lệ (DoS), nên chỉ
+/// quản trị viên mới được khoá tài khoản.
+/// </summary>
+public sealed class LoginGuardOptions
+{
+    /// <summary>Số lần đăng nhập sai từ cùng một IP trước khi chặn IP đó.</summary>
+    public int IpBlockAfterFailedAttempts { get; set; } = 10;
+
+    /// <summary>Thời gian chặn IP (phút).</summary>
+    public int IpBlockMinutes { get; set; } = 15;
+
+    /// <summary>Cửa sổ đếm số lần sai (phút); quá thời gian này bộ đếm tự đặt lại.</summary>
+    public int AttemptWindowMinutes { get; set; } = 15;
 }
 
 /// <summary>Ngưỡng rate limiting theo cửa sổ cố định.</summary>

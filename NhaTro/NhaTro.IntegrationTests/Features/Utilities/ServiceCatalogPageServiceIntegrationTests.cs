@@ -842,6 +842,35 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
         Assert.All(tariffVersions, tv => Assert.False(string.IsNullOrWhiteSpace(tv.CreatedBy) || tv.CreatedBy == "—"));
     }
 
+    [SqlServerFact]
+    public async Task GetPriceVersionsForCallerAsync_TariffTiersExposeRangeLabelPerTierPriceAndEffectiveTo()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner1Id, Roles.ChuTro);
+
+        var pageService = CreatePageService(Owner1Id, Roles.ChuTro);
+        var versions = await pageService.GetPriceVersionsForCallerAsync("all");
+
+        // Phiên bản đang áp dụng: mỗi bậc có nhãn riêng và đơn giá riêng thay vì "Biểu giá bậc thang".
+        var activeFirstTier = Assert.Single(versions, v => v.Id == "pv-trf-1-1");
+        Assert.False(string.IsNullOrWhiteSpace(activeFirstTier.TierLabel));
+        Assert.Equal(1_984m, activeFirstTier.Rate);
+        Assert.Equal(new DateOnly(2025, 5, 10), activeFirstTier.EffectiveFrom);
+        Assert.Null(activeFirstTier.EffectiveTo);
+        Assert.Equal(PriceVersionStatus.Active, activeFirstTier.Status);
+
+        var activeLastTier = Assert.Single(versions, v => v.Id == "pv-trf-1-6");
+        Assert.False(string.IsNullOrWhiteSpace(activeLastTier.TierLabel));
+        Assert.Equal(3_460m, activeLastTier.Rate);
+
+        // Phiên bản cũ có ngày hết hiệu lực = ngày trước phiên bản kế tiếp.
+        var oldFirstTier = Assert.Single(versions, v => v.Id == "pv-trf-3-10");
+        Assert.Equal(new DateOnly(2024, 10, 10), oldFirstTier.EffectiveTo);
+        Assert.Equal(PriceVersionStatus.Expired, oldFirstTier.Status);
+        Assert.Equal(1_806m, oldFirstTier.Rate);
+    }
+
     private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => new(utcNow, TimeSpan.Zero);

@@ -1,4 +1,8 @@
 ﻿@page "/Account/RegisterConfirmation"
+@layout Layout.AuthLayout
+
+@* Trang nhắc người dùng kiểm tra hộp thư để xác nhận tài khoản sau khi đăng ký;
+   khi chưa cấu hình SMTP (sender NoOp) hiển thị luôn liên kết xác nhận. Dùng khung AuthLayout. *@
 
 @using System.Text
 @using Microsoft.AspNetCore.Identity

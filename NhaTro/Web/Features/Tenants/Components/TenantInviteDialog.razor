@@ -1,0 +1,121 @@
+@using System.ComponentModel.DataAnnotations
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Forms
+@using Web.Features.Tenants.Invitations
+@using Web.Features.Tenants.Services
+
+@inject TenantPageService TenantPages
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<FeatureDialog Visible="Visible" Title="@L["InviteTenantTitle"]" CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose">
+    <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+        <DataAnnotationsValidator />
+
+        <div class="account-form-body">
+            @if (_error is not null)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert-circle" />
+                    <span>@_error</span>
+                </div>
+            }
+
+            <FormField TValue="string" Id="invite-name" Label="@L["FullNameLabel"]" Required="true"
+                       For="() => _model.FullName">
+                <InputText id="invite-name" @bind-Value="_model.FullName" autocomplete="name" maxlength="200" />
+            </FormField>
+
+            <FormField TValue="string" Id="invite-email" Label="@L["EmailLabel"]" Required="true"
+                       Hint="@L["InviteTenantEmailHint"]" For="() => _model.Email">
+                <InputText id="invite-email" @bind-Value="_model.Email" type="email" autocomplete="off" maxlength="256" />
+            </FormField>
+
+            <FormField TValue="string" Id="invite-phone" Label="@L["PhoneLabel"]" For="() => _model.PhoneNumber">
+                <InputText id="invite-phone" @bind-Value="_model.PhoneNumber" inputmode="numeric" maxlength="10" />
+            </FormField>
+
+            <p class="note">@L["InviteTenantNote"]</p>
+
+            <div class="account-form-actions">
+                <button type="button" class="btn btn-secondary" disabled="@_saving" @onclick="OnClose">
+                    @L["Cancel"]
+                </button>
+                <button type="submit" class="btn btn-primary" disabled="@_saving">
+                    @if (_saving) { <span class="spinner" aria-hidden="true"></span> }
+                    @L["InviteTenantSend"]
+                </button>
+            </div>
+        </div>
+    </EditForm>
+</FeatureDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSent { get; set; }
+
+    private InvitationModel _model = new();
+    private string? _error;
+    private bool _saving;
+    private bool _wasVisible;
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _model = new InvitationModel();
+            _error = null;
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private async Task SubmitAsync()
+    {
+        _saving = true;
+        _error = null;
+        try
+        {
+            var result = await TenantPages.CreateInvitationAsync(new CreateTenantInvitationRequest
+            {
+                FullName = _model.FullName,
+                Email = _model.Email,
+                PhoneNumber = _model.PhoneNumber,
+            });
+
+            if (!result.Succeeded)
+            {
+                _error = result.ErrorCode switch
+                {
+                    TenantInvitationErrorCodes.EmailAlreadyRegistered => L["InviteTenantEmailTaken"],
+                    TenantInvitationErrorCodes.Forbidden => L["InviteTenantForbidden"],
+                    _ => L["InviteTenantFailed"],
+                };
+                return;
+            }
+
+            Toasts.Success(L["InviteTenantSent"]);
+            await OnSent.InvokeAsync();
+            await OnClose.InvokeAsync();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private sealed class InvitationModel
+    {
+        [Required]
+        [StringLength(200, MinimumLength = 2)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải có 10 số, bắt đầu bằng 0.")]
+        public string? PhoneNumber { get; set; }
+    }
+}
