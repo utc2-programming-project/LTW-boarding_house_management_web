@@ -4,7 +4,9 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=NhaTro_Demo_3A;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;Application Name=NhaTro-Demo-3A",
+        "DemoSeed__SkipDevAccounts": "true"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5177"
@@ -13,10 +15,21 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=NhaTro_Demo_3A;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;Application Name=NhaTro-Demo-3A",
+        "DemoSeed__SkipDevAccounts": "true"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7260;http://localhost:5177"
+    },
+    "dev": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5178"
     },
     "IIS Express": {
       "commandName": "IISExpress",

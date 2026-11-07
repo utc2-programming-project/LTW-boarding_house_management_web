@@ -574,6 +574,31 @@ app.MapRazorComponents<App>()
 // Endpoint bổ sung cho các Razor component Identity /Account.
 app.MapAdditionalIdentityEndpoints();
 
+// VHT-49 (3A): seed dữ liệu demo vào DB riêng khi chạy rõ tham số --seed-demo.
+// Nhánh này thoát trước các seeder dev để DB demo chỉ có 6 tài khoản demo.
+if (args.Any(arg => string.Equals(arg, "--seed-demo", StringComparison.Ordinal)))
+{
+    await using var demoScope = app.Services.CreateAsyncScope();
+    var demoDb = demoScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await demoDb.Database.MigrateAsync();
+    var demoPassword = app.Configuration["DemoSeed:Password"];
+    if (string.IsNullOrWhiteSpace(demoPassword))
+    {
+        demoPassword = DemoDataSeeder.DefaultPassword;
+    }
+
+    var summary = await DemoDataSeeder.EnsureAsync(demoDb, demoPassword);
+    app.Logger.LogInformation(
+        "Demo 3A: {Users} user, {Properties} nhà, {Rooms} phòng, {Contracts} hợp đồng, {Readings} kỳ chỉ số; đáp án {Totals}",
+        summary.Users,
+        summary.Properties,
+        summary.Rooms,
+        summary.Contracts,
+        summary.Readings,
+        string.Join(", ", summary.PeriodTotals.Select(pair => $"{pair.Key}={pair.Value}")));
+    return;
+}
+
 // ── 15. Khởi tạo dữ liệu ───────────────────────────────────────────────────
 // Chạy dev: áp migration còn thiếu để schema DB khớp model.
 if (app.Environment.IsDevelopment())
@@ -590,7 +615,9 @@ using (var scope = app.Services.CreateScope())
     {
         await RoleSeeder.EnsureAsync(scope.ServiceProvider);
         await AdminSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
-        if (app.Environment.IsDevelopment())
+        // VHT-49: khi chạy app trên DB demo, tắt 4 tài khoản dev để DB chỉ còn 6 tài khoản demo.
+        if (app.Environment.IsDevelopment()
+            && !app.Configuration.GetValue("DemoSeed:SkipDevAccounts", false))
         {
             await DevAccountSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
         }
