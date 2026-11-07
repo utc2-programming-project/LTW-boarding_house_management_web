@@ -11,19 +11,8 @@ namespace Web.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "DeletedAt",
-                table: "Rooms",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "DeletedBy",
-                table: "Rooms",
-                type: "nvarchar(450)",
-                maxLength: 450,
-                nullable: true);
-
+            // Rooms.DeletedAt/DeletedBy đã có từ 20261104023558_AddRoomSoftDeleteAudit;
+            // migration này sinh trên nhánh chưa merge dev nên từng thêm trùng cột.
             migrationBuilder.CreateTable(
                 name: "Payments",
                 columns: table => new
@@ -149,14 +138,6 @@ namespace Web.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Payments");
-
-            migrationBuilder.DropColumn(
-                name: "DeletedAt",
-                table: "Rooms");
-
-            migrationBuilder.DropColumn(
-                name: "DeletedBy",
-                table: "Rooms");
         }
     }
 }
