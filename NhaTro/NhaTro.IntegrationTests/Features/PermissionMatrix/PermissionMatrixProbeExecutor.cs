@@ -2367,10 +2367,26 @@ public static class PermissionMatrixProbeExecutor
     {
         var caller = world.CallerFor(role);
         var payments = world.NewPayments();
-        var invoice = await world.NewInvoiceQuery().GetInvoiceAsync(world.Data.InvoiceIssuedId, world.OwnerA);
+        var invoices = world.NewInvoices();
+
+        // VHT-48 3A: mỗi lần thử dùng hóa đơn RIÊNG, vì DB chỉ cho một Payment Confirmed/hóa đơn.
+        // Hợp đồng mới trên phòng mới nhưng vẫn gắn Khách thuê A để luồng gửi minh chứng hợp lệ.
+        var setup = await CreateIsolatedContractSetupAsync(world);
+        var contracts = world.NewContracts();
+        var contract = await contracts.CreateContractAsync(
+            new CreateContractRequest(
+                setup.RoomId, world.Data.Today, world.Data.Today.AddMonths(24), [world.Data.TenantAId]),
+            world.OwnerA);
+        if (contract.Status == ContractStatus.Pending)
+        {
+            await contracts.ApproveContractAsync(
+                contract.ContractId, new ApproveContractRequestDto { IsApproved = true }, world.OwnerA);
+        }
+        var draft = await invoices.CreateDraftAsync(BuildDraftRequest(contract.ContractId, 1), world.OwnerA);
+        var invoice = await invoices.IssueAsync(draft.Id, world.OwnerA);
 
         var pending = await payments.SubmitAsync(
-            world.Data.InvoiceIssuedId,
+            invoice.Id,
             new SubmitPaymentRequest
             {
                 Amount = invoice.TotalAmount,

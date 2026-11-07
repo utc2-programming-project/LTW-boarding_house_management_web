@@ -38,7 +38,7 @@ public sealed class ContractRenewalRequestConfiguration : IEntityTypeConfigurati
         builder.HasOne<Contract>()
             .WithMany()
             .HasForeignKey(request => request.ContractId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Tenant>()
             .WithMany()
