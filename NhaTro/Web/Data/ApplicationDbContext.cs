@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
 using Web.Features.Audit.Entities;
-using Web.Features.Payments.Entities;
 using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.Entities;
 using Web.Features.Maintenance.Entities;
@@ -37,6 +36,10 @@ namespace Web.Data
         public DbSet<ContractRenewalRequest> ContractRenewalRequests => Set<ContractRenewalRequest>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+        // VHT-54: yêu cầu thanh toán, minh chứng và audit nghiệp vụ P6.
+        public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<PaymentProof> PaymentProofs => Set<PaymentProof>();
+        public DbSet<PaymentAuditLog> PaymentAuditLogs => Set<PaymentAuditLog>();
         public DbSet<MaintenanceIncident> MaintenanceIncidents => Set<MaintenanceIncident>();
         public DbSet<MaintenanceIncidentHistory> MaintenanceIncidentHistories => Set<MaintenanceIncidentHistory>();
         public DbSet<IncidentPhotoAttachment> IncidentPhotoAttachments => Set<IncidentPhotoAttachment>();
@@ -62,9 +65,6 @@ namespace Web.Data
         // P5: chỉ số điện/nước bền vững + lịch sử sửa (D10).
         public DbSet<UtilityReading> UtilityReadings => Set<UtilityReading>();
         public DbSet<UtilityReadingAudit> UtilityReadingAudits => Set<UtilityReadingAudit>();
-
-        // P6: yêu cầu thanh toán và minh chứng (OP37/OP38).
-        public DbSet<Payment> Payments => Set<Payment>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -107,21 +107,6 @@ namespace Web.Data
                 entity.Property(item => item.OldWaterEnd).HasPrecision(18, 2);
                 entity.Property(item => item.NewWaterEnd).HasPrecision(18, 2);
                 entity.HasIndex(item => item.UtilityReadingId);
-            });
-
-            builder.Entity<Payment>(entity =>
-            {
-                entity.Property(item => item.RowVersion).IsRowVersion();
-                entity.Property(item => item.Amount).HasPrecision(18, 2);
-                entity.Property(item => item.ProofFileIdsJson).HasMaxLength(2000);
-                entity.Property(item => item.TransactionCode).HasMaxLength(100);
-                entity.Property(item => item.RejectionReason).HasMaxLength(500);
-                entity.Property(item => item.SubmittedByUserId).HasMaxLength(450);
-                entity.HasIndex(item => item.InvoiceId);
-                entity.HasOne<Invoice>()
-                    .WithMany()
-                    .HasForeignKey(item => item.InvoiceId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

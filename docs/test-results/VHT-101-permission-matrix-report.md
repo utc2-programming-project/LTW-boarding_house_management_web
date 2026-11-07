@@ -1,6 +1,6 @@
 # VHT-101 – Báo cáo kiểm thử ma trận quyền tự động
 
-- Sinh lúc: 2026-11-06 17:34:27 UTC
+- Sinh lúc: 2026-11-07 11:11:44 UTC
 - Nguồn yêu cầu: `docs/task/thao_tac_va_quyen.xlsx` (sheet Ma trận quyền / Công tắc Quản lý / Quyết định)
 - Số liệu dưới đây là kết quả THẬT của các test hành vi đã chạy trong cùng lần chạy; không ô nào được tô hồng.
 - Chống rửa điểm: Skip không tính là PASS, FAIL không biến thành BLOCKED, không đổi kỳ vọng cho khớp code.
@@ -193,14 +193,14 @@
 | E37 | OP36 Phát hành hóa đơn | ChuTro | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Invoices.InvoiceService | 1 | P6_E37_OP36_ChuTro |
 | F37 | OP36 Phát hành hóa đơn | QuanLy | ⚙️ | SPECIAL_MODES | SPECIAL_MODES | PASS | Service | Web.Features.Invoices.InvoiceService | 3 | P6_F37_OP36_QuanLy |
 | G37 | OP36 Phát hành hóa đơn | KhachThue | ❌ | DENY | DENIED | PASS | Service | Web.Features.Invoices.InvoiceService | 1 | P6_G37_OP36_KhachThue |
-| D38 | OP37 Gửi yêu cầu thanh toán | Admin | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Payments.Services.PaymentService | 0 | P6_D38_OP37_Admin |
-| E38 | OP37 Gửi yêu cầu thanh toán | ChuTro | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Payments.Services.PaymentService | 0 | P6_E38_OP37_ChuTro |
-| F38 | OP37 Gửi yêu cầu thanh toán | QuanLy | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Payments.Services.PaymentService | 0 | P6_F38_OP37_QuanLy |
-| G38 | OP37 Gửi yêu cầu thanh toán | KhachThue | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Payments.Services.PaymentService | 1 | P6_G38_OP37_KhachThue |
-| D39 | OP38 Xác nhận thanh toán | Admin | ❌ | DENY | DENIED | PASS | Service | Web.Features.Payments.Services.PaymentService | 1 | P6_D39_OP38_Admin |
-| E39 | OP38 Xác nhận thanh toán | ChuTro | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Payments.Services.PaymentService | 1 | P6_E39_OP38_ChuTro |
-| F39 | OP38 Xác nhận thanh toán | QuanLy | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Payments.Services.PaymentService | 1 | P6_F39_OP38_QuanLy |
-| G39 | OP38 Xác nhận thanh toán | KhachThue | ❌ | DENY | DENIED | PASS | Service | Web.Features.Payments.Services.PaymentService | 1 | P6_G39_OP38_KhachThue |
+| D38 | OP37 Gửi yêu cầu thanh toán | Admin | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Invoices.Services.PaymentService | 0 | P6_D38_OP37_Admin |
+| E38 | OP37 Gửi yêu cầu thanh toán | ChuTro | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Invoices.Services.PaymentService | 0 | P6_E38_OP37_ChuTro |
+| F38 | OP37 Gửi yêu cầu thanh toán | QuanLy | — | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | Service | Web.Features.Invoices.Services.PaymentService | 0 | P6_F38_OP37_QuanLy |
+| G38 | OP37 Gửi yêu cầu thanh toán | KhachThue | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Invoices.Services.PaymentService | 1 | P6_G38_OP37_KhachThue |
+| D39 | OP38 Xác nhận thanh toán | Admin | ❌ | DENY | DENIED | PASS | Service | Web.Features.Invoices.Services.PaymentService | 1 | P6_D39_OP38_Admin |
+| E39 | OP38 Xác nhận thanh toán | ChuTro | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Invoices.Services.PaymentService | 1 | P6_E39_OP38_ChuTro |
+| F39 | OP38 Xác nhận thanh toán | QuanLy | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Invoices.Services.PaymentService | 1 | P6_F39_OP38_QuanLy |
+| G39 | OP38 Xác nhận thanh toán | KhachThue | ❌ | DENY | DENIED | PASS | Service | Web.Features.Invoices.Services.PaymentService | 1 | P6_G39_OP38_KhachThue |
 | D40 | OP39 Xem doanh thu / công nợ (tổng hợp) | Admin | ❌ | DENY | DENIED | PASS | Service | Web.Features.Reports.Services.RevenueReportService | 1 | P6_D40_OP39_Admin |
 | E40 | OP39 Xem doanh thu / công nợ (tổng hợp) | ChuTro | ✅ | ALLOW | ALLOWED | PASS | Service | Web.Features.Reports.Services.RevenueReportService | 1 | P6_E40_OP39_ChuTro |
 | F40 | OP39 Xem doanh thu / công nợ (tổng hợp) | QuanLy | ❌ | DENY | DENIED | PASS | Service | Web.Features.Reports.Services.RevenueReportService | 1 | P6_F40_OP39_QuanLy |
@@ -235,17 +235,17 @@
 <details><summary>Bấm để xem bằng chứng / hiệu lực DB / từng chế độ công tắc của 180 ô</summary>
 
 - **D2 · OP01 · Admin → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Đăng nhập thật thành công cho Admin (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
-    - `default` = Allowed: Đăng nhập thật thành công cho Admin (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
+  - Bằng chứng: Đăng nhập thật thành công cho Admin (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
+    - `default` = Allowed: Đăng nhập thật thành công cho Admin (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
 - **E2 · OP01 · ChuTro → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Đăng nhập thật thành công cho ChuTro (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
-    - `default` = Allowed: Đăng nhập thật thành công cho ChuTro (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
+  - Bằng chứng: Đăng nhập thật thành công cho ChuTro (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
+    - `default` = Allowed: Đăng nhập thật thành công cho ChuTro (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
 - **F2 · OP01 · QuanLy → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Đăng nhập thật thành công cho QuanLy (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
-    - `default` = Allowed: Đăng nhập thật thành công cho QuanLy (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
+  - Bằng chứng: Đăng nhập thật thành công cho QuanLy (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
+    - `default` = Allowed: Đăng nhập thật thành công cho QuanLy (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
 - **G2 · OP01 · KhachThue → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Đăng nhập thật thành công cho KhachThue (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
-    - `default` = Allowed: Đăng nhập thật thành công cho KhachThue (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-06)
+  - Bằng chứng: Đăng nhập thật thành công cho KhachThue (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
+    - `default` = Allowed: Đăng nhập thật thành công cho KhachThue (đúng mật khẩu đã băm, đã duyệt lúc 2026-11-07)
 - **D3 · OP02 · Admin → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
   - Bằng chứng: Đọc hồ sơ cá nhân thành công: 
     - `default` = Allowed: Đọc hồ sơ cá nhân thành công: 
@@ -285,11 +285,11 @@
   - Bằng chứng: Vai trò KhachThue sửa hồ sơ cá nhân thành công
     - `default` = Allowed: Vai trò KhachThue sửa hồ sơ cá nhân thành công
 - **D6 · OP05 · Admin → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Tạo tài khoản 'pm-mgr_61@test.local' có hiệu lực thật trong AspNetUsers (10 -> 11)
-    - `default` = Allowed: Tạo tài khoản 'pm-mgr_61@test.local' có hiệu lực thật trong AspNetUsers (10 -> 11)
+  - Bằng chứng: Tạo tài khoản 'pm-mgr_49@test.local' có hiệu lực thật trong AspNetUsers (10 -> 11)
+    - `default` = Allowed: Tạo tài khoản 'pm-mgr_49@test.local' có hiệu lực thật trong AspNetUsers (10 -> 11)
 - **E6 · OP05 · ChuTro → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
-  - Bằng chứng: Tạo tài khoản 'pm-mgr_46@test.local' có hiệu lực thật trong AspNetUsers (8 -> 9)
-    - `default` = Allowed: Tạo tài khoản 'pm-mgr_46@test.local' có hiệu lực thật trong AspNetUsers (8 -> 9)
+  - Bằng chứng: Tạo tài khoản 'pm-mgr_31@test.local' có hiệu lực thật trong AspNetUsers (8 -> 9)
+    - `default` = Allowed: Tạo tài khoản 'pm-mgr_31@test.local' có hiệu lực thật trong AspNetUsers (8 -> 9)
 - **F6 · OP05 · QuanLy → PASS** (tầng Service, service `Web.Features.Accounts.AccountService`)
   - Bằng chứng: Case A (A-trong-pham-vi): Quản lý tạo tài khoản cho khách trong tòa được giao (tai khoản ở trạng thái chờ duyệt theo D1/A49) // Case B (B-ngoai-pham-vi): Bị chặn ngoài phạm vi đúng: ErrorCode=OutOfScope
     - `A-trong-pham-vi` = Allowed: Quản lý tạo tài khoản cho khách trong tòa được giao (tai khoản ở trạng thái chờ duyệt theo D1/A49)
@@ -379,9 +379,9 @@
     - `default` = Allowed: Chủ trọ sửa thông tin phòng thành công trực tiếp
 - **F13 · OP12 · QuanLy → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: SW-01: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: Quản lý sửa thông tin phòng SW01-0069 (chỉ đổi tầng) có hiệu lực ngay (hiệu lực DB: 'SW01-0069/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0069/4/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW01-0070/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0070/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
-    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW01-0071/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0071/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
+    - `mode:Cho phép` = Allowed: Quản lý sửa thông tin phòng SW01-0054 (chỉ đổi tầng) có hiệu lực ngay (hiệu lực DB: 'SW01-0054/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0054/4/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW01-0055/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0055/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
+    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW01-0056/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW01-0056/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-01: 0 -> 0)
 - **G13 · OP12 · KhachThue → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: Bị từ chối sửa phòng và dữ liệu không đổi: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối sửa phòng và dữ liệu không đổi: UnauthorizedAccessException
@@ -393,9 +393,9 @@
     - `default` = Allowed: Chủ trọ đổi giá phòng thành công
 - **F14 · OP13 · QuanLy → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: SW-02: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: Quản lý đổi giá phòng SW02-0055 có hiệu lực ngay (hiệu lực DB: 'SW02-0055/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0055/3/25.00/1600000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW02-0056/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0056/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
-    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW02-0057/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0057/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
+    - `mode:Cho phép` = Allowed: Quản lý đổi giá phòng SW02-0042 có hiệu lực ngay (hiệu lực DB: 'SW02-0042/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0042/3/25.00/1600000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW02-0043/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0043/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
+    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW02-0045/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW02-0045/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-02: 0 -> 0)
 - **G14 · OP13 · KhachThue → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: Bị từ chối thiết lập giá phòng, dữ liệu không đổi: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối thiết lập giá phòng, dữ liệu không đổi: UnauthorizedAccessException
@@ -407,9 +407,9 @@
     - `default` = Allowed: Chủ trọ đổi trạng thái phòng thành công
 - **F15 · OP14 · QuanLy → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: SW-03: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: Quản lý đổi trạng thái phòng SW03-0047 có hiệu lực ngay (hiệu lực DB: 'SW03-0047/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0047/3/25.00/1500000.00/Maintenance/del=False/active=Tr…'; yêu cầu chờ duyệt SW-03: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW03-0048/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0048/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-03: 0 -> 0)
-    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW03-0049/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0049/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-03: 0 -> 0)
+    - `mode:Cho phép` = Allowed: Quản lý đổi trạng thái phòng SW03-0032 có hiệu lực ngay (hiệu lực DB: 'SW03-0032/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0032/3/25.00/1500000.00/Maintenance/del=False/active=Tr…'; yêu cầu chờ duyệt SW-03: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'SW03-0033/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0033/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-03: 0 -> 0)
+    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'SW03-0034/3/25.00/1500000.00/Available/del=False/active=True' -> 'SW03-0034/3/25.00/1500000.00/Available/del=False/active=True'; yêu cầu chờ duyệt SW-03: 0 -> 0)
 - **G15 · OP14 · KhachThue → PASS** (tầng Service, service `Web.Features.Rooms.RoomService`)
   - Bằng chứng: Bị từ chối đổi trạng thái phòng, dữ liệu không đổi: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối đổi trạng thái phòng, dữ liệu không đổi: UnauthorizedAccessException
@@ -483,13 +483,13 @@
   - Bằng chứng: Bị từ chối đưa hồ sơ khách vào thùng rác: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối đưa hồ sơ khách vào thùng rác: UnauthorizedAccessException
 - **E21 · OP20 · ChuTro → PASS** (tầng Service, service `Web.Features.Tenants.TenantService`)
-  - Bằng chứng: Chủ trọ đưa hồ sơ khách vào thùng rác có hiệu lực thật (Khach can tai khoan 34/0910000034/del=True/active=True)
-    - `default` = Allowed: Chủ trọ đưa hồ sơ khách vào thùng rác có hiệu lực thật (Khach can tai khoan 34/0910000034/del=True/active=True)
+  - Bằng chứng: Chủ trọ đưa hồ sơ khách vào thùng rác có hiệu lực thật (Khach can tai khoan 17/0910000017/del=True/active=True)
+    - `default` = Allowed: Chủ trọ đưa hồ sơ khách vào thùng rác có hiệu lực thật (Khach can tai khoan 17/0910000017/del=True/active=True)
 - **F21 · OP20 · QuanLy → PASS** (tầng Service, service `Web.Features.Tenants.TenantService`)
   - Bằng chứng: SW-06: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: Quản lý xóa hồ sơ khách có hiệu lực ngay (hiệu lực DB: 'Khach can tai khoan 25/0910000025/del=False/active=True' -> 'Khach can tai khoan 25/0910000025/del=True/active=True'; yêu cầu chờ duyệt SW-06: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'Khach can tai khoan 26/0910000026/del=False/active=True' -> 'Khach can tai khoan 26/0910000026/del=False/active=True'; yêu cầu chờ duyệt SW-06: 0 -> 1)
-    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'Khach can tai khoan 27/0910000027/del=False/active=True' -> 'Khach can tai khoan 27/0910000027/del=False/active=True'; yêu cầu chờ duyệt SW-06: 1 -> 1)
+    - `mode:Cho phép` = Allowed: Quản lý xóa hồ sơ khách có hiệu lực ngay (hiệu lực DB: 'Khach can tai khoan 4/0910000004/del=False/active=True' -> 'Khach can tai khoan 4/0910000004/del=True/active=True'; yêu cầu chờ duyệt SW-06: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: chờ duyệt: ApprovalRequired (hiệu lực DB: 'Khach can tai khoan 5/0910000005/del=False/active=True' -> 'Khach can tai khoan 5/0910000005/del=False/active=True'; yêu cầu chờ duyệt SW-06: 0 -> 1)
+    - `mode:Không thể` = Denied: UnauthorizedAccessException: Bạn không có quyền thực hiện thao tác này (hiệu lực DB: 'Khach can tai khoan 6/0910000006/del=False/active=True' -> 'Khach can tai khoan 6/0910000006/del=False/active=True'; yêu cầu chờ duyệt SW-06: 1 -> 1)
 - **G21 · OP20 · KhachThue → PASS** (tầng Service, service `Web.Features.Tenants.TenantService`)
   - Bằng chứng: Bị từ chối đưa hồ sơ khách vào thùng rác: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối đưa hồ sơ khách vào thùng rác: UnauthorizedAccessException
@@ -497,8 +497,8 @@
   - Bằng chứng: Bị từ chối khôi phục khách thuê từ thùng rác: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối khôi phục khách thuê từ thùng rác: UnauthorizedAccessException
 - **E22 · OP21 · ChuTro → PASS** (tầng Service, service `Web.Features.Tenants.TenantService`)
-  - Bằng chứng: Chủ trọ khôi phục hồ sơ khách từ thùng rác có hiệu lực thật (Khach can tai khoan 72/0910000072/del=False/active=True)
-    - `default` = Allowed: Chủ trọ khôi phục hồ sơ khách từ thùng rác có hiệu lực thật (Khach can tai khoan 72/0910000072/del=False/active=True)
+  - Bằng chứng: Chủ trọ khôi phục hồ sơ khách từ thùng rác có hiệu lực thật (Khach can tai khoan 57/0910000057/del=False/active=True)
+    - `default` = Allowed: Chủ trọ khôi phục hồ sơ khách từ thùng rác có hiệu lực thật (Khach can tai khoan 57/0910000057/del=False/active=True)
 - **F22 · OP21 · QuanLy → PASS** (tầng Service, service `Web.Features.Tenants.TenantService`)
   - Bằng chứng: Bị từ chối khôi phục khách thuê từ thùng rác: UnauthorizedAccessException
     - `default` = Denied: Bị từ chối khôi phục khách thuê từ thùng rác: UnauthorizedAccessException
@@ -525,8 +525,8 @@
   - Bằng chứng: Hợp đồng tạo ra ở trạng thái Chờ duyệt (Status=Pending)
     - `default` = PendingApproval: Hợp đồng tạo ra ở trạng thái Chờ duyệt (Status=Pending)
 - **F24 · OP23 · QuanLy → PASS** (tầng Service, service `Web.Features.Contracts.Services.ContractService`)
-  - Bằng chứng: Hợp đồng của Quản lý vào Chờ duyệt đúng D3 (ContractId=4f0beb51-c8d1-4346-9608-16a5e77b580b)
-    - `default` = PendingApproval: Hợp đồng của Quản lý vào Chờ duyệt đúng D3 (ContractId=4f0beb51-c8d1-4346-9608-16a5e77b580b)
+  - Bằng chứng: Hợp đồng của Quản lý vào Chờ duyệt đúng D3 (ContractId=76181705-9ee6-47a2-8952-fc80db141028)
+    - `default` = PendingApproval: Hợp đồng của Quản lý vào Chờ duyệt đúng D3 (ContractId=76181705-9ee6-47a2-8952-fc80db141028)
 - **G24 · OP23 · KhachThue → PASS** (tầng Service, service `Web.Features.Contracts.Services.ContractService`)
   - Bằng chứng: Bị từ chối tạo hợp đồng, không phát sinh dòng mới: ContractAuthorizationException
     - `default` = Denied: Bị từ chối tạo hợp đồng, không phát sinh dòng mới: ContractAuthorizationException
@@ -550,8 +550,8 @@
     - `default` = Allowed: Chủ trọ thanh lý hợp đồng có hiệu lực ngay (Status=Liquidated)
 - **F26 · OP25 · QuanLy → PASS** (tầng Service, service `Web.Features.Contracts.Services.ContractService`)
   - Bằng chứng: SW-07: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: Service chấp nhận lệnh thanh lý hợp đồng 29cf41e5-2575-4282-8bc8-ec7df3d891cb (hiệu lực DB: 'Approved' -> 'Liquidated'; yêu cầu chờ duyệt SW-07: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: Service chấp nhận lệnh thanh lý hợp đồng 0d12ffb5-a278-4c8a-91e5-ad2d34cb96d0 (hiệu lực DB: 'Approved' -> 'Approved'; yêu cầu chờ duyệt SW-07: 0 -> 1)
+    - `mode:Cho phép` = Allowed: Service chấp nhận lệnh thanh lý hợp đồng a52ce5fe-43c1-45a3-aeb6-db614605c82a (hiệu lực DB: 'Approved' -> 'Liquidated'; yêu cầu chờ duyệt SW-07: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: Service chấp nhận lệnh thanh lý hợp đồng 5a31d1e1-d264-4343-92d0-7900eef87660 (hiệu lực DB: 'Approved' -> 'Approved'; yêu cầu chờ duyệt SW-07: 0 -> 1)
     - `mode:Không thể` = Denied: Bị chặn thanh lý: ContractOperationException (hiệu lực DB: 'Approved' -> 'Approved'; yêu cầu chờ duyệt SW-07: 1 -> 1)
 - **G26 · OP25 · KhachThue → PASS** (tầng Service, service `Web.Features.Contracts.Services.ContractService`)
   - Bằng chứng: Bị từ chối thanh lý / gia hạn hợp đồng, trạng thái vẫn Approved: ContractAuthorizationException
@@ -696,27 +696,27 @@
 - **G37 · OP36 · KhachThue → PASS** (tầng Service, service `Web.Features.Invoices.InvoiceService`)
   - Bằng chứng: Bị từ chối phát hành hóa đơn, trạng thái vẫn Draft: InvoiceAuthorizationException
     - `default` = Denied: Bị từ chối phát hành hóa đơn, trạng thái vẫn Draft: InvoiceAuthorizationException
-- **D38 · OP37 · Admin → NOT_APPLICABLE** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
+- **D38 · OP37 · Admin → NOT_APPLICABLE** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
   - Bằng chứng: Ô '—' — workbook đánh dấu không áp dụng (Mục VI.5)
-- **E38 · OP37 · ChuTro → NOT_APPLICABLE** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
+- **E38 · OP37 · ChuTro → NOT_APPLICABLE** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
   - Bằng chứng: Ô '—' — workbook đánh dấu không áp dụng (Mục VI.5)
-- **F38 · OP37 · QuanLy → NOT_APPLICABLE** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
+- **F38 · OP37 · QuanLy → NOT_APPLICABLE** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
   - Bằng chứng: Ô '—' — workbook đánh dấu không áp dụng (Mục VI.5)
-- **G38 · OP37 · KhachThue → PASS** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
+- **G38 · OP37 · KhachThue → PASS** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
   - Bằng chứng: Khách thuê gửi được minh chứng thanh toán cho hóa đơn 2 (PaymentId=1, Pending).
     - `default` = Allowed: Khách thuê gửi được minh chứng thanh toán cho hóa đơn 2 (PaymentId=1, Pending).
-- **D39 · OP38 · Admin → PASS** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
-  - Bằng chứng: PaymentAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xác nhận thanh toán.
-    - `default` = Denied: PaymentAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xác nhận thanh toán.
-- **E39 · OP38 · ChuTro → PASS** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
-  - Bằng chứng: Xác nhận thanh toán PaymentId=5 có hiệu lực thật (Confirmed).
-    - `default` = Allowed: Xác nhận thanh toán PaymentId=5 có hiệu lực thật (Confirmed).
-- **F39 · OP38 · QuanLy → PASS** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
-  - Bằng chứng: Xác nhận thanh toán PaymentId=3 có hiệu lực thật (Confirmed).
-    - `default` = Allowed: Xác nhận thanh toán PaymentId=3 có hiệu lực thật (Confirmed).
-- **G39 · OP38 · KhachThue → PASS** (tầng Service, service `Web.Features.Payments.Services.PaymentService`)
-  - Bằng chứng: PaymentAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xác nhận thanh toán.
-    - `default` = Denied: PaymentAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xác nhận thanh toán.
+- **D39 · OP38 · Admin → PASS** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
+  - Bằng chứng: PaymentAuthorizationException: Bạn không có quyền thực hiện thao tác thanh toán này.
+    - `default` = Denied: PaymentAuthorizationException: Bạn không có quyền thực hiện thao tác thanh toán này.
+- **E39 · OP38 · ChuTro → PASS** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
+  - Bằng chứng: Xác nhận thanh toán PaymentId=1 có hiệu lực thật (Confirmed).
+    - `default` = Allowed: Xác nhận thanh toán PaymentId=1 có hiệu lực thật (Confirmed).
+- **F39 · OP38 · QuanLy → PASS** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
+  - Bằng chứng: Xác nhận thanh toán PaymentId=1 có hiệu lực thật (Confirmed).
+    - `default` = Allowed: Xác nhận thanh toán PaymentId=1 có hiệu lực thật (Confirmed).
+- **G39 · OP38 · KhachThue → PASS** (tầng Service, service `Web.Features.Invoices.Services.PaymentService`)
+  - Bằng chứng: PaymentAuthorizationException: Bạn không có quyền thực hiện thao tác thanh toán này.
+    - `default` = Denied: PaymentAuthorizationException: Bạn không có quyền thực hiện thao tác thanh toán này.
 - **D40 · OP39 · Admin → PASS** (tầng Service, service `Web.Features.Reports.Services.RevenueReportService`)
   - Bằng chứng: RevenueReportAuthorizationException: Báo cáo doanh thu/công nợ tổng hợp chỉ dành cho Chủ trọ.
     - `default` = Denied: RevenueReportAuthorizationException: Báo cáo doanh thu/công nợ tổng hợp chỉ dành cho Chủ trọ.
@@ -774,12 +774,12 @@
   - Bằng chứng: Bị từ chối đính kèm ảnh kết quả (ErrorCode=Forbidden), DB không gắn thêm ảnh nào
     - `default` = Denied: Bị từ chối đính kèm ảnh kết quả (ErrorCode=Forbidden), DB không gắn thêm ảnh nào
 - **E44 · OP43 · ChuTro → PASS** (tầng Service, service `Web.Features.Maintenance.IncidentService`)
-  - Bằng chứng: Chủ trọ đính kèm ảnh kết quả có hiệu lực thật (FileId=fbe70a02-3df4-4443-a0d5-85dcba1f779b, ảnh gắn vào phiếu=attached=3)
-    - `default` = Allowed: Chủ trọ đính kèm ảnh kết quả có hiệu lực thật (FileId=fbe70a02-3df4-4443-a0d5-85dcba1f779b, ảnh gắn vào phiếu=attached=3)
+  - Bằng chứng: Chủ trọ đính kèm ảnh kết quả có hiệu lực thật (FileId=74601a29-7a6f-463b-b8e4-c3b1e5b0c9ea, ảnh gắn vào phiếu=attached=3)
+    - `default` = Allowed: Chủ trọ đính kèm ảnh kết quả có hiệu lực thật (FileId=74601a29-7a6f-463b-b8e4-c3b1e5b0c9ea, ảnh gắn vào phiếu=attached=3)
 - **F44 · OP43 · QuanLy → PASS** (tầng Service, service `Web.Features.Maintenance.IncidentService`)
   - Bằng chứng: SW-14: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
-    - `mode:Cho phép` = Allowed: ảnh kết quả gắn thẳng vào phiếu 9 (FileId=707ce9c6-db88-46e8-a402-8d9bed74c43e) (hiệu lực DB: 'incident=9 attached=0' -> 'incident=9 attached=1'; yêu cầu chờ duyệt SW-14: 0 -> 0)
-    - `mode:Duyệt` = PendingApproval: phiếu 10 tạo yêu cầu chờ duyệt a9d3f2da-567c-4097-afbf-7ec0f0e88cc3 (FileId=bd3abbb1-d438-4d54-b07a-65a0db56a836) (hiệu lực DB: 'incident=10 attached=0' -> 'incident=10 attached=0'; yêu cầu chờ duyệt SW-14: 0 -> 1)
+    - `mode:Cho phép` = Allowed: ảnh kết quả gắn thẳng vào phiếu 9 (FileId=274c9c37-504d-40a6-8c24-02d364cb5d9c) (hiệu lực DB: 'incident=9 attached=0' -> 'incident=9 attached=1'; yêu cầu chờ duyệt SW-14: 0 -> 0)
+    - `mode:Duyệt` = PendingApproval: phiếu 10 tạo yêu cầu chờ duyệt 326d00d0-cad4-43a4-9c49-bca42a2db887 (FileId=e5fa4e75-450b-4112-abad-286278aaa1e1) (hiệu lực DB: 'incident=10 attached=0' -> 'incident=10 attached=0'; yêu cầu chờ duyệt SW-14: 0 -> 1)
     - `mode:Không thể` = Denied: ErrorCode=Forbidden (hiệu lực DB: 'incident=11 attached=0' -> 'incident=11 attached=0'; yêu cầu chờ duyệt SW-14: 1 -> 1)
 - **G44 · OP43 · KhachThue → PASS** (tầng Service, service `Web.Features.Maintenance.IncidentService`)
   - Bằng chứng: Case A (A-trong-pham-vi): Khách thuê đọc được ảnh của phiếu thuộc phòng mình đang thuê // Case B (B-ngoai-pham-vi): Bị chặn ngoài phạm vi đúng: access=None, đính kèm ảnh bị từ chối (Forbidden)
@@ -802,8 +802,8 @@
   - Bằng chứng: ReportExportAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xuất báo cáo Excel.
     - `default` = Denied: ReportExportAuthorizationException: Chỉ Chủ trọ hoặc Quản lý được xuất báo cáo Excel.
 - **E46 · OP45 · ChuTro → PASS** (tầng Service, service `Web.Features.Reports.Services.ReportExportService`)
-  - Bằng chứng: Chủ trọ xuất Excel hợp lệ (6759 byte, chữ ký ZIP).
-    - `default` = Allowed: Chủ trọ xuất Excel hợp lệ (6759 byte, chữ ký ZIP).
+  - Bằng chứng: Chủ trọ xuất Excel hợp lệ (6762 byte, chữ ký ZIP).
+    - `default` = Allowed: Chủ trọ xuất Excel hợp lệ (6762 byte, chữ ký ZIP).
 - **F46 · OP45 · QuanLy → PASS** (tầng Service, service `Web.Features.Reports.Services.ReportExportService`)
   - Bằng chứng: SW-16: Cho phép -> Allowed; Duyệt -> PendingApproval; Không thể -> Denied
     - `mode:Cho phép` = Allowed: Xuất Excel 6572 byte (hiệu lực DB: 'n/a' -> 'n/a'; yêu cầu chờ duyệt SW-16: 0 -> 0)
