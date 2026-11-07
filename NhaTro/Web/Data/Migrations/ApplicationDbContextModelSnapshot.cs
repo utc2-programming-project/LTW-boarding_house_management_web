@@ -955,9 +955,23 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InvoiceId");
+                    b.HasIndex("InvoiceId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Payments_InvoiceConfirmed")
+                        .HasFilter("[Status] = 1");
 
-                    b.ToTable("Payments");
+                    b.HasIndex("InvoiceId", "RequestedAt");
+
+                    b.ToTable("Payments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Payments_Amount", "[Amount] > 0");
+
+                            t.HasCheckConstraint("CK_Payments_RejectionReason", "([Status] <> 2 AND [RejectionReason] IS NULL) OR ([Status] = 2 AND [RejectionReason] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Payments_ReviewedAt", "([Status] = 0 AND [ReviewedAt] IS NULL) OR ([Status] <> 0 AND [ReviewedAt] IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Payments_Status", "[Status] IN (0, 1, 2)");
+                        });
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.Property", b =>
@@ -2333,7 +2347,7 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Contracts.Entities.Contract", null)
                         .WithMany()
                         .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Web.Data.ApplicationUser", null)
@@ -2500,7 +2514,7 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -2542,7 +2556,7 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Utilities.Entities.UtilityReading", null)
                         .WithMany("Audits")
                         .HasForeignKey("UtilityReadingId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
