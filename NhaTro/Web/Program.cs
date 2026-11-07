@@ -382,6 +382,8 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
 // VHT-54: gửi/xác nhận/từ chối thanh toán, ghi tiền và audit trong một transaction.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
     Web.Features.Invoices.Services.PaymentService>();
+// VHT-55: adapter UI khách gửi yêu cầu thanh toán + minh chứng, tra kết quả trước khi thử lại.
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);  
 var app = builder.Build();

@@ -1,0 +1,79 @@
+.payment-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+}
+
+.payment-summary-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+    color: var(--text-secondary);
+    font-size: .875rem;
+}
+
+.payment-summary-row strong,
+.payment-summary-row span:last-child {
+    color: var(--text-primary);
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.detail-label {
+    color: var(--text-muted);
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+.payment-rejection {
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--border);
+}
+
+.payment-rejection p {
+    margin: var(--space-1) 0 0;
+    color: var(--error-text);
+}
+
+.payment-proofs {
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--border);
+}
+
+.payment-proofs ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.payment-proofs li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.payment-proofs .lucide-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+.break-anywhere {
+    overflow-wrap: anywhere;
+}

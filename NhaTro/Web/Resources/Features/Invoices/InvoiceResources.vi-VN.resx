@@ -89,4 +89,70 @@
   <data name="DetailNotFoundTitle" xml:space="preserve"><value>Không tìm thấy hóa đơn</value></data>
   <data name="DetailNotFoundDesc" xml:space="preserve"><value>Hóa đơn không tồn tại hoặc bạn không có quyền xem.</value></data>
   <data name="BackToInvoices" xml:space="preserve"><value>Về danh sách hóa đơn</value></data>
+
+  <data name="ErrorLoadDetail" xml:space="preserve"><value>Không tải được chi tiết hóa đơn. Vui lòng thử lại.</value></data>
+  <data name="ErrorLoadPayments" xml:space="preserve"><value>Không tải được lịch sử thanh toán. Vui lòng thử lại.</value></data>
+
+  <data name="PaymentHeading" xml:space="preserve"><value>Thanh toán hóa đơn</value></data>
+  <data name="PaymentStatusPending" xml:space="preserve"><value>Chờ xác nhận</value></data>
+  <data name="PaymentStatusConfirmed" xml:space="preserve"><value>Đã xác nhận</value></data>
+  <data name="PaymentStatusRejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="PaymentStatusNone" xml:space="preserve"><value>Chưa có yêu cầu thanh toán</value></data>
+  <data name="PaymentRequestedAt" xml:space="preserve"><value>Thời điểm gửi</value></data>
+  <data name="PaymentTransferredAt" xml:space="preserve"><value>Thời điểm chuyển khoản</value></data>
+  <data name="PaymentTransferredAtRequired" xml:space="preserve"><value>Vui lòng chọn thời điểm chuyển khoản.</value></data>
+  <data name="PaymentReviewedAt" xml:space="preserve"><value>Thời điểm xử lý</value></data>
+  <data name="PaymentAmount" xml:space="preserve"><value>Số tiền chuyển khoản</value></data>
+  <data name="PaymentAmountHint" xml:space="preserve"><value>Nhập đúng tổng hóa đơn {0}.</value></data>
+  <data name="PaymentAmountInvalid" xml:space="preserve"><value>Số tiền không hợp lệ.</value></data>
+  <data name="PaymentAmountMismatch" xml:space="preserve"><value>Số tiền phải bằng đúng tổng hóa đơn {0}.</value></data>
+  <data name="PaymentTransactionCode" xml:space="preserve"><value>Mã giao dịch</value></data>
+  <data name="PaymentTransactionCodePlaceholder" xml:space="preserve"><value>Ví dụ: FT24010112345 (không bắt buộc)</value></data>
+  <data name="PaymentProof" xml:space="preserve"><value>Minh chứng thanh toán</value></data>
+  <data name="PaymentProofHint" xml:space="preserve"><value>Ảnh hoặc PDF, tối đa {0} MB mỗi tệp.</value></data>
+  <data name="PaymentProofRequired" xml:space="preserve"><value>Vui lòng đính kèm ít nhất một minh chứng thanh toán.</value></data>
+  <data name="PaymentProofTooLarge" xml:space="preserve"><value>Tệp {0} vượt quá {1} MB.</value></data>
+  <data name="PaymentProofInvalidType" xml:space="preserve"><value>Định dạng minh chứng không được hỗ trợ.</value></data>
+  <data name="PaymentProofTooMany" xml:space="preserve"><value>Chỉ được chọn tối đa 20 tệp.</value></data>
+  <data name="PaymentProofRemove" xml:space="preserve"><value>Xóa tệp</value></data>
+  <data name="PaymentProofPrepared" xml:space="preserve"><value>Đã tải lên {0} minh chứng, sẽ dùng khi gửi yêu cầu.</value></data>
+  <data name="PaymentProofOpen" xml:space="preserve"><value>Mở minh chứng</value></data>
+  <data name="PaymentSubmit" xml:space="preserve"><value>Gửi yêu cầu thanh toán</value></data>
+  <data name="PaymentSubmitting" xml:space="preserve"><value>Đang gửi...</value></data>
+  <data name="PaymentSubmittedSuccess" xml:space="preserve"><value>Đã gửi yêu cầu thanh toán. Vui lòng chờ xác nhận.</value></data>
+  <data name="PaymentCheckResult" xml:space="preserve"><value>Kiểm tra kết quả</value></data>
+  <data name="PaymentChecking" xml:space="preserve"><value>Đang kiểm tra...</value></data>
+  <data name="PaymentResultUnknown" xml:space="preserve"><value>Chưa xác định được kết quả gửi. Vui lòng kiểm tra kết quả trước khi thử lại.</value></data>
+  <data name="PaymentNoResultYet" xml:space="preserve"><value>Chưa ghi nhận yêu cầu thanh toán nào. Bạn có thể gửi lại.</value></data>
+  <data name="PaymentPendingNotice" xml:space="preserve"><value>Yêu cầu thanh toán đang chờ chủ nhà xác nhận. Số tiền chưa được cộng vào đã thanh toán.</value></data>
+  <data name="PaymentRejectedNotice" xml:space="preserve"><value>Yêu cầu thanh toán trước đó bị từ chối. Bạn có thể kiểm tra lý do và gửi lại.</value></data>
+  <data name="PaymentPaidNotice" xml:space="preserve"><value>Hóa đơn đã được thanh toán đủ.</value></data>
+  <data name="PaymentDraftNotice" xml:space="preserve"><value>Hóa đơn chưa phát hành nên chưa thể thanh toán.</value></data>
+  <data name="PaymentHistoryHeading" xml:space="preserve"><value>Lịch sử thanh toán</value></data>
+  <data name="PaymentRejectionReason" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="PaymentRefreshPending" xml:space="preserve"><value>Yêu cầu đã được gửi nhưng chưa tải lại được dữ liệu. Vui lòng kiểm tra lại sau.</value></data>
+
+  <data name="PayErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thanh toán cho hóa đơn này.</value></data>
+  <data name="PayErrorInvoiceNotFound" xml:space="preserve"><value>Không tìm thấy hóa đơn.</value></data>
+  <data name="PayErrorInvoiceNotIssued" xml:space="preserve"><value>Hóa đơn chưa phát hành nên chưa thể thanh toán.</value></data>
+  <data name="PayErrorInvoiceAlreadyPaid" xml:space="preserve"><value>Hóa đơn đã được thanh toán.</value></data>
+  <data name="PayErrorAmountMismatch" xml:space="preserve"><value>Số tiền không khớp tổng hóa đơn.</value></data>
+  <data name="PayErrorInvalidTransactionCode" xml:space="preserve"><value>Mã giao dịch không hợp lệ.</value></data>
+  <data name="PayErrorTransferredAtInFuture" xml:space="preserve"><value>Thời điểm chuyển khoản không được ở tương lai.</value></data>
+  <data name="PayErrorProofRequired" xml:space="preserve"><value>Vui lòng đính kèm minh chứng thanh toán.</value></data>
+  <data name="PayErrorInvalidProof" xml:space="preserve"><value>Minh chứng thanh toán không hợp lệ.</value></data>
+  <data name="PayErrorPendingPaymentExists" xml:space="preserve"><value>Đã có yêu cầu thanh toán đang chờ xác nhận.</value></data>
+  <data name="PayErrorPaymentNotFound" xml:space="preserve"><value>Không tìm thấy yêu cầu thanh toán.</value></data>
+  <data name="PayErrorInvalidPaymentStatus" xml:space="preserve"><value>Trạng thái yêu cầu thanh toán không hợp lệ.</value></data>
+  <data name="PayErrorConcurrencyConflict" xml:space="preserve"><value>Dữ liệu vừa thay đổi. Vui lòng kiểm tra lại kết quả trước khi thử lại.</value></data>
+  <data name="PayErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi khi xử lý thanh toán. Vui lòng thử lại.</value></data>
+  <data name="PayErrorFileSizeExceeded" xml:space="preserve"><value>Tệp vượt quá dung lượng cho phép.</value></data>
+  <data name="PayErrorInvalidFileType" xml:space="preserve"><value>Định dạng tệp không được hỗ trợ.</value></data>
+  <data name="PayErrorEmptyFile" xml:space="preserve"><value>Tệp rỗng.</value></data>
+  <data name="PayErrorUploadFailed" xml:space="preserve"><value>Tải minh chứng thất bại. Vui lòng thử lại.</value></data>
+  <data name="PayErrorUploadForbidden" xml:space="preserve"><value>Bạn không có quyền tải minh chứng.</value></data>
+  <data name="PayErrorFileCountExceeded" xml:space="preserve"><value>Đã vượt quá số tệp cho phép.</value></data>
+  <data name="PayErrorRelatedEntityNotFound" xml:space="preserve"><value>Không tìm thấy hóa đơn để gắn minh chứng.</value></data>
+  <data name="PayErrorUploadInvalidRequest" xml:space="preserve"><value>Yêu cầu tải tệp không hợp lệ.</value></data>
+  <data name="PayErrorUploadUnknown" xml:space="preserve"><value>Đã xảy ra lỗi khi tải minh chứng. Vui lòng thử lại.</value></data>
 </root>

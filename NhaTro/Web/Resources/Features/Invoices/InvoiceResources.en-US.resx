@@ -89,4 +89,70 @@
   <data name="DetailNotFoundTitle" xml:space="preserve"><value>Invoice not found</value></data>
   <data name="DetailNotFoundDesc" xml:space="preserve"><value>The invoice does not exist or you do not have permission to view it.</value></data>
   <data name="BackToInvoices" xml:space="preserve"><value>Back to invoices</value></data>
+
+  <data name="ErrorLoadDetail" xml:space="preserve"><value>Could not load invoice details. Please try again.</value></data>
+  <data name="ErrorLoadPayments" xml:space="preserve"><value>Could not load payment history. Please try again.</value></data>
+
+  <data name="PaymentHeading" xml:space="preserve"><value>Invoice payment</value></data>
+  <data name="PaymentStatusPending" xml:space="preserve"><value>Pending confirmation</value></data>
+  <data name="PaymentStatusConfirmed" xml:space="preserve"><value>Confirmed</value></data>
+  <data name="PaymentStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="PaymentStatusNone" xml:space="preserve"><value>No payment request yet</value></data>
+  <data name="PaymentRequestedAt" xml:space="preserve"><value>Submitted at</value></data>
+  <data name="PaymentTransferredAt" xml:space="preserve"><value>Transfer time</value></data>
+  <data name="PaymentTransferredAtRequired" xml:space="preserve"><value>Please select the transfer time.</value></data>
+  <data name="PaymentReviewedAt" xml:space="preserve"><value>Reviewed at</value></data>
+  <data name="PaymentAmount" xml:space="preserve"><value>Transfer amount</value></data>
+  <data name="PaymentAmountHint" xml:space="preserve"><value>Enter the exact invoice total of {0}.</value></data>
+  <data name="PaymentAmountInvalid" xml:space="preserve"><value>The amount is not valid.</value></data>
+  <data name="PaymentAmountMismatch" xml:space="preserve"><value>The amount must equal the invoice total of {0}.</value></data>
+  <data name="PaymentTransactionCode" xml:space="preserve"><value>Transaction code</value></data>
+  <data name="PaymentTransactionCodePlaceholder" xml:space="preserve"><value>e.g. FT24010112345 (optional)</value></data>
+  <data name="PaymentProof" xml:space="preserve"><value>Payment proof</value></data>
+  <data name="PaymentProofHint" xml:space="preserve"><value>Image or PDF, up to {0} MB per file.</value></data>
+  <data name="PaymentProofRequired" xml:space="preserve"><value>Please attach at least one payment proof.</value></data>
+  <data name="PaymentProofTooLarge" xml:space="preserve"><value>{0} exceeds the {1} MB limit.</value></data>
+  <data name="PaymentProofInvalidType" xml:space="preserve"><value>This proof file type is not supported.</value></data>
+  <data name="PaymentProofTooMany" xml:space="preserve"><value>You can select at most 20 files.</value></data>
+  <data name="PaymentProofRemove" xml:space="preserve"><value>Remove file</value></data>
+  <data name="PaymentProofPrepared" xml:space="preserve"><value>{0} proof file(s) uploaded and ready to submit.</value></data>
+  <data name="PaymentProofOpen" xml:space="preserve"><value>Open proof</value></data>
+  <data name="PaymentSubmit" xml:space="preserve"><value>Submit payment request</value></data>
+  <data name="PaymentSubmitting" xml:space="preserve"><value>Submitting...</value></data>
+  <data name="PaymentSubmittedSuccess" xml:space="preserve"><value>Payment request submitted. Please wait for confirmation.</value></data>
+  <data name="PaymentCheckResult" xml:space="preserve"><value>Check result</value></data>
+  <data name="PaymentChecking" xml:space="preserve"><value>Checking...</value></data>
+  <data name="PaymentResultUnknown" xml:space="preserve"><value>We could not confirm the submission result. Check the result before trying again.</value></data>
+  <data name="PaymentNoResultYet" xml:space="preserve"><value>No payment request was recorded. You can submit again.</value></data>
+  <data name="PaymentPendingNotice" xml:space="preserve"><value>Your payment request is waiting for the landlord to confirm. The amount is not added to paid yet.</value></data>
+  <data name="PaymentRejectedNotice" xml:space="preserve"><value>Your previous payment request was rejected. Review the reason and submit again.</value></data>
+  <data name="PaymentPaidNotice" xml:space="preserve"><value>This invoice has been paid in full.</value></data>
+  <data name="PaymentDraftNotice" xml:space="preserve"><value>This invoice has not been issued yet, so it cannot be paid.</value></data>
+  <data name="PaymentHistoryHeading" xml:space="preserve"><value>Payment history</value></data>
+  <data name="PaymentRejectionReason" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="PaymentRefreshPending" xml:space="preserve"><value>The request was submitted but the latest data could not be loaded. Please check again later.</value></data>
+
+  <data name="PayErrorForbidden" xml:space="preserve"><value>You do not have permission to pay this invoice.</value></data>
+  <data name="PayErrorInvoiceNotFound" xml:space="preserve"><value>Invoice not found.</value></data>
+  <data name="PayErrorInvoiceNotIssued" xml:space="preserve"><value>This invoice has not been issued yet, so it cannot be paid.</value></data>
+  <data name="PayErrorInvoiceAlreadyPaid" xml:space="preserve"><value>This invoice has already been paid.</value></data>
+  <data name="PayErrorAmountMismatch" xml:space="preserve"><value>The amount does not match the invoice total.</value></data>
+  <data name="PayErrorInvalidTransactionCode" xml:space="preserve"><value>The transaction code is not valid.</value></data>
+  <data name="PayErrorTransferredAtInFuture" xml:space="preserve"><value>The transfer time cannot be in the future.</value></data>
+  <data name="PayErrorProofRequired" xml:space="preserve"><value>Please attach payment proof.</value></data>
+  <data name="PayErrorInvalidProof" xml:space="preserve"><value>The payment proof is not valid.</value></data>
+  <data name="PayErrorPendingPaymentExists" xml:space="preserve"><value>A payment request is already pending confirmation.</value></data>
+  <data name="PayErrorPaymentNotFound" xml:space="preserve"><value>Payment request not found.</value></data>
+  <data name="PayErrorInvalidPaymentStatus" xml:space="preserve"><value>The payment request status is not valid for this action.</value></data>
+  <data name="PayErrorConcurrencyConflict" xml:space="preserve"><value>The data just changed. Check the result before trying again.</value></data>
+  <data name="PayErrorUnknown" xml:space="preserve"><value>Something went wrong while processing the payment. Please try again.</value></data>
+  <data name="PayErrorFileSizeExceeded" xml:space="preserve"><value>The file exceeds the allowed size.</value></data>
+  <data name="PayErrorInvalidFileType" xml:space="preserve"><value>This file type is not supported.</value></data>
+  <data name="PayErrorEmptyFile" xml:space="preserve"><value>The file is empty.</value></data>
+  <data name="PayErrorUploadFailed" xml:space="preserve"><value>Could not upload the proof. Please try again.</value></data>
+  <data name="PayErrorUploadForbidden" xml:space="preserve"><value>You do not have permission to upload proof.</value></data>
+  <data name="PayErrorFileCountExceeded" xml:space="preserve"><value>The number of files exceeds the limit.</value></data>
+  <data name="PayErrorRelatedEntityNotFound" xml:space="preserve"><value>The invoice for this proof could not be found.</value></data>
+  <data name="PayErrorUploadInvalidRequest" xml:space="preserve"><value>The upload request is not valid.</value></data>
+  <data name="PayErrorUploadUnknown" xml:space="preserve"><value>Something went wrong while uploading the proof. Please try again.</value></data>
 </root>

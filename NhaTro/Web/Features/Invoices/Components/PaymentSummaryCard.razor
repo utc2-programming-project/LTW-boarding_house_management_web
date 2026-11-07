@@ -1,0 +1,70 @@
+@inject IStringLocalizer<InvoiceResources> L
+
+<div class="payment-summary">
+    <div class="payment-summary-row">
+        <span>@L["PaymentAmount"]</span>
+        <strong class="tabular-nums">@MoneyFormatter.Format(Payment.Amount)</strong>
+    </div>
+    <div class="payment-summary-row">
+        <span>@L["PaymentRequestedAt"]</span>
+        <span class="tabular-nums">@DateFormatter.FormatDateTime(Payment.RequestedAt.UtcDateTime)</span>
+    </div>
+    <div class="payment-summary-row">
+        <span>@L["PaymentTransferredAt"]</span>
+        <span class="tabular-nums">@DateFormatter.FormatDateTime(Payment.TransferredAt.UtcDateTime)</span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Payment.TransactionCode))
+    {
+        <div class="payment-summary-row">
+            <span>@L["PaymentTransactionCode"]</span>
+            <span class="break-anywhere">@Payment.TransactionCode</span>
+        </div>
+    }
+    @if (Payment.ReviewedAt is not null)
+    {
+        <div class="payment-summary-row">
+            <span>@L["PaymentReviewedAt"]</span>
+            <span class="tabular-nums">@DateFormatter.FormatDateTime(Payment.ReviewedAt.Value.UtcDateTime)</span>
+        </div>
+    }
+
+    @if (Payment.Status == PaymentStatus.Rejected && !string.IsNullOrWhiteSpace(Payment.RejectionReason))
+    {
+        <div class="payment-rejection">
+            <span class="detail-label">@L["PaymentRejectionReason"]</span>
+            <p>@Payment.RejectionReason</p>
+        </div>
+    }
+
+    @if (Payment.ProofFileIds.Count > 0)
+    {
+        <div class="payment-proofs">
+            <span class="detail-label">@L["PaymentProof"]</span>
+            <ul>
+                @foreach (var proofId in Payment.ProofFileIds)
+                {
+                    <li>
+                        <LucideIcon Name="file-text" />
+                        <a href="@($"/api/files/{proofId:D}")" target="_blank" rel="noopener">
+                            @ProofName(proofId)
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PaymentDto Payment { get; set; } = default!;
+
+    [Parameter]
+    public IReadOnlyDictionary<Guid, FileMetadataDto> ProofFiles { get; set; } =
+        new Dictionary<Guid, FileMetadataDto>();
+
+    private string ProofName(Guid proofId) =>
+        ProofFiles.TryGetValue(proofId, out var file) && !string.IsNullOrWhiteSpace(file.FileName)
+            ? file.FileName
+            : L["PaymentProofOpen"];
+}
