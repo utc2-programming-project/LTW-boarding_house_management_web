@@ -17,6 +17,8 @@ Script thực hiện: tạo DB (nếu cần) → `dotnet ef database update` t�
 
 Mật khẩu mặc định: `Demo@123456` (đổi bằng `-Password`). Chỉ dùng cho demo.
 
+Khi chạy profile `http`/`https`, bảng **“Đăng nhập nhanh để test”** ở trang Login hiện đúng 6 tài khoản demo bên dưới (không hiện tài khoản `@nhatro.local`).
+
 | Email | Vai trò | Phạm vi |
 |---|---|---|
 | `admin@demo.local` | Admin | Quản trị hệ thống; không vào nghiệp vụ |

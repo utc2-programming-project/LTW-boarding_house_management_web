@@ -36,6 +36,28 @@ public static class DemoDataSeeder
     public const string TenantAEmail = "khachthue.a@demo.local";
     public const string TenantBEmail = "khachthue.b@demo.local";
 
+    /// <summary>Danh sách tài khoản demo dùng cho seeder và bảng đăng nhập nhanh.</summary>
+    public static readonly (string Email, string Role)[] Accounts =
+    [
+        (AdminEmail, Roles.Admin),
+        (OwnerAEmail, Roles.ChuTro),
+        (OwnerBEmail, Roles.ChuTro),
+        (ManagerAEmail, Roles.QuanLy),
+        (TenantAEmail, Roles.KhachThue),
+        (TenantBEmail, Roles.KhachThue),
+    ];
+
+    private static readonly IReadOnlyDictionary<string, string> DisplayNames =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [AdminEmail] = "Quản trị Demo",
+            [OwnerAEmail] = "Chủ trọ Demo A",
+            [OwnerBEmail] = "Chủ trọ Demo B",
+            [ManagerAEmail] = "Quản lý Demo A",
+            [TenantAEmail] = "Khách thuê Demo A",
+            [TenantBEmail] = "Khách thuê Demo B",
+        };
+
     public const string PropertyAName = "Nhà trọ Demo 3A - Bình Thạnh";
     public const string PropertyBName = "Nhà trọ Demo 3A - Thủ Đức";
     public const string RoomA101Code = "A101";
@@ -225,20 +247,11 @@ public static class DemoDataSeeder
         string password,
         CancellationToken cancellationToken)
     {
-        var definitions = new[]
-        {
-            (AdminEmail, Roles.Admin, "Quản trị Demo"),
-            (OwnerAEmail, Roles.ChuTro, "Chủ trọ Demo A"),
-            (OwnerBEmail, Roles.ChuTro, "Chủ trọ Demo B"),
-            (ManagerAEmail, Roles.QuanLy, "Quản lý Demo A"),
-            (TenantAEmail, Roles.KhachThue, "Khách thuê Demo A"),
-            (TenantBEmail, Roles.KhachThue, "Khách thuê Demo B"),
-        };
-
         var result = new Dictionary<string, ApplicationUser>(StringComparer.Ordinal);
         var hasher = new PasswordHasher<ApplicationUser>();
-        foreach (var (email, roleName, fullName) in definitions)
+        foreach (var (email, roleName) in Accounts)
         {
+            var fullName = DisplayNames[email];
             var normalized = email.ToUpperInvariant();
             var user = await db.Users.FirstOrDefaultAsync(item => item.NormalizedEmail == normalized, cancellationToken);
             if (user is null)
