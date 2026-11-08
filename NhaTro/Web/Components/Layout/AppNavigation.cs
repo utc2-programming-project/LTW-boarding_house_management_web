@@ -39,6 +39,7 @@ public static class AppNavigation
                         ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"]),
                 ]),
             new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
+            new("PaymentRequests", "check", "ChuTro,QuanLy", "/payment-requests"),
             new("MyInvoices", "receipt", "KhachThue", "/my/invoices", Aliases: ["/my-invoices"]),
         ]),
         new("NavGroupOperations", "ChuTro,QuanLy,KhachThue",

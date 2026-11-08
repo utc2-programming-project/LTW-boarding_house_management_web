@@ -29,8 +29,14 @@ public sealed class PaymentDto
     /// <summary>Thời điểm hệ thống nhận yêu cầu, lưu UTC.</summary>
     public required DateTimeOffset RequestedAt { get; init; }
 
+    /// <summary>Tài khoản khách thuê gửi yêu cầu.</summary>
+    public string? RequestedByUserId { get; init; }
+
     /// <summary>Thời điểm xác nhận hoặc từ chối; null khi còn Pending.</summary>
     public DateTimeOffset? ReviewedAt { get; init; }
+
+    /// <summary>Tài khoản Quản lý/Chủ trọ đã đối chiếu; null khi còn Pending.</summary>
+    public string? ReviewedByUserId { get; init; }
 
     /// <summary>Lý do từ chối minh chứng; có khi Status = Rejected.</summary>
     public string? RejectionReason { get; init; }

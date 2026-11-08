@@ -6,8 +6,8 @@ using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
+using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
-using Web.Features.Payments.Entities;
 using Web.Features.Properties;
 using Web.Features.Reports.DTOs;
 using Web.Features.Rooms;
@@ -94,6 +94,9 @@ public sealed class ReportExportService(
             join room in db.Rooms.IgnoreQueryFilters().AsNoTracking()
                 on contract.RoomId equals room.Id
             where propertyIds.Contains(room.PropertyId)
+                // VHT-57: cùng định nghĩa hóa đơn hợp lệ với RevenueReportService,
+                // bản nháp không được xuất và không cộng vào công nợ.
+                && invoice.Status != InvoiceStatus.Draft
                 && (filter.From == null || invoice.PeriodEnd >= filter.From)
                 && (filter.To == null || invoice.PeriodStart <= filter.To)
             orderby invoice.Id

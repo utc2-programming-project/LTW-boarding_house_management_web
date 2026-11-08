@@ -167,6 +167,9 @@
   <data name="Invoices" xml:space="preserve">
     <value>Hóa đơn</value>
   </data>
+  <data name="PaymentRequests" xml:space="preserve">
+    <value>Xác nhận thanh toán</value>
+  </data>
   <data name="Incidents" xml:space="preserve">
     <value>Sự cố</value>
   </data>

@@ -167,6 +167,9 @@
   <data name="Invoices" xml:space="preserve">
     <value>Invoices</value>
   </data>
+  <data name="PaymentRequests" xml:space="preserve">
+    <value>Payment review</value>
+  </data>
   <data name="Incidents" xml:space="preserve">
     <value>Incidents</value>
   </data>

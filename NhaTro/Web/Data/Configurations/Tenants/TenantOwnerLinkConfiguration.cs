@@ -16,7 +16,7 @@ public class TenantOwnerLinkConfiguration : IEntityTypeConfiguration<TenantOwner
         builder.HasOne<Tenant>()
             .WithMany()
             .HasForeignKey(link => link.TenantId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(link => link.OwnerId);
     }

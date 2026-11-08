@@ -4,6 +4,7 @@ using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
+using Web.Features.Invoices.Mapping;
 using Web.Features.Properties;
 using Web.Features.Rooms.Entities;
 
@@ -72,10 +73,20 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             rows.Select(row => row.Invoice.ContractId).Distinct().ToArray(),
             cancellationToken);
 
+        // Chỉ Payment Confirmed mới được cộng vào tiền đã thu; Pending/Rejected không tính.
+        var invoiceIds = rows.Select(row => row.Invoice.Id).ToArray();
+        var paidByInvoice = await context.Payments
+            .AsNoTracking()
+            .Where(payment => invoiceIds.Contains(payment.InvoiceId)
+                && payment.Status == PaymentStatus.Confirmed)
+            .GroupBy(payment => payment.InvoiceId)
+            .Select(group => new { InvoiceId = group.Key, Amount = group.Sum(payment => payment.Amount) })
+            .ToDictionaryAsync(row => row.InvoiceId, row => row.Amount, cancellationToken);
+
         var items = rows.Select(row =>
         {
             var invoice = row.Invoice;
-            var paidAmount = invoice.Status == InvoiceStatus.Paid ? invoice.TotalAmount : 0m;
+            var paidAmount = paidByInvoice.GetValueOrDefault(invoice.Id, 0m);
             return new InvoiceListItemDto
             {
                 Id = invoice.Id,
@@ -148,7 +159,20 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             .SingleAsync(cancellationToken);
 
         var tenantNames = await LoadTenantNamesAsync([invoice.ContractId], cancellationToken);
-        var paidAmount = invoice.Status == InvoiceStatus.Paid ? invoice.TotalAmount : 0m;
+
+        // Tiền đã thu và yêu cầu mới nhất đều đọc từ bảng Payments, không suy từ trạng thái hóa đơn.
+        var payments = await context.Payments
+            .AsNoTracking()
+            .Include(payment => payment.Proofs)
+            .Where(payment => payment.InvoiceId == invoice.Id)
+            .OrderByDescending(payment => payment.RequestedAt)
+            .ThenByDescending(payment => payment.Id)
+            .ToListAsync(cancellationToken);
+
+        var paidAmount = payments
+            .Where(payment => payment.Status == PaymentStatus.Confirmed)
+            .Sum(payment => payment.Amount);
+        var latestPayment = payments.FirstOrDefault();
 
         return new InvoiceDto
         {
@@ -179,7 +203,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             TotalAmount = invoice.TotalAmount,
             PaidAmount = paidAmount,
             OutstandingAmount = Math.Max(0m, invoice.TotalAmount - paidAmount),
-            LatestPayment = null,
+            LatestPayment = latestPayment is null ? null : PaymentMapping.ToDto(latestPayment),
         };
     }
 
