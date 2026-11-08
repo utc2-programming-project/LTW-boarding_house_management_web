@@ -1,55 +1,127 @@
 @* Sidebar chính của hệ thống: render các nhóm mục từ AppNavigation, lọc theo vai trò
-   (AuthorizeView, Policy riêng cho sự cố) và tự thu gọn thành icon khi màn hình hẹp. *@
+   (AuthorizeView, Policy riêng cho sự cố). Menu cuộn riêng, khu tài khoản cố định ở đáy. *@
 
+@using System.Security.Claims
+@using Web.Features.Accounts
 @inject IStringLocalizer<Shared> L
+@inject NavigationManager Navigation
 
-<aside id="app-sidebar" class="app-sidebar" aria-label="@L["Navigation"]" tabindex="-1">
-    <a class="app-brand" href="/" aria-label="@L["AppName"]" title="@L["AppName"]"><span class="app-logo"><LucideIcon Name="building" /></span><span class="sidebar-label">@L["AppName"]</span></a>
+<aside id="app-sidebar" class="app-sidebar" aria-label="@L["Navigation"]" tabindex="-1" data-permanent>
+    <span class="sidebar-resizer" data-sidebar-resizer aria-hidden="true"></span>
     <button class="icon-button drawer-close" type="button" data-drawer-close aria-label="@L["CloseNavigation"]"><LucideIcon Name="close" /></button>
-    <nav class="sidebar-menu" aria-label="@L["Navigation"]">
-        @foreach (var group in AppNavigation.Groups)
-        {
-            <AuthorizeView Roles="@group.Roles" Context="groupAuth">
-                <Authorized>
-                    <div class="sidebar-group">
-                        <p class="sidebar-group-title sidebar-label">@L[group.Key]</p>
-                        <div class="sidebar-group-items">
-                            @foreach (var item in group.Items)
+    <a class="app-brand" href="/" aria-label="@L["AppName"]" title="@L["AppName"]"
+       data-label="@L["AppName"]" data-toggle-label="@L["ToggleNavigation"]"><span class="app-logo"><LucideIcon Name="building" /></span><span class="app-logo-panel" aria-hidden="true"><LucideIcon Name="panel-left" /></span><span class="sidebar-label">@L["AppName"]</span></a>
+    <div class="sidebar-main">
+        <nav class="sidebar-menu" aria-label="@L["Navigation"]">
+            @foreach (var section in AppNavigation.Sections)
+            {
+                <AuthorizeView Roles="@section.Roles" Context="groupAuth">
+                    <Authorized>
+                        <div class="sidebar-group">
+                            @if (section.TitleKey is not null)
                             {
-                                <AuthorizeView Roles="@item.Roles" Context="menuAuth"
-                                               Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
-                                    @if (item.Href is not null)
-                                    {
-                                        <NavLink href="@item.Href" Match="@GetMatch(item)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
-                                    }
-                                    else
-                                    {
-                                        <div class="nav-item unavailable" aria-disabled="true" aria-label="@(L[item.Key] + " — " + L["Unavailable"])" title="@(L[item.Key] + " — " + L["Unavailable"])"><LucideIcon Name="@item.Icon" /><span class="sidebar-label"><span>@L[item.Key]</span><small>@L["Unavailable"]</small></span></div>
-                                    }
-                                </AuthorizeView>
+                                <p class="sidebar-group-title sidebar-label">@L[section.TitleKey]</p>
                             }
+                            <div class="sidebar-group-items">
+                                @foreach (var item in section.Items.Where(entry => entry.ShowInSidebar))
+                                {
+                                    <AuthorizeView Roles="@item.Roles" Context="menuAuth"
+                                                   Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
+                                        @{
+                                            var active = string.Equals(item.Href, _activeHref, StringComparison.OrdinalIgnoreCase);
+                                        }
+                                        <a href="@item.Href" class="@NavClass(active)" aria-current="@NavAriaCurrent(active)" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></a>
+                                    </AuthorizeView>
+                                }
+                            </div>
                         </div>
+                    </Authorized>
+                </AuthorizeView>
+            }
+        </nav>
+    </div>
+    <div class="sidebar-footer">
+        <AuthorizeView Context="account">
+            <Authorized>
+                <div class="sidebar-account-wrap">
+                    <button class="sidebar-account" type="button" data-account-menu-toggle aria-haspopup="menu" aria-expanded="false"
+                            aria-controls="account-menu" aria-label="@L["MyAccount"]">
+                        <span class="avatar" aria-hidden="true">@Initials(account.User.Identity?.Name)</span>
+                        <span class="sidebar-account-text">
+                            <span class="sidebar-account-name">@account.User.Identity?.Name</span>
+                            <span class="sidebar-account-role">@RoleLabel(account.User)</span>
+                        </span>
+                        <span class="rail-tip" aria-hidden="true">@AccountTip(account.User)</span>
+                        <span class="sidebar-account-caret" aria-hidden="true"><LucideIcon Name="chevrons-up-down" /></span>
+                    </button>
+                    <div class="account-menu" id="account-menu" role="menu" aria-label="@L["MyAccount"]" hidden>
+                        <a class="account-menu-item" role="menuitem" href="@AccountHref(account.User)"><LucideIcon Name="user" /><span>@L["MyAccount"]</span></a>
+                        <a class="account-menu-item" role="menuitem" href="Account/Manage"><LucideIcon Name="settings" /><span>@L["Settings"]</span></a>
+                        <div class="account-menu-sep" role="separator"></div>
+                        <div class="account-menu-row" role="group" aria-labelledby="account-menu-appearance-label">
+                            <span class="account-menu-row-label" id="account-menu-appearance-label">@L["AppearanceLabel"]</span>
+                            <button class="account-menu-theme" type="button" data-theme-toggle aria-label="@L["ToggleTheme"]" aria-pressed="false">
+                                <span class="light-icon"><LucideIcon Name="moon" /></span>
+                                <span class="dark-icon"><LucideIcon Name="sun" /></span>
+                            </button>
+                        </div>
+                        <div class="account-menu-row">
+                            <span class="account-menu-row-label" id="account-menu-language-label">@L["Language"]</span>
+                            <div class="culture-control account-menu-culture">
+                                <AntiforgeryToken />
+                                <div class="culture-segmented" role="group" aria-labelledby="account-menu-language-label">
+                                    <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
+                                    <button type="button" class="culture-button" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
+                                </div>
+                                <span class="culture-error" role="alert" hidden data-culture-error>@L["CultureError"]</span>
+                                <span class="sr-only" role="status" data-culture-status data-loading-label="@L["Loading"]"></span>
+                            </div>
+                        </div>
+                        <div class="account-menu-sep" role="separator"></div>
+                        <form action="Account/Logout" method="post" data-enhance="false">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="returnUrl" value="" />
+                            <button type="submit" class="account-menu-item" role="menuitem"><LucideIcon Name="logout" /><span>@L["SignOut"]</span></button>
+                        </form>
                     </div>
-                </Authorized>
-            </AuthorizeView>
-        }
-    </nav>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <a class="nav-item" href="login" data-tip="@L["SignIn"]"><LucideIcon Name="user" /><span class="sidebar-label">@L["SignIn"]</span></a>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
 </aside>
 
 @code {
-    // Mục cha chỉ sáng khi đang đứng đúng route của nó; nếu có mục con riêng
-    // (vd /services/prices) thì dùng khớp chính xác để tránh sáng đồng thời.
-    private static NavLinkMatch GetMatch(NavigationItem item)
+    private string? _activeHref;
+
+    protected override void OnParametersSet()
     {
-        if (item.Href is null || item.Href == "/")
-        {
-            return NavLinkMatch.All;
-        }
-
-        var hasChildItem = AppNavigation.Items.Any(other =>
-            other.Href is not null &&
-            other.Href.StartsWith(item.Href + "/", StringComparison.OrdinalIgnoreCase));
-
-        return hasChildItem ? NavLinkMatch.All : NavLinkMatch.Prefix;
+        var path = SidebarActive.Normalize(Navigation.ToBaseRelativePath(Navigation.Uri));
+        _activeHref = NavigationResolver.Resolve(path)?.SidebarItem?.Href;
     }
+
+    private static string NavClass(bool active) => active ? "nav-item active" : "nav-item";
+
+    private static string? NavAriaCurrent(bool active) => active ? "page" : null;
+
+    private static string AccountHref(ClaimsPrincipal user) => user.IsInRole(Roles.KhachThue) ? "/my/tenant-profile" : "/profile";
+    private static string Initials(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
+
+    private string AccountTip(ClaimsPrincipal user)
+    {
+        var name = user.Identity?.Name ?? string.Empty;
+        var role = RoleLabel(user);
+        return string.IsNullOrEmpty(role) ? name : $"{name} · {role}";
+    }
+
+    private string RoleLabel(ClaimsPrincipal user) => Roles.ResolvePrimaryRole(user) switch
+    {
+        Roles.Admin => L["RoleAdmin"].Value,
+        Roles.ChuTro => L["RoleChuTro"].Value,
+        Roles.QuanLy => L["RoleQuanLy"].Value,
+        Roles.KhachThue => L["RoleKhachThue"].Value,
+        _ => string.Empty,
+    };
 }

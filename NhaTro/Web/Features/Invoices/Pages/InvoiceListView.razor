@@ -1,4 +1,5 @@
 @page "/invoices"
+@page "/my/invoices"
 @page "/my-invoices"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
@@ -10,7 +11,7 @@
 <PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
 
 <div class="invoice-page">
-    <BreadcrumbNav Items="@Breadcrumbs" />
+    <NavBreadcrumb />
 
     <header class="page-header">
         <div>
@@ -254,13 +255,10 @@
     private int _page = 1;
 
     private bool IsMyInvoices =>
+        Navigation.Uri.Contains("/my/invoices", StringComparison.OrdinalIgnoreCase) ||
         Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
 
-    private string DetailBase => IsMyInvoices ? "/my-invoices" : "/invoices";
-
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => IsMyInvoices
-        ? [new(L["OverviewNav"], "/"), new(L["MyBreadcrumb"])]
-        : [new(L["OverviewNav"], "/"), new(L["Breadcrumb"])];
+    private string DetailBase => IsMyInvoices ? "/my/invoices" : "/invoices";
 
     private IReadOnlyList<int> AvailableYears
     {

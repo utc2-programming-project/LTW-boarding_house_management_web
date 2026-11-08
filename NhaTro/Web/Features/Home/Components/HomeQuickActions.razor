@@ -31,7 +31,7 @@
     {
         Roles.ChuTro =>
         [
-            new("QuickRecordReading", "zap", "/meter-readings"),
+            new("QuickRecordReading", "zap", "/services/readings"),
             new("QuickCreateInvoice", "receipt", "/invoices"),
             new("QuickNewContract", "file", "/contracts"),
             new("QuickAddTenant", "users", "/tenants"),
@@ -39,11 +39,11 @@
         ],
         Roles.QuanLy =>
         [
-            new("QuickRecordReading", "zap", "/meter-readings"),
+            new("QuickRecordReading", "zap", "/services/readings"),
             new("QuickCreateInvoice", "receipt", "/invoices"),
             new("QuickNewContract", "file", "/contracts"),
             new("QuickAddTenant", "users", "/tenants"),
-            new("QuickMyRequests", "check", "/my-requests"),
+            new("QuickMyRequests", "check", "/my/requests"),
         ],
         Roles.Admin =>
         [
@@ -52,8 +52,8 @@
         ],
         Roles.KhachThue =>
         [
-            new("QuickViewRoom", "door", "/tenant/my-room"),
-            new("QuickViewInvoices", "receipt", "/my-invoices"),
+            new("QuickViewRoom", "door", "/my/room"),
+            new("QuickViewInvoices", "receipt", "/my/invoices"),
             new("QuickReportIncident", "wrench", "/incidents"),
         ],
         _ => [],

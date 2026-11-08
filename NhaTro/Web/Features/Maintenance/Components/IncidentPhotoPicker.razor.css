@@ -1,9 +1,13 @@
 .photo-picker { display: grid; gap: 8px; min-width: 0; }
 .photo-picker > label { font-weight: 500; }
 .photo-picker p { margin: 0; color: var(--text-secondary); font-size: .75rem; }
-.photo-picker ::deep input { width: 100%; min-height: 40px; color: var(--text-primary); }
-.photo-picker ::deep input.invalid { border: 1px solid var(--error-text); border-radius: 8px; }
-.photo-picker ::deep input::file-selector-button { min-height: 40px; padding: 8px 12px; margin-right: 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text-primary); }
+.photo-select-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-width: 0; }
+.photo-select { position: relative; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text-primary); font-size: .875rem; font-weight: 600; }
+.photo-select:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.photo-select.invalid { border-color: var(--error-text); }
+.photo-select.is-disabled { opacity: .6; }
+.photo-select ::deep input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.photo-select ::deep input:disabled { cursor: not-allowed; }
 .photo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 figure { margin: 0; min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
 img { width: 100%; height: 112px; object-fit: contain; background: var(--surface-subtle); }
@@ -11,5 +15,5 @@ figcaption { overflow-wrap: anywhere; margin: 4px 0 8px; font-size: .75rem; }
 .photo-error { min-height: 0; color: var(--error-text); font-size: .75rem; line-height: 1.5; }
 @media (max-width: 767px) {
     .photo-grid { grid-template-columns: 1fr; }
-    .photo-picker ::deep input, .photo-picker ::deep input::file-selector-button { min-height: 44px; }
+    .photo-select { min-height: 44px; }
 }

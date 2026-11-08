@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
 @inject IStringLocalizer<Shared> L
 
 <MudThemeProvider Theme="AppTheme.Value" IsDarkMode="_dark" />
@@ -13,12 +14,13 @@
 
 <a class="skip-link" href="#main-content">@L["SkipContent"]</a>
 <div class="app-shell">
+    <div class="app-chrome-shadow" aria-hidden="true"><span></span></div>
     <AppSidebar />
     <div class="drawer-overlay" data-drawer-overlay hidden></div>
     <div class="app-workspace">
         <AppTopbar />
         <ManagerOwnerBanner @rendermode="InteractiveServer" />
-        <main id="main-content" class="app-content" tabindex="-1">@Body</main>
+        <main id="main-content" class="app-content" tabindex="-1"><div class="app-surface">@Body</div></main>
     </div>
 </div>
 <div id="blazor-error-ui" data-nosnippet role="alert">
@@ -29,14 +31,25 @@
 
 @code {
     private bool _dark;
+    private string? _lastUri;
     private DotNetObjectReference<MainLayout>? _reference;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
-        _reference = DotNetObjectReference.Create(this);
-        _dark = await JS.InvokeAsync<bool>("appLayout.connect", _reference);
-        StateHasChanged();
+        if (firstRender)
+        {
+            _reference = DotNetObjectReference.Create(this);
+            _dark = await JS.InvokeAsync<bool>("appLayout.connect", _reference);
+            _lastUri = Navigation.Uri;
+            StateHasChanged();
+            return;
+        }
+
+        // Interactive routing đổi trang ngay trong circuit: đồng bộ mục active + animation chuyển cảnh.
+        if (Navigation.Uri == _lastUri) return;
+        _lastUri = Navigation.Uri;
+        try { await JS.InvokeVoidAsync("appLayout.onNavigated"); }
+        catch (JSDisconnectedException) { }
     }
 
     [JSInvokable]

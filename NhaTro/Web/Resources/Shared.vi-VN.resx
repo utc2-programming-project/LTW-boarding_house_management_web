@@ -62,6 +62,15 @@
   <data name="AppName" xml:space="preserve">
     <value>Web vận hành nhà trọ</value>
   </data>
+  <data name="GlobalSearch" xml:space="preserve">
+    <value>Tìm kiếm</value>
+  </data>
+  <data name="GlobalSearchPlaceholder" xml:space="preserve">
+    <value>Tìm kiếm nhanh...</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Thông báo</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Đăng nhập</value>
   </data>
@@ -98,6 +107,9 @@
   <data name="Language" xml:space="preserve">
     <value>Ngôn ngữ</value>
   </data>
+  <data name="AppearanceLabel" xml:space="preserve">
+    <value>Giao diện</value>
+  </data>
   <data name="CultureError" xml:space="preserve">
     <value>Không thể đổi ngôn ngữ. Vui lòng thử lại.</value>
   </data>
@@ -106,6 +118,9 @@
   </data>
   <data name="MyAccount" xml:space="preserve">
     <value>Tài khoản của tôi</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Cài đặt</value>
   </data>
   <data name="SignOut" xml:space="preserve">
     <value>Đăng xuất</value>
@@ -232,6 +247,21 @@
   </data>
   <data name="NavGroupPersonal" xml:space="preserve">
     <value>Cá nhân</value>
+  </data>
+  <data name="PricingNav" xml:space="preserve">
+    <value>Bảng đơn giá theo kỳ</value>
+  </data>
+  <data name="ContractCreateNav" xml:space="preserve">
+    <value>Tạo hợp đồng</value>
+  </data>
+  <data name="ContractRenewalsNav" xml:space="preserve">
+    <value>Yêu cầu gia hạn</value>
+  </data>
+  <data name="ContractDetailNav" xml:space="preserve">
+    <value>Chi tiết hợp đồng</value>
+  </data>
+  <data name="InvoiceDetailNav" xml:space="preserve">
+    <value>Chi tiết hóa đơn</value>
   </data>
 
   <!-- VHT-8: dang nhap -->
