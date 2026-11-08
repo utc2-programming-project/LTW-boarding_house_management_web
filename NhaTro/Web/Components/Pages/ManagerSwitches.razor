@@ -1,3 +1,4 @@
+@page "/admin/manager-switches"
 @page "/manager-switches"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
 @using System.Security.Claims
@@ -13,7 +14,7 @@
 <PageTitle>@L["ManagerSwitches"] · @L["AppName"]</PageTitle>
 
 <section class="switches-page" aria-labelledby="switches-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ManagerSwitches"]) })" />
+    <NavBreadcrumb />
 
     <header class="page-heading">
         <div>

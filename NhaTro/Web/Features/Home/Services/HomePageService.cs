@@ -266,9 +266,9 @@ public sealed class HomePageService(
         var kpis = new List<HomeKpi>();
         if (invoiceList.Value is { } invoiceResult)
         {
-            kpis.Add(new("HomeKpiUnpaidInvoices", Count(invoiceResult.Summary.IssuedCount), Href: "/my-invoices"));
+            kpis.Add(new("HomeKpiUnpaidInvoices", Count(invoiceResult.Summary.IssuedCount), Href: "/my/invoices"));
             kpis.Add(new("HomeKpiOutstandingAmount", MoneyFormatter.Format(invoiceResult.Summary.OutstandingAmount),
-                Href: "/my-invoices"));
+                Href: "/my/invoices"));
         }
         else
         {
@@ -299,7 +299,7 @@ public sealed class HomePageService(
         var actions = new List<HomeAction>();
         if (invoiceList.Value is { } invoiceResultForActions)
         {
-            actions.Add(new("HomeActionUnpaidInvoices", invoiceResultForActions.Summary.IssuedCount, "/my-invoices"));
+            actions.Add(new("HomeActionUnpaidInvoices", invoiceResultForActions.Summary.IssuedCount, "/my/invoices"));
         }
 
         if (incidentRows.State == HomeLoadState.Loaded)

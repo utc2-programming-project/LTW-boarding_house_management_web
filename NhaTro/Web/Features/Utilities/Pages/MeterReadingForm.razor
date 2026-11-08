@@ -1,3 +1,4 @@
+@page "/services/readings"
 @page "/meter-readings"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
@@ -21,7 +22,7 @@
 <PageTitle>@L["MeterReadingPageTitle"] · @L["AppName"]</PageTitle>
 
 <div class="meter-reading-page">
-    <BreadcrumbNav Items="@_breadcrumbs" />
+    <NavBreadcrumb />
 
     <!-- Simulation Banner (Dữ liệu mẫu — Sprint 2C) -->
     <div class="simulation-banner">
@@ -266,7 +267,6 @@
     private List<RoomReadingSampleDto> _filteredRooms = [];
     private readonly Dictionary<string, (decimal? ElectricEnd, decimal? WaterEnd)> _draftReadings = new(StringComparer.Ordinal);
 
-    private List<BreadcrumbNav.BreadcrumbItem> _breadcrumbs = [];
 
     private int TotalRoomsCount => _filteredRooms.Count;
     private int LockedRoomsCount => _filteredRooms.Count(r => string.Equals(r.Status, "locked", StringComparison.OrdinalIgnoreCase));
@@ -283,13 +283,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _breadcrumbs =
-        [
-            new(L["MeterReadingNavHome"], "/"),
-            new(L["MeterReadingNavServices"], "/services"),
-            new(L["MeterReadingNavReadings"], null)
-        ];
-
         UpdatePeriodRange(_selectedYear, _selectedMonth);
         await ReloadDataAsync();
     }
