@@ -45,6 +45,18 @@ public sealed class ManagerApprovalService(
             return Failure(invalid, MessageOf(invalid));
         }
 
+        // Chống gửi chéo: quyền tạo yêu cầu không được vượt phạm vi tòa được phân công.
+        // PropertyId null là yêu cầu không gắn bản ghi (SW-16 xuất báo cáo) — hộp thư vẫn lọc theo phân công.
+        if (request.PropertyId is { } propertyId
+            && !await db.PropertyManagers.AnyAsync(
+                assignment => assignment.PropertyId == propertyId
+                    && assignment.ManagerUserId == caller.UserId
+                    && assignment.RevokedAt == null,
+                ct))
+        {
+            return Failure(ApprovalErrorCodes.Forbidden, ApprovalErrorMessages.Forbidden);
+        }
+
         var entity = new ManagerApprovalRequest
         {
             Id = Guid.NewGuid(),
