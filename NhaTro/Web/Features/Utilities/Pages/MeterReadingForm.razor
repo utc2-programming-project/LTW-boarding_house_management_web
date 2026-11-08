@@ -225,21 +225,108 @@
         }
         else
         {
-            <RoomSummaryTable Rooms="@_filteredRooms" DraftReadings="@_draftReadings" />
-
-            <!-- Room cards list -->
-            <div class="room-cards-container">
-                @foreach (var room in _filteredRooms)
+            <!-- Danh sách phòng gọn theo tầng, bấm để mở chi tiết -->
+            <div class="room-accordion">
+                @foreach (var group in PagedFloorGroups)
                 {
-                    <RoomReadingCard @key="room.Id"
-                                     Room="room"
-                                     CallerRole="@_callerRole"
-                                     PeriodStart="@_periodStart"
-                                     PeriodEnd="@_periodEnd"
-                                     OnChanged="HandleRoomReadingChanged"
-                                     OnSave="HandleRoomSave" />
+                    <section class="floor-group" @key="group.Floor">
+                        <header class="floor-group-header">
+                            <div class="floor-group-title">
+                                <LucideIcon Name="layers" />
+                                <h2>@string.Format(L["MeterReadingFloorGroup"], group.Floor > 0 ? group.Floor.ToString() : L["MeterReadingUnknownFloor"].Value)</h2>
+                            </div>
+                            <span class="floor-group-count">@string.Format(L["MeterReadingRoomCountFormat"], group.Rooms.Count)</span>
+                        </header>
+
+                        <div class="floor-group-rooms">
+                            @foreach (var room in group.Rooms)
+                            {
+                                var isExpanded = _expandedRoomId == room.Id;
+                                <article class="room-row @(isExpanded ? "expanded" : "")" @key="room.Id">
+                                    <button type="button"
+                                            class="room-row-header"
+                                            @onclick="() => ToggleRoom(room.Id)"
+                                            aria-expanded="@(isExpanded ? "true" : "false")"
+                                            aria-label="@string.Format(L["MeterReadingToggleRoomDetails"], room.RoomCode)">
+                                        <div class="room-row-main">
+                                            <span class="room-row-badge"><LucideIcon Name="door" /></span>
+                                            <span class="room-row-text">
+                                                <span class="room-row-title">
+                                                    <span class="room-row-code">@room.RoomCode</span>
+                                                    <span class="room-row-name">@room.RoomName</span>
+                                                    <span class="room-status-chip @GetRoomStatusCss(room)">@GetRoomStatusLabel(room)</span>
+                                                </span>
+                                                <span class="room-row-meta">
+                                                    <span>@L["MeterReadingTenantLabel"] <strong>@room.TenantName</strong></span>
+                                                    <span class="meta-sep">•</span>
+                                                    <span>@L["MeterReadingContractCodeLabel"] <code>@room.ContractCode</code></span>
+                                                </span>
+                                            </span>
+                                        </div>
+
+                                        <div class="room-row-stats">
+                                            <span class="room-stat electric">
+                                                <LucideIcon Name="zap" />
+                                                <span class="room-stat-label">@L["MeterReadingElectricMeter"]</span>
+                                                <strong class="room-stat-value">@FormatElectricUsage(room)</strong>
+                                            </span>
+                                            <span class="room-stat water">
+                                                <LucideIcon Name="droplet" />
+                                                <span class="room-stat-label">@L["MeterReadingWaterMeter"]</span>
+                                                <strong class="room-stat-value">@FormatWaterUsage(room)</strong>
+                                            </span>
+                                            <span class="room-chevron @(isExpanded ? "rotated" : "")">
+                                                <LucideIcon Name="chevron-down" />
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    @if (isExpanded)
+                                    {
+                                        <div class="room-row-body">
+                                            <RoomReadingCard @key="room.Id"
+                                                             Room="room"
+                                                             CallerRole="@_callerRole"
+                                                             PeriodStart="@_periodStart"
+                                                             PeriodEnd="@_periodEnd"
+                                                             HideHeader="true"
+                                                             OnChanged="HandleRoomReadingChanged"
+                                                             OnSave="HandleRoomSave" />
+                                        </div>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    </section>
                 }
             </div>
+
+            <footer class="table-footer">
+                <div class="pagination-info">
+                    @string.Format(L["TableSummary"], FirstItem, LastItem, _filteredRooms.Count)
+                </div>
+
+                <div class="pagination-controls">
+                    <label class="page-size-field" for="meter-page-size">
+                        <span>@L["P2RowsPerPage"]</span>
+                        <select id="meter-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </label>
+
+                    <nav class="pager" aria-label="@L["TablePagination"]">
+                        <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["TablePreviousPage"]">
+                            <LucideIcon Name="chevron-left" />
+                        </button>
+                        <span class="page-indicator">@_page / @TotalPages</span>
+                        <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["TableNextPage"]">
+                            <LucideIcon Name="chevron-right" />
+                        </button>
+                    </nav>
+                </div>
+            </footer>
         }
     }
 </div>
@@ -265,6 +352,28 @@
     private List<RoomReadingSampleDto> _allRooms = [];
     private List<RoomReadingSampleDto> _filteredRooms = [];
     private readonly Dictionary<string, (decimal? ElectricEnd, decimal? WaterEnd)> _draftReadings = new(StringComparer.Ordinal);
+
+    private int _page = 1;
+    private int _pageSize = 10;
+    private string? _expandedRoomId;
+
+    private sealed record FloorGroup(int Floor, IReadOnlyList<RoomReadingSampleDto> Rooms);
+
+    private List<RoomReadingSampleDto> SortedRooms => _filteredRooms
+        .OrderBy(GetFloor)
+        .ThenBy(r => r.RoomCode, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    private List<FloorGroup> PagedFloorGroups => SortedRooms
+        .Skip((_page - 1) * _pageSize)
+        .Take(_pageSize)
+        .GroupBy(GetFloor)
+        .Select(g => new FloorGroup(g.Key, g.ToList()))
+        .ToList();
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_filteredRooms.Count / (double)_pageSize));
+    private int FirstItem => _filteredRooms.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
+    private int LastItem => Math.Min(_page * _pageSize, _filteredRooms.Count);
 
     private List<BreadcrumbNav.BreadcrumbItem> _breadcrumbs = [];
 
@@ -409,6 +518,9 @@
             .Where(r => r.PeriodStart == _periodStart && r.PeriodEnd == _periodEnd)
             .ToList();
 
+        _page = 1;
+        _expandedRoomId = null;
+
         if (roomsInPeriod.Count == 0)
         {
             _periodHasNoData = true;
@@ -434,6 +546,104 @@
             _filteredRooms = roomsInPeriod.Where(r => r.BuildingId == _selectedBuildingId).ToList();
         }
     }
+
+    private void ToggleRoom(string roomId)
+    {
+        _expandedRoomId = _expandedRoomId == roomId ? null : roomId;
+    }
+
+    private void ChangePageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _page = 1;
+            _expandedRoomId = null;
+        }
+    }
+
+    private void GoToPreviousPage()
+    {
+        if (_page <= 1) return;
+        _page--;
+        _expandedRoomId = null;
+    }
+
+    private void GoToNextPage()
+    {
+        if (_page >= TotalPages) return;
+        _page++;
+        _expandedRoomId = null;
+    }
+
+    private static int GetFloor(RoomReadingSampleDto room)
+    {
+        // P101 -> tầng 1, P201 -> tầng 2, P1001 -> tầng 10
+        var digits = new string(room.RoomCode.Where(char.IsDigit).ToArray());
+        if (!int.TryParse(digits, out var number) || number < 100)
+        {
+            return 0;
+        }
+
+        return number / 100;
+    }
+
+    private bool HasDraftEnd(RoomReadingSampleDto room, bool electric, out decimal end)
+    {
+        if (_draftReadings.TryGetValue(room.Id, out var draft))
+        {
+            var value = electric ? draft.ElectricEnd : draft.WaterEnd;
+            if (value.HasValue)
+            {
+                end = value.Value;
+                return true;
+            }
+        }
+
+        end = electric ? room.ElectricEnd : room.WaterEnd;
+        return electric ? room.HasElectricReading : room.HasWaterReading;
+    }
+
+    private string FormatElectricUsage(RoomReadingSampleDto room)
+    {
+        if (!HasDraftEnd(room, electric: true, out var end))
+        {
+            return "—";
+        }
+
+        var usage = Math.Max(0m, end - room.ElectricStart);
+        return string.Format("{0:N0} kWh", usage);
+    }
+
+    private string FormatWaterUsage(RoomReadingSampleDto room)
+    {
+        if (!HasDraftEnd(room, electric: false, out var end))
+        {
+            return "—";
+        }
+
+        var usage = Math.Max(0m, end - room.WaterStart);
+        return string.Format("{0:N0} m³", usage);
+    }
+
+    private string GetRoomStatusCss(RoomReadingSampleDto room)
+    {
+        if (string.Equals(room.Status, "locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return "locked";
+        }
+
+        var hasElectric = HasDraftEnd(room, electric: true, out _);
+        var hasWater = HasDraftEnd(room, electric: false, out _);
+        return hasElectric && hasWater ? "recorded" : "unrecorded";
+    }
+
+    private string GetRoomStatusLabel(RoomReadingSampleDto room) => GetRoomStatusCss(room) switch
+    {
+        "locked" => L["MeterReadingStatusLocked"].Value,
+        "recorded" => L["MeterReadingKpiRecorded"].Value,
+        _ => L["MeterReadingKpiUnrecorded"].Value,
+    };
 
     private void HandleRoomReadingChanged((string RoomId, decimal? ElectricEnd, decimal? WaterEnd) payload)
     {

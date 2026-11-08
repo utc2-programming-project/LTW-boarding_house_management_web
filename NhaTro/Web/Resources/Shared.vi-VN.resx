@@ -1317,6 +1317,9 @@
   <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Tháng:</value></data>
   <data name="MeterReadingYearFilter" xml:space="preserve"><value>Năm:</value></data>
   <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Tháng {0:00}</value></data>
+  <data name="MeterReadingFloorGroup" xml:space="preserve"><value>Tầng {0}</value></data>
+  <data name="MeterReadingUnknownFloor" xml:space="preserve"><value>Chưa rõ tầng</value></data>
+  <data name="MeterReadingToggleRoomDetails" xml:space="preserve"><value>Xem chi tiết phòng {0}</value></data>
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Đang tải…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>Không có dữ liệu.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>Không thể xử lý yêu cầu. Vui lòng tải lại và thử lại.</value></data>
