@@ -134,6 +134,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // D16: nhật ký thao tác độc lập, xóa trước Users/Properties.
         await db.AuditLogEntries.ExecuteDeleteAsync();
         // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.
+        // VHT-48 3A: yêu cầu gia hạn giữ lịch sử (Restrict) nên phải xóa tường minh trước Contracts.
+        await db.ContractRenewalRequests.ExecuteDeleteAsync();
         await db.ContractMembers.ExecuteDeleteAsync();
         await db.Contracts.ExecuteDeleteAsync();
         await db.UtilityBillingCostLineSnapshots.ExecuteDeleteAsync();
@@ -155,6 +157,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.ServiceCatalogs.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
+        // VHT-48 3A: liên kết khách ↔ chủ trọ giữ lịch sử (Restrict) nên xóa trước Tenants.
+        await db.TenantOwnerLinks.ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.UserRoles.ExecuteDeleteAsync();
         await db.RoleClaims.ExecuteDeleteAsync();

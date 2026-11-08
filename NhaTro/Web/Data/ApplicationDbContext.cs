@@ -95,7 +95,7 @@ namespace Web.Data
                 entity.HasMany(item => item.Audits)
                     .WithOne()
                     .HasForeignKey(audit => audit.UtilityReadingId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<UtilityReadingAudit>(entity =>
