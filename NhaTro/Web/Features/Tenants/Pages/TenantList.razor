@@ -95,8 +95,8 @@
             <div class="tenant-search-field">
                 <label class="sr-only" for="tenant-search">@L["TenantSearch"]</label>
                 <span class="tenant-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-                <InputText id="tenant-search" class="input" @bind-Value="_keyword" @bind-Value:after="ResetTableAsync"
-                           placeholder="@L["TenantSearchHint"]" autocomplete="off" />
+                <input id="tenant-search" class="input" @bind="_keyword" @bind:event="oninput" @bind:after="ResetTableAsync"
+                       placeholder="@L["TenantSearchHint"]" autocomplete="off" />
             </div>
             <div class="tenant-filter-select">
                 <label class="sr-only" for="tenant-status-filter">@L["TenantStatusFilter"]</label>
@@ -125,16 +125,16 @@
                     <option value="not-renting">@L["TenantRentalNone"]</option>
                 </select>
             </div>
-            <div class="tenant-filter-select tenant-sort-select">
-                <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
+            <div class="tenant-filter-select tenant-sort-select tenant-labeled-select">
+                <label class="tenant-inline-label" for="tenant-sort-filter">@L["TenantSort"]</label>
                 <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
                     <option value="created">@L["TenantSortCreatedDesc"]</option>
                     <option value="name-asc">@L["TenantSortNameAsc"]</option>
                     <option value="name-desc">@L["TenantSortNameDesc"]</option>
                 </select>
             </div>
-            <div class="tenant-filter-select tenant-page-size">
-                <label class="sr-only" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
+            <div class="tenant-filter-select tenant-page-size tenant-labeled-select">
+                <label class="tenant-inline-label" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
                 <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync">
                     <option value="10">10</option>
                     <option value="20">20</option>

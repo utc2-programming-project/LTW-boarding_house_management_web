@@ -30,7 +30,7 @@
   <data name="StatUnitTypes" xml:space="preserve"><value>types</value></data>
   <data name="StatUnitServices" xml:space="preserve"><value>services</value></data>
 
-  <data name="SearchPlaceholder" xml:space="preserve"><value>Search by service name...</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search by service name, code or description...</value></data>
   <data name="AllBuildings" xml:space="preserve"><value>All Properties</value></data>
   <data name="AllTypes" xml:space="preserve"><value>All Service Types</value></data>
   <data name="MeterType" xml:space="preserve"><value>By Meter</value></data>
@@ -287,6 +287,8 @@
   <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Only the landlord can delete services.</value></data>
   <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Delete completed but could not be verified. Please reload the page.</value></data>
   <data name="PriceEffectiveFromFilter" xml:space="preserve"><value>Effective from</value></data>
+  <data name="PriceKeywordFilter" xml:space="preserve"><value>Search</value></data>
+  <data name="PriceKeywordPlaceholder" xml:space="preserve"><value>Creator, note, scope…</value></data>
   <data name="PriceEffectiveToFilter" xml:space="preserve"><value>Effective to</value></data>
   <data name="AllScopes" xml:space="preserve"><value>All scopes</value></data>
   <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>

@@ -479,9 +479,11 @@
 
         if (!string.IsNullOrWhiteSpace(_searchTerm))
         {
+            var term = _searchTerm.Trim();
             query = query.Where(s =>
-                s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                s.Code.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+                s.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                s.Code.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (s.Description != null && s.Description.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
 
         if (!string.IsNullOrWhiteSpace(_selectedType) && _selectedType != "all")

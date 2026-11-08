@@ -451,6 +451,7 @@
   <data name="AllFilterValues" xml:space="preserve"><value>All</value></data>
   <data name="SearchTitle" xml:space="preserve"><value>Search incident titles</value></data>
   <data name="SearchRoom" xml:space="preserve"><value>Search properties or rooms</value></data>
+  <data name="SearchCreatedDate" xml:space="preserve"><value>Filter by created date (dd/MM/yyyy)</value></data>
   <data name="Resolution" xml:space="preserve"><value>Resolution</value></data>
   <data name="CompletedAt" xml:space="preserve"><value>Completed at</value></data>
   <data name="ImageViewer" xml:space="preserve"><value>Image viewer</value></data>

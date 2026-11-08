@@ -90,6 +90,13 @@
     <!-- Filter Toolbar -->
     <div class="filters-container">
         <div class="filters-row">
+            <label class="filter-field" for="price-keyword-filter">
+                <span class="filter-label">@L["PriceKeywordFilter"]</span>
+                <input id="price-keyword-filter" type="search" class="input" autocomplete="off"
+                       placeholder="@L["PriceKeywordPlaceholder"]"
+                       @bind="_keywordFilter" @bind:event="oninput" @bind:after="OnFilterChanged" />
+            </label>
+
             <label class="filter-field" for="price-status-filter">
                 <span class="filter-label">@L["ThPriceStatus"]</span>
                 <select id="price-status-filter" class="input select-filter" @bind="_statusFilter" @bind:after="OnFilterChanged">
@@ -293,6 +300,7 @@
     private string _selectedServiceId = string.Empty;
     private string _statusFilter = "all";
     private string _scopeFilter = string.Empty;
+    private string _keywordFilter = string.Empty;
     private DateTime? _effectiveFromFilter;
     private DateTime? _effectiveToFilter;
     private int _pageSize = 10;
@@ -351,6 +359,7 @@
         _currentSelectedService = _services.FirstOrDefault(s => s.Id == serviceId);
         _statusFilter = "all";
         _scopeFilter = string.Empty;
+        _keywordFilter = string.Empty;
         _effectiveFromFilter = null;
         _effectiveToFilter = null;
         _page = 1;
@@ -385,6 +394,15 @@
     {
         IEnumerable<PriceVersionDto> query = _allVersions;
 
+        if (!string.IsNullOrWhiteSpace(_keywordFilter))
+        {
+            var keyword = _keywordFilter.Trim();
+            query = query.Where(v =>
+                Contains(v.CreatedBy, keyword) ||
+                Contains(v.Note, keyword) ||
+                Contains(v.BuildingName, keyword));
+        }
+
         if (_statusFilter != "all" && Enum.TryParse<PriceVersionStatus>(_statusFilter, out var status))
         {
             query = query.Where(v => v.Status == status);
@@ -404,7 +422,8 @@
         if (_effectiveToFilter.HasValue)
         {
             var effectiveTo = DateOnly.FromDateTime(_effectiveToFilter.Value);
-            query = query.Where(v => v.EffectiveTo.HasValue && v.EffectiveTo.Value <= effectiveTo);
+            // Bảng giá chưa đặt ngày kết thúc vẫn còn hiệu lực nên phải giữ lại.
+            query = query.Where(v => v.EffectiveTo == null || v.EffectiveTo.Value <= effectiveTo);
         }
 
         _filteredVersions = query.ToList();
@@ -426,10 +445,15 @@
         ApplyFilters();
     }
 
+    private static bool Contains(string? value, string keyword) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Contains(keyword, StringComparison.CurrentCultureIgnoreCase);
+
     private void ResetFilters()
     {
         _statusFilter = "all";
         _scopeFilter = string.Empty;
+        _keywordFilter = string.Empty;
         _effectiveFromFilter = null;
         _effectiveToFilter = null;
         _page = 1;

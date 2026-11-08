@@ -636,6 +636,16 @@
   <data name="P2Address" xml:space="preserve"><value>Address</value></data>
   <data name="P2NotProvided" xml:space="preserve"><value>Not provided</value></data>
   <data name="P2RoomCount" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2MinRooms" xml:space="preserve"><value>Rooms from</value></data>
+  <data name="P2MaxRooms" xml:space="preserve"><value>Rooms to</value></data>
+  <data name="P2MinRoomsPlaceholder" xml:space="preserve"><value>Min</value></data>
+  <data name="P2MaxRoomsPlaceholder" xml:space="preserve"><value>Max</value></data>
+  <data name="P2SortBy" xml:space="preserve"><value>Sort</value></data>
+  <data name="P2SortName" xml:space="preserve"><value>Name (A–Z)</value></data>
+  <data name="P2SortNewest" xml:space="preserve"><value>Newest created</value></data>
+  <data name="P2SortOldest" xml:space="preserve"><value>Oldest created</value></data>
+  <data name="P2SortRoomCountDesc" xml:space="preserve"><value>Most rooms first</value></data>
+  <data name="P2SortRoomCountAsc" xml:space="preserve"><value>Fewest rooms first</value></data>
   <data name="P2Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="P2PropertiesTable" xml:space="preserve"><value>Property list</value></data>
   <data name="P2RowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
@@ -714,6 +724,12 @@
   <data name="P2StatusUnknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="P2MinPrice" xml:space="preserve"><value>Min price</value></data>
   <data name="P2MaxPrice" xml:space="preserve"><value>Max price</value></data>
+  <data name="P2AmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
+  <data name="P2AllFloors" xml:space="preserve"><value>All floors</value></data>
+  <data name="P2AreaFrom" xml:space="preserve"><value>Area from (m²)</value></data>
+  <data name="P2AreaTo" xml:space="preserve"><value>Area to (m²)</value></data>
+  <data name="P2ValidationAreaNumber" xml:space="preserve"><value>Area filters must be non-negative numbers.</value></data>
+  <data name="P2ValidationAreaRange" xml:space="preserve"><value>Minimum area cannot exceed maximum area.</value></data>
   <data name="P2OnlyAvailable" xml:space="preserve"><value>Available only</value></data>
   <data name="P2ValidationPriceNumber" xml:space="preserve"><value>Price filters must be non-negative numbers.</value></data>
   <data name="P2ValidationPriceRange" xml:space="preserve"><value>Minimum price cannot exceed maximum price.</value></data>
@@ -1320,6 +1336,27 @@
   <data name="MeterReadingFloorGroup" xml:space="preserve"><value>Floor {0}</value></data>
   <data name="MeterReadingUnknownFloor" xml:space="preserve"><value>Unknown floor</value></data>
   <data name="MeterReadingToggleRoomDetails" xml:space="preserve"><value>View details for room {0}</value></data>
+  <data name="MeterReadingSearchLabel" xml:space="preserve"><value>Search</value></data>
+  <data name="MeterReadingSearchPlaceholder" xml:space="preserve"><value>Search room code, room name, tenant, contract…</value></data>
+  <data name="MeterReadingStatusFilter" xml:space="preserve"><value>Period status</value></data>
+  <data name="MeterReadingAdvancedFilter" xml:space="preserve"><value>Advanced filters</value></data>
+  <data name="MeterReadingAdvancedFilterCount" xml:space="preserve"><value>Advanced filters ({0})</value></data>
+  <data name="MeterReadingAdvancedFilterTitle" xml:space="preserve"><value>Meter reading status</value></data>
+  <data name="MeterReadingAdvancedSelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="MeterReadingAdvancedClear" xml:space="preserve"><value>Clear</value></data>
+  <data name="MeterReadingAdvancedHint" xml:space="preserve"><value>Pick one or more statuses. Rooms matching any selected status are shown.</value></data>
+  <data name="MeterReadingStatusOptionUnrecorded" xml:space="preserve"><value>Not recorded (missing both electricity and water)</value></data>
+  <data name="MeterReadingStatusOptionRecorded" xml:space="preserve"><value>Fully recorded</value></data>
+  <data name="MeterReadingStatusOptionLocked" xml:space="preserve"><value>Locked (period closed, read-only)</value></data>
+  <data name="MeterReadingStatusOptionOpen" xml:space="preserve"><value>Not locked (can still enter/edit)</value></data>
+  <data name="MeterReadingStatusAll" xml:space="preserve"><value>All period statuses</value></data>
+  <data name="MeterReadingStatusPartial" xml:space="preserve"><value>Partially recorded</value></data>
+  <data name="MeterReadingStatusMissingElectric" xml:space="preserve"><value>Missing electricity reading</value></data>
+  <data name="MeterReadingStatusMissingWater" xml:space="preserve"><value>Missing water reading</value></data>
+  <data name="MeterReadingFloorFilter" xml:space="preserve"><value>Floor</value></data>
+  <data name="MeterReadingFloorAll" xml:space="preserve"><value>All floors</value></data>
+  <data name="MeterReadingNoFilterMatchTitle" xml:space="preserve"><value>No rooms match the filters</value></data>
+  <data name="MeterReadingNoFilterMatchDesc" xml:space="preserve"><value>Try another keyword or clear some filters to see other rooms.</value></data>
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>

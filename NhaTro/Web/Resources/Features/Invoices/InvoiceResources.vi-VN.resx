@@ -29,6 +29,16 @@
   <data name="AllContracts" xml:space="preserve"><value>Tất cả hợp đồng</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="FilterKeyword" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="FilterKeywordPlaceholder" xml:space="preserve"><value>Mã hóa đơn, hợp đồng, phòng, nhà, khách thuê…</value></data>
+  <data name="FilterPaymentState" xml:space="preserve"><value>Tình trạng thu tiền</value></data>
+  <data name="PaymentStateAll" xml:space="preserve"><value>Tất cả tình trạng thu</value></data>
+  <data name="PaymentStateUnpaid" xml:space="preserve"><value>Chưa thu</value></data>
+  <data name="PaymentStatePartial" xml:space="preserve"><value>Thu một phần</value></data>
+  <data name="PaymentStatePaid" xml:space="preserve"><value>Đã thu đủ</value></data>
+  <data name="FilterMinAmount" xml:space="preserve"><value>Số tiền từ</value></data>
+  <data name="FilterMaxAmount" xml:space="preserve"><value>Số tiền đến</value></data>
+  <data name="AmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
   <data name="ResetFilter" xml:space="preserve"><value>Xóa lọc</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Nháp</value></data>
@@ -167,6 +177,11 @@
   <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Tiền đang chờ</value></data>
   <data name="ReviewFilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="ReviewAllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="ReviewFilterKeyword" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="ReviewFilterKeywordPlaceholder" xml:space="preserve"><value>Mã yêu cầu, hóa đơn, phòng, nhà, khách thuê…</value></data>
+  <data name="ReviewFilterMinAmount" xml:space="preserve"><value>Số tiền từ</value></data>
+  <data name="ReviewFilterMaxAmount" xml:space="preserve"><value>Số tiền đến</value></data>
+  <data name="ReviewAmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
   <data name="ReviewRefresh" xml:space="preserve"><value>Làm mới</value></data>
   <data name="ReviewThRequest" xml:space="preserve"><value>Yêu cầu</value></data>
   <data name="ReviewThInvoice" xml:space="preserve"><value>Hóa đơn</value></data>

@@ -30,7 +30,7 @@
   <data name="StatUnitTypes" xml:space="preserve"><value>loại</value></data>
   <data name="StatUnitServices" xml:space="preserve"><value>dịch vụ</value></data>
 
-  <data name="SearchPlaceholder" xml:space="preserve"><value>Tìm theo tên dịch vụ...</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Tìm theo tên, mã hoặc mô tả dịch vụ...</value></data>
   <data name="AllBuildings" xml:space="preserve"><value>Tất cả nhà trọ</value></data>
   <data name="AllTypes" xml:space="preserve"><value>Tất cả loại dịch vụ</value></data>
   <data name="MeterType" xml:space="preserve"><value>Theo chỉ số</value></data>
@@ -287,6 +287,8 @@
   <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Chỉ Chủ trọ được xóa dịch vụ.</value></data>
   <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Đã xóa nhưng chưa xác minh được. Vui lòng tải lại trang.</value></data>
   <data name="PriceEffectiveFromFilter" xml:space="preserve"><value>Mốc hiệu lực từ</value></data>
+  <data name="PriceKeywordFilter" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="PriceKeywordPlaceholder" xml:space="preserve"><value>Người tạo, ghi chú, phạm vi áp dụng…</value></data>
   <data name="PriceEffectiveToFilter" xml:space="preserve"><value>Ngày hết hiệu lực đến</value></data>
   <data name="AllScopes" xml:space="preserve"><value>Tất cả phạm vi</value></data>
   <data name="PaginationLabel" xml:space="preserve"><value>Phân trang</value></data>

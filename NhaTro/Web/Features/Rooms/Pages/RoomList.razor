@@ -96,55 +96,75 @@
     {
         <section class="p2-filter-panel" aria-label="@L["P2RoomFilters"]">
             <form class="room-filters" novalidate @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
-                <label class="search-field" for="room-keyword">
-                    <LucideIcon Name="search" />
-                    <span class="sr-only">@L["P2SearchRooms"]</span>
-                    <input id="room-keyword" type="search" maxlength="50" autocomplete="off"
-                           placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:event="oninput" />
-                </label>
-                <label class="filter-select" for="room-property">
-                    <span class="sr-only">@L["P2Property"]</span>
-                    <select id="room-property" @bind="_propertyFilter">
-                        <option value="">@L["P2AllProperties"]</option>
-                        @foreach (var property in _properties)
-                        {
-                            <option value="@property.Id">@property.Name</option>
-                        }
-                    </select>
-                </label>
-                <label class="filter-select" for="room-status">
-                    <span class="sr-only">@L["P2Status"]</span>
-                    <select id="room-status" @bind="_statusFilter">
-                        <option value="">@L["P2AllStatuses"]</option>
-                        <option value="@((int)RoomStatus.Available)">@L["P2StatusAvailable"]</option>
-                        <option value="@((int)RoomStatus.Rented)">@L["P2StatusRented"]</option>
-                        <option value="@((int)RoomStatus.Maintenance)">@L["P2StatusMaintenance"]</option>
-                    </select>
-                </label>
-                <label class="filter-select" for="room-activity">
-                    <span class="sr-only">@L["P2Activity"]</span>
-                    <select id="room-activity" @bind="_activeFilter">
-                        <option value="">@L["P2AllActivity"]</option>
-                        <option value="true">@L["P2Active"]</option>
-                        <option value="false">@L["P2Inactive"]</option>
-                    </select>
-                </label>
-                <label class="price-field" for="room-min-price">
-                    <span>@L["P2MinPrice"]</span>
-                    <input id="room-min-price" type="number" min="0" step="1" inputmode="numeric" @bind="_minPriceText" />
-                </label>
-                <label class="price-field" for="room-max-price">
-                    <span>@L["P2MaxPrice"]</span>
-                    <input id="room-max-price" type="number" min="0" step="1" inputmode="numeric" @bind="_maxPriceText" />
-                </label>
-                <label class="available-toggle" for="room-only-available">
-                    <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
-                    <span>@L["P2OnlyAvailable"]</span>
-                </label>
-                <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
-                <button class="btn btn-secondary" type="button" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />@L["P2ResetFilters"]
-                </button>
+                <div class="room-filter-row room-filter-primary">
+                    <label class="search-field" for="room-keyword">
+                        <LucideIcon Name="search" />
+                        <span class="sr-only">@L["P2SearchRooms"]</span>
+                        <input id="room-keyword" type="search" maxlength="50" autocomplete="off"
+                               placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:event="oninput"
+                               @bind:after="ApplyFiltersAsync" />
+                    </label>
+                    <label class="filter-select" for="room-property">
+                        <span class="sr-only">@L["P2Property"]</span>
+                        <select id="room-property" @bind="_propertyFilter">
+                            <option value="">@L["P2AllProperties"]</option>
+                            @foreach (var property in _properties)
+                            {
+                                <option value="@property.Id">@property.Name</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="filter-select" for="room-status">
+                        <span class="sr-only">@L["P2Status"]</span>
+                        <select id="room-status" @bind="_statusFilter">
+                            <option value="">@L["P2AllStatuses"]</option>
+                            <option value="@((int)RoomStatus.Available)">@L["P2StatusAvailable"]</option>
+                            <option value="@((int)RoomStatus.Rented)">@L["P2StatusRented"]</option>
+                            <option value="@((int)RoomStatus.Maintenance)">@L["P2StatusMaintenance"]</option>
+                        </select>
+                    </label>
+                    <label class="filter-select" for="room-activity">
+                        <span class="sr-only">@L["P2Activity"]</span>
+                        <select id="room-activity" @bind="_activeFilter">
+                            <option value="">@L["P2AllActivity"]</option>
+                            <option value="true">@L["P2Active"]</option>
+                            <option value="false">@L["P2Inactive"]</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="room-filter-row room-filter-advanced">
+                    <label class="price-field" for="room-min-price">
+                        <span>@L["P2MinPrice"]</span>
+                        <input id="room-min-price" type="number" min="0" step="1" inputmode="numeric"
+                               placeholder="@L["P2AmountPlaceholder"]" @bind="_minPriceText" />
+                    </label>
+                    <label class="price-field" for="room-max-price">
+                        <span>@L["P2MaxPrice"]</span>
+                        <input id="room-max-price" type="number" min="0" step="1" inputmode="numeric"
+                               placeholder="@L["P2AmountPlaceholder"]" @bind="_maxPriceText" />
+                    </label>
+                    <label class="price-field" for="room-floor-filter">
+                        <span>@L["P2Floor"]</span>
+                        <input id="room-floor-filter" type="number" min="0" max="1000" step="1" inputmode="numeric"
+                               placeholder="@L["P2AllFloors"]" @bind="_floorText" />
+                    </label>
+                    <label class="price-field" for="room-min-area">
+                        <span>@L["P2AreaFrom"]</span>
+                        <input id="room-min-area" type="number" min="0" step="0.01" inputmode="decimal" @bind="_minAreaText" />
+                    </label>
+                    <label class="price-field" for="room-max-area">
+                        <span>@L["P2AreaTo"]</span>
+                        <input id="room-max-area" type="number" min="0" step="0.01" inputmode="decimal" @bind="_maxAreaText" />
+                    </label>
+                    <label class="available-toggle" for="room-only-available">
+                        <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
+                        <span>@L["P2OnlyAvailable"]</span>
+                    </label>
+                    <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
+                    <button class="btn btn-secondary" type="button" @onclick="ResetFiltersAsync">
+                        <LucideIcon Name="refresh" />@L["P2ResetFilters"]
+                    </button>
+                </div>
             </form>
             @if (!string.IsNullOrWhiteSpace(_filterError))
             {
@@ -217,6 +237,9 @@
     private string _activeFilter = string.Empty;
     private string _minPriceText = string.Empty;
     private string _maxPriceText = string.Empty;
+    private string _floorText = string.Empty;
+    private string _minAreaText = string.Empty;
+    private string _maxAreaText = string.Empty;
     private string? _filterError;
     private string? _propertyLoadError;
     private string? _summaryError;
@@ -347,6 +370,9 @@
         bool? isActive = bool.TryParse(_activeFilter, out var parsedActive) ? parsedActive : null;
         MoneyFormatter.TryParse(_minPriceText, out var minPrice);
         MoneyFormatter.TryParse(_maxPriceText, out var maxPrice);
+        int? floor = int.TryParse(_floorText, out var parsedFloor) ? parsedFloor : null;
+        decimal? minArea = decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsedMinArea) ? parsedMinArea : null;
+        decimal? maxArea = decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsedMaxArea) ? parsedMaxArea : null;
 
         return await PageService.ListAsync(new RoomFilter
         {
@@ -357,6 +383,9 @@
             OnlyAvailable = _onlyAvailable ? true : null,
             MinPrice = string.IsNullOrWhiteSpace(_minPriceText) ? null : minPrice,
             MaxPrice = string.IsNullOrWhiteSpace(_maxPriceText) ? null : maxPrice,
+            Floor = floor,
+            MinArea = minArea,
+            MaxArea = maxArea,
             Page = request.Page,
             PageSize = request.PageSize
         });
@@ -387,6 +416,30 @@
             return Task.CompletedTask;
         }
 
+        var hasFloor = string.IsNullOrWhiteSpace(_floorText) || int.TryParse(_floorText, out var floorValue) && floorValue is >= 0 and <= 1000;
+        if (!hasFloor)
+        {
+            _filterError = L["P2ValidationFloor"];
+            return Task.CompletedTask;
+        }
+
+        var hasMinArea = string.IsNullOrWhiteSpace(_minAreaText) || decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaValue) && areaValue >= 0;
+        var hasMaxArea = string.IsNullOrWhiteSpace(_maxAreaText) || decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var maxAreaValue) && maxAreaValue >= 0;
+        if (!hasMinArea || !hasMaxArea)
+        {
+            _filterError = L["P2ValidationAreaNumber"];
+            return Task.CompletedTask;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_minAreaText) && !string.IsNullOrWhiteSpace(_maxAreaText)
+            && decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaMin)
+            && decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaMax)
+            && areaMin > areaMax)
+        {
+            _filterError = L["P2ValidationAreaRange"];
+            return Task.CompletedTask;
+        }
+
         _hasActiveFilters = HasRoomFilters();
         _tableKey++;
         return Task.CompletedTask;
@@ -400,6 +453,9 @@
         _activeFilter = string.Empty;
         _minPriceText = string.Empty;
         _maxPriceText = string.Empty;
+        _floorText = string.Empty;
+        _minAreaText = string.Empty;
+        _maxAreaText = string.Empty;
         _onlyAvailable = false;
         _filterError = null;
         _hasActiveFilters = false;
@@ -425,6 +481,9 @@
         _activeFilter = string.Empty;
         _minPriceText = string.Empty;
         _maxPriceText = string.Empty;
+        _floorText = string.Empty;
+        _minAreaText = string.Empty;
+        _maxAreaText = string.Empty;
         _onlyAvailable = false;
         _filterError = null;
         _hasActiveFilters = false;
@@ -440,6 +499,9 @@
         || !string.IsNullOrWhiteSpace(_activeFilter)
         || !string.IsNullOrWhiteSpace(_minPriceText)
         || !string.IsNullOrWhiteSpace(_maxPriceText)
+        || !string.IsNullOrWhiteSpace(_floorText)
+        || !string.IsNullOrWhiteSpace(_minAreaText)
+        || !string.IsNullOrWhiteSpace(_maxAreaText)
         || _onlyAvailable;
 
     private string FormatArea(RoomListItem item) => item.AreaM2 is { } area
