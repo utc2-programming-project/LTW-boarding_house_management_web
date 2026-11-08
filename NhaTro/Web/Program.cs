@@ -202,6 +202,11 @@ builder.Services.AddAuthorization(options =>
         (context.User.IsInRole(Roles.ChuTro) ||
          context.User.IsInRole(Roles.QuanLy) ||
          context.User.IsInRole(Roles.KhachThue))));
+    // VHT-56: chỉ Quản lý/Chủ trọ được vào hàng đợi xác nhận thanh toán.
+    options.AddPolicy("PaymentReview", p => p.RequireAssertion(context =>
+        context.User.Identity?.IsAuthenticated == true &&
+        !context.User.IsInRole(Roles.Admin) &&
+        (context.User.IsInRole(Roles.ChuTro) || context.User.IsInRole(Roles.QuanLy))));
 });
 
 // ── 6. Service nghiệp vụ (đọc/ghi SQL, tự kiểm quyền và phạm vi) ───────────
@@ -424,8 +429,7 @@ builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
 // P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
-// P6: gửi/xác nhận thanh toán (OP37/OP38) và báo cáo doanh thu/công nợ (OP39).
-builder.Services.AddScoped<Web.Features.Payments.Services.PaymentService>();
+// P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
 // D8: xuất Excel P8 + SW-16.
 builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
@@ -436,6 +440,15 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
 // VHT-53: lập/phát hành hóa đơn từ nguồn chi phí đã chốt, chống trùng kỳ.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
     Web.Features.Invoices.Services.InvoiceService>();
+// VHT-54: gửi/xác nhận/từ chối thanh toán, ghi tiền và audit trong một transaction.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
+    Web.Features.Invoices.Services.PaymentService>();
+// VHT-55: adapter UI khách gửi yêu cầu thanh toán + minh chứng, tra kết quả trước khi thử lại.
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
+// VHT-56: hàng đợi đọc theo phạm vi + adapter UI Quản lý xác nhận/từ chối và tra kết quả.
+builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQueryService,
+    Web.Features.Invoices.Services.PaymentReviewQueryService>();
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();

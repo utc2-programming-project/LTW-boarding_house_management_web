@@ -25,12 +25,198 @@
 }
 
 .detail-card,
-.items-card {
+.items-card,
+.payment-card {
     padding: var(--space-5);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--surface);
     box-shadow: var(--shadow-card);
+}
+
+.page-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid var(--error-border);
+    border-radius: var(--radius-card);
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.page-error p {
+    margin: 0;
+}
+
+.payment-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.payment-card-header .section-title {
+    margin: 0;
+}
+
+.payment-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    font-size: .875rem;
+    line-height: 1.5;
+}
+
+.payment-notice .lucide-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.payment-notice p {
+    margin: 0;
+}
+
+.payment-notice.info {
+    border-color: var(--info-border, #BFDBFE);
+    background: var(--info-bg, #EFF6FF);
+    color: var(--info-text, #1D4ED8);
+}
+
+.payment-notice.success {
+    border-color: var(--success-border);
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.payment-notice.warning {
+    border-color: var(--warning-border);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.payment-notice.danger {
+    border-color: var(--error-border);
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.payment-result-check {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.payment-form {
+    margin-top: var(--space-5);
+}
+
+.payment-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
+}
+
+.payment-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.payment-field.full {
+    grid-column: 1 / -1;
+}
+
+.field-error {
+    color: var(--error-text);
+    font-size: .8125rem;
+    line-height: 1.45;
+}
+
+.selected-proofs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.selected-proofs li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+    font-size: .875rem;
+}
+
+.selected-proofs .lucide-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.selected-proof-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.icon-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.icon-action-btn:hover:not(:disabled) {
+    border-color: var(--border);
+    background: var(--hover-bg);
+    color: var(--accent-text);
+}
+
+.payment-history {
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+}
+
+.payment-history-table td,
+.payment-history-table th {
+    vertical-align: top;
+}
+
+.proof-link {
+    display: block;
+    margin-bottom: var(--space-1);
+    overflow-wrap: anywhere;
+}
+
+.history-reason td {
+    padding-top: 0;
+    color: var(--error-text);
+    font-size: .8125rem;
+}
+
+.break-anywhere {
+    overflow-wrap: anywhere;
 }
 
 .detail-grid {
@@ -149,7 +335,8 @@
 }
 
 @media (max-width: 720px) {
-    .detail-grid {
+    .detail-grid,
+    .payment-form-grid {
         grid-template-columns: 1fr;
     }
 

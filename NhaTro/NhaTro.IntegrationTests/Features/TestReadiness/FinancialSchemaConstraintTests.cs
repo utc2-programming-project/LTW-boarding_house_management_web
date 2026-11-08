@@ -5,7 +5,10 @@ using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Enums;
-using Web.Features.Payments.Services;
+using Web.Features.Invoices.Services;
+using Web.Features.Storage.Entities;
+using Web.Features.Storage.Enums;
+using System.Globalization;
 
 namespace NhaTro.IntegrationTests.Features.TestReadiness;
 
@@ -32,9 +35,9 @@ public sealed class FinancialSchemaConstraintTests(SqlServerFixture fixture)
         string? reason = null) =>
         db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO Payments
-                (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, ReviewedAt, RejectionReason, SubmittedByUserId)
+                (InvoiceId, Amount, TransferredAt, Status, RequestedAt, ReviewedAt, RejectionReason, RequestedByUserId)
             VALUES
-                ({invoiceId}, {amount}, SYSDATETIMEOFFSET(), {status}, N'[]', SYSDATETIMEOFFSET(), {reviewedAt}, {reason}, {PermissionMatrixWorld.TenantUserAId})
+                ({invoiceId}, {amount}, SYSDATETIMEOFFSET(), {status}, SYSDATETIMEOFFSET(), {reviewedAt}, {reason}, {PermissionMatrixWorld.TenantUserAId})
             """);
 
     private static async Task<SqlException> AssertSqlRejectedAsync(
@@ -125,7 +128,7 @@ public sealed class FinancialSchemaConstraintTests(SqlServerFixture fixture)
         var exception = await Assert.ThrowsAsync<SqlException>(() => InsertPaymentAsync(
             db, world.Data.InvoiceIssuedId, 1_500_000m, (int)PaymentStatus.Confirmed, reviewedAt));
 
-        Assert.Contains("UX_Payments_InvoiceConfirmed", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("UX_Payments_InvoiceStatus", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [SqlServerFact]
@@ -140,7 +143,7 @@ public sealed class FinancialSchemaConstraintTests(SqlServerFixture fixture)
         await InsertPaymentAsync(
             db, world.Data.InvoiceIssuedId, 1_500_000m, (int)PaymentStatus.Confirmed, reviewedAt);
 
-        var statuses = await db.Set<Web.Features.Payments.Entities.Payment>()
+        var statuses = await db.Set<Web.Features.Invoices.Entities.Payment>()
             .AsNoTracking()
             .Where(item => item.InvoiceId == world.Data.InvoiceIssuedId)
             .Select(item => item.Status)
@@ -150,10 +153,30 @@ public sealed class FinancialSchemaConstraintTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
-    public async Task Hai_luong_xac_nhan_dong_thoi_chi_mot_lan_thanh_cong()
+    public async Task Hai_luong_xac_nhan_dong_thoi_chi_ghi_mot_lan_thu()
     {
         await using var world = await NewWorldAsync();
         var invoice = await world.NewInvoiceQuery().GetInvoiceAsync(world.Data.InvoiceIssuedId, world.OwnerA);
+        // Minh chứng thật phải thuộc đúng khách thuê và hóa đơn đang gửi.
+        var proofId = Guid.NewGuid();
+        await using (var proofDb = world.NewDb())
+        {
+            proofDb.StoredFiles.Add(new StoredFile
+            {
+                Id = proofId,
+                FileName = "financial-payment-proof.png",
+                StoredFileName = $"{proofId:N}.png",
+                RelativePath = $"probe/{proofId:N}.png",
+                ContentType = "image/png",
+                FileSizeBytes = 128,
+                FileCategory = FileCategory.PaymentProof,
+                UploadedByUserId = world.TenantAAsPropertyCaller.UserId,
+                UploadedAt = DateTimeOffset.UtcNow,
+                RelatedEntityId = world.Data.InvoiceIssuedId.ToString(CultureInfo.InvariantCulture),
+                RelatedEntityType = RelatedEntityType.Payment,
+            });
+            await proofDb.SaveChangesAsync();
+        }
         var pending = await world.NewPayments().SubmitAsync(
             world.Data.InvoiceIssuedId,
             new SubmitPaymentRequest
@@ -161,45 +184,33 @@ public sealed class FinancialSchemaConstraintTests(SqlServerFixture fixture)
                 Amount = invoice.TotalAmount,
                 TransferredAt = DateTimeOffset.UtcNow.AddMinutes(-1),
                 TransactionCode = "VHT48-CONCURRENT",
-                ProofFileIds = [Guid.NewGuid()],
+                ProofFileIds = [proofId],
             },
             world.TenantAAsPropertyCaller);
 
         await using var db1 = world.NewDb();
         await using var db2 = world.NewDb();
         var results = await Task.WhenAll(
-            TryConfirmAsync(new PaymentService(db1, TimeProvider.System), pending.Id, world.OwnerA),
-            TryConfirmAsync(new PaymentService(db2, TimeProvider.System), pending.Id, world.OwnerA));
+            new PaymentService(db1, TimeProvider.System).ConfirmAsync(pending.Id, world.OwnerA),
+            new PaymentService(db2, TimeProvider.System).ConfirmAsync(pending.Id, world.OwnerA));
 
-        Assert.Equal(1, results.Count(result => result is null));
-        Assert.Equal(1, results.Count(result => result is DbUpdateConcurrencyException));
+        // Xác nhận lặp trả cùng kết quả nhưng chỉ ghi một lần thu và một audit.
+        Assert.All(results, result => Assert.Equal(PaymentStatus.Confirmed, result.Status));
 
         await using var verify = world.NewDb();
-        var payment = await verify.Set<Web.Features.Payments.Entities.Payment>()
+        var payment = await verify.Set<Web.Features.Invoices.Entities.Payment>()
             .AsNoTracking()
             .SingleAsync(item => item.Id == pending.Id);
         Assert.Equal(PaymentStatus.Confirmed, payment.Status);
         Assert.NotNull(payment.ReviewedAt);
 
-        // Ghi nhận BLOCKED: dev chưa cập nhật Invoice.Paid/audit (thuộc VHT-54 chưa merge).
+        Assert.Equal(1, await verify.PaymentAuditLogs.CountAsync(
+            log => log.PaymentId == pending.Id && log.Action == PaymentAuditAction.Confirmed));
         var invoiceStatus = await verify.Invoices.AsNoTracking()
             .Where(item => item.Id == world.Data.InvoiceIssuedId)
             .Select(item => item.Status)
             .SingleAsync();
-        Assert.Equal(InvoiceStatus.Issued, invoiceStatus);
+        Assert.Equal(InvoiceStatus.Paid, invoiceStatus);
     }
 
-    private static async Task<Exception?> TryConfirmAsync(
-        PaymentService service, int paymentId, Web.Features.Properties.PropertyCaller caller)
-    {
-        try
-        {
-            await service.ConfirmAsync(paymentId, caller);
-            return null;
-        }
-        catch (Exception exception)
-        {
-            return exception;
-        }
-    }
 }

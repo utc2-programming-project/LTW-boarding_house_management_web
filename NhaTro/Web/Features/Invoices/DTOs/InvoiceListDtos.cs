@@ -26,7 +26,7 @@ public sealed class InvoiceListItemDto
 
     public required decimal TotalAmount { get; init; }
 
-    /// <summary>Chỉ cộng Payment Confirmed; chưa có bảng Payment ở VHT-35 nên suy từ trạng thái Paid.</summary>
+    /// <summary>Chỉ cộng Payment Confirmed; Pending/Rejected không được tính.</summary>
     public required decimal PaidAmount { get; init; }
 
     /// <summary>Tổng hóa đơn trừ tiền đã xác nhận, không âm.</summary>

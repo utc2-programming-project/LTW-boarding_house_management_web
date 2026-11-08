@@ -101,9 +101,9 @@ public sealed class HistoryRetentionTests(SqlServerFixture fixture)
             .FirstAsync();
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO Payments
-                (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, SubmittedByUserId)
+                (InvoiceId, Amount, TransferredAt, Status, RequestedAt, RequestedByUserId)
             VALUES
-                ({invoiceId}, 1000, SYSDATETIMEOFFSET(), 0, N'[]', SYSDATETIMEOFFSET(), {PermissionMatrixWorld.TenantUserAId})
+                ({invoiceId}, 1000, SYSDATETIMEOFFSET(), 0, SYSDATETIMEOFFSET(), {PermissionMatrixWorld.TenantUserAId})
             """);
 
         var exception = await Assert.ThrowsAsync<SqlException>(

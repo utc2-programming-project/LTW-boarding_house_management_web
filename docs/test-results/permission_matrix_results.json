@@ -1,6 +1,6 @@
 {
   "task": "VHT-101",
-  "generatedAtUtc": "2026-11-06T17:34:27.4931225+00:00",
+  "generatedAtUtc": "2026-11-07T11:11:45.0103116+00:00",
   "workbook": {
     "path": "docs/task/thao_tac_va_quyen.xlsx",
     "sha256": "48fdd0c2c64a9fde3fff2ecb983da6432bbedb770c43e321a15adb4b347799a3",
@@ -57,19 +57,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho Admin (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)",
+      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho Admin (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)",
       "unsupportedReason": "",
       "scope": "B\u1EA3n th\u00E2n",
       "allowedExample": "\u0110\u0103ng nh\u1EADp b\u1EB1ng t\u00E0i kho\u1EA3n c\u1EE7a m\u00ECnh",
       "deniedExample": "D\u00F9ng chung t\u00E0i kho\u1EA3n ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.2457098+00:00",
+      "executedAtUtc": "2026-11-07T11:11:35.4477754+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho Admin (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)"
+          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho Admin (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)"
         }
       ]
     },
@@ -91,19 +91,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho ChuTro (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)",
+      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho ChuTro (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)",
       "unsupportedReason": "",
       "scope": "B\u1EA3n th\u00E2n",
       "allowedExample": "\u0110\u0103ng nh\u1EADp b\u1EB1ng t\u00E0i kho\u1EA3n c\u1EE7a m\u00ECnh",
       "deniedExample": "D\u00F9ng chung t\u00E0i kho\u1EA3n ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:09.4842312+00:00",
+      "executedAtUtc": "2026-11-07T11:10:12.5073661+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho ChuTro (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)"
+          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho ChuTro (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)"
         }
       ]
     },
@@ -125,19 +125,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho QuanLy (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)",
+      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho QuanLy (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)",
       "unsupportedReason": "",
       "scope": "B\u1EA3n th\u00E2n",
       "allowedExample": "\u0110\u0103ng nh\u1EADp b\u1EB1ng t\u00E0i kho\u1EA3n c\u1EE7a m\u00ECnh",
       "deniedExample": "D\u00F9ng chung t\u00E0i kho\u1EA3n ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.2417088+00:00",
+      "executedAtUtc": "2026-11-07T11:11:20.7485677+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho QuanLy (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)"
+          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho QuanLy (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)"
         }
       ]
     },
@@ -159,19 +159,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho KhachThue (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)",
+      "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho KhachThue (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)",
       "unsupportedReason": "",
       "scope": "B\u1EA3n th\u00E2n",
       "allowedExample": "\u0110\u0103ng nh\u1EADp b\u1EB1ng t\u00E0i kho\u1EA3n c\u1EE7a m\u00ECnh",
       "deniedExample": "D\u00F9ng chung t\u00E0i kho\u1EA3n ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.2363332+00:00",
+      "executedAtUtc": "2026-11-07T11:09:55.5573411+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho KhachThue (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-06)"
+          "evidence": "\u0110\u0103ng nh\u1EADp th\u1EADt th\u00E0nh c\u00F4ng cho KhachThue (\u0111\u00FAng m\u1EADt kh\u1EA9u \u0111\u00E3 b\u0103m, \u0111\u00E3 duy\u1EC7t l\u00FAc 2026-11-07)"
         }
       ]
     },
@@ -200,7 +200,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA m\u1EDF trang t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c; m\u1ED9t user g\u1EEDi request v\u1EDBi ID t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c \u0111\u1EC3 \u0111\u1ECDc th\u00F4ng tin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.8535349+00:00",
+      "executedAtUtc": "2026-11-07T11:10:04.5595676+00:00",
       "subcases": [
         {
           "name": "default",
@@ -234,7 +234,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA m\u1EDF trang t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c; m\u1ED9t user g\u1EEDi request v\u1EDBi ID t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c \u0111\u1EC3 \u0111\u1ECDc th\u00F4ng tin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.8877354+00:00",
+      "executedAtUtc": "2026-11-07T11:10:48.2182413+00:00",
       "subcases": [
         {
           "name": "default",
@@ -268,7 +268,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA m\u1EDF trang t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c; m\u1ED9t user g\u1EEDi request v\u1EDBi ID t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c \u0111\u1EC3 \u0111\u1ECDc th\u00F4ng tin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.330773+00:00",
+      "executedAtUtc": "2026-11-07T11:10:50.1231599+00:00",
       "subcases": [
         {
           "name": "default",
@@ -302,7 +302,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA m\u1EDF trang t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c; m\u1ED9t user g\u1EEDi request v\u1EDBi ID t\u00E0i kho\u1EA3n c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c \u0111\u1EC3 \u0111\u1ECDc th\u00F4ng tin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.4531694+00:00",
+      "executedAtUtc": "2026-11-07T11:11:38.47898+00:00",
       "subcases": [
         {
           "name": "default",
@@ -336,7 +336,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA g\u1ECDi API danh s\u00E1ch user; Qu\u1EA3n l\u00FD xem t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD; Admin xem h\u1ED3 s\u01A1 kh\u00E1ch, gi\u1EA5y t\u1EDD, h\u1EE3p \u0111\u1ED3ng, h\u00F3a \u0111\u01A1n (d\u1EEF li\u1EC7u nghi\u1EC7p v\u1EE5)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.394238+00:00",
+      "executedAtUtc": "2026-11-07T11:09:56.8881036+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -375,7 +375,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA g\u1ECDi API danh s\u00E1ch user; Qu\u1EA3n l\u00FD xem t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD; Admin xem h\u1ED3 s\u01A1 kh\u00E1ch, gi\u1EA5y t\u1EDD, h\u1EE3p \u0111\u1ED3ng, h\u00F3a \u0111\u01A1n (d\u1EEF li\u1EC7u nghi\u1EC7p v\u1EE5)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.0770633+00:00",
+      "executedAtUtc": "2026-11-07T11:11:06.2158765+00:00",
       "subcases": [
         {
           "name": "default",
@@ -409,7 +409,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA g\u1ECDi API danh s\u00E1ch user; Qu\u1EA3n l\u00FD xem t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD; Admin xem h\u1ED3 s\u01A1 kh\u00E1ch, gi\u1EA5y t\u1EDD, h\u1EE3p \u0111\u1ED3ng, h\u00F3a \u0111\u01A1n (d\u1EEF li\u1EC7u nghi\u1EC7p v\u1EE5)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.4757733+00:00",
+      "executedAtUtc": "2026-11-07T11:10:43.5605667+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -448,7 +448,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA g\u1ECDi API danh s\u00E1ch user; Qu\u1EA3n l\u00FD xem t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD; Admin xem h\u1ED3 s\u01A1 kh\u00E1ch, gi\u1EA5y t\u1EDD, h\u1EE3p \u0111\u1ED3ng, h\u00F3a \u0111\u01A1n (d\u1EEF li\u1EC7u nghi\u1EC7p v\u1EE5)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.5796965+00:00",
+      "executedAtUtc": "2026-11-07T11:11:08.5836149+00:00",
       "subcases": [
         {
           "name": "default",
@@ -482,7 +482,7 @@
       "deniedExample": "G\u1ECDi API c\u1EADp nh\u1EADt user kh\u00E1c b\u1EB1ng c\u00E1ch \u0111\u1ED5i ID trong request; s\u1EEDa tr\u01B0\u1EDDng role/vai tr\u00F2 qua form th\u00F4ng tin c\u00E1 nh\u00E2n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.9372437+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.060241+00:00",
       "subcases": [
         {
           "name": "default",
@@ -516,7 +516,7 @@
       "deniedExample": "G\u1ECDi API c\u1EADp nh\u1EADt user kh\u00E1c b\u1EB1ng c\u00E1ch \u0111\u1ED5i ID trong request; s\u1EEDa tr\u01B0\u1EDDng role/vai tr\u00F2 qua form th\u00F4ng tin c\u00E1 nh\u00E2n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:14.230996+00:00",
+      "executedAtUtc": "2026-11-07T11:10:39.0708995+00:00",
       "subcases": [
         {
           "name": "default",
@@ -550,7 +550,7 @@
       "deniedExample": "G\u1ECDi API c\u1EADp nh\u1EADt user kh\u00E1c b\u1EB1ng c\u00E1ch \u0111\u1ED5i ID trong request; s\u1EEDa tr\u01B0\u1EDDng role/vai tr\u00F2 qua form th\u00F4ng tin c\u00E1 nh\u00E2n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.6157255+00:00",
+      "executedAtUtc": "2026-11-07T11:11:26.8825388+00:00",
       "subcases": [
         {
           "name": "default",
@@ -584,7 +584,7 @@
       "deniedExample": "G\u1ECDi API c\u1EADp nh\u1EADt user kh\u00E1c b\u1EB1ng c\u00E1ch \u0111\u1ED5i ID trong request; s\u1EEDa tr\u01B0\u1EDDng role/vai tr\u00F2 qua form th\u00F4ng tin c\u00E1 nh\u00E2n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:09.0880106+00:00",
+      "executedAtUtc": "2026-11-07T11:10:06.7468848+00:00",
       "subcases": [
         {
           "name": "default",
@@ -611,19 +611,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_61@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (10 -\u003E 11)",
+      "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_49@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (10 -\u003E 11)",
       "unsupportedReason": "",
       "scope": "M\u1ECDi vai tr\u00F2 (Admin) / Qu\u1EA3n l\u00FD v\u00E0 Kh\u00E1ch thu\u00EA (Ch\u1EE7 tr\u1ECD) / Kh\u00E1ch thu\u00EA c\u1EE7a t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao, tr\u1EA1ng th\u00E1i Ch\u1EDD duy\u1EC7t (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Admin t\u1EA1o t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD. Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Qu\u1EA3n l\u00FD v\u00E0 duy\u1EC7t ngay; Qu\u1EA3n l\u00FD t\u1EA1o t\u00E0i kho\u1EA3n Kh\u00E1ch thu\u00EA m\u1EDBi, ch\u1EDD duy\u1EC7t",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u0103ng k\u00FD; Qu\u1EA3n l\u00FD t\u1EA1o Ch\u1EE7 tr\u1ECD ho\u1EB7c kh\u00E1ch t\u00F2a nh\u00E0 kh\u00E1c; Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Admin ho\u1EB7c Ch\u1EE7 tr\u1ECD kh\u00E1c (D2); Qu\u1EA3n l\u00FD t\u1EA1o Qu\u1EA3n l\u00FD/Admin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:22.7158185+00:00",
+      "executedAtUtc": "2026-11-07T11:11:04.9105001+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_61@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (10 -\u003E 11)"
+          "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_49@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (10 -\u003E 11)"
         }
       ]
     },
@@ -645,19 +645,19 @@
       "tier": "Service",
       "service": "Web.Features.Accounts.AccountService",
       "errorCode": null,
-      "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_46@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (8 -\u003E 9)",
+      "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_31@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (8 -\u003E 9)",
       "unsupportedReason": "",
       "scope": "M\u1ECDi vai tr\u00F2 (Admin) / Qu\u1EA3n l\u00FD v\u00E0 Kh\u00E1ch thu\u00EA (Ch\u1EE7 tr\u1ECD) / Kh\u00E1ch thu\u00EA c\u1EE7a t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao, tr\u1EA1ng th\u00E1i Ch\u1EDD duy\u1EC7t (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Admin t\u1EA1o t\u00E0i kho\u1EA3n Ch\u1EE7 tr\u1ECD. Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Qu\u1EA3n l\u00FD v\u00E0 duy\u1EC7t ngay; Qu\u1EA3n l\u00FD t\u1EA1o t\u00E0i kho\u1EA3n Kh\u00E1ch thu\u00EA m\u1EDBi, ch\u1EDD duy\u1EC7t",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u0103ng k\u00FD; Qu\u1EA3n l\u00FD t\u1EA1o Ch\u1EE7 tr\u1ECD ho\u1EB7c kh\u00E1ch t\u00F2a nh\u00E0 kh\u00E1c; Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Admin ho\u1EB7c Ch\u1EE7 tr\u1ECD kh\u00E1c (D2); Qu\u1EA3n l\u00FD t\u1EA1o Qu\u1EA3n l\u00FD/Admin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.1972413+00:00",
+      "executedAtUtc": "2026-11-07T11:10:54.9154293+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_46@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (8 -\u003E 9)"
+          "evidence": "T\u1EA1o t\u00E0i kho\u1EA3n \u0027pm-mgr_31@test.local\u0027 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt trong AspNetUsers (8 -\u003E 9)"
         }
       ]
     },
@@ -686,7 +686,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u0103ng k\u00FD; Qu\u1EA3n l\u00FD t\u1EA1o Ch\u1EE7 tr\u1ECD ho\u1EB7c kh\u00E1ch t\u00F2a nh\u00E0 kh\u00E1c; Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Admin ho\u1EB7c Ch\u1EE7 tr\u1ECD kh\u00E1c (D2); Qu\u1EA3n l\u00FD t\u1EA1o Qu\u1EA3n l\u00FD/Admin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.6895272+00:00",
+      "executedAtUtc": "2026-11-07T11:11:18.0759317+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -725,7 +725,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u0103ng k\u00FD; Qu\u1EA3n l\u00FD t\u1EA1o Ch\u1EE7 tr\u1ECD ho\u1EB7c kh\u00E1ch t\u00F2a nh\u00E0 kh\u00E1c; Ch\u1EE7 tr\u1ECD t\u1EA1o t\u00E0i kho\u1EA3n Admin ho\u1EB7c Ch\u1EE7 tr\u1ECD kh\u00E1c (D2); Qu\u1EA3n l\u00FD t\u1EA1o Qu\u1EA3n l\u00FD/Admin",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.966675+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.3077754+00:00",
       "subcases": [
         {
           "name": "default",
@@ -759,7 +759,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t t\u00E0i kho\u1EA3n m\u00ECnh v\u1EEBa t\u1EA1o; Ch\u1EE7 tr\u1ECD kh\u00F3a t\u00E0i kho\u1EA3n Admin ho\u1EB7c ch\u00EDnh m\u00ECnh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.7521192+00:00",
+      "executedAtUtc": "2026-11-07T11:11:10.4816415+00:00",
       "subcases": [
         {
           "name": "default",
@@ -793,7 +793,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t t\u00E0i kho\u1EA3n m\u00ECnh v\u1EEBa t\u1EA1o; Ch\u1EE7 tr\u1ECD kh\u00F3a t\u00E0i kho\u1EA3n Admin ho\u1EB7c ch\u00EDnh m\u00ECnh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.9248807+00:00",
+      "executedAtUtc": "2026-11-07T11:11:12.5999604+00:00",
       "subcases": [
         {
           "name": "default",
@@ -827,7 +827,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t t\u00E0i kho\u1EA3n m\u00ECnh v\u1EEBa t\u1EA1o; Ch\u1EE7 tr\u1ECD kh\u00F3a t\u00E0i kho\u1EA3n Admin ho\u1EB7c ch\u00EDnh m\u00ECnh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:09.979031+00:00",
+      "executedAtUtc": "2026-11-07T11:10:15.5446972+00:00",
       "subcases": [
         {
           "name": "default",
@@ -861,7 +861,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t t\u00E0i kho\u1EA3n m\u00ECnh v\u1EEBa t\u1EA1o; Ch\u1EE7 tr\u1ECD kh\u00F3a t\u00E0i kho\u1EA3n Admin ho\u1EB7c ch\u00EDnh m\u00ECnh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:22.7014629+00:00",
+      "executedAtUtc": "2026-11-07T11:11:04.3433036+00:00",
       "subcases": [
         {
           "name": "default",
@@ -895,7 +895,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 n\u00E2ng role c\u1EE7a m\u00ECnh l\u00EAn Ch\u1EE7 tr\u1ECD; Ch\u1EE7 tr\u1ECD \u0111\u1ED5i vai tr\u00F2 b\u1EA5t k\u1EF3 ai; g\u1EE1 vai tr\u00F2 Admin cu\u1ED1i c\u00F9ng c\u1EE7a h\u1EC7 th\u1ED1ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D1",
       "implementationNote": "Ch\u1EC9 Admin c\u1EA5p/\u0111\u1ED5i vai tr\u00F2; Ch\u1EE7 tr\u1ECD v\u00E0 Admin l\u00E0 hai vai tr\u00F2 ri\u00EAng",
-      "executedAtUtc": "2026-11-06T17:34:19.5761158+00:00",
+      "executedAtUtc": "2026-11-07T11:10:56.7862119+00:00",
       "subcases": [
         {
           "name": "default",
@@ -929,7 +929,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 n\u00E2ng role c\u1EE7a m\u00ECnh l\u00EAn Ch\u1EE7 tr\u1ECD; Ch\u1EE7 tr\u1ECD \u0111\u1ED5i vai tr\u00F2 b\u1EA5t k\u1EF3 ai; g\u1EE1 vai tr\u00F2 Admin cu\u1ED1i c\u00F9ng c\u1EE7a h\u1EC7 th\u1ED1ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D1",
       "implementationNote": "Ch\u1EC9 Admin c\u1EA5p/\u0111\u1ED5i vai tr\u00F2; Ch\u1EE7 tr\u1ECD v\u00E0 Admin l\u00E0 hai vai tr\u00F2 ri\u00EAng",
-      "executedAtUtc": "2026-11-06T17:34:25.7568167+00:00",
+      "executedAtUtc": "2026-11-07T11:11:30.4119589+00:00",
       "subcases": [
         {
           "name": "default",
@@ -963,7 +963,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 n\u00E2ng role c\u1EE7a m\u00ECnh l\u00EAn Ch\u1EE7 tr\u1ECD; Ch\u1EE7 tr\u1ECD \u0111\u1ED5i vai tr\u00F2 b\u1EA5t k\u1EF3 ai; g\u1EE1 vai tr\u00F2 Admin cu\u1ED1i c\u00F9ng c\u1EE7a h\u1EC7 th\u1ED1ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D1",
       "implementationNote": "Ch\u1EC9 Admin c\u1EA5p/\u0111\u1ED5i vai tr\u00F2; Ch\u1EE7 tr\u1ECD v\u00E0 Admin l\u00E0 hai vai tr\u00F2 ri\u00EAng",
-      "executedAtUtc": "2026-11-06T17:34:12.8563254+00:00",
+      "executedAtUtc": "2026-11-07T11:10:35.7850119+00:00",
       "subcases": [
         {
           "name": "default",
@@ -997,7 +997,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 n\u00E2ng role c\u1EE7a m\u00ECnh l\u00EAn Ch\u1EE7 tr\u1ECD; Ch\u1EE7 tr\u1ECD \u0111\u1ED5i vai tr\u00F2 b\u1EA5t k\u1EF3 ai; g\u1EE1 vai tr\u00F2 Admin cu\u1ED1i c\u00F9ng c\u1EE7a h\u1EC7 th\u1ED1ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D1",
       "implementationNote": "Ch\u1EC9 Admin c\u1EA5p/\u0111\u1ED5i vai tr\u00F2; Ch\u1EE7 tr\u1ECD v\u00E0 Admin l\u00E0 hai vai tr\u00F2 ri\u00EAng",
-      "executedAtUtc": "2026-11-06T17:34:13.4278354+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.5399183+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1031,7 +1031,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i c\u00F4ng t\u1EAFc c\u1EE7a m\u00ECnh; Admin \u0111\u1ED5i c\u00F4ng t\u1EAFc nghi\u1EC7p v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.9885512+00:00",
+      "executedAtUtc": "2026-11-07T11:11:33.3613101+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1065,7 +1065,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i c\u00F4ng t\u1EAFc c\u1EE7a m\u00ECnh; Admin \u0111\u1ED5i c\u00F4ng t\u1EAFc nghi\u1EC7p v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.5455098+00:00",
+      "executedAtUtc": "2026-11-07T11:10:56.6155411+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1099,7 +1099,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i c\u00F4ng t\u1EAFc c\u1EE7a m\u00ECnh; Admin \u0111\u1ED5i c\u00F4ng t\u1EAFc nghi\u1EC7p v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:14.290393+00:00",
+      "executedAtUtc": "2026-11-07T11:10:39.3217067+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1133,7 +1133,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i c\u00F4ng t\u1EAFc c\u1EE7a m\u00ECnh; Admin \u0111\u1ED5i c\u00F4ng t\u1EAFc nghi\u1EC7p v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.2343647+00:00",
+      "executedAtUtc": "2026-11-07T11:09:55.4907549+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1167,7 +1167,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t y\u00EAu c\u1EA7u c\u1EE7a m\u00ECnh; Qu\u1EA3n l\u00FD xem y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.7054699+00:00",
+      "executedAtUtc": "2026-11-07T11:10:23.7630466+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1201,7 +1201,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t y\u00EAu c\u1EA7u c\u1EE7a m\u00ECnh; Qu\u1EA3n l\u00FD xem y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.7005201+00:00",
+      "executedAtUtc": "2026-11-07T11:11:29.198542+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1235,7 +1235,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t y\u00EAu c\u1EA7u c\u1EE7a m\u00ECnh; Qu\u1EA3n l\u00FD xem y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.5878022+00:00",
+      "executedAtUtc": "2026-11-07T11:11:08.8247063+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -1274,7 +1274,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t y\u00EAu c\u1EA7u c\u1EE7a m\u00ECnh; Qu\u1EA3n l\u00FD xem y\u00EAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.3119978+00:00",
+      "executedAtUtc": "2026-11-07T11:11:16.6181418+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1308,7 +1308,7 @@
       "deniedExample": "Admin xem nh\u1EADt k\u00FD nghi\u1EC7p v\u1EE5; Ch\u1EE7 tr\u1ECD xem ngo\u00E0i ph\u1EA1m vi; Qu\u1EA3n l\u00FD/Kh\u00E1ch xem nh\u1EADt k\u00FD; nh\u1EADt k\u00FD ch\u1EE9a CCCD \u0111\u1EA7y \u0111\u1EE7, m\u1EADt kh\u1EA9u, token, n\u1ED9i dung gi\u1EA5y t\u1EDD",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t ch\u1ED1t D16",
       "implementationNote": "T\u00E1ch 2 s\u1ED5: h\u1EC7 th\u1ED1ng cho Admin, nghi\u1EC7p v\u1EE5 theo ph\u1EA1m vi cho Ch\u1EE7 tr\u1ECD; ch\u1EC9 ghi ai/l\u00E0m g\u00EC/l\u00FAc n\u00E0o",
-      "executedAtUtc": "2026-11-06T17:34:16.7872783+00:00",
+      "executedAtUtc": "2026-11-07T11:10:47.4559297+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1342,7 +1342,7 @@
       "deniedExample": "Admin xem nh\u1EADt k\u00FD nghi\u1EC7p v\u1EE5; Ch\u1EE7 tr\u1ECD xem ngo\u00E0i ph\u1EA1m vi; Qu\u1EA3n l\u00FD/Kh\u00E1ch xem nh\u1EADt k\u00FD; nh\u1EADt k\u00FD ch\u1EE9a CCCD \u0111\u1EA7y \u0111\u1EE7, m\u1EADt kh\u1EA9u, token, n\u1ED9i dung gi\u1EA5y t\u1EDD",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t ch\u1ED1t D16",
       "implementationNote": "T\u00E1ch 2 s\u1ED5: h\u1EC7 th\u1ED1ng cho Admin, nghi\u1EC7p v\u1EE5 theo ph\u1EA1m vi cho Ch\u1EE7 tr\u1ECD; ch\u1EC9 ghi ai/l\u00E0m g\u00EC/l\u00FAc n\u00E0o",
-      "executedAtUtc": "2026-11-06T17:34:16.8577344+00:00",
+      "executedAtUtc": "2026-11-07T11:10:47.9931578+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1376,7 +1376,7 @@
       "deniedExample": "Admin xem nh\u1EADt k\u00FD nghi\u1EC7p v\u1EE5; Ch\u1EE7 tr\u1ECD xem ngo\u00E0i ph\u1EA1m vi; Qu\u1EA3n l\u00FD/Kh\u00E1ch xem nh\u1EADt k\u00FD; nh\u1EADt k\u00FD ch\u1EE9a CCCD \u0111\u1EA7y \u0111\u1EE7, m\u1EADt kh\u1EA9u, token, n\u1ED9i dung gi\u1EA5y t\u1EDD",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t ch\u1ED1t D16",
       "implementationNote": "T\u00E1ch 2 s\u1ED5: h\u1EC7 th\u1ED1ng cho Admin, nghi\u1EC7p v\u1EE5 theo ph\u1EA1m vi cho Ch\u1EE7 tr\u1ECD; ch\u1EC9 ghi ai/l\u00E0m g\u00EC/l\u00FAc n\u00E0o",
-      "executedAtUtc": "2026-11-06T17:34:14.5672359+00:00",
+      "executedAtUtc": "2026-11-07T11:10:40.1564346+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1410,7 +1410,7 @@
       "deniedExample": "Admin xem nh\u1EADt k\u00FD nghi\u1EC7p v\u1EE5; Ch\u1EE7 tr\u1ECD xem ngo\u00E0i ph\u1EA1m vi; Qu\u1EA3n l\u00FD/Kh\u00E1ch xem nh\u1EADt k\u00FD; nh\u1EADt k\u00FD ch\u1EE9a CCCD \u0111\u1EA7y \u0111\u1EE7, m\u1EADt kh\u1EA9u, token, n\u1ED9i dung gi\u1EA5y t\u1EDD",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t ch\u1ED1t D16",
       "implementationNote": "T\u00E1ch 2 s\u1ED5: h\u1EC7 th\u1ED1ng cho Admin, nghi\u1EC7p v\u1EE5 theo ph\u1EA1m vi cho Ch\u1EE7 tr\u1ECD; ch\u1EC9 ghi ai/l\u00E0m g\u00EC/l\u00FAc n\u00E0o",
-      "executedAtUtc": "2026-11-06T17:34:14.2812218+00:00",
+      "executedAtUtc": "2026-11-07T11:10:39.2913207+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1444,7 +1444,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ph\u00F2ng kh\u00E1c \u0111ang tr\u1ED1ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.635428+00:00",
+      "executedAtUtc": "2026-11-07T11:11:27.987349+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1478,7 +1478,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ph\u00F2ng kh\u00E1c \u0111ang tr\u1ED1ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.8720021+00:00",
+      "executedAtUtc": "2026-11-07T11:11:11.4948343+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1512,7 +1512,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ph\u00F2ng kh\u00E1c \u0111ang tr\u1ED1ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:11.4377554+00:00",
+      "executedAtUtc": "2026-11-07T11:10:31.9153256+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1546,7 +1546,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ph\u00F2ng kh\u00E1c \u0111ang tr\u1ED1ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.6718648+00:00",
+      "executedAtUtc": "2026-11-07T11:10:22.6364913+00:00",
       "subcases": [
         {
           "name": "A-phong-cua-minh",
@@ -1585,7 +1585,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa th\u00F4ng tin ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.2816011+00:00",
+      "executedAtUtc": "2026-11-07T11:10:49.6911384+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1619,7 +1619,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa th\u00F4ng tin ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:12.7972909+00:00",
+      "executedAtUtc": "2026-11-07T11:10:35.2332645+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1653,22 +1653,22 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa th\u00F4ng tin ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.0088376+00:00",
+      "executedAtUtc": "2026-11-07T11:11:13.4337264+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "Qu\u1EA3n l\u00FD s\u1EEDa th\u00F4ng tin ph\u00F2ng SW01-0069 (ch\u1EC9 \u0111\u1ED5i t\u1EA7ng) c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0069|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0069|4|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
+          "evidence": "Qu\u1EA3n l\u00FD s\u1EEDa th\u00F4ng tin ph\u00F2ng SW01-0054 (ch\u1EC9 \u0111\u1ED5i t\u1EA7ng) c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0054|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0054|4|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0070|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0070|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
+          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0055|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0055|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
           "verdict": "Denied",
-          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0071|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0071|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
+          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW01-0056|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW01-0056|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-01: 0 -\u003E 0)"
         }
       ]
     },
@@ -1697,7 +1697,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa th\u00F4ng tin ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:27.434584+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.2851238+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1731,7 +1731,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i gi\u00E1 khi ch\u01B0a \u0111\u01B0\u1EE3c quy\u1EC1n",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:10.7338654+00:00",
+      "executedAtUtc": "2026-11-07T11:10:24.3781538+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1765,7 +1765,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i gi\u00E1 khi ch\u01B0a \u0111\u01B0\u1EE3c quy\u1EC1n",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:22.9542294+00:00",
+      "executedAtUtc": "2026-11-07T11:11:05.6326669+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1799,22 +1799,22 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i gi\u00E1 khi ch\u01B0a \u0111\u01B0\u1EE3c quy\u1EC1n",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:21.389575+00:00",
+      "executedAtUtc": "2026-11-07T11:11:01.1770377+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "Qu\u1EA3n l\u00FD \u0111\u1ED5i gi\u00E1 ph\u00F2ng SW02-0055 c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0055|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0055|3|25.00|1600000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
+          "evidence": "Qu\u1EA3n l\u00FD \u0111\u1ED5i gi\u00E1 ph\u00F2ng SW02-0042 c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0042|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0042|3|25.00|1600000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0056|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0056|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
+          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0043|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0043|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
           "verdict": "Denied",
-          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0057|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0057|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
+          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW02-0045|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW02-0045|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-02: 0 -\u003E 0)"
         }
       ]
     },
@@ -1843,7 +1843,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 \u0111\u1ED5i gi\u00E1 khi ch\u01B0a \u0111\u01B0\u1EE3c quy\u1EC1n",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:21.9740416+00:00",
+      "executedAtUtc": "2026-11-07T11:11:02.9777418+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1877,7 +1877,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.6564574+00:00",
+      "executedAtUtc": "2026-11-07T11:10:22.0051096+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1911,7 +1911,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.3701164+00:00",
+      "executedAtUtc": "2026-11-07T11:10:55.5445126+00:00",
       "subcases": [
         {
           "name": "default",
@@ -1945,22 +1945,22 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.3928929+00:00",
+      "executedAtUtc": "2026-11-07T11:10:55.6990201+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "Qu\u1EA3n l\u00FD \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng SW03-0047 c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0047|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0047|3|25.00|1500000.00|Maintenance|del=False|active=Tr\u2026\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
+          "evidence": "Qu\u1EA3n l\u00FD \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng SW03-0032 c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0032|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0032|3|25.00|1500000.00|Maintenance|del=False|active=Tr\u2026\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0048|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0048|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
+          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0033|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0033|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
           "verdict": "Denied",
-          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0049|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0049|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
+          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027SW03-0034|3|25.00|1500000.00|Available|del=False|active=True\u0027 -\u003E \u0027SW03-0034|3|25.00|1500000.00|Available|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-03: 0 -\u003E 0)"
         }
       ]
     },
@@ -1989,7 +1989,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u1ED5i tr\u1EA1ng th\u00E1i ph\u00F2ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.3715062+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.7762577+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2023,7 +2023,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD x\u00F3a ph\u00F2ng; x\u00F3a ph\u00F2ng c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c (k\u1EC3 c\u1EA3 Ch\u1EE7 tr\u1ECD)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#16); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:25.2363646+00:00",
+      "executedAtUtc": "2026-11-07T11:11:20.5799084+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2057,7 +2057,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD x\u00F3a ph\u00F2ng; x\u00F3a ph\u00F2ng c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c (k\u1EC3 c\u1EA3 Ch\u1EE7 tr\u1ECD)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#16); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:18.1026596+00:00",
+      "executedAtUtc": "2026-11-07T11:10:52.7157264+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2091,7 +2091,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD x\u00F3a ph\u00F2ng; x\u00F3a ph\u00F2ng c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c (k\u1EC3 c\u1EA3 Ch\u1EE7 tr\u1ECD)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#16); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:11.1175734+00:00",
+      "executedAtUtc": "2026-11-07T11:10:27.5921193+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2125,7 +2125,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD x\u00F3a ph\u00F2ng; x\u00F3a ph\u00F2ng c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c (k\u1EC3 c\u1EA3 Ch\u1EE7 tr\u1ECD)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#16); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:10.705638+00:00",
+      "executedAtUtc": "2026-11-07T11:10:23.8309917+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2159,7 +2159,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c ph\u00F2ng; kh\u00F4i ph\u1EE5c khi m\u00E3 ph\u00F2ng b\u1ECB tr\u00F9ng v\u1EDBi ph\u00F2ng \u0111ang d\u00F9ng",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:13.2373571+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.3325476+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2193,7 +2193,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c ph\u00F2ng; kh\u00F4i ph\u1EE5c khi m\u00E3 ph\u00F2ng b\u1ECB tr\u00F9ng v\u1EDBi ph\u00F2ng \u0111ang d\u00F9ng",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.5364545+00:00",
+      "executedAtUtc": "2026-11-07T11:11:08.2606824+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2227,7 +2227,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c ph\u00F2ng; kh\u00F4i ph\u1EE5c khi m\u00E3 ph\u00F2ng b\u1ECB tr\u00F9ng v\u1EDBi ph\u00F2ng \u0111ang d\u00F9ng",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.0949486+00:00",
+      "executedAtUtc": "2026-11-07T11:11:19.5555662+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2261,7 +2261,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c ph\u00F2ng; kh\u00F4i ph\u1EE5c khi m\u00E3 ph\u00F2ng b\u1ECB tr\u00F9ng v\u1EDBi ph\u00F2ng \u0111ang d\u00F9ng",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.5006122+00:00",
+      "executedAtUtc": "2026-11-07T11:10:20.1042571+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2295,7 +2295,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1ED3 s\u01A1 ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.5094685+00:00",
+      "executedAtUtc": "2026-11-07T11:10:20.597471+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2329,7 +2329,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1ED3 s\u01A1 ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:09.2977753+00:00",
+      "executedAtUtc": "2026-11-07T11:10:08.6593255+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2363,7 +2363,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1ED3 s\u01A1 ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.3903358+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.9109332+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2397,7 +2397,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1ED3 s\u01A1 ng\u01B0\u1EDDi kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.3126693+00:00",
+      "executedAtUtc": "2026-11-07T11:11:16.6182788+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -2436,7 +2436,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 th\u00EAm h\u1ED3 s\u01A1 kh\u00E1ch kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.8992091+00:00",
+      "executedAtUtc": "2026-11-07T11:11:12.158396+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2470,7 +2470,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 th\u00EAm h\u1ED3 s\u01A1 kh\u00E1ch kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:13.2622489+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.3768338+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2504,7 +2504,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 th\u00EAm h\u1ED3 s\u01A1 kh\u00E1ch kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.1062255+00:00",
+      "executedAtUtc": "2026-11-07T11:11:14.9264282+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -2548,7 +2548,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 th\u00EAm h\u1ED3 s\u01A1 kh\u00E1ch kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:11.437339+00:00",
+      "executedAtUtc": "2026-11-07T11:10:31.8691861+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2582,7 +2582,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa h\u1ED3 s\u01A1 c\u1EE7a ng\u01B0\u1EDDi b\u00EAn c\u1EA1nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:22.8760287+00:00",
+      "executedAtUtc": "2026-11-07T11:11:05.3556495+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2616,7 +2616,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa h\u1ED3 s\u01A1 c\u1EE7a ng\u01B0\u1EDDi b\u00EAn c\u1EA1nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.8822393+00:00",
+      "executedAtUtc": "2026-11-07T11:10:57.6198801+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2650,7 +2650,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa h\u1ED3 s\u01A1 c\u1EE7a ng\u01B0\u1EDDi b\u00EAn c\u1EA1nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.9896564+00:00",
+      "executedAtUtc": "2026-11-07T11:11:33.3625784+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -2694,7 +2694,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA s\u1EEDa h\u1ED3 s\u01A1 c\u1EE7a ng\u01B0\u1EDDi b\u00EAn c\u1EA1nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.2084755+00:00",
+      "executedAtUtc": "2026-11-07T11:09:54.3735878+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -2733,7 +2733,7 @@
       "deniedExample": "X\u00F3a h\u1ED3 s\u01A1 c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#21); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:23.8555111+00:00",
+      "executedAtUtc": "2026-11-07T11:11:11.1457085+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2760,19 +2760,19 @@
       "tier": "Service",
       "service": "Web.Features.Tenants.TenantService",
       "errorCode": null,
-      "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u01B0a h\u1ED3 s\u01A1 kh\u00E1ch v\u00E0o th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 34|0910000034|del=True|active=True)",
+      "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u01B0a h\u1ED3 s\u01A1 kh\u00E1ch v\u00E0o th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 17|0910000017|del=True|active=True)",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 / t\u00F2a nh\u00E0",
       "allowedExample": "Ch\u1EE7 tr\u1ECD (ho\u1EB7c Qu\u1EA3n l\u00FD khi c\u00F4ng t\u1EAFc cho ph\u00E9p) chuy\u1EC3n h\u1ED3 s\u01A1 kh\u00E1ch \u0111\u00E3 k\u1EBFt th\u00FAc h\u1EE3p \u0111\u1ED3ng v\u00E0o th\u00F9ng r\u00E1c",
       "deniedExample": "X\u00F3a h\u1ED3 s\u01A1 c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#21); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:11.1410107+00:00",
+      "executedAtUtc": "2026-11-07T11:10:28.1900465+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u01B0a h\u1ED3 s\u01A1 kh\u00E1ch v\u00E0o th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 34|0910000034|del=True|active=True)"
+          "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u01B0a h\u1ED3 s\u01A1 kh\u00E1ch v\u00E0o th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 17|0910000017|del=True|active=True)"
         }
       ]
     },
@@ -2801,22 +2801,22 @@
       "deniedExample": "X\u00F3a h\u1ED3 s\u01A1 c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#21); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:09.6331367+00:00",
+      "executedAtUtc": "2026-11-07T11:10:13.3150546+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "Qu\u1EA3n l\u00FD x\u00F3a h\u1ED3 s\u01A1 kh\u00E1ch c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 25|0910000025|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 25|0910000025|del=True|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 0 -\u003E 0)"
+          "evidence": "Qu\u1EA3n l\u00FD x\u00F3a h\u1ED3 s\u01A1 kh\u00E1ch c\u00F3 hi\u1EC7u l\u1EF1c ngay (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 4|0910000004|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 4|0910000004|del=True|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 26|0910000026|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 26|0910000026|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 0 -\u003E 1)"
+          "evidence": "ch\u1EDD duy\u1EC7t: ApprovalRequired (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 5|0910000005|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 5|0910000005|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 0 -\u003E 1)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
           "verdict": "Denied",
-          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 27|0910000027|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 27|0910000027|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 1 -\u003E 1)"
+          "evidence": "UnauthorizedAccessException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c n\u00E0y (hi\u1EC7u l\u1EF1c DB: \u0027Khach can tai khoan 6|0910000006|del=False|active=True\u0027 -\u003E \u0027Khach can tai khoan 6|0910000006|del=False|active=True\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-06: 1 -\u003E 1)"
         }
       ]
     },
@@ -2845,7 +2845,7 @@
       "deniedExample": "X\u00F3a h\u1ED3 s\u01A1 c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "X\u00F3a m\u1EC1m \u002B kh\u00F4i ph\u1EE5c (#21); ch\u1EB7n khi c\u00F2n h\u1EE3p \u0111\u1ED3ng hi\u1EC7u l\u1EF1c",
-      "executedAtUtc": "2026-11-06T17:34:19.807682+00:00",
+      "executedAtUtc": "2026-11-07T11:10:57.4051867+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2879,7 +2879,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1; kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 khi \u0111\u00E3 b\u1ECB x\u00F3a v\u0129nh vi\u1EC5n theo h\u1EA1n l\u01B0u",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.5604556+00:00",
+      "executedAtUtc": "2026-11-07T11:11:24.9635131+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2906,19 +2906,19 @@
       "tier": "Service",
       "service": "Web.Features.Tenants.TenantService",
       "errorCode": null,
-      "evidence": "Ch\u1EE7 tr\u1ECD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 kh\u00E1ch t\u1EEB th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 72|0910000072|del=False|active=True)",
+      "evidence": "Ch\u1EE7 tr\u1ECD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 kh\u00E1ch t\u1EEB th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 57|0910000057|del=False|active=True)",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9",
       "allowedExample": "Ch\u1EE7 tr\u1ECD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 kh\u00E1ch b\u1ECB x\u00F3a nh\u1EA7m",
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1; kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 khi \u0111\u00E3 b\u1ECB x\u00F3a v\u0129nh vi\u1EC5n theo h\u1EA1n l\u01B0u",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.3235465+00:00",
+      "executedAtUtc": "2026-11-07T11:11:16.7661518+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "Ch\u1EE7 tr\u1ECD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 kh\u00E1ch t\u1EEB th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 72|0910000072|del=False|active=True)"
+          "evidence": "Ch\u1EE7 tr\u1ECD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 kh\u00E1ch t\u1EEB th\u00F9ng r\u00E1c c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Khach can tai khoan 57|0910000057|del=False|active=True)"
         }
       ]
     },
@@ -2947,7 +2947,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1; kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 khi \u0111\u00E3 b\u1ECB x\u00F3a v\u0129nh vi\u1EC5n theo h\u1EA1n l\u01B0u",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:13.9296775+00:00",
+      "executedAtUtc": "2026-11-07T11:10:38.4970769+00:00",
       "subcases": [
         {
           "name": "default",
@@ -2981,7 +2981,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1; kh\u00F4i ph\u1EE5c h\u1ED3 s\u01A1 khi \u0111\u00E3 b\u1ECB x\u00F3a v\u0129nh vi\u1EC5n theo h\u1EA1n l\u01B0u",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (th\u00F9ng r\u00E1c)",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.5200626+00:00",
+      "executedAtUtc": "2026-11-07T11:11:23.0991942+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3015,7 +3015,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1EE3p \u0111\u1ED3ng ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.0442943+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.6658637+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3049,7 +3049,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1EE3p \u0111\u1ED3ng ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.6427385+00:00",
+      "executedAtUtc": "2026-11-07T11:10:00.1318288+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3083,7 +3083,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1EE3p \u0111\u1ED3ng ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.8861387+00:00",
+      "executedAtUtc": "2026-11-07T11:10:26.060212+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3117,7 +3117,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u1EE3p \u0111\u1ED3ng ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.0450141+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.6674398+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -3156,7 +3156,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 l\u1EADp h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D3",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n t\u1EA1o \u0111\u01B0\u1EE3c, h\u1EE3p \u0111\u1ED3ng Ch\u1EDD duy\u1EC7t; ki\u1EC3m so\u00E1t duy nh\u1EA5t l\u00E0 b\u01B0\u1EDBc Duy\u1EC7t h\u1EE3p \u0111\u1ED3ng",
-      "executedAtUtc": "2026-11-06T17:34:27.3195151+00:00",
+      "executedAtUtc": "2026-11-07T11:11:43.5299619+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3190,7 +3190,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 l\u1EADp h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D3",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n t\u1EA1o \u0111\u01B0\u1EE3c, h\u1EE3p \u0111\u1ED3ng Ch\u1EDD duy\u1EC7t; ki\u1EC3m so\u00E1t duy nh\u1EA5t l\u00E0 b\u01B0\u1EDBc Duy\u1EC7t h\u1EE3p \u0111\u1ED3ng",
-      "executedAtUtc": "2026-11-06T17:34:25.0373736+00:00",
+      "executedAtUtc": "2026-11-07T11:11:19.2538077+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3217,19 +3217,19 @@
       "tier": "Service",
       "service": "Web.Features.Contracts.Services.ContractService",
       "errorCode": null,
-      "evidence": "H\u1EE3p \u0111\u1ED3ng c\u1EE7a Qu\u1EA3n l\u00FD v\u00E0o Ch\u1EDD duy\u1EC7t \u0111\u00FAng D3 (ContractId=4f0beb51-c8d1-4346-9608-16a5e77b580b)",
+      "evidence": "H\u1EE3p \u0111\u1ED3ng c\u1EE7a Qu\u1EA3n l\u00FD v\u00E0o Ch\u1EDD duy\u1EC7t \u0111\u00FAng D3 (ContractId=76181705-9ee6-47a2-8952-fc80db141028)",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 (Ch\u1EE7 tr\u1ECD) / t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Qu\u1EA3n l\u00FD l\u1EADp h\u1EE3p \u0111\u1ED3ng cho kh\u00E1ch m\u1EDBi \u2192 tr\u1EA1ng th\u00E1i Ch\u1EDD duy\u1EC7t; Ch\u1EE7 tr\u1ECD t\u1EA1o h\u1EE3p \u0111\u1ED3ng",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 l\u1EADp h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D3",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n t\u1EA1o \u0111\u01B0\u1EE3c, h\u1EE3p \u0111\u1ED3ng Ch\u1EDD duy\u1EC7t; ki\u1EC3m so\u00E1t duy nh\u1EA5t l\u00E0 b\u01B0\u1EDBc Duy\u1EC7t h\u1EE3p \u0111\u1ED3ng",
-      "executedAtUtc": "2026-11-06T17:34:22.9805897+00:00",
+      "executedAtUtc": "2026-11-07T11:11:05.8799272+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "PendingApproval",
-          "evidence": "H\u1EE3p \u0111\u1ED3ng c\u1EE7a Qu\u1EA3n l\u00FD v\u00E0o Ch\u1EDD duy\u1EC7t \u0111\u00FAng D3 (ContractId=4f0beb51-c8d1-4346-9608-16a5e77b580b)"
+          "evidence": "H\u1EE3p \u0111\u1ED3ng c\u1EE7a Qu\u1EA3n l\u00FD v\u00E0o Ch\u1EDD duy\u1EC7t \u0111\u00FAng D3 (ContractId=76181705-9ee6-47a2-8952-fc80db141028)"
         }
       ]
     },
@@ -3258,7 +3258,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 l\u1EADp h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D3",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n t\u1EA1o \u0111\u01B0\u1EE3c, h\u1EE3p \u0111\u1ED3ng Ch\u1EDD duy\u1EC7t; ki\u1EC3m so\u00E1t duy nh\u1EA5t l\u00E0 b\u01B0\u1EDBc Duy\u1EC7t h\u1EE3p \u0111\u1ED3ng",
-      "executedAtUtc": "2026-11-06T17:34:25.455065+00:00",
+      "executedAtUtc": "2026-11-07T11:11:22.5767713+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3292,7 +3292,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t h\u1EE3p \u0111\u1ED3ng m\u00ECnh t\u1EA1o (Ch\u1EE7 tr\u1ECD \u0111\u01B0\u1EE3c t\u1EF1 duy\u1EC7t \u2014 D4)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "G\u1ED3m t\u1EEB ch\u1ED1i; D4 cho ph\u00E9p Ch\u1EE7 tr\u1ECD t\u1EF1 t\u1EA1o \u002B t\u1EF1 duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:10.509629+00:00",
+      "executedAtUtc": "2026-11-07T11:10:20.6009629+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3326,7 +3326,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t h\u1EE3p \u0111\u1ED3ng m\u00ECnh t\u1EA1o (Ch\u1EE7 tr\u1ECD \u0111\u01B0\u1EE3c t\u1EF1 duy\u1EC7t \u2014 D4)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "G\u1ED3m t\u1EEB ch\u1ED1i; D4 cho ph\u00E9p Ch\u1EE7 tr\u1ECD t\u1EF1 t\u1EA1o \u002B t\u1EF1 duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:09.1274268+00:00",
+      "executedAtUtc": "2026-11-07T11:10:07.3055513+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3360,7 +3360,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t h\u1EE3p \u0111\u1ED3ng m\u00ECnh t\u1EA1o (Ch\u1EE7 tr\u1ECD \u0111\u01B0\u1EE3c t\u1EF1 duy\u1EC7t \u2014 D4)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "G\u1ED3m t\u1EEB ch\u1ED1i; D4 cho ph\u00E9p Ch\u1EE7 tr\u1ECD t\u1EF1 t\u1EA1o \u002B t\u1EF1 duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:08.718792+00:00",
+      "executedAtUtc": "2026-11-07T11:10:01.8859944+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3394,7 +3394,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD t\u1EF1 duy\u1EC7t h\u1EE3p \u0111\u1ED3ng m\u00ECnh t\u1EA1o (Ch\u1EE7 tr\u1ECD \u0111\u01B0\u1EE3c t\u1EF1 duy\u1EC7t \u2014 D4)",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "G\u1ED3m t\u1EEB ch\u1ED1i; D4 cho ph\u00E9p Ch\u1EE7 tr\u1ECD t\u1EF1 t\u1EA1o \u002B t\u1EF1 duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:25.1016041+00:00",
+      "executedAtUtc": "2026-11-07T11:11:19.7078524+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3428,7 +3428,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 thanh l\u00FD h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:13.2242607+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.2909178+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3462,7 +3462,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 thanh l\u00FD h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.5963086+00:00",
+      "executedAtUtc": "2026-11-07T11:11:09.0282456+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3496,17 +3496,17 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 thanh l\u00FD h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.5815056+00:00",
+      "executedAtUtc": "2026-11-07T11:11:40.4135353+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "Service ch\u1EA5p nh\u1EADn l\u1EC7nh thanh l\u00FD h\u1EE3p \u0111\u1ED3ng 29cf41e5-2575-4282-8bc8-ec7df3d891cb (hi\u1EC7u l\u1EF1c DB: \u0027Approved\u0027 -\u003E \u0027Liquidated\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-07: 0 -\u003E 0)"
+          "evidence": "Service ch\u1EA5p nh\u1EADn l\u1EC7nh thanh l\u00FD h\u1EE3p \u0111\u1ED3ng a52ce5fe-43c1-45a3-aeb6-db614605c82a (hi\u1EC7u l\u1EF1c DB: \u0027Approved\u0027 -\u003E \u0027Liquidated\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-07: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "Service ch\u1EA5p nh\u1EADn l\u1EC7nh thanh l\u00FD h\u1EE3p \u0111\u1ED3ng 0d12ffb5-a278-4c8a-91e5-ad2d34cb96d0 (hi\u1EC7u l\u1EF1c DB: \u0027Approved\u0027 -\u003E \u0027Approved\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-07: 0 -\u003E 1)"
+          "evidence": "Service ch\u1EA5p nh\u1EADn l\u1EC7nh thanh l\u00FD h\u1EE3p \u0111\u1ED3ng 5a31d1e1-d264-4343-92d0-7900eef87660 (hi\u1EC7u l\u1EF1c DB: \u0027Approved\u0027 -\u003E \u0027Approved\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-07: 0 -\u003E 1)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
@@ -3540,7 +3540,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 thanh l\u00FD h\u1EE3p \u0111\u1ED3ng",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.3484803+00:00",
+      "executedAtUtc": "2026-11-07T11:10:50.2989708+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3574,7 +3574,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ti\u1EC1n c\u1ECDc c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.8552044+00:00",
+      "executedAtUtc": "2026-11-07T11:11:11.1452391+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3608,7 +3608,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ti\u1EC1n c\u1ECDc c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.5217149+00:00",
+      "executedAtUtc": "2026-11-07T11:10:56.4308798+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3642,7 +3642,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ti\u1EC1n c\u1ECDc c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.8869884+00:00",
+      "executedAtUtc": "2026-11-07T11:10:51.87533+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3676,7 +3676,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ti\u1EC1n c\u1ECDc c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.3601076+00:00",
+      "executedAtUtc": "2026-11-07T11:11:36.8075059+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -3715,7 +3715,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 ghi \u0111\u00E3 \u0111\u00F3ng c\u1ECDc",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:26.452907+00:00",
+      "executedAtUtc": "2026-11-07T11:11:38.454914+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3749,7 +3749,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 ghi \u0111\u00E3 \u0111\u00F3ng c\u1ECDc",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:09.3573592+00:00",
+      "executedAtUtc": "2026-11-07T11:10:10.324038+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3783,7 +3783,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 ghi \u0111\u00E3 \u0111\u00F3ng c\u1ECDc",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:16.0822831+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.9803469+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -3827,7 +3827,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 ghi \u0111\u00E3 \u0111\u00F3ng c\u1ECDc",
       "statusNote": "\u0110\u00E3 ch\u1ED1t",
       "implementationNote": "M\u1EB7c \u0111\u1ECBnh ch\u1EBF \u0111\u1ED9 Duy\u1EC7t",
-      "executedAtUtc": "2026-11-06T17:34:25.5912967+00:00",
+      "executedAtUtc": "2026-11-07T11:11:26.2243828+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3861,7 +3861,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ch\u1EC9 s\u1ED1 ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:13.2234487+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.2901798+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3895,7 +3895,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ch\u1EC9 s\u1ED1 ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.8310027+00:00",
+      "executedAtUtc": "2026-11-07T11:10:47.7470666+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3929,7 +3929,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ch\u1EC9 s\u1ED1 ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.6547551+00:00",
+      "executedAtUtc": "2026-11-07T11:11:17.888483+00:00",
       "subcases": [
         {
           "name": "default",
@@ -3963,7 +3963,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem ch\u1EC9 s\u1ED1 ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.5093407+00:00",
+      "executedAtUtc": "2026-11-07T11:09:58.9012912+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -4002,7 +4002,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 nh\u1EADp ch\u1EC9 s\u1ED1",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.351271+00:00",
+      "executedAtUtc": "2026-11-07T11:10:55.3731691+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4036,7 +4036,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 nh\u1EADp ch\u1EC9 s\u1ED1",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.7988138+00:00",
+      "executedAtUtc": "2026-11-07T11:10:25.2216338+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4070,7 +4070,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 nh\u1EADp ch\u1EC9 s\u1ED1",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.1887136+00:00",
+      "executedAtUtc": "2026-11-07T11:11:20.2914202+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4104,7 +4104,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 nh\u1EADp ch\u1EC9 s\u1ED1",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.5799601+00:00",
+      "executedAtUtc": "2026-11-07T11:11:08.5846492+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4138,7 +4138,7 @@
       "deniedExample": "\u2014",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (chi ti\u1EBFt D7)",
       "implementationNote": "\u0110\u01A1n gi\u00E1 theo quy \u0111\u1ECBnh nh\u00E0 n\u01B0\u1EDBc, c\u1EA5u h\u00ECnh s\u1EB5n trong h\u1EC7 th\u1ED1ng, kh\u00F4ng ai s\u1EEDa tr\u00EAn giao di\u1EC7n",
-      "executedAtUtc": "2026-11-06T17:34:27.4648525+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774015+00:00",
       "subcases": []
     },
     {
@@ -4166,7 +4166,7 @@
       "deniedExample": "\u2014",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (chi ti\u1EBFt D7)",
       "implementationNote": "\u0110\u01A1n gi\u00E1 theo quy \u0111\u1ECBnh nh\u00E0 n\u01B0\u1EDBc, c\u1EA5u h\u00ECnh s\u1EB5n trong h\u1EC7 th\u1ED1ng, kh\u00F4ng ai s\u1EEDa tr\u00EAn giao di\u1EC7n",
-      "executedAtUtc": "2026-11-06T17:34:27.464874+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774411+00:00",
       "subcases": []
     },
     {
@@ -4194,7 +4194,7 @@
       "deniedExample": "\u2014",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (chi ti\u1EBFt D7)",
       "implementationNote": "\u0110\u01A1n gi\u00E1 theo quy \u0111\u1ECBnh nh\u00E0 n\u01B0\u1EDBc, c\u1EA5u h\u00ECnh s\u1EB5n trong h\u1EC7 th\u1ED1ng, kh\u00F4ng ai s\u1EEDa tr\u00EAn giao di\u1EC7n",
-      "executedAtUtc": "2026-11-06T17:34:27.4648749+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774435+00:00",
       "subcases": []
     },
     {
@@ -4222,7 +4222,7 @@
       "deniedExample": "\u2014",
       "statusNote": "\u0110\u00E3 ch\u1ED1t (chi ti\u1EBFt D7)",
       "implementationNote": "\u0110\u01A1n gi\u00E1 theo quy \u0111\u1ECBnh nh\u00E0 n\u01B0\u1EDBc, c\u1EA5u h\u00ECnh s\u1EB5n trong h\u1EC7 th\u1ED1ng, kh\u00F4ng ai s\u1EEDa tr\u00EAn giao di\u1EC7n",
-      "executedAtUtc": "2026-11-06T17:34:27.4648757+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774452+00:00",
       "subcases": []
     },
     {
@@ -4250,7 +4250,7 @@
       "deniedExample": "S\u1EEDa ch\u1EC9 s\u1ED1 k\u1EF3 \u0111\u00E3 ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; s\u1EEDa k\u1EF3 xa h\u01A1n k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc; s\u1EEDa kh\u00F4ng c\u00F3 l\u00FD do",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "Ch\u1EC9 k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc ch\u01B0a ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; ghi l\u1ECBch s\u1EED b\u1EAFt bu\u1ED9c",
-      "executedAtUtc": "2026-11-06T17:34:08.6737214+00:00",
+      "executedAtUtc": "2026-11-07T11:10:01.1134693+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4284,7 +4284,7 @@
       "deniedExample": "S\u1EEDa ch\u1EC9 s\u1ED1 k\u1EF3 \u0111\u00E3 ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; s\u1EEDa k\u1EF3 xa h\u01A1n k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc; s\u1EEDa kh\u00F4ng c\u00F3 l\u00FD do",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "Ch\u1EC9 k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc ch\u01B0a ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; ghi l\u1ECBch s\u1EED b\u1EAFt bu\u1ED9c",
-      "executedAtUtc": "2026-11-06T17:34:22.8763364+00:00",
+      "executedAtUtc": "2026-11-07T11:11:05.3559469+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4318,7 +4318,7 @@
       "deniedExample": "S\u1EEDa ch\u1EC9 s\u1ED1 k\u1EF3 \u0111\u00E3 ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; s\u1EEDa k\u1EF3 xa h\u01A1n k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc; s\u1EEDa kh\u00F4ng c\u00F3 l\u00FD do",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "Ch\u1EC9 k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc ch\u01B0a ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; ghi l\u1ECBch s\u1EED b\u1EAFt bu\u1ED9c",
-      "executedAtUtc": "2026-11-06T17:34:23.3157603+00:00",
+      "executedAtUtc": "2026-11-07T11:11:06.8443633+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -4362,7 +4362,7 @@
       "deniedExample": "S\u1EEDa ch\u1EC9 s\u1ED1 k\u1EF3 \u0111\u00E3 ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; s\u1EEDa k\u1EF3 xa h\u01A1n k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc; s\u1EEDa kh\u00F4ng c\u00F3 l\u00FD do",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "Ch\u1EC9 k\u1EF3 li\u1EC1n tr\u01B0\u1EDBc ch\u01B0a ph\u00E1t h\u00E0nh h\u00F3a \u0111\u01A1n; ghi l\u1ECBch s\u1EED b\u1EAFt bu\u1ED9c",
-      "executedAtUtc": "2026-11-06T17:34:11.0401128+00:00",
+      "executedAtUtc": "2026-11-07T11:10:26.8825723+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4396,7 +4396,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem l\u1ECBch s\u1EED s\u1EEDa; s\u1EEDa ho\u1EB7c x\u00F3a d\u00F2ng l\u1ECBch s\u1EED",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.2340047+00:00",
+      "executedAtUtc": "2026-11-07T11:11:16.1431216+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4430,7 +4430,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem l\u1ECBch s\u1EED s\u1EEDa; s\u1EEDa ho\u1EB7c x\u00F3a d\u00F2ng l\u1ECBch s\u1EED",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:21.7367997+00:00",
+      "executedAtUtc": "2026-11-07T11:11:02.1211848+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4464,7 +4464,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem l\u1ECBch s\u1EED s\u1EEDa; s\u1EEDa ho\u1EB7c x\u00F3a d\u00F2ng l\u1ECBch s\u1EED",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:21.8185168+00:00",
+      "executedAtUtc": "2026-11-07T11:11:02.4963501+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -4503,7 +4503,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem l\u1ECBch s\u1EED s\u1EEDa; s\u1EEDa ho\u1EB7c x\u00F3a d\u00F2ng l\u1ECBch s\u1EED",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D10",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.3850269+00:00",
+      "executedAtUtc": "2026-11-07T11:11:37.3626497+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4537,7 +4537,7 @@
       "deniedExample": "Ch\u1EE7 tr\u1ECD/Qu\u1EA3n l\u00FD s\u1EEDa bi\u1EC3u gi\u00E1 \u0111i\u1EC7n/n\u01B0\u1EDBc tr\u00EAn giao di\u1EC7n (kh\u00F3a \u2014 D7); Qu\u1EA3n l\u00FD th\u00EAm d\u1ECBch v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D7",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.2988356+00:00",
+      "executedAtUtc": "2026-11-07T11:11:16.4602417+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4571,7 +4571,7 @@
       "deniedExample": "Ch\u1EE7 tr\u1ECD/Qu\u1EA3n l\u00FD s\u1EEDa bi\u1EC3u gi\u00E1 \u0111i\u1EC7n/n\u01B0\u1EDBc tr\u00EAn giao di\u1EC7n (kh\u00F3a \u2014 D7); Qu\u1EA3n l\u00FD th\u00EAm d\u1ECBch v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D7",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.6354895+00:00",
+      "executedAtUtc": "2026-11-07T11:11:27.9874669+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4605,7 +4605,7 @@
       "deniedExample": "Ch\u1EE7 tr\u1ECD/Qu\u1EA3n l\u00FD s\u1EEDa bi\u1EC3u gi\u00E1 \u0111i\u1EC7n/n\u01B0\u1EDBc tr\u00EAn giao di\u1EC7n (kh\u00F3a \u2014 D7); Qu\u1EA3n l\u00FD th\u00EAm d\u1ECBch v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D7",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.2137815+00:00",
+      "executedAtUtc": "2026-11-07T11:11:15.8987222+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4639,7 +4639,7 @@
       "deniedExample": "Ch\u1EE7 tr\u1ECD/Qu\u1EA3n l\u00FD s\u1EEDa bi\u1EC3u gi\u00E1 \u0111i\u1EC7n/n\u01B0\u1EDBc tr\u00EAn giao di\u1EC7n (kh\u00F3a \u2014 D7); Qu\u1EA3n l\u00FD th\u00EAm d\u1ECBch v\u1EE5",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D7",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.2903623+00:00",
+      "executedAtUtc": "2026-11-07T11:10:49.8115503+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4673,7 +4673,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u00F3a \u0111\u01A1n ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.3712515+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.7724541+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4707,7 +4707,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u00F3a \u0111\u01A1n ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.8038558+00:00",
+      "executedAtUtc": "2026-11-07T11:11:10.8232512+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4741,7 +4741,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u00F3a \u0111\u01A1n ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.458142+00:00",
+      "executedAtUtc": "2026-11-07T11:11:17.133121+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4775,7 +4775,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem h\u00F3a \u0111\u01A1n ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.2238827+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.5324418+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -4814,7 +4814,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 t\u1EA1o h\u00F3a \u0111\u01A1n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.8761311+00:00",
+      "executedAtUtc": "2026-11-07T11:10:05.2380667+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4848,7 +4848,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 t\u1EA1o h\u00F3a \u0111\u01A1n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.359052+00:00",
+      "executedAtUtc": "2026-11-07T11:10:50.4742551+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4882,7 +4882,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 t\u1EA1o h\u00F3a \u0111\u01A1n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:18.2189738+00:00",
+      "executedAtUtc": "2026-11-07T11:10:52.9937272+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -4926,7 +4926,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 t\u1EA1o h\u00F3a \u0111\u01A1n",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.46362+00:00",
+      "executedAtUtc": "2026-11-07T11:11:39.100276+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4960,7 +4960,7 @@
       "deniedExample": "S\u1EEDa h\u00F3a \u0111\u01A1n \u0111\u00E3 ph\u00E1t h\u00E0nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.4669036+00:00",
+      "executedAtUtc": "2026-11-07T11:09:58.3486112+00:00",
       "subcases": [
         {
           "name": "default",
@@ -4994,7 +4994,7 @@
       "deniedExample": "S\u1EEDa h\u00F3a \u0111\u01A1n \u0111\u00E3 ph\u00E1t h\u00E0nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.654794+00:00",
+      "executedAtUtc": "2026-11-07T11:10:44.1496866+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5028,7 +5028,7 @@
       "deniedExample": "S\u1EEDa h\u00F3a \u0111\u01A1n \u0111\u00E3 ph\u00E1t h\u00E0nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.9681964+00:00",
+      "executedAtUtc": "2026-11-07T11:10:58.0618432+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -5072,7 +5072,7 @@
       "deniedExample": "S\u1EEDa h\u00F3a \u0111\u01A1n \u0111\u00E3 ph\u00E1t h\u00E0nh",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.6472717+00:00",
+      "executedAtUtc": "2026-11-07T11:10:21.7059496+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5097,7 +5097,7 @@
       "actual": "NOT_APPLICABLE",
       "status": "NOT_APPLICABLE",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
       "evidence": "\u00D4 \u0027\u2014\u0027 \u2014 workbook \u0111\u00E1nh d\u1EA5u kh\u00F4ng \u00E1p d\u1EE5ng (M\u1EE5c VI.5)",
       "unsupportedReason": "",
@@ -5106,7 +5106,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u00E1nh d\u1EA5u h\u00F3a \u0111\u01A1n \u0111\u00E3 thanh to\u00E1n",
       "statusNote": "\u2753 D17",
       "implementationNote": "Ch\u01B0a r\u00F5 \u0111\u1ECBnh d\u1EA1ng c\u1EE7a \u0111\u1ED1i t\u01B0\u1EE3ng n\u00E0o; \u0111\u1EC1 xu\u1EA5t xem D17",
-      "executedAtUtc": "2026-11-06T17:34:27.464887+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774637+00:00",
       "subcases": []
     },
     {
@@ -5125,7 +5125,7 @@
       "actual": "NOT_APPLICABLE",
       "status": "NOT_APPLICABLE",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
       "evidence": "\u00D4 \u0027\u2014\u0027 \u2014 workbook \u0111\u00E1nh d\u1EA5u kh\u00F4ng \u00E1p d\u1EE5ng (M\u1EE5c VI.5)",
       "unsupportedReason": "",
@@ -5134,7 +5134,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u00E1nh d\u1EA5u h\u00F3a \u0111\u01A1n \u0111\u00E3 thanh to\u00E1n",
       "statusNote": "\u2753 D17",
       "implementationNote": "Ch\u01B0a r\u00F5 \u0111\u1ECBnh d\u1EA1ng c\u1EE7a \u0111\u1ED1i t\u01B0\u1EE3ng n\u00E0o; \u0111\u1EC1 xu\u1EA5t xem D17",
-      "executedAtUtc": "2026-11-06T17:34:27.4648882+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774654+00:00",
       "subcases": []
     },
     {
@@ -5153,7 +5153,7 @@
       "actual": "NOT_APPLICABLE",
       "status": "NOT_APPLICABLE",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
       "evidence": "\u00D4 \u0027\u2014\u0027 \u2014 workbook \u0111\u00E1nh d\u1EA5u kh\u00F4ng \u00E1p d\u1EE5ng (M\u1EE5c VI.5)",
       "unsupportedReason": "",
@@ -5162,7 +5162,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u00E1nh d\u1EA5u h\u00F3a \u0111\u01A1n \u0111\u00E3 thanh to\u00E1n",
       "statusNote": "\u2753 D17",
       "implementationNote": "Ch\u01B0a r\u00F5 \u0111\u1ECBnh d\u1EA1ng c\u1EE7a \u0111\u1ED1i t\u01B0\u1EE3ng n\u00E0o; \u0111\u1EC1 xu\u1EA5t xem D17",
-      "executedAtUtc": "2026-11-06T17:34:27.4648903+00:00",
+      "executedAtUtc": "2026-11-07T11:11:44.7774669+00:00",
       "subcases": []
     },
     {
@@ -5181,7 +5181,7 @@
       "actual": "ALLOWED",
       "status": "PASS",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
       "evidence": "Kh\u00E1ch thu\u00EA g\u1EEDi \u0111\u01B0\u1EE3c minh ch\u1EE9ng thanh to\u00E1n cho h\u00F3a \u0111\u01A1n 2 (PaymentId=1, Pending).",
       "unsupportedReason": "",
@@ -5190,7 +5190,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA \u0111\u00E1nh d\u1EA5u h\u00F3a \u0111\u01A1n \u0111\u00E3 thanh to\u00E1n",
       "statusNote": "\u2753 D17",
       "implementationNote": "Ch\u01B0a r\u00F5 \u0111\u1ECBnh d\u1EA1ng c\u1EE7a \u0111\u1ED1i t\u01B0\u1EE3ng n\u00E0o; \u0111\u1EC1 xu\u1EA5t xem D17",
-      "executedAtUtc": "2026-11-06T17:34:13.7530686+00:00",
+      "executedAtUtc": "2026-11-07T11:10:37.8588238+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5215,21 +5215,21 @@
       "actual": "DENIED",
       "status": "PASS",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": "Forbidden",
-      "evidence": "PaymentAuthorizationException: Ch\u1EC9 Ch\u1EE7 tr\u1ECD ho\u1EB7c Qu\u1EA3n l\u00FD \u0111\u01B0\u1EE3c x\u00E1c nh\u1EADn thanh to\u00E1n.",
+      "evidence": "PaymentAuthorizationException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c thanh to\u00E1n n\u00E0y.",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 (Ch\u1EE7 tr\u1ECD) / t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Qu\u1EA3n l\u00FD x\u00E1c nh\u1EADn sau khi \u0111\u1ED1i chi\u1EBFu",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 x\u00E1c nh\u1EADn ti\u1EC1n \u0111\u00E3 v\u00E0o",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D6",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n x\u00E1c nh\u1EADn \u0111\u01B0\u1EE3c (c\u1ED1 \u0111\u1ECBnh, kh\u00F4ng c\u00F4ng t\u1EAFc)",
-      "executedAtUtc": "2026-11-06T17:34:14.9663936+00:00",
+      "executedAtUtc": "2026-11-07T11:10:41.7062881+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Denied",
-          "evidence": "PaymentAuthorizationException: Ch\u1EC9 Ch\u1EE7 tr\u1ECD ho\u1EB7c Qu\u1EA3n l\u00FD \u0111\u01B0\u1EE3c x\u00E1c nh\u1EADn thanh to\u00E1n."
+          "evidence": "PaymentAuthorizationException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c thanh to\u00E1n n\u00E0y."
         }
       ]
     },
@@ -5249,21 +5249,21 @@
       "actual": "ALLOWED",
       "status": "PASS",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
-      "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=5 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed).",
+      "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=1 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed).",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 (Ch\u1EE7 tr\u1ECD) / t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Qu\u1EA3n l\u00FD x\u00E1c nh\u1EADn sau khi \u0111\u1ED1i chi\u1EBFu",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 x\u00E1c nh\u1EADn ti\u1EC1n \u0111\u00E3 v\u00E0o",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D6",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n x\u00E1c nh\u1EADn \u0111\u01B0\u1EE3c (c\u1ED1 \u0111\u1ECBnh, kh\u00F4ng c\u00F4ng t\u1EAFc)",
-      "executedAtUtc": "2026-11-06T17:34:23.2494357+00:00",
+      "executedAtUtc": "2026-11-07T11:11:06.5049317+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=5 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed)."
+          "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=1 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed)."
         }
       ]
     },
@@ -5283,21 +5283,21 @@
       "actual": "ALLOWED",
       "status": "PASS",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": null,
-      "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed).",
+      "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=1 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed).",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 (Ch\u1EE7 tr\u1ECD) / t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Qu\u1EA3n l\u00FD x\u00E1c nh\u1EADn sau khi \u0111\u1ED1i chi\u1EBFu",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 x\u00E1c nh\u1EADn ti\u1EC1n \u0111\u00E3 v\u00E0o",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D6",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n x\u00E1c nh\u1EADn \u0111\u01B0\u1EE3c (c\u1ED1 \u0111\u1ECBnh, kh\u00F4ng c\u00F4ng t\u1EAFc)",
-      "executedAtUtc": "2026-11-06T17:34:17.9783363+00:00",
+      "executedAtUtc": "2026-11-07T11:10:52.2083709+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed)."
+          "evidence": "X\u00E1c nh\u1EADn thanh to\u00E1n PaymentId=1 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (Confirmed)."
         }
       ]
     },
@@ -5317,21 +5317,21 @@
       "actual": "DENIED",
       "status": "PASS",
       "tier": "Service",
-      "service": "Web.Features.Payments.Services.PaymentService",
+      "service": "Web.Features.Invoices.Services.PaymentService",
       "errorCode": "Forbidden",
-      "evidence": "PaymentAuthorizationException: Ch\u1EC9 Ch\u1EE7 tr\u1ECD ho\u1EB7c Qu\u1EA3n l\u00FD \u0111\u01B0\u1EE3c x\u00E1c nh\u1EADn thanh to\u00E1n.",
+      "evidence": "PaymentAuthorizationException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c thanh to\u00E1n n\u00E0y.",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 (Ch\u1EE7 tr\u1ECD) / t\u00F2a nh\u00E0 \u0111\u01B0\u1EE3c giao (Qu\u1EA3n l\u00FD)",
       "allowedExample": "Qu\u1EA3n l\u00FD x\u00E1c nh\u1EADn sau khi \u0111\u1ED1i chi\u1EBFu",
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 x\u00E1c nh\u1EADn ti\u1EC1n \u0111\u00E3 v\u00E0o",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D6",
       "implementationNote": "Qu\u1EA3n l\u00FD lu\u00F4n x\u00E1c nh\u1EADn \u0111\u01B0\u1EE3c (c\u1ED1 \u0111\u1ECBnh, kh\u00F4ng c\u00F4ng t\u1EAFc)",
-      "executedAtUtc": "2026-11-06T17:34:22.6405597+00:00",
+      "executedAtUtc": "2026-11-07T11:11:04.1588973+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Denied",
-          "evidence": "PaymentAuthorizationException: Ch\u1EC9 Ch\u1EE7 tr\u1ECD ho\u1EB7c Qu\u1EA3n l\u00FD \u0111\u01B0\u1EE3c x\u00E1c nh\u1EADn thanh to\u00E1n."
+          "evidence": "PaymentAuthorizationException: B\u1EA1n kh\u00F4ng c\u00F3 quy\u1EC1n th\u1EF1c hi\u1EC7n thao t\u00E1c thanh to\u00E1n n\u00E0y."
         }
       ]
     },
@@ -5360,7 +5360,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD xem b\u00E1o c\u00E1o doanh thu/c\u00F4ng n\u1EE3 t\u1ED5ng h\u1EE3p (k\u1EC3 c\u1EA3 trong t\u00F2a nh\u00E0 m\u00ECnh)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.0447949+00:00",
+      "executedAtUtc": "2026-11-07T11:10:45.6662737+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5394,7 +5394,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD xem b\u00E1o c\u00E1o doanh thu/c\u00F4ng n\u1EE3 t\u1ED5ng h\u1EE3p (k\u1EC3 c\u1EA3 trong t\u00F2a nh\u00E0 m\u00ECnh)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:19.1696486+00:00",
+      "executedAtUtc": "2026-11-07T11:10:54.7414097+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5428,7 +5428,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD xem b\u00E1o c\u00E1o doanh thu/c\u00F4ng n\u1EE3 t\u1ED5ng h\u1EE3p (k\u1EC3 c\u1EA3 trong t\u00F2a nh\u00E0 m\u00ECnh)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:26.2411795+00:00",
+      "executedAtUtc": "2026-11-07T11:11:35.4234278+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5462,7 +5462,7 @@
       "deniedExample": "Qu\u1EA3n l\u00FD xem b\u00E1o c\u00E1o doanh thu/c\u00F4ng n\u1EE3 t\u1ED5ng h\u1EE3p (k\u1EC3 c\u1EA3 trong t\u00F2a nh\u00E0 m\u00ECnh)",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.2130086+00:00",
+      "executedAtUtc": "2026-11-07T11:10:49.2411457+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5496,7 +5496,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem phi\u1EBFu c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:15.2227294+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.5301797+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5530,7 +5530,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem phi\u1EBFu c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:08.5883544+00:00",
+      "executedAtUtc": "2026-11-07T11:09:59.6245582+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5564,7 +5564,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem phi\u1EBFu c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.599641+00:00",
+      "executedAtUtc": "2026-11-07T11:10:51.3798769+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5598,7 +5598,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem phi\u1EBFu c\u1EE7a ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:11.5375717+00:00",
+      "executedAtUtc": "2026-11-07T11:10:33.1836094+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -5637,7 +5637,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EA1o phi\u1EBFu cho ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.579555+00:00",
+      "executedAtUtc": "2026-11-07T11:11:17.4426399+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5671,7 +5671,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EA1o phi\u1EBFu cho ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.4767718+00:00",
+      "executedAtUtc": "2026-11-07T11:11:07.8744745+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5705,7 +5705,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EA1o phi\u1EBFu cho ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:14.5677964+00:00",
+      "executedAtUtc": "2026-11-07T11:10:40.1576078+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -5749,7 +5749,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EA1o phi\u1EBFu cho ph\u00F2ng kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.9201064+00:00",
+      "executedAtUtc": "2026-11-07T11:10:48.6530747+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5783,7 +5783,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u00F3ng phi\u1EBFu",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:24.6079458+00:00",
+      "executedAtUtc": "2026-11-07T11:11:17.704899+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5817,7 +5817,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u00F3ng phi\u1EBFu",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:17.213977+00:00",
+      "executedAtUtc": "2026-11-07T11:10:49.2421935+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5851,7 +5851,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u00F3ng phi\u1EBFu",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:10.0177009+00:00",
+      "executedAtUtc": "2026-11-07T11:10:16.4536539+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -5895,7 +5895,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA t\u1EF1 \u0111\u00F3ng phi\u1EBFu",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:23.8995679+00:00",
+      "executedAtUtc": "2026-11-07T11:11:12.1587966+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5929,7 +5929,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem \u1EA3nh nh\u1EA1y c\u1EA3m kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:11.3487545+00:00",
+      "executedAtUtc": "2026-11-07T11:10:29.5355474+00:00",
       "subcases": [
         {
           "name": "default",
@@ -5956,19 +5956,19 @@
       "tier": "Service",
       "service": "Web.Features.Maintenance.IncidentService",
       "errorCode": null,
-      "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u00EDnh k\u00E8m \u1EA3nh k\u1EBFt qu\u1EA3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (FileId=fbe70a02-3df4-4443-a0d5-85dcba1f779b, \u1EA3nh g\u1EAFn v\u00E0o phi\u1EBFu=attached=3)",
+      "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u00EDnh k\u00E8m \u1EA3nh k\u1EBFt qu\u1EA3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (FileId=74601a29-7a6f-463b-b8e4-c3b1e5b0c9ea, \u1EA3nh g\u1EAFn v\u00E0o phi\u1EBFu=attached=3)",
       "unsupportedReason": "",
       "scope": "To\u00E0n b\u1ED9 / t\u00F2a nh\u00E0 / \u1EA3nh c\u1EE7a m\u00ECnh",
       "allowedExample": "Qu\u1EA3n l\u00FD up \u1EA3nh sau khi s\u1EEDa",
       "deniedExample": "Kh\u00E1ch thu\u00EA xem \u1EA3nh nh\u1EA1y c\u1EA3m kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:25.3817561+00:00",
+      "executedAtUtc": "2026-11-07T11:11:21.995723+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u00EDnh k\u00E8m \u1EA3nh k\u1EBFt qu\u1EA3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (FileId=fbe70a02-3df4-4443-a0d5-85dcba1f779b, \u1EA3nh g\u1EAFn v\u00E0o phi\u1EBFu=attached=3)"
+          "evidence": "Ch\u1EE7 tr\u1ECD \u0111\u00EDnh k\u00E8m \u1EA3nh k\u1EBFt qu\u1EA3 c\u00F3 hi\u1EC7u l\u1EF1c th\u1EADt (FileId=74601a29-7a6f-463b-b8e4-c3b1e5b0c9ea, \u1EA3nh g\u1EAFn v\u00E0o phi\u1EBFu=attached=3)"
         }
       ]
     },
@@ -5997,17 +5997,17 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem \u1EA3nh nh\u1EA1y c\u1EA3m kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:21.9818656+00:00",
+      "executedAtUtc": "2026-11-07T11:11:03.2037633+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
           "verdict": "Allowed",
-          "evidence": "\u1EA3nh k\u1EBFt qu\u1EA3 g\u1EAFn th\u1EB3ng v\u00E0o phi\u1EBFu 9 (FileId=707ce9c6-db88-46e8-a402-8d9bed74c43e) (hi\u1EC7u l\u1EF1c DB: \u0027incident=9 attached=0\u0027 -\u003E \u0027incident=9 attached=1\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-14: 0 -\u003E 0)"
+          "evidence": "\u1EA3nh k\u1EBFt qu\u1EA3 g\u1EAFn th\u1EB3ng v\u00E0o phi\u1EBFu 9 (FileId=274c9c37-504d-40a6-8c24-02d364cb5d9c) (hi\u1EC7u l\u1EF1c DB: \u0027incident=9 attached=0\u0027 -\u003E \u0027incident=9 attached=1\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-14: 0 -\u003E 0)"
         },
         {
           "name": "mode:Duy\u1EC7t",
           "verdict": "PendingApproval",
-          "evidence": "phi\u1EBFu 10 t\u1EA1o y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t a9d3f2da-567c-4097-afbf-7ec0f0e88cc3 (FileId=bd3abbb1-d438-4d54-b07a-65a0db56a836) (hi\u1EC7u l\u1EF1c DB: \u0027incident=10 attached=0\u0027 -\u003E \u0027incident=10 attached=0\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-14: 0 -\u003E 1)"
+          "evidence": "phi\u1EBFu 10 t\u1EA1o y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t 326d00d0-cad4-43a4-9c49-bca42a2db887 (FileId=e5fa4e75-450b-4112-abad-286278aaa1e1) (hi\u1EC7u l\u1EF1c DB: \u0027incident=10 attached=0\u0027 -\u003E \u0027incident=10 attached=0\u0027; y\u00EAu c\u1EA7u ch\u1EDD duy\u1EC7t SW-14: 0 -\u003E 1)"
         },
         {
           "name": "mode:Kh\u00F4ng th\u1EC3",
@@ -6041,7 +6041,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xem \u1EA3nh nh\u1EA1y c\u1EA3m kh\u00E1c",
       "statusNote": "",
       "implementationNote": "",
-      "executedAtUtc": "2026-11-06T17:34:16.3502506+00:00",
+      "executedAtUtc": "2026-11-07T11:10:46.8090601+00:00",
       "subcases": [
         {
           "name": "A-trong-pham-vi",
@@ -6080,7 +6080,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA truy c\u1EADp b\u00E1o c\u00E1o qu\u1EA3n tr\u1ECB",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Kh\u00F4ng th\u1EC3; m\u1EE5c b\u00E1o c\u00E1o c\u1EA5u h\u00ECnh \u1EDF sheet C\u00F4ng t\u1EAFc (SW-15a\u2026e)",
-      "executedAtUtc": "2026-11-06T17:34:25.635241+00:00",
+      "executedAtUtc": "2026-11-07T11:11:27.9870515+00:00",
       "subcases": [
         {
           "name": "default",
@@ -6114,7 +6114,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA truy c\u1EADp b\u00E1o c\u00E1o qu\u1EA3n tr\u1ECB",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Kh\u00F4ng th\u1EC3; m\u1EE5c b\u00E1o c\u00E1o c\u1EA5u h\u00ECnh \u1EDF sheet C\u00F4ng t\u1EAFc (SW-15a\u2026e)",
-      "executedAtUtc": "2026-11-06T17:34:10.7385313+00:00",
+      "executedAtUtc": "2026-11-07T11:10:24.7806093+00:00",
       "subcases": [
         {
           "name": "default",
@@ -6148,7 +6148,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA truy c\u1EADp b\u00E1o c\u00E1o qu\u1EA3n tr\u1ECB",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Kh\u00F4ng th\u1EC3; m\u1EE5c b\u00E1o c\u00E1o c\u1EA5u h\u00ECnh \u1EDF sheet C\u00F4ng t\u1EAFc (SW-15a\u2026e)",
-      "executedAtUtc": "2026-11-06T17:34:14.2905948+00:00",
+      "executedAtUtc": "2026-11-07T11:10:39.3218699+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -6187,7 +6187,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA truy c\u1EADp b\u00E1o c\u00E1o qu\u1EA3n tr\u1ECB",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D12",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Kh\u00F4ng th\u1EC3; m\u1EE5c b\u00E1o c\u00E1o c\u1EA5u h\u00ECnh \u1EDF sheet C\u00F4ng t\u1EAFc (SW-15a\u2026e)",
-      "executedAtUtc": "2026-11-06T17:34:14.2902051+00:00",
+      "executedAtUtc": "2026-11-07T11:10:39.3215111+00:00",
       "subcases": [
         {
           "name": "default",
@@ -6221,7 +6221,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xu\u1EA5t b\u00E1o c\u00E1o c\u1EA3 nh\u00E0; xu\u1EA5t s\u1ED1 CCCD / \u1EA3nh gi\u1EA5y t\u1EDD (kh\u00F4ng bao gi\u1EDD xu\u1EA5t)",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D8",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Duy\u1EC7t/Kh\u00F4ng th\u1EC3; Excel; kh\u00F4ng xu\u1EA5t CCCD",
-      "executedAtUtc": "2026-11-06T17:34:25.988769+00:00",
+      "executedAtUtc": "2026-11-07T11:11:33.3615326+00:00",
       "subcases": [
         {
           "name": "default",
@@ -6248,19 +6248,19 @@
       "tier": "Service",
       "service": "Web.Features.Reports.Services.ReportExportService",
       "errorCode": null,
-      "evidence": "Ch\u1EE7 tr\u1ECD xu\u1EA5t Excel h\u1EE3p l\u1EC7 (6759 byte, ch\u1EEF k\u00FD ZIP).",
+      "evidence": "Ch\u1EE7 tr\u1ECD xu\u1EA5t Excel h\u1EE3p l\u1EC7 (6762 byte, ch\u1EEF k\u00FD ZIP).",
       "unsupportedReason": "",
       "scope": "To\u00E0n h\u1EC7 th\u1ED1ng / ph\u1EA1m vi qu\u1EA3n l\u00FD",
       "allowedExample": "Ch\u1EE7 tr\u1ECD xu\u1EA5t Excel doanh thu th\u00E1ng; Qu\u1EA3n l\u00FD xu\u1EA5t Excel c\u1EE7a m\u1EE5c b\u00E1o c\u00E1o \u0111\u01B0\u1EE3c ph\u00E9p khi c\u00F4ng t\u1EAFc = Cho ph\u00E9p/Duy\u1EC7t",
       "deniedExample": "Kh\u00E1ch thu\u00EA xu\u1EA5t b\u00E1o c\u00E1o c\u1EA3 nh\u00E0; xu\u1EA5t s\u1ED1 CCCD / \u1EA3nh gi\u1EA5y t\u1EDD (kh\u00F4ng bao gi\u1EDD xu\u1EA5t)",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D8",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Duy\u1EC7t/Kh\u00F4ng th\u1EC3; Excel; kh\u00F4ng xu\u1EA5t CCCD",
-      "executedAtUtc": "2026-11-06T17:34:25.3501367+00:00",
+      "executedAtUtc": "2026-11-07T11:11:21.6038608+00:00",
       "subcases": [
         {
           "name": "default",
           "verdict": "Allowed",
-          "evidence": "Ch\u1EE7 tr\u1ECD xu\u1EA5t Excel h\u1EE3p l\u1EC7 (6759 byte, ch\u1EEF k\u00FD ZIP)."
+          "evidence": "Ch\u1EE7 tr\u1ECD xu\u1EA5t Excel h\u1EE3p l\u1EC7 (6762 byte, ch\u1EEF k\u00FD ZIP)."
         }
       ]
     },
@@ -6289,7 +6289,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xu\u1EA5t b\u00E1o c\u00E1o c\u1EA3 nh\u00E0; xu\u1EA5t s\u1ED1 CCCD / \u1EA3nh gi\u1EA5y t\u1EDD (kh\u00F4ng bao gi\u1EDD xu\u1EA5t)",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D8",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Duy\u1EC7t/Kh\u00F4ng th\u1EC3; Excel; kh\u00F4ng xu\u1EA5t CCCD",
-      "executedAtUtc": "2026-11-06T17:34:15.0492583+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.024798+00:00",
       "subcases": [
         {
           "name": "mode:Cho ph\u00E9p",
@@ -6333,7 +6333,7 @@
       "deniedExample": "Kh\u00E1ch thu\u00EA xu\u1EA5t b\u00E1o c\u00E1o c\u1EA3 nh\u00E0; xu\u1EA5t s\u1ED1 CCCD / \u1EA3nh gi\u1EA5y t\u1EDD (kh\u00F4ng bao gi\u1EDD xu\u1EA5t)",
       "statusNote": "\u0110\u1EC1 xu\u1EA5t D8",
       "implementationNote": "Ch\u1EBF \u0111\u1ED9 Cho ph\u00E9p/Duy\u1EC7t/Kh\u00F4ng th\u1EC3; Excel; kh\u00F4ng xu\u1EA5t CCCD",
-      "executedAtUtc": "2026-11-06T17:34:15.223096+00:00",
+      "executedAtUtc": "2026-11-07T11:10:42.5306642+00:00",
       "subcases": [
         {
           "name": "default",

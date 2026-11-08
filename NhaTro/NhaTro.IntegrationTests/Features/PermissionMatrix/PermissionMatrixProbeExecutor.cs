@@ -34,6 +34,7 @@ using Web.Features.Settings;
 using Web.Features.Settings.Enums;
 using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
+using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
 using Web.Features.Tenants;
 using Web.Features.Tenants.DTOs;
@@ -83,7 +84,7 @@ public static class PermissionMatrixProbeExecutor
         33 => "Web.Features.Utilities.Services.ServiceCatalogService",
         <= 34 => "Web.Features.Invoices.InvoiceQueryService",
         <= 36 => "Web.Features.Invoices.InvoiceService",
-        37 or 38 => "Web.Features.Payments.Services.PaymentService",
+        37 or 38 => "Web.Features.Invoices.Services.PaymentService",
         39 => "Web.Features.Reports.Services.RevenueReportService",
         <= 43 => "Web.Features.Maintenance.IncidentService",
         44 => "Web.Features.Reports.RoomReportService",
@@ -2332,12 +2333,30 @@ public static class PermissionMatrixProbeExecutor
         var payments = world.NewPayments();
         var invoice = await world.NewInvoiceQuery().GetInvoiceAsync(world.Data.InvoiceIssuedId, world.OwnerA);
 
+        if (symbol != MatrixSymbol.Forbidden)
+        {
+            // OP37 chạy sau OP38 trên cùng world chia sẻ có thể gặp hóa đơn đã Paid; khi đó
+            // không thể tạo yêu cầu mới và ta chứng minh bằng yêu cầu đã có trong DB.
+            var latest = await payments.GetLatestPaymentAsync(
+                world.Data.InvoiceIssuedId, world.TenantAAsPropertyCaller);
+
+            if (latest is not null)
+            {
+                return latest.Status == PaymentStatus.Pending
+                    ? ProbeOutcome.Allowed(
+                        $"Khách thuê đã có yêu cầu thanh toán Pending cho hóa đơn {invoice.Id} (PaymentId={latest.Id}).")
+                    : ProbeOutcome.Denied(
+                        $"Hóa đơn {invoice.Id} đã có thanh toán {latest.Status}; không còn yêu cầu Pending để chứng minh.");
+            }
+        }
+
+        var proofId = await SeedPaymentProofAsync(world, world.Data.InvoiceIssuedId, world.TenantAAsPropertyCaller.UserId);
         var request = new SubmitPaymentRequest
         {
             Amount = invoice.TotalAmount,
             TransferredAt = DateTimeOffset.UtcNow.AddMinutes(-1),
             TransactionCode = "PROBE",
-            ProofFileIds = [Guid.NewGuid()],
+            ProofFileIds = [proofId],
         };
 
         try
@@ -2385,44 +2404,77 @@ public static class PermissionMatrixProbeExecutor
         var draft = await invoices.CreateDraftAsync(BuildDraftRequest(contract.ContractId, 1), world.OwnerA);
         var invoice = await invoices.IssueAsync(draft.Id, world.OwnerA);
 
-        var pending = await payments.SubmitAsync(
+        // Mỗi lượt thử dùng hóa đơn riêng và minh chứng thật của chính khách thuê.
+        var proofId = await SeedPaymentProofAsync(
+            world, invoice.Id, world.TenantAAsPropertyCaller.UserId);
+        var payment = await payments.SubmitAsync(
             invoice.Id,
             new SubmitPaymentRequest
             {
                 Amount = invoice.TotalAmount,
                 TransferredAt = DateTimeOffset.UtcNow.AddMinutes(-1),
                 TransactionCode = "PROBE-CONFIRM",
-                ProofFileIds = [Guid.NewGuid()],
+                ProofFileIds = [proofId],
             },
             world.TenantAAsPropertyCaller);
+        var before = payment.Status;
 
         try
         {
-            var confirmed = await payments.ConfirmAsync(pending.Id, caller);
+            var confirmed = await payments.ConfirmAsync(payment.Id, caller);
             if (symbol == MatrixSymbol.Forbidden)
             {
                 return ProbeOutcome.Allowed(
-                    $"Lỗi: vai trò {role} vẫn xác nhận được thanh toán PaymentId={pending.Id}");
+                    $"Lỗi: vai trò {role} vẫn xác nhận được thanh toán PaymentId={payment.Id}");
             }
 
             return confirmed.Status == PaymentStatus.Confirmed
                 ? ProbeOutcome.Allowed(
-                    $"Xác nhận thanh toán PaymentId={pending.Id} có hiệu lực thật (Confirmed).")
+                    $"Xác nhận thanh toán PaymentId={payment.Id} có hiệu lực thật (Confirmed).")
                 : ProbeOutcome.Denied($"Xác nhận thanh toán không đổi trạng thái: {confirmed.Status}");
         }
         catch (Exception ex)
         {
             await using var db = world.NewDb();
             var status = await db.Payments.AsNoTracking()
-                .Where(item => item.Id == pending.Id)
+                .Where(item => item.Id == payment.Id)
                 .Select(item => item.Status)
                 .SingleAsync();
 
-            return status == PaymentStatus.Pending
+            return status == before
                 ? TranslateException(ex, "Xác nhận thanh toán")
                 : ProbeOutcome.Allowed(
                     $"Lỗi: bị từ chối nhưng thanh toán đã đổi trạng thái sang {status}");
         }
+    }
+
+    /// <summary>
+    /// Tạo tệp minh chứng P6 thật trong DB test: VHT-54 bắt buộc tệp PaymentProof do chính
+    /// khách gửi, gắn RelatedEntityId = invoiceId và chưa bị xóa.
+    /// </summary>
+    private static async Task<Guid> SeedPaymentProofAsync(
+        PermissionMatrixWorld world,
+        int invoiceId,
+        string userId)
+    {
+        var proofId = Guid.NewGuid();
+        await using var db = world.NewDb();
+        db.StoredFiles.Add(new StoredFile
+        {
+            Id = proofId,
+            FileName = "probe-payment-proof.png",
+            StoredFileName = $"{proofId:N}.png",
+            RelativePath = $"probe/{proofId:N}.png",
+            ContentType = "image/png",
+            FileSizeBytes = 128,
+            FileCategory = FileCategory.PaymentProof,
+            UploadedByUserId = userId,
+            UploadedAt = DateTimeOffset.UtcNow,
+            RelatedEntityId = invoiceId.ToString(CultureInfo.InvariantCulture),
+            RelatedEntityType = RelatedEntityType.Payment,
+        });
+        await db.SaveChangesAsync();
+        return proofId;
     }
 
     private static async Task<ProbeOutcome> ProbeOP39_ViewRevenueReportAsync(

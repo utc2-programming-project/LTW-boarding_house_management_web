@@ -22,41 +22,7 @@ namespace Web.Data.Migrations
                 name: "FK_UtilityReadingAudits_UtilityReadings_UtilityReadingId",
                 table: "UtilityReadingAudits");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Payments_InvoiceId",
-                table: "Payments");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Payments_InvoiceId_RequestedAt",
-                table: "Payments",
-                columns: new[] { "InvoiceId", "RequestedAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "UX_Payments_InvoiceConfirmed",
-                table: "Payments",
-                column: "InvoiceId",
-                unique: true,
-                filter: "[Status] = 1");
-
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Payments_Amount",
-                table: "Payments",
-                sql: "[Amount] > 0");
-
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Payments_RejectionReason",
-                table: "Payments",
-                sql: "([Status] <> 2 AND [RejectionReason] IS NULL) OR ([Status] = 2 AND [RejectionReason] IS NOT NULL)");
-
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Payments_ReviewedAt",
-                table: "Payments",
-                sql: "([Status] = 0 AND [ReviewedAt] IS NULL) OR ([Status] <> 0 AND [ReviewedAt] IS NOT NULL)");
-
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Payments_Status",
-                table: "Payments",
-                sql: "[Status] IN (0, 1, 2)");
+            // Các CHECK và unique index Payment đã có trong AddPayments.
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ContractRenewalRequests_Contracts_ContractId",
@@ -98,34 +64,7 @@ namespace Web.Data.Migrations
                 name: "FK_UtilityReadingAudits_UtilityReadings_UtilityReadingId",
                 table: "UtilityReadingAudits");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Payments_InvoiceId_RequestedAt",
-                table: "Payments");
-
-            migrationBuilder.DropIndex(
-                name: "UX_Payments_InvoiceConfirmed",
-                table: "Payments");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Payments_Amount",
-                table: "Payments");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Payments_RejectionReason",
-                table: "Payments");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Payments_ReviewedAt",
-                table: "Payments");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Payments_Status",
-                table: "Payments");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Payments_InvoiceId",
-                table: "Payments",
-                column: "InvoiceId");
+            // Các CHECK và unique index Payment đã có trong AddPayments.
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ContractRenewalRequests_Contracts_ContractId",
