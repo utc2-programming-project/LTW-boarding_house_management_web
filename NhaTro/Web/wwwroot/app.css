@@ -1,3 +1,5 @@
+/* Style dùng chung toàn ứng dụng: trạng thái validation, nút/ô nhập lẻ, khung auth (.auth-shell,
+   .auth-page, .auth-card) và các màn đăng nhập - hồ sơ - quản trị tài khoản. Token màu ở css/theme.css. */
 h1:focus {
     outline: none;
 }
@@ -206,10 +208,61 @@ h1:focus {
     }
 }
 
+/* Khung trang trước khi đăng nhập: không có sidebar/topbar của hệ thống. */
+.auth-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: var(--page-bg, #F8FAFC);
+}
+
+.auth-shell-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+}
+
+.auth-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    color: var(--text-primary, #0D131B);
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-brand:hover {
+    color: var(--text-primary, #0D131B);
+}
+
+.auth-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 16px 64px;
+}
+
+@media (min-width: 768px) {
+    .auth-shell-bar {
+        padding: 16px 24px;
+    }
+
+    .auth-main {
+        padding: 24px 32px 96px;
+    }
+}
+
 /* Trang đăng nhập căn giữa. */
 .auth-page {
     display: flex;
     justify-content: center;
+    width: 100%;
 }
 
 .auth-card {
@@ -499,6 +552,23 @@ h1:focus {
     line-height: 18px;
 }
 
+/* Cột "Chủ trọ" của tài khoản Quản lý (VHT-24). */
+.account-owner {
+    display: flex;
+    flex-direction: column;
+}
+
+.owner-badge.unassigned {
+    display: inline-flex;
+    width: fit-content;
+    padding: 2px 8px;
+    border: 1px solid var(--control-border, #CBD5E1);
+    border-radius: 999px;
+    color: var(--text-muted, #64748B);
+    font-size: 12px;
+    line-height: 18px;
+}
+
 .row-actions {
     display: inline-flex;
     flex-wrap: wrap;
@@ -560,3 +630,7 @@ h1:focus {
             padding-right: 52px;
         }
 }
+
+/* Nhóm nút hành động ở góc phải page-heading (Tạo tài khoản + Thùng rác). */
+.page-heading-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+

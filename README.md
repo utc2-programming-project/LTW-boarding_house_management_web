@@ -34,7 +34,7 @@
 | --- | --- |
 | Blazor Web App, .NET 10, Interactive Server | Vai trò Chủ trọ, Quản lý, Khách thuê; seed vai trò; policy. Chưa trang nào có `[Authorize]` |
 | ASP.NET Core Identity (cookie) với bộ trang tài khoản scaffold mặc định | Gửi email thật (đang dùng `IdentityNoOpEmailSender`) |
-| EF Core 10 và SQL Server, 2 migration: `CreateIdentitySchema`, `CoreSchema` | Layout sidebar và topbar, theme theo [quy chuẩn giao diện](docs/design/phong_cach_giao_dien.md). Trang `/` chỉ là trang thử MudBlazor |
+| EF Core 10 và SQL Server, 2 migration: `CreateIdentitySchema`, `CoreSchema` | Trang Báo cáo và Phân quyền chưa có route (menu hiển thị mờ) |
 | Entity và cấu hình EF cho `Property`, `Room`, `Tenant` (xóa mềm, unique index có filter) | Service, DTO, giao diện cho nhà trọ, phòng, khách thuê |
 | Serilog ghi ra Console và file | Hợp đồng, cọc, điện nước, hóa đơn, thanh toán, sự cố, báo cáo (chưa có bảng, chưa có code) |
 | 3 project test xUnit, mỗi project 1 test rỗng | Test nghiệp vụ, lưu trữ tệp, health check, Options validation |
@@ -73,7 +73,7 @@ dotnet dev-certs https --trust
 dotnet run --project NhaTro/Web --launch-profile https
 ```
 
-Mở https://localhost:7256, bấm nút **Kiểm tra**. Thông báo "MudBlazor hoạt động!" nghĩa là giao diện chạy được. Nếu dùng SQL Server khác hoặc hệ điều hành khác, xem [Cấu hình và secrets](#cấu-hình-và-secrets).
+Mở https://localhost:7256, đăng nhập bằng một tài khoản mẫu (bảng đăng nhập nhanh trên trang đăng nhập), rồi xem **Trang chủ** tại `/`. Trang chủ lấy số liệu thật theo vai trò; `/dashboard` là màn phân tích sâu cho Chủ trọ và Quản lý. Nếu dùng SQL Server khác hoặc hệ điều hành khác, xem [Cấu hình và secrets](#cấu-hình-và-secrets).
 
 ### Yêu cầu môi trường
 
@@ -333,7 +333,7 @@ NhaTro is a Blazor Web App for managing a boarding house: rooms, tenants, contra
 | --- | --- |
 | Blazor Web App, .NET 10, Interactive Server | Owner / Manager / Tenant roles, role seeding, policies; no page uses `[Authorize]` |
 | ASP.NET Core Identity (cookie) with the default scaffolded account pages | Real email sending (`IdentityNoOpEmailSender` is used) |
-| EF Core 10 and SQL Server, 2 migrations: `CreateIdentitySchema`, `CoreSchema` | Sidebar and topbar layout, theme per the [UI guide](docs/design/phong_cach_giao_dien.md); `/` is only a MudBlazor smoke-test page |
+| EF Core 10 and SQL Server, 2 migrations: `CreateIdentitySchema`, `CoreSchema` | Reports and Permissions have no route yet (menu items are shown disabled) |
 | Entities and EF configuration for `Property`, `Room`, `Tenant` (soft delete, filtered unique indexes) | Services, DTOs and UI for properties, rooms and tenants |
 | Serilog to Console and file | Contracts, deposits, utilities, invoices, payments, incidents, reports (no tables, no code) |
 | 3 xUnit test projects, one empty test each | Real business tests, file storage, health checks, Options validation |
@@ -372,7 +372,7 @@ dotnet dev-certs https --trust
 dotnet run --project NhaTro/Web --launch-profile https
 ```
 
-Open https://localhost:7256 and click **Kiểm tra** ("Check"). A "MudBlazor hoạt động!" message means the UI works. For another SQL Server or operating system, see [Configuration and secrets](#configuration-and-secrets).
+Open https://localhost:7256, sign in with a sample account (the quick-login table on the sign-in page), then open **Home** at `/`. The home page shows real data scoped to the signed-in role; `/dashboard` is the deeper analytics screen for Owners and Managers. For another SQL Server or operating system, see [Configuration and secrets](#configuration-and-secrets).
 
 ### Prerequisites
 

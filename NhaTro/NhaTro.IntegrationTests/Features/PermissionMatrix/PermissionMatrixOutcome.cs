@@ -56,7 +56,7 @@ public sealed record ProbeOutcome(
     ProbeVerdict Verdict,
     string Evidence,
     ProbeTier Tier = ProbeTier.Service,
-    IReadOnlyList<ProbeSubcase> Subcases = null!,
+    IReadOnlyList<ProbeSubcase>? Subcases = null,
     string? ErrorCode = null)
 {
     /// <summary>Tình huống con của ô này; ô một tình huống có đúng một phần tử.</summary>

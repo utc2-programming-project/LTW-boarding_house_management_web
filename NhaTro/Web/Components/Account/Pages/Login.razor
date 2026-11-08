@@ -1,5 +1,9 @@
 ﻿@page "/login"
 @page "/Account/Login"
+@layout Layout.AuthLayout
+
+@* Trang đăng nhập theo chuẩn phong_cach_giao_dien.md.
+   Giữ static SSR + form POST vì Identity ghi cookie qua HTTP, không làm được trong circuit Blazor. *@
 
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
@@ -7,16 +11,13 @@
 @using Web.Data
 @using Web.Infrastructure.Security
 
-@inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<Shared> L
 @inject ICaptchaVerifier CaptchaVerifier
-
-@* Trang đăng nhập theo chuẩn phong_cach_giao_dien.md.
-   Giữ static SSR + form POST vì Identity ghi cookie qua HTTP, không làm được trong circuit Blazor. *@
+@inject ILoginAttemptGuard AttemptGuard
 
 <PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
 
@@ -93,6 +94,10 @@
             </button>
         </EditForm>
 
+        <p class="hint">
+            <a href="Account/RegisterOwner">@L["RegisterOwnerLink"]</a>
+        </p>
+
         @* Chi hien o Development khi da co mat khau dev (xem DevQuickLogin.razor). *@
         <DevQuickLogin />
     </div>
@@ -118,6 +123,13 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "stale")]
+    private string? StaleForm { get; set; }
+
+    // Rate limiter chuyển POST bị chặn về đây thay vì trả text thô.
+    [SupplyParameterFromQuery(Name = "tooManyRequests")]
+    private string? TooManyRequestsFlag { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
@@ -131,6 +143,24 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
+            // Program.cs doi POST co token cu (tab khac da dang nhap / phien het han)
+            // thanh redirect ve day de tai lai form voi token moi.
+            // IP đang bị chặn vì sai quá nhiều lần: ưu tiên thông báo chặn kèm số phút,
+            // kể cả khi rate limiter cũng vừa chặn request (đã gắn tooManyRequests=1).
+            if (AttemptGuard.GetIpBlockRemaining(RateLimitPolicies.ClientKey(HttpContext)) is { } blocked)
+            {
+                errorMessage = BlockedMessage(blocked);
+            }
+            else if (StaleForm == "1")
+            {
+                errorMessage = L["LoginFormStale"];
+            }
+            else if (TooManyRequestsFlag == "1")
+            {
+                // Vua bi gioi han tan suat: hien thong bao ngay tren form thay vi trang text.
+                errorMessage = L["TooManyRequests"];
+            }
+
             // Xoa cookie dang nhap ngoai (neu co) de bat dau luong dang nhap sach.
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
@@ -173,12 +203,30 @@
 
         _submitting = true;
 
+        // Chan theo IP: sai qua nhieu lan thi tam khoa IP, KHONG khoa tai khoan.
+        var clientIp = RateLimitPolicies.ClientKey(HttpContext);
+        if (AttemptGuard.GetIpBlockRemaining(clientIp) is { } blockedNow)
+        {
+            _submitting = false;
+            errorMessage = BlockedMessage(blockedNow);
+            return;
+        }
+
         // sau nhieu lan sai, bat buoc giai CAPTCHA truoc khi kiem mat khau.
-        if (await IsCaptchaRequiredAsync())
+        if (IsCaptchaRequired())
         {
             if (!CaptchaVerifier.Verify(Input.CaptchaToken, Input.CaptchaAnswer))
             {
                 _submitting = false;
+
+                // Giai CAPTCHA sai cung la mot lan thu that bai: dem theo IP de chan som.
+                AttemptGuard.RegisterFailure(clientIp, Input.Email.Trim());
+                if (AttemptGuard.GetIpBlockRemaining(clientIp) is { } blockedCaptcha)
+                {
+                    errorMessage = BlockedMessage(blockedCaptcha);
+                    return;
+                }
+
                 errorMessage = L["CaptchaInvalid"];
                 _captchaChallenge = CaptchaVerifier.CreateChallenge();
                 Input.CaptchaAnswer = string.Empty;
@@ -187,10 +235,11 @@
         }
 
         var result = await SignInManager.PasswordSignInAsync(
-            Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: true);
+            Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
+            AttemptGuard.RegisterSuccess(clientIp, Input.Email.Trim());
             Logger.LogInformation("Nguoi dung dang nhap thanh cong.");
             // ReturnUrl rong -> ve trang chu; tranh NavigateTo lam IdentityRedirectManager loi.
             RedirectManager.RedirectTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
@@ -225,8 +274,17 @@
         // Khong noi ro email sai hay mat khau sai (tranh do tai khoan).
         errorMessage = L["LoginInvalid"];
 
+        // Ghi nhan lan sai theo IP + tai khoan (khong dung lockout cua Identity).
+        AttemptGuard.RegisterFailure(clientIp, Input.Email.Trim());
+
+        if (AttemptGuard.GetIpBlockRemaining(clientIp) is { } blockedAfter)
+        {
+            errorMessage = BlockedMessage(blockedAfter);
+            return;
+        }
+
         // vuot nguong sai thi hien CAPTCHA cho lan dang nhap tiep theo.
-        if (await IsCaptchaRequiredAsync())
+        if (IsCaptchaRequired())
         {
             _captchaChallenge = CaptchaVerifier.CreateChallenge();
             Input.CaptchaAnswer = string.Empty;
@@ -234,16 +292,15 @@
     }
 
     /// <summary>Co bat buoc CAPTCHA khong, dua tren so lan dang nhap sai cua tai khoan.</summary>
-    private async Task<bool> IsCaptchaRequiredAsync()
-    {
-        var user = await UserManager.FindByEmailAsync(Input.Email.Trim());
-        if (user is null)
-        {
-            return false;
-        }
+    private bool IsCaptchaRequired() =>
+        CaptchaVerifier.IsChallengeRequired(AttemptGuard.GetAccountFailures(Input.Email.Trim()));
 
-        return CaptchaVerifier.IsChallengeRequired(await UserManager.GetAccessFailedCountAsync(user));
-    }
+    /// <summary>Thong bao IP dang bi chan, kem so phut con lai.</summary>
+    private string BlockedMessage(TimeSpan remaining) =>
+        string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            L["LoginIpBlocked"],
+            Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes)));
 
     private static bool IsValidEmail(string value)
     {

@@ -29,6 +29,8 @@ public sealed class ContractRenewalRequestConfiguration : IEntityTypeConfigurati
         builder.HasKey(request => request.Id);
 
         builder.Property(request => request.Note).HasMaxLength(ContractRenewalRules.MaxNoteLength);
+        builder.Property(request => request.RejectReason).HasMaxLength(ContractRenewalRules.MaxNoteLength);
+        builder.Property(request => request.DecidedByUserId).HasMaxLength(450);
         builder.Property(request => request.Status).IsRequired();
         builder.Property(request => request.RequestedAt).IsRequired();
         builder.Property(request => request.RowVersion).IsRowVersion();
@@ -36,11 +38,16 @@ public sealed class ContractRenewalRequestConfiguration : IEntityTypeConfigurati
         builder.HasOne<Contract>()
             .WithMany()
             .HasForeignKey(request => request.ContractId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Tenant>()
             .WithMany()
             .HasForeignKey(request => request.RequestedByTenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(request => request.DecidedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Một hợp đồng chỉ có một yêu cầu đang chờ.

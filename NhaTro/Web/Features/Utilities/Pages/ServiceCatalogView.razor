@@ -327,6 +327,14 @@
                                                             @onclick="() => OpenUpdateModal(service)">
                                                         <LucideIcon Name="edit" />
                                                     </button>
+                                                    <button type="button"
+                                                            class="icon-action-btn delete-action-btn"
+                                                            data-action="delete-service"
+                                                            title="@L["DeleteServiceTooltip"]"
+                                                            aria-label="@L["DeleteServiceTooltip"]"
+                                                            @onclick="() => RequestDelete(service)">
+                                                        <LucideIcon Name="trash" />
+                                                    </button>
                                                 </Authorized>
                                             </AuthorizeView>
                                         }
@@ -382,6 +390,20 @@
                   ServiceName="@_tierServiceName"
                   OnClose="() => _isTierModalOpen = false" />
 
+<AuthorizeView Policy="UtilityManage">
+    <Authorized>
+        <ConfirmDialog Visible="_isDeleteConfirmOpen"
+                       Title="@L["DeleteServiceTitle"]"
+                       Message="@L["DeleteServiceConfirm", _deleteTarget?.Name ?? string.Empty]"
+                       ConfirmText="@L["DeleteServiceAction"]"
+                       CancelText="@L["CancelBtn"]"
+                       BusyText="@L["DeletingService"]"
+                       Danger="true"
+                       OnConfirm="DeleteServiceAsync"
+                       OnCancel="CancelDelete" />
+    </Authorized>
+</AuthorizeView>
+
 @code {
     private List<ServiceItemDto> _allServices = [];
     private List<ServiceItemDto> _filteredServices = [];
@@ -404,7 +426,9 @@
     private bool _isUpdateModalOpen;
     private bool _isTierModalOpen;
     private bool _isCreateModalOpen;
+    private bool _isDeleteConfirmOpen;
     private ServiceItemDto? _selectedService;
+    private ServiceItemDto? _deleteTarget;
     private string _tierServiceName = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -506,6 +530,40 @@
         {
             await LoadDataAsync();
             Toast.Success(_isSampleData ? L["ToastServiceToggled"] : L["ToastServiceToggledSuccessSql"]);
+        }
+        else
+        {
+            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+        }
+    }
+
+    private void RequestDelete(ServiceItemDto service)
+    {
+        _deleteTarget = service;
+        _isDeleteConfirmOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        _isDeleteConfirmOpen = false;
+        _deleteTarget = null;
+    }
+
+    private async Task DeleteServiceAsync()
+    {
+        if (_deleteTarget is null)
+        {
+            CancelDelete();
+            return;
+        }
+
+        var res = await PageService.DeleteServiceAsync(_deleteTarget.Id);
+        _isDeleteConfirmOpen = false;
+        if (res.Success)
+        {
+            _deleteTarget = null;
+            await LoadDataAsync();
+            Toast.Success(L["ToastServiceDeletedSuccess"]);
         }
         else
         {

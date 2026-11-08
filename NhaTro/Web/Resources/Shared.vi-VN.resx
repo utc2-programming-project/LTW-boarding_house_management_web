@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Chuỗi giao diện tiếng Việt (mặc định) của toàn ứng dụng: nhãn, nút, thông báo và điều hướng. -->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -88,9 +89,6 @@
   <data name="ToggleNavigation" xml:space="preserve">
     <value>Đóng hoặc mở thanh điều hướng</value>
   </data>
-  <data name="LayoutPreview" xml:space="preserve">
-    <value>Trang mẫu giao diện</value>
-  </data>
   <data name="Unavailable" xml:space="preserve">
     <value>Chưa khả dụng</value>
   </data>
@@ -154,6 +152,9 @@
   <data name="Invoices" xml:space="preserve">
     <value>Hóa đơn</value>
   </data>
+  <data name="PaymentRequests" xml:space="preserve">
+    <value>Xác nhận thanh toán</value>
+  </data>
   <data name="Incidents" xml:space="preserve">
     <value>Sự cố</value>
   </data>
@@ -162,6 +163,9 @@
   </data>
   <data name="ManagerSwitches" xml:space="preserve">
     <value>Công tắc Quản lý</value>
+  </data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve">
+    <value>Mỗi công tắc quyết định Quản lý được làm gì với một nghiệp vụ: làm ngay, phải chờ Chủ trọ duyệt hoặc bị chặn.</value>
   </data>
   <data name="Approvals" xml:space="preserve">
     <value>Hàng đợi duyệt</value>
@@ -184,32 +188,8 @@
   <data name="ReportIncident" xml:space="preserve">
     <value>Báo sự cố</value>
   </data>
-  <data name="PreviewDescription" xml:space="preserve">
-    <value>Khung giao diện dùng chung với điều hướng, ngôn ngữ và chế độ sáng/tối.</value>
-  </data>
-  <data name="SampleData" xml:space="preserve">
-    <value>Dữ liệu mẫu</value>
-  </data>
-  <data name="DisplayExamples" xml:space="preserve">
-    <value>Ví dụ định dạng hiển thị</value>
-  </data>
-  <data name="SampleDisclaimer" xml:space="preserve">
-    <value>Các giá trị dưới đây chỉ dùng minh họa giao diện, không phải dữ liệu nghiệp vụ.</value>
-  </data>
-  <data name="SampleDate" xml:space="preserve">
-    <value>Ngày minh họa</value>
-  </data>
-  <data name="SampleAmount" xml:space="preserve">
-    <value>Số tiền minh họa</value>
-  </data>
   <data name="NoData" xml:space="preserve">
     <value>Chưa có dữ liệu</value>
-  </data>
-  <data name="ModulesPending" xml:space="preserve">
-    <value>Các phân hệ sẽ xuất hiện khi được tích hợp. Mục chưa khả dụng chưa thể mở.</value>
-  </data>
-  <data name="BackToPreview" xml:space="preserve">
-    <value>Về trang mẫu</value>
   </data>
   <data name="AccountStatusPendingApproval" xml:space="preserve">
     <value>Chờ duyệt</value>
@@ -229,8 +209,29 @@
   <data name="Restore" xml:space="preserve">
     <value>Khôi phục</value>
   </data>
+  <data name="Home" xml:space="preserve">
+    <value>Trang chủ</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Tổng quan</value>
+  </data>
+  <data name="NavGroupOverview" xml:space="preserve">
+    <value>Tổng quan</value>
+  </data>
+  <data name="NavGroupProperty" xml:space="preserve">
+    <value>Nhà trọ &amp; hợp đồng</value>
+  </data>
+  <data name="NavGroupFinance" xml:space="preserve">
+    <value>Tài chính</value>
+  </data>
+  <data name="NavGroupOperations" xml:space="preserve">
+    <value>Vận hành</value>
+  </data>
+  <data name="NavGroupAdmin" xml:space="preserve">
+    <value>Quản trị</value>
+  </data>
+  <data name="NavGroupPersonal" xml:space="preserve">
+    <value>Cá nhân</value>
   </data>
 
   <!-- VHT-8: dang nhap -->
@@ -245,6 +246,9 @@
   </data>
   <data name="LoginInvalid" xml:space="preserve">
     <value>Email hoặc mật khẩu không đúng.</value>
+  </data>
+  <data name="LoginFormStale" xml:space="preserve">
+    <value>Trang đăng nhập đã cũ hoặc phiên đã hết hạn. Vui lòng thử lại.</value>
   </data>
   <data name="LoginPendingApproval" xml:space="preserve">
     <value>Tài khoản đang chờ duyệt, vui lòng liên hệ người quản lý tài khoản.</value>
@@ -650,6 +654,41 @@
   <data name="P2ValidationAddressLength" xml:space="preserve"><value>Địa chỉ không được vượt quá 500 ký tự.</value></data>
   <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Dữ liệu nhập chưa hợp lệ. Vui lòng kiểm tra lại.</value></data>
   <data name="P2PropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ hoặc bạn không có quyền truy cập.</value></data>
+  <data name="P2ManagersTitle" xml:space="preserve"><value>Quản lý được phân công</value></data>
+  <data name="P2ManagersSubtitle" xml:space="preserve"><value>Gán tài khoản Quản lý vào nhà trọ này.</value></data>
+  <data name="P2NoManagers" xml:space="preserve"><value>Chưa có Quản lý nào được phân công.</value></data>
+  <data name="P2SelectManager" xml:space="preserve"><value>Chọn Quản lý</value></data>
+  <data name="P2AssignManager" xml:space="preserve"><value>Gán Quản lý</value></data>
+  <data name="P2RevokeManager" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="P2AssignedAt" xml:space="preserve"><value>Ngày gán</value></data>
+  <data name="P2ManagerAssigned" xml:space="preserve"><value>Đã gán Quản lý.</value></data>
+  <data name="P2ManagerRevoked" xml:space="preserve"><value>Đã thu hồi Quản lý.</value></data>
+  <data name="P2ManagerSaveFailed" xml:space="preserve"><value>Không thể cập nhật phân công. Vui lòng thử lại.</value></data>
+  <data name="P2NoAvailableManagers" xml:space="preserve"><value>Không còn tài khoản Quản lý nào để gán.</value></data>
+  <data name="P2ManagerAlreadyAssigned" xml:space="preserve"><value>Quản lý đã được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerNotAssigned" xml:space="preserve"><value>Quản lý chưa được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerInvalidRole" xml:space="preserve"><value>Tài khoản được chọn không phải Quản lý.</value></data>
+  <data name="P2ManagerNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản Quản lý.</value></data>
+  <data name="P2ManagerOwnedByAnotherOwner" xml:space="preserve"><value>Quản lý này đã thuộc một chủ trọ khác.</value></data>
+  <data name="ColumnOwner" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="ColumnOwnerOrProperty" xml:space="preserve"><value>Chủ trọ / Nhà trọ</value></data>
+  <data name="OwnerUnassigned" xml:space="preserve"><value>Chưa có chủ trọ</value></data>
+  <data name="OwnerSelf" xml:space="preserve"><value>Chính chủ</value></data>
+  <data name="OwnerNoProperty" xml:space="preserve"><value>Chưa có nhà trọ</value></data>
+  <data name="NotApplicable" xml:space="preserve"><value>—</value></data>
+  <data name="AssignProperties" xml:space="preserve"><value>Phân công tòa nhà</value></data>
+  <data name="AssignPropertiesTitle" xml:space="preserve"><value>Phân công tòa nhà</value></data>
+  <data name="AssignedProperties" xml:space="preserve"><value>Tòa nhà đang được phân công</value></data>
+  <data name="NoAssignedProperties" xml:space="preserve"><value>Chưa được phân công tòa nhà nào.</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Chọn tòa nhà</value></data>
+  <data name="AssignProperty" xml:space="preserve"><value>Phân công</value></data>
+  <data name="RevokeProperty" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="PropertyAssigned" xml:space="preserve"><value>Đã phân công tòa nhà.</value></data>
+  <data name="PropertyRevoked" xml:space="preserve"><value>Đã thu hồi tòa nhà.</value></data>
+  <data name="NoAvailableProperties" xml:space="preserve"><value>Không còn tòa nhà nào để phân công.</value></data>
+  <data name="ManagerOwnerBanner" xml:space="preserve"><value>Chủ trọ của bạn: {0}</value></data>
+  <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>Bạn chưa được phân công cho Chủ trọ nào. Vui lòng liên hệ Chủ trọ để được phân công tòa nhà.</value></data>
+  <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Không tải được thông tin Chủ trọ.</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Phòng</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Theo dõi phòng, giá thuê và trạng thái sử dụng</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Thêm phòng</value></data>
@@ -714,6 +753,29 @@
   <data name="P2RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng hoặc bạn không có quyền truy cập.</value></data>
   <data name="P2DuplicateRoomCode" xml:space="preserve"><value>Mã phòng đã tồn tại trong nhà trọ này.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>Xem danh sách phòng</value></data>
+  <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Phân công Quản lý</value></data>
+  <data name="P2ManagerPanelHint" xml:space="preserve"><value>Quản lý chỉ thấy nhà trọ và phòng được phân công đang hiệu lực.</value></data>
+  <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>Chưa có Quản lý nào được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Phân công từ</value></data>
+  <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Chọn tài khoản Quản lý</value></data>
+  <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Chọn tài khoản Quản lý —</value></data>
+  <data name="P2ManagerOperationFailed" xml:space="preserve"><value>Không thể thực hiện, vui lòng thử lại.</value></data>
+  <data name="P2DeleteProperty" xml:space="preserve"><value>Xóa nhà trọ</value></data>
+  <data name="P2DeletePropertyTitle" xml:space="preserve"><value>Chuyển nhà trọ vào thùng rác?</value></data>
+  <data name="P2DeletePropertyConfirm" xml:space="preserve"><value>Nhà trọ '{0}' sẽ được chuyển vào thùng rác. Bạn có thể khôi phục lại cùng các phòng chưa bị xóa.</value></data>
+  <data name="P2PropertyDeleted" xml:space="preserve"><value>Đã chuyển nhà trọ vào thùng rác.</value></data>
+  <data name="P2PropertyHasRooms" xml:space="preserve"><value>Nhà trọ còn phòng. Hãy chuyển toàn bộ phòng sang thùng rác trước khi xóa.</value></data>
+  <data name="P2PropertyTrashOpen" xml:space="preserve"><value>Thùng rác</value></data>
+  <data name="P2PropertyTrashTitle" xml:space="preserve"><value>Thùng rác nhà trọ</value></data>
+  <data name="P2PropertyTrashSubtitle" xml:space="preserve"><value>Nhà trọ đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
+  <data name="P2PropertyTrashTable" xml:space="preserve"><value>Danh sách nhà trọ trong thùng rác</value></data>
+  <data name="P2PropertyTrashRoomCount" xml:space="preserve"><value>Phòng chờ khôi phục</value></data>
+  <data name="P2PropertyTrashRestoreTitle" xml:space="preserve"><value>Khôi phục nhà trọ?</value></data>
+  <data name="P2PropertyTrashRestoreConfirm" xml:space="preserve"><value>Nhà trọ '{0}' sẽ hiện lại trong danh sách cùng các phòng chưa bị xóa.</value></data>
+  <data name="P2PropertyTrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
+  <data name="P2PropertyTrashRestored" xml:space="preserve"><value>Đã khôi phục nhà trọ.</value></data>
+  <data name="P2PropertyTrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được nhà trọ.</value></data>
+  <data name="P2RoomTrashOpen" xml:space="preserve"><value>Thùng rác</value></data>
   <data name="P2TrashTitle" xml:space="preserve"><value>Thùng rác phòng</value></data>
   <data name="P2TrashSubtitle" xml:space="preserve"><value>Phòng đã xóa mềm. Chỉ chủ trọ xem và khôi phục.</value></data>
   <data name="P2TrashTable" xml:space="preserve"><value>Danh sách phòng trong thùng rác</value></data>
@@ -723,7 +785,8 @@
   <data name="P2TrashRestoring" xml:space="preserve"><value>Đang khôi phục…</value></data>
   <data name="P2TrashRestored" xml:space="preserve"><value>Đã khôi phục phòng.</value></data>
   <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Không khôi phục được phòng. Vui lòng thử lại.</value></data>
-  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác nên không thể khôi phục.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>Mã phòng đã được dùng cho phòng khác trong cùng nhà trọ nên không thể khôi phục.</value></data>
+  <data name="P2RestorePropertyDeleted" xml:space="preserve"><value>Nhà trọ của phòng này đã bị xóa nên không khôi phục được phòng.</value></data>
 
   <!-- VHT-17: giao diện khách thuê và hồ sơ P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
@@ -907,6 +970,9 @@
   </data>
   <data name="TooManyRequests" xml:space="preserve">
     <value>Bạn thao tác quá nhanh. Vui lòng thử lại sau.</value>
+  </data>
+  <data name="LoginIpBlocked" xml:space="preserve">
+    <value>Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau {0} phút.</value>
   </data>
   <data name="CaptchaRequired" xml:space="preserve">
     <value>Vì bạn đã nhập sai nhiều lần, vui lòng trả lời câu hỏi xác minh.</value>
@@ -1111,6 +1177,15 @@
   <data name="RenewRequestFailed" xml:space="preserve"><value>Không gửi được yêu cầu gia hạn. Vui lòng thử lại.</value></data>
   <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="RenewStatusPending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="RenewStatusApproved" xml:space="preserve"><value>Đã chấp thuận</value></data>
+  <data name="RenewStatusRejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="RenewDecidedAtLabel" xml:space="preserve"><value>Ngày trả lời</value></data>
+  <data name="RenewRejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="RenewTabsLabel" xml:space="preserve"><value>Nội dung yêu cầu gia hạn</value></data>
+  <data name="RenewTabRequest" xml:space="preserve"><value>Gửi yêu cầu</value></data>
+  <data name="RenewTabHistory" xml:space="preserve"><value>Kết quả &amp; lịch sử</value></data>
+  <data name="RenewPendingBlocksNew" xml:space="preserve"><value>Yêu cầu mới nhất của bạn vẫn đang chờ Ban quản lý xử lý, chưa gửi thêm được.</value></data>
+  <data name="RenewHistoryEmpty" xml:space="preserve"><value>Bạn chưa gửi yêu cầu gia hạn nào cho hợp đồng này.</value></data>
   <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Gửi ngày</value></data>
   <data name="RenewErrorForbidden" xml:space="preserve"><value>Bạn không có quyền gửi yêu cầu gia hạn cho hợp đồng này.</value></data>
   <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng thuê.</value></data>
@@ -1264,30 +1339,139 @@
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Kỳ chỉ số</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Sự cố</value></data>
   <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
-  <data name="SW-01" xml:space="preserve"><value>Sửa thông tin phòng</value></data>
-  <data name="SW-02" xml:space="preserve"><value>Thiết lập / đổi giá phòng</value></data>
+  <data name="SW-01" xml:space="preserve"><value>Chỉnh sửa thông tin phòng</value></data>
+  <data name="SW-02" xml:space="preserve"><value>Chỉnh sửa giá thuê</value></data>
   <data name="SW-03" xml:space="preserve"><value>Đổi trạng thái phòng</value></data>
-  <data name="SW-04" xml:space="preserve"><value>Tạo hồ sơ khách thuê</value></data>
-  <data name="SW-05" xml:space="preserve"><value>Sửa hồ sơ khách thuê</value></data>
-  <data name="SW-06" xml:space="preserve"><value>Xóa hồ sơ khách thuê</value></data>
+  <data name="SW-04" xml:space="preserve"><value>Tiếp nhận khách thuê</value></data>
+  <data name="SW-05" xml:space="preserve"><value>Chỉnh sửa hồ sơ khách thuê</value></data>
+  <data name="SW-06" xml:space="preserve"><value>Đưa hồ sơ khách thuê vào thùng rác</value></data>
   <data name="SW-07" xml:space="preserve"><value>Gia hạn / thanh lý hợp đồng</value></data>
   <data name="SW-08" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
-  <data name="SW-09" xml:space="preserve"><value>Sửa chỉ số kỳ liền trước</value></data>
-  <data name="SW-10" xml:space="preserve"><value>Tạo / lập hóa đơn</value></data>
+  <data name="SW-09" xml:space="preserve"><value>Sửa chỉ số điện nước kỳ trước</value></data>
+  <data name="SW-10" xml:space="preserve"><value>Lập hóa đơn</value></data>
   <data name="SW-11" xml:space="preserve"><value>Phát hành hóa đơn</value></data>
-  <data name="SW-12" xml:space="preserve"><value>Tạo phiếu bảo trì</value></data>
-  <data name="SW-13" xml:space="preserve"><value>Cập nhật trạng thái xử lý sự cố</value></data>
-  <data name="SW-14" xml:space="preserve"><value>Đính kèm ảnh kết quả</value></data>
-  <data name="SW-15" xml:space="preserve"><value>Xem báo cáo</value></data>
-  <data name="SW-16" xml:space="preserve"><value>Xuất báo cáo (Excel)</value></data>
-  <data name="SW-15a" xml:space="preserve"><value>Xem báo cáo — mục Phòng</value></data>
-  <data name="SW-15b" xml:space="preserve"><value>Xem báo cáo — mục Khách thuê</value></data>
-  <data name="SW-15c" xml:space="preserve"><value>Xem báo cáo — mục Hợp đồng</value></data>
-  <data name="SW-15d" xml:space="preserve"><value>Xem báo cáo — mục Hóa đơn</value></data>
-  <data name="SW-15e" xml:space="preserve"><value>Xem báo cáo — mục Doanh thu / công nợ</value></data>
+  <data name="SW-12" xml:space="preserve"><value>Tạo phiếu sự cố</value></data>
+  <data name="SW-13" xml:space="preserve"><value>Cập nhật xử lý sự cố</value></data>
+  <data name="SW-14" xml:space="preserve"><value>Đính kèm ảnh kết quả xử lý</value></data>
+  <data name="SW-15" xml:space="preserve"><value>Xem báo cáo vận hành</value></data>
+  <data name="SW-15a" xml:space="preserve"><value>Báo cáo — mục Phòng</value></data>
+  <data name="SW-15b" xml:space="preserve"><value>Báo cáo — mục Khách thuê</value></data>
+  <data name="SW-15c" xml:space="preserve"><value>Báo cáo — mục Hợp đồng</value></data>
+  <data name="SW-15d" xml:space="preserve"><value>Báo cáo — mục Điện nước &amp; dịch vụ</value></data>
+  <data name="SW-15e" xml:space="preserve"><value>Báo cáo — mục Sự cố</value></data>
+  <data name="SW-16" xml:space="preserve"><value>Xuất báo cáo Excel</value></data>
+  <data name="SwDesc-SW-01" xml:space="preserve"><value>Quản lý sửa mã phòng, tầng, diện tích và ghi chú của phòng. Không gồm giá thuê và trạng thái phòng.</value></data>
+  <data name="SwDesc-SW-02" xml:space="preserve"><value>Quản lý đổi giá thuê niêm yết của phòng. Giá này dùng khi lập hợp đồng và tính tiền thuê hàng tháng.</value></data>
+  <data name="SwDesc-SW-03" xml:space="preserve"><value>Quản lý chuyển phòng giữa Trống, Đang thuê và Bảo trì. Đổi sai có thể làm hỏng luồng lập hợp đồng và hóa đơn.</value></data>
+  <data name="SwDesc-SW-04" xml:space="preserve"><value>Quản lý tiếp nhận hồ sơ khách thuê mới, gồm thông tin cá nhân và giấy tờ tùy thân.</value></data>
+  <data name="SwDesc-SW-05" xml:space="preserve"><value>Quản lý sửa hồ sơ khách thuê đã có. Số CCCD luôn được che với Quản lý.</value></data>
+  <data name="SwDesc-SW-06" xml:space="preserve"><value>Quản lý đưa hồ sơ khách thuê vào thùng rác (xóa mềm). Chủ trọ vẫn có thể khôi phục.</value></data>
+  <data name="SwDesc-SW-07" xml:space="preserve"><value>Quản lý gia hạn hoặc thanh lý hợp đồng đang hiệu lực.</value></data>
+  <data name="SwDesc-SW-08" xml:space="preserve"><value>Quản lý điều chỉnh tiền cọc đã thỏa thuận trong hợp đồng.</value></data>
+  <data name="SwDesc-SW-09" xml:space="preserve"><value>Quản lý sửa chỉ số điện nước của kỳ đã chốt trước đó. Mỗi lần sửa đều được ghi nhật ký kiểm toán.</value></data>
+  <data name="SwDesc-SW-10" xml:space="preserve"><value>Quản lý lập hóa đơn nháp cho phòng và kỳ tính tiền. Hóa đơn chưa phát hành thì khách thuê chưa thấy.</value></data>
+  <data name="SwDesc-SW-11" xml:space="preserve"><value>Quản lý phát hành hóa đơn nháp để gửi cho khách thuê. Sau khi phát hành, số liệu bị khóa.</value></data>
+  <data name="SwDesc-SW-12" xml:space="preserve"><value>Quản lý tạo phiếu sự cố cho phòng, kèm mô tả và ảnh hiện trạng.</value></data>
+  <data name="SwDesc-SW-13" xml:space="preserve"><value>Quản lý cập nhật trạng thái xử lý của phiếu sự cố, ví dụ đang xử lý hoặc hoàn tất.</value></data>
+  <data name="SwDesc-SW-14" xml:space="preserve"><value>Quản lý đính kèm ảnh kết quả sau khi xử lý sự cố để Chủ trọ đối chiếu.</value></data>
+  <data name="SwDesc-SW-15" xml:space="preserve"><value>Quyết định Quản lý có được mở trang Báo cáo vận hành hay không. Chặn tại đây là chặn toàn bộ các mục bên dưới.</value></data>
+  <data name="SwDesc-SW-15a" xml:space="preserve"><value>Cho phép Quản lý xem mục báo cáo Phòng: số phòng, trạng thái và giá thuê.</value></data>
+  <data name="SwDesc-SW-15b" xml:space="preserve"><value>Cho phép Quản lý xem mục báo cáo Khách thuê: hồ sơ và tình trạng thuê.</value></data>
+  <data name="SwDesc-SW-15c" xml:space="preserve"><value>Dành cho mục báo cáo Hợp đồng. Màn hình báo cáo này chưa có nên công tắc chưa chặn thao tác nào.</value></data>
+  <data name="SwDesc-SW-15d" xml:space="preserve"><value>Dành cho mục báo cáo Điện nước và dịch vụ. Màn hình báo cáo này chưa có nên công tắc chưa chặn thao tác nào.</value></data>
+  <data name="SwDesc-SW-15e" xml:space="preserve"><value>Dành cho mục báo cáo Sự cố. Màn hình báo cáo này chưa có nên công tắc chưa chặn thao tác nào.</value></data>
+  <data name="SwDesc-SW-16" xml:space="preserve"><value>Quyết định Quản lý có được xuất báo cáo ra Excel hay không. Tệp xuất không bao giờ chứa số CCCD.</value></data>
+  <data name="SwDetail-SW-01" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu sửa phòng vào Hàng đợi duyệt và chỉ ghi sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không mở được form chỉnh sửa phòng.</value></data>
+  <data name="SwDetail-SW-02" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu đổi giá vào Hàng đợi duyệt. Chọn Chặn: Quản lý không đổi được giá thuê.</value></data>
+  <data name="SwDetail-SW-03" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu đổi trạng thái vào Hàng đợi duyệt. Chọn Chặn: Quản lý không đổi được trạng thái phòng.</value></data>
+  <data name="SwDetail-SW-04" xml:space="preserve"><value>Chọn Cần duyệt: hồ sơ khách thuê mới chỉ được tạo sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không mở được form tiếp nhận.</value></data>
+  <data name="SwDetail-SW-05" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu sửa hồ sơ vào Hàng đợi duyệt, dữ liệu cũ giữ nguyên. Chọn Chặn: Quản lý không sửa được hồ sơ.</value></data>
+  <data name="SwDetail-SW-06" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu xóa vào Hàng đợi duyệt, hồ sơ chưa bị chuyển vào thùng rác. Chọn Chặn: Quản lý không xóa được hồ sơ.</value></data>
+  <data name="SwDetail-SW-07" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu gia hạn hoặc thanh lý vào Hàng đợi duyệt. Chọn Chặn: Quản lý không thao tác được trên hợp đồng.</value></data>
+  <data name="SwDetail-SW-08" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu đổi tiền cọc vào Hàng đợi duyệt. Chọn Chặn: Quản lý không sửa được tiền cọc.</value></data>
+  <data name="SwDetail-SW-09" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu sửa chỉ số vào Hàng đợi duyệt. Chọn Chặn: Quản lý không sửa được chỉ số kỳ đã chốt.</value></data>
+  <data name="SwDetail-SW-10" xml:space="preserve"><value>Chọn Cần duyệt: hóa đơn nháp chỉ được tạo sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không lập được hóa đơn.</value></data>
+  <data name="SwDetail-SW-11" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu phát hành vào Hàng đợi duyệt, hóa đơn vẫn ở trạng thái nháp. Chọn Chặn: Quản lý không phát hành được hóa đơn.</value></data>
+  <data name="SwDetail-SW-12" xml:space="preserve"><value>Chọn Cần duyệt: phiếu sự cố chỉ được tạo sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không mở được form báo sự cố.</value></data>
+  <data name="SwDetail-SW-13" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu đổi trạng thái xử lý vào Hàng đợi duyệt. Chọn Chặn: Quản lý không cập nhật được phiếu sự cố.</value></data>
+  <data name="SwDetail-SW-14" xml:space="preserve"><value>Chọn Cần duyệt: ảnh kết quả chỉ được đính kèm sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không tải được ảnh kết quả.</value></data>
+  <data name="SwDetail-SW-15" xml:space="preserve"><value>Chọn Chặn: Quản lý không mở được trang Báo cáo vận hành, kể cả các mục bên dưới.</value></data>
+  <data name="SwDetail-SW-15a" xml:space="preserve"><value>Chọn Chặn: Quản lý không xem được mục báo cáo Phòng.</value></data>
+  <data name="SwDetail-SW-15b" xml:space="preserve"><value>Chọn Chặn: Quản lý không xem được mục báo cáo Khách thuê.</value></data>
+  <data name="SwDetail-SW-15c" xml:space="preserve"><value>Chọn Chặn: sẽ chặn mục báo cáo Hợp đồng khi màn hình này được bổ sung.</value></data>
+  <data name="SwDetail-SW-15d" xml:space="preserve"><value>Chọn Chặn: sẽ chặn mục báo cáo Điện nước và dịch vụ khi màn hình này được bổ sung.</value></data>
+  <data name="SwDetail-SW-15e" xml:space="preserve"><value>Chọn Chặn: sẽ chặn mục báo cáo Sự cố khi màn hình này được bổ sung.</value></data>
+  <data name="SwDetail-SW-16" xml:space="preserve"><value>Chọn Cần duyệt: yêu cầu xuất Excel vào Hàng đợi duyệt, tệp chỉ được tạo sau khi Chủ trọ duyệt. Chọn Chặn: Quản lý không xuất được báo cáo.</value></data>
+  <data name="SwGroupP2" xml:space="preserve"><value>Phòng</value></data>
+  <data name="SwGroupP3" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="SwGroupP4" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="SwGroupP5" xml:space="preserve"><value>Chỉ số điện nước</value></data>
+  <data name="SwGroupP6" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="SwGroupP7" xml:space="preserve"><value>Sự cố</value></data>
+  <data name="SwGroupP8" xml:space="preserve"><value>Báo cáo</value></data>
+  <data name="SwModeLabel" xml:space="preserve"><value>Chế độ áp dụng cho Quản lý</value></data>
+  <data name="SwModeAllow" xml:space="preserve"><value>Cho phép</value></data>
+  <data name="SwModeApprove" xml:space="preserve"><value>Cần duyệt</value></data>
+  <data name="SwModeDeny" xml:space="preserve"><value>Chặn</value></data>
+  <data name="SwModesTitle" xml:space="preserve"><value>Cách công tắc hoạt động</value></data>
+  <data name="SwModeHelpAllow" xml:space="preserve"><value>Quản lý thực hiện ngay, không cần Chủ trọ duyệt.</value></data>
+  <data name="SwModeHelpApprove" xml:space="preserve"><value>Yêu cầu của Quản lý vào Hàng đợi duyệt và chỉ có hiệu lực sau khi Chủ trọ duyệt.</value></data>
+  <data name="SwModeHelpDeny" xml:space="preserve"><value>Quản lý không thực hiện được thao tác này.</value></data>
+  <data name="SwOwnerNote" xml:space="preserve"><value>Công tắc chỉ áp dụng cho Quản lý. Thao tác của Chủ trọ luôn có hiệu lực ngay.</value></data>
+  <data name="SwExplainShow" xml:space="preserve"><value>Xem tác động</value></data>
+  <data name="SwExplainHide" xml:space="preserve"><value>Thu gọn</value></data>
   <data name="ForgotPasswordTitle" xml:space="preserve"><value>Quên mật khẩu?</value></data>
   <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Nhập email của bạn.</value></data>
   <data name="ResetPasswordButton" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="BackToLogin" xml:space="preserve"><value>Quay lại đăng nhập</value></data>
+  <data name="InviteTenantButton" xml:space="preserve"><value>Mời khách thuê</value></data>
+  <data name="InviteTenantTitle" xml:space="preserve"><value>Mời khách thuê</value></data>
+  <data name="InviteTenantEmailHint" xml:space="preserve"><value>Lời mời sẽ được gửi tới email này.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>Khách mở email, đặt mật khẩu; hồ sơ tạo ra sẽ thuộc chủ trọ của bạn.</value></data>
+  <data name="InviteTenantSend" xml:space="preserve"><value>Gửi lời mời</value></data>
+  <data name="InviteTenantSent" xml:space="preserve"><value>Đã gửi lời mời qua email.</value></data>
+  <data name="InviteTenantEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="InviteTenantForbidden" xml:space="preserve"><value>Bạn chưa được gán cho chủ trọ nào.</value></data>
+  <data name="InviteTenantFailed" xml:space="preserve"><value>Không gửi được lời mời.</value></data>
+  <data name="InviteAcceptTitle" xml:space="preserve"><value>Tham gia hệ thống nhà trọ</value></data>
+  <data name="InviteAcceptAccount" xml:space="preserve"><value>Tài khoản: {0}</value></data>
+  <data name="InviteAcceptPasswordHint" xml:space="preserve"><value>Mật khẩu tối thiểu 8 ký tự.</value></data>
+  <data name="InviteAcceptSubmit" xml:space="preserve"><value>Đặt mật khẩu và tham gia</value></data>
+  <data name="InviteAcceptSuccess" xml:space="preserve"><value>Đã tạo tài khoản. Hãy đăng nhập bằng email và mật khẩu vừa đặt.</value></data>
+  <data name="InviteAcceptInvalid" xml:space="preserve"><value>Liên kết không hợp lệ, đã dùng hoặc đã hết hạn.</value></data>
+  <data name="InviteAcceptExpired" xml:space="preserve"><value>Lời mời đã hết hạn. Vui lòng liên hệ chủ trọ.</value></data>
+  <data name="InviteAcceptUsed" xml:space="preserve"><value>Lời mời đã được sử dụng.</value></data>
+  <data name="InviteAcceptEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="InviteAcceptFailed" xml:space="preserve"><value>Không tạo được tài khoản. Vui lòng kiểm tra mật khẩu.</value></data>
+  <data name="RegisterOwnerTitle" xml:space="preserve"><value>Đăng ký chủ trọ</value></data>
+  <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Tạo tài khoản chủ trọ để tự quản lý nhà trọ của bạn.</value></data>
+  <data name="RegisterOwnerButton" xml:space="preserve"><value>Gửi đăng ký</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>Sau khi gửi, quản trị viên sẽ duyệt tài khoản trước khi bạn đăng nhập được.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Đã gửi yêu cầu đăng ký. Tài khoản đang chờ quản trị viên duyệt; hãy kiểm tra email để xác nhận địa chỉ.</value></data>
+  <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
+  <data name="RegisterOwnerFailed" xml:space="preserve"><value>Không đăng ký được. Kiểm tra lại thông tin và mật khẩu (tối thiểu 8 ký tự, có chữ hoa, chữ thường và số).</value></data>
+  <data name="RegisterOwnerLogin" xml:space="preserve"><value>Đã có tài khoản? Đăng nhập</value></data>
+  <data name="RegisterOwnerLink" xml:space="preserve"><value>Chưa có tài khoản? Đăng ký làm chủ trọ</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Xóa</value></data>
+  <data name="DeleteAccountTitle" xml:space="preserve"><value>Xóa tài khoản</value></data>
+  <data name="DeleteAccountMessage" xml:space="preserve"><value>Xóa vĩnh viễn tài khoản {0}? Hành động này không hoàn tác được.</value></data>
+  <data name="DeleteAccountConfirm" xml:space="preserve"><value>Xóa tài khoản</value></data>
+  <data name="AccountDeleted" xml:space="preserve"><value>Đã xóa tài khoản.</value></data>
+  <data name="ErrorCannotDeleteSelf" xml:space="preserve"><value>Không thể xóa tài khoản đang đăng nhập.</value></data>
+  <data name="ErrorCannotDeleteLastAdmin" xml:space="preserve"><value>Không thể xóa Admin cuối cùng của hệ thống.</value></data>
+  <data name="ErrorAccountInUse" xml:space="preserve"><value>Tài khoản còn gắn hồ sơ khách thuê. Hãy bỏ liên kết trước khi xóa.</value></data>
+  <data name="AccountTrash" xml:space="preserve"><value>Thùng rác</value></data>
+  <data name="AccountTrashTitle" xml:space="preserve"><value>Tài khoản đã xóa</value></data>
+  <data name="AccountTrashEmpty" xml:space="preserve"><value>Thùng rác trống.</value></data>
+  <data name="AccountDeletedAt" xml:space="preserve"><value>Đã xóa lúc</value></data>
+  <data name="AccountRestore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="AccountRestored" xml:space="preserve"><value>Đã khôi phục tài khoản.</value></data>
+  <data name="ForgotPasswordHint" xml:space="preserve"><value>Nhập email đã đăng ký. Hệ thống sẽ gửi liên kết đặt lại mật khẩu.</value></data>
+  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết trong vài phút. Nhớ kiểm tra cả thư mục Spam.</value></data>
+  <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Dùng đúng email của tài khoản cần đặt lại.</value></data>
+  <data name="ResetPasswordConfirmationHint" xml:space="preserve"><value>Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.</value></data>
+  <data name="ResetPasswordError" xml:space="preserve"><value>Không đặt lại được mật khẩu: {0}</value></data>
+  <data name="ResetPasswordInvalidToken" xml:space="preserve"><value>Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.</value></data>
   <data name="RecoveryCodeTitle" xml:space="preserve"><value>Xác minh mã khôi phục</value></data>
   <data name="RecoveryCodePlaceholder" xml:space="preserve"><value>Mã khôi phục</value></data>
   <data name="RecoveryCodeLabel" xml:space="preserve"><value>Mã khôi phục</value></data>
@@ -1330,6 +1514,7 @@
   <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Không thể cập nhật số điện thoại.</value></data>
   <data name="ManageEmailTitle" xml:space="preserve"><value>Quản lý email</value></data>
   <data name="EmailPlaceholder" xml:space="preserve"><value>Nhập email</value></data>
+  <data name="EmailConfirmedLabel" xml:space="preserve"><value>Đã xác minh</value></data>
   <data name="SendVerificationEmailAction" xml:space="preserve"><value>Gửi email xác minh</value></data>
   <data name="NewEmailLabel" xml:space="preserve"><value>Email mới</value></data>
   <data name="NewEmailPlaceholder" xml:space="preserve"><value>Nhập email mới</value></data>
@@ -1469,4 +1654,24 @@
   <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Bản xem trước mô phỏng</value></data>
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Bản xem trước mô phỏng thông tin tệp. Vui lòng tải xuống tệp gốc để xem toàn bộ nội dung quét thực tế.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Không hỗ trợ xem trước trực tiếp loại tệp này. Vui lòng tải tệp xuống để xem nội dung đầy đủ.</value></data>
+  <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Thay đổi được lưu tự động. Mục báo cáo chỉ có hai lựa chọn: Cho phép hoặc Chặn.</value></data>
+  <data name="RoomPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
+  <data name="RoomCodeRequired" xml:space="preserve"><value>Vui lòng nhập mã phòng.</value></data>
+  <data name="RoomCodeMaxLength" xml:space="preserve"><value>Mã phòng không được vượt quá 50 ký tự.</value></data>
+  <data name="RoomFloorInvalid" xml:space="preserve"><value>Tầng phải nằm trong khoảng từ 0 đến 1000.</value></data>
+  <data name="RoomAreaInvalid" xml:space="preserve"><value>Diện tích phải nằm trong khoảng từ 0 đến 100000 m².</value></data>
+  <data name="RoomPriceInvalid" xml:space="preserve"><value>Giá thuê không hợp lệ.</value></data>
+  <data name="RoomStatusInvalid" xml:space="preserve"><value>Trạng thái phòng không hợp lệ.</value></data>
+  <data name="TenantFullNameRequired" xml:space="preserve"><value>Vui lòng nhập họ tên.</value></data>
+  <data name="TenantFullNameMaxLength" xml:space="preserve"><value>Họ tên không được vượt quá 200 ký tự.</value></data>
+  <data name="TenantPhoneRequired" xml:space="preserve"><value>Vui lòng nhập số điện thoại.</value></data>
+  <data name="TenantPhoneMaxLength" xml:space="preserve"><value>Số điện thoại không được vượt quá 20 ký tự.</value></data>
+  <data name="TenantEmailInvalid" xml:space="preserve"><value>Email không hợp lệ.</value></data>
+  <data name="TenantEmailMaxLength" xml:space="preserve"><value>Email không được vượt quá 256 ký tự.</value></data>
+  <data name="TenantIdNumberMaxLength" xml:space="preserve"><value>Số CCCD/CMND không được vượt quá 20 ký tự.</value></data>
+  <data name="TenantGenderInvalid" xml:space="preserve"><value>Giới tính không hợp lệ.</value></data>
+  <data name="TenantAddressMaxLength" xml:space="preserve"><value>Địa chỉ không được vượt quá 300 ký tự.</value></data>
+  <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Nơi cấp không được vượt quá 200 ký tự.</value></data>
+  <data name="TenantNoteMaxLength" xml:space="preserve"><value>Ghi chú không được vượt quá 500 ký tự.</value></data>
+  <data name="TenantRowVersionRequired" xml:space="preserve"><value>Thiếu RowVersion.</value></data>
 </root>

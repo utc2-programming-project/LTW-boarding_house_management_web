@@ -1,5 +1,5 @@
 @inject IStringLocalizer<DashboardResource> L
-<div class="kpi-grid">
+<div class="kpi-grid @(IsOwner ? "kpi-grid-owner" : null)">
 @foreach (var key in Keys)
 {
     var isRoom = key is "TotalRooms" or "Occupancy";

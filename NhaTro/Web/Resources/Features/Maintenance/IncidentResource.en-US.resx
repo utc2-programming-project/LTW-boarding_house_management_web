@@ -448,6 +448,9 @@
   <data name="FileSizeExceeded" xml:space="preserve"><value>Photos must not be empty or exceed 5 MB.</value></data>
   <data name="UploadFailed" xml:space="preserve"><value>Photo upload failed. Please retry.</value></data>
   <data name="PendingPhotosMissing" xml:space="preserve"><value>Some photos are missing. Select the missing photos to complete this request.</value></data>
+  <data name="AllFilterValues" xml:space="preserve"><value>All</value></data>
+  <data name="SearchTitle" xml:space="preserve"><value>Search incident titles</value></data>
+  <data name="SearchRoom" xml:space="preserve"><value>Search properties or rooms</value></data>
   <data name="Resolution" xml:space="preserve"><value>Resolution</value></data>
   <data name="CompletedAt" xml:space="preserve"><value>Completed at</value></data>
   <data name="ImageViewer" xml:space="preserve"><value>Image viewer</value></data>

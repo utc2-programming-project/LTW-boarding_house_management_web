@@ -21,7 +21,6 @@ using Web.Features.Invoices;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Enums;
 using Web.Features.Invoices.Services;
-using Web.Features.Payments.Services;
 using Web.Features.Reports.Services;
 using Web.Features.Maintenance;
 using Web.Features.Maintenance.DTOs;
@@ -346,11 +345,14 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
             new RoomSave { PropertyId = propertyA.Property!.Id, Code = "A101", StandardPrice = 1_500_000m }, OwnerA);
         var roomSpare = await rooms.CreateAsync(
             new RoomSave { PropertyId = propertyA.Property.Id, Code = "A102", StandardPrice = 2_000_000m }, OwnerA);
+        // Nhà B cố ý dùng lại mã "A101": mã phòng chỉ duy nhất trong từng nhà trọ (ERD VHT-5),
+        // nên world của ma trận quyền đồng thời là chốt chặn cho quy tắc đó.
         var roomB = await rooms.CreateAsync(
             new RoomSave { PropertyId = propertyB.Property!.Id, Code = "A101", StandardPrice = 1_800_000m }, OwnerB);
         if (!roomA.Succeeded || !roomSpare.Succeeded || !roomB.Succeeded)
         {
-            throw new InvalidOperationException("Seed phòng thất bại.");
+            throw new InvalidOperationException(
+                $"Seed phòng thất bại: {roomA.ErrorCode} / {roomSpare.ErrorCode} / {roomB.ErrorCode}");
         }
 
         await NewAssignments().AssignAsync(propertyA.Property.Id, ManagerAId, OwnerA);

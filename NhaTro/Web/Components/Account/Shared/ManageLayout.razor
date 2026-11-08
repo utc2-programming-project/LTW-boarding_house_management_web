@@ -2,17 +2,18 @@
 @layout Web.Components.Layout.MainLayout
 @inject IStringLocalizer<Shared> L
 
-<h1>@L["ManageAccountTitle"]</h1>
+<section class="account-shell">
+    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ManageAccountTitle"]) })" />
 
-<div>
-    <h2>@L["ManageAccountSubtitle"]</h2>
-    <hr />
-    <div class="row">
-        <div class="col-lg-3">
-            <ManageNavMenu />
+    <header class="page-heading">
+        <div>
+            <h1 id="account-title">@L["ManageAccountTitle"]</h1>
+            <p>@L["ManageAccountSubtitle"]</p>
         </div>
-        <div class="col-lg-9">
-            @Body
-        </div>
+    </header>
+
+    <div class="account-body">
+        <ManageNavMenu />
+        <div class="account-panel">@Body</div>
     </div>
-</div>
+</section>

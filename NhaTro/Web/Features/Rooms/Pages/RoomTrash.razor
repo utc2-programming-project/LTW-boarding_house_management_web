@@ -133,6 +133,7 @@
             Toasts.Error(result.ErrorCode switch
             {
                 RoomErrorCodes.DuplicateRoomCode => L["P2RestoreDuplicateCode"],
+                RoomErrorCodes.PropertyDeleted => L["P2RestorePropertyDeleted"],
                 RoomErrorCodes.Forbidden => L["P2Forbidden"],
                 RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
                 _ => L["P2TrashRestoreFailed"]

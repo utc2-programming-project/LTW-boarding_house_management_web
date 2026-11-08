@@ -62,6 +62,13 @@ public static class RateLimitPolicies
         return LoginPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
     }
 
+    // PLAN-008: chặn spam đăng ký chủ trọ từ một IP.
+    private static readonly string[] RegisterPaths = ["/account/registerowner"];
+
+    public static bool IsRegisterRequest(HttpContext http) =>
+        HttpMethods.IsPost(http.Request.Method)
+        && RegisterPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Bỏ '/' cuối để "/Account/Login/" không lách được giới hạn; "/" giữ nguyên.
     /// </summary>
@@ -72,17 +79,19 @@ public static class RateLimitPolicies
     }
 
     /// <summary>
-    /// Phản hồi 429 an toàn: JSON theo cấu trúc storage cho <c>/api</c>, còn lại là thông báo
-    /// đã bản địa hoá. Không lộ chi tiết nội bộ.
+    /// Phản hồi khi vượt giới hạn: JSON theo cấu trúc storage cho <c>/api</c>; POST đăng nhập thì
+    /// chuyển về form đăng nhập kèm thông báo đã bản địa hoá; còn lại là 429 text.
+    /// Không lộ chi tiết nội bộ.
     /// </summary>
     public static async ValueTask WriteRejectionAsync(OnRejectedContext context, CancellationToken cancellationToken)
     {
-        var response = context.HttpContext.Response;
-        response.StatusCode = StatusCodes.Status429TooManyRequests;
+        var http = context.HttpContext;
+        var response = http.Response;
         response.Headers.CacheControl = "no-store";
 
-        if (context.HttpContext.Request.Path.StartsWithSegments("/api"))
+        if (http.Request.Path.StartsWithSegments("/api"))
         {
+            response.StatusCode = StatusCodes.Status429TooManyRequests;
             await response.WriteAsJsonAsync(
                 UploadResult.Failure(
                     StorageErrorCodes.UploadFailed,
@@ -91,7 +100,24 @@ public static class RateLimitPolicies
             return;
         }
 
-        var localizer = context.HttpContext.RequestServices.GetService<IStringLocalizer<Shared>>();
+        // POST đăng nhập: trả về form thật kèm thông báo, tránh trình duyệt hiện trang trắng
+        // chỉ có một dòng text thô (lỗi UI khi bị giới hạn tần suất).
+        if (IsLoginRequest(http))
+        {
+            var target = "/login?tooManyRequests=1";
+            var returnUrl = http.Request.Query["ReturnUrl"].ToString();
+            if (!string.IsNullOrWhiteSpace(returnUrl))
+            {
+                target += "&ReturnUrl=" + Uri.EscapeDataString(returnUrl);
+            }
+
+            response.StatusCode = StatusCodes.Status303SeeOther;
+            response.Headers.Location = target;
+            return;
+        }
+
+        response.StatusCode = StatusCodes.Status429TooManyRequests;
+        var localizer = http.RequestServices.GetService<IStringLocalizer<Shared>>();
         var message = localizer?["TooManyRequests"].Value ?? "Bạn thao tác quá nhanh, vui lòng thử lại sau.";
         await response.WriteAsync(message, cancellationToken);
     }

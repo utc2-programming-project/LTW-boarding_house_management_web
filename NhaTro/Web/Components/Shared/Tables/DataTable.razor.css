@@ -11,6 +11,42 @@
     overflow-x: auto;
 }
 
+/* Bộ lọc độc lập vùng cuộn bảng; chỉ áp dụng khi trang bật toolbar. */
+.filter-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border, #E2E8F0);
+}
+
+.filter-field { min-width: 0; }
+
+.filter-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-primary, #0D131B);
+    font-size: .875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+}
+
+.filter-toolbar .filter-input {
+    min-width: 0;
+    min-height: 44px;
+    font-size: .875rem;
+    line-height: 1.375rem;
+}
+
+.filter-toolbar .filter-input::placeholder { color: var(--text-muted, #64748B); }
+
+.filter-toolbar-actions {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -220,6 +256,10 @@ thead th.numeric .sort-button {
 }
 
 @media (max-width: 767.98px) {
+    .filter-toolbar { grid-template-columns: minmax(0, 1fr); }
+    .filter-toolbar .filter-input { font-size: 1rem; line-height: 1.5rem; }
+    .filter-toolbar-actions { justify-content: flex-start; }
+    .filter-toolbar-actions ::deep .btn { min-height: 44px; }
     .page-button {
         min-width: 44px;
         height: 44px;

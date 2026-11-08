@@ -1,0 +1,68 @@
+@inject IStringLocalizer<HomeResource> L
+
+@if (Section.State == HomeLoadState.Loading)
+{
+    <div class="kpi-grid" aria-busy="true">
+        @for (var index = 0; index < 4; index++)
+        {
+            <article class="kpi-card" aria-hidden="true"><span class="skeleton"></span></article>
+        }
+    </div>
+}
+else if (Section.State is HomeLoadState.Error or HomeLoadState.Denied)
+{
+    <div class="kpi-feedback" role="status">
+        <p>@L[Section.State == HomeLoadState.Denied ? "Denied" : "Error"]</p>
+        <button type="button" class="btn btn-secondary" @onclick="Retry">@L["Retry"]</button>
+    </div>
+}
+else
+{
+    <div class="kpi-grid">
+        @foreach (var kpi in Section.Items)
+        {
+            @if (kpi.Unavailable)
+            {
+                <article class="kpi-card unavailable">
+                    <h2>@L[kpi.Key]</h2>
+                    <span class="value">—</span>
+                    <p class="hint">@L["KpiUnavailable"]</p>
+                    <button type="button" class="btn btn-secondary retry" @onclick="Retry">@L["Retry"]</button>
+                </article>
+            }
+            else if (kpi.Href is null)
+            {
+                <article class="kpi-card">@CardContent(kpi)</article>
+            }
+            else
+            {
+                <a class="kpi-card kpi-link" href="@kpi.Href">@CardContent(kpi)</a>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public HomeSection<HomeKpi> Section { get; set; } = HomeSection<HomeKpi>.Loading();
+    [Parameter] public EventCallback Retry { get; set; }
+
+    private RenderFragment CardContent(HomeKpi kpi) => @<text>
+        <h2>@L[kpi.Key]</h2>
+        <span class="value">@kpi.Value</span>
+        @if (!string.IsNullOrEmpty(kpi.HintKey) || !string.IsNullOrEmpty(kpi.Hint))
+        {
+            <p class="hint">@HintText(kpi)</p>
+        }
+    </text>;
+
+    private string HintText(HomeKpi kpi)
+    {
+        var label = string.IsNullOrEmpty(kpi.HintKey) ? "" : L[kpi.HintKey].Value;
+        if (string.IsNullOrEmpty(kpi.Hint))
+        {
+            return label;
+        }
+
+        return string.IsNullOrEmpty(label) ? kpi.Hint : $"{label}: {kpi.Hint}";
+    }
+}

@@ -6,8 +6,32 @@
 .p2-detail-grid > div { min-width: 0; padding: 16px; border-radius: var(--radius-card); background: var(--surface-subtle); }
 .p2-detail-grid dt { color: var(--text-secondary); font-size: .8125rem; }
 .p2-detail-grid dd { margin: 6px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.p2-managers { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--control-border); }
+.p2-managers-heading h3 { margin: 0; font-size: 1.05rem; }
+.p2-managers-heading p { margin: 4px 0 16px; color: var(--text-secondary); }
+.p2-alert.success { border-color: var(--success-border); background: var(--success-bg); color: var(--success-text); }
+.p2-manager-list { display: grid; gap: 10px; margin: 0 0 16px; padding: 0; list-style: none; }
+.p2-manager-list > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-control); }
+.p2-manager-info { display: grid; gap: 4px; min-width: 0; }
+.p2-manager-info strong { overflow-wrap: anywhere; }
+.p2-manager-info span, .p2-manager-empty { color: var(--text-secondary); font-size: .875rem; }
+.p2-manager-empty { margin: 0 0 16px; color: var(--text-secondary); }
+.p2-manager-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
+.p2-manager-form label { grid-column: 1 / -1; font-weight: 600; }
+.p2-manager-form select { min-height: 44px; }
 .p2-details-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 16px; border: 1px solid transparent; border-radius: var(--radius-control); font-weight: 600; }
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-secondary { border-color: var(--control-border); background: var(--surface); color: var(--text-primary); }
-@media (max-width: 560px) { .p2-details-body { padding: 16px; } .p2-detail-grid { grid-template-columns: minmax(0, 1fr); } .p2-details-actions > button { flex: 1; } }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.p2-manager-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--control-border); }
+.p2-manager-heading { margin: 0; font-size: 1rem; }
+.p2-manager-hint { margin: 6px 0 16px; color: var(--text-secondary); font-size: .8125rem; }
+.p2-manager-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 14px; border-radius: var(--radius-control); background: var(--surface-subtle); }
+.p2-manager-email { font-weight: 600; overflow-wrap: anywhere; }
+.p2-manager-since { flex: 1; color: var(--text-secondary); font-size: .8125rem; }
+.p2-manager-assign { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.p2-manager-assign .filter-select { flex: 1; min-width: 220px; }
+.p2-manager-assign select { width: 100%; min-height: 44px; padding: 9px 12px; border: 1px solid var(--control-border); border-radius: var(--radius-control); background: var(--surface); color: var(--text-primary); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 560px) { .p2-details-body { padding: 16px; } .p2-detail-grid { grid-template-columns: minmax(0, 1fr); } .p2-details-actions > button { flex: 1; } .p2-manager-assign > * { width: 100%; } }

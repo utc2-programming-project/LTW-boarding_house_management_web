@@ -274,7 +274,16 @@
   <data name="TariffElectricShortName" xml:space="preserve"><value>Household electricity</value></data>
   <data name="TariffWaterShortName" xml:space="preserve"><value>Household water</value></data>
   <data name="TariffTierServiceName" xml:space="preserve"><value>{0} - Tier {1} ({2} {3})</value></data>
+  <data name="TariffTierRangeLabel" xml:space="preserve"><value>Tier {0}: {1} {2}</value></data>
   <data name="SystemCreatorLabel" xml:space="preserve"><value>System</value></data>
   <data name="BuildingFallbackName" xml:space="preserve"><value>Property #{0}</value></data>
   <data name="AllBuildingsDescription" xml:space="preserve"><value>Entire system</value></data>
+  <data name="DeleteServiceTooltip" xml:space="preserve"><value>Delete service</value></data>
+  <data name="DeleteServiceTitle" xml:space="preserve"><value>Delete service</value></data>
+  <data name="DeleteServiceConfirm" xml:space="preserve"><value>Delete service "{0}"? It will no longer appear in the catalog; price history is kept.</value></data>
+  <data name="DeleteServiceAction" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeletingService" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="ToastServiceDeletedSuccess" xml:space="preserve"><value>Service deleted.</value></data>
+  <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Only the landlord can delete services.</value></data>
+  <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Delete completed but could not be verified. Please reload the page.</value></data>
 </root>

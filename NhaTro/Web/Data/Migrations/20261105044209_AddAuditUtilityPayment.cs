@@ -30,35 +30,6 @@ namespace Web.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Payments",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    TransferredAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    TransactionCode = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    ProofFileIdsJson = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    RequestedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    ReviewedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    RejectionReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    SubmittedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Payments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Payments_Invoices_InvoiceId",
-                        column: x => x.InvoiceId,
-                        principalTable: "Invoices",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UtilityReadings",
                 columns: table => new
                 {
@@ -124,11 +95,6 @@ namespace Web.Data.Migrations
                 column: "PropertyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_InvoiceId",
-                table: "Payments",
-                column: "InvoiceId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UtilityReadingAudits_UtilityReadingId",
                 table: "UtilityReadingAudits",
                 column: "UtilityReadingId");
@@ -145,9 +111,6 @@ namespace Web.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AuditLogEntries");
-
-            migrationBuilder.DropTable(
-                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "UtilityReadingAudits");

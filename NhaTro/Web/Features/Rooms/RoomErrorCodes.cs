@@ -7,6 +7,9 @@ public static class RoomErrorCodes
     public const string Forbidden = nameof(Forbidden);
     public const string RoomNotFound = nameof(RoomNotFound);
     public const string PropertyNotFound = nameof(PropertyNotFound);
+
+    /// <summary>Phòng trong thùng rác thuộc nhà trọ đã bị xóa mềm: khôi phục sẽ tạo phòng mồ côi.</summary>
+    public const string PropertyDeleted = nameof(PropertyDeleted);
     public const string DuplicateRoomCode = nameof(DuplicateRoomCode);
     public const string RoomInUse = nameof(RoomInUse);
     public const string ApprovalRequired = nameof(ApprovalRequired);
@@ -21,6 +24,7 @@ public static class RoomErrorMessages
     public const string Forbidden = "Bạn không có quyền thực hiện thao tác này";
     public const string RoomNotFound = "Không tìm thấy phòng";
     public const string PropertyNotFound = "Không tìm thấy nhà trọ";
+    public const string PropertyDeleted = "Nhà trọ của phòng này đã bị xóa nên không khôi phục được phòng";
     public const string DuplicateRoomCode = "Mã phòng đã tồn tại trong nhà trọ này";
     public const string RoomInUse = "Phòng đang có hợp đồng hiệu lực, không thể xóa";
     public const string ApprovalRequired = "Thay đổi đang chờ Chủ trọ duyệt";

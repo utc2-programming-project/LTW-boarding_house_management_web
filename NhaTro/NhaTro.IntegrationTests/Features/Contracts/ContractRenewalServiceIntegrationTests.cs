@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Contracts;
+using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Rules;
@@ -30,6 +31,18 @@ public sealed class ContractRenewalServiceIntegrationTests(SqlServerFixture fixt
 
     private static TenantCaller TenantCallerOf(string userId) => new(userId, Roles.KhachThue);
 
+    /// <summary>Tab "Kết quả &amp; lịch sử" đọc ListForContractAsync; phần tử đầu là yêu cầu mới nhất.</summary>
+    private static async Task<ContractRenewalResult> LatestAsync(
+        ContractRenewalService service,
+        TenantCaller caller,
+        Guid contractId)
+    {
+        var history = await service.ListForContractAsync(caller, contractId);
+        return history.Succeeded
+            ? ContractRenewalResult.Success(history.Items.FirstOrDefault())
+            : ContractRenewalResult.Failure(history.ErrorCode!, history.ErrorMessage!);
+    }
+
     [SqlServerFact]
     public async Task Gui_yeu_cau_luu_dong_cho_xu_ly_va_doc_lai_dung_dinh_dang()
     {
@@ -54,12 +67,12 @@ public sealed class ContractRenewalServiceIntegrationTests(SqlServerFixture fixt
         Assert.Equal((await TenantOfAsync(db, TenantUserId)).Id, stored.RequestedByTenantId);
         Assert.Equal(RenewalRequestStatus.Pending, stored.Status);
 
-        var pending = await service.GetPendingAsync(TenantCallerOf(TenantUserId), contract.ContractId);
+        var pending = await LatestAsync(service, TenantCallerOf(TenantUserId), contract.ContractId);
         Assert.True(pending.Succeeded, pending.ErrorMessage);
         Assert.Equal(submitted.Request.Id, pending.Request!.Id);
 
         // Cùng hợp đồng nên khách ở ghép thấy đúng một yêu cầu đang chờ, không thấy bản riêng.
-        var asRoommate = await service.GetPendingAsync(TenantCallerOf(RoommateUserId), contract.ContractId);
+        var asRoommate = await LatestAsync(service, TenantCallerOf(RoommateUserId), contract.ContractId);
         Assert.Equal(submitted.Request.Id, asRoommate.Request!.Id);
     }
 
@@ -104,7 +117,7 @@ public sealed class ContractRenewalServiceIntegrationTests(SqlServerFixture fixt
             TenantCallerOf(TenantUserId), Guid.NewGuid(), 6, null);
         Assert.Equal(ContractRenewalErrorCodes.Forbidden, unknownContract.ErrorCode);
 
-        Assert.False((await service.GetPendingAsync(TenantCallerOf(OtherTenantUserId), contract.ContractId)).Succeeded);
+        Assert.False((await LatestAsync(service, TenantCallerOf(OtherTenantUserId), contract.ContractId)).Succeeded);
         Assert.Empty(await db.ContractRenewalRequests.ToListAsync());
     }
 
@@ -163,14 +176,16 @@ public sealed class ContractRenewalServiceIntegrationTests(SqlServerFixture fixt
         await SeedAccountsAsync(db);
         var contract = await SeedApprovedContractAsync(db, TenantUserId);
 
-        var result = await NewService(db).GetPendingAsync(TenantCallerOf(TenantUserId), contract.ContractId);
+        var result = await LatestAsync(NewService(db), TenantCallerOf(TenantUserId), contract.ContractId);
 
         Assert.True(result.Succeeded);
         Assert.Null(result.Request);
     }
 
     private ContractRenewalService NewService(ApplicationDbContext db) =>
-        new(db, new FixedTimeProvider(FrozenNow));
+        new(db, FrozenClock, new ContractService(db, FrozenClock));
+
+    private static TimeProvider FrozenClock { get; } = new FixedTimeProvider(FrozenNow);
 
     private async Task ResetDatabaseAsync()
     {

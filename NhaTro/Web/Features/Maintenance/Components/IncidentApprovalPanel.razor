@@ -5,8 +5,13 @@
 @inject ToastService Toasts
 
 <section class="incident-approvals" aria-label="@L["ApprovalQueue"]">
-    <h2>@L["ApprovalQueue"]</h2>
-    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="RefreshAsync">@L["RefreshQueue"]</button>
+    <div class="approval-heading">
+        <h2>@L["ApprovalQueue"]</h2>
+        <button type="button" class="btn btn-secondary refresh-requests" disabled="@_busy" aria-busy="@(_busy ? "true" : null)" @onclick="RefreshAsync">
+            <LucideIcon Name="refresh-cw" />
+            <span>@L["RefreshQueue"]</span>
+        </button>
+    </div>
     @if (_error is not null) { <p role="alert">@_error</p> }
     @if (_requests.Count == 0) { <p>@L["NoData"]</p> }
     @foreach (var request in _requests)
@@ -80,7 +85,11 @@
         try
         {
             _owner = (await Session.CallerAsync()).IsChuTro;
-            _requests = await Session.RequestsAsync();
+            var requests = await Session.RequestsAsync();
+            // Quản lý chỉ theo dõi yêu cầu cần xử lý; Chủ trọ giữ danh sách hiện có.
+            _requests = _owner ? requests : requests
+                .Where(request => request.Status is ApprovalRequestStatus.Pending or ApprovalRequestStatus.Rejected)
+                .ToArray();
             _images.Clear();
             _roomLabels.Clear();
             foreach (var request in _requests)

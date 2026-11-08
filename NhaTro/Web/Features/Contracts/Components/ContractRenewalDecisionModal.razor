@@ -1,0 +1,137 @@
+@using Web.Common.Utils
+@using Web.Features.Contracts.DTOs
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject IStringLocalizer<ContractResources> L
+
+<dialog @ref="_dialog" class="contract-modal" aria-modal="true" aria-labelledby="renewal-decision-title" @onclick="CloseAsync">
+    <section class="contract-modal-panel" @onclick:stopPropagation="true">
+        <div class="contract-modal-header">
+            <h2 id="renewal-decision-title">@L["RenewalDecisionTitle"]</h2>
+            <button type="button" class="icon-button" aria-label="@L["ContractCloseAction"]"
+                    disabled="@IsBusy" @onclick="CloseAsync">
+                <LucideIcon Name="x" />
+            </button>
+        </div>
+        <p>@L["RenewalDecisionDescription"]</p>
+
+        @if (Request is { } request)
+        {
+            <dl class="renewal-decision-summary">
+                <div><dt>@L["ContractNumberLabel"]</dt><dd>@request.ContractNumber</dd></div>
+                <div><dt>@L["ContractRoomLabel"]</dt><dd>@request.PropertyName · @request.RoomCode</dd></div>
+                <div><dt>@L["RenewalRequesterLabel"]</dt><dd>@request.RequesterName</dd></div>
+                <div><dt>@L["RenewalMonthsLabel"]</dt><dd class="tabular-nums">@L["RenewalMonthsValue", request.RequestedMonths]</dd></div>
+                <div>
+                    <dt>@L["RenewalProposedEndLabel"]</dt>
+                    <dd class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(request.CurrentEndDate)) → @DateFormatter.Format(DateOnly.FromDateTime(request.ProposedEndDate))</dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(request.Note))
+                {
+                    <div class="renewal-decision-note"><dt>@L["RenewalNoteLabel"]</dt><dd>@request.Note</dd></div>
+                }
+            </dl>
+        }
+
+        <label for="renewal-reject-reason">@L["ContractRejectReasonLabel"]</label>
+        <textarea id="renewal-reject-reason" class="input" maxlength="@MaxReasonLength" @bind="_reason" disabled="@IsBusy"></textarea>
+        @if (_showReasonError)
+        {
+            <p class="contract-field-error" role="alert">@L["RenewalErrorRejectReasonRequired"]</p>
+        }
+
+        <footer>
+            <button type="button" class="btn btn-secondary" disabled="@IsBusy" @onclick="CloseAsync">@L["ContractCancelAction"]</button>
+            <button type="button" class="btn btn-danger" disabled="@IsBusy" @onclick="RejectAsync">@L["ContractRejectAction"]</button>
+            <button type="button" class="btn btn-primary" disabled="@IsBusy" @onclick="ApproveAsync">@L[IsBusy ? "ContractProcessing" : "RenewalAcceptAction"]</button>
+        </footer>
+    </section>
+</dialog>
+
+@code {
+    private const string ModulePath = "./Features/Contracts/Components/ContractApproveModal.razor.js";
+    private const int MaxReasonLength = ContractRenewalRules.MaxNoteLength;
+
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public RenewalRequestItemDto? Request { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<RenewalDecisionRequest> OnDecide { get; set; }
+
+    private ElementReference _dialog;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _registration;
+    private DotNetObjectReference<ContractRenewalDecisionModal>? _self;
+    private string? _reason;
+    private bool _showReasonError;
+    private bool _wasVisible;
+    private bool _openInDom;
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _reason = null;
+            _showReasonError = false;
+        }
+
+        _wasVisible = Visible;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Tái dùng module <dialog> của hộp duyệt hợp đồng: focus trap, top-layer, chặn Esc khi đang xử lý.
+        if (_module is null)
+        {
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
+            _self = DotNetObjectReference.Create(this);
+            _registration = await _module.InvokeAsync<IJSObjectReference>("register", _dialog, _self);
+        }
+
+        if (Visible == _openInDom)
+        {
+            return;
+        }
+
+        await _module.InvokeVoidAsync(Visible ? "open" : "close", _dialog);
+        _openInDom = Visible;
+    }
+
+    private Task CloseAsync() => IsBusy ? Task.CompletedTask : OnClose.InvokeAsync();
+
+    [JSInvokable]
+    public Task RequestCloseAsync() => InvokeAsync(CloseAsync);
+
+    private Task ApproveAsync() =>
+        OnDecide.InvokeAsync(new RenewalDecisionRequest { IsApproved = true });
+
+    private Task RejectAsync()
+    {
+        _showReasonError = string.IsNullOrWhiteSpace(_reason);
+        return _showReasonError
+            ? Task.CompletedTask
+            : OnDecide.InvokeAsync(new RenewalDecisionRequest { IsApproved = false, Reason = _reason });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_registration is not null)
+            {
+                await _registration.InvokeVoidAsync("dispose");
+                await _registration.DisposeAsync();
+            }
+
+            if (_module is not null)
+            {
+                await _module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        _self?.Dispose();
+    }
+}

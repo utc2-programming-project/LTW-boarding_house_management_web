@@ -213,8 +213,33 @@ public sealed class RoomPropertyServiceIntegrationTests(SqlServerFixture fixture
             PropertyId = b.Property!.Id, Code = "P101", StandardPrice = 1_500_000m,
         }, ChuTro);
 
+        // ERD VHT-5: mã phòng chỉ duy nhất trong từng nhà trọ (IX_Rooms_PropertyId_Code),
+        // nên hai nhà khác nhau được phép trùng số phòng.
         Assert.True(roomA.Succeeded, roomA.ErrorMessage);
         Assert.True(roomB.Succeeded, roomB.ErrorMessage);
+    }
+
+    [SqlServerFact]
+    public async Task Cung_ma_phong_khac_tang_bi_chan()
+    {
+        await SeedAsync();
+        await using var db = fixture.CreateContext();
+        var property = await NewPropertyService(db).CreateAsync(new PropertySave { Name = "Trọ A" }, ChuTro);
+        var propertyId = property.Property!.Id;
+        var service = NewRoomService(db);
+
+        var first = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = propertyId, Code = "P101", Floor = 1, StandardPrice = 1_000_000m,
+        }, ChuTro);
+        var second = await service.CreateAsync(new RoomSave
+        {
+            PropertyId = propertyId, Code = "P101", Floor = 2, StandardPrice = 1_000_000m,
+        }, ChuTro);
+
+        Assert.True(first.Succeeded, first.ErrorMessage);
+        Assert.False(second.Succeeded);
+        Assert.Equal(RoomErrorCodes.DuplicateRoomCode, second.ErrorCode);
     }
 
     [SqlServerFact]
