@@ -286,4 +286,8 @@
   <data name="ToastServiceDeletedSuccess" xml:space="preserve"><value>Service deleted.</value></data>
   <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Only the landlord can delete services.</value></data>
   <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Delete completed but could not be verified. Please reload the page.</value></data>
+  <data name="AllScopes" xml:space="preserve"><value>All scopes</value></data>
+  <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>
+  <data name="PreviousPage" xml:space="preserve"><value>Previous page</value></data>
+  <data name="NextPage" xml:space="preserve"><value>Next page</value></data>
 </root>

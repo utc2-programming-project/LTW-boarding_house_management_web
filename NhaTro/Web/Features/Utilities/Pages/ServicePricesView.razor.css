@@ -293,3 +293,135 @@
     color: var(--text-secondary, #475569);
 }
 
+/* Filters */
+.filters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filters-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #475569);
+}
+
+.select-filter {
+    flex: none;
+    width: auto;
+    min-width: 180px;
+}
+
+.btn-reset {
+    flex: none;
+    align-self: flex-end;
+}
+
+/* Table Footer & Pagination */
+.table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--surface-subtle, #F1F5F9);
+    border-top: 1px solid var(--border, #E2E8F0);
+    font-size: 13px;
+    color: var(--text-secondary, #475569);
+    flex-wrap: wrap;
+}
+
+.pagination-info {
+    font-variant-numeric: tabular-nums;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.page-size-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.page-size-select {
+    width: auto;
+    min-width: 72px;
+    height: 32px;
+    padding: 0 8px;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pager-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 8px;
+    background: var(--surface, #FFFFFF);
+    color: var(--text-primary, #0D131B);
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms;
+}
+
+.pager-btn:hover:not(:disabled) {
+    background: var(--hover-bg, #F1F5F9);
+}
+
+.pager-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.pager-btn ::deep .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.page-indicator {
+    min-width: 56px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--text-primary, #0D131B);
+}
+
+@media (max-width: 767.98px) {
+    .select-filter {
+        width: 100%;
+        min-width: 0;
+    }
+    .filter-field {
+        width: 100%;
+    }
+    .table-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
