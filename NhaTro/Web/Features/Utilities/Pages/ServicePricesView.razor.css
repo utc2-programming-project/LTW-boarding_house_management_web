@@ -325,6 +325,12 @@
     min-width: 180px;
 }
 
+.date-filter {
+    flex: none;
+    width: auto;
+    min-width: 170px;
+}
+
 .btn-reset {
     flex: none;
     align-self: flex-end;
@@ -413,6 +419,10 @@
 
 @media (max-width: 767.98px) {
     .select-filter {
+        width: 100%;
+        min-width: 0;
+    }
+    .date-filter {
         width: 100%;
         min-width: 0;
     }

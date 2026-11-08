@@ -20,7 +20,7 @@
                                                Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
                                     @if (item.Href is not null)
                                     {
-                                        <NavLink href="@item.Href" Match="@(item.Href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
+                                        <NavLink href="@item.Href" Match="@GetMatch(item)" class="nav-item" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></NavLink>
                                     }
                                     else
                                     {
@@ -35,3 +35,21 @@
         }
     </nav>
 </aside>
+
+@code {
+    // Mục cha chỉ sáng khi đang đứng đúng route của nó; nếu có mục con riêng
+    // (vd /services/prices) thì dùng khớp chính xác để tránh sáng đồng thời.
+    private static NavLinkMatch GetMatch(NavigationItem item)
+    {
+        if (item.Href is null || item.Href == "/")
+        {
+            return NavLinkMatch.All;
+        }
+
+        var hasChildItem = AppNavigation.Items.Any(other =>
+            other.Href is not null &&
+            other.Href.StartsWith(item.Href + "/", StringComparison.OrdinalIgnoreCase));
+
+        return hasChildItem ? NavLinkMatch.All : NavLinkMatch.Prefix;
+    }
+}
