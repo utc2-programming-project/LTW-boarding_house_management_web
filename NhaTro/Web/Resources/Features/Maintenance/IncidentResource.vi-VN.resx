@@ -459,4 +459,7 @@
   <data name="ZoomIn" xml:space="preserve"><value>Phóng to</value></data>
   <data name="RotateImage" xml:space="preserve"><value>Xoay ảnh</value></data>
   <data name="DownloadResultPhoto" xml:space="preserve"><value>Tải ảnh sau xử lý</value></data>
+  <data name="ChoosePhotos" xml:space="preserve"><value>Chọn ảnh</value></data>
+  <data name="NoPhotosSelected" xml:space="preserve"><value>Chưa chọn ảnh</value></data>
+  <data name="PhotosSelected" xml:space="preserve"><value>Đã chọn {0} ảnh</value></data>
 </root>

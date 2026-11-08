@@ -3,10 +3,16 @@
 
 <div class="photo-picker">
     <label for="@_inputId">@L["Attachments"]</label>
-    <InputFile @key="_inputVersion" id="@_inputId" OnChange="ReadAsync" multiple
-               accept=".jpg,.jpeg,.png" disabled="@(Disabled || _reading || Photos.Count >= Capacity)"
-               class="@(_error is null ? null : "invalid")" aria-invalid="@(_error is not null)"
-               aria-describedby="@(_inputId + "-hint " + _inputId + "-error")" />
+    <div class="photo-select-row">
+        <div class="photo-select @((Disabled || _reading || Photos.Count >= Capacity) ? "is-disabled" : null) @(_error is not null ? "invalid" : null)">
+            <span aria-hidden="true">@L["ChoosePhotos"]</span>
+            <InputFile @key="_inputVersion" id="@_inputId" OnChange="ReadAsync" multiple
+                       accept=".jpg,.jpeg,.png" disabled="@(Disabled || _reading || Photos.Count >= Capacity)"
+                       aria-label="@L["ChoosePhotos"]" title="@L["ChoosePhotos"]" aria-invalid="@(_error is not null)"
+                       aria-describedby="@(_inputId + "-selection " + _inputId + "-hint " + _inputId + "-error")" />
+        </div>
+        <p id="@(_inputId + "-selection")" role="status">@(Photos.Count == 0 ? L["NoPhotosSelected"] : L["PhotosSelected", Photos.Count])</p>
+    </div>
     <p id="@(_inputId + "-hint")">@L["PhotoHint", Capacity]</p>
     @if (_reading)
     {
