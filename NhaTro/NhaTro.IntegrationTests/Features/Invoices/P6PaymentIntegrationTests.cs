@@ -146,6 +146,39 @@ public sealed class P6PaymentIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task Xac_nhan_tra_ket_qua_da_ghi_khi_context_con_Pending_cu()
+    {
+        var data = await SeedIssuedInvoiceAsync();
+        var proofId = await AddProofAsync(data, data.InvoiceId);
+        int paymentId;
+        await using (var setup = fixture.CreateContext())
+        {
+            paymentId = (await NewService(setup)
+                .SubmitAsync(data.InvoiceId, Request(proofId, "FT-STALE"), Tenant(data))).Id;
+        }
+
+        // Giữ Payment Pending trong context để tái hiện lần đọc cũ của luồng thứ hai.
+        await using var staleDb = fixture.CreateContext();
+        var stalePayment = await staleDb.Payments.SingleAsync(item => item.Id == paymentId);
+        Assert.Equal(PaymentStatus.Pending, stalePayment.Status);
+        await using (var winnerDb = fixture.CreateContext())
+        {
+            await NewService(winnerDb).ConfirmAsync(paymentId, Owner(data));
+        }
+
+        var repeated = await NewService(staleDb).ConfirmAsync(paymentId, Owner(data));
+        Assert.Equal(paymentId, repeated.Id);
+        Assert.Equal(PaymentStatus.Confirmed, repeated.Status);
+        Assert.Equal([proofId], repeated.ProofFileIds);
+
+        await using var verify = fixture.CreateContext();
+        Assert.Equal(InvoiceStatus.Paid, (await verify.Invoices.SingleAsync(item => item.Id == data.InvoiceId)).Status);
+        Assert.Equal(1, await verify.Payments.CountAsync(item => item.InvoiceId == data.InvoiceId));
+        Assert.Equal(1, await verify.PaymentAuditLogs.CountAsync(
+            item => item.PaymentId == paymentId && item.Action == PaymentAuditAction.Confirmed));
+    }
+
+    [SqlServerFact]
     public async Task Hai_luong_xac_nhan_dong_thoi_chi_ghi_mot_lan_thu()
     {
         var data = await SeedIssuedInvoiceAsync();

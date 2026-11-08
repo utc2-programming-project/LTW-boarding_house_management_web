@@ -261,8 +261,21 @@ public sealed class PaymentService : IPaymentService
         var invoice = await _context.Invoices
             .SingleAsync(item => item.Id == payment.InvoiceId, cancellationToken);
 
-        if (invoice.Status == InvoiceStatus.Paid)
+        if (invoice.Status == InvoiceStatus.Paid ||
+            (invoice.Status == InvoiceStatus.Issued &&
+             await HasConfirmedPaymentAsync(payment.InvoiceId, cancellationToken)))
         {
+            // Luồng khác có thể đã xác nhận sau lần đọc Payment Pending ở trên.
+            // Chỉ trả kết quả lặp của chính yêu cầu này, không lấy khoản thu khác.
+            var current = await _context.Payments
+                .AsNoTracking()
+                .Include(item => item.Proofs)
+                .SingleOrDefaultAsync(item => item.Id == paymentId, cancellationToken);
+            if (current?.Status == PaymentStatus.Confirmed)
+            {
+                return PaymentMapping.ToDto(current);
+            }
+
             throw new PaymentOperationException(
                 PaymentErrorMessages.InvoiceAlreadyPaid,
                 PaymentErrorCodes.InvoiceAlreadyPaid);
@@ -273,13 +286,6 @@ public sealed class PaymentService : IPaymentService
             throw new PaymentOperationException(
                 PaymentErrorMessages.InvoiceNotIssued,
                 PaymentErrorCodes.InvoiceNotIssued);
-        }
-
-        if (await HasConfirmedPaymentAsync(payment.InvoiceId, cancellationToken))
-        {
-            throw new PaymentOperationException(
-                PaymentErrorMessages.InvoiceAlreadyPaid,
-                PaymentErrorCodes.InvoiceAlreadyPaid);
         }
 
         var now = _timeProvider.GetUtcNow();
@@ -315,7 +321,7 @@ public sealed class PaymentService : IPaymentService
 
             // Luồng khác đã xác nhận trước: trả kết quả đã ghi thay vì tạo thêm một lần thu tiền.
             var confirmed = await FindConfirmedPaymentAsync(payment.InvoiceId, cancellationToken);
-            if (confirmed is not null)
+            if (confirmed?.Id == paymentId)
             {
                 return PaymentMapping.ToDto(confirmed);
             }
