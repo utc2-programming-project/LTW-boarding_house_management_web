@@ -151,14 +151,18 @@
                     </select>
                 </label>
 
-                <label class="filter-field wide">
+                <div class="filter-field wide">
                     <span>@L["MeterReadingPeriodFilter"]</span>
-                    <input id="select-period"
-                           type="month"
-                           class="input"
-                           value="@_selectedPeriodKey"
-                           @onchange="HandlePeriodChanged" />
-                </label>
+                    <div class="period-display" aria-live="polite">
+                        <LucideIcon Name="calendar" />
+                        <span class="period-display-main">
+                            @string.Format(L["MeterReadingMonthOptionFormat"], _selectedMonth) / @_selectedYear
+                        </span>
+                        <span class="period-display-range">
+                            (@_periodStart.ToString("dd/MM/yyyy") – @_periodEnd.ToString("dd/MM/yyyy"))
+                        </span>
+                    </div>
+                </div>
 
                 <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRefreshBtn"]">
                     <LucideIcon Name="refresh-cw" />
@@ -340,7 +344,6 @@
     private string _selectedBuildingId = "b1";
     private int _selectedYear = 2026;
     private int _selectedMonth = 10;
-    private string _selectedPeriodKey = "2026-10";
     private bool _periodHasNoData;
     private string _periodLabel = "10/2026";
     private DateOnly _periodStart = new(2026, 10, 1);
@@ -476,30 +479,11 @@
         }
     }
 
-    private void HandlePeriodChanged(ChangeEventArgs e)
-    {
-        var raw = e.Value?.ToString() ?? string.Empty;
-        _draftReadings.Clear();
-
-        var parts = raw.Split('-');
-        if (parts.Length == 2 &&
-            int.TryParse(parts[0], out var year) &&
-            int.TryParse(parts[1], out var month) &&
-            month is >= 1 and <= 12)
-        {
-            _selectedYear = year;
-            _selectedMonth = month;
-            UpdatePeriodRange(year, month);
-            ApplyFilters();
-        }
-    }
-
     private void UpdatePeriodRange(int year, int month)
     {
         var anchor = new DateOnly(year, month, 1);
         _periodStart = InvoicePeriodRules.Start(anchor);
         _periodEnd = InvoicePeriodRules.EndInclusive(anchor);
-        _selectedPeriodKey = $"{year:D4}-{month:D2}";
         _periodLabel = $"{month:D2}/{year:D4}";
     }
 

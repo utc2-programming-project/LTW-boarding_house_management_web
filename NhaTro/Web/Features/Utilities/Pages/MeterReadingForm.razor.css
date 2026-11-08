@@ -1023,6 +1023,39 @@
     min-width: 220px;
 }
 
+.period-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--border, #E2E8F0);
+    border-radius: 8px;
+    background: var(--surface-subtle, #F8FAFC);
+    color: var(--text-primary, #0D131B);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.period-display .lucide-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary, #4F46E5);
+    flex: none;
+}
+
+.period-display-main {
+    white-space: nowrap;
+}
+
+.period-display-range {
+    color: var(--text-muted, #64748B);
+    font-size: .8125rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
 .reset-button {
     display: inline-flex;
     align-items: center;
