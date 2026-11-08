@@ -34,7 +34,6 @@ public partial class BusinessReportsView
     private int scopeVersion;
 
     private bool Busy => Refreshing || RoomState == DashboardLoadState.Loading || TenantState == DashboardLoadState.Loading;
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(D["Title"], "/dashboard"), new(L["Title"])];
 
     protected override async Task OnInitializedAsync()
     {

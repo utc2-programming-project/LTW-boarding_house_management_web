@@ -11,7 +11,7 @@
 <div class="home-page">
     <header class="home-header">
         <div class="home-title-stack">
-            <BreadcrumbNav Items="@Breadcrumbs" />
+            <NavBreadcrumb />
             <h1>@Greeting@(string.IsNullOrEmpty(DisplayName) ? "" : $", {DisplayName}")</h1>
             <p class="home-meta">
                 @if (Snapshot is { } roleSnapshot)
@@ -179,8 +179,6 @@
 
     private string DisplayName => Snapshot?.DisplayName ?? "";
 
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Title"])];
-
     private string Greeting
     {
         get
@@ -192,7 +190,7 @@
         }
     }
 
-    private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my-invoices" : "/invoices";
+    private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my/invoices" : "/invoices";
 
     private string RoleLabel(string role) => role switch
     {

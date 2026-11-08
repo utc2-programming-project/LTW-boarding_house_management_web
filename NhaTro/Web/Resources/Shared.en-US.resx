@@ -62,6 +62,15 @@
   <data name="AppName" xml:space="preserve">
     <value>Boarding House Operations Web</value>
   </data>
+  <data name="GlobalSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="GlobalSearchPlaceholder" xml:space="preserve">
+    <value>Quick search...</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Sign in</value>
   </data>
@@ -98,6 +107,9 @@
   <data name="Language" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="AppearanceLabel" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
   <data name="CultureError" xml:space="preserve">
     <value>Unable to change language. Please try again.</value>
   </data>
@@ -106,6 +118,9 @@
   </data>
   <data name="MyAccount" xml:space="preserve">
     <value>My account</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
   </data>
   <data name="SignOut" xml:space="preserve">
     <value>Sign out</value>
@@ -229,6 +244,21 @@
   </data>
   <data name="NavGroupPersonal" xml:space="preserve">
     <value>Personal</value>
+  </data>
+  <data name="PricingNav" xml:space="preserve">
+    <value>Periodic tariff table</value>
+  </data>
+  <data name="ContractCreateNav" xml:space="preserve">
+    <value>Create contract</value>
+  </data>
+  <data name="ContractRenewalsNav" xml:space="preserve">
+    <value>Renewal requests</value>
+  </data>
+  <data name="ContractDetailNav" xml:space="preserve">
+    <value>Contract details</value>
+  </data>
+  <data name="InvoiceDetailNav" xml:space="preserve">
+    <value>Invoice details</value>
   </data>
 
   <!-- VHT-8: sign-in -->

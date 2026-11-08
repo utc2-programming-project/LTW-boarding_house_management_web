@@ -1,0 +1,51 @@
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Shared> L
+
+@if (_items.Count > 0)
+{
+    <BreadcrumbNav Items="_items" />
+}
+
+@code {
+    /// <summary>Nhãn trang hiện tại cho route động (vd số hợp đồng); không cần cho route tĩnh.</summary>
+    [Parameter] public string? CurrentLabel { get; set; }
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> _items = [];
+
+    protected override void OnParametersSet() => _items = Build();
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Build()
+    {
+        var path = SidebarActive.Normalize(Navigation.ToBaseRelativePath(Navigation.Uri));
+        var match = NavigationResolver.Resolve(path);
+        if (match is null)
+        {
+            return string.IsNullOrWhiteSpace(CurrentLabel)
+                ? Array.Empty<BreadcrumbNav.BreadcrumbItem>()
+                : new[] { new BreadcrumbNav.BreadcrumbItem(CurrentLabel) };
+        }
+
+        var appendCurrent = !string.IsNullOrWhiteSpace(CurrentLabel)
+            && !string.Equals(CurrentLabel, L[match.Leaf.Key].Value, StringComparison.Ordinal);
+        var items = new List<BreadcrumbNav.BreadcrumbItem>(match.Chain.Count + 2);
+
+        if (match.Section.TitleKey is { } sectionKey)
+        {
+            items.Add(new BreadcrumbNav.BreadcrumbItem(L[sectionKey]));
+        }
+
+        for (var i = 0; i < match.Chain.Count; i++)
+        {
+            var node = match.Chain[i];
+            var isCurrent = i == match.Chain.Count - 1 && !appendCurrent;
+            items.Add(new BreadcrumbNav.BreadcrumbItem(L[node.Key], isCurrent ? null : node.Href));
+        }
+
+        if (appendCurrent)
+        {
+            items.Add(new BreadcrumbNav.BreadcrumbItem(CurrentLabel!));
+        }
+
+        return items;
+    }
+}

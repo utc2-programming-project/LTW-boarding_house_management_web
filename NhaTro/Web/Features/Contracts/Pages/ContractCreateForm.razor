@@ -20,7 +20,7 @@
 
 <PageTitle>@L["ContractCreateHeading"]</PageTitle>
 <section class="contract-page contract-live-form" aria-labelledby="contract-create-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractCreateHeading"]) })" />
+    <NavBreadcrumb />
     <header class="page-heading"><div><h1 id="contract-create-title">@L["ContractCreateHeading"]</h1><p>@L["ContractCreateDescription"]</p></div></header>
 
     @if (_loading)

@@ -12,11 +12,7 @@
 <div class="p2-page">
     <header class="p2-heading">
         <div>
-            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-            {
-                new(L["Dashboard"], "/"),
-                new(L["P2PropertiesTitle"])
-            })" />
+            <NavBreadcrumb />
             <h1>@L["P2PropertiesTitle"]</h1>
             <p>@L["P2PropertiesSubtitle"]</p>
         </div>
