@@ -150,3 +150,40 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 - 2E.5: gửi Phúc bản ERD cuối + ghi chú để ghép Word/slide.
 - VHT-28 2A yêu cầu người thứ hai chạy script — vẫn chưa có.
 - SHA sẽ đổi khi VHT-124/126 merge → chạy lại TASK-02/04/06 (script + diff) trước khi publish.
+
+## Lượt 3A — ràng buộc tài chính (VHT-48)
+
+**Nguồn rà:** `dev@b5eac48`, migration mới `20261107152554_AddFinancialConstraints`.
+
+**Kết luận: DAT trên DB sạch và DB nâng cấp; không có pending model changes.**
+
+### Ràng buộc thêm trong lượt này
+
+| Bảng | Ràng buộc |
+| --- | --- |
+| `Payments` | 4 CHECK (`Amount > 0`, `Status IN (0,1,2)`, `ReviewedAt`/`RejectionReason` khớp Status); unique `UX_Payments_InvoiceConfirmed` `(InvoiceId)` filter `[Status] = 1`; index `(InvoiceId, RequestedAt)` |
+| `UtilityReadingAudits` | FK → `UtilityReadings` đổi Cascade → **Restrict** |
+| `ContractRenewalRequests` | FK → `Contracts` đổi Cascade → **Restrict** |
+| `TenantOwnerLinks` | FK → `Tenants` đổi Cascade → **Restrict** |
+
+### Bằng chứng
+
+| Lệnh | Kết quả |
+| --- | --- |
+| `dotnet ef migrations has-pending-model-changes` | Không có thay đổi model |
+| `kiem_tra_migration.ps1 -Database NhaTro_VHT48_3A -KeepDatabase` | `KET QUA: DAT`; `Assert-FinancialSchema` PASS ở cả 2 pha |
+| 9 case âm bản trên DB nâng cấp | Amount 0, Status 9, Pending có ReviewedAt, Confirmed thiếu ReviewedAt, Rejected thiếu lý do, 2 Confirmed cùng hóa đơn, xóa chỉ số còn lịch sử — đều bị chặn |
+| `dotnet test ~FinancialSchema\|~HistoryRetention` | 13 pass |
+| `dotnet test ~PermissionMatrix` | 364 pass |
+| Toàn bộ IntegrationTests | 713 pass |
+
+### Ghi nhận
+
+- `Payments` trên dev chưa có `PaymentProofs`/`PaymentAuditLogs`; xác nhận tiền chưa cập nhật `Invoice.Paid` — chờ VHT-54.
+- `ManagerToggles` không có bảng lịch sử; chỉ cập nhật dòng hiện tại + log ứng dụng.
+- OP38 của ma trận quyền được sửa để mỗi lần thử dùng hóa đơn riêng (DB mới chỉ cho một Confirmed/hóa đơn).
+
+### Còn lại
+
+- VHT-48 3C: cập nhật ERD theo `docs/imp/VHT-48-erd-delta-tai-chinh-3a.md`.
+- Khi VHT-54 merge: bổ sung Proof/AuditLog và chạy lại case C06/C08.
