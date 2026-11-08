@@ -20,70 +20,95 @@
         </button>
     </header>
 
-    <div class="filters">
-        <label>@D["Property"]
-            <select class="property-filter" value="@SelectedPropertyId" @onchange="ChangePropertyAsync" disabled="@Busy">
-                <option value="">@D["AllProperties"]</option>
-                @if (SelectedPropertyId.HasValue && !Properties.Any(p => p.Id == SelectedPropertyId))
-                {
-                    <option value="@SelectedPropertyId">@L["UnavailableProperty"]</option>
-                }
-                @foreach (var property in Properties)
-                {
-                    <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + D["Inactive"] : "")</option>
-                }
-            </select>
-        </label>
-        <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
-    </div>
-    @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
-    {
-        <div role="status" class="feedback">
-            <p>@(PropertyState == DashboardLoadState.Denied ? L["UnavailableProperty"] : D["Error"])</p>
-            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="RefreshAsync">@D["Retry"]</button>
-        </div>
-    }
-    <p class="scope-note">@L["ScopeNote"]</p>
-    <p class="scope-note">@D["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
-
-    <section class="report-section" aria-labelledby="room-report-heading">
-        <h2 id="room-report-heading">@L["RoomReport"]</h2>
+    <div class="report-toolbar">
         <div class="filters">
-            <label>@L["RoomActivity"]
-                <select class="room-activity-filter" value="@(RoomActive ? "true" : "false")" @onchange="ChangeRoomActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                    <option value="true">@L["ActiveRooms"]</option>
-                    <option value="false">@L["InactiveRooms"]</option>
-                </select>
-            </label>
-            <label>@L["RoomStatus"]
-                <select class="room-status-filter" @bind="RoomStatusFilter" @bind:after="ChangeRoomFiltersAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                    <option value="">@L["AllStatuses"]</option>
-                    @foreach (var status in Enum.GetValues<RoomStatus>())
+            <label>@D["Property"]
+                <select class="property-filter" value="@SelectedPropertyId" @onchange="ChangePropertyAsync" disabled="@Busy">
+                    <option value="">@D["AllProperties"]</option>
+                    @if (SelectedPropertyId.HasValue && !Properties.Any(p => p.Id == SelectedPropertyId))
                     {
-                        <option value="@status">@D[status.ToString()]</option>
+                        <option value="@SelectedPropertyId">@L["UnavailableProperty"]</option>
+                    }
+                    @foreach (var property in Properties)
+                    {
+                        <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + D["Inactive"] : "")</option>
                     }
                 </select>
             </label>
+            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
+        </div>
+        @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
+        {
+            <div role="status" class="feedback">
+                <p>@(PropertyState == DashboardLoadState.Denied ? L["UnavailableProperty"] : D["Error"])</p>
+                <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="RefreshAsync">@D["Retry"]</button>
+            </div>
+        }
+        <div class="filter-context">
+            <p class="scope-note">@L["ScopeNote"]</p>
+            <p class="updated-at">@D["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
+        </div>
+    </div>
+
+    <section class="report-section" aria-labelledby="room-report-heading">
+        <div class="section-heading">
+            <h2 id="room-report-heading">@L["RoomReport"]</h2>
+            <div class="filters">
+                <label>@L["RoomActivity"]
+                    <select class="room-activity-filter" value="@(RoomActive ? "true" : "false")" @onchange="ChangeRoomActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                        <option value="true">@L["ActiveRooms"]</option>
+                        <option value="false">@L["InactiveRooms"]</option>
+                    </select>
+                </label>
+                <label>@L["RoomStatus"]
+                    <select class="room-status-filter" @bind="RoomStatusFilter" @bind:after="ChangeRoomFiltersAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                        <option value="">@L["AllStatuses"]</option>
+                        @foreach (var status in Enum.GetValues<RoomStatus>())
+                        {
+                            <option value="@status">@D[status.ToString()]</option>
+                        }
+                    </select>
+                </label>
+            </div>
         </div>
         <DashboardPanel Title="@D["RoomStructure"]" State="@RoomState" DeniedText="@D["RoomsDenied"]" Retry="RetryRoomsAsync">
             @if (RoomResult is { } rooms)
             {
                 <div class="room-overview">
                     <dl class="kpis">
-                        <dt>@L["RoomTotal"]</dt><dd>@DashboardFormat.FormatNumber(rooms.Kpis.Total)</dd>
-                        <dt>@D["Available"]</dt><dd>@DashboardFormat.FormatNumber(rooms.Kpis.Available)</dd>
-                        <dt>@D["Rented"]</dt><dd>@DashboardFormat.FormatNumber(rooms.Kpis.Rented)</dd>
-                        <dt>@D["Maintenance"]</dt><dd>@DashboardFormat.FormatNumber(rooms.Kpis.Maintenance)</dd>
-                        <dt>@D["Occupancy"]</dt><dd>@DashboardFormat.FormatOccupancy(DashboardFormat.OccupancyPercent(rooms.Kpis.Rented, rooms.Kpis.Total, rooms.Kpis.Maintenance))</dd>
-                    </dl>
-                    @if (rooms.Kpis.Total > 0)
-                    {
-                        <div class="room-chart-summary">
-                            <RoomStructureChart Kpis="@rooms.Kpis" TotalLabel="@L["RoomTotal"]" />
+                        <div class="kpi-card">
+                            <dt>@L["RoomTotal"]</dt>
+                            <dd>@DashboardFormat.FormatNumber(rooms.Kpis.Total)</dd>
                         </div>
-                    }
+                        <div class="kpi-card">
+                            <dt>@D["Available"]</dt>
+                            <dd>@DashboardFormat.FormatNumber(rooms.Kpis.Available)</dd>
+                        </div>
+                        <div class="kpi-card">
+                            <dt>@D["Rented"]</dt>
+                            <dd>@DashboardFormat.FormatNumber(rooms.Kpis.Rented)</dd>
+                        </div>
+                        <div class="kpi-card">
+                            <dt>@D["Maintenance"]</dt>
+                            <dd>@DashboardFormat.FormatNumber(rooms.Kpis.Maintenance)</dd>
+                        </div>
+                    </dl>
+                    <div class="room-chart-summary @(rooms.Kpis.Total > 0 ? "has-chart" : "")">
+                        <div class="occupancy-summary">
+                            <dl class="occupancy-kpi">
+                                <dt>@D["Occupancy"]</dt>
+                                <dd>@DashboardFormat.FormatOccupancy(DashboardFormat.OccupancyPercent(rooms.Kpis.Rented, rooms.Kpis.Total, rooms.Kpis.Maintenance))</dd>
+                            </dl>
+                            <p class="scope-note">@L["OccupancyNote"]</p>
+                        </div>
+                        @if (rooms.Kpis.Total > 0)
+                        {
+                            <div class="room-chart-visual">
+                                <RoomStructureChart Kpis="@rooms.Kpis" TotalLabel="@L["RoomTotal"]" />
+                            </div>
+                        }
+                    </div>
                 </div>
-                <p class="scope-note">@L["OccupancyNote"]</p>
                 @if (rooms.Rooms.TotalCount == 0)
                 {
                     <EmptyStateCard Title="@D["Empty"]" Description="@L["EmptyDescription"]">
@@ -123,33 +148,47 @@
     </section>
 
     <section class="report-section" aria-labelledby="tenant-report-heading">
-        <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
-        <div class="filters">
-            <label>@L["TenantActivity"]
-                <select class="tenant-activity-filter" value="@(TenantActive?.ToString().ToLowerInvariant())" @onchange="ChangeTenantActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                    <option value="">@L["AllStatuses"]</option>
-                    <option value="true">@D["TenantActive"]</option>
-                    <option value="false">@D["Inactive"]</option>
-                </select>
-            </label>
-            <label>@L["RentalStatus"]
-                <select class="tenant-rental-filter" value="@(TenantRenting?.ToString().ToLowerInvariant())" @onchange="ChangeTenantRentalAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                    <option value="">@L["AllStatuses"]</option>
-                    <option value="true">@L["Renting"]</option>
-                    <option value="false">@L["NotRenting"]</option>
-                </select>
-            </label>
+        <div class="section-heading">
+            <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
+            <div class="filters">
+                <label>@L["TenantActivity"]
+                    <select class="tenant-activity-filter" value="@(TenantActive?.ToString().ToLowerInvariant())" @onchange="ChangeTenantActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                        <option value="">@L["AllStatuses"]</option>
+                        <option value="true">@D["TenantActive"]</option>
+                        <option value="false">@D["Inactive"]</option>
+                    </select>
+                </label>
+                <label>@L["RentalStatus"]
+                    <select class="tenant-rental-filter" value="@(TenantRenting?.ToString().ToLowerInvariant())" @onchange="ChangeTenantRentalAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                        <option value="">@L["AllStatuses"]</option>
+                        <option value="true">@L["Renting"]</option>
+                        <option value="false">@L["NotRenting"]</option>
+                    </select>
+                </label>
+            </div>
         </div>
         <DashboardPanel Title="@L["TenantReport"]" Icon="users" State="@TenantState" DeniedText="@D["TenantsDenied"]" Retry="RetryTenantsAsync">
             @if (TenantResult is { } tenants)
             {
                 <dl class="kpis">
-                    <dt>@D["TenantTotal"]</dt><dd>@DashboardFormat.FormatNumber(tenants.Kpis.Total)</dd>
-                    <dt>@D["TenantActive"]</dt><dd>@DashboardFormat.FormatNumber(tenants.Kpis.Active)</dd>
-                    <dt>@D["TenantRenting"]</dt><dd>@DashboardFormat.FormatNumber(tenants.Kpis.Renting)</dd>
+                    <div class="kpi-card">
+                        <dt>@D["TenantTotal"]</dt>
+                        <dd>@DashboardFormat.FormatNumber(tenants.Kpis.Total)</dd>
+                    </div>
+                    <div class="kpi-card">
+                        <dt>@D["TenantActive"]</dt>
+                        <dd>@DashboardFormat.FormatNumber(tenants.Kpis.Active)</dd>
+                    </div>
+                    <div class="kpi-card">
+                        <dt>@D["TenantRenting"]</dt>
+                        <dd>@DashboardFormat.FormatNumber(tenants.Kpis.Renting)</dd>
+                    </div>
                     @if (IsOwner && tenants.Kpis.LinkedAccountCount is int linked)
                     {
-                        <dt>@D["TenantLinked"]</dt><dd>@DashboardFormat.FormatNumber(linked)</dd>
+                        <div class="kpi-card">
+                            <dt>@D["TenantLinked"]</dt>
+                            <dd>@DashboardFormat.FormatNumber(linked)</dd>
+                        </div>
                     }
                 </dl>
                 @if (tenants.Tenants.TotalCount == 0)
