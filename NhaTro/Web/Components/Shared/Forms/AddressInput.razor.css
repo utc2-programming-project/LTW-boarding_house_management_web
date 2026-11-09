@@ -1,0 +1,40 @@
+.address-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.address-input-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.65rem;
+}
+
+.address-input-part {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.address-input-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted, #5b6472);
+}
+
+.address-input-control {
+    width: 100%;
+}
+
+.address-input-hint {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--text-muted, #5b6472);
+}
+
+@media (max-width: 640px) {
+    .address-input-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

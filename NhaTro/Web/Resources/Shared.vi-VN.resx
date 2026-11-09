@@ -1744,4 +1744,12 @@
   <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Nơi cấp không được vượt quá 200 ký tự.</value></data>
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Ghi chú không được vượt quá 500 ký tự.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>Thiếu RowVersion.</value></data>
+  <data name="AddressStreetLabel" xml:space="preserve"><value>Số nhà, tên đường</value></data>
+  <data name="AddressStreetPlaceholder" xml:space="preserve"><value>Ví dụ: 12 Nguyễn Trãi</value></data>
+  <data name="AddressProvinceLabel" xml:space="preserve"><value>Tỉnh/Thành phố</value></data>
+  <data name="AddressProvincePlaceholder" xml:space="preserve"><value>Gõ để tìm tỉnh/thành phố</value></data>
+  <data name="AddressWardLabel" xml:space="preserve"><value>Phường/Xã</value></data>
+  <data name="AddressWardPlaceholder" xml:space="preserve"><value>Gõ để tìm phường/xã</value></data>
+  <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Chọn tỉnh/thành phố trước</value></data>
+  <data name="AddressSuggestionHint" xml:space="preserve"><value>Gợi ý theo dữ liệu hành chính 34 tỉnh/thành phố và 3.321 phường/xã. Địa chỉ cũ vẫn được giữ nguyên.</value></data>
 </root>

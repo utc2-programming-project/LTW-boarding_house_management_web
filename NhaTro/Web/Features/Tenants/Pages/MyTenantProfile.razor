@@ -83,10 +83,12 @@
                                            aria-describedby="tenant-own-email-error" aria-invalid="@(_editContext.HasError(() => _form.Email) ? "true" : "false")" />
                             </FormField>
                             <FormField TValue="string" Id="tenant-own-address" Label="@L["TenantPermanentAddress"]"
+                                       LabelFor="tenant-own-address-street"
                                        For="() => _form.PermanentAddress">
-                                <InputTextArea id="tenant-own-address" class="input tenant-profile-address"
-                                               @bind-Value="_form.PermanentAddress" maxlength="300"
-                                               aria-describedby="tenant-own-address-error" aria-invalid="@(_editContext.HasError(() => _form.PermanentAddress) ? "true" : "false")" />
+                                <AddressInput Id="tenant-own-address" @bind-Value="_form.PermanentAddress"
+                                              MaxLength="300"
+                                              AriaDescribedBy="tenant-own-address-error"
+                                              AriaInvalid="@_editContext.HasError(() => _form.PermanentAddress)" />
                             </FormField>
                         </div>
                         <div class="form-actions">
