@@ -12,8 +12,19 @@
 <div class="p2-page">
     <header class="p2-heading">
         <div>
-            <NavBreadcrumb />
-            <h1>@L["P2PropertiesTitle"]</h1>
+            <NavBreadcrumb TitleAsHeading="true">
+                <CurrentContent>
+                    <span class="property-help" @onpointerenter="ShowHelp" @onpointerleave="LeaveHelp">
+                        <button type="button" class="property-help-button" aria-label="@L["P2PropertiesHelpLabel"]"
+                                aria-describedby="property-heading-help" aria-expanded="@HelpVisible.ToString().ToLowerInvariant()"
+                                @onfocus="ShowHelp" @onblur="CloseHelp" @onclick="ToggleHelp"
+                                @onpointerdown="HoldHelp" @onkeydown="HandleHelpKey">
+                            <LucideIcon Name="circle-help" />
+                        </button>
+                        <span id="property-heading-help" class="property-help-tooltip" role="tooltip" hidden="@(!HelpVisible)">@L["P2PropertiesSubtitle"]</span>
+                    </span>
+                </CurrentContent>
+            </NavBreadcrumb>
             <p>@L["P2PropertiesSubtitle"]</p>
         </div>
         @if (_isOwner)
@@ -119,6 +130,24 @@
                Danger="true" OnConfirm="DeletePropertyAsync" OnCancel="CancelDelete" />
 
 @code {
+    private bool _helpPinned;
+    private bool _helpActive;
+    private bool _helpDismissed;
+    private bool HelpVisible => !_helpDismissed && (_helpPinned || _helpActive);
+
+    private void ShowHelp() { _helpActive = true; _helpDismissed = false; }
+    private void LeaveHelp() => _helpActive = false;
+    private void CloseHelp() { _helpActive = false; _helpPinned = false; _helpDismissed = false; }
+    private void ToggleHelp() { _helpPinned = !_helpPinned; _helpDismissed = !_helpPinned; }
+    private void HoldHelp(PointerEventArgs args)
+    {
+        if (args.PointerType == "touch") ShowHelp();
+    }
+    private void HandleHelpKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") { _helpPinned = false; _helpDismissed = true; }
+    }
+
     private DataTable<PropertyListItem>? _table;
     private IReadOnlyList<DataTableColumn<PropertyListItem>> _columns = [];
     private DataTableLabels _tableLabels = new();

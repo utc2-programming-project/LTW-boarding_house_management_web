@@ -1744,6 +1744,7 @@
   <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Nơi cấp không được vượt quá 200 ký tự.</value></data>
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Ghi chú không được vượt quá 500 ký tự.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>Thiếu RowVersion.</value></data>
+  <data name="P2PropertiesHelpLabel" xml:space="preserve"><value>Giải thích về trang Nhà trọ</value></data>
   <data name="AddressStreetLabel" xml:space="preserve"><value>Số nhà, tên đường</value></data>
   <data name="AddressStreetPlaceholder" xml:space="preserve"><value>Ví dụ: 12 Nguyễn Trãi</value></data>
   <data name="AddressProvinceLabel" xml:space="preserve"><value>Tỉnh/Thành phố</value></data>

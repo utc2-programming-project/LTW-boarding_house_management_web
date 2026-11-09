@@ -3,12 +3,15 @@
 
 @if (_items.Count > 0)
 {
-    <BreadcrumbNav Items="_items" />
+    <BreadcrumbNav Items="_items" TitleAsHeading="TitleAsHeading" CurrentContent="CurrentContent" />
 }
 
 @code {
     /// <summary>Nhãn trang hiện tại cho route động (vd số hợp đồng); không cần cho route tĩnh.</summary>
     [Parameter] public string? CurrentLabel { get; set; }
+
+    [Parameter] public bool TitleAsHeading { get; set; }
+    [Parameter] public RenderFragment? CurrentContent { get; set; }
 
     private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> _items = [];
 
