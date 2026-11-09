@@ -19,7 +19,7 @@
 <PageTitle>@L["ContractListTitle"]</PageTitle>
 
 <section class="contract-list-page" aria-labelledby="contract-list-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractListTitle"]) })" />
+    <NavBreadcrumb />
     <header class="page-heading">
         <div><h1 id="contract-list-title">@L["ContractListTitle"]</h1><p>@L["ContractListDescription"]</p></div>
         <AuthorizeView Roles="ChuTro,QuanLy">

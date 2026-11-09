@@ -6,7 +6,7 @@
 
 <PageTitle>@L["PageTitle"]</PageTitle>
 <div class="incidents-page">
-    <BreadcrumbNav Items="Breadcrumbs" />
+    <NavBreadcrumb />
     <div class="page-heading">
         <div><h1>@L[_tenant ? "TenantHeading" : "PageTitle"]</h1><p>@L[_tenant ? "TenantSubtitle" : "LiveStaffSubtitle"]</p></div>
         @if (!_loading && _error is null)
@@ -43,7 +43,6 @@
     private bool _creating;
     private int? _detailId;
     private string? _error;
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Home"], "/"), new(L["PageTitle"])];
     protected override Task OnInitializedAsync() => InitializeAsync();
     private async Task InitializeAsync()
     {

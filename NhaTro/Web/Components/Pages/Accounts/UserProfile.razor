@@ -18,11 +18,7 @@
 <PageTitle>@L["ProfileTitle"] · @L["AppName"]</PageTitle>
 
 <section class="profile-page" aria-labelledby="profile-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-    {
-        new(L["Dashboard"], "/"),
-        new(L["ProfileTitle"]),
-    })" />
+    <NavBreadcrumb CurrentLabel="@L["ProfileTitle"]" />
 
     <header class="page-heading profile-page-heading">
         <div>

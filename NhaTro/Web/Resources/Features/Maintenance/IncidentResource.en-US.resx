@@ -459,4 +459,7 @@
   <data name="ZoomIn" xml:space="preserve"><value>Zoom in</value></data>
   <data name="RotateImage" xml:space="preserve"><value>Rotate</value></data>
   <data name="DownloadResultPhoto" xml:space="preserve"><value>Download result photo</value></data>
+  <data name="ChoosePhotos" xml:space="preserve"><value>Choose images</value></data>
+  <data name="NoPhotosSelected" xml:space="preserve"><value>No images selected</value></data>
+  <data name="PhotosSelected" xml:space="preserve"><value>Images selected: {0}</value></data>
 </root>

@@ -1,0 +1,626 @@
+@page "/payment-requests/{PaymentId:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "PaymentReview")]
+@inject PaymentReviewPageService ReviewPage
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<InvoiceResources> L
+
+<PageTitle>@L["ReviewDetailPageTitle"]</PageTitle>
+
+<div class="payment-review-detail-page">
+    <NavBreadcrumb CurrentLabel="@($"YC-{PaymentId}")" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_loadError is not null)
+    {
+        <div class="page-error" role="alert">
+            <p>@_loadError</p>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["ReviewRetry"]</button>
+        </div>
+    }
+    else if (_notFound || _item is null)
+    {
+        <EmptyStateCard Title="@L["ReviewDetailNotFoundTitle"]" Description="@L["ReviewDetailNotFoundDesc"]">
+            <button type="button" class="btn btn-secondary" @onclick="BackToList">@L["ReviewBackToList"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">@L["ReviewDetailHeading"] · YC-@Item.Payment.Id</h1>
+                <p class="page-subtitle">@L["ReviewDetailSubtitle"]</p>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                <LucideIcon Name="arrow-left" />
+                <span>@L["ReviewBackToList"]</span>
+            </button>
+        </header>
+
+        @if (_actionError is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_actionError</span>
+            </div>
+        }
+
+        @if (_requiresResultCheck)
+        {
+            <div class="review-notice warning" role="alert">
+                <LucideIcon Name="wifi" />
+                <div class="review-result-check">
+                    <p>@L["ReviewResultUnknown"]</p>
+                    <button type="button" class="btn btn-secondary" disabled="@_checkingResult" @onclick="CheckResultAsync">
+                        @if (_checkingResult)
+                        {
+                            <span class="spinner"></span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="refresh" />
+                        }
+                        <span>@L[_checkingResult ? "ReviewChecking" : "ReviewCheckResult"]</span>
+                    </button>
+                </div>
+            </div>
+        }
+        else if (Item.Payment.Status == PaymentStatus.Confirmed)
+        {
+            <div class="review-notice success" role="status">
+                <LucideIcon Name="circle-check" />
+                <span>@L["ReviewConfirmedNotice"]</span>
+            </div>
+        }
+        else if (Item.Payment.Status == PaymentStatus.Rejected)
+        {
+            <div class="review-notice danger" role="status">
+                <LucideIcon Name="alert" />
+                <span>@L["ReviewRejectedNotice"]</span>
+            </div>
+        }
+        else if (Item.Payment.Status != PaymentStatus.Pending)
+        {
+            <div class="review-notice info" role="status">
+                <LucideIcon Name="info" />
+                <span>@L["ReviewNotPendingNotice"]</span>
+            </div>
+        }
+
+        @if (_resultCheckMessage is not null && !_requiresResultCheck)
+        {
+            <div class="review-notice info" role="status">
+                <LucideIcon Name="info" />
+                <span>@_resultCheckMessage</span>
+            </div>
+        }
+
+        <section class="detail-card">
+            <div class="section-header">
+                <h2 class="section-title">@L["ReviewInvoiceHeading"]</h2>
+                <div class="section-actions">
+                    <StatusBadge Text="@InvoiceStatusText(Item.InvoiceStatus)" Tone="@InvoiceStatusTone(Item.InvoiceStatus)" />
+                    <button type="button" class="btn btn-secondary btn-sm" @onclick="OpenInvoice">
+                        <LucideIcon Name="file-text" />
+                        <span>@L["ReviewOpenInvoice"]</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-field">
+                    <span class="detail-label">@L["ReviewThInvoice"]</span>
+                    <span class="detail-value tabular-nums">HD-@Item.InvoiceId</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["ReviewThPeriod"]</span>
+                    <span class="detail-value tabular-nums">@DateFormatter.Format(Item.PeriodStart) – @DateFormatter.Format(Item.PeriodEnd)</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailContract"]</span>
+                    <span class="detail-value">@Item.ContractNumber</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["ReviewThRoomProperty"]</span>
+                    <span class="detail-value">@Item.RoomCode · @Item.PropertyName</span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["ReviewThTenants"]</span>
+                    <span class="detail-value">
+                        @if (Item.TenantNames.Count == 0)
+                        {
+                            <span class="muted">@L["NoTenants"]</span>
+                        }
+                        else
+                        {
+                            @string.Join(", ", Item.TenantNames)
+                        }
+                    </span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["ReviewPaymentId"]</span>
+                    <span class="detail-value tabular-nums">YC-@Item.Payment.Id</span>
+                </div>
+            </div>
+
+            <div class="summary-panel">
+                <div class="summary-row">
+                    <span>@L["SummaryTotal"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(Item.InvoiceTotal)</strong>
+                </div>
+                <div class="summary-row">
+                    <span>@L["PaymentAmount"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(Item.Payment.Amount)</strong>
+                </div>
+                @if (Item.Payment.Amount != Item.InvoiceTotal)
+                {
+                    <div class="summary-row mismatch">
+                        <span>@L["PayErrorAmountMismatch"]</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="detail-card">
+            <div class="section-header">
+                <h2 class="section-title">@L["ReviewPaymentHeading"]</h2>
+                <StatusBadge Text="@PaymentStatusText(Item.Payment.Status)" Tone="@PaymentStatusTone(Item.Payment.Status)" />
+            </div>
+
+            <PaymentSummaryCard Payment="Item.Payment" ProofFiles="_proofFiles" />
+        </section>
+
+        @if (CanReview)
+        {
+            <section class="action-bar">
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="OpenConfirm">
+                    <LucideIcon Name="circle-check" />
+                    <span>@L["ReviewConfirmAction"]</span>
+                </button>
+                <button type="button" class="btn btn-danger" disabled="@_busy" @onclick="OpenReject">
+                    <LucideIcon Name="x" />
+                    <span>@L["ReviewRejectAction"]</span>
+                </button>
+            </section>
+        }
+    }
+</div>
+
+<ConfirmDialog Visible="_confirmVisible"
+               Title="@L["ReviewConfirmTitle"]"
+               Message="@L["ReviewConfirmMessage"]"
+               ConfirmText="@L["ReviewConfirmText"]"
+               CancelText="@L["ReviewRejectCancel"]"
+               BusyText="@L["ReviewProcessing"]"
+               OnConfirm="ConfirmAsync"
+               OnCancel="CancelConfirm" />
+
+<FeatureDialog Visible="_rejectVisible"
+               Title="@L["ReviewRejectTitle"]"
+               CloseLabel="@L["ReviewRejectCancel"]"
+               Busy="@_rejecting"
+               OnClose="CloseReject">
+    <form class="reject-form" @onsubmit="SubmitRejectAsync" @onsubmit:preventDefault>
+        <label class="reject-field">
+            <span class="detail-label">@L["ReviewRejectReasonLabel"]</span>
+            <textarea class="input"
+                      rows="4"
+                      maxlength="500"
+                      placeholder="@L["ReviewRejectReasonPlaceholder"]"
+                      @bind="_rejectReason"
+                      disabled="@_rejecting"></textarea>
+            <span class="note">@(_rejectReason?.Length ?? 0)/500</span>
+        </label>
+
+        @if (_rejectError is not null)
+        {
+            <p class="field-error" role="alert">@_rejectError</p>
+        }
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" disabled="@_rejecting" @onclick="CancelReject">
+                @L["ReviewRejectCancel"]
+            </button>
+            <button type="submit" class="btn btn-danger" disabled="@_rejecting">
+                @if (_rejecting)
+                {
+                    <span class="spinner"></span>
+                }
+                <span>@L[_rejecting ? "ReviewRejectSubmitting" : "ReviewRejectSubmit"]</span>
+            </button>
+        </div>
+    </form>
+</FeatureDialog>
+
+@code {
+    [Parameter]
+    public int PaymentId { get; set; }
+
+    private PaymentReviewItemDto? _item;
+    private IReadOnlyDictionary<Guid, FileMetadataDto> _proofFiles = new Dictionary<Guid, FileMetadataDto>();
+
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _loadError;
+
+    private string? _actionError;
+    private string? _resultCheckMessage;
+    private bool _requiresResultCheck;
+    private bool _checkingResult;
+
+    private bool _busy;
+    private bool _confirmVisible;
+
+    private bool _rejectVisible;
+    private bool _rejecting;
+    private string _rejectReason = string.Empty;
+    private string? _rejectError;
+
+    // Chỉ dùng trong nhánh đã kiểm tra null; giữ markup gọn.
+    private PaymentReviewItemDto Item => _item!;
+
+    private bool CanReview =>
+        _item is { Payment.Status: PaymentStatus.Pending } &&
+        !_busy &&
+        !_checkingResult &&
+        !_requiresResultCheck;
+
+    private static readonly IReadOnlyDictionary<string, string> ReviewErrorKeys =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [PaymentErrorCodes.Forbidden] = "ReviewErrorForbidden",
+            [PaymentErrorCodes.InvoiceAlreadyPaid] = "ReviewErrorInvoiceAlreadyPaid",
+            [PaymentErrorCodes.PaymentNotFound] = "ReviewErrorPaymentNotFound",
+            [PaymentErrorCodes.InvalidPaymentStatus] = "ReviewErrorInvalidStatus",
+            [PaymentErrorCodes.RejectionReasonRequired] = "ReviewErrorRejectionReasonRequired",
+            [PaymentErrorCodes.RejectionReasonTooLong] = "ReviewErrorRejectionReasonTooLong",
+            [PaymentErrorCodes.ConcurrencyConflict] = "ReviewErrorConcurrency",
+        };
+
+    protected override Task OnParametersSetAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _notFound = false;
+        _loadError = null;
+        _actionError = null;
+        _resultCheckMessage = null;
+        _requiresResultCheck = false;
+        _item = null;
+        _proofFiles = new Dictionary<Guid, FileMetadataDto>();
+
+        try
+        {
+            _item = await ReviewPage.DetailAsync(PaymentId);
+            await LoadProofFilesAsync();
+        }
+        catch (KeyNotFoundException)
+        {
+            // Không phân biệt "không tồn tại" với "ngoài phạm vi" để không lộ ID yêu cầu.
+            _notFound = true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _notFound = true;
+        }
+        catch (Exception)
+        {
+            _loadError = L["ReviewDetailLoadError"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadProofFilesAsync()
+    {
+        if (_item is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _proofFiles = await ReviewPage.ProofFilesAsync(_item.InvoiceId);
+        }
+        catch (Exception)
+        {
+            // Tên tệp chỉ để hiển thị; liên kết minh chứng vẫn mở qua endpoint tệp đã phân quyền.
+            _proofFiles = new Dictionary<Guid, FileMetadataDto>();
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_item is null || !CanReview)
+        {
+            _confirmVisible = false;
+            return;
+        }
+
+        _busy = true;
+        _actionError = null;
+        _resultCheckMessage = null;
+
+        try
+        {
+            var updated = await ReviewPage.ConfirmAsync(_item.Payment.Id);
+            ApplyPayment(updated);
+            _confirmVisible = false;
+            Toasts.Success(L["ReviewConfirmSuccess"]);
+            await RefreshAfterActionAsync(null);
+        }
+        catch (PaymentAuthorizationException exception)
+        {
+            _confirmVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentNotFoundException exception)
+        {
+            _confirmVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentOperationException exception)
+            when (exception.ErrorCode is PaymentErrorCodes.InvoiceAlreadyPaid
+                or PaymentErrorCodes.InvalidPaymentStatus
+                or PaymentErrorCodes.ConcurrencyConflict)
+        {
+            _confirmVisible = false;
+            await RefreshAfterActionAsync(null);
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentOperationException exception)
+        {
+            _confirmVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (Exception)
+        {
+            // Không biết server đã ghi nhận tiền hay chưa: bắt buộc tra kết quả trước khi thao tác lại.
+            _confirmVisible = false;
+            _requiresResultCheck = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SubmitRejectAsync()
+    {
+        if (_item is null || _rejecting)
+        {
+            return;
+        }
+
+        var reason = _rejectReason?.Trim() ?? string.Empty;
+        if (reason.Length == 0)
+        {
+            _rejectError = L["ReviewErrorRejectionReasonRequired"];
+            return;
+        }
+
+        if (reason.Length > 500)
+        {
+            _rejectError = L["ReviewErrorRejectionReasonTooLong"];
+            return;
+        }
+
+        _rejecting = true;
+        _rejectError = null;
+        _actionError = null;
+        _resultCheckMessage = null;
+
+        try
+        {
+            var updated = await ReviewPage.RejectAsync(_item.Payment.Id, reason);
+            ApplyPayment(updated);
+            _rejectVisible = false;
+            _rejectReason = string.Empty;
+            Toasts.Success(L["ReviewRejectSuccess"]);
+            await RefreshAfterActionAsync(null);
+        }
+        catch (PaymentAuthorizationException exception)
+        {
+            _rejectVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentNotFoundException exception)
+        {
+            _rejectVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentValidationException exception)
+        {
+            _rejectError = ServiceErrorText(exception);
+        }
+        catch (PaymentOperationException exception)
+            when (exception.ErrorCode is PaymentErrorCodes.InvoiceAlreadyPaid
+                or PaymentErrorCodes.InvalidPaymentStatus
+                or PaymentErrorCodes.ConcurrencyConflict)
+        {
+            _rejectVisible = false;
+            await RefreshAfterActionAsync(null);
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (PaymentOperationException exception)
+        {
+            _rejectVisible = false;
+            _actionError = ServiceErrorText(exception);
+        }
+        catch (Exception)
+        {
+            // Không biết server đã ghi nhận từ chối hay chưa: bắt buộc tra kết quả trước khi thao tác lại.
+            _rejectVisible = false;
+            _requiresResultCheck = true;
+        }
+        finally
+        {
+            _rejecting = false;
+        }
+    }
+
+    private async Task CheckResultAsync()
+    {
+        if (_checkingResult)
+        {
+            return;
+        }
+
+        _checkingResult = true;
+        _actionError = null;
+        _resultCheckMessage = null;
+
+        try
+        {
+            _item = await ReviewPage.DetailAsync(PaymentId);
+            await LoadProofFilesAsync();
+            _requiresResultCheck = false;
+            _resultCheckMessage = L["ReviewResultChecked"];
+        }
+        catch (KeyNotFoundException)
+        {
+            _requiresResultCheck = false;
+            _notFound = true;
+        }
+        catch (Exception exception)
+        {
+            _actionError = ServiceErrorText(exception);
+            _requiresResultCheck = true;
+        }
+        finally
+        {
+            _checkingResult = false;
+        }
+    }
+
+    private async Task RefreshAfterActionAsync(string? noticeKey)
+    {
+        try
+        {
+            _item = await ReviewPage.DetailAsync(PaymentId);
+            await LoadProofFilesAsync();
+            _notFound = false;
+            _loadError = null;
+        }
+        catch (Exception)
+        {
+            // Thao tác đã thành công ở máy chủ; lỗi đọc lại chỉ làm mất phần làm mới.
+        }
+
+        if (noticeKey is not null)
+        {
+            _resultCheckMessage = L[noticeKey];
+        }
+    }
+
+    private void ApplyPayment(PaymentDto payment)
+    {
+        if (_item is null)
+        {
+            return;
+        }
+
+        _item = new PaymentReviewItemDto
+        {
+            Payment = payment,
+            InvoiceId = _item.InvoiceId,
+            ContractNumber = _item.ContractNumber,
+            RoomCode = _item.RoomCode,
+            PropertyName = _item.PropertyName,
+            TenantNames = _item.TenantNames,
+            PeriodStart = _item.PeriodStart,
+            PeriodEnd = _item.PeriodEnd,
+            InvoiceStatus = _item.InvoiceStatus,
+            InvoiceTotal = _item.InvoiceTotal,
+        };
+    }
+
+    private void OpenConfirm()
+    {
+        if (CanReview)
+        {
+            _confirmVisible = true;
+        }
+    }
+
+    private void CancelConfirm() => _confirmVisible = false;
+
+    private void OpenReject()
+    {
+        if (!CanReview || _busy)
+        {
+            return;
+        }
+
+        _rejectReason = string.Empty;
+        _rejectError = null;
+        _rejectVisible = true;
+    }
+
+    private void CloseReject()
+    {
+        if (_rejecting)
+        {
+            return;
+        }
+
+        _rejectVisible = false;
+        _rejectError = null;
+    }
+
+    private void CancelReject() => CloseReject();
+
+    private string ServiceErrorText(Exception exception)
+    {
+        var code = (exception as IPaymentServiceError)?.ErrorCode;
+        if (code is not null && ReviewErrorKeys.TryGetValue(code, out var key))
+        {
+            return L[key];
+        }
+
+        return string.IsNullOrWhiteSpace(exception.Message) ? L["ReviewErrorUnknown"] : exception.Message;
+    }
+
+    private void BackToList() => Navigation.NavigateTo("/payment-requests");
+
+    private void OpenInvoice() => Navigation.NavigateTo($"/invoices/{Item.InvoiceId}");
+
+    private string InvoiceStatusText(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => L["StatusDraft"],
+        InvoiceStatus.Issued => L["StatusIssued"],
+        InvoiceStatus.Paid => L["StatusPaid"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone InvoiceStatusTone(InvoiceStatus status) => status switch
+    {
+        InvoiceStatus.Draft => BadgeTone.Neutral,
+        InvoiceStatus.Issued => BadgeTone.Info,
+        InvoiceStatus.Paid => BadgeTone.Success,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string PaymentStatusText(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => L["PaymentStatusPending"],
+        PaymentStatus.Confirmed => L["PaymentStatusConfirmed"],
+        PaymentStatus.Rejected => L["PaymentStatusRejected"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone PaymentStatusTone(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => BadgeTone.Warning,
+        PaymentStatus.Confirmed => BadgeTone.Success,
+        PaymentStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Neutral,
+    };
+}

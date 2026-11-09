@@ -1,0 +1,249 @@
+@page "/payment-requests"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "PaymentReview")]
+@inject PaymentReviewPageService ReviewPage
+@inject NavigationManager Navigation
+@inject IStringLocalizer<InvoiceResources> L
+
+<PageTitle>@L["ReviewPageTitle"]</PageTitle>
+
+<div class="payment-review-page">
+    <NavBreadcrumb />
+
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">@L["ReviewHeading"]</h1>
+            <p class="page-subtitle">@L["ReviewSubtitle"]</p>
+        </div>
+        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
+            <LucideIcon Name="refresh" />
+            <span>@L["ReviewRefresh"]</span>
+        </button>
+    </header>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="page-error" role="alert">
+            <p>@_error</p>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["ReviewRetry"]</button>
+        </div>
+    }
+    else
+    {
+        <div class="stats-grid">
+            <div class="stat-card pending-card">
+                <span class="stat-label">@L["ReviewStatPending"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.PendingCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@L["ReviewStatConfirmed"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.ConfirmedCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@L["ReviewStatRejected"]</span>
+                <span class="stat-number tabular-nums">@_result.Summary.RejectedCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@L["ReviewStatPendingAmount"]</span>
+                <span class="stat-number tabular-nums">@MoneyFormatter.Format(_result.Summary.PendingAmount)</span>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filters-row">
+                <label class="filter-field">
+                    <span>@L["ReviewFilterStatus"]</span>
+                    <select class="input" @bind="_status" @bind:after="OnStatusChangedAsync">
+                        <option value="">@L["ReviewAllStatuses"]</option>
+                        <option value="@PaymentStatus.Pending">@L["PaymentStatusPending"]</option>
+                        <option value="@PaymentStatus.Confirmed">@L["PaymentStatusConfirmed"]</option>
+                        <option value="@PaymentStatus.Rejected">@L["PaymentStatusRejected"]</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <div class="table-card">
+            @if (_result.Items.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="review-table">
+                        <thead>
+                            <tr>
+                                <th>@L["ReviewThRequest"]</th>
+                                <th>@L["ReviewThInvoice"]</th>
+                                <th>@L["ReviewThRoomProperty"]</th>
+                                <th>@L["ReviewThTenants"]</th>
+                                <th>@L["ReviewThPeriod"]</th>
+                                <th>@L["ReviewThRequestedAt"]</th>
+                                <th class="text-right">@L["ReviewThAmount"]</th>
+                                <th>@L["ReviewThStatus"]</th>
+                                <th class="text-right">@L["ReviewThActions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _result.Items)
+                            {
+                                <tr>
+                                    <td class="font-semibold tabular-nums">YC-@item.Payment.Id</td>
+                                    <td class="font-semibold tabular-nums">HD-@item.InvoiceId</td>
+                                    <td>
+                                        <span class="room-code">@item.RoomCode</span>
+                                        <span class="property-name">@item.PropertyName</span>
+                                    </td>
+                                    <td>
+                                        @if (item.TenantNames.Count == 0)
+                                        {
+                                            <span class="muted">@L["NoTenants"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@string.Join(", ", item.TenantNames)</span>
+                                        }
+                                    </td>
+                                    <td class="tabular-nums">@DateFormatter.Format(item.PeriodStart) – @DateFormatter.Format(item.PeriodEnd)</td>
+                                    <td class="tabular-nums">@DateFormatter.FormatDateTime(item.Payment.RequestedAt.UtcDateTime)</td>
+                                    <td class="text-right tabular-nums">@MoneyFormatter.Format(item.Payment.Amount)</td>
+                                    <td>
+                                        <StatusBadge Text="@PaymentStatusText(item.Payment.Status)" Tone="@PaymentStatusTone(item.Payment.Status)" />
+                                    </td>
+                                    <td class="text-right">
+                                        <button type="button"
+                                                class="icon-action-btn"
+                                                title="@L["ReviewViewDetail"]"
+                                                aria-label="@L["ReviewViewDetail"]"
+                                                @onclick="() => OpenDetail(item.Payment.Id)">
+                                            <LucideIcon Name="eye" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <footer class="table-footer">
+                    <span>@string.Format(L["PageInfo"], _result.Page, TotalPages, _result.TotalCount)</span>
+                    <div class="pager">
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page <= 1)" @onclick="PreviousPageAsync">
+                            @L["Previous"]
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page >= TotalPages)" @onclick="NextPageAsync">
+                            @L["Next"]
+                        </button>
+                    </div>
+                </footer>
+            }
+            else
+            {
+                <EmptyStateCard Title="@L["ReviewEmptyTitle"]" Description="@L["ReviewEmptyDesc"]" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private const int PageSize = 20;
+
+    private PaymentReviewListResult _result = new()
+    {
+        Items = [],
+        TotalCount = 0,
+        Page = 1,
+        PageSize = PageSize,
+        Summary = new PaymentReviewSummaryDto
+        {
+            PendingCount = 0,
+            ConfirmedCount = 0,
+            RejectedCount = 0,
+            PendingAmount = 0m,
+        },
+    };
+
+    private PaymentStatus? _status = PaymentStatus.Pending;
+    private bool _loading = true;
+    private string? _error;
+    private int _page = 1;
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _result = await ReviewPage.ListAsync(new PaymentReviewFilter
+            {
+                Status = _status,
+                Page = _page,
+                PageSize = PageSize,
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["ReviewErrorForbidden"];
+        }
+        catch (Exception)
+        {
+            _error = L["ReviewLoadError"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnStatusChangedAsync()
+    {
+        _page = 1;
+        await ReloadAsync();
+    }
+
+    private async Task PreviousPageAsync()
+    {
+        if (_page <= 1)
+        {
+            return;
+        }
+
+        _page--;
+        await ReloadAsync();
+    }
+
+    private async Task NextPageAsync()
+    {
+        if (_page >= TotalPages)
+        {
+            return;
+        }
+
+        _page++;
+        await ReloadAsync();
+    }
+
+    private void OpenDetail(int paymentId) => Navigation.NavigateTo($"/payment-requests/{paymentId}");
+
+    private string PaymentStatusText(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => L["PaymentStatusPending"],
+        PaymentStatus.Confirmed => L["PaymentStatusConfirmed"],
+        PaymentStatus.Rejected => L["PaymentStatusRejected"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone PaymentStatusTone(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => BadgeTone.Warning,
+        PaymentStatus.Confirmed => BadgeTone.Success,
+        PaymentStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Neutral,
+    };
+}

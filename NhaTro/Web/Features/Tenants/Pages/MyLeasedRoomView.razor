@@ -1,3 +1,4 @@
+@page "/my/room"
 @page "/tenant/my-room"
 @attribute [Authorize(Roles = Roles.KhachThue)]
 @rendermode InteractiveServer
@@ -17,22 +18,14 @@
 <div class="leased-room-page">
     @if (_loading)
     {
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-        {
-            new(L["Dashboard"], "/"),
-            new(L["MyRoomTitle"])
-        })" />
+        <NavBreadcrumb />
         <div class="leased-room-state">
             <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
         </div>
     }
     else if (_loadFailed)
     {
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-        {
-            new(L["Dashboard"], "/"),
-            new(L["MyRoomTitle"])
-        })" />
+        <NavBreadcrumb />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["MyRoomTitle"]" Description="@L["MyRoomLoadFailed"]">
                 <button type="button" class="btn btn-secondary" @onclick="LoadRoomAsync">@L["Retry"]</button>
@@ -41,18 +34,14 @@
     }
     else if (_leasedRoom is null)
     {
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-        {
-            new(L["Dashboard"], "/"),
-            new(L["MyRoomTitle"])
-        })" />
+        <NavBreadcrumb />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["EmptyMyRoomTitle"]" Description="@L["EmptyMyRoomDesc"]">
                 <Icon>
                     <LucideIcon Name="home" />
                 </Icon>
                 <ChildContent>
-                    <a href="/tenant/profile" class="btn btn-secondary">
+                    <a href="/my/tenant-profile" class="btn btn-secondary">
                         <LucideIcon Name="user" />
                         @L["MyTenantProfile"]
                     </a>
@@ -63,11 +52,7 @@
     else
     {
         <div class="breadcrumb-title-stack">
-            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-            {
-                new(L["Dashboard"], "/"),
-                new(L["MyRoomTitle"])
-            })" />
+            <NavBreadcrumb />
 
             <header class="leased-room-header">
             <div class="leased-room-title-block">
@@ -96,7 +81,7 @@
                     <span>@L["RenewContract"]</span>
                 </button>
 
-                <a href="/documents"
+                <a href="/my/documents"
                    class="btn btn-primary">
                     <LucideIcon Name="folder" />
                     <span>@L["TenantDocumentsTitle"]</span>

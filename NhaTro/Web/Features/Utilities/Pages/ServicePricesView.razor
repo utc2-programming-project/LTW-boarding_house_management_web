@@ -22,12 +22,7 @@
     <header class="page-header">
         <div class="heading-group">
             <div class="breadcrumb-title-stack">
-                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-                    {
-                        new(L["CatalogOverviewNav"], "/"),
-                        new(L["CatalogBreadcrumb"], "/services"),
-                        new(L["PricesBreadcrumb"])
-                    })" />
+                <NavBreadcrumb />
                 <h1 class="page-title">@L["PricesHeading"]</h1>
             </div>
             <p class="page-subtitle">@L["PricesSubtitle"]</p>

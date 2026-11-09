@@ -633,6 +633,9 @@ public sealed class FileService(
             && await db.Tenants.AnyAsync(t => t.Id == tenantId, cancellationToken),
         RelatedEntityType.MaintenanceIncident => int.TryParse(entityId, out var incidentId)
             && await db.MaintenanceIncidents.AnyAsync(i => i.Id == incidentId, cancellationToken),
+        // VHT-54: minh chứng thanh toán gắn với hóa đơn (RelatedEntityId = invoiceId) trước khi có Payment.
+        RelatedEntityType.Payment => int.TryParse(entityId, out var invoiceId)
+            && await db.Invoices.AnyAsync(i => i.Id == invoiceId, cancellationToken),
         _ => true,
     };
 
@@ -665,6 +668,13 @@ public sealed class FileService(
     {
         RelatedEntityType.Tenant when userId.Length > 0 && int.TryParse(entityId, out var tenantId) =>
             await db.Tenants.AnyAsync(t => t.Id == tenantId && t.UserId == userId, cancellationToken),
+        // VHT-54: khách thuê chỉ upload/đọc minh chứng của hóa đơn thuộc hợp đồng có tên mình.
+        RelatedEntityType.Payment when userId.Length > 0 && int.TryParse(entityId, out var invoiceId) =>
+            await (from invoice in db.Invoices
+                   join member in db.ContractMembers on invoice.ContractId equals member.ContractId
+                   join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+                   where invoice.Id == invoiceId && tenant.UserId == userId
+                   select invoice.Id).AnyAsync(cancellationToken),
         _ => false,
     };
 
@@ -680,7 +690,8 @@ public sealed class FileService(
         out string canonical)
     {
         canonical = raw;
-        if (type is not (RelatedEntityType.Room or RelatedEntityType.Tenant or RelatedEntityType.MaintenanceIncident))
+        if (type is not (RelatedEntityType.Room or RelatedEntityType.Tenant
+            or RelatedEntityType.MaintenanceIncident or RelatedEntityType.Payment))
         {
             return true;
         }

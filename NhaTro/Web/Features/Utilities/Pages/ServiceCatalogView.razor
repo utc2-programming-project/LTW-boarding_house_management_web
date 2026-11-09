@@ -22,11 +22,7 @@
     <header class="page-header">
         <div class="heading-group">
             <div class="breadcrumb-title-stack">
-                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-                    {
-                        new(L["CatalogOverviewNav"], "/"),
-                        new(L["CatalogBreadcrumb"])
-                    })" />
+                <NavBreadcrumb />
                 <h1 class="page-title">@L["CatalogHeading"]</h1>
             </div>
             <p class="page-subtitle">@L["CatalogSubtitle"]</p>
@@ -51,7 +47,7 @@
                 <LucideIcon Name="history" />
                 <span>@L["PriceHistoryBtn"]</span>
             </button>
-            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/meter-readings")'>
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/readings")'>
                 <LucideIcon Name="zap" />
                 <span>@L["MeterReadingBtn"]</span>
             </button>

@@ -1,3 +1,4 @@
+@page "/admin/manager-switches"
 @page "/manager-switches"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
 @using System.Security.Claims
@@ -13,7 +14,7 @@
 <PageTitle>@L["ManagerSwitches"] · @L["AppName"]</PageTitle>
 
 <section class="switches-page" aria-labelledby="switches-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ManagerSwitches"]) })" />
+    <NavBreadcrumb />
 
     <header class="page-heading">
         <div>
@@ -21,6 +22,16 @@
             <p>@L["ManagerSwitchesSubtitle"]</p>
         </div>
     </header>
+
+    <section class="sw-guide" aria-labelledby="sw-guide-title">
+        <h2 id="sw-guide-title">@L["SwModesTitle"]</h2>
+        <div class="sw-guide-list">
+            <p class="sw-guide-item"><strong>@L["SwModeAllow"]</strong><span class="sw-guide-text">@L["SwModeHelpAllow"]</span></p>
+            <p class="sw-guide-item"><strong>@L["SwModeApprove"]</strong><span class="sw-guide-text">@L["SwModeHelpApprove"]</span></p>
+            <p class="sw-guide-item"><strong>@L["SwModeDeny"]</strong><span class="sw-guide-text">@L["SwModeHelpDeny"]</span></p>
+        </div>
+        <p class="sw-guide-note">@L["SwOwnerNote"]</p>
+    </section>
 
     @if (_error)
     {
@@ -39,37 +50,66 @@
     }
     else if (_items is not null)
     {
-        <div class="account-panel">
-            <p class="account-hint">@L["ManagerSwitchesSaveHint"]</p>
-            <div class="table-scroll">
-                <table class="account-table">
-                    <thead><tr><th scope="col">@L["ApprovalUiAction"]</th><th scope="col">@L["ApprovalUiMode"]</th></tr></thead>
-                    <tbody>
-                        @foreach (var item in _items.OrderBy(item => item.Code, StringComparer.OrdinalIgnoreCase))
-                        {
-                            <tr @key="item.Code">
-                                <th scope="row"><label for="@item.Code">@item.Code · @L[item.Code]</label></th>
-                                <td>
-                                    <select @key="_renderVersion" id="@item.Code" class="input" value="@item.Mode" disabled="@_saving"
-                                            @onchange="args => SaveAsync(item, args)">
-                                        @foreach (var mode in item.AllowedModes)
-                                        {
-                                            <option value="@mode">@L[$"ApprovalUiMode{mode}"]</option>
-                                        }
-                                    </select>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <p class="account-hint">@L["ManagerSwitchesSaveHint"]</p>
+
+        @foreach (var group in _items.GroupBy(item => item.Group))
+        {
+            var groupTitle = $"SwGroup{group.Key}";
+            <section class="sw-group" aria-labelledby="@($"sw-group-{group.Key}")">
+                <h2 id="@($"sw-group-{group.Key}")" class="sw-group-title">@L[groupTitle]</h2>
+                <div class="sw-grid">
+                    @foreach (var item in group)
+                    {
+                        var explainId = $"sw-explain-{item.Code}";
+                        var expanded = _expanded.Contains(item.Code);
+                        <article class="sw-card" @key="item.Code">
+                            <div class="sw-card-head">
+                                <div class="sw-card-title">
+                                    <h3>@L[item.Code]</h3>
+                                    <span class="sw-code">@item.Code</span>
+                                </div>
+                                <fieldset class="sw-modes" disabled="@_saving" @key="_renderVersion">
+                                    <legend class="sw-sr-only">@L["SwModeLabel"]</legend>
+                                    @foreach (var mode in item.AllowedModes)
+                                    {
+                                        <label class="sw-mode">
+                                            <input type="radio" name="@($"sw-mode-{item.Code}")" value="@mode"
+                                                   checked="@(item.Mode == mode)"
+                                                   @onchange="args => SaveAsync(item, args)" />
+                                            <span>@L[$"SwMode{mode}"]</span>
+                                        </label>
+                                    }
+                                </fieldset>
+                            </div>
+
+                            <p class="sw-desc">@L[$"SwDesc-{item.Code}"]</p>
+
+                            <button type="button" class="sw-explain-toggle"
+                                    aria-expanded="@expanded.ToString().ToLowerInvariant()"
+                                    aria-controls="@explainId"
+                                    @onclick="() => ToggleExplain(item.Code)">
+                                <LucideIcon Name="@(expanded ? "chevron-down" : "info")" />
+                                <span>@L[expanded ? "SwExplainHide" : "SwExplainShow"]</span>
+                            </button>
+
+                            @if (expanded)
+                            {
+                                <div class="sw-explain" id="@explainId">
+                                    <p>@L[$"SwDetail-{item.Code}"]</p>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            </section>
+        }
     }
 </section>
 
 @code {
     private IReadOnlyList<ManagerToggleItem>? _items;
     private ManagerToggleCaller _caller = default!;
+    private readonly HashSet<string> _expanded = new(StringComparer.OrdinalIgnoreCase);
     private bool _saving;
     private bool _error;
     private int _renderVersion;
@@ -87,6 +127,17 @@
         _error = !result.Succeeded;
         _items = result.Succeeded ? result.Items : null;
     }
+
+    private void ToggleExplain(string code)
+    {
+        if (!_expanded.Remove(code))
+        {
+            _expanded.Add(code);
+        }
+    }
+
+    private MarkupString ModeHelp(string key) =>
+        new($"<span class=\"sw-guide-text\">{System.Net.WebUtility.HtmlEncode(L[key].Value)}</span>");
 
     private async Task SaveAsync(ManagerToggleItem item, ChangeEventArgs args)
     {
