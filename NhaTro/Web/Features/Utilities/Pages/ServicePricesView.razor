@@ -82,6 +82,56 @@
         }
     </div>
 
+    <!-- Filter Toolbar -->
+    <div class="filters-container">
+        <div class="filters-row">
+            <label class="filter-field" for="price-keyword-filter">
+                <span class="filter-label">@L["PriceKeywordFilter"]</span>
+                <input id="price-keyword-filter" type="search" class="input" autocomplete="off"
+                       placeholder="@L["PriceKeywordPlaceholder"]"
+                       @bind="_keywordFilter" @bind:event="oninput" @bind:after="OnFilterChanged" />
+            </label>
+
+            <label class="filter-field" for="price-status-filter">
+                <span class="filter-label">@L["ThPriceStatus"]</span>
+                <select id="price-status-filter" class="input select-filter" @bind="_statusFilter" @bind:after="OnFilterChanged">
+                    <option value="all">@L["AllStatuses"]</option>
+                    <option value="@((int)PriceVersionStatus.Active)">@L["StatusActive"]</option>
+                    <option value="@((int)PriceVersionStatus.Upcoming)">@L["StatusUpcoming"]</option>
+                    <option value="@((int)PriceVersionStatus.Expired)">@L["StatusExpired"]</option>
+                </select>
+            </label>
+
+            <label class="filter-field" for="price-scope-filter">
+                <span class="filter-label">@L["ThPriceScope"]</span>
+                <select id="price-scope-filter" class="input select-filter" @bind="_scopeFilter" @bind:after="OnFilterChanged">
+                    <option value="">@L["AllScopes"]</option>
+                    @foreach (var scope in _scopeOptions)
+                    {
+                        <option value="@scope.Value">@scope.Label</option>
+                    }
+                </select>
+            </label>
+
+            <label class="filter-field" for="price-effective-from-filter">
+                <span class="filter-label">@L["PriceEffectiveFromFilter"]</span>
+                <input id="price-effective-from-filter" type="date" class="input date-filter"
+                       @bind="_effectiveFromFilter" @bind:after="OnFilterChanged" />
+            </label>
+
+            <label class="filter-field" for="price-effective-to-filter">
+                <span class="filter-label">@L["PriceEffectiveToFilter"]</span>
+                <input id="price-effective-to-filter" type="date" class="input date-filter"
+                       @bind="_effectiveToFilter" @bind:after="OnFilterChanged" />
+            </label>
+
+            <button type="button" class="btn btn-secondary btn-reset" @onclick="ResetFilters">
+                <LucideIcon Name="refresh" />
+                <span>@L["ResetFilter"]</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Timeline History Table -->
     <div class="table-card">
         @if (_filteredVersions.Count > 0)
@@ -101,7 +151,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var v in _filteredVersions)
+                        @foreach (var v in PagedVersions)
                         {
                             <tr class="version-row">
                                 <td class="tabular-nums font-semibold text-slate-800">
@@ -158,6 +208,33 @@
                     </tbody>
                 </table>
             </div>
+
+            <footer class="table-footer">
+                <div class="pagination-info">
+                    @L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @_filteredVersions.Count
+                </div>
+
+                <div class="pagination-controls">
+                    <label class="page-size-field" for="price-page-size">
+                        <span>@L["RowsPerPage"]</span>
+                        <select id="price-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </label>
+
+                    <nav class="pager" aria-label="@L["PaginationLabel"]">
+                        <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["PreviousPage"]">
+                            <LucideIcon Name="chevron-left" />
+                        </button>
+                        <span class="page-indicator">@_page / @TotalPages</span>
+                        <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["NextPage"]">
+                            <LucideIcon Name="chevron-right" />
+                        </button>
+                    </nav>
+                </div>
+            </footer>
         }
         else
         {
@@ -212,8 +289,17 @@
 
 @code {
     private List<ServiceItemDto> _services = [];
+    private List<PriceVersionDto> _allVersions = [];
     private List<PriceVersionDto> _filteredVersions = [];
+    private List<(string Value, string Label)> _scopeOptions = [];
     private string _selectedServiceId = string.Empty;
+    private string _statusFilter = "all";
+    private string _scopeFilter = string.Empty;
+    private string _keywordFilter = string.Empty;
+    private DateTime? _effectiveFromFilter;
+    private DateTime? _effectiveToFilter;
+    private int _pageSize = 10;
+    private int _page = 1;
     private ServiceItemDto? _currentSelectedService;
     private string _callerRole = string.Empty;
     private bool _isPriceModalOpen;
@@ -266,18 +352,142 @@
     {
         _selectedServiceId = serviceId;
         _currentSelectedService = _services.FirstOrDefault(s => s.Id == serviceId);
+        _statusFilter = "all";
+        _scopeFilter = string.Empty;
+        _keywordFilter = string.Empty;
+        _effectiveFromFilter = null;
+        _effectiveToFilter = null;
+        _page = 1;
         try
         {
             var versions = await PageService.GetPriceVersionsForCallerAsync(serviceId);
-            _filteredVersions = versions.ToList();
+            _allVersions = versions.ToList();
+            BuildScopeOptions();
+            ApplyFilters();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load service price versions.");
             _loadError = L["SqlLoadVersionsError"];
+            _allVersions = [];
             _filteredVersions = [];
+            _scopeOptions = [];
         }
     }
+
+    private void BuildScopeOptions()
+    {
+        _scopeOptions = _allVersions
+            .GroupBy(v => v.BuildingScope)
+            .Select(group => (
+                Value: group.Key,
+                Label: group.Key == "all" ? L["AllBuildingsDescription"].Value : group.First().BuildingName))
+            .ToList();
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<PriceVersionDto> query = _allVersions;
+
+        if (!string.IsNullOrWhiteSpace(_keywordFilter))
+        {
+            var keyword = _keywordFilter.Trim();
+            query = query.Where(v =>
+                Contains(v.CreatedBy, keyword) ||
+                Contains(v.Note, keyword) ||
+                Contains(v.BuildingName, keyword));
+        }
+
+        if (_statusFilter != "all" && Enum.TryParse<PriceVersionStatus>(_statusFilter, out var status))
+        {
+            query = query.Where(v => v.Status == status);
+        }
+
+        if (!string.IsNullOrEmpty(_scopeFilter))
+        {
+            query = query.Where(v => string.Equals(v.BuildingScope, _scopeFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_effectiveFromFilter.HasValue)
+        {
+            var effectiveFrom = DateOnly.FromDateTime(_effectiveFromFilter.Value);
+            query = query.Where(v => v.EffectiveFrom >= effectiveFrom);
+        }
+
+        if (_effectiveToFilter.HasValue)
+        {
+            var effectiveTo = DateOnly.FromDateTime(_effectiveToFilter.Value);
+            // Bảng giá chưa đặt ngày kết thúc vẫn còn hiệu lực nên phải giữ lại.
+            query = query.Where(v => v.EffectiveTo == null || v.EffectiveTo.Value <= effectiveTo);
+        }
+
+        _filteredVersions = query.ToList();
+
+        if (_page > TotalPages)
+        {
+            _page = TotalPages;
+        }
+
+        if (_page < 1)
+        {
+            _page = 1;
+        }
+    }
+
+    private void OnFilterChanged()
+    {
+        _page = 1;
+        ApplyFilters();
+    }
+
+    private static bool Contains(string? value, string keyword) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Contains(keyword, StringComparison.CurrentCultureIgnoreCase);
+
+    private void ResetFilters()
+    {
+        _statusFilter = "all";
+        _scopeFilter = string.Empty;
+        _keywordFilter = string.Empty;
+        _effectiveFromFilter = null;
+        _effectiveToFilter = null;
+        _page = 1;
+        ApplyFilters();
+    }
+
+    private void ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _page = 1;
+        }
+    }
+
+    private void GoToPreviousPage()
+    {
+        if (_page > 1)
+        {
+            _page--;
+        }
+    }
+
+    private void GoToNextPage()
+    {
+        if (_page < TotalPages)
+        {
+            _page++;
+        }
+    }
+
+    private IEnumerable<PriceVersionDto> PagedVersions =>
+        _filteredVersions.Skip((_page - 1) * _pageSize).Take(_pageSize);
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_filteredVersions.Count / (double)_pageSize));
+
+    private int FirstItem => _filteredVersions.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
+
+    private int LastItem => Math.Min(_page * _pageSize, _filteredVersions.Count);
 
     private static string GetStatusBadgeClass(PriceVersionStatus status) => status switch
     {

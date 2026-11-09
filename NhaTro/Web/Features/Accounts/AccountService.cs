@@ -25,7 +25,8 @@ public sealed class AccountService(
 {
     public async Task<PagedResult<AccountListItemDto>> ListAsync(
         string? keyword, string? roleFilter, int page, int pageSize,
-        string callerUserId, string callerRole, CancellationToken ct = default)
+        string callerUserId, string callerRole, string? statusFilter = null,
+        CancellationToken ct = default)
     {
         if (!AccountPermissionRules.CanManageAccounts(callerRole))
         {
@@ -68,6 +69,24 @@ public sealed class AccountService(
                 (row.User.Email != null && row.User.Email.Contains(term)) ||
                 (row.User.FullName != null && row.User.FullName.Contains(term)) ||
                 (row.User.PhoneNumber != null && row.User.PhoneNumber.Contains(term)));
+        }
+
+        // VHT-95: loc theo trang thai hien thi (Khoa uu tien cao nhat, roi Cho duyet, Hoat dong).
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            var permanentLockout = AccountStatusRules.PermanentLockout - TimeSpan.FromMinutes(1);
+            query = statusFilter switch
+            {
+                "locked" => query.Where(row =>
+                    row.User.LockoutEnd != null && row.User.LockoutEnd >= permanentLockout),
+                "pending" => query.Where(row =>
+                    (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.ApprovedAt == null),
+                "active" => query.Where(row =>
+                    (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.ApprovedAt != null),
+                _ => query,
+            };
         }
 
         var total = await query.CountAsync(ct);

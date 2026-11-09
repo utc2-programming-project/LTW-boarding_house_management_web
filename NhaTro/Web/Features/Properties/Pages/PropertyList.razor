@@ -44,14 +44,35 @@
                     <LucideIcon Name="search" />
                     <span class="sr-only">@L["P2SearchProperties"]</span>
                     <input id="property-keyword" type="search" maxlength="200" autocomplete="off"
-                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput" />
+                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput"
+                           @bind:after="ApplyFiltersAsync" />
                 </label>
                 <label class="filter-select" for="property-active">
                     <span class="sr-only">@L["P2Activity"]</span>
-                    <select id="property-active" @bind="_activeFilter">
+                    <select id="property-active" @bind="_activeFilter" @bind:after="ApplyFiltersAsync">
                         <option value="">@L["P2AllActivity"]</option>
                         <option value="true">@L["P2Active"]</option>
                         <option value="false">@L["P2Inactive"]</option>
+                    </select>
+                </label>
+                <label class="filter-number" for="property-min-rooms">
+                    <span>@L["P2MinRooms"]</span>
+                    <input id="property-min-rooms" type="number" min="0" inputmode="numeric"
+                           placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount" />
+                </label>
+                <label class="filter-number" for="property-max-rooms">
+                    <span>@L["P2MaxRooms"]</span>
+                    <input id="property-max-rooms" type="number" min="0" inputmode="numeric"
+                           placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount" />
+                </label>
+                <label class="filter-select" for="property-sort">
+                    <span class="sr-only">@L["P2SortBy"]</span>
+                    <select id="property-sort" @bind="_sortFilter" @bind:after="ApplyFiltersAsync">
+                        <option value="name">@L["P2SortName"]</option>
+                        <option value="newest">@L["P2SortNewest"]</option>
+                        <option value="oldest">@L["P2SortOldest"]</option>
+                        <option value="roomCountDesc">@L["P2SortRoomCountDesc"]</option>
+                        <option value="roomCountAsc">@L["P2SortRoomCountAsc"]</option>
                     </select>
                 </label>
                 <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
@@ -104,6 +125,9 @@
     private PropertyListItem? _selectedProperty;
     private string _keyword = string.Empty;
     private string _activeFilter = string.Empty;
+    private string _minRoomCount = string.Empty;
+    private string _maxRoomCount = string.Empty;
+    private string _sortFilter = "name";
     private string? _pageError;
     private int _tableKey;
     private int _formKey;
@@ -172,10 +196,15 @@
     private async Task<PagedResult<PropertyListItem>> LoadPropertiesAsync(DataTableRequest request)
     {
         var active = bool.TryParse(_activeFilter, out var parsed) ? parsed : (bool?)null;
+        var minRooms = int.TryParse(_minRoomCount, out var min) && min >= 0 ? min : (int?)null;
+        var maxRooms = int.TryParse(_maxRoomCount, out var max) && max >= 0 ? max : (int?)null;
         return await PageService.ListAsync(new PropertyFilter
         {
             Keyword = _keyword,
             IsActive = active,
+            MinRoomCount = minRooms,
+            MaxRoomCount = maxRooms,
+            SortBy = _sortFilter,
             Page = request.Page,
             PageSize = request.PageSize
         });
@@ -183,7 +212,11 @@
 
     private Task ApplyFiltersAsync()
     {
-        _hasActiveFilters = !string.IsNullOrWhiteSpace(_keyword) || !string.IsNullOrWhiteSpace(_activeFilter);
+        _hasActiveFilters = !string.IsNullOrWhiteSpace(_keyword)
+            || !string.IsNullOrWhiteSpace(_activeFilter)
+            || !string.IsNullOrWhiteSpace(_minRoomCount)
+            || !string.IsNullOrWhiteSpace(_maxRoomCount)
+            || _sortFilter != "name";
         _tableKey++;
         return Task.CompletedTask;
     }
@@ -192,6 +225,9 @@
     {
         _keyword = string.Empty;
         _activeFilter = string.Empty;
+        _minRoomCount = string.Empty;
+        _maxRoomCount = string.Empty;
+        _sortFilter = "name";
         _hasActiveFilters = false;
         _tableKey++;
         return Task.CompletedTask;
@@ -201,6 +237,9 @@
     {
         _keyword = string.Empty;
         _activeFilter = string.Empty;
+        _minRoomCount = string.Empty;
+        _maxRoomCount = string.Empty;
+        _sortFilter = "name";
         _hasActiveFilters = false;
         return Task.CompletedTask;
     }

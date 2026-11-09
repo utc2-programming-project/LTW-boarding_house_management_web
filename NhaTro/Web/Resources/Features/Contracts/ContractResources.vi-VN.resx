@@ -113,6 +113,20 @@
   <data name="ContractSearchLabel" xml:space="preserve"><value>Tìm hợp đồng</value></data>
   <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Mã hợp đồng, khách thuê, phòng hoặc nhà trọ</value></data>
   <data name="ContractSearchAction" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="ContractFilterStatusAll" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="ContractFilterPropertyAll" xml:space="preserve"><value>Tất cả nhà trọ</value></data>
+  <data name="ContractFilterSortLabel" xml:space="preserve"><value>Sắp xếp</value></data>
+  <data name="ContractFilterSortNewest" xml:space="preserve"><value>Mới nhất</value></data>
+  <data name="ContractFilterSortExpiring" xml:space="preserve"><value>Sắp hết hạn trước</value></data>
+  <data name="ContractFilterSortRoom" xml:space="preserve"><value>Theo mã phòng</value></data>
+  <data name="ContractFilterReset" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="ContractFilterDateFrom" xml:space="preserve"><value>Hiệu lực từ ngày</value></data>
+  <data name="ContractFilterDateTo" xml:space="preserve"><value>Đến ngày</value></data>
+  <data name="ContractFilterMinRent" xml:space="preserve"><value>Tiền thuê từ</value></data>
+  <data name="ContractFilterMaxRent" xml:space="preserve"><value>Tiền thuê đến</value></data>
+  <data name="ContractAmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
+  <data name="ContractFilterEmptyTitle" xml:space="preserve"><value>Không có hợp đồng khớp bộ lọc</value></data>
+  <data name="ContractFilterEmptyDesc" xml:space="preserve"><value>Thử đổi từ khóa hoặc bỏ bớt bộ lọc để xem các hợp đồng khác.</value></data>
   <data name="ContractLoadErrorTitle" xml:space="preserve"><value>Không tải được hợp đồng</value></data>
   <data name="ContractLoadErrorDescription" xml:space="preserve"><value>Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.</value></data>
   <data name="ContractRetry" xml:space="preserve"><value>Thử lại</value></data>

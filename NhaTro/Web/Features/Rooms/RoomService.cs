@@ -388,6 +388,21 @@ public sealed class RoomService(
             query = query.Where(r => r.StandardPrice <= maxPrice);
         }
 
+        if (filter.Floor is { } floor)
+        {
+            query = query.Where(r => r.Floor == floor);
+        }
+
+        if (filter.MinArea is { } minArea)
+        {
+            query = query.Where(r => r.AreaM2 != null && r.AreaM2 >= minArea);
+        }
+
+        if (filter.MaxArea is { } maxArea)
+        {
+            query = query.Where(r => r.AreaM2 != null && r.AreaM2 <= maxArea);
+        }
+
         return query;
     }
 

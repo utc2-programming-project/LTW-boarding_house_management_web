@@ -11,6 +11,17 @@ public sealed class PaymentReviewFilter
 {
     public PaymentStatus? Status { get; set; } = PaymentStatus.Pending;
 
+    /// <summary>Tìm theo mã yêu cầu/hóa đơn, hợp đồng, mã phòng, tên nhà hoặc tên khách thuê.</summary>
+    public string? Keyword { get; set; }
+
+    public int? Year { get; set; }
+
+    public int? Month { get; set; }
+
+    public decimal? MinAmount { get; set; }
+
+    public decimal? MaxAmount { get; set; }
+
     [Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
@@ -19,8 +30,49 @@ public sealed class PaymentReviewFilter
 
     public void Normalize()
     {
+        Keyword = string.IsNullOrWhiteSpace(Keyword) ? null : Keyword.Trim();
+
+        if (MinAmount is < 0)
+        {
+            MinAmount = null;
+        }
+
+        if (MaxAmount is < 0)
+        {
+            MaxAmount = null;
+        }
+
+        if (MinAmount is { } min && MaxAmount is { } max && min > max)
+        {
+            (MinAmount, MaxAmount) = (max, min);
+        }
+
+        if (Month is < 1 or > 12 || Year is < 2000 or > 2100)
+        {
+            Month = null;
+            Year = null;
+        }
+
+        if (Month is null || Year is null)
+        {
+            Month = null;
+            Year = null;
+        }
+
         Page = Math.Max(1, Page);
         PageSize = Math.Clamp(PageSize, 1, 100);
+    }
+
+    /// <summary>Khoảng ngày của kỳ hóa đơn, tính cả hai đầu; null khi không lọc kỳ.</summary>
+    public (DateOnly Start, DateOnly End)? PeriodRange()
+    {
+        if (Year is not { } year || Month is not { } month)
+        {
+            return null;
+        }
+
+        var start = new DateOnly(year, month, 1);
+        return (start, start.AddMonths(1).AddDays(-1));
     }
 }
 

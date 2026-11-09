@@ -279,7 +279,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
         throw new UnauthorizedAccessException(ForbiddenMessage);
     }
 
-    private static IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
+    private IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
     {
         if (filter.PeriodRange() is { } period)
         {
@@ -297,7 +297,71 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             query = query.Where(invoice => invoice.Status == status);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var term = filter.Keyword!;
+            var invoiceId = ParsePrefixedNumber(term, "HD");
+            var matchingContracts =
+                from contract in context.Contracts
+                join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractNumber.Contains(term)
+                    || room.Code.Contains(term)
+                    || property.Name.Contains(term)
+                    || context.ContractMembers.Any(member => member.ContractId == contract.ContractId
+                        && context.Tenants.IgnoreQueryFilters()
+                            .Any(tenant => tenant.Id == member.TenantId && tenant.FullName.Contains(term)))
+                select contract.ContractId;
+
+            query = invoiceId is { } id
+                ? query.Where(invoice => matchingContracts.Contains(invoice.ContractId) || invoice.Id == id)
+                : query.Where(invoice => matchingContracts.Contains(invoice.ContractId));
+        }
+
+        if (filter.MinAmount is { } minAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount >= minAmount);
+        }
+
+        if (filter.MaxAmount is { } maxAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount <= maxAmount);
+        }
+
+        if (filter.PaymentState is { } paymentState)
+        {
+            query = paymentState switch
+            {
+                InvoicePaymentState.Unpaid => query.Where(invoice =>
+                    !context.Payments.Any(payment =>
+                        payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)),
+                InvoicePaymentState.Partial => query.Where(invoice =>
+                    (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) > 0m
+                    && (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) < invoice.TotalAmount),
+                _ => query.Where(invoice =>
+                    (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) >= invoice.TotalAmount),
+            };
+        }
+
         return query;
+    }
+
+    /// <summary>Đọc mã dạng "HD-12" hoặc "12"; trả null khi từ khóa không phải mã số.</summary>
+    private static int? ParsePrefixedNumber(string term, string prefix)
+    {
+        var normalized = term.Trim();
+        if (normalized.StartsWith(prefix + "-", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[(prefix.Length + 1)..];
+        }
+
+        return int.TryParse(normalized, out var value) ? value : null;
     }
 
     private async Task<Dictionary<Guid, IReadOnlyList<string>>> LoadTenantNamesAsync(

@@ -16,7 +16,8 @@ public interface IAccountService
     /// <summary>Danh sach tai khoan cho /admin/users, da loc theo vai tro nguoi goi duoc thay.</summary>
     Task<PagedResult<AccountListItemDto>> ListAsync(
         string? keyword, string? roleFilter, int page, int pageSize,
-        string callerUserId, string callerRole, CancellationToken ct = default);
+        string callerUserId, string callerRole, string? statusFilter = null,
+        CancellationToken ct = default);
 
     /// <summary>So lieu nhanh cho trang chu Admin; vai tro khac nhan ban rong.</summary>
     Task<AccountSummaryDto> GetSummaryAsync(
