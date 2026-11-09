@@ -3,6 +3,8 @@
 @attribute [Authorize(Policy = "UtilityBusiness")]
 @inject IStringLocalizer<UtilityResources> L
 @inject ServiceCatalogPageService PageService
+@inject ContractServiceRegistrationService RegistrationService
+@inject Web.Features.Utilities.Services.ServiceRegistrationService RegistrationRequestService
 @inject ToastService Toast
 @inject NavigationManager Navigation
 @inject ILogger<ServiceCatalogView> Logger
@@ -47,7 +49,7 @@
                 <LucideIcon Name="history" />
                 <span>@L["PriceHistoryBtn"]</span>
             </button>
-            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/readings")'>
+            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/readings/costs")'>
                 <LucideIcon Name="zap" />
                 <span>@L["MeterReadingBtn"]</span>
             </button>
@@ -302,6 +304,17 @@
                                             <LucideIcon Name="eye" />
                                         </button>
 
+                                        @if (_callerRole == Roles.KhachThue && !service.IsReadOnly && service.Type != ServiceTypeCategory.Meter)
+                                        {
+                                            var alreadyRegistered = _registeredServiceIds.Contains(GetCatalogId(service));
+                                            <button type="button"
+                                                    class="btn @(_pendingServiceIds.Contains(GetCatalogId(service)) ? "btn-secondary" : (alreadyRegistered ? "btn-secondary" : "btn-primary")) register-btn"
+                                                    disabled="@_togglingServiceId.Contains(GetCatalogId(service))"
+                                                    @onclick="() => OpenRegistrationModal(service)">
+                                                <span>@(alreadyRegistered ? L["ServiceAlreadyRegisteredBtn"] : L["ServiceRegisterBtn"])</span>
+                                            </button>
+                                        }
+
                                         @if (service.IsReadOnly)
                                         {
                                             <button type="button"
@@ -400,6 +413,45 @@
     </Authorized>
 </AuthorizeView>
 
+<!-- Tenant: đăng ký dịch vụ (gửi yêu cầu xét duyệt) -->
+@if (_registrationTarget is not null)
+{
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="registration-title" @onclick="CloseRegistrationModal">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="registration-title">@L["ServiceRequestTitle"]</h2>
+                    <p>@_registrationTarget.Name</p>
+                </div>
+                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal">✕</button>
+            </header>
+            <div class="modal-body">
+                <dl class="summary-lines">
+                    <div><dt>@L["ServiceRequestName"]</dt><dd>@_registrationTarget.Name</dd></div>
+                    <div><dt>@L["ServiceRequestPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_registrationTarget.CurrentRate)</dd></div>
+                    <div><dt>@L["ServiceRequestMonth"]</dt><dd class="tabular-nums">@DateOnly.FromDateTime(DateTime.Today).ToString("MM/yyyy")</dd></div>
+                </dl>
+                <p class="muted">@L["ServiceRequestMonthlyNote"]</p>
+                <div class="form-field">
+                    <label for="registration-note">@L["ServiceRequestNote"]</label>
+                    <input id="registration-note" type="text" class="input" placeholder="@L["ServiceRequestNotePlaceholder"]" @bind="_registrationNote" />
+                </div>
+                @if (_registrationError is not null)
+                {
+                    <div class="form-alert" role="alert"><span>@_registrationError</span></div>
+                }
+                <p class="muted">@L["ServiceRequestPendingNote"]</p>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" disabled="@_submittingRegistration" @onclick="CloseRegistrationModal">@L["CancelBtn"]</button>
+                <button type="button" class="btn btn-primary" disabled="@_submittingRegistration" @onclick="SubmitRegistrationAsync">
+                    @(_submittingRegistration ? L["LoadingText"] : L["ServiceRequestSubmit"])
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
 @code {
     private List<ServiceItemDto> _allServices = [];
     private List<ServiceItemDto> _filteredServices = [];
@@ -427,6 +479,15 @@
     private ServiceItemDto? _deleteTarget;
     private string _tierServiceName = string.Empty;
 
+    private IReadOnlySet<int> _registeredServiceIds = new HashSet<int>();
+    private readonly HashSet<int> _togglingServiceId = [];
+    private IReadOnlySet<int> _pendingServiceIds = new HashSet<int>();
+
+    private ServiceItemDto? _registrationTarget;
+    private string _registrationNote = string.Empty;
+    private string? _registrationError;
+    private bool _submittingRegistration;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
@@ -441,6 +502,17 @@
             _visibleBuildings = (await PageService.GetBuildingsForCallerAsync()).ToList();
 
             _allServices = (await PageService.GetServicesForCallerAsync()).ToList();
+            _registeredServiceIds = string.Equals(_callerRole, Roles.KhachThue, StringComparison.OrdinalIgnoreCase)
+                ? await RegistrationService.GetMyRegisteredServiceIdsAsync()
+                : new HashSet<int>();
+            if (string.Equals(_callerRole, Roles.KhachThue, StringComparison.OrdinalIgnoreCase))
+            {
+                var requests = await RegistrationRequestService.ListMineAsync();
+                _pendingServiceIds = requests
+                    .Where(request => request.Status == Web.Features.Utilities.Entities.ServiceRegistrationStatus.PendingApproval)
+                    .Select(request => request.ServiceCatalogId)
+                    .ToHashSet();
+            }
             _totalCount = _allServices.Count;
             _activeCount = _allServices.Count(s => s.Active);
             _pausedCount = _allServices.Count(s => !s.Active);
@@ -461,6 +533,50 @@
             _activeCount = 0;
             _pausedCount = 0;
             _readOnlyCount = 0;
+        }
+    }
+
+    private static int GetCatalogId(ServiceItemDto service)
+    {
+        int.TryParse(service.Id, out var id);
+        return id;
+    }
+
+    private void OpenRegistrationModal(ServiceItemDto service)
+    {
+        _registrationTarget = service;
+        _registrationNote = string.Empty;
+        _registrationError = null;
+    }
+
+    private void CloseRegistrationModal()
+    {
+        if (_submittingRegistration) return;
+        _registrationTarget = null;
+    }
+
+    private async Task SubmitRegistrationAsync()
+    {
+        if (_registrationTarget is null || _submittingRegistration) return;
+        _submittingRegistration = true;
+        _registrationError = null;
+        try
+        {
+            var request = await RegistrationRequestService.RequestAsync(
+                GetCatalogId(_registrationTarget),
+                _registrationNote);
+            _pendingServiceIds = _pendingServiceIds.Append(request.ServiceCatalogId).ToHashSet();
+            Toast.Success(L["ServiceRequestSuccess"]);
+            _registrationTarget = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to submit service registration request.");
+            _registrationError = ex.Message;
+        }
+        finally
+        {
+            _submittingRegistration = false;
         }
     }
 

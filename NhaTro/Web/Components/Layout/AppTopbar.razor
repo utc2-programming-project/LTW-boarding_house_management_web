@@ -1,4 +1,7 @@
 @inject IStringLocalizer<Shared> L
+@inject Web.Features.Notifications.INotificationService Notifications
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider Authentication
+@inject NavigationManager Navigation
 
 <header class="app-topbar">
     <button class="icon-button" type="button" data-drawer-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="@L["ToggleNavigation"]"><LucideIcon Name="menu" /></button>
@@ -16,12 +19,111 @@
     <div class="topbar-actions">
         <AuthorizeView>
             <Authorized>
-                @* Chuông thông báo: mới dựng giao diện, chưa gắn chức năng. *@
-                <button class="icon-button" type="button" aria-label="@L["Notifications"]" title="@L["Notifications"]">
-                    <LucideIcon Name="bell" />
-                </button>
+                <div class="notification-menu">
+                    <button class="icon-button" type="button" aria-label="@L["Notifications"]" title="@L["Notifications"]"
+                            @onclick="ToggleNotifications" aria-expanded="@_notificationsOpen">
+                        <LucideIcon Name="bell" />
+                        @if (_unreadCount > 0)
+                        {
+                            <span class="notification-badge">@_unreadCount</span>
+                        }
+                    </button>
+                    @if (_notificationsOpen)
+                    {
+                        <div class="notification-panel" role="menu">
+                            <div class="notification-panel-header">
+                                <strong>@L["Notifications"]</strong>
+                                @if (_unreadCount > 0)
+                                {
+                                    <button type="button" class="notification-mark" @onclick="MarkAllRead">@L["NotificationMarkAllRead"]</button>
+                                }
+                            </div>
+                            @if (_items.Count == 0)
+                            {
+                                <p class="notification-empty">@L["NotificationEmpty"]</p>
+                            }
+                            else
+                            {
+                                foreach (var item in _items)
+                                {
+                                    <button type="button" class="notification-item @(!item.IsRead ? "unread" : "")"
+                                            @onclick="() => OpenNotification(item)">
+                                        <span class="notification-item-title">@item.Title</span>
+                                        <span class="notification-item-body">@item.Body</span>
+                                        <span class="notification-item-time">@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                    </button>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
             </Authorized>
             <NotAuthorized><a class="btn btn-secondary sign-in" href="login">@L["SignIn"]</a></NotAuthorized>
         </AuthorizeView>
     </div>
 </header>
+
+@code {
+    private readonly List<Web.Features.Notifications.AppNotification> _items = [];
+    private bool _notificationsOpen;
+    private int _unreadCount;
+
+    protected override Task OnInitializedAsync()
+    {
+        // Không query DB lúc khởi tạo: tránh đua với data của page trong cùng circuit.
+        _unreadCount = 0;
+        return Task.CompletedTask;
+    }
+
+    private async Task ToggleNotifications()
+    {
+        _notificationsOpen = !_notificationsOpen;
+        if (_notificationsOpen)
+        {
+            await RefreshAsync();
+        }
+    }
+
+    private async Task OpenNotification(Web.Features.Notifications.AppNotification item)
+    {
+        var state = await Authentication.GetAuthenticationStateAsync();
+        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            await Notifications.MarkReadAsync(userId, item.Id);
+        }
+
+        _notificationsOpen = false;
+        await RefreshAsync();
+        if (!string.IsNullOrWhiteSpace(item.Link))
+        {
+            Navigation.NavigateTo(item.Link);
+        }
+    }
+
+    private async Task MarkAllRead()
+    {
+        var state = await Authentication.GetAuthenticationStateAsync();
+        var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId)) return;
+        await Notifications.MarkAllReadAsync(userId);
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            var state = await Authentication.GetAuthenticationStateAsync();
+            var userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId)) return;
+            _items.Clear();
+            _items.AddRange(await Notifications.ListAsync(userId));
+            _unreadCount = await Notifications.UnreadCountAsync(userId);
+        }
+        catch
+        {
+            // Chuông không được làm hỏng layout khi tải lỗi.
+        }
+    }
+}

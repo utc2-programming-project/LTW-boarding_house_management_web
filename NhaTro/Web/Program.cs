@@ -370,6 +370,9 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
+// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
+builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
+    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
@@ -424,6 +427,13 @@ builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationServ
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
+// VHT-58: màn hình chỉ số/chi phí P5 đọc SQL thật (kỳ, snapshot biểu giá, hóa đơn P6).
+builder.Services.AddScoped<Web.Features.Utilities.Services.MonthlyUtilityCalculationPageService>();
+// Khách thuê đăng ký dịch vụ hằng tháng theo hợp đồng.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ContractServiceRegistrationService>();
+// Quy trình đăng ký dịch vụ có xét duyệt + tạo hóa đơn từ yêu cầu.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceRegistrationService>();
+builder.Services.AddScoped<Web.Features.Notifications.INotificationService, Web.Features.Notifications.NotificationService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();

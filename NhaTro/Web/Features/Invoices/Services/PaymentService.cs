@@ -24,11 +24,16 @@ public sealed class PaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _context;
     private readonly TimeProvider _timeProvider;
+    private readonly Web.Features.Notifications.INotificationService? _notifications;
 
-    public PaymentService(ApplicationDbContext context, TimeProvider? timeProvider = null)
+    public PaymentService(
+        ApplicationDbContext context,
+        TimeProvider? timeProvider = null,
+        Web.Features.Notifications.INotificationService? notifications = null)
     {
         _context = context;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _notifications = notifications;
     }
 
     public async Task<PaymentDto> SubmitAsync(
@@ -221,7 +226,18 @@ public sealed class PaymentService : IPaymentService
                 exception);
         }
 
-        return PaymentMapping.ToDto(payment, proofIds);
+        var dto = PaymentMapping.ToDto(payment, proofIds);
+        var ownerId = await ResolveOwnerUserIdAsync(invoiceId, cancellationToken);
+        if (_notifications is not null && !string.IsNullOrWhiteSpace(ownerId))
+        {
+            await _notifications.NotifyAsync(
+                ownerId,
+                "Khách vừa gửi minh chứng thanh toán",
+                $"Hóa đơn HD-{invoiceId}: khách thuê đã gửi minh chứng {payment.Amount:0} ₫, chờ xác nhận.",
+                $"/payment-requests/{payment.Id}");
+        }
+
+        return dto;
     }
 
     public async Task<PaymentDto> ConfirmAsync(
@@ -342,7 +358,18 @@ public sealed class PaymentService : IPaymentService
                 exception);
         }
 
-        return PaymentMapping.ToDto(payment);
+        var confirmedDto = PaymentMapping.ToDto(payment);
+        var confirmTenantId = await ResolveTenantUserIdAsync(payment.InvoiceId, cancellationToken);
+        if (_notifications is not null && !string.IsNullOrWhiteSpace(confirmTenantId))
+        {
+            await _notifications.NotifyAsync(
+                confirmTenantId,
+                "Thanh toán đã được xác nhận",
+                $"Hóa đơn HD-{payment.InvoiceId} đã thanh toán thành công {payment.Amount:0} ₫.",
+                $"/my/invoices/{payment.InvoiceId}");
+        }
+
+        return confirmedDto;
     }
 
     public async Task<PaymentDto> RejectAsync(
@@ -446,7 +473,18 @@ public sealed class PaymentService : IPaymentService
                 exception);
         }
 
-        return PaymentMapping.ToDto(payment);
+        var rejectedDto = PaymentMapping.ToDto(payment);
+        var rejectTenantId = await ResolveTenantUserIdAsync(payment.InvoiceId, cancellationToken);
+        if (_notifications is not null && !string.IsNullOrWhiteSpace(rejectTenantId))
+        {
+            await _notifications.NotifyAsync(
+                rejectTenantId,
+                "Minh chứng thanh toán bị từ chối",
+                $"Hóa đơn HD-{payment.InvoiceId}: {reason}",
+                $"/my/invoices/{payment.InvoiceId}");
+        }
+
+        return rejectedDto;
     }
 
     public async Task<PaymentDto?> GetLatestPaymentAsync(
@@ -566,6 +604,43 @@ public sealed class PaymentService : IPaymentService
                 PaymentErrorCodes.Forbidden);
         }
     }
+
+    private async Task<string?> ResolveOwnerUserIdAsync(int invoiceId, CancellationToken cancellationToken) =>
+        await _context.Invoices
+            .AsNoTracking()
+            .Where(invoice => invoice.Id == invoiceId)
+            .Join(
+                _context.Contracts,
+                invoice => invoice.ContractId,
+                contract => contract.ContractId,
+                (invoice, contract) => contract.RoomId)
+            .Join(
+                _context.Rooms.IgnoreQueryFilters(),
+                roomId => roomId,
+                room => room.Id,
+                (_, room) => room.PropertyId)
+            .Join(
+                _context.Properties.IgnoreQueryFilters(),
+                propertyId => propertyId,
+                property => property.Id,
+                (_, property) => property.OwnerId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    private async Task<string?> ResolveTenantUserIdAsync(int invoiceId, CancellationToken cancellationToken) =>
+        await _context.Invoices
+            .AsNoTracking()
+            .Where(invoice => invoice.Id == invoiceId)
+            .Join(
+                _context.ContractMembers,
+                invoice => invoice.ContractId,
+                member => member.ContractId,
+                (invoice, member) => member.TenantId)
+            .Join(
+                _context.Tenants.IgnoreQueryFilters(),
+                tenantId => tenantId,
+                tenant => tenant.Id,
+                (_, tenant) => tenant.UserId)
+            .FirstOrDefaultAsync(cancellationToken);
 
     private Task<bool> HasConfirmedPaymentAsync(int invoiceId, CancellationToken cancellationToken) =>
         _context.Payments.AnyAsync(

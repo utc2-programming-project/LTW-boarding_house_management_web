@@ -4,6 +4,9 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
 @inject IInvoiceQueryService InvoiceQuery
+@inject Web.Features.Invoices.Services.IInvoiceService InvoiceService
+@inject Web.Features.Notifications.INotificationService Notifications
+@inject Microsoft.Extensions.Options.IOptions<Web.Features.Invoices.BankAccountOptions> BankAccount
 @inject PaymentPageService PaymentPage
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
@@ -39,10 +42,34 @@
                 <h1 class="page-title">@L["DetailHeading"] · HD-@Invoice.Id</h1>
                 <p class="page-subtitle">@L["DetailSubtitle"]</p>
             </div>
-            <button type="button" class="btn btn-secondary" @onclick="BackToList">
-                <LucideIcon Name="arrow-left" />
-                <span>@L["BackToList"]</span>
-            </button>
+            <div class="header-actions">
+                @if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Draft)
+                {
+                    <button type="button" class="btn btn-primary" disabled="@_issuing" @onclick="IssueAsync">
+                        @if (_issuing)
+                        {
+                            <span class="spinner"></span>
+                            <span>@L["IssuingButton"]</span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="send" />
+                            <span>@L["SendBillButton"]</span>
+                        }
+                    </button>
+                }
+                else if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Issued)
+                {
+                    <button type="button" class="btn btn-secondary" @onclick="SendBillAsync">
+                        <LucideIcon Name="send" />
+                        <span>@L["SendBillButton"]</span>
+                    </button>
+                }
+                <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                    <LucideIcon Name="arrow-left" />
+                    <span>@L["BackToList"]</span>
+                </button>
+            </div>
         </header>
 
         <section class="detail-card">
@@ -88,6 +115,18 @@
                     <span class="detail-label">@L["DetailIssuedAt"]</span>
                     <span class="detail-value tabular-nums">
                         @(Invoice.IssuedAt is null ? L["DetailNotAvailable"] : DateFormatter.FormatDateTime(Invoice.IssuedAt))
+                    </span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailDueDate"]</span>
+                    <span class="detail-value tabular-nums">
+                        @(Invoice.DueDate is null ? "—" : DateFormatter.Format(Invoice.DueDate.Value))
+                    </span>
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">@L["DetailPaymentStatus"]</span>
+                    <span class="badge-inline">
+                        <StatusBadge Text="@PaymentStateText" Tone="@PaymentStateTone" />
                     </span>
                 </div>
             </div>
@@ -149,7 +188,181 @@
             </div>
         </section>
 
-        @if (_caller is not null)
+        @if (Invoice.Status != InvoiceStatus.Draft && BankAccount.Value.IsConfigured && _caller is { IsKhachThue: true })
+        {
+            <section class="qr-card">
+                <h2 class="section-title">@L["QrTitle"]</h2>
+                <div class="qr-payment-layout">
+                    <div class="qr-zone">
+                        @if (_qrExpired)
+                        {
+                            <p class="qr-expired" role="status">@L["QrExpired"]</p>
+                            <button type="button" class="btn btn-primary" @onclick="GenerateQr">
+                                <LucideIcon Name="qr-code" />
+                                <span>@L["RegenerateQrButton"]</span>
+                            </button>
+                        }
+                        else if (_qrImageUri is null)
+                        {
+                            <div class="qr-placeholder">
+                                <button type="button" class="btn btn-primary" @onclick="GenerateQr">
+                                    <LucideIcon Name="qr-code" />
+                                    <span>@L["CreateQrButton"]</span>
+                                </button>
+                                <p class="muted">@L["QrNote"]</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <img class="qr-image" src="@_qrImageUri" alt="VietQR" width="240" height="240" />
+                            <p class="qr-validity">@L["QrExpiresAt"]: @_qrExpiresAt?.ToLocalTime().ToString("HH:mm")@(string.IsNullOrWhiteSpace(_qrRemaining) ? "" : $" ({L["QrRemainingInstruction"]} {_qrRemaining})")</p>
+                        }
+                    </div>
+                    <div class="qr-side">
+                        <dl class="qr-info">
+                            <div><dt>@L["QrBank"]</dt><dd>@BankAccount.Value.DisplayAccount</dd></div>
+                            <div><dt>@L["SummaryTotal"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</dd></div>
+                            <div><dt>@L["QrContent"]</dt><dd>HD-@Invoice.Id</dd></div>
+                        </dl>
+
+                        @if (Invoice.Status == InvoiceStatus.Draft)
+                        {
+                            <div class="payment-notice info" role="status">
+                                <LucideIcon Name="info" />
+                                <span>@L["PaymentDraftNotice"]</span>
+                            </div>
+                        }
+                        else if (Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed)
+                        {
+                            <div class="payment-notice success" role="status">
+                                <LucideIcon Name="circle-check" />
+                                <span>@L["PaymentPaidNotice"]</span>
+                            </div>
+                            @if (_latestPayment is not null)
+                            {
+                                <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                            }
+                        }
+                        else if (_latestPayment is { Status: PaymentStatus.Pending })
+                        {
+                            <div class="payment-notice warning" role="status">
+                                <LucideIcon Name="info" />
+                                <span>@L["PaymentPendingNotice"]</span>
+                            </div>
+                            <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                        }
+                        else
+                        {
+                            @if (_latestPayment is { Status: PaymentStatus.Rejected })
+                            {
+                                <div class="payment-notice danger" role="alert">
+                                    <LucideIcon Name="alert" />
+                                    <span>@L["PaymentRejectedNotice"]</span>
+                                </div>
+                                <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                            }
+
+                            @if (_requiresResultCheck)
+                            {
+                                <div class="payment-notice warning">
+                                    <LucideIcon Name="wifi" />
+                                    <div class="payment-result-check">
+                                        <p>@L["PaymentResultUnknown"]</p>
+                                        <button type="button" class="btn btn-secondary" disabled="@_checkingResult" @onclick="CheckResultAsync">
+                                            @if (_checkingResult)
+                                            {
+                                                <span class="spinner"></span>
+                                            }
+                                            else
+                                            {
+                                                <LucideIcon Name="refresh" />
+                                            }
+                                            <span>@L[_checkingResult ? "PaymentChecking" : "PaymentCheckResult"]</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                @if (_resultCheckMessage is not null)
+                                {
+                                    <div class="payment-notice info" role="status">
+                                        <LucideIcon Name="info" />
+                                        <span>@_resultCheckMessage</span>
+                                    </div>
+                                }
+
+                                <form class="payment-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                                    @if (_formError is not null)
+                                    {
+                                        <div class="form-alert" role="alert">
+                                            <LucideIcon Name="alert" />
+                                            <span>@_formError</span>
+                                        </div>
+                                    }
+                                    <div class="payment-fixed-amount">
+                                        <span>@L["PaymentAmount"]</span>
+                                        <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</strong>
+                                    </div>
+                                    <div class="payment-field full">
+                                        <span class="detail-label">@L["PaymentProof"]</span>
+                                        <InputFile @key="_fileInputVersion"
+                                                   id="payment-proof-input"
+                                                   multiple
+                                                   accept="@ProofAccept"
+                                                   OnChange="OnFilesSelected"
+                                                   disabled="@_submitting" />
+                                        <span class="note">@string.Format(L["PaymentProofHint"], FileTypeRules.DescribeMegabytes(PaymentPolicy.MaxBytes))</span>
+                                        @if (_fileError is not null)
+                                        {
+                                            <span class="field-error" role="alert">@_fileError</span>
+                                        }
+
+                                        @if (_selectedFiles.Count > 0)
+                                        {
+                                            <ul class="selected-proofs">
+                                                @foreach (var file in _selectedFiles)
+                                                {
+                                                    <li>
+                                                        <LucideIcon Name="file" />
+                                                        <span class="selected-proof-name">@file.Name</span>
+                                                        <span class="muted tabular-nums">@NumberFormatter.FileSize(file.Size)</span>
+                                                        <button type="button"
+                                                                class="icon-action-btn"
+                                                                title="@L["PaymentProofRemove"]"
+                                                                aria-label="@L["PaymentProofRemove"]"
+                                                                disabled="@_submitting"
+                                                                @onclick="() => RemoveFile(file)">
+                                                            <LucideIcon Name="x" />
+                                                        </button>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" disabled="@_submitting">
+                                            @if (_submitting)
+                                            {
+                                                <span class="spinner"></span>
+                                            }
+                                            else
+                                            {
+                                                <LucideIcon Name="send" />
+                                            }
+                                            <span>@L[_submitting ? "PaymentSubmitting" : "PaymentSubmit"]</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            }
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+
+        @if (_caller is not null && !_caller.IsKhachThue && (_latestPayment is not null || _paymentsError is not null))
         {
             <section class="payment-card">
                 <div class="payment-card-header">
@@ -176,181 +389,16 @@
                     </div>
                 }
 
-                @if (!_caller.IsKhachThue)
+                @if (_latestPayment is not null)
                 {
-                    @if (_latestPayment is null)
-                    {
-                        <p class="muted">@L["PaymentStatusNone"]</p>
-                    }
-                    else
-                    {
-                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
-                    }
-                }
-                else if (Invoice.Status == InvoiceStatus.Draft)
-                {
-                    <div class="payment-notice info" role="status">
-                        <LucideIcon Name="info" />
-                        <span>@L["PaymentDraftNotice"]</span>
-                    </div>
-                }
-                else if (Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed)
-                {
-                    <div class="payment-notice success" role="status">
-                        <LucideIcon Name="circle-check" />
-                        <span>@L["PaymentPaidNotice"]</span>
-                    </div>
-                    @if (_latestPayment is not null)
-                    {
-                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
-                    }
-                }
-                else if (_latestPayment is { Status: PaymentStatus.Pending })
-                {
-                    <div class="payment-notice warning" role="status">
-                        <LucideIcon Name="info" />
-                        <span>@L["PaymentPendingNotice"]</span>
-                    </div>
                     <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
                 }
-                else
-                {
-                    @if (_latestPayment is { Status: PaymentStatus.Rejected })
-                    {
-                        <div class="payment-notice danger" role="alert">
-                            <LucideIcon Name="alert" />
-                            <span>@L["PaymentRejectedNotice"]</span>
-                        </div>
-                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
-                    }
-
-                    @if (_requiresResultCheck)
-                    {
-                        <div class="payment-notice warning">
-                            <LucideIcon Name="wifi" />
-                            <div class="payment-result-check">
-                                <p>@L["PaymentResultUnknown"]</p>
-                                <button type="button" class="btn btn-secondary" disabled="@_checkingResult" @onclick="CheckResultAsync">
-                                    @if (_checkingResult)
-                                    {
-                                        <span class="spinner"></span>
-                                    }
-                                    else
-                                    {
-                                        <LucideIcon Name="refresh" />
-                                    }
-                                    <span>@L[_checkingResult ? "PaymentChecking" : "PaymentCheckResult"]</span>
-                                </button>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        @if (_resultCheckMessage is not null)
-                        {
-                            <div class="payment-notice info" role="status">
-                                <LucideIcon Name="info" />
-                                <span>@_resultCheckMessage</span>
-                            </div>
-                        }
-
-                        <form class="payment-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
-                            <div class="payment-form-grid">
-                                <label class="payment-field">
-                                    <span class="detail-label">@L["PaymentAmount"]</span>
-                                    <input class="input @(_amountError is null ? null : "invalid")"
-                                           inputmode="numeric"
-                                           @bind="_amountText"
-                                           disabled="@_submitting"
-                                           aria-invalid="@(_amountError is not null)" />
-                                    <span class="note">@string.Format(L["PaymentAmountHint"], MoneyFormatter.Format(Invoice.TotalAmount))</span>
-                                    @if (_amountError is not null)
-                                    {
-                                        <span class="field-error" role="alert">@_amountError</span>
-                                    }
-                                </label>
-
-                                <label class="payment-field">
-                                    <span class="detail-label">@L["PaymentTransferredAt"]</span>
-                                    <input type="datetime-local"
-                                           class="input"
-                                           value="@_transferredAtLocal"
-                                           @onchange="OnTransferredAtChanged"
-                                           disabled="@_submitting" />
-                                </label>
-
-                                <label class="payment-field full">
-                                    <span class="detail-label">@L["PaymentTransactionCode"]</span>
-                                    <input class="input"
-                                           maxlength="100"
-                                           placeholder="@L["PaymentTransactionCodePlaceholder"]"
-                                           @bind="_transactionCode"
-                                           disabled="@_submitting" />
-                                </label>
-
-                                <div class="payment-field full">
-                                    <span class="detail-label">@L["PaymentProof"]</span>
-                                    <InputFile @key="_fileInputVersion"
-                                               id="payment-proof-input"
-                                               multiple
-                                               accept="@ProofAccept"
-                                               OnChange="OnFilesSelected"
-                                               disabled="@_submitting" />
-                                    <span class="note">@string.Format(L["PaymentProofHint"], FileTypeRules.DescribeMegabytes(PaymentPolicy.MaxBytes))</span>
-
-                                    @if (_fileError is not null)
-                                    {
-                                        <span class="field-error" role="alert">@_fileError</span>
-                                    }
-
-                                    @if (_preparedProofIds.Count > 0)
-                                    {
-                                        <span class="note">@string.Format(L["PaymentProofPrepared"], _preparedProofIds.Count)</span>
-                                    }
-
-                                    @if (_selectedFiles.Count > 0)
-                                    {
-                                        <ul class="selected-proofs">
-                                            @foreach (var file in _selectedFiles)
-                                            {
-                                                <li>
-                                                    <LucideIcon Name="file-text" />
-                                                    <span class="selected-proof-name">@file.Name</span>
-                                                    <span class="muted tabular-nums">@NumberFormatter.FileSize(file.Size)</span>
-                                                    <button type="button"
-                                                            class="icon-action-btn"
-                                                            title="@L["PaymentProofRemove"]"
-                                                            aria-label="@L["PaymentProofRemove"]"
-                                                            disabled="@_submitting"
-                                                            @onclick="() => RemoveFile(file)">
-                                                        <LucideIcon Name="x" />
-                                                    </button>
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-primary" disabled="@_submitting">
-                                    @if (_submitting)
-                                    {
-                                        <span class="spinner"></span>
-                                    }
-                                    else
-                                    {
-                                        <LucideIcon Name="send" />
-                                    }
-                                    <span>@L[_submitting ? "PaymentSubmitting" : "PaymentSubmit"]</span>
-                                </button>
-                            </div>
-                        </form>
-                    }
-                }
+            </section>
+        }
 
                 @if (_payments.Count > 0)
                 {
+                    <section class="payment-card">
                     <div class="payment-history">
                         <h3 class="section-title">@L["PaymentHistoryHeading"]</h3>
                         <div class="table-responsive">
@@ -422,18 +470,126 @@
     private string? _loadError;
     private string? _paymentsError;
 
-    private string _amountText = string.Empty;
-    private string _transferredAtLocal = string.Empty;
-    private string? _transactionCode;
     private List<IBrowserFile> _selectedFiles = [];
     private List<Guid> _preparedProofIds = [];
     private int _fileInputVersion;
-    private string? _amountError;
     private string? _fileError;
     private string? _formError;
     private string? _resultCheckMessage;
     private bool _submitting;
+    private bool _issuing;
     private bool _checkingResult;
+    private string? _qrImageUri;
+    private DateTimeOffset? _qrExpiresAt;
+    private bool _qrExpired => _qrExpiresAt is { } expires && DateTimeOffset.UtcNow > expires;
+    private string? _qrRemaining => _qrExpiresAt is { } expires && expires > DateTimeOffset.UtcNow
+        ? (expires - DateTimeOffset.UtcNow).ToString(@"mm\:ss")
+        : null;
+    private PeriodicTimer? _qrTimer;
+    private CancellationTokenSource? _qrTimerCts;
+
+    private void GenerateQr()
+    {
+        if (_invoice is null || !BankAccount.Value.IsConfigured) return;
+        _qrImageUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
+            BankAccount.Value.Code,
+            BankAccount.Value.AccountNumber,
+            _invoice.TotalAmount,
+            $"HD-{_invoice.Id}"));
+        _qrExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
+        StartQrTimer();
+    }
+
+    private void StartQrTimer()
+    {
+        StopQrTimer();
+        _qrTimerCts = new CancellationTokenSource();
+        _qrTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        var token = _qrTimerCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (await _qrTimer.WaitForNextTickAsync(token))
+                {
+                    if (_qrExpiresAt is { } expires && DateTimeOffset.UtcNow > expires)
+                    {
+                        _qrImageUri = null;
+                        _qrExpiresAt = null;
+                        InvokeAsync(StateHasChanged);
+                        StopQrTimer();
+                        return;
+                    }
+
+                    InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }, token);
+    }
+
+    private void StopQrTimer()
+    {
+        _qrTimer?.Dispose();
+        _qrTimer = null;
+        _qrTimerCts?.Cancel();
+        _qrTimerCts?.Dispose();
+        _qrTimerCts = null;
+    }
+
+    public void Dispose()
+    {
+        StopQrTimer();
+    }
+
+    private async Task SendBillAsync()
+    {
+        if (_invoice is null || _caller is null || _caller.IsKhachThue) return;
+        // Draft: phát hành rồi gửi; Đã phát hành: chỉ gửi lại thông báo.
+        if (_invoice.Status == InvoiceStatus.Draft)
+        {
+            var issued = await InvoiceService.IssueAsync(_invoice.Id, _caller);
+            _invoice = issued;
+        }
+
+        var tenantUserIds = await InvoiceQuery.GetContractTenantUserIdsAsync(_invoice.ContractId);
+        foreach (var tenantUserId in tenantUserIds)
+        {
+            if (!string.IsNullOrWhiteSpace(tenantUserId))
+            {
+                await Notifications.NotifyAsync(
+                    tenantUserId,
+                    "Có hóa đơn cần thanh toán",
+                    $"Hóa đơn HD-{_invoice.Id} ({MoneyFormatter.Format(_invoice.TotalAmount)}). Vui lòng vào xem và thanh toán.",
+                    $"/my/invoices/{_invoice.Id}");
+            }
+        }
+
+        Toasts.Success(L["SendBillSuccess"]);
+        await ReloadAsync();
+    }
+
+    private string PaymentStateText => (_invoice?.Status, _latestPayment?.Status) switch
+    {
+        (InvoiceStatus.Paid, _) => L["PaymentStatePaid"],
+        (_, PaymentStatus.Confirmed) => L["PaymentStatePaid"],
+        (_, PaymentStatus.Pending) => L["PaymentStatePendingConfirmation"],
+        (_, PaymentStatus.Rejected) => L["PaymentStateRejected"],
+        (InvoiceStatus.Issued, null) when _invoice?.DueDate is { } due && due < DateOnly.FromDateTime(DateTime.Today) => L["PaymentStateExpired"],
+        (InvoiceStatus.Issued, _) => L["PaymentStateUnpaid"],
+        _ => L["PaymentStateUnpaid"],
+    };
+
+    private BadgeTone PaymentStateTone => (_invoice?.Status, _latestPayment?.Status) switch
+    {
+        (InvoiceStatus.Paid, _) => BadgeTone.Success,
+        (_, PaymentStatus.Confirmed) => BadgeTone.Success,
+        (_, PaymentStatus.Pending) => BadgeTone.Warning,
+        (_, PaymentStatus.Rejected) => BadgeTone.Error,
+        _ => BadgeTone.Info,
+    };
     private bool _requiresResultCheck;
 
     // Chỉ dùng trong nhánh đã kiểm tra null; giữ markup gọn.
@@ -524,6 +680,33 @@
         }
     }
 
+    private async Task IssueAsync()
+    {
+        if (_issuing || _caller is null || _invoice is null || _caller.IsKhachThue) return;
+        if (_invoice.Status != InvoiceStatus.Draft) return;
+
+        _issuing = true;
+        try
+        {
+            var issued = await InvoiceService.IssueAsync(_invoice.Id, _caller);
+            _invoice = issued;
+            Toasts.Success(L["IssueSuccess"]);
+            await ReloadAsync();
+        }
+        catch (Web.Features.Invoices.InvoiceOperationException)
+        {
+            Toasts.Error(L["IssueFailed"]);
+        }
+        catch (Exception)
+        {
+            Toasts.Error(L["IssueFailed"]);
+        }
+        finally
+        {
+            _issuing = false;
+        }
+    }
+
     private async Task LoadPaymentHistoryAsync()
     {
         if (_invoice is null)
@@ -545,13 +728,9 @@
 
     private void ResetForm()
     {
-        _amountText = _invoice is null ? string.Empty : MoneyFormatter.Format(_invoice.TotalAmount);
-        _transferredAtLocal = DateTime.Now.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
-        _transactionCode = null;
         _selectedFiles = [];
         _preparedProofIds = [];
         _fileInputVersion++;
-        _amountError = null;
         _fileError = null;
         _formError = null;
         _resultCheckMessage = null;
@@ -566,7 +745,6 @@
 
         _submitting = true;
         _formError = null;
-        _amountError = null;
         _fileError = null;
         _resultCheckMessage = null;
 
@@ -608,7 +786,7 @@
                 Invoice.Id,
                 amount,
                 transferredAt,
-                string.IsNullOrWhiteSpace(_transactionCode) ? null : _transactionCode.Trim(),
+                null,
                 proofIds);
 
             _latestPayment = payment;
@@ -725,39 +903,16 @@
 
     private bool ValidateForm(out decimal amount, out DateTimeOffset transferredAt)
     {
-        amount = 0;
-        transferredAt = default;
+        // Form gửi bill chỉ còn 1 nút: số tiền = tổng hóa đơn, thời điểm = lúc gửi.
+        // Trên bill chuyển khoản ngân hàng đã có đủ thông tin chi tiết.
+        amount = Invoice?.TotalAmount ?? 0m;
+        transferredAt = DateTimeOffset.Now;
         var valid = true;
 
-        if (!MoneyFormatter.TryParse(_amountText, out amount))
+        if (amount <= 0m)
         {
-            _amountError = L["PaymentAmountInvalid"];
+            _formError = L["PaymentAmountInvalid"];
             valid = false;
-        }
-        else if (amount != Invoice.TotalAmount)
-        {
-            _amountError = string.Format(L["PaymentAmountMismatch"], MoneyFormatter.Format(Invoice.TotalAmount));
-            valid = false;
-        }
-
-        if (!DateTime.TryParseExact(
-                _transferredAtLocal,
-                "yyyy-MM-ddTHH:mm",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeLocal,
-                out var local))
-        {
-            _formError = L["PaymentTransferredAtRequired"];
-            valid = false;
-        }
-        else
-        {
-            transferredAt = new DateTimeOffset(local);
-            if (transferredAt > DateTimeOffset.Now)
-            {
-                _formError = L["PayErrorTransferredAtInFuture"];
-                valid = false;
-            }
         }
 
         if (_selectedFiles.Count == 0 && _preparedProofIds.Count == 0)
@@ -769,16 +924,11 @@
         return valid;
     }
 
-    private void OnTransferredAtChanged(ChangeEventArgs args)
-    {
-        // Giữ chuỗi theo định dạng của input để tránh binding kiểu DateTime của Blazor.
-        _transferredAtLocal = args.Value?.ToString() ?? string.Empty;
-    }
-
     private void OnFilesSelected(InputFileChangeEventArgs args)
     {
         _fileError = null;
-        _fileInputVersion++;
+        // Không được thay key/render lại ô chọn file ở đây: Blazor JS giữ stream theo element,
+        // render lại sẽ làm Stream đọc ở bước gửi bị lỗi "_blazorFilesById".
 
         IReadOnlyList<IBrowserFile> incoming;
         try
@@ -824,7 +974,7 @@
     private void RemoveFile(IBrowserFile file)
     {
         _selectedFiles = _selectedFiles.Where(item => !ReferenceEquals(item, file)).ToList();
-        _fileInputVersion++;
+        // Không bump _fileInputVersion: giữ nguyên element để các tệp còn lại đọc được stream.
         _fileError = null;
     }
 

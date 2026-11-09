@@ -1,0 +1,441 @@
+@page "/service-registrations"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UtilityRecord")]
+@using Microsoft.Extensions.Options
+@using Web.Common.Utils
+@using Web.Features.Invoices
+@using Web.Features.Utilities.Entities
+@using Web.Features.Utilities.Services
+@inject ServiceRegistrationService RegistrationService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject IOptions<BankAccountOptions> BankOptions
+@inject IStringLocalizer<UtilityResources> UL
+
+<PageTitle>@UL["RegManagePageTitle"]</PageTitle>
+
+<div class="registration-manage-page">
+    <NavBreadcrumb />
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">@UL["RegManageTitle"]</h1>
+            <p class="page-subtitle">@UL["RegManageSubtitle"]</p>
+        </div>
+        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+            <LucideIcon Name="refresh" />
+            <span>@UL["P5CostRefresh"]</span>
+        </button>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="loading-line" role="status"><span class="spinner" aria-hidden="true"></span><span>@UL["P5CostLoading"]</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="inline-error" role="alert"><span>@_error</span></div>
+    }
+    else if (_rows.Count == 0)
+    {
+        <div class="empty-state">
+            <h2>@UL["P5CostEmptyTitle"]</h2>
+            <p>@UL["RegManageEmpty"]</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>@UL["RegColRequestId"]</th>
+                            <th>@UL["RegColTenant"]</th>
+                            <th>@UL["P5CostThRoom"]</th>
+                            <th>@UL["ServiceRequestQuantity"]</th>
+                            <th>@UL["RegColRequestedAt"]</th>
+                            <th>@UL["RegColStatus"]</th>
+                            <th class="text-right">@UL["P5CostThActions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _rows)
+                        {
+                            <tr>
+                                <td class="tabular-nums">#@row.Id</td>
+                                <td>
+                                    <span class="room-code">@string.Join(", ", row.TenantNames)</span>
+                                    @if (row.TenantPhones.Count > 0)
+                                    {
+                                        <span class="room-property">@string.Join(", ", row.TenantPhones)</span>
+                                    }
+                                    <span class="room-property">@row.ContractNumber</span>
+                                </td>
+                                <td>
+                                    <span class="room-code">@row.ServiceName</span>
+                                    <span class="room-property">@row.RoomCode · @row.PropertyName</span>
+                                </td>
+                                <td class="text-right tabular-nums">@row.Quantity.ToString("0.##")</td>
+                                <td class="tabular-nums">@DateFormatter.FormatDateTime(row.RequestedAt.UtcDateTime)</td>
+                                <td><span class="status-badge @StatusClass(row.Status)">@StatusLabel(row.Status)</span></td>
+                                <td class="text-right cell-actions">
+                                    <button type="button" class="icon-btn" title="@UL["P5CostDetails"]" aria-label="@UL["P5CostDetails"]" @onclick="() => _detail = row">
+                                        <LucideIcon Name="eye" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (_detail is not null)
+{
+    var detail = _detail;
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="registration-detail-title" @onclick="() => _detail = null">
+        <div class="modal-dialog detail-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="registration-detail-title">@string.Format(UL["RegDetailTitle"], detail.ServiceName)</h2>
+                    <p>@detail.RoomCode · @detail.ContractNumber · @detail.PropertyName</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="() => _detail = null">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body detail-body">
+                <dl class="summary-lines">
+                    <div><dt>@UL["ServiceRequestQuantity"]</dt><dd class="tabular-nums">@detail.Quantity.ToString("0.##")</dd></div>
+                    <div><dt>@UL["ServiceRequestStart"]</dt><dd class="tabular-nums">@DateFormatter.Format(detail.StartDate)</dd></div>
+                    <div><dt>@UL["ServiceRequestEnd"]</dt><dd class="tabular-nums">@(detail.EndDate is { } end ? DateFormatter.Format(end) : "—")</dd></div>
+                    <div><dt>@UL["ServiceRequestNote"]</dt><dd>@(string.IsNullOrWhiteSpace(detail.Note) ? "—" : detail.Note)</dd></div>
+                    <div><dt>@UL["RegColRequestedAt"]</dt><dd class="tabular-nums">@DateFormatter.FormatDateTime(detail.RequestedAt.UtcDateTime)</dd></div>
+                </dl>
+
+                @if (detail.Status == ServiceRegistrationStatus.PendingApproval)
+                {
+                    <div class="form-field">
+                        <label for="reject-reason">@UL["RegRejectReasonLabel"]</label>
+                        <input id="reject-reason" type="text" class="input @(_reasonError is not null ? "is-invalid" : "")" @bind="_rejectReason" />
+                        @if (_reasonError is not null)
+                        {
+                            <span class="field-error" role="alert">@_reasonError</span>
+                        }
+                    </div>
+                }
+
+                @if (detail.Status == ServiceRegistrationStatus.Approved && detail.CancelStatus == ServiceRegistrationCancelStatus.Pending)
+                {
+                    <div class="detail-section">
+                        <h3>@UL["RegCancelRequestTitle"]</h3>
+                        <p>@detail.CancelReason</p>
+                    </div>
+                    <div class="form-field">
+                        <label for="cancel-reject-reason">@UL["RegCancelRejectReasonLabel"]</label>
+                        <input id="cancel-reject-reason" type="text" class="input @(_cancelRejectReasonError is not null ? "is-invalid" : "")" @bind="_cancelRejectReason" />
+                        @if (_cancelRejectReasonError is not null)
+                        {
+                            <span class="field-error" role="alert">@_cancelRejectReasonError</span>
+                        }
+                    </div>
+                }
+
+                @if (detail.Status == ServiceRegistrationStatus.Approved && detail.InvoiceId is null && _invoiceFormOpen)
+                {
+                    <div class="invoice-form">
+                        <h3>@UL["RegCreateInvoiceTitle"]</h3>
+                        <div class="invoice-form-grid">
+                            <div class="invoice-form-fields">
+                                <div class="form-field">
+                                    <label for="invoice-amount">@UL["RegInvoiceAmount"]</label>
+                                    <input id="invoice-amount" type="number" step="1000" min="1" class="input tabular-nums" @bind="_invoiceAmount" @bind:after="RefreshInvoiceQr" />
+                                </div>
+                                <div class="form-field">
+                                    <label for="invoice-due">@UL["RegInvoiceDueDate"]</label>
+                                    <input id="invoice-due" type="date" class="input" @bind="_invoiceDueDate" />
+                                </div>
+                                <div class="form-field">
+                                    <label for="invoice-content">@UL["RegInvoiceContent"]</label>
+                                    <input id="invoice-content" type="text" class="input" @bind="_invoiceContent" @bind:after="RefreshInvoiceQr" />
+                                </div>
+                            </div>
+                            <div class="invoice-form-side">
+                                <div class="form-field bank-info">
+                                    <span>@UL["RegBankAccount"]</span>
+                                    <strong>@BankOptions.Value.DisplayAccount</strong>
+                                </div>
+                                @if (_invoiceQr is not null)
+                                {
+                                    <img class="qr-preview" src="@_invoiceQr" alt="VietQR" width="180" height="180" />
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (_actionError is not null)
+                {
+                    <div class="inline-error compact" role="alert"><span>@_actionError</span></div>
+                }
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _detail = null">@UL["P5CostClosePanel"]</button>
+
+                @if (detail.Status == ServiceRegistrationStatus.PendingApproval)
+                {
+                    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => RejectAsync(detail)">
+                        <span>@UL["RegRejectButton"]</span>
+                    </button>
+                    <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => ApproveAsync(detail)">
+                        <LucideIcon Name="check" />
+                        <span>@UL["RegApproveButton"]</span>
+                    </button>
+                }
+                else if (detail.Status == ServiceRegistrationStatus.Approved && detail.InvoiceId is null)
+                {
+                    @if (!_invoiceFormOpen)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => OpenInvoiceForm(detail)">
+                            <span>@UL["RegCreateInvoiceButton"]</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="() => _invoiceFormOpen = false">@UL["P5CostCancelButton"]</button>
+                        <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => CreateInvoiceAsync(detail)">
+                            @(_busy ? UL["P5CostSavingButton"] : UL["RegCreateInvoiceConfirm"])
+                        </button>
+                    }
+                }
+                else if (detail.Status == ServiceRegistrationStatus.Approved && detail.CancelStatus == ServiceRegistrationCancelStatus.Pending)
+                {
+                    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => RejectCancelAsync(detail)">
+                        <span>@UL["RegCancelRejectButton"]</span>
+                    </button>
+                    <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => ApproveCancelAsync(detail)">
+                        <LucideIcon Name="check" />
+                        <span>@UL["RegCancelApproveButton"]</span>
+                    </button>
+                }
+                else if (detail.InvoiceId is { } invoiceId)
+                {
+                    <a class="btn btn-primary" href="/invoices/@invoiceId">
+                        <LucideIcon Name="receipt" />
+                        <span>HD-@invoiceId</span>
+                    </a>
+                }
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ServiceRegistrationDto> _rows = [];
+    private ServiceRegistrationDto? _detail;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _reasonError;
+    private string _rejectReason = string.Empty;
+    private string _cancelRejectReason = string.Empty;
+    private string? _cancelRejectReasonError;
+    private string? _actionError;
+
+    private bool _invoiceFormOpen;
+    private decimal _invoiceAmount;
+    private DateOnly _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
+    private string _invoiceContent = string.Empty;
+    private string? _invoiceQr;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rows = await RegistrationService.ListForLandlordAsync();
+        }
+        catch (Exception)
+        {
+            _error = UL["P5CostLoadError"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ApproveAsync(ServiceRegistrationDto row)
+    {
+        _busy = true;
+        _actionError = null;
+        _reasonError = null;
+        try
+        {
+            await RegistrationService.ApproveAsync(row.Id);
+            Toast.Success(UL["RegApproveSuccess"]);
+            _detail = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectAsync(ServiceRegistrationDto row)
+    {
+        _reasonError = null;
+        if (string.IsNullOrWhiteSpace(_rejectReason))
+        {
+            _reasonError = UL["RegRejectReasonRequired"];
+            return;
+        }
+
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            await RegistrationService.RejectAsync(row.Id, _rejectReason);
+            _rejectReason = string.Empty;
+            Toast.Success(UL["RegRejectSuccess"]);
+            _detail = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenInvoiceForm(ServiceRegistrationDto row)
+    {
+        _invoiceFormOpen = true;
+        _actionError = null;
+        _invoiceAmount = MoneyFormatter.RoundVnd(row.Quantity * 100000m);
+        _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
+        _invoiceContent = row.ServiceName;
+        RefreshInvoiceQr();
+    }
+
+    private void RefreshInvoiceQr()
+    {
+        var bank = BankOptions.Value;
+        if (!bank.IsConfigured || _invoiceAmount <= 0m)
+        {
+            _invoiceQr = null;
+            return;
+        }
+
+        var payload = VietQr.GeneratePayload(bank.Code, bank.AccountNumber, _invoiceAmount, _invoiceContent);
+        _invoiceQr = VietQr.ImageDataUri(payload);
+    }
+
+    private async Task CreateInvoiceAsync(ServiceRegistrationDto row)
+    {
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            var periodStart = row.StartDate;
+            var periodEnd = _invoiceDueDate;
+            var invoice = await RegistrationService.CreateInvoiceAsync(
+                row.Id,
+                _invoiceAmount,
+                _invoiceContent,
+                periodStart,
+                periodEnd,
+                _invoiceDueDate);
+            Toast.Success(UL["P5CostInvoiceCreatedToast"]);
+            Navigation.NavigateTo($"/invoices/{invoice.Id}");
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ApproveCancelAsync(ServiceRegistrationDto row)
+    {
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            await RegistrationService.ApproveCancelAsync(row.Id);
+            Toast.Success(UL["RegCancelApprovedSuccess"]);
+            _detail = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RejectCancelAsync(ServiceRegistrationDto row)
+    {
+        _cancelRejectReasonError = null;
+        if (string.IsNullOrWhiteSpace(_cancelRejectReason))
+        {
+            _cancelRejectReasonError = UL["RegCancelRejectReasonRequired"];
+            return;
+        }
+
+        _busy = true;
+        _actionError = null;
+        try
+        {
+            await RegistrationService.RejectCancelAsync(row.Id, _cancelRejectReason);
+            _cancelRejectReason = string.Empty;
+            Toast.Success(UL["RegCancelRejectedSuccess"]);
+            _detail = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string StatusClass(ServiceRegistrationStatus status) => status switch
+    {
+        ServiceRegistrationStatus.PendingApproval => "status-open",
+        ServiceRegistrationStatus.Approved => "status-invoiced",
+        _ => "status-closed",
+    };
+
+    private string StatusLabel(ServiceRegistrationStatus status) => status switch
+    {
+        ServiceRegistrationStatus.PendingApproval => UL["RegStatusPending"],
+        ServiceRegistrationStatus.Approved => UL["RegStatusApproved"],
+        ServiceRegistrationStatus.Cancelled => UL["RegStatusCancelled"],
+        _ => UL["RegStatusRejected"],
+    };
+}

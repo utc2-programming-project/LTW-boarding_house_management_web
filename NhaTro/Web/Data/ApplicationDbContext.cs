@@ -6,6 +6,7 @@ using Web.Features.Audit.Entities;
 using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.Entities;
 using Web.Features.Maintenance.Entities;
+using Web.Features.Notifications;
 using Web.Features.Rooms.Entities;
 using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
@@ -59,6 +60,15 @@ namespace Web.Data
         public DbSet<ServiceCatalog> ServiceCatalogs => Set<ServiceCatalog>();
         public DbSet<ServicePriceHistory> ServicePriceHistories => Set<ServicePriceHistory>();
 
+        // Khách thuê đăng ký dịch vụ hằng tháng theo hợp đồng (phòng).
+        public DbSet<ContractServiceRegistration> ContractServiceRegistrations => Set<ContractServiceRegistration>();
+
+        // Yêu cầu đăng ký dịch vụ có xét duyệt (PENDING → APPROVED/REJECTED).
+        public DbSet<ServiceRegistrationRequest> ServiceRegistrationRequests => Set<ServiceRegistrationRequest>();
+
+        // Thông báo giữa các vai trò (đăng ký, hóa đơn, thanh toán).
+        public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
+
         // D16: nhật ký thao tác tách sổ hệ thống (Admin) và sổ nghiệp vụ theo tòa nhà (Chủ trọ).
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
 
@@ -107,6 +117,31 @@ namespace Web.Data
                 entity.Property(item => item.OldWaterEnd).HasPrecision(18, 2);
                 entity.Property(item => item.NewWaterEnd).HasPrecision(18, 2);
                 entity.HasIndex(item => item.UtilityReadingId);
+            });
+
+            builder.Entity<ContractServiceRegistration>(entity =>
+            {
+                entity.Property(item => item.RegisteredByUserId).HasMaxLength(450);
+                entity.Property(item => item.MonthStart).HasColumnType("date");
+                entity.HasIndex(item => new { item.ContractId, item.ServiceCatalogId, item.MonthStart }).IsUnique();
+                entity.HasIndex(item => item.ContractId);
+            });
+
+            builder.Entity<ServiceRegistrationRequest>(entity =>
+            {
+                entity.Property(item => item.RowVersion).IsRowVersion();
+                entity.Property(item => item.Quantity).HasPrecision(18, 2);
+                entity.Property(item => item.ServiceName).HasMaxLength(250);
+                entity.Property(item => item.Note).HasMaxLength(1000);
+                entity.Property(item => item.RequestedByUserId).HasMaxLength(450);
+                entity.Property(item => item.ReviewedByUserId).HasMaxLength(450);
+                entity.Property(item => item.RejectReason).HasMaxLength(1000);
+                entity.Property(item => item.CancelReason).HasMaxLength(1000);
+                entity.Property(item => item.CancelReviewedByUserId).HasMaxLength(450);
+                entity.Property(item => item.CancelRejectReason).HasMaxLength(1000);
+                entity.HasIndex(item => item.ContractId);
+                entity.HasIndex(item => item.Status);
+                entity.HasIndex(item => new { item.ContractId, item.ServiceCatalogId, item.StartDate });
             });
         }
     }

@@ -202,6 +202,7 @@
 <FeatureDialog Visible="_rejectVisible"
                Title="@L["ReviewRejectTitle"]"
                CloseLabel="@L["ReviewRejectCancel"]"
+               CssClass="reject-dialog"
                Busy="@_rejecting"
                OnClose="CloseReject">
     <form class="reject-form" @onsubmit="SubmitRejectAsync" @onsubmit:preventDefault>
