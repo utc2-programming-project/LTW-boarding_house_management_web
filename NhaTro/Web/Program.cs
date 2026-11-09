@@ -33,6 +33,7 @@ using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Email;
+using Web.Infrastructure.Addresses;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -246,6 +247,9 @@ builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
+
+// Gợi ý địa chỉ: đọc một lần dữ liệu JSON 34 tỉnh/thành phố và 3.321 phường/xã trong wwwroot.
+builder.Services.AddSingleton<VietnamAddressCatalog>();
 
 // 21 công tắc Quản lý lưu trong SQL (không đặt ở appsettings). Service ghi chỉ dành cho Chủ trọ;
 // policy chỉ đọc, dùng chung để quyết định có thay Quản lý hay không.

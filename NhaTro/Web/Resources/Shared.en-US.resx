@@ -1704,4 +1704,12 @@
   <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Place of issue must not exceed 200 characters.</value></data>
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Note must not exceed 500 characters.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>RowVersion is missing.</value></data>
+  <data name="AddressStreetLabel" xml:space="preserve"><value>House number, street</value></data>
+  <data name="AddressStreetPlaceholder" xml:space="preserve"><value>e.g. 12 Nguyen Trai</value></data>
+  <data name="AddressProvinceLabel" xml:space="preserve"><value>Province/City</value></data>
+  <data name="AddressProvincePlaceholder" xml:space="preserve"><value>Type to search province/city</value></data>
+  <data name="AddressWardLabel" xml:space="preserve"><value>Ward/Commune</value></data>
+  <data name="AddressWardPlaceholder" xml:space="preserve"><value>Type to search ward/commune</value></data>
+  <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Select a province/city first</value></data>
+  <data name="AddressSuggestionHint" xml:space="preserve"><value>Suggestions use the 34 province/city and 3,321 ward/commune dataset. Existing addresses are kept as-is.</value></data>
 </root>
