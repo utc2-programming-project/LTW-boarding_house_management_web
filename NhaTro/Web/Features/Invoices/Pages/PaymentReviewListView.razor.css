@@ -101,6 +101,20 @@
     width: 100%;
 }
 
+.filter-field.wide {
+    flex: 1 1 260px;
+}
+
+.filters-row-secondary {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border, #E2E8F0);
+}
+
+.reset-button {
+    margin-left: auto;
+}
+
 .table-card {
     border: 1px solid var(--border);
     border-radius: var(--radius-card);

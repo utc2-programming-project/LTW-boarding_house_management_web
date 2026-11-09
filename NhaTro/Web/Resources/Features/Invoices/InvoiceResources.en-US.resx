@@ -29,6 +29,16 @@
   <data name="AllContracts" xml:space="preserve"><value>All contracts</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Status</value></data>
   <data name="AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="FilterKeyword" xml:space="preserve"><value>Search</value></data>
+  <data name="FilterKeywordPlaceholder" xml:space="preserve"><value>Invoice, contract, room, property, tenant…</value></data>
+  <data name="FilterPaymentState" xml:space="preserve"><value>Payment state</value></data>
+  <data name="PaymentStateAll" xml:space="preserve"><value>All payment states</value></data>
+  <data name="PaymentStateUnpaid" xml:space="preserve"><value>Unpaid</value></data>
+  <data name="PaymentStatePartial" xml:space="preserve"><value>Partially paid</value></data>
+  <data name="PaymentStatePaid" xml:space="preserve"><value>Fully paid</value></data>
+  <data name="FilterMinAmount" xml:space="preserve"><value>Amount from</value></data>
+  <data name="FilterMaxAmount" xml:space="preserve"><value>Amount to</value></data>
+  <data name="AmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
   <data name="ResetFilter" xml:space="preserve"><value>Reset filters</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Draft</value></data>
@@ -167,6 +177,11 @@
   <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Pending amount</value></data>
   <data name="ReviewFilterStatus" xml:space="preserve"><value>Status</value></data>
   <data name="ReviewAllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="ReviewFilterKeyword" xml:space="preserve"><value>Search</value></data>
+  <data name="ReviewFilterKeywordPlaceholder" xml:space="preserve"><value>Request, invoice, room, property, tenant…</value></data>
+  <data name="ReviewFilterMinAmount" xml:space="preserve"><value>Amount from</value></data>
+  <data name="ReviewFilterMaxAmount" xml:space="preserve"><value>Amount to</value></data>
+  <data name="ReviewAmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
   <data name="ReviewRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="ReviewThRequest" xml:space="preserve"><value>Request</value></data>
   <data name="ReviewThInvoice" xml:space="preserve"><value>Invoice</value></data>

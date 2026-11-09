@@ -102,6 +102,43 @@
                     <span>@L["ResetFilter"]</span>
                 </button>
             </div>
+
+            <div class="filters-row filters-row-secondary">
+                <label class="filter-field wide">
+                    <span>@L["FilterKeyword"]</span>
+                    <input class="input"
+                           type="search"
+                           autocomplete="off"
+                           placeholder="@L["FilterKeywordPlaceholder"]"
+                           @bind="_keyword"
+                           @bind:event="oninput"
+                           @bind:after="OnFilterChanged" />
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterPaymentState"]</span>
+                    <select class="input" @bind="_paymentState" @bind:after="OnFilterChanged">
+                        <option value="">@L["PaymentStateAll"]</option>
+                        <option value="unpaid">@L["PaymentStateUnpaid"]</option>
+                        <option value="partial">@L["PaymentStatePartial"]</option>
+                        <option value="paid">@L["PaymentStatePaid"]</option>
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterMinAmount"]</span>
+                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                           placeholder="@L["AmountPlaceholder"]"
+                           @bind="_minAmount" @bind:after="OnFilterChanged" />
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterMaxAmount"]</span>
+                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                           placeholder="@L["AmountPlaceholder"]"
+                           @bind="_maxAmount" @bind:after="OnFilterChanged" />
+                </label>
+            </div>
         </div>
 
         <div class="table-card">
@@ -211,6 +248,10 @@
     private int? _month;
     private Guid? _contractId;
     private InvoiceStatus? _status;
+    private string _keyword = string.Empty;
+    private string _paymentState = string.Empty;
+    private string _minAmount = string.Empty;
+    private string _maxAmount = string.Empty;
     private int _page = 1;
 
     private bool IsMyInvoices =>
@@ -291,10 +332,20 @@
 
     private InvoiceFilter BuildFilter() => new()
     {
+        Keyword = _keyword,
         Year = _year,
         Month = _month,
         ContractId = _contractId,
         Status = _status,
+        PaymentState = _paymentState switch
+        {
+            "unpaid" => InvoicePaymentState.Unpaid,
+            "partial" => InvoicePaymentState.Partial,
+            "paid" => InvoicePaymentState.Paid,
+            _ => (InvoicePaymentState?)null,
+        },
+        MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
+        MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
         Page = _page,
         PageSize = PageSize,
     };
@@ -305,6 +356,10 @@
         _month = null;
         _contractId = null;
         _status = null;
+        _keyword = string.Empty;
+        _paymentState = string.Empty;
+        _minAmount = string.Empty;
+        _maxAmount = string.Empty;
         _page = 1;
         await LoadResultAsync();
     }

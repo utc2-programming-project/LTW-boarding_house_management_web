@@ -49,6 +49,54 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
             query = query.Where(payment => payment.Status == status);
         }
 
+        if (filter.PeriodRange() is { } period)
+        {
+            var invoiceIdsInPeriod = context.Invoices
+                .Where(invoice => invoice.PeriodStart <= period.End && invoice.PeriodEnd >= period.Start)
+                .Select(invoice => invoice.Id);
+            query = query.Where(payment => invoiceIdsInPeriod.Contains(payment.InvoiceId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var term = filter.Keyword!;
+            var paymentId = ParsePrefixedNumber(term, "YC");
+            var invoiceId = ParsePrefixedNumber(term, "HD");
+            var matchingInvoices =
+                from invoice in context.Invoices
+                join contract in context.Contracts on invoice.ContractId equals contract.ContractId
+                join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractNumber.Contains(term)
+                    || room.Code.Contains(term)
+                    || property.Name.Contains(term)
+                    || context.ContractMembers.Any(member => member.ContractId == contract.ContractId
+                        && context.Tenants.IgnoreQueryFilters()
+                            .Any(tenant => tenant.Id == member.TenantId && tenant.FullName.Contains(term)))
+                select invoice.Id;
+
+            query = (paymentId, invoiceId) switch
+            {
+                ({ } pid, { } iid) => query.Where(payment =>
+                    payment.Id == pid || payment.InvoiceId == iid || matchingInvoices.Contains(payment.InvoiceId)),
+                ({ } pid, null) => query.Where(payment =>
+                    payment.Id == pid || matchingInvoices.Contains(payment.InvoiceId)),
+                (null, { } iid) => query.Where(payment =>
+                    payment.InvoiceId == iid || matchingInvoices.Contains(payment.InvoiceId)),
+                _ => query.Where(payment => matchingInvoices.Contains(payment.InvoiceId)),
+            };
+        }
+
+        if (filter.MinAmount is { } minAmount)
+        {
+            query = query.Where(payment => payment.Amount >= minAmount);
+        }
+
+        if (filter.MaxAmount is { } maxAmount)
+        {
+            query = query.Where(payment => payment.Amount <= maxAmount);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
 
@@ -229,6 +277,18 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
             .ToDictionary(
                 group => group.Key,
                 group => (IReadOnlyList<string>)group.Select(row => row.FullName).ToArray());
+    }
+
+    /// <summary>Đọc mã dạng "YC-12"/"HD-12" hoặc "12"; trả null khi từ khóa không phải mã số.</summary>
+    private static int? ParsePrefixedNumber(string term, string prefix)
+    {
+        var normalized = term.Trim();
+        if (normalized.StartsWith(prefix + "-", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[(prefix.Length + 1)..];
+        }
+
+        return int.TryParse(normalized, out var value) ? value : null;
     }
 
     private static void EnsureManager(PropertyCaller caller)

@@ -33,9 +33,20 @@ public sealed class InvoiceListItemDto
     public required decimal OutstandingAmount { get; init; }
 }
 
-/// <summary>Bộ lọc danh sách hóa đơn theo kỳ, hợp đồng và trạng thái.</summary>
+/// <summary>Trạng thái thu tiền của hóa đơn, suy từ các Payment đã xác nhận.</summary>
+public enum InvoicePaymentState
+{
+    Unpaid,
+    Partial,
+    Paid,
+}
+
+/// <summary>Bộ lọc danh sách hóa đơn theo kỳ, hợp đồng, trạng thái và số tiền.</summary>
 public sealed class InvoiceFilter
 {
+    /// <summary>Tìm theo mã hóa đơn, số hợp đồng, mã phòng, tên nhà hoặc tên khách thuê.</summary>
+    public string? Keyword { get; set; }
+
     public int? Year { get; set; }
 
     public int? Month { get; set; }
@@ -43,6 +54,12 @@ public sealed class InvoiceFilter
     public Guid? ContractId { get; set; }
 
     public InvoiceStatus? Status { get; set; }
+
+    public InvoicePaymentState? PaymentState { get; set; }
+
+    public decimal? MinAmount { get; set; }
+
+    public decimal? MaxAmount { get; set; }
 
     [Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
@@ -53,6 +70,23 @@ public sealed class InvoiceFilter
     /// <summary>Chuẩn hóa tháng/năm và kẹp trang để query không nhận giá trị lạ từ UI.</summary>
     public void Normalize()
     {
+        Keyword = string.IsNullOrWhiteSpace(Keyword) ? null : Keyword.Trim();
+
+        if (MinAmount is < 0)
+        {
+            MinAmount = null;
+        }
+
+        if (MaxAmount is < 0)
+        {
+            MaxAmount = null;
+        }
+
+        if (MinAmount is { } min && MaxAmount is { } max && min > max)
+        {
+            (MinAmount, MaxAmount) = (max, min);
+        }
+
         if (Month is < 1 or > 12 || Year is < 2000 or > 2100)
         {
             Month = null;

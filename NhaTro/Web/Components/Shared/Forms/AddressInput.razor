@@ -1,0 +1,235 @@
+@inject VietnamAddressCatalog Catalog
+@inject IStringLocalizer<Shared> L
+@using System.Linq.Expressions
+
+@*
+    Ô nhập địa chỉ dùng chung: giữ nguyên ô nhập tự do "Số nhà, tên đường" cho dữ liệu cũ,
+    đồng thời gợi ý tỉnh/thành phố và phường/xã từ dữ liệu hành chính lưu trong project.
+    Giá trị phát ra vẫn là một chuỗi địa chỉ duy nhất để không phải đổi schema hiện có.
+*@
+<div class="address-input" data-address-input>
+    <div class="address-input-part">
+        <label class="address-input-label" for="@($"{Id}-street")">@L["AddressStreetLabel"]</label>
+        <input id="@($"{Id}-street")"
+               class="input address-input-control"
+               type="text"
+               value="@_street"
+               maxlength="@MaxLength"
+               autocomplete="street-address"
+               placeholder="@L["AddressStreetPlaceholder"]"
+               aria-describedby="@AriaDescribedBy"
+               aria-invalid="@AriaInvalidValue"
+               @oninput="OnStreetInput" />
+    </div>
+
+    <div class="address-input-row">
+        <div class="address-input-part">
+            <label class="address-input-label" for="@($"{Id}-province")">@L["AddressProvinceLabel"]</label>
+            <input id="@($"{Id}-province")"
+                   class="input address-input-control"
+                   type="text"
+                   value="@_provinceText"
+                   list="@($"{Id}-province-options")"
+                   autocomplete="address-level1"
+                   placeholder="@L["AddressProvincePlaceholder"]"
+                   aria-describedby="@AriaDescribedBy"
+                   aria-invalid="@AriaInvalidValue"
+                   @oninput="OnProvinceInput"
+                   @onblur="CanonicalizeProvinceAsync" />
+            <datalist id="@($"{Id}-province-options")">
+                @foreach (var province in Catalog.Provinces)
+                {
+                    <option value="@province.Name"></option>
+                }
+            </datalist>
+        </div>
+
+        <div class="address-input-part">
+            <label class="address-input-label" for="@($"{Id}-ward")">@L["AddressWardLabel"]</label>
+            <input id="@($"{Id}-ward")"
+                   class="input address-input-control"
+                   type="text"
+                   value="@_wardText"
+                   list="@($"{Id}-ward-options")"
+                   autocomplete="address-level2"
+                   placeholder="@(_selectedProvince is null ? L["AddressWardProvinceRequired"].Value : L["AddressWardPlaceholder"].Value)"
+                   aria-describedby="@AriaDescribedBy"
+                   aria-invalid="@AriaInvalidValue"
+                   @oninput="OnWardInput"
+                   @onblur="CanonicalizeWardAsync" />
+            <datalist id="@($"{Id}-ward-options")">
+                @if (_selectedProvince is not null)
+                {
+                    foreach (var ward in _selectedProvince.Wards)
+                    {
+                        <option value="@ward.Name"></option>
+                    }
+                }
+            </datalist>
+        </div>
+    </div>
+
+    <p class="address-input-hint">@L["AddressSuggestionHint"]</p>
+</div>
+
+@code {
+    private string _street = string.Empty;
+    private string _provinceText = string.Empty;
+    private string _wardText = string.Empty;
+    private string? _lastEmitted;
+    private bool _initialized;
+    private Province? _selectedProvince;
+
+    /// <summary>Id gốc; các ô con dùng thêm hậu tố <c>-street</c>, <c>-province</c>, <c>-ward</c>.</summary>
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+
+    /// <summary>Chuỗi địa chỉ đầy đủ ghép từ số nhà, phường/xã và tỉnh/thành phố.</summary>
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>Biểu thức model để EditForm biết trường địa chỉ đã thay đổi.</summary>
+    [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+
+    [Parameter] public int MaxLength { get; set; } = 500;
+
+    [Parameter] public string? AriaDescribedBy { get; set; }
+
+    [Parameter] public bool AriaInvalid { get; set; }
+
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+
+    private string? AriaInvalidValue => AriaInvalid ? "true" : null;
+
+    protected override void OnParametersSet()
+    {
+        if (!_initialized)
+        {
+            ParseExternalValue(Value);
+            _lastEmitted = Value;
+            _initialized = true;
+            return;
+        }
+
+        // Chỉ đọc lại khi cha thay đổi giá trị từ bên ngoài (ví dụ tải lại hồ sơ),
+        // tránh ghi đè đúng lúc người dùng đang gõ.
+        if (!string.Equals(Value, _lastEmitted, StringComparison.Ordinal))
+        {
+            ParseExternalValue(Value);
+            _lastEmitted = Value;
+        }
+    }
+
+    private async Task OnStreetInput(ChangeEventArgs args)
+    {
+        _street = args.Value?.ToString() ?? string.Empty;
+        await EmitAsync();
+    }
+
+    private async Task OnProvinceInput(ChangeEventArgs args)
+    {
+        _provinceText = args.Value?.ToString() ?? string.Empty;
+        var previousCode = _selectedProvince?.Code;
+        _selectedProvince = Catalog.FindProvince(_provinceText);
+
+        // Đổi tỉnh thì bỏ phường/xã cũ để tránh ghép địa chỉ lệch tỉnh.
+        if (previousCode is not null
+            && _selectedProvince is not null
+            && previousCode != _selectedProvince.Code)
+        {
+            _wardText = string.Empty;
+        }
+
+        await EmitAsync();
+    }
+
+    private async Task OnWardInput(ChangeEventArgs args)
+    {
+        _wardText = args.Value?.ToString() ?? string.Empty;
+        await EmitAsync();
+    }
+
+    private async Task CanonicalizeProvinceAsync()
+    {
+        var province = Catalog.FindProvince(_provinceText);
+        if (province is null)
+        {
+            await EmitAsync();
+            return;
+        }
+
+        _provinceText = province.Name;
+        _selectedProvince = province;
+        await EmitAsync();
+    }
+
+    private async Task CanonicalizeWardAsync()
+    {
+        var province = _selectedProvince ?? Catalog.FindProvince(_provinceText);
+        if (province is not null)
+        {
+            var ward = Catalog.FindWard(province, _wardText);
+            if (ward is not null)
+            {
+                _wardText = ward.Name;
+            }
+        }
+
+        await EmitAsync();
+    }
+
+    private void ParseExternalValue(string? value)
+    {
+        _street = value ?? string.Empty;
+        _provinceText = string.Empty;
+        _wardText = string.Empty;
+        _selectedProvince = null;
+
+        if (string.IsNullOrWhiteSpace(value)) return;
+
+        var parts = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2) return;
+
+        var province = Catalog.FindProvince(parts[^1]);
+        if (province is null) return;
+
+        _provinceText = province.Name;
+        _selectedProvince = province;
+
+        var remaining = parts[..^1];
+        var ward = Catalog.FindWard(province, remaining[^1]);
+        if (ward is not null)
+        {
+            _wardText = ward.Name;
+            remaining = remaining[..^1];
+        }
+
+        // Địa chỉ cũ không khớp dữ liệu mới vẫn được giữ nguyên trong ô tự do.
+        _street = remaining.Length == 0 ? value : string.Join(", ", remaining);
+    }
+
+    private async Task EmitAsync()
+    {
+        var value = Compose();
+        _lastEmitted = value;
+        if (!string.Equals(value, Value, StringComparison.Ordinal))
+        {
+            await ValueChanged.InvokeAsync(value);
+        }
+
+        if (EditContext is not null && ValueExpression is not null)
+        {
+            EditContext.NotifyFieldChanged(FieldIdentifier.Create(ValueExpression));
+        }
+    }
+
+    private string? Compose()
+    {
+        var parts = new[] { _street, _wardText, _provinceText }
+            .Select(part => part?.Trim())
+            .Where(part => !string.IsNullOrWhiteSpace(part))
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(", ", parts);
+    }
+}

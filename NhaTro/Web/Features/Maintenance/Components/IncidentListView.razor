@@ -50,7 +50,7 @@
                     <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
                 }
             </div> },
-            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true },
+            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true, Filterable = true, FilterPlaceholder = L["SearchCreatedDate"] },
             new() { Key = "Actions", Title = L["Actions"], Template = i => @<button type="button" class="btn btn-secondary incident-detail-action"
                 @ref="_detailButtons[i.Id]"
                 aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button> }
@@ -100,6 +100,8 @@
                 "Category" => items.Where(i => i.Category.ToString() == filter.Value),
                 "Urgency" => items.Where(i => i.Urgency.ToString() == filter.Value),
                 "Status" => items.Where(i => i.Status.ToString() == filter.Value),
+                "Created" => items.Where(i => DateFormatter.FormatDateTime(i.CreatedAtUtc)
+                    .Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
                 _ => items
             };
         }

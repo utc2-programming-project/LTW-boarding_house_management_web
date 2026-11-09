@@ -92,9 +92,12 @@
 
             <div class="tenant-form-field tenant-form-address">
                 <FormField TValue="string" Id="tenant-address" Label="@L["TenantPermanentAddress"]"
+                           LabelFor="tenant-address-street"
                            For="() => _form.PermanentAddress">
-                    <InputTextArea id="tenant-address" class="input tenant-textarea" @bind-Value="_form.PermanentAddress"
-                                   maxlength="300" aria-describedby="tenant-address-error" aria-invalid="@(_editContext.HasError(() => _form.PermanentAddress) ? "true" : "false")" />
+                    <AddressInput Id="tenant-address" @bind-Value="_form.PermanentAddress"
+                                  MaxLength="300"
+                                  AriaDescribedBy="tenant-address-error"
+                                  AriaInvalid="@_editContext.HasError(() => _form.PermanentAddress)" />
                 </FormField>
             </div>
 

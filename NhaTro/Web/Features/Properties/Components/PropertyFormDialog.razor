@@ -29,8 +29,11 @@
                         <span class="p2-field-error" id="property-name-error" aria-live="polite">@ErrorFor(nameof(_model.Name))</span>
                     </div>
                     <div class="p2-field full">
-                        <label for="property-address">@L["P2Address"]</label>
-                        <InputTextArea id="property-address" @bind-Value="_model.Address" maxlength="500" rows="3" aria-describedby="property-address-error" aria-invalid="@(_editContext.HasError(() => _model.Address) ? "true" : "false")" />
+                        <label for="property-address-street">@L["P2Address"]</label>
+                        <AddressInput Id="property-address" @bind-Value="_model.Address"
+                                      MaxLength="500"
+                                      AriaDescribedBy="property-address-error"
+                                      AriaInvalid="@_editContext.HasError(() => _model.Address)" />
                         <span class="p2-field-error" id="property-address-error" aria-live="polite">@ErrorFor(nameof(_model.Address))</span>
                     </div>
                     <label class="p2-check-field" for="property-is-active">

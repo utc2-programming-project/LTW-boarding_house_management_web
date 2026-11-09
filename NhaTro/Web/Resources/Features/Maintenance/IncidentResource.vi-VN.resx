@@ -451,6 +451,7 @@
   <data name="AllFilterValues" xml:space="preserve"><value>Tất cả</value></data>
   <data name="SearchTitle" xml:space="preserve"><value>Nhập tiêu đề sự cố</value></data>
   <data name="SearchRoom" xml:space="preserve"><value>Nhập tên nhà trọ hoặc phòng</value></data>
+  <data name="SearchCreatedDate" xml:space="preserve"><value>Lọc theo ngày tạo (dd/MM/yyyy)</value></data>
   <data name="Resolution" xml:space="preserve"><value>Kết quả xử lý</value></data>
   <data name="CompletedAt" xml:space="preserve"><value>Thời gian hoàn thành</value></data>
   <data name="ImageViewer" xml:space="preserve"><value>Xem ảnh</value></data>

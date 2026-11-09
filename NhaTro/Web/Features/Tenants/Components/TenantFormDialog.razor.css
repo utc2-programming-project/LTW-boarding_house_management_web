@@ -55,8 +55,9 @@
 }
 
 .tenant-form-grid ::deep .tenant-textarea {
-    height: 112px;
-    min-height: 112px;
+    /* Căn đáy ô ghi chú với hàng Tỉnh/Thành phố - Phường/Xã của khối địa chỉ bên trái. */
+    height: 147px;
+    min-height: 147px;
     padding: 10px 12px;
     resize: vertical;
 }
