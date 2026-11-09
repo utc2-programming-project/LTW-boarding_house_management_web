@@ -1753,4 +1753,79 @@
   <data name="AddressWardPlaceholder" xml:space="preserve"><value>Type to search ward/commune</value></data>
   <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Select a province/city first</value></data>
   <data name="AddressSuggestionHint" xml:space="preserve"><value>Suggestions use the 34 province/city and 3,321 ward/commune dataset. Existing addresses are kept as-is.</value></data>
+  <!-- PLAN-009..013: seamless property setup wizard -->
+  <data name="P2SetupTitle" xml:space="preserve"><value>Property setup</value></data>
+  <data name="P2SetupSubtitle" xml:space="preserve"><value>Finish the property, rooms and pricing in one pass so you can start renting right away.</value></data>
+  <data name="P2SetupExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="P2SetupStepperLabel" xml:space="preserve"><value>Setup steps</value></data>
+  <data name="P2SetupStepBasics" xml:space="preserve"><value>Basics</value></data>
+  <data name="P2SetupStepRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2SetupStepPricing" xml:space="preserve"><value>Pricing &amp; services</value></data>
+  <data name="P2SetupResumeTitle" xml:space="preserve"><value>You have an unfinished draft</value></data>
+  <data name="P2SetupResumeBody" xml:space="preserve"><value>“{0}” has not been fully set up. Continue or discard this draft?</value></data>
+  <data name="P2SetupResumeContinue" xml:space="preserve"><value>Continue draft</value></data>
+  <data name="P2SetupResumeDiscard" xml:space="preserve"><value>Discard draft</value></data>
+  <data name="P2SetupBasicsTitle" xml:space="preserve"><value>Property information</value></data>
+  <data name="P2SetupBasicsSubtitle" xml:space="preserve"><value>Just the name and address; the next steps add rooms and pricing.</value></data>
+  <data name="P2SetupContinueRooms" xml:space="preserve"><value>Save and add rooms</value></data>
+  <data name="P2SetupContinue" xml:space="preserve"><value>Continue setup</value></data>
+  <data name="P2SetupBack" xml:space="preserve"><value>Back to rooms</value></data>
+  <data name="P2SetupFinish" xml:space="preserve"><value>Finish setup</value></data>
+  <data name="P2SetupExitTitle" xml:space="preserve"><value>Leave setup?</value></data>
+  <data name="P2SetupExitBody" xml:space="preserve"><value>Choose how to save before leaving. You can come back later at any time.</value></data>
+  <data name="P2SetupExitSaveAndLeave" xml:space="preserve"><value>Save &amp; exit</value></data>
+  <data name="P2SetupExitSaveDraft" xml:space="preserve"><value>Save draft &amp; exit</value></data>
+  <data name="P2SetupExitContinue" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupExitSaved" xml:space="preserve"><value>Setup information saved.</value></data>
+  <data name="P2SetupDraftSaved" xml:space="preserve"><value>Draft saved in this browser.</value></data>
+  <data name="P2SetupDraftKept" xml:space="preserve"><value>Your previous draft was left untouched.</value></data>
+  <data name="P2SetupDraftBannerTitle" xml:space="preserve"><value>Setup draft</value></data>
+  <data name="P2SetupDraftBannerBody" xml:space="preserve"><value>“{0}” is still in progress. Continue to finish rooms and pricing.</value></data>
+  <data name="P2SetupDraftUnnamed" xml:space="preserve"><value>untitled</value></data>
+  <data name="P2SetupDraftResume" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupDraftDiscard" xml:space="preserve"><value>Discard</value></data>
+  <data name="P2SetupRoomsTitle" xml:space="preserve"><value>Property rooms</value></data>
+  <data name="P2SetupRoomsSubtitle" xml:space="preserve"><value>Add rooms one by one; after saving we will ask whether to add another.</value></data>
+  <data name="P2SetupRoomAdd" xml:space="preserve"><value>Add room</value></data>
+  <data name="P2SetupRoomsEmpty" xml:space="preserve"><value>No rooms yet.</value></data>
+  <data name="P2SetupRoomsEmptyHint" xml:space="preserve"><value>You can add rooms later, but adding them now is faster.</value></data>
+  <data name="P2SetupRoomsCount" xml:space="preserve"><value>{0} rooms</value></data>
+  <data name="P2SetupRoomSkip" xml:space="preserve"><value>Skip, configure later</value></data>
+  <data name="P2SetupRoomContinue" xml:space="preserve"><value>Done, go to pricing</value></data>
+  <data name="P2SetupAskMoreTitle" xml:space="preserve"><value>Room saved</value></data>
+  <data name="P2SetupAskMoreBody" xml:space="preserve"><value>Do you want to add another room?</value></data>
+  <data name="P2SetupAskMoreYes" xml:space="preserve"><value>Add another room</value></data>
+  <data name="P2SetupAskMoreNo" xml:space="preserve"><value>Done, go to pricing</value></data>
+  <data name="P2SetupPriceTitle" xml:space="preserve"><value>Pricing &amp; services</value></data>
+  <data name="P2SetupPriceSubtitle" xml:space="preserve"><value>Check electricity/water rates and choose how to set up the property's own services.</value></data>
+  <data name="P2SetupPriceElectric" xml:space="preserve"><value>Electricity</value></data>
+  <data name="P2SetupPriceWater" xml:space="preserve"><value>Water</value></data>
+  <data name="P2SetupPriceEffectiveFrom" xml:space="preserve"><value>Effective from {0}</value></data>
+  <data name="P2SetupPriceMissing" xml:space="preserve"><value>No effective rate yet</value></data>
+  <data name="P2SetupPriceServices" xml:space="preserve"><value>Property services</value></data>
+  <data name="P2SetupPriceServiceCount" xml:space="preserve"><value>{0} services in effect</value></data>
+  <data name="P2SetupPriceNoServices" xml:space="preserve"><value>No property services yet</value></data>
+  <data name="P2SetupPriceOptionsTitle" xml:space="preserve"><value>How would you like to set the pricing?</value></data>
+  <data name="P2SetupPriceUseSystem" xml:space="preserve"><value>Use system rates</value></data>
+  <data name="P2SetupPriceUseSystemHint" xml:space="preserve"><value>Electricity and water follow the current government rates; nothing to enter.</value></data>
+  <data name="P2SetupPriceCopy" xml:space="preserve"><value>Copy from another property</value></data>
+  <data name="P2SetupPriceCopyHint" xml:space="preserve"><value>Take the current services and prices from a property you manage.</value></data>
+  <data name="P2SetupPriceNoSources" xml:space="preserve"><value>No other property is available to copy from.</value></data>
+  <data name="P2SetupPriceCopySource" xml:space="preserve"><value>Source property</value></data>
+  <data name="P2SetupPriceCopySourcePlaceholder" xml:space="preserve"><value>Select a property to copy</value></data>
+  <data name="P2SetupPriceCopyAction" xml:space="preserve"><value>Copy prices</value></data>
+  <data name="P2SetupPriceManual" xml:space="preserve"><value>Enter services manually</value></data>
+  <data name="P2SetupPriceManualHint" xml:space="preserve"><value>Add internet, parking, cleaning… with your own rates.</value></data>
+  <data name="P2SetupPriceAddService" xml:space="preserve"><value>Add service</value></data>
+  <data name="P2SetupPriceLater" xml:space="preserve"><value>Configure later</value></data>
+  <data name="P2SetupPriceLaterHint" xml:space="preserve"><value>Finish now and set prices later in the Services section.</value></data>
+  <data name="P2SetupPriceCopyResult" xml:space="preserve"><value>Copied {0} services.</value></data>
+  <data name="P2SetupPriceCopyResultSkipped" xml:space="preserve"><value>Copied {0} services, skipped {1} with duplicate names.</value></data>
+  <data name="P2SetupPriceServiceAdded" xml:space="preserve"><value>Service added to the property.</value></data>
+  <data name="P2SetupFinishedTitle" xml:space="preserve"><value>Setup complete</value></data>
+  <data name="P2SetupFinishedBody" xml:space="preserve"><value>“{0}” is ready for renting.</value></data>
+  <data name="P2SetupFinishedRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2SetupFinishedServices" xml:space="preserve"><value>Services</value></data>
+  <data name="P2SetupFinishedViewRooms" xml:space="preserve"><value>View rooms</value></data>
+  <data name="P2SetupFinishedDone" xml:space="preserve"><value>Back to properties</value></data>
 </root>

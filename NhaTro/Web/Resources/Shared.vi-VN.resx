@@ -1753,4 +1753,79 @@
   <data name="AddressWardPlaceholder" xml:space="preserve"><value>Gõ để tìm phường/xã</value></data>
   <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Chọn tỉnh/thành phố trước</value></data>
   <data name="AddressSuggestionHint" xml:space="preserve"><value>Gợi ý theo dữ liệu hành chính 34 tỉnh/thành phố và 3.321 phường/xã. Địa chỉ cũ vẫn được giữ nguyên.</value></data>
+  <!-- PLAN-009..013: luồng thiết lập nhà trọ liền mạch -->
+  <data name="P2SetupTitle" xml:space="preserve"><value>Thiết lập nhà trọ</value></data>
+  <data name="P2SetupSubtitle" xml:space="preserve"><value>Hoàn tất thông tin, phòng và giá trong một lượt để bắt đầu cho thuê ngay.</value></data>
+  <data name="P2SetupExit" xml:space="preserve"><value>Thoát</value></data>
+  <data name="P2SetupStepperLabel" xml:space="preserve"><value>Các bước thiết lập</value></data>
+  <data name="P2SetupStepBasics" xml:space="preserve"><value>Thông tin</value></data>
+  <data name="P2SetupStepRooms" xml:space="preserve"><value>Phòng</value></data>
+  <data name="P2SetupStepPricing" xml:space="preserve"><value>Giá &amp; dịch vụ</value></data>
+  <data name="P2SetupResumeTitle" xml:space="preserve"><value>Bạn có bản nháp đang dở</value></data>
+  <data name="P2SetupResumeBody" xml:space="preserve"><value>Nhà trọ “{0}” chưa hoàn tất thiết lập. Tiếp tục hay bỏ bản nháp này?</value></data>
+  <data name="P2SetupResumeContinue" xml:space="preserve"><value>Tiếp tục nháp</value></data>
+  <data name="P2SetupResumeDiscard" xml:space="preserve"><value>Bỏ nháp</value></data>
+  <data name="P2SetupBasicsTitle" xml:space="preserve"><value>Thông tin nhà trọ</value></data>
+  <data name="P2SetupBasicsSubtitle" xml:space="preserve"><value>Chỉ cần tên và địa chỉ; các bước sau sẽ thêm phòng và giá.</value></data>
+  <data name="P2SetupContinueRooms" xml:space="preserve"><value>Lưu và thêm phòng</value></data>
+  <data name="P2SetupContinue" xml:space="preserve"><value>Tiếp tục thiết lập</value></data>
+  <data name="P2SetupBack" xml:space="preserve"><value>Quay lại bước phòng</value></data>
+  <data name="P2SetupFinish" xml:space="preserve"><value>Hoàn tất thiết lập</value></data>
+  <data name="P2SetupExitTitle" xml:space="preserve"><value>Thoát thiết lập?</value></data>
+  <data name="P2SetupExitBody" xml:space="preserve"><value>Chọn cách lưu trước khi rời. Bạn có thể quay lại làm tiếp bất cứ lúc nào.</value></data>
+  <data name="P2SetupExitSaveAndLeave" xml:space="preserve"><value>Lưu &amp; thoát</value></data>
+  <data name="P2SetupExitSaveDraft" xml:space="preserve"><value>Lưu nháp &amp; thoát</value></data>
+  <data name="P2SetupExitContinue" xml:space="preserve"><value>Tiếp tục</value></data>
+  <data name="P2SetupExitSaved" xml:space="preserve"><value>Đã lưu thông tin thiết lập.</value></data>
+  <data name="P2SetupDraftSaved" xml:space="preserve"><value>Đã lưu bản nháp trên trình duyệt này.</value></data>
+  <data name="P2SetupDraftKept" xml:space="preserve"><value>Bản nháp trước đó vẫn được giữ nguyên.</value></data>
+  <data name="P2SetupDraftBannerTitle" xml:space="preserve"><value>Bản nháp thiết lập</value></data>
+  <data name="P2SetupDraftBannerBody" xml:space="preserve"><value>Nhà trọ “{0}” đang làm dở. Tiếp tục để hoàn tất phòng và giá.</value></data>
+  <data name="P2SetupDraftUnnamed" xml:space="preserve"><value>chưa đặt tên</value></data>
+  <data name="P2SetupDraftResume" xml:space="preserve"><value>Tiếp tục</value></data>
+  <data name="P2SetupDraftDiscard" xml:space="preserve"><value>Xóa nháp</value></data>
+  <data name="P2SetupRoomsTitle" xml:space="preserve"><value>Phòng của nhà trọ</value></data>
+  <data name="P2SetupRoomsSubtitle" xml:space="preserve"><value>Thêm từng phòng; lưu xong hệ thống sẽ hỏi bạn có thêm nữa không.</value></data>
+  <data name="P2SetupRoomAdd" xml:space="preserve"><value>Thêm phòng</value></data>
+  <data name="P2SetupRoomsEmpty" xml:space="preserve"><value>Chưa có phòng nào.</value></data>
+  <data name="P2SetupRoomsEmptyHint" xml:space="preserve"><value>Bạn có thể thêm phòng sau, nhưng thêm ngay sẽ nhanh hơn.</value></data>
+  <data name="P2SetupRoomsCount" xml:space="preserve"><value>Đã có {0} phòng</value></data>
+  <data name="P2SetupRoomSkip" xml:space="preserve"><value>Bỏ qua, cấu hình sau</value></data>
+  <data name="P2SetupRoomContinue" xml:space="preserve"><value>Xong, sang bước giá</value></data>
+  <data name="P2SetupAskMoreTitle" xml:space="preserve"><value>Đã lưu phòng</value></data>
+  <data name="P2SetupAskMoreBody" xml:space="preserve"><value>Bạn có muốn thêm phòng nữa không?</value></data>
+  <data name="P2SetupAskMoreYes" xml:space="preserve"><value>Thêm phòng nữa</value></data>
+  <data name="P2SetupAskMoreNo" xml:space="preserve"><value>Xong, sang bước giá</value></data>
+  <data name="P2SetupPriceTitle" xml:space="preserve"><value>Giá &amp; dịch vụ</value></data>
+  <data name="P2SetupPriceSubtitle" xml:space="preserve"><value>Kiểm tra giá điện/nước và chọn cách thiết lập dịch vụ riêng của nhà trọ.</value></data>
+  <data name="P2SetupPriceElectric" xml:space="preserve"><value>Giá điện</value></data>
+  <data name="P2SetupPriceWater" xml:space="preserve"><value>Giá nước</value></data>
+  <data name="P2SetupPriceEffectiveFrom" xml:space="preserve"><value>Áp dụng từ {0}</value></data>
+  <data name="P2SetupPriceMissing" xml:space="preserve"><value>Chưa có biểu giá hiệu lực</value></data>
+  <data name="P2SetupPriceServices" xml:space="preserve"><value>Dịch vụ riêng</value></data>
+  <data name="P2SetupPriceServiceCount" xml:space="preserve"><value>{0} dịch vụ đang áp dụng</value></data>
+  <data name="P2SetupPriceNoServices" xml:space="preserve"><value>Chưa có dịch vụ riêng nào</value></data>
+  <data name="P2SetupPriceOptionsTitle" xml:space="preserve"><value>Chọn cách thiết lập giá</value></data>
+  <data name="P2SetupPriceUseSystem" xml:space="preserve"><value>Dùng biểu giá hệ thống</value></data>
+  <data name="P2SetupPriceUseSystemHint" xml:space="preserve"><value>Điện và nước áp theo biểu giá nhà nước đang hiệu lực, không cần nhập.</value></data>
+  <data name="P2SetupPriceCopy" xml:space="preserve"><value>Sao chép từ nhà trọ khác</value></data>
+  <data name="P2SetupPriceCopyHint" xml:space="preserve"><value>Lấy danh mục và giá đang hiệu lực của một nhà trọ bạn đang quản lý.</value></data>
+  <data name="P2SetupPriceNoSources" xml:space="preserve"><value>Chưa có nhà trọ nào khác để sao chép.</value></data>
+  <data name="P2SetupPriceCopySource" xml:space="preserve"><value>Nhà trọ nguồn</value></data>
+  <data name="P2SetupPriceCopySourcePlaceholder" xml:space="preserve"><value>Chọn nhà trọ để sao chép</value></data>
+  <data name="P2SetupPriceCopyAction" xml:space="preserve"><value>Sao chép giá</value></data>
+  <data name="P2SetupPriceManual" xml:space="preserve"><value>Tự nhập dịch vụ</value></data>
+  <data name="P2SetupPriceManualHint" xml:space="preserve"><value>Thêm internet, giữ xe, vệ sinh… với mức giá riêng.</value></data>
+  <data name="P2SetupPriceAddService" xml:space="preserve"><value>Thêm dịch vụ</value></data>
+  <data name="P2SetupPriceLater" xml:space="preserve"><value>Cấu hình sau</value></data>
+  <data name="P2SetupPriceLaterHint" xml:space="preserve"><value>Hoàn tất bây giờ và thiết lập giá sau trong mục Dịch vụ.</value></data>
+  <data name="P2SetupPriceCopyResult" xml:space="preserve"><value>Đã sao chép {0} dịch vụ.</value></data>
+  <data name="P2SetupPriceCopyResultSkipped" xml:space="preserve"><value>Đã sao chép {0} dịch vụ, bỏ qua {1} dịch vụ trùng tên.</value></data>
+  <data name="P2SetupPriceServiceAdded" xml:space="preserve"><value>Đã thêm dịch vụ cho nhà trọ.</value></data>
+  <data name="P2SetupFinishedTitle" xml:space="preserve"><value>Thiết lập hoàn tất</value></data>
+  <data name="P2SetupFinishedBody" xml:space="preserve"><value>Nhà trọ “{0}” đã sẵn sàng để cho thuê.</value></data>
+  <data name="P2SetupFinishedRooms" xml:space="preserve"><value>Phòng</value></data>
+  <data name="P2SetupFinishedServices" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="P2SetupFinishedViewRooms" xml:space="preserve"><value>Xem phòng</value></data>
+  <data name="P2SetupFinishedDone" xml:space="preserve"><value>Về danh sách nhà trọ</value></data>
 </root>

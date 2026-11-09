@@ -1,0 +1,142 @@
+.setup-step {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.setup-step-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.setup-step-head h2 {
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+}
+
+.setup-step-head p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.setup-empty {
+    padding: 28px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    text-align: center;
+    background: var(--surface-subtle);
+}
+
+.setup-empty p {
+    margin: 0 0 6px;
+}
+
+.setup-empty-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.setup-room-count {
+    margin: 0;
+    font-weight: 600;
+}
+
+.setup-room-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.setup-room-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.setup-room-code {
+    font-weight: 600;
+    min-width: 72px;
+}
+
+.setup-room-meta {
+    flex: 1 1 220px;
+    color: var(--text-muted);
+}
+
+.setup-room-status {
+    font-size: 0.85rem;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+}
+
+.setup-step-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.setup-ask-more {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.setup-ask-more p {
+    margin: 0;
+}
+
+.setup-ask-more-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.p2-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--error-border);
+    border-radius: var(--radius-control);
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.p2-inline-loading {
+    padding: 32px 0;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+@media (max-width: 767.98px) {
+    .setup-step-head {
+        flex-direction: column;
+    }
+
+    .setup-step-actions,
+    .setup-ask-more-actions {
+        flex-direction: column-reverse;
+    }
+
+    .setup-step-actions .btn,
+    .setup-ask-more-actions .btn {
+        width: 100%;
+    }
+}

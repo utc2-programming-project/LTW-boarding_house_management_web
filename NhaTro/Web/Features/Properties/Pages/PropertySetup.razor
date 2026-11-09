@@ -1,0 +1,682 @@
+@page "/properties/new"
+@page "/properties/{PropertyId:int}/setup"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject PropertyPageService PageService
+@inject RoomPageService RoomPageService
+@inject ServiceCatalogPageService CatalogPageService
+@inject PropertySetupDraftStore DraftStore
+@inject P2CallerProvider CallerProvider
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertySetup> Logger
+
+<PageTitle>@L["P2SetupTitle"] · @L["AppName"]</PageTitle>
+
+<NavigationLock ConfirmExternalNavigation="@HasWork" OnBeforeInternalNavigation="BeforeInternalNavigation" />
+
+<div class="setup-page">
+    <header class="setup-heading">
+        <div>
+            <NavBreadcrumb TitleAsHeading="true" CurrentLabel="@L["P2SetupTitle"].Value" />
+            <p>@L["P2SetupSubtitle"]</p>
+        </div>
+        <button class="btn btn-secondary" type="button" @onclick="RequestExit">
+            <LucideIcon Name="arrow-left" />
+            @L["P2SetupExit"]
+        </button>
+    </header>
+
+    <ol class="setup-stepper" aria-label="@L["P2SetupStepperLabel"]">
+        <li class="@StepClass(PropertySetupStep.Basics)">
+            <span class="setup-stepper-index">1</span>
+            <span class="setup-stepper-label">@L["P2SetupStepBasics"]</span>
+        </li>
+        <li class="@StepClass(PropertySetupStep.Rooms)">
+            <span class="setup-stepper-index">2</span>
+            <span class="setup-stepper-label">@L["P2SetupStepRooms"]</span>
+        </li>
+        <li class="@StepClass(PropertySetupStep.Pricing)">
+            <span class="setup-stepper-index">3</span>
+            <span class="setup-stepper-label">@L["P2SetupStepPricing"]</span>
+        </li>
+    </ol>
+
+    @if (!_stateReady)
+    {
+        <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_pageError))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_pageError</span>
+            <button class="btn btn-secondary" type="button" @onclick="ReloadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_resumeDraft is not null)
+    {
+        <section class="p2-alert warning setup-resume" role="status">
+            <div>
+                <strong>@L["P2SetupResumeTitle"]</strong>
+                <p>@L["P2SetupResumeBody", _resumeDraft.Name]</p>
+            </div>
+            <div class="setup-resume-actions">
+                <button class="btn btn-primary" type="button" @onclick="ResumeDraftAsync">@L["P2SetupResumeContinue"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="DiscardDraftAsync">@L["P2SetupResumeDiscard"]</button>
+            </div>
+        </section>
+
+        @if (_step == PropertySetupStep.Basics)
+        {
+            @RenderBasics()
+        }
+    }
+    else
+    {
+        @switch (_step)
+        {
+            case PropertySetupStep.Basics:
+                @RenderBasics()
+                break;
+
+            case PropertySetupStep.Rooms:
+                @if (_propertyId is int roomsPropertyId)
+                {
+                    <section class="setup-card">
+                        <PropertySetupRoomsStep @key="roomsPropertyId"
+                                                PropertyId="roomsPropertyId"
+                                                PropertyName="@_model.Name"
+                                                IsOwner="true"
+                                                PendingRoom="_pendingRoom"
+                                                OnPendingRoomChanged="HandlePendingRoomChangedAsync"
+                                                OnContinue="GoToPricingAsync" />
+                    </section>
+                }
+                break;
+
+            case PropertySetupStep.Pricing:
+                @if (_propertyId is int pricingPropertyId)
+                {
+                    <section class="setup-card">
+                        <PropertySetupPricingStep PropertyId="pricingPropertyId"
+                                                  PropertyName="@_model.Name"
+                                                  OnBack="BackToRoomsAsync"
+                                                  OnFinish="FinishAsync" />
+                    </section>
+                }
+                break;
+
+            case PropertySetupStep.Finished:
+                <section class="setup-finish">
+                    <div class="setup-finish-icon" aria-hidden="true">
+                        <LucideIcon Name="check-circle-2" />
+                    </div>
+                    <h2>@L["P2SetupFinishedTitle"]</h2>
+                    <p>@L["P2SetupFinishedBody", _model.Name]</p>
+                    <dl class="setup-finish-summary">
+                        <div>
+                            <dt>@L["P2SetupFinishedRooms"]</dt>
+                            <dd>@_finishedRoomCount</dd>
+                        </div>
+                        <div>
+                            <dt>@L["P2SetupFinishedServices"]</dt>
+                            <dd>@_finishedServiceCount</dd>
+                        </div>
+                    </dl>
+                    <div class="setup-finish-actions">
+                        <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2SetupFinishedViewRooms"]</button>
+                        <button class="btn btn-primary" type="button" @onclick="GoToListAsync">@L["P2SetupFinishedDone"]</button>
+                    </div>
+                </section>
+                break;
+        }
+    }
+</div>
+
+<FeatureDialog Visible="_exitVisible" Title="@L["P2SetupExitTitle"]"
+               CloseLabel="@L["Close"]" Busy="_saving" OnClose="CloseExit">
+    <div class="setup-exit">
+        <p>@L["P2SetupExitBody"]</p>
+        <div class="setup-exit-actions">
+            <button class="btn btn-primary" type="button" disabled="@(!CanSaveAndExit || _saving)" @onclick="SaveAndExitAsync">
+                @L["P2SetupExitSaveAndLeave"]
+            </button>
+            <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="SaveDraftAndExitAsync">
+                @L["P2SetupExitSaveDraft"]
+            </button>
+            <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="CloseExit">
+                @L["P2SetupExitContinue"]
+            </button>
+        </div>
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter] public int? PropertyId { get; set; }
+
+    private readonly PropertySave _model = new();
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private PropertySetupDraft? _resumeDraft;
+    private RoomSave? _pendingRoom;
+    private PropertySetupStep _step = PropertySetupStep.Basics;
+    private int? _propertyId;
+    private string? _userId;
+    private string? _pageError;
+    private bool _stateReady;
+    private bool _interactive;
+    private bool _saving;
+    private bool _exitVisible;
+    private bool _allowNavigation;
+    private bool _resetAllowNavigation;
+    private int _finishedRoomCount;
+    private int _finishedServiceCount;
+    private CancellationTokenSource? _draftCts;
+
+    private bool HasWork => _step != PropertySetupStep.Finished
+        && (_propertyId is not null
+            || !string.IsNullOrWhiteSpace(_model.Name)
+            || !string.IsNullOrWhiteSpace(_model.Address));
+
+    // Đang hiện banner nháp cũ thì chưa có gì mới để lưu, tránh tạo nhà trọ trùng.
+    private bool CanSaveAndExit => _resumeDraft is null
+        && (_step != PropertySetupStep.Basics || BasicsIsValid);
+
+    private bool BasicsIsValid =>
+        !string.IsNullOrWhiteSpace(_model.Name)
+        && _model.Name.Length <= 200
+        && (_model.Address?.Length ?? 0) <= 500;
+
+    protected override void OnInitialized()
+    {
+        ResetValidation();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (PropertyId is int routeId && routeId > 0)
+        {
+            _propertyId = routeId;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_resetAllowNavigation)
+        {
+            _allowNavigation = false;
+            _resetAllowNavigation = false;
+        }
+
+        if (!firstRender) return;
+        _interactive = true;
+
+        try
+        {
+            _userId = (await CallerProvider.GetCallerAsync()).UserId;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _pageError = L["P2Forbidden"];
+            _stateReady = true;
+            StateHasChanged();
+            return;
+        }
+
+        await LoadInitialStateAsync();
+        _stateReady = true;
+        if (_resumeDraft is null) await PersistDraftAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadInitialStateAsync()
+    {
+        _pageError = null;
+        var draft = _userId is null ? null : await DraftStore.LoadAsync(_userId);
+
+        if (_propertyId is int id)
+        {
+            var result = await PageService.GetAsync(id);
+            if (!result.Succeeded || result.Property is null)
+            {
+                _pageError = result.ErrorCode == PropertyErrorCodes.PropertyNotFound
+                    ? L["P2PropertyNotFound"]
+                    : L["P2LoadFailed"];
+                return;
+            }
+
+            _model.Name = result.Property.Name;
+            _model.Address = result.Property.Address;
+            _model.IsActive = result.Property.IsActive;
+            ResetValidation();
+
+            // Nháp cùng nhà trọ thì khôi phục bước và phòng đang nhập dở.
+            if (draft is not null && draft.PropertyId == id)
+            {
+                _pendingRoom = draft.PendingRoom;
+                _step = draft.Step switch
+                {
+                    PropertySetupStep.Pricing => PropertySetupStep.Pricing,
+                    _ => PropertySetupStep.Rooms
+                };
+            }
+            else
+            {
+                _step = PropertySetupStep.Rooms;
+            }
+
+            return;
+        }
+
+        if (draft is not null && draft.PropertyId is not null)
+        {
+            _resumeDraft = draft;
+            _model.Name = draft.Name;
+            _model.Address = draft.Address;
+            _model.IsActive = draft.IsActive;
+            ResetValidation();
+            return;
+        }
+
+        if (draft is not null)
+        {
+            _model.Name = draft.Name;
+            _model.Address = draft.Address;
+            _model.IsActive = draft.IsActive;
+            ResetValidation();
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _stateReady = false;
+        StateHasChanged();
+        await LoadInitialStateAsync();
+        _stateReady = true;
+    }
+
+    private RenderFragment RenderBasics() => __builder =>
+    {
+        <section class="setup-card">
+            <header class="setup-card-head">
+                <h2>@L["P2SetupBasicsTitle"]</h2>
+                <p>@L["P2SetupBasicsSubtitle"]</p>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(_pageError))
+            {
+                <div class="p2-alert error" role="alert">
+                    <span>@_pageError</span>
+                </div>
+            }
+
+            <EditForm EditContext="_editContext" OnSubmit="SaveBasicsAsync">
+                <div class="p2-form-grid" @onfocusout="QueueDraftSave">
+                    <div class="p2-field full">
+                        <label for="setup-property-name">@L["P2PropertyName"] <span class="required" aria-hidden="true">*</span></label>
+                        <InputText id="setup-property-name" class="input" @bind-Value="_model.Name" maxlength="200" autocomplete="organization"
+                                   aria-describedby="setup-property-name-error"
+                                   aria-invalid="@(_editContext.HasError(() => _model.Name) ? "true" : "false")" />
+                        <span class="p2-field-error" id="setup-property-name-error" aria-live="polite">@ErrorFor(nameof(_model.Name))</span>
+                    </div>
+                    <div class="p2-field full">
+                        <label for="setup-property-address-street">@L["P2Address"]</label>
+                        <AddressInput Id="setup-property-address" @bind-Value="_model.Address" MaxLength="500"
+                                      AriaDescribedBy="setup-property-address-error"
+                                      AriaInvalid="@_editContext.HasError(() => _model.Address)" />
+                        <span class="p2-field-error" id="setup-property-address-error" aria-live="polite">@ErrorFor(nameof(_model.Address))</span>
+                    </div>
+                    <label class="p2-check-field" for="setup-property-active">
+                        <InputCheckbox id="setup-property-active" @bind-Value="_model.IsActive" />
+                        <span>@L["P2Active"]</span>
+                    </label>
+                </div>
+
+                <footer class="setup-step-actions">
+                    <button class="btn btn-secondary" type="button" @onclick="RequestExit">@L["Cancel"]</button>
+                    <button class="btn btn-primary" type="submit" disabled="@_saving" aria-busy="@(_saving ? "true" : null)">
+                        @(_saving ? L["P2Saving"] : L["P2SetupContinueRooms"])
+                    </button>
+                </footer>
+            </EditForm>
+        </section>
+    };
+
+    private bool ValidateBasics()
+    {
+        _model.Normalize();
+        if (string.IsNullOrWhiteSpace(_model.Name)) AddError(nameof(_model.Name), L["P2ValidationPropertyNameRequired"]);
+        else if (_model.Name.Length > 200) AddError(nameof(_model.Name), L["P2ValidationNameLength"]);
+        if ((_model.Address?.Length ?? 0) > 500) AddError(nameof(_model.Address), L["P2ValidationAddressLength"]);
+        _editContext.NotifyValidationStateChanged();
+        return !_editContext.GetValidationMessages().Any();
+    }
+
+    private async Task SaveBasicsAsync(EditContext _)
+    {
+        if (_saving) return;
+
+        _messages.Clear();
+        _editContext.NotifyValidationStateChanged();
+        _pageError = null;
+        if (!ValidateBasics()) return;
+
+        _saving = true;
+        try
+        {
+            var result = await PageService.CreateAsync(_model);
+            if (!result.Succeeded || result.Property is null)
+            {
+                _pageError = result.ErrorCode switch
+                {
+                    PropertyErrorCodes.Forbidden => L["P2Forbidden"],
+                    PropertyErrorCodes.InvalidRequest => L["P2ValidationInvalidRequest"],
+                    _ => L["P2SaveFailed"]
+                };
+                return;
+            }
+
+            _propertyId = result.Property.Id;
+            _step = PropertySetupStep.Rooms;
+            _resumeDraft = null;
+            await PersistDraftAsync();
+            NavigateToSetup();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _pageError = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _pageError = L["P2SaveFailed"];
+            Logger.LogError(ex, "PLAN-010: tạo nhà trọ trong wizard thất bại");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void NavigateToSetup()
+    {
+        if (_propertyId is not int id) return;
+        _allowNavigation = true;
+        _resetAllowNavigation = true;
+        Navigation.NavigateTo($"/properties/{id}/setup");
+    }
+
+    private async Task HandlePendingRoomChangedAsync(RoomSave? room)
+    {
+        _pendingRoom = room;
+        await PersistDraftAsync();
+    }
+
+    private async Task GoToPricingAsync()
+    {
+        _step = PropertySetupStep.Pricing;
+        await PersistDraftAsync();
+    }
+
+    private async Task BackToRoomsAsync()
+    {
+        _step = PropertySetupStep.Rooms;
+        await PersistDraftAsync();
+    }
+
+    private async Task FinishAsync()
+    {
+        if (_propertyId is not int id) return;
+
+        try
+        {
+            var rooms = await RoomPageService.ListAsync(new RoomFilter { PropertyId = id, Page = 1, PageSize = 1 });
+            _finishedRoomCount = rooms.TotalCount;
+
+            var status = await CatalogPageService.GetPriceSetupStatusAsync(id);
+            _finishedServiceCount = status.PropertyServices.Count;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PLAN-013: tổng kết thiết lập nhà trọ {PropertyId} thất bại", id);
+        }
+
+        _step = PropertySetupStep.Finished;
+        _pendingRoom = null;
+        await ClearDraftAsync();
+    }
+
+    private void RequestExit()
+    {
+        if (!HasWork)
+        {
+            _allowNavigation = true;
+            Navigation.NavigateTo("/properties");
+            return;
+        }
+
+        _exitVisible = true;
+    }
+
+    private void CloseExit() => _exitVisible = false;
+
+    private async Task SaveAndExitAsync()
+    {
+        if (_saving) return;
+
+        _saving = true;
+        try
+        {
+            if (_propertyId is null)
+            {
+                if (!ValidateBasics())
+                {
+                    _exitVisible = false;
+                    return;
+                }
+
+                var result = await PageService.CreateAsync(_model);
+                if (!result.Succeeded || result.Property is null)
+                {
+                    _pageError = result.ErrorCode switch
+                    {
+                        PropertyErrorCodes.Forbidden => L["P2Forbidden"],
+                        PropertyErrorCodes.InvalidRequest => L["P2ValidationInvalidRequest"],
+                        _ => L["P2SaveFailed"]
+                    };
+                    _exitVisible = false;
+                    return;
+                }
+
+                _propertyId = result.Property.Id;
+                _step = PropertySetupStep.Rooms;
+            }
+
+            await ClearDraftAsync();
+            _exitVisible = false;
+            Toasts.Success(L["P2SetupExitSaved"]);
+            LeaveWizard("/properties");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _pageError = L["P2Forbidden"];
+            _exitVisible = false;
+        }
+        catch (Exception ex)
+        {
+            _pageError = L["P2SaveFailed"];
+            _exitVisible = false;
+            Logger.LogError(ex, "PLAN-010: lưu và thoát wizard thất bại");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task SaveDraftAndExitAsync()
+    {
+        _saving = true;
+        try
+        {
+            if (_resumeDraft is null)
+            {
+                await PersistDraftAsync();
+                Toasts.Success(L["P2SetupDraftSaved"]);
+            }
+            else
+            {
+                // Bản nháp của nhà trọ khác đang dở: giữ nguyên, không ghi đè bằng form trống.
+                Toasts.Success(L["P2SetupDraftKept"]);
+            }
+
+            _resumeDraft = null;
+            _exitVisible = false;
+            LeaveWizard("/properties");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void LeaveWizard(string url)
+    {
+        _allowNavigation = true;
+        Navigation.NavigateTo(url);
+    }
+
+    private void BeforeInternalNavigation(LocationChangingContext context)
+    {
+        if (_allowNavigation || !HasWork)
+        {
+            return;
+        }
+
+        context.PreventNavigation();
+        _exitVisible = true;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private Task ResumeDraftAsync()
+    {
+        if (_resumeDraft?.PropertyId is not int id) return Task.CompletedTask;
+
+        _propertyId = id;
+        _pendingRoom = _resumeDraft.PendingRoom;
+        _step = _resumeDraft.Step == PropertySetupStep.Pricing
+            ? PropertySetupStep.Pricing
+            : PropertySetupStep.Rooms;
+        _resumeDraft = null;
+        _allowNavigation = true;
+        _resetAllowNavigation = true;
+        Navigation.NavigateTo($"/properties/{id}/setup");
+        return Task.CompletedTask;
+    }
+
+    private async Task DiscardDraftAsync()
+    {
+        _resumeDraft = null;
+        _model.Name = string.Empty;
+        _model.Address = null;
+        _model.IsActive = true;
+        ResetValidation();
+        await ClearDraftAsync();
+    }
+
+    private async Task GoToListAsync() => LeaveWizard("/properties");
+
+    private async Task ViewRoomsAsync()
+    {
+        if (_propertyId is not int id) return;
+        LeaveWizard($"/rooms?propertyId={id}");
+    }
+
+    private void QueueDraftSave()
+    {
+        if (!_interactive || _userId is null) return;
+
+        _draftCts?.Cancel();
+        _draftCts?.Dispose();
+        _draftCts = new CancellationTokenSource();
+        _ = DebouncedPersistAsync(_draftCts.Token);
+    }
+
+    private async Task DebouncedPersistAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(800, ct);
+            if (ct.IsCancellationRequested) return;
+            await InvokeAsync(PersistDraftAsync);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
+    private async Task PersistDraftAsync()
+    {
+        if (!_interactive || string.IsNullOrWhiteSpace(_userId) || _step == PropertySetupStep.Finished) return;
+
+        // Không lưu nháp rỗng: tránh banner "đang làm dở" cho nhà trọ chưa nhập gì.
+        var hasContent = _propertyId is not null
+            || !string.IsNullOrWhiteSpace(_model.Name)
+            || !string.IsNullOrWhiteSpace(_model.Address)
+            || _pendingRoom is not null;
+        if (!hasContent)
+        {
+            await ClearDraftAsync();
+            return;
+        }
+
+        var draft = new PropertySetupDraft
+        {
+            PropertyId = _propertyId,
+            Step = _step,
+            Name = _model.Name,
+            Address = _model.Address,
+            IsActive = _model.IsActive,
+            PendingRoom = _pendingRoom
+        };
+        await DraftStore.SaveAsync(_userId, draft);
+    }
+
+    private async Task ClearDraftAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_userId)) return;
+        await DraftStore.ClearAsync(_userId);
+    }
+
+    private void ResetValidation()
+    {
+        _editContext = new EditContext(_model);
+        _messages = new ValidationMessageStore(_editContext);
+        _editContext.OnFieldChanged += (_, args) =>
+        {
+            _messages.Clear(args.FieldIdentifier);
+            _editContext.NotifyValidationStateChanged();
+        };
+        _editContext.OnFieldChanged += (_, _) => QueueDraftSave();
+    }
+
+    private string? ErrorFor(string field) => _messages[new FieldIdentifier(_model, field)].FirstOrDefault();
+
+    private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_model, field), message);
+
+    private string StepClass(PropertySetupStep step)
+    {
+        if (_step == PropertySetupStep.Finished || step < _step) return "setup-step done";
+        return step == _step ? "setup-step active" : "setup-step";
+    }
+
+    public void Dispose()
+    {
+        _draftCts?.Cancel();
+        _draftCts?.Dispose();
+    }
+}

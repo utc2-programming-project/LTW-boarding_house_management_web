@@ -18,9 +18,9 @@
 }
 
 .address-input-label {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--text-muted, #5b6472);
+    color: var(--text-secondary, #5b6472);
 }
 
 .address-input-control {
@@ -29,7 +29,7 @@
 
 .address-input-hint {
     margin: 0;
-    font-size: 0.74rem;
+    font-size: 0.8125rem;
     color: var(--text-muted, #5b6472);
 }
 

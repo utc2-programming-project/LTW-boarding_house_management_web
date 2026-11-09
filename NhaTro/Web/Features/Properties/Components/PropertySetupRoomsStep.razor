@@ -1,0 +1,202 @@
+@inject RoomPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertySetupRoomsStep> Logger
+
+<div class="setup-step">
+    <header class="setup-step-head">
+        <div>
+            <h2>@L["P2SetupRoomsTitle"]</h2>
+            <p>@L["P2SetupRoomsSubtitle"]</p>
+        </div>
+        <button class="btn btn-primary" type="button" disabled="@_loading" @onclick="OpenCreate">
+            <LucideIcon Name="plus" />
+            @L["P2SetupRoomAdd"]
+        </button>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_error</span>
+            <button class="btn btn-secondary" type="button" @onclick="LoadRoomsAsync">@L["Retry"]</button>
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+    }
+    else if (_rooms.Count == 0)
+    {
+        <div class="setup-empty" role="status">
+            <p>@L["P2SetupRoomsEmpty"]</p>
+            <p class="setup-empty-hint">@L["P2SetupRoomsEmptyHint"]</p>
+        </div>
+    }
+    else
+    {
+        <p class="setup-room-count" role="status">@L["P2SetupRoomsCount", _rooms.Count]</p>
+        <ul class="setup-room-list">
+            @foreach (var room in _rooms)
+            {
+                <li class="setup-room-item">
+                    <span class="setup-room-code">@room.Code</span>
+                    <span class="setup-room-meta">
+                        @L["P2Floor"]: @(room.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value)
+                        · @MoneyFormatter.Format(room.StandardPrice)
+                    </span>
+                    <span class="setup-room-status">@StatusText(room.Status)</span>
+                </li>
+            }
+        </ul>
+    }
+
+    <footer class="setup-step-actions">
+        <button class="btn btn-secondary" type="button" @onclick="ContinueAsync">
+            @L["P2SetupRoomSkip"]
+        </button>
+        <button class="btn btn-primary" type="button" @onclick="ContinueAsync">
+            @L["P2SetupRoomContinue"]
+        </button>
+    </footer>
+</div>
+
+@if (_formVisible)
+{
+    <RoomFormDialog @key="_formKey" Visible="true" RoomId="null" IsOwner="IsOwner"
+                    Properties="_formProperties" InitialPropertyId="PropertyId"
+                    InitialDraft="PendingRoom" DraftMode="true"
+                    OnDraftCaptured="HandleDraftCapturedAsync"
+                    OnClose="CloseForm" OnSaved="HandleSavedAsync" />
+}
+
+<FeatureDialog Visible="_askMoreVisible" Title="@L["P2SetupAskMoreTitle"]"
+               CloseLabel="@L["Close"]" OnClose="CloseAskMoreAsync">
+    <div class="setup-ask-more">
+        <p>@L["P2SetupAskMoreBody"]</p>
+        <div class="setup-ask-more-actions">
+            <button class="btn btn-primary" type="button" @onclick="AddAnotherAsync">@L["P2SetupAskMoreYes"]</button>
+            <button class="btn btn-secondary" type="button" @onclick="FinishRoomsAsync">@L["P2SetupAskMoreNo"]</button>
+        </div>
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public int PropertyId { get; set; }
+    [Parameter, EditorRequired] public string PropertyName { get; set; } = string.Empty;
+    [Parameter] public bool IsOwner { get; set; }
+
+    /// <summary>Phòng đang nhập dở được khôi phục từ nháp local.</summary>
+    [Parameter] public RoomSave? PendingRoom { get; set; }
+
+    [Parameter] public EventCallback<RoomSave?> OnPendingRoomChanged { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+
+    private readonly List<RoomListItem> _rooms = [];
+    private IReadOnlyList<PropertyListItem> _formProperties = [];
+    private int _formKey;
+    private bool _formVisible;
+    private bool _loading;
+    private bool _askMoreVisible;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _formProperties = [new PropertyListItem { Id = PropertyId, Name = PropertyName }];
+        await LoadRoomsAsync();
+    }
+
+    private async Task LoadRoomsAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rooms.Clear();
+            var page = 1;
+            while (true)
+            {
+                // RoomFilter giới hạn PageSize ≤ 100 nên duyệt từng trang thay vì xin 500.
+                var result = await PageService.ListAsync(new RoomFilter { PropertyId = PropertyId, Page = page, PageSize = 100 });
+                if (result.Items.Count == 0) break;
+
+                _rooms.AddRange(result.Items);
+                if (_rooms.Count >= result.TotalCount) break;
+                page++;
+            }
+
+            _rooms.Sort((left, right) =>
+            {
+                var byFloor = Nullable.Compare(left.Floor, right.Floor);
+                return byFloor != 0
+                    ? byFloor
+                    : StringComparer.OrdinalIgnoreCase.Compare(left.Code, right.Code);
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "PLAN-011: tải danh sách phòng của nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        if (!IsOwner) return;
+        _formKey++;
+        _formVisible = true;
+    }
+
+    private void CloseForm() => _formVisible = false;
+
+    private async Task HandleDraftCapturedAsync(RoomSave draft)
+    {
+        await OnPendingRoomChanged.InvokeAsync(draft);
+    }
+
+    private async Task HandleSavedAsync()
+    {
+        _formVisible = false;
+        await OnPendingRoomChanged.InvokeAsync(null);
+        await LoadRoomsAsync();
+        _askMoreVisible = true;
+    }
+
+    private Task CloseAskMoreAsync()
+    {
+        _askMoreVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private void AddAnotherAsync()
+    {
+        _askMoreVisible = false;
+        _formKey++;
+        _formVisible = true;
+    }
+
+    private async Task FinishRoomsAsync()
+    {
+        _askMoreVisible = false;
+        await OnPendingRoomChanged.InvokeAsync(null);
+        await ContinueAsync();
+    }
+
+    private Task ContinueAsync() => OnContinue.InvokeAsync();
+
+    private string StatusText(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => L["P2StatusAvailable"],
+        RoomStatus.Rented => L["P2StatusRented"],
+        RoomStatus.Maintenance => L["P2StatusMaintenance"],
+        _ => L["P2StatusUnknown"]
+    };
+}

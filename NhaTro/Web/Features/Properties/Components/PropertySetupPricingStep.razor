@@ -1,0 +1,268 @@
+﻿@inject ServiceCatalogPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertySetupPricingStep> Logger
+
+<div class="setup-step">
+    <header class="setup-step-head">
+        <div>
+            <h2>@L["P2SetupPriceTitle"]</h2>
+            <p>@L["P2SetupPriceSubtitle"]</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="p2-inline-loading" role="status" aria-live="polite">@L["P2Loading"]</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_error</span>
+            <button class="btn btn-secondary" type="button" @onclick="LoadStatusAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_status is not null)
+    {
+        <div class="setup-price-cards">
+            <article class="setup-price-card @(electricOk ? "ok" : "missing")">
+                <h3>@L["P2SetupPriceElectric"]</h3>
+                @if (electricOk)
+                {
+                    <p>@L["P2SetupPriceEffectiveFrom", _status.ElectricEffectiveFrom]</p>
+                }
+                else
+                {
+                    <p>@L["P2SetupPriceMissing"]</p>
+                }
+            </article>
+
+            <article class="setup-price-card @(waterOk ? "ok" : "missing")">
+                <h3>@L["P2SetupPriceWater"]</h3>
+                @if (waterOk)
+                {
+                    <p>@L["P2SetupPriceEffectiveFrom", _status.WaterEffectiveFrom]</p>
+                }
+                else
+                {
+                    <p>@L["P2SetupPriceMissing"]</p>
+                }
+            </article>
+
+            <article class="setup-price-card @(servicesOk ? "ok" : "missing")">
+                <h3>@L["P2SetupPriceServices"]</h3>
+                @if (servicesOk)
+                {
+                    <p>@L["P2SetupPriceServiceCount", _status.PropertyServices.Count]</p>
+                    <ul class="setup-price-service-list">
+                        @foreach (var service in _status.PropertyServices)
+                        {
+                            <li>@service.Name — @MoneyFormatter.Format(service.CurrentRate)</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>@L["P2SetupPriceNoServices"]</p>
+                }
+            </article>
+        </div>
+
+        <fieldset class="setup-price-options">
+            <legend>@L["P2SetupPriceOptionsTitle"]</legend>
+
+            <label class="setup-option">
+                <input type="radio" name="setup-price-method" value="system"
+                       checked="@(_method == "system")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceUseSystem"]</strong>
+                    <small>@L["P2SetupPriceUseSystemHint"]</small>
+                </span>
+            </label>
+
+            <label class="setup-option">
+                <input type="radio" name="setup-price-method" value="copy"
+                       checked="@(_method == "copy")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceCopy"]</strong>
+                    <small>@L["P2SetupPriceCopyHint"]</small>
+                </span>
+            </label>
+
+            @if (_method == "copy")
+            {
+                <div class="setup-option-body">
+                    @if (_status.CopySources.Count == 0)
+                    {
+                        <p>@L["P2SetupPriceNoSources"]</p>
+                    }
+                    else
+                    {
+                        <label for="setup-copy-source">@L["P2SetupPriceCopySource"]</label>
+                        <select id="setup-copy-source" class="input" @bind="_sourceId">
+                            <option value="">@L["P2SetupPriceCopySourcePlaceholder"]</option>
+                            @foreach (var source in _status.CopySources)
+                            {
+                                <option value="@source.Id">@source.Name</option>
+                            }
+                        </select>
+                        <button class="btn btn-primary" type="button"
+                                disabled="@(_copying || string.IsNullOrWhiteSpace(_sourceId))"
+                                aria-busy="@(_copying ? "true" : null)"
+                                @onclick="CopyAsync">
+                            @(_copying ? L["P2Saving"] : L["P2SetupPriceCopyAction"])
+                        </button>
+                    }
+                </div>
+            }
+
+            <label class="setup-option">
+                <input type="radio" name="setup-price-method" value="manual"
+                       checked="@(_method == "manual")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceManual"]</strong>
+                    <small>@L["P2SetupPriceManualHint"]</small>
+                </span>
+            </label>
+
+            @if (_method == "manual")
+            {
+                <div class="setup-option-body">
+                    <button class="btn btn-secondary" type="button" @onclick="OpenCreate">
+                        @L["P2SetupPriceAddService"]
+                    </button>
+                </div>
+            }
+
+            <label class="setup-option">
+                <input type="radio" name="setup-price-method" value="later"
+                       checked="@(_method == "later")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceLater"]</strong>
+                    <small>@L["P2SetupPriceLaterHint"]</small>
+                </span>
+            </label>
+        </fieldset>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="p2-alert @_messageTone" role="status">@_message</div>
+        }
+    }
+
+    <footer class="setup-step-actions">
+        <button class="btn btn-secondary" type="button" @onclick="() => OnBack.InvokeAsync()">
+            @L["P2SetupBack"]
+        </button>
+        <button class="btn btn-primary" type="button" @onclick="() => OnFinish.InvokeAsync()">
+            @L["P2SetupFinish"]
+        </button>
+    </footer>
+</div>
+
+<ServiceCreateModal IsOpen="_createOpen" Buildings="_buildings" CanWrite="true"
+                    OnClose="CloseCreate" OnCreate="HandleCreateServiceAsync" />
+
+@code {
+    [Parameter, EditorRequired] public int PropertyId { get; set; }
+    [Parameter, EditorRequired] public string PropertyName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnFinish { get; set; }
+
+    private PropertyPriceSetupStatusDto? _status;
+    private IReadOnlyList<BuildingOptionDto> _buildings = [];
+    private bool _loading;
+    private bool _copying;
+    private bool _createOpen;
+    private string? _error;
+    private string? _message;
+    private string _messageTone = "success";
+    private string _method = "system";
+    private string? _sourceId;
+
+    private bool electricOk => _status?.HasElectricTariff == true;
+    private bool waterOk => _status?.HasWaterTariff == true;
+    private bool servicesOk => _status?.HasPropertyServices == true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _buildings = [new BuildingOptionDto(
+            PropertyId.ToString(CultureInfo.InvariantCulture), PropertyName, string.Empty, 0, 0)];
+        await LoadStatusAsync();
+    }
+
+    private async Task LoadStatusAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _status = await PageService.GetPriceSetupStatusAsync(PropertyId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "PLAN-013: tải tình trạng giá của nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CopyAsync()
+    {
+        if (_status is null || !int.TryParse(_sourceId, out var sourceId) || sourceId <= 0) return;
+
+        _copying = true;
+        _message = null;
+        try
+        {
+            var result = await PageService.CopyPricesAsync(sourceId, PropertyId);
+            if (!result.Success)
+            {
+                _messageTone = "error";
+                _message = result.ErrorMessage ?? L["P2SaveFailed"];
+                return;
+            }
+
+            _messageTone = "success";
+            _message = result.Skipped > 0
+                ? L["P2SetupPriceCopyResultSkipped", result.Copied, result.Skipped]
+                : L["P2SetupPriceCopyResult", result.Copied];
+            await LoadStatusAsync();
+        }
+        finally
+        {
+            _copying = false;
+        }
+    }
+
+    private void OpenCreate() => _createOpen = true;
+
+    private void SelectMethod(ChangeEventArgs args) =>
+        _method = args.Value?.ToString() is { Length: > 0 } value ? value : "system";
+
+    private void CloseCreate() => _createOpen = false;
+
+    private async Task HandleCreateServiceAsync(CreateServiceRequest request)
+    {
+        request.BuildingId = PropertyId.ToString(CultureInfo.InvariantCulture);
+        var result = await PageService.AddServiceAsync(request);
+        if (result.Success)
+        {
+            _messageTone = "success";
+            _message = L["P2SetupPriceServiceAdded"];
+            _createOpen = false;
+            await LoadStatusAsync();
+        }
+        else
+        {
+            _messageTone = "error";
+            _message = result.ErrorMessage ?? L["P2SaveFailed"];
+        }
+    }
+}

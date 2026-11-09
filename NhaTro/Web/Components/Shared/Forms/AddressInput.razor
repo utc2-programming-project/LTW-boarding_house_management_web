@@ -11,7 +11,7 @@
     <div class="address-input-part">
         <label class="address-input-label" for="@($"{Id}-street")">@L["AddressStreetLabel"]</label>
         <input id="@($"{Id}-street")"
-               class="input address-input-control"
+               class="input address-input-control @(AriaInvalid ? "invalid" : null)"
                type="text"
                value="@_street"
                maxlength="@MaxLength"
@@ -26,7 +26,7 @@
         <div class="address-input-part">
             <label class="address-input-label" for="@($"{Id}-province")">@L["AddressProvinceLabel"]</label>
             <input id="@($"{Id}-province")"
-                   class="input address-input-control"
+                   class="input address-input-control @(AriaInvalid ? "invalid" : null)"
                    type="text"
                    value="@_provinceText"
                    list="@($"{Id}-province-options")"
@@ -47,7 +47,7 @@
         <div class="address-input-part">
             <label class="address-input-label" for="@($"{Id}-ward")">@L["AddressWardLabel"]</label>
             <input id="@($"{Id}-ward")"
-                   class="input address-input-control"
+                   class="input address-input-control @(AriaInvalid ? "invalid" : null)"
                    type="text"
                    value="@_wardText"
                    list="@($"{Id}-ward-options")"
