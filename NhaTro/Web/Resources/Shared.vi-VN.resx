@@ -666,6 +666,16 @@
   <data name="P2Address" xml:space="preserve"><value>Địa chỉ</value></data>
   <data name="P2NotProvided" xml:space="preserve"><value>Chưa cập nhật</value></data>
   <data name="P2RoomCount" xml:space="preserve"><value>Số phòng</value></data>
+  <data name="P2MinRooms" xml:space="preserve"><value>Số phòng từ</value></data>
+  <data name="P2MaxRooms" xml:space="preserve"><value>Số phòng đến</value></data>
+  <data name="P2MinRoomsPlaceholder" xml:space="preserve"><value>Tối thiểu</value></data>
+  <data name="P2MaxRoomsPlaceholder" xml:space="preserve"><value>Tối đa</value></data>
+  <data name="P2SortBy" xml:space="preserve"><value>Sắp xếp</value></data>
+  <data name="P2SortName" xml:space="preserve"><value>Theo tên (A–Z)</value></data>
+  <data name="P2SortNewest" xml:space="preserve"><value>Mới tạo gần đây</value></data>
+  <data name="P2SortOldest" xml:space="preserve"><value>Tạo lâu nhất</value></data>
+  <data name="P2SortRoomCountDesc" xml:space="preserve"><value>Nhiều phòng trước</value></data>
+  <data name="P2SortRoomCountAsc" xml:space="preserve"><value>Ít phòng trước</value></data>
   <data name="P2Actions" xml:space="preserve"><value>Thao tác</value></data>
   <data name="P2PropertiesTable" xml:space="preserve"><value>Danh sách nhà trọ</value></data>
   <data name="P2RowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
@@ -744,6 +754,12 @@
   <data name="P2StatusUnknown" xml:space="preserve"><value>Không xác định</value></data>
   <data name="P2MinPrice" xml:space="preserve"><value>Giá từ</value></data>
   <data name="P2MaxPrice" xml:space="preserve"><value>Giá đến</value></data>
+  <data name="P2AmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
+  <data name="P2AllFloors" xml:space="preserve"><value>Tất cả tầng</value></data>
+  <data name="P2AreaFrom" xml:space="preserve"><value>Diện tích từ (m²)</value></data>
+  <data name="P2AreaTo" xml:space="preserve"><value>Diện tích đến (m²)</value></data>
+  <data name="P2ValidationAreaNumber" xml:space="preserve"><value>Diện tích lọc phải là số không âm.</value></data>
+  <data name="P2ValidationAreaRange" xml:space="preserve"><value>Diện tích tối thiểu không được lớn hơn diện tích tối đa.</value></data>
   <data name="P2OnlyAvailable" xml:space="preserve"><value>Chỉ phòng trống</value></data>
   <data name="P2ValidationPriceNumber" xml:space="preserve"><value>Giá lọc phải là số không âm.</value></data>
   <data name="P2ValidationPriceRange" xml:space="preserve"><value>Giá tối thiểu không được lớn hơn giá tối đa.</value></data>
@@ -1347,6 +1363,30 @@
   <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Tháng:</value></data>
   <data name="MeterReadingYearFilter" xml:space="preserve"><value>Năm:</value></data>
   <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Tháng {0:00}</value></data>
+  <data name="MeterReadingFloorGroup" xml:space="preserve"><value>Tầng {0}</value></data>
+  <data name="MeterReadingUnknownFloor" xml:space="preserve"><value>Chưa rõ tầng</value></data>
+  <data name="MeterReadingToggleRoomDetails" xml:space="preserve"><value>Xem chi tiết phòng {0}</value></data>
+  <data name="MeterReadingSearchLabel" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="MeterReadingSearchPlaceholder" xml:space="preserve"><value>Tìm mã phòng, tên phòng, khách thuê, hợp đồng…</value></data>
+  <data name="MeterReadingStatusFilter" xml:space="preserve"><value>Trạng thái kỳ</value></data>
+  <data name="MeterReadingAdvancedFilter" xml:space="preserve"><value>Bộ lọc nâng cao</value></data>
+  <data name="MeterReadingAdvancedFilterCount" xml:space="preserve"><value>Bộ lọc nâng cao ({0})</value></data>
+  <data name="MeterReadingAdvancedFilterTitle" xml:space="preserve"><value>Trạng thái ghi chỉ số</value></data>
+  <data name="MeterReadingAdvancedSelectAll" xml:space="preserve"><value>Chọn tất cả</value></data>
+  <data name="MeterReadingAdvancedClear" xml:space="preserve"><value>Bỏ chọn</value></data>
+  <data name="MeterReadingAdvancedHint" xml:space="preserve"><value>Chọn một hoặc nhiều trạng thái. Phòng khớp bất kỳ trạng thái nào đã chọn sẽ hiển thị.</value></data>
+  <data name="MeterReadingStatusOptionUnrecorded" xml:space="preserve"><value>Chưa ghi chỉ số (thiếu cả điện và nước)</value></data>
+  <data name="MeterReadingStatusOptionRecorded" xml:space="preserve"><value>Đã ghi đủ chỉ số</value></data>
+  <data name="MeterReadingStatusOptionLocked" xml:space="preserve"><value>Đã chốt số (khóa kỳ, không sửa được)</value></data>
+  <data name="MeterReadingStatusOptionOpen" xml:space="preserve"><value>Chưa chốt số (còn nhập/sửa được)</value></data>
+  <data name="MeterReadingStatusAll" xml:space="preserve"><value>Tất cả trạng thái kỳ</value></data>
+  <data name="MeterReadingStatusPartial" xml:space="preserve"><value>Chưa ghi đủ chỉ số</value></data>
+  <data name="MeterReadingStatusMissingElectric" xml:space="preserve"><value>Thiếu chỉ số điện</value></data>
+  <data name="MeterReadingStatusMissingWater" xml:space="preserve"><value>Thiếu chỉ số nước</value></data>
+  <data name="MeterReadingFloorFilter" xml:space="preserve"><value>Tầng</value></data>
+  <data name="MeterReadingFloorAll" xml:space="preserve"><value>Tất cả tầng</value></data>
+  <data name="MeterReadingNoFilterMatchTitle" xml:space="preserve"><value>Không có phòng khớp bộ lọc</value></data>
+  <data name="MeterReadingNoFilterMatchDesc" xml:space="preserve"><value>Thử đổi từ khóa hoặc bỏ bớt bộ lọc để xem các phòng khác.</value></data>
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Đang tải…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>Không có dữ liệu.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>Không thể xử lý yêu cầu. Vui lòng tải lại và thử lại.</value></data>

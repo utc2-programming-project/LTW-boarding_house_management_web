@@ -6,7 +6,9 @@
 @inject IStringLocalizer<Shared> L
 @inject IStringLocalizer<UtilityResources> UL
 
-<div class="room-reading-card @(IsLocked ? "card-locked" : "")" id="@($"room-{Room.Id}")">
+<div class="room-reading-card @(IsLocked ? "card-locked" : "") @(HideHeader ? "card-embedded" : "")" id="@($"room-{Room.Id}")">
+    @if (!HideHeader)
+    {
     <!-- Room header -->
     <div class="room-card-header">
         <div class="room-identity-group">
@@ -54,6 +56,7 @@
             }
         </div>
     </div>
+    }
 
     @if (IsLocked)
     {
@@ -377,6 +380,7 @@
     [Parameter] public string CallerRole { get; set; } = string.Empty;
     [Parameter] public DateOnly PeriodStart { get; set; }
     [Parameter] public DateOnly PeriodEnd { get; set; }
+    [Parameter] public bool HideHeader { get; set; }
     [Parameter] public EventCallback<(string RoomId, decimal? ElectricEnd, decimal? WaterEnd)> OnChanged { get; set; }
     [Parameter, EditorRequired] public Func<(string RoomId, decimal ElectricEnd, decimal WaterEnd, string? Reason, bool IsLock), Task<bool>> OnSave { get; set; } = default!;
     [Inject] public MeterReadingPageService PageService { get; set; } = default!;
