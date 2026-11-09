@@ -11,7 +11,7 @@ namespace Web.Features.Invoices.Rules;
 public static class InvoiceDraftRules
 {
     public const int MaxDescriptionLength = 250;
-    public const int MaxUnitLength = 20;
+    public const int MaxUnitLength = 30;
 
     /// <summary>
     /// Chuẩn hóa và kiểm tra các dòng nguồn. Trả về bản sao đã trim mô tả/đơn vị

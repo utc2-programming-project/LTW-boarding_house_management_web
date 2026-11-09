@@ -9,6 +9,7 @@ using Web.Features.Invoices.Enums;
 using Web.Features.Invoices.Rules;
 using Web.Features.Properties;
 using Web.Features.Utilities;
+using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Enums;
 using Web.Features.Utilities.Services;
@@ -128,6 +129,250 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         Assert.Equal(196_600m, water.Total);
         Assert.Equal(1, water.ResidentCount);
         Assert.Equal(3, water.CostLines.Count);
+    }
+
+    [SqlServerFact]
+    public async Task SaveReadingsAsync_SnapshotsServiceLines_AndLaterCatalogToggleCannotChangeSettledMoney()
+    {
+        var data = await SeedApprovedContractAsync();
+        await using var db = fixture.CreateContext();
+        await SeedServiceCatalogsAsync(db, data.PropertyAId);
+        var owner = Owner(data);
+        var service = NewService(db);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+
+        var saved = await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        Assert.Equal(130_000m, saved.ServiceCost);
+        Assert.True(await db.UtilityReadingPeriods
+            .AnyAsync(item => item.Id == period.Id && item.HasServiceSnapshots));
+        Assert.Equal(2, await db.UtilityServicePeriodSnapshots
+            .CountAsync(item => item.UtilityReadingPeriodId == period.Id));
+
+        // Chủ trọ tắt danh mục cho các kỳ mới. Kỳ đã chốt chỉ số phải đọc snapshot của nó.
+        await db.ServiceCatalogs.ExecuteUpdateAsync(setters => setters
+            .SetProperty(catalog => catalog.IsActive, false));
+        db.ChangeTracker.Clear();
+
+        var reread = await service.GetPeriodAsync(period.Id, owner);
+        Assert.NotNull(reread);
+        Assert.Equal(130_000m, reread.ServiceCost);
+        Assert.Equal(3_671_100m, reread.TotalAmount);
+
+        var invoiceSource = await service.BuildInvoiceRequestAsync(period.Id, owner);
+        Assert.Equal(130_000m, invoiceSource.Items
+            .Where(item => item.ItemType == InvoiceItemType.Service)
+            .Sum(item => item.Amount));
+        Assert.Equal(3_671_100m, InvoiceCalculationRules.CalculateTotal(invoiceSource.Items));
+    }
+
+    [SqlServerFact]
+    public async Task SaveReadingsAsync_PreservesFractionalServiceUnitPriceInSnapshot()
+    {
+        var data = await SeedApprovedContractAsync();
+        await using var db = fixture.CreateContext();
+        await AddCatalogAsync(
+            db, data.PropertyAId, "Phí theo tỷ lệ", "tháng", "fixed-monthly", 12.3456m, isReadOnly: false);
+        var owner = Owner(data);
+        var service = NewService(db);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+
+        await service.SaveReadingsAsync(period.Id, 0m, 0m, owner);
+
+        var snapshot = await db.UtilityServicePeriodSnapshots
+            .SingleAsync(item => item.UtilityReadingPeriodId == period.Id);
+        Assert.Equal(12.3456m, snapshot.UnitPrice);
+        Assert.Equal(12m, snapshot.Amount);
+
+        var invoiceSource = await service.BuildInvoiceRequestAsync(period.Id, owner);
+        var item = Assert.Single(invoiceSource.Items, item => item.ItemType == InvoiceItemType.Service);
+        Assert.Equal(12.3456m, item.UnitPrice);
+        Assert.Equal(12m, item.Amount);
+    }
+
+    [SqlServerFact]
+    public async Task BuildInvoiceRequestAsync_RejectsLegacyPeriodWithoutServiceSnapshots()
+    {
+        var data = await SeedApprovedContractAsync();
+        await using var db = fixture.CreateContext();
+        var owner = Owner(data);
+        var service = NewService(db);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+        await service.SaveReadingsAsync(period.Id, 0m, 0m, owner);
+
+        // Mô phỏng một kỳ đã ghi chỉ số từ trước migration mới: không được lấy danh mục hiện
+        // tại để đoán lại chi phí dịch vụ và phát hành hóa đơn với số liệu sai.
+        await db.UtilityReadingPeriods
+            .Where(item => item.Id == period.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.HasServiceSnapshots, false));
+        db.ChangeTracker.Clear();
+
+        var exception = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+            service.BuildInvoiceRequestAsync(period.Id, owner));
+        Assert.Equal(nameof(UtilityReadingErrorCode.ServiceSnapshotsMissing), exception.Code);
+    }
+
+    [SqlServerFact]
+    public async Task OpenPeriodAsync_ConcurrentOverlaps_OnlyOnePeriodIsCreated()
+    {
+        var data = await SeedApprovedContractAsync();
+        var owner = Owner(data);
+        using var start = new Barrier(2);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        async Task<object> TryOpenAsync(DateOnly startDate, DateOnly endDate)
+        {
+            await using var db = fixture.CreateContext();
+            var service = NewService(db);
+            await Task.Run(() => start.SignalAndWait(timeout.Token), timeout.Token);
+            try
+            {
+                return await service.OpenPeriodAsync(data.ContractId, startDate, endDate, owner);
+            }
+            catch (UtilityReadingException exception)
+            {
+                return exception;
+            }
+        }
+
+        var all = Task.WhenAll(
+            TryOpenAsync(OctoberStart, OctoberEnd),
+            TryOpenAsync(new DateOnly(Year, 10, 15), new DateOnly(Year, 11, 15)));
+        var completed = await Task.WhenAny(all, Task.Delay(Timeout.InfiniteTimeSpan, timeout.Token));
+        Assert.Same(all, completed);
+        var results = await all;
+
+        Assert.IsType<UtilityReadingPeriodDto>(
+            Assert.Single(results, result => result is UtilityReadingPeriodDto));
+        var rejected = Assert.IsType<UtilityReadingException>(
+            Assert.Single(results, result => result is UtilityReadingException));
+        // Luồng nào lấy khóa hợp đồng trước quyết định mã lỗi: luồng sau thấy kỳ chồng lấn,
+        // hoặc luồng trước thấy đã có kỳ bắt đầu muộn hơn.
+        Assert.Contains(rejected.Code, new[]
+        {
+            nameof(UtilityReadingErrorCode.OverlappingPeriod),
+            nameof(UtilityReadingErrorCode.PeriodHasLaterPeriod),
+        });
+
+        await using var verify = fixture.CreateContext();
+        Assert.Equal(1, await verify.UtilityReadingPeriods
+            .CountAsync(period => period.ContractId == data.ContractId));
+    }
+
+    [SqlServerFact]
+    public async Task BackfillServiceSnapshotsAsync_RejectsNoReadingsAndInvoicedPeriod()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext();
+        var service = NewService(db); var owner = Owner(data);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+        var noReadings = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
+        Assert.Equal(nameof(UtilityReadingErrorCode.PeriodHasNoReadings), noReadings.Code);
+        await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        var invoice = new Invoice { ContractId = data.ContractId, PeriodStart = OctoberStart, PeriodEnd = OctoberEnd, Status = InvoiceStatus.Issued, TotalAmount = 1m, CreatedAt = DateTime.UtcNow };
+        db.Invoices.Add(invoice); await db.SaveChangesAsync();
+        await db.UtilityReadingPeriods.Where(x => x.Id == period.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.InvoiceId, invoice.Id)); db.ChangeTracker.Clear();
+        var locked = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
+        Assert.Equal(nameof(UtilityReadingErrorCode.PeriodLocked), locked.Code);
+    }
+
+    [SqlServerFact]
+    public async Task SaveReadingsAsync_ConcurrentSamePeriod_OnlyOneEntryWins()
+    {
+        var data = await SeedApprovedContractAsync();
+        var owner = Owner(data);
+        int periodId;
+        await using (var setup = fixture.CreateContext())
+        {
+            periodId = (await NewService(setup).OpenPeriodAsync(
+                data.ContractId, OctoberStart, OctoberEnd, owner)).Id;
+        }
+
+        using var start = new Barrier(2);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        async Task<object> TrySaveAsync(decimal electricEnd)
+        {
+            await using var db = fixture.CreateContext();
+            var service = NewService(db);
+            await Task.Run(() => start.SignalAndWait(timeout.Token), timeout.Token);
+            try
+            {
+                return await service.SaveReadingsAsync(periodId, electricEnd, 16m, owner, timeout.Token);
+            }
+            catch (UtilityReadingException exception)
+            {
+                return exception;
+            }
+        }
+
+        var all = Task.WhenAll(TrySaveAsync(160m), TrySaveAsync(170m));
+        var completed = await Task.WhenAny(all, Task.Delay(Timeout.InfiniteTimeSpan, timeout.Token));
+        Assert.Same(all, completed);
+        var results = await all;
+
+        Assert.IsType<UtilityReadingPeriodDto>(
+            Assert.Single(results, result => result is UtilityReadingPeriodDto));
+        var rejected = Assert.IsType<UtilityReadingException>(
+            Assert.Single(results, result => result is UtilityReadingException));
+        Assert.Equal(nameof(UtilityReadingErrorCode.PeriodAlreadyHasReadings), rejected.Code);
+    }
+
+    [SqlServerFact]
+    public async Task BackfillServiceSnapshotsAsync_BackfillsLegacyPeriodAndIsIdempotent()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext();
+        await SeedServiceCatalogsAsync(db, data.PropertyAId); var service = NewService(db); var owner = Owner(data);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+        await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        await db.UtilityServicePeriodSnapshots.Where(x => x.UtilityReadingPeriodId == period.Id).ExecuteDeleteAsync();
+        await db.UtilityReadingPeriods.Where(x => x.Id == period.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.HasServiceSnapshots, false)); db.ChangeTracker.Clear();
+        Assert.Equal(2, await service.BackfillServiceSnapshotsAsync(period.Id, owner));
+        Assert.Equal(2, await db.UtilityServicePeriodSnapshots.CountAsync(x => x.UtilityReadingPeriodId == period.Id));
+        var dto = await service.GetPeriodAsync(period.Id, owner); Assert.NotNull(dto); Assert.False(dto.ServiceSnapshotsMissing); Assert.Equal(130_000m, dto.ServiceCost);
+        Assert.Equal(130_000m, (await service.BuildInvoiceRequestAsync(period.Id, owner)).Items.Where(x => x.ItemType == InvoiceItemType.Service).Sum(x => x.Amount));
+        Assert.Equal(0, await service.BackfillServiceSnapshotsAsync(period.Id, owner));
+    }
+
+    [SqlServerFact]
+    public async Task BuildInvoiceRequestAsync_RejectsInvoiceFromDifferentPeriod()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext(); var service = NewService(db); var owner = Owner(data);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner); await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        var invoice = new Invoice { ContractId = data.ContractId, PeriodStart = new DateOnly(Year, 9, 1), PeriodEnd = new DateOnly(Year, 9, 30), Status = InvoiceStatus.Issued, TotalAmount = 1m, CreatedAt = DateTime.UtcNow };
+        db.Invoices.Add(invoice); await db.SaveChangesAsync(); await db.UtilityReadingPeriods.Where(x => x.Id == period.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.InvoiceId, invoice.Id)); db.ChangeTracker.Clear();
+        var dto = await Assert.ThrowsAsync<UtilityReadingException>(() => service.GetPeriodAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), dto.Code);
+        var source = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BuildInvoiceRequestAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), source.Code);
+    }
+
+    [SqlServerFact]
+    public async Task BuildInvoiceRequestAsync_UnitLength25_FlowsThroughToInvoice()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext(); var service = NewService(db); var owner = Owner(data);
+        var unit = new string('a', 25); await AddCatalogAsync(db, data.PropertyAId, "Phi dai", unit, "fixed", 50_000m, false);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner); await service.SaveReadingsAsync(period.Id, 0m, 0m, owner);
+        var item = Assert.Single((await service.BuildInvoiceRequestAsync(period.Id, owner)).Items, x => x.ItemType == InvoiceItemType.Service);
+        Assert.Equal(unit, item.Unit); Assert.Equal(50_000m, item.Amount);
+    }
+
+    [SqlServerFact]
+    public async Task SaveReadingsAsync_AfterValidationFailure_CanRetryInSameContext()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext(); var service = NewService(db); var owner = Owner(data);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
+        await Assert.ThrowsAsync<UtilityReadingException>(() => service.SaveReadingsAsync(period.Id, -1m, 16m, owner));
+        var saved = await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        Assert.True(saved.HasReadings); Assert.Equal(160m, saved.ElectricEnd);
+    }
+
+    [SqlServerFact]
+    public async Task BuildInvoiceRequestAsync_HandlesMeteredAndPerPersonUnitVariants()
+    {
+        var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext(); var service = NewService(db); var owner = Owner(data);
+        await AddCatalogAsync(db, data.PropertyAId, "Dien bien the", "kWh/tháng", "meter", 1m, false);
+        await AddCatalogAsync(db, data.PropertyAId, "Ve sinh bien the", "Người/tháng", "fixed", 30_000m, false);
+        var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner); await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
+        var items = (await service.BuildInvoiceRequestAsync(period.Id, owner)).Items;
+        Assert.DoesNotContain(items, x => x.ItemType == InvoiceItemType.Service && x.Description == "Dien bien the");
+        Assert.Equal(1m, Assert.Single(items, x => x.Description == "Ve sinh bien the").Quantity);
     }
 
     [SqlServerFact]

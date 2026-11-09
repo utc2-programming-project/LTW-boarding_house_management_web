@@ -150,3 +150,12 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 - 2E.5: gửi Phúc bản ERD cuối + ghi chú để ghép Word/slide.
 - VHT-28 2A yêu cầu người thứ hai chạy script — vẫn chưa có.
 - SHA sẽ đổi khi VHT-124/126 merge → chạy lại TASK-02/04/06 (script + diff) trước khi publish.
+
+## VHT-51 — snapshot dịch vụ và gia cố kỳ ghi chỉ số (09/11/2026)
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261109163100_AddUtilityServicePeriodSnapshots` | Thêm `HasServiceSnapshots` vào `UtilityReadingPeriods`; tạo `UtilityServicePeriodSnapshots`, FK cascade về kỳ, unique `(UtilityReadingPeriodId, SourceServicePriceHistoryId)` và các CHECK số tiền/số lượng. |
+| `20261109195353_HardenUtilityReadingPeriods` | Nới `Unit` của `InvoiceItems` và `UtilityBillingPeriodSnapshots` lên 30 ký tự; thay index `InvoiceId` bằng unique filtered index để một invoice chỉ thuộc một kỳ. |
+
+SVG ERD chưa vẽ thêm bảng snapshot dịch vụ trong lượt này; schema SQL là nguồn đối chiếu cập nhật cho hai migration trên.

@@ -23,7 +23,7 @@ public interface IUtilityReadingService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Ghi chỉ số cuối kỳ lần đầu và chốt snapshot điện/nước trong cùng transaction.
+    /// Ghi chỉ số cuối kỳ lần đầu và chốt snapshot điện/nước/dịch vụ trong cùng transaction.
     /// Chặn khi kỳ đã phát hành hóa đơn (D10) hoặc đã ghi chỉ số (điều chỉnh thuộc VHT-102).
     /// </summary>
     Task<UtilityReadingPeriodDto> SaveReadingsAsync(
@@ -41,6 +41,13 @@ public interface IUtilityReadingService
     Task<UtilityReadingPeriodDto?> GetPeriodByContractAsync(
         Guid contractId,
         DateOnly periodStart,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Chụp tường minh dịch vụ cho kỳ legacy đã ghi chỉ số, chưa có hóa đơn/snapshot.
+    /// Gọi lại sau khi chụp trả 0; giá dùng tại thời điểm gọi, không suy diễn lịch sử.</summary>
+    Task<int> BackfillServiceSnapshotsAsync(
+        int periodId,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
 

@@ -39,6 +39,12 @@ public sealed class UtilityReadingPeriod
     /// <summary>Đã nhập chỉ số cuối kỳ (phân biệt "chưa nhập" với "bằng 0").</summary>
     public bool HasReadings { get; set; }
 
+    /// <summary>
+    /// Đã chụp các dòng dịch vụ khi chốt chỉ số. Kỳ cũ trước migration giữ false để không
+    /// suy diễn snapshot bằng giá hiện hành.
+    /// </summary>
+    public bool HasServiceSnapshots { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

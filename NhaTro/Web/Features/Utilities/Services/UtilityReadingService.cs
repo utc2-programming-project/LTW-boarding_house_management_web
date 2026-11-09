@@ -21,7 +21,7 @@ namespace Web.Features.Utilities.Services;
 /// <summary>
 /// VHT-51 — ghi chỉ số/sử dụng/tính chi phí kỳ thật.
 /// Toàn bộ số liệu lấy từ hợp đồng, kỳ trước và biểu giá đã khóa (VHT-100);
-/// điện/nước được chốt thành snapshot bất biến, sau đó mới chuyển cho P6 lập hóa đơn.
+/// điện/nước/dịch vụ được chốt thành snapshot bất biến, sau đó mới chuyển cho P6 lập hóa đơn.
 /// </summary>
 public sealed class UtilityReadingService(
     ApplicationDbContext context,
@@ -45,7 +45,14 @@ public sealed class UtilityReadingService(
     {
         ArgumentNullException.ThrowIfNull(caller);
 
-        var contract = await LoadManageableContractAsync(contractId, caller, cancellationToken);
+        var authorizedContract = await LoadManageableContractAsync(contractId, caller, cancellationToken);
+        ValidateContractAndPeriod(authorizedContract, periodStart, periodEnd);
+
+        // UPDLOCK/HOLDLOCK trên cùng hàng hợp đồng tuần tự hóa mọi lần mở kỳ của hợp đồng đó,
+        // kể cả hai kỳ có ngày bắt đầu khác nhau nhưng chồng nhau. Khóa trong bộ nhớ không đủ
+        // vì ứng dụng có thể chạy nhiều process.
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var contract = await LockContractAsync(contractId, cancellationToken);
         ValidateContractAndPeriod(contract, periodStart, periodEnd);
 
         var existing = await context.UtilityReadingPeriods
@@ -61,7 +68,8 @@ public sealed class UtilityReadingService(
                     nameof(UtilityReadingErrorCode.DuplicatePeriod));
             }
 
-            return await ToDtoAsync(existing, cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return await ToDtoAsync(existing, cancellationToken);
         }
 
         // Không mở kỳ chen trước kỳ đã có: chuỗi chỉ số đầu/cuối phải tiến theo thời gian.
@@ -133,6 +141,7 @@ public sealed class UtilityReadingService(
         try
         {
             await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException exception) when (IsUniqueViolation(exception))
         {
@@ -145,6 +154,7 @@ public sealed class UtilityReadingService(
                     cancellationToken);
             if (duplicate is not null && duplicate.PeriodEnd == periodEnd)
             {
+                await transaction.RollbackAsync(cancellationToken);
                 return await ToDtoAsync(duplicate, cancellationToken);
             }
 
@@ -173,6 +183,9 @@ public sealed class UtilityReadingService(
         ArgumentNullException.ThrowIfNull(caller);
 
         var period = await LoadManageablePeriodAsync(periodId, caller, cancellationToken);
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        await LockContractAsync(period.ContractId, cancellationToken);
+        await context.Entry(period).ReloadAsync(cancellationToken);
 
         // D10: kỳ đã phát hành hóa đơn thì khóa vĩnh viễn. Kiểm cả InvoiceId vì tiền lịch sử
         // được đọc từ hóa đơn đã chốt, không phụ thuộc trạng thái được cập nhật cùng lúc hay không.
@@ -195,6 +208,8 @@ public sealed class UtilityReadingService(
         // Hai kỳ có thể được mở chen nhau (ví dụ 10 và 11 mở gần như cùng lúc): kỳ 11 lúc mở
         // chưa thấy chỉ số kỳ 10 nên đầu kỳ đang là 0. Trước khi ghi, lấy lại mốc cuối kỳ liền
         // trước đã lưu để dây chuyền chỉ số luôn đúng; nếu kỳ trước chưa đọc thì chặn như lúc mở.
+        var targetElectricStart = period.ElectricStart;
+        var targetWaterStart = period.WaterStart;
         var previous = await FindPreviousPeriodAsync(
             period.ContractId,
             period.PeriodStart,
@@ -208,23 +223,22 @@ public sealed class UtilityReadingService(
                     nameof(UtilityReadingErrorCode.PreviousPeriodHasNoReadings));
             }
 
-            if (period.ElectricStart != previous.ElectricEnd || period.WaterStart != previous.WaterEnd)
-            {
-                period.ElectricStart = previous.ElectricEnd;
-                period.WaterStart = previous.WaterEnd;
-            }
+            targetElectricStart = previous.ElectricEnd;
+            targetWaterStart = previous.WaterEnd;
         }
 
         var issues = UtilityReadingRules.ValidateReadings(
-            period.ElectricStart,
+            targetElectricStart,
             electricEnd,
-            period.WaterStart,
+            targetWaterStart,
             waterEnd);
         if (issues.Count > 0)
         {
             throw FromIssue(issues[0]);
         }
 
+        period.ElectricStart = targetElectricStart;
+        period.WaterStart = targetWaterStart;
         var now = _clock.UtcNow();
         period.ElectricEnd = UtilityTariffRules.NormalizeQuantity(electricEnd);
         period.WaterEnd = UtilityTariffRules.NormalizeQuantity(waterEnd);
@@ -236,7 +250,6 @@ public sealed class UtilityReadingService(
         var waterUsage = UtilityTariffRules.NormalizeQuantity(
             UtilityReadingRules.CalculateUsage(period.WaterStart, period.WaterEnd));
 
-        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             await context.SaveChangesAsync(cancellationToken);
@@ -266,6 +279,12 @@ public sealed class UtilityReadingService(
                     period.ResidentCount,
                     cancellationToken);
             }
+
+            var serviceSnapshots = await LoadServiceSnapshotsForCurrentCatalogAsync(
+                period, includeInactiveCatalogs: false, cancellationToken);
+            context.UtilityServicePeriodSnapshots.AddRange(serviceSnapshots);
+            period.HasServiceSnapshots = true;
+            await context.SaveChangesAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
         }
@@ -339,6 +358,67 @@ public sealed class UtilityReadingService(
         return period is null ? null : await ToDtoAsync(period, cancellationToken);
     }
 
+    public async Task<int> BackfillServiceSnapshotsAsync(
+        int periodId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        var period = await LoadManageablePeriodAsync(periodId, caller, cancellationToken);
+        if (period.InvoiceId is not null)
+        {
+            throw new UtilityReadingException(UtilityReadingErrorMessages.PeriodLocked, nameof(UtilityReadingErrorCode.PeriodLocked));
+        }
+
+        if (!period.HasReadings)
+        {
+            throw new UtilityReadingException(UtilityReadingErrorMessages.PeriodHasNoReadings, nameof(UtilityReadingErrorCode.PeriodHasNoReadings));
+        }
+
+        if (period.HasServiceSnapshots)
+        {
+            return 0;
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await LockContractAsync(period.ContractId, cancellationToken);
+            await context.Entry(period).ReloadAsync(cancellationToken);
+            if (period.InvoiceId is not null)
+            {
+                throw new UtilityReadingException(UtilityReadingErrorMessages.PeriodLocked, nameof(UtilityReadingErrorCode.PeriodLocked));
+            }
+
+            if (!period.HasReadings)
+            {
+                throw new UtilityReadingException(UtilityReadingErrorMessages.PeriodHasNoReadings, nameof(UtilityReadingErrorCode.PeriodHasNoReadings));
+            }
+
+            if (period.HasServiceSnapshots)
+            {
+                await transaction.CommitAsync(cancellationToken);
+                return 0;
+            }
+            // Price history is immutable. Include a catalog disabled after the legacy period so
+            // backfill does not silently discard a historical service line.
+            var snapshots = await LoadServiceSnapshotsForCurrentCatalogAsync(
+                period, includeInactiveCatalogs: true, cancellationToken);
+            context.UtilityServicePeriodSnapshots.AddRange(snapshots);
+            period.HasServiceSnapshots = true;
+            period.UpdatedAt = _clock.UtcNow();
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return snapshots.Count;
+        }
+        catch
+        {
+            await RollbackQuietlyAsync(transaction, cancellationToken);
+            context.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
     public async Task<CreateInvoiceRequest> BuildInvoiceRequestAsync(
         int periodId,
         PropertyCaller caller,
@@ -357,6 +437,16 @@ public sealed class UtilityReadingService(
                 nameof(UtilityReadingErrorCode.PeriodHasNoReadings));
         }
 
+        // Các kỳ được tạo trước migration không có snapshot dịch vụ. Không được dựng nguồn
+        // hóa đơn bằng danh mục hiện hành vì trạng thái bật/tắt khi kỳ được chốt đã mất.
+        // Chỉ kỳ đã phát hành mới đọc từ InvoiceItems nên không cần snapshot P5 này.
+        if (period.InvoiceId is null && !period.HasServiceSnapshots)
+        {
+            throw new UtilityReadingException(
+                UtilityReadingErrorMessages.ServiceSnapshotsMissing,
+                nameof(UtilityReadingErrorCode.ServiceSnapshotsMissing));
+        }
+
         return await BuildInvoiceRequestAsync(period, cancellationToken);
     }
 
@@ -371,6 +461,7 @@ public sealed class UtilityReadingService(
         // Kỳ đã phát hành: trả lại đúng nguồn đã chốt trong hóa đơn, không đọc lại giá hiện tại.
         if (period.InvoiceId is { } invoiceId)
         {
+            await LoadMatchingInvoiceAsync(period, invoiceId, cancellationToken);
             var storedItems = await context.InvoiceItems
                 .AsNoTracking()
                 .Where(item => item.InvoiceId == invoiceId)
@@ -401,7 +492,7 @@ public sealed class UtilityReadingService(
 
     /// <summary>
     /// Ghép nguồn chi phí đã chốt: tiền thuê theo hợp đồng, điện/nước theo snapshot kỳ,
-    /// dịch vụ theo đơn giá đang hiệu lực của tòa tại ngày bắt đầu kỳ.
+    /// dịch vụ theo snapshot khi đã ghi chỉ số (dữ liệu legacy trước migration mới đọc cách cũ).
     /// </summary>
     private async Task<List<InvoiceItemInputDto>> ComposeSettledItemsAsync(
         UtilityReadingPeriod period,
@@ -459,6 +550,55 @@ public sealed class UtilityReadingService(
         UtilityReadingPeriod period,
         CancellationToken cancellationToken)
     {
+        if (period.HasServiceSnapshots)
+        {
+            return await context.UtilityServicePeriodSnapshots
+                .AsNoTracking()
+                .Where(snapshot => snapshot.UtilityReadingPeriodId == period.Id)
+                .OrderBy(snapshot => snapshot.Description)
+                .ThenBy(snapshot => snapshot.Id)
+                .Select(snapshot => new InvoiceItemInputDto
+                {
+                    ItemType = InvoiceItemType.Service,
+                    Description = snapshot.Description,
+                    Unit = snapshot.Unit,
+                    Quantity = snapshot.Quantity,
+                    UnitPrice = snapshot.UnitPrice,
+                    Amount = snapshot.Amount,
+                })
+                .ToListAsync(cancellationToken);
+        }
+
+        // A legacy period has no trustworthy service snapshot. Its DTO is explicitly marked
+        // incomplete and must not expose a reconstructed current-catalog amount as history.
+        return [];
+    }
+
+    private async Task<List<UtilityServicePeriodSnapshot>> LoadServiceSnapshotsForCurrentCatalogAsync(
+        UtilityReadingPeriod period,
+        bool includeInactiveCatalogs,
+        CancellationToken cancellationToken)
+    {
+        var currentItems = await LoadCurrentServiceItemsWithSourceAsync(
+            period, includeInactiveCatalogs, cancellationToken);
+        return currentItems.Select(item => new UtilityServicePeriodSnapshot
+        {
+            UtilityReadingPeriodId = period.Id,
+            SourceServiceCatalogId = item.ServiceCatalogId,
+            SourceServicePriceHistoryId = item.ServicePriceHistoryId,
+            Description = item.Description,
+            Unit = item.Unit,
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice,
+            Amount = item.Amount,
+        }).ToList();
+    }
+
+    private async Task<List<ServiceItemSource>> LoadCurrentServiceItemsWithSourceAsync(
+        UtilityReadingPeriod period,
+        bool includeInactiveCatalogs,
+        CancellationToken cancellationToken)
+    {
         // Phòng có thể bị xóa mềm sau khi mở kỳ; kỳ đã chụp RoomId nên vẫn phải tra được tòa
         // để không làm rơi các dòng dịch vụ của hóa đơn lịch sử.
         var propertyId = await context.Rooms
@@ -472,11 +612,13 @@ public sealed class UtilityReadingService(
             return [];
         }
 
+        // Snapshot uses the catalog version effective on the period start; later catalog edits
+        // must not mutate the values already captured for this period.
         var versions = await context.ServicePriceHistories
             .AsNoTracking()
             .Where(version => (version.ServiceCatalog.PropertyId == propertyId
                     || version.ServiceCatalog.PropertyId == null)
-                && version.ServiceCatalog.IsActive
+                && (includeInactiveCatalogs || version.ServiceCatalog.IsActive)
                 && !version.ServiceCatalog.IsReadOnly
                 && version.EffectiveDate <= period.PeriodStart)
             .ToListAsync(cancellationToken);
@@ -491,26 +633,27 @@ public sealed class UtilityReadingService(
             .OrderBy(version => version.Name)
             .ToList();
 
-        var items = new List<InvoiceItemInputDto>(effective.Count);
+        var items = new List<ServiceItemSource>(effective.Count);
         foreach (var version in effective)
         {
-            if (IsMeteredUnit(version.Unit))
+            var unitKind = ServiceUnitNormalizer.Classify(version.Unit);
+            if (unitKind == ServiceUnitKind.Metered)
             {
                 // Điện/nước đã chốt theo biểu giá khóa, không cộng trùng qua danh mục dịch vụ.
                 continue;
             }
 
-            var quantity = IsPerPersonUnit(version.Unit) ? period.ResidentCount : 1m;
+            // ResidentCount is captured at opening; non-person units are charged once.
+            var quantity = unitKind == ServiceUnitKind.PerPerson ? period.ResidentCount : 1m;
             var amount = MoneyFormatter.RoundVnd(version.UnitPrice * quantity);
-            items.Add(new InvoiceItemInputDto
-            {
-                ItemType = InvoiceItemType.Service,
-                Description = version.Name,
-                Unit = version.Unit,
-                Quantity = quantity,
-                UnitPrice = version.UnitPrice,
-                Amount = amount,
-            });
+            items.Add(new ServiceItemSource(
+                version.ServiceCatalogId,
+                version.Id,
+                version.Name,
+                version.Unit,
+                quantity,
+                version.UnitPrice,
+                amount));
         }
 
         return items;
@@ -538,6 +681,13 @@ public sealed class UtilityReadingService(
             .ThenByDescending(period => period.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
+    // EF cannot express UPDLOCK/HOLDLOCK. This raw SQL locks only the target contract to serialize
+    // competing period/read operations; it does not broaden the authorization query.
+    private Task<Contract> LockContractAsync(Guid contractId, CancellationToken cancellationToken) =>
+        context.Contracts.FromSqlInterpolated(
+                $"SELECT * FROM [Contracts] WITH (UPDLOCK, HOLDLOCK) WHERE [ContractId] = {contractId}")
+            .SingleAsync(cancellationToken);
+
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is SqlException { Number: 2601 or 2627 };
 
@@ -558,6 +708,7 @@ public sealed class UtilityReadingService(
 
         if (period.InvoiceId is { } invoiceId)
         {
+            await LoadMatchingInvoiceAsync(period, invoiceId, cancellationToken);
             // D10: kỳ đã phát hành thì tiền hiển thị phải lấy đúng dòng hóa đơn đã chốt,
             // không đọc lại danh mục dịch vụ hiện tại (tránh âm thầm đổi tiền lịch sử).
             var invoiceItems = await context.InvoiceItems
@@ -606,7 +757,31 @@ public sealed class UtilityReadingService(
             serviceCost,
             totalAmount,
             electric?.Id,
-            water?.Id);
+            water?.Id,
+            period.InvoiceId is null && !period.HasServiceSnapshots);
+    }
+
+    private sealed record ServiceItemSource(
+        int ServiceCatalogId,
+        int ServicePriceHistoryId,
+        string Description,
+        string Unit,
+        decimal Quantity,
+        decimal UnitPrice,
+        decimal Amount);
+
+    private async Task<Invoice> LoadMatchingInvoiceAsync(
+        UtilityReadingPeriod period,
+        int invoiceId,
+        CancellationToken cancellationToken)
+    {
+        var invoice = await context.Invoices.AsNoTracking().SingleOrDefaultAsync(item => item.Id == invoiceId, cancellationToken);
+        if (invoice is null || invoice.ContractId != period.ContractId || invoice.PeriodStart != period.PeriodStart || invoice.PeriodEnd != period.PeriodEnd)
+        {
+            throw new UtilityReadingException(UtilityReadingErrorMessages.InvoicePeriodMismatch, nameof(UtilityReadingErrorCode.InvoicePeriodMismatch));
+        }
+
+        return invoice;
     }
 
     private async Task<UtilityReadingPeriod> LoadManageablePeriodAsync(
@@ -747,15 +922,4 @@ public sealed class UtilityReadingService(
             Amount = item.ItemType == InvoiceItemType.Discount ? Math.Abs(item.Amount) : item.Amount,
         };
 
-    private static bool IsMeteredUnit(string unit)
-    {
-        var normalized = unit.Trim().ToLowerInvariant();
-        return normalized is "kwh" or "m³" or "m3";
-    }
-
-    private static bool IsPerPersonUnit(string unit)
-    {
-        var normalized = unit.Trim().ToLowerInvariant();
-        return normalized is "người" or "nguoi" or "person";
-    }
 }

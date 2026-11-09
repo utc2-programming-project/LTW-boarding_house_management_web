@@ -4,7 +4,8 @@ namespace Web.Features.Utilities.DTOs;
 
 /// <summary>
 /// Ảnh chụp kỳ ghi chỉ số thật (VHT-51): chỉ số đầu/cuối, lượng tiêu thụ, chi phí snapshot
-/// điện/nước và trạng thái khóa hóa đơn. Chi phí dịch vụ lấy từ đơn giá đang hiệu lực của tòa.
+/// điện/nước/dịch vụ và trạng thái khóa hóa đơn. Kỳ mới đọc dịch vụ từ snapshot; kỳ legacy chỉ
+/// ước tính theo catalog hiện hành để hiển thị, có ServiceSnapshotsMissing và phải backfill trước P6.
 /// </summary>
 public sealed record UtilityReadingPeriodDto(
     int Id,
@@ -28,4 +29,5 @@ public sealed record UtilityReadingPeriodDto(
     decimal ServiceCost,
     decimal TotalAmount,
     int? ElectricSnapshotId,
-    int? WaterSnapshotId);
+    int? WaterSnapshotId,
+    bool ServiceSnapshotsMissing = false);

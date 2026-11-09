@@ -364,8 +364,8 @@ namespace Web.Migrations
 
                     b.Property<string>("Unit")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -506,7 +506,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Contracts", null, t =>
+                    b.ToTable("Contracts", t =>
                         {
                             t.HasTrigger("TR_Contracts_PreventApprovedOverlap");
                         });
@@ -526,7 +526,7 @@ namespace Web.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("ContractMembers", (string)null);
+                    b.ToTable("ContractMembers");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
@@ -662,16 +662,16 @@ namespace Web.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Unit")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id");
 
@@ -876,7 +876,7 @@ namespace Web.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Properties", (string)null);
+                    b.ToTable("Properties");
                 });
 
             modelBuilder.Entity("Web.Features.Properties.Entities.PropertyManager", b =>
@@ -924,7 +924,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[RevokedAt] IS NULL");
 
-                    b.ToTable("PropertyManagers", (string)null);
+                    b.ToTable("PropertyManagers");
                 });
 
             modelBuilder.Entity("Web.Features.Rooms.Entities.Room", b =>
@@ -982,7 +982,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("Rooms", (string)null);
+                    b.ToTable("Rooms");
                 });
 
             modelBuilder.Entity("Web.Features.Settings.Entities.ManagerToggle", b =>
@@ -1197,7 +1197,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId", "OccurredAt");
 
-                    b.ToTable("FileAccessAuditLogs", (string)null);
+                    b.ToTable("FileAccessAuditLogs");
                 });
 
             modelBuilder.Entity("Web.Features.Storage.Entities.StoredFile", b =>
@@ -1260,7 +1260,7 @@ namespace Web.Migrations
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
-                    b.ToTable("StoredFiles", (string)null);
+                    b.ToTable("StoredFiles");
                 });
 
             modelBuilder.Entity("Web.Features.Tenants.Entities.Tenant", b =>
@@ -1357,7 +1357,7 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL AND [IsDeleted] = 0");
 
-                    b.ToTable("Tenants", (string)null);
+                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>
@@ -1490,6 +1490,9 @@ namespace Web.Migrations
                     b.Property<bool>("HasReadings")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("HasServiceSnapshots")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("InvoiceId")
                         .HasColumnType("int");
 
@@ -1527,7 +1530,9 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InvoiceId");
+                    b.HasIndex("InvoiceId")
+                        .IsUnique()
+                        .HasFilter("[InvoiceId] IS NOT NULL");
 
                     b.HasIndex("RoomId");
 
@@ -1548,9 +1553,65 @@ namespace Web.Migrations
 
                             t.HasCheckConstraint("CK_UtilityReadingPeriods_ResidentCount", "[ResidentCount] > 0");
 
+                            t.HasCheckConstraint("CK_UtilityReadingPeriods_ServiceSnapshotsRequireReadings", "[HasServiceSnapshots] = 0 OR [HasReadings] = 1");
+
                             t.HasCheckConstraint("CK_UtilityReadingPeriods_Status", "[Status] IN (0, 1)");
 
                             t.HasCheckConstraint("CK_UtilityReadingPeriods_Water", "[WaterStart] >= 0 AND [WaterEnd] >= [WaterStart]");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityServicePeriodSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("SourceServiceCatalogId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SourceServicePriceHistoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("UtilityReadingPeriodId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilityReadingPeriodId", "SourceServicePriceHistoryId")
+                        .IsUnique();
+
+                    b.ToTable("UtilityServicePeriodSnapshots", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_UtilityServicePeriodSnapshots_Amount", "[Amount] >= 0");
+
+                            t.HasCheckConstraint("CK_UtilityServicePeriodSnapshots_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_UtilityServicePeriodSnapshots_UnitPrice", "[UnitPrice] >= 0");
                         });
                 });
 
@@ -1989,7 +2050,7 @@ namespace Web.Migrations
 
                             b1.HasKey("IdentityUserPasskeyCredentialId");
 
-                            b1.ToTable("AspNetUserPasskeys", (string)null);
+                            b1.ToTable("AspNetUserPasskeys");
 
                             b1
                                 .ToJson("Data")
@@ -2283,6 +2344,15 @@ namespace Web.Migrations
                         .WithMany()
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityServicePeriodSnapshot", b =>
+                {
+                    b.HasOne("Web.Features.Utilities.Entities.UtilityReadingPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("UtilityReadingPeriodId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

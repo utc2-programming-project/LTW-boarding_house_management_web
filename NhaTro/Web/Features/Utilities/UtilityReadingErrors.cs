@@ -15,6 +15,8 @@ public enum UtilityReadingErrorCode
     PeriodAlreadyHasReadings,
     PreviousPeriodHasNoReadings,
     PeriodHasNoReadings,
+    ServiceSnapshotsMissing,
+    InvoicePeriodMismatch,
     ReadingCannotBeNegative,
     ReadingLessThanPrevious,
     Forbidden,
@@ -36,6 +38,9 @@ public static class UtilityReadingErrorMessages
     public const string PeriodAlreadyHasReadings = "Kỳ đã ghi chỉ số; việc điều chỉnh kỳ liền trước thuộc luồng VHT-102.";
     public const string PreviousPeriodHasNoReadings = "Kỳ liền trước chưa ghi chỉ số nên chưa lấy được chỉ số đầu kỳ.";
     public const string PeriodHasNoReadings = "Kỳ chưa ghi chỉ số nên chưa thể chuyển chi phí cho hóa đơn.";
+    public const string ServiceSnapshotsMissing =
+        "Kỳ cũ chưa có snapshot dịch vụ đáng tin cậy nên chưa thể chuyển cho hóa đơn.";
+    public const string InvoicePeriodMismatch = "Hóa đơn gắn với kỳ không cùng hợp đồng hoặc thời gian.";
     public const string ReadingCannotBeNegative = "Chỉ số không được là số âm.";
     public const string ReadingLessThanPrevious = "Chỉ số mới phải lớn hơn hoặc bằng chỉ số đầu kỳ.";
     public const string Forbidden = "Bạn không có quyền ghi chỉ số/tính chi phí kỳ.";

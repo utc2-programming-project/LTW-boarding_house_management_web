@@ -29,6 +29,9 @@ public sealed class UtilityReadingPeriodConfiguration : IEntityTypeConfiguration
             table.HasCheckConstraint(
                 "CK_UtilityReadingPeriods_InvoicedHasReadings",
                 "[Status] = 0 OR [HasReadings] = 1");
+            table.HasCheckConstraint(
+                "CK_UtilityReadingPeriods_ServiceSnapshotsRequireReadings",
+                "[HasServiceSnapshots] = 0 OR [HasReadings] = 1");
         });
 
         builder.HasKey(period => period.Id);
@@ -46,6 +49,7 @@ public sealed class UtilityReadingPeriodConfiguration : IEntityTypeConfiguration
         // Một hợp đồng chỉ có một kỳ cho mỗi ngày bắt đầu (chống ghi trùng kỳ).
         builder.HasIndex(period => new { period.ContractId, period.PeriodStart }).IsUnique();
         builder.HasIndex(period => new { period.ContractId, period.PeriodEnd });
+        builder.HasIndex(period => period.InvoiceId).IsUnique().HasFilter("[InvoiceId] IS NOT NULL");
 
         builder.HasOne<Contract>()
             .WithMany()

@@ -10,7 +10,7 @@ namespace NhaTro.IntegrationTests.Infrastructure;
 /// nếu không thì dùng SQL Server LocalDB.
 /// Tech-stack quy định: dùng SQL Server database riêng, KHÔNG dùng EF InMemory (không chứng minh
 /// được rowversion/filtered index) và KHÔNG Docker/Testcontainers.
-/// Mỗi lần chạy tạo một database riêng, áp migration, xóa khi xong.
+/// Mỗi lần chạy tạo một database riêng bằng EnsureCreated, xóa khi xong.
 /// </summary>
 public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<ApplicationDbContext>
 {
@@ -119,6 +119,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
         await db.IncidentPhotoAttachments.ExecuteDeleteAsync();
         await db.StoredFiles.ExecuteDeleteAsync();
+        // VHT-51: xóa snapshot tường minh trước kỳ để test không phụ thuộc cascade.
+        await db.UtilityServicePeriodSnapshots.ExecuteDeleteAsync();
         // VHT-51: kỳ ghi chỉ số tham chiếu Hóa đơn/Hợp đồng/Phòng: xóa trước các bảng đó.
         await db.UtilityReadingPeriods.ExecuteDeleteAsync();
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
