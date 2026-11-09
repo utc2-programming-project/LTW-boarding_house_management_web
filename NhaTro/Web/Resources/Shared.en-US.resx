@@ -1704,4 +1704,5 @@
   <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Place of issue must not exceed 200 characters.</value></data>
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Note must not exceed 500 characters.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>RowVersion is missing.</value></data>
+  <data name="P2PropertiesHelpLabel" xml:space="preserve"><value>About the properties page</value></data>
 </root>
