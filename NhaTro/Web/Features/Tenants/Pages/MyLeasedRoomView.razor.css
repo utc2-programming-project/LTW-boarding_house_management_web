@@ -6,46 +6,6 @@
     color: var(--text-primary);
 }
 
-.breadcrumb-title-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.breadcrumb-title-stack > ::deep .breadcrumb {
-    margin-bottom: 0;
-}
-
-.leased-room-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 16px;
-}
-
-.leased-room-title-block {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.leased-room-title-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.leased-room-title-row h1 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 28px;
-    line-height: 36px;
-    font-weight: 700;
-    letter-spacing: -.02em;
-}
-
 .leased-room-status-badge {
     display: inline-flex;
     align-items: center;
@@ -677,16 +637,6 @@
 @media (max-width: 767.98px) {
     .leased-room-page {
         gap: 20px;
-    }
-
-    .leased-room-header {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
-    }
-
-    .leased-room-title-row h1 {
-        font-size: 24px;
-        line-height: 32px;
     }
 
     .leased-room-actions,

@@ -1745,6 +1745,7 @@
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Ghi chú không được vượt quá 500 ký tự.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>Thiếu RowVersion.</value></data>
   <data name="P2PropertiesHelpLabel" xml:space="preserve"><value>Giải thích về trang Nhà trọ</value></data>
+  <data name="PageHelpLabel" xml:space="preserve"><value>Giải thích về trang này</value></data>
   <data name="AddressStreetLabel" xml:space="preserve"><value>Số nhà, tên đường</value></data>
   <data name="AddressStreetPlaceholder" xml:space="preserve"><value>Ví dụ: 12 Nguyễn Trãi</value></data>
   <data name="AddressProvinceLabel" xml:space="preserve"><value>Tỉnh/Thành phố</value></data>
@@ -1752,6 +1753,20 @@
   <data name="AddressWardLabel" xml:space="preserve"><value>Phường/Xã</value></data>
   <data name="AddressWardPlaceholder" xml:space="preserve"><value>Chọn phường/xã</value></data>
   <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Chọn tỉnh/thành phố trước</value></data>
+  <data name="ApprovalsHelp" xml:space="preserve"><value>Xem và xử lý các yêu cầu đang chờ duyệt trong phạm vi tài khoản của bạn.</value></data>
+  <data name="MyRequestsHelp" xml:space="preserve"><value>Theo dõi trạng thái các yêu cầu bạn đã gửi.</value></data>
+  <data name="InviteAcceptHelp" xml:space="preserve"><value>Chấp nhận lời mời tham gia nhà trọ và tạo tài khoản của bạn.</value></data>
+  <data name="ConfirmEmailHelp" xml:space="preserve"><value>Xác nhận địa chỉ email để hoàn tất việc tạo tài khoản.</value></data>
+  <data name="ConfirmEmailChangeHelp" xml:space="preserve"><value>Xác nhận thay đổi địa chỉ email của tài khoản.</value></data>
+  <data name="ExternalLoginHelp" xml:space="preserve"><value>Liên kết tài khoản đăng nhập bên ngoài với tài khoản hiện có.</value></data>
+  <data name="RegisterConfirmationHelp" xml:space="preserve"><value>Kiểm tra email để hoàn tất xác nhận tài khoản chủ trọ.</value></data>
+  <data name="ResendEmailConfirmationHelp" xml:space="preserve"><value>Gửi lại email xác nhận nếu bạn chưa nhận được.</value></data>
+  <data name="InvalidUserHelp" xml:space="preserve"><value>Tài khoản không hợp lệ hoặc không còn tồn tại trong hệ thống.</value></data>
+  <data name="AccessDeniedHelp" xml:space="preserve"><value>Tài khoản của bạn không có quyền mở trang này.</value></data>
+  <data name="LockoutHelp" xml:space="preserve"><value>Tài khoản đang bị khóa; liên hệ người quản lý tài khoản để mở lại.</value></data>
+  <data name="ErrorHelp" xml:space="preserve"><value>Đã xảy ra lỗi khi xử lý yêu cầu của bạn.</value></data>
+  <data name="NotFoundHelp" xml:space="preserve"><value>Đường dẫn không tồn tại hoặc nội dung đã được di chuyển.</value></data>
+  <data name="LeasedRoomHelp" xml:space="preserve"><value>Xem hợp đồng thuê phòng hiện tại, điều khoản và các phụ lục điện tử.</value></data>
   <data name="AddressSuggestionHint" xml:space="preserve"><value>Chọn tỉnh/thành phố rồi chọn phường/xã theo danh mục 34 tỉnh/thành phố và 3.321 phường/xã. Chỉ dùng "Khác" khi địa chỉ nằm ngoài danh mục; địa chỉ cũ được giữ ở ô nhập tay.</value></data>
   <data name="AddressOtherOption" xml:space="preserve"><value>Khác — nhập tay</value></data>
   <data name="AddressProvinceManualPlaceholder" xml:space="preserve"><value>Nhập tỉnh/thành phố ngoài danh mục</value></data>

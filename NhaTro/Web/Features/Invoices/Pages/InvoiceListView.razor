@@ -11,14 +11,7 @@
 <PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
 
 <div class="invoice-page">
-    <NavBreadcrumb />
-
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@L[IsMyInvoices ? "MyHeading" : "Heading"]</h1>
-            <p class="page-subtitle">@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]</p>
-        </div>
-    </header>
+    <PageHeading Title="@L[IsMyInvoices ? "MyHeading" : "Heading"]" HelpText="@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]" />
 
     @if (_loading)
     {

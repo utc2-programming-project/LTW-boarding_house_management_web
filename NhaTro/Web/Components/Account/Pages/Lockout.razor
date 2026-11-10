@@ -9,11 +9,10 @@
 <PageTitle>@L["LockoutTitle"] · @L["AppName"]</PageTitle>
 
 <section aria-labelledby="lockout-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LockoutTitle"]) })" />
+    <PageHeading Title="@L["LockoutTitle"]" TitleId="lockout-title" HelpText="@L["LockoutHelp"]" InteractiveHelp="true" />
 
     <div class="preview-card empty-state">
         <LucideIcon Name="lock" />
-        <h2 id="lockout-title">@L["LockoutTitle"]</h2>
         <p role="alert">@L["LockoutMessage"]</p>
         <a class="btn btn-secondary" href="/login">@L["LoginButton"]</a>
     </div>
