@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
 <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
 <resheader name="version"><value>2.0</value></resheader>
@@ -77,4 +77,5 @@
 <data name="QuickMyRequests" xml:space="preserve"><value>My requests</value></data>
 <data name="QuickPermissions" xml:space="preserve"><value>Permissions</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>In progress</value></data>
+<data name="WorkScopeNote" xml:space="preserve"><value>Quick actions and work lists below cover all data you are allowed to access and do not follow the statistics filters above.</value></data>
 </root>

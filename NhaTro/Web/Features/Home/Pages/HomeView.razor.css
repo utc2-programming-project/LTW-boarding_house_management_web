@@ -18,3 +18,5 @@ h1 { margin:0; font-size:1.75rem; line-height:2.25rem; letter-spacing:-.02em; ov
 .muted { display:block; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
 @media(max-width:1199px) { .home-grid { grid-template-columns:1fr; } }
 @media(max-width:767px) { .home-header { flex-direction:column; gap:16px; } h1 { font-size:1.5rem; line-height:2rem; } .home-grid { gap:16px; } }
+
+.work-scope-note { margin:0; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }

@@ -1,6 +1,8 @@
 @page "/"
 @attribute [Authorize]
 @rendermode InteractiveServer
+@using Web.Features.Dashboard.Components
+@inject AuthenticationStateProvider Authentication
 @inject HomePageService PageService
 @inject IStringLocalizer<HomeResource> L
 @inject TimeProvider Time
@@ -9,6 +11,8 @@
 <PageTitle>@L["Title"]</PageTitle>
 
 <div class="home-page">
+    @if (!IsManagement)
+    {
     <header class="home-header">
         <div class="home-title-stack">
             <NavBreadcrumb />
@@ -29,6 +33,11 @@
             <LucideIcon Name="refresh" />@L["Refresh"]
         </button>
     </header>
+    }
+    else if (WorkInitialized)
+    {
+        <DashboardOverview RefreshAdditionalContent="LoadAsync" AdditionalContentBusy="Busy" />
+    }
 
     @if (PageState == HomeLoadState.Loading)
     {
@@ -43,11 +52,18 @@
     }
     else if (Snapshot is { } snapshot)
     {
+        @if (!IsManagement)
+        {
         <section class="home-section" aria-labelledby="kpi-heading">
             <h2 id="kpi-heading" class="section-label">@L["KpiTitle"]</h2>
             <HomeKpiGrid Section="@snapshot.Kpis" Retry="LoadAsync" />
         </section>
+        }
 
+        @if (IsManagement)
+        {
+            <p class="work-scope-note">@L["WorkScopeNote"]</p>
+        }
         <HomeQuickActions Role="@snapshot.Role" />
 
         <div class="home-grid">
@@ -176,6 +192,8 @@
 
     private HomeLoadState PageState = HomeLoadState.Loading;
     private bool Busy;
+    private bool IsManagement;
+    private bool WorkInitialized;
 
     private string DisplayName => Snapshot?.DisplayName ?? "";
 
@@ -203,9 +221,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var principal = (await Authentication.GetAuthenticationStateAsync()).User;
+        var role = Roles.ResolvePrimaryRole(principal);
+        IsManagement = role is Roles.ChuTro or Roles.QuanLy;
         if (Snapshot is not null)
         {
             PageState = HomeLoadState.Loaded;
+            WorkInitialized = true;
             return;
         }
 
@@ -224,7 +246,7 @@
 
         try
         {
-            Snapshot = await PageService.LoadAsync();
+            Snapshot = await PageService.LoadAsync(includeManagementKpis: false);
             PageState = HomeLoadState.Loaded;
             LastRefreshed = VietnamTime.ToVietnam(Time.UtcNow());
         }
@@ -243,6 +265,7 @@
         finally
         {
             Busy = false;
+            WorkInitialized = true;
         }
     }
 }
