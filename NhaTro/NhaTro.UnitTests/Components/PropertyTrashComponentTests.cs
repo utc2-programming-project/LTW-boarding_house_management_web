@@ -30,8 +30,9 @@ public sealed class PropertyTrashComponentTests : BunitContext
         Services.AddLogging();
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(_toasts);
-        Services.AddSingleton(new PropertyPageService(
-            new P2CallerProvider(new OwnerAuthenticationProvider()), _properties, new FakeManagerService()));
+        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider());
+        Services.AddSingleton(callerProvider);
+        Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
     }
 
     [Fact]

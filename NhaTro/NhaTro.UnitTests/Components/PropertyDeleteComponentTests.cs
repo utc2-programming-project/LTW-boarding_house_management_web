@@ -109,8 +109,9 @@ public sealed class PropertyDeleteComponentTests : BunitContext
 
     private IRenderedComponent<PropertyList> Render(AuthenticationStateProvider auth)
     {
-        Services.AddSingleton(new PropertyPageService(
-            new P2CallerProvider(auth), _properties, new FakeManagerService()));
+        var callerProvider = new P2CallerProvider(auth);
+        Services.AddSingleton(callerProvider);
+        Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
 
         return Render<PropertyList>();
     }
