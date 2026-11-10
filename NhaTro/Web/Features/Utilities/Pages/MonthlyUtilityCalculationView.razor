@@ -1,0 +1,952 @@
+@page "/services/readings/costs"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UtilityBusiness")]
+@using System.Globalization
+@using Web.Common.Utils
+@using Web.Features.Invoices.Enums
+@using Web.Features.Utilities.Services
+@inject MonthlyUtilityCalculationPageService PageService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject IStringLocalizer<UtilityResources> UL
+
+<PageTitle>@UL["P5CostPageTitle"]</PageTitle>
+
+<div class="monthly-cost-page">
+    <div class="page-heading">
+        <NavBreadcrumb />
+        <div class="page-heading-row">
+            <div class="heading-copy">
+                <h1 class="page-title">@UL["P5CostHeading"]</h1>
+                <p class="page-subtitle">@UL["P5CostSubtitle"]</p>
+                <span class="sql-badge">
+                    <LucideIcon Name="hard-drive" />
+                    <span>@UL["P5CostSqlBadge"]</span>
+                </span>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                    <LucideIcon Name="refresh" />
+                    <span>@UL["P5CostRefresh"]</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="stats-grid" aria-hidden="true">
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="stat-card skeleton tall"></div>
+            }
+        </div>
+        <div class="filters-card skeleton short"></div>
+        <div class="table-card skeleton table-skeleton"></div>
+        <div class="loading-line" role="status">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>@UL["P5CostLoading"]</span>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="inline-error" role="alert">
+            <LucideIcon Name="alert-triangle" />
+            <div>
+                <h2>@UL["P5CostLoadErrorTitle"]</h2>
+                <p>@_error</p>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@UL["P5CostRetry"]</span>
+            </button>
+        </div>
+    }
+    else if (_data is not null)
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">@UL["P5CostStatRooms"]</span>
+                <span class="stat-number tabular-nums">@FilteredRooms.Count</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@UL["P5CostStatRecorded"]</span>
+                <span class="stat-number tabular-nums">@RecordedCount</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">@UL["P5CostStatInvoiced"]</span>
+                <span class="stat-number tabular-nums">@InvoicedCount</span>
+            </div>
+            <div class="stat-card total-stat">
+                <span class="stat-label">@UL["P5CostStatTotal"]</span>
+                <span class="stat-number tabular-nums">@MoneyFormatter.Format(FilteredRooms.Sum(room => room.TotalAmount))</span>
+            </div>
+        </div>
+
+        <div class="filters-card">
+            <div class="filters-row">
+                <label class="filter-field">
+                    <span>@UL["P5CostPropertyFilter"]</span>
+                    <select class="input" @bind="_propertyId" @bind:after="LoadAsync">
+                        <option value="">@UL["P5CostAllProperties"]</option>
+                        @foreach (var property in _data.Properties)
+                        {
+                            <option value="@property.Id">@property.Name</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@UL["P5CostPeriodStart"]</span>
+                    <input type="date" class="input" @bind="_periodStart" @bind:after="OnPeriodChangedAsync" />
+                </label>
+
+                <label class="filter-field">
+                    <span>@UL["P5CostPeriodEnd"]</span>
+                    <input type="date" class="input" @bind="_periodEnd" @bind:after="OnPeriodChangedAsync" />
+                </label>
+
+                <label class="filter-field wide">
+                    <span>@UL["P5CostSearchLabel"]</span>
+                    <input type="search" class="input" placeholder="@UL["P5CostSearchPlaceholder"]" @bind="_search" @bind:event="oninput" />
+                </label>
+
+                <label class="filter-check">
+                    <input type="checkbox" @bind="_onlyUnrecorded" />
+                    <span>@UL["P5CostOnlyUnrecorded"]</span>
+                </label>
+
+                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />
+                    <span>@UL["P5CostResetFilter"]</span>
+                </button>
+            </div>
+
+            @if (_periodError is not null)
+            {
+                <p class="period-error" role="alert">@_periodError</p>
+            }
+            <p class="formula-hint">
+                <LucideIcon Name="info" />
+                <span>@UL["P5CostFormulaHint"]</span>
+            </p>
+        </div>
+
+        @if (FilteredRooms.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon"><LucideIcon Name="inbox" /></div>
+                <h2>@UL["P5CostEmptyTitle"]</h2>
+                <p>@UL["P5CostEmptyDescription"]</p>
+                <button type="button" class="btn btn-secondary" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />
+                    <span>@UL["P5CostResetFilter"]</span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="cost-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left">@UL["P5CostThRoom"]</th>
+                                <th class="text-right">@UL["P5CostThElectricUsage"]</th>
+                                <th class="text-right">@UL["P5CostThElectricAmount"]</th>
+                                <th class="text-right">@UL["P5CostThWaterUsage"]</th>
+                                <th class="text-right">@UL["P5CostThWaterAmount"]</th>
+                                <th class="text-right">@UL["P5CostThServices"]</th>
+                                <th class="text-right">@UL["P5CostThTotal"]</th>
+                                <th>@UL["P5CostThInvoiceStatus"]</th>
+                                <th class="text-right">@UL["P5CostThActions"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var room in FilteredRooms)
+                            {
+                                <tr @key="room.ContractId">
+                                    <td class="cell-room" data-label="@UL["P5CostThRoom"]">
+                                        <div class="room-cell">
+                                            <div>
+                                                <span class="room-code">@room.RoomCode</span>
+                                                <span class="room-property">@room.PropertyName</span>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(room.TenantNames))
+                                            {
+                                                <span class="room-tenant">@room.TenantNames</span>
+                                            }
+                                            <span class="status-badge @StatusClass(room.State)">@StatusLabel(room.State)</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right tabular-nums" data-label="@UL["P5CostThElectricUsage"]">
+                                        @if (room.HasReadings)
+                                        {
+                                            @FormatUsage(room.ElectricUsage, "kWh")
+                                        }
+                                        else
+                                        {
+                                            <span class="no-data">@UL["P5CostNoData"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-right tabular-nums amount" data-label="@UL["P5CostThElectricAmount"]">
+                                        @if (room.HasReadings)
+                                        {
+                                            @MoneyFormatter.Format(room.ElectricCost)
+                                        }
+                                        else
+                                        {
+                                            <span class="no-data">@UL["P5CostNoData"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-right tabular-nums" data-label="@UL["P5CostThWaterUsage"]">
+                                        @if (room.HasReadings)
+                                        {
+                                            @FormatUsage(room.WaterUsage, "m³")
+                                        }
+                                        else
+                                        {
+                                            <span class="no-data">@UL["P5CostNoData"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-right tabular-nums amount" data-label="@UL["P5CostThWaterAmount"]">
+                                        @if (room.HasReadings)
+                                        {
+                                            @MoneyFormatter.Format(room.WaterCost)
+                                        }
+                                        else
+                                        {
+                                            <span class="no-data">@UL["P5CostNoData"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-right tabular-nums amount" data-label="@UL["P5CostThServices"]">
+                                        @if (room.ServiceLines.Count > 0)
+                                        {
+                                            <span>@MoneyFormatter.Format(room.ServiceCost)</span>
+                                            <span class="service-count">@string.Format(UL["P5CostServiceCount"], room.ServiceLines.Count)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="no-data">@UL["P5CostNoData"]</span>
+                                        }
+                                    </td>
+                                    <td class="text-right tabular-nums amount total-cell" data-label="@UL["P5CostThTotal"]">
+                                        @MoneyFormatter.Format(room.TotalAmount)
+                                    </td>
+                                    <td class="cell-invoice" data-label="@UL["P5CostThInvoiceStatus"]">
+                                        @if (room.InvoiceId is { } invoiceId)
+                                        {
+                                            <a class="invoice-link created" href="@InvoiceDetailHref(invoiceId)">
+                                                <LucideIcon Name="receipt" />
+                                                <span>@UL["P5CostInvoiceCreated"]</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="invoice-pill pending">
+                                                <LucideIcon Name="file" />
+                                                <span>@UL["P5CostInvoicePending"]</span>
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-right cell-actions" data-label="@UL["P5CostThActions"]">
+                                        <div class="row-actions">
+                                            <button type="button" class="icon-btn" title="@UL["P5CostDetails"]" aria-label="@UL["P5CostDetails"]" @onclick="() => OpenDetails(room)">
+                                                <LucideIcon Name="eye" />
+                                            </button>
+                                            <AuthorizeView Policy="UtilityRecord">
+                                                <Authorized>
+                                                    @if (!room.IsInvoiced && room.CanAdjust)
+                                                    {
+                                                        <button type="button" class="icon-btn" title="@UL["P5CostEditReading"]" aria-label="@UL["P5CostEditReading"]" @onclick="() => OpenEdit(room, false)">
+                                                            <LucideIcon Name="edit" />
+                                                        </button>
+                                                    }
+                                                    else if (!room.IsInvoiced && !room.HasReadings)
+                                                    {
+                                                        <button type="button" class="icon-btn" title="@UL["P5CostEditReading"]" aria-label="@UL["P5CostEditReading"]" @onclick="() => OpenEdit(room, false)">
+                                                            <LucideIcon Name="plus" />
+                                                        </button>
+                                                    }
+                                                    @if (room.InvoiceId is null)
+                                                    {
+                                                        <button type="button" class="icon-btn" title="@UL["P5CostCreateInvoice"]" aria-label="@UL["P5CostCreateInvoice"]" disabled="@_creatingInvoice" @onclick="() => CreateInvoiceAsync(room)">
+                                                            <LucideIcon Name="arrow-right" />
+                                                        </button>
+                                                    }
+                                                </Authorized>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@if (_detailRoom is not null)
+{
+    var detail = _detailRoom;
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cost-detail-title" @onclick="CloseDetails">
+        <div class="modal-dialog detail-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="cost-detail-title">@string.Format(UL["P5CostDetailTitle"], detail.RoomCode)</h2>
+                    <p>@detail.PropertyName · @detail.ContractNumber · @DateFormatter.Format(detail.PeriodStart) – @DateFormatter.Format(detail.PeriodEnd)</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseDetails">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body detail-body">
+                <div class="detail-topline">
+                    <span class="status-badge @StatusClass(detail.State)">@StatusLabel(detail.State)</span>
+                    @if (detail.InvoiceId is { } detailInvoiceId)
+                    {
+                        <a class="invoice-link created" href="@InvoiceDetailHref(detailInvoiceId)">
+                            <LucideIcon Name="receipt" />
+                            <span>@UL["P5CostInvoiceCreated"]</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="invoice-pill pending">
+                            <LucideIcon Name="file" />
+                            <span>@UL["P5CostInvoicePending"]</span>
+                        </span>
+                    }
+                </div>
+
+                <div class="reading-pair-grid">
+                    <section class="reading-pair-card">
+                        <h3><LucideIcon Name="zap" /> @UL["P5CostElectricSection"]</h3>
+                        <dl>
+                            <div><dt>@UL["P5CostBeforeLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.ElectricStart, "kWh")</dd></div>
+                            <div><dt>@UL["P5CostAfterLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.ElectricEnd, "kWh")</dd></div>
+                            <div><dt>@UL["P5CostUsageLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.ElectricUsage, "kWh")</dd></div>
+                            <div><dt>@UL["P5CostAvgUnitPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.ElectricUnitPrice)</dd></div>
+                            <div class="strong"><dt>@UL["P5CostAmountLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.ElectricCost)</dd></div>
+                        </dl>
+                        @if (detail.ElectricTiers.Count > 0)
+                        {
+                            <table class="mini-table">
+                                <thead>
+                                    <tr>
+                                        <th>@UL["P5CostTierLabel"]</th>
+                                        <th class="text-right">@UL["P5CostQuantityLabel"]</th>
+                                        <th class="text-right">@UL["P5CostUnitPriceLabel"]</th>
+                                        <th class="text-right">@UL["P5CostAmountLabel"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tier in detail.ElectricTiers)
+                                    {
+                                        <tr>
+                                            <td>@tier.TierNumber</td>
+                                            <td class="text-right tabular-nums">@FormatUsage(tier.Quantity, "kWh")</td>
+                                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.UnitPrice)</td>
+                                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Amount)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </section>
+
+                    <section class="reading-pair-card">
+                        <h3><LucideIcon Name="droplet" /> @UL["P5CostWaterSection"]</h3>
+                        <dl>
+                            <div><dt>@UL["P5CostBeforeLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.WaterStart, "m³")</dd></div>
+                            <div><dt>@UL["P5CostAfterLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.WaterEnd, "m³")</dd></div>
+                            <div><dt>@UL["P5CostUsageLabel"]</dt><dd class="tabular-nums">@FormatUsage(detail.WaterUsage, "m³")</dd></div>
+                            <div><dt>@UL["P5CostAvgUnitPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.WaterUnitPrice)</dd></div>
+                            <div class="strong"><dt>@UL["P5CostAmountLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.WaterCost)</dd></div>
+                        </dl>
+                        @if (detail.WaterTiers.Count > 0)
+                        {
+                            <table class="mini-table">
+                                <thead>
+                                    <tr>
+                                        <th>@UL["P5CostTierLabel"]</th>
+                                        <th class="text-right">@UL["P5CostQuantityLabel"]</th>
+                                        <th class="text-right">@UL["P5CostUnitPriceLabel"]</th>
+                                        <th class="text-right">@UL["P5CostAmountLabel"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tier in detail.WaterTiers)
+                                    {
+                                        <tr>
+                                            <td>@tier.TierNumber</td>
+                                            <td class="text-right tabular-nums">@FormatUsage(tier.Quantity, "m³")</td>
+                                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.UnitPrice)</td>
+                                            <td class="text-right tabular-nums">@MoneyFormatter.Format(tier.Amount)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </section>
+                </div>
+
+                <section class="detail-section">
+                    <h3><LucideIcon Name="home" /> @UL["P5CostServiceSection"]</h3>
+                    <dl class="summary-lines">
+                        <div><dt>@UL["P5CostRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.RentAmount)</dd></div>
+                        @foreach (var line in detail.ServiceLines)
+                        {
+                            <div>
+                                <dt>@line.Name <span class="muted">(@FormatUsage(line.Quantity, line.Unit))</span></dt>
+                                <dd class="tabular-nums">@MoneyFormatter.Format(line.Amount)</dd>
+                            </div>
+                        }
+                        <div class="strong total"><dt>@UL["P5CostTotalLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.TotalAmount)</dd></div>
+                    </dl>
+                </section>
+
+                <section class="detail-section">
+                    <div class="section-title-row">
+                        <h3><LucideIcon Name="history" /> @UL["P5CostCorrectionsTitle"]</h3>
+                        <span class="chip">@string.Format(detail.Corrections.Count == 1 ? UL["P5CostCorrectionsCountOne"] : UL["P5CostCorrectionsCount"], detail.Corrections.Count)</span>
+                    </div>
+                    @if (detail.Corrections.Count == 0)
+                    {
+                        <p class="muted">@UL["P5CostCorrectionsEmpty"]</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="mini-table corrections-table">
+                                <thead>
+                                    <tr>
+                                        <th>@UL["P5CostCorrectionField"]</th>
+                                        <th class="text-right">@UL["P5CostCorrectionDiff"]</th>
+                                        <th>@UL["P5CostCorrectionReason"]</th>
+                                        <th>@UL["P5CostCorrectionChangedAt"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var correction in detail.Corrections)
+                                    {
+                                        <tr>
+                                            <td>@CorrectionFieldLabel(correction.Field)</td>
+                                            <td class="text-right tabular-nums">@FormatCorrection(correction)</td>
+                                            <td>@correction.Reason</td>
+                                            <td class="tabular-nums">@FormatMoment(correction.ChangedAt)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </section>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseDetails">
+                    <span>@UL["P5CostClosePanel"]</span>
+                </button>
+                <AuthorizeView Policy="UtilityRecord">
+                    <Authorized>
+                        @if (!detail.IsInvoiced && detail.CanCorrectPrevious && detail.PreviousReading is not null)
+                        {
+                            <button type="button" class="btn btn-secondary" @onclick="() => OpenEdit(detail, true)">
+                                <LucideIcon Name="history" />
+                                <span>@UL["P5CostCorrectPrevious"]</span>
+                            </button>
+                        }
+                        @if (!detail.IsInvoiced && (detail.CanAdjust || !detail.HasReadings))
+                        {
+                            <button type="button" class="btn btn-primary" @onclick="() => OpenEdit(detail, false)">
+                                <LucideIcon Name="edit" />
+                                <span>@(detail.HasReadings ? UL["P5CostAdjustReading"] : UL["P5CostEditReading"])</span>
+                            </button>
+                        }
+                        @if (detail.InvoiceId is null)
+                        {
+                            <button type="button" class="btn btn-primary" disabled="@_creatingInvoice" @onclick="() => CreateInvoiceAsync(detail)">
+                                @if (_creatingInvoice)
+                                {
+                                    <span class="spinner" aria-hidden="true"></span>
+                                    <span>@UL["P5CostInvoiceCreating"]</span>
+                                }
+                                else
+                                {
+                                    <LucideIcon Name="receipt" />
+                                    <span>@UL["P5CostCreateInvoice"]</span>
+                                }
+                            </button>
+                        }
+                    </Authorized>
+                </AuthorizeView>
+            </footer>
+        </div>
+    </div>
+}
+
+@if (_editRoom is not null)
+{
+    var edit = _editRoom;
+    var previous = edit.PreviousReading;
+    var editPeriodStart = _editPrevious && previous is not null ? previous.PeriodStart : edit.PeriodStart;
+    var editPeriodEnd = _editPrevious && previous is not null ? previous.PeriodEnd : edit.PeriodEnd;
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cost-edit-title" @onclick="CloseEdit">
+        <div class="modal-dialog edit-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="cost-edit-title">@(_editPrevious ? UL["P5CostCorrectPreviousTitle"] : UL["P5CostEditTitle"])</h2>
+                    <p>@string.Format(UL["P5CostEditDescription"], edit.RoomCode, DateFormatter.Format(editPeriodStart), DateFormatter.Format(editPeriodEnd))</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseEdit" disabled="@_saving">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                @if (_editPrevious && previous is not null)
+                {
+                    <div class="previous-note">
+                        <LucideIcon Name="history" />
+                        <span>@string.Format(UL["P5CostPreviousPeriodNote"], DateFormatter.Format(previous.PeriodStart), DateFormatter.Format(previous.PeriodEnd))</span>
+                    </div>
+                }
+
+                <div class="edit-grid">
+                    <div class="form-field">
+                        <label for="edit-electric">@UL["P5CostElectricEndLabel"]</label>
+                        <input id="edit-electric"
+                               type="number"
+                               step="0.01"
+                               class="input tabular-nums @(_editElectricInvalid ? "is-invalid" : "")"
+                               @bind="_editElectricEnd" />
+                        <span class="field-hint">@string.Format(UL["P5CostStartReadingHint"], FormatUsage(EditElectricStart, "kWh"))</span>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="edit-water">@UL["P5CostWaterEndLabel"]</label>
+                        <input id="edit-water"
+                               type="number"
+                               step="0.01"
+                               class="input tabular-nums @(_editWaterInvalid ? "is-invalid" : "")"
+                               @bind="_editWaterEnd" />
+                        <span class="field-hint">@string.Format(UL["P5CostStartReadingHint"], FormatUsage(EditWaterStart, "m³"))</span>
+                    </div>
+                </div>
+
+                @if (NeedsReason)
+                {
+                    <div class="form-field">
+                        <label for="edit-reason">@UL["P5CostReasonLabel"] <span class="required">*</span></label>
+                        <input id="edit-reason"
+                               type="text"
+                               class="input @(_editReasonError is not null ? "is-invalid" : "")"
+                               placeholder="@UL["P5CostReasonPlaceholder"]"
+                               @bind="_editReason" />
+                        @if (_editReasonError is not null)
+                        {
+                            <span class="field-error" role="alert">@_editReasonError</span>
+                        }
+                    </div>
+                }
+
+                @if (_editInlineError is not null)
+                {
+                    <div class="inline-error compact" role="alert">
+                        <LucideIcon Name="alert" />
+                        <span>@_editInlineError</span>
+                    </div>
+                }
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseEdit" disabled="@_saving">
+                    @UL["P5CostCancelButton"]
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="SaveEditAsync" disabled="@_saving">
+                    @if (_saving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@UL["P5CostSavingButton"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="check" />
+                        <span>@UL["P5CostSaveButton"]</span>
+                    }
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private MonthlyUtilityViewData? _data;
+    private MonthlyUtilityRoomCostDto? _detailRoom;
+    private MonthlyUtilityRoomCostDto? _editRoom;
+
+    private bool _loading = true;
+    private bool _saving;
+    private bool _creatingInvoice;
+    private bool _editPrevious;
+    private string? _error;
+    private string? _periodError;
+    private string? _editInlineError;
+    private string? _editReasonError;
+    private bool _editElectricInvalid;
+    private bool _editWaterInvalid;
+
+    private int? _propertyId;
+    private string _search = string.Empty;
+    private bool _onlyUnrecorded;
+    private DateOnly _periodStart;
+    private DateOnly _periodEnd;
+
+    private decimal _editElectricEnd;
+    private decimal _editWaterEnd;
+    private string _editReason = string.Empty;
+
+    private IReadOnlyList<MonthlyUtilityRoomCostDto> FilteredRooms
+    {
+        get
+        {
+            if (_data is null) return [];
+
+            IEnumerable<MonthlyUtilityRoomCostDto> rooms = _data.Rooms;
+            if (_onlyUnrecorded)
+            {
+                rooms = rooms.Where(room => !room.HasReadings);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_search))
+            {
+                var term = _search.Trim();
+                rooms = rooms.Where(room =>
+                    room.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || room.TenantNames.Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || room.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || room.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return rooms.ToList();
+        }
+    }
+
+    private int RecordedCount => FilteredRooms.Count(room => room.HasReadings);
+    private int InvoicedCount => FilteredRooms.Count(room => room.IsInvoiced);
+
+    private bool NeedsReason => _editPrevious || _editRoom?.HasReadings == true;
+
+    private decimal EditElectricStart => _editPrevious
+        ? _editRoom?.PreviousReading?.ElectricStart ?? 0m
+        : _editRoom?.ElectricStart ?? 0m;
+
+    private decimal EditWaterStart => _editPrevious
+        ? _editRoom?.PreviousReading?.WaterStart ?? 0m
+        : _editRoom?.WaterStart ?? 0m;
+
+    protected override Task OnInitializedAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        _periodStart = new DateOnly(today.Year, today.Month, 1);
+        _periodEnd = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+        return LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _periodError = null;
+        try
+        {
+            if (_periodEnd < _periodStart)
+            {
+                _periodError = UL["ErrorBillingPeriodEndMustBeOnOrAfterStart"];
+                _loading = false;
+                return;
+            }
+
+            _data = await PageService.LoadAsync(_propertyId, _periodStart, _periodEnd, CancellationToken.None);
+
+            if (_detailRoom is not null)
+            {
+                _detailRoom = _data.Rooms.FirstOrDefault(room => room.RoomId == _detailRoom.RoomId);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = UL["ErrorAccessDenied"];
+            Toast.Error(_error);
+        }
+        catch (Exception)
+        {
+            _error = UL["P5CostLoadError"];
+            Toast.Error(_error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnPeriodChangedAsync()
+    {
+        if (_periodEnd < _periodStart)
+        {
+            _periodError = UL["ErrorBillingPeriodEndMustBeOnOrAfterStart"];
+            return;
+        }
+        _periodError = null;
+        await LoadAsync();
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        _propertyId = null;
+        _search = string.Empty;
+        _onlyUnrecorded = false;
+        _periodStart = new DateOnly(today.Year, today.Month, 1);
+        _periodEnd = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+        await LoadAsync();
+    }
+
+    private void OpenDetails(MonthlyUtilityRoomCostDto room) => _detailRoom = room;
+
+    private void CloseDetails() => _detailRoom = null;
+
+    private void OpenEdit(MonthlyUtilityRoomCostDto room, bool previous)
+    {
+        _editRoom = room;
+        _editPrevious = previous;
+        _editReason = string.Empty;
+        _editReasonError = null;
+        _editInlineError = null;
+        _editElectricInvalid = false;
+        _editWaterInvalid = false;
+
+        if (previous && room.PreviousReading is not null)
+        {
+            _editElectricEnd = room.PreviousReading.ElectricEnd;
+            _editWaterEnd = room.PreviousReading.WaterEnd;
+        }
+        else if (room.HasReadings)
+        {
+            _editElectricEnd = room.ElectricEnd;
+            _editWaterEnd = room.WaterEnd;
+        }
+        else
+        {
+            _editElectricEnd = room.ElectricStart;
+            _editWaterEnd = room.WaterStart;
+        }
+    }
+
+    private void CloseEdit()
+    {
+        if (_saving) return;
+        _editRoom = null;
+        _editInlineError = null;
+        _editReasonError = null;
+        _editElectricInvalid = false;
+        _editWaterInvalid = false;
+        _editPrevious = false;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_editRoom is null || _saving) return;
+
+        _editInlineError = null;
+        _editReasonError = null;
+        _editElectricInvalid = false;
+        _editWaterInvalid = false;
+
+        if (_editElectricEnd < EditElectricStart || _editWaterEnd < EditWaterStart)
+        {
+            _editElectricInvalid = _editElectricEnd < EditElectricStart;
+            _editWaterInvalid = _editWaterEnd < EditWaterStart;
+            _editInlineError = UL["ErrorMeterReadingMustBeGreaterOrEqualStart"];
+            return;
+        }
+
+        if (_editElectricEnd < 0m || _editWaterEnd < 0m)
+        {
+            _editElectricInvalid = _editElectricEnd < 0m;
+            _editWaterInvalid = _editWaterEnd < 0m;
+            _editInlineError = UL["ErrorMeterReadingCannotBeNegative"];
+            return;
+        }
+
+        if (NeedsReason && string.IsNullOrWhiteSpace(_editReason))
+        {
+            _editReasonError = UL["ErrorAdjustmentReasonIsRequired"];
+            return;
+        }
+
+        _saving = true;
+        await Task.Yield();
+        try
+        {
+            MonthlyUtilitySaveResult result;
+            if (_editPrevious)
+            {
+                var previous = _editRoom.PreviousReading;
+                if (previous is null)
+                {
+                    _editInlineError = UL["P5CostSaveFailed"];
+                    return;
+                }
+
+                result = await PageService.CorrectAsync(
+                    previous.Id,
+                    _editElectricEnd,
+                    _editWaterEnd,
+                    _editReason,
+                    CancellationToken.None);
+            }
+            else
+            {
+                result = await PageService.SaveAsync(
+                    new MonthlyUtilitySaveRequest(
+                        _editRoom.RoomId,
+                        _editRoom.ContractId,
+                        _editRoom.ReadingId,
+                        _editRoom.PeriodStart,
+                        _editRoom.PeriodEnd,
+                        _editElectricEnd,
+                        _editWaterEnd,
+                        NeedsReason ? _editReason : null),
+                    CancellationToken.None);
+            }
+
+            if (result.Success)
+            {
+                Toast.Success(NeedsReason ? UL["P5CostAdjustSuccess"] : UL["P5CostSaveSuccess"]);
+                _detailRoom = null;
+                // CloseEdit() tự bỏ qua khi _saving còn true; hạ cờ trước để modal đóng thật.
+                _saving = false;
+                CloseEdit();
+                await LoadAsync();
+                return;
+            }
+
+            var message = result.PendingApproval
+                ? UL["P5CostApprovalPending"]
+                : ErrorMessage(result.ErrorCode);
+            if (result.ErrorCode == "InvalidReading")
+            {
+                _editElectricInvalid = true;
+                _editWaterInvalid = true;
+            }
+            _editInlineError = message;
+            Toast.Error(message);
+        }
+        catch (Exception)
+        {
+            _editInlineError = UL["P5CostSaveFailed"];
+            Toast.Error(_editInlineError);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task CreateInvoiceAsync(MonthlyUtilityRoomCostDto room)
+    {
+        if (_creatingInvoice) return;
+        _creatingInvoice = true;
+        try
+        {
+            var result = await PageService.CreateInvoiceAsync(
+                room.ContractId,
+                room.PeriodStart,
+                room.PeriodEnd,
+                CancellationToken.None);
+            if (result.Success && result.InvoiceId is { } invoiceId)
+            {
+                Toast.Success(UL["P5CostInvoiceCreatedToast"]);
+                _detailRoom = null;
+                Navigation.NavigateTo($"/invoices/{invoiceId}");
+                return;
+            }
+
+            var message = InvoiceErrorMessage(result.ErrorCode);
+            Toast.Error(message);
+        }
+        catch (Exception)
+        {
+            Toast.Error(UL["P5CostInvoiceFailed"]);
+        }
+        finally
+        {
+            _creatingInvoice = false;
+        }
+    }
+
+    private string InvoiceErrorMessage(string? code) => code switch
+    {
+        "DuplicateInvoice" => UL["P5CostInvoiceDuplicate"],
+        "Forbidden" or "AccessDenied" or "OutsideScope" or "ContractNotApproved" or "ContractNotFound" => UL["ErrorAccessDenied"],
+        "InvalidPeriod" => UL["ErrorBillingPeriodEndMustBeOnOrAfterStart"],
+        "InvalidItem" or "ItemsRequired" => UL["P5CostInvoiceFailed"],
+        "ApprovalRequired" => UL["P5CostApprovalPending"],
+        "RoomNotFound" => UL["ErrorRoomNotFound"],
+        _ => UL["P5CostInvoiceFailed"],
+    };
+
+    private string ErrorMessage(string? code) => code switch
+    {
+        "Forbidden" or "AccessDenied" or "OutsideScope" => UL["ErrorAccessDenied"],
+        "InvalidPeriod" => UL["ErrorBillingPeriodEndMustBeOnOrAfterStart"],
+        "InvalidReading" => UL["ErrorMeterReadingMustBeGreaterOrEqualStart"],
+        "AdjustmentReasonRequired" => UL["ErrorAdjustmentReasonIsRequired"],
+        "NotAdjustable" => UL["P5CostNotAdjustable"],
+        "ApprovalRequired" => UL["P5CostApprovalPending"],
+        "DuplicatePeriod" => UL["P5CostDuplicatePeriod"],
+        "RoomNotFound" => UL["ErrorRoomNotFound"],
+        "ReadingNotFound" => UL["P5CostReadingNotFound"],
+        _ => UL["P5CostSaveFailed"],
+    };
+
+    private string StatusClass(MonthlyUtilityPeriodState state) => state switch
+    {
+        MonthlyUtilityPeriodState.Open => "status-open",
+        MonthlyUtilityPeriodState.Closed => "status-closed",
+        _ => "status-invoiced",
+    };
+
+    private string StatusLabel(MonthlyUtilityPeriodState state) => state switch
+    {
+        MonthlyUtilityPeriodState.Open => UL["P5CostStatusOpen"],
+        MonthlyUtilityPeriodState.Closed => UL["P5CostStatusClosed"],
+        _ => UL["P5CostStatusInvoiced"],
+    };
+
+    private string CorrectionFieldLabel(string field) => field switch
+    {
+        "Electric" => UL["P5CostCorrectionElectric"],
+        "Water" => UL["P5CostCorrectionWater"],
+        _ => field,
+    };
+
+    private string FormatCorrection(MonthlyUtilityCorrectionDto correction) =>
+        $"{FormatNumber(correction.OldValue)} → {FormatNumber(correction.NewValue)}";
+
+    private string FormatUsage(decimal value, string unit) => $"{FormatNumber(value)} {unit}";
+
+    private static string FormatNumber(decimal value) => value.ToString("0.##", Inv);
+
+    private static string FormatMoment(DateTimeOffset value) =>
+        DateFormatter.FormatDateTime(value.UtcDateTime);
+
+    private static string InvoiceDetailHref(int invoiceId) => $"/invoices/{invoiceId}";
+}

@@ -19,10 +19,10 @@
     gap: 8px 16px;
     margin-bottom: 16px;
     padding: 12px 14px;
-    border: 1px solid var(--error-border, #B91C1C);
+    border: 1px solid var(--error-border);
     border-radius: 8px;
-    background: var(--error-bg, #FEF2F2);
-    color: var(--error-text, #B91C1C);
+    background: var(--error-bg);
+    color: var(--error-text);
 }
 
 .tenant-conflict-alert p {
@@ -55,8 +55,9 @@
 }
 
 .tenant-form-grid ::deep .tenant-textarea {
-    height: 112px;
-    min-height: 112px;
+    /* Căn đáy ô ghi chú với hàng Tỉnh/Thành phố - Phường/Xã của khối địa chỉ bên trái. */
+    height: 147px;
+    min-height: 147px;
     padding: 10px 12px;
     resize: vertical;
 }

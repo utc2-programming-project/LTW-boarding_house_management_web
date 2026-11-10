@@ -25,6 +25,15 @@ public sealed class RoomFilter
     [Range(0, (double)decimal.MaxValue)]
     public decimal? MaxPrice { get; set; }
 
+    [Range(0, 1000)]
+    public int? Floor { get; set; }
+
+    [Range(0, (double)decimal.MaxValue)]
+    public decimal? MinArea { get; set; }
+
+    [Range(0, (double)decimal.MaxValue)]
+    public decimal? MaxArea { get; set; }
+
     [Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
@@ -38,5 +47,7 @@ public sealed class RoomFilter
         Keyword = string.IsNullOrWhiteSpace(Keyword) ? null : Keyword.Trim();
         if (MinPrice is < 0) MinPrice = null;
         if (MaxPrice is < 0) MaxPrice = null;
+        if (MinArea is < 0) MinArea = null;
+        if (MaxArea is < 0) MaxArea = null;
     }
 }

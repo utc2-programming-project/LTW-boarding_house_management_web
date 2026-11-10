@@ -3,7 +3,7 @@
 
 <div class="field">
     <div class="label-heading">
-        <label class="label" for="@Id">
+        <label class="label" for="@(LabelFor ?? Id)">
             <span class="label-text">
                 @Label
                 @if (Required)
@@ -43,6 +43,13 @@
     /// </summary>
     [Parameter, EditorRequired]
     public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Id của ô nhập cần gắn nhãn khi khác <see cref="Id"/>; dùng cho component gồm nhiều ô con
+    /// như địa chỉ, nơi Id gốc vẫn là id của vùng lỗi.
+    /// </summary>
+    [Parameter]
+    public string? LabelFor { get; set; }
 
     /// <summary>Thuộc tính của model gắn với ô nhập, ví dụ <c>() =&gt; model.Name</c>. Dùng bên trong EditForm.</summary>
     [Parameter, EditorRequired]

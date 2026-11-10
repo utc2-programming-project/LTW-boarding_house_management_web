@@ -4,26 +4,6 @@
     gap: var(--space-5);
 }
 
-.page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-}
-
-.page-title {
-    margin: 0;
-    font-size: 1.5rem;
-    line-height: 1.3;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.page-subtitle {
-    margin: var(--space-1) 0 0;
-    color: var(--text-secondary);
-}
-
 .page-error {
     display: flex;
     align-items: center;
@@ -48,8 +28,8 @@
 .stat-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4);
+    gap: 4px;
+    padding: 20px;
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--surface);
@@ -64,9 +44,9 @@
 
 .stat-number {
     color: var(--text-primary);
-    font-size: 1.5rem;
+    font-size: 28px;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 36px;
 }
 
 .pending-card .stat-number {
@@ -101,6 +81,20 @@
     width: 100%;
 }
 
+.filter-field.wide {
+    flex: 1 1 260px;
+}
+
+.filters-row-secondary {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+
+.reset-button {
+    margin-left: auto;
+}
+
 .table-card {
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
@@ -116,27 +110,30 @@
 .review-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: .875rem;
+    font-size: 13px;
+    text-align: left;
 }
 
 .review-table th {
-    padding: var(--space-3) var(--space-4);
+    height: 44px;
+    padding: 0 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface-subtle);
     color: var(--text-secondary);
-    font-size: .75rem;
+    font-size: 12px;
     font-weight: 600;
     text-align: left;
     text-transform: uppercase;
-    letter-spacing: .02em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
 }
 
 .review-table td {
-    padding: var(--space-3) var(--space-4);
+    height: 52px;
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border);
     color: var(--text-primary);
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .review-table tbody tr:hover {
@@ -208,9 +205,5 @@
 @media (max-width: 560px) {
     .stats-grid {
         grid-template-columns: 1fr;
-    }
-
-    .page-header {
-        flex-direction: column;
     }
 }

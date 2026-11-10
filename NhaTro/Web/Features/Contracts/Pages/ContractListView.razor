@@ -19,23 +19,78 @@
 <PageTitle>@L["ContractListTitle"]</PageTitle>
 
 <section class="contract-list-page" aria-labelledby="contract-list-title">
-    <NavBreadcrumb />
-    <header class="page-heading">
-        <div><h1 id="contract-list-title">@L["ContractListTitle"]</h1><p>@L["ContractListDescription"]</p></div>
-        <AuthorizeView Roles="ChuTro,QuanLy">
-            <Authorized>
-                <div class="contract-heading-actions">
-                    <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
-                    <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-    </header>
+    <PageHeading Title="@L["ContractListTitle"]" TitleId="contract-list-title" HelpText="@L["ContractListDescription"]">
+        <Actions>
+            <AuthorizeView Roles="ChuTro,QuanLy">
+                <Authorized>
+                    <div class="contract-heading-actions">
+                        <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
+                        <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </Actions>
+    </PageHeading>
 
     <form class="contract-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
         <label for="contract-keyword">@L["ContractSearchLabel"]</label>
-        <div><input id="contract-keyword" class="input" @bind="_keyword" placeholder="@L["ContractSearchPlaceholder"]" />
-            <button class="btn btn-secondary" type="submit"><LucideIcon Name="search" />@L["ContractSearchAction"]</button></div>
+        <div class="contract-filter-row">
+            <input id="contract-keyword" class="input" @bind="_keyword" placeholder="@L["ContractSearchPlaceholder"]" />
+            <button class="btn btn-secondary" type="submit"><LucideIcon Name="search" />@L["ContractSearchAction"]</button>
+        </div>
+        <div class="contract-filter-row contract-filter-options">
+            <select id="contract-status-filter" class="input" aria-label="@L["ContractStatusLabel"]"
+                    value="@_statusFilter" @onchange="HandleStatusFilterChanged">
+                <option value="all">@L["ContractFilterStatusAll"]</option>
+                <option value="pending">@L["ContractStatusPending"]</option>
+                <option value="upcoming">@L["ContractStatusUpcoming"]</option>
+                <option value="active">@L["ContractStatusActive"]</option>
+                <option value="expiring">@L["ContractStatusExpiringSoon"]</option>
+                <option value="expired">@L["ContractStatusExpired"]</option>
+                <option value="liquidated">@L["ContractStatusLiquidated"]</option>
+                <option value="rejected">@L["ContractStatusRejected"]</option>
+            </select>
+
+            <select id="contract-property-filter" class="input" aria-label="@L["ContractPropertyLabel"]"
+                    value="@_propertyFilter" @onchange="HandlePropertyFilterChanged">
+                <option value="all">@L["ContractFilterPropertyAll"]</option>
+                @foreach (var propertyName in PropertyOptions)
+                {
+                    <option value="@propertyName">@propertyName</option>
+                }
+            </select>
+
+            <select id="contract-sort-filter" class="input" aria-label="@L["ContractFilterSortLabel"]"
+                    value="@_sortFilter" @onchange="HandleSortChanged">
+                <option value="newest">@L["ContractFilterSortNewest"]</option>
+                <option value="expiring">@L["ContractFilterSortExpiring"]</option>
+                <option value="room">@L["ContractFilterSortRoom"]</option>
+            </select>
+
+            <button type="button" class="btn btn-secondary contract-reset-button" @onclick="ResetFiltersAsync">
+                <LucideIcon Name="refresh" />@L["ContractFilterReset"]
+            </button>
+        </div>
+        <div class="contract-filter-row contract-filter-advanced">
+            <label class="contract-field" for="contract-term-from">
+                <span>@L["ContractFilterDateFrom"]</span>
+                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" />
+            </label>
+            <label class="contract-field" for="contract-term-to">
+                <span>@L["ContractFilterDateTo"]</span>
+                <input id="contract-term-to" type="date" class="input" @bind="_termTo" />
+            </label>
+            <label class="contract-field" for="contract-min-rent">
+                <span>@L["ContractFilterMinRent"]</span>
+                <input id="contract-min-rent" type="number" min="0" step="1000" class="input"
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" />
+            </label>
+            <label class="contract-field" for="contract-max-rent">
+                <span>@L["ContractFilterMaxRent"]</span>
+                <input id="contract-max-rent" type="number" min="0" step="1000" class="input"
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" />
+            </label>
+        </div>
     </form>
 
     @if (_loading)
@@ -54,6 +109,12 @@
             <AuthorizeView Roles="ChuTro,QuanLy"><Authorized><a class="btn btn-primary" href="/contracts/create">@L["ContractCreateAction"]</a></Authorized></AuthorizeView>
         </EmptyStateCard>
     }
+    else if (VisibleItems.Count == 0)
+    {
+        <EmptyStateCard Title="@L["ContractFilterEmptyTitle"]" Description="@L["ContractFilterEmptyDesc"]">
+            <button class="btn btn-secondary" @onclick="ResetFiltersAsync">@L["ContractFilterReset"]</button>
+        </EmptyStateCard>
+    }
     else
     {
         <div class="contract-table-wrap">
@@ -63,7 +124,7 @@
                     <th scope="col">@L["ContractTermLabel"]</th><th scope="col" class="numeric">@L["ContractFinanceLabel"]</th><th scope="col">@L["ContractStatusActionsLabel"]</th>
                 </tr></thead>
                 <tbody>
-                @foreach (var item in _items)
+                @foreach (var item in VisibleItems)
                 {
                     <tr role="row">
                         <td role="cell" data-label="@L["ContractNumberLabel"]"><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
@@ -98,12 +159,73 @@
 @code {
     private IReadOnlyList<ContractListItemDto> _items = [];
     private string? _keyword;
+    private string _statusFilter = "all";
+    private string _propertyFilter = "all";
+    private string _sortFilter = "newest";
+    private DateTime? _termFrom;
+    private DateTime? _termTo;
+    private decimal? _minRent;
+    private decimal? _maxRent;
     private bool _loading = true;
     private bool _failed;
     private bool _canApprove;
     private bool _decisionOpen;
     private bool _decisionBusy;
     private Guid _decisionContractId;
+
+    private IEnumerable<string> PropertyOptions => _items
+        .Select(item => item.PropertyName)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase);
+
+    private IReadOnlyList<ContractListItemDto> VisibleItems
+    {
+        get
+        {
+            IEnumerable<ContractListItemDto> query = _items;
+
+            if (_statusFilter != "all")
+            {
+                query = query.Where(item => StatusKey(DisplayStatusOf(item)) == _statusFilter);
+            }
+
+            if (_propertyFilter != "all")
+            {
+                query = query.Where(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Khoảng ngày xét theo giao nhau của thời hạn hợp đồng.
+            if (_termFrom is { } termFrom)
+            {
+                query = query.Where(item => item.EndDate.Date >= termFrom.Date);
+            }
+
+            if (_termTo is { } termTo)
+            {
+                query = query.Where(item => item.StartDate.Date <= termTo.Date);
+            }
+
+            if (_minRent is { } minRent)
+            {
+                query = query.Where(item => item.SnapshotPrice >= minRent);
+            }
+
+            if (_maxRent is { } maxRent)
+            {
+                query = query.Where(item => item.SnapshotPrice <= maxRent);
+            }
+
+            query = _sortFilter switch
+            {
+                "expiring" => query.OrderBy(item => item.EndDate).ThenBy(item => item.RoomCode),
+                "room" => query.OrderBy(item => item.RoomCode, StringComparer.OrdinalIgnoreCase),
+                _ => query.OrderByDescending(item => item.StartDate).ThenBy(item => item.RoomCode),
+            };
+
+            return query.ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,10 +235,48 @@
     }
 
     private async Task SearchAsync() => await LoadAsync();
+
+    private void HandleStatusFilterChanged(ChangeEventArgs e)
+    {
+        _statusFilter = e.Value?.ToString() ?? "all";
+    }
+
+    private void HandlePropertyFilterChanged(ChangeEventArgs e)
+    {
+        _propertyFilter = e.Value?.ToString() ?? "all";
+    }
+
+    private void HandleSortChanged(ChangeEventArgs e)
+    {
+        _sortFilter = e.Value?.ToString() ?? "newest";
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _keyword = null;
+        _statusFilter = "all";
+        _propertyFilter = "all";
+        _sortFilter = "newest";
+        _termFrom = null;
+        _termTo = null;
+        _minRent = null;
+        _maxRent = null;
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
         _loading = true; _failed = false;
-        try { _items = await Contracts.ListAsync(_keyword); }
+        try
+        {
+            _items = await Contracts.ListAsync(_keyword);
+
+            if (_propertyFilter != "all" &&
+                !_items.Any(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase)))
+            {
+                _propertyFilter = "all";
+            }
+        }
         catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
         finally { _loading = false; }
     }
@@ -136,17 +296,29 @@
         finally { _decisionBusy = false; }
     }
     private string ErrorText(Exception ex) => ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
-    private string StatusLabel(ContractListItemDto item) => L[ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    private ContractDisplayStatus DisplayStatusOf(ContractListItemDto item) =>
+        ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam());
+    private static string StatusKey(ContractDisplayStatus status) => status switch
     {
-        ContractDisplayStatus.Pending => "ContractStatusPending",
-        ContractDisplayStatus.Upcoming => "ContractStatusUpcoming",
-        ContractDisplayStatus.Active => "ContractStatusActive",
-        ContractDisplayStatus.ExpiringSoon => "ContractStatusExpiringSoon",
-        ContractDisplayStatus.Expired => "ContractStatusExpired",
-        ContractDisplayStatus.Liquidated => "ContractStatusLiquidated",
+        ContractDisplayStatus.Pending => "pending",
+        ContractDisplayStatus.Upcoming => "upcoming",
+        ContractDisplayStatus.Active => "active",
+        ContractDisplayStatus.ExpiringSoon => "expiring",
+        ContractDisplayStatus.Expired => "expired",
+        ContractDisplayStatus.Liquidated => "liquidated",
+        _ => "rejected",
+    };
+    private string StatusLabel(ContractListItemDto item) => L[StatusKey(DisplayStatusOf(item)) switch
+    {
+        "pending" => "ContractStatusPending",
+        "upcoming" => "ContractStatusUpcoming",
+        "active" => "ContractStatusActive",
+        "expiring" => "ContractStatusExpiringSoon",
+        "expired" => "ContractStatusExpired",
+        "liquidated" => "ContractStatusLiquidated",
         _ => "ContractStatusRejected",
     }];
-    private BadgeTone StatusTone(ContractListItemDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
+    private BadgeTone StatusTone(ContractListItemDto item) => DisplayStatusOf(item) switch
     {
         ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
         ContractDisplayStatus.Upcoming => BadgeTone.Info,

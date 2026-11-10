@@ -13,26 +13,26 @@
 <div class="home-page">
     @if (!IsManagement)
     {
-    <header class="home-header">
-        <div class="home-title-stack">
-            <NavBreadcrumb />
-            <h1>@Greeting@(string.IsNullOrEmpty(DisplayName) ? "" : $", {DisplayName}")</h1>
-            <p class="home-meta">
-                @if (Snapshot is { } roleSnapshot)
-                {
-                    <span class="role-badge">@RoleLabel(roleSnapshot.Role)</span>
-                }
-                <span>@DateFormatter.Format(Time.TodayVietnam())</span>
-                @if (LastRefreshed is { } refreshed)
-                {
-                    <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
-                }
-            </p>
-        </div>
-        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
-            <LucideIcon Name="refresh" />@L["Refresh"]
-        </button>
-    </header>
+        <PageHeading Title="@HeadingTitle" HelpText="@L["HomeDescription"]">
+            <HeadingMeta>
+                <p class="home-meta">
+                    @if (Snapshot is { } roleSnapshot)
+                    {
+                        <span class="role-badge">@RoleLabel(roleSnapshot.Role)</span>
+                    }
+                    <span>@DateFormatter.Format(Time.TodayVietnam())</span>
+                    @if (LastRefreshed is { } refreshed)
+                    {
+                        <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
+                    }
+                </p>
+            </HeadingMeta>
+            <Actions>
+                <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
+                    <LucideIcon Name="refresh" />@L["Refresh"]
+                </button>
+            </Actions>
+        </PageHeading>
     }
     else if (WorkInitialized)
     {
@@ -209,6 +209,8 @@
     private bool WorkInitialized;
 
     private string DisplayName => Snapshot?.DisplayName ?? "";
+
+    private string HeadingTitle => string.IsNullOrEmpty(DisplayName) ? Greeting : $"{Greeting}, {DisplayName}";
 
     private string Greeting
     {

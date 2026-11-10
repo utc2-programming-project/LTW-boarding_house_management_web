@@ -33,6 +33,7 @@ using Web.Features.Tenants.Services;
 using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Email;
+using Web.Infrastructure.Addresses;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -246,6 +247,13 @@ builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
+// PLAN-010: nháp thiết lập nhà trọ ở local (ProtectedLocalStorage do Blazor đăng ký sẵn;
+// khai báo lại để chắc chắn resolve được trong mọi cấu hình host).
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedLocalStorage>();
+builder.Services.AddScoped<Web.Features.Properties.Services.PropertySetupDraftStore>();
+
+// Gợi ý địa chỉ: đọc một lần dữ liệu JSON 34 tỉnh/thành phố và 3.321 phường/xã trong wwwroot.
+builder.Services.AddSingleton<VietnamAddressCatalog>();
 
 // 21 công tắc Quản lý lưu trong SQL (không đặt ở appsettings). Service ghi chỉ dành cho Chủ trọ;
 // policy chỉ đọc, dùng chung để quyết định có thay Quản lý hay không.
@@ -366,6 +374,9 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
+// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
+builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
+    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
@@ -420,7 +431,17 @@ builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationServ
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
+// VHT-58: màn hình chỉ số/chi phí P5 đọc SQL thật (kỳ, snapshot biểu giá, hóa đơn P6).
+builder.Services.AddScoped<Web.Features.Utilities.Services.MonthlyUtilityCalculationPageService>();
+// Khách thuê đăng ký dịch vụ hằng tháng theo hợp đồng.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ContractServiceRegistrationService>();
+// Quy trình đăng ký dịch vụ có xét duyệt + tạo hóa đơn từ yêu cầu.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceRegistrationService>();
+builder.Services.AddScoped<Web.Features.Notifications.INotificationService, Web.Features.Notifications.NotificationService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
+// VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.
+builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingService,
+    Web.Features.Utilities.Services.UtilityReadingPeriodService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();

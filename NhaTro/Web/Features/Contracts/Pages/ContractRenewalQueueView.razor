@@ -15,11 +15,11 @@
 <PageTitle>@L["RenewalQueueTitle"]</PageTitle>
 
 <section class="renewal-queue-page" aria-labelledby="renewal-queue-title">
-    <NavBreadcrumb />
-    <header class="page-heading">
-        <div><h1 id="renewal-queue-title">@L["RenewalQueueTitle"]</h1><p>@L["RenewalQueueDescription"]</p></div>
-        <a class="btn btn-secondary" href="/contracts"><LucideIcon Name="arrow-left" />@L["ContractBackToList"]</a>
-    </header>
+    <PageHeading Title="@L["RenewalQueueTitle"]" TitleId="renewal-queue-title" HelpText="@L["RenewalQueueDescription"]">
+        <Actions>
+            <a class="btn btn-secondary" href="/contracts"><LucideIcon Name="arrow-left" />@L["ContractBackToList"]</a>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {

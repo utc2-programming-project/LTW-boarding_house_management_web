@@ -1,6 +1,6 @@
 @inject IStringLocalizer<Shared> L
 
-<nav class="breadcrumb" aria-label="@L["Breadcrumb"]">
+<nav class="@(TitleAsHeading ? "breadcrumb breadcrumb-heading" : "breadcrumb")" aria-label="@L["Breadcrumb"]">
     <ol>
         @for (var i = 0; i < Items.Count; i++)
         {
@@ -13,7 +13,16 @@
                 }
                 else if (isLast)
                 {
-                    <span aria-current="page">@item.Label</span>
+                    @if (TitleAsHeading)
+                    {
+                        <h1 id="@HeadingId" aria-current="page">@(HeadingText ?? item.Label)</h1>
+                        @CurrentContent
+                        @HeadingSuffix
+                    }
+                    else
+                    {
+                        <span aria-current="page">@item.Label</span>
+                    }
                 }
                 else
                 {
@@ -29,6 +38,11 @@
 </nav>
 
 @code {
+    [Parameter] public bool TitleAsHeading { get; set; }
+    [Parameter] public string? HeadingId { get; set; }
+    [Parameter] public string? HeadingText { get; set; }
+    [Parameter] public RenderFragment? CurrentContent { get; set; }
+    [Parameter] public RenderFragment? HeadingSuffix { get; set; }
     [Parameter, EditorRequired] public IReadOnlyList<BreadcrumbItem> Items { get; set; } = [];
     public sealed record BreadcrumbItem(string Label, string? Href = null);
 }

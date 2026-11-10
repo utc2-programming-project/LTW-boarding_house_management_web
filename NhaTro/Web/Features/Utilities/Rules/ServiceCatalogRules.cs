@@ -4,6 +4,7 @@ namespace Web.Features.Utilities.Rules;
 
 public static class ServiceCatalogRules
 {
+    public const int MaxUnitLength = 30;
     public static IReadOnlyList<string> Validate(CreateServiceCatalogDto request) =>
         Validate(request.Name, request.Unit, request.CalculationMethod, request.UnitPrice, request.EffectiveDate, request.EffectiveTo, request.Note, request.Description);
 
@@ -22,7 +23,7 @@ public static class ServiceCatalogRules
     {
         var errors = new List<string>();
         if (string.IsNullOrWhiteSpace(name)) errors.Add(nameof(CreateServiceCatalogDto.Name));
-        if (string.IsNullOrWhiteSpace(unit)) errors.Add(nameof(CreateServiceCatalogDto.Unit));
+        if (string.IsNullOrWhiteSpace(unit) || unit.Trim().Length > MaxUnitLength) errors.Add(nameof(CreateServiceCatalogDto.Unit));
         if (string.IsNullOrWhiteSpace(calculationMethod)) errors.Add(nameof(CreateServiceCatalogDto.CalculationMethod));
         if (unitPrice <= 0m) errors.Add(nameof(CreateServiceCatalogDto.UnitPrice));
         if (effectiveDate == default) errors.Add(nameof(CreateServiceCatalogDto.EffectiveDate));

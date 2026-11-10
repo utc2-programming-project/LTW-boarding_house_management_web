@@ -8,18 +8,14 @@
 <PageTitle>@L["ReviewPageTitle"]</PageTitle>
 
 <div class="payment-review-page">
-    <NavBreadcrumb />
-
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@L["ReviewHeading"]</h1>
-            <p class="page-subtitle">@L["ReviewSubtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
-            <LucideIcon Name="refresh" />
-            <span>@L["ReviewRefresh"]</span>
-        </button>
-    </header>
+    <PageHeading Title="@L["ReviewHeading"]" HelpText="@L["ReviewSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@L["ReviewRefresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -57,13 +53,67 @@
             <div class="filters-row">
                 <label class="filter-field">
                     <span>@L["ReviewFilterStatus"]</span>
-                    <select class="input" @bind="_status" @bind:after="OnStatusChangedAsync">
+                    <select class="input" @bind="_status" @bind:after="OnFilterChangedAsync">
                         <option value="">@L["ReviewAllStatuses"]</option>
                         <option value="@PaymentStatus.Pending">@L["PaymentStatusPending"]</option>
                         <option value="@PaymentStatus.Confirmed">@L["PaymentStatusConfirmed"]</option>
                         <option value="@PaymentStatus.Rejected">@L["PaymentStatusRejected"]</option>
                     </select>
                 </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterYear"]</span>
+                    <select class="input" @bind="_year" @bind:after="OnFilterChangedAsync">
+                        <option value="">@L["AllYears"]</option>
+                        @foreach (var year in AvailableYears)
+                        {
+                            <option value="@year">@year</option>
+                        }
+                    </select>
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["FilterMonth"]</span>
+                    <select class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChangedAsync">
+                        <option value="">@L["AllMonths"]</option>
+                        @for (var month = 1; month <= 12; month++)
+                        {
+                            <option value="@month">@string.Format(L["MonthValue"], month)</option>
+                        }
+                    </select>
+                </label>
+            </div>
+
+            <div class="filters-row filters-row-secondary">
+                <label class="filter-field wide">
+                    <span>@L["ReviewFilterKeyword"]</span>
+                    <input class="input"
+                           type="search"
+                           autocomplete="off"
+                           placeholder="@L["ReviewFilterKeywordPlaceholder"]"
+                           @bind="_keyword"
+                           @bind:event="oninput"
+                           @bind:after="OnFilterChangedAsync" />
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["ReviewFilterMinAmount"]</span>
+                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                           placeholder="@L["ReviewAmountPlaceholder"]"
+                           @bind="_minAmount" @bind:after="OnFilterChangedAsync" />
+                </label>
+
+                <label class="filter-field">
+                    <span>@L["ReviewFilterMaxAmount"]</span>
+                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                           placeholder="@L["ReviewAmountPlaceholder"]"
+                           @bind="_maxAmount" @bind:after="OnFilterChangedAsync" />
+                </label>
+
+                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["ResetFilter"]</span>
+                </button>
             </div>
         </div>
 
@@ -165,9 +215,23 @@
     };
 
     private PaymentStatus? _status = PaymentStatus.Pending;
+    private string _keyword = string.Empty;
+    private int? _year;
+    private int? _month;
+    private string _minAmount = string.Empty;
+    private string _maxAmount = string.Empty;
     private bool _loading = true;
     private string? _error;
     private int _page = 1;
+
+    private static IReadOnlyList<int> AvailableYears
+    {
+        get
+        {
+            var current = DateTime.UtcNow.Year;
+            return Enumerable.Range(current - 5, 7).Reverse().ToArray();
+        }
+    }
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
@@ -183,6 +247,11 @@
             _result = await ReviewPage.ListAsync(new PaymentReviewFilter
             {
                 Status = _status,
+                Keyword = _keyword,
+                Year = _year,
+                Month = _month,
+                MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
+                MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
                 Page = _page,
                 PageSize = PageSize,
             });
@@ -201,8 +270,25 @@
         }
     }
 
-    private async Task OnStatusChangedAsync()
+    private async Task OnFilterChangedAsync()
     {
+        if (_year is null)
+        {
+            _month = null;
+        }
+
+        _page = 1;
+        await ReloadAsync();
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _status = null;
+        _keyword = string.Empty;
+        _year = null;
+        _month = null;
+        _minAmount = string.Empty;
+        _maxAmount = string.Empty;
         _page = 1;
         await ReloadAsync();
     }

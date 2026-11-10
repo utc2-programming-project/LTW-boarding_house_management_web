@@ -78,4 +78,5 @@
 <data name="QuickPermissions" xml:space="preserve"><value>Permissions</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>In progress</value></data>
 <data name="WorkScopeNote" xml:space="preserve"><value>Work lists below cover all data you are allowed to access and do not follow the statistics filters below.</value></data>
+<data name="HomeDescription" xml:space="preserve"><value>A quick overview of properties, rooms, contracts and invoices within your account scope.</value></data>
 </root>

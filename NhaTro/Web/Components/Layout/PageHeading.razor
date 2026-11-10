@@ -1,0 +1,95 @@
+@inject IStringLocalizer<Shared> L
+
+<div class="page-heading @Class">
+    <div class="page-heading-main">
+        @if (ShowBreadcrumb)
+        {
+            @if (BreadcrumbItems is not null)
+            {
+                <BreadcrumbNav Items="BreadcrumbItems" TitleAsHeading="true" HeadingId="@TitleId" HeadingText="@Title">
+                    <CurrentContent>
+                        @if (HasHelp)
+                        {
+                            <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                        }
+                    </CurrentContent>
+                    <HeadingSuffix>@HeadingSuffix</HeadingSuffix>
+                </BreadcrumbNav>
+            }
+            else
+            {
+                <NavBreadcrumb TitleAsHeading="true" HeadingId="@TitleId" HeadingText="@Title"
+                               HeadingLabel="@(string.IsNullOrWhiteSpace(CurrentLabel) ? Title : null)"
+                               CurrentLabel="@CurrentLabel">
+                    <CurrentContent>
+                        @if (HasHelp)
+                        {
+                            <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                        }
+                    </CurrentContent>
+                    <HeadingSuffix>@HeadingSuffix</HeadingSuffix>
+                </NavBreadcrumb>
+            }
+        }
+        else
+        {
+            <div class="page-heading-title">
+                <h1 id="@TitleId">@Title</h1>
+                @if (HasHelp)
+                {
+                    <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                }
+                @HeadingSuffix
+            </div>
+        }
+        @if (HasHelp)
+        {
+            <p id="@_helpId" class="page-heading-description" hidden>@HelpText</p>
+        }
+        @HeadingMeta
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="page-heading-actions">@Actions</div>
+    }
+</div>
+
+@code {
+    /// <summary>Tiêu đề trang, đồng thời là mục cuối breadcrumb.</summary>
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+
+    /// <summary>Id cho h1 để giữ các aria-labelledby hiện có.</summary>
+    [Parameter] public string? TitleId { get; set; }
+
+    /// <summary>Nội dung trợ giúp của nút dấu hỏi; rỗng thì không hiện nút.</summary>
+    [Parameter] public string? HelpText { get; set; }
+
+    /// <summary>Nhãn truy cập riêng cho nút trợ giúp.</summary>
+    [Parameter] public string? HelpLabel { get; set; }
+
+    /// <summary>Nối thêm mục cuối breadcrumb thay vì thay nhãn (trang chi tiết động).</summary>
+    [Parameter] public string? CurrentLabel { get; set; }
+
+    /// <summary>Hiện breadcrumb dẫn tới trang; tắt cho trang lỗi hoặc trang độc lập.</summary>
+    [Parameter] public bool ShowBreadcrumb { get; set; } = true;
+
+    /// <summary>Chuỗi breadcrumb dựng sẵn cho route không có trong cây điều hướng.</summary>
+    [Parameter] public IReadOnlyList<BreadcrumbNav.BreadcrumbItem>? BreadcrumbItems { get; set; }
+
+    /// <summary>Nút hành động bên phải tiêu đề.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    /// <summary>Nội dung cạnh tiêu đề, vd badge đếm hoặc trạng thái.</summary>
+    [Parameter] public RenderFragment? HeadingSuffix { get; set; }
+
+    /// <summary>Dòng dữ liệu nghiệp vụ dưới tiêu đề (không dùng cho mô tả chức năng).</summary>
+    [Parameter] public RenderFragment? HeadingMeta { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Giữ tương thích các trang gọi hiện có; trợ giúp dùng script chung cho cả static SSR.</summary>
+    [Parameter] public bool InteractiveHelp { get; set; }
+
+    private bool HasHelp => !string.IsNullOrWhiteSpace(HelpText);
+    private readonly string _helpId = $"page-heading-help-{Guid.NewGuid():N}";
+}

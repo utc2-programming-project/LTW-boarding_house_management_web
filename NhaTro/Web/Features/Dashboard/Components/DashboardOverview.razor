@@ -5,14 +5,11 @@
 @inject ILogger<DashboardOverview> Logger
 
 <div class="dashboard-page">
-    <header class="page-header">
-        <div class="breadcrumb-title-stack">
-            <NavBreadcrumb />
-            <h1>@L["HomeTitle"]</h1>
-            <p>@L["Subtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
-    </header>
+    <PageHeading Title="@L["HomeTitle"]" HelpText="@L["Subtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
+        </Actions>
+    </PageHeading>
     @HeaderContent
     <div class="filters">
         <label>@L["Property"]

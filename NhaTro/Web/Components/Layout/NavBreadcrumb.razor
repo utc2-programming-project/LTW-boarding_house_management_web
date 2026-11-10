@@ -3,12 +3,22 @@
 
 @if (_items.Count > 0)
 {
-    <BreadcrumbNav Items="_items" />
+    <BreadcrumbNav Items="_items" TitleAsHeading="TitleAsHeading" HeadingId="@HeadingId" HeadingText="@HeadingText"
+                   CurrentContent="CurrentContent" HeadingSuffix="HeadingSuffix" />
 }
 
 @code {
-    /// <summary>Nhãn trang hiện tại cho route động (vd số hợp đồng); không cần cho route tĩnh.</summary>
+    /// <summary>Nhãn trang hiện tại cho route động (vd số hợp đồng); nối thêm sau mục cuối.</summary>
     [Parameter] public string? CurrentLabel { get; set; }
+
+    /// <summary>Nhãn thay cho mục cuối (giữ nguyên chuỗi tổ tiên), dùng cho tiêu đề riêng của trang.</summary>
+    [Parameter] public string? HeadingLabel { get; set; }
+
+    [Parameter] public bool TitleAsHeading { get; set; }
+    [Parameter] public string? HeadingId { get; set; }
+    [Parameter] public string? HeadingText { get; set; }
+    [Parameter] public RenderFragment? CurrentContent { get; set; }
+    [Parameter] public RenderFragment? HeadingSuffix { get; set; }
 
     private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> _items = [];
 
@@ -20,9 +30,10 @@
         var match = NavigationResolver.Resolve(path);
         if (match is null)
         {
-            return string.IsNullOrWhiteSpace(CurrentLabel)
+            var label = !string.IsNullOrWhiteSpace(CurrentLabel) ? CurrentLabel : HeadingLabel;
+            return string.IsNullOrWhiteSpace(label)
                 ? Array.Empty<BreadcrumbNav.BreadcrumbItem>()
-                : new[] { new BreadcrumbNav.BreadcrumbItem(CurrentLabel) };
+                : new[] { new BreadcrumbNav.BreadcrumbItem(label) };
         }
 
         var appendCurrent = !string.IsNullOrWhiteSpace(CurrentLabel)
@@ -44,6 +55,10 @@
         if (appendCurrent)
         {
             items.Add(new BreadcrumbNav.BreadcrumbItem(CurrentLabel!));
+        }
+        else if (!string.IsNullOrWhiteSpace(HeadingLabel) && items.Count > 0)
+        {
+            items[^1] = items[^1] with { Label = HeadingLabel };
         }
 
         return items;

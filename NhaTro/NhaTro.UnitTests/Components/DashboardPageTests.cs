@@ -65,7 +65,7 @@ public sealed class DashboardPageTests : BunitContext
         var count = RoomRequests.Count;
         page.FindAll("select")[1].Change("Year");
         Assert.Equal(count, RoomRequests.Count);
-        page.Find(".page-header button").Click();
+        page.Find(".page-heading-actions button").Click();
         page.WaitForAssertion(() => Assert.Equal(count + 1, RoomRequests.Count));
         Assert.Equal(7, RoomRequests.Last());
         page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7, 7 }, TenantRequests));
@@ -84,7 +84,7 @@ public sealed class DashboardPageTests : BunitContext
 
         page.FindAll("select")[0].Change("7");
         page.WaitForAssertion(() => Assert.Equal(7, TenantRequests.Last()));
-        page.Find(".page-header button").Click();
+        page.Find(".page-heading-actions button").Click();
 
         page.WaitForAssertion(() => Assert.Equal(1, refreshes));
         page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7, 7 }, RoomRequests));

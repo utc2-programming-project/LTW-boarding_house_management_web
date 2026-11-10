@@ -3,14 +3,8 @@
 @inject IStringLocalizer<Shared> L
 
 <section class="account-shell">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ManageAccountTitle"]) })" />
-
-    <header class="page-heading">
-        <div>
-            <h1 id="account-title">@L["ManageAccountTitle"]</h1>
-            <p>@L["ManageAccountSubtitle"]</p>
-        </div>
-    </header>
+    <PageHeading Title="@L["ManageAccountTitle"]" TitleId="account-title" HelpText="@L["ManageAccountSubtitle"]"
+                 InteractiveHelp="true" />
 
     <div class="account-body">
         <ManageNavMenu />
