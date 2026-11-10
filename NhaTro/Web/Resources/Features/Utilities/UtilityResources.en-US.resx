@@ -454,4 +454,6 @@
   <data name="P5CostApprovalPending" xml:space="preserve"><value>The change was submitted for approval.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>A reading already exists for this room and period.</value></data>
   <data name="P5CostReadingNotFound" xml:space="preserve"><value>Reading for this period was not found.</value></data>
+  <data name="ErrorCopySameProperty" xml:space="preserve"><value>Prices cannot be copied from the same property.</value></data>
+  <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>You do not have access to the source property.</value></data>
 </root>

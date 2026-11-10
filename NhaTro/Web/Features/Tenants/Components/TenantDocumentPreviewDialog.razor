@@ -36,7 +36,7 @@
                     @if (CanDownload)
                     {
                         <a href="/api/tenants/@TenantId/documents/@Document.Id" target="_blank" rel="noopener noreferrer" download="@Document.FileName"
-                           style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 8px; background-color: var(--primary); color: var(--surface); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                           style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 8px; background-color: var(--primary); color: var(--on-primary); font-size: 13px; font-weight: 500; text-decoration: none; box-shadow: var(--shadow-card);">
                             <LucideIcon Name="download" />
                             <span>@L["DownloadDocumentSecure"]</span>
                         </a>

@@ -13,6 +13,19 @@ public sealed class VietnamAddressCatalog
 {
     private const string DataFile = "data/vn-address.json";
 
+    /// <summary>Viết tắt thường gặp của tỉnh/thành phố, khóa là tên đã chuẩn hóa.</summary>
+    private static readonly Dictionary<string, string> ProvinceAliases = new(StringComparer.Ordinal)
+    {
+        ["hcm"] = "ho chi minh",
+        ["tphcm"] = "ho chi minh",
+        ["sai gon"] = "ho chi minh",
+        ["hn"] = "ha noi",
+        ["tphn"] = "ha noi",
+        ["dn"] = "da nang",
+        ["hp"] = "hai phong",
+        ["ct"] = "can tho",
+    };
+
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<VietnamAddressCatalog> _logger;
     private readonly Lazy<IReadOnlyList<Province>> _provinces;
@@ -27,7 +40,7 @@ public sealed class VietnamAddressCatalog
     /// <summary>34 tỉnh/thành phố theo mô hình sau sáp nhập, kèm phường/xã trực thuộc.</summary>
     public IReadOnlyList<Province> Provinces => _provinces.Value;
 
-    /// <summary>Tìm tỉnh/thành phố theo tên đầy đủ hoặc tên rút gọn, không phân biệt dấu và hoa thường.</summary>
+    /// <summary>Tìm tỉnh/thành phố theo tên đầy đủ, tên rút gọn hoặc viết tắt, không phân biệt dấu và hoa thường.</summary>
     public Province? FindProvince(string? text)
     {
         var normalized = AddressText.NormalizeForSearch(text);
@@ -42,8 +55,22 @@ public sealed class VietnamAddressCatalog
             }
         }
 
+        var alias = ResolveAlias(normalized) ?? ResolveAlias(normalizedShort);
+        if (alias is null) return null;
+
+        foreach (var province in Provinces)
+        {
+            if (AddressText.MatchesName(province.Name, alias, alias))
+            {
+                return province;
+            }
+        }
+
         return null;
     }
+
+    private static string? ResolveAlias(string normalized) =>
+        ProvinceAliases.TryGetValue(normalized, out var shortName) ? shortName : null;
 
     /// <summary>Tìm phường/xã trong một tỉnh theo tên đầy đủ hoặc tên rút gọn.</summary>
     public Ward? FindWard(Province province, string? text)
@@ -116,7 +143,7 @@ public static class AddressText
 {
     private static readonly string[] AdministrativePrefixes =
     {
-        "thanh pho ", "tinh ", "tp. ", "tp ", "phuong ", "xa ", "dac khu ", "thi tran ", "quan ", "huyen "
+        "thanh pho ", "tinh ", "tp. ", "tp.", "tp ", "phuong ", "xa ", "p. ", "x. ", "dac khu ", "thi tran ", "quan ", "huyen "
     };
 
     /// <summary>Bỏ dấu, đưa về chữ thường và gộp khoảng trắng để so khớp.</summary>
@@ -176,5 +203,52 @@ public static class AddressText
 
         return normalizedShortInput.Length > 0
             && (full == normalizedShortInput || shortName == normalizedShortInput);
+    }
+
+    /// <summary>Đoạn có dạng tên tỉnh/thành phố ("Tỉnh …", "Thành phố …", "TP. …").</summary>
+    public static bool LooksLikeProvince(string? value)
+    {
+        var normalized = NormalizeForSearch(value);
+        if (normalized.Length == 0) return false;
+
+        return normalized.StartsWith("tinh ", StringComparison.Ordinal)
+            || normalized.StartsWith("thanh pho ", StringComparison.Ordinal)
+            || normalized.StartsWith("tp.", StringComparison.Ordinal)
+            || normalized.StartsWith("tp ", StringComparison.Ordinal);
+    }
+
+    /// <summary>Đoạn có dạng tên phường/xã/đặc khu ("Phường …", "Xã …", "Đặc khu …").</summary>
+    public static bool LooksLikeWard(string? value)
+    {
+        var normalized = NormalizeForSearch(value);
+        if (normalized.Length == 0) return false;
+
+        return normalized.StartsWith("phuong ", StringComparison.Ordinal)
+            || normalized.StartsWith("xa ", StringComparison.Ordinal)
+            || normalized.StartsWith("dac khu ", StringComparison.Ordinal)
+            || normalized.StartsWith("p. ", StringComparison.Ordinal)
+            || normalized.StartsWith("x. ", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Đoạn cấp huyện/thành phố thuộc tỉnh của mô hình 3 cấp cũ (Quận 1, Huyện Nhà Bè, TP. Thủ Đức…).
+    /// Địa chỉ cũ cần bỏ các đoạn này khi quy về mô hình 2 cấp hiện hành.
+    /// </summary>
+    public static bool IsLegacyDistrictSegment(string? value)
+    {
+        var normalized = NormalizeForSearch(value);
+        if (normalized.Length == 0) return false;
+
+        return normalized.StartsWith("quan ", StringComparison.Ordinal)
+            || normalized.StartsWith("huyen ", StringComparison.Ordinal)
+            || normalized.StartsWith("thi xa ", StringComparison.Ordinal)
+            || normalized.StartsWith("thi tran ", StringComparison.Ordinal)
+            || normalized.StartsWith("thanh pho ", StringComparison.Ordinal)
+            || normalized.StartsWith("tp.", StringComparison.Ordinal)
+            || normalized.StartsWith("tp ", StringComparison.Ordinal)
+            || normalized.StartsWith("q.", StringComparison.Ordinal)
+            || normalized.StartsWith("h.", StringComparison.Ordinal)
+            || normalized.StartsWith("tx.", StringComparison.Ordinal)
+            || normalized.StartsWith("tt.", StringComparison.Ordinal);
     }
 }

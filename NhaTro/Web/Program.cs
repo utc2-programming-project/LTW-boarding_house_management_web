@@ -247,6 +247,10 @@ builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
+// PLAN-010: nháp thiết lập nhà trọ ở local (ProtectedLocalStorage do Blazor đăng ký sẵn;
+// khai báo lại để chắc chắn resolve được trong mọi cấu hình host).
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedLocalStorage>();
+builder.Services.AddScoped<Web.Features.Properties.Services.PropertySetupDraftStore>();
 
 // Gợi ý địa chỉ: đọc một lần dữ liệu JSON 34 tỉnh/thành phố và 3.321 phường/xã trong wwwroot.
 builder.Services.AddSingleton<VietnamAddressCatalog>();

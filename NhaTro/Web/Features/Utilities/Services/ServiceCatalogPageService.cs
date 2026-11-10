@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using Web.Features.Accounts;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
+using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.DTOs;
@@ -388,6 +390,79 @@ public sealed class ServiceCatalogPageService(
 
         return result;
     }
+
+    /// <summary>
+    /// PLAN-012: tổng hợp tình trạng giá của một nhà trọ cho bước thiết lập giá.
+    /// </summary>
+    public async Task<PropertyPriceSetupStatusDto> GetPriceSetupStatusAsync(
+        int propertyId, CancellationToken ct = default)
+    {
+        var services = await GetServicesForCallerAsync(ct: ct);
+        var buildingId = propertyId.ToString(CultureInfo.InvariantCulture);
+
+        var propertyServices = services
+            .Where(service => service.BuildingId == buildingId
+                && service.Active
+                && service.PriceStatus == PriceVersionStatus.Active)
+            .OrderBy(service => service.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        var electric = services.FirstOrDefault(service => IsSystemTariff(service, "TRF-E"));
+        var water = services.FirstOrDefault(service => IsSystemTariff(service, "TRF-W"));
+
+        var buildings = await GetBuildingsForCallerAsync(ct);
+        var copySources = buildings
+            .Where(building => building.Id != "all" && building.Id != buildingId)
+            .ToArray();
+
+        return new PropertyPriceSetupStatusDto(
+            propertyId,
+            electric is not null,
+            electric?.CurrentRate,
+            electric?.Unit,
+            electric?.EffectiveFrom,
+            water is not null,
+            water?.CurrentRate,
+            water?.Unit,
+            water?.EffectiveFrom,
+            propertyServices,
+            copySources);
+    }
+
+    /// <summary>
+    /// PLAN-012: sao chép danh mục/giá đang hiệu lực từ nhà trọ nguồn sang nhà trọ đích.
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage, int Copied, int Skipped)> CopyPricesAsync(
+        int sourcePropertyId, int targetPropertyId, CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        if (!caller.IsChuTro)
+        {
+            return (false, T("ErrorOwnerOnlyService"), 0, 0);
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            var result = await catalogService.CopyPricesFromPropertyAsync(
+                sourcePropertyId, targetPropertyId, caller, ct);
+            return (true, null, result.Copied, result.Skipped);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to copy service prices.");
+            return (false, LocalizeFailure(ex), 0, 0);
+        }
+    }
+
+    private static bool IsSystemTariff(ServiceItemDto service, string codePrefix) =>
+        service.Id.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase)
+        && service.Code.StartsWith(codePrefix, StringComparison.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<BuildingOptionDto>> GetEditableBuildingScopesAsync(
         ServiceItemDto service, CancellationToken ct = default)

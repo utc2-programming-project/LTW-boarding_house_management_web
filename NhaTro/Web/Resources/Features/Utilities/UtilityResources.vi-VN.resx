@@ -454,4 +454,6 @@
   <data name="P5CostApprovalPending" xml:space="preserve"><value>Yêu cầu đã được gửi duyệt.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>Phòng đã có chỉ số cho kỳ này.</value></data>
   <data name="P5CostReadingNotFound" xml:space="preserve"><value>Không tìm thấy chỉ số của kỳ.</value></data>
+  <data name="ErrorCopySameProperty" xml:space="preserve"><value>Không thể sao chép giá từ chính nhà trọ này.</value></data>
+  <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>Bạn không có quyền xem nhà trọ nguồn.</value></data>
 </root>

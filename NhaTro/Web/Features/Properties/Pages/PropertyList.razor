@@ -2,6 +2,8 @@
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
 @inject PropertyPageService PageService
+@inject PropertySetupDraftStore DraftStore
+@inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
@@ -39,6 +41,20 @@
             </div>
         }
     </header>
+
+    @if (_draft is not null)
+    {
+        <section class="p2-alert warning setup-draft-banner" role="status">
+            <div>
+                <strong>@L["P2SetupDraftBannerTitle"]</strong>
+                <p>@L["P2SetupDraftBannerBody", string.IsNullOrWhiteSpace(_draft.Name) ? L["P2SetupDraftUnnamed"].Value : _draft.Name]</p>
+            </div>
+            <div class="setup-draft-actions">
+                <button class="btn btn-primary" type="button" @onclick="ResumeDraft">@L["P2SetupDraftResume"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="DiscardDraftAsync">@L["P2SetupDraftDiscard"]</button>
+            </div>
+        </section>
+    }
 
     @if (!string.IsNullOrWhiteSpace(_pageError))
     {
@@ -122,7 +138,8 @@
 @if (_selectedProperty is not null)
 {
     <PropertyDetailsDialog Property="_selectedProperty" IsOwner="_isOwner"
-                           OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms" />
+                           OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms"
+                           OnContinueSetup="ContinueSetup" />
 }
 <ConfirmDialog Visible="_deleteVisible" Title="@L["P2DeletePropertyTitle"]"
                Message="@L["P2DeletePropertyConfirm", _deleteProperty?.Name ?? string.Empty]"
@@ -168,6 +185,8 @@
     private bool _ready;
     private bool _isOwner;
     private bool _hasActiveFilters;
+    private PropertySetupDraft? _draft;
+    private string? _userId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -283,13 +302,52 @@
         return Task.CompletedTask;
     }
 
-    private void OpenCreate() { _formPropertyId = null; _formKey++; _formVisible = true; }
+    private void OpenCreate() => Navigation.NavigateTo("/properties/new");
     private void OpenEdit(int id) { _formPropertyId = id; _formKey++; _formVisible = true; }
     private void OpenDetails(PropertyListItem item) => _selectedProperty = item;
     private void CloseForm() => _formVisible = false;
     private void CloseDetails() => _selectedProperty = null;
     private void EditSelected() { if (_selectedProperty is not null) OpenEdit(_selectedProperty.Id); _selectedProperty = null; }
     private void ViewRooms(int propertyId) => Navigation.NavigateTo($"/rooms?propertyId={propertyId}");
+    private void ContinueSetup(int propertyId) => Navigation.NavigateTo($"/properties/{propertyId}/setup");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_isOwner) return;
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            _userId = caller.UserId;
+            _draft = await DraftStore.LoadAsync(caller.UserId);
+            if (_draft is not null) StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "PLAN-010: không đọc được bản nháp thiết lập nhà trọ");
+        }
+    }
+
+    private void ResumeDraft()
+    {
+        if (_draft?.PropertyId is int id)
+        {
+            Navigation.NavigateTo($"/properties/{id}/setup");
+            return;
+        }
+
+        Navigation.NavigateTo("/properties/new");
+    }
+
+    private async Task DiscardDraftAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_userId))
+        {
+            await DraftStore.ClearAsync(_userId);
+        }
+
+        _draft = null;
+    }
 
     private async Task OnPropertySavedAsync()
     {

@@ -1180,7 +1180,7 @@ BEGIN
 
     -- 2 nhà trọ của chủ trọ (Address được để trống)
     INSERT INTO Properties (Name, Address, OwnerId, IsActive, CreatedAt, IsDeleted)
-    VALUES (N'Trọ An Bình', N'12 Nguyễn Trãi, Quận 5, TP.HCM', N'mau-chu-tro', 1, SYSUTCDATETIME(), 0),
+    VALUES (N'Trọ An Bình', N'12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh', N'mau-chu-tro', 1, SYSUTCDATETIME(), 0),
            (N'Trọ Hoa Mai', NULL, N'mau-chu-tro', 1, SYSUTCDATETIME(), 0);
 
     -- 4 phòng (Status: 0 Trống, 1 Đang thuê, 2 Bảo trì; P101 dùng lại được ở nhà khác; Floor NULL = chưa xác định)
