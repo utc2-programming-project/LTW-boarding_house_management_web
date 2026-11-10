@@ -77,5 +77,5 @@
 <data name="QuickMyRequests" xml:space="preserve"><value>Yêu cầu của tôi</value></data>
 <data name="QuickPermissions" xml:space="preserve"><value>Phân quyền</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>Đang hoàn thiện</value></data>
-<data name="WorkScopeNote" xml:space="preserve"><value>Danh sách công việc bên dưới áp dụng cho toàn bộ phạm vi bạn được cấp quyền, không theo bộ lọc thống kê ở trên.</value></data>
+<data name="WorkScopeNote" xml:space="preserve"><value>Danh sách công việc bên dưới áp dụng cho toàn bộ phạm vi bạn được cấp quyền, không theo bộ lọc thống kê bên dưới.</value></data>
 </root>

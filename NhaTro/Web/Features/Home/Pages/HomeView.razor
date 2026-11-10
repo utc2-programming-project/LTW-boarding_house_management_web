@@ -41,6 +41,8 @@
                 @if (Snapshot is { } managementSnapshot)
                 {
                     <HomeQuickActions Role="@managementSnapshot.Role" />
+                    <p class="work-scope-note">@L["WorkScopeNote"]</p>
+                    @WorkCards(managementSnapshot)
                 }
             </HeaderContent>
         </DashboardOverview>
@@ -67,16 +69,20 @@
         </section>
         }
 
-        @if (IsManagement)
-        {
-            <p class="work-scope-note">@L["WorkScopeNote"]</p>
-        }
         @if (!IsManagement)
         {
             <HomeQuickActions Role="@snapshot.Role" />
         }
 
-        <div class="home-grid">
+        @if (!IsManagement)
+        {
+            @WorkCards(snapshot)
+        }
+    }
+</div>
+
+@code {
+    private RenderFragment WorkCards(HomeSnapshot snapshot) => @<div class="home-grid">
             <HomePanel Title="@L["ActionsTitle"]" Icon="check" State="@snapshot.Actions.State" Retry="LoadAsync">
                 <HomeActionList Section="@snapshot.Actions" />
             </HomePanel>
@@ -187,11 +193,8 @@
                     }
                 </HomePanel>
             }
-        </div>
-    }
-</div>
+        </div>;
 
-@code {
     // Giữ ảnh chụp của lượt prerender để lượt interactive không tải lại từ đầu (tránh nháy "Đang tải").
     // [PersistentState] chỉ chấp nhận property public.
     [PersistentState]
