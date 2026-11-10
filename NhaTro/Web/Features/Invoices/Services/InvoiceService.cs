@@ -563,8 +563,8 @@ public sealed class InvoiceService : IInvoiceService
         {
             var expected = InvoiceCalculationRules.ToItem(items[index]);
             var actual = existingItems[index];
-            // Quantity/UnitPrice của bảng hóa đơn là decimal(18,2); Amount mới là số tiền
-            // snapshot đã chốt. So sánh theo đúng độ chính xác đã lưu để lần gửi lặp khớp.
+            // Quantity/UnitPrice are persisted at four decimal places so a P5 service snapshot
+            // retains its source precision. Compare at the database precision for idempotency.
             if (actual.ItemType != expected.ItemType
                 || actual.Description != expected.Description
                 || actual.Unit != expected.Unit
@@ -580,5 +580,5 @@ public sealed class InvoiceService : IInvoiceService
     }
 
     private static decimal ToStoredDecimal(decimal value) =>
-        decimal.Round(value, 2, MidpointRounding.AwayFromZero);
+        decimal.Round(value, 4, MidpointRounding.AwayFromZero);
 }

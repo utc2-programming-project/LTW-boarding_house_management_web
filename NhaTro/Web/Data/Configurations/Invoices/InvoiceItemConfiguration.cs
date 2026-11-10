@@ -22,9 +22,9 @@ public sealed class InvoiceItemConfiguration : IEntityTypeConfiguration<InvoiceI
 
         builder.Property(item => item.ItemType).HasConversion<int>();
         builder.Property(item => item.Description).HasMaxLength(250).IsRequired();
-        builder.Property(item => item.Unit).HasMaxLength(20);
-        builder.Property(item => item.Quantity).HasPrecision(18, 2);
-        builder.Property(item => item.UnitPrice).HasPrecision(18, 2);
+        builder.Property(item => item.Unit).HasMaxLength(30);
+        builder.Property(item => item.Quantity).HasPrecision(18, 4);
+        builder.Property(item => item.UnitPrice).HasPrecision(18, 4);
         builder.Property(item => item.Amount).HasPrecision(18, 2);
 
         builder.HasIndex(item => new { item.InvoiceId, item.DisplayOrder });

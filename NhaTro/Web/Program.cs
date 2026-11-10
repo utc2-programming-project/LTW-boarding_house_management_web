@@ -429,6 +429,9 @@ builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
+// VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.
+builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingService,
+    Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
