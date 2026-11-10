@@ -14,16 +14,10 @@
 <PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
 
 <div class="invoice-page">
-    <NavBreadcrumb />
-
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@L[IsMyInvoices ? "MyHeading" : "Heading"]</h1>
-            <p class="page-subtitle">@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]</p>
-        </div>
-        @if (IsMyInvoices)
-        {
-            <div class="header-actions">
+    <PageHeading Title="@L[IsMyInvoices ? "MyHeading" : "Heading"]" HelpText="@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]">
+        <Actions>
+            @if (IsMyInvoices)
+            {
                 <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/my/service-registrations")'>
                     <LucideIcon Name="history" />
                     <span>@L["RegistrationHistoryButton"]</span>
@@ -32,18 +26,16 @@
                     <LucideIcon Name="plus" />
                     <span>@L["RegisterServiceButton"]</span>
                 </button>
-            </div>
-        }
-        else
-        {
-            <div class="header-actions">
+            }
+            else
+            {
                 <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/service-registrations")'>
                     <LucideIcon Name="clipboard-list" />
                     <span>@L["ManageRegistrationsButton"]</span>
                 </button>
-            </div>
-        }
-    </header>
+            }
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {

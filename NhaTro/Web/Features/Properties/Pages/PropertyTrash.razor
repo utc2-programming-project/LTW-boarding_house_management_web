@@ -10,16 +10,13 @@
 <PageTitle>@L["P2PropertyTrashTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <NavBreadcrumb />
-            <h1>@L["P2PropertyTrashTitle"]</h1>
-            <p>@L["P2PropertyTrashSubtitle"]</p>
-        </div>
-        <button class="btn btn-secondary" type="button" @onclick="GoToProperties">
-            <LucideIcon Name="building" />@L["P2PropertiesTitle"]
-        </button>
-    </header>
+    <PageHeading Title="@L["P2PropertyTrashTitle"]" HelpText="@L["P2PropertyTrashSubtitle"]">
+        <Actions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToProperties">
+                <LucideIcon Name="building" />@L["P2PropertiesTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
 
     <DataTable @ref="_table" TItem="PropertyTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"

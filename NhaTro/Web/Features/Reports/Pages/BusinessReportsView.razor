@@ -9,16 +9,16 @@
 
 <PageTitle>@L["Title"]</PageTitle>
 <div class="reports-page">
-    <header class="page-header">
-        <div class="breadcrumb-title-stack">
-            <NavBreadcrumb />
-            <h1>@L["Title"]</h1>
+    <PageHeading Title="@L["Title"]" HelpText="@L["ReportDescription"]">
+        <HeadingMeta>
             <p>@L["CurrentData"]</p>
-        </div>
-        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync">
-            <LucideIcon Name="refresh" />@D["Refresh"]
-        </button>
-    </header>
+        </HeadingMeta>
+        <Actions>
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync">
+                <LucideIcon Name="refresh" />@D["Refresh"]
+            </button>
+        </Actions>
+    </PageHeading>
 
     <div class="report-toolbar">
         <div class="filters">

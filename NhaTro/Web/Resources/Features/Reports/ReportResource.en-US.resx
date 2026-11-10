@@ -32,4 +32,5 @@
 <data name="PageSummary" xml:space="preserve"><value>Page {0} / {1} · Total {2}</value></data>
 <data name="Previous" xml:space="preserve"><value>Previous</value></data>
 <data name="Next" xml:space="preserve"><value>Next</value></data>
+<data name="ReportDescription" xml:space="preserve"><value>View revenue, receivables and operating performance within your account scope.</value></data>
 </root>

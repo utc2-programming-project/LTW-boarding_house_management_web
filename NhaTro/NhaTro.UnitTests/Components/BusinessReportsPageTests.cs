@@ -158,7 +158,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         page.FindAll(".report-pager nav button")[1].Click();
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
         RoomCount = 1;
-        page.Find(".page-header button").Click();
+        page.Find(".page-heading-actions button").Click();
         page.WaitForAssertion(() =>
         {
             Assert.Equal(1, RoomRequests.Last().Page);

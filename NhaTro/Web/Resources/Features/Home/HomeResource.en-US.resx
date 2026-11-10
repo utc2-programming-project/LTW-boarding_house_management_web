@@ -77,4 +77,5 @@
 <data name="QuickMyRequests" xml:space="preserve"><value>My requests</value></data>
 <data name="QuickPermissions" xml:space="preserve"><value>Permissions</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>In progress</value></data>
+<data name="HomeDescription" xml:space="preserve"><value>A quick overview of properties, rooms, contracts and invoices within your account scope.</value></data>
 </root>

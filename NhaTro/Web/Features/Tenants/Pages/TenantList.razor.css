@@ -1,7 +1,4 @@
 .tenant-list-page { display: flex; flex-direction: column; gap: 24px; }
-.tenant-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.tenant-page-heading p { margin: 8px 0 0; }
-.tenant-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 .tenant-page-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .tenant-page-actions .btn { min-height: 44px; }
 
@@ -57,7 +54,6 @@
 
 @media (max-width: 767.98px) {
     .tenant-list-page { gap: 16px; }
-    .tenant-page-heading { align-items: stretch; flex-direction: column; gap: 16px; }
     .tenant-page-actions { justify-content: stretch; }
     .tenant-page-actions .btn { flex: 1; min-height: 44px; }
     .tenant-stats { grid-template-columns: 1fr; gap: 10px; }

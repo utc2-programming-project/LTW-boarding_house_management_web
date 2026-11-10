@@ -15,8 +15,9 @@
                 {
                     @if (TitleAsHeading)
                     {
-                        <h1 aria-current="page">@item.Label</h1>
+                        <h1 id="@HeadingId" aria-current="page">@(HeadingText ?? item.Label)</h1>
                         @CurrentContent
+                        @HeadingSuffix
                     }
                     else
                     {
@@ -38,7 +39,10 @@
 
 @code {
     [Parameter] public bool TitleAsHeading { get; set; }
+    [Parameter] public string? HeadingId { get; set; }
+    [Parameter] public string? HeadingText { get; set; }
     [Parameter] public RenderFragment? CurrentContent { get; set; }
+    [Parameter] public RenderFragment? HeadingSuffix { get; set; }
     [Parameter, EditorRequired] public IReadOnlyList<BreadcrumbItem> Items { get; set; } = [];
     public sealed record BreadcrumbItem(string Label, string? Href = null);
 }

@@ -77,4 +77,5 @@
 <data name="QuickMyRequests" xml:space="preserve"><value>Yêu cầu của tôi</value></data>
 <data name="QuickPermissions" xml:space="preserve"><value>Phân quyền</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>Đang hoàn thiện</value></data>
+<data name="HomeDescription" xml:space="preserve"><value>Tổng quan nhanh tình hình nhà trọ, phòng, hợp đồng và hóa đơn trong phạm vi tài khoản của bạn.</value></data>
 </root>
