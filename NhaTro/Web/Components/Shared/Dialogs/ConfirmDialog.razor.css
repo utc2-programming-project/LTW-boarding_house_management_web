@@ -11,13 +11,13 @@
     padding: 24px;
     border: 0;
     border-radius: 16px;
-    background: var(--surface, #FFFFFF);
-    color: var(--text-primary, #0D131B);
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-dialog);
 }
 
     .confirm-dialog::backdrop {
-        background: var(--overlay, rgba(15, 23, 42, 0.40));
+        background: var(--overlay);
     }
 
     .confirm-dialog[open] {
@@ -34,7 +34,7 @@
 .body {
     font-size: 14px;
     line-height: 22px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
 }
 
     .body ::deep p {

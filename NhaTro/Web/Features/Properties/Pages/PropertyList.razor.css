@@ -22,3 +22,8 @@
 :deep(.table-card table) { min-width: 760px; }
 @media (max-width: 900px) { .property-filters .btn { flex: 1 1 140px; } }
 @media (max-width: 640px) { .p2-page-actions { width: 100%; } .p2-page-actions > .btn { flex: 1; justify-content: center; } .search-field, .filter-select, .filter-number { flex: 1 1 100%; min-width: 0; } .p2-table-options { justify-content: flex-start; } }
+
+.setup-draft-banner { border-color: var(--warning-border); background: var(--warning-bg); color: var(--text-primary); }
+.setup-draft-banner p { margin: 4px 0 0; color: var(--text-secondary); }
+.setup-draft-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: none; }
+@media (max-width: 640px) { .setup-draft-banner { align-items: stretch; flex-direction: column; } .setup-draft-actions > .btn { flex: 1; } }

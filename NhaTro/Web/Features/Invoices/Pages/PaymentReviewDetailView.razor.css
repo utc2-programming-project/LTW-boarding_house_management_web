@@ -135,9 +135,9 @@
 }
 
 .review-notice.info {
-    border-color: var(--info-border, #BFDBFE);
-    background: var(--info-bg, #EFF6FF);
-    color: var(--info-text, #1D4ED8);
+    border-color: var(--info-border);
+    background: var(--info-bg);
+    color: var(--info-text);
 }
 
 .review-notice.success {

@@ -9,21 +9,21 @@ internal static class AppTheme
     {
         PaletteLight = new PaletteLight
         {
-            Primary = "#4F46E5", Background = "#F8FAFC", Surface = "#FFFFFF",
-            AppbarBackground = "#FFFFFF", AppbarText = "#0D131B",
-            DrawerBackground = "#FFFFFF", DrawerText = "#475569",
-            TextPrimary = "#0D131B", TextSecondary = "#475569",
-            Divider = "#E2E8F0", Error = "#B91C1C", Success = "#166534",
-            Warning = "#92400E", Info = "#1E40AF"
+            Primary = "#4F46E5", Background = "#F2F2F7", Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF", AppbarText = "#000000",
+            DrawerBackground = "#FFFFFF", DrawerText = "#3C3C43",
+            TextPrimary = "#000000", TextSecondary = "#3C3C43",
+            Divider = "#C6C6C8", Error = "#D70015", Success = "#1E7B36",
+            Warning = "#8A4B00", Info = "#1E40AF"
         },
         PaletteDark = new PaletteDark
         {
-            Primary = "#4F46E5", Background = "#0F172A", Surface = "#1E293B",
-            AppbarBackground = "#111827", AppbarText = "#F8FAFC",
-            DrawerBackground = "#111827", DrawerText = "#CBD5E1",
-            TextPrimary = "#F8FAFC", TextSecondary = "#CBD5E1",
-            Divider = "#334155", Error = "#FCA5A5", Success = "#86EFAC",
-            Warning = "#FCD34D", Info = "#93C5FD"
+            Primary = "#4F46E5", Background = "#000000", Surface = "#1C1C1E",
+            AppbarBackground = "#1C1C1E", AppbarText = "#FFFFFF",
+            DrawerBackground = "#1C1C1E", DrawerText = "#C7C7CC",
+            TextPrimary = "#FFFFFF", TextSecondary = "#C7C7CC",
+            Divider = "#38383A", Error = "#FF453A", Success = "#30D158",
+            Warning = "#FF9F0A", Info = "#93C5FD"
         },
         Typography = new Typography
         {

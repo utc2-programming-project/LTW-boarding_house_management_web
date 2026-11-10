@@ -11,7 +11,7 @@ BEGIN TRAN;
 
 UPDATE Properties
 SET Name = N'Nhà trọ Hòa Bình',
-    Address = N'12 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP.HCM'
+    Address = N'12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh'
 WHERE Id = 1;
 
 UPDATE Rooms

@@ -30,8 +30,8 @@
             }
             @if (!string.IsNullOrWhiteSpace(_loadError))
             {
-                <div class="sample-data-note" style="border-left: 3px solid #ef4444; background: #fef2f2; color: #991b1b;">
-                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">@L["SqlErrorBadge"]</span>
+                <div class="sample-data-note" style="border-left: 3px solid var(--danger); background: var(--error-bg); color: var(--error-text);">
+                    <span class="sample-data-badge" style="background: var(--danger); color: var(--on-primary);">@L["SqlErrorBadge"]</span>
                     <span>@_loadError</span>
                 </div>
             }

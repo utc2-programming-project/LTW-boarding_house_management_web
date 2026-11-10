@@ -73,6 +73,36 @@ public sealed class VietnamAddressCatalogTests : IDisposable
         Assert.Equal(4, ward!.Code);
     }
 
+    [Theory]
+    [InlineData("TP.HCM")]
+    [InlineData("TP HCM")]
+    [InlineData("TPHCM")]
+    [InlineData("HCM")]
+    [InlineData("Sài Gòn")]
+    public void FindProvince_MatchesCommonAbbreviations(string input)
+    {
+        var catalog = CreateCatalog();
+
+        var province = catalog.FindProvince(input);
+
+        Assert.NotNull(province);
+        Assert.Equal(79, province!.Code);
+    }
+
+    [Theory]
+    [InlineData("Quận 1", true)]
+    [InlineData("quan 1", true)]
+    [InlineData("Q. Bình Thạnh", true)]
+    [InlineData("Huyện Nhà Bè", true)]
+    [InlineData("Thị xã Bến Cát", true)]
+    [InlineData("TP. Thủ Đức", true)]
+    [InlineData("Phường Bến Thành", false)]
+    [InlineData("12 Nguyễn Trãi", false)]
+    public void IsLegacyDistrictSegment_Nhan_dien_cap_huyen_cu(string input, bool expected)
+    {
+        Assert.Equal(expected, AddressText.IsLegacyDistrictSegment(input));
+    }
+
     [Fact]
     public void FindProvince_ReturnsNullForUnknownOrEmptyInput()
     {

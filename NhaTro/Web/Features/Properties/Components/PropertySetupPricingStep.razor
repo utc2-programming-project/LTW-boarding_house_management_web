@@ -1,0 +1,577 @@
+@inject ServiceCatalogPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<UtilityResources> U
+@inject ToastService Toasts
+@inject ILogger<PropertySetupPricingStep> Logger
+
+<div class="setup-step">
+    <header class="setup-step-head">
+        <div>
+            <h2>@L["P2SetupPriceTitle"]</h2>
+            <p>@L["P2SetupPriceSubtitle"]</p>
+        </div>
+        <a class="btn btn-secondary setup-price-link" href="/services/prices">
+            <LucideIcon Name="receipt" />
+            @L["P2SetupPriceViewAll"]
+        </a>
+    </header>
+
+    @if (_loading && _status is null)
+    {
+        <div class="setup-price-skeleton" role="status" aria-live="polite">
+            <span class="sr-only">@L["P2Loading"]</span>
+            @for (var i = 0; i < 3; i++)
+            {
+                <span class="setup-price-skeleton-card sk-block" aria-hidden="true"></span>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_error</span>
+            <button class="btn btn-secondary" type="button" @onclick="LoadStatusAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_status is not null)
+    {
+        <div class="setup-price-cards">
+            <article class="setup-price-card @(electricOk ? "ok" : "missing")">
+                <div class="setup-price-card-head">
+                    <span class="setup-price-icon" aria-hidden="true"><LucideIcon Name="zap" /></span>
+                    <div>
+                        <h3>@L["P2SetupPriceElectric"]</h3>
+                        @if (electricOk)
+                        {
+                            <strong class="setup-price-value">
+                                @MoneyFormatter.Format(_status.ElectricRate ?? 0)
+                                <em>/ @UnitLabel(_status.ElectricUnit)</em>
+                            </strong>
+                        }
+                        else
+                        {
+                            <span class="setup-price-missing-text">@L["P2SetupPriceMissing"]</span>
+                        }
+                    </div>
+                </div>
+                <p class="setup-price-meta">
+                    @EffectiveText(electricOk, _status.ElectricEffectiveFrom)
+                </p>
+                <a class="setup-price-adjust" href="/services/prices">@L["P2SetupPriceAdjust"]</a>
+            </article>
+
+            <article class="setup-price-card @(waterOk ? "ok" : "missing")">
+                <div class="setup-price-card-head">
+                    <span class="setup-price-icon" aria-hidden="true"><LucideIcon Name="droplet" /></span>
+                    <div>
+                        <h3>@L["P2SetupPriceWater"]</h3>
+                        @if (waterOk)
+                        {
+                            <strong class="setup-price-value">
+                                @MoneyFormatter.Format(_status.WaterRate ?? 0)
+                                <em>/ @UnitLabel(_status.WaterUnit)</em>
+                            </strong>
+                        }
+                        else
+                        {
+                            <span class="setup-price-missing-text">@L["P2SetupPriceMissing"]</span>
+                        }
+                    </div>
+                </div>
+                <p class="setup-price-meta">
+                    @EffectiveText(waterOk, _status.WaterEffectiveFrom)
+                </p>
+                <a class="setup-price-adjust" href="/services/prices">@L["P2SetupPriceAdjust"]</a>
+            </article>
+
+            <article class="setup-price-card @(servicesOk ? "ok" : "missing")">
+                <div class="setup-price-card-head">
+                    <span class="setup-price-icon" aria-hidden="true"><LucideIcon Name="receipt" /></span>
+                    <div>
+                        <h3>@L["P2SetupPriceServices"]</h3>
+                        @if (servicesOk)
+                        {
+                            <span class="setup-price-countline">@L["P2SetupPriceServiceCount", _status.PropertyServices.Count]</span>
+                        }
+                        else
+                        {
+                            <span class="setup-price-missing-text">@L["P2SetupPriceNoServices"]</span>
+                        }
+                    </div>
+                </div>
+                @if (servicesOk)
+                {
+                    <ul class="setup-price-service-list">
+                        @foreach (var service in _status.PropertyServices.Take(4))
+                        {
+                            <li>
+                                <span>@service.Name</span>
+                                <span class="setup-price-num">@MoneyFormatter.Format(service.CurrentRate)</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                <a class="setup-price-adjust" href="/services/prices">@L["P2SetupPriceAdjust"]</a>
+            </article>
+        </div>
+
+        @if (!electricOk || !waterOk)
+        {
+            <div class="p2-alert warning setup-price-warning" role="status">
+                <div class="setup-price-warning-text">
+                    <strong>@L["P2SetupPriceWarningTitle"]</strong>
+                    <p>@L["P2SetupPriceWarningBody"]</p>
+                </div>
+                <a class="btn btn-secondary" href="/services/prices">@L["P2SetupPriceOpenPrices"]</a>
+            </div>
+        }
+
+        <fieldset class="setup-price-options">
+            <legend>@L["P2SetupPriceOptionsTitle"]</legend>
+
+            <label class="setup-option @(_method == "manual" ? "selected" : null)">
+                <input type="radio" name="setup-price-method" value="manual"
+                       checked="@(_method == "manual")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceManual"]</strong>
+                    <small>@L["P2SetupPriceManualHint"]</small>
+                </span>
+            </label>
+
+            @if (_method == "manual")
+            {
+                <div class="setup-option-body setup-manual">
+                    <div class="setup-manual-head">
+                        <p>@L["P2SetupPriceManualBody"]</p>
+                        <button class="btn btn-secondary" type="button" @onclick="OpenCreate">
+                            <LucideIcon Name="plus" />
+                            @L["P2SetupPriceAddService"]
+                        </button>
+                    </div>
+
+                    @if (servicesOk)
+                    {
+                        <ul class="setup-service-list" aria-label="@L["P2SetupPriceServices"]">
+                            @foreach (var service in _status.PropertyServices)
+                            {
+                                <li class="setup-service-row">
+                                    <span class="setup-service-main">
+                                        <strong>@service.Name</strong>
+                                        <small>@service.Code</small>
+                                    </span>
+                                    <span class="setup-service-rate">
+                                        @MoneyFormatter.Format(service.CurrentRate)
+                                        <em>/ @UnitLabel(service.Unit)</em>
+                                    </span>
+                                    <span class="setup-service-date">@EffectiveText(true, service.EffectiveFrom)</span>
+                                    <span class="setup-service-actions">
+                                        @if (service.IsReadOnly)
+                                        {
+                                            <StatusBadge Text="@L["P2SetupPriceReadOnly"]" Tone="BadgeTone.Neutral" />
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-secondary setup-service-edit" type="button"
+                                                    @onclick="() => OpenEditPrice(service)">
+                                                @L["P2SetupPriceEdit"]
+                                            </button>
+                                            <button class="icon-button danger-action" type="button"
+                                                    title="@L["P2SetupPriceDeleteTitle"]" aria-label="@L["P2SetupPriceDeleteTitle"]"
+                                                    @onclick="() => RequestDelete(service)">
+                                                <LucideIcon Name="trash-2" />
+                                            </button>
+                                        }
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="setup-manual-empty">
+                            <p>@L["P2SetupPriceManualEmpty"]</p>
+                            <p class="setup-manual-hint">@L["P2SetupPriceManualEmptyHint"]</p>
+                        </div>
+                    }
+                </div>
+            }
+
+            <label class="setup-option @(_method == "copy" ? "selected" : null)">
+                <input type="radio" name="setup-price-method" value="copy"
+                       checked="@(_method == "copy")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceCopy"]</strong>
+                    <small>@L["P2SetupPriceCopyHint"]</small>
+                </span>
+            </label>
+
+            @if (_method == "copy")
+            {
+                <div class="setup-option-body setup-copy">
+                    @if (_status.CopySources.Count == 0)
+                    {
+                        <p>@L["P2SetupPriceNoSources"]</p>
+                    }
+                    else
+                    {
+                        <label for="setup-copy-source">@L["P2SetupPriceCopySource"]</label>
+                        <div class="setup-copy-controls">
+                            <select id="setup-copy-source" class="input" value="@_sourceId" @onchange="SourceChangedAsync">
+                                <option value="">@L["P2SetupPriceCopySourcePlaceholder"]</option>
+                                @foreach (var source in _status.CopySources)
+                                {
+                                    <option value="@source.Id">@source.Name</option>
+                                }
+                            </select>
+                            <button class="btn btn-primary" type="button"
+                                    disabled="@(_copying || string.IsNullOrWhiteSpace(_sourceId))"
+                                    aria-busy="@(_copying ? "true" : null)"
+                                    @onclick="CopyAsync">
+                                @if (_copying)
+                                {
+                                    <span class="spinner" aria-hidden="true"></span>
+                                    @L["P2Saving"]
+                                }
+                                else
+                                {
+                                    <LucideIcon Name="copy" />
+                                    @L["P2SetupPriceCopyAction"]
+                                }
+                            </button>
+                        </div>
+
+                        @if (_previewLoading)
+                        {
+                            <p class="setup-copy-loading" role="status">@L["P2SetupPriceCopyPreviewLoading"]</p>
+                        }
+                        else if (_preview is not null)
+                        {
+                            <div class="setup-copy-preview">
+                                <h4>@L["P2SetupPriceCopyPreviewTitle", SelectedSourceName]</h4>
+                                <span class="setup-copy-count">@L["P2SetupPriceCopyPreviewCount", _preview.Count]</span>
+                                @if (_preview.Count == 0)
+                                {
+                                    <p>@L["P2SetupPriceCopyPreviewEmpty"]</p>
+                                }
+                                else
+                                {
+                                    <ul>
+                                        @foreach (var service in _preview.Take(4))
+                                        {
+                                            <li>
+                                                <span>@service.Name</span>
+                                                <span class="setup-price-num">@MoneyFormatter.Format(service.CurrentRate)</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                    @if (_preview.Count > 4)
+                                    {
+                                        <p class="setup-copy-more">@L["P2SetupPriceCopyPreviewMore", _preview.Count - 4]</p>
+                                    }
+                                }
+                                <p class="setup-copy-note">@L["P2SetupPriceCopyPreviewNote"]</p>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+
+            <label class="setup-option @(_method == "later" ? "selected" : null)">
+                <input type="radio" name="setup-price-method" value="later"
+                       checked="@(_method == "later")" @onchange="SelectMethod" />
+                <span>
+                    <strong>@L["P2SetupPriceLater"]</strong>
+                    <small>@L["P2SetupPriceLaterHint"]</small>
+                </span>
+            </label>
+        </fieldset>
+
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="p2-alert @_messageTone" role="status" aria-live="polite">@_message</div>
+        }
+    }
+
+    <footer class="setup-step-actions">
+        <button class="btn btn-secondary setup-action-back" type="button" @onclick="() => OnBack.InvokeAsync()">
+            @L["P2SetupBack"]
+        </button>
+        <button class="btn btn-primary setup-action-next" type="button" @onclick="() => OnFinish.InvokeAsync()">
+            @L["P2SetupFinish"]
+        </button>
+    </footer>
+</div>
+
+<ServiceCreateModal IsOpen="_createOpen" Buildings="_buildings" CanWrite="true"
+                    OnClose="CloseCreate" OnCreate="HandleCreateServiceAsync" />
+
+<ServicePriceModal IsOpen="_priceOpen" Service="_editService" CanWrite="true"
+                   OnClose="ClosePrice" OnSave="HandleUpdatePriceAsync" />
+
+<FeatureDialog Visible="_deleteOpen" Title="@L["P2SetupPriceDeleteTitle"]"
+               CloseLabel="@L["Close"]" Busy="_deleting" OnClose="CancelDelete" CssClass="setup-confirm-dialog">
+    <div class="setup-confirm">
+        <p>@L["P2SetupPriceDeleteBody", _deleteName]</p>
+        @if (!string.IsNullOrWhiteSpace(_deleteError))
+        {
+            <div class="p2-alert error" role="alert">@_deleteError</div>
+        }
+        <div class="setup-confirm-actions">
+            <button class="btn btn-secondary" type="button" disabled="@_deleting" autofocus @onclick="CancelDelete">@L["Cancel"]</button>
+            <button class="btn btn-danger" type="button" disabled="@_deleting" aria-busy="@(_deleting ? "true" : null)" @onclick="ConfirmDeleteAsync">
+                @if (_deleting)
+                {
+                    <span class="spinner" aria-hidden="true"></span>
+                    @L["P2Deleting"]
+                }
+                else
+                {
+                    @L["Delete"]
+                }
+            </button>
+        </div>
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public int PropertyId { get; set; }
+    [Parameter, EditorRequired] public string PropertyName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnFinish { get; set; }
+
+    private PropertyPriceSetupStatusDto? _status;
+    private IReadOnlyList<BuildingOptionDto> _buildings = [];
+    private IReadOnlyList<ServiceItemDto>? _preview;
+    private ServiceItemDto? _editService;
+    private ServiceItemDto? _deleteService;
+    private bool _loading;
+    private bool _copying;
+    private bool _previewLoading;
+    private bool _createOpen;
+    private bool _priceOpen;
+    private bool _deleteOpen;
+    private bool _deleting;
+    private string? _error;
+    private string? _message;
+    private string _messageTone = "success";
+    private string _method = "later";
+    private string? _sourceId;
+    private string _deleteName = string.Empty;
+    private string? _deleteError;
+
+    private bool electricOk => _status?.HasElectricTariff == true;
+    private bool waterOk => _status?.HasWaterTariff == true;
+    private bool servicesOk => _status?.HasPropertyServices == true;
+
+    private string SelectedSourceName =>
+        _status?.CopySources.FirstOrDefault(source => source.Id == _sourceId)?.Name ?? string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _buildings = [new BuildingOptionDto(
+            PropertyId.ToString(CultureInfo.InvariantCulture), PropertyName, string.Empty, 0, 0)];
+        await LoadStatusAsync();
+    }
+
+    private async Task LoadStatusAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _status = await PageService.GetPriceSetupStatusAsync(PropertyId);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "PLAN-013: tải tình trạng giá của nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectMethod(ChangeEventArgs args) =>
+        _method = args.Value?.ToString() is { Length: > 0 } value ? value : "later";
+
+    private async Task SourceChangedAsync(ChangeEventArgs args)
+    {
+        _sourceId = args.Value?.ToString();
+        _preview = null;
+        if (string.IsNullOrWhiteSpace(_sourceId))
+        {
+            _previewLoading = false;
+            return;
+        }
+
+        var sourceId = _sourceId;
+        _previewLoading = true;
+        try
+        {
+            var services = await PageService.GetServicesForCallerAsync(buildingFilter: sourceId);
+            if (!string.Equals(_sourceId, sourceId, StringComparison.Ordinal)) return;
+            _preview = services
+                .Where(service => service.Active && service.BuildingId == sourceId)
+                .OrderBy(service => service.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PLAN-013: xem trước giá sao chép từ nhà trọ {SourceId} thất bại", sourceId);
+            _preview = null;
+        }
+        finally
+        {
+            _previewLoading = false;
+        }
+    }
+
+    private async Task CopyAsync()
+    {
+        if (_status is null || !int.TryParse(_sourceId, out var sourceId) || sourceId <= 0) return;
+
+        _copying = true;
+        _message = null;
+        try
+        {
+            var result = await PageService.CopyPricesAsync(sourceId, PropertyId);
+            if (!result.Success)
+            {
+                _messageTone = "error";
+                _message = result.ErrorMessage ?? L["P2SaveFailed"];
+                return;
+            }
+
+            _messageTone = "success";
+            _message = result.Skipped > 0
+                ? L["P2SetupPriceCopyResultSkipped", result.Copied, result.Skipped]
+                : L["P2SetupPriceCopyResult", result.Copied];
+            await LoadStatusAsync();
+        }
+        catch (Exception ex)
+        {
+            _messageTone = "error";
+            _message = L["P2SaveFailed"];
+            Logger.LogError(ex, "PLAN-013: sao chép giá sang nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _copying = false;
+        }
+    }
+
+    private void OpenCreate() => _createOpen = true;
+
+    private void CloseCreate() => _createOpen = false;
+
+    private async Task HandleCreateServiceAsync(CreateServiceRequest request)
+    {
+        request.BuildingId = PropertyId.ToString(CultureInfo.InvariantCulture);
+        var result = await PageService.AddServiceAsync(request);
+        if (result.Success)
+        {
+            _messageTone = "success";
+            _message = L["P2SetupPriceServiceAdded"];
+            _createOpen = false;
+            await LoadStatusAsync();
+        }
+        else
+        {
+            // Modal vẫn mở nên phải báo lỗi qua toast để người dùng thấy.
+            Toasts.Error(result.ErrorMessage ?? L["P2SaveFailed"].Value);
+        }
+    }
+
+    private void OpenEditPrice(ServiceItemDto service)
+    {
+        _editService = service;
+        _priceOpen = true;
+    }
+
+    private void ClosePrice()
+    {
+        _priceOpen = false;
+        _editService = null;
+    }
+
+    private async Task HandleUpdatePriceAsync(UpdatePriceRequest request)
+    {
+        var result = await PageService.UpdateServicePriceAsync(request);
+        _priceOpen = false;
+        _editService = null;
+
+        if (!result.Success)
+        {
+            _messageTone = "error";
+            _message = result.ErrorMessage ?? L["P2SaveFailed"];
+            return;
+        }
+
+        _messageTone = "success";
+        _message = L["P2SetupPriceUpdated"];
+        await LoadStatusAsync();
+    }
+
+    private void RequestDelete(ServiceItemDto service)
+    {
+        _deleteService = service;
+        _deleteName = service.Name;
+        _deleteError = null;
+        _deleteOpen = true;
+    }
+
+    private void CancelDelete() => _deleteOpen = false;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteService is null || _deleting) return;
+
+        _deleting = true;
+        _deleteError = null;
+        try
+        {
+            var result = await PageService.DeleteServiceAsync(_deleteService.Id);
+            if (result.Success)
+            {
+                _deleteOpen = false;
+                _deleteService = null;
+                _messageTone = "success";
+                _message = L["P2SetupPriceDeleted"];
+                await LoadStatusAsync();
+                return;
+            }
+
+            _deleteError = result.ErrorMessage ?? L["P2SaveFailed"];
+        }
+        catch (Exception ex)
+        {
+            _deleteError = L["P2SaveFailed"];
+            Logger.LogError(ex, "PLAN-013: xóa dịch vụ trong wizard nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private string EffectiveText(bool hasValue, DateOnly? date) =>
+        hasValue && date is DateOnly value
+            ? L["P2SetupPriceEffectiveFrom", value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)]
+            : L["P2SetupPriceNoDate"];
+
+    private string UnitLabel(ServiceUnitCategory? unit) => unit switch
+    {
+        ServiceUnitCategory.KilowattHour => U["UnitKwh"],
+        ServiceUnitCategory.CubicMeter => U["UnitM3"],
+        ServiceUnitCategory.Person => U["UnitPerson"],
+        ServiceUnitCategory.Vehicle => U["UnitVehicle"],
+        ServiceUnitCategory.Visit => U["UnitVisit"],
+        ServiceUnitCategory.Room => U["UnitRoom"],
+        _ => U["NoData"]
+    };
+}
