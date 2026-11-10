@@ -1,7 +1,10 @@
 using Bunit;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.JSInterop;
 using System.Security.Claims;
 using Web.Common.Models;
 using Web.Features.Accounts;
@@ -112,6 +115,8 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         var callerProvider = new P2CallerProvider(auth);
         Services.AddSingleton(callerProvider);
         Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
+        Services.AddSingleton(sp => new PropertySetupDraftStore(
+            new ProtectedLocalStorage(sp.GetRequiredService<IJSRuntime>(), new EphemeralDataProtectionProvider())));
 
         return Render<PropertyList>();
     }
