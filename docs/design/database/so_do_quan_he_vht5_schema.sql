@@ -644,7 +644,7 @@ BEGIN
         Type INT NOT NULL,  -- 0 Điện, 1 Nước
         ScopeCode NVARCHAR(50) NOT NULL,  -- phạm vi biểu giá đã áp
         BillingPeriodId INT NOT NULL,  -- kỳ tính tiền (số), KHÔNG có FK: P5 chưa có bảng kỳ
-        Unit NVARCHAR(20) NOT NULL,  -- đơn vị: kWh, m³
+        Unit NVARCHAR(30) NOT NULL,  -- đơn vị: kWh, m³
         EffectiveDate DATE NOT NULL,  -- ngày hiệu lực của biểu giá đã dùng
         PeriodStart DATE NOT NULL,  -- đầu kỳ
         PeriodEnd DATE NOT NULL,  -- cuối kỳ, phải >= PeriodStart
@@ -743,9 +743,9 @@ BEGIN
         InvoiceId INT NOT NULL,  -- hóa đơn chứa dòng, trỏ tới Invoices.Id
         ItemType INT NOT NULL,  -- 0 Tiền phòng, 1 Điện, 2 Nước, 3 Dịch vụ, 4 Giảm giá
         Description NVARCHAR(250) NOT NULL,  -- diễn giải dòng
-        Unit NVARCHAR(20),  -- đơn vị tính, được để trống
-        Quantity DECIMAL(18,2) NOT NULL,  -- số lượng, phải > 0
-        UnitPrice DECIMAL(18,2) NOT NULL,  -- đơn giá (>= 0)
+        Unit NVARCHAR(30),  -- đơn vị tính, được để trống
+        Quantity DECIMAL(18,4) NOT NULL,  -- số lượng, phải > 0
+        UnitPrice DECIMAL(18,4) NOT NULL,  -- đơn giá (>= 0)
         Amount DECIMAL(18,2) NOT NULL,  -- thành tiền; âm CHỈ khi ItemType = 4 (giảm giá)
         DisplayOrder INT NOT NULL,  -- thứ tự hiển thị; không unique nên đọc phải sắp kèm Id
         CONSTRAINT FK_InvoiceItems_Invoices_InvoiceId FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),  -- Restrict
@@ -758,6 +758,61 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InvoiceItems_InvoiceId_DisplayOrder' AND object_id = OBJECT_ID(N'dbo.InvoiceItems'))
     CREATE INDEX IX_InvoiceItems_InvoiceId_DisplayOrder ON InvoiceItems(InvoiceId, DisplayOrder);
+GO
+
+-- VHT-51: placed after Contracts, Rooms and Invoices so all FK targets exist.
+IF OBJECT_ID(N'dbo.UtilityReadingPeriods', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityReadingPeriods
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityReadingPeriods PRIMARY KEY,
+        ContractId UNIQUEIDENTIFIER NOT NULL, RoomId INT NOT NULL,
+        PeriodStart DATE NOT NULL, PeriodEnd DATE NOT NULL,
+        ElectricStart DECIMAL(18,4) NOT NULL, ElectricEnd DECIMAL(18,4) NOT NULL,
+        WaterStart DECIMAL(18,4) NOT NULL, WaterEnd DECIMAL(18,4) NOT NULL,
+        ResidentCount INT NOT NULL, Status INT NOT NULL, InvoiceId INT NULL,
+        HasReadings BIT NOT NULL, HasServiceSnapshots BIT NOT NULL CONSTRAINT DF_UtilityReadingPeriods_HasServiceSnapshots DEFAULT (0),
+        CreatedAt DATETIME2 NOT NULL, UpdatedAt DATETIME2 NOT NULL, RowVersion ROWVERSION NOT NULL,
+        CONSTRAINT FK_UtilityReadingPeriods_Contracts_ContractId FOREIGN KEY (ContractId) REFERENCES Contracts(ContractId),
+        CONSTRAINT FK_UtilityReadingPeriods_Rooms_RoomId FOREIGN KEY (RoomId) REFERENCES Rooms(Id),
+        CONSTRAINT FK_UtilityReadingPeriods_Invoices_InvoiceId FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),
+        CONSTRAINT CK_UtilityReadingPeriods_Period CHECK (PeriodEnd >= PeriodStart),
+        CONSTRAINT CK_UtilityReadingPeriods_Electric CHECK (ElectricStart >= 0 AND ElectricEnd >= ElectricStart),
+        CONSTRAINT CK_UtilityReadingPeriods_Water CHECK (WaterStart >= 0 AND WaterEnd >= WaterStart),
+        CONSTRAINT CK_UtilityReadingPeriods_ResidentCount CHECK (ResidentCount > 0),
+        CONSTRAINT CK_UtilityReadingPeriods_Status CHECK (Status IN (0, 1)),
+        CONSTRAINT CK_UtilityReadingPeriods_InvoicedHasInvoice CHECK (Status = 0 OR InvoiceId IS NOT NULL),
+        CONSTRAINT CK_UtilityReadingPeriods_InvoicedHasReadings CHECK (Status = 0 OR HasReadings = 1),
+        CONSTRAINT CK_UtilityReadingPeriods_ServiceSnapshotsRequireReadings CHECK (HasServiceSnapshots = 0 OR HasReadings = 1)
+    )
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_ContractId_PeriodStart' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE UNIQUE INDEX IX_UtilityReadingPeriods_ContractId_PeriodStart ON UtilityReadingPeriods(ContractId, PeriodStart);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_ContractId_PeriodEnd' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE INDEX IX_UtilityReadingPeriods_ContractId_PeriodEnd ON UtilityReadingPeriods(ContractId, PeriodEnd);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_RoomId' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE INDEX IX_UtilityReadingPeriods_RoomId ON UtilityReadingPeriods(RoomId);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_InvoiceId' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE UNIQUE INDEX IX_UtilityReadingPeriods_InvoiceId ON UtilityReadingPeriods(InvoiceId) WHERE InvoiceId IS NOT NULL;
+GO
+IF OBJECT_ID(N'dbo.UtilityServicePeriodSnapshots', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityServicePeriodSnapshots
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityServicePeriodSnapshots PRIMARY KEY,
+        UtilityReadingPeriodId INT NOT NULL, SourceServiceCatalogId INT NOT NULL, SourceServicePriceHistoryId INT NOT NULL,
+        Description NVARCHAR(200) NOT NULL, Unit NVARCHAR(30) NOT NULL,
+        Quantity DECIMAL(18,4) NOT NULL, UnitPrice DECIMAL(18,4) NOT NULL, Amount DECIMAL(18,0) NOT NULL,
+        CONSTRAINT FK_UtilityServicePeriodSnapshots_UtilityReadingPeriods_UtilityReadingPeriodId FOREIGN KEY (UtilityReadingPeriodId) REFERENCES UtilityReadingPeriods(Id) ON DELETE CASCADE,
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_Quantity CHECK (Quantity > 0),
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_UnitPrice CHECK (UnitPrice >= 0),
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_Amount CHECK (Amount >= 0)
+    )
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityServicePeriodSnapshots_UtilityReadingPeriodId_SourceServicePriceHistoryId' AND object_id = OBJECT_ID(N'dbo.UtilityServicePeriodSnapshots'))
+    CREATE UNIQUE INDEX IX_UtilityServicePeriodSnapshots_UtilityReadingPeriodId_SourceServicePriceHistoryId ON UtilityServicePeriodSnapshots(UtilityReadingPeriodId, SourceServicePriceHistoryId);
 GO
 
 -- ============================================================================

@@ -439,6 +439,9 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ContractServiceRegist
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceRegistrationService>();
 builder.Services.AddScoped<Web.Features.Notifications.INotificationService, Web.Features.Notifications.NotificationService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
+// VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.
+builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingService,
+    Web.Features.Utilities.Services.UtilityReadingPeriodService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();

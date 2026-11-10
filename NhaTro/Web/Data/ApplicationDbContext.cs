@@ -57,6 +57,10 @@ namespace Web.Data
         public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();
         public DbSet<UtilityBillingCostLineSnapshot> UtilityBillingCostLineSnapshots => Set<UtilityBillingCostLineSnapshot>();
 
+        // VHT-51: kỳ ghi chỉ số thật, giữ chỉ số đầu/cuối và tham chiếu hóa đơn đã phát hành (D10).
+        public DbSet<UtilityReadingPeriod> UtilityReadingPeriods => Set<UtilityReadingPeriod>();
+        public DbSet<UtilityServicePeriodSnapshot> UtilityServicePeriodSnapshots => Set<UtilityServicePeriodSnapshot>();
+
         public DbSet<ServiceCatalog> ServiceCatalogs => Set<ServiceCatalog>();
         public DbSet<ServicePriceHistory> ServicePriceHistories => Set<ServicePriceHistory>();
 
