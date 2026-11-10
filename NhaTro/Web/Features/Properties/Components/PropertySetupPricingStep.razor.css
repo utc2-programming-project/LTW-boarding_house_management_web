@@ -4,6 +4,16 @@
     gap: 20px;
 }
 
+/* ---------- Đầu bước ---------- */
+
+.setup-step-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
 .setup-step-head h2 {
     margin: 0 0 4px;
     font-size: 1.15rem;
@@ -14,14 +24,483 @@
     color: var(--text-muted);
 }
 
-.setup-step-actions {
+.setup-price-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.setup-price-link:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.setup-price-link ::deep .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- Thẻ giá ---------- */
+
+.setup-price-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.setup-price-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    animation: setup-price-card-in 220ms var(--ease);
+}
+
+.setup-price-card.ok {
+    border-color: var(--success-border);
+}
+
+.setup-price-card.missing {
+    border-color: var(--warning-border);
+    background: var(--surface-subtle);
+}
+
+.setup-price-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.setup-price-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.setup-price-card.missing .setup-price-icon {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.setup-price-icon ::deep .lucide-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.setup-price-card h3 {
+    margin: 0 0 2px;
+    font-size: 0.95rem;
+}
+
+.setup-price-value {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.setup-price-value em {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.setup-price-countline {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.setup-price-missing-text {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--warning-text);
+}
+
+.setup-price-meta {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.setup-price-adjust {
+    margin-top: auto;
+    align-self: flex-start;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.setup-price-adjust:hover {
+    text-decoration: underline;
+}
+
+.setup-price-adjust:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.setup-price-service-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.setup-price-service-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.setup-price-num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ---------- Cảnh báo thiếu giá ---------- */
+
+.setup-price-warning {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 10px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
 }
+
+.setup-price-warning-text {
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.setup-price-warning-text p {
+    margin: 4px 0 0;
+}
+
+/* ---------- Lựa chọn ---------- */
+
+.setup-price-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.setup-price-options legend {
+    padding: 0 6px;
+    font-weight: 600;
+}
+
+.setup-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+    transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.setup-option:hover {
+    background: var(--surface-subtle);
+}
+
+.setup-option.selected {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+}
+
+.setup-option input {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.setup-option span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.setup-option small {
+    color: var(--text-muted);
+}
+
+.setup-option-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 0 8px 42px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+    animation: setup-option-body-in 180ms var(--ease);
+}
+
+.setup-option-body > label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.setup-option-body .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    font-weight: 600;
+}
+
+.setup-option-body .btn-secondary {
+    border-color: var(--control-border);
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.setup-option-body .btn-primary {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+.setup-option-body .btn ::deep .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- Tự nhập ---------- */
+
+.setup-manual-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.setup-manual-head p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.setup-service-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.setup-service-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+}
+
+.setup-service-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.setup-service-main strong {
+    overflow-wrap: anywhere;
+}
+
+.setup-service-main small {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.setup-service-rate {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.setup-service-rate em {
+    font-style: normal;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.setup-service-date {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.setup-service-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.setup-service-edit {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.setup-service-actions ::deep .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.setup-service-actions .danger-action {
+    color: var(--danger);
+}
+
+.setup-service-actions .danger-action:hover {
+    background: var(--error-bg);
+    color: var(--danger-hover);
+}
+
+.setup-manual-empty {
+    padding: 18px 14px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-control);
+    text-align: center;
+    background: var(--surface);
+}
+
+.setup-manual-empty p {
+    margin: 0;
+}
+
+.setup-manual-hint {
+    margin-top: 4px !important;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ---------- Sao chép ---------- */
+
+.setup-copy-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.setup-copy-controls select {
+    flex: 1 1 220px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+}
+
+.setup-copy-controls select:focus-visible {
+    border-color: var(--focus-ring);
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.setup-copy-loading {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.setup-copy-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+}
+
+.setup-copy-preview h4 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.setup-copy-count {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.setup-copy-preview ul {
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.setup-copy-preview li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.setup-copy-more,
+.setup-copy-note {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* ---------- Thông báo ---------- */
 
 .p2-alert {
     display: flex;
@@ -42,135 +521,290 @@
     color: var(--error-text);
 }
 
+.p2-alert.warning {
+    border-color: var(--warning-border);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
 .p2-alert.success {
     border-color: var(--success-border);
     background: var(--success-bg);
     color: var(--success-text);
 }
 
-.p2-inline-loading {
-    padding: 32px 0;
-    color: var(--text-secondary);
-    text-align: center;
+.p2-alert .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-decoration: none;
 }
 
-.setup-price-cards {
+.p2-alert ::deep .lucide-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* ---------- Tải ---------- */
+
+.setup-price-skeleton {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 12px;
 }
 
-.setup-price-card {
-    padding: 16px;
+.setup-price-skeleton-card {
+    height: 124px;
+    border-radius: var(--radius-card);
+}
+
+.sk-block {
+    display: block;
     border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface);
+    background: linear-gradient(90deg, var(--surface-subtle) 25%, var(--border) 37%, var(--surface-subtle) 63%);
+    background-size: 400% 100%;
+    animation: setup-price-skeleton 1.4s ease infinite;
 }
 
-.setup-price-card h3 {
-    margin: 0 0 6px;
-    font-size: 0.95rem;
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
-.setup-price-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
+/* ---------- Chân bước ---------- */
 
-.setup-price-card.ok {
-    border-color: var(--success, #2f855a);
-}
-
-.setup-price-card.missing {
-    border-color: var(--warning, #b7791f);
-    background: var(--surface-subtle);
-}
-
-.setup-price-service-list {
-    margin: 8px 0 0;
-    padding-left: 18px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.setup-price-options {
-    display: flex;
-    flex-direction: column;
+.setup-step-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
     gap: 10px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    background: var(--surface);
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
 }
 
-.setup-price-options legend {
-    padding: 0 6px;
+/* Ba vùng: lùi bên trái, bỏ qua ở giữa, tiến bên phải. Bước này không có nút
+   bỏ qua nên tiến vẫn nằm sát phải. */
+.setup-action-back {
+    grid-column: 1;
+    justify-self: start;
+}
+
+.setup-action-next {
+    grid-column: 3;
+    justify-self: end;
+}
+
+.setup-step-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 9px 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
     font-weight: 600;
 }
 
-.setup-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px;
-    border-radius: 8px;
-    cursor: pointer;
+.setup-step-actions .btn-primary {
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
-.setup-option:hover {
-    background: var(--surface-subtle);
+.setup-step-actions .btn-secondary {
+    border-color: var(--control-border);
+    background: var(--surface);
+    color: var(--text-primary);
 }
 
-.setup-option input {
-    margin-top: 4px;
-}
+/* ---------- Hộp thoại xác nhận ---------- */
 
-.setup-option span {
+.setup-confirm {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 18px;
+    padding: 24px;
 }
 
-.setup-option small {
-    color: var(--text-muted);
+.setup-confirm p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.55;
 }
 
-.setup-option-body {
+.setup-confirm-actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-end;
+    justify-content: flex-end;
     gap: 10px;
-    margin: 0 0 6px 34px;
-    padding: 12px;
-    border-left: 3px solid var(--border);
 }
 
-.setup-option-body label {
-    flex: 0 0 100%;
-    font-size: 0.9rem;
+.setup-confirm-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    font-weight: 600;
 }
 
-.setup-option-body select {
-    min-width: 220px;
-    flex: 1 1 220px;
+.setup-confirm-actions .btn-secondary {
+    border-color: var(--control-border);
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.setup-confirm-actions .btn-danger {
+    background: var(--danger);
+    color: var(--on-primary);
+}
+
+/* ---------- Hiệu ứng ---------- */
+
+@keyframes setup-price-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes setup-option-body-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes setup-price-skeleton {
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* ---------- Màn hình hẹp ---------- */
+
+@media (max-width: 900px) {
+    .setup-service-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "main actions"
+            "rate actions"
+            "date actions";
+        row-gap: 4px;
+    }
+
+    .setup-service-main {
+        grid-area: main;
+    }
+
+    .setup-service-rate {
+        grid-area: rate;
+    }
+
+    .setup-service-date {
+        grid-area: date;
+    }
+
+    .setup-service-actions {
+        grid-area: actions;
+    }
 }
 
 @media (max-width: 767.98px) {
-    .setup-option-body {
-        margin-left: 0;
+    .setup-step-head {
+        flex-direction: column;
     }
 
-    .setup-option-body select {
-        min-width: 0;
+    .setup-step-head > .setup-price-link {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .setup-option-body {
+        margin-left: 0;
+        padding: 12px;
+    }
+
+    .setup-copy-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .setup-copy-controls .btn {
         width: 100%;
     }
 
-    .setup-step-actions {
+    .setup-manual-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .setup-manual-head .btn {
+        width: 100%;
+    }
+
+    .setup-price-warning {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .setup-step-actions,
+    .setup-confirm-actions {
+        display: flex;
         flex-direction: column-reverse;
     }
 
-    .setup-step-actions .btn {
+    .setup-step-actions .btn,
+    .setup-confirm-actions .btn {
         width: 100%;
+    }
+
+    .setup-confirm {
+        padding: 20px 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .setup-price-card,
+    .setup-option-body {
+        animation: none;
+    }
+
+    .sk-block {
+        animation: none;
+    }
+
+    .setup-option {
+        transition: none;
     }
 }

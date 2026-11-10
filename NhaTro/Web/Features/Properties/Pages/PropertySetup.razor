@@ -19,30 +19,106 @@
 
 <div class="setup-page">
     <header class="setup-heading">
-        <div>
+        <div class="setup-heading-text">
             <NavBreadcrumb TitleAsHeading="true" CurrentLabel="@L["P2SetupTitle"].Value" />
             <p>@L["P2SetupSubtitle"]</p>
         </div>
-        <button class="btn btn-secondary" type="button" @onclick="RequestExit">
-            <LucideIcon Name="arrow-left" />
+        <button class="btn btn-secondary setup-exit-button" type="button" @onclick="OpenExit">
+            <LucideIcon Name="logout" />
             @L["P2SetupExit"]
         </button>
     </header>
 
-    <ol class="setup-stepper" aria-label="@L["P2SetupStepperLabel"]">
-        <li class="@StepClass(PropertySetupStep.Basics)">
-            <span class="setup-stepper-index">1</span>
-            <span class="setup-stepper-label">@L["P2SetupStepBasics"]</span>
-        </li>
-        <li class="@StepClass(PropertySetupStep.Rooms)">
-            <span class="setup-stepper-index">2</span>
-            <span class="setup-stepper-label">@L["P2SetupStepRooms"]</span>
-        </li>
-        <li class="@StepClass(PropertySetupStep.Pricing)">
-            <span class="setup-stepper-index">3</span>
-            <span class="setup-stepper-label">@L["P2SetupStepPricing"]</span>
-        </li>
-    </ol>
+    @if (_stateReady && _step != PropertySetupStep.Finished)
+    {
+        <nav class="setup-rail" aria-label="@L["P2SetupStepperLabel"]">
+            <ol class="setup-rail-list">
+                @foreach (var step in Steps)
+                {
+                    var state = StepState(step);
+                    <li class="setup-rail-step @state">
+                        @if (state == "done")
+                        {
+                            <button type="button" class="setup-rail-node" aria-label="@RailDoneLabel(step)"
+                                    @onclick="() => GoToStepAsync(step)">
+                                <span class="setup-rail-index"><LucideIcon Name="check" /></span>
+                                <span class="setup-rail-text">
+                                    <strong>@StepLabel(step)</strong>
+                                    <small>@L["P2SetupRailDone"]</small>
+                                </span>
+                            </button>
+                        }
+                        else if (state == "current")
+                        {
+                            <span class="setup-rail-node" aria-current="step">
+                                <span class="setup-rail-index">@((int)step)</span>
+                                <span class="setup-rail-text">
+                                    <strong>@StepLabel(step)</strong>
+                                    <small>@L["P2SetupRailCurrent"]</small>
+                                </span>
+                            </span>
+                        }
+                        else
+                        {
+                            <button type="button" class="setup-rail-node" aria-disabled="true"
+                                    title="@LockedReason(step)" @onclick="() => ShowLockedReason(step)">
+                                <span class="setup-rail-index"><LucideIcon Name="lock" /></span>
+                                <span class="setup-rail-text">
+                                    <strong>@StepLabel(step)</strong>
+                                    <small>@L["P2SetupRailLocked"]</small>
+                                </span>
+                            </button>
+                        }
+                    </li>
+                }
+            </ol>
+        </nav>
+
+        <div class="setup-progress">
+            <button type="button" class="setup-progress-toggle" aria-expanded="@(_railOpen ? "true" : "false")"
+                    aria-controls="setup-progress-steps" @onclick="ToggleRail">
+                <span>@L["P2SetupProgressValue", Math.Min((int)_step, 3), 3, StepLabel(CurrentStep)]</span>
+                <LucideIcon Name="chevron-down" Class="setup-progress-chevron" />
+            </button>
+            <div class="setup-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="3"
+                 aria-valuenow="@ProgressValue" aria-valuetext="@L["P2SetupProgressValue", Math.Min((int)_step, 3), 3, StepLabel(CurrentStep)]">
+                <span class="setup-progress-fill" style="width:@(ProgressPercent)%"></span>
+            </div>
+            <p class="setup-progress-next">
+                @(NextStep is PropertySetupStep next
+                    ? L["P2SetupProgressNext", StepLabel(next)]
+                    : L["P2SetupProgressAllDone"])
+            </p>
+
+            @if (_railOpen)
+            {
+                <ol class="setup-progress-list" id="setup-progress-steps">
+                    @foreach (var step in Steps)
+                    {
+                        var state = StepState(step);
+                        <li class="setup-progress-item @state">
+                            @if (state == "done")
+                            {
+                                <button type="button" class="setup-progress-link" @onclick="() => GoToStepAsync(step)">
+                                    <LucideIcon Name="check" />
+                                    <span>@StepLabel(step)</span>
+                                    <small>@L["P2SetupRailBack"]</small>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="setup-progress-link" aria-current="@(state == "current" ? "step" : null)">
+                                    <span class="setup-progress-dot">@((int)step)</span>
+                                    <span>@StepLabel(step)</span>
+                                    <small>@(state == "current" ? L["P2SetupRailCurrent"].Value : LockedReason(step))</small>
+                                </span>
+                            }
+                        </li>
+                    }
+                </ol>
+            }
+        </div>
+    }
 
     @if (!_stateReady)
     {
@@ -75,8 +151,9 @@
     }
     else
     {
-        @switch (_step)
-        {
+        <div class="setup-step-shell" @key="_step">
+            @switch (_step)
+            {
             case PropertySetupStep.Basics:
                 @RenderBasics()
                 break;
@@ -91,7 +168,8 @@
                                                 IsOwner="true"
                                                 PendingRoom="_pendingRoom"
                                                 OnPendingRoomChanged="HandlePendingRoomChangedAsync"
-                                                OnContinue="GoToPricingAsync" />
+                                                OnContinue="GoToPricingAsync"
+                                                OnBack="BackToBasicsAsync" />
                     </section>
                 }
                 break;
@@ -109,44 +187,33 @@
                 break;
 
             case PropertySetupStep.Finished:
-                <section class="setup-finish">
-                    <div class="setup-finish-icon" aria-hidden="true">
-                        <LucideIcon Name="check-circle-2" />
-                    </div>
-                    <h2>@L["P2SetupFinishedTitle"]</h2>
-                    <p>@L["P2SetupFinishedBody", _model.Name]</p>
-                    <dl class="setup-finish-summary">
-                        <div>
-                            <dt>@L["P2SetupFinishedRooms"]</dt>
-                            <dd>@_finishedRoomCount</dd>
-                        </div>
-                        <div>
-                            <dt>@L["P2SetupFinishedServices"]</dt>
-                            <dd>@_finishedServiceCount</dd>
-                        </div>
-                    </dl>
-                    <div class="setup-finish-actions">
-                        <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2SetupFinishedViewRooms"]</button>
-                        <button class="btn btn-primary" type="button" @onclick="GoToListAsync">@L["P2SetupFinishedDone"]</button>
-                    </div>
-                </section>
+                @RenderFinished()
                 break;
-        }
+            }
+        </div>
     }
 </div>
 
 <FeatureDialog Visible="_exitVisible" Title="@L["P2SetupExitTitle"]"
-               CloseLabel="@L["Close"]" Busy="_saving" OnClose="CloseExit">
+               CloseLabel="@L["Close"]" Busy="_saving" OnClose="CloseExit" CssClass="setup-exit-dialog">
     <div class="setup-exit">
         <p>@L["P2SetupExitBody"]</p>
+        @if (!CanSaveAndExit)
+        {
+            <p class="setup-exit-hint" id="setup-exit-hint">@L["P2SetupExitHint"]</p>
+        }
         <div class="setup-exit-actions">
-            <button class="btn btn-primary" type="button" disabled="@(!CanSaveAndExit || _saving)" @onclick="SaveAndExitAsync">
+            <button class="btn btn-primary" type="button"
+                    disabled="@(!CanSaveAndExit || _saving)"
+                    aria-describedby="@(!CanSaveAndExit ? "setup-exit-hint" : null)"
+                    aria-busy="@(_saving ? "true" : null)"
+                    @onclick="SaveAndExitAsync">
                 @L["P2SetupExitSaveAndLeave"]
             </button>
             <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="SaveDraftAndExitAsync">
                 @L["P2SetupExitSaveDraft"]
             </button>
-            <button class="btn btn-secondary" type="button" disabled="@_saving" @onclick="CloseExit">
+            <button class="btn btn-secondary" type="button" disabled="@_saving" autofocus @onclick="CloseExit">
                 @L["P2SetupExitContinue"]
             </button>
         </div>
@@ -156,12 +223,16 @@
 @code {
     [Parameter] public int? PropertyId { get; set; }
 
+    private static readonly PropertySetupStep[] Steps =
+        [PropertySetupStep.Basics, PropertySetupStep.Rooms, PropertySetupStep.Pricing];
+
     private readonly PropertySave _model = new();
     private EditContext _editContext = default!;
     private ValidationMessageStore _messages = default!;
     private PropertySetupDraft? _resumeDraft;
     private RoomSave? _pendingRoom;
     private PropertySetupStep _step = PropertySetupStep.Basics;
+    private PropertyPriceSetupStatusDto? _finishedStatus;
     private int? _propertyId;
     private string? _userId;
     private string? _pageError;
@@ -169,6 +240,7 @@
     private bool _interactive;
     private bool _saving;
     private bool _exitVisible;
+    private bool _railOpen;
     private bool _allowNavigation;
     private bool _resetAllowNavigation;
     private int _finishedRoomCount;
@@ -182,12 +254,34 @@
 
     // Đang hiện banner nháp cũ thì chưa có gì mới để lưu, tránh tạo nhà trọ trùng.
     private bool CanSaveAndExit => _resumeDraft is null
-        && (_step != PropertySetupStep.Basics || BasicsIsValid);
+        && (_propertyId is not null || BasicsIsValid);
 
     private bool BasicsIsValid =>
         !string.IsNullOrWhiteSpace(_model.Name)
         && _model.Name.Length <= 200
         && (_model.Address?.Length ?? 0) <= 500;
+
+    private PropertySetupStep CurrentStep => _step == PropertySetupStep.Finished
+        ? PropertySetupStep.Pricing
+        : _step;
+
+    private PropertySetupStep? NextStep => _step switch
+    {
+        PropertySetupStep.Basics => PropertySetupStep.Rooms,
+        PropertySetupStep.Rooms => PropertySetupStep.Pricing,
+        _ => null
+    };
+
+    private int DoneCount => _step == PropertySetupStep.Finished ? 3 : (int)_step - 1;
+
+    // (số bước xong + 0.5) / 3: bước đang làm được tính nửa bước để thanh tiến độ không đứng ở 0%.
+    private int ProgressPercent => _step == PropertySetupStep.Finished
+        ? 100
+        : (int)Math.Round((DoneCount + 0.5) / 3d * 100, MidpointRounding.AwayFromZero);
+
+    private double ProgressValue => _step == PropertySetupStep.Finished
+        ? 3
+        : Math.Round(DoneCount + 0.5, 1);
 
     protected override void OnInitialized()
     {
@@ -258,9 +352,18 @@
                 _pendingRoom = draft.PendingRoom;
                 _step = draft.Step switch
                 {
+                    PropertySetupStep.Basics => PropertySetupStep.Basics,
                     PropertySetupStep.Pricing => PropertySetupStep.Pricing,
                     _ => PropertySetupStep.Rooms
                 };
+                // Bước thông tin có thể chứa sửa đổi chưa lưu (quay lại từ bước sau).
+                if (_step == PropertySetupStep.Basics)
+                {
+                    _model.Name = draft.Name;
+                    _model.Address = draft.Address;
+                    _model.IsActive = draft.IsActive;
+                    ResetValidation();
+                }
             }
             else
             {
@@ -335,14 +438,115 @@
                 </div>
 
                 <footer class="setup-step-actions">
-                    <button class="btn btn-secondary" type="button" @onclick="RequestExit">@L["Cancel"]</button>
-                    <button class="btn btn-primary" type="submit" disabled="@_saving" aria-busy="@(_saving ? "true" : null)">
+                    <button class="btn btn-primary setup-action-next" type="submit" disabled="@_saving" aria-busy="@(_saving ? "true" : null)">
                         @(_saving ? L["P2Saving"] : L["P2SetupContinueRooms"])
                     </button>
                 </footer>
             </EditForm>
         </section>
     };
+
+    private RenderFragment RenderFinished() => __builder =>
+    {
+        var hasRooms = _finishedRoomCount > 0;
+        var hasElectric = _finishedStatus?.HasElectricTariff == true;
+        var hasWater = _finishedStatus?.HasWaterTariff == true;
+        <section class="setup-finish" aria-labelledby="setup-finish-title">
+            <div class="setup-finish-icon" aria-hidden="true">
+                <LucideIcon Name="check-circle-2" />
+            </div>
+            <h2 id="setup-finish-title">@L["P2SetupFinishedTitle"]</h2>
+            <p>@L["P2SetupFinishedBody", _model.Name]</p>
+
+            <dl class="setup-finish-summary">
+                <div>
+                    <dt>@L["P2SetupFinishedProperty"]</dt>
+                    <dd>@_model.Name</dd>
+                </div>
+                <div>
+                    <dt>@L["P2SetupFinishedAddress"]</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(_model.Address) ? L["P2NotProvided"].Value : _model.Address)</dd>
+                </div>
+                <div>
+                    <dt>@L["P2SetupFinishedRooms"]</dt>
+                    <dd>@_finishedRoomCount</dd>
+                </div>
+                <div>
+                    <dt>@L["P2SetupFinishedElectric"]</dt>
+                    <dd>@RateText(_finishedStatus?.HasElectricTariff == true, _finishedStatus?.ElectricRate, _finishedStatus?.ElectricUnit)</dd>
+                </div>
+                <div>
+                    <dt>@L["P2SetupFinishedWater"]</dt>
+                    <dd>@RateText(_finishedStatus?.HasWaterTariff == true, _finishedStatus?.WaterRate, _finishedStatus?.WaterUnit)</dd>
+                </div>
+                <div>
+                    <dt>@L["P2SetupFinishedServices"]</dt>
+                    <dd>@_finishedServiceCount</dd>
+                </div>
+            </dl>
+
+            @if (!hasRooms || !hasElectric || !hasWater)
+            {
+                <div class="p2-alert warning setup-finish-warning" role="status">
+                    <div>
+                        <strong>@L["P2SetupFinishedWarningTitle"]</strong>
+                        <ul>
+                            @if (!hasRooms)
+                            {
+                                <li>@L["P2SetupFinishedWarningRooms"]</li>
+                            }
+                            @if (!hasElectric)
+                            {
+                                <li>@L["P2SetupFinishedWarningElectric"]</li>
+                            }
+                            @if (!hasWater)
+                            {
+                                <li>@L["P2SetupFinishedWarningWater"]</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            <div class="setup-finish-next">
+                <h3>@L["P2SetupFinishedNextTitle"]</h3>
+                <ul>
+                    <li>
+                        <LucideIcon Name="users" />
+                        <span>@L["P2SetupFinishedNextTenants"]</span>
+                        <a href="/contracts/create">@L["P2SetupFinishedNextOpen"]</a>
+                    </li>
+                    <li>
+                        <LucideIcon Name="wallet" />
+                        <span>@L["P2SetupFinishedNextPrices"]</span>
+                        <a href="/services/prices">@L["P2SetupFinishedNextOpen"]</a>
+                    </li>
+                    <li>
+                        <LucideIcon Name="door" />
+                        <span>@L["P2SetupFinishedNextRooms"]</span>
+                        <a href="@RoomListUrl">@L["P2SetupFinishedNextOpen"]</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="setup-finish-actions">
+                <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2SetupFinishedViewRooms"]</button>
+                <button class="btn btn-primary" type="button" @onclick="GoToListAsync">@L["P2SetupFinishedDone"]</button>
+            </div>
+        </section>
+    };
+
+    private string RoomListUrl => _propertyId is int id ? $"/rooms?propertyId={id}" : "/rooms";
+
+    private string RateText(bool hasTariff, decimal? rate, ServiceUnitCategory? unit) =>
+        hasTariff && rate is decimal value
+            ? unit switch
+            {
+                ServiceUnitCategory.KilowattHour => $"{MoneyFormatter.Format(value)} / kWh",
+                ServiceUnitCategory.CubicMeter => $"{MoneyFormatter.Format(value)} / m³",
+                _ => MoneyFormatter.Format(value)
+            }
+            : L["P2SetupFinishedNotConfigured"].Value;
 
     private bool ValidateBasics()
     {
@@ -366,7 +570,11 @@
         _saving = true;
         try
         {
-            var result = await PageService.CreateAsync(_model);
+            // Quay lại bước 1 từ bước sau thì sửa nhà trọ đã tạo, tránh sinh bản ghi trùng.
+            var created = _propertyId is null;
+            var result = _propertyId is int existingId
+                ? await PageService.UpdateAsync(existingId, _model)
+                : await PageService.CreateAsync(_model);
             if (!result.Succeeded || result.Property is null)
             {
                 _pageError = result.ErrorCode switch
@@ -382,7 +590,7 @@
             _step = PropertySetupStep.Rooms;
             _resumeDraft = null;
             await PersistDraftAsync();
-            NavigateToSetup();
+            if (created) NavigateToSetup();
         }
         catch (UnauthorizedAccessException)
         {
@@ -391,7 +599,7 @@
         catch (Exception ex)
         {
             _pageError = L["P2SaveFailed"];
-            Logger.LogError(ex, "PLAN-010: tạo nhà trọ trong wizard thất bại");
+            Logger.LogError(ex, "PLAN-010: lưu nhà trọ trong wizard thất bại");
         }
         finally
         {
@@ -419,6 +627,12 @@
         await PersistDraftAsync();
     }
 
+    private async Task BackToBasicsAsync()
+    {
+        _step = PropertySetupStep.Basics;
+        await PersistDraftAsync();
+    }
+
     private async Task BackToRoomsAsync()
     {
         _step = PropertySetupStep.Rooms;
@@ -429,13 +643,14 @@
     {
         if (_propertyId is not int id) return;
 
+        _finishedStatus = null;
         try
         {
             var rooms = await RoomPageService.ListAsync(new RoomFilter { PropertyId = id, Page = 1, PageSize = 1 });
             _finishedRoomCount = rooms.TotalCount;
 
-            var status = await CatalogPageService.GetPriceSetupStatusAsync(id);
-            _finishedServiceCount = status.PropertyServices.Count;
+            _finishedStatus = await CatalogPageService.GetPriceSetupStatusAsync(id);
+            _finishedServiceCount = _finishedStatus.PropertyServices.Count;
         }
         catch (Exception ex)
         {
@@ -447,17 +662,25 @@
         await ClearDraftAsync();
     }
 
-    private void RequestExit()
+    private async Task GoToStepAsync(PropertySetupStep step)
     {
-        if (!HasWork)
-        {
-            _allowNavigation = true;
-            Navigation.NavigateTo("/properties");
-            return;
-        }
+        if (!CanVisit(step) || step == _step) return;
 
-        _exitVisible = true;
+        _step = step;
+        _railOpen = false;
+        await PersistDraftAsync();
     }
+
+    private bool CanVisit(PropertySetupStep step) =>
+        _step != PropertySetupStep.Finished
+        && step < _step
+        && step >= PropertySetupStep.Basics;
+
+    private void ShowLockedReason(PropertySetupStep step) => Toasts.Error(LockedReason(step));
+
+    private void ToggleRail() => _railOpen = !_railOpen;
+
+    private void OpenExit() => _exitVisible = true;
 
     private void CloseExit() => _exitVisible = false;
 
@@ -468,7 +691,8 @@
         _saving = true;
         try
         {
-            if (_propertyId is null)
+            // Bước thông tin có thể đã sửa tên/địa chỉ sau khi tạo nhà trọ (quay lại từ bước sau).
+            if (_propertyId is null || _step == PropertySetupStep.Basics)
             {
                 if (!ValidateBasics())
                 {
@@ -476,7 +700,9 @@
                     return;
                 }
 
-                var result = await PageService.CreateAsync(_model);
+                var result = _propertyId is int existingId
+                    ? await PageService.UpdateAsync(existingId, _model)
+                    : await PageService.CreateAsync(_model);
                 if (!result.Succeeded || result.Property is null)
                 {
                     _pageError = result.ErrorCode switch
@@ -668,11 +894,25 @@
 
     private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_model, field), message);
 
-    private string StepClass(PropertySetupStep step)
+    private string StepState(PropertySetupStep step)
     {
-        if (_step == PropertySetupStep.Finished || step < _step) return "setup-step done";
-        return step == _step ? "setup-step active" : "setup-step";
+        if (_step == PropertySetupStep.Finished || step < _step) return "done";
+        return step == _step ? "current" : "upcoming";
     }
+
+    private string StepLabel(PropertySetupStep step) => step switch
+    {
+        PropertySetupStep.Basics => L["P2SetupStepBasics"],
+        PropertySetupStep.Rooms => L["P2SetupStepRooms"],
+        _ => L["P2SetupStepPricing"]
+    };
+
+    private string LockedReason(PropertySetupStep step) => step == PropertySetupStep.Pricing
+        ? L["P2SetupRailLockedReasonPricing"]
+        : L["P2SetupRailLockedReasonRooms"];
+
+    private string RailDoneLabel(PropertySetupStep step) =>
+        L["P2SetupRailDoneLabel", (int)step, StepLabel(step)];
 
     public void Dispose()
     {

@@ -106,6 +106,22 @@ public class RoomComponentTests : BunitContext
     // ---------- B16-01 ----------
 
     [Fact]
+    public void Form_nhan_ban_nap_phong_nguon_va_goi_y_ma_moi()
+    {
+        _rooms.OnGet = _ => Found("P101");
+
+        var cut = Render<RoomFormDialog>(p => p
+            .Add(c => c.Visible, true)
+            .Add(c => c.CloneFromRoomId, 7)
+            .Add(c => c.IsOwner, true)
+            .Add(c => c.Properties, OneProperty()));
+
+        cut.WaitForAssertion(() => cut.Find("#room-code"));
+        Assert.Equal("P102", cut.Find("#room-code").GetAttribute("value"));
+        Assert.Contains("P2CloneRoom", cut.Find(".feature-dialog-header h2").TextContent);
+    }
+
+    [Fact]
     public void B16_01_form_phong_tat_validation_goc_va_khong_gioi_han_buoc_gia()
     {
         var cut = RenderForm(roomId: null);

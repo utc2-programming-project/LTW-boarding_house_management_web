@@ -7,8 +7,8 @@ public static class ContractFormSampleData
 {
     public static IReadOnlyList<ContractPropertySample> Properties { get; } =
     [
-        new(1, "Tòa nhà An Gia 01", "12 Nguyễn Văn Bảo, Gò Vấp"),
-        new(2, "Nhà trọ Bình Minh", "48 Phan Văn Trị, Gò Vấp"),
+        new(1, "Tòa nhà An Gia 01", "12 Nguyễn Văn Bảo, Phường Gò Vấp, Thành phố Hồ Chí Minh"),
+        new(2, "Nhà trọ Bình Minh", "48 Phan Văn Trị, Phường Gò Vấp, Thành phố Hồ Chí Minh"),
     ];
 
     public static IReadOnlyList<ContractRoomSample> Rooms { get; } =

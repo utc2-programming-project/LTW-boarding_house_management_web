@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using Bunit;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.JSInterop;
 using Web.Common.Models;
 using Web.Components.Shared.Feedback;
 using Web.Features.Accounts;
@@ -30,8 +33,11 @@ public sealed class PropertyTrashComponentTests : BunitContext
         Services.AddLogging();
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(_toasts);
-        Services.AddSingleton(new PropertyPageService(
-            new P2CallerProvider(new OwnerAuthenticationProvider()), _properties, new FakeManagerService()));
+        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider());
+        Services.AddSingleton(callerProvider);
+        Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
+        Services.AddSingleton(sp => new PropertySetupDraftStore(
+            new ProtectedLocalStorage(sp.GetRequiredService<IJSRuntime>(), new EphemeralDataProtectionProvider())));
     }
 
     [Fact]

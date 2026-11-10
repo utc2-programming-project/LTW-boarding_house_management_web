@@ -418,8 +418,12 @@ public sealed class ServiceCatalogPageService(
         return new PropertyPriceSetupStatusDto(
             propertyId,
             electric is not null,
+            electric?.CurrentRate,
+            electric?.Unit,
             electric?.EffectiveFrom,
             water is not null,
+            water?.CurrentRate,
+            water?.Unit,
             water?.EffectiveFrom,
             propertyServices,
             copySources);

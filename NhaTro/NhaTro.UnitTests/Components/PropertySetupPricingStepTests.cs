@@ -9,6 +9,7 @@ using Microsoft.Extensions.Time.Testing;
 using System.Security.Claims;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Components.Shared.Feedback;
 using Web.Features.Properties.Components;
 using Web.Features.Properties.Entities;
 using Web.Features.Utilities;
@@ -36,6 +37,7 @@ public sealed class PropertySetupPricingStepTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         Services.AddLogging();
+        Services.AddSingleton(new ToastService());
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer<SharedResource>());
         Services.AddSingleton<IStringLocalizer<UtilityResources>>(new KeyLocalizer<UtilityResources>());
 

@@ -3,8 +3,8 @@
 @using System.Linq.Expressions
 
 @*
-    Ô nhập địa chỉ dùng chung: giữ nguyên ô nhập tự do "Số nhà, tên đường" cho dữ liệu cũ,
-    đồng thời gợi ý tỉnh/thành phố và phường/xã từ dữ liệu hành chính lưu trong project.
+    Ô nhập địa chỉ dùng chung: tỉnh/thành phố và phường/xã chọn từ danh mục 2 cấp hiện hành,
+    chỉ mở ô nhập tay khi chọn "Khác" cho địa chỉ nằm ngoài danh mục hoặc dữ liệu cũ.
     Giá trị phát ra vẫn là một chuỗi địa chỉ duy nhất để không phải đổi schema hiện có.
 *@
 <div class="address-input" data-address-input>
@@ -19,53 +19,95 @@
                placeholder="@L["AddressStreetPlaceholder"]"
                aria-describedby="@AriaDescribedBy"
                aria-invalid="@AriaInvalidValue"
-               @oninput="OnStreetInput" />
+               @oninput="OnStreetInputAsync" />
     </div>
 
     <div class="address-input-row">
         <div class="address-input-part">
-            <label class="address-input-label" for="@($"{Id}-province")">@L["AddressProvinceLabel"]</label>
-            <input id="@($"{Id}-province")"
-                   class="input address-input-control @(AriaInvalid ? "invalid" : null)"
-                   type="text"
-                   value="@_provinceText"
-                   list="@($"{Id}-province-options")"
-                   autocomplete="address-level1"
-                   placeholder="@L["AddressProvincePlaceholder"]"
-                   aria-describedby="@AriaDescribedBy"
-                   aria-invalid="@AriaInvalidValue"
-                   @oninput="OnProvinceInput"
-                   @onblur="CanonicalizeProvinceAsync" />
-            <datalist id="@($"{Id}-province-options")">
-                @foreach (var province in Catalog.Provinces)
-                {
-                    <option value="@province.Name"></option>
-                }
-            </datalist>
+            <label class="address-input-label" for="@(_provinceManual ? $"{Id}-province-manual" : $"{Id}-province")">@L["AddressProvinceLabel"]</label>
+            @if (_provinceManual)
+            {
+                <input id="@($"{Id}-province-manual")"
+                       class="input address-input-control @(AriaInvalid ? "invalid" : null)"
+                       type="text"
+                       value="@_provinceText"
+                       maxlength="120"
+                       autocomplete="address-level1"
+                       aria-label="@L["AddressProvinceLabel"]"
+                       placeholder="@L["AddressProvinceManualPlaceholder"]"
+                       aria-describedby="@AriaDescribedBy"
+                       aria-invalid="@AriaInvalidValue"
+                       @oninput="OnProvinceManualInputAsync"
+                       @onblur="CanonicalizeManualProvinceAsync" />
+            }
+            else
+            {
+                <select id="@($"{Id}-province")"
+                        class="input address-input-control @(AriaInvalid ? "invalid" : null)"
+                        aria-describedby="@AriaDescribedBy"
+                        aria-invalid="@AriaInvalidValue"
+                        @bind="_provinceSelect"
+                        @bind:after="OnProvinceSelectedAsync">
+                    <option value="">@L["AddressProvincePlaceholder"]</option>
+                    @foreach (var province in SortedProvinces)
+                    {
+                        <option value="@province.Name">@province.Name</option>
+                    }
+                    <option value="@ManualOption">@L["AddressOtherOption"]</option>
+                </select>
+            }
         </div>
 
         <div class="address-input-part">
-            <label class="address-input-label" for="@($"{Id}-ward")">@L["AddressWardLabel"]</label>
-            <input id="@($"{Id}-ward")"
-                   class="input address-input-control @(AriaInvalid ? "invalid" : null)"
-                   type="text"
-                   value="@_wardText"
-                   list="@($"{Id}-ward-options")"
-                   autocomplete="address-level2"
-                   placeholder="@(_selectedProvince is null ? L["AddressWardProvinceRequired"].Value : L["AddressWardPlaceholder"].Value)"
-                   aria-describedby="@AriaDescribedBy"
-                   aria-invalid="@AriaInvalidValue"
-                   @oninput="OnWardInput"
-                   @onblur="CanonicalizeWardAsync" />
-            <datalist id="@($"{Id}-ward-options")">
-                @if (_selectedProvince is not null)
-                {
-                    foreach (var ward in _selectedProvince.Wards)
+            <label class="address-input-label" for="@(_provinceManual || _wardManual ? $"{Id}-ward-manual" : $"{Id}-ward")">@L["AddressWardLabel"]</label>
+            @if (_provinceManual)
+            {
+                <input id="@($"{Id}-ward-manual")"
+                       class="input address-input-control @(AriaInvalid ? "invalid" : null)"
+                       type="text"
+                       value="@_wardText"
+                       maxlength="120"
+                       autocomplete="address-level2"
+                       aria-label="@L["AddressWardLabel"]"
+                       placeholder="@L["AddressWardManualPlaceholder"]"
+                       aria-describedby="@AriaDescribedBy"
+                       aria-invalid="@AriaInvalidValue"
+                       @oninput="OnWardManualInputAsync" />
+            }
+            else
+            {
+                <select id="@($"{Id}-ward")"
+                        class="input address-input-control @(AriaInvalid ? "invalid" : null)"
+                        disabled="@(_selectedProvince is null)"
+                        aria-describedby="@AriaDescribedBy"
+                        aria-invalid="@AriaInvalidValue"
+                        @bind="_wardSelect"
+                        @bind:after="OnWardSelectedAsync">
+                    <option value="">@(_selectedProvince is null ? L["AddressWardProvinceRequired"].Value : L["AddressWardPlaceholder"].Value)</option>
+                    @if (_selectedProvince is not null)
                     {
-                        <option value="@ward.Name"></option>
+                        foreach (var ward in SortedWards)
+                        {
+                            <option value="@ward.Name">@ward.Name</option>
+                        }
                     }
+                    <option value="@ManualOption">@L["AddressOtherOption"]</option>
+                </select>
+                @if (_wardManual)
+                {
+                    <input id="@($"{Id}-ward-manual")"
+                           class="input address-input-control address-input-manual @(AriaInvalid ? "invalid" : null)"
+                           type="text"
+                           value="@_wardText"
+                           maxlength="120"
+                           autocomplete="address-level2"
+                           aria-label="@L["AddressWardLabel"]"
+                           placeholder="@L["AddressWardManualPlaceholder"]"
+                           aria-describedby="@AriaDescribedBy"
+                           aria-invalid="@AriaInvalidValue"
+                           @oninput="OnWardManualInputAsync" />
                 }
-            </datalist>
+            }
         </div>
     </div>
 
@@ -73,12 +115,27 @@
 </div>
 
 @code {
+    private const string ManualOption = "__manual__";
+
     private string _street = string.Empty;
     private string _provinceText = string.Empty;
     private string _wardText = string.Empty;
+    private string _provinceSelect = string.Empty;
+    private string _wardSelect = string.Empty;
+    private bool _provinceManual;
+    private bool _wardManual;
     private string? _lastEmitted;
     private bool _initialized;
+    private bool _normalizeOnRender;
     private Province? _selectedProvince;
+
+    private IEnumerable<Province> SortedProvinces => Catalog.Provinces
+        .OrderBy(province => AddressText.RemoveAdministrativePrefix(province.Name), StringComparer.CurrentCulture);
+
+    private IEnumerable<Ward> SortedWards => _selectedProvince is null
+        ? Enumerable.Empty<Ward>()
+        : _selectedProvince.Wards
+            .OrderBy(ward => AddressText.RemoveAdministrativePrefix(ward.Name), StringComparer.CurrentCulture);
 
     /// <summary>Id gốc; các ô con dùng thêm hậu tố <c>-street</c>, <c>-province</c>, <c>-ward</c>.</summary>
     [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
@@ -108,48 +165,83 @@
             ParseExternalValue(Value);
             _lastEmitted = Value;
             _initialized = true;
+            // Địa chỉ 3 cấp cũ cần được ghi lại thành 2 cấp ngay khi form mở, để
+            // giá trị hiển thị và giá trị lưu không lệch nhau.
+            _normalizeOnRender = !string.IsNullOrWhiteSpace(Value);
             return;
         }
 
         // Chỉ đọc lại khi cha thay đổi giá trị từ bên ngoài (ví dụ tải lại hồ sơ),
-        // tránh ghi đè đúng lúc người dùng đang gõ.
+        // tránh ghi đè đúng lúc người dùng đang thao tác.
         if (!string.Equals(Value, _lastEmitted, StringComparison.Ordinal))
         {
             ParseExternalValue(Value);
             _lastEmitted = Value;
+            _normalizeOnRender = !string.IsNullOrWhiteSpace(Value);
         }
     }
 
-    private async Task OnStreetInput(ChangeEventArgs args)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_normalizeOnRender) return;
+        _normalizeOnRender = false;
+
+        if (string.Equals(Compose(), Value, StringComparison.Ordinal)) return;
+        await EmitAsync();
+    }
+
+    private async Task OnStreetInputAsync(ChangeEventArgs args)
     {
         _street = args.Value?.ToString() ?? string.Empty;
         await EmitAsync();
     }
 
-    private async Task OnProvinceInput(ChangeEventArgs args)
+    private async Task OnProvinceSelectedAsync()
     {
-        _provinceText = args.Value?.ToString() ?? string.Empty;
-        var previousCode = _selectedProvince?.Code;
-        _selectedProvince = Catalog.FindProvince(_provinceText);
+        if (string.Equals(_provinceSelect, ManualOption, StringComparison.Ordinal))
+        {
+            _provinceManual = true;
+            _provinceText = string.Empty;
+            _selectedProvince = null;
+            ClearWard();
+            await EmitAsync();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_provinceSelect))
+        {
+            _provinceManual = false;
+            _provinceText = string.Empty;
+            _selectedProvince = null;
+            ClearWard();
+            await EmitAsync();
+            return;
+        }
+
+        var province = Catalog.FindProvince(_provinceSelect);
+        var changed = _selectedProvince?.Code != province?.Code;
+
+        _provinceManual = false;
+        _selectedProvince = province;
+        _provinceText = province?.Name ?? _provinceSelect;
 
         // Đổi tỉnh thì bỏ phường/xã cũ để tránh ghép địa chỉ lệch tỉnh.
-        if (previousCode is not null
-            && _selectedProvince is not null
-            && previousCode != _selectedProvince.Code)
+        if (changed)
         {
-            _wardText = string.Empty;
+            ClearWard();
         }
 
         await EmitAsync();
     }
 
-    private async Task OnWardInput(ChangeEventArgs args)
+    private async Task OnProvinceManualInputAsync(ChangeEventArgs args)
     {
-        _wardText = args.Value?.ToString() ?? string.Empty;
+        _provinceText = args.Value?.ToString() ?? string.Empty;
+        _selectedProvince = Catalog.FindProvince(_provinceText);
         await EmitAsync();
     }
 
-    private async Task CanonicalizeProvinceAsync()
+    private async Task CanonicalizeManualProvinceAsync()
     {
         var province = Catalog.FindProvince(_provinceText);
         if (province is null)
@@ -158,19 +250,19 @@
             return;
         }
 
+        // Nhập tay trúng tên trong danh mục thì quay lại chế độ chọn, giữ nguyên phường/xã đã gõ.
+        _provinceManual = false;
+        _provinceSelect = province.Name;
         _provinceText = province.Name;
         _selectedProvince = province;
-        await EmitAsync();
-    }
 
-    private async Task CanonicalizeWardAsync()
-    {
-        var province = _selectedProvince ?? Catalog.FindProvince(_provinceText);
-        if (province is not null)
+        if (_wardManual && !string.IsNullOrWhiteSpace(_wardText))
         {
             var ward = Catalog.FindWard(province, _wardText);
             if (ward is not null)
             {
+                _wardManual = false;
+                _wardSelect = ward.Name;
                 _wardText = ward.Name;
             }
         }
@@ -178,34 +270,123 @@
         await EmitAsync();
     }
 
+    private async Task OnWardSelectedAsync()
+    {
+        if (string.Equals(_wardSelect, ManualOption, StringComparison.Ordinal))
+        {
+            _wardManual = true;
+            _wardText = string.Empty;
+        }
+        else
+        {
+            _wardManual = false;
+            _wardText = _wardSelect;
+        }
+
+        await EmitAsync();
+    }
+
+    private async Task OnWardManualInputAsync(ChangeEventArgs args)
+    {
+        _wardText = args.Value?.ToString() ?? string.Empty;
+        await EmitAsync();
+    }
+
+    private void ClearWard()
+    {
+        _wardText = string.Empty;
+        _wardSelect = string.Empty;
+        _wardManual = false;
+    }
+
     private void ParseExternalValue(string? value)
     {
         _street = value ?? string.Empty;
         _provinceText = string.Empty;
         _wardText = string.Empty;
+        _provinceSelect = string.Empty;
+        _wardSelect = string.Empty;
+        _provinceManual = false;
+        _wardManual = false;
         _selectedProvince = null;
 
         if (string.IsNullOrWhiteSpace(value)) return;
 
         var parts = value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2) return;
 
-        var province = Catalog.FindProvince(parts[^1]);
-        if (province is null) return;
-
-        _provinceText = province.Name;
-        _selectedProvince = province;
-
-        var remaining = parts[..^1];
-        var ward = Catalog.FindWard(province, remaining[^1]);
-        if (ward is not null)
+        // Tìm tỉnh từ cuối chuỗi để chịu được phần đuôi thừa của dữ liệu cũ.
+        var provinceIndex = -1;
+        Province? province = null;
+        for (var i = parts.Length - 1; i >= 0; i--)
         {
-            _wardText = ward.Name;
-            remaining = remaining[..^1];
+            province = Catalog.FindProvince(parts[i]);
+            if (province is null) continue;
+            provinceIndex = i;
+            break;
         }
 
-        // Địa chỉ cũ không khớp dữ liệu mới vẫn được giữ nguyên trong ô tự do.
-        _street = remaining.Length == 0 ? value : string.Join(", ", remaining);
+        if (province is null)
+        {
+            ParseUncataloguedAddress(parts, value);
+            return;
+        }
+
+        _provinceText = province.Name;
+        _provinceSelect = province.Name;
+        _selectedProvince = province;
+
+        var remaining = parts
+            .Take(provinceIndex)
+            .Where(part => !AddressText.IsLegacyDistrictSegment(part))
+            .ToList();
+
+        if (remaining.Count > 0)
+        {
+            var ward = Catalog.FindWard(province, remaining[^1]);
+            if (ward is not null)
+            {
+                _wardText = ward.Name;
+                _wardSelect = ward.Name;
+                remaining.RemoveAt(remaining.Count - 1);
+            }
+            else if (AddressText.LooksLikeWard(remaining[^1]))
+            {
+                // Phường/xã cũ không còn trong danh mục mới: giữ lại ở ô nhập tay để người dùng chọn lại.
+                _wardText = remaining[^1];
+                _wardManual = true;
+                remaining.RemoveAt(remaining.Count - 1);
+            }
+        }
+
+        _street = string.Join(", ", remaining);
+    }
+
+    private void ParseUncataloguedAddress(string[] parts, string original)
+    {
+        var remaining = parts.ToList();
+
+        // Không xác định được tỉnh trong danh mục: nếu đuôi chuỗi trông giống tỉnh/thành phố
+        // thì giữ ở chế độ nhập tay thay vì nhét cả địa chỉ vào ô số nhà.
+        if (remaining.Count > 0 && AddressText.LooksLikeProvince(remaining[^1]))
+        {
+            _provinceText = remaining[^1];
+            _provinceManual = true;
+            remaining.RemoveAt(remaining.Count - 1);
+
+            if (remaining.Count > 0 && AddressText.LooksLikeWard(remaining[^1]))
+            {
+                _wardText = remaining[^1];
+                _wardManual = true;
+                remaining.RemoveAt(remaining.Count - 1);
+            }
+        }
+
+        // Bỏ đoạn cấp huyện của mô hình 3 cấp cũ, phần còn lại giữ nguyên.
+        remaining = remaining
+            .Where(part => !AddressText.IsLegacyDistrictSegment(part))
+            .ToList();
+
+        _street = remaining.Count == 0 ? original : string.Join(", ", remaining);
     }
 
     private async Task EmitAsync()

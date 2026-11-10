@@ -8,8 +8,12 @@ namespace Web.Features.Properties.DTOs;
 public sealed record PropertyPriceSetupStatusDto(
     int PropertyId,
     bool HasElectricTariff,
+    decimal? ElectricRate,
+    ServiceUnitCategory? ElectricUnit,
     DateOnly? ElectricEffectiveFrom,
     bool HasWaterTariff,
+    decimal? WaterRate,
+    ServiceUnitCategory? WaterUnit,
     DateOnly? WaterEffectiveFrom,
     IReadOnlyList<ServiceItemDto> PropertyServices,
     IReadOnlyList<BuildingOptionDto> CopySources)
