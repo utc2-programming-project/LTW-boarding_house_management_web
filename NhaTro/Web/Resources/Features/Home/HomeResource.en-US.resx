@@ -77,5 +77,5 @@
 <data name="QuickMyRequests" xml:space="preserve"><value>My requests</value></data>
 <data name="QuickPermissions" xml:space="preserve"><value>Permissions</value></data>
 <data name="ComingSoon" xml:space="preserve"><value>In progress</value></data>
-<data name="WorkScopeNote" xml:space="preserve"><value>Quick actions and work lists below cover all data you are allowed to access and do not follow the statistics filters above.</value></data>
+<data name="WorkScopeNote" xml:space="preserve"><value>Work lists below cover all data you are allowed to access and do not follow the statistics filters above.</value></data>
 </root>

@@ -36,7 +36,14 @@
     }
     else if (WorkInitialized)
     {
-        <DashboardOverview RefreshAdditionalContent="LoadAsync" AdditionalContentBusy="Busy" />
+        <DashboardOverview RefreshAdditionalContent="LoadAsync" AdditionalContentBusy="Busy">
+            <HeaderContent>
+                @if (Snapshot is { } managementSnapshot)
+                {
+                    <HomeQuickActions Role="@managementSnapshot.Role" />
+                }
+            </HeaderContent>
+        </DashboardOverview>
     }
 
     @if (PageState == HomeLoadState.Loading)
@@ -64,7 +71,10 @@
         {
             <p class="work-scope-note">@L["WorkScopeNote"]</p>
         }
-        <HomeQuickActions Role="@snapshot.Role" />
+        @if (!IsManagement)
+        {
+            <HomeQuickActions Role="@snapshot.Role" />
+        }
 
         <div class="home-grid">
             <HomePanel Title="@L["ActionsTitle"]" Icon="check" State="@snapshot.Actions.State" Retry="LoadAsync">
