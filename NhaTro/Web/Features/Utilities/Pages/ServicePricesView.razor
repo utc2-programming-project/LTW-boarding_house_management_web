@@ -19,13 +19,8 @@
     else
     {
     <!-- Header -->
-    <header class="page-header">
-        <div class="heading-group">
-            <div class="breadcrumb-title-stack">
-                <NavBreadcrumb />
-                <h1 class="page-title">@L["PricesHeading"]</h1>
-            </div>
-            <p class="page-subtitle">@L["PricesSubtitle"]</p>
+    <PageHeading Title="@L["PricesHeading"]" HelpText="@L["PricesSubtitle"]">
+        <HeadingMeta>
             @if (_isSampleData)
             {
                 <div class="sample-data-note">
@@ -40,26 +35,27 @@
                     <span>@_loadError</span>
                 </div>
             }
-        </div>
-
-        <div class="header-actions">
-            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
-                <LucideIcon Name="arrow-left" />
-                <span>@L["BackToCatalogBtn"]</span>
-            </button>
-            <AuthorizeView Policy="UtilityManage">
-                <Authorized>
-                    @if (_currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
-                    {
-                        <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
-                            <LucideIcon Name="plus" />
-                            <span>@L["UpdatePriceMilestoneBtn"]</span>
-                        </button>
-                    }
-                </Authorized>
-            </AuthorizeView>
-        </div>
-    </header>
+        </HeadingMeta>
+        <Actions>
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services")'>
+                    <LucideIcon Name="arrow-left" />
+                    <span>@L["BackToCatalogBtn"]</span>
+                </button>
+                <AuthorizeView Policy="UtilityManage">
+                    <Authorized>
+                        @if (_currentSelectedService is not null && !_currentSelectedService.IsReadOnly)
+                        {
+                            <button type="button" class="btn btn-primary" @onclick="() => _isPriceModalOpen = true">
+                                <LucideIcon Name="plus" />
+                                <span>@L["UpdatePriceMilestoneBtn"]</span>
+                            </button>
+                        }
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </Actions>
+    </PageHeading>
 
     <!-- Service Selector Tabs -->
     <div class="service-tabs-container">

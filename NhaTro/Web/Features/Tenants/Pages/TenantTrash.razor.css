@@ -1,7 +1,4 @@
 .tenant-trash-page { display: flex; flex-direction: column; gap: 20px; }
-.tenant-trash-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.tenant-trash-heading p { margin: 8px 0 0; color: var(--text-secondary); }
-.tenant-trash-heading .btn { min-height: 44px; }
 
 .tenant-trash-note {
     display: flex;
@@ -56,8 +53,6 @@
 
 @media (max-width: 767px) {
     .tenant-trash-page { gap: 14px; }
-    .tenant-trash-heading { align-items: stretch; flex-direction: column; gap: 12px; }
-    .tenant-trash-heading .btn { align-self: flex-start; }
     .tenant-trash-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
     .tenant-trash-search { max-width: none; }
     .tenant-trash-pager { justify-content: space-between; }

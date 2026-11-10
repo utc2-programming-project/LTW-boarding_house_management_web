@@ -23,14 +23,8 @@
 
 <section class="auth-page" aria-labelledby="login-title">
     <div class="auth-card">
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LoginTitle"]) })" />
-
-        <header class="page-heading auth-heading">
-            <div>
-                <h1 id="login-title">@L["LoginTitle"]</h1>
-                <p>@L["LoginSubtitle"]</p>
-            </div>
-        </header>
+    <PageHeading Title="@L["LoginTitle"]" TitleId="login-title" HelpText="@L["LoginSubtitle"]"
+                 InteractiveHelp="true" Class="auth-heading" />
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {

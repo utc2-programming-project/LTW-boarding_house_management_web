@@ -9,8 +9,6 @@
 <PageTitle>@L["ReviewDetailPageTitle"]</PageTitle>
 
 <div class="payment-review-detail-page">
-    <NavBreadcrumb CurrentLabel="@($"YC-{PaymentId}")" />
-
     @if (_loading)
     {
         <LoadingOverlay Visible="true" Text="@L["Loading"]" />
@@ -30,16 +28,14 @@
     }
     else
     {
-        <header class="page-header">
-            <div>
-                <h1 class="page-title">@L["ReviewDetailHeading"] · YC-@Item.Payment.Id</h1>
-                <p class="page-subtitle">@L["ReviewDetailSubtitle"]</p>
-            </div>
-            <button type="button" class="btn btn-secondary" @onclick="BackToList">
-                <LucideIcon Name="arrow-left" />
-                <span>@L["ReviewBackToList"]</span>
-            </button>
-        </header>
+        <PageHeading Title="@($"{L["ReviewDetailHeading"]} · YC-{Item.Payment.Id}")" CurrentLabel="@($"YC-{PaymentId}")" HelpText="@L["ReviewDetailSubtitle"]">
+            <Actions>
+                <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                    <LucideIcon Name="arrow-left" />
+                    <span>@L["ReviewBackToList"]</span>
+                </button>
+            </Actions>
+        </PageHeading>
 
         @if (_actionError is not null)
         {

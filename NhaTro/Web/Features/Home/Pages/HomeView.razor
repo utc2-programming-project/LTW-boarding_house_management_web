@@ -9,10 +9,8 @@
 <PageTitle>@L["Title"]</PageTitle>
 
 <div class="home-page">
-    <header class="home-header">
-        <div class="home-title-stack">
-            <NavBreadcrumb />
-            <h1>@Greeting@(string.IsNullOrEmpty(DisplayName) ? "" : $", {DisplayName}")</h1>
+    <PageHeading Title="@HeadingTitle" HelpText="@L["HomeDescription"]">
+        <HeadingMeta>
             <p class="home-meta">
                 @if (Snapshot is { } roleSnapshot)
                 {
@@ -24,11 +22,13 @@
                     <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
                 }
             </p>
-        </div>
-        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
-            <LucideIcon Name="refresh" />@L["Refresh"]
-        </button>
-    </header>
+        </HeadingMeta>
+        <Actions>
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />@L["Refresh"]
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (PageState == HomeLoadState.Loading)
     {
@@ -178,6 +178,8 @@
     private bool Busy;
 
     private string DisplayName => Snapshot?.DisplayName ?? "";
+
+    private string HeadingTitle => string.IsNullOrEmpty(DisplayName) ? Greeting : $"{Greeting}, {DisplayName}";
 
     private string Greeting
     {

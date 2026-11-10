@@ -9,34 +9,29 @@
 <PageTitle>@L["TenantsTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-list-page" aria-labelledby="tenants-title">
-    <header class="tenant-page-heading">
-        <div>
-            <NavBreadcrumb />
-            <div class="tenant-title-row">
-                <h1 id="tenants-title">@L["TenantsTitle"]</h1>
-            </div>
-            <p>@L["TenantsSubtitle"]</p>
-        </div>
-        <div class="tenant-page-actions">
-            @if (_canRevealIdNumber)
-            {
-                <a class="btn btn-secondary" href="/tenants/trash">
-                    <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
-                </a>
-                <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
-                    @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
-                    else { <LucideIcon Name="download" /> }
-                    @L["TenantExport"]
+    <PageHeading Title="@L["TenantsTitle"]" TitleId="tenants-title" HelpText="@L["TenantsSubtitle"]">
+        <Actions>
+            <div class="tenant-page-actions">
+                @if (_canRevealIdNumber)
+                {
+                    <a class="btn btn-secondary" href="/tenants/trash">
+                        <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
+                    </a>
+                    <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
+                        @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
+                        else { <LucideIcon Name="download" /> }
+                        @L["TenantExport"]
+                    </button>
+                }
+                <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
+                    <LucideIcon Name="mail" /> @L["InviteTenantButton"]
                 </button>
-            }
-            <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
-                <LucideIcon Name="mail" /> @L["InviteTenantButton"]
-            </button>
-            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
-                <LucideIcon Name="plus" /> @L["TenantAdd"]
-            </button>
-        </div>
-    </header>
+                <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" /> @L["TenantAdd"]
+                </button>
+            </div>
+        </Actions>
+    </PageHeading>
 
     @if (_summaryError)
     {

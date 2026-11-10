@@ -1745,6 +1745,7 @@
   <data name="TenantNoteMaxLength" xml:space="preserve"><value>Note must not exceed 500 characters.</value></data>
   <data name="TenantRowVersionRequired" xml:space="preserve"><value>RowVersion is missing.</value></data>
   <data name="P2PropertiesHelpLabel" xml:space="preserve"><value>About the properties page</value></data>
+  <data name="PageHelpLabel" xml:space="preserve"><value>About this page</value></data>
   <data name="AddressStreetLabel" xml:space="preserve"><value>House number, street</value></data>
   <data name="AddressStreetPlaceholder" xml:space="preserve"><value>e.g. 12 Nguyen Trai</value></data>
   <data name="AddressProvinceLabel" xml:space="preserve"><value>Province/City</value></data>
@@ -1753,4 +1754,18 @@
   <data name="AddressWardPlaceholder" xml:space="preserve"><value>Type to search ward/commune</value></data>
   <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Select a province/city first</value></data>
   <data name="AddressSuggestionHint" xml:space="preserve"><value>Suggestions use the 34 province/city and 3,321 ward/commune dataset. Existing addresses are kept as-is.</value></data>
+  <data name="ApprovalsHelp" xml:space="preserve"><value>Review and handle approval requests within your account scope.</value></data>
+  <data name="MyRequestsHelp" xml:space="preserve"><value>Track the status of requests you have submitted.</value></data>
+  <data name="InviteAcceptHelp" xml:space="preserve"><value>Accept the boarding-house invitation and create your account.</value></data>
+  <data name="ConfirmEmailHelp" xml:space="preserve"><value>Confirm your email address to finish creating your account.</value></data>
+  <data name="ConfirmEmailChangeHelp" xml:space="preserve"><value>Confirm the change to your account email address.</value></data>
+  <data name="ExternalLoginHelp" xml:space="preserve"><value>Link an external sign-in account to your existing account.</value></data>
+  <data name="RegisterConfirmationHelp" xml:space="preserve"><value>Check your email to finish confirming the owner account.</value></data>
+  <data name="ResendEmailConfirmationHelp" xml:space="preserve"><value>Resend the confirmation email if you have not received it.</value></data>
+  <data name="InvalidUserHelp" xml:space="preserve"><value>The account is invalid or no longer exists in the system.</value></data>
+  <data name="AccessDeniedHelp" xml:space="preserve"><value>Your account does not have permission to open this page.</value></data>
+  <data name="LockoutHelp" xml:space="preserve"><value>The account is locked; contact the account manager to unlock it.</value></data>
+  <data name="ErrorHelp" xml:space="preserve"><value>Something went wrong while processing your request.</value></data>
+  <data name="NotFoundHelp" xml:space="preserve"><value>The link does not exist or the content has moved.</value></data>
+  <data name="LeasedRoomHelp" xml:space="preserve"><value>View your current lease contract, terms and electronic annexes.</value></data>
 </root>

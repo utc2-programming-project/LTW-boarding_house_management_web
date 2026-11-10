@@ -10,24 +10,21 @@
 <PageTitle>@L["P2RoomsTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <NavBreadcrumb />
-            <h1>@L["P2RoomsTitle"]</h1>
-            <p>@L["P2RoomsSubtitle"]</p>
-        </div>
-        @if (_isOwner)
-        {
-            <div class="p2-page-actions">
-                <a class="btn btn-secondary" href="/rooms/trash">
-                    <LucideIcon Name="trash" />@L["P2RoomTrashOpen"]
-                </a>
-                <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                    <LucideIcon Name="plus" />@L["P2AddRoom"]
-                </button>
-            </div>
-        }
-    </header>
+    <PageHeading Title="@L["P2RoomsTitle"]" HelpText="@L["P2RoomsSubtitle"]">
+        <Actions>
+            @if (_isOwner)
+            {
+                <div class="p2-page-actions">
+                    <a class="btn btn-secondary" href="/rooms/trash">
+                        <LucideIcon Name="trash" />@L["P2RoomTrashOpen"]
+                    </a>
+                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                        <LucideIcon Name="plus" />@L["P2AddRoom"]
+                    </button>
+                </div>
+            }
+        </Actions>
+    </PageHeading>
 
     @if (_summaryLoading)
     {

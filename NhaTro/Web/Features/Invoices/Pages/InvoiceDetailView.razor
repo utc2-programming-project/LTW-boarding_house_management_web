@@ -13,8 +13,6 @@
 <PageTitle>@L["DetailPageTitle"]</PageTitle>
 
 <div class="invoice-detail-page">
-    <NavBreadcrumb CurrentLabel="@L["DetailBreadcrumb"]" />
-
     @if (_loading)
     {
         <LoadingOverlay Visible="true" Text="@L["Loading"]" />
@@ -34,16 +32,14 @@
     }
     else
     {
-        <header class="page-header">
-            <div>
-                <h1 class="page-title">@L["DetailHeading"] · HD-@Invoice.Id</h1>
-                <p class="page-subtitle">@L["DetailSubtitle"]</p>
-            </div>
-            <button type="button" class="btn btn-secondary" @onclick="BackToList">
-                <LucideIcon Name="arrow-left" />
-                <span>@L["BackToList"]</span>
-            </button>
-        </header>
+        <PageHeading Title="@($"{L["DetailHeading"]} · HD-{Invoice.Id}")" CurrentLabel="@L["DetailBreadcrumb"]" HelpText="@L["DetailSubtitle"]">
+            <Actions>
+                <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                    <LucideIcon Name="arrow-left" />
+                    <span>@L["BackToList"]</span>
+                </button>
+            </Actions>
+        </PageHeading>
 
         <section class="detail-card">
             <div class="detail-grid">

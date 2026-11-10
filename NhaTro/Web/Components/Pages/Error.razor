@@ -4,10 +4,11 @@
 
 <PageTitle>@L["ErrorTitle"] · @L["AppName"]</PageTitle>
 
+<PageHeading Title="@L["ErrorTitle"]" TitleId="error-title" HelpText="@L["ErrorHelp"]" InteractiveHelp="true" />
+
 @* Trang lỗi an toàn, song ngữ; không lộ chi tiết exception ở môi trường thật. *@
-<section class="empty-state" aria-labelledby="error-title">
+<section class="empty-state">
     <LucideIcon Name="alert" />
-    <h1 id="error-title">@L["ErrorTitle"]</h1>
     <p>@L["ErrorPageMessage"]</p>
     @if (ShowRequestId)
     {

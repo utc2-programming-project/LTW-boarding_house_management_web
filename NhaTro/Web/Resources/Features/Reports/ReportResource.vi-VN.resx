@@ -32,4 +32,5 @@
 <data name="PageSummary" xml:space="preserve"><value>Trang {0} / {1} · Tổng {2}</value></data>
 <data name="Previous" xml:space="preserve"><value>Trang trước</value></data>
 <data name="Next" xml:space="preserve"><value>Trang sau</value></data>
+<data name="ReportDescription" xml:space="preserve"><value>Xem doanh thu, công nợ và hiệu suất vận hành theo phạm vi tài khoản của bạn.</value></data>
 </root>

@@ -9,16 +9,13 @@
 <PageTitle>@L["TenantTrashTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-trash-page" aria-labelledby="tenant-trash-title">
-    <header class="tenant-trash-heading">
-        <div>
-            <NavBreadcrumb />
-            <h1 id="tenant-trash-title">@L["TenantTrashTitle"]</h1>
-            <p>@L["TenantTrashSubtitle"]</p>
-        </div>
-        <a class="btn btn-secondary" href="/tenants">
-            <LucideIcon Name="arrow-left" /> @L["TenantTrashBack"]
-        </a>
-    </header>
+    <PageHeading Title="@L["TenantTrashTitle"]" TitleId="tenant-trash-title" HelpText="@L["TenantTrashSubtitle"]">
+        <Actions>
+            <a class="btn btn-secondary" href="/tenants">
+                <LucideIcon Name="arrow-left" /> @L["TenantTrashBack"]
+            </a>
+        </Actions>
+    </PageHeading>
 
     <div class="tenant-trash-note" role="note">
         <LucideIcon Name="shield-check" />

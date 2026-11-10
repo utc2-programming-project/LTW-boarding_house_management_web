@@ -18,14 +18,14 @@
 <div class="leased-room-page">
     @if (_loading)
     {
-        <NavBreadcrumb />
+        <PageHeading Title="@L["LeasedRoomContractHeading"]" TitleId="leased-room-title" HelpText="@L["LeasedRoomHelp"]" />
         <div class="leased-room-state">
             <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
         </div>
     }
     else if (_loadFailed)
     {
-        <NavBreadcrumb />
+        <PageHeading Title="@L["LeasedRoomContractHeading"]" TitleId="leased-room-title" HelpText="@L["LeasedRoomHelp"]" />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["MyRoomTitle"]" Description="@L["MyRoomLoadFailed"]">
                 <button type="button" class="btn btn-secondary" @onclick="LoadRoomAsync">@L["Retry"]</button>
@@ -34,7 +34,7 @@
     }
     else if (_leasedRoom is null)
     {
-        <NavBreadcrumb />
+        <PageHeading Title="@L["LeasedRoomContractHeading"]" TitleId="leased-room-title" HelpText="@L["LeasedRoomHelp"]" />
         <div class="leased-room-state">
             <EmptyStateCard Title="@L["EmptyMyRoomTitle"]" Description="@L["EmptyMyRoomDesc"]">
                 <Icon>
@@ -51,44 +51,39 @@
     }
     else
     {
-        <div class="breadcrumb-title-stack">
-            <NavBreadcrumb />
-
-            <header class="leased-room-header">
-            <div class="leased-room-title-block">
-                <div class="leased-room-title-row">
-                    <h1 id="leased-room-title">@L["LeasedRoomContractHeading"]</h1>
-                    <span class="leased-room-status-badge">@GetContractStatusLabel()</span>
-                </div>
+        <PageHeading Title="@L["LeasedRoomContractHeading"]" TitleId="leased-room-title" HelpText="@L["LeasedRoomHelp"]">
+            <HeadingSuffix>
+                <span class="leased-room-status-badge">@GetContractStatusLabel()</span>
+            </HeadingSuffix>
+            <HeadingMeta>
                 <p class="leased-room-subtitle">
-                    @L["LeasedRoomContractDescription",
-                       !string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value,
-                       !string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value]
+                    @L["P2RoomsTitle"]: @(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value)
+                    · @L["Properties"]: @(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)
                 </p>
-            </div>
+            </HeadingMeta>
+            <Actions>
+                <div class="leased-room-actions">
+                    <a href="@($"/contracts/{_leasedRoom.ContractId}")"
+                       class="btn btn-secondary">
+                        <LucideIcon Name="file-text" />
+                        <span>@L["P2ViewDetails"]</span>
+                    </a>
 
-            <div class="leased-room-actions">
-                <a href="@($"/contracts/{_leasedRoom.ContractId}")"
-                   class="btn btn-secondary">
-                    <LucideIcon Name="file-text" />
-                    <span>@L["P2ViewDetails"]</span>
-                </a>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            @onclick="OpenRenewModal">
+                        <LucideIcon Name="refresh-cw" />
+                        <span>@L["RenewContract"]</span>
+                    </button>
 
-                <button type="button"
-                        class="btn btn-secondary"
-                        @onclick="OpenRenewModal">
-                    <LucideIcon Name="refresh-cw" />
-                    <span>@L["RenewContract"]</span>
-                </button>
-
-                <a href="/my/documents"
-                   class="btn btn-primary">
-                    <LucideIcon Name="folder" />
-                    <span>@L["TenantDocumentsTitle"]</span>
-                </a>
-            </div>
-        </header>
-        </div>
+                    <a href="/my/documents"
+                       class="btn btn-primary">
+                        <LucideIcon Name="folder" />
+                        <span>@L["TenantDocumentsTitle"]</span>
+                    </a>
+                </div>
+            </Actions>
+        </PageHeading>
 
         <div class="leased-room-banner">
             <div class="leased-room-banner-copy">
