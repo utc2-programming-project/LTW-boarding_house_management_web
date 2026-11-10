@@ -437,8 +437,8 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogServic
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
 // D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
-// P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
-builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
+// P5 (legacy, tiền VHT-51): chỉ số điện/nước trên UtilityReadings + lịch sử sửa (D10, SW-09).
+builder.Services.AddScoped<Web.Features.Utilities.Services.LegacyUtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
 // P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();

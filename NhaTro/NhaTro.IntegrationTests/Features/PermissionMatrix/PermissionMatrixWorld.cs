@@ -204,7 +204,7 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
     public AuditLogService NewAuditLogs() => new(SharedDb);
 
-    public UtilityReadingService NewUtilityReadings() => new(
+    public LegacyUtilityReadingService NewUtilityReadings() => new(
         SharedDb, TimeProvider.System, TogglePolicy, NewApprovals());
 
     public PaymentService NewPayments() => new(SharedDb, TimeProvider.System);

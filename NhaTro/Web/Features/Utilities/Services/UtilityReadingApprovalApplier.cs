@@ -72,7 +72,7 @@ public sealed class UtilityReadingApprovalApplier : IApprovalApplier
             throw Invalid(UtilityReadingErrorCodes.OutsideScope);
         }
 
-        await UtilityReadingService.EnsureAdjustableAsync(db, reading, ct);
+        await LegacyUtilityReadingService.EnsureAdjustableAsync(db, reading, ct);
 
         var reason = payload.Reason?.Trim();
         if (string.IsNullOrWhiteSpace(reason))
@@ -85,7 +85,7 @@ public sealed class UtilityReadingApprovalApplier : IApprovalApplier
             throw Invalid(UtilityReadingErrorCodes.InvalidReading);
         }
 
-        UtilityReadingService.Apply(
+        LegacyUtilityReadingService.Apply(
             reading,
             new AdjustUtilityReadingRequest(payload.ElectricEnd, payload.WaterEnd, reason),
             reason,
