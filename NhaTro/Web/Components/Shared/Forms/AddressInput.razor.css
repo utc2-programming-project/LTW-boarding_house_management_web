@@ -20,17 +20,22 @@
 .address-input-label {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--text-secondary, #5b6472);
+    color: var(--text-secondary);
 }
 
 .address-input-control {
     width: 100%;
 }
 
+/* Ô nhập tay xuất hiện ngay dưới ô chọn để thấy rõ đang ở chế độ ngoài danh mục. */
+.address-input-manual {
+    margin-top: 0.3rem;
+}
+
 .address-input-hint {
     margin: 0;
     font-size: 0.8125rem;
-    color: var(--text-muted, #5b6472);
+    color: var(--text-muted);
 }
 
 @media (max-width: 640px) {

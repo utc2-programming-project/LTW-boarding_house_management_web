@@ -108,7 +108,7 @@
 .filters-row-secondary {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px dashed var(--border, #E2E8F0);
+    border-top: 1px dashed var(--border);
 }
 
 .reset-button {

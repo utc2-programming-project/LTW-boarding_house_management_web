@@ -6,21 +6,21 @@
     padding: 16px;
     border: 1px solid;
     border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+    box-shadow: var(--shadow-popover);
     animation: toast-in 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Màu theo docs/design/phong_cach_giao_dien.md mục 3: chữ / nền / viền. */
 .tone-success {
-    color: var(--success-text, #166534);
-    background: var(--success-bg, #F0FDF4);
-    border-color: var(--success-border, #BBF7D0);
+    color: var(--success-text);
+    background: var(--success-bg);
+    border-color: var(--success-border);
 }
 
 .tone-error {
-    color: var(--error-text, #B91C1C);
-    background: var(--error-bg, #FEF2F2);
-    border-color: var(--error-border, #FECACA);
+    color: var(--error-text);
+    background: var(--error-bg);
+    border-color: var(--error-border);
 }
 
 .icon {
@@ -67,7 +67,7 @@
 }
 
 .close:focus-visible {
-    outline: 2px solid var(--focus-ring, #4F46E5);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
