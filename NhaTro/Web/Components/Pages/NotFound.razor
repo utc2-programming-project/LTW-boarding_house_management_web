@@ -4,10 +4,11 @@
 
 <PageTitle>@L["NotFoundTitle"] · @L["AppName"]</PageTitle>
 
+<PageHeading Title="@L["NotFoundTitle"]" TitleId="not-found-title" HelpText="@L["NotFoundHelp"]" InteractiveHelp="true" />
+
 @* Trang không tìm thấy, song ngữ; không lộ thông tin nội bộ. *@
-<section class="empty-state" aria-labelledby="not-found-title">
+<section class="empty-state">
     <LucideIcon Name="search" />
-    <h1 id="not-found-title">@L["NotFoundTitle"]</h1>
     <p>@L["NotFoundMessage"]</p>
     <a class="btn btn-primary" href="/">@L["BackToHome"]</a>
 </section>

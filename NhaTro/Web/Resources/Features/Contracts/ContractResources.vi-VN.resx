@@ -241,4 +241,5 @@
   <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Trạng thái / Thao tác</value></data>
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Thuê/tháng</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Đặt cọc</value></data>
+<data name="ContractDetailDescription" xml:space="preserve"><value>Xem thông tin hợp đồng, các bên, điều khoản và tình trạng thanh toán.</value></data>
 </root>

@@ -22,7 +22,7 @@
 <PageTitle>@L["MeterReadingPageTitle"] · @L["AppName"]</PageTitle>
 
 <div class="meter-reading-page">
-    <NavBreadcrumb />
+    <PageHeading Title="@L["MeterReadingPageTitle"]" HelpText="@L["MeterReadingPageSubtitle"]" />
 
     <!-- Simulation Banner (Dữ liệu mẫu — Sprint 2C) -->
     <div class="simulation-banner">
@@ -39,12 +39,7 @@
     </div>
 
     <!-- Header trang -->
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@L["MeterReadingPageTitle"]</h1>
-            <p class="page-subtitle">@L["MeterReadingPageSubtitle"]</p>
-        </div>
-    </header>
+    @* Đầu trang đã chuyển lên trước banner dữ liệu mẫu. *@
 
     @if (_isLoading)
     {

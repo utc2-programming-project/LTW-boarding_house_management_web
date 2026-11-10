@@ -19,18 +19,18 @@
 <PageTitle>@L["ContractListTitle"]</PageTitle>
 
 <section class="contract-list-page" aria-labelledby="contract-list-title">
-    <NavBreadcrumb />
-    <header class="page-heading">
-        <div><h1 id="contract-list-title">@L["ContractListTitle"]</h1><p>@L["ContractListDescription"]</p></div>
-        <AuthorizeView Roles="ChuTro,QuanLy">
-            <Authorized>
-                <div class="contract-heading-actions">
-                    <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
-                    <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-    </header>
+    <PageHeading Title="@L["ContractListTitle"]" TitleId="contract-list-title" HelpText="@L["ContractListDescription"]">
+        <Actions>
+            <AuthorizeView Roles="ChuTro,QuanLy">
+                <Authorized>
+                    <div class="contract-heading-actions">
+                        <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
+                        <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </Actions>
+    </PageHeading>
 
     <form class="contract-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
         <label for="contract-keyword">@L["ContractSearchLabel"]</label>

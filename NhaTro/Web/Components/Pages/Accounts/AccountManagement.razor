@@ -26,14 +26,8 @@
 <PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
 
 <section aria-labelledby="accounts-title">
-    <NavBreadcrumb />
-
-    <header class="page-heading">
-        <div>
-            <h1 id="accounts-title">@L["AccountsTitle"]</h1>
-            <p>@L["AccountsSubtitle"]</p>
-        </div>
-        <div class="page-heading-actions">
+    <PageHeading Title="@L["AccountsTitle"]" TitleId="accounts-title" HelpText="@L["AccountsSubtitle"]">
+        <Actions>
             @if (_assignableRoles.Count > 0)
             {
                 <button type="button" class="btn btn-primary" @onclick="OpenCreate">
@@ -46,8 +40,8 @@
                     <LucideIcon Name="trash" /> @L["AccountTrash"]
                 </button>
             }
-        </div>
-    </header>
+        </Actions>
+    </PageHeading>
 
     <div class="toolbar" role="search">
         <div class="field field-inline">
