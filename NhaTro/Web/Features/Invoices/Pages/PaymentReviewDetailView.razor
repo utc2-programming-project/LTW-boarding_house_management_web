@@ -9,7 +9,7 @@
 <PageTitle>@L["ReviewDetailPageTitle"]</PageTitle>
 
 <div class="payment-review-detail-page">
-    <BreadcrumbNav Items="@Breadcrumbs" />
+    <NavBreadcrumb CurrentLabel="@($"YC-{PaymentId}")" />
 
     @if (_loading)
     {
@@ -268,13 +268,6 @@
         !_busy &&
         !_checkingResult &&
         !_requiresResultCheck;
-
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs =>
-    [
-        new(L["OverviewNav"], "/"),
-        new(L["ReviewBreadcrumb"], "/payment-requests"),
-        new($"YC-{PaymentId}"),
-    ];
 
     private static readonly IReadOnlyDictionary<string, string> ReviewErrorKeys =
         new Dictionary<string, string>(StringComparer.Ordinal)

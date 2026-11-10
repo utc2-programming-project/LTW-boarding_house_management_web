@@ -1,3 +1,4 @@
+@page "/my/tenant-profile"
 @page "/tenant/profile"
 @attribute [Authorize(Roles = Roles.KhachThue)]
 @rendermode InteractiveServer
@@ -5,7 +6,7 @@
 <PageTitle>@L["TenantProfileTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-profile-page" aria-labelledby="tenant-profile-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["MyTenantProfile"]) })" />
+    <NavBreadcrumb CurrentLabel="@L["MyTenantProfile"]" />
     <header class="page-heading">
         <div>
             <h1 id="tenant-profile-title">@L["TenantProfileTitle"]</h1>

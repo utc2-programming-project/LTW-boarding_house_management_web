@@ -18,7 +18,7 @@ public sealed class ContractUiAccessTests(WebAppFixture fixture) : IClassFixture
         "/tenants",
         "/contracts",
         "/contracts/create",
-        "/documents",
+        "/my/documents",
     ];
 
     [WebAppFact]
@@ -57,7 +57,7 @@ public sealed class ContractUiAccessTests(WebAppFixture fixture) : IClassFixture
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
-        var documents = await client.GetAsync("/documents");
+        var documents = await client.GetAsync("/my/documents");
         Assert.Equal(HttpStatusCode.Redirect, documents.StatusCode);
         Assert.Contains(
             "/Account/AccessDenied",

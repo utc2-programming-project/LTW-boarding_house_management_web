@@ -1,3 +1,4 @@
+@page "/tenants/trash"
 @page "/trash"
 @attribute [Authorize(Roles = Roles.ChuTro)]
 @rendermode InteractiveServer
@@ -10,6 +11,7 @@
 <section class="tenant-trash-page" aria-labelledby="tenant-trash-title">
     <header class="tenant-trash-heading">
         <div>
+            <NavBreadcrumb />
             <h1 id="tenant-trash-title">@L["TenantTrashTitle"]</h1>
             <p>@L["TenantTrashSubtitle"]</p>
         </div>

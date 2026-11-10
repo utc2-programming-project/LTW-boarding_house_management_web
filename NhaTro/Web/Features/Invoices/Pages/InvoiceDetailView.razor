@@ -1,4 +1,5 @@
 @page "/invoices/{Id:int}"
+@page "/my/invoices/{Id:int}"
 @page "/my-invoices/{Id:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
@@ -12,7 +13,7 @@
 <PageTitle>@L["DetailPageTitle"]</PageTitle>
 
 <div class="invoice-detail-page">
-    <BreadcrumbNav Items="@Breadcrumbs" />
+    <NavBreadcrumb CurrentLabel="@L["DetailBreadcrumb"]" />
 
     @if (_loading)
     {
@@ -443,13 +444,10 @@
     private string ProofAccept => string.Join(",", PaymentPolicy.AllowedExtensions);
 
     private bool IsMyInvoices =>
+        Navigation.Uri.Contains("/my/invoices", StringComparison.OrdinalIgnoreCase) ||
         Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
 
-    private string ListPath => IsMyInvoices ? "/my-invoices" : "/invoices";
-
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => IsMyInvoices
-        ? [new(L["OverviewNav"], "/"), new(L["MyBreadcrumb"], ListPath), new(L["DetailBreadcrumb"])]
-        : [new(L["OverviewNav"], "/"), new(L["Breadcrumb"], ListPath), new(L["DetailBreadcrumb"])];
+    private string ListPath => IsMyInvoices ? "/my/invoices" : "/invoices";
 
     private static readonly IReadOnlyDictionary<string, string> PaymentErrorKeys =
         new Dictionary<string, string>(StringComparer.Ordinal)

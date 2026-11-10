@@ -18,7 +18,7 @@
 
 <PageTitle>@L["ContractDetailTitle"]</PageTitle>
 <section class="contract-detail-page" aria-labelledby="contract-detail-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractDetailTitle"]) })" />
+    <NavBreadcrumb CurrentLabel="@L["ContractDetailTitle"]" />
     @if (_loading) { <LoadingOverlay Visible="true" Text="@L["TableLoading"]" /> }
     else if (_contract is null)
     {

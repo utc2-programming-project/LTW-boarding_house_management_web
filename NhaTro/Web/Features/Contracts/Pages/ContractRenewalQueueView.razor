@@ -15,7 +15,7 @@
 <PageTitle>@L["RenewalQueueTitle"]</PageTitle>
 
 <section class="renewal-queue-page" aria-labelledby="renewal-queue-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["RenewalQueueTitle"]) })" />
+    <NavBreadcrumb />
     <header class="page-heading">
         <div><h1 id="renewal-queue-title">@L["RenewalQueueTitle"]</h1><p>@L["RenewalQueueDescription"]</p></div>
         <a class="btn btn-secondary" href="/contracts"><LucideIcon Name="arrow-left" />@L["ContractBackToList"]</a>

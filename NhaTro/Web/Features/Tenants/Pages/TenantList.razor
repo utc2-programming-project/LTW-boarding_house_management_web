@@ -11,11 +11,7 @@
 <section class="tenant-list-page" aria-labelledby="tenants-title">
     <header class="tenant-page-heading">
         <div>
-            <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-            {
-                new(L["Dashboard"], "/"),
-                new(L["TenantsTitle"])
-            })" />
+            <NavBreadcrumb />
             <div class="tenant-title-row">
                 <h1 id="tenants-title">@L["TenantsTitle"]</h1>
             </div>
@@ -24,7 +20,7 @@
         <div class="tenant-page-actions">
             @if (_canRevealIdNumber)
             {
-                <a class="btn btn-secondary" href="/trash">
+                <a class="btn btn-secondary" href="/tenants/trash">
                     <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
                 </a>
                 <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">

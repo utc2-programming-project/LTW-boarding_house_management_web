@@ -8,7 +8,7 @@
 <PageTitle>@L["ReviewPageTitle"]</PageTitle>
 
 <div class="payment-review-page">
-    <BreadcrumbNav Items="@Breadcrumbs" />
+    <NavBreadcrumb />
 
     <header class="page-header">
         <div>
@@ -168,9 +168,6 @@
     private bool _loading = true;
     private string? _error;
     private int _page = 1;
-
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs =>
-        [new(L["OverviewNav"], "/"), new(L["ReviewBreadcrumb"])];
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
