@@ -8,8 +8,8 @@ public static class UtilitySampleData
     public static readonly IReadOnlyList<BuildingOptionDto> Buildings =
     [
         new("all", "Tất cả nhà trọ", "Toàn bộ hệ thống", 20, 19),
-        new("b1", "Tòa nhà An Gia 01", "128 Ung Văn Khiêm, P. 25, Q. Bình Thạnh, TP. Hồ Chí Minh", 12, 11),
-        new("b2", "Nhà trọ Bình Minh", "45/12 Đường số 8, P. Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh", 8, 8),
+        new("b1", "Tòa nhà An Gia 01", "128 Ung Văn Khiêm, Phường Bình Thạnh, Thành phố Hồ Chí Minh", 12, 11),
+        new("b2", "Nhà trọ Bình Minh", "45/12 Đường số 8, Phường Tăng Nhơn Phú, Thành phố Hồ Chí Minh", 8, 8),
     ];
 
     public static IReadOnlyList<string> GetAllowedBuildingIds(string? role, string? email)

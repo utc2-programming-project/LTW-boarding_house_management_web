@@ -294,4 +294,6 @@
   <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>
   <data name="PreviousPage" xml:space="preserve"><value>Previous page</value></data>
   <data name="NextPage" xml:space="preserve"><value>Next page</value></data>
+  <data name="ErrorCopySameProperty" xml:space="preserve"><value>Prices cannot be copied from the same property.</value></data>
+  <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>You do not have access to the source property.</value></data>
 </root>

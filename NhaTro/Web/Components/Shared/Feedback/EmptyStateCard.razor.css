@@ -11,7 +11,7 @@
     display: inline-flex;
     width: 48px;
     height: 48px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
 }
 
 .icon ::deep svg {
@@ -24,7 +24,7 @@
     font-size: 16px;
     line-height: 24px;
     font-weight: 600;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
 }
 
 .description {
@@ -32,7 +32,7 @@
     max-width: 480px;
     font-size: 14px;
     line-height: 22px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
 }
 
 .actions {

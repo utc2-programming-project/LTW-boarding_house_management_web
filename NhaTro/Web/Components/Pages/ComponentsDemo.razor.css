@@ -3,7 +3,7 @@
     max-width: 960px;
     margin: 0 auto;
     padding: 32px;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
     font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -29,7 +29,7 @@
     margin: 0;
     font-size: 14px;
     line-height: 22px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
 }
 
 .row {
@@ -53,16 +53,16 @@
     min-width: 220px;
     height: 40px;
     padding: 0 12px;
-    border: 1px solid var(--control-border, #64748B);
+    border: 1px solid var(--control-border);
     border-radius: 8px;
-    background: var(--surface, #FFFFFF);
-    color: var(--text-primary, #0D131B);
+    background: var(--surface);
+    color: var(--text-primary);
     font-family: inherit;
     font-size: 14px;
 }
 
     .room-select:focus-visible {
-        outline: 2px solid var(--focus-ring, #4F46E5);
+        outline: 2px solid var(--focus-ring);
         outline-offset: 2px;
     }
 

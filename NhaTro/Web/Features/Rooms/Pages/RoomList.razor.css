@@ -7,7 +7,7 @@
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-secondary { border-color: var(--control-border); background: var(--surface); color: var(--text-primary); }
 .btn-secondary:hover { background: var(--hover-bg); }
-.btn-danger { border-color: var(--danger); background: var(--danger); color: #fff; }
+.btn-danger { border-color: var(--danger); background: var(--danger); color: var(--on-primary); }
 .p2-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 .p2-summary-card { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
 .summary-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; color: var(--text-secondary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; text-transform: uppercase; }

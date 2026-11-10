@@ -294,4 +294,6 @@
   <data name="PaginationLabel" xml:space="preserve"><value>Phân trang</value></data>
   <data name="PreviousPage" xml:space="preserve"><value>Trang trước</value></data>
   <data name="NextPage" xml:space="preserve"><value>Trang sau</value></data>
+  <data name="ErrorCopySameProperty" xml:space="preserve"><value>Không thể sao chép giá từ chính nhà trọ này.</value></data>
+  <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>Bạn không có quyền xem nhà trọ nguồn.</value></data>
 </root>
