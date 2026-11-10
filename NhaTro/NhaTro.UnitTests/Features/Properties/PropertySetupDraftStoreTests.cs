@@ -18,7 +18,7 @@ public class PropertySetupDraftStoreTests
             PropertyId = 42,
             Step = PropertySetupStep.Rooms,
             Name = "Nhà trọ Bình Minh",
-            Address = "12 Nguyễn Trãi, Quận 5",
+            Address = "12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh",
             IsActive = true,
             UpdatedAt = Now,
             PendingRoom = new RoomSave

@@ -128,9 +128,9 @@ public static class DemoDataSeeder
             var tenantUserB = users[TenantBEmail];
 
             var propertyA = await EnsurePropertyAsync(
-                db, PropertyAName, "Số 1 Đường Demo, Phường Demo, TP.HCM", ownerA.Id, cancellationToken);
+                db, PropertyAName, "Số 1 Ung Văn Khiêm, Phường Bình Thạnh, Thành phố Hồ Chí Minh", ownerA.Id, cancellationToken);
             var propertyB = await EnsurePropertyAsync(
-                db, PropertyBName, "Số 2 Đường Demo, Phường Demo, TP.HCM", ownerB.Id, cancellationToken);
+                db, PropertyBName, "Số 2 Võ Văn Ngân, Phường Thủ Đức, Thành phố Hồ Chí Minh", ownerB.Id, cancellationToken);
 
             var roomA101 = await EnsureRoomAsync(
                 db, propertyA.Id, RoomA101Code, 1, 25m, 3_000_000m, RoomStatus.Rented, false, ownerA.Id, cancellationToken);
@@ -145,13 +145,13 @@ public static class DemoDataSeeder
 
             var tenantA = await EnsureTenantAsync(
                 db, "Khách thuê Demo A", "0000000001", "000000000001", tenantUserA.Id,
-                "Số 3 Đường Demo, Phường Demo, TP.HCM", false, ownerA.Id, cancellationToken);
+                "Số 3 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh", false, ownerA.Id, cancellationToken);
             var tenantB = await EnsureTenantAsync(
                 db, "Khách thuê Demo B", "0000000002", "000000000002", tenantUserB.Id,
-                "Số 4 Đường Demo, Phường Demo, TP.HCM", false, ownerB.Id, cancellationToken);
+                "Số 4 Lê Lợi, Phường Sài Gòn, Thành phố Hồ Chí Minh", false, ownerB.Id, cancellationToken);
             var tenantTrash = await EnsureTenantAsync(
                 db, "Khách Demo đã xóa", "0000000003", "000000000003", null,
-                "Số 5 Đường Demo, Phường Demo, TP.HCM", true, ownerA.Id, cancellationToken);
+                "Số 5 Cách Mạng Tháng 8, Phường Bàn Cờ, Thành phố Hồ Chí Minh", true, ownerA.Id, cancellationToken);
 
             await EnsureTenantOwnerLinkAsync(db, tenantA.Id, ownerA.Id, cancellationToken);
             await EnsureTenantOwnerLinkAsync(db, tenantB.Id, ownerB.Id, cancellationToken);

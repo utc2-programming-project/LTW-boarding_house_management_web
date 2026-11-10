@@ -204,7 +204,8 @@
 {
     <RoomFormDialog @key="_formKey" Visible="true" RoomId="_formRoomId" IsOwner="_isOwner"
                     Properties="_properties" InitialPropertyId="@SelectedPropertyId"
-                    OnClose="CloseForm" OnSaved="OnRoomSavedAsync" />
+                    AllowDelete="_isOwner"
+                    OnClose="CloseForm" OnSaved="OnRoomSavedAsync" OnDeleted="OnRoomDeletedAsync" />
 }
 @if (_selectedRoom is not null)
 {
@@ -557,6 +558,13 @@
     {
         _formVisible = false;
         Toasts.Success(L["P2SaveSucceeded"]);
+        await RefreshAfterMutationAsync();
+    }
+
+    private async Task OnRoomDeletedAsync()
+    {
+        _formVisible = false;
+        Toasts.Success(L["P2RoomMovedToTrash"]);
         await RefreshAfterMutationAsync();
     }
 
