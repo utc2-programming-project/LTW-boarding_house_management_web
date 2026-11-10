@@ -22,6 +22,8 @@ public sealed class InvoiceListItemDto
 
     public required DateOnly PeriodEnd { get; init; }
 
+    public DateOnly? DueDate { get; init; }
+
     public required InvoiceStatus Status { get; init; }
 
     public required decimal TotalAmount { get; init; }
@@ -33,12 +35,15 @@ public sealed class InvoiceListItemDto
     public required decimal OutstandingAmount { get; init; }
 }
 
-/// <summary>Trạng thái thu tiền của hóa đơn, suy từ các Payment đã xác nhận.</summary>
+/// <summary>Trạng thái thu tiền của hóa đơn, suy từ các Payment và hạn thanh toán.</summary>
 public enum InvoicePaymentState
 {
     Unpaid,
     Partial,
     Paid,
+    PendingConfirmation,
+    PaymentRejected,
+    Expired,
 }
 
 /// <summary>Bộ lọc danh sách hóa đơn theo kỳ, hợp đồng, trạng thái và số tiền.</summary>

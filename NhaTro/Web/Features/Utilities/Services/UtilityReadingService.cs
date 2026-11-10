@@ -310,7 +310,7 @@ public sealed class UtilityReadingService(
             join contract in db.Contracts.AsNoTracking()
                 on invoice.ContractId equals contract.ContractId
             where contract.RoomId == reading.RoomId
-                && invoice.Status == InvoiceStatus.Issued
+                && (invoice.Status == InvoiceStatus.Issued || invoice.Status == InvoiceStatus.Paid)
                 && invoice.PeriodStart <= reading.PeriodEnd
                 && reading.PeriodStart <= invoice.PeriodEnd
             select invoice.Id)
