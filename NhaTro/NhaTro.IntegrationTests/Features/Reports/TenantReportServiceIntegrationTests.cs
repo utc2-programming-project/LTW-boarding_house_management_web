@@ -93,15 +93,25 @@ public sealed class TenantReportServiceIntegrationTests(SqlServerFixture fixture
         var roomB202 = NewRoom(propertyB.Id, "B202");
         db.Rooms.AddRange(roomA101, roomA102, roomB201, roomB202);
 
-        var tenantA = NewTenant("An Nguyễn", "0901000001", TenantUserAId);
-        var tenantB = NewTenant("Bình Trần", "0901000002", TenantUserBId);
+        var tenantA = NewTenant("An Nguyễn", "0901000001", TenantUserAId, OwnerAId);
+        var tenantB = NewTenant("Bình Trần", "0901000002", TenantUserBId, OwnerBId);
         var tenantInactive = NewTenant(
-            "Chi Lê", "0901000003", TenantUserInactiveId, isActive: false);
-        var tenantPool = NewTenant("Dũng Phạm", "0901000004", userId: null);
-        var tenantPending = NewTenant("Em Võ", "0901000005", userId: null);
-        var tenantDeleted = NewTenant("Phúc Đỗ", "0901000006", userId: null, isDeleted: true);
+            "Chi Lê", "0901000003", TenantUserInactiveId, OwnerBId, isActive: false);
+        var tenantPool = NewTenant("Dũng Phạm", "0901000004", userId: null, ownerId: OwnerAId);
+        var tenantPending = NewTenant("Em Võ", "0901000005", userId: null, ownerId: OwnerAId);
+        var tenantDeleted = NewTenant("Phúc Đỗ", "0901000006", userId: null, ownerId: OwnerAId, isDeleted: true);
         db.Tenants.AddRange(
             tenantA, tenantB, tenantInactive, tenantPool, tenantPending, tenantDeleted);
+        await db.SaveChangesAsync();
+
+        // PLAN-005 (điều chỉnh): liên kết chủ trọ nhiều-nhiều (một khách có thể thuộc nhiều chủ trọ).
+        db.TenantOwnerLinks.AddRange(
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantA.Id, OwnerId = OwnerAId },
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantB.Id, OwnerId = OwnerBId },
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantInactive.Id, OwnerId = OwnerBId },
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantPool.Id, OwnerId = OwnerAId },
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantPending.Id, OwnerId = OwnerAId },
+            new Web.Features.Tenants.Entities.TenantOwnerLink { TenantId = tenantDeleted.Id, OwnerId = OwnerAId });
         await db.SaveChangesAsync();
 
         // An có hai hợp đồng cùng hiệu lực: KPI đang thuê vẫn chỉ tính một khách.
@@ -129,7 +139,7 @@ public sealed class TenantReportServiceIntegrationTests(SqlServerFixture fixture
     };
 
     private static Tenant NewTenant(
-        string fullName, string phone, string? userId, bool isActive = true, bool isDeleted = false) => new()
+        string fullName, string phone, string? userId, string? ownerId = null, bool isActive = true, bool isDeleted = false) => new()
     {
         FullName = fullName,
         Phone = phone,

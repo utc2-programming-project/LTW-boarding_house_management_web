@@ -251,6 +251,151 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         return ToDto(catalog, _timeProvider.TodayVietnam());
     }
 
+    public async Task DeleteServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var catalog = await _context.ServiceCatalogs
+            .SingleOrDefaultAsync(item => item.Id == serviceCatalogId);
+        if (catalog is null)
+        {
+            throw new KeyNotFoundException($"Không tìm thấy danh mục dịch vụ {serviceCatalogId}.");
+        }
+
+        if (catalog.IsReadOnly)
+        {
+            throw WithKey(new UnauthorizedAccessException("Biểu giá điện/nước chỉ được xem, không thể xóa."), "ErrorReadOnlyTariff");
+        }
+
+        if (!catalog.PropertyId.HasValue)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể xóa danh mục hệ thống dùng chung."), "ErrorSystemCatalogReadOnly");
+        }
+
+        var hasAccess = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .AnyAsync(property => property.Id == catalog.PropertyId.Value && property.IsActive && !property.IsDeleted);
+        if (!hasAccess)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý danh mục của nhà trọ này.");
+        }
+
+        // Xóa mềm: giữ danh mục + lịch sử giá để đối soát hóa đơn cũ, chỉ ẩn khỏi danh mục.
+        catalog.IsDeleted = true;
+        catalog.DeletedAt = _timeProvider.UtcNow();
+        catalog.DeletedBy = caller.UserId;
+        catalog.IsActive = false;
+        await _context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task<ServicePriceCopyResult> CopyPricesFromPropertyAsync(
+        int sourcePropertyId,
+        int targetPropertyId,
+        PropertyCaller caller,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        if (sourcePropertyId <= 0 || targetPropertyId <= 0)
+        {
+            throw WithKey(new ArgumentException("Nhà trọ nguồn và đích không hợp lệ."), "ErrorInvalidData");
+        }
+
+        if (sourcePropertyId == targetPropertyId)
+        {
+            throw WithKey(new ArgumentException("Không thể sao chép giá từ chính nhà trọ này."), "ErrorCopySameProperty");
+        }
+
+        var accessibleIds = await PropertyScope.Apply(_context.Properties, _context.PropertyManagers, caller)
+            .Where(property => property.Id == sourcePropertyId || property.Id == targetPropertyId)
+            .Select(property => property.Id)
+            .ToListAsync(ct);
+
+        if (!accessibleIds.Contains(targetPropertyId))
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền quản lý nhà trọ đích.");
+        }
+
+        if (!accessibleIds.Contains(sourcePropertyId))
+        {
+            throw WithKey(new UnauthorizedAccessException("Bạn không có quyền xem nhà trọ nguồn."), "ErrorCopySourceForbidden");
+        }
+
+        var today = _timeProvider.TodayVietnam();
+
+        // Chỉ lấy danh mục đang dùng; bỏ danh mục chỉ đọc (biểu giá hệ thống) và bản đã xóa mềm.
+        var sources = await _context.ServiceCatalogs
+            .AsNoTracking()
+            .Include(catalog => catalog.PriceHistory)
+            .Where(catalog => catalog.PropertyId == sourcePropertyId
+                && !catalog.IsDeleted
+                && catalog.IsActive
+                && !catalog.IsReadOnly)
+            .ToListAsync(ct);
+
+        var targetNames = (await _context.ServiceCatalogs
+                .AsNoTracking()
+                .Include(catalog => catalog.PriceHistory)
+                .Where(catalog => catalog.PropertyId == targetPropertyId && !catalog.IsDeleted)
+                .ToListAsync(ct))
+            .SelectMany(catalog => catalog.PriceHistory)
+            .Select(version => version.Name.Trim())
+            .Where(name => name.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var copied = 0;
+        var skipped = 0;
+
+        foreach (var source in sources)
+        {
+            // Chỉ sao chép bản giá đang hiệu lực; không mang lịch sử cũ sang nhà trọ mới.
+            var current = source.PriceHistory
+                .Where(version => version.EffectiveDate <= today
+                    && (version.EffectiveTo is null || version.EffectiveTo.Value >= today))
+                .OrderByDescending(version => version.EffectiveDate)
+                .FirstOrDefault();
+
+            if (current is null) continue;
+
+            var name = current.Name.Trim();
+            if (name.Length == 0) continue;
+
+            if (!targetNames.Add(name))
+            {
+                skipped++;
+                continue;
+            }
+
+            var catalog = new ServiceCatalog
+            {
+                PropertyId = targetPropertyId,
+                IsReadOnly = false,
+                IsActive = true,
+                Description = source.Description,
+                CreatedAt = _timeProvider.UtcNow(),
+            };
+            catalog.PriceHistory.Add(CreateVersion(
+                name,
+                current.Unit,
+                current.CalculationMethod,
+                current.UnitPrice,
+                today,
+                caller.UserId,
+                note: $"Sao chép từ nhà trọ #{sourcePropertyId}"));
+            _context.ServiceCatalogs.Add(catalog);
+            copied++;
+        }
+
+        // Một lần lưu cho cả lô: hoặc sao chép đủ, hoặc không ghi gì.
+        if (copied > 0) await _context.SaveChangesAsync(ct);
+
+        return new ServicePriceCopyResult(copied, skipped);
+    }
+
     private ServicePriceHistory CreateVersion(
         string name,
         string unit,

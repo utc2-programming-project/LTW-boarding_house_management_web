@@ -90,6 +90,26 @@ function Assert-IncidentSchema([string]$database) {
     if ($cost -eq 1) { Pass "RepairCost decimal(18,0)" } else { Fail "RepairCost sai precision/scale" }
 }
 
+function Assert-FinancialSchema([string]$database) {
+    $tables = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.tables WHERE name IN ('Payments', 'UtilityReadingAudits', 'AuditLogEntries')")
+    if ($tables -eq 3) { Pass "Co 3 bang tai chinh/audit" } else { Fail "Thieu bang tai chinh/audit ($tables/3)" }
+
+    $checks = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.check_constraints WHERE name IN ('CK_Payments_Amount', 'CK_Payments_Status', 'CK_Payments_ReviewedAt', 'CK_Payments_RejectionReason')")
+    if ($checks -eq 4) { Pass "Du 4 check constraint Payments" } else { Fail "Check Payments thieu ($checks/4)" }
+
+    $unique = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'UX_Payments_InvoiceStatus' AND is_unique = 1 AND has_filter = 1 AND filter_definition LIKE '%Status%1%'")
+    if ($unique -eq 1) { Pass "Unique pending/confirmed theo hoa don co filter" } else { Fail "Thieu unique UX_Payments_InvoiceStatus" }
+
+    $lookup = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'IX_Payments_InvoiceId_Status_RequestedAt'")
+    if ($lookup -eq 1) { Pass "Index tra cuu Payment theo hoa don" } else { Fail "Thieu index IX_Payments_InvoiceId_Status_RequestedAt" }
+
+    $fk = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.foreign_keys WHERE name IN ('FK_Payments_Invoices_InvoiceId', 'FK_UtilityReadingAudits_UtilityReadings_UtilityReadingId') AND delete_referential_action_desc = 'NO_ACTION'")
+    if ($fk -eq 2) { Pass "FK tai chinh dung NO_ACTION" } else { Fail "FK tai chinh sai ($fk/2)" }
+
+    $money = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('Payments') AND name = 'Amount' AND precision = 18 AND scale = 2")
+    if ($money -eq 1) { Pass "Payment.Amount decimal(18,2)" } else { Fail "Payment.Amount sai precision" }
+}
+
 if (-not (Get-Command sqlcmd -ErrorAction SilentlyContinue)) { throw "Khong tim thay sqlcmd." }
 if (-not (Test-Path $projectPath)) { throw "Khong tim thay project: $projectPath" }
 
@@ -136,6 +156,7 @@ else { Write-Host "  Check constraint: (khong co)" }
 
 Assert-InvoiceSchema $Database
 Assert-IncidentSchema $Database
+Assert-FinancialSchema $Database
 
 Write-Step "Kiem tra duong nang cap: DB cu + migration hoa don"
 & sqlcmd -S $Server -d master -b -Q "IF DB_ID(N'$Database') IS NOT NULL BEGIN ALTER DATABASE [$Database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$Database]; END" | Out-Null
@@ -186,6 +207,7 @@ else { Pass "DB nang cap khong con migration pending" }
 
 Assert-InvoiceSchema $Database
 Assert-IncidentSchema $Database
+Assert-FinancialSchema $Database
 
 Write-Step "Kiem tra rang buoc hoa don bang du lieu that"
 Invoke-Sql $Database "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-10-01', '2026-10-31', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';" | Out-Null
@@ -195,6 +217,23 @@ Expect-SqlFail $Database "FK chan hop dong khong ton tai" "INSERT INTO Invoices 
 Expect-SqlFail $Database "Check chan ngay ket thuc truoc ngay bat dau" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2026-12-31', '2026-12-01', 1, 0, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
 Expect-SqlFail $Database "Check chan tong tien am" "INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt) SELECT ContractId, '2027-01-01', '2027-01-31', 1, -1, SYSUTCDATETIME() FROM Contracts WHERE ContractNumber = N'VHT121-OLD';"
 Expect-SqlFail $Database "Check chan dong thuong co tien am" "INSERT INTO InvoiceItems (InvoiceId, ItemType, Description, Quantity, UnitPrice, Amount, DisplayOrder) SELECT TOP 1 Id, 0, N'Thu', 1, 0, -1, 1 FROM Invoices;"
+
+Write-Step "Kiem tra rang buoc tai chinh bang du lieu that"
+Invoke-Sql $Database "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 0, N'[]', SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;" | Out-Null
+Pass "Them duoc Payment Pending hop le"
+Expect-SqlFail $Database "Check chan Payment.Amount khong duong" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, SubmittedByUserId) SELECT TOP 1 Id, 0, SYSDATETIMEOFFSET(), 0, N'[]', SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+Expect-SqlFail $Database "Check chan Payment.Status ngoai 0..2" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 9, N'[]', SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+Expect-SqlFail $Database "Check chan Pending co ReviewedAt" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, ReviewedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 0, N'[]', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+Expect-SqlFail $Database "Check chan Confirmed thieu ReviewedAt" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 1, N'[]', SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+Expect-SqlFail $Database "Check chan Rejected thieu ly do" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, ReviewedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 2, N'[]', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+
+Invoke-Sql $Database "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, ReviewedAt, SubmittedByUserId) SELECT TOP 1 Id, 1000, SYSDATETIMEOFFSET(), 1, N'[]', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;" | Out-Null
+Pass "Them duoc Payment Confirmed hop le"
+Expect-SqlFail $Database "Unique chan hai Confirmed cung hoa don" "INSERT INTO Payments (InvoiceId, Amount, TransferredAt, Status, ProofFileIdsJson, RequestedAt, ReviewedAt, SubmittedByUserId) SELECT TOP 1 Id, 2000, SYSDATETIMEOFFSET(), 1, N'[]', SYSDATETIMEOFFSET(), SYSDATETIMEOFFSET(), N'vht28-owner' FROM Invoices;"
+
+Invoke-Sql $Database "INSERT INTO UtilityReadings (RoomId, PeriodStart, PeriodEnd, ElectricStart, ElectricEnd, WaterStart, WaterEnd, RecordedByUserId, CreatedAt) SELECT TOP 1 Id, '2026-01-01', '2026-01-31', 0, 10, 0, 5, N'vht28-owner', SYSDATETIMEOFFSET() FROM Rooms WHERE Code = N'VHT28-P1';" | Out-Null
+Invoke-Sql $Database "INSERT INTO UtilityReadingAudits (UtilityReadingId, OldElectricEnd, NewElectricEnd, OldWaterEnd, NewWaterEnd, Reason, ChangedByUserId, ChangedAt) SELECT TOP 1 Id, 10, 12, 5, 6, N'Dieu chinh chi so', N'vht28-owner', SYSDATETIMEOFFSET() FROM UtilityReadings;" | Out-Null
+Expect-SqlFail $Database "FK chan xoa chi so khi con lich su" "DELETE FROM UtilityReadings;"
 
 Write-Step "Kiem tra rang buoc su co P7 bang du lieu that"
 $p7Rows = [int](Invoke-Sql $Database "SELECT (SELECT COUNT(*) FROM MaintenanceIncidents) + (SELECT COUNT(*) FROM MaintenanceIncidentHistories) + (SELECT COUNT(*) FROM IncidentPhotoAttachments)")

@@ -1,0 +1,182 @@
+@page "/Account/RegisterOwner"
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using Web.Components.Shared.Forms
+@using Web.Data
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+
+@inject IAccountService Accounts
+@inject UserManager<ApplicationUser> Users
+@inject IEmailSender<ApplicationUser> EmailSender
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["RegisterOwnerTitle"] · @L["AppName"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="register-owner-title">
+    <div class="auth-card">
+        <PageHeading Title="@L["RegisterOwnerTitle"]" TitleId="register-owner-title" HelpText="@L["RegisterOwnerSubtitle"]"
+                     InteractiveHelp="true" Class="auth-heading" />
+
+        @if (_done)
+        {
+            <div class="form-alert" role="status">
+                <LucideIcon Name="check" />
+                <span>@L["RegisterOwnerSuccessText"]</span>
+            </div>
+            <p class="hint"><a href="Account/Login">@L["BackToLogin"]</a></p>
+        }
+        else
+        {
+            if (_error is not null)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert" />
+                    <span>@_error</span>
+                </div>
+            }
+
+            <EditForm Model="Input" FormName="register-owner" OnValidSubmit="SubmitAsync" method="post">
+                <DataAnnotationsValidator />
+
+                <FormField TValue="string" Id="register-name" Label="@L["FullNameLabel"]" Required="true"
+                           For="() => Input.FullName">
+                    <InputText @bind-Value="Input.FullName" id="register-name" class="input"
+                               autocomplete="name" maxlength="200" aria-required="true"
+                               aria-describedby="register-name-error" />
+                </FormField>
+
+                <FormField TValue="string" Id="register-email" Label="@L["EmailLabel"]" Required="true"
+                           For="() => Input.Email">
+                    <InputText @bind-Value="Input.Email" id="register-email" class="input" type="email"
+                               autocomplete="username" maxlength="256" aria-required="true"
+                               aria-describedby="register-email-error" />
+                </FormField>
+
+                <FormField TValue="string" Id="register-phone" Label="@L["PhoneLabel"]"
+                           For="() => Input.PhoneNumber">
+                    <InputText @bind-Value="Input.PhoneNumber" id="register-phone" class="input"
+                               inputmode="numeric" maxlength="10" autocomplete="tel"
+                               aria-describedby="register-phone-error" />
+                </FormField>
+
+                <FormField TValue="string" Id="register-password" Label="@L["PasswordLabel"]" Required="true"
+                           For="() => Input.Password">
+                    <InputText @bind-Value="Input.Password" id="register-password" class="input" type="password"
+                               autocomplete="new-password" aria-required="true"
+                               aria-describedby="register-password-error" />
+                </FormField>
+
+                <FormField TValue="string" Id="register-confirm" Label="@L["ConfirmPasswordLabel"]" Required="true"
+                           For="() => Input.ConfirmPassword">
+                    <InputText @bind-Value="Input.ConfirmPassword" id="register-confirm" class="input"
+                               type="password" autocomplete="new-password" aria-required="true"
+                               placeholder="@L["ConfirmPasswordPlaceholder"]"
+                               aria-describedby="register-confirm-error" />
+                </FormField>
+
+                <p class="note">@L["RegisterOwnerNote"]</p>
+
+                <button type="submit" class="btn btn-primary btn-block" disabled="@_saving">
+                    @if (_saving) { <span class="spinner" aria-hidden="true"></span> }
+                    @L["RegisterOwnerButton"]
+                </button>
+            </EditForm>
+
+            <p class="hint">
+                <a href="Account/Login">@L["RegisterOwnerLogin"]</a>
+            </p>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    private string? _error;
+    private bool _saving;
+    private bool _done;
+
+    protected override void OnInitialized() => Input ??= new();
+
+    private async Task SubmitAsync()
+    {
+        _saving = true;
+        _error = null;
+        try
+        {
+            var result = await Accounts.RegisterOwnerAsync(new RegisterOwnerRequest
+            {
+                Email = Input.Email,
+                FullName = Input.FullName,
+                PhoneNumber = Input.PhoneNumber,
+                Password = Input.Password,
+            });
+
+            if (!result.Succeeded)
+            {
+                _error = result.ErrorCode == AccountErrorCodes.DuplicateEmail
+                    ? L["RegisterOwnerEmailTaken"]
+                    : L["RegisterOwnerFailed"];
+                return;
+            }
+
+            // Xác nhận email là tuỳ chọn: lỗi gửi mail không chặn đăng ký (Admin vẫn duyệt tay).
+            try
+            {
+                var user = await Users.FindByEmailAsync(Input.Email.Trim());
+                if (user is not null)
+                {
+                    var code = await Users.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                    var link = Navigation.GetUriWithQueryParameters(
+                        Navigation.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                        new Dictionary<string, object?>
+                        {
+                            ["userId"] = user.Id,
+                            ["code"] = code,
+                        });
+                    await EmailSender.SendConfirmationLinkAsync(user, Input.Email.Trim(), link);
+                }
+            }
+            catch
+            {
+                // Bỏ qua: xác nhận email không phải điều kiện bắt buộc để Admin duyệt.
+            }
+
+            _done = true;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(200, MinimumLength = 2)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải có 10 số, bắt đầu bằng 0.")]
+        public string? PhoneNumber { get; set; }
+
+        [Required]
+        [StringLength(100, MinimumLength = 8)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        [DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "Mật khẩu xác nhận không khớp.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

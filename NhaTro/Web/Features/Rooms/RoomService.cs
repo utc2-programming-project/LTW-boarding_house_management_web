@@ -270,7 +270,14 @@ public sealed class RoomService(
             return NotFound();
         }
 
-        // Khôi phục khi mã phòng đã bị dùng lại cho phòng đang hoạt động => chặn (ma trận #16).
+        // Danh sách thùng rác dùng IgnoreQueryFilters nên phòng của nhà trọ đã xóa mềm vẫn hiện;
+        // cho khôi phục sẽ tạo phòng mà không trang nào hiển thị được (phạm vi phòng suy qua nhà trọ).
+        if (!await db.Properties.AnyAsync(p => p.Id == entity.PropertyId, ct))
+        {
+            return RoomResult.Failure(RoomErrorCodes.PropertyDeleted, RoomErrorMessages.PropertyDeleted);
+        }
+
+        // Khôi phục khi mã phòng đã bị dùng lại trong cùng nhà => chặn (ma trận #16).
         if (await RoomCodeExistsAsync(db, entity.PropertyId, entity.Code, id, ct))
         {
             return RoomResult.Failure(RoomErrorCodes.DuplicateRoomCode, RoomErrorMessages.DuplicateRoomCode);
@@ -381,6 +388,21 @@ public sealed class RoomService(
             query = query.Where(r => r.StandardPrice <= maxPrice);
         }
 
+        if (filter.Floor is { } floor)
+        {
+            query = query.Where(r => r.Floor == floor);
+        }
+
+        if (filter.MinArea is { } minArea)
+        {
+            query = query.Where(r => r.AreaM2 != null && r.AreaM2 >= minArea);
+        }
+
+        if (filter.MaxArea is { } maxArea)
+        {
+            query = query.Where(r => r.AreaM2 != null && r.AreaM2 <= maxArea);
+        }
+
         return query;
     }
 
@@ -394,7 +416,8 @@ public sealed class RoomService(
         return await query.AnyAsync(ct);
     }
 
-    // Trùng mã theo nhà, chỉ xét phòng chưa xóa mềm (khớp unique filtered index IX_Rooms_PropertyId_Code).
+    // Trùng mã chỉ xét trong cùng một nhà trọ, chỉ tính phòng chưa xóa mềm
+    // (khớp unique filtered index IX_Rooms_PropertyId_Code của ERD VHT-5).
     private static Task<bool> RoomCodeExistsAsync(
         ApplicationDbContext db,
         int propertyId,

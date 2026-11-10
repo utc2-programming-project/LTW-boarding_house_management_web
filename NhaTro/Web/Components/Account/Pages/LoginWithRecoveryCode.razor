@@ -1,4 +1,8 @@
 ﻿@page "/Account/LoginWithRecoveryCode"
+@layout Layout.AuthLayout
+
+@* Đăng nhập bằng mã khôi phục khi không dùng được ứng dụng xác thực hai lớp.
+   Dùng khung AuthLayout (trước đăng nhập). *@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
@@ -12,12 +16,9 @@
 
 <PageTitle>@L["RecoveryCodeTitle"]</PageTitle>
 
-<h1>@L["RecoveryCodeTitle"]</h1>
+<PageHeading Title="@L["RecoveryCodeTitle"]" HelpText="@L["RecoveryCodeExplanation"]" InteractiveHelp="true" />
 <hr />
 <StatusMessage Message="@message" />
-<p>
-    @L["RecoveryCodeExplanation"]
-</p>
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">

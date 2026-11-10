@@ -1,20 +1,28 @@
 @page "/invoices/{Id:int}"
+@page "/my/invoices/{Id:int}"
 @page "/my-invoices/{Id:int}"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
 @inject IInvoiceQueryService InvoiceQuery
+@inject PaymentPageService PaymentPage
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
+@inject ToastService Toasts
 @inject IStringLocalizer<InvoiceResources> L
 
 <PageTitle>@L["DetailPageTitle"]</PageTitle>
 
 <div class="invoice-detail-page">
-    <BreadcrumbNav Items="@Breadcrumbs" />
-
     @if (_loading)
     {
         <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_loadError is not null)
+    {
+        <div class="page-error" role="alert">
+            <p>@_loadError</p>
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["Retry"]</button>
+        </div>
     }
     else if (_notFound || _invoice is null)
     {
@@ -24,16 +32,14 @@
     }
     else
     {
-        <header class="page-header">
-            <div>
-                <h1 class="page-title">@L["DetailHeading"] · HD-@Invoice.Id</h1>
-                <p class="page-subtitle">@L["DetailSubtitle"]</p>
-            </div>
-            <button type="button" class="btn btn-secondary" @onclick="BackToList">
-                <LucideIcon Name="arrow-left" />
-                <span>@L["BackToList"]</span>
-            </button>
-        </header>
+        <PageHeading Title="@($"{L["DetailHeading"]} · HD-{Invoice.Id}")" CurrentLabel="@L["DetailBreadcrumb"]" HelpText="@L["DetailSubtitle"]">
+            <Actions>
+                <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                    <LucideIcon Name="arrow-left" />
+                    <span>@L["BackToList"]</span>
+                </button>
+            </Actions>
+        </PageHeading>
 
         <section class="detail-card">
             <div class="detail-grid">
@@ -138,6 +144,262 @@
                 </div>
             </div>
         </section>
+
+        @if (_caller is not null)
+        {
+            <section class="payment-card">
+                <div class="payment-card-header">
+                    <h2 class="section-title">@L["PaymentHeading"]</h2>
+                    @if (_latestPayment is not null)
+                    {
+                        <StatusBadge Text="@PaymentStatusText(_latestPayment.Status)" Tone="@PaymentStatusTone(_latestPayment.Status)" />
+                    }
+                </div>
+
+                @if (_paymentsError is not null)
+                {
+                    <div class="form-alert" role="alert">
+                        <LucideIcon Name="alert" />
+                        <span>@_paymentsError</span>
+                    </div>
+                }
+
+                @if (_formError is not null)
+                {
+                    <div class="form-alert" role="alert">
+                        <LucideIcon Name="alert" />
+                        <span>@_formError</span>
+                    </div>
+                }
+
+                @if (!_caller.IsKhachThue)
+                {
+                    @if (_latestPayment is null)
+                    {
+                        <p class="muted">@L["PaymentStatusNone"]</p>
+                    }
+                    else
+                    {
+                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                    }
+                }
+                else if (Invoice.Status == InvoiceStatus.Draft)
+                {
+                    <div class="payment-notice info" role="status">
+                        <LucideIcon Name="info" />
+                        <span>@L["PaymentDraftNotice"]</span>
+                    </div>
+                }
+                else if (Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed)
+                {
+                    <div class="payment-notice success" role="status">
+                        <LucideIcon Name="circle-check" />
+                        <span>@L["PaymentPaidNotice"]</span>
+                    </div>
+                    @if (_latestPayment is not null)
+                    {
+                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                    }
+                }
+                else if (_latestPayment is { Status: PaymentStatus.Pending })
+                {
+                    <div class="payment-notice warning" role="status">
+                        <LucideIcon Name="info" />
+                        <span>@L["PaymentPendingNotice"]</span>
+                    </div>
+                    <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                }
+                else
+                {
+                    @if (_latestPayment is { Status: PaymentStatus.Rejected })
+                    {
+                        <div class="payment-notice danger" role="alert">
+                            <LucideIcon Name="alert" />
+                            <span>@L["PaymentRejectedNotice"]</span>
+                        </div>
+                        <PaymentSummaryCard Payment="_latestPayment" ProofFiles="_proofFiles" />
+                    }
+
+                    @if (_requiresResultCheck)
+                    {
+                        <div class="payment-notice warning">
+                            <LucideIcon Name="wifi" />
+                            <div class="payment-result-check">
+                                <p>@L["PaymentResultUnknown"]</p>
+                                <button type="button" class="btn btn-secondary" disabled="@_checkingResult" @onclick="CheckResultAsync">
+                                    @if (_checkingResult)
+                                    {
+                                        <span class="spinner"></span>
+                                    }
+                                    else
+                                    {
+                                        <LucideIcon Name="refresh" />
+                                    }
+                                    <span>@L[_checkingResult ? "PaymentChecking" : "PaymentCheckResult"]</span>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (_resultCheckMessage is not null)
+                        {
+                            <div class="payment-notice info" role="status">
+                                <LucideIcon Name="info" />
+                                <span>@_resultCheckMessage</span>
+                            </div>
+                        }
+
+                        <form class="payment-form" @onsubmit="SubmitAsync" @onsubmit:preventDefault>
+                            <div class="payment-form-grid">
+                                <label class="payment-field">
+                                    <span class="detail-label">@L["PaymentAmount"]</span>
+                                    <input class="input @(_amountError is null ? null : "invalid")"
+                                           inputmode="numeric"
+                                           @bind="_amountText"
+                                           disabled="@_submitting"
+                                           aria-invalid="@(_amountError is not null)" />
+                                    <span class="note">@string.Format(L["PaymentAmountHint"], MoneyFormatter.Format(Invoice.TotalAmount))</span>
+                                    @if (_amountError is not null)
+                                    {
+                                        <span class="field-error" role="alert">@_amountError</span>
+                                    }
+                                </label>
+
+                                <label class="payment-field">
+                                    <span class="detail-label">@L["PaymentTransferredAt"]</span>
+                                    <input type="datetime-local"
+                                           class="input"
+                                           value="@_transferredAtLocal"
+                                           @onchange="OnTransferredAtChanged"
+                                           disabled="@_submitting" />
+                                </label>
+
+                                <label class="payment-field full">
+                                    <span class="detail-label">@L["PaymentTransactionCode"]</span>
+                                    <input class="input"
+                                           maxlength="100"
+                                           placeholder="@L["PaymentTransactionCodePlaceholder"]"
+                                           @bind="_transactionCode"
+                                           disabled="@_submitting" />
+                                </label>
+
+                                <div class="payment-field full">
+                                    <span class="detail-label">@L["PaymentProof"]</span>
+                                    <InputFile @key="_fileInputVersion"
+                                               id="payment-proof-input"
+                                               multiple
+                                               accept="@ProofAccept"
+                                               OnChange="OnFilesSelected"
+                                               disabled="@_submitting" />
+                                    <span class="note">@string.Format(L["PaymentProofHint"], FileTypeRules.DescribeMegabytes(PaymentPolicy.MaxBytes))</span>
+
+                                    @if (_fileError is not null)
+                                    {
+                                        <span class="field-error" role="alert">@_fileError</span>
+                                    }
+
+                                    @if (_preparedProofIds.Count > 0)
+                                    {
+                                        <span class="note">@string.Format(L["PaymentProofPrepared"], _preparedProofIds.Count)</span>
+                                    }
+
+                                    @if (_selectedFiles.Count > 0)
+                                    {
+                                        <ul class="selected-proofs">
+                                            @foreach (var file in _selectedFiles)
+                                            {
+                                                <li>
+                                                    <LucideIcon Name="file-text" />
+                                                    <span class="selected-proof-name">@file.Name</span>
+                                                    <span class="muted tabular-nums">@NumberFormatter.FileSize(file.Size)</span>
+                                                    <button type="button"
+                                                            class="icon-action-btn"
+                                                            title="@L["PaymentProofRemove"]"
+                                                            aria-label="@L["PaymentProofRemove"]"
+                                                            disabled="@_submitting"
+                                                            @onclick="() => RemoveFile(file)">
+                                                        <LucideIcon Name="x" />
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" disabled="@_submitting">
+                                    @if (_submitting)
+                                    {
+                                        <span class="spinner"></span>
+                                    }
+                                    else
+                                    {
+                                        <LucideIcon Name="send" />
+                                    }
+                                    <span>@L[_submitting ? "PaymentSubmitting" : "PaymentSubmit"]</span>
+                                </button>
+                            </div>
+                        </form>
+                    }
+                }
+
+                @if (_payments.Count > 0)
+                {
+                    <div class="payment-history">
+                        <h3 class="section-title">@L["PaymentHistoryHeading"]</h3>
+                        <div class="table-responsive">
+                            <table class="items-table payment-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>@L["PaymentRequestedAt"]</th>
+                                        <th class="text-right">@L["ThAmount"]</th>
+                                        <th>@L["PaymentTransactionCode"]</th>
+                                        <th>@L["ThStatus"]</th>
+                                        <th>@L["PaymentProof"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var payment in _payments)
+                                    {
+                                        <tr>
+                                            <td class="tabular-nums">@DateFormatter.FormatDateTime(payment.RequestedAt.UtcDateTime)</td>
+                                            <td class="text-right tabular-nums">@MoneyFormatter.Format(payment.Amount)</td>
+                                            <td class="break-anywhere">@(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)</td>
+                                            <td>
+                                                <StatusBadge Text="@PaymentStatusText(payment.Status)" Tone="@PaymentStatusTone(payment.Status)" />
+                                            </td>
+                                            <td>
+                                                @if (payment.ProofFileIds.Count == 0)
+                                                {
+                                                    <span class="muted">-</span>
+                                                }
+                                                else
+                                                {
+                                                    foreach (var proofId in payment.ProofFileIds)
+                                                    {
+                                                        <a class="proof-link" href="@($"/api/files/{proofId:D}")" target="_blank" rel="noopener">
+                                                            @ProofName(proofId)
+                                                        </a>
+                                                    }
+                                                }
+                                            </td>
+                                        </tr>
+                                        @if (payment.Status == PaymentStatus.Rejected && !string.IsNullOrWhiteSpace(payment.RejectionReason))
+                                        {
+                                            <tr class="history-reason">
+                                                <td colspan="5"><strong>@L["PaymentRejectionReason"]:</strong> @payment.RejectionReason</td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </section>
+        }
     }
 </div>
 
@@ -146,31 +408,98 @@
     public int Id { get; set; }
 
     private InvoiceDto? _invoice;
+    private PaymentDto? _latestPayment;
+    private IReadOnlyList<PaymentDto> _payments = [];
+    private IReadOnlyDictionary<Guid, FileMetadataDto> _proofFiles = new Dictionary<Guid, FileMetadataDto>();
+    private PropertyCaller? _caller;
+
     private bool _loading = true;
     private bool _notFound;
+    private string? _loadError;
+    private string? _paymentsError;
+
+    private string _amountText = string.Empty;
+    private string _transferredAtLocal = string.Empty;
+    private string? _transactionCode;
+    private List<IBrowserFile> _selectedFiles = [];
+    private List<Guid> _preparedProofIds = [];
+    private int _fileInputVersion;
+    private string? _amountError;
+    private string? _fileError;
+    private string? _formError;
+    private string? _resultCheckMessage;
+    private bool _submitting;
+    private bool _checkingResult;
+    private bool _requiresResultCheck;
 
     // Chỉ dùng trong nhánh đã kiểm tra null; giữ markup gọn.
     private InvoiceDto Invoice => _invoice!;
 
+    private PaymentProofPolicy PaymentPolicy => PaymentPage.ProofPolicy;
+
+    private string ProofAccept => string.Join(",", PaymentPolicy.AllowedExtensions);
+
     private bool IsMyInvoices =>
+        Navigation.Uri.Contains("/my/invoices", StringComparison.OrdinalIgnoreCase) ||
         Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
 
-    private string ListPath => IsMyInvoices ? "/my-invoices" : "/invoices";
+    private string ListPath => IsMyInvoices ? "/my/invoices" : "/invoices";
 
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => IsMyInvoices
-        ? [new(L["OverviewNav"], "/"), new(L["MyBreadcrumb"], ListPath), new(L["DetailBreadcrumb"])]
-        : [new(L["OverviewNav"], "/"), new(L["Breadcrumb"], ListPath), new(L["DetailBreadcrumb"])];
+    private static readonly IReadOnlyDictionary<string, string> PaymentErrorKeys =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [PaymentErrorCodes.Forbidden] = "PayErrorForbidden",
+            [PaymentErrorCodes.InvoiceNotFound] = "PayErrorInvoiceNotFound",
+            [PaymentErrorCodes.InvoiceNotIssued] = "PayErrorInvoiceNotIssued",
+            [PaymentErrorCodes.InvoiceAlreadyPaid] = "PayErrorInvoiceAlreadyPaid",
+            [PaymentErrorCodes.AmountMismatch] = "PayErrorAmountMismatch",
+            [PaymentErrorCodes.InvalidTransactionCode] = "PayErrorInvalidTransactionCode",
+            [PaymentErrorCodes.TransferredAtInFuture] = "PayErrorTransferredAtInFuture",
+            [PaymentErrorCodes.ProofRequired] = "PayErrorProofRequired",
+            [PaymentErrorCodes.InvalidProof] = "PayErrorInvalidProof",
+            [PaymentErrorCodes.PendingPaymentExists] = "PayErrorPendingPaymentExists",
+            [PaymentErrorCodes.PaymentNotFound] = "PayErrorPaymentNotFound",
+            [PaymentErrorCodes.InvalidPaymentStatus] = "PayErrorInvalidPaymentStatus",
+            [PaymentErrorCodes.ConcurrencyConflict] = "PayErrorConcurrencyConflict",
+        };
 
-    protected override async Task OnParametersSetAsync()
+    private static readonly IReadOnlyDictionary<string, string> UploadErrorKeys =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [StorageErrorCodes.FileSizeExceeded] = "PayErrorFileSizeExceeded",
+            [StorageErrorCodes.InvalidFileType] = "PayErrorInvalidFileType",
+            [StorageErrorCodes.EmptyFile] = "PayErrorEmptyFile",
+            [StorageErrorCodes.UploadFailed] = "PayErrorUploadFailed",
+            [StorageErrorCodes.Forbidden] = "PayErrorUploadForbidden",
+            [StorageErrorCodes.FileCountExceeded] = "PayErrorFileCountExceeded",
+            [StorageErrorCodes.RelatedEntityNotFound] = "PayErrorRelatedEntityNotFound",
+            [StorageErrorCodes.InvalidRequest] = "PayErrorUploadInvalidRequest",
+        };
+
+    protected override Task OnParametersSetAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
     {
         _loading = true;
         _notFound = false;
+        _loadError = null;
+        _paymentsError = null;
         _invoice = null;
+        _latestPayment = null;
+        _payments = [];
+        _proofFiles = new Dictionary<Guid, FileMetadataDto>();
+        _formError = null;
+        _resultCheckMessage = null;
+        _requiresResultCheck = false;
 
         try
         {
             var caller = await CallerProvider.GetCallerAsync();
+            _caller = caller;
             _invoice = await InvoiceQuery.GetInvoiceAsync(Id, caller);
+            _latestPayment = _invoice.LatestPayment;
+            ResetForm();
+            await LoadPaymentHistoryAsync();
         }
         catch (KeyNotFoundException)
         {
@@ -181,11 +510,352 @@
         {
             _notFound = true;
         }
+        catch (Exception)
+        {
+            _loadError = L["ErrorLoadDetail"];
+        }
         finally
         {
             _loading = false;
         }
     }
+
+    private async Task LoadPaymentHistoryAsync()
+    {
+        if (_invoice is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _payments = await PaymentPage.HistoryAsync(Id);
+            _proofFiles = (await PaymentPage.ProofFilesAsync(Id)).ToDictionary(file => file.Id);
+            _latestPayment = _payments.FirstOrDefault() ?? _invoice.LatestPayment;
+        }
+        catch (Exception)
+        {
+            _paymentsError = L["ErrorLoadPayments"];
+        }
+    }
+
+    private void ResetForm()
+    {
+        _amountText = _invoice is null ? string.Empty : MoneyFormatter.Format(_invoice.TotalAmount);
+        _transferredAtLocal = DateTime.Now.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+        _transactionCode = null;
+        _selectedFiles = [];
+        _preparedProofIds = [];
+        _fileInputVersion++;
+        _amountError = null;
+        _fileError = null;
+        _formError = null;
+        _resultCheckMessage = null;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_submitting || _checkingResult || _requiresResultCheck || _invoice is null || _caller is null || !_caller.IsKhachThue)
+        {
+            return;
+        }
+
+        _submitting = true;
+        _formError = null;
+        _amountError = null;
+        _fileError = null;
+        _resultCheckMessage = null;
+
+        try
+        {
+            if (!ValidateForm(out var amount, out var transferredAt))
+            {
+                return;
+            }
+
+            var proofIds = _preparedProofIds.ToList();
+            var pendingFiles = _selectedFiles.ToList();
+            foreach (var file in pendingFiles)
+            {
+                var result = await PaymentPage.UploadProofAsync(Invoice.Id, file);
+                if (!result.Succeeded || result.File is null)
+                {
+                    _formError = UploadErrorText(result);
+                    _preparedProofIds = proofIds;
+                    return;
+                }
+
+                proofIds.Add(result.File.Id);
+                _preparedProofIds = proofIds.ToList();
+                // Giữ lại tệp chưa tải được để lần gửi sau không upload trùng tệp đã lên.
+                _selectedFiles = _selectedFiles.Where(item => !ReferenceEquals(item, file)).ToList();
+            }
+
+            if (proofIds.Count == 0)
+            {
+                _fileError = L["PaymentProofRequired"];
+                return;
+            }
+
+            _selectedFiles = [];
+            _fileInputVersion++;
+
+            var payment = await PaymentPage.SubmitAsync(
+                Invoice.Id,
+                amount,
+                transferredAt,
+                string.IsNullOrWhiteSpace(_transactionCode) ? null : _transactionCode.Trim(),
+                proofIds);
+
+            _latestPayment = payment;
+            _preparedProofIds = [];
+            Toasts.Success(L["PaymentSubmittedSuccess"]);
+            await RefreshAfterSubmitAsync();
+        }
+        catch (PaymentNotFoundException exception)
+        {
+            _formError = ServiceErrorText(exception);
+        }
+        catch (PaymentAuthorizationException exception)
+        {
+            _formError = ServiceErrorText(exception);
+        }
+        catch (PaymentValidationException exception)
+        {
+            _formError = ServiceErrorText(exception);
+            if (exception.ErrorCode is PaymentErrorCodes.ProofRequired or PaymentErrorCodes.InvalidProof)
+            {
+                _fileError = _formError;
+                // Minh chứng bị service từ chối: bỏ qua bộ đệm để lần sau phải chọn/tải lại.
+                ClearProofSelection();
+            }
+        }
+        catch (PaymentOperationException exception)
+            when (exception.ErrorCode is PaymentErrorCodes.PendingPaymentExists
+                or PaymentErrorCodes.InvoiceAlreadyPaid
+                or PaymentErrorCodes.ConcurrencyConflict)
+        {
+            _formError = ServiceErrorText(exception);
+            _requiresResultCheck = false;
+            ClearProofSelection();
+            await LoadPaymentHistoryAsync();
+            _paymentsError = null;
+        }
+        catch (PaymentOperationException exception)
+        {
+            _formError = ServiceErrorText(exception);
+        }
+        catch (Exception)
+        {
+            // Không biết server đã ghi yêu cầu hay chưa: bắt buộc tra kết quả trước khi thử lại.
+            _requiresResultCheck = true;
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    private async Task CheckResultAsync()
+    {
+        if (_checkingResult || _invoice is null)
+        {
+            return;
+        }
+
+        _checkingResult = true;
+        _formError = null;
+        _resultCheckMessage = null;
+
+        try
+        {
+            var latest = await PaymentPage.LatestAsync(Id);
+            await LoadPaymentHistoryAsync();
+            _latestPayment = latest ?? _payments.FirstOrDefault() ?? _invoice.LatestPayment;
+            _requiresResultCheck = false;
+
+            if (latest is null)
+            {
+                // Chưa có bản ghi: giữ minh chứng đã tải để lần gửi lại không upload trùng.
+                _resultCheckMessage = L["PaymentNoResultYet"];
+            }
+            else
+            {
+                _preparedProofIds = [];
+                _selectedFiles = [];
+                _fileInputVersion++;
+            }
+        }
+        catch (Exception exception)
+        {
+            _formError = ServiceErrorText(exception);
+            _requiresResultCheck = true;
+        }
+        finally
+        {
+            _checkingResult = false;
+        }
+    }
+
+    private async Task RefreshAfterSubmitAsync()
+    {
+        if (_invoice is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var invoice = await InvoiceQuery.GetInvoiceAsync(Id, _caller!);
+            _invoice = invoice;
+            _latestPayment = invoice.LatestPayment ?? _latestPayment;
+            await LoadPaymentHistoryAsync();
+            ResetForm();
+        }
+        catch (Exception)
+        {
+            // Yêu cầu đã gửi thành công; lỗi đọc lại chỉ làm mất phần làm mới, không báo gửi thất bại.
+            _resultCheckMessage = L["PaymentRefreshPending"];
+        }
+    }
+
+    private bool ValidateForm(out decimal amount, out DateTimeOffset transferredAt)
+    {
+        amount = 0;
+        transferredAt = default;
+        var valid = true;
+
+        if (!MoneyFormatter.TryParse(_amountText, out amount))
+        {
+            _amountError = L["PaymentAmountInvalid"];
+            valid = false;
+        }
+        else if (amount != Invoice.TotalAmount)
+        {
+            _amountError = string.Format(L["PaymentAmountMismatch"], MoneyFormatter.Format(Invoice.TotalAmount));
+            valid = false;
+        }
+
+        if (!DateTime.TryParseExact(
+                _transferredAtLocal,
+                "yyyy-MM-ddTHH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeLocal,
+                out var local))
+        {
+            _formError = L["PaymentTransferredAtRequired"];
+            valid = false;
+        }
+        else
+        {
+            transferredAt = new DateTimeOffset(local);
+            if (transferredAt > DateTimeOffset.Now)
+            {
+                _formError = L["PayErrorTransferredAtInFuture"];
+                valid = false;
+            }
+        }
+
+        if (_selectedFiles.Count == 0 && _preparedProofIds.Count == 0)
+        {
+            _fileError = L["PaymentProofRequired"];
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    private void OnTransferredAtChanged(ChangeEventArgs args)
+    {
+        // Giữ chuỗi theo định dạng của input để tránh binding kiểu DateTime của Blazor.
+        _transferredAtLocal = args.Value?.ToString() ?? string.Empty;
+    }
+
+    private void OnFilesSelected(InputFileChangeEventArgs args)
+    {
+        _fileError = null;
+        _fileInputVersion++;
+
+        IReadOnlyList<IBrowserFile> incoming;
+        try
+        {
+            incoming = args.GetMultipleFiles(20);
+        }
+        catch (InvalidOperationException)
+        {
+            _fileError = L["PaymentProofTooMany"];
+            return;
+        }
+
+        var accepted = new List<IBrowserFile>(_selectedFiles);
+        foreach (var file in incoming)
+        {
+            if (file.Size > PaymentPolicy.MaxBytes)
+            {
+                _fileError = string.Format(
+                    L["PaymentProofTooLarge"],
+                    file.Name,
+                    FileTypeRules.DescribeMegabytes(PaymentPolicy.MaxBytes));
+                continue;
+            }
+
+            var extension = FileTypeRules.GetExtension(file.Name);
+            if (!PaymentPolicy.AllowedExtensions.Contains(extension, StringComparer.Ordinal))
+            {
+                _fileError = L["PaymentProofInvalidType"];
+                continue;
+            }
+
+            if (accepted.Any(existing => existing.Name == file.Name && existing.Size == file.Size))
+            {
+                continue;
+            }
+
+            accepted.Add(file);
+        }
+
+        _selectedFiles = accepted;
+    }
+
+    private void RemoveFile(IBrowserFile file)
+    {
+        _selectedFiles = _selectedFiles.Where(item => !ReferenceEquals(item, file)).ToList();
+        _fileInputVersion++;
+        _fileError = null;
+    }
+
+    private void ClearProofSelection()
+    {
+        _selectedFiles = [];
+        _preparedProofIds = [];
+        _fileInputVersion++;
+    }
+
+    private string ServiceErrorText(Exception exception)
+    {
+        var code = (exception as IPaymentServiceError)?.ErrorCode;
+        if (code is not null && PaymentErrorKeys.TryGetValue(code, out var key))
+        {
+            return L[key];
+        }
+
+        return string.IsNullOrWhiteSpace(exception.Message) ? L["PayErrorUnknown"] : exception.Message;
+    }
+
+    private string UploadErrorText(UploadResult result)
+    {
+        if (result.ErrorCode is not null && UploadErrorKeys.TryGetValue(result.ErrorCode, out var key))
+        {
+            return L[key];
+        }
+
+        return string.IsNullOrWhiteSpace(result.ErrorMessage) ? L["PayErrorUploadUnknown"] : result.ErrorMessage;
+    }
+
+    private string ProofName(Guid proofId) =>
+        _proofFiles.TryGetValue(proofId, out var file) && !string.IsNullOrWhiteSpace(file.FileName)
+            ? file.FileName
+            : L["PaymentProofOpen"];
 
     private void BackToList() => Navigation.NavigateTo(ListPath);
 
@@ -202,6 +872,22 @@
         InvoiceStatus.Draft => BadgeTone.Neutral,
         InvoiceStatus.Issued => BadgeTone.Info,
         InvoiceStatus.Paid => BadgeTone.Success,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string PaymentStatusText(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => L["PaymentStatusPending"],
+        PaymentStatus.Confirmed => L["PaymentStatusConfirmed"],
+        PaymentStatus.Rejected => L["PaymentStatusRejected"],
+        _ => L["StatusUnknown"],
+    };
+
+    private static BadgeTone PaymentStatusTone(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => BadgeTone.Warning,
+        PaymentStatus.Confirmed => BadgeTone.Success,
+        PaymentStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };
 

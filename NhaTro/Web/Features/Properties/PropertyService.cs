@@ -33,11 +33,28 @@ public sealed class PropertyService(
             query = query.Where(p => p.Name.Contains(keyword) || (p.Address != null && p.Address.Contains(keyword)));
         }
 
+        // Loc theo khoang so phong (dem phong chua xoa mem) truoc khi phan trang.
+        if (filter.MinRoomCount is { } minRoomCount)
+        {
+            query = query.Where(p => db.Rooms.Count(r => r.PropertyId == p.Id) >= minRoomCount);
+        }
+
+        if (filter.MaxRoomCount is { } maxRoomCount)
+        {
+            query = query.Where(p => db.Rooms.Count(r => r.PropertyId == p.Id) <= maxRoomCount);
+        }
+
         var total = await query.CountAsync(ct);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
-        var rows = await query
-            .OrderBy(p => p.Name)
-            .ThenBy(p => p.Id)
+        var ordered = filter.SortBy switch
+        {
+            "newest" => query.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id),
+            "oldest" => query.OrderBy(p => p.CreatedAt).ThenBy(p => p.Id),
+            "roomCountAsc" => query.OrderBy(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
+            "roomCountDesc" => query.OrderByDescending(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
+            _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id),
+        };
+        var rows = await ordered
             .Skip((int)Math.Min(skip, int.MaxValue))
             .Take(filter.PageSize)
             .Select(p => new
@@ -116,6 +133,103 @@ public sealed class PropertyService(
         PropertyMapping.ApplySave(request, entity);
         entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
 
+        await db.SaveChangesAsync(ct);
+
+        return PropertyResult.Success(PropertyMapping.ToDetail(entity));
+    }
+
+    public async Task<PropertyResult> DeleteAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default)
+    {
+        // Ma trận P2: tạo/sửa/xóa nhà trọ chỉ Chủ trọ (Quản lý ❌).
+        EnsureCanWrite(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeQuery(db, caller).FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        // Room→Property là Restrict, còn phòng trong thùng rác thì không có đường xóa cứng,
+        // nên chỉ chặn khi còn phòng nằm ngoài thùng rác (global filter đã loại IsDeleted).
+        if (await db.Rooms.AnyAsync(r => r.PropertyId == id, ct))
+        {
+            return PropertyResult.Failure(
+                PropertyErrorCodes.PropertyHasRooms, PropertyErrorMessages.PropertyHasRooms);
+        }
+
+        entity.IsDeleted = true;
+        entity.DeletedAt = clock.GetUtcNow().UtcDateTime;
+        entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(ct);
+
+        return PropertyResult.Success();
+    }
+
+    public async Task<PagedResult<PropertyTrashItem>> ListDeletedAsync(
+        PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default)
+    {
+        // Thùng rác nhà trọ chỉ Chủ trọ (giống thùng rác phòng VHT-98); phạm vi theo OwnerId.
+        EnsureCanWrite(caller);
+        filter.Normalize();
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var query = db.Properties.IgnoreQueryFilters()
+            .Where(p => p.IsDeleted && p.OwnerId == caller.UserId);
+
+        if (filter.Keyword is { Length: > 0 } keyword)
+        {
+            query = query.Where(p => p.Name.Contains(keyword) || (p.Address != null && p.Address.Contains(keyword)));
+        }
+
+        var total = await query.CountAsync(ct);
+        var skip = (long)(filter.Page - 1) * filter.PageSize;
+        var rows = await query
+            .OrderByDescending(p => p.DeletedAt)
+            .ThenByDescending(p => p.Id)
+            .Skip((int)Math.Min(skip, int.MaxValue))
+            .Take(filter.PageSize)
+            .Select(p => new
+            {
+                Property = p,
+                // Điều kiện ghi thẳng vì IgnoreQueryFilters tắt bộ lọc của mọi bảng trong query.
+                TrashedRoomCount = db.Rooms.Count(r => r.PropertyId == p.Id && r.IsDeleted),
+            })
+            .ToListAsync(ct);
+
+        return new PagedResult<PropertyTrashItem>
+        {
+            Items = rows.Select(r => new PropertyTrashItem
+            {
+                Id = r.Property.Id,
+                Name = r.Property.Name,
+                Address = r.Property.Address,
+                TrashedRoomCount = r.TrashedRoomCount,
+                DeletedAt = r.Property.DeletedAt,
+            }).ToList(),
+            Page = filter.Page,
+            PageSize = filter.PageSize,
+            TotalCount = total,
+        };
+    }
+
+    public async Task<PropertyResult> RestoreAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanWrite(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await db.Properties.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted && p.OwnerId == caller.UserId, ct);
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(ct);
 
         return PropertyResult.Success(PropertyMapping.ToDetail(entity));

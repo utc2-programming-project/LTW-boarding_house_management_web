@@ -1,4 +1,8 @@
 ﻿@page "/Account/LoginWith2fa"
+@layout Layout.AuthLayout
+
+@* Bước hai của đăng nhập khi tài khoản bật xác thực hai lớp: nhập mã từ ứng dụng
+   authenticator, có tùy chọn ghi nhớ máy. Dùng khung AuthLayout. *@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
@@ -12,10 +16,9 @@
 
 <PageTitle>@L["TwoFactorLoginTitle"]</PageTitle>
 
-<h1>@L["TwoFactorLoginTitle"]</h1>
+<PageHeading Title="@L["TwoFactorLoginTitle"]" HelpText="@L["TwoFactorLoginDescription"]" InteractiveHelp="true" />
 <hr />
 <StatusMessage Message="@message" />
-<p>@L["TwoFactorLoginDescription"]</p>
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">

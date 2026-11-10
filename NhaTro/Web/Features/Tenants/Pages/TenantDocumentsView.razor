@@ -1,4 +1,5 @@
 @using Web.Features.Tenants.Documents
+@page "/my/documents"
 @page "/documents"
 @attribute [Authorize(Roles = Roles.KhachThue)]
 @rendermode InteractiveServer
@@ -11,29 +12,17 @@
 <PageTitle>@L["TenantDocumentsTitle"] · @L["AppName"]</PageTitle>
 
 <div class="doc-page-container">
-    <div class="breadcrumb-title-stack">
-        <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-        {
-            new(L["Dashboard"], "/"),
-            new(L["TenantDocumentsTitle"])
-        })" />
-
-        <!-- 1. Header Row -->
-        <div class="doc-header-row">
-        <div class="doc-title-block">
-            <div class="doc-title-row">
-                <h1 class="doc-main-title">@L["TenantDocumentsTitle"]</h1>
-                @if (_documentsList is not null)
-                {
-                    <span class="doc-count-badge">
-                        @(_documentsList.Items.Count) @(_documentsList.Items.Count == 1 ? L["FileUnitSingular"] : L["FilesUnit"])
-                    </span>
-                }
-            </div>
-            <p class="doc-subtitle">@L["TenantDocumentsSubtitle"]</p>
-        </div>
-
-        <div class="doc-actions-row">
+    <PageHeading Title="@L["TenantDocumentsTitle"]" HelpText="@L["TenantDocumentsSubtitle"]">
+        <HeadingSuffix>
+            @if (_documentsList is not null)
+            {
+                <span class="doc-count-badge">
+                    @(_documentsList.Items.Count) @(_documentsList.Items.Count == 1 ? L["FileUnitSingular"] : L["FilesUnit"])
+                </span>
+            }
+        </HeadingSuffix>
+        <Actions>
+            <div class="doc-actions-row">
             @if (_documentsList?.CanExport == true && (_documentsList?.Items.Count ?? 0) > 0)
             {
                 <button type="button" class="btn btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
@@ -56,9 +45,9 @@
                     <span>@L["UploadDocument"]</span>
                 </button>
             }
-        </div>
-    </div>
-    </div>
+            </div>
+        </Actions>
+    </PageHeading>
 
     <!-- 2. Privacy Banner -->
     <div class="doc-privacy-banner">

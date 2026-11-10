@@ -1,0 +1,71 @@
+.reports-page { display:flex; flex-direction:column; gap:32px; max-width:1440px; margin:auto; min-width:0; }
+h1 { margin:0; font-size:1.75rem; line-height:2.25rem; letter-spacing:-.02em; font-weight:700; }
+h2 { margin:0; font-size:1.25rem; line-height:1.75rem; letter-spacing:-.01em; font-weight:600; }
+p { margin:0; color:var(--text-secondary); }
+.report-toolbar { display:flex; flex-direction:column; gap:16px; padding:24px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-card); box-shadow:var(--shadow-card); }
+.filters { display:flex; align-items:flex-end; flex-wrap:wrap; gap:20px; min-width:0; }
+label { display:flex; flex-direction:column; gap:8px; font-size:.875rem; line-height:1.25rem; font-weight:500; width:240px; max-width:100%; min-width:0; }
+.report-toolbar label { width:320px; }
+select { width:100%; min-height:44px; max-width:100%; padding:8px 12px; border:1px solid var(--control-border); border-radius:var(--radius-control); background:var(--surface); color:var(--text-primary); font-size:.875rem; line-height:1.375rem; transition:border-color 150ms var(--ease); }
+select:hover:not(:disabled) { border-color:var(--border-hover); }
+select:focus-visible { border-color:var(--focus-ring); outline:2px solid var(--focus-ring); outline-offset:2px; }
+select:disabled { background:var(--disabled-bg); color:var(--text-disabled); cursor:default; }
+.filter-context { display:flex; flex-direction:column; gap:8px; padding-top:16px; border-top:1px solid var(--border); }
+.scope-note,.updated-at { font-size:.75rem; line-height:1.125rem; }
+.updated-at { font-variant-numeric:tabular-nums; }
+.report-section { display:flex; flex-direction:column; gap:24px; min-width:0; }
+.section-heading { display:flex; flex-direction:column; gap:16px; }
+/* Giới hạn style card chung trong trang báo cáo, không đổi dashboard. */
+.report-section ::deep .dashboard-panel { height:auto; min-width:0; box-shadow:var(--shadow-card); }
+.report-section ::deep .dashboard-panel > header { margin-bottom:24px; }
+.report-section ::deep .dashboard-panel > header h2 { font-size:1.125rem; line-height:1.625rem; font-weight:600; }
+.report-section ::deep .dashboard-panel > header .lucide-icon { width:24px; height:24px; flex-basis:24px; color:var(--accent-text); }
+.room-overview { display:flex; flex-direction:column; gap:24px; min-width:0; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; margin:0; }
+.kpi-card { display:flex; flex-direction:column; gap:8px; min-width:0; padding:24px; border:1px solid var(--border); border-radius:var(--radius-card); background:var(--surface); box-shadow:var(--shadow-card); }
+dt { font-size:.875rem; line-height:1.25rem; font-weight:500; color:var(--text-secondary); overflow-wrap:anywhere; }
+dd { margin:0; font-size:2rem; line-height:2.5rem; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; color:var(--text-primary); overflow-wrap:anywhere; }
+.kpi-card dd { margin-top:auto; }
+.room-chart-summary { display:grid; gap:24px; padding-top:24px; border-top:1px solid var(--border); min-width:0; }
+.room-chart-summary.has-chart { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:center; }
+.occupancy-summary { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.occupancy-kpi { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px 24px; margin:0; }
+.occupancy-summary .scope-note { max-width:60ch; }
+.room-chart-visual { min-width:0; }
+.room-chart-visual ::deep .room-chart { height:280px; }
+/* Cho vùng hình co lại để luôn dành đủ chỗ cho chú giải trong khung. */
+.room-chart-visual ::deep .room-chart > .mud-chart { height:100%; min-height:0; }
+.room-chart-visual ::deep .mud-chart > .mud-chart { display:grid; grid-template-rows:minmax(0,1fr) auto; height:100%; min-height:0; width:100%; }
+.room-chart-visual ::deep .mud-chart-pie { width:100%; height:100%; min-height:0; max-height:100%; }
+.room-chart-visual ::deep .mud-chart-legend .mud-typography { font-size:.75rem; line-height:1.125rem; }
+.room-chart-visual ::deep .chart-values { margin-bottom:0; }
+.table-scroll { overflow-x:auto; max-width:100%; margin:24px 0 16px; border:1px solid var(--border); border-radius:var(--radius-card); }
+table { width:100%; border-collapse:collapse; text-align:left; font-size:.875rem; line-height:1.375rem; }
+caption { text-align:left; font-size:1.125rem; line-height:1.625rem; font-weight:600; padding:16px; color:var(--text-primary); }
+th,td { padding:12px 16px; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
+th { height:44px; background:var(--surface-subtle); font-size:.8125rem; line-height:1.25rem; color:var(--text-secondary); font-weight:600; }
+td { height:52px; }
+tbody tr:hover { background:var(--hover-bg); }
+tbody tr:last-child td { border-bottom:0; }
+.numeric { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.feedback { display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+@media(max-width:1199px) {
+    .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .room-chart-summary.has-chart { grid-template-columns:1fr; }
+}
+@media(max-width:767px) {
+    .reports-page { gap:24px; }
+    h1 { font-size:1.5rem; line-height:2rem; }
+    .report-toolbar,.kpi-card { padding:16px; }
+    .filters { flex-direction:column; align-items:stretch; gap:20px; }
+    label,.report-toolbar label { width:100%; }
+    .kpis { grid-template-columns:1fr; gap:16px; }
+    dd { font-size:1.75rem; line-height:2.25rem; }
+    select { font-size:1rem; line-height:1.5rem; }
+    .reports-page .btn { min-height:44px; }
+    .room-chart-visual ::deep .room-chart { height:240px; }
+    table { min-width:560px; }
+}
+@media(prefers-reduced-motion:reduce) {
+    select { transition:none; }
+}

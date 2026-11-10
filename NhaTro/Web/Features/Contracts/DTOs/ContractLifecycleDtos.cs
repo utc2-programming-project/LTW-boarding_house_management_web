@@ -22,10 +22,16 @@ public sealed record ContractActionResultDto(
     Guid? ApprovalRequestId);
 
 /// <summary>Payload SW-07 lưu trong hàng đợi duyệt để applier áp dụng lại.</summary>
-public sealed record ContractApprovalPayload(string Action, DateTime? EndDate);
+public sealed record ContractApprovalPayload(
+    string Action,
+    DateTime? EndDate,
+    decimal? DepositAmount = null);
 
 public static class ContractApprovalActions
 {
     public const string Renew = nameof(Renew);
     public const string Liquidate = nameof(Liquidate);
+
+    /// <summary>SW-08: Quản lý ghi nhận tiền cọc, chờ Chủ trọ duyệt.</summary>
+    public const string UpdateDeposit = nameof(UpdateDeposit);
 }

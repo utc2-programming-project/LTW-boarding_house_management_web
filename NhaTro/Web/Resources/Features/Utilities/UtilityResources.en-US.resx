@@ -30,7 +30,7 @@
   <data name="StatUnitTypes" xml:space="preserve"><value>types</value></data>
   <data name="StatUnitServices" xml:space="preserve"><value>services</value></data>
 
-  <data name="SearchPlaceholder" xml:space="preserve"><value>Search by service name...</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search by service name, code or description...</value></data>
   <data name="AllBuildings" xml:space="preserve"><value>All Properties</value></data>
   <data name="AllTypes" xml:space="preserve"><value>All Service Types</value></data>
   <data name="MeterType" xml:space="preserve"><value>By Meter</value></data>
@@ -274,7 +274,26 @@
   <data name="TariffElectricShortName" xml:space="preserve"><value>Household electricity</value></data>
   <data name="TariffWaterShortName" xml:space="preserve"><value>Household water</value></data>
   <data name="TariffTierServiceName" xml:space="preserve"><value>{0} - Tier {1} ({2} {3})</value></data>
+  <data name="TariffTierRangeLabel" xml:space="preserve"><value>Tier {0}: {1} {2}</value></data>
   <data name="SystemCreatorLabel" xml:space="preserve"><value>System</value></data>
   <data name="BuildingFallbackName" xml:space="preserve"><value>Property #{0}</value></data>
   <data name="AllBuildingsDescription" xml:space="preserve"><value>Entire system</value></data>
+  <data name="DeleteServiceTooltip" xml:space="preserve"><value>Delete service</value></data>
+  <data name="DeleteServiceTitle" xml:space="preserve"><value>Delete service</value></data>
+  <data name="DeleteServiceConfirm" xml:space="preserve"><value>Delete service "{0}"? It will no longer appear in the catalog; price history is kept.</value></data>
+  <data name="DeleteServiceAction" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeletingService" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="ToastServiceDeletedSuccess" xml:space="preserve"><value>Service deleted.</value></data>
+  <data name="ErrorOwnerOnlyDelete" xml:space="preserve"><value>Only the landlord can delete services.</value></data>
+  <data name="ErrorVerifyDeleteFailed" xml:space="preserve"><value>Delete completed but could not be verified. Please reload the page.</value></data>
+  <data name="PriceEffectiveFromFilter" xml:space="preserve"><value>Effective from</value></data>
+  <data name="PriceKeywordFilter" xml:space="preserve"><value>Search</value></data>
+  <data name="PriceKeywordPlaceholder" xml:space="preserve"><value>Creator, note, scope…</value></data>
+  <data name="PriceEffectiveToFilter" xml:space="preserve"><value>Effective to</value></data>
+  <data name="AllScopes" xml:space="preserve"><value>All scopes</value></data>
+  <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>
+  <data name="PreviousPage" xml:space="preserve"><value>Previous page</value></data>
+  <data name="NextPage" xml:space="preserve"><value>Next page</value></data>
+  <data name="ErrorCopySameProperty" xml:space="preserve"><value>Prices cannot be copied from the same property.</value></data>
+  <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>You do not have access to the source property.</value></data>
 </root>

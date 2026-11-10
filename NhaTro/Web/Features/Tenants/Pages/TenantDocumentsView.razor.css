@@ -83,11 +83,11 @@
     padding: 0 20px;
     border-radius: 8px;
     background-color: var(--primary);
-    color: var(--surface);
+    color: var(--on-primary);
     font-size: 14px;
     font-weight: 500;
     border: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: background-color 0.15s;
 }
@@ -109,7 +109,7 @@
     font-size: 14px;
     font-weight: 500;
     border: 1px solid var(--neutral-border);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: background-color 0.15s;
 }
@@ -189,7 +189,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     box-sizing: border-box;
 }
 
@@ -248,10 +248,11 @@
     border-radius: 12px;
     background-color: var(--surface);
     border: 1px solid var(--border);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    /* Chân thẻ dính đáy bằng margin-top:auto; space-between sẽ đẩy số liệu của thẻ Dung lượng (không có chân) xuống cuối */
+    justify-content: flex-start;
     box-sizing: border-box;
     min-height: 124px;
 }
@@ -342,7 +343,8 @@
     font-size: 12px;
     color: var(--success-text);
     font-weight: 500;
-    margin-top: 8px;
+    margin-top: auto;
+    padding-top: 8px;
 }
 
 .doc-status-dot {
@@ -364,7 +366,8 @@
 .doc-bento-footer-text {
     font-size: 12px;
     color: var(--text-muted);
-    margin-top: 8px;
+    margin-top: auto;
+    padding-top: 8px;
 }
 
 /* Table Card & Toolbar */
@@ -373,7 +376,7 @@
     background-color: var(--surface);
     border-radius: 12px;
     border: 1px solid var(--border);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -638,9 +641,9 @@
 
 .doc-page-btn-active {
     background-color: var(--primary);
-    color: var(--surface);
+    color: var(--on-primary);
     border: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-card);
 }
 
 .doc-page-btn-disabled {
@@ -661,7 +664,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-card);
     flex-wrap: wrap;
 }
 
@@ -704,7 +707,7 @@
     color: var(--text-primary);
     font-size: 13px;
     font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     white-space: nowrap;
     transition: all 0.15s;
@@ -833,7 +836,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    box-shadow: var(--shadow-card);
 }
 
 .doc-state-icon {
@@ -854,7 +857,7 @@
 .doc-state-card .doc-btn-primary { margin-top: 24px; }
 .doc-state-card .doc-btn-secondary { margin-top: 24px; }
 
-.doc-skeleton-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.doc-skeleton-card { overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-card); }
 .doc-skeleton-table-wrap { width: 100%; overflow-x: auto; }
 .doc-skeleton-table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
 .doc-skeleton-table thead { height: 40px; background: var(--page-bg); border-bottom: 1px solid var(--border); }

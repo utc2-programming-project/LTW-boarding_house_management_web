@@ -18,18 +18,7 @@
 <PageTitle>@L["ProfileTitle"] · @L["AppName"]</PageTitle>
 
 <section class="profile-page" aria-labelledby="profile-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-    {
-        new(L["Dashboard"], "/"),
-        new(L["ProfileTitle"]),
-    })" />
-
-    <header class="page-heading profile-page-heading">
-        <div>
-            <h1 id="profile-title">@L["ProfileTitle"]</h1>
-            <p>@L["ProfileSubtitle"]</p>
-        </div>
-    </header>
+    <PageHeading Title="@L["ProfileTitle"]" TitleId="profile-title" HelpText="@L["ProfileSubtitle"]" CurrentLabel="@L["ProfileTitle"]" />
 
     @if (_loading)
     {

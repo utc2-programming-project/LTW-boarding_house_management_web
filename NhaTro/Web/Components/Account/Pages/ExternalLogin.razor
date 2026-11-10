@@ -1,4 +1,8 @@
 ﻿@page "/Account/ExternalLogin"
+@layout Layout.AuthLayout
+
+@* Trang xử lý đăng nhập bằng nhà cung cấp ngoài: liên kết danh tính ngoài với tài khoản
+   cục bộ hoặc tạo tài khoản mới. Dùng khung AuthLayout (trước đăng nhập). *@
 
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
@@ -20,7 +24,7 @@
 <PageTitle>@L["RegisterTitle"]</PageTitle>
 
 <StatusMessage Message="@message" />
-<h1>@L["RegisterTitle"]</h1>
+<PageHeading Title="@L["RegisterTitle"]" HelpText="@L["ExternalLoginHelp"]" InteractiveHelp="true" />
 <h2>@L["ExternalLoginAssociateTitle", ProviderDisplayName ?? ""]</h2>
 <hr />
 

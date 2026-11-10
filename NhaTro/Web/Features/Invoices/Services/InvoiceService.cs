@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Web.Data;
+using Web.Features.Approvals;
+using Web.Features.Approvals.DTOs;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices.DTOs;
@@ -7,6 +12,10 @@ using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
 using Web.Features.Invoices.Rules;
 using Web.Features.Properties;
+using Web.Features.Rooms;
+using Web.Features.Settings;
+using Web.Features.Settings.Enums;
+using Web.Features.Settings.Services;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Invoices.Services;
@@ -15,21 +24,31 @@ namespace Web.Features.Invoices.Services;
 /// Lập/phát hành hóa đơn từ nguồn chi phí đã chốt.
 /// Service chỉ tin dữ liệu nguồn sau khi kiểm hợp đồng, phạm vi và từng dòng;
 /// mọi phép tính tiền dùng chung <see cref="InvoiceCalculationRules"/>.
+/// Lập hóa đơn (SW-10) và phát hành (SW-11) là hai thao tác ⚙️ của Quản lý: chế độ công tắc
+/// quyết định ghi ngay, vào hàng đợi duyệt hay bị chặn — Chủ trọ luôn ghi ngay (D4).
 /// </summary>
 public sealed class InvoiceService : IInvoiceService
 {
+    private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
+
     private readonly ApplicationDbContext _context;
     private readonly IInvoiceQueryService _invoiceQuery;
     private readonly TimeProvider _timeProvider;
+    private readonly IManagerTogglePolicy? _togglePolicy;
+    private readonly IManagerApprovalService? _approvals;
 
     public InvoiceService(
         ApplicationDbContext context,
         IInvoiceQueryService invoiceQuery,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IManagerTogglePolicy? togglePolicy = null,
+        IManagerApprovalService? approvals = null)
     {
         _context = context;
         _invoiceQuery = invoiceQuery;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _togglePolicy = togglePolicy;
+        _approvals = approvals;
     }
 
     public async Task<InvoiceDto> CreateDraftAsync(
@@ -49,6 +68,14 @@ public sealed class InvoiceService : IInvoiceService
 
         var total = InvoiceCalculationRules.CalculateTotal(items);
 
+        // Công tắc phải được kiểm TRƯỚC mọi lần trả về "idempotent": Quản lý ở chế độ
+        // Không thể không được nhận success chỉ vì hóa đơn của kỳ đó đã tồn tại.
+        var decision = await EvaluateToggleAsync(ManagerAction.SW10, caller, cancellationToken);
+        if (decision == RoomChangeDecision.Denied)
+        {
+            EnsureToggleAllowed(decision);
+        }
+
         var existing = await FindByPeriodAsync(
             request.ContractId,
             request.PeriodStart,
@@ -65,6 +92,14 @@ public sealed class InvoiceService : IInvoiceService
                 InvoiceErrorCodes.DuplicateInvoice);
         }
 
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            await CreateDraftApprovalRequestAsync(contract, items, request, caller, cancellationToken);
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.ApprovalRequired,
+                InvoiceErrorCodes.ApprovalRequired);
+        }
+
         var now = _timeProvider.UtcNow();
         var invoice = new Invoice
         {
@@ -74,7 +109,7 @@ public sealed class InvoiceService : IInvoiceService
             Status = InvoiceStatus.Draft,
             TotalAmount = total,
             CreatedAt = now,
-            Items = invoiceItems(items),
+            Items = ToEntities(items),
         };
 
         _context.Invoices.Add(invoice);
@@ -112,27 +147,31 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         return await _invoiceQuery.GetInvoiceAsync(invoice.Id, caller, cancellationToken);
+    }
 
-        List<InvoiceItem> invoiceItems(IReadOnlyList<InvoiceItemInputDto> source)
+    /// <summary>
+    /// Dòng hóa đơn lưu dưới dạng snapshot đã chốt (thành tiền do rule tính, không lấy số client gửi).
+    /// Applier SW-10 dựng lại dòng bằng chính hàm này để bản được duyệt giống bản Quản lý đã xin.
+    /// </summary>
+    internal static List<InvoiceItem> ToEntities(IReadOnlyList<InvoiceItemInputDto> source)
+    {
+        var result = new List<InvoiceItem>(source.Count);
+        for (var index = 0; index < source.Count; index++)
         {
-            var result = new List<InvoiceItem>(source.Count);
-            for (var index = 0; index < source.Count; index++)
+            var item = InvoiceCalculationRules.ToItem(source[index]);
+            result.Add(new InvoiceItem
             {
-                var item = InvoiceCalculationRules.ToItem(source[index]);
-                result.Add(new InvoiceItem
-                {
-                    ItemType = item.ItemType,
-                    Description = item.Description,
-                    Unit = item.Unit,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    Amount = item.Amount,
-                    DisplayOrder = index + 1,
-                });
-            }
-
-            return result;
+                ItemType = item.ItemType,
+                Description = item.Description,
+                Unit = item.Unit,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                Amount = item.Amount,
+                DisplayOrder = index + 1,
+            });
         }
+
+        return result;
     }
 
     public async Task<InvoiceDto> IssueAsync(
@@ -155,6 +194,14 @@ public sealed class InvoiceService : IInvoiceService
             throw new InvoiceNotFoundException(
                 InvoiceErrorMessages.InvoiceNotFound,
                 InvoiceErrorCodes.InvoiceNotFound);
+        }
+
+        // Công tắc phải được kiểm TRƯỚC nhánh "gửi lặp": Quản lý ở chế độ Không thể không được
+        // nhận success chỉ vì hóa đơn đã phát hành trước đó.
+        var decision = await EvaluateToggleAsync(ManagerAction.SW11, caller, cancellationToken);
+        if (decision == RoomChangeDecision.Denied)
+        {
+            EnsureToggleAllowed(decision);
         }
 
         // Gửi lặp yêu cầu phát hành không đổi dữ liệu và không tạo hóa đơn mới.
@@ -190,6 +237,14 @@ public sealed class InvoiceService : IInvoiceService
                 InvoiceErrorCodes.TotalMismatch);
         }
 
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            await CreateIssueApprovalRequestAsync(invoice, contract, caller, cancellationToken);
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.ApprovalRequired,
+                InvoiceErrorCodes.ApprovalRequired);
+        }
+
         var now = _timeProvider.UtcNow();
         invoice.Status = InvoiceStatus.Issued;
         invoice.IssuedAt = now;
@@ -223,6 +278,10 @@ public sealed class InvoiceService : IInvoiceService
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(caller);
+
+        // Kiểm công tắc TRƯỚC khi mở transaction: một yêu cầu chờ duyệt tạo bên trong
+        // transaction này sẽ bị rollback kèm khi bước sau ném lỗi, thành ra "đã gửi duyệt" mà DB không có gì.
+        await EnsureDirectExecutionAsync(caller, cancellationToken);
 
         // Lập và phát hành là một nghiệp vụ: nếu bước phát hành lỗi thì rollback cả
         // hóa đơn nháp, không để lại bản ghi dở dang.
@@ -288,7 +347,157 @@ public sealed class InvoiceService : IInvoiceService
             InvoiceErrorCodes.Forbidden);
     }
 
-    private static void ValidateContractAndPeriod(
+    /// <summary>
+    /// Chủ trọ là cấp cao nhất nên thao tác của họ có hiệu lực ngay (D4). Quản lý phải đi qua
+    /// công tắc; thiếu policy thì coi như "cần duyệt" — fail closed, không mặc nhiên cho ghi sổ.
+    /// </summary>
+    private async Task<RoomChangeDecision> EvaluateToggleAsync(
+        ManagerAction action,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (!caller.IsQuanLy)
+        {
+            return RoomChangeDecision.Allowed;
+        }
+
+        return _togglePolicy is null
+            ? RoomChangeDecision.RequiresApproval
+            : await _togglePolicy.EvaluateAsync(action, caller.Role, cancellationToken);
+    }
+
+    private static void EnsureToggleAllowed(RoomChangeDecision decision)
+    {
+        if (decision != RoomChangeDecision.Allowed)
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.ApprovalDenied,
+                InvoiceErrorCodes.ApprovalDenied);
+        }
+    }
+
+    /// <summary>
+    /// Bản gộp "lập rồi phát hành" là một transaction nên không dừng giữa chừng để chờ duyệt được:
+    /// Quản lý ở chế độ Duyệt phải gửi từng bước, mỗi bước một yêu cầu cho Chủ trọ quyết định.
+    /// </summary>
+    private async Task EnsureDirectExecutionAsync(PropertyCaller caller, CancellationToken cancellationToken)
+    {
+        foreach (var action in new[] { ManagerAction.SW10, ManagerAction.SW11 })
+        {
+            var decision = await EvaluateToggleAsync(action, caller, cancellationToken);
+            if (decision == RoomChangeDecision.RequiresApproval)
+            {
+                throw new InvoiceOperationException(
+                    InvoiceErrorMessages.ApprovalComposite,
+                    InvoiceErrorCodes.ApprovalRequired);
+            }
+
+            EnsureToggleAllowed(decision);
+        }
+    }
+
+    private async Task CreateDraftApprovalRequestAsync(
+        Contract contract,
+        IReadOnlyList<InvoiceItemInputDto> items,
+        CreateInvoiceRequest request,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        var payload = new InvoiceDraftApprovalPayload(
+            contract.ContractId,
+            request.PeriodStart,
+            request.PeriodEnd,
+            items);
+
+        await CreateApprovalRequestAsync(
+            ManagerAction.SW10,
+            ApprovalTargetType.Contract,
+            contract.ContractId.ToString("D"),
+            await ResolvePropertyIdAsync(contract.RoomId, cancellationToken),
+            JsonSerializer.Serialize(payload, PayloadJsonOptions),
+            expectedToken: null,
+            caller,
+            cancellationToken);
+    }
+
+    private async Task CreateIssueApprovalRequestAsync(
+        Invoice invoice,
+        Contract contract,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        await CreateApprovalRequestAsync(
+            ManagerAction.SW11,
+            ApprovalTargetType.Invoice,
+            invoice.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            await ResolvePropertyIdAsync(contract.RoomId, cancellationToken),
+            JsonSerializer.Serialize(
+                new InvoiceIssueApprovalPayload(invoice.Id), PayloadJsonOptions),
+            invoice.RowVersion,
+            caller,
+            cancellationToken);
+    }
+
+    private async Task CreateApprovalRequestAsync(
+        ManagerAction action,
+        ApprovalTargetType targetType,
+        string targetKey,
+        int propertyId,
+        string payloadJson,
+        byte[]? expectedToken,
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (_approvals is null)
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.ApprovalFailed,
+                InvoiceErrorCodes.ApprovalFailed);
+        }
+
+        var approval = await _approvals.CreateAsync(
+            new CreateApprovalRequest
+            {
+                OperationCode = ManagerToggleCatalog.ToCode(action),
+                TargetType = targetType,
+                TargetKey = targetKey,
+                PropertyId = propertyId,
+                PayloadJson = payloadJson,
+                ExpectedToken = expectedToken,
+            },
+            new ApprovalCaller(caller.UserId, caller.Role),
+            cancellationToken);
+
+        if (approval.Succeeded && approval.Request is not null)
+        {
+            return;
+        }
+
+        throw new InvoiceOperationException(
+            approval.ErrorMessage ?? InvoiceErrorMessages.ApprovalFailed,
+            InvoiceErrorCodes.ApprovalFailed);
+    }
+
+    private async Task<int> ResolvePropertyIdAsync(int roomId, CancellationToken cancellationToken)
+    {
+        var propertyId = await _context.Rooms
+            .IgnoreQueryFilters()
+            .Where(room => room.Id == roomId)
+            .Select(room => (int?)room.PropertyId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (propertyId is null)
+        {
+            throw new InvoiceNotFoundException(
+                InvoiceErrorMessages.ContractNotFound,
+                InvoiceErrorCodes.ContractNotFound);
+        }
+
+        return propertyId.Value;
+    }
+
+    /// <summary>internal: applier SW-10/SW-11 tái dùng đúng chốt kiểm này khi Chủ trọ duyệt.</summary>
+    internal static void ValidateContractAndPeriod(
         Contract contract,
         DateOnly periodStart,
         DateOnly periodEnd)

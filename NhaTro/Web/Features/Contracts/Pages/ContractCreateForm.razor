@@ -3,6 +3,8 @@
 @attribute [Authorize(Policy = "ContractManage")]
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.JSInterop
 @using Web.Components.Shared.Feedback
 @using Web.Common.Utils
 @using Web.Features.Contracts
@@ -14,11 +16,11 @@
 @inject ToastService Toasts
 @inject NavigationManager Navigation
 @inject TimeProvider Clock
+@inject IJSRuntime JS
 
 <PageTitle>@L["ContractCreateHeading"]</PageTitle>
 <section class="contract-page contract-live-form" aria-labelledby="contract-create-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractCreateHeading"]) })" />
-    <header class="page-heading"><div><h1 id="contract-create-title">@L["ContractCreateHeading"]</h1><p>@L["ContractCreateDescription"]</p></div></header>
+    <PageHeading Title="@L["ContractCreateHeading"]" TitleId="contract-create-title" HelpText="@L["ContractCreateDescription"]" />
 
     @if (_loading)
     {
@@ -30,6 +32,11 @@
     }
     else
     {
+        <NavigationLock ConfirmExternalNavigation="@_editContext.IsModified()" OnBeforeInternalNavigation="ConfirmLeaveAsync" />
+        @if (_editContext.IsModified())
+        {
+            <p class="contract-field-hint" data-unsaved-form role="status">@L["ContractUnsavedChanges"]</p>
+        }
         <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync" class="contract-live-form-card">
             <DataAnnotationsValidator />
             @if (ValidationErrors.Count > 0)
@@ -132,6 +139,16 @@
     {
         if (selected && !_form.TenantIds.Contains(tenantId)) _form.TenantIds.Add(tenantId);
         else if (!selected) _form.TenantIds.Remove(tenantId);
+        _editContext.NotifyFieldChanged(new FieldIdentifier(_form, nameof(_form.TenantIds)));
+    }
+
+    private async Task ConfirmLeaveAsync(LocationChangingContext context)
+    {
+        if (_editContext.IsModified() &&
+            !await JS.InvokeAsync<bool>("confirm", context.CancellationToken, L["ContractConfirmLeave"].Value))
+        {
+            context.PreventNavigation();
+        }
     }
 
     private Task HandleSubmitAsync(EditContext _) => SubmitAsync();
@@ -164,6 +181,7 @@
                 _form.EndDate!.Value.ToDateTime(TimeOnly.MinValue),
                 _form.TenantIds),
                 CancellationToken.None);
+            _editContext.MarkAsUnmodified();
             Toasts.Success(L["ContractCreatedSuccess"]);
             Navigation.NavigateTo($"/contracts/{result.ContractId}");
         }

@@ -113,6 +113,20 @@
   <data name="ContractSearchLabel" xml:space="preserve"><value>Find a contract</value></data>
   <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Contract number, tenant, room, or property</value></data>
   <data name="ContractSearchAction" xml:space="preserve"><value>Search</value></data>
+  <data name="ContractFilterStatusAll" xml:space="preserve"><value>All statuses</value></data>
+  <data name="ContractFilterPropertyAll" xml:space="preserve"><value>All properties</value></data>
+  <data name="ContractFilterSortLabel" xml:space="preserve"><value>Sort</value></data>
+  <data name="ContractFilterSortNewest" xml:space="preserve"><value>Newest first</value></data>
+  <data name="ContractFilterSortExpiring" xml:space="preserve"><value>Expiring soonest</value></data>
+  <data name="ContractFilterSortRoom" xml:space="preserve"><value>By room code</value></data>
+  <data name="ContractFilterReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="ContractFilterDateFrom" xml:space="preserve"><value>Effective from</value></data>
+  <data name="ContractFilterDateTo" xml:space="preserve"><value>Effective to</value></data>
+  <data name="ContractFilterMinRent" xml:space="preserve"><value>Rent from</value></data>
+  <data name="ContractFilterMaxRent" xml:space="preserve"><value>Rent to</value></data>
+  <data name="ContractAmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
+  <data name="ContractFilterEmptyTitle" xml:space="preserve"><value>No contracts match the filters</value></data>
+  <data name="ContractFilterEmptyDesc" xml:space="preserve"><value>Try another keyword or clear some filters to see other contracts.</value></data>
   <data name="ContractLoadErrorTitle" xml:space="preserve"><value>Could not load contracts</value></data>
   <data name="ContractLoadErrorDescription" xml:space="preserve"><value>An error occurred while loading data. Please try again.</value></data>
   <data name="ContractRetry" xml:space="preserve"><value>Try again</value></data>
@@ -184,5 +198,48 @@
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
+  <data name="ContractUnsavedChanges" xml:space="preserve"><value>This form has unsaved changes.</value></data>
+  <data name="ContractConfirmLeave" xml:space="preserve"><value>Leave the form and discard unsaved changes?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Loading.</value></data>
+  <data name="RenewalQueueTitle" xml:space="preserve"><value>Room renewal requests</value></data>
+  <data name="RenewalQueueDescription" xml:space="preserve"><value>Tenants send these requests from "My room". Accepting extends the contract by exactly the months requested.</value></data>
+  <data name="RenewalQueueNavLabel" xml:space="preserve"><value>Renewal requests</value></data>
+  <data name="RenewalQueueLoadErrorTitle" xml:space="preserve"><value>Renewal requests could not be loaded</value></data>
+  <data name="RenewalQueueLoadErrorDescription" xml:space="preserve"><value>An error occurred while loading the requests. Please try again.</value></data>
+  <data name="RenewalQueueEmptyTitle" xml:space="preserve"><value>No pending requests</value></data>
+  <data name="RenewalQueueEmptyDescription" xml:space="preserve"><value>Every renewal request in your properties has already been handled.</value></data>
+  <data name="RenewalRequesterLabel" xml:space="preserve"><value>Requested by</value></data>
+  <data name="RenewalMonthsLabel" xml:space="preserve"><value>Months requested</value></data>
+  <data name="RenewalMonthsValue" xml:space="preserve"><value>{0} month(s)</value></data>
+  <data name="RenewalCurrentEndLabel" xml:space="preserve"><value>Current end date</value></data>
+  <data name="RenewalProposedEndLabel" xml:space="preserve"><value>Proposed end date</value></data>
+  <data name="RenewalSentAtLabel" xml:space="preserve"><value>Sent at</value></data>
+  <data name="RenewalNoteLabel" xml:space="preserve"><value>Tenant note</value></data>
+  <data name="RenewalDecideAction" xml:space="preserve"><value>Review request</value></data>
+  <data name="ContractCloseAction" xml:space="preserve"><value>Close dialog</value></data>
+  <data name="RenewalAcceptAction" xml:space="preserve"><value>Accept</value></data>
+  <data name="RenewalDecisionTitle" xml:space="preserve"><value>Review renewal request</value></data>
+  <data name="RenewalDecisionDescription" xml:space="preserve"><value>Accepting creates a new contract starting right after the current end date. Rejecting requires a reason the tenant can see.</value></data>
+  <data name="RenewalAcceptSuccess" xml:space="preserve"><value>Renewal accepted and contract extended.</value></data>
+  <data name="RenewalRejectSuccess" xml:space="preserve"><value>Renewal request rejected.</value></data>
+  <data name="RenewalPendingOwnerApproval" xml:space="preserve"><value>Sent to the owner for approval; the tenant request is still pending.</value></data>
+  <data name="RenewalGenericError" xml:space="preserve"><value>The renewal request could not be processed.</value></data>
+  <data name="RenewalErrorForbidden" xml:space="preserve"><value>You are not allowed to decide this renewal request.</value></data>
+  <data name="RenewalErrorContractNotFound" xml:space="preserve"><value>The contract of this request was not found.</value></data>
+  <data name="RenewalErrorInvalidStatus" xml:space="preserve"><value>The contract is no longer active, so it cannot be renewed.</value></data>
+  <data name="RenewalErrorRequestNotFound" xml:space="preserve"><value>Renewal request not found.</value></data>
+  <data name="RenewalErrorAlreadyDecided" xml:space="preserve"><value>This request has already been decided.</value></data>
+  <data name="RenewalErrorRejectReasonRequired" xml:space="preserve"><value>Please enter the rejection reason.</value></data>
+  <data name="RenewalErrorReasonTooLong" xml:space="preserve"><value>The rejection reason cannot exceed 500 characters.</value></data>
+  <data name="RenewalErrorApprovalDenied" xml:space="preserve"><value>The owner currently blocks contract renewal operations.</value></data>
+  <data name="RenewalErrorRenewApplyFailed" xml:space="preserve"><value>The contract could not be renewed. Please review the contract and try again.</value></data>
+  <data name="RenewalErrorAlreadyRenewed" xml:space="preserve"><value>This contract has already been renewed, so the old request can no longer be approved.</value></data>
+  <data name="RenewalErrorDateOverlap" xml:space="preserve"><value>The room already has an active contract during the extended period.</value></data>
+  <data name="RenewalErrorEndDateInvalid" xml:space="preserve"><value>The new end date must be later than the current end date.</value></data>
+  <data name="ContractRoomPropertyLabel" xml:space="preserve"><value>Room / Property</value></data>
+  <data name="ContractFinanceLabel" xml:space="preserve"><value>Finances</value></data>
+  <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Status / Actions</value></data>
+  <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
+  <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
+<data name="ContractDetailDescription" xml:space="preserve"><value>View contract information, parties, terms and payment status.</value></data>
 </root>

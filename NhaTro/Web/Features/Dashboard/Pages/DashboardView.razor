@@ -9,14 +9,11 @@
 
 <PageTitle>@L["Title"]</PageTitle>
 <div class="dashboard-page">
-    <header class="page-header">
-        <div class="breadcrumb-title-stack">
-            <BreadcrumbNav Items="@Breadcrumbs" />
-            <h1>@L["Title"]</h1>
-            <p>@L["Subtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
-    </header>
+    <PageHeading Title="@L["Title"]" HelpText="@L["Subtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
+        </Actions>
+    </PageHeading>
     <div class="filters">
         <label>@L["Property"]
             <select value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
@@ -27,7 +24,7 @@
                 }
             </select>
         </label>
-        <label>@L["Period"]
+        <label>@L["PendingPeriod"]
             <select @bind="Filter.Period">
                 @foreach (var period in Enum.GetValues<DashboardPeriod>())
                 {
@@ -43,6 +40,8 @@
     <p class="updated">@L["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
     <KPICardGrid IsOwner="@IsOwner" Kpis="@Rooms" State="@RoomState" Retry="LoadRoomsAsync" RoomsHref="@RoomsHref" FilterDescription="@FilterDescription" />
     <p class="scope-note">@L["RoomScopeNote"]</p>
+    <p class="scope-note">@L["CurrentPeriodNote"]</p>
+    <a class="reports-link" href="@ReportsHref">@L["ViewReports"]</a>
     <div class="panel-grid">
         <DashboardPanel Title="@L["RoomStructure"]" State="@RoomState" DeniedText="@L["RoomsDenied"]" Retry="LoadRoomsAsync">
             @if (Rooms is not null) { <RoomStructureChart Kpis="@Rooms" /> }
@@ -71,7 +70,7 @@
     private DateTime? LastRefreshed;
     private bool Busy => Refreshing || PropertyState == DashboardLoadState.Loading || RoomState == DashboardLoadState.Loading || TenantState == DashboardLoadState.Loading;
     private string RoomsHref => Filter.PropertyId is { } id ? $"/rooms?propertyId={id}" : "/rooms";
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Title"])];
+    private string ReportsHref => Filter.PropertyId is { } id ? $"/reports?propertyId={id}" : "/reports";
     private string FilterDescription
     {
         get

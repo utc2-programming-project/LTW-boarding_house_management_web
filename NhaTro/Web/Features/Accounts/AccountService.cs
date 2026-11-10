@@ -1,3 +1,5 @@
+// Triển khai IAccountService trên UserManager + EF Core: tạo, duyệt, khóa/mở khóa tài khoản,
+// đổi vai trò và lọc danh sách theo phạm vi dữ liệu. Mọi kiểm quyền nằm ở server.
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
@@ -23,7 +25,8 @@ public sealed class AccountService(
 {
     public async Task<PagedResult<AccountListItemDto>> ListAsync(
         string? keyword, string? roleFilter, int page, int pageSize,
-        string callerUserId, string callerRole, CancellationToken ct = default)
+        string callerUserId, string callerRole, string? statusFilter = null,
+        CancellationToken ct = default)
     {
         if (!AccountPermissionRules.CanManageAccounts(callerRole))
         {
@@ -37,6 +40,7 @@ public sealed class AccountService(
             from user in db.Users.AsNoTracking()
             join userRole in db.UserRoles on user.Id equals userRole.UserId
             join role in db.Roles on userRole.RoleId equals role.Id
+            where !user.IsDeleted
             select new { User = user, RoleName = role.Name! };
 
         // Pham vi phai ap truoc keyword/count de khong lo tong so tai khoan ngoai pham vi.
@@ -67,6 +71,24 @@ public sealed class AccountService(
                 (row.User.PhoneNumber != null && row.User.PhoneNumber.Contains(term)));
         }
 
+        // VHT-95: loc theo trang thai hien thi (Khoa uu tien cao nhat, roi Cho duyet, Hoat dong).
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            var permanentLockout = AccountStatusRules.PermanentLockout - TimeSpan.FromMinutes(1);
+            query = statusFilter switch
+            {
+                "locked" => query.Where(row =>
+                    row.User.LockoutEnd != null && row.User.LockoutEnd >= permanentLockout),
+                "pending" => query.Where(row =>
+                    (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.ApprovedAt == null),
+                "active" => query.Where(row =>
+                    (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.ApprovedAt != null),
+                _ => query,
+            };
+        }
+
         var total = await query.CountAsync(ct);
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
@@ -88,19 +110,94 @@ public sealed class AccountService(
             })
             .ToListAsync(ct);
 
+        var managerUserIds = rows
+            .Where(row => row.Role == Roles.QuanLy)
+            .Select(row => row.Id)
+            .ToList();
+
+        var assignmentRows = new List<ManagerAssignmentRow>();
+        if (managerUserIds.Count > 0)
+        {
+            assignmentRows = await (
+                    from assignment in db.PropertyManagers.AsNoTracking()
+                    join property in db.Properties.AsNoTracking() on assignment.PropertyId equals property.Id
+                    join owner in db.Users.AsNoTracking() on property.OwnerId equals owner.Id
+                    where assignment.RevokedAt == null && managerUserIds.Contains(assignment.ManagerUserId)
+                    orderby property.Name
+                    select new ManagerAssignmentRow(
+                        assignment.ManagerUserId,
+                        property.Id,
+                        property.Name,
+                        property.Address,
+                        owner.Id,
+                        owner.FullName,
+                        owner.Email))
+                .ToListAsync(ct);
+        }
+
+        var assignmentsByManager = assignmentRows
+            .GroupBy(row => row.ManagerUserId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        // VHT-24: tài khoản Chủ trọ — lấy các tòa nhà họ sở hữu để cột "Chủ trọ / Nhà trọ"
+        // có nghĩa (trước đây mọi vai trò khác Quản lý đều hiện "Chưa có dữ liệu").
+        var ownerUserIds = rows
+            .Where(row => row.Role == Roles.ChuTro)
+            .Select(row => row.Id)
+            .ToList();
+
+        var ownedRows = new List<OwnedPropertyRow>();
+        if (ownerUserIds.Count > 0)
+        {
+            ownedRows = await (
+                    from property in db.Properties.AsNoTracking()
+                    where ownerUserIds.Contains(property.OwnerId) && !property.IsDeleted
+                    orderby property.Name
+                    select new OwnedPropertyRow(
+                        property.OwnerId,
+                        property.Id,
+                        property.Name,
+                        property.Address))
+                .ToListAsync(ct);
+        }
+
+        var ownedByOwner = ownedRows
+            .GroupBy(row => row.OwnerUserId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
         var items = rows
-            .Select(row => new AccountListItemDto
+            .Select(row =>
             {
-                Id = row.Id,
-                UserName = row.UserName ?? string.Empty,
-                Email = row.Email,
-                PhoneNumber = row.PhoneNumber,
-                FullName = row.FullName,
-                Role = row.Role,
-                IsLocked = AccountStatusRules.IsPermanentlyLocked(row.LockoutEnd),
-                LockoutEnd = row.LockoutEnd,
-                Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd),
-                ApprovedAt = row.ApprovedAt,
+                assignmentsByManager.TryGetValue(row.Id, out var assigned);
+                var owner = assigned?.FirstOrDefault();
+                ownedByOwner.TryGetValue(row.Id, out var owned);
+
+                return new AccountListItemDto
+                {
+                    Id = row.Id,
+                    UserName = row.UserName ?? string.Empty,
+                    Email = row.Email,
+                    PhoneNumber = row.PhoneNumber,
+                    FullName = row.FullName,
+                    Role = row.Role,
+                    IsLocked = AccountStatusRules.IsPermanentlyLocked(row.LockoutEnd),
+                    LockoutEnd = row.LockoutEnd,
+                    Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd),
+                    ApprovedAt = row.ApprovedAt,
+                    OwnerUserId = owner?.OwnerUserId,
+                    OwnerName = owner?.OwnerName,
+                    OwnerEmail = owner?.OwnerEmail,
+                    AssignedProperties = assigned is null
+                        ? new List<AccountAssignedProperty>()
+                        : assigned
+                            .Select(item => new AccountAssignedProperty(item.PropertyId, item.PropertyName, item.PropertyAddress))
+                            .ToList(),
+                    OwnedProperties = owned is null
+                        ? new List<AccountAssignedProperty>()
+                        : owned
+                            .Select(item => new AccountAssignedProperty(item.PropertyId, item.PropertyName, item.PropertyAddress))
+                            .ToList(),
+                };
             })
             .ToList();
 
@@ -111,6 +208,63 @@ public sealed class AccountService(
             Page = page,
             PageSize = pageSize,
         };
+    }
+
+    /// <summary>Trang chủ Admin: đếm theo trạng thái và vài tài khoản chờ duyệt mới nhất.</summary>
+    public async Task<AccountSummaryDto> GetSummaryAsync(
+        string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin)
+        {
+            return AccountSummaryDto.Empty;
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var rows = await (
+                from user in db.Users.AsNoTracking()
+                join userRole in db.UserRoles on user.Id equals userRole.UserId
+                join role in db.Roles on userRole.RoleId equals role.Id
+                select new
+                {
+                    user.Id,
+                    user.UserName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.FullName,
+                    user.LockoutEnd,
+                    user.ApprovedAt,
+                    Role = role.Name!,
+                })
+            .ToListAsync(ct);
+
+        var statuses = rows
+            .Select(row => new { Row = row, Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd) })
+            .ToList();
+
+        var pending = statuses
+            .Where(item => item.Status == AccountStatus.Pending)
+            .OrderBy(item => item.Row.UserName)
+            .Take(5)
+            .Select(item => new AccountListItemDto
+            {
+                Id = item.Row.Id,
+                UserName = item.Row.UserName ?? string.Empty,
+                Email = item.Row.Email,
+                PhoneNumber = item.Row.PhoneNumber,
+                FullName = item.Row.FullName,
+                Role = item.Row.Role,
+                IsLocked = AccountStatusRules.IsPermanentlyLocked(item.Row.LockoutEnd),
+                LockoutEnd = item.Row.LockoutEnd,
+                Status = item.Status,
+                ApprovedAt = item.Row.ApprovedAt,
+            })
+            .ToList();
+
+        return new AccountSummaryDto(
+            statuses.Count(item => item.Status == AccountStatus.Active),
+            statuses.Count(item => item.Status == AccountStatus.Pending),
+            statuses.Count(item => item.Status == AccountStatus.Locked),
+            pending);
     }
 
     public async Task<AccountResultOf<MyProfileDto>> GetMyProfileAsync(
@@ -270,6 +424,194 @@ public sealed class AccountService(
 
         logger.LogInformation("Tai khoan {Email} vai tro {Role} duoc tao boi {Caller}.", email, role, callerUserId);
         return AccountResult.Success();
+    }
+
+    public async Task<AccountResult> RegisterOwnerAsync(
+        RegisterOwnerRequest request, CancellationToken ct = default)
+    {
+        var email = request.Email?.Trim() ?? string.Empty;
+        var fullName = string.IsNullOrWhiteSpace(request.FullName)
+            ? string.Empty
+            : CollapseSpaces(request.FullName);
+        var phone = string.IsNullOrWhiteSpace(request.PhoneNumber)
+            ? null
+            : request.PhoneNumber.Trim();
+
+        if (email.Length == 0)
+        {
+            return AccountResult.Failure(AccountErrorCodes.InvalidEmail);
+        }
+
+        if (fullName.Length is 0 or > 200)
+        {
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed, "FullName");
+        }
+
+        if (phone is not null && !IsValidVietnamPhone(phone))
+        {
+            return AccountResult.Failure(AccountErrorCodes.InvalidPhone);
+        }
+
+        if (await users.FindByEmailAsync(email) is not null)
+        {
+            return AccountResult.Failure(AccountErrorCodes.DuplicateEmail);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = false,
+            FullName = fullName,
+            PhoneNumber = phone,
+            // Chờ Admin duyệt: AccountSignInManager chặn đăng nhập khi ApprovedAt null.
+            ApprovedAt = null,
+        };
+
+        var created = await users.CreateAsync(user, request.Password);
+        if (!created.Succeeded)
+        {
+            logger.LogWarning(
+                "Dang ky chu tro {Email} that bai: {Errors}",
+                email, string.Join(", ", created.Errors.Select(e => e.Code)));
+            return AccountResult.Failure(
+                AccountErrorCodes.OperationFailed, created.Errors.First().Code);
+        }
+
+        await users.AddToRoleAsync(user, Roles.ChuTro);
+        logger.LogInformation("Dang ky chu tro moi {Email}, cho Admin duyet.", email);
+        return AccountResult.Success();
+    }
+
+    public async Task<AccountResult> DeleteAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        var targetRole = (await users.GetRolesAsync(target)).FirstOrDefault() ?? string.Empty;
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var targetIsLastAdmin = targetRole == Roles.Admin
+            && await CountActiveAdminsAsync(db, ct) <= 1;
+
+        var reason = AccountPermissionRules.CheckDelete(
+            callerRole, callerUserId, targetUserId, targetRole, targetIsLastAdmin);
+        if (reason is not null)
+        {
+            return AccountResult.Failure(reason);
+        }
+
+        if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OutOfScope);
+        }
+
+        // Còn hồ sơ khách gắn tài khoản thì phải bỏ liên kết trước (giữ toàn vẹn dữ liệu P3).
+        if (await db.Tenants.AnyAsync(t => t.UserId == targetUserId, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.AccountInUse);
+        }
+
+        // Xoá mềm: nhả email cho người mới đăng ký, giữ hồ sơ để khôi phục.
+        var originalEmail = target.Email ?? target.UserName ?? string.Empty;
+        var placeholder = $"deleted-{Guid.NewGuid():N}@deleted.local";
+
+        target.OriginalEmail = originalEmail;
+        target.Email = placeholder;
+        target.UserName = placeholder;
+        target.IsDeleted = true;
+        target.DeletedAt = DateTime.UtcNow;
+        target.DeletedByUserId = callerUserId;
+
+        var deleted = await users.UpdateAsync(target);
+        if (!deleted.Succeeded)
+        {
+            logger.LogWarning(
+                "Xoa tai khoan {UserId} that bai: {Errors}",
+                targetUserId, string.Join(", ", deleted.Errors.Select(e => e.Code)));
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        logger.LogInformation("Da xoa mem tai khoan {UserId} boi {CallerId}.", targetUserId, callerUserId);
+        return AccountResult.Success();
+    }
+
+    public async Task<AccountResult> RestoreAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin && callerRole != Roles.ChuTro)
+        {
+            return AccountResult.Failure(AccountErrorCodes.Forbidden);
+        }
+
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null || !target.IsDeleted)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        var originalEmail = target.OriginalEmail;
+        if (string.IsNullOrWhiteSpace(originalEmail))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OutOfScope);
+        }
+
+        // Khôi phục mà email đã bị người khác dùng lại thì báo lỗi, không ghi đè.
+        if (await users.FindByEmailAsync(originalEmail) is not null)
+        {
+            return AccountResult.Failure(AccountErrorCodes.DuplicateEmail);
+        }
+
+        target.Email = originalEmail;
+        target.UserName = originalEmail;
+        target.IsDeleted = false;
+        target.DeletedAt = null;
+        target.DeletedByUserId = null;
+        target.OriginalEmail = null;
+
+        var restored = await users.UpdateAsync(target);
+        if (!restored.Succeeded)
+        {
+            logger.LogWarning(
+                "Khoi phuc tai khoan {UserId} that bai: {Errors}",
+                targetUserId, string.Join(", ", restored.Errors.Select(e => e.Code)));
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        logger.LogInformation("Da khoi phuc tai khoan {UserId} boi {CallerId}.", targetUserId, callerUserId);
+        return AccountResult.Success();
+    }
+
+    public async Task<IReadOnlyList<DeletedAccountDto>> ListDeletedAsync(
+        string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin)
+        {
+            return [];
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var rows = await db.Users.AsNoTracking()
+            .Where(user => user.IsDeleted)
+            .OrderByDescending(user => user.DeletedAt)
+            .Take(200)
+            .ToListAsync(ct);
+
+        return rows.Select(user => new DeletedAccountDto(
+            user.Id,
+            string.IsNullOrWhiteSpace(user.OriginalEmail) ? "(không rõ)" : user.OriginalEmail!,
+            user.FullName,
+            user.DeletedAt)).ToList();
     }
 
     public async Task<AccountResult> ApproveAsync(
@@ -635,7 +977,7 @@ public sealed class AccountService(
                 from userRole in db.UserRoles
                 join role in db.Roles on userRole.RoleId equals role.Id
                 join user in db.Users on userRole.UserId equals user.Id
-                where role.Name == Roles.Admin
+                where role.Name == Roles.Admin && !user.IsDeleted
                 select new { user.ApprovedAt, user.LockoutEnd })
             .ToListAsync(ct);
 
@@ -674,4 +1016,21 @@ public sealed class AccountService(
 
     private static string CollapseSpaces(string value) =>
         string.Join(' ', value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    /// <summary>Dòng phân công Quản lý → tòa nhà, kèm Chủ trọ sở hữu tòa.</summary>
+    private sealed record ManagerAssignmentRow(
+        string ManagerUserId,
+        int PropertyId,
+        string PropertyName,
+        string? PropertyAddress,
+        string OwnerUserId,
+        string? OwnerName,
+        string? OwnerEmail);
+
+    /// <summary>Tòa nhà thuộc sở hữu của một tài khoản Chủ trọ (dùng cho cột "Chủ trọ / Nhà trọ").</summary>
+    private sealed record OwnedPropertyRow(
+        string OwnerUserId,
+        int PropertyId,
+        string PropertyName,
+        string? PropertyAddress);
 }

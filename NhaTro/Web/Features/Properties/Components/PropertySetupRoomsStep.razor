@@ -1,0 +1,669 @@
+@inject RoomPageService PageService
+@inject IStringLocalizer<Shared> L
+@inject ILogger<PropertySetupRoomsStep> Logger
+
+<div class="setup-step">
+    <header class="setup-step-head">
+        <div>
+            <h2>@L["P2SetupRoomsTitle"]</h2>
+            <p>@L["P2SetupRoomsSubtitle"]</p>
+        </div>
+        <button class="btn btn-primary" type="button" disabled="@_loading" @onclick="OpenCreate">
+            <LucideIcon Name="plus" />
+            @L["P2SetupRoomAdd"]
+        </button>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="p2-alert error" role="alert">
+            <span>@_error</span>
+            <button class="btn btn-secondary" type="button" @onclick="LoadRoomsAsync">@L["Retry"]</button>
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <div class="setup-room-skeleton" role="status" aria-live="polite">
+            <span class="sr-only">@L["P2Loading"]</span>
+            @for (var i = 0; i < 3; i++)
+            {
+                <div class="setup-room-skeleton-row" aria-hidden="true">
+                    <span class="sk-box sk-check"></span>
+                    <span class="sk-line"></span>
+                    <span class="sk-line sk-short"></span>
+                </div>
+            }
+        </div>
+    }
+    else if (_rooms.Count == 0)
+    {
+        <div class="setup-empty" role="status">
+            <span class="setup-empty-icon" aria-hidden="true"><LucideIcon Name="house-plus" /></span>
+            <p>@L["P2SetupRoomsEmpty"]</p>
+            <p class="setup-empty-hint">@L["P2SetupRoomsEmptyHint"]</p>
+            <button class="btn btn-secondary" type="button" @onclick="OpenCreate">@L["P2SetupRoomAdd"]</button>
+        </div>
+    }
+    else
+    {
+        <div class="setup-room-toolbar">
+            <div class="setup-room-search">
+                <LucideIcon Name="search" />
+                <input id="setup-room-search" type="search" value="@_keyword" @oninput="SearchChanged"
+                       placeholder="@L["P2SetupRoomsSearchPlaceholder"]" aria-label="@L["P2SetupRoomsSearchPlaceholder"]" />
+            </div>
+            <div class="setup-room-chips" role="group" aria-label="@L["P2SetupRoomsFilterLabel"]">
+                <button class="setup-chip @(_statusFilter is null ? "active" : null)" type="button"
+                        aria-pressed="@(_statusFilter is null ? "true" : "false")" @onclick="() => SetStatus(null)">
+                    @L["P2SetupRoomsFilterAll"]
+                </button>
+                @foreach (var status in Statuses)
+                {
+                    <button class="setup-chip @(_statusFilter == status ? "active" : null)" type="button"
+                            aria-pressed="@(_statusFilter == status ? "true" : "false")" @onclick="() => SetStatus(status)">
+                        @StatusText(status)
+                    </button>
+                }
+            </div>
+            <label class="setup-room-sort">
+                <span>@L["P2SetupRoomsSortLabel"]</span>
+                <select value="@_sort" @onchange="SortChanged">
+                    <option value="floor-asc">@L["P2SetupRoomsSortFloorAsc"]</option>
+                    <option value="floor-desc">@L["P2SetupRoomsSortFloorDesc"]</option>
+                    <option value="code-asc">@L["P2SetupRoomsSortCodeAsc"]</option>
+                    <option value="price-asc">@L["P2SetupRoomsSortPriceAsc"]</option>
+                    <option value="price-desc">@L["P2SetupRoomsSortPriceDesc"]</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="setup-room-summary" role="status">
+            <span class="setup-room-count">@L["P2SetupRoomsCount", _rooms.Count]</span>
+            @if (IsFiltered)
+            {
+                <span class="setup-room-filtered">@L["P2SetupRoomsFiltered", _view.Count, _rooms.Count]</span>
+            }
+        </div>
+
+        @if (SelectedCount > 0)
+        {
+            <div class="setup-selection-bar" role="region" aria-live="polite" aria-label="@L["P2SetupRoomsSelectionLabel"]">
+                <span class="setup-selection-count">@L["P2SetupRoomsSelected", SelectedCount]</span>
+                <div class="setup-selection-actions">
+                    <button class="btn btn-secondary" type="button" @onclick="ClearSelection">@L["P2SetupRoomsClearSelection"]</button>
+                    <button class="btn btn-danger" type="button" @onclick="OpenBulkDelete">
+                        <LucideIcon Name="trash-2" />
+                        @L["P2SetupRoomsDeleteSelected", SelectedCount]
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (_view.Count == 0)
+        {
+            <div class="setup-empty filter" role="status">
+                <p>@L["P2SetupRoomsFilterEmpty"]</p>
+                <button class="btn btn-secondary" type="button" @onclick="ClearFilters">@L["P2SetupRoomsClearFilter"]</button>
+            </div>
+        }
+        else
+        {
+            <ul class="setup-room-list" aria-label="@L["P2SetupRoomsTitle"]">
+                <li class="setup-room-list-head">
+                    <span class="setup-room-check">
+                        <input type="checkbox" checked="@AllVisibleSelected" aria-checked="@SelectAllState"
+                               @onchange="ToggleSelectAll" aria-label="@L["P2SetupRoomsSelectAll"]" />
+                    </span>
+                    <span>@L["P2RoomCode"]</span>
+                    <span>@L["P2Floor"]</span>
+                    <span>@L["P2Area"]</span>
+                    <span class="is-end">@L["P2StandardPrice"]</span>
+                    <span>@L["P2Status"]</span>
+                    <span class="is-end">@L["P2Actions"]</span>
+                </li>
+                @foreach (var room in VisibleRooms)
+                {
+                    <li class="setup-room-item @(room.IsActive ? null : "is-inactive")" @key="room.Id">
+                        <span class="setup-room-check">
+                            <input type="checkbox" checked="@_selected.Contains(room.Id)"
+                                   aria-label="@L["P2SetupRoomsSelectOne", room.Code]"
+                                   @onchange="args => ToggleSelect(room.Id, args)" />
+                        </span>
+                        <span class="setup-room-code">@room.Code</span>
+                        <span class="setup-room-meta">
+                            <span class="setup-room-floor">@L["P2Floor"] @(room.Floor?.ToString(CultureInfo.InvariantCulture) ?? "—")</span>
+                            <span class="setup-room-area">@FormatArea(room)</span>
+                            <span class="setup-room-price">@MoneyFormatter.Format(room.StandardPrice)</span>
+                        </span>
+                        <span class="setup-room-status">
+                            <StatusBadge Text="@StatusText(room.Status)" Tone="@StatusTone(room.Status)" />
+                            @if (!room.IsActive)
+                            {
+                                <StatusBadge Text="@L["P2Inactive"]" Tone="BadgeTone.Neutral" />
+                            }
+                        </span>
+                        <span class="setup-room-actions">
+                            <button class="icon-button" type="button" title="@L["P2Edit"]" aria-label="@L["P2Edit"]"
+                                    @onclick="() => OpenEdit(room.Id)">
+                                <LucideIcon Name="edit" />
+                            </button>
+                            <button class="icon-button" type="button" title="@L["P2SetupRoomsClone"]" aria-label="@L["P2SetupRoomsClone"]"
+                                    @onclick="() => OpenClone(room.Id)">
+                                <LucideIcon Name="copy" />
+                            </button>
+                            <button class="icon-button danger-action" type="button" title="@L["P2SetupRoomsDelete"]" aria-label="@L["P2SetupRoomsDelete"]"
+                                    @onclick="() => RequestDelete(room)">
+                                <LucideIcon Name="trash-2" />
+                            </button>
+                        </span>
+                    </li>
+                }
+            </ul>
+
+            @if (HasMore)
+            {
+                <button class="btn btn-secondary setup-room-more" type="button" @onclick="LoadMore">
+                    @L["P2SetupRoomsLoadMore", Math.Min(PageSize, _view.Count - _visibleCount)]
+                </button>
+            }
+        }
+    }
+
+    <footer class="setup-step-actions">
+        <button class="btn btn-secondary setup-action-back" type="button" @onclick="() => OnBack.InvokeAsync()">
+            @L["P2SetupBack"]
+        </button>
+        <button class="btn btn-primary setup-action-next" type="button" @onclick="ContinueAsync">
+            @L["P2SetupRoomContinue"]
+        </button>
+    </footer>
+</div>
+
+@if (_formVisible)
+{
+    <RoomFormDialog @key="_formKey" Visible="true"
+                    RoomId="@(_formMode == FormMode.Edit ? _formRoomId : null)"
+                    CloneFromRoomId="@(_formMode == FormMode.Clone ? _formRoomId : null)"
+                    IsOwner="IsOwner"
+                    Properties="_formProperties"
+                    InitialPropertyId="PropertyId"
+                    LockedPropertyName="@PropertyName"
+                    ExistingRooms="RoomCodes"
+                    AllowSaveAndAdd="true"
+                    InitialDraft="@(_formMode == FormMode.Create ? PendingRoom : null)"
+                    DraftMode="@(_formMode == FormMode.Create)"
+                    OnDraftCaptured="HandleDraftCapturedAsync"
+                    OnClose="CloseForm" OnSaved="HandleSavedAsync" OnSavedDetail="HandleSavedDetailAsync" />
+}
+
+<FeatureDialog Visible="_deleteVisible" Title="@L["P2DeleteRoomTitle"]"
+               CloseLabel="@L["Close"]" Busy="_deleting" OnClose="CancelDelete" CssClass="setup-confirm-dialog">
+    <div class="setup-confirm">
+        <p>@L["P2DeleteRoomConfirm", _deleteCode]</p>
+        @if (!string.IsNullOrWhiteSpace(_deleteError))
+        {
+            <div class="p2-alert error" role="alert">@_deleteError</div>
+        }
+        <div class="setup-confirm-actions">
+            <button class="btn btn-secondary" type="button" disabled="@_deleting" autofocus @onclick="CancelDelete">@L["Cancel"]</button>
+            <button class="btn btn-danger" type="button" disabled="@_deleting" aria-busy="@(_deleting ? "true" : null)" @onclick="ConfirmDeleteAsync">
+                @if (_deleting)
+                {
+                    <span class="spinner" aria-hidden="true"></span>
+                    @L["P2Deleting"]
+                }
+                else
+                {
+                    @L["P2MoveToTrash"]
+                }
+            </button>
+        </div>
+    </div>
+</FeatureDialog>
+
+<FeatureDialog Visible="_bulkVisible" Title="@L["P2SetupRoomsBulkTitle"]"
+               CloseLabel="@L["Close"]" Busy="_bulkRunning" OnClose="CloseBulk" CssClass="setup-confirm-dialog">
+    <div class="setup-confirm">
+        @if (!_bulkFinished)
+        {
+            @if (_bulkRunning)
+            {
+                <p role="status">@L["P2SetupRoomsBulkRunning", _bulkDone, _bulkTotal]</p>
+                <div class="setup-bulk-track" role="progressbar" aria-valuemin="0" aria-valuemax="@_bulkTotal"
+                     aria-valuenow="@_bulkDone" aria-valuetext="@L["P2SetupRoomsBulkRunning", _bulkDone, _bulkTotal]">
+                    <span class="setup-bulk-fill" style="width:@BulkPercent%"></span>
+                </div>
+            }
+            else
+            {
+                <p>@L["P2SetupRoomsBulkBody", _bulkTotal]</p>
+                <div class="setup-confirm-actions">
+                    <button class="btn btn-secondary" type="button" autofocus @onclick="CloseBulk">@L["Cancel"]</button>
+                    <button class="btn btn-danger" type="button" @onclick="RunBulkDeleteAsync">
+                        <LucideIcon Name="trash-2" />
+                        @L["P2SetupRoomsDeleteSelected", _bulkTotal]
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="p2-alert success" role="status">
+                <LucideIcon Name="circle-check" />
+                <span>@L["P2SetupRoomsBulkDone", _bulkDeleted]</span>
+            </div>
+            @if (_bulkFailures.Count > 0)
+            {
+                <div class="p2-alert warning" role="status">
+                    <div>
+                        <strong>@L["P2SetupRoomsBulkPartial", _bulkDeleted, _bulkFailures.Count]</strong>
+                        <ul>
+                            @foreach (var failure in _bulkFailures)
+                            {
+                                <li>@L["P2SetupRoomsDeleteError", failure.Code, failure.Reason]</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+            <div class="setup-confirm-actions">
+                <button class="btn btn-primary" type="button" autofocus @onclick="CloseBulk">@L["Close"]</button>
+            </div>
+        }
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public int PropertyId { get; set; }
+    [Parameter, EditorRequired] public string PropertyName { get; set; } = string.Empty;
+    [Parameter] public bool IsOwner { get; set; }
+
+    /// <summary>Phòng đang nhập dở được khôi phục từ nháp local.</summary>
+    [Parameter] public RoomSave? PendingRoom { get; set; }
+
+    [Parameter] public EventCallback<RoomSave?> OnPendingRoomChanged { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+    [Parameter] public EventCallback OnBack { get; set; }
+
+    private const int PageSize = 20;
+    private static readonly RoomStatus[] Statuses =
+        [RoomStatus.Available, RoomStatus.Rented, RoomStatus.Maintenance];
+
+    private readonly List<RoomListItem> _rooms = [];
+    private readonly List<RoomListItem> _view = [];
+    private readonly HashSet<int> _selected = [];
+    private readonly List<(string Code, string Reason)> _bulkFailures = [];
+    private IReadOnlyList<PropertyListItem> _formProperties = [];
+    private int _formKey;
+    private FormMode _formMode = FormMode.Create;
+    private int? _formRoomId;
+    private bool _formVisible;
+    private bool _hasDraft;
+    private bool _listDirty;
+    private bool _loading;
+    private string? _error;
+    private string _keyword = string.Empty;
+    private RoomStatus? _statusFilter;
+    private string _sort = "floor-asc";
+    private int _visibleCount = PageSize;
+    private bool _deleteVisible;
+    private bool _deleting;
+    private int? _deleteRoomId;
+    private string _deleteCode = string.Empty;
+    private string? _deleteError;
+    private bool _bulkVisible;
+    private bool _bulkRunning;
+    private bool _bulkFinished;
+    private int _bulkTotal;
+    private int _bulkDone;
+    private int _bulkDeleted;
+
+    private enum FormMode
+    {
+        Create,
+        Edit,
+        Clone
+    }
+
+    private IReadOnlyList<string> RoomCodes => _rooms.Select(room => room.Code).ToList();
+    private IEnumerable<RoomListItem> VisibleRooms => _view.Take(_visibleCount);
+    private bool HasMore => _view.Count > _visibleCount;
+    private int SelectedCount => _selected.Count;
+    private bool IsFiltered => !string.IsNullOrWhiteSpace(_keyword) || _statusFilter is not null;
+
+    private bool AllVisibleSelected =>
+        VisibleRooms.Any() && VisibleRooms.All(room => _selected.Contains(room.Id));
+
+    private string SelectAllState => AllVisibleSelected
+        ? "true"
+        : VisibleRooms.Any(room => _selected.Contains(room.Id)) ? "mixed" : "false";
+
+    private int BulkPercent => _bulkTotal == 0 ? 0 : (int)Math.Round(_bulkDone * 100d / _bulkTotal);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _formProperties = [new PropertyListItem { Id = PropertyId, Name = PropertyName }];
+        await LoadRoomsAsync();
+    }
+
+    private async Task LoadRoomsAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rooms.Clear();
+            var page = 1;
+            while (true)
+            {
+                // RoomFilter giới hạn PageSize ≤ 100 nên duyệt từng trang thay vì xin 500.
+                var result = await PageService.ListAsync(new RoomFilter { PropertyId = PropertyId, Page = page, PageSize = 100 });
+                if (result.Items.Count == 0) break;
+
+                _rooms.AddRange(result.Items);
+                if (_rooms.Count >= result.TotalCount) break;
+                page++;
+            }
+
+            var ids = _rooms.Select(room => room.Id).ToHashSet();
+            _selected.RemoveWhere(id => !ids.Contains(id));
+            RefreshView();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _error = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _error = L["P2LoadFailed"];
+            Logger.LogError(ex, "PLAN-011: tải danh sách phòng của nhà trọ {PropertyId} thất bại", PropertyId);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void RefreshView()
+    {
+        IEnumerable<RoomListItem> query = _rooms;
+
+        var keyword = _keyword.Trim();
+        if (keyword.Length > 0)
+        {
+            query = query.Where(room =>
+                room.Code.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                || (room.Floor is int floor && floor.ToString(CultureInfo.InvariantCulture).Contains(keyword, StringComparison.Ordinal)));
+        }
+
+        if (_statusFilter is RoomStatus status)
+            query = query.Where(room => room.Status == status);
+
+        query = _sort switch
+        {
+            "floor-desc" => query
+                .OrderByDescending(room => room.Floor ?? int.MinValue)
+                .ThenBy(room => room.Code, StringComparer.OrdinalIgnoreCase),
+            "code-asc" => query.OrderBy(room => room.Code, StringComparer.OrdinalIgnoreCase),
+            "price-asc" => query
+                .OrderBy(room => room.StandardPrice)
+                .ThenBy(room => room.Code, StringComparer.OrdinalIgnoreCase),
+            "price-desc" => query
+                .OrderByDescending(room => room.StandardPrice)
+                .ThenBy(room => room.Code, StringComparer.OrdinalIgnoreCase),
+            _ => query
+                .OrderBy(room => room.Floor ?? int.MinValue)
+                .ThenBy(room => room.Code, StringComparer.OrdinalIgnoreCase)
+        };
+
+        _view.Clear();
+        _view.AddRange(query);
+    }
+
+    private void SearchChanged(ChangeEventArgs args)
+    {
+        _keyword = args.Value?.ToString() ?? string.Empty;
+        _visibleCount = PageSize;
+        RefreshView();
+    }
+
+    private void SetStatus(RoomStatus? status)
+    {
+        _statusFilter = status;
+        _visibleCount = PageSize;
+        RefreshView();
+    }
+
+    private void SortChanged(ChangeEventArgs args)
+    {
+        _sort = args.Value?.ToString() ?? "floor-asc";
+        _visibleCount = PageSize;
+        RefreshView();
+    }
+
+    private void ClearFilters()
+    {
+        _keyword = string.Empty;
+        _statusFilter = null;
+        _visibleCount = PageSize;
+        RefreshView();
+    }
+
+    private void LoadMore() => _visibleCount += PageSize;
+
+    private void ToggleSelect(int roomId, ChangeEventArgs args)
+    {
+        if (args.Value is true) _selected.Add(roomId);
+        else _selected.Remove(roomId);
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs args)
+    {
+        var select = args.Value is true;
+        foreach (var room in VisibleRooms)
+        {
+            if (select) _selected.Add(room.Id);
+            else _selected.Remove(room.Id);
+        }
+    }
+
+    private void ClearSelection() => _selected.Clear();
+
+    private void OpenCreate()
+    {
+        if (!IsOwner) return;
+        _formMode = FormMode.Create;
+        _formRoomId = null;
+        _hasDraft = false;
+        OpenForm();
+    }
+
+    private void OpenEdit(int id)
+    {
+        if (!IsOwner) return;
+        _formMode = FormMode.Edit;
+        _formRoomId = id;
+        OpenForm();
+    }
+
+    private void OpenClone(int id)
+    {
+        if (!IsOwner) return;
+        _formMode = FormMode.Clone;
+        _formRoomId = id;
+        OpenForm();
+    }
+
+    private void OpenForm()
+    {
+        _formKey++;
+        _formVisible = true;
+    }
+
+    private async Task CloseForm()
+    {
+        _formVisible = false;
+        if (!_hasDraft) await OnPendingRoomChanged.InvokeAsync(null);
+        if (_listDirty)
+        {
+            _listDirty = false;
+            await LoadRoomsAsync();
+        }
+    }
+
+    private async Task HandleDraftCapturedAsync(RoomSave draft)
+    {
+        _hasDraft = true;
+        await OnPendingRoomChanged.InvokeAsync(draft);
+    }
+
+    private async Task HandleSavedDetailAsync(RoomDetail room)
+    {
+        _hasDraft = false;
+        _listDirty = true;
+        await OnPendingRoomChanged.InvokeAsync(null);
+    }
+
+    private async Task HandleSavedAsync()
+    {
+        _formVisible = false;
+        _hasDraft = false;
+        _listDirty = false;
+        await OnPendingRoomChanged.InvokeAsync(null);
+        await LoadRoomsAsync();
+    }
+
+    private void RequestDelete(RoomListItem room)
+    {
+        if (!IsOwner) return;
+        _deleteRoomId = room.Id;
+        _deleteCode = room.Code;
+        _deleteError = null;
+        _deleteVisible = true;
+    }
+
+    private void CancelDelete() => _deleteVisible = false;
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_deleteRoomId is not int id || _deleting) return;
+
+        _deleting = true;
+        _deleteError = null;
+        try
+        {
+            var result = await PageService.DeleteAsync(id);
+            if (result.Succeeded)
+            {
+                _selected.Remove(id);
+                _deleteVisible = false;
+                await LoadRoomsAsync();
+                return;
+            }
+
+            _deleteError = MapDeleteError(result.ErrorCode);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _deleteError = L["P2Forbidden"];
+        }
+        catch (Exception ex)
+        {
+            _deleteError = L["P2SaveFailed"];
+            Logger.LogError(ex, "PLAN-011: xóa phòng {RoomId} trong wizard thất bại", id);
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private void OpenBulkDelete()
+    {
+        if (SelectedCount == 0) return;
+        _bulkTotal = SelectedCount;
+        _bulkDone = 0;
+        _bulkDeleted = 0;
+        _bulkFinished = false;
+        _bulkFailures.Clear();
+        _bulkVisible = true;
+    }
+
+    private void CloseBulk()
+    {
+        if (_bulkRunning) return;
+        _bulkVisible = false;
+    }
+
+    private async Task RunBulkDeleteAsync()
+    {
+        if (_bulkRunning) return;
+
+        _bulkRunning = true;
+        _bulkTotal = _selected.Count;
+        var targets = _rooms.Where(room => _selected.Contains(room.Id)).ToList();
+
+        foreach (var room in targets)
+        {
+            try
+            {
+                var result = await PageService.DeleteAsync(room.Id);
+                if (result.Succeeded)
+                {
+                    _bulkDeleted++;
+                    _selected.Remove(room.Id);
+                }
+                else
+                {
+                    _bulkFailures.Add((room.Code, MapDeleteError(result.ErrorCode)));
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _bulkFailures.Add((room.Code, L["P2Forbidden"]));
+            }
+            catch (Exception ex)
+            {
+                _bulkFailures.Add((room.Code, L["P2SaveFailed"]));
+                Logger.LogError(ex, "PLAN-011: xóa phòng {RoomId} hàng loạt thất bại", room.Id);
+            }
+
+            _bulkDone++;
+            StateHasChanged();
+        }
+
+        _bulkRunning = false;
+        _bulkFinished = true;
+        await LoadRoomsAsync();
+    }
+
+    private string MapDeleteError(string? code) => code switch
+    {
+        RoomErrorCodes.RoomInUse => L["P2RoomInUse"],
+        RoomErrorCodes.Forbidden => L["P2Forbidden"],
+        RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
+        _ => L["P2SaveFailed"]
+    };
+
+    private Task ContinueAsync() => OnContinue.InvokeAsync();
+
+    private static string FormatArea(RoomListItem room) =>
+        room.AreaM2 is decimal area ? $"{area.ToString("0.##", CultureInfo.CurrentCulture)} m²" : "—";
+
+    private string StatusText(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => L["P2StatusAvailable"],
+        RoomStatus.Rented => L["P2StatusRented"],
+        RoomStatus.Maintenance => L["P2StatusMaintenance"],
+        _ => L["P2StatusUnknown"]
+    };
+
+    private static BadgeTone StatusTone(RoomStatus status) => status switch
+    {
+        RoomStatus.Available => BadgeTone.Success,
+        RoomStatus.Rented => BadgeTone.Info,
+        RoomStatus.Maintenance => BadgeTone.Warning,
+        _ => BadgeTone.Neutral
+    };
+}

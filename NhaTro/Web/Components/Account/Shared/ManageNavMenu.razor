@@ -4,32 +4,18 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IStringLocalizer<Shared> L
 
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">@L["ProfileTitle"]</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/Email">@L["EmailLabel"]</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/ChangePassword">@L["PasswordLabel"]</NavLink>
-    </li>
+<nav class="account-nav" aria-label="@L["ManageAccountTitle"]">
+    <NavLink href="Account/Manage" Match="NavLinkMatch.All">@L["ProfileTitle"]</NavLink>
+    <NavLink href="Account/Manage/Email">@L["EmailLabel"]</NavLink>
+    <NavLink href="Account/Manage/ChangePassword">@L["PasswordLabel"]</NavLink>
     @if (hasExternalLogins)
     {
-        <li class="nav-item">
-            <NavLink class="nav-link" href="Account/Manage/ExternalLogins">@L["ManageNavExternalLogins"]</NavLink>
-        </li>
+        <NavLink href="Account/Manage/ExternalLogins">@L["ManageNavExternalLogins"]</NavLink>
     }
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">@L["TwoFactorLoginTitle"]</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/Passkeys">@L["ManageNavPasskeys"]</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/PersonalData">@L["ManageNavPersonalData"]</NavLink>
-    </li>
-</ul>
+    <NavLink href="Account/Manage/TwoFactorAuthentication">@L["TwoFactorLoginTitle"]</NavLink>
+    <NavLink href="Account/Manage/Passkeys">@L["ManageNavPasskeys"]</NavLink>
+    <NavLink href="Account/Manage/PersonalData">@L["ManageNavPersonalData"]</NavLink>
+</nav>
 
 @code {
     private bool hasExternalLogins;

@@ -1,0 +1,33 @@
+@inject IStringLocalizer<HomeResource> L
+<section class="home-panel" aria-busy="@(State == HomeLoadState.Loading)">
+    <header>
+        <LucideIcon Name="@Icon" />
+        <h2>@Title</h2>
+        @if (Href is not null && State == HomeLoadState.Loaded)
+        {
+            <a class="panel-link" href="@Href">@L["ViewAll"]<LucideIcon Name="arrow-right" /></a>
+        }
+    </header>
+    @if (State == HomeLoadState.Loading)
+    {
+        <div class="skeleton" role="status" aria-label="@L["Loading"]"></div>
+    }
+    else if (State is HomeLoadState.Error or HomeLoadState.Denied)
+    {
+        <p class="feedback" role="status">@L[State == HomeLoadState.Denied ? "Denied" : "Error"]</p>
+        <button type="button" class="btn btn-secondary" @onclick="Retry">@L["Retry"]</button>
+    }
+    else
+    {
+        @ChildContent
+    }
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "file";
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public HomeLoadState State { get; set; } = HomeLoadState.Loaded;
+    [Parameter] public EventCallback Retry { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

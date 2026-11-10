@@ -37,9 +37,7 @@ LTW/
 │   │   │   ├── Routes.razor
 │   │   │   ├── _Imports.razor
 │   │   │   ├── Layout/                  # MainLayout, ReconnectModal
-│   │   │   ├── Pages/                   # Home: giới thiệu INIT; trang lỗi
-│   │   │   │   ├── Home.razor
-│   │   │   │   └── Home.razor.css
+│   │   │   ├── Pages/                   # Trang lỗi, NotFound, ComponentsDemo
 │   │   │   ├── Shared/                  # Dialogs, feedback, forms, tables, LucideIcon
 │   │   │   └── Account/                 # Template Identity + HTTP auth
 │   │   ├── Data/
@@ -51,6 +49,11 @@ LTW/
 │   │   │   │   └── Tenants/
 │   │   │   └── Migrations/              # Identity, CoreSchema, snapshot
 │   │   ├── Features/
+│   │   │   ├── Home/
+│   │   │   │   ├── Pages/HomeView.razor       # "/" Trang chủ theo vai trò
+│   │   │   │   ├── Components/                # HomeKpiGrid, HomeActionList, HomeQuickActions, HomePanel
+│   │   │   │   ├── DTOs/HomeDtos.cs
+│   │   │   │   └── Services/HomePageService.cs  # ảnh chụp nhanh, chỉ gọi nguồn vai trò được xem
 │   │   │   ├── Properties/
 │   │   │   │   ├── Pages/PropertyList.razor
 │   │   │   │   ├── Components/PropertyFormDialog.razor, PropertyDetailsDialog.razor
@@ -100,7 +103,7 @@ LTW/
     └── archive/
 ```
 
-**Current status:** The database core and Identity scaffold exist. The home page is a simple bilingual introduction, not a dashboard. P2 now has bilingual SQL-backed property and room list/detail/forms in `Features/Properties/` and `Features/Rooms/` (VHT-16 UI + VHT-7 services), with role-gated actions and server-side filtering/pagination. Manager property assignment (VHT-24), live approval switches/queue (VHT-94/VHT-96), and active-contract deletion checks (VHT-98) remain on their service extension points. `docs/UI/UI_Quan_ly_phong` remains the design prototype; its sample rows are not loaded by the application.
+**Current status:** The database core and Identity scaffold exist. `/` is a role-aware home page built from real services (room/tenant KPIs, invoices, approvals, incidents, contracts, admin account summary); `/dashboard` remains the deeper analytics screen for Owner and Manager. P2 now has bilingual SQL-backed property and room list/detail/forms in `Features/Properties/` and `Features/Rooms/` (VHT-16 UI + VHT-7 services), with role-gated actions and server-side filtering/pagination. Manager property assignment (VHT-24), live approval switches/queue (VHT-94/VHT-96), and active-contract deletion checks (VHT-98) remain on their service extension points. `docs/UI/UI_Quan_ly_phong` remains the design prototype; its sample rows are not loaded by the application.
 
 **VHT-94 (đã triển khai - nền công tắc Quản lý):** `Features/Settings/` gồm `ManagerToggleCatalog` (21 mã SW-01…SW-16 + SW-15a…e), `Enums/`, `Entities/ManagerToggle`, `Services/ManagerToggleService` (đọc/ghi SQL + guard Chủ trọ), `Services/ManagerTogglePolicy` (mode → Allowed/RequiresApproval/Denied, cài thêm `IRoomChangePolicy` để P2 dùng lại), `DTOs/`; `Data/Configurations/Settings/ManagerToggleConfiguration.cs` + migration `AddManagerToggles` (seed 21 dòng, check constraint SW-15). Công tắc lưu SQL, **không** dùng `IOptions`/appsettings. UI cấu hình vẫn là NEW-04 (VHT-97), hàng đợi duyệt là VHT-96.
 
@@ -222,7 +225,7 @@ Common → .NET; không phụ thuộc ngược Feature hoặc UI
 ## 6. Hai ngôn ngữ / Localization
 
 - Hỗ trợ **`vi-VN` / `en-US`**, mặc định tiếng Việt. Folder, class, namespace và resource key bằng tiếng Anh.
-- INIT chỉ đổi nội dung giới thiệu tại `Home.razor`, chưa lưu lựa chọn qua trang/tải lại và chưa dịch Identity.
+- Trang chủ dùng marker `Web.Features.Home.HomeResource` với `Resources/Features/Home/HomeResource.vi-VN.resx` và `.en-US.resx`; hai tệp phải có cùng key.
 - Phú thiết lập `AddLocalization`, `RequestLocalization`, resource và selector chung; cookie culture được đặt qua HTTP endpoint để dùng cho lần tải trang/circuit mới. Không đổi global culture của mọi người dùng.
 - Shared resource marker tại `Common/Localization/SharedResource.cs`; dùng `IStringLocalizer<SharedResource>` với `ResourcesPath = "Resources"`.
 - Ví dụ đúng theo namespace marker: `Resources/Common/Localization/SharedResource.vi-VN.resx` và `SharedResource.en-US.resx`. Resource feature dùng marker/namespace riêng khi cần; hai ngôn ngữ phải có cùng key.

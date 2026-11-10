@@ -6,46 +6,6 @@
     color: var(--text-primary);
 }
 
-.breadcrumb-title-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.breadcrumb-title-stack > ::deep .breadcrumb {
-    margin-bottom: 0;
-}
-
-.leased-room-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 16px;
-}
-
-.leased-room-title-block {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.leased-room-title-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.leased-room-title-row h1 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 28px;
-    line-height: 36px;
-    font-weight: 700;
-    letter-spacing: -.02em;
-}
-
 .leased-room-status-badge {
     display: inline-flex;
     align-items: center;
@@ -92,7 +52,7 @@
     border: 1px solid var(--info-border);
     border-radius: 8px;
     background: var(--info-bg);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+    box-shadow: var(--shadow-card);
 }
 
 .leased-room-banner-copy,
@@ -143,7 +103,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--surface);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    box-shadow: var(--shadow-card);
 }
 
 .leased-room-bento-header {
@@ -230,7 +190,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--surface);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    box-shadow: var(--shadow-card);
 }
 
 .leased-room-panel-header {
@@ -449,12 +409,63 @@
     line-height: 18px;
 }
 
+.renew-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 20px 24px 0;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-subtle);
+}
+
+.renew-tab {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.renew-tab-active {
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
 .leased-room-dialog-body {
     display: grid;
     gap: 20px;
     padding: 24px;
     overflow-y: auto;
     min-height: 0;
+}
+
+/* Hai tab dùng chung một ô grid nên chiều cao hộp thoại chỉ do panel "Gửi yêu cầu"
+   quyết định: panel lịch sử tự đặt height:0 (không đóng góp vào cỡ ô) rồi
+   min-height:100% để chiếm đúng chiều cao panel kia đã định và cuộn trong đó. */
+.renew-panel {
+    grid-area: 1 / 1;
+    min-width: 0;
+}
+
+.renew-panel-history {
+    height: 0;
+    min-height: 100%;
+    overflow-y: auto;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+}
+
+/* Vẫn giữ panel gửi yêu cầu trong dòng (để nó làm khung định chiều cao) nhưng ẩn khỏi
+   màn hình và khỏi thứ tự tab khi người dùng đang xem tab lịch sử. */
+.renew-panel-hidden {
+    visibility: hidden;
 }
 
 .renew-unavailable-notice {
@@ -510,7 +521,7 @@
 .leased-room-dialog-input:focus,
 .leased-room-dialog-note:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--focus-ring-soft, rgba(79, 70, 229, .2));
+    box-shadow: 0 0 0 2px var(--focus-ring-soft);
 }
 
 .leased-room-dialog-input:disabled,
@@ -628,16 +639,6 @@
         gap: 20px;
     }
 
-    .leased-room-header {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
-    }
-
-    .leased-room-title-row h1 {
-        font-size: 24px;
-        line-height: 32px;
-    }
-
     .leased-room-actions,
     .leased-room-actions > * {
         width: 100%;
@@ -669,6 +670,10 @@
     .leased-room-dialog-header,
     .leased-room-dialog-body {
         padding: 16px;
+    }
+
+    .renew-tabs {
+        margin: 16px 16px 0;
     }
 
     .leased-room-dialog-actions {

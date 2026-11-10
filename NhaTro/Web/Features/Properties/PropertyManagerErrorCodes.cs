@@ -9,6 +9,7 @@ public static class PropertyManagerErrorCodes
     public const string InvalidManagerRole = nameof(InvalidManagerRole);
     public const string AlreadyAssigned = nameof(AlreadyAssigned);
     public const string NotAssigned = nameof(NotAssigned);
+    public const string ManagerOwnedByAnotherOwner = nameof(ManagerOwnedByAnotherOwner);
     public const string OperationFailed = nameof(OperationFailed);
 }
 
@@ -21,5 +22,6 @@ public static class PropertyManagerErrorMessages
     public const string InvalidManagerRole = "Tài khoản được chọn không phải Quản lý";
     public const string AlreadyAssigned = "Quản lý đã được phân công cho nhà trọ này";
     public const string NotAssigned = "Quản lý chưa được phân công cho nhà trọ này";
+    public const string ManagerOwnedByAnotherOwner = "Quản lý đã thuộc một chủ trọ khác";
     public const string OperationFailed = "Không thể thực hiện, vui lòng thử lại";
 }

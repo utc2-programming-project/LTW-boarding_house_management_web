@@ -1,17 +1,18 @@
 ﻿@page "/Account/Lockout"
+@layout Layout.AuthLayout
+
+@* Trang báo tài khoản đang bị khóa (quản trị khóa, không phải do gõ sai mật khẩu),
+   hướng dẫn liên hệ người quản lý tài khoản. Dùng khung AuthLayout. *@
 
 @inject IStringLocalizer<Shared> L
-
-@* VHT-95: trang bao tai khoan bi khoa (Admin khoa vinh vien hoac sai mat khau qua nhieu lan). *@
 
 <PageTitle>@L["LockoutTitle"] · @L["AppName"]</PageTitle>
 
 <section aria-labelledby="lockout-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["LockoutTitle"]) })" />
+    <PageHeading Title="@L["LockoutTitle"]" TitleId="lockout-title" HelpText="@L["LockoutHelp"]" InteractiveHelp="true" />
 
     <div class="preview-card empty-state">
         <LucideIcon Name="lock" />
-        <h2 id="lockout-title">@L["LockoutTitle"]</h2>
         <p role="alert">@L["LockoutMessage"]</p>
         <a class="btn btn-secondary" href="/login">@L["LoginButton"]</a>
     </div>

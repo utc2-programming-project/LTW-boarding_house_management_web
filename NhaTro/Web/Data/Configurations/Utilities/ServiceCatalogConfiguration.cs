@@ -14,6 +14,8 @@ public sealed class ServiceCatalogConfiguration : IEntityTypeConfiguration<Servi
         builder.Property(catalog => catalog.IsActive).HasDefaultValue(true);
         builder.Property(catalog => catalog.Description).HasMaxLength(500);
         builder.Property(catalog => catalog.CreatedAt).HasColumnType("datetime2");
+        builder.Property(catalog => catalog.DeletedBy).HasMaxLength(450);
+        builder.HasQueryFilter(catalog => !catalog.IsDeleted);
         builder.HasOne<Web.Features.Properties.Entities.Property>()
             .WithMany()
             .HasForeignKey(catalog => catalog.PropertyId)

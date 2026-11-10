@@ -1,39 +1,88 @@
+// Cây điều hướng duy nhất cho sidebar + breadcrumb + active.
+// Mỗi section = một nhóm trên sidebar (TitleKey null: không hiện tiêu đề).
+// Item có Href là đích; Children/Aliases là route con/URL cũ không hiện trên sidebar.
 namespace Web.Components.Layout;
 
 public static class AppNavigation
 {
-    // Chỉ gắn route khi module có trang thật và đã bảo vệ quyền.
-    public static readonly NavigationItem[] Items =
+    public static readonly NavigationSection[] Sections =
     [
-        new("Dashboard", "chart", "ChuTro,QuanLy", "/dashboard"),
-        // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
-        new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
-        new("Permissions", "shield", "Admin"),
-        new("Properties", "building", "ChuTro,QuanLy", "/properties"),
-        new("Rooms", "door", "ChuTro,QuanLy", "/rooms"),
-        new("Tenants", "users", "ChuTro,QuanLy", "/tenants"),
-        new("Contracts", "file", "ChuTro,QuanLy,KhachThue", "/contracts"),
-        new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services"),
-        new("Pricing", "wallet", "ChuTro,QuanLy,KhachThue", "/services/prices"),
-        new("MeterReadings", "zap", "ChuTro,QuanLy,KhachThue", "/meter-readings"),
-        new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
-        new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
-        new("Reports", "chart", "ChuTro"),
-        new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
-        new("Approvals", "check", "ChuTro", "/approvals"),
-        // VHT-99: thùng rác hồ sơ khách thuê.
-        new("Trash", "trash", "ChuTro", "/trash"),
-        // VHT-98: thùng rác phòng tách route để không trùng /trash.
-        new("RoomTrash", "trash", "ChuTro", "/rooms/trash"),
-        new("MyRequests", "file", "QuanLy", "/my-requests"),
-        new("MyDocuments", "file-text", "KhachThue", "/documents"),
-        new("MyRoom", "door", "KhachThue", "/tenant/my-room"),
-        new("MyInvoices", "receipt", "KhachThue", "/my-invoices"),
-        new("ReportIncident", "wrench", "KhachThue", "/incidents"),
-        // Hồ sơ khách thuê dùng service P3; các vai trò còn lại dùng hồ sơ tài khoản P1.
-        new("MyAccount", "user", "Admin,ChuTro,QuanLy", "/profile"),
-        new("MyTenantProfile", "user", "KhachThue", "/tenant/profile")
+        new(null, "Admin,ChuTro,QuanLy,KhachThue",
+        [
+            new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/"),
+            new("Dashboard", "chart", "ChuTro,QuanLy", "/dashboard"),
+        ]),
+        new("NavGroupProperty", "ChuTro,QuanLy,KhachThue",
+        [
+            new("Properties", "building", "ChuTro,QuanLy", "/properties",
+                Children: [new("P2PropertyTrashTitle", "", "ChuTro", "/properties/trash", ShowInSidebar: false)]),
+            new("Rooms", "door", "ChuTro,QuanLy", "/rooms",
+                Children: [new("P2TrashTitle", "", "ChuTro", "/rooms/trash", ShowInSidebar: false)]),
+            new("Tenants", "users", "ChuTro,QuanLy", "/tenants",
+                Children: [new("TenantTrashTitle", "", "ChuTro", "/tenants/trash", ShowInSidebar: false)],
+                Aliases: ["/trash"]),
+            new("Contracts", "file", "ChuTro,QuanLy,KhachThue", "/contracts",
+                Children:
+                [
+                    new("ContractCreateNav", "", "ChuTro,QuanLy", "/contracts/create", ShowInSidebar: false),
+                    new("ContractRenewalsNav", "", "ChuTro,QuanLy", "/contracts/renewals", ShowInSidebar: false),
+                ]),
+            new("MyRoom", "door", "KhachThue", "/my/room", Aliases: ["/tenant/my-room"]),
+        ]),
+        new("NavGroupFinance", "ChuTro,QuanLy,KhachThue",
+        [
+            new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services",
+                Children:
+                [
+                    new("PricingNav", "", "ChuTro,QuanLy,KhachThue", "/services/prices", ShowInSidebar: false),
+                    new("MeterReadingNavReadings", "", "ChuTro,QuanLy,KhachThue", "/services/readings",
+                        ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"]),
+                ]),
+            new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
+            new("PaymentRequests", "check", "ChuTro,QuanLy", "/payment-requests"),
+            new("MyInvoices", "receipt", "KhachThue", "/my/invoices", Aliases: ["/my-invoices"]),
+        ]),
+        new("NavGroupOperations", "ChuTro,QuanLy,KhachThue",
+        [
+            new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
+            new("ReportIncident", "wrench", "KhachThue", "/incidents"),
+            new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
+            new("Approvals", "check", "ChuTro", "/approvals"),
+            new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
+        ]),
+        new("NavGroupAdmin", "Admin,ChuTro,QuanLy",
+        [
+            // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
+            new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
+            new("ManagerSwitches", "settings", "ChuTro", "/admin/manager-switches", Aliases: ["/manager-switches"]),
+        ]),
+        new("NavGroupPersonal", "KhachThue",
+        [
+            new("MyDocuments", "file-text", "KhachThue", "/my/documents", Aliases: ["/documents"]),
+        ]),
     ];
+
+    /// <summary>Toàn bộ item (kể cả route con ẩn sidebar), dùng cho test/resolver.</summary>
+    public static readonly NavigationItem[] Items = Sections.SelectMany(section => Flatten(section.Items)).ToArray();
+
+    private static IEnumerable<NavigationItem> Flatten(IEnumerable<NavigationItem> items)
+    {
+        foreach (var item in items)
+        {
+            yield return item;
+            if (item.Children is null) continue;
+            foreach (var child in Flatten(item.Children)) yield return child;
+        }
+    }
 }
 
-public sealed record NavigationItem(string Key, string Icon, string Roles, string? Href = null);
+public sealed record NavigationItem(
+    string Key,
+    string Icon,
+    string Roles,
+    string Href,
+    bool ShowInSidebar = true,
+    string[]? Aliases = null,
+    NavigationItem[]? Children = null);
+
+public sealed record NavigationSection(string? TitleKey, string Roles, NavigationItem[] Items);

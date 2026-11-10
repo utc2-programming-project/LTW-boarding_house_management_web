@@ -6,16 +6,16 @@
 
 <PageTitle>@L["PageTitle"]</PageTitle>
 <div class="incidents-page">
-    <BreadcrumbNav Items="Breadcrumbs" />
-    <div class="page-heading">
-        <div><h1>@L[_tenant ? "TenantHeading" : "PageTitle"]</h1><p>@L[_tenant ? "TenantSubtitle" : "LiveStaffSubtitle"]</p></div>
-        @if (!_loading && _error is null)
-        {
-            <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentMode.Deny || _rooms.Count == 0)" @onclick="() => _creating = true">
-                <LucideIcon Name="plus" /> @L["CreateIncident"]
-            </button>
-        }
-    </div>
+    <PageHeading Title="@L[_tenant ? "TenantHeading" : "PageTitle"]" HelpText="@L[_tenant ? "TenantSubtitle" : "LiveStaffSubtitle"]">
+        <Actions>
+            @if (!_loading && _error is null)
+            {
+                <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentMode.Deny || _rooms.Count == 0)" @onclick="() => _creating = true">
+                    <LucideIcon Name="plus" /> @L["CreateIncident"]
+                </button>
+            }
+        </Actions>
+    </PageHeading>
     @if (_loading) { <LoadingOverlay Visible="true" Text="@L["Loading"]" /> }
     else if (_error is not null)
     {
@@ -43,7 +43,6 @@
     private bool _creating;
     private int? _detailId;
     private string? _error;
-    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Breadcrumbs => [new(L["Home"], "/"), new(L["PageTitle"])];
     protected override Task OnInitializedAsync() => InitializeAsync();
     private async Task InitializeAsync()
     {

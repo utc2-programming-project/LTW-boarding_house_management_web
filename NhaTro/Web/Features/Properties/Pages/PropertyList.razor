@@ -2,6 +2,8 @@
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
 @inject PropertyPageService PageService
+@inject PropertySetupDraftStore DraftStore
+@inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
@@ -10,18 +12,35 @@
 <PageTitle>@L["P2PropertiesTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <h1>@L["P2PropertiesTitle"]</h1>
-            <p>@L["P2PropertiesSubtitle"]</p>
-        </div>
-        @if (_isOwner)
-        {
-            <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                <LucideIcon Name="plus" />@L["P2AddProperty"]
-            </button>
-        }
-    </header>
+    <PageHeading Title="@L["P2PropertiesTitle"]" HelpText="@L["P2PropertiesSubtitle"]">
+        <Actions>
+            @if (_isOwner)
+            {
+                <div class="p2-page-actions">
+                    <a class="btn btn-secondary" href="/properties/trash">
+                        <LucideIcon Name="trash" />@L["P2PropertyTrashOpen"]
+                    </a>
+                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                        <LucideIcon Name="plus" />@L["P2AddProperty"]
+                    </button>
+                </div>
+            }
+        </Actions>
+    </PageHeading>
+
+    @if (_draft is not null)
+    {
+        <section class="p2-alert warning setup-draft-banner" role="status">
+            <div>
+                <strong>@L["P2SetupDraftBannerTitle"]</strong>
+                <p>@L["P2SetupDraftBannerBody", string.IsNullOrWhiteSpace(_draft.Name) ? L["P2SetupDraftUnnamed"].Value : _draft.Name]</p>
+            </div>
+            <div class="setup-draft-actions">
+                <button class="btn btn-primary" type="button" @onclick="ResumeDraft">@L["P2SetupDraftResume"]</button>
+                <button class="btn btn-secondary" type="button" @onclick="DiscardDraftAsync">@L["P2SetupDraftDiscard"]</button>
+            </div>
+        </section>
+    }
 
     @if (!string.IsNullOrWhiteSpace(_pageError))
     {
@@ -38,14 +57,35 @@
                     <LucideIcon Name="search" />
                     <span class="sr-only">@L["P2SearchProperties"]</span>
                     <input id="property-keyword" type="search" maxlength="200" autocomplete="off"
-                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput" />
+                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput"
+                           @bind:after="ApplyFiltersAsync" />
                 </label>
                 <label class="filter-select" for="property-active">
                     <span class="sr-only">@L["P2Activity"]</span>
-                    <select id="property-active" @bind="_activeFilter">
+                    <select id="property-active" @bind="_activeFilter" @bind:after="ApplyFiltersAsync">
                         <option value="">@L["P2AllActivity"]</option>
                         <option value="true">@L["P2Active"]</option>
                         <option value="false">@L["P2Inactive"]</option>
+                    </select>
+                </label>
+                <label class="filter-number" for="property-min-rooms">
+                    <span>@L["P2MinRooms"]</span>
+                    <input id="property-min-rooms" type="number" min="0" inputmode="numeric"
+                           placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount" />
+                </label>
+                <label class="filter-number" for="property-max-rooms">
+                    <span>@L["P2MaxRooms"]</span>
+                    <input id="property-max-rooms" type="number" min="0" inputmode="numeric"
+                           placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount" />
+                </label>
+                <label class="filter-select" for="property-sort">
+                    <span class="sr-only">@L["P2SortBy"]</span>
+                    <select id="property-sort" @bind="_sortFilter" @bind:after="ApplyFiltersAsync">
+                        <option value="name">@L["P2SortName"]</option>
+                        <option value="newest">@L["P2SortNewest"]</option>
+                        <option value="oldest">@L["P2SortOldest"]</option>
+                        <option value="roomCountDesc">@L["P2SortRoomCountDesc"]</option>
+                        <option value="roomCountAsc">@L["P2SortRoomCountAsc"]</option>
                     </select>
                 </label>
                 <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
@@ -84,25 +124,55 @@
 @if (_selectedProperty is not null)
 {
     <PropertyDetailsDialog Property="_selectedProperty" IsOwner="_isOwner"
-                           OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms" />
+                           OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms"
+                           OnContinueSetup="ContinueSetup" />
 }
+<ConfirmDialog Visible="_deleteVisible" Title="@L["P2DeletePropertyTitle"]"
+               Message="@L["P2DeletePropertyConfirm", _deleteProperty?.Name ?? string.Empty]"
+               ConfirmText="@L["P2MoveToTrash"]" CancelText="@L["Cancel"]" BusyText="@L["Deleting"]"
+               Danger="true" OnConfirm="DeletePropertyAsync" OnCancel="CancelDelete" />
 
 @code {
+    private bool _helpPinned;
+    private bool _helpActive;
+    private bool _helpDismissed;
+    private bool HelpVisible => !_helpDismissed && (_helpPinned || _helpActive);
+
+    private void ShowHelp() { _helpActive = true; _helpDismissed = false; }
+    private void LeaveHelp() => _helpActive = false;
+    private void CloseHelp() { _helpActive = false; _helpPinned = false; _helpDismissed = false; }
+    private void ToggleHelp() { _helpPinned = !_helpPinned; _helpDismissed = !_helpPinned; }
+    private void HoldHelp(PointerEventArgs args)
+    {
+        if (args.PointerType == "touch") ShowHelp();
+    }
+    private void HandleHelpKey(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape") { _helpPinned = false; _helpDismissed = true; }
+    }
+
     private DataTable<PropertyListItem>? _table;
     private IReadOnlyList<DataTableColumn<PropertyListItem>> _columns = [];
     private DataTableLabels _tableLabels = new();
     private PropertyListItem? _selectedProperty;
     private string _keyword = string.Empty;
     private string _activeFilter = string.Empty;
+    private string _minRoomCount = string.Empty;
+    private string _maxRoomCount = string.Empty;
+    private string _sortFilter = "name";
     private string? _pageError;
     private int _tableKey;
     private int _formKey;
     private int _pageSize = 20;
     private int? _formPropertyId;
     private bool _formVisible;
+    private bool _deleteVisible;
+    private PropertyListItem? _deleteProperty;
     private bool _ready;
     private bool _isOwner;
     private bool _hasActiveFilters;
+    private PropertySetupDraft? _draft;
+    private string? _userId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -143,6 +213,7 @@
             @if (_isOwner)
             {
                 <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
+                <button class="icon-button danger-action" type="button" aria-label="@L["P2DeleteProperty"]" title="@L["P2DeleteProperty"]" @onclick="() => RequestDelete(item)"><LucideIcon Name="trash" /></button>
             }
         </div>;
 
@@ -159,10 +230,15 @@
     private async Task<PagedResult<PropertyListItem>> LoadPropertiesAsync(DataTableRequest request)
     {
         var active = bool.TryParse(_activeFilter, out var parsed) ? parsed : (bool?)null;
+        var minRooms = int.TryParse(_minRoomCount, out var min) && min >= 0 ? min : (int?)null;
+        var maxRooms = int.TryParse(_maxRoomCount, out var max) && max >= 0 ? max : (int?)null;
         return await PageService.ListAsync(new PropertyFilter
         {
             Keyword = _keyword,
             IsActive = active,
+            MinRoomCount = minRooms,
+            MaxRoomCount = maxRooms,
+            SortBy = _sortFilter,
             Page = request.Page,
             PageSize = request.PageSize
         });
@@ -170,7 +246,11 @@
 
     private Task ApplyFiltersAsync()
     {
-        _hasActiveFilters = !string.IsNullOrWhiteSpace(_keyword) || !string.IsNullOrWhiteSpace(_activeFilter);
+        _hasActiveFilters = !string.IsNullOrWhiteSpace(_keyword)
+            || !string.IsNullOrWhiteSpace(_activeFilter)
+            || !string.IsNullOrWhiteSpace(_minRoomCount)
+            || !string.IsNullOrWhiteSpace(_maxRoomCount)
+            || _sortFilter != "name";
         _tableKey++;
         return Task.CompletedTask;
     }
@@ -179,6 +259,9 @@
     {
         _keyword = string.Empty;
         _activeFilter = string.Empty;
+        _minRoomCount = string.Empty;
+        _maxRoomCount = string.Empty;
+        _sortFilter = "name";
         _hasActiveFilters = false;
         _tableKey++;
         return Task.CompletedTask;
@@ -188,6 +271,9 @@
     {
         _keyword = string.Empty;
         _activeFilter = string.Empty;
+        _minRoomCount = string.Empty;
+        _maxRoomCount = string.Empty;
+        _sortFilter = "name";
         _hasActiveFilters = false;
         return Task.CompletedTask;
     }
@@ -202,18 +288,112 @@
         return Task.CompletedTask;
     }
 
-    private void OpenCreate() { _formPropertyId = null; _formKey++; _formVisible = true; }
+    private void OpenCreate() => Navigation.NavigateTo("/properties/new");
     private void OpenEdit(int id) { _formPropertyId = id; _formKey++; _formVisible = true; }
     private void OpenDetails(PropertyListItem item) => _selectedProperty = item;
     private void CloseForm() => _formVisible = false;
     private void CloseDetails() => _selectedProperty = null;
     private void EditSelected() { if (_selectedProperty is not null) OpenEdit(_selectedProperty.Id); _selectedProperty = null; }
     private void ViewRooms(int propertyId) => Navigation.NavigateTo($"/rooms?propertyId={propertyId}");
+    private void ContinueSetup(int propertyId) => Navigation.NavigateTo($"/properties/{propertyId}/setup");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_isOwner) return;
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            _userId = caller.UserId;
+            _draft = await DraftStore.LoadAsync(caller.UserId);
+            if (_draft is not null) StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "PLAN-010: không đọc được bản nháp thiết lập nhà trọ");
+        }
+    }
+
+    private void ResumeDraft()
+    {
+        if (_draft?.PropertyId is int id)
+        {
+            Navigation.NavigateTo($"/properties/{id}/setup");
+            return;
+        }
+
+        Navigation.NavigateTo("/properties/new");
+    }
+
+    private async Task DiscardDraftAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_userId))
+        {
+            await DraftStore.ClearAsync(_userId);
+        }
+
+        _draft = null;
+    }
 
     private async Task OnPropertySavedAsync()
     {
         _formVisible = false;
         Toasts.Success(L["P2SaveSucceeded"]);
         if (_table is not null) await _table.ReloadAsync();
+    }
+
+    private void RequestDelete(PropertyListItem item)
+    {
+        if (!_isOwner) return;
+        _deleteProperty = item;
+        _deleteVisible = true;
+        _selectedProperty = null;
+    }
+
+    private void CancelDelete()
+    {
+        _deleteVisible = false;
+        _deleteProperty = null;
+    }
+
+    private async Task DeletePropertyAsync()
+    {
+        if (!_isOwner || _deleteProperty is null)
+        {
+            CancelDelete();
+            return;
+        }
+
+        try
+        {
+            var result = await PageService.DeleteAsync(_deleteProperty.Id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["P2PropertyDeleted"]);
+                CancelDelete();
+                if (_table is not null) await _table.ReloadAsync();
+                return;
+            }
+
+            Toasts.Error(result.ErrorCode switch
+            {
+                PropertyErrorCodes.PropertyHasRooms => L["P2PropertyHasRooms"],
+                PropertyErrorCodes.Forbidden => L["P2Forbidden"],
+                PropertyErrorCodes.PropertyNotFound => L["P2PropertyNotFound"],
+                _ => L["P2SaveFailed"]
+            });
+            CancelDelete();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["P2Forbidden"]);
+            CancelDelete();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 property delete failed");
+            Toasts.Error(L["P2SaveFailed"]);
+            CancelDelete();
+        }
     }
 }

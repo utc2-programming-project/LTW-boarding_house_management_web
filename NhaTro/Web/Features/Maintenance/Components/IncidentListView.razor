@@ -3,7 +3,7 @@
 
 <div class="incident-list" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
 <DataTable @ref="_table" TItem="IncidentItem" Columns="_columns" ItemsProvider="LoadAsync"
-           Labels="Labels" Caption="@L["ListCaption"]" PageSize="5">
+           Labels="Labels" Caption="@L["ListCaption"]" PageSize="5" UseFilterToolbar="true">
     <EmptyActions>
         @if (CanCreate)
         {
@@ -39,23 +39,28 @@
     {
         _columns =
         [
-            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true, Filterable = true },
-            new() { Key = "Room", Title = L["PropertyRoom"], Value = RoomText, Sortable = true, Filterable = true },
-            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Filterable = true },
-            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Filterable = true },
-            new() { Key = "Status", Title = L["Status"], Filterable = true, Template = i => @<div>
+            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true, Filterable = true, FilterPlaceholder = L["SearchTitle"] },
+            new() { Key = "Room", Title = L["PropertyRoom"], Value = RoomText, Sortable = true, Filterable = true, FilterPlaceholder = L["SearchRoom"] },
+            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Filterable = true, FilterOptions = FilterOptions<IncidentCategory>("Category") },
+            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Filterable = true, FilterOptions = FilterOptions<IncidentUrgency>("Urgency") },
+            new() { Key = "Status", Title = L["Status"], Filterable = true, FilterOptions = FilterOptions<IncidentStatus>("Status"), Template = i => @<div>
                     <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
                 @if (i.Pending.Count > 0)
                 {
                     <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
                 }
             </div> },
-            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true },
+            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true, Filterable = true, FilterPlaceholder = L["SearchCreatedDate"] },
             new() { Key = "Actions", Title = L["Actions"], Template = i => @<button type="button" class="btn btn-secondary incident-detail-action"
                 @ref="_detailButtons[i.Id]"
                 aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button> }
         ];
     }
+
+    // Giá trị enum dùng để lọc chính xác, nhãn được dịch theo ngôn ngữ hiện tại.
+    private IReadOnlyList<DataTableFilterOption> FilterOptions<TEnum>(string prefix) where TEnum : struct, Enum =>
+        [new("", L["AllFilterValues"]), .. Enum.GetValues<TEnum>().Select(value =>
+            new DataTableFilterOption(value.ToString(), L[$"{prefix}{value}"]))];
 
     private static string Text(IncidentItem item, string text) => text;
 
@@ -88,13 +93,17 @@
         IEnumerable<IncidentItem> items = scoped;
         foreach (var filter in request.Filters)
         {
-            items = items.Where(i => (filter.Key switch
+            items = filter.Key switch
             {
-                "Title" => Text(i, i.Title), "Room" => RoomText(i),
-                "Category" => L[$"Category{i.Category}"].Value, "Urgency" => L[$"Urgency{i.Urgency}"].Value,
-                "Status" => L[$"Status{i.Status}"].Value,
-                _ => ""
-            }).Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase));
+                "Title" => items.Where(i => i.Title.Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
+                "Room" => items.Where(i => RoomText(i).Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
+                "Category" => items.Where(i => i.Category.ToString() == filter.Value),
+                "Urgency" => items.Where(i => i.Urgency.ToString() == filter.Value),
+                "Status" => items.Where(i => i.Status.ToString() == filter.Value),
+                "Created" => items.Where(i => DateFormatter.FormatDateTime(i.CreatedAtUtc)
+                    .Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
+                _ => items
+            };
         }
         var ordered = request.SortKey switch
         {

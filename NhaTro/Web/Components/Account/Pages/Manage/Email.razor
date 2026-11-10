@@ -5,6 +5,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Web.Components.Shared.Forms
 @using Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -14,44 +15,50 @@
 
 <PageTitle>@L["ManageEmailTitle"]</PageTitle>
 
-<h3>@L["ManageEmailTitle"]</h3>
+<h2 class="account-section">@L["ManageEmailTitle"]</h2>
+<StatusMessage Message="@message" />
 
-<StatusMessage Message="@message"/>
-<div class="row">
-    <div class="col-xl-6">
-        <form @onsubmit="OnSendEmailVerificationAsync" @formname="send-verification" id="send-verification-form" method="post">
-            <AntiforgeryToken />
-        </form>
-        <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
+<form @onsubmit="OnSendEmailVerificationAsync" @formname="send-verification" id="send-verification-form" method="post">
+    <AntiforgeryToken />
+</form>
+
+<EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="account-form">
+        <div class="account-field">
+            <span class="account-field-label">@L["EmailLabel"]</span>
+            <p class="account-readonly" id="email">@email</p>
             @if (isEmailConfirmed)
             {
-                <div class="form-floating mb-3 input-group">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="@L["EmailPlaceholder"]" disabled />
-                    <div class="input-group-append">
-                        <span class="h-100 input-group-text text-success font-weight-bold">✓</span>
-                    </div>
-                    <label for="email" class="form-label">@L["EmailLabel"]</label>
-                </div>
+                <span class="account-status">
+                    <LucideIcon Name="check" />
+                    @L["EmailConfirmedLabel"]
+                </span>
             }
             else
             {
-                <div class="form-floating mb-3">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="@L["EmailPlaceholder"]" disabled />
-                    <label for="email" class="form-label">@L["EmailLabel"]</label>
-                    <button type="submit" class="btn btn-link" form="send-verification-form">@L["SendVerificationEmailAction"]</button>
+                <div class="account-actions">
+                    <button type="submit" class="btn btn-secondary" form="send-verification-form">
+                        @L["SendVerificationEmailAction"]
+                    </button>
                 </div>
             }
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email" aria-required="true" placeholder="@L["NewEmailPlaceholder"]" />
-                <label for="Input.NewEmail" class="form-label">@L["NewEmailLabel"]</label>
-                <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">@L["ChangeEmailAction"]</button>
-        </EditForm>
+        </div>
+
+        <FormField TValue="string" Id="Input.NewEmail" Label="@L["NewEmailLabel"]" Required="true"
+                   For="() => Input.NewEmail">
+            <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" autocomplete="email"
+                       aria-required="true" aria-describedby="Input.NewEmail-error"
+                       placeholder="@L["NewEmailPlaceholder"]" />
+        </FormField>
+
+        <div class="account-actions">
+            <button type="submit" class="btn btn-primary">@L["ChangeEmailAction"]</button>
+        </div>
     </div>
-</div>
+</EditForm>
 
 @code {
     private string? message;

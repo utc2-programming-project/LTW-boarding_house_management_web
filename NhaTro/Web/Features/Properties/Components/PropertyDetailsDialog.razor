@@ -1,3 +1,4 @@
+@using Web.Features.Properties
 @inject IStringLocalizer<Shared> L
 @inject PropertyPageService PageService
 @inject ILogger<PropertyDetailsDialog> Logger
@@ -34,9 +35,62 @@
                 <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2ViewRooms"]</button>
                 @if (IsOwner)
                 {
+                    <button class="btn btn-secondary" type="button" @onclick="ContinueSetupAsync">@L["P2SetupContinue"]</button>
                     <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>
                 }
             </div>
+
+            @if (IsOwner)
+            {
+                <section class="p2-manager-panel" aria-label="@L["P2ManagerPanelTitle"]">
+                    <h3 class="p2-manager-heading">@L["P2ManagerPanelTitle"]</h3>
+                    <p class="p2-manager-hint">@L["P2ManagerPanelHint"]</p>
+
+                    @if (!string.IsNullOrWhiteSpace(_managerError))
+                    {
+                        <div class="p2-alert error" role="alert"><span>@_managerError</span></div>
+                    }
+
+                    @if (_assignments.Count == 0)
+                    {
+                        <p class="p2-manager-empty">@L["P2ManagerNoneAssigned"]</p>
+                    }
+                    else
+                    {
+                        <ul class="p2-manager-list">
+                            @foreach (var assignment in _assignments)
+                            {
+                                <li class="p2-manager-row">
+                                    <span class="p2-manager-email">@(string.IsNullOrWhiteSpace(assignment.ManagerEmail) ? assignment.ManagerUserId : assignment.ManagerEmail)</span>
+                                    <span class="p2-manager-since">@L["P2ManagerAssignedSince"]: @DateFormatter.FormatDateTime(assignment.AssignedAt)</span>
+                                    <button class="btn btn-secondary" type="button" disabled="@_managerBusy"
+                                            @onclick="() => RevokeManagerAsync(assignment.ManagerUserId)">
+                                        <LucideIcon Name="user-off" />@L["P2RevokeManager"]
+                                    </button>
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="p2-manager-assign">
+                        <label class="filter-select" for="p2-manager-candidate">
+                            <span class="sr-only">@L["P2ManagerCandidateLabel"]</span>
+                            <select id="p2-manager-candidate" @bind="_selectedManagerId" disabled="@_managerBusy">
+                                <option value="">@L["P2ManagerCandidatePlaceholder"]</option>
+                                @foreach (var candidate in _assignableCandidates)
+                                {
+                                    <option value="@candidate.UserId">@candidate.Display</option>
+                                }
+                            </select>
+                        </label>
+                        <button class="btn btn-primary" type="button"
+                                disabled="@(_managerBusy || string.IsNullOrWhiteSpace(_selectedManagerId))"
+                                @onclick="AssignManagerAsync">
+                            <LucideIcon Name="users" />@L["P2AssignManager"]
+                        </button>
+                    </div>
+                </section>
+            }
         }
     </section>
 </FeatureDialog>
@@ -48,14 +102,24 @@
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback<int> OnViewRooms { get; set; }
 
+    /// <summary>PLAN-013: mở lại wizard thiết lập (phòng/giá) cho nhà trọ đã tạo.</summary>
+    [Parameter] public EventCallback<int> OnContinueSetup { get; set; }
+
     private FeatureDialog? _featureDialog;
     private PropertyDetail? _detail;
     private string? _error;
     private bool _loading = true;
+    private IReadOnlyList<PropertyManagerItem> _assignments = [];
+    private IReadOnlyList<ManagerCandidateDto> _assignableCandidates = [];
+    private string _selectedManagerId = string.Empty;
+    private string? _managerError;
+    private bool _managerBusy;
     private string DialogTitle => _detail?.Name ?? Property.Name;
 
     protected override async Task OnInitializedAsync()
-        => await LoadAsync();
+    {
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -66,6 +130,11 @@
             var result = await PageService.GetAsync(Property.Id);
             if (result.Succeeded) _detail = result.Property;
             else _error = result.ErrorCode == PropertyErrorCodes.PropertyNotFound ? L["P2PropertyNotFound"] : L["P2LoadFailed"];
+
+            if (_detail is not null && IsOwner)
+            {
+                await LoadManagersAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -75,6 +144,82 @@
         finally { _loading = false; }
     }
 
+    private async Task LoadManagersAsync()
+    {
+        var assignments = await PageService.GetManagerAssignmentsAsync(Property.Id);
+        var candidates = await PageService.GetAssignableManagersAsync(Property.Id);
+
+        _assignments = assignments.Succeeded ? assignments.Items : [];
+        _assignableCandidates = candidates.Succeeded
+            ? candidates.Items.Where(candidate => !candidate.IsAssigned).ToList()
+            : [];
+
+        _managerError = !assignments.Succeeded
+            ? ManagerErrorText(assignments.ErrorCode)
+            : candidates.Succeeded ? null : ManagerErrorText(candidates.ErrorCode);
+    }
+
+    private async Task AssignManagerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedManagerId)) return;
+
+        _managerBusy = true;
+        _managerError = null;
+        try
+        {
+            var result = await PageService.AssignManagerAsync(Property.Id, _selectedManagerId);
+            if (!result.Succeeded)
+            {
+                _managerError = ManagerErrorText(result.ErrorCode);
+                return;
+            }
+
+            _selectedManagerId = string.Empty;
+            await LoadManagersAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 manager assignment failed");
+            _managerError = L["P2ManagerOperationFailed"];
+        }
+        finally { _managerBusy = false; }
+    }
+
+    private async Task RevokeManagerAsync(string managerUserId)
+    {
+        _managerBusy = true;
+        _managerError = null;
+        try
+        {
+            var result = await PageService.RevokeManagerAsync(Property.Id, managerUserId);
+            if (!result.Succeeded)
+            {
+                _managerError = ManagerErrorText(result.ErrorCode);
+                return;
+            }
+
+            await LoadManagersAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "P2 manager revocation failed");
+            _managerError = L["P2ManagerOperationFailed"];
+        }
+        finally { _managerBusy = false; }
+    }
+
+    private string ManagerErrorText(string? errorCode) => errorCode switch
+    {
+        PropertyManagerErrorCodes.Forbidden => L["P2Forbidden"].Value,
+        PropertyManagerErrorCodes.PropertyNotFound => L["P2PropertyNotFound"].Value,
+        PropertyManagerErrorCodes.ManagerNotFound => L["P2ManagerNotFound"].Value,
+        PropertyManagerErrorCodes.InvalidManagerRole => L["P2ManagerInvalidRole"].Value,
+        PropertyManagerErrorCodes.AlreadyAssigned => L["P2ManagerAlreadyAssigned"].Value,
+        PropertyManagerErrorCodes.NotAssigned => L["P2ManagerNotAssigned"].Value,
+        PropertyManagerErrorCodes.ManagerOwnedByAnotherOwner => L["P2ManagerOwnedByAnotherOwner"].Value,
+        _ => L["P2ManagerOperationFailed"].Value,
+    };
+
     private Task RetryLoadAsync() => LoadAsync();
 
     private Task EditAsync() => _featureDialog?.RequestCloseAsync(OnEdit) ?? OnEdit.InvokeAsync();
@@ -83,5 +228,11 @@
     {
         if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
         await OnViewRooms.InvokeAsync(Property.Id);
+    }
+
+    private async Task ContinueSetupAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnContinueSetup.InvokeAsync(Property.Id);
     }
 }

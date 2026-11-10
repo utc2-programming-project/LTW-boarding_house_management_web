@@ -1,0 +1,179 @@
+@page "/contracts/renewals"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractManage")]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Utils
+@using Web.Features.Contracts
+@using Web.Features.Contracts.Components
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Services
+@using Web.Components.Shared.Feedback
+@inject ContractRenewalPageService Renewals
+@inject IStringLocalizer<ContractResources> L
+@inject ToastService Toasts
+
+<PageTitle>@L["RenewalQueueTitle"]</PageTitle>
+
+<section class="renewal-queue-page" aria-labelledby="renewal-queue-title">
+    <PageHeading Title="@L["RenewalQueueTitle"]" TitleId="renewal-queue-title" HelpText="@L["RenewalQueueDescription"]">
+        <Actions>
+            <a class="btn btn-secondary" href="/contracts"><LucideIcon Name="arrow-left" />@L["ContractBackToList"]</a>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["RenewalQueueLoadErrorTitle"]" Description="@L["RenewalQueueLoadErrorDescription"]">
+            <button class="btn btn-secondary" @onclick="LoadAsync">@L["ContractRetry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["RenewalQueueEmptyTitle"]" Description="@L["RenewalQueueEmptyDescription"]" />
+    }
+    else
+    {
+        <div class="renewal-table-wrap">
+            <table class="renewal-table">
+                <thead><tr>
+                    <th>@L["ContractNumberLabel"]</th><th>@L["RenewalRequesterLabel"]</th><th>@L["ContractRoomLabel"]</th>
+                    <th>@L["ContractPropertyLabel"]</th><th class="numeric">@L["RenewalMonthsLabel"]</th>
+                    <th>@L["RenewalCurrentEndLabel"]</th><th>@L["RenewalProposedEndLabel"]</th><th>@L["RenewalSentAtLabel"]</th>
+                    <th>@L["ContractActionsLabel"]</th>
+                </tr></thead>
+                <tbody>
+                @foreach (var item in _items)
+                {
+                    <tr>
+                        <td><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
+                        <td>@item.RequesterName</td><td>@item.RoomCode</td><td>@item.PropertyName</td>
+                        <td class="numeric tabular-nums">@L["RenewalMonthsValue", item.RequestedMonths]</td>
+                        <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.CurrentEndDate))</td>
+                        <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.ProposedEndDate))</td>
+                        <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.RequestedAt))</td>
+                        <td class="renewal-row-actions">
+                            <button class="btn btn-primary" @onclick="() => OpenDecision(item)">@L["RenewalDecideAction"]</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<ContractRenewalDecisionModal Visible="_decisionOpen" IsBusy="_decisionBusy" Request="_decisionRequest"
+                               OnClose="CloseDecision" OnDecide="DecideAsync" />
+
+@code {
+    private IReadOnlyList<RenewalRequestItemDto> _items = [];
+    private bool _loading = true;
+    private bool _failed;
+    private bool _decisionOpen;
+    private bool _decisionBusy;
+    private RenewalRequestItemDto? _decisionRequest;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _failed = false;
+        try
+        {
+            var result = await Renewals.ListPendingAsync();
+            if (result.Succeeded)
+            {
+                _items = result.Items;
+            }
+            else
+            {
+                _failed = true;
+                Toasts.Error(ErrorText(result.ErrorCode));
+            }
+        }
+        catch
+        {
+            _failed = true;
+            Toasts.Error(L["RenewalQueueLoadErrorDescription"]);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenDecision(RenewalRequestItemDto item)
+    {
+        _decisionRequest = item;
+        _decisionOpen = true;
+    }
+
+    private Task CloseDecision()
+    {
+        if (!_decisionBusy)
+        {
+            _decisionOpen = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task DecideAsync(RenewalDecisionRequest decision)
+    {
+        if (_decisionRequest is null)
+        {
+            return;
+        }
+
+        _decisionBusy = true;
+        try
+        {
+            var result = await Renewals.DecideAsync(_decisionRequest.Id, decision);
+            if (!result.Succeeded)
+            {
+                Toasts.Error(ErrorText(result.ErrorCode, result.ErrorMessage));
+                return;
+            }
+
+            Toasts.Success(DecisionToastText(decision, result));
+            _decisionOpen = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error(ex is IContractServiceError error
+                ? ErrorText(error.ErrorCode, ex.Message)
+                : L["RenewalGenericError"].Value);
+        }
+        finally
+        {
+            _decisionBusy = false;
+        }
+    }
+
+    private string DecisionToastText(RenewalDecisionRequest decision, ContractRenewalResult result) =>
+        result.AwaitingOwnerApproval
+            ? L["RenewalPendingOwnerApproval"].Value
+            : L[decision.IsApproved ? "RenewalAcceptSuccess" : "RenewalRejectSuccess"].Value;
+
+    private string ErrorText(string? errorCode, string? detail = null)
+    {
+        if (errorCode is null)
+        {
+            return L["RenewalGenericError"].Value;
+        }
+
+        // RenewApplyFailed là mã gộp cho những lỗi P4 chưa tách riêng: nói nguyên nhân thật nếu P4 đã cho biết.
+        if (errorCode == ContractRenewalErrorCodes.RenewApplyFailed && !string.IsNullOrWhiteSpace(detail))
+        {
+            return detail;
+        }
+
+        return L[$"RenewalError{errorCode}"].Value;
+    }
+}

@@ -1,15 +1,15 @@
 .contract-page {
     max-width: 1240px;
-    margin: 0 auto;
+    margin: 0;
 }
 
 .contract-live-form-card {
     display: grid;
     gap: 24px;
     padding: 24px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--surface, #FFFFFF);
+    background: var(--surface);
     box-shadow: var(--shadow-card);
 }
 
@@ -22,7 +22,7 @@
 .contract-live-grid .contract-field { display: grid; gap: 8px; }
 .contract-live-grid label, .contract-tenant-picker legend { font-weight: 600; }
 .contract-live-grid .input { min-width: 0; min-height: 44px; }
-.contract-live-grid ::deep .input.is-invalid { border-color: #B91C1C; background: var(--error-bg, #FEF2F2); }
+.contract-live-grid ::deep .input.is-invalid { border-color: var(--error-text); background: var(--error-bg); }
 .contract-price-preview { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); }
 .contract-price-preview strong { text-align: right; }
 .contract-tenant-picker { min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
@@ -31,7 +31,7 @@
 .contract-tenant-options label { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; gap: 4px 8px; min-height: 44px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
 .contract-tenant-options input { grid-row: span 2; width: 18px; height: 18px; }
 .contract-tenant-options small { grid-column: 2; color: var(--text-secondary); }
-.contract-live-form .contract-validation-summary { align-items: flex-start; padding: 12px 16px; border: 1px solid var(--error-border, #FECACA); border-radius: 8px; background: var(--error-bg, #FEF2F2); color: var(--error-text, #B91C1C); }
+.contract-live-form .contract-validation-summary { align-items: flex-start; padding: 12px 16px; border: 1px solid var(--error-border); border-radius: 8px; background: var(--error-bg); color: var(--error-text); }
 .contract-live-form .contract-action-bar { display: flex; justify-content: flex-end; gap: 8px; margin: 0; }
 @media (max-width: 767px) {
     .contract-live-form-card { padding: 16px; }
@@ -48,10 +48,10 @@
     min-height: 36px;
     margin: 0 -8px 20px;
     padding: 6px 12px;
-    border: 1px solid #3730A3;
+    border: 1px solid var(--accent-border);
     border-radius: 8px;
-    background: #312E81;
-    color: #EEF2FF;
+    background: var(--accent-soft);
+    color: var(--accent-text);
     font-size: 12px;
     font-weight: 600;
 }
@@ -80,15 +80,15 @@
     flex: 0 0 16px;
     width: 16px;
     height: 16px;
-    color: #FCD34D;
+    color: var(--accent-text);
 }
 
 .demo-strip-badge {
     flex: none;
     padding: 2px 8px;
     border-radius: 5px;
-    background: #4338CA;
-    color: #E0E7FF;
+    background: var(--primary);
+    color: var(--on-primary);
     font-size: 11px;
 }
 
@@ -98,9 +98,9 @@
     gap: 14px;
     margin-bottom: 24px;
     padding: 16px 20px;
-    border: 1px solid var(--accent-border, #C7D2FE);
+    border: 1px solid var(--accent-border);
     border-radius: 16px;
-    background: var(--accent-soft, #EEF2FF);
+    background: var(--accent-soft);
     box-shadow: var(--shadow-card);
 }
 
@@ -111,8 +111,8 @@
     height: 40px;
     place-items: center;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--primary, #4F46E5) 12%, transparent);
-    color: var(--accent-text, #4338CA);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    color: var(--accent-text);
 }
 
 .demo-card-copy {
@@ -122,7 +122,7 @@
 
 .demo-card-copy h2 {
     margin: 0;
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
     font-size: 14px;
     line-height: 20px;
     font-weight: 700;
@@ -144,13 +144,13 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 4px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 12px;
     font-weight: 500;
 }
 
 .contract-eyebrow span:first-child {
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -162,10 +162,10 @@
     gap: 8px;
     min-height: 40px;
     padding: 0 14px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--surface-subtle, #F1F5F9);
-    color: var(--text-secondary, #475569);
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
     font-size: 12px;
     font-weight: 600;
 }
@@ -174,7 +174,7 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #10B981;
+    background: var(--success-text);
 }
 
 .contract-grid {
@@ -194,9 +194,9 @@
 .contract-card {
     min-width: 0;
     padding: 22px 24px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    background: var(--surface, #FFFFFF);
+    background: var(--surface);
     box-shadow: var(--shadow-card);
 }
 
@@ -206,7 +206,7 @@
     min-height: 42px;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
+    border-bottom: 1px solid var(--border);
 }
 
 .contract-section-title {
@@ -224,7 +224,7 @@
     flex: 0 0 24px;
     width: 24px;
     height: 24px;
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
 }
 
 .section-letter {
@@ -234,8 +234,8 @@
     height: 34px;
     place-items: center;
     border-radius: 11px;
-    background: var(--primary, #4F46E5);
-    color: var(--on-primary, #FFFFFF);
+    background: var(--primary);
+    color: var(--on-primary);
     font-size: 12px;
     font-weight: 700;
 }
@@ -246,15 +246,15 @@
     flex: none;
     padding: 4px 9px;
     border-radius: 8px;
-    background: var(--accent-soft, #EEF2FF);
-    color: var(--accent-text, #4338CA);
+    background: var(--accent-soft);
+    color: var(--accent-text);
     font-size: 11px;
     line-height: 18px;
     font-weight: 600;
 }
 
 .section-subtitle {
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 11px;
     line-height: 17px;
     text-align: right;
@@ -281,7 +281,7 @@
 .contract-field ::deep .label {
     min-height: 20px;
     margin-bottom: 0;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
     font-size: 13px;
     line-height: 20px;
     font-weight: 600;
@@ -298,13 +298,13 @@
 
 .contract-field ::deep .required {
     margin-left: 4px;
-    color: var(--danger, #B91C1C);
+    color: var(--danger);
 }
 
 .contract-field ::deep .error {
     min-height: 0;
     margin-top: 4px;
-    color: var(--error-text, #B91C1C);
+    color: var(--error-text);
     font-size: 12px;
     line-height: 18px;
 }
@@ -320,55 +320,55 @@
 .contract-label {
     display: block;
     margin-bottom: 8px;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
     font-size: 13px;
     line-height: 20px;
     font-weight: 600;
 }
 
 .required-mark {
-    color: var(--danger, #B91C1C);
+    color: var(--danger);
 }
 
 .contract-field ::deep .contract-control {
     min-width: 0;
-    border-color: var(--border, #CBD5E1);
-    background: var(--surface-subtle, #F8FAFC);
+    border-color: var(--border);
+    background: var(--surface-subtle);
     transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease), background-color 150ms var(--ease);
 }
 
 .contract-field ::deep .contract-control:hover:not(:disabled) {
-    border-color: var(--border-hover, #475569);
+    border-color: var(--border-hover);
 }
 
 .contract-field ::deep .contract-control:focus,
 .contract-field ::deep .contract-control:focus-visible {
-    border-color: var(--focus-ring, #4F46E5);
-    background: var(--surface, #FFFFFF);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring, #4F46E5) 20%, transparent);
+    border-color: var(--focus-ring);
+    background: var(--surface);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-ring) 20%, transparent);
     outline: 0;
 }
 
 .contract-field ::deep .contract-control:disabled {
-    color: var(--text-disabled, #94A3B8);
+    color: var(--text-disabled);
     cursor: not-allowed;
     opacity: 1;
 }
 
 .contract-field ::deep .contract-control.is-invalid {
-    border-color: var(--danger, #B91C1C);
-    background: var(--error-bg, #FEF2F2);
+    border-color: var(--danger);
+    background: var(--error-bg);
 }
 
 .field-meta {
     margin-top: 6px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 11px;
     line-height: 17px;
 }
 
 .accent-meta {
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
 }
 
 .field-label-row {
@@ -384,14 +384,14 @@
 .contract-field-error {
     min-height: 0;
     margin-top: 4px;
-    color: var(--error-text, #B91C1C);
+    color: var(--error-text);
     font-size: 12px;
     line-height: 18px;
 }
 
 .contract-field-hint {
     margin-top: 4px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 12px;
     line-height: 18px;
 }
@@ -408,9 +408,9 @@
     gap: 12px;
     margin-top: 20px;
     padding: 13px;
-    border: 1px solid var(--accent-border, #C7D2FE);
+    border: 1px solid var(--accent-border);
     border-radius: 12px;
-    background: color-mix(in srgb, var(--accent-soft, #EEF2FF) 55%, var(--surface, #FFFFFF));
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
 }
 
 .selected-room-icon {
@@ -420,8 +420,8 @@
     height: 40px;
     place-items: center;
     border-radius: 11px;
-    background: var(--primary, #4F46E5);
-    color: var(--on-primary, #FFFFFF);
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 .selected-room-details {
@@ -437,7 +437,7 @@
 }
 
 .selected-room-details span {
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
     font-size: 11px;
 }
 
@@ -449,13 +449,13 @@
 }
 
 .selected-room-price span {
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 10px;
     text-transform: uppercase;
 }
 
 .selected-room-price strong {
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
     font-size: 14px;
 }
 
@@ -509,9 +509,9 @@
     gap: 8px;
     min-width: 0;
     padding: 10px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--surface-subtle, #F8FAFC);
+    background: var(--surface-subtle);
 }
 
 .member-index {
@@ -520,8 +520,8 @@
     height: 28px;
     place-items: center;
     border-radius: 8px;
-    background: var(--accent-soft, #EEF2FF);
-    color: var(--accent-text, #4338CA);
+    background: var(--accent-soft);
+    color: var(--accent-text);
     font-size: 12px;
     font-weight: 700;
 }
@@ -529,8 +529,8 @@
 .contract-page ::deep .contract-form .member-row .input {
     min-width: 0;
     padding: 0 9px;
-    border-color: var(--border, #CBD5E1);
-    background: var(--surface, #FFFFFF);
+    border-color: var(--border);
+    background: var(--surface);
     font-size: 12px;
 }
 
@@ -538,11 +538,11 @@
     width: 40px;
     height: 40px;
     flex-basis: 40px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
 }
 
 .member-remove:hover {
-    color: var(--danger, #B91C1C);
+    color: var(--danger);
 }
 
 .contract-empty-note {
@@ -552,13 +552,13 @@
     margin-top: 12px;
     padding: 12px;
     border-radius: 8px;
-    background: var(--surface-subtle, #F1F5F9);
-    color: var(--text-secondary, #475569);
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
     font-size: 12px;
 }
 
 .contract-empty-note .lucide-icon {
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
 }
 
 .contract-page ::deep .contract-form .contract-notes {
@@ -571,7 +571,7 @@
 .contract-page ::deep .contract-form .contract-notes::placeholder,
 .contract-page ::deep .contract-form .member-row .input::placeholder,
 .contract-page ::deep .contract-form .money-input-wrap input::placeholder {
-    color: var(--text-muted, #94A3B8);
+    color: var(--text-muted);
     opacity: 1;
 }
 
@@ -600,7 +600,7 @@
     right: 10px;
     display: flex;
     transform: translateY(-50%);
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     pointer-events: none;
 }
 
@@ -616,10 +616,10 @@
     gap: 8px;
     margin-top: 18px;
     padding: 12px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: var(--surface-subtle, #F8FAFC);
-    color: var(--text-secondary, #475569);
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
     font-size: 12px;
     line-height: 18px;
 }
@@ -628,7 +628,7 @@
     flex: 0 0 18px;
     width: 18px;
     height: 18px;
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
 }
 
 .finance-field {
@@ -642,7 +642,7 @@
     padding: 0 4px;
     border: 0;
     background: transparent;
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
     font-size: 11px;
     font-weight: 600;
 }
@@ -652,7 +652,7 @@
 }
 
 .text-action:disabled {
-    color: var(--text-disabled, #94A3B8);
+    color: var(--text-disabled);
     cursor: not-allowed;
 }
 
@@ -668,7 +668,7 @@
     top: 50%;
     right: 12px;
     transform: translateY(-50%);
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     pointer-events: none;
@@ -681,14 +681,14 @@
 .utility-rate-card {
     margin-top: 18px;
     padding: 12px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--surface-subtle, #F8FAFC);
+    background: var(--surface-subtle);
 }
 
 .utility-rate-card h3 {
     margin: 0 0 10px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
     font-size: 10px;
     line-height: 16px;
     font-weight: 700;
@@ -709,28 +709,28 @@
     gap: 8px;
     min-height: 44px;
     padding: 8px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    background: var(--surface, #FFFFFF);
+    background: var(--surface);
     font-size: 10px;
 }
 
 .utility-rate span {
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
 }
 
 .utility-rate strong {
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
     text-align: right;
 }
 
 .initial-payment-card {
     padding: 20px;
-    border: 1px solid #4338CA;
+    border: 1px solid var(--primary-pressed);
     border-radius: 16px;
-    background: linear-gradient(135deg, #4F46E5, #4338CA);
-    color: #FFFFFF;
-    box-shadow: 0 6px 16px rgba(67, 56, 202, .20);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: var(--on-primary);
+    box-shadow: var(--shadow-accent);
 }
 
 .initial-payment-card header {
@@ -739,7 +739,7 @@
     justify-content: space-between;
     gap: 12px;
     padding-bottom: 14px;
-    border-bottom: 1px solid rgba(255,255,255,.2);
+    border-bottom: 1px solid color-mix(in srgb, var(--on-primary) 20%, transparent);
 }
 
 .initial-payment-card h2 {
@@ -752,7 +752,7 @@
 }
 
 .initial-payment-card .lucide-icon {
-    color: #E0E7FF;
+    color: color-mix(in srgb, var(--on-primary) 80%, transparent);
 }
 
 .initial-payment-total {
@@ -777,8 +777,8 @@
     justify-content: space-between;
     gap: 12px;
     padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,.2);
-    color: #E0E7FF;
+    border-top: 1px solid color-mix(in srgb, var(--on-primary) 20%, transparent);
+    color: color-mix(in srgb, var(--on-primary) 80%, transparent);
     font-size: 10px;
     line-height: 16px;
 }
@@ -788,7 +788,7 @@
 }
 
 .initial-payment-breakdown strong {
-    color: #FFFFFF;
+    color: var(--on-primary);
 }
 
 .contract-action-bar {
@@ -801,17 +801,17 @@
     gap: 20px;
     margin-top: 20px;
     padding: 12px 16px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 16px;
-    background: color-mix(in srgb, var(--surface, #FFFFFF) 94%, transparent);
-    box-shadow: var(--shadow-popover, 0 8px 24px rgba(15,23,42,.10));
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: var(--shadow-popover);
     backdrop-filter: blur(12px);
 }
 
 .contract-footer-caption {
     gap: 8px;
     min-width: 0;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
     font-size: 11px;
     line-height: 17px;
 }
@@ -820,7 +820,7 @@
     flex: 0 0 20px;
     width: 20px;
     height: 20px;
-    color: var(--accent-text, #4338CA);
+    color: var(--accent-text);
 }
 
 .contract-action-buttons {
@@ -852,10 +852,10 @@
     gap: 10px;
     margin-bottom: 16px;
     padding: 12px 14px;
-    border: 1px solid var(--error-border, #FECACA);
+    border: 1px solid var(--error-border);
     border-radius: 10px;
-    background: var(--error-bg, #FEF2F2);
-    color: var(--error-text, #B91C1C);
+    background: var(--error-bg);
+    color: var(--error-text);
     font-size: 13px;
     line-height: 20px;
 }
@@ -874,9 +874,9 @@
 
 .contract-action-feedback {
     align-items: center;
-    border-color: var(--info-border, #BFDBFE);
-    background: var(--info-bg, #EFF6FF);
-    color: var(--info-text, #1E40AF);
+    border-color: var(--info-border);
+    background: var(--info-bg);
+    color: var(--info-text);
 }
 
 .contract-snapshot-summary {
@@ -890,16 +890,16 @@
     max-width: 640px;
     margin: 32px auto;
     padding: 32px;
-    border: 1px solid var(--border, #E2E8F0);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--surface, #FFFFFF);
+    background: var(--surface);
     text-align: center;
 }
 
 .contract-access-denied > .lucide-icon {
     width: 48px;
     height: 48px;
-    color: var(--text-muted, #64748B);
+    color: var(--text-muted);
 }
 
 .contract-access-denied h1 {

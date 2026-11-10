@@ -1,14 +1,50 @@
 .table-card {
     overflow: hidden;
-    background: var(--surface, #FFFFFF);
-    border: 1px solid var(--border, #E2E8F0);
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-shadow: var(--shadow-card);
 }
 
 /* Bảng rộng cuộn trong khung, không làm tràn trang. */
 .table-scroll {
     overflow-x: auto;
+}
+
+/* Bộ lọc độc lập vùng cuộn bảng; chỉ áp dụng khi trang bật toolbar. */
+.filter-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.filter-field { min-width: 0; }
+
+.filter-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    font-size: .875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+}
+
+.filter-toolbar .filter-input {
+    min-width: 0;
+    min-height: 44px;
+    font-size: .875rem;
+    line-height: 1.375rem;
+}
+
+.filter-toolbar .filter-input::placeholder { color: var(--text-muted); }
+
+.filter-toolbar-actions {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 12px;
 }
 
 table {
@@ -19,8 +55,8 @@ table {
 thead th {
     height: 44px;
     padding: 0 16px;
-    background: var(--surface-subtle, #F1F5F9);
-    color: var(--text-secondary, #475569);
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
     font-size: 13px;
     line-height: 20px;
     font-weight: 600;
@@ -31,8 +67,8 @@ thead th {
 tbody td {
     height: 52px;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-    color: var(--text-primary, #0D131B);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
     font-size: 14px;
     line-height: 22px;
     text-align: left;
@@ -43,7 +79,7 @@ tbody tr:last-child td {
 }
 
 tbody tr.data-row:hover {
-    background: var(--hover-bg, #F1F5F9);
+    background: var(--hover-bg);
 }
 
 /* Số liệu căn phải, chữ số có độ rộng bằng nhau. */
@@ -72,13 +108,13 @@ thead th.numeric .sort-button {
 }
 
 .sort-button:hover {
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
 }
 
 .sort-button:focus-visible,
 .filter-input:focus-visible,
 .page-button:focus-visible {
-    outline: 2px solid var(--focus-ring, #4F46E5);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -90,8 +126,8 @@ thead th.numeric .sort-button {
 
 .filter-row td {
     padding: 8px 16px;
-    border-bottom: 1px solid var(--border, #E2E8F0);
-    background: var(--surface-subtle, #F1F5F9);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-subtle);
 }
 
 .filter-input {
@@ -100,17 +136,17 @@ thead th.numeric .sort-button {
     min-width: 120px;
     height: 44px;
     padding: 0 12px;
-    border: 1px solid var(--control-border, #64748B);
+    border: 1px solid var(--control-border);
     border-radius: 8px;
-    background: var(--surface, #FFFFFF);
-    color: var(--text-primary, #0D131B);
+    background: var(--surface);
+    color: var(--text-primary);
     font-family: inherit;
     font-size: 14px;
     line-height: 22px;
 }
 
 .filter-input:hover {
-    border-color: var(--border-hover, #475569);
+    border-color: var(--border-hover);
 }
 
 .state-cell {
@@ -123,7 +159,7 @@ thead th.numeric .sort-button {
     align-items: center;
     gap: 12px;
     padding: 32px;
-    color: var(--error-text, #B91C1C);
+    color: var(--error-text);
 }
 
 .error-box p {
@@ -137,7 +173,7 @@ thead th.numeric .sort-button {
     display: block;
     height: 16px;
     border-radius: 4px;
-    background: var(--surface-subtle, #F1F5F9);
+    background: var(--surface-subtle);
     animation: shimmer 1.2s ease-in-out infinite;
 }
 
@@ -153,13 +189,13 @@ thead th.numeric .sort-button {
     justify-content: space-between;
     gap: 12px;
     padding: 12px 16px;
-    border-top: 1px solid var(--border, #E2E8F0);
+    border-top: 1px solid var(--border);
 }
 
 .summary {
     font-size: 12px;
     line-height: 18px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
 }
 
@@ -180,7 +216,7 @@ thead th.numeric .sort-button {
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
     font-family: inherit;
     font-size: 14px;
     line-height: 20px;
@@ -194,16 +230,16 @@ thead th.numeric .sort-button {
 }
 
 .page-button:hover:not(:disabled):not(.current) {
-    background: var(--hover-bg, #F1F5F9);
+    background: var(--hover-bg);
 }
 
 .page-button.current {
-    background: var(--primary, #4F46E5);
-    color: var(--on-primary, #FFFFFF);
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 .page-button:disabled {
-    color: var(--text-disabled, #94A3B8);
+    color: var(--text-disabled);
     cursor: not-allowed;
 }
 
@@ -220,6 +256,10 @@ thead th.numeric .sort-button {
 }
 
 @media (max-width: 767.98px) {
+    .filter-toolbar { grid-template-columns: minmax(0, 1fr); }
+    .filter-toolbar .filter-input { font-size: 1rem; line-height: 1.5rem; }
+    .filter-toolbar-actions { justify-content: flex-start; }
+    .filter-toolbar-actions ::deep .btn { min-height: 44px; }
     .page-button {
         min-width: 44px;
         height: 44px;

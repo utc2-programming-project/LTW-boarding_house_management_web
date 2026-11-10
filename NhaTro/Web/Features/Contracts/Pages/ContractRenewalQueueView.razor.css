@@ -1,0 +1,17 @@
+.renewal-queue-page { max-width: 1440px; margin: 0 auto; }
+.renewal-queue-page .page-heading { margin: 20px 0 24px; }
+.renewal-queue-page .page-heading p { margin: 8px 0 0; color: var(--text-secondary); }
+.renewal-table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.renewal-table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+.renewal-table th { height: 44px; padding: 8px 12px; background: var(--surface-subtle); color: var(--text-secondary); font-size: 13px; text-align: left; white-space: nowrap; }
+.renewal-table td { height: 52px; padding: 8px 12px; border-top: 1px solid var(--border); font-size: 14px; }
+.renewal-table tr:hover td { background: var(--hover-bg); }
+.renewal-table td a:not(.btn) { color: var(--accent-text); font-weight: 600; }
+.renewal-table .numeric { text-align: right; white-space: nowrap; }
+.renewal-row-actions { display: flex; gap: 8px; align-items: center; }
+.renewal-row-actions .btn { min-height: 40px; padding: 6px 10px; white-space: nowrap; }
+
+@media (max-width: 767px) {
+    .renewal-queue-page .page-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
+    .renewal-row-actions .btn { min-height: 44px; }
+}

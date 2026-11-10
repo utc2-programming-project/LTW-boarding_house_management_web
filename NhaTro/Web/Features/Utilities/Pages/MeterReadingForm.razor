@@ -1,3 +1,4 @@
+@page "/services/readings"
 @page "/meter-readings"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
@@ -21,7 +22,7 @@
 <PageTitle>@L["MeterReadingPageTitle"] · @L["AppName"]</PageTitle>
 
 <div class="meter-reading-page">
-    <BreadcrumbNav Items="@_breadcrumbs" />
+    <PageHeading Title="@L["MeterReadingPageTitle"]" HelpText="@L["MeterReadingPageSubtitle"]" />
 
     <!-- Simulation Banner (Dữ liệu mẫu — Sprint 2C) -->
     <div class="simulation-banner">
@@ -38,12 +39,7 @@
     </div>
 
     <!-- Header trang -->
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@L["MeterReadingPageTitle"]</h1>
-            <p class="page-subtitle">@L["MeterReadingPageSubtitle"]</p>
-        </div>
-    </header>
+    @* Đầu trang đã chuyển lên trước banner dữ liệu mẫu. *@
 
     @if (_isLoading)
     {
@@ -151,24 +147,109 @@
                     </select>
                 </label>
 
-                <label class="filter-field wide">
+                <div class="filter-field wide">
                     <span>@L["MeterReadingPeriodFilter"]</span>
-                    <input id="select-period"
-                           type="month"
-                           class="input"
-                           value="@_selectedPeriodKey"
-                           @onchange="HandlePeriodChanged" />
-                </label>
+                    <div class="period-display" aria-live="polite">
+                        <LucideIcon Name="calendar" />
+                        <span class="period-display-main">
+                            @string.Format(L["MeterReadingMonthOptionFormat"], _selectedMonth) / @_selectedYear
+                        </span>
+                        <span class="period-display-range">
+                            (@_periodStart.ToString("dd/MM/yyyy") – @_periodEnd.ToString("dd/MM/yyyy"))
+                        </span>
+                    </div>
+                </div>
 
                 <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRefreshBtn"]">
                     <LucideIcon Name="refresh-cw" />
                     <span>@L["MeterReadingRefreshBtn"]</span>
                 </button>
             </div>
+
+            <!-- Bộ lọc chi tiết: tìm kiếm, trạng thái ghi chỉ số, tầng -->
+            <div class="filters-row filters-row-secondary">
+                <label class="filter-field search-filter" for="meter-search">
+                    <span>@L["MeterReadingSearchLabel"]</span>
+                    <span class="search-input-wrap">
+                        <LucideIcon Name="search" />
+                        <input id="meter-search"
+                               type="search"
+                               class="input"
+                               autocomplete="off"
+                               placeholder="@L["MeterReadingSearchPlaceholder"]"
+                               @bind="_searchText"
+                               @bind:event="oninput"
+                               @bind:after="ApplyFilters" />
+                    </span>
+                </label>
+
+                <div class="filter-field">
+                    <span>@L["MeterReadingStatusFilter"]</span>
+                    <button type="button"
+                            class="btn btn-secondary advanced-filter-toggle @(_showAdvancedFilters ? "open" : "") @(_statusFilters.Count > 0 ? "has-selection" : "")"
+                            @onclick="ToggleAdvancedFilters"
+                            aria-expanded="@(_showAdvancedFilters ? "true" : "false")"
+                            aria-controls="meter-status-panel">
+                        <LucideIcon Name="filter" />
+                        <span>
+                            @(_statusFilters.Count == 0
+                                ? L["MeterReadingAdvancedFilter"].Value
+                                : string.Format(L["MeterReadingAdvancedFilterCount"], _statusFilters.Count))
+                        </span>
+                        <span class="advanced-filter-chevron @(_showAdvancedFilters ? "rotated" : "")">
+                            <LucideIcon Name="chevron-down" />
+                        </span>
+                    </button>
+                </div>
+
+                <label class="filter-field" for="meter-floor-filter">
+                    <span>@L["MeterReadingFloorFilter"]</span>
+                    <select id="meter-floor-filter" class="input" value="@_floorFilter" @onchange="HandleFloorFilterChanged">
+                        <option value="all">@L["MeterReadingFloorAll"]</option>
+                        @foreach (var floor in AvailableFloors)
+                        {
+                            <option value="@floor">@GetFloorLabel(floor)</option>
+                        }
+                    </select>
+                </label>
+
+                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetDetailFilters" disabled="@(!HasDetailFilters)">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["P2ResetFilters"]</span>
+                </button>
+            </div>
+
+            @if (_showAdvancedFilters)
+            {
+                <div class="advanced-filter-panel" id="meter-status-panel">
+                    <div class="advanced-filter-header">
+                        <div class="advanced-filter-title">
+                            <LucideIcon Name="filter" />
+                            <span>@L["MeterReadingAdvancedFilterTitle"]</span>
+                        </div>
+                        <div class="advanced-filter-actions">
+                            <button type="button" class="link-button" @onclick="SelectAllStatusFilters">@L["MeterReadingAdvancedSelectAll"]</button>
+                            <button type="button" class="link-button" @onclick="ClearStatusFilters" disabled="@(_statusFilters.Count == 0)">@L["MeterReadingAdvancedClear"]</button>
+                        </div>
+                    </div>
+                    <div class="advanced-filter-options">
+                        @foreach (var option in StatusFilterOptions)
+                        {
+                            <label class="advanced-filter-option">
+                                <input type="checkbox"
+                                       checked="@_statusFilters.Contains(option)"
+                                       @onchange="e => ToggleStatusFilter(option, e.Value is true)" />
+                                <span class="advanced-filter-option-label">@GetStatusOptionLabel(option)</span>
+                            </label>
+                        }
+                    </div>
+                    <p class="advanced-filter-hint">@L["MeterReadingAdvancedHint"]</p>
+                </div>
+            }
         </div>
 
         <!-- Empty states -->
-        @if (_callerRole == Roles.KhachThue && _filteredRooms.Count == 0 && !_periodHasNoData)
+        @if (_callerRole == Roles.KhachThue && _filteredRooms.Count == 0 && !_periodHasNoData && !HasDetailFilters)
         {
             <div class="empty-state-box">
                 <div class="empty-icon-wrap">
@@ -209,6 +290,20 @@
                 </button>
             </div>
         }
+        else if (HasDetailFilters && _filteredRooms.Count == 0)
+        {
+            <div class="empty-state-box">
+                <div class="empty-icon-wrap">
+                    <LucideIcon Name="search" />
+                </div>
+                <h3 class="empty-title">@L["MeterReadingNoFilterMatchTitle"]</h3>
+                <p class="empty-desc">@L["MeterReadingNoFilterMatchDesc"]</p>
+                <button type="button" class="btn btn-secondary" @onclick="ResetDetailFilters">
+                    <LucideIcon Name="refresh" />
+                    <span>@L["P2ResetFilters"]</span>
+                </button>
+            </div>
+        }
         else if (_filteredRooms.Count == 0)
         {
             <div class="empty-state-box">
@@ -225,21 +320,108 @@
         }
         else
         {
-            <RoomSummaryTable Rooms="@_filteredRooms" DraftReadings="@_draftReadings" />
-
-            <!-- Room cards list -->
-            <div class="room-cards-container">
-                @foreach (var room in _filteredRooms)
+            <!-- Danh sách phòng gọn theo tầng, bấm để mở chi tiết -->
+            <div class="room-accordion">
+                @foreach (var group in PagedFloorGroups)
                 {
-                    <RoomReadingCard @key="room.Id"
-                                     Room="room"
-                                     CallerRole="@_callerRole"
-                                     PeriodStart="@_periodStart"
-                                     PeriodEnd="@_periodEnd"
-                                     OnChanged="HandleRoomReadingChanged"
-                                     OnSave="HandleRoomSave" />
+                    <section class="floor-group" @key="group.Floor">
+                        <header class="floor-group-header">
+                            <div class="floor-group-title">
+                                <LucideIcon Name="layers" />
+                                <h2>@GetFloorLabel(group.Floor)</h2>
+                            </div>
+                            <span class="floor-group-count">@string.Format(L["MeterReadingRoomCountFormat"], group.Rooms.Count)</span>
+                        </header>
+
+                        <div class="floor-group-rooms">
+                            @foreach (var room in group.Rooms)
+                            {
+                                var isExpanded = _expandedRoomId == room.Id;
+                                <article class="room-row @(isExpanded ? "expanded" : "")" @key="room.Id">
+                                    <button type="button"
+                                            class="room-row-header"
+                                            @onclick="() => ToggleRoom(room.Id)"
+                                            aria-expanded="@(isExpanded ? "true" : "false")"
+                                            aria-label="@string.Format(L["MeterReadingToggleRoomDetails"], room.RoomCode)">
+                                        <div class="room-row-main">
+                                            <span class="room-row-badge"><LucideIcon Name="door" /></span>
+                                            <span class="room-row-text">
+                                                <span class="room-row-title">
+                                                    <span class="room-row-code">@room.RoomCode</span>
+                                                    <span class="room-row-name">@room.RoomName</span>
+                                                    <span class="room-status-chip @GetRoomStatusCss(room)">@GetRoomStatusLabel(room)</span>
+                                                </span>
+                                                <span class="room-row-meta">
+                                                    <span>@L["MeterReadingTenantLabel"] <strong>@room.TenantName</strong></span>
+                                                    <span class="meta-sep">•</span>
+                                                    <span>@L["MeterReadingContractCodeLabel"] <code>@room.ContractCode</code></span>
+                                                </span>
+                                            </span>
+                                        </div>
+
+                                        <div class="room-row-stats">
+                                            <span class="room-stat electric">
+                                                <LucideIcon Name="zap" />
+                                                <span class="room-stat-label">@L["MeterReadingElectricMeter"]</span>
+                                                <strong class="room-stat-value">@FormatElectricUsage(room)</strong>
+                                            </span>
+                                            <span class="room-stat water">
+                                                <LucideIcon Name="droplet" />
+                                                <span class="room-stat-label">@L["MeterReadingWaterMeter"]</span>
+                                                <strong class="room-stat-value">@FormatWaterUsage(room)</strong>
+                                            </span>
+                                            <span class="room-chevron @(isExpanded ? "rotated" : "")">
+                                                <LucideIcon Name="chevron-down" />
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    @if (isExpanded)
+                                    {
+                                        <div class="room-row-body">
+                                            <RoomReadingCard @key="room.Id"
+                                                             Room="room"
+                                                             CallerRole="@_callerRole"
+                                                             PeriodStart="@_periodStart"
+                                                             PeriodEnd="@_periodEnd"
+                                                             HideHeader="true"
+                                                             OnChanged="HandleRoomReadingChanged"
+                                                             OnSave="HandleRoomSave" />
+                                        </div>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    </section>
                 }
             </div>
+
+            <footer class="table-footer">
+                <div class="pagination-info">
+                    @string.Format(L["TableSummary"], FirstItem, LastItem, _filteredRooms.Count)
+                </div>
+
+                <div class="pagination-controls">
+                    <label class="page-size-field" for="meter-page-size">
+                        <span>@L["P2RowsPerPage"]</span>
+                        <select id="meter-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </label>
+
+                    <nav class="pager" aria-label="@L["TablePagination"]">
+                        <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["TablePreviousPage"]">
+                            <LucideIcon Name="chevron-left" />
+                        </button>
+                        <span class="page-indicator">@_page / @TotalPages</span>
+                        <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["TableNextPage"]">
+                            <LucideIcon Name="chevron-right" />
+                        </button>
+                    </nav>
+                </div>
+            </footer>
         }
     }
 </div>
@@ -253,7 +435,6 @@
     private string _selectedBuildingId = "b1";
     private int _selectedYear = 2026;
     private int _selectedMonth = 10;
-    private string _selectedPeriodKey = "2026-10";
     private bool _periodHasNoData;
     private string _periodLabel = "10/2026";
     private DateOnly _periodStart = new(2026, 10, 1);
@@ -266,7 +447,60 @@
     private List<RoomReadingSampleDto> _filteredRooms = [];
     private readonly Dictionary<string, (decimal? ElectricEnd, decimal? WaterEnd)> _draftReadings = new(StringComparer.Ordinal);
 
-    private List<BreadcrumbNav.BreadcrumbItem> _breadcrumbs = [];
+    private int _page = 1;
+    private int _pageSize = 10;
+    private string? _expandedRoomId;
+    private string _searchText = string.Empty;
+    private readonly HashSet<string> _statusFilters = new(StringComparer.Ordinal);
+    private bool _showAdvancedFilters;
+    private string _floorFilter = "all";
+
+    private static readonly string[] StatusFilterOptions =
+        ["unrecorded", "missing-electric", "missing-water", "recorded", "locked", "open"];
+
+    private bool HasDetailFilters =>
+        !string.IsNullOrWhiteSpace(_searchText) ||
+        _statusFilters.Count > 0 ||
+        _floorFilter != "all";
+
+    private List<int> AvailableFloors
+    {
+        get
+        {
+            IEnumerable<RoomReadingSampleDto> rooms = _allRooms
+                .Where(r => r.PeriodStart == _periodStart && r.PeriodEnd == _periodEnd);
+
+            if (_callerRole == Roles.KhachThue)
+            {
+                var allowedIds = UtilitySampleData.GetAllowedRoomIds(_callerRole, _callerEmail);
+                rooms = rooms.Where(r => allowedIds.Contains(r.Id));
+            }
+            else if (!string.IsNullOrWhiteSpace(_selectedBuildingId) && _selectedBuildingId != "all")
+            {
+                rooms = rooms.Where(r => r.BuildingId == _selectedBuildingId);
+            }
+
+            return rooms.Select(GetFloor).Distinct().OrderBy(f => f).ToList();
+        }
+    }
+
+    private sealed record FloorGroup(int Floor, IReadOnlyList<RoomReadingSampleDto> Rooms);
+
+    private List<RoomReadingSampleDto> SortedRooms => _filteredRooms
+        .OrderBy(GetFloor)
+        .ThenBy(r => r.RoomCode, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    private List<FloorGroup> PagedFloorGroups => SortedRooms
+        .Skip((_page - 1) * _pageSize)
+        .Take(_pageSize)
+        .GroupBy(GetFloor)
+        .Select(g => new FloorGroup(g.Key, g.ToList()))
+        .ToList();
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_filteredRooms.Count / (double)_pageSize));
+    private int FirstItem => _filteredRooms.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
+    private int LastItem => Math.Min(_page * _pageSize, _filteredRooms.Count);
 
     private int TotalRoomsCount => _filteredRooms.Count;
     private int LockedRoomsCount => _filteredRooms.Count(r => string.Equals(r.Status, "locked", StringComparison.OrdinalIgnoreCase));
@@ -283,13 +517,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _breadcrumbs =
-        [
-            new(L["MeterReadingNavHome"], "/"),
-            new(L["MeterReadingNavServices"], "/services"),
-            new(L["MeterReadingNavReadings"], null)
-        ];
-
         UpdatePeriodRange(_selectedYear, _selectedMonth);
         await ReloadDataAsync();
     }
@@ -367,30 +594,11 @@
         }
     }
 
-    private void HandlePeriodChanged(ChangeEventArgs e)
-    {
-        var raw = e.Value?.ToString() ?? string.Empty;
-        _draftReadings.Clear();
-
-        var parts = raw.Split('-');
-        if (parts.Length == 2 &&
-            int.TryParse(parts[0], out var year) &&
-            int.TryParse(parts[1], out var month) &&
-            month is >= 1 and <= 12)
-        {
-            _selectedYear = year;
-            _selectedMonth = month;
-            UpdatePeriodRange(year, month);
-            ApplyFilters();
-        }
-    }
-
     private void UpdatePeriodRange(int year, int month)
     {
         var anchor = new DateOnly(year, month, 1);
         _periodStart = InvoicePeriodRules.Start(anchor);
         _periodEnd = InvoicePeriodRules.EndInclusive(anchor);
-        _selectedPeriodKey = $"{year:D4}-{month:D2}";
         _periodLabel = $"{month:D2}/{year:D4}";
     }
 
@@ -409,6 +617,9 @@
             .Where(r => r.PeriodStart == _periodStart && r.PeriodEnd == _periodEnd)
             .ToList();
 
+        _page = 1;
+        _expandedRoomId = null;
+
         if (roomsInPeriod.Count == 0)
         {
             _periodHasNoData = true;
@@ -418,22 +629,238 @@
 
         _periodHasNoData = false;
 
+        IEnumerable<RoomReadingSampleDto> query = roomsInPeriod;
+
         if (_callerRole == Roles.KhachThue)
         {
             var allowedIds = UtilitySampleData.GetAllowedRoomIds(_callerRole, _callerEmail);
-            _filteredRooms = roomsInPeriod.Where(r => allowedIds.Contains(r.Id)).ToList();
-            return;
+            query = query.Where(r => allowedIds.Contains(r.Id));
+        }
+        else if (!string.IsNullOrWhiteSpace(_selectedBuildingId) && _selectedBuildingId != "all")
+        {
+            query = query.Where(r => r.BuildingId == _selectedBuildingId);
         }
 
-        if (string.IsNullOrWhiteSpace(_selectedBuildingId) || _selectedBuildingId == "all")
+        if (!string.IsNullOrWhiteSpace(_searchText))
         {
-            _filteredRooms = roomsInPeriod;
+            var term = _searchText.Trim();
+            query = query.Where(r =>
+                r.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                r.RoomName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                r.TenantName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                r.TenantPhone.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                r.ContractCode.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_statusFilters.Count > 0)
+        {
+            query = query.Where(MatchesStatusFilters);
+        }
+
+        if (_floorFilter != "all" && int.TryParse(_floorFilter, out var floor))
+        {
+            query = query.Where(r => GetFloor(r) == floor);
+        }
+
+        _filteredRooms = query.ToList();
+    }
+
+    private void ToggleRoom(string roomId)
+    {
+        _expandedRoomId = _expandedRoomId == roomId ? null : roomId;
+    }
+
+    private void ToggleAdvancedFilters() => _showAdvancedFilters = !_showAdvancedFilters;
+
+    private void ToggleStatusFilter(string option, bool isChecked)
+    {
+        if (isChecked)
+        {
+            _statusFilters.Add(option);
         }
         else
         {
-            _filteredRooms = roomsInPeriod.Where(r => r.BuildingId == _selectedBuildingId).ToList();
+            _statusFilters.Remove(option);
+        }
+
+        ApplyFilters();
+    }
+
+    private void SelectAllStatusFilters()
+    {
+        foreach (var option in StatusFilterOptions)
+        {
+            _statusFilters.Add(option);
+        }
+
+        ApplyFilters();
+    }
+
+    private void ClearStatusFilters()
+    {
+        if (_statusFilters.Count == 0)
+        {
+            return;
+        }
+
+        _statusFilters.Clear();
+        ApplyFilters();
+    }
+
+    private bool MatchesStatusFilters(RoomReadingSampleDto room)
+    {
+        if (_statusFilters.Contains("open") &&
+            !string.Equals(room.Status, "locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return _statusFilters.Contains(GetRoomFilterStatus(room));
+    }
+
+    private string GetStatusOptionLabel(string option) => option switch
+    {
+        "unrecorded" => L["MeterReadingStatusOptionUnrecorded"].Value,
+        "missing-electric" => L["MeterReadingStatusMissingElectric"].Value,
+        "missing-water" => L["MeterReadingStatusMissingWater"].Value,
+        "recorded" => L["MeterReadingStatusOptionRecorded"].Value,
+        "locked" => L["MeterReadingStatusOptionLocked"].Value,
+        _ => L["MeterReadingStatusOptionOpen"].Value,
+    };
+
+    private void HandleFloorFilterChanged(ChangeEventArgs e)
+    {
+        _floorFilter = e.Value?.ToString() ?? "all";
+        ApplyFilters();
+    }
+
+    private void ResetDetailFilters()
+    {
+        _searchText = string.Empty;
+        _statusFilters.Clear();
+        _floorFilter = "all";
+        ApplyFilters();
+    }
+
+    private string GetFloorLabel(int floor) => floor > 0
+        ? string.Format(L["MeterReadingFloorGroup"], floor)
+        : L["MeterReadingUnknownFloor"].Value;
+
+    private void ChangePageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _page = 1;
+            _expandedRoomId = null;
         }
     }
+
+    private void GoToPreviousPage()
+    {
+        if (_page <= 1) return;
+        _page--;
+        _expandedRoomId = null;
+    }
+
+    private void GoToNextPage()
+    {
+        if (_page >= TotalPages) return;
+        _page++;
+        _expandedRoomId = null;
+    }
+
+    private static int GetFloor(RoomReadingSampleDto room)
+    {
+        // P101 -> tầng 1, P201 -> tầng 2, P1001 -> tầng 10
+        var digits = new string(room.RoomCode.Where(char.IsDigit).ToArray());
+        if (!int.TryParse(digits, out var number) || number < 100)
+        {
+            return 0;
+        }
+
+        return number / 100;
+    }
+
+    private bool HasDraftEnd(RoomReadingSampleDto room, bool electric, out decimal end)
+    {
+        if (_draftReadings.TryGetValue(room.Id, out var draft))
+        {
+            var value = electric ? draft.ElectricEnd : draft.WaterEnd;
+            if (value.HasValue)
+            {
+                end = value.Value;
+                return true;
+            }
+        }
+
+        end = electric ? room.ElectricEnd : room.WaterEnd;
+        return electric ? room.HasElectricReading : room.HasWaterReading;
+    }
+
+    private string FormatElectricUsage(RoomReadingSampleDto room)
+    {
+        if (!HasDraftEnd(room, electric: true, out var end))
+        {
+            return "—";
+        }
+
+        var usage = Math.Max(0m, end - room.ElectricStart);
+        return string.Format("{0:N0} kWh", usage);
+    }
+
+    private string FormatWaterUsage(RoomReadingSampleDto room)
+    {
+        if (!HasDraftEnd(room, electric: false, out var end))
+        {
+            return "—";
+        }
+
+        var usage = Math.Max(0m, end - room.WaterStart);
+        return string.Format("{0:N0} m³", usage);
+    }
+
+    private string GetRoomFilterStatus(RoomReadingSampleDto room)
+    {
+        if (string.Equals(room.Status, "locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return "locked";
+        }
+
+        var hasElectric = HasDraftEnd(room, electric: true, out _);
+        var hasWater = HasDraftEnd(room, electric: false, out _);
+
+        if (hasElectric && hasWater)
+        {
+            return "recorded";
+        }
+
+        if (!hasElectric && !hasWater)
+        {
+            return "unrecorded";
+        }
+
+        return hasElectric ? "missing-water" : "missing-electric";
+    }
+
+    private string GetRoomStatusCss(RoomReadingSampleDto room)
+    {
+        if (string.Equals(room.Status, "locked", StringComparison.OrdinalIgnoreCase))
+        {
+            return "locked";
+        }
+
+        var hasElectric = HasDraftEnd(room, electric: true, out _);
+        var hasWater = HasDraftEnd(room, electric: false, out _);
+        return hasElectric && hasWater ? "recorded" : "unrecorded";
+    }
+
+    private string GetRoomStatusLabel(RoomReadingSampleDto room) => GetRoomStatusCss(room) switch
+    {
+        "locked" => L["MeterReadingStatusLocked"].Value,
+        "recorded" => L["MeterReadingKpiRecorded"].Value,
+        _ => L["MeterReadingKpiUnrecorded"].Value,
+    };
 
     private void HandleRoomReadingChanged((string RoomId, decimal? ElectricEnd, decimal? WaterEnd) payload)
     {

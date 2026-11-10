@@ -17,6 +17,8 @@
     <!-- VHT-27: health check readiness cho ket noi DB (/health/ready). -->
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
     <PackageReference Include="MudBlazor" Version="9.11.0" />
+    <!-- D8: xuất báo cáo Excel (chỉ P8), không dùng cho PDF. -->
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />

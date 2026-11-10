@@ -4,6 +4,7 @@ using Web.Features.Contracts.Entities;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
+using Web.Features.Invoices.Mapping;
 using Web.Features.Properties;
 using Web.Features.Rooms.Entities;
 
@@ -72,10 +73,20 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             rows.Select(row => row.Invoice.ContractId).Distinct().ToArray(),
             cancellationToken);
 
+        // Chỉ Payment Confirmed mới được cộng vào tiền đã thu; Pending/Rejected không tính.
+        var invoiceIds = rows.Select(row => row.Invoice.Id).ToArray();
+        var paidByInvoice = await context.Payments
+            .AsNoTracking()
+            .Where(payment => invoiceIds.Contains(payment.InvoiceId)
+                && payment.Status == PaymentStatus.Confirmed)
+            .GroupBy(payment => payment.InvoiceId)
+            .Select(group => new { InvoiceId = group.Key, Amount = group.Sum(payment => payment.Amount) })
+            .ToDictionaryAsync(row => row.InvoiceId, row => row.Amount, cancellationToken);
+
         var items = rows.Select(row =>
         {
             var invoice = row.Invoice;
-            var paidAmount = invoice.Status == InvoiceStatus.Paid ? invoice.TotalAmount : 0m;
+            var paidAmount = paidByInvoice.GetValueOrDefault(invoice.Id, 0m);
             return new InvoiceListItemDto
             {
                 Id = invoice.Id,
@@ -148,7 +159,20 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             .SingleAsync(cancellationToken);
 
         var tenantNames = await LoadTenantNamesAsync([invoice.ContractId], cancellationToken);
-        var paidAmount = invoice.Status == InvoiceStatus.Paid ? invoice.TotalAmount : 0m;
+
+        // Tiền đã thu và yêu cầu mới nhất đều đọc từ bảng Payments, không suy từ trạng thái hóa đơn.
+        var payments = await context.Payments
+            .AsNoTracking()
+            .Include(payment => payment.Proofs)
+            .Where(payment => payment.InvoiceId == invoice.Id)
+            .OrderByDescending(payment => payment.RequestedAt)
+            .ThenByDescending(payment => payment.Id)
+            .ToListAsync(cancellationToken);
+
+        var paidAmount = payments
+            .Where(payment => payment.Status == PaymentStatus.Confirmed)
+            .Sum(payment => payment.Amount);
+        var latestPayment = payments.FirstOrDefault();
 
         return new InvoiceDto
         {
@@ -179,7 +203,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             TotalAmount = invoice.TotalAmount,
             PaidAmount = paidAmount,
             OutstandingAmount = Math.Max(0m, invoice.TotalAmount - paidAmount),
-            LatestPayment = null,
+            LatestPayment = latestPayment is null ? null : PaymentMapping.ToDto(latestPayment),
         };
     }
 
@@ -255,7 +279,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
         throw new UnauthorizedAccessException(ForbiddenMessage);
     }
 
-    private static IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
+    private IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
     {
         if (filter.PeriodRange() is { } period)
         {
@@ -273,7 +297,71 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             query = query.Where(invoice => invoice.Status == status);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var term = filter.Keyword!;
+            var invoiceId = ParsePrefixedNumber(term, "HD");
+            var matchingContracts =
+                from contract in context.Contracts
+                join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractNumber.Contains(term)
+                    || room.Code.Contains(term)
+                    || property.Name.Contains(term)
+                    || context.ContractMembers.Any(member => member.ContractId == contract.ContractId
+                        && context.Tenants.IgnoreQueryFilters()
+                            .Any(tenant => tenant.Id == member.TenantId && tenant.FullName.Contains(term)))
+                select contract.ContractId;
+
+            query = invoiceId is { } id
+                ? query.Where(invoice => matchingContracts.Contains(invoice.ContractId) || invoice.Id == id)
+                : query.Where(invoice => matchingContracts.Contains(invoice.ContractId));
+        }
+
+        if (filter.MinAmount is { } minAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount >= minAmount);
+        }
+
+        if (filter.MaxAmount is { } maxAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount <= maxAmount);
+        }
+
+        if (filter.PaymentState is { } paymentState)
+        {
+            query = paymentState switch
+            {
+                InvoicePaymentState.Unpaid => query.Where(invoice =>
+                    !context.Payments.Any(payment =>
+                        payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)),
+                InvoicePaymentState.Partial => query.Where(invoice =>
+                    (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) > 0m
+                    && (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) < invoice.TotalAmount),
+                _ => query.Where(invoice =>
+                    (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) >= invoice.TotalAmount),
+            };
+        }
+
         return query;
+    }
+
+    /// <summary>Đọc mã dạng "HD-12" hoặc "12"; trả null khi từ khóa không phải mã số.</summary>
+    private static int? ParsePrefixedNumber(string term, string prefix)
+    {
+        var normalized = term.Trim();
+        if (normalized.StartsWith(prefix + "-", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[(prefix.Length + 1)..];
+        }
+
+        return int.TryParse(normalized, out var value) ? value : null;
     }
 
     private async Task<Dictionary<Guid, IReadOnlyList<string>>> LoadTenantNamesAsync(

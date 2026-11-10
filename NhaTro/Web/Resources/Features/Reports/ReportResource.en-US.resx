@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Operational reports</value></data>
+<data name="CurrentData" xml:space="preserve"><value>Current operational figures, updated on refresh.</value></data>
+<data name="ScopeNote" xml:space="preserve"><value>Rooms follow the selected property and status. Tenants follow profiles with a contract at the selected property, including all contract statuses. All properties also includes visible profiles without contracts.</value></data>
+<data name="UnavailableProperty" xml:space="preserve"><value>The property is unavailable or outside your permitted scope.</value></data>
+<data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+<data name="RoomReport" xml:space="preserve"><value>Room report</value></data>
+<data name="TenantReport" xml:space="preserve"><value>Tenant report</value></data>
+<data name="RoomActivity" xml:space="preserve"><value>Room activity</value></data>
+<data name="ActiveRooms" xml:space="preserve"><value>Active rooms</value></data>
+<data name="InactiveRooms" xml:space="preserve"><value>Inactive rooms</value></data>
+<data name="RoomStatus" xml:space="preserve"><value>Room status</value></data>
+<data name="AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+<data name="RoomTotal" xml:space="preserve"><value>Rooms matching filters</value></data>
+<data name="RoomCode" xml:space="preserve"><value>Room code</value></data>
+<data name="StandardPrice" xml:space="preserve"><value>Standard room price</value></data>
+<data name="TenantActivity" xml:space="preserve"><value>Profile status</value></data>
+<data name="RentalStatus" xml:space="preserve"><value>Rental status</value></data>
+<data name="Renting" xml:space="preserve"><value>Renting</value></data>
+<data name="NotRenting" xml:space="preserve"><value>No active contract</value></data>
+<data name="CurrentProperty" xml:space="preserve"><value>Current property</value></data>
+<data name="CurrentRoom" xml:space="preserve"><value>Current room</value></data>
+<data name="FullName" xml:space="preserve"><value>Full name</value></data>
+<data name="Phone" xml:space="preserve"><value>Phone number</value></data>
+<data name="Yes" xml:space="preserve"><value>Yes</value></data>
+<data name="No" xml:space="preserve"><value>No</value></data>
+<data name="EmptyDescription" xml:space="preserve"><value>No matching data within your permitted scope. Clear filters to review available data.</value></data>
+<data name="OccupancyNote" xml:space="preserve"><value>Occupancy = rented rooms / (total rooms − maintenance rooms) within the current filters. A zero denominator displays —.</value></data>
+<data name="PageSummary" xml:space="preserve"><value>Page {0} / {1} · Total {2}</value></data>
+<data name="Previous" xml:space="preserve"><value>Previous</value></data>
+<data name="Next" xml:space="preserve"><value>Next</value></data>
+<data name="ReportDescription" xml:space="preserve"><value>View revenue, receivables and operating performance within your account scope.</value></data>
+</root>

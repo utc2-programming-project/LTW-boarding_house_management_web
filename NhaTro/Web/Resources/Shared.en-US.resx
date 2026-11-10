@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- English UI strings; key set must match Shared.vi-VN.resx. -->
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -61,6 +62,15 @@
   <data name="AppName" xml:space="preserve">
     <value>Boarding House Operations Web</value>
   </data>
+  <data name="GlobalSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="GlobalSearchPlaceholder" xml:space="preserve">
+    <value>Quick search...</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Sign in</value>
   </data>
@@ -88,9 +98,6 @@
   <data name="ToggleNavigation" xml:space="preserve">
     <value>Toggle navigation</value>
   </data>
-  <data name="LayoutPreview" xml:space="preserve">
-    <value>Layout preview</value>
-  </data>
   <data name="Unavailable" xml:space="preserve">
     <value>Not available yet</value>
   </data>
@@ -100,6 +107,9 @@
   <data name="Language" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="AppearanceLabel" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
   <data name="CultureError" xml:space="preserve">
     <value>Unable to change language. Please try again.</value>
   </data>
@@ -108,6 +118,9 @@
   </data>
   <data name="MyAccount" xml:space="preserve">
     <value>My account</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
   </data>
   <data name="SignOut" xml:space="preserve">
     <value>Sign out</value>
@@ -154,6 +167,9 @@
   <data name="Invoices" xml:space="preserve">
     <value>Invoices</value>
   </data>
+  <data name="PaymentRequests" xml:space="preserve">
+    <value>Payment review</value>
+  </data>
   <data name="Incidents" xml:space="preserve">
     <value>Incidents</value>
   </data>
@@ -162,6 +178,9 @@
   </data>
   <data name="ManagerSwitches" xml:space="preserve">
     <value>Manager permissions</value>
+  </data>
+  <data name="ManagerSwitchesSubtitle" xml:space="preserve">
+    <value>Each switch controls what managers may do with one workflow: act immediately, wait for the owner's approval, or be blocked.</value>
   </data>
   <data name="Approvals" xml:space="preserve">
     <value>Approval queue</value>
@@ -184,32 +203,8 @@
   <data name="ReportIncident" xml:space="preserve">
     <value>Report an incident</value>
   </data>
-  <data name="PreviewDescription" xml:space="preserve">
-    <value>A shared layout with navigation, language selection, and light and dark themes.</value>
-  </data>
-  <data name="SampleData" xml:space="preserve">
-    <value>Sample data</value>
-  </data>
-  <data name="DisplayExamples" xml:space="preserve">
-    <value>Display format examples</value>
-  </data>
-  <data name="SampleDisclaimer" xml:space="preserve">
-    <value>The values below demonstrate the interface and are not operational data.</value>
-  </data>
-  <data name="SampleDate" xml:space="preserve">
-    <value>Example date</value>
-  </data>
-  <data name="SampleAmount" xml:space="preserve">
-    <value>Example amount</value>
-  </data>
   <data name="NoData" xml:space="preserve">
     <value>No data</value>
-  </data>
-  <data name="ModulesPending" xml:space="preserve">
-    <value>Modules will become available as they are integrated. Unavailable items cannot be opened yet.</value>
-  </data>
-  <data name="BackToPreview" xml:space="preserve">
-    <value>Back to preview</value>
   </data>
   <data name="AccountStatusPendingApproval" xml:space="preserve">
     <value>Pending approval</value>
@@ -229,8 +224,44 @@
   <data name="Restore" xml:space="preserve">
     <value>Restore</value>
   </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
+  </data>
+  <data name="NavGroupOverview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="NavGroupProperty" xml:space="preserve">
+    <value>Property &amp; contracts</value>
+  </data>
+  <data name="NavGroupFinance" xml:space="preserve">
+    <value>Finance</value>
+  </data>
+  <data name="NavGroupOperations" xml:space="preserve">
+    <value>Operations</value>
+  </data>
+  <data name="NavGroupAdmin" xml:space="preserve">
+    <value>Administration</value>
+  </data>
+  <data name="NavGroupPersonal" xml:space="preserve">
+    <value>Personal</value>
+  </data>
+  <data name="PricingNav" xml:space="preserve">
+    <value>Periodic tariff table</value>
+  </data>
+  <data name="ContractCreateNav" xml:space="preserve">
+    <value>Create contract</value>
+  </data>
+  <data name="ContractRenewalsNav" xml:space="preserve">
+    <value>Renewal requests</value>
+  </data>
+  <data name="ContractDetailNav" xml:space="preserve">
+    <value>Contract details</value>
+  </data>
+  <data name="InvoiceDetailNav" xml:space="preserve">
+    <value>Invoice details</value>
   </data>
 
   <!-- VHT-8: sign-in -->
@@ -245,6 +276,9 @@
   </data>
   <data name="LoginInvalid" xml:space="preserve">
     <value>Incorrect email or password.</value>
+  </data>
+  <data name="LoginFormStale" xml:space="preserve">
+    <value>The sign-in page is out of date or the session has expired. Please try again.</value>
   </data>
   <data name="LoginPendingApproval" xml:space="preserve">
     <value>This account is pending approval. Please contact your account manager.</value>
@@ -632,6 +666,16 @@
   <data name="P2Address" xml:space="preserve"><value>Address</value></data>
   <data name="P2NotProvided" xml:space="preserve"><value>Not provided</value></data>
   <data name="P2RoomCount" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2MinRooms" xml:space="preserve"><value>Rooms from</value></data>
+  <data name="P2MaxRooms" xml:space="preserve"><value>Rooms to</value></data>
+  <data name="P2MinRoomsPlaceholder" xml:space="preserve"><value>Min</value></data>
+  <data name="P2MaxRoomsPlaceholder" xml:space="preserve"><value>Max</value></data>
+  <data name="P2SortBy" xml:space="preserve"><value>Sort</value></data>
+  <data name="P2SortName" xml:space="preserve"><value>Name (A–Z)</value></data>
+  <data name="P2SortNewest" xml:space="preserve"><value>Newest created</value></data>
+  <data name="P2SortOldest" xml:space="preserve"><value>Oldest created</value></data>
+  <data name="P2SortRoomCountDesc" xml:space="preserve"><value>Most rooms first</value></data>
+  <data name="P2SortRoomCountAsc" xml:space="preserve"><value>Fewest rooms first</value></data>
   <data name="P2Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="P2PropertiesTable" xml:space="preserve"><value>Property list</value></data>
   <data name="P2RowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
@@ -650,6 +694,41 @@
   <data name="P2ValidationAddressLength" xml:space="preserve"><value>Address must be 500 characters or fewer.</value></data>
   <data name="P2ValidationInvalidRequest" xml:space="preserve"><value>Some of the entered data is invalid. Please review it.</value></data>
   <data name="P2PropertyNotFound" xml:space="preserve"><value>Property not found or access is not allowed.</value></data>
+  <data name="P2ManagersTitle" xml:space="preserve"><value>Assigned managers</value></data>
+  <data name="P2ManagersSubtitle" xml:space="preserve"><value>Assign manager accounts to this property.</value></data>
+  <data name="P2NoManagers" xml:space="preserve"><value>No managers are assigned yet.</value></data>
+  <data name="P2SelectManager" xml:space="preserve"><value>Select a manager</value></data>
+  <data name="P2AssignManager" xml:space="preserve"><value>Assign manager</value></data>
+  <data name="P2RevokeManager" xml:space="preserve"><value>Revoke</value></data>
+  <data name="P2AssignedAt" xml:space="preserve"><value>Assigned at</value></data>
+  <data name="P2ManagerAssigned" xml:space="preserve"><value>Manager assigned.</value></data>
+  <data name="P2ManagerRevoked" xml:space="preserve"><value>Manager revoked.</value></data>
+  <data name="P2ManagerSaveFailed" xml:space="preserve"><value>Could not update the assignment. Please try again.</value></data>
+  <data name="P2NoAvailableManagers" xml:space="preserve"><value>No manager accounts are available to assign.</value></data>
+  <data name="P2ManagerAlreadyAssigned" xml:space="preserve"><value>This manager is already assigned to the property.</value></data>
+  <data name="P2ManagerNotAssigned" xml:space="preserve"><value>This manager is not assigned to the property.</value></data>
+  <data name="P2ManagerInvalidRole" xml:space="preserve"><value>The selected account is not a manager.</value></data>
+  <data name="P2ManagerNotFound" xml:space="preserve"><value>Manager account not found.</value></data>
+  <data name="P2ManagerOwnedByAnotherOwner" xml:space="preserve"><value>This manager already belongs to another owner.</value></data>
+  <data name="ColumnOwner" xml:space="preserve"><value>Owner</value></data>
+  <data name="ColumnOwnerOrProperty" xml:space="preserve"><value>Landlord / Property</value></data>
+  <data name="OwnerUnassigned" xml:space="preserve"><value>No owner</value></data>
+  <data name="OwnerSelf" xml:space="preserve"><value>Owner</value></data>
+  <data name="OwnerNoProperty" xml:space="preserve"><value>No property yet</value></data>
+  <data name="NotApplicable" xml:space="preserve"><value>—</value></data>
+  <data name="AssignProperties" xml:space="preserve"><value>Assign buildings</value></data>
+  <data name="AssignPropertiesTitle" xml:space="preserve"><value>Assign buildings</value></data>
+  <data name="AssignedProperties" xml:space="preserve"><value>Assigned buildings</value></data>
+  <data name="NoAssignedProperties" xml:space="preserve"><value>No buildings assigned yet.</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Select a building</value></data>
+  <data name="AssignProperty" xml:space="preserve"><value>Assign</value></data>
+  <data name="RevokeProperty" xml:space="preserve"><value>Revoke</value></data>
+  <data name="PropertyAssigned" xml:space="preserve"><value>Building assigned.</value></data>
+  <data name="PropertyRevoked" xml:space="preserve"><value>Building revoked.</value></data>
+  <data name="NoAvailableProperties" xml:space="preserve"><value>No buildings left to assign.</value></data>
+  <data name="ManagerOwnerBanner" xml:space="preserve"><value>Your owner: {0}</value></data>
+  <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>You have not been assigned to any owner yet. Contact your owner to be assigned a building.</value></data>
+  <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Could not load owner information.</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Rooms</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Track rooms, rental prices, and occupancy status</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Add room</value></data>
@@ -675,6 +754,12 @@
   <data name="P2StatusUnknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="P2MinPrice" xml:space="preserve"><value>Min price</value></data>
   <data name="P2MaxPrice" xml:space="preserve"><value>Max price</value></data>
+  <data name="P2AmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
+  <data name="P2AllFloors" xml:space="preserve"><value>All floors</value></data>
+  <data name="P2AreaFrom" xml:space="preserve"><value>Area from (m²)</value></data>
+  <data name="P2AreaTo" xml:space="preserve"><value>Area to (m²)</value></data>
+  <data name="P2ValidationAreaNumber" xml:space="preserve"><value>Area filters must be non-negative numbers.</value></data>
+  <data name="P2ValidationAreaRange" xml:space="preserve"><value>Minimum area cannot exceed maximum area.</value></data>
   <data name="P2OnlyAvailable" xml:space="preserve"><value>Available only</value></data>
   <data name="P2ValidationPriceNumber" xml:space="preserve"><value>Price filters must be non-negative numbers.</value></data>
   <data name="P2ValidationPriceRange" xml:space="preserve"><value>Minimum price cannot exceed maximum price.</value></data>
@@ -689,7 +774,7 @@
   <data name="P2SquareMeter" xml:space="preserve"><value>m²</value></data>
   <data name="P2StandardPrice" xml:space="preserve"><value>Rental price</value></data>
   <data name="P2SelectProperty" xml:space="preserve"><value>Select a property</value></data>
-  <data name="P2PriceInputHint" xml:space="preserve"><value>Enter the amount in Vietnamese dong (VND).</value></data>
+  <data name="P2PriceInputHint" xml:space="preserve"><value>Enter the amount in dong, for example 2.500.000 ₫.</value></data>
   <data name="P2ValidationPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
   <data name="P2ValidationRoomCodeRequired" xml:space="preserve"><value>Enter a room code.</value></data>
   <data name="P2ValidationRoomCodeLength" xml:space="preserve"><value>Room code must be 50 characters or fewer.</value></data>
@@ -712,8 +797,31 @@
   <data name="P2RoomMovedToTrash" xml:space="preserve"><value>Room moved to trash.</value></data>
   <data name="P2RoomInUse" xml:space="preserve"><value>This room has an active contract and cannot be deleted.</value></data>
   <data name="P2RoomNotFound" xml:space="preserve"><value>Room not found or access is not allowed.</value></data>
-  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in the property.</value></data>
+  <data name="P2DuplicateRoomCode" xml:space="preserve"><value>This room code already exists in this property.</value></data>
   <data name="P2ViewRooms" xml:space="preserve"><value>View rooms</value></data>
+  <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Manager assignment</value></data>
+  <data name="P2ManagerPanelHint" xml:space="preserve"><value>A manager only sees the properties and rooms actively assigned to them.</value></data>
+  <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>No manager is assigned to this property yet.</value></data>
+  <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Assigned since</value></data>
+  <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Select a manager account</value></data>
+  <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Select a manager account —</value></data>
+  <data name="P2ManagerOperationFailed" xml:space="preserve"><value>The action could not be completed. Please try again.</value></data>
+  <data name="P2DeleteProperty" xml:space="preserve"><value>Delete property</value></data>
+  <data name="P2DeletePropertyTitle" xml:space="preserve"><value>Move this property to the trash?</value></data>
+  <data name="P2DeletePropertyConfirm" xml:space="preserve"><value>Property '{0}' will be moved to the trash. You can restore it together with its non-deleted rooms.</value></data>
+  <data name="P2PropertyDeleted" xml:space="preserve"><value>Property moved to trash.</value></data>
+  <data name="P2PropertyHasRooms" xml:space="preserve"><value>This property still has rooms. Move all rooms to the trash before deleting it.</value></data>
+  <data name="P2PropertyTrashOpen" xml:space="preserve"><value>Trash</value></data>
+  <data name="P2PropertyTrashTitle" xml:space="preserve"><value>Property trash</value></data>
+  <data name="P2PropertyTrashSubtitle" xml:space="preserve"><value>Soft-deleted properties. Only the owner can view and restore them.</value></data>
+  <data name="P2PropertyTrashTable" xml:space="preserve"><value>Properties in trash</value></data>
+  <data name="P2PropertyTrashRoomCount" xml:space="preserve"><value>Rooms awaiting restore</value></data>
+  <data name="P2PropertyTrashRestoreTitle" xml:space="preserve"><value>Restore this property?</value></data>
+  <data name="P2PropertyTrashRestoreConfirm" xml:space="preserve"><value>Property '{0}' will return to the list together with its non-deleted rooms.</value></data>
+  <data name="P2PropertyTrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
+  <data name="P2PropertyTrashRestored" xml:space="preserve"><value>Property restored.</value></data>
+  <data name="P2PropertyTrashRestoreFailed" xml:space="preserve"><value>The property could not be restored.</value></data>
+  <data name="P2RoomTrashOpen" xml:space="preserve"><value>Trash</value></data>
   <data name="P2TrashTitle" xml:space="preserve"><value>Room trash</value></data>
   <data name="P2TrashSubtitle" xml:space="preserve"><value>Soft-deleted rooms. Only the owner can view and restore them.</value></data>
   <data name="P2TrashTable" xml:space="preserve"><value>Rooms in trash</value></data>
@@ -723,7 +831,8 @@
   <data name="P2TrashRestoring" xml:space="preserve"><value>Restoring…</value></data>
   <data name="P2TrashRestored" xml:space="preserve"><value>Room restored.</value></data>
   <data name="P2TrashRestoreFailed" xml:space="preserve"><value>Could not restore the room. Please try again.</value></data>
-  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>The room code is already used by another room, so it cannot be restored.</value></data>
+  <data name="P2RestoreDuplicateCode" xml:space="preserve"><value>The room code is already used by another room in this property, so it cannot be restored.</value></data>
+  <data name="P2RestorePropertyDeleted" xml:space="preserve"><value>This room's property has been deleted, so the room cannot be restored.</value></data>
 
   <!-- VHT-17: tenant management and tenant profile P3 -->
   <data name="MyTenantProfile" xml:space="preserve"><value>My profile</value></data>
@@ -908,6 +1017,9 @@
   <data name="TooManyRequests" xml:space="preserve">
     <value>Too many requests. Please try again later.</value>
   </data>
+  <data name="LoginIpBlocked" xml:space="preserve">
+    <value>Too many failed sign-in attempts. Please try again in {0} minute(s).</value>
+  </data>
   <data name="CaptchaRequired" xml:space="preserve">
     <value>Because of repeated failed attempts, please answer the verification question.</value>
   </data>
@@ -1080,7 +1192,7 @@
   <data name="RequirementSupportingDocuments" xml:space="preserve"><value>Employment contract or student ID for long-term residents.</value></data>
   <data name="PreviewDocumentIssuer" xml:space="preserve"><value>SOCIALIST REPUBLIC OF VIETNAM</value></data>
   <data name="PhotoLabel" xml:space="preserve"><value>PHOTO</value></data>
-  <data name="SampleResidentAddress" xml:space="preserve"><value>Ben Thanh Ward, District 1, Ho Chi Minh City</value></data>
+  <data name="SampleResidentAddress" xml:space="preserve"><value>Ben Thanh Ward, Ho Chi Minh City</value></data>
   <data name="ContentType" xml:space="preserve"><value>Content type</value></data>
   <data name="Actions" xml:space="preserve"><value>Actions</value></data>
   <data name="Deleting" xml:space="preserve"><value>Deleting...</value></data>
@@ -1111,6 +1223,15 @@
   <data name="RenewRequestFailed" xml:space="preserve"><value>The renewal request could not be sent. Please try again.</value></data>
   <data name="RenewPendingStatusLabel" xml:space="preserve"><value>Status</value></data>
   <data name="RenewStatusPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="RenewStatusApproved" xml:space="preserve"><value>Accepted</value></data>
+  <data name="RenewStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="RenewDecidedAtLabel" xml:space="preserve"><value>Replied on</value></data>
+  <data name="RenewRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="RenewTabsLabel" xml:space="preserve"><value>Renewal request sections</value></data>
+  <data name="RenewTabRequest" xml:space="preserve"><value>Send request</value></data>
+  <data name="RenewTabHistory" xml:space="preserve"><value>Result &amp; history</value></data>
+  <data name="RenewPendingBlocksNew" xml:space="preserve"><value>Your latest request is still awaiting management, so no new request can be sent.</value></data>
+  <data name="RenewHistoryEmpty" xml:space="preserve"><value>You have not sent any renewal request for this contract.</value></data>
   <data name="RenewPendingSentAtLabel" xml:space="preserve"><value>Sent on</value></data>
   <data name="RenewErrorForbidden" xml:space="preserve"><value>You are not allowed to send a renewal request for this contract.</value></data>
   <data name="RenewErrorContractNotFound" xml:space="preserve"><value>Lease contract not found.</value></data>
@@ -1242,6 +1363,30 @@
   <data name="MeterReadingMonthFilter" xml:space="preserve"><value>Month:</value></data>
   <data name="MeterReadingYearFilter" xml:space="preserve"><value>Year:</value></data>
   <data name="MeterReadingMonthOptionFormat" xml:space="preserve"><value>Month {0:00}</value></data>
+  <data name="MeterReadingFloorGroup" xml:space="preserve"><value>Floor {0}</value></data>
+  <data name="MeterReadingUnknownFloor" xml:space="preserve"><value>Unknown floor</value></data>
+  <data name="MeterReadingToggleRoomDetails" xml:space="preserve"><value>View details for room {0}</value></data>
+  <data name="MeterReadingSearchLabel" xml:space="preserve"><value>Search</value></data>
+  <data name="MeterReadingSearchPlaceholder" xml:space="preserve"><value>Search room code, room name, tenant, contract…</value></data>
+  <data name="MeterReadingStatusFilter" xml:space="preserve"><value>Period status</value></data>
+  <data name="MeterReadingAdvancedFilter" xml:space="preserve"><value>Advanced filters</value></data>
+  <data name="MeterReadingAdvancedFilterCount" xml:space="preserve"><value>Advanced filters ({0})</value></data>
+  <data name="MeterReadingAdvancedFilterTitle" xml:space="preserve"><value>Meter reading status</value></data>
+  <data name="MeterReadingAdvancedSelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="MeterReadingAdvancedClear" xml:space="preserve"><value>Clear</value></data>
+  <data name="MeterReadingAdvancedHint" xml:space="preserve"><value>Pick one or more statuses. Rooms matching any selected status are shown.</value></data>
+  <data name="MeterReadingStatusOptionUnrecorded" xml:space="preserve"><value>Not recorded (missing both electricity and water)</value></data>
+  <data name="MeterReadingStatusOptionRecorded" xml:space="preserve"><value>Fully recorded</value></data>
+  <data name="MeterReadingStatusOptionLocked" xml:space="preserve"><value>Locked (period closed, read-only)</value></data>
+  <data name="MeterReadingStatusOptionOpen" xml:space="preserve"><value>Not locked (can still enter/edit)</value></data>
+  <data name="MeterReadingStatusAll" xml:space="preserve"><value>All period statuses</value></data>
+  <data name="MeterReadingStatusPartial" xml:space="preserve"><value>Partially recorded</value></data>
+  <data name="MeterReadingStatusMissingElectric" xml:space="preserve"><value>Missing electricity reading</value></data>
+  <data name="MeterReadingStatusMissingWater" xml:space="preserve"><value>Missing water reading</value></data>
+  <data name="MeterReadingFloorFilter" xml:space="preserve"><value>Floor</value></data>
+  <data name="MeterReadingFloorAll" xml:space="preserve"><value>All floors</value></data>
+  <data name="MeterReadingNoFilterMatchTitle" xml:space="preserve"><value>No rooms match the filters</value></data>
+  <data name="MeterReadingNoFilterMatchDesc" xml:space="preserve"><value>Try another keyword or clear some filters to see other rooms.</value></data>
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>
@@ -1263,30 +1408,140 @@
   <data name="ApprovalUiTargetContract" xml:space="preserve"><value>Contract</value></data>
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Meter reading period</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Incident</value></data>
+  <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Invoice</value></data>
   <data name="SW-01" xml:space="preserve"><value>Edit room details</value></data>
-  <data name="SW-02" xml:space="preserve"><value>Set room rate</value></data>
+  <data name="SW-02" xml:space="preserve"><value>Edit room rent</value></data>
   <data name="SW-03" xml:space="preserve"><value>Change room status</value></data>
-  <data name="SW-04" xml:space="preserve"><value>Create tenant profile</value></data>
+  <data name="SW-04" xml:space="preserve"><value>Add tenant</value></data>
   <data name="SW-05" xml:space="preserve"><value>Edit tenant profile</value></data>
-  <data name="SW-06" xml:space="preserve"><value>Delete tenant profile</value></data>
-  <data name="SW-07" xml:space="preserve"><value>Extend or terminate contract</value></data>
+  <data name="SW-06" xml:space="preserve"><value>Move tenant profile to trash</value></data>
+  <data name="SW-07" xml:space="preserve"><value>Renew or liquidate contract</value></data>
   <data name="SW-08" xml:space="preserve"><value>Update deposit</value></data>
   <data name="SW-09" xml:space="preserve"><value>Edit previous meter readings</value></data>
   <data name="SW-10" xml:space="preserve"><value>Create invoice</value></data>
   <data name="SW-11" xml:space="preserve"><value>Issue invoice</value></data>
-  <data name="SW-12" xml:space="preserve"><value>Create maintenance ticket</value></data>
-  <data name="SW-13" xml:space="preserve"><value>Update incident status</value></data>
+  <data name="SW-12" xml:space="preserve"><value>Create incident ticket</value></data>
+  <data name="SW-13" xml:space="preserve"><value>Update incident handling</value></data>
   <data name="SW-14" xml:space="preserve"><value>Attach result photos</value></data>
-  <data name="SW-15" xml:space="preserve"><value>View reports</value></data>
+  <data name="SW-15" xml:space="preserve"><value>View operational reports</value></data>
+  <data name="SW-15a" xml:space="preserve"><value>Reports — Rooms</value></data>
+  <data name="SW-15b" xml:space="preserve"><value>Reports — Tenants</value></data>
+  <data name="SW-15c" xml:space="preserve"><value>Reports — Contracts</value></data>
+  <data name="SW-15d" xml:space="preserve"><value>Reports — Utilities &amp; services</value></data>
+  <data name="SW-15e" xml:space="preserve"><value>Reports — Incidents</value></data>
   <data name="SW-16" xml:space="preserve"><value>Export reports to Excel</value></data>
-  <data name="SW-15a" xml:space="preserve"><value>View room report</value></data>
-  <data name="SW-15b" xml:space="preserve"><value>View tenant report</value></data>
-  <data name="SW-15c" xml:space="preserve"><value>View contract report</value></data>
-  <data name="SW-15d" xml:space="preserve"><value>View invoice report</value></data>
-  <data name="SW-15e" xml:space="preserve"><value>View revenue and receivables report</value></data>
+  <data name="SwDesc-SW-01" xml:space="preserve"><value>Managers can edit a room's code, floor, area and notes. Rent and room status have separate switches.</value></data>
+  <data name="SwDesc-SW-02" xml:space="preserve"><value>Managers can change the room's listed rent. This rate is used for contracts and monthly rent charges.</value></data>
+  <data name="SwDesc-SW-03" xml:space="preserve"><value>Managers can move a room between Vacant, Rented and Maintenance. A wrong change can break contract and invoice flows.</value></data>
+  <data name="SwDesc-SW-04" xml:space="preserve"><value>Managers can register a new tenant profile with personal details and identity documents.</value></data>
+  <data name="SwDesc-SW-05" xml:space="preserve"><value>Managers can edit existing tenant profiles. Identity numbers stay masked for managers.</value></data>
+  <data name="SwDesc-SW-06" xml:space="preserve"><value>Managers can move a tenant profile to the trash (soft delete). The owner can still restore it.</value></data>
+  <data name="SwDesc-SW-07" xml:space="preserve"><value>Managers can renew or liquidate an active contract.</value></data>
+  <data name="SwDesc-SW-08" xml:space="preserve"><value>Managers can adjust the deposit agreed in the contract.</value></data>
+  <data name="SwDesc-SW-09" xml:space="preserve"><value>Managers can edit meter readings of a period that was already closed. Every change is written to the audit log.</value></data>
+  <data name="SwDesc-SW-10" xml:space="preserve"><value>Managers can create draft invoices for a room and billing period. Tenants cannot see drafts.</value></data>
+  <data name="SwDesc-SW-11" xml:space="preserve"><value>Managers can issue draft invoices to tenants. Once issued, the figures are locked.</value></data>
+  <data name="SwDesc-SW-12" xml:space="preserve"><value>Managers can create incident tickets for a room with a description and photos.</value></data>
+  <data name="SwDesc-SW-13" xml:space="preserve"><value>Managers can update an incident ticket's handling status, such as in progress or resolved.</value></data>
+  <data name="SwDesc-SW-14" xml:space="preserve"><value>Managers can attach result photos after fixing an incident so the owner can verify.</value></data>
+  <data name="SwDesc-SW-15" xml:space="preserve"><value>Controls whether managers can open the operational reports page. Blocking here blocks every report section below.</value></data>
+  <data name="SwDesc-SW-15a" xml:space="preserve"><value>Lets managers see the Rooms report: room counts, status and rent.</value></data>
+  <data name="SwDesc-SW-15b" xml:space="preserve"><value>Lets managers see the Tenants report: profiles and rental status.</value></data>
+  <data name="SwDesc-SW-15c" xml:space="preserve"><value>For the Contracts report section. That report screen does not exist yet, so this switch blocks nothing.</value></data>
+  <data name="SwDesc-SW-15d" xml:space="preserve"><value>For the Utilities &amp; services report section. That report screen does not exist yet, so this switch blocks nothing.</value></data>
+  <data name="SwDesc-SW-15e" xml:space="preserve"><value>For the Incidents report section. That report screen does not exist yet, so this switch blocks nothing.</value></data>
+  <data name="SwDesc-SW-16" xml:space="preserve"><value>Controls whether managers can export reports to Excel. Exports never contain identity numbers.</value></data>
+  <data name="SwDetail-SW-01" xml:space="preserve"><value>Requires approval: room edit requests go to the approval queue and are written only after the owner approves. Block: managers cannot open the room edit form.</value></data>
+  <data name="SwDetail-SW-02" xml:space="preserve"><value>Requires approval: rent change requests go to the approval queue. Block: managers cannot change the rent.</value></data>
+  <data name="SwDetail-SW-03" xml:space="preserve"><value>Requires approval: status change requests go to the approval queue. Block: managers cannot change the room status.</value></data>
+  <data name="SwDetail-SW-04" xml:space="preserve"><value>Requires approval: new tenant profiles are created only after the owner approves. Block: managers cannot open the intake form.</value></data>
+  <data name="SwDetail-SW-05" xml:space="preserve"><value>Requires approval: profile edit requests go to the approval queue and existing data stays unchanged. Block: managers cannot edit profiles.</value></data>
+  <data name="SwDetail-SW-06" xml:space="preserve"><value>Requires approval: delete requests go to the approval queue and the profile stays out of the trash. Block: managers cannot delete profiles.</value></data>
+  <data name="SwDetail-SW-07" xml:space="preserve"><value>Requires approval: renewal or liquidation requests go to the approval queue. Block: managers cannot act on the contract.</value></data>
+  <data name="SwDetail-SW-08" xml:space="preserve"><value>Requires approval: deposit change requests go to the approval queue. Block: managers cannot edit the deposit.</value></data>
+  <data name="SwDetail-SW-09" xml:space="preserve"><value>Requires approval: reading edit requests go to the approval queue. Block: managers cannot edit readings of a closed period.</value></data>
+  <data name="SwDetail-SW-10" xml:space="preserve"><value>Requires approval: draft invoices are created only after the owner approves. Block: managers cannot create invoices.</value></data>
+  <data name="SwDetail-SW-11" xml:space="preserve"><value>Requires approval: issue requests go to the approval queue and the invoice stays a draft. Block: managers cannot issue invoices.</value></data>
+  <data name="SwDetail-SW-12" xml:space="preserve"><value>Requires approval: incident tickets are created only after the owner approves. Block: managers cannot open the incident form.</value></data>
+  <data name="SwDetail-SW-13" xml:space="preserve"><value>Requires approval: handling status changes go to the approval queue. Block: managers cannot update incident tickets.</value></data>
+  <data name="SwDetail-SW-14" xml:space="preserve"><value>Requires approval: result photos are attached only after the owner approves. Block: managers cannot upload result photos.</value></data>
+  <data name="SwDetail-SW-15" xml:space="preserve"><value>Block: managers cannot open the operational reports page, including every section below.</value></data>
+  <data name="SwDetail-SW-15a" xml:space="preserve"><value>Block: managers cannot view the Rooms report section.</value></data>
+  <data name="SwDetail-SW-15b" xml:space="preserve"><value>Block: managers cannot view the Tenants report section.</value></data>
+  <data name="SwDetail-SW-15c" xml:space="preserve"><value>Block: will block the Contracts report section once that screen exists.</value></data>
+  <data name="SwDetail-SW-15d" xml:space="preserve"><value>Block: will block the Utilities &amp; services report section once that screen exists.</value></data>
+  <data name="SwDetail-SW-15e" xml:space="preserve"><value>Block: will block the Incidents report section once that screen exists.</value></data>
+  <data name="SwDetail-SW-16" xml:space="preserve"><value>Requires approval: Excel export requests go to the approval queue and the file is created only after the owner approves. Block: managers cannot export reports.</value></data>
+  <data name="SwGroupP2" xml:space="preserve"><value>Rooms</value></data>
+  <data name="SwGroupP3" xml:space="preserve"><value>Tenants</value></data>
+  <data name="SwGroupP4" xml:space="preserve"><value>Contracts</value></data>
+  <data name="SwGroupP5" xml:space="preserve"><value>Meter readings</value></data>
+  <data name="SwGroupP6" xml:space="preserve"><value>Invoices</value></data>
+  <data name="SwGroupP7" xml:space="preserve"><value>Incidents</value></data>
+  <data name="SwGroupP8" xml:space="preserve"><value>Reports</value></data>
+  <data name="SwModeLabel" xml:space="preserve"><value>Setting for managers</value></data>
+  <data name="SwModeAllow" xml:space="preserve"><value>Allow</value></data>
+  <data name="SwModeApprove" xml:space="preserve"><value>Requires approval</value></data>
+  <data name="SwModeDeny" xml:space="preserve"><value>Block</value></data>
+  <data name="SwModesTitle" xml:space="preserve"><value>How switches work</value></data>
+  <data name="SwModeHelpAllow" xml:space="preserve"><value>Managers act immediately without owner approval.</value></data>
+  <data name="SwModeHelpApprove" xml:space="preserve"><value>Manager requests go to the approval queue and take effect only after the owner approves.</value></data>
+  <data name="SwModeHelpDeny" xml:space="preserve"><value>Managers cannot perform this action.</value></data>
+  <data name="SwOwnerNote" xml:space="preserve"><value>Switches apply to managers only. Owner actions always take effect immediately.</value></data>
+  <data name="SwExplainShow" xml:space="preserve"><value>See impact</value></data>
+  <data name="SwExplainHide" xml:space="preserve"><value>Hide</value></data>
   <data name="ForgotPasswordTitle" xml:space="preserve"><value>Forgot your password?</value></data>
   <data name="ForgotPasswordPrompt" xml:space="preserve"><value>Enter your email address.</value></data>
   <data name="ResetPasswordButton" xml:space="preserve"><value>Reset password</value></data>
+  <data name="BackToLogin" xml:space="preserve"><value>Back to sign in</value></data>
+  <data name="InviteTenantButton" xml:space="preserve"><value>Invite tenant</value></data>
+  <data name="InviteTenantTitle" xml:space="preserve"><value>Invite a tenant</value></data>
+  <data name="InviteTenantEmailHint" xml:space="preserve"><value>The invitation is sent to this email.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>The tenant opens the email and sets a password; the profile belongs to your account.</value></data>
+  <data name="InviteTenantSend" xml:space="preserve"><value>Send invitation</value></data>
+  <data name="InviteTenantSent" xml:space="preserve"><value>Invitation sent by email.</value></data>
+  <data name="InviteTenantEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="InviteTenantForbidden" xml:space="preserve"><value>You are not assigned to any owner.</value></data>
+  <data name="InviteTenantFailed" xml:space="preserve"><value>Could not send the invitation.</value></data>
+  <data name="InviteAcceptTitle" xml:space="preserve"><value>Join the boarding-house system</value></data>
+  <data name="InviteAcceptAccount" xml:space="preserve"><value>Account: {0}</value></data>
+  <data name="InviteAcceptPasswordHint" xml:space="preserve"><value>At least 8 characters.</value></data>
+  <data name="InviteAcceptSubmit" xml:space="preserve"><value>Set password and join</value></data>
+  <data name="InviteAcceptSuccess" xml:space="preserve"><value>Account created. Sign in with your email and the new password.</value></data>
+  <data name="InviteAcceptInvalid" xml:space="preserve"><value>The link is invalid, already used, or expired.</value></data>
+  <data name="InviteAcceptExpired" xml:space="preserve"><value>The invitation has expired. Please contact the landlord.</value></data>
+  <data name="InviteAcceptUsed" xml:space="preserve"><value>The invitation has already been used.</value></data>
+  <data name="InviteAcceptEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="InviteAcceptFailed" xml:space="preserve"><value>Could not create the account. Check the password.</value></data>
+  <data name="RegisterOwnerTitle" xml:space="preserve"><value>Register as a landlord</value></data>
+  <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Create a landlord account to manage your boarding houses.</value></data>
+  <data name="RegisterOwnerButton" xml:space="preserve"><value>Submit registration</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>An administrator must approve your account before you can sign in.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Registration submitted. Your account is waiting for administrator approval; check your email to confirm the address.</value></data>
+  <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
+  <data name="RegisterOwnerFailed" xml:space="preserve"><value>Registration failed. Check your details and password (at least 8 characters with upper case, lower case and a digit).</value></data>
+  <data name="RegisterOwnerLogin" xml:space="preserve"><value>Already have an account? Sign in</value></data>
+  <data name="RegisterOwnerLink" xml:space="preserve"><value>No account yet? Register as a landlord</value></data>
+  <data name="DeleteAccount" xml:space="preserve"><value>Delete</value></data>
+  <data name="DeleteAccountTitle" xml:space="preserve"><value>Delete account</value></data>
+  <data name="DeleteAccountMessage" xml:space="preserve"><value>Permanently delete account {0}? This cannot be undone.</value></data>
+  <data name="DeleteAccountConfirm" xml:space="preserve"><value>Delete account</value></data>
+  <data name="AccountDeleted" xml:space="preserve"><value>Account deleted.</value></data>
+  <data name="ErrorCannotDeleteSelf" xml:space="preserve"><value>You cannot delete the account you are signed in with.</value></data>
+  <data name="ErrorCannotDeleteLastAdmin" xml:space="preserve"><value>The last administrator cannot be deleted.</value></data>
+  <data name="ErrorAccountInUse" xml:space="preserve"><value>The account is linked to a tenant profile. Unlink it first.</value></data>
+  <data name="AccountTrash" xml:space="preserve"><value>Trash</value></data>
+  <data name="AccountTrashTitle" xml:space="preserve"><value>Deleted accounts</value></data>
+  <data name="AccountTrashEmpty" xml:space="preserve"><value>Trash is empty.</value></data>
+  <data name="AccountDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="AccountRestore" xml:space="preserve"><value>Restore</value></data>
+  <data name="AccountRestored" xml:space="preserve"><value>Account restored.</value></data>
+  <data name="ForgotPasswordHint" xml:space="preserve"><value>Enter your registered email and we will send a password reset link.</value></data>
+  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>If the email exists in the system, you will receive a link within a few minutes. Remember to check the Spam folder.</value></data>
+  <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Use the email of the account you are resetting.</value></data>
+  <data name="ResetPasswordConfirmationHint" xml:space="preserve"><value>You can now sign in with your new password.</value></data>
+  <data name="ResetPasswordError" xml:space="preserve"><value>Could not reset the password: {0}</value></data>
+  <data name="ResetPasswordInvalidToken" xml:space="preserve"><value>The reset link is invalid or has expired. Please request a new link.</value></data>
   <data name="RecoveryCodeTitle" xml:space="preserve"><value>Recovery code verification</value></data>
   <data name="RecoveryCodePlaceholder" xml:space="preserve"><value>Recovery code</value></data>
   <data name="RecoveryCodeLabel" xml:space="preserve"><value>Recovery code</value></data>
@@ -1329,6 +1584,7 @@
   <data name="ProfilePhoneUpdateFailed" xml:space="preserve"><value>Could not update the phone number.</value></data>
   <data name="ManageEmailTitle" xml:space="preserve"><value>Manage email</value></data>
   <data name="EmailPlaceholder" xml:space="preserve"><value>Enter your email</value></data>
+  <data name="EmailConfirmedLabel" xml:space="preserve"><value>Verified</value></data>
   <data name="SendVerificationEmailAction" xml:space="preserve"><value>Send verification email</value></data>
   <data name="NewEmailLabel" xml:space="preserve"><value>New email</value></data>
   <data name="NewEmailPlaceholder" xml:space="preserve"><value>Enter a new email</value></data>
@@ -1468,4 +1724,213 @@
   <data name="SimulatedPreviewWatermark" xml:space="preserve"><value>Simulated preview</value></data>
   <data name="SimulatedPreviewNotice" xml:space="preserve"><value>Simulated file preview. Please download the original file to view the full scanned document.</value></data>
   <data name="PreviewNotAvailable" xml:space="preserve"><value>Direct preview is not available for this file type. Please download the file to view its full content.</value></data>
+  <data name="ManagerSwitchesSaveHint" xml:space="preserve"><value>Changes are saved automatically. Report sections only support Allow or Block.</value></data>
+  <data name="RoomPropertyRequired" xml:space="preserve"><value>Please select a property.</value></data>
+  <data name="RoomCodeRequired" xml:space="preserve"><value>Please enter a room code.</value></data>
+  <data name="RoomCodeMaxLength" xml:space="preserve"><value>Room code must not exceed 50 characters.</value></data>
+  <data name="RoomFloorInvalid" xml:space="preserve"><value>Floor must be between 0 and 1000.</value></data>
+  <data name="RoomAreaInvalid" xml:space="preserve"><value>Area must be between 0 and 100000 m².</value></data>
+  <data name="RoomPriceInvalid" xml:space="preserve"><value>Rent price is invalid.</value></data>
+  <data name="RoomStatusInvalid" xml:space="preserve"><value>Room status is invalid.</value></data>
+  <data name="TenantFullNameRequired" xml:space="preserve"><value>Please enter the full name.</value></data>
+  <data name="TenantFullNameMaxLength" xml:space="preserve"><value>Full name must not exceed 200 characters.</value></data>
+  <data name="TenantPhoneRequired" xml:space="preserve"><value>Please enter a phone number.</value></data>
+  <data name="TenantPhoneMaxLength" xml:space="preserve"><value>Phone number must not exceed 20 characters.</value></data>
+  <data name="TenantEmailInvalid" xml:space="preserve"><value>Email is not valid.</value></data>
+  <data name="TenantEmailMaxLength" xml:space="preserve"><value>Email must not exceed 256 characters.</value></data>
+  <data name="TenantIdNumberMaxLength" xml:space="preserve"><value>ID number must not exceed 20 characters.</value></data>
+  <data name="TenantGenderInvalid" xml:space="preserve"><value>Gender is invalid.</value></data>
+  <data name="TenantAddressMaxLength" xml:space="preserve"><value>Address must not exceed 300 characters.</value></data>
+  <data name="TenantIdIssuedPlaceMaxLength" xml:space="preserve"><value>Place of issue must not exceed 200 characters.</value></data>
+  <data name="TenantNoteMaxLength" xml:space="preserve"><value>Note must not exceed 500 characters.</value></data>
+  <data name="TenantRowVersionRequired" xml:space="preserve"><value>RowVersion is missing.</value></data>
+  <data name="P2PropertiesHelpLabel" xml:space="preserve"><value>About the properties page</value></data>
+  <data name="PageHelpLabel" xml:space="preserve"><value>About this page</value></data>
+  <data name="AddressStreetLabel" xml:space="preserve"><value>House number, street</value></data>
+  <data name="AddressStreetPlaceholder" xml:space="preserve"><value>e.g. 12 Nguyen Trai</value></data>
+  <data name="AddressProvinceLabel" xml:space="preserve"><value>Province/City</value></data>
+  <data name="AddressProvincePlaceholder" xml:space="preserve"><value>Select province/city</value></data>
+  <data name="AddressWardLabel" xml:space="preserve"><value>Ward/Commune</value></data>
+  <data name="AddressWardPlaceholder" xml:space="preserve"><value>Select ward/commune</value></data>
+  <data name="AddressWardProvinceRequired" xml:space="preserve"><value>Select a province/city first</value></data>
+  <data name="ApprovalsHelp" xml:space="preserve"><value>Review and handle approval requests within your account scope.</value></data>
+  <data name="MyRequestsHelp" xml:space="preserve"><value>Track the status of requests you have submitted.</value></data>
+  <data name="InviteAcceptHelp" xml:space="preserve"><value>Accept the boarding-house invitation and create your account.</value></data>
+  <data name="ConfirmEmailHelp" xml:space="preserve"><value>Confirm your email address to finish creating your account.</value></data>
+  <data name="ConfirmEmailChangeHelp" xml:space="preserve"><value>Confirm the change to your account email address.</value></data>
+  <data name="ExternalLoginHelp" xml:space="preserve"><value>Link an external sign-in account to your existing account.</value></data>
+  <data name="RegisterConfirmationHelp" xml:space="preserve"><value>Check your email to finish confirming the owner account.</value></data>
+  <data name="ResendEmailConfirmationHelp" xml:space="preserve"><value>Resend the confirmation email if you have not received it.</value></data>
+  <data name="InvalidUserHelp" xml:space="preserve"><value>The account is invalid or no longer exists in the system.</value></data>
+  <data name="AccessDeniedHelp" xml:space="preserve"><value>Your account does not have permission to open this page.</value></data>
+  <data name="LockoutHelp" xml:space="preserve"><value>The account is locked; contact the account manager to unlock it.</value></data>
+  <data name="ErrorHelp" xml:space="preserve"><value>Something went wrong while processing your request.</value></data>
+  <data name="NotFoundHelp" xml:space="preserve"><value>The link does not exist or the content has moved.</value></data>
+  <data name="LeasedRoomHelp" xml:space="preserve"><value>View your current lease contract, terms and electronic annexes.</value></data>
+  <data name="AddressSuggestionHint" xml:space="preserve"><value>Pick a province/city, then a ward/commune from the 34 province/city and 3,321 ward/commune dataset. Use "Other" only when the address is outside the list; legacy addresses stay in the manual fields.</value></data>
+  <data name="AddressOtherOption" xml:space="preserve"><value>Other — enter manually</value></data>
+  <data name="AddressProvinceManualPlaceholder" xml:space="preserve"><value>Enter a province/city outside the list</value></data>
+  <data name="AddressWardManualPlaceholder" xml:space="preserve"><value>Enter a ward/commune outside the list</value></data>
+  <!-- PLAN-009..013: seamless property setup wizard -->
+  <data name="P2SetupTitle" xml:space="preserve"><value>Property setup</value></data>
+  <data name="P2SetupSubtitle" xml:space="preserve"><value>Finish the property, rooms and pricing in one pass so you can start renting right away.</value></data>
+  <data name="P2SetupExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="P2SetupStepperLabel" xml:space="preserve"><value>Setup steps</value></data>
+  <data name="P2SetupStepBasics" xml:space="preserve"><value>Basics</value></data>
+  <data name="P2SetupStepRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2SetupStepPricing" xml:space="preserve"><value>Pricing &amp; services</value></data>
+  <data name="P2SetupResumeTitle" xml:space="preserve"><value>You have an unfinished draft</value></data>
+  <data name="P2SetupResumeBody" xml:space="preserve"><value>“{0}” has not been fully set up. Continue or discard this draft?</value></data>
+  <data name="P2SetupResumeContinue" xml:space="preserve"><value>Continue draft</value></data>
+  <data name="P2SetupResumeDiscard" xml:space="preserve"><value>Discard draft</value></data>
+  <data name="P2SetupBasicsTitle" xml:space="preserve"><value>Property information</value></data>
+  <data name="P2SetupBasicsSubtitle" xml:space="preserve"><value>Just the name and address; the next steps add rooms and pricing.</value></data>
+  <data name="P2SetupContinueRooms" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupContinue" xml:space="preserve"><value>Continue setup</value></data>
+  <data name="P2SetupBack" xml:space="preserve"><value>Back</value></data>
+  <data name="P2SetupFinish" xml:space="preserve"><value>Finish</value></data>
+  <data name="P2SetupExitTitle" xml:space="preserve"><value>Leave setup?</value></data>
+  <data name="P2SetupExitBody" xml:space="preserve"><value>Choose how to save before leaving. You can come back later at any time.</value></data>
+  <data name="P2SetupExitSaveAndLeave" xml:space="preserve"><value>Save &amp; exit</value></data>
+  <data name="P2SetupExitSaveDraft" xml:space="preserve"><value>Save draft &amp; exit</value></data>
+  <data name="P2SetupExitContinue" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupExitSaved" xml:space="preserve"><value>Setup information saved.</value></data>
+  <data name="P2SetupDraftSaved" xml:space="preserve"><value>Draft saved in this browser.</value></data>
+  <data name="P2SetupDraftKept" xml:space="preserve"><value>Your previous draft was left untouched.</value></data>
+  <data name="P2SetupDraftBannerTitle" xml:space="preserve"><value>Setup draft</value></data>
+  <data name="P2SetupDraftBannerBody" xml:space="preserve"><value>“{0}” is still in progress. Continue to finish rooms and pricing.</value></data>
+  <data name="P2SetupDraftUnnamed" xml:space="preserve"><value>untitled</value></data>
+  <data name="P2SetupDraftResume" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupDraftDiscard" xml:space="preserve"><value>Discard</value></data>
+  <data name="P2SetupRoomsTitle" xml:space="preserve"><value>Property rooms</value></data>
+  <data name="P2SetupRoomsSubtitle" xml:space="preserve"><value>Add rooms one by one; after saving we will ask whether to add another.</value></data>
+  <data name="P2SetupRoomAdd" xml:space="preserve"><value>Add room</value></data>
+  <data name="P2SetupRoomsEmpty" xml:space="preserve"><value>No rooms yet.</value></data>
+  <data name="P2SetupRoomsEmptyHint" xml:space="preserve"><value>You can add rooms later, but adding them now is faster.</value></data>
+  <data name="P2SetupRoomsCount" xml:space="preserve"><value>{0} rooms</value></data>
+  <data name="P2SetupRoomContinue" xml:space="preserve"><value>Continue</value></data>
+  <data name="P2SetupAskMoreTitle" xml:space="preserve"><value>Room saved</value></data>
+  <data name="P2SetupAskMoreBody" xml:space="preserve"><value>Do you want to add another room?</value></data>
+  <data name="P2SetupAskMoreYes" xml:space="preserve"><value>Add another room</value></data>
+  <data name="P2SetupAskMoreNo" xml:space="preserve"><value>Done, go to pricing</value></data>
+  <data name="P2SetupPriceTitle" xml:space="preserve"><value>Pricing &amp; services</value></data>
+  <data name="P2SetupPriceSubtitle" xml:space="preserve"><value>Check electricity/water rates and choose how to set up the property's own services.</value></data>
+  <data name="P2SetupPriceElectric" xml:space="preserve"><value>Electricity</value></data>
+  <data name="P2SetupPriceWater" xml:space="preserve"><value>Water</value></data>
+  <data name="P2SetupPriceEffectiveFrom" xml:space="preserve"><value>Effective from {0}</value></data>
+  <data name="P2SetupPriceMissing" xml:space="preserve"><value>No effective rate yet</value></data>
+  <data name="P2SetupPriceServices" xml:space="preserve"><value>Property services</value></data>
+  <data name="P2SetupPriceServiceCount" xml:space="preserve"><value>{0} services in effect</value></data>
+  <data name="P2SetupPriceNoServices" xml:space="preserve"><value>No property services yet</value></data>
+  <data name="P2SetupPriceOptionsTitle" xml:space="preserve"><value>How would you like to set the pricing?</value></data>
+  <data name="P2SetupPriceUseSystem" xml:space="preserve"><value>Use system rates</value></data>
+  <data name="P2SetupPriceUseSystemHint" xml:space="preserve"><value>Electricity and water follow the current government rates; nothing to enter.</value></data>
+  <data name="P2SetupPriceCopy" xml:space="preserve"><value>Copy from another property</value></data>
+  <data name="P2SetupPriceCopyHint" xml:space="preserve"><value>Take the current services and prices from a property you manage.</value></data>
+  <data name="P2SetupPriceNoSources" xml:space="preserve"><value>No other property is available to copy from.</value></data>
+  <data name="P2SetupPriceCopySource" xml:space="preserve"><value>Source property</value></data>
+  <data name="P2SetupPriceCopySourcePlaceholder" xml:space="preserve"><value>Select a property to copy</value></data>
+  <data name="P2SetupPriceCopyAction" xml:space="preserve"><value>Copy prices</value></data>
+  <data name="P2SetupPriceManual" xml:space="preserve"><value>Enter services manually</value></data>
+  <data name="P2SetupPriceManualHint" xml:space="preserve"><value>Add internet, parking, cleaning… with your own rates.</value></data>
+  <data name="P2SetupPriceAddService" xml:space="preserve"><value>Add service</value></data>
+  <data name="P2SetupPriceLater" xml:space="preserve"><value>Configure later</value></data>
+  <data name="P2SetupPriceLaterHint" xml:space="preserve"><value>Finish now and set prices later in the Services section.</value></data>
+  <data name="P2SetupPriceCopyResult" xml:space="preserve"><value>Copied {0} services.</value></data>
+  <data name="P2SetupPriceCopyResultSkipped" xml:space="preserve"><value>Copied {0} services, skipped {1} with duplicate names.</value></data>
+  <data name="P2SetupPriceServiceAdded" xml:space="preserve"><value>Service added to the property.</value></data>
+  <data name="P2SetupPriceViewAll" xml:space="preserve"><value>View price list</value></data>
+  <data name="P2SetupPriceAdjust" xml:space="preserve"><value>Adjust</value></data>
+  <data name="P2SetupPriceWarningTitle" xml:space="preserve"><value>Not enough prices for invoicing</value></data>
+  <data name="P2SetupPriceWarningBody" xml:space="preserve"><value>The property is still usable; you can add tariffs after finishing.</value></data>
+  <data name="P2SetupPriceOpenPrices" xml:space="preserve"><value>Open price list</value></data>
+  <data name="P2SetupPriceCopyPreviewTitle" xml:space="preserve"><value>Will copy from “{0}”</value></data>
+  <data name="P2SetupPriceCopyPreviewCount" xml:space="preserve"><value>{0} active services</value></data>
+  <data name="P2SetupPriceCopyPreviewEmpty" xml:space="preserve"><value>The source property has no active services.</value></data>
+  <data name="P2SetupPriceCopyPreviewNote" xml:space="preserve"><value>Services already present in this property are skipped.</value></data>
+  <data name="P2SetupPriceCopyPreviewLoading" xml:space="preserve"><value>Loading preview…</value></data>
+  <data name="P2SetupPriceCopyPreviewMore" xml:space="preserve"><value>… and {0} more services</value></data>
+  <data name="P2SetupPriceManualBody" xml:space="preserve"><value>Services currently applied to this property.</value></data>
+  <data name="P2SetupPriceManualEmpty" xml:space="preserve"><value>No services added yet.</value></data>
+  <data name="P2SetupPriceManualEmptyHint" xml:space="preserve"><value>Add parking, cleaning, internet… with your own rates.</value></data>
+  <data name="P2SetupPriceEdit" xml:space="preserve"><value>Update price</value></data>
+  <data name="P2SetupPriceDeleteTitle" xml:space="preserve"><value>Delete service</value></data>
+  <data name="P2SetupPriceDeleteBody" xml:space="preserve"><value>Remove “{0}” from this property? The service will be hidden and can be restored from the service catalog.</value></data>
+  <data name="P2SetupPriceDeleted" xml:space="preserve"><value>Service deleted.</value></data>
+  <data name="P2SetupPriceUpdated" xml:space="preserve"><value>Service price updated.</value></data>
+  <data name="P2SetupPriceReadOnly" xml:space="preserve"><value>System service</value></data>
+  <data name="P2SetupPriceNoDate" xml:space="preserve"><value>No effective date</value></data>
+  <data name="P2SetupFinishedTitle" xml:space="preserve"><value>Setup complete</value></data>
+  <data name="P2SetupFinishedBody" xml:space="preserve"><value>“{0}” is ready for renting.</value></data>
+  <data name="P2SetupFinishedRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P2SetupFinishedServices" xml:space="preserve"><value>Services</value></data>
+  <data name="P2SetupFinishedViewRooms" xml:space="preserve"><value>View rooms</value></data>
+  <data name="P2SetupFinishedDone" xml:space="preserve"><value>Back to properties</value></data>
+  <!-- Stepper + mobile progress -->
+  <data name="P2SetupRailDone" xml:space="preserve"><value>Done</value></data>
+  <data name="P2SetupRailCurrent" xml:space="preserve"><value>In progress</value></data>
+  <data name="P2SetupRailLocked" xml:space="preserve"><value>Not open</value></data>
+  <data name="P2SetupRailBack" xml:space="preserve"><value>Go back</value></data>
+  <data name="P2SetupRailDoneLabel" xml:space="preserve"><value>Back to step {0}: {1}</value></data>
+  <data name="P2SetupRailLockedReasonRooms" xml:space="preserve"><value>Save the property details first to open the rooms step.</value></data>
+  <data name="P2SetupRailLockedReasonPricing" xml:space="preserve"><value>Finish the rooms step before moving to pricing.</value></data>
+  <data name="P2SetupProgressValue" xml:space="preserve"><value>Step {0}/{1} · {2}</value></data>
+  <data name="P2SetupProgressNext" xml:space="preserve"><value>Next: {0}</value></data>
+  <data name="P2SetupProgressAllDone" xml:space="preserve"><value>All 3 steps complete</value></data>
+  <data name="P2SetupExitHint" xml:space="preserve"><value>Enter the property name to save &amp; exit, or save a draft to continue later.</value></data>
+  <!-- Finish screen -->
+  <data name="P2SetupFinishedProperty" xml:space="preserve"><value>Property</value></data>
+  <data name="P2SetupFinishedAddress" xml:space="preserve"><value>Address</value></data>
+  <data name="P2SetupFinishedElectric" xml:space="preserve"><value>Electricity rate</value></data>
+  <data name="P2SetupFinishedWater" xml:space="preserve"><value>Water rate</value></data>
+  <data name="P2SetupFinishedNotConfigured" xml:space="preserve"><value>Not configured</value></data>
+  <data name="P2SetupFinishedWarningTitle" xml:space="preserve"><value>A few items are still unset</value></data>
+  <data name="P2SetupFinishedWarningRooms" xml:space="preserve"><value>No rooms yet — add rooms to start renting.</value></data>
+  <data name="P2SetupFinishedWarningElectric" xml:space="preserve"><value>No electricity rate is currently in effect.</value></data>
+  <data name="P2SetupFinishedWarningWater" xml:space="preserve"><value>No water rate is currently in effect.</value></data>
+  <data name="P2SetupFinishedNextTitle" xml:space="preserve"><value>Suggested next steps</value></data>
+  <data name="P2SetupFinishedNextTenants" xml:space="preserve"><value>Create a contract for the first tenant</value></data>
+  <data name="P2SetupFinishedNextPrices" xml:space="preserve"><value>Adjust electricity, water and service rates</value></data>
+  <data name="P2SetupFinishedNextRooms" xml:space="preserve"><value>Manage the property's room list</value></data>
+  <data name="P2SetupFinishedNextOpen" xml:space="preserve"><value>Open</value></data>
+  <!-- Room dialog: create / edit / clone -->
+  <data name="P2CloneRoom" xml:space="preserve"><value>Duplicate room</value></data>
+  <data name="P2CloneHint" xml:space="preserve"><value>Copied from room {0}. A new code was suggested to avoid duplicates.</value></data>
+  <data name="P2SaveAndAdd" xml:space="preserve"><value>Save and add another</value></data>
+  <data name="P2CodeSuggestion" xml:space="preserve"><value>Suggest code</value></data>
+  <data name="P2CodeSuggestionHint" xml:space="preserve"><value>Suggests a code from the floor and the next free number.</value></data>
+  <data name="P2PriceInvalidFormat" xml:space="preserve"><value>The amount is not formatted correctly. Example: 2.500.000.</value></data>
+  <data name="P2DiscardTitle" xml:space="preserve"><value>Discard changes?</value></data>
+  <data name="P2DiscardBody" xml:space="preserve"><value>The information you just entered has not been saved.</value></data>
+  <data name="P2DiscardKeep" xml:space="preserve"><value>Keep editing</value></data>
+  <data name="P2DiscardConfirm" xml:space="preserve"><value>Discard changes</value></data>
+  <data name="P2RoomSavedNext" xml:space="preserve"><value>Room {0} saved. Enter the next room below.</value></data>
+  <!-- Rooms step: filter, sort, selection and bulk delete -->
+  <data name="P2SetupRoomsSearchPlaceholder" xml:space="preserve"><value>Search by code or floor</value></data>
+  <data name="P2SetupRoomsFilterLabel" xml:space="preserve"><value>Filter by status</value></data>
+  <data name="P2SetupRoomsFilterAll" xml:space="preserve"><value>All</value></data>
+  <data name="P2SetupRoomsSortLabel" xml:space="preserve"><value>Sort</value></data>
+  <data name="P2SetupRoomsSortFloorAsc" xml:space="preserve"><value>Floor ascending</value></data>
+  <data name="P2SetupRoomsSortFloorDesc" xml:space="preserve"><value>Floor descending</value></data>
+  <data name="P2SetupRoomsSortCodeAsc" xml:space="preserve"><value>Room code A → Z</value></data>
+  <data name="P2SetupRoomsSortPriceAsc" xml:space="preserve"><value>Price ascending</value></data>
+  <data name="P2SetupRoomsSortPriceDesc" xml:space="preserve"><value>Price descending</value></data>
+  <data name="P2SetupRoomsFiltered" xml:space="preserve"><value>{0}/{1} rooms match the filters</value></data>
+  <data name="P2SetupRoomsFilterEmpty" xml:space="preserve"><value>No room matches the filters.</value></data>
+  <data name="P2SetupRoomsClearFilter" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="P2SetupRoomsLoadMore" xml:space="preserve"><value>Show {0} more rooms</value></data>
+  <data name="P2SetupRoomsSelected" xml:space="preserve"><value>{0} rooms selected</value></data>
+  <data name="P2SetupRoomsSelectionLabel" xml:space="preserve"><value>Actions for selected rooms</value></data>
+  <data name="P2SetupRoomsSelectAll" xml:space="preserve"><value>Select all visible rooms</value></data>
+  <data name="P2SetupRoomsSelectOne" xml:space="preserve"><value>Select room {0}</value></data>
+  <data name="P2SetupRoomsClearSelection" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="P2SetupRoomsDeleteSelected" xml:space="preserve"><value>Delete selected ({0})</value></data>
+  <data name="P2SetupRoomsClone" xml:space="preserve"><value>Duplicate room</value></data>
+  <data name="P2SetupRoomsDelete" xml:space="preserve"><value>Delete room</value></data>
+  <data name="P2SetupRoomsBulkTitle" xml:space="preserve"><value>Delete the selected rooms?</value></data>
+  <data name="P2SetupRoomsBulkBody" xml:space="preserve"><value>{0} rooms will be moved to the trash. Rooms with an active contract cannot be deleted.</value></data>
+  <data name="P2SetupRoomsBulkRunning" xml:space="preserve"><value>Deleting {0}/{1} rooms…</value></data>
+  <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>{0} rooms deleted.</value></data>
+  <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>{0} rooms deleted, {1} could not be deleted:</value></data>
+  <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Room {0}: {1}</value></data>
 </root>

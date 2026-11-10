@@ -1,0 +1,139 @@
+@page "/invite/{Token}"
+
+@using System.ComponentModel.DataAnnotations
+@using Web.Components.Shared.Forms
+@using Web.Features.Tenants.Invitations
+
+@inject TenantInvitationService Invitations
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["InviteAcceptTitle"] · @L["AppName"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="invite-title">
+    <div class="auth-card">
+        <PageHeading Title="@L["InviteAcceptTitle"]" TitleId="invite-title" HelpText="@L["InviteAcceptHelp"]"
+                     InteractiveHelp="true" Class="auth-heading">
+            <HeadingMeta>
+                @if (_account is not null)
+                {
+                    <p>@string.Format(L["InviteAcceptAccount"], _account)</p>
+                }
+            </HeadingMeta>
+        </PageHeading>
+
+        @if (_succeeded)
+        {
+            <div class="form-alert" role="status">
+                <LucideIcon Name="check" />
+                <span>@L["InviteAcceptSuccess"]</span>
+            </div>
+            <p class="hint"><a href="Account/Login">@L["BackToLogin"]</a></p>
+        }
+        else if (!_valid)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@L["InviteAcceptInvalid"]</span>
+            </div>
+        }
+        else
+        {
+            if (_error is not null)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert" />
+                    <span>@_error</span>
+                </div>
+            }
+
+            <EditForm Model="Input" FormName="accept-invitation" OnValidSubmit="SubmitAsync" method="post">
+                <DataAnnotationsValidator />
+
+                <FormField TValue="string" Id="invite-password" Label="@L["PasswordLabel"]" Required="true"
+                           Hint="@L["InviteAcceptPasswordHint"]" For="() => Input.Password">
+                    <InputText @bind-Value="Input.Password" id="invite-password" type="password" class="input"
+                               autocomplete="new-password" aria-required="true"
+                               aria-describedby="invite-password-hint invite-password-error" />
+                </FormField>
+
+                <FormField TValue="string" Id="invite-confirm" Label="@L["ConfirmPasswordLabel"]" Required="true"
+                           For="() => Input.ConfirmPassword">
+                    <InputText @bind-Value="Input.ConfirmPassword" id="invite-confirm" type="password" class="input"
+                               autocomplete="new-password" aria-required="true"
+                               placeholder="@L["ConfirmPasswordPlaceholder"]"
+                               aria-describedby="invite-confirm-error" />
+                </FormField>
+
+                <button type="submit" class="btn btn-primary btn-block">@L["InviteAcceptSubmit"]</button>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = default!;
+
+    private string? _account;
+    private bool _valid;
+    private bool _succeeded;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        var peek = await Invitations.PeekAsync(Token);
+        if (peek is null)
+        {
+            _valid = false;
+            return;
+        }
+
+        _valid = true;
+        _account = MaskEmail(peek.Value.Email);
+    }
+
+    private async Task SubmitAsync()
+    {
+        var result = await Invitations.AcceptAsync(Token, Input.Password);
+        if (result.Succeeded)
+        {
+            _succeeded = true;
+            return;
+        }
+
+        _error = result.ErrorCode switch
+        {
+            TenantInvitationErrorCodes.Expired => L["InviteAcceptExpired"],
+            TenantInvitationErrorCodes.AlreadyUsed => L["InviteAcceptUsed"],
+            TenantInvitationErrorCodes.EmailAlreadyRegistered => L["InviteAcceptEmailTaken"],
+            _ => L["InviteAcceptFailed"],
+        };
+    }
+
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 1)
+        {
+            return email;
+        }
+
+        return email[0] + new string('*', Math.Min(at - 1, 4)) + email[at..];
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [StringLength(100, MinimumLength = 8)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        [DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "Mật khẩu xác nhận không khớp.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

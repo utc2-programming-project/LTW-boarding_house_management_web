@@ -9,7 +9,7 @@
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@Title</PageTitle>
-<h1>@Title</h1>
+<PageHeading Title="@Title" HelpText="@(Mine ? L["MyRequestsHelp"] : L["ApprovalsHelp"])" />
 
 @if (_error)
 {

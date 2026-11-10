@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2212 2752" width="2212" height="2752" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">
-<rect width="2212" height="2752" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2212 3620" width="2212" height="3620" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="12">
+<rect width="2212" height="3620" fill="#ffffff"/>
 <polyline points="604,290 530,290 530,2050 260,2050 260,2098" stroke="#8c959f" stroke-width="1.5" fill="none"/>
 <text x="592" y="302" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="272" y="2076" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
@@ -24,9 +24,9 @@
 <text x="1619" y="1446" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1621" y="2162" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="1667" y="1500" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ApprovalRequestId</text>
-<polyline points="260.0,390.0 260.0,244.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<polyline points="260.0,390.0 260.0,266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
 <text x="272.0" y="377.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
-<text x="272.0" y="257.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="272.0" y="279.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="267.0" y="328.7" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">OwnerId</text>
 <polyline points="480.0,175.0 604.0,175.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
 <text x="493.0" y="187.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
@@ -36,14 +36,14 @@
 <text x="493.0" y="603.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="591.0" y="603.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="542.0" y="583.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">UserId</text>
-<polyline points="260.0,792.0 260.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="805.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
-<text x="272.0" y="859.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
-<text x="267.0" y="825.6" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ManagerUserId</text>
-<polyline points="260.0,244.0 260.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="257.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
-<text x="272.0" y="859.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
-<text x="267.0" y="507.8" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PropertyId</text>
+<polyline points="260.0,880.0 260.0,960.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="272.0" y="893.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="272.0" y="947.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="267.0" y="920.0" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ManagerUserId</text>
+<polyline points="260.0,266.0 260.0,960.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="248.0" y="279.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="272.0" y="947.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="267.0" y="352.0" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PropertyId</text>
 <polyline points="1044.0,153.0 1168.0,153.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
 <text x="1057.0" y="165.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1155.0" y="165.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
@@ -56,8 +56,8 @@
 <text x="1057.0" y="442.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1155.0" y="442.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="1106.0" y="410.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">TenantId</text>
-<polyline points="260.0,244.0 260.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="257.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<polyline points="260.0,266.0 260.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="248.0" y="279.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="272.0" y="1253.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="267.0" y="673.2" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PropertyId</text>
 <polyline points="480.0,1368.0 604.0,1368.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
@@ -84,23 +84,67 @@
 <text x="1964.0" y="301.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1964.0" y="377.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="1959.0" y="330.8" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">InvoiceId</text>
-<polyline points="260.0,792.0 260.0,832.0 542.0,832.0 542.0,832.0 824.0,832.0 824.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="805.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<polyline points="260.0,880.0 260.0,832.0 542.0,832.0 542.0,832.0 824.0,832.0 824.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="272.0" y="893.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="836.0" y="859.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
-<text x="434.8" y="812.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">UploadedByUserId</text>
-<polyline points="260.0,792.0 260.0,832.0 1670.0,832.0 1670.0,832.0 1952.0,832.0 1952.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="805.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="542.0" y="824.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">UploadedByUserId</text>
+<polyline points="260.0,880.0 260.0,832.0 1670.0,832.0 1670.0,832.0 1952.0,832.0 1952.0,872.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="272.0" y="893.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1964.0" y="859.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="1134.2" y="824.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">UpdatedByUserId</text>
-<polyline points="260.0,244.0 260.0,284.0 1106.0,284.0 1106.0,1226.0 1388.0,1226.0 1388.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="257.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<polyline points="260.0,266.0 260.0,284.0 1106.0,284.0 1106.0,1226.0 1388.0,1226.0 1388.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="248.0" y="279.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1400.0" y="1253.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
 <text x="784.5" y="264.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PropertyId</text>
-<polyline points="260.0,792.0 260.0,832.0 1106.0,832.0 1106.0,1226.0 1388.0,1226.0 1388.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
-<text x="272.0" y="805.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<polyline points="260.0,880.0 260.0,832.0 1106.0,832.0 1106.0,1226.0 1388.0,1226.0 1388.0,1266.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="272.0" y="893.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
 <text x="1400.0" y="1253.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
-<text x="784.5" y="824.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">RequestedByUserId</text>
-<rect x="40.0" y="40.0" width="440" height="204" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<text x="1290.0" y="824.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">RequestedByUserId</text>
+<polyline points="480.0,520.0 500.0,520.0 500.0,2600.0 480.0,2600.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="492.0" y="532.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="492.0" y="2612.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="490.0" y="1560.0" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">DecidedByUserId</text>
+<polyline points="1168.0,220.0 1140.0,220.0 1140.0,2450.0 260.0,2450.0 260.0,2480.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1152.0" y="232.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="272.0" y="2466.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1130.0" y="900.0" text-anchor="end" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">ContractId</text>
+<polyline points="604.0,640.0 550.0,640.0 550.0,2470.0 300.0,2470.0 300.0,2480.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="592.0" y="652.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="312.0" y="2466.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="596.0" y="1506.0" text-anchor="end" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">RequestedByTenantId</text>
+<polyline points="604.0,720.0 540.0,720.0 540.0,2800.0 60.0,2800.0 60.0,2810.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="592.0" y="732.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="72.0" y="2788.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="548.0" y="1800.0" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">TenantId</text>
+<polyline points="604.0,1100.0 560.0,1100.0 560.0,2800.0 700.0,2800.0 700.0,2900.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="592.0" y="1112.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="716.0" y="2812.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="560.0" y="2782.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">FileId</text>
+<polyline points="1168.0,2650.0 1100.0,2650.0 1100.0,2940.0 1044.0,2940.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1156.0" y="2662.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1056.0" y="2952.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1160.0" y="2700.0" text-anchor="end" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PaymentId</text>
+<polyline points="1608.0,2680.0 1732.0,2680.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1621.0" y="2692.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1719.0" y="2692.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1670.0" y="2658.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">PaymentId</text>
+<polyline points="2172.0,130.0 2200.0,130.0 2200.0,2450.0 1388.0,2450.0 1388.0,2480.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="2184.0" y="142.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1400.0" y="2436.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1900.0" y="2438.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">InvoiceId</text>
+<polyline points="1044.0,200.0 1152.0,200.0 1152.0,2800.0 1388.0,2800.0 1388.0,2810.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1065.0" y="212.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1400.0" y="2788.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1152.0" y="1650.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">RoomId</text>
+<polyline points="1608.0,3000.0 1732.0,3000.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="1621.0" y="3012.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="1719.0" y="3012.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="1670.0" y="2978.0" text-anchor="middle" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">UtilityReadingId</text>
+<polyline points="480.0,850.0 580.0,850.0 580.0,1450.0 604.0,1450.0" stroke="#8c959f" stroke-width="1.5" fill="none"/>
+<text x="492.0" y="838.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">1</text>
+<text x="592.0" y="1462.0" text-anchor="middle" dominant-baseline="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#1f2328" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">N</text>
+<text x="488.0" y="1215.0" text-anchor="start" font-size="11" fill="#4b5563" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">CreatedByUserId</text>
+<rect x="40.0" y="40.0" width="440" height="226" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M40.0 68.0V46.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V68.0Z" fill="#dbe7fb"/>
 <text x="50.0" y="59.0" font-size="14" font-weight="700" fill="#1f2328">Properties</text>
 <line x1="40.0" y1="68.0" x2="480.0" y2="68.0" stroke="#8c959f" opacity=".16"/>
@@ -129,7 +173,10 @@
 <line x1="40.0" y1="222.0" x2="480.0" y2="222.0" stroke="#8c959f" opacity=".16"/>
 <text x="72.0" y="237.0" font-size="11" fill="#1f2328">IsDeleted</text>
 <text x="472.0" y="237.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
-<rect x="604.0" y="40.0" width="440" height="270" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<line x1="40.0" y1="244.0" x2="480.0" y2="244.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="259.0" font-size="11" fill="#1f2328">DeletedAt</text>
+<text x="472.0" y="259.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<rect x="604.0" y="40.0" width="440" height="314" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M604.0 68.0V46.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V68.0Z" fill="#dbe7fb"/>
 <text x="614.0" y="59.0" font-size="14" font-weight="700" fill="#1f2328">Rooms</text>
 <line x1="604.0" y1="68.0" x2="1044.0" y2="68.0" stroke="#8c959f" opacity=".16"/>
@@ -168,6 +215,12 @@
 <line x1="604.0" y1="288.0" x2="1044.0" y2="288.0" stroke="#8c959f" opacity=".16"/>
 <text x="636.0" y="303.0" font-size="11" fill="#1f2328">IsDeleted</text>
 <text x="1036.0" y="303.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
+<line x1="604.0" y1="310.0" x2="1044.0" y2="310.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="325.0" font-size="11" fill="#1f2328">DeletedAt</text>
+<text x="1036.0" y="325.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="604.0" y1="332.0" x2="1044.0" y2="332.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="347.0" font-size="11" fill="#1f2328">DeletedBy</text>
+<text x="1036.0" y="347.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
 <rect x="1168.0" y="40.0" width="440" height="226" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M1168.0 68.0V46.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V68.0Z" fill="#dbe7fb"/>
 <text x="1178.0" y="59.0" font-size="14" font-weight="700" fill="#1f2328">Contracts</text>
@@ -237,7 +290,7 @@
 <line x1="1732.0" y1="266.0" x2="2172.0" y2="266.0" stroke="#8c959f" opacity=".16"/>
 <text x="1764.0" y="281.0" font-size="11" fill="#1f2328">RowVersion</text>
 <text x="2164.0" y="281.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
-<rect x="40.0" y="390.0" width="440" height="402" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<rect x="40.0" y="390.0" width="440" height="490" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M40.0 418.0V396.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V418.0Z" fill="#dbe7fb"/>
 <text x="50.0" y="409.0" font-size="14" font-weight="700" fill="#1f2328">AspNetUsers</text>
 <line x1="40.0" y1="418.0" x2="480.0" y2="418.0" stroke="#8c959f" opacity=".16"/>
@@ -293,7 +346,19 @@
 <line x1="40.0" y1="770.0" x2="480.0" y2="770.0" stroke="#8c959f" opacity=".16"/>
 <text x="72.0" y="785.0" font-size="11" fill="#1f2328">ApprovedAt</text>
 <text x="472.0" y="785.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
-<rect x="604.0" y="390.0" width="440" height="402" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<line x1="40.0" y1="792.0" x2="480.0" y2="792.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="807.0" font-size="11" fill="#1f2328">IsDeleted</text>
+<text x="472.0" y="807.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
+<line x1="40.0" y1="814.0" x2="480.0" y2="814.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="829.0" font-size="11" fill="#1f2328">DeletedAt</text>
+<text x="472.0" y="829.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="40.0" y1="836.0" x2="480.0" y2="836.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="851.0" font-size="11" fill="#1f2328">DeletedByUserId</text>
+<text x="472.0" y="851.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(max)</text>
+<line x1="40.0" y1="858.0" x2="480.0" y2="858.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="873.0" font-size="11" fill="#1f2328">OriginalEmail</text>
+<text x="472.0" y="873.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(max)</text>
+<rect x="604.0" y="390.0" width="440" height="446" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M604.0 418.0V396.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V418.0Z" fill="#dbe7fb"/>
 <text x="614.0" y="409.0" font-size="14" font-weight="700" fill="#1f2328">Tenants</text>
 <line x1="604.0" y1="418.0" x2="1044.0" y2="418.0" stroke="#8c959f" opacity=".16"/>
@@ -314,7 +379,6 @@
 <text x="850.0" y="521.0" font-size="10" font-weight="700" fill="#15803d">UQ</text>
 <text x="1036.0" y="521.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(20)</text>
 <line x1="604.0" y1="528.0" x2="1044.0" y2="528.0" stroke="#8c959f" opacity=".16"/>
-<text x="612.0" y="543.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
 <text x="636.0" y="543.0" font-size="11" fill="#1f2328">UserId</text>
 <text x="850.0" y="543.0" font-size="10" font-weight="700" fill="#15803d">UQ</text>
 <text x="1036.0" y="543.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
@@ -351,6 +415,12 @@
 <line x1="604.0" y1="770.0" x2="1044.0" y2="770.0" stroke="#8c959f" opacity=".16"/>
 <text x="636.0" y="785.0" font-size="11" fill="#1f2328">Note</text>
 <text x="1036.0" y="785.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="604.0" y1="792.0" x2="1044.0" y2="792.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="807.0" font-size="11" fill="#1f2328">DeletedAt</text>
+<text x="1036.0" y="807.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="604.0" y1="814.0" x2="1044.0" y2="814.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="829.0" font-size="11" fill="#1f2328">DeletedByUserId</text>
+<text x="1036.0" y="829.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
 <rect x="1168.0" y="390.0" width="440" height="72" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M1168.0 418.0V396.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V418.0Z" fill="#dbe7fb"/>
 <text x="1178.0" y="409.0" font-size="14" font-weight="700" fill="#1f2328">ContractMembers</text>
@@ -394,35 +464,35 @@
 <line x1="1732.0" y1="594.0" x2="2172.0" y2="594.0" stroke="#8c959f" opacity=".16"/>
 <text x="1764.0" y="609.0" font-size="11" fill="#1f2328">DisplayOrder</text>
 <text x="2164.0" y="609.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
-<rect x="40.0" y="872.0" width="440" height="182" rx="6" fill="#ffffff" stroke="#8c959f"/>
-<path d="M40.0 900.0V878.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V900.0Z" fill="#dbe7fb"/>
-<text x="50.0" y="891.0" font-size="14" font-weight="700" fill="#1f2328">PropertyManagers</text>
-<line x1="40.0" y1="900.0" x2="480.0" y2="900.0" stroke="#8c959f" opacity=".16"/>
-<text x="48.0" y="915.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
-<text x="72.0" y="915.0" font-size="11" fill="#1f2328">Id</text>
-<text x="472.0" y="915.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
-<line x1="40.0" y1="922.0" x2="480.0" y2="922.0" stroke="#8c959f" opacity=".16"/>
-<text x="48.0" y="937.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
-<text x="72.0" y="937.0" font-size="11" fill="#1f2328">PropertyId</text>
-<text x="472.0" y="937.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
-<line x1="40.0" y1="944.0" x2="480.0" y2="944.0" stroke="#8c959f" opacity=".16"/>
-<text x="48.0" y="959.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
-<text x="72.0" y="959.0" font-size="11" fill="#1f2328">ManagerUserId</text>
-<text x="472.0" y="959.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
-<line x1="40.0" y1="966.0" x2="480.0" y2="966.0" stroke="#8c959f" opacity=".16"/>
-<text x="72.0" y="981.0" font-size="11" fill="#1f2328">AssignedAt</text>
-<text x="472.0" y="981.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<rect x="40.0" y="960.0" width="440" height="182" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M40.0 988.0V966.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V988.0Z" fill="#dbe7fb"/>
+<text x="50.0" y="979.0" font-size="14" font-weight="700" fill="#1f2328">PropertyManagers</text>
 <line x1="40.0" y1="988.0" x2="480.0" y2="988.0" stroke="#8c959f" opacity=".16"/>
-<text x="48.0" y="1003.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
-<text x="72.0" y="1003.0" font-size="11" fill="#1f2328">AssignedByUserId</text>
-<text x="472.0" y="1003.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<text x="48.0" y="1003.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="1003.0" font-size="11" fill="#1f2328">Id</text>
+<text x="472.0" y="1003.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
 <line x1="40.0" y1="1010.0" x2="480.0" y2="1010.0" stroke="#8c959f" opacity=".16"/>
-<text x="72.0" y="1025.0" font-size="11" fill="#1f2328">RevokedAt</text>
-<text x="472.0" y="1025.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<text x="48.0" y="1025.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="1025.0" font-size="11" fill="#1f2328">PropertyId</text>
+<text x="472.0" y="1025.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
 <line x1="40.0" y1="1032.0" x2="480.0" y2="1032.0" stroke="#8c959f" opacity=".16"/>
 <text x="48.0" y="1047.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
-<text x="72.0" y="1047.0" font-size="11" fill="#1f2328">RevokedByUserId</text>
-<text x="472.0" y="1047.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
+<text x="72.0" y="1047.0" font-size="11" fill="#1f2328">ManagerUserId</text>
+<text x="472.0" y="1047.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="40.0" y1="1054.0" x2="480.0" y2="1054.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1069.0" font-size="11" fill="#1f2328">AssignedAt</text>
+<text x="472.0" y="1069.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="40.0" y1="1076.0" x2="480.0" y2="1076.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="1091.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="1091.0" font-size="11" fill="#1f2328">AssignedByUserId</text>
+<text x="472.0" y="1091.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="40.0" y1="1098.0" x2="480.0" y2="1098.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1113.0" font-size="11" fill="#1f2328">RevokedAt</text>
+<text x="472.0" y="1113.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="40.0" y1="1120.0" x2="480.0" y2="1120.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="1135.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="1135.0" font-size="11" fill="#1f2328">RevokedByUserId</text>
+<text x="472.0" y="1135.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
 <rect x="604.0" y="872.0" width="440" height="314" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M604.0 900.0V878.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V900.0Z" fill="#dbe7fb"/>
 <text x="614.0" y="891.0" font-size="14" font-weight="700" fill="#1f2328">StoredFiles</text>
@@ -521,7 +591,7 @@
 <text x="1740.0" y="981.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
 <text x="1764.0" y="981.0" font-size="11" fill="#1f2328">UpdatedByUserId</text>
 <text x="2164.0" y="981.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
-<rect x="40.0" y="1266.0" width="440" height="116" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<rect x="40.0" y="1266.0" width="440" height="226" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M40.0 1294.0V1272.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V1294.0Z" fill="#dbe7fb"/>
 <text x="50.0" y="1285.0" font-size="14" font-weight="700" fill="#1f2328">ServiceCatalogs</text>
 <line x1="40.0" y1="1294.0" x2="480.0" y2="1294.0" stroke="#8c959f" opacity=".16"/>
@@ -536,9 +606,24 @@
 <text x="72.0" y="1353.0" font-size="11" fill="#1f2328">IsReadOnly</text>
 <text x="472.0" y="1353.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
 <line x1="40.0" y1="1360.0" x2="480.0" y2="1360.0" stroke="#8c959f" opacity=".16"/>
-<text x="72.0" y="1375.0" font-size="11" fill="#1f2328">CreatedAt</text>
-<text x="472.0" y="1375.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
-<rect x="604.0" y="1266.0" width="440" height="226" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<text x="72.0" y="1375.0" font-size="11" fill="#1f2328">IsActive</text>
+<text x="472.0" y="1375.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
+<line x1="40.0" y1="1382.0" x2="480.0" y2="1382.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1397.0" font-size="11" fill="#1f2328">Description</text>
+<text x="472.0" y="1397.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="40.0" y1="1404.0" x2="480.0" y2="1404.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1419.0" font-size="11" fill="#1f2328">IsDeleted</text>
+<text x="472.0" y="1419.0" text-anchor="end" font-size="10" fill="#656d76">bit NOT NULL</text>
+<line x1="40.0" y1="1426.0" x2="480.0" y2="1426.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1441.0" font-size="11" fill="#1f2328">DeletedAt</text>
+<text x="472.0" y="1441.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="40.0" y1="1448.0" x2="480.0" y2="1448.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1463.0" font-size="11" fill="#1f2328">DeletedBy</text>
+<text x="472.0" y="1463.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
+<line x1="40.0" y1="1470.0" x2="480.0" y2="1470.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="1485.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="472.0" y="1485.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<rect x="604.0" y="1266.0" width="440" height="270" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M604.0 1294.0V1272.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V1294.0Z" fill="#dbe7fb"/>
 <text x="614.0" y="1285.0" font-size="14" font-weight="700" fill="#1f2328">ServicePriceHistory</text>
 <line x1="604.0" y1="1294.0" x2="1044.0" y2="1294.0" stroke="#8c959f" opacity=".16"/>
@@ -566,11 +651,18 @@
 <text x="850.0" y="1441.0" font-size="10" font-weight="700" fill="#15803d">UQ</text>
 <text x="1036.0" y="1441.0" text-anchor="end" font-size="10" fill="#656d76">date NOT NULL</text>
 <line x1="604.0" y1="1448.0" x2="1044.0" y2="1448.0" stroke="#8c959f" opacity=".16"/>
-<text x="636.0" y="1463.0" font-size="11" fill="#1f2328">CreatedAt</text>
-<text x="1036.0" y="1463.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<text x="636.0" y="1463.0" font-size="11" fill="#1f2328">EffectiveTo</text>
+<text x="1036.0" y="1463.0" text-anchor="end" font-size="10" fill="#656d76">date</text>
 <line x1="604.0" y1="1470.0" x2="1044.0" y2="1470.0" stroke="#8c959f" opacity=".16"/>
-<text x="636.0" y="1485.0" font-size="11" fill="#1f2328">CreatedByUserId</text>
-<text x="1036.0" y="1485.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<text x="636.0" y="1485.0" font-size="11" fill="#1f2328">Note</text>
+<text x="1036.0" y="1485.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="604.0" y1="1492.0" x2="1044.0" y2="1492.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="1507.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="1036.0" y="1507.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="604.0" y1="1514.0" x2="1044.0" y2="1514.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="1529.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="636.0" y="1529.0" font-size="11" fill="#1f2328">CreatedByUserId</text>
+<text x="1036.0" y="1529.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
 <rect x="1168.0" y="1266.0" width="440" height="336" rx="6" fill="#ffffff" stroke="#8c959f"/>
 <path d="M1168.0 1294.0V1272.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V1294.0Z" fill="#dbe7fb"/>
 <text x="1178.0" y="1285.0" font-size="14" font-weight="700" fill="#1f2328">ManagerApprovalRequests</text>
@@ -860,15 +952,305 @@
 <text x="1176.0" y="2207.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
 <text x="1200.0" y="2207.0" font-size="11" fill="#1f2328">ApprovalRequestId</text>
 <text x="1600.0" y="2207.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier</text>
-<text x="40" y="2530" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Cách đọc: "1" và "N" ở hai đầu đường nối (N = từ 0 trở lên). Nhãn trên đường là cột khóa ngoại. PK khóa chính, FK khóa ngoại, UQ không được trùng.</text>
-<text x="40" y="2548" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Mọi FK đều Restrict (NO ACTION): cấm xóa thật bảng cha khi còn dòng con, kể cả con đã xóa mềm. 3 bảng P7 dùng cùng quy tắc.</text>
-<text x="40" y="2566" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Xóa mềm (IsDeleted): Properties, Rooms, Tenants, StoredFiles. Invoices KHÔNG có IsDeleted vì D13 không cho hủy hóa đơn trong v1.0.</text>
-<text x="40" y="2584" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Tiền: hóa đơn và dịch vụ decimal(18,2); biểu giá điện nước và chi phí P5 decimal(18,4); MaintenanceIncidents.RepairCost decimal(18,0). Thời gian: date cho kỳ, datetime2/datetimeoffset cho mốc thao tác (UTC).</text>
-<text x="40" y="2602" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Liên kết mềm (không FK, kiểm khi ghi): StoredFiles.RelatedEntityId, FileAccessAuditLogs.ActorUserId/FileId, UtilityBillingPeriodSnapshots.BillingPeriodId, ServicePriceHistory.CreatedByUserId, MaintenanceIncidentHistories.ActorUserId.</text>
-<text x="40" y="2620" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Trigger TR_Contracts_PreventApprovedOverlap chặn 2 hợp đồng Status = 1 chồng khoảng ngày trên cùng một phòng.</text>
-<text x="40" y="2638" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum lưu int: Contracts.Status 0/1/2 (Chờ duyệt/Đã duyệt/Từ chối); Invoices.Status 0/1/2 (Nháp/Đã phát hành/Đã thu); InvoiceItems.ItemType 0/1/2/3/4; UtilityTariffs.Type 0 điện, 1 nước; ManagerApprovalRequests.Status 0..3.</text>
-<text x="40" y="2656" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum P7: MaintenanceIncidents.Category 0..4 (điện/nước/nội thất/vệ sinh/khác), Urgency 0..2 (Thấp/Trung bình/Cao), Status 0..2 (Mới/Đang xử lý/Đã xong); MaintenanceIncidentHistories.Action 0..4; IncidentPhotoAttachments.Kind 0/1.</text>
-<text x="40" y="2674" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Check P7: Category/Urgency/Status theo khoảng; RepairCost NULL hoặc >= 0; FromStatus NULL hoặc 0..2; mỗi ảnh sự cố phải có IncidentId hoặc ApprovalRequestId (CK_IncidentPhotoAttachments_Target).</text>
-<text x="40" y="2692" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">UQ có điều kiện: Rooms(PropertyId,Code) khi chưa xóa mềm; Tenants.CitizenId khi có và IsActive = 1; Tenants.UserId khi có; PropertyManagers(PropertyId,ManagerUserId) khi RevokedAt NULL; 1 yêu cầu chờ duyệt cho mỗi (OperationCode,TargetType,TargetKey).</text>
-<text x="40" y="2710" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Bảng Identity phụ (AspNetRoles, AspNetRoleClaims, AspNetUserRoles, AspNetUserClaims, AspNetUserLogins, AspNetUserTokens, AspNetUserPasskeys) không vẽ trong ERD.</text>
+<rect x="40.0" y="2480.0" width="440" height="270" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M40.0 2508.0V2486.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V2508.0Z" fill="#dbe7fb"/>
+<text x="50.0" y="2499.0" font-size="14" font-weight="700" fill="#1f2328">ContractRenewalRequests</text>
+<line x1="40.0" y1="2508.0" x2="480.0" y2="2508.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2523.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="2523.0" font-size="11" fill="#1f2328">Id</text>
+<text x="472.0" y="2523.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier NOT NULL</text>
+<line x1="40.0" y1="2530.0" x2="480.0" y2="2530.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2545.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="2545.0" font-size="11" fill="#1f2328">ContractId</text>
+<text x="472.0" y="2545.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier NOT NULL</text>
+<line x1="40.0" y1="2552.0" x2="480.0" y2="2552.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2567.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="2567.0" font-size="11" fill="#1f2328">RequestedByTenantId</text>
+<text x="472.0" y="2567.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2574.0" x2="480.0" y2="2574.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2589.0" font-size="11" fill="#1f2328">RequestedMonths</text>
+<text x="472.0" y="2589.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2596.0" x2="480.0" y2="2596.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2611.0" font-size="11" fill="#1f2328">Note</text>
+<text x="472.0" y="2611.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="40.0" y1="2618.0" x2="480.0" y2="2618.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2633.0" font-size="11" fill="#1f2328">Status</text>
+<text x="472.0" y="2633.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2640.0" x2="480.0" y2="2640.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2655.0" font-size="11" fill="#1f2328">RequestedAt</text>
+<text x="472.0" y="2655.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="40.0" y1="2662.0" x2="480.0" y2="2662.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2677.0" font-size="11" fill="#1f2328">DecidedAt</text>
+<text x="472.0" y="2677.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="40.0" y1="2684.0" x2="480.0" y2="2684.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2699.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="72.0" y="2699.0" font-size="11" fill="#1f2328">DecidedByUserId</text>
+<text x="472.0" y="2699.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
+<line x1="40.0" y1="2706.0" x2="480.0" y2="2706.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2721.0" font-size="11" fill="#1f2328">RejectReason</text>
+<text x="472.0" y="2721.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="40.0" y1="2728.0" x2="480.0" y2="2728.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2743.0" font-size="11" fill="#1f2328">RowVersion</text>
+<text x="472.0" y="2743.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
+<rect x="604.0" y="2480.0" width="440" height="314" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M604.0 2508.0V2486.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V2508.0Z" fill="#dbe7fb"/>
+<text x="614.0" y="2499.0" font-size="14" font-weight="700" fill="#1f2328">TenantInvitations</text>
+<line x1="604.0" y1="2508.0" x2="1044.0" y2="2508.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="2523.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="636.0" y="2523.0" font-size="11" fill="#1f2328">Id</text>
+<text x="1036.0" y="2523.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="604.0" y1="2530.0" x2="1044.0" y2="2530.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2545.0" font-size="11" fill="#1f2328">Email</text>
+<text x="1036.0" y="2545.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(256) NOT NULL</text>
+<line x1="604.0" y1="2552.0" x2="1044.0" y2="2552.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2567.0" font-size="11" fill="#1f2328">FullName</text>
+<text x="1036.0" y="2567.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(200) NOT NULL</text>
+<line x1="604.0" y1="2574.0" x2="1044.0" y2="2574.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2589.0" font-size="11" fill="#1f2328">Phone</text>
+<text x="1036.0" y="2589.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(20)</text>
+<line x1="604.0" y1="2596.0" x2="1044.0" y2="2596.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2611.0" font-size="11" fill="#1f2328">OwnerId</text>
+<text x="1036.0" y="2611.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="604.0" y1="2618.0" x2="1044.0" y2="2618.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2633.0" font-size="11" fill="#1f2328">InvitedByUserId</text>
+<text x="1036.0" y="2633.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="604.0" y1="2640.0" x2="1044.0" y2="2640.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2655.0" font-size="11" fill="#1f2328">TokenHash</text>
+<text x="850.0" y="2655.0" font-size="10" font-weight="700" fill="#15803d">UQ</text>
+<text x="1036.0" y="2655.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(64) NOT NULL</text>
+<line x1="604.0" y1="2662.0" x2="1044.0" y2="2662.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2677.0" font-size="11" fill="#1f2328">ExpiresAt</text>
+<text x="1036.0" y="2677.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="604.0" y1="2684.0" x2="1044.0" y2="2684.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2699.0" font-size="11" fill="#1f2328">AcceptedAt</text>
+<text x="1036.0" y="2699.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="604.0" y1="2706.0" x2="1044.0" y2="2706.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2721.0" font-size="11" fill="#1f2328">RevokedAt</text>
+<text x="1036.0" y="2721.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="604.0" y1="2728.0" x2="1044.0" y2="2728.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2743.0" font-size="11" fill="#1f2328">TenantId</text>
+<text x="1036.0" y="2743.0" text-anchor="end" font-size="10" fill="#656d76">int</text>
+<line x1="604.0" y1="2750.0" x2="1044.0" y2="2750.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2765.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="1036.0" y="2765.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="604.0" y1="2772.0" x2="1044.0" y2="2772.0" stroke="#8c959f" opacity=".16"/>
+<text x="636.0" y="2787.0" font-size="11" fill="#1f2328">RowVersion</text>
+<text x="1036.0" y="2787.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
+<rect x="1168.0" y="2480.0" width="440" height="292" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M1168.0 2508.0V2486.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V2508.0Z" fill="#dbe7fb"/>
+<text x="1178.0" y="2499.0" font-size="14" font-weight="700" fill="#1f2328">Payments</text>
+<line x1="1168.0" y1="2508.0" x2="1608.0" y2="2508.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2523.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="1200.0" y="2523.0" font-size="11" fill="#1f2328">Id</text>
+<text x="1600.0" y="2523.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="1168.0" y1="2530.0" x2="1608.0" y2="2530.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2545.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1200.0" y="2545.0" font-size="11" fill="#1f2328">InvoiceId</text>
+<text x="1600.0" y="2545.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1168.0" y1="2552.0" x2="1608.0" y2="2552.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2567.0" font-size="11" fill="#1f2328">Amount</text>
+<text x="1600.0" y="2567.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1168.0" y1="2574.0" x2="1608.0" y2="2574.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2589.0" font-size="11" fill="#1f2328">TransferredAt</text>
+<text x="1600.0" y="2589.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="1168.0" y1="2596.0" x2="1608.0" y2="2596.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2611.0" font-size="11" fill="#1f2328">TransactionCode</text>
+<text x="1600.0" y="2611.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(100)</text>
+<line x1="1168.0" y1="2618.0" x2="1608.0" y2="2618.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2633.0" font-size="11" fill="#1f2328">Status</text>
+<text x="1600.0" y="2633.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1168.0" y1="2640.0" x2="1608.0" y2="2640.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2655.0" font-size="11" fill="#1f2328">RequestedAt</text>
+<text x="1600.0" y="2655.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<line x1="1168.0" y1="2662.0" x2="1608.0" y2="2662.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2677.0" font-size="11" fill="#1f2328">RequestedByUserId</text>
+<text x="1600.0" y="2677.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="1168.0" y1="2684.0" x2="1608.0" y2="2684.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2699.0" font-size="11" fill="#1f2328">ReviewedAt</text>
+<text x="1600.0" y="2699.0" text-anchor="end" font-size="10" fill="#656d76">datetime2</text>
+<line x1="1168.0" y1="2706.0" x2="1608.0" y2="2706.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2721.0" font-size="11" fill="#1f2328">ReviewedByUserId</text>
+<text x="1600.0" y="2721.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
+<line x1="1168.0" y1="2728.0" x2="1608.0" y2="2728.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2743.0" font-size="11" fill="#1f2328">RejectionReason</text>
+<text x="1600.0" y="2743.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<line x1="1168.0" y1="2750.0" x2="1608.0" y2="2750.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2765.0" font-size="11" fill="#1f2328">RowVersion</text>
+<text x="1600.0" y="2765.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
+<rect x="1732.0" y="2480.0" width="440" height="270" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M1732.0 2508.0V2486.0 a6 6 0 0 1 6-6 H2160.0 a6 6 0 0 1 6 6 V2508.0Z" fill="#dbe7fb"/>
+<text x="1742.0" y="2499.0" font-size="14" font-weight="700" fill="#1f2328">PaymentAuditLogs</text>
+<line x1="1732.0" y1="2508.0" x2="2172.0" y2="2508.0" stroke="#8c959f" opacity=".16"/>
+<text x="1740.0" y="2523.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="1764.0" y="2523.0" font-size="11" fill="#1f2328">Id</text>
+<text x="2164.0" y="2523.0" text-anchor="end" font-size="10" fill="#656d76">bigint identity NOT NULL</text>
+<line x1="1732.0" y1="2530.0" x2="2172.0" y2="2530.0" stroke="#8c959f" opacity=".16"/>
+<text x="1740.0" y="2545.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1764.0" y="2545.0" font-size="11" fill="#1f2328">PaymentId</text>
+<text x="2164.0" y="2545.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1732.0" y1="2552.0" x2="2172.0" y2="2552.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2567.0" font-size="11" fill="#1f2328">InvoiceId</text>
+<text x="2164.0" y="2567.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1732.0" y1="2574.0" x2="2172.0" y2="2574.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2589.0" font-size="11" fill="#1f2328">Action</text>
+<text x="2164.0" y="2589.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1732.0" y1="2596.0" x2="2172.0" y2="2596.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2611.0" font-size="11" fill="#1f2328">FromStatus</text>
+<text x="2164.0" y="2611.0" text-anchor="end" font-size="10" fill="#656d76">int</text>
+<line x1="1732.0" y1="2618.0" x2="2172.0" y2="2618.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2633.0" font-size="11" fill="#1f2328">ToStatus</text>
+<text x="2164.0" y="2633.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1732.0" y1="2640.0" x2="2172.0" y2="2640.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2655.0" font-size="11" fill="#1f2328">Amount</text>
+<text x="2164.0" y="2655.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1732.0" y1="2662.0" x2="2172.0" y2="2662.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2677.0" font-size="11" fill="#1f2328">ActorUserId</text>
+<text x="2164.0" y="2677.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="1732.0" y1="2684.0" x2="2172.0" y2="2684.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2699.0" font-size="11" fill="#1f2328">ActorRole</text>
+<text x="2164.0" y="2699.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(20) NOT NULL</text>
+<line x1="1732.0" y1="2706.0" x2="2172.0" y2="2706.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2721.0" font-size="11" fill="#1f2328">OccurredAt</text>
+<text x="2164.0" y="2721.0" text-anchor="end" font-size="10" fill="#656d76">datetimeoffset NOT NULL</text>
+<line x1="1732.0" y1="2728.0" x2="2172.0" y2="2728.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2743.0" font-size="11" fill="#1f2328">Note</text>
+<text x="2164.0" y="2743.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500)</text>
+<rect x="40.0" y="2810.0" width="440" height="94" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M40.0 2838.0V2816.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V2838.0Z" fill="#dbe7fb"/>
+<text x="50.0" y="2829.0" font-size="14" font-weight="700" fill="#1f2328">TenantOwnerLinks</text>
+<line x1="40.0" y1="2838.0" x2="480.0" y2="2838.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2853.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="2853.0" font-size="11" fill="#1f2328">TenantId</text>
+<text x="472.0" y="2853.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="2860.0" x2="480.0" y2="2860.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="2875.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="2875.0" font-size="11" fill="#1f2328">OwnerId</text>
+<text x="472.0" y="2875.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="40.0" y1="2882.0" x2="480.0" y2="2882.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="2897.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="472.0" y="2897.0" text-anchor="end" font-size="10" fill="#656d76">datetime2 NOT NULL</text>
+<rect x="604.0" y="2900.0" width="440" height="72" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M604.0 2928.0V2906.0 a6 6 0 0 1 6-6 H1032.0 a6 6 0 0 1 6 6 V2928.0Z" fill="#dbe7fb"/>
+<text x="614.0" y="2919.0" font-size="14" font-weight="700" fill="#1f2328">PaymentProofs</text>
+<line x1="604.0" y1="2928.0" x2="1044.0" y2="2928.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="2943.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="636.0" y="2943.0" font-size="11" fill="#1f2328">PaymentId</text>
+<text x="1036.0" y="2943.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="604.0" y1="2950.0" x2="1044.0" y2="2950.0" stroke="#8c959f" opacity=".16"/>
+<text x="612.0" y="2965.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="636.0" y="2965.0" font-size="11" fill="#1f2328">FileId</text>
+<text x="1036.0" y="2965.0" text-anchor="end" font-size="10" fill="#656d76">uniqueidentifier NOT NULL</text>
+<rect x="1168.0" y="2810.0" width="440" height="292" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M1168.0 2838.0V2816.0 a6 6 0 0 1 6-6 H1596.0 a6 6 0 0 1 6 6 V2838.0Z" fill="#dbe7fb"/>
+<text x="1178.0" y="2829.0" font-size="14" font-weight="700" fill="#1f2328">UtilityReadings</text>
+<line x1="1168.0" y1="2838.0" x2="1608.0" y2="2838.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2853.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="1200.0" y="2853.0" font-size="11" fill="#1f2328">Id</text>
+<text x="1600.0" y="2853.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="1168.0" y1="2860.0" x2="1608.0" y2="2860.0" stroke="#8c959f" opacity=".16"/>
+<text x="1176.0" y="2875.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1200.0" y="2875.0" font-size="11" fill="#1f2328">RoomId</text>
+<text x="1600.0" y="2875.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1168.0" y1="2882.0" x2="1608.0" y2="2882.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2897.0" font-size="11" fill="#1f2328">PeriodStart</text>
+<text x="1414.0" y="2897.0" font-size="10" font-weight="700" fill="#15803d">UQ</text>
+<text x="1600.0" y="2897.0" text-anchor="end" font-size="10" fill="#656d76">date NOT NULL</text>
+<line x1="1168.0" y1="2904.0" x2="1608.0" y2="2904.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2919.0" font-size="11" fill="#1f2328">PeriodEnd</text>
+<text x="1600.0" y="2919.0" text-anchor="end" font-size="10" fill="#656d76">date NOT NULL</text>
+<line x1="1168.0" y1="2926.0" x2="1608.0" y2="2926.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2941.0" font-size="11" fill="#1f2328">ElectricStart</text>
+<text x="1600.0" y="2941.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1168.0" y1="2948.0" x2="1608.0" y2="2948.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2963.0" font-size="11" fill="#1f2328">ElectricEnd</text>
+<text x="1600.0" y="2963.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1168.0" y1="2970.0" x2="1608.0" y2="2970.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="2985.0" font-size="11" fill="#1f2328">WaterStart</text>
+<text x="1600.0" y="2985.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1168.0" y1="2992.0" x2="1608.0" y2="2992.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="3007.0" font-size="11" fill="#1f2328">WaterEnd</text>
+<text x="1600.0" y="3007.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1168.0" y1="3014.0" x2="1608.0" y2="3014.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="3029.0" font-size="11" fill="#1f2328">RecordedByUserId</text>
+<text x="1600.0" y="3029.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(max) NOT NULL</text>
+<line x1="1168.0" y1="3036.0" x2="1608.0" y2="3036.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="3051.0" font-size="11" fill="#1f2328">CreatedAt</text>
+<text x="1600.0" y="3051.0" text-anchor="end" font-size="10" fill="#656d76">datetimeoffset NOT NULL</text>
+<line x1="1168.0" y1="3058.0" x2="1608.0" y2="3058.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="3073.0" font-size="11" fill="#1f2328">UpdatedAt</text>
+<text x="1600.0" y="3073.0" text-anchor="end" font-size="10" fill="#656d76">datetimeoffset</text>
+<line x1="1168.0" y1="3080.0" x2="1608.0" y2="3080.0" stroke="#8c959f" opacity=".16"/>
+<text x="1200.0" y="3095.0" font-size="11" fill="#1f2328">RowVersion</text>
+<text x="1600.0" y="3095.0" text-anchor="end" font-size="10" fill="#656d76">rowversion NOT NULL</text>
+<rect x="1732.0" y="2810.0" width="440" height="226" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M1732.0 2838.0V2816.0 a6 6 0 0 1 6-6 H2160.0 a6 6 0 0 1 6 6 V2838.0Z" fill="#dbe7fb"/>
+<text x="1742.0" y="2829.0" font-size="14" font-weight="700" fill="#1f2328">UtilityReadingAudits</text>
+<line x1="1732.0" y1="2838.0" x2="2172.0" y2="2838.0" stroke="#8c959f" opacity=".16"/>
+<text x="1740.0" y="2853.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="1764.0" y="2853.0" font-size="11" fill="#1f2328">Id</text>
+<text x="2164.0" y="2853.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="1732.0" y1="2860.0" x2="2172.0" y2="2860.0" stroke="#8c959f" opacity=".16"/>
+<text x="1740.0" y="2875.0" font-size="10" font-weight="700" fill="#1d4ed8">FK</text>
+<text x="1764.0" y="2875.0" font-size="11" fill="#1f2328">UtilityReadingId</text>
+<text x="2164.0" y="2875.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="1732.0" y1="2882.0" x2="2172.0" y2="2882.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2897.0" font-size="11" fill="#1f2328">OldElectricEnd</text>
+<text x="2164.0" y="2897.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1732.0" y1="2904.0" x2="2172.0" y2="2904.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2919.0" font-size="11" fill="#1f2328">NewElectricEnd</text>
+<text x="2164.0" y="2919.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1732.0" y1="2926.0" x2="2172.0" y2="2926.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2941.0" font-size="11" fill="#1f2328">OldWaterEnd</text>
+<text x="2164.0" y="2941.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1732.0" y1="2948.0" x2="2172.0" y2="2948.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2963.0" font-size="11" fill="#1f2328">NewWaterEnd</text>
+<text x="2164.0" y="2963.0" text-anchor="end" font-size="10" fill="#656d76">decimal(18,2) NOT NULL</text>
+<line x1="1732.0" y1="2970.0" x2="2172.0" y2="2970.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="2985.0" font-size="11" fill="#1f2328">Reason</text>
+<text x="2164.0" y="2985.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(500) NOT NULL</text>
+<line x1="1732.0" y1="2992.0" x2="2172.0" y2="2992.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="3007.0" font-size="11" fill="#1f2328">ChangedByUserId</text>
+<text x="2164.0" y="3007.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450) NOT NULL</text>
+<line x1="1732.0" y1="3014.0" x2="2172.0" y2="3014.0" stroke="#8c959f" opacity=".16"/>
+<text x="1764.0" y="3029.0" font-size="11" fill="#1f2328">ChangedAt</text>
+<text x="2164.0" y="3029.0" text-anchor="end" font-size="10" fill="#656d76">datetimeoffset NOT NULL</text>
+<rect x="40.0" y="3120.0" width="440" height="182" rx="6" fill="#ffffff" stroke="#8c959f"/>
+<path d="M40.0 3148.0V3126.0 a6 6 0 0 1 6-6 H468.0 a6 6 0 0 1 6 6 V3148.0Z" fill="#dbe7fb"/>
+<text x="50.0" y="3139.0" font-size="14" font-weight="700" fill="#1f2328">AuditLogEntries</text>
+<line x1="40.0" y1="3148.0" x2="480.0" y2="3148.0" stroke="#8c959f" opacity=".16"/>
+<text x="48.0" y="3163.0" font-size="10" font-weight="700" fill="#b45309">PK</text>
+<text x="72.0" y="3163.0" font-size="11" fill="#1f2328">Id</text>
+<text x="472.0" y="3163.0" text-anchor="end" font-size="10" fill="#656d76">int identity NOT NULL</text>
+<line x1="40.0" y1="3170.0" x2="480.0" y2="3170.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3185.0" font-size="11" fill="#1f2328">Category</text>
+<text x="472.0" y="3185.0" text-anchor="end" font-size="10" fill="#656d76">int NOT NULL</text>
+<line x1="40.0" y1="3192.0" x2="480.0" y2="3192.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3207.0" font-size="11" fill="#1f2328">Action</text>
+<text x="472.0" y="3207.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(200) NOT NULL</text>
+<line x1="40.0" y1="3214.0" x2="480.0" y2="3214.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3229.0" font-size="11" fill="#1f2328">ActorUserId</text>
+<text x="472.0" y="3229.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(450)</text>
+<line x1="40.0" y1="3236.0" x2="480.0" y2="3236.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3251.0" font-size="11" fill="#1f2328">PropertyId</text>
+<text x="472.0" y="3251.0" text-anchor="end" font-size="10" fill="#656d76">int</text>
+<line x1="40.0" y1="3258.0" x2="480.0" y2="3258.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3273.0" font-size="11" fill="#1f2328">Metadata</text>
+<text x="472.0" y="3273.0" text-anchor="end" font-size="10" fill="#656d76">nvarchar(1000)</text>
+<line x1="40.0" y1="3280.0" x2="480.0" y2="3280.0" stroke="#8c959f" opacity=".16"/>
+<text x="72.0" y="3295.0" font-size="11" fill="#1f2328">OccurredAt</text>
+<text x="472.0" y="3295.0" text-anchor="end" font-size="10" fill="#656d76">datetimeoffset NOT NULL</text>
+<text x="40" y="3360" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Cách đọc: "1" và "N" ở hai đầu đường nối (N = từ 0 trở lên). Nhãn trên đường là cột khóa ngoại. PK khóa chính, FK khóa ngoại, UQ không được trùng.</text>
+<text x="40" y="3378" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Mọi FK đều Restrict (NO ACTION): cấm xóa thật bảng cha khi còn dòng con, kể cả con đã xóa mềm. Áp dụng cho P7 và 10 FK mới của đợt 3C.</text>
+<text x="40" y="3396" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Xóa mềm (IsDeleted): Properties, Rooms, Tenants, StoredFiles, ServiceCatalogs, AspNetUsers. Invoices/Payments không có IsDeleted; lịch sử giữ bằng trạng thái và bảng audit.</text>
+<text x="40" y="3414" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Tiền: hóa đơn và dịch vụ decimal(18,2); biểu giá điện nước và chi phí P5 decimal(18,4); MaintenanceIncidents.RepairCost decimal(18,0). Thời gian: date cho kỳ, datetime2/datetimeoffset cho mốc thao tác (UTC).</text>
+<text x="40" y="3432" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Liên kết mềm (không FK, kiểm khi ghi): StoredFiles.RelatedEntityId, FileAccessAuditLogs.ActorUserId/FileId, UtilityBillingPeriodSnapshots.BillingPeriodId, MaintenanceIncidentHistories.ActorUserId, UtilityReadings.RecordedByUserId, PaymentAuditLogs.ActorUserId.</text>
+<text x="40" y="3450" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Payments.RequestedByUserId/ReviewedByUserId, AuditLogEntries.ActorUserId/PropertyId, TenantInvitations.OwnerId/InvitedByUserId/TenantId, TenantOwnerLinks.OwnerId, UtilityReadingAudits.ChangedByUserId.</text>
+<text x="40" y="3468" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Trigger TR_Contracts_PreventApprovedOverlap chặn 2 hợp đồng Status = 1 chồng khoảng ngày trên cùng một phòng.</text>
+<text x="40" y="3486" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum lưu int: Contracts.Status 0/1/2 (Chờ duyệt/Đã duyệt/Từ chối); Invoices.Status 0/1/2 (Nháp/Đã phát hành/Đã thu); InvoiceItems.ItemType 0/1/2/3/4; UtilityTariffs.Type 0 điện, 1 nước; ManagerApprovalRequests.Status 0..3.</text>
+<text x="40" y="3504" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Enum P7: MaintenanceIncidents.Category 0..4 (điện/nước/nội thất/vệ sinh/khác), Urgency 0..2 (Thấp/Trung bình/Cao), Status 0..2 (Mới/Đang xử lý/Đã xong); MaintenanceIncidentHistories.Action 0..4; IncidentPhotoAttachments.Kind 0/1.</text>
+<text x="40" y="3522" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Check P7: Category/Urgency/Status theo khoảng; RepairCost NULL hoặc >= 0; FromStatus NULL hoặc 0..2; mỗi ảnh sự cố phải có IncidentId hoặc ApprovalRequestId (CK_IncidentPhotoAttachments_Target).</text>
+<text x="40" y="3540" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">UQ có điều kiện: Rooms(PropertyId,Code) khi chưa xóa mềm; Tenants.CitizenId khi có và IsActive = 1; Tenants.UserId khi có; PropertyManagers(PropertyId,ManagerUserId) khi RevokedAt NULL.</text>
+<text x="40" y="3558" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">UX_Payments_InvoiceStatus (InvoiceId,Status) khi Status IN (0,1); UX_ContractRenewalRequests_Pending (ContractId) khi Status = 0; 1 yêu cầu chờ duyệt cho mỗi (OperationCode,TargetType,TargetKey).</text>
+<text x="40" y="3576" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Bảng Identity phụ (AspNetRoles, AspNetRoleClaims, AspNetUserRoles, AspNetUserClaims, AspNetUserLogins, AspNetUserTokens, AspNetUserPasskeys) không vẽ trong ERD.</text>
+<text x="40" y="3594" font-family="system-ui,sans-serif" font-size="12" fill="#656d76">Delta 3C: 9 bảng mới (ContractRenewalRequests, Payments, PaymentProofs, PaymentAuditLogs, AuditLogEntries, UtilityReadings, UtilityReadingAudits, TenantInvitations, TenantOwnerLinks); Payments.Status 0/1/2; ContractRenewalRequests.Status 0/1/2.</text>
 </svg>

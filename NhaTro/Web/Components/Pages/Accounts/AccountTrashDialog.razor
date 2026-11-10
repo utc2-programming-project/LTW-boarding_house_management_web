@@ -1,0 +1,97 @@
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Features.Accounts
+@using Web.Features.Accounts.DTOs
+
+@inject IAccountService Accounts
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<FeatureDialog Visible="Visible" Title="@L["AccountTrashTitle"]" CloseLabel="@L["Close"]" OnClose="OnClose">
+    @if (_loading)
+    {
+        <p class="note">@L["TableLoading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="note">@L["AccountTrashEmpty"]</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="account-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@L["EmailLabel"]</th>
+                        <th scope="col">@L["FullNameLabel"]</th>
+                        <th scope="col">@L["AccountDeletedAt"]</th>
+                        <th scope="col">@L["ColumnActions"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td>@item.OriginalEmail</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.FullName) ? L["NoData"].Value : item.FullName)</td>
+                            <td>@(item.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                        @onclick="() => RestoreAsync(item)">
+                                    @L["AccountRestore"]
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</FeatureDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string CallerUserId { get; set; } = string.Empty;
+    [Parameter] public string CallerRole { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private IReadOnlyList<DeletedAccountDto> _items = [];
+    private bool _loading;
+    private bool _wasVisible;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !_wasVisible)
+        {
+            await LoadAsync();
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = await Accounts.ListDeletedAsync(CallerRole);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RestoreAsync(DeletedAccountDto item)
+    {
+        var result = await Accounts.RestoreAsync(item.Id, CallerUserId, CallerRole);
+        if (!result.Succeeded)
+        {
+            Toasts.Error(L[AccountErrorCodes.ResourceKey(result.ErrorCode)]);
+            return;
+        }
+
+        Toasts.Success(L["AccountRestored"]);
+        await LoadAsync();
+    }
+}

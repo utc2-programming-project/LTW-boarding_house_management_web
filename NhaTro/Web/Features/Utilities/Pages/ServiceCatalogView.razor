@@ -19,17 +19,8 @@
     else
     {
     <!-- Page Heading -->
-    <header class="page-header">
-        <div class="heading-group">
-            <div class="breadcrumb-title-stack">
-                <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[]
-                    {
-                        new(L["CatalogOverviewNav"], "/"),
-                        new(L["CatalogBreadcrumb"])
-                    })" />
-                <h1 class="page-title">@L["CatalogHeading"]</h1>
-            </div>
-            <p class="page-subtitle">@L["CatalogSubtitle"]</p>
+    <PageHeading Title="@L["CatalogHeading"]" HelpText="@L["CatalogSubtitle"]">
+        <HeadingMeta>
             @if (_isSampleData)
             {
                 <div class="sample-data-note">
@@ -39,32 +30,33 @@
             }
             @if (!string.IsNullOrWhiteSpace(_loadError))
             {
-                <div class="sample-data-note" style="border-left: 3px solid #ef4444; background: #fef2f2; color: #991b1b;">
-                    <span class="sample-data-badge" style="background: #ef4444; color: #fff;">@L["SqlErrorBadge"]</span>
+                <div class="sample-data-note" style="border-left: 3px solid var(--danger); background: var(--error-bg); color: var(--error-text);">
+                    <span class="sample-data-badge" style="background: var(--danger); color: var(--on-primary);">@L["SqlErrorBadge"]</span>
                     <span>@_loadError</span>
                 </div>
             }
-        </div>
-
-        <div class="header-actions">
-            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/prices")'>
-                <LucideIcon Name="history" />
-                <span>@L["PriceHistoryBtn"]</span>
-            </button>
-            <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/meter-readings")'>
-                <LucideIcon Name="zap" />
-                <span>@L["MeterReadingBtn"]</span>
-            </button>
-            <AuthorizeView Policy="UtilityManage">
-                <Authorized>
-                    <button id="service-create-open-btn" type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
-                        <LucideIcon Name="plus" />
-                        <span>@L["AddNewServiceBtn"]</span>
-                    </button>
-                </Authorized>
-            </AuthorizeView>
-        </div>
-    </header>
+        </HeadingMeta>
+        <Actions>
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/prices")'>
+                    <LucideIcon Name="history" />
+                    <span>@L["PriceHistoryBtn"]</span>
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/readings")'>
+                    <LucideIcon Name="zap" />
+                    <span>@L["MeterReadingBtn"]</span>
+                </button>
+                <AuthorizeView Policy="UtilityManage">
+                    <Authorized>
+                        <button id="service-create-open-btn" type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
+                            <LucideIcon Name="plus" />
+                            <span>@L["AddNewServiceBtn"]</span>
+                        </button>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </Actions>
+    </PageHeading>
 
     <!-- 4 Stat KPI Cards -->
     <div class="stats-grid">
@@ -327,6 +319,14 @@
                                                             @onclick="() => OpenUpdateModal(service)">
                                                         <LucideIcon Name="edit" />
                                                     </button>
+                                                    <button type="button"
+                                                            class="icon-action-btn delete-action-btn"
+                                                            data-action="delete-service"
+                                                            title="@L["DeleteServiceTooltip"]"
+                                                            aria-label="@L["DeleteServiceTooltip"]"
+                                                            @onclick="() => RequestDelete(service)">
+                                                        <LucideIcon Name="trash" />
+                                                    </button>
                                                 </Authorized>
                                             </AuthorizeView>
                                         }
@@ -382,6 +382,20 @@
                   ServiceName="@_tierServiceName"
                   OnClose="() => _isTierModalOpen = false" />
 
+<AuthorizeView Policy="UtilityManage">
+    <Authorized>
+        <ConfirmDialog Visible="_isDeleteConfirmOpen"
+                       Title="@L["DeleteServiceTitle"]"
+                       Message="@L["DeleteServiceConfirm", _deleteTarget?.Name ?? string.Empty]"
+                       ConfirmText="@L["DeleteServiceAction"]"
+                       CancelText="@L["CancelBtn"]"
+                       BusyText="@L["DeletingService"]"
+                       Danger="true"
+                       OnConfirm="DeleteServiceAsync"
+                       OnCancel="CancelDelete" />
+    </Authorized>
+</AuthorizeView>
+
 @code {
     private List<ServiceItemDto> _allServices = [];
     private List<ServiceItemDto> _filteredServices = [];
@@ -404,7 +418,9 @@
     private bool _isUpdateModalOpen;
     private bool _isTierModalOpen;
     private bool _isCreateModalOpen;
+    private bool _isDeleteConfirmOpen;
     private ServiceItemDto? _selectedService;
+    private ServiceItemDto? _deleteTarget;
     private string _tierServiceName = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -455,9 +471,11 @@
 
         if (!string.IsNullOrWhiteSpace(_searchTerm))
         {
+            var term = _searchTerm.Trim();
             query = query.Where(s =>
-                s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                s.Code.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+                s.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                s.Code.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (s.Description != null && s.Description.Contains(term, StringComparison.OrdinalIgnoreCase)));
         }
 
         if (!string.IsNullOrWhiteSpace(_selectedType) && _selectedType != "all")
@@ -506,6 +524,40 @@
         {
             await LoadDataAsync();
             Toast.Success(_isSampleData ? L["ToastServiceToggled"] : L["ToastServiceToggledSuccessSql"]);
+        }
+        else
+        {
+            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+        }
+    }
+
+    private void RequestDelete(ServiceItemDto service)
+    {
+        _deleteTarget = service;
+        _isDeleteConfirmOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        _isDeleteConfirmOpen = false;
+        _deleteTarget = null;
+    }
+
+    private async Task DeleteServiceAsync()
+    {
+        if (_deleteTarget is null)
+        {
+            CancelDelete();
+            return;
+        }
+
+        var res = await PageService.DeleteServiceAsync(_deleteTarget.Id);
+        _isDeleteConfirmOpen = false;
+        if (res.Success)
+        {
+            _deleteTarget = null;
+            await LoadDataAsync();
+            Toast.Success(L["ToastServiceDeletedSuccess"]);
         }
         else
         {

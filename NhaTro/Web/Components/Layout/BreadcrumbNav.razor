@@ -1,17 +1,36 @@
 @inject IStringLocalizer<Shared> L
 
-<nav class="breadcrumb" aria-label="@L["Breadcrumb"]">
+<nav class="@(TitleAsHeading ? "breadcrumb breadcrumb-heading" : "breadcrumb")" aria-label="@L["Breadcrumb"]">
     <ol>
-        @foreach (var item in Items)
+        @for (var i = 0; i < Items.Count; i++)
         {
+            var item = Items[i];
+            var isLast = i == Items.Count - 1;
             <li>
-                @if (item.Href is not null)
+                @if (item.Href is not null && !isLast)
                 {
-                    <a href="@item.Href">@item.Label</a><LucideIcon Name="chevron" />
+                    <a href="@item.Href">@item.Label</a>
+                }
+                else if (isLast)
+                {
+                    @if (TitleAsHeading)
+                    {
+                        <h1 id="@HeadingId" aria-current="page">@(HeadingText ?? item.Label)</h1>
+                        @CurrentContent
+                        @HeadingSuffix
+                    }
+                    else
+                    {
+                        <span aria-current="page">@item.Label</span>
+                    }
                 }
                 else
                 {
-                    <span aria-current="page">@item.Label</span>
+                    <span>@item.Label</span>
+                }
+                @if (!isLast)
+                {
+                    <LucideIcon Name="chevron" />
                 }
             </li>
         }
@@ -19,6 +38,11 @@
 </nav>
 
 @code {
+    [Parameter] public bool TitleAsHeading { get; set; }
+    [Parameter] public string? HeadingId { get; set; }
+    [Parameter] public string? HeadingText { get; set; }
+    [Parameter] public RenderFragment? CurrentContent { get; set; }
+    [Parameter] public RenderFragment? HeadingSuffix { get; set; }
     [Parameter, EditorRequired] public IReadOnlyList<BreadcrumbItem> Items { get; set; } = [];
     public sealed record BreadcrumbItem(string Label, string? Href = null);
 }

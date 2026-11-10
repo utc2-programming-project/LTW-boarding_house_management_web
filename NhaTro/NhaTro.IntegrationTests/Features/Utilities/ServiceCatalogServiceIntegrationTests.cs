@@ -495,6 +495,113 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
     }
 
     [SqlServerFact]
+    public async Task DeleteServiceCatalogAsync_Owner_SoftDeletesAndKeepsPriceHistory()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+
+        var prop = new Property { Name = "Nhà Xóa", OwnerId = OwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var caller = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+        var created = await service.CreateOrUpdateServicePriceAsync(
+            CreateRequest(prop.Id, "Rác", "phòng", "fixed-monthly", 50_000m, new DateOnly(2026, 1, 1)),
+            caller);
+
+        await service.DeleteServiceCatalogAsync(created.Id, caller);
+
+        // Biến mất khỏi danh mục nhưng dữ liệu vẫn còn để đối soát.
+        Assert.DoesNotContain(await service.GetServiceCatalogsAsync(caller), catalog => catalog.Id == created.Id);
+
+        await using var checkDb = fixture.CreateContext();
+        var deleted = await checkDb.ServiceCatalogs
+            .IgnoreQueryFilters()
+            .Include(catalog => catalog.PriceHistory)
+            .SingleAsync(catalog => catalog.Id == created.Id);
+
+        Assert.True(deleted.IsDeleted);
+        Assert.NotNull(deleted.DeletedAt);
+        Assert.Equal(OwnerId, deleted.DeletedBy);
+        Assert.False(deleted.IsActive);
+        Assert.Single(deleted.PriceHistory);
+    }
+
+    [SqlServerFact]
+    public async Task DeleteServiceCatalogAsync_RejectsReadOnlyGlobalAndCrossProperty()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, OtherOwnerId, Roles.ChuTro);
+
+        var otherProp = new Property { Name = "Nhà Chủ Khác", OwnerId = OtherOwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(otherProp);
+        await db.SaveChangesAsync();
+
+        var readOnlyCat = new ServiceCatalog
+        {
+            PropertyId = otherProp.Id,
+            IsReadOnly = true,
+            PriceHistory = [new ServicePriceHistory { Name = "Điện", Unit = "kWh", CalculationMethod = "meter", UnitPrice = 3000m, EffectiveDate = new DateOnly(2026, 1, 1) }]
+        };
+        var globalCat = new ServiceCatalog
+        {
+            PropertyId = null,
+            IsReadOnly = false,
+            PriceHistory = [new ServicePriceHistory { Name = "Dịch vụ chung", Unit = "tháng", CalculationMethod = "fixed-monthly", UnitPrice = 20_000m, EffectiveDate = new DateOnly(2026, 1, 1) }]
+        };
+        var crossPropCat = new ServiceCatalog
+        {
+            PropertyId = otherProp.Id,
+            IsReadOnly = false,
+            PriceHistory = [new ServicePriceHistory { Name = "Xe", Unit = "xe", CalculationMethod = "fixed-monthly", UnitPrice = 10_000m, EffectiveDate = new DateOnly(2026, 1, 1) }]
+        };
+        db.ServiceCatalogs.AddRange(readOnlyCat, globalCat, crossPropCat);
+        await db.SaveChangesAsync();
+
+        var caller = new PropertyCaller(OwnerId, Roles.ChuTro);
+        var service = new ServiceCatalogService(db);
+
+        // Read-only (biểu giá điện/nước) rejected
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.DeleteServiceCatalogAsync(readOnlyCat.Id, caller));
+
+        // Global rejected
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.DeleteServiceCatalogAsync(globalCat.Id, caller));
+
+        // Cross-property rejected
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.DeleteServiceCatalogAsync(crossPropCat.Id, caller));
+    }
+
+    [SqlServerFact]
+    public async Task DeleteServiceCatalogAsync_RejectsManager()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, OwnerId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, ManagerId, Roles.QuanLy);
+
+        var prop = new Property { Name = "Nhà Quản Lý", OwnerId = OwnerId, IsActive = true, CreatedAt = DateTime.UtcNow };
+        db.Properties.Add(prop);
+        await db.SaveChangesAsync();
+
+        var service = new ServiceCatalogService(db);
+        var created = await service.CreateOrUpdateServicePriceAsync(
+            CreateRequest(prop.Id, "Internet", "phòng", "fixed-monthly", 100_000m, new DateOnly(2026, 1, 1)),
+            new PropertyCaller(OwnerId, Roles.ChuTro));
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            service.DeleteServiceCatalogAsync(created.Id, new PropertyCaller(ManagerId, Roles.QuanLy)));
+
+        Assert.False((await db.ServiceCatalogs.SingleAsync(catalog => catalog.Id == created.Id)).IsDeleted);
+    }
+
+    [SqlServerFact]
     public async Task CreateOrUpdateServicePriceAsync_WhenInactive_RejectsNewPriceVersion()
     {
         await fixture.ResetAsync();
@@ -629,7 +736,7 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         await using var tx = await db.Database.BeginTransactionAsync();
 
         await db.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt]) VALUES (NULL, 0, GETUTCDATE());
+            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt], [IsDeleted]) VALUES (NULL, 0, GETUTCDATE(), 0);
             DECLARE @catId int = SCOPE_IDENTITY();
             INSERT INTO [ServicePriceHistory] ([ServiceCatalogId], [Name], [Unit], [CalculationMethod], [UnitPrice], [EffectiveDate], [CreatedAt], [CreatedByUserId])
             VALUES (@catId, 'Int User Item', 'phòng', 'fixed-monthly', 10000, '2026-01-01', GETUTCDATE(), '101');
@@ -677,7 +784,7 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         await using var tx = await db.Database.BeginTransactionAsync();
 
         await db.Database.ExecuteSqlRawAsync(@"
-            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt]) VALUES (NULL, 0, GETUTCDATE());
+            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt], [IsDeleted]) VALUES (NULL, 0, GETUTCDATE(), 0);
             DECLARE @catId int = SCOPE_IDENTITY();
             INSERT INTO [ServicePriceHistory] ([ServiceCatalogId], [Name], [Unit], [CalculationMethod], [UnitPrice], [EffectiveDate], [CreatedAt], [CreatedByUserId])
             VALUES (@catId, 'Null User Item', 'phòng', 'fixed-monthly', 10000, '2026-01-01', GETUTCDATE(), NULL);
@@ -722,7 +829,7 @@ public sealed class ServiceCatalogServiceIntegrationTests(SqlServerFixture fixtu
         await using var tx = await db.Database.BeginTransactionAsync();
 
         await db.Database.ExecuteSqlRawAsync($@"
-            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt]) VALUES (NULL, 0, GETUTCDATE());
+            INSERT INTO [ServiceCatalogs] ([PropertyId], [IsReadOnly], [CreatedAt], [IsDeleted]) VALUES (NULL, 0, GETUTCDATE(), 0);
             DECLARE @catId int = SCOPE_IDENTITY();
             INSERT INTO [ServicePriceHistory] ([ServiceCatalogId], [Name], [Unit], [CalculationMethod], [UnitPrice], [EffectiveDate], [CreatedAt], [CreatedByUserId])
             VALUES (@catId, 'Guid User Item', 'phòng', 'fixed-monthly', 10000, '2026-01-01', GETUTCDATE(), '{guidUser}');

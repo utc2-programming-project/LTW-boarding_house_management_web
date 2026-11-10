@@ -18,7 +18,6 @@
 
 <PageTitle>@L["ContractDetailTitle"]</PageTitle>
 <section class="contract-detail-page" aria-labelledby="contract-detail-title">
-    <BreadcrumbNav Items="@(new BreadcrumbNav.BreadcrumbItem[] { new(L["ContractNavLabel"], "/contracts"), new(L["ContractDetailTitle"]) })" />
     @if (_loading) { <LoadingOverlay Visible="true" Text="@L["TableLoading"]" /> }
     else if (_contract is null)
     {
@@ -26,7 +25,15 @@
     }
     else
     {
-        <header class="page-heading"><div><h1 id="contract-detail-title">@_contract.ContractNumber</h1><p>@_contract.PropertyName · @_contract.RoomCode</p></div><StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" /></header>
+        <PageHeading Title="@_contract.ContractNumber" TitleId="contract-detail-title"
+                     CurrentLabel="@L["ContractDetailTitle"]" HelpText="@L["ContractDetailDescription"]">
+            <HeadingMeta>
+                <p>@_contract.PropertyName · @_contract.RoomCode</p>
+            </HeadingMeta>
+            <Actions>
+                <StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" />
+            </Actions>
+        </PageHeading>
         <dl class="contract-detail-grid">
             <div><dt>@L["ContractTenantsLabel"]</dt><dd><ul>@foreach (var member in _contract.Members) { <li>@member.FullName @if (!string.IsNullOrWhiteSpace(member.Phone)) { <span>· @member.Phone</span> }</li> }</ul></dd></div>
             <div><dt>@L["ContractTermLabel"]</dt><dd>@DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))</dd></div>

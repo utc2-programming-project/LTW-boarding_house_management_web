@@ -114,6 +114,36 @@ public sealed class InvoiceQueryServiceIntegrationTests(SqlServerFixture fixture
     }
 
     [SqlServerFact]
+    public async Task GetInvoicesAsync_FiltersByKeywordAmountAndPaymentState()
+    {
+        var data = await SeedInvoicesAsync();
+
+        await using var db = fixture.CreateContext();
+        var service = new InvoiceQueryService(db);
+        var caller = new PropertyCaller(data.ChuTroAId, Roles.ChuTro);
+
+        var byRoom = await service.GetInvoicesAsync(new InvoiceFilter { Keyword = "A101" }, caller);
+        var byTenant = await service.GetInvoicesAsync(new InvoiceFilter { Keyword = "Khách thuê A" }, caller);
+        var byContract = await service.GetInvoicesAsync(new InvoiceFilter { Keyword = "HD-A-2026" }, caller);
+        var byCode = await service.GetInvoicesAsync(
+            new InvoiceFilter { Keyword = $"HD-{data.InvoiceASeptemberId}" },
+            caller);
+        var byAmount = await service.GetInvoicesAsync(
+            new InvoiceFilter { MinAmount = 2_950_000m },
+            caller);
+        var partial = await service.GetInvoicesAsync(
+            new InvoiceFilter { PaymentState = InvoicePaymentState.Partial },
+            caller);
+
+        Assert.Equal([data.InvoiceAOctoberId, data.InvoiceASeptemberId], byRoom.Items.Select(item => item.Id));
+        Assert.Equal([data.InvoiceAOctoberId, data.InvoiceASeptemberId], byTenant.Items.Select(item => item.Id));
+        Assert.Equal([data.InvoiceAOctoberId, data.InvoiceASeptemberId], byContract.Items.Select(item => item.Id));
+        Assert.Equal([data.InvoiceASeptemberId], byCode.Items.Select(item => item.Id));
+        Assert.Equal([data.InvoiceASeptemberId], byAmount.Items.Select(item => item.Id));
+        Assert.Empty(partial.Items);
+    }
+
+    [SqlServerFact]
     public async Task GetInvoicesAsync_PeriodFilterUsesInclusiveOverlap()
     {
         var data = await SeedInvoicesAsync();

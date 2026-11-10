@@ -510,6 +510,54 @@ public sealed class ContractService : IContractService
         return await ApplyLiquidationAsync(contract, room, property, today, cancellationToken);
     }
 
+    public async Task<ContractActionResultDto> UpdateDepositAsync(
+        Guid contractId,
+        decimal depositAmount,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCanManage(caller);
+
+        if (depositAmount < 0m)
+        {
+            throw new ContractValidationException(
+                "Tiền cọc phải là số không âm.",
+                ContractErrorCodes.InvalidDepositAmount,
+                nameof(depositAmount));
+        }
+
+        var (contract, _, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        var decision = await EvaluateSw08Async(caller, cancellationToken);
+
+        if (decision == RoomChangeDecision.Denied)
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.ApprovalDenied,
+                ContractErrorCodes.ApprovalDenied);
+        }
+
+        if (decision == RoomChangeDecision.RequiresApproval)
+        {
+            var approval = await CreateApprovalRequestAsync(
+                contract,
+                property.Id,
+                new ContractApprovalPayload(
+                    ContractApprovalActions.UpdateDeposit,
+                    null,
+                    MoneyFormatter.RoundVnd(depositAmount)),
+                caller,
+                cancellationToken,
+                operationCode: "SW-08");
+
+            return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
+        }
+
+        contract.DepositAmount = MoneyFormatter.RoundVnd(depositAmount);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new ContractActionResultDto(ContractActionOutcome.Applied, contract.ContractId, null);
+    }
+
     public async Task<ContractResponseDto> CreateContractAsync(
         CreateContractRequest request,
         PropertyCaller caller,
@@ -640,6 +688,31 @@ public sealed class ContractService : IContractService
                 TenantId = tenantId,
             }));
 
+            // PLAN-005 (điều chỉnh): hợp đồng ở tòa của chủ trọ nào thì chủ trọ đó được xem hồ sơ khách,
+            // kể cả khách đã thuộc chủ trọ khác — mỗi khách có thể có nhiều liên kết chủ trọ.
+            var propertyOwnerId = await _context.Properties.AsNoTracking()
+                .Where(property => property.Id == room.PropertyId)
+                .Select(property => property.OwnerId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(propertyOwnerId))
+            {
+                var linkedTenantIds = await _context.TenantOwnerLinks
+                    .Where(link => link.OwnerId == propertyOwnerId && requestedTenantIds.Contains(link.TenantId))
+                    .Select(link => link.TenantId)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var tenantId in requestedTenantIds.Except(linkedTenantIds))
+                {
+                    _context.TenantOwnerLinks.Add(new Web.Features.Tenants.Entities.TenantOwnerLink
+                    {
+                        TenantId = tenantId,
+                        OwnerId = propertyOwnerId,
+                        CreatedAt = DateTime.UtcNow,
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -749,6 +822,20 @@ public sealed class ContractService : IContractService
             : await _togglePolicy.EvaluateAsync(ManagerAction.SW07, caller.Role, cancellationToken);
     }
 
+    private async Task<RoomChangeDecision> EvaluateSw08Async(
+        PropertyCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (!caller.IsQuanLy)
+        {
+            return RoomChangeDecision.Allowed;
+        }
+
+        return _togglePolicy is null
+            ? RoomChangeDecision.RequiresApproval
+            : await _togglePolicy.EvaluateAsync(ManagerAction.SW08, caller.Role, cancellationToken);
+    }
+
     private async Task<(Contract Contract, Room Room, Property Property)> LoadLifecycleTargetAsync(
         Guid contractId,
         PropertyCaller caller,
@@ -794,7 +881,8 @@ public sealed class ContractService : IContractService
         int propertyId,
         ContractApprovalPayload payload,
         PropertyCaller caller,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string operationCode = "SW-07")
     {
         if (_approvals is null)
         {
@@ -806,7 +894,7 @@ public sealed class ContractService : IContractService
         var approval = await _approvals.CreateAsync(
             new CreateApprovalRequest
             {
-                OperationCode = "SW-07",
+                OperationCode = operationCode,
                 TargetType = ApprovalTargetType.Contract,
                 TargetKey = contract.ContractId.ToString("D"),
                 PropertyId = propertyId,

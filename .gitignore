@@ -44,4 +44,7 @@ docs/Imp/*
 
 scripts/*
 !scripts/database/
-!scripts/database/*.ps1   
+!scripts/database/*.ps1
+!scripts/data/
+!scripts/data/*.ps1   
+docs/imp/

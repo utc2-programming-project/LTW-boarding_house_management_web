@@ -10,15 +10,13 @@
 <PageTitle>@L["P2TrashTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <h1>@L["P2TrashTitle"]</h1>
-            <p>@L["P2TrashSubtitle"]</p>
-        </div>
-        <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
-            <LucideIcon Name="door" />@L["P2RoomsTitle"]
-        </button>
-    </header>
+    <PageHeading Title="@L["P2TrashTitle"]" HelpText="@L["P2TrashSubtitle"]">
+        <Actions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
+                <LucideIcon Name="door" />@L["P2RoomsTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
 
     <DataTable @ref="_table" TItem="RoomTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
@@ -133,6 +131,7 @@
             Toasts.Error(result.ErrorCode switch
             {
                 RoomErrorCodes.DuplicateRoomCode => L["P2RestoreDuplicateCode"],
+                RoomErrorCodes.PropertyDeleted => L["P2RestorePropertyDeleted"],
                 RoomErrorCodes.Forbidden => L["P2Forbidden"],
                 RoomErrorCodes.RoomNotFound => L["P2RoomNotFound"],
                 _ => L["P2TrashRestoreFailed"]

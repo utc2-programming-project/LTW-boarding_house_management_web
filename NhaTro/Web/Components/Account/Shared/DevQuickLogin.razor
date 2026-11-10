@@ -51,6 +51,23 @@
             return;
         }
 
+        // VHT-49: khi chạy DB demo, hiện đúng 6 tài khoản demo thay vì tài khoản dev.
+        if (string.Equals(Config["DemoSeed:SkipDevAccounts"], "true", StringComparison.OrdinalIgnoreCase))
+        {
+            var demoPassword = Config["DemoSeed:Password"];
+            if (string.IsNullOrWhiteSpace(demoPassword))
+            {
+                demoPassword = DemoDataSeeder.DefaultPassword;
+            }
+
+            foreach (var (email, role) in DemoDataSeeder.Accounts)
+            {
+                Entries.Add(new DevLoginEntry(role, email, demoPassword));
+            }
+
+            return;
+        }
+
         // Admin that duoc gieo tu AdminSeed (khong phai tu DevAccounts).
         var adminEmail = Config["AdminSeed:Email"];
         var adminPassword = Config["AdminSeed:Password"];
