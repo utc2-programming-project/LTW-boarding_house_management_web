@@ -95,7 +95,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         page.FindAll(".report-pager nav button")[1].Click();
         page.WaitForAssertion(() => Assert.Equal(2, TenantRequests.Last().Page));
 
-        page.Find(".property-filter").Change("7");
+        page.Find("#report-property").Change("7");
 
         page.WaitForAssertion(() =>
         {
@@ -121,22 +121,22 @@ public sealed class BusinessReportsPageTests : BunitContext
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
         var tenantCalls = TenantRequests.Count;
 
-        page.Find(".room-status-filter").Change("Available");
+        page.Find("#report-room-status").Change("Available");
         page.WaitForAssertion(() =>
         {
             Assert.Equal(RoomStatus.Available, RoomRequests.Last().Status);
             Assert.Equal(1, RoomRequests.Last().Page);
         });
-        page.Find(".room-activity-filter").Change("false");
+        page.Find("#report-room-activity").Change("false");
         page.WaitForAssertion(() => Assert.False(RoomRequests.Last().IsActive));
         Assert.Equal(tenantCalls, TenantRequests.Count);
         var roomCalls = RoomRequests.Count;
 
         page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
-        page.Find(".tenant-rental-filter").Change("true");
+        page.Find("#report-tenant-rental").Change("true");
         page.WaitForAssertion(() => Assert.True(TenantRequests.Last().HasActiveContract));
-        page.Find(".tenant-activity-filter").Change("false");
+        page.Find("#report-tenant-activity").Change("false");
         page.WaitForAssertion(() => Assert.False(TenantRequests.Last().IsActive));
         Assert.Equal(roomCalls, RoomRequests.Count);
     }

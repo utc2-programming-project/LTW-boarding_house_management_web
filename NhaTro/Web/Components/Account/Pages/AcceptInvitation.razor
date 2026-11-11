@@ -1,10 +1,18 @@
 @page "/invite/{Token}"
+@layout Layout.AuthLayout
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
 @using Web.Components.Shared.Forms
+@using Web.Data
+@using Web.Features.Accounts.Otp
+@using Web.Features.Tenants.Enums
 @using Web.Features.Tenants.Invitations
 
-@inject TenantInvitationService Invitations
+@inject TenantQrInvitationService Qr
+@inject IOtpService Otp
+@inject UserManager<ApplicationUser> Users
+@inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["InviteAcceptTitle"] · @L["AppName"]</PageTitle>
@@ -12,60 +20,113 @@
 <section class="auth-page" aria-labelledby="invite-title">
     <div class="auth-card">
         <PageHeading Title="@L["InviteAcceptTitle"]" TitleId="invite-title" HelpText="@L["InviteAcceptHelp"]"
-                     InteractiveHelp="true" Class="auth-heading">
-            <HeadingMeta>
-                @if (_account is not null)
-                {
-                    <p>@string.Format(L["InviteAcceptAccount"], _account)</p>
-                }
-            </HeadingMeta>
-        </PageHeading>
+                     InteractiveHelp="true" Class="auth-heading" />
 
-        @if (_succeeded)
+        @if (_details is not null && !_details.IsExpired && !_details.IsRevoked && !_details.IsAccepted)
+        {
+            <div class="invite-summary">
+                <p><strong>@L["InviteOwnerLabel"]:</strong> @_details.OwnerName</p>
+                @if (!string.IsNullOrWhiteSpace(_details.PropertyName))
+                {
+                    <p><strong>@L["InvitePropertyLabel"]:</strong> @_details.PropertyName@(string.IsNullOrWhiteSpace(_details.RoomCode) ? "" : $" · {_details.RoomCode}")</p>
+                }
+                <p class="hint">@string.Format(L["InviteExpiresAt"], _details.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</p>
+            </div>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_success is not null)
         {
             <div class="form-alert" role="status">
                 <LucideIcon Name="check" />
-                <span>@L["InviteAcceptSuccess"]</span>
+                <span>@_success</span>
             </div>
-            <p class="hint"><a href="Account/Login">@L["BackToLogin"]</a></p>
+            <p class="hint"><a href="/select-role?returnUrl=%2Fmy%2Froom">@L["InviteSwitchTenant"]</a></p>
         }
-        else if (!_valid)
+        else if (_details is null || _details.IsRevoked || _details.IsAccepted || _details.IsExpired)
         {
             <div class="form-alert" role="alert">
                 <LucideIcon Name="alert" />
                 <span>@L["InviteAcceptInvalid"]</span>
             </div>
         }
-        else
+        else if (_details.Kind == TenantInvitationKind.NewAccount)
         {
-            if (_error is not null)
-            {
-                <div class="form-alert" role="alert">
-                    <LucideIcon Name="alert" />
-                    <span>@_error</span>
-                </div>
-            }
-
-            <EditForm Model="Input" FormName="accept-invitation" OnValidSubmit="SubmitAsync" method="post">
+            <EditForm Model="Input" FormName="accept-invitation" OnValidSubmit="SubmitNewAsync" method="post">
                 <DataAnnotationsValidator />
+
+                <FormField TValue="string" Id="invite-name" Label="@L["FullNameLabel"]" Required="true"
+                           For="() => Input.FullName">
+                    <InputText @bind-Value="Input.FullName" id="invite-name" class="input"
+                               autocomplete="name" maxlength="200" aria-required="true" />
+                </FormField>
+
+                <FormField TValue="string" Id="invite-email" Label="@L["EmailLabel"]" Required="true"
+                           For="() => Input.Email">
+                    <InputText @bind-Value="Input.Email" id="invite-email" class="input" type="email"
+                               autocomplete="email" maxlength="256" aria-required="true"
+                               readonly="@(!string.IsNullOrWhiteSpace(_details.Email))" />
+                </FormField>
+
+                <FormField TValue="string" Id="invite-phone" Label="@L["PhoneLabel"]" For="() => Input.PhoneNumber">
+                    <InputText @bind-Value="Input.PhoneNumber" id="invite-phone" class="input"
+                               inputmode="numeric" maxlength="10" autocomplete="tel" />
+                </FormField>
 
                 <FormField TValue="string" Id="invite-password" Label="@L["PasswordLabel"]" Required="true"
                            Hint="@L["InviteAcceptPasswordHint"]" For="() => Input.Password">
-                    <InputText @bind-Value="Input.Password" id="invite-password" type="password" class="input"
-                               autocomplete="new-password" aria-required="true"
-                               aria-describedby="invite-password-hint invite-password-error" />
+                    <InputText @bind-Value="Input.Password" id="invite-password" class="input" type="password"
+                               autocomplete="new-password" aria-required="true" />
                 </FormField>
 
                 <FormField TValue="string" Id="invite-confirm" Label="@L["ConfirmPasswordLabel"]" Required="true"
                            For="() => Input.ConfirmPassword">
-                    <InputText @bind-Value="Input.ConfirmPassword" id="invite-confirm" type="password" class="input"
-                               autocomplete="new-password" aria-required="true"
-                               placeholder="@L["ConfirmPasswordPlaceholder"]"
-                               aria-describedby="invite-confirm-error" />
+                    <InputText @bind-Value="Input.ConfirmPassword" id="invite-confirm" class="input" type="password"
+                               autocomplete="new-password" aria-required="true" />
                 </FormField>
 
-                <button type="submit" class="btn btn-primary btn-block">@L["InviteAcceptSubmit"]</button>
+                <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
+                    @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                    @L["InviteAcceptSubmit"]
+                </button>
             </EditForm>
+        }
+        else
+        {
+            @if (!_authenticated)
+            {
+                <div class="form-alert" role="status">
+                    <LucideIcon Name="user" />
+                    <span>@L["InviteLoginRequired"]</span>
+                </div>
+                <p class="hint">
+                    <a href="@LoginUrl">@L["BackToLogin"]</a>
+                </p>
+            }
+            else if (!_isTargetUser)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert" />
+                    <span>@L["InviteWrongAccount"]</span>
+                </div>
+                <p class="hint"><a href="/Account/Logout">@L["SignOut"]</a></p>
+            }
+            else
+            {
+                <EditForm Model="Input" FormName="accept-existing-invitation" OnValidSubmit="SubmitExistingAsync" method="post">
+                    <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
+                        @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                        @L["InviteAcceptExistingButton"]
+                    </button>
+                </EditForm>
+            }
         }
     </div>
 </section>
@@ -73,60 +134,137 @@
 @code {
     [Parameter] public string Token { get; set; } = string.Empty;
 
-    [SupplyParameterFromForm]
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "accept-invitation")]
     private InputModel Input { get; set; } = default!;
 
-    private string? _account;
-    private bool _valid;
-    private bool _succeeded;
+    [SupplyParameterFromForm(FormName = "accept-existing-invitation")]
+    private ExistingModel Existing { get; set; } = default!;
+
+    private TenantInvitationDetails? _details;
     private string? _error;
+    private string? _success;
+    private bool _busy;
+    private bool _authenticated;
+    private bool _isTargetUser;
+    private string? _currentUserId;
+
+    private string LoginUrl =>
+        $"/Account/Login?returnUrl={Uri.EscapeDataString($"/invite/{Token}")}";
 
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
+        Existing ??= new();
 
-        var peek = await Invitations.PeekAsync(Token);
-        if (peek is null)
+        _details = await Qr.PeekDetailsAsync(Token);
+        if (_details is not null && _details.Kind == TenantInvitationKind.NewAccount)
         {
-            _valid = false;
+            Input.FullName = _details.FullName;
+            Input.Email = _details.Email;
+            Input.PhoneNumber = _details.Phone;
+        }
+
+        _authenticated = HttpContext.User.Identity?.IsAuthenticated == true;
+        if (_authenticated)
+        {
+            var user = await Users.GetUserAsync(HttpContext.User);
+            _currentUserId = user?.Id;
+            _isTargetUser = _details?.TargetUserId is null
+                || string.Equals(_details.TargetUserId, _currentUserId, StringComparison.Ordinal);
+        }
+    }
+
+    private async Task SubmitNewAsync()
+    {
+        if (_details is null || _busy)
+        {
             return;
         }
 
-        _valid = true;
-        _account = MaskEmail(peek.Value.Email);
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Qr.BeginNewAccountAsync(Token, new NewTenantAccountRequest
+            {
+                FullName = Input.FullName,
+                Email = Input.Email,
+                PhoneNumber = Input.PhoneNumber,
+                Password = Input.Password,
+            });
+
+            if (!result.Succeeded)
+            {
+                _error = MapError(result.ErrorCode);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.UserId) && !string.IsNullOrWhiteSpace(result.Email))
+            {
+                await Otp.IssueAsync(result.UserId, result.Email, OtpPurpose.TenantRegistration);
+            }
+
+            var email = Uri.EscapeDataString(result.Email ?? Input.Email.Trim());
+            RedirectManager.RedirectTo(
+                $"/Account/VerifyOtp?purpose=TenantRegistration&email={email}&invite={Uri.EscapeDataString(Token)}");
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
-    private async Task SubmitAsync()
+    private async Task SubmitExistingAsync()
     {
-        var result = await Invitations.AcceptAsync(Token, Input.Password);
-        if (result.Succeeded)
+        if (_details is null || _busy || !_isTargetUser)
         {
-            _succeeded = true;
             return;
         }
 
-        _error = result.ErrorCode switch
+        _busy = true;
+        _error = null;
+        try
         {
-            TenantInvitationErrorCodes.Expired => L["InviteAcceptExpired"],
-            TenantInvitationErrorCodes.AlreadyUsed => L["InviteAcceptUsed"],
-            TenantInvitationErrorCodes.EmailAlreadyRegistered => L["InviteAcceptEmailTaken"],
-            _ => L["InviteAcceptFailed"],
-        };
-    }
+            var result = await Qr.AcceptExistingAsync(Token, _currentUserId!);
+            if (!result.Succeeded)
+            {
+                _error = MapError(result.ErrorCode);
+                return;
+            }
 
-    private static string MaskEmail(string email)
-    {
-        var at = email.IndexOf('@');
-        if (at <= 1)
-        {
-            return email;
+            _success = L["InviteAcceptExistingSuccess"];
         }
-
-        return email[0] + new string('*', Math.Min(at - 1, 4)) + email[at..];
+        finally
+        {
+            _busy = false;
+        }
     }
+
+    private string MapError(string? code) => code switch
+    {
+        TenantInvitationErrorCodes.Expired => L["InviteAcceptExpired"],
+        TenantInvitationErrorCodes.AlreadyUsed => L["InviteAcceptUsed"],
+        TenantInvitationErrorCodes.EmailAlreadyRegistered => L["InviteAcceptEmailTaken"],
+        TenantInvitationErrorCodes.Forbidden => L["InviteWrongAccount"],
+        _ => L["InviteAcceptFailed"],
+    };
 
     private sealed class InputModel
     {
+        [Required]
+        [StringLength(200, MinimumLength = 2)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải có 10 số, bắt đầu bằng 0.")]
+        public string? PhoneNumber { get; set; }
+
         [Required]
         [StringLength(100, MinimumLength = 8)]
         [DataType(DataType.Password)]
@@ -135,5 +273,9 @@
         [DataType(DataType.Password)]
         [Compare(nameof(Password), ErrorMessage = "Mật khẩu xác nhận không khớp.")]
         public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private sealed class ExistingModel
+    {
     }
 }

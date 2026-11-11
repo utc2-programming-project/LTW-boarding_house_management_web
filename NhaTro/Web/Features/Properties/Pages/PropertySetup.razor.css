@@ -46,7 +46,7 @@
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 0;
     margin: 0;
     padding: 14px 8px;
     list-style: none;
@@ -56,30 +56,40 @@
     box-shadow: var(--shadow-card);
 }
 
-/* Đường nối đi qua tâm 3 node, nằm sau node nên chỉ lộ phần giữa. */
-.setup-rail-list::before {
+/* Mỗi bước tự vẽ nửa đường nối bên trái và bên phải nên đường đứt chỉ nằm
+   trong khoảng trống giữa hai node, không bao giờ chạy xuyên qua nhãn. */
+.setup-rail-step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.setup-rail-step::before,
+.setup-rail-step::after {
     content: "";
-    position: absolute;
-    top: 34px;
-    left: calc(100% / 6);
-    right: calc(100% / 6);
+    flex: 1 1 0;
+    min-width: 10px;
     height: 2px;
     border-radius: 2px;
     background: repeating-linear-gradient(90deg, var(--border) 0 6px, transparent 6px 12px);
 }
 
-.setup-rail-step {
-    position: relative;
-    z-index: 1;
-    min-width: 0;
+/* Bước đầu/cuối vẫn giữ chỗ để node canh giữa, chỉ ẩn nửa đường thừa. */
+.setup-rail-step:first-child::before,
+.setup-rail-step:last-child::after {
+    visibility: hidden;
 }
 
 .setup-rail-node {
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    width: 100%;
+    max-width: 100%;
     min-height: 48px;
     padding: 6px 10px;
     border: 0;
@@ -711,7 +721,7 @@ button.setup-progress-link:hover {
 @media (max-width: 480px) {
     .setup-rail-list {
         padding: 12px 4px;
-        gap: 6px;
+        gap: 0;
     }
 
     .setup-rail-text strong {

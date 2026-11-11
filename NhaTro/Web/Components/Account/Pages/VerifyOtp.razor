@@ -1,0 +1,357 @@
+@page "/Account/VerifyOtp"
+@page "/verify-otp"
+@layout Layout.AuthLayout
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Options
+@using Web.Components.Shared.Forms
+@using Web.Data
+@using Web.Features.Accounts.Contexts
+@using Web.Features.Accounts.Otp
+
+@inject IOtpService Otp
+@inject IOptions<OtpOptions> OtpOptions
+@inject PostLoginRouter PostLogin
+@inject UserManager<ApplicationUser> Users
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["OtpTitle"] · @L["AppName"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="otp-title">
+    <div class="auth-card">
+        <AuthTabs Active="AuthTab.None" Dimmed="true" />
+        <PageHeading Title="@L["OtpHeading"]" TitleId="otp-title" HelpText="@L["OtpHelp"]"
+                     InteractiveHelp="true" Class="auth-heading" />
+
+        @if (!string.IsNullOrWhiteSpace(_email))
+        {
+            <p class="hint otp-target">@string.Format(L["OtpEmailMasked"], MaskEmail(_email))</p>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_notice is not null)
+        {
+            <div class="form-alert" role="status">
+                <LucideIcon Name="check" />
+                <span>@_notice</span>
+            </div>
+        }
+
+        <EditForm Model="Input" FormName="verify-otp" OnValidSubmit="SubmitAsync" method="post">
+            <DataAnnotationsValidator />
+
+            <FormField TValue="string" Id="otp-code" Label="@L["OtpCodeLabel"]" Required="true"
+                       Hint="@L["OtpCodeHint"]" For="() => Input.Code">
+                <InputText @bind-Value="Input.Code" id="otp-code" class="input otp-native otp-native-hidden"
+                           data-otp-source="otp-code"
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="@_otpLength"
+                           aria-required="true" aria-describedby="otp-code-hint otp-code-error" />
+                <div class="otp-cells" data-otp data-length="@_otpLength" data-source="otp-code"
+                     data-cell-label="@L["OtpCellLabel"]" style="--otp-count:@_otpLength"></div>
+            </FormField>
+
+            <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
+                @L["OtpSubmit"]
+            </button>
+        </EditForm>
+
+        <EditForm Model="Resend" FormName="verify-otp-resend" OnValidSubmit="ResendAsync" method="post">
+            <button type="submit" class="btn btn-secondary btn-block" disabled="@_busy"
+                    data-resend-at="@_resendAt?.ToString("O")"
+                    data-resend-label="@L["OtpResend"]"
+                    data-resend-template="@L["OtpResendIn"]">
+                @L["OtpResend"]
+            </button>
+        </EditForm>
+
+        @if (_expiresAt is not null)
+        {
+            <p class="hint">@string.Format(L["OtpExpiresAt"], _expiresAt.Value.ToLocalTime().ToString("HH:mm"))</p>
+        }
+
+        <p class="hint otp-back"><a href="Account/Login">@L["BackToLogin"]</a></p>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? Email { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? Purpose { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromForm(FormName = "verify-otp")]
+    private InputModel Input { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "verify-otp-resend")]
+    private ResendModel Resend { get; set; } = default!;
+
+    private string? _email;
+    private string? _userId;
+    private OtpPurpose _purpose = OtpPurpose.FirstLogin;
+    private DateTime? _expiresAt;
+    private DateTimeOffset? _resendAt;
+    private int _otpLength = 6;
+    private string? _error;
+    private string? _notice;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+        Resend ??= new();
+        _purpose = ParsePurpose(Purpose);
+        _otpLength = OtpOptions.Value.Length == 8 ? 8 : 6;
+
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            var user = await Users.GetUserAsync(HttpContext.User);
+            if (user is not null)
+            {
+                if (_purpose == OtpPurpose.PasswordReset)
+                {
+                    // Đang đăng nhập vẫn có thể reset tài khoản khác nếu biết OTP;
+                    // tra theo email của lời mời, không dùng UserId phiên hiện tại.
+                    _userId = null;
+                    _email = Email?.Trim() ?? user.Email ?? user.UserName;
+                }
+                else
+                {
+                    _userId = user.Id;
+                    _email = user.Email ?? user.UserName;
+                    if (user.EmailConfirmed)
+                    {
+                        RedirectManager.RedirectTo("/");
+                        return;
+                    }
+                }
+            }
+        }
+
+        _email ??= Email?.Trim();
+
+        if (string.IsNullOrWhiteSpace(_email))
+        {
+            RedirectManager.RedirectTo("Account/Login");
+            return;
+        }
+
+        // Chỉ tự phát mã cho phiên đăng nhập đầu tiên; đăng ký chủ trọ đã phát mã ở bước trước.
+        if (_userId is not null && HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            var issued = await Otp.IssueAsync(_userId, _email, _purpose);
+            ApplyIssueResult(issued, initial: true);
+        }
+        else if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Khách vừa được gửi mã ở bước trước; vẫn giữ cooldown 60 giây.
+            _resendAt = DateTimeOffset.UtcNow.AddSeconds(60);
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_email) || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _notice = null;
+        try
+        {
+            var result = await Otp.VerifyAsync(_userId, _email, _purpose, Input.Code);
+            switch (result.Status)
+            {
+                case OtpVerifyStatus.Success:
+                    await CompleteVerificationAsync();
+                    return;
+                case OtpVerifyStatus.Expired:
+                    _error = L["OtpExpired"];
+                    return;
+                case OtpVerifyStatus.Locked:
+                    _error = string.Format(
+                        L["OtpLocked"],
+                        result.LockedUntil?.ToLocalTime().ToString("HH:mm") ?? L["OtpLockedSoon"].Value);
+                    return;
+                case OtpVerifyStatus.NotFound:
+                    _error = L["OtpNotFound"];
+                    return;
+                default:
+                    _error = result.RemainingAttempts > 0
+                        ? string.Format(L["OtpInvalid"], result.RemainingAttempts)
+                        : L["OtpInvalidNoAttempts"];
+                    return;
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ResendAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_email) || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _notice = null;
+        try
+        {
+            // Không gửi OTP reset cho email không tồn tại/chưa xác thực (tránh spam).
+            if (_purpose == OtpPurpose.PasswordReset)
+            {
+                var resetUser = await Users.FindByEmailAsync(_email);
+                if (resetUser is null || !await Users.IsEmailConfirmedAsync(resetUser))
+                {
+                    _error = L["OtpNotFound"];
+                    return;
+                }
+            }
+
+            var issued = await Otp.IssueAsync(_userId, _email, _purpose);
+            ApplyIssueResult(issued);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ApplyIssueResult(OtpIssueResult result, bool initial = false)
+    {
+        _expiresAt = result.ExpiresAt;
+        switch (result.Status)
+        {
+            case OtpIssueStatus.Success:
+                _notice = initial ? L["OtpSent"] : L["OtpResendSuccess"];
+                _resendAt = DateTimeOffset.UtcNow.AddSeconds(60);
+                break;
+            case OtpIssueStatus.Cooldown:
+                _notice = string.Format(L["OtpResendCooldown"], Math.Max(1, result.RetryAfterSeconds));
+                _resendAt = DateTimeOffset.UtcNow.AddSeconds(Math.Max(1, result.RetryAfterSeconds));
+                break;
+            case OtpIssueStatus.Locked:
+                _error = string.Format(L["OtpLocked"], L["OtpLockedSoon"]);
+                _resendAt = DateTimeOffset.UtcNow.AddMinutes(15);
+                break;
+            case OtpIssueStatus.TooManyRequests:
+                _error = L["OtpTooMany"];
+                _resendAt = DateTimeOffset.UtcNow.AddMinutes(60);
+                break;
+            default:
+                _error = L["OtpSendFailed"];
+                _resendAt = DateTimeOffset.UtcNow.AddSeconds(60);
+                break;
+        }
+    }
+
+    private async Task CompleteVerificationAsync()
+    {
+        var user = _userId is not null
+            ? await Users.FindByIdAsync(_userId)
+            : await Users.FindByEmailAsync(_email!);
+
+        if (user is null)
+        {
+            _error = L["OtpUserNotFound"];
+            return;
+        }
+
+        // Quên mật khẩu: OTP chỉ mở khóa bước đặt mật khẩu mới, không kích hoạt tài khoản.
+        if (_purpose == OtpPurpose.PasswordReset)
+        {
+            var resetToken = await Users.GeneratePasswordResetTokenAsync(user);
+            var encoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
+            RedirectManager.RedirectTo(
+                $"/Account/ResetPassword?code={Uri.EscapeDataString(encoded)}"
+                + $"&email={Uri.EscapeDataString(user.Email ?? _email!)}");
+            return;
+        }
+
+        user.EmailConfirmed = true;
+        user.ApprovedAt ??= DateTime.UtcNow;
+
+        var updated = await Users.UpdateAsync(user);
+        if (!updated.Succeeded)
+        {
+            _error = L["OtpUpdateFailed"];
+            return;
+        }
+
+        await Users.UpdateSecurityStampAsync(user);
+
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+        {
+            await SignInManager.RefreshSignInAsync(user);
+            var redirect = await PostLogin.GetRedirectAsync(user, SafeReturnUrl());
+            RedirectManager.RedirectTo(redirect);
+            return;
+        }
+
+        RedirectManager.RedirectTo("Account/Login?verified=1");
+    }
+
+    private string SafeReturnUrl() =>
+        !string.IsNullOrWhiteSpace(ReturnUrl)
+        && ReturnUrl.StartsWith('/')
+        && !ReturnUrl.StartsWith("//", StringComparison.Ordinal)
+            ? ReturnUrl
+            : "/";
+
+    private static OtpPurpose ParsePurpose(string? value)
+    {
+        if (Enum.TryParse<OtpPurpose>(value, ignoreCase: true, out var purpose)
+            && Enum.IsDefined(purpose))
+        {
+            return purpose;
+        }
+
+        return OtpPurpose.FirstLogin;
+    }
+
+    private static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 1)
+        {
+            return email;
+        }
+
+        return email[0] + new string('*', Math.Min(at - 1, 4)) + email[at..];
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [RegularExpression(@"^\d{6,8}$", ErrorMessage = "Mã xác thực phải gồm 6 đến 8 chữ số.")]
+        public string Code { get; set; } = string.Empty;
+    }
+
+    private sealed class ResendModel
+    {
+    }
+}

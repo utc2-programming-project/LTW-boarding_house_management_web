@@ -15,7 +15,8 @@ namespace Web.Components.Account
             IOptions<IdentityOptions> options)
         : RevalidatingServerAuthenticationStateProvider(loggerFactory)
     {
-        protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
+        // PLAN-025: khoá chủ trọ cần có hiệu lực nhanh; 30 phút mặc định là quá dài.
+        protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(2);
 
         protected override async Task<bool> ValidateAuthenticationStateAsync(
             AuthenticationState authenticationState, CancellationToken cancellationToken)

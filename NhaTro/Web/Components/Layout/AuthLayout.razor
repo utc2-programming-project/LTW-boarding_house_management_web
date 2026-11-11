@@ -5,11 +5,7 @@
    Sidebar + topbar của hệ thống chỉ xuất hiện sau khi đã đăng nhập (MainLayout). *@
 <a class="skip-link" href="#main-content">@L["SkipContent"]</a>
 <div class="auth-shell">
-    <header class="auth-shell-bar">
-        <a class="auth-brand" href="/">
-            <span class="app-logo"><LucideIcon Name="building" /></span>
-            <span>@L["AppName"]</span>
-        </a>
+    <header class="auth-shell-bar" data-permanent>
         <div class="topbar-actions">
             <button class="icon-button" type="button" data-theme-toggle aria-label="@L["ToggleTheme"]" aria-pressed="false"><span class="light-icon"><LucideIcon Name="moon" /></span><span class="dark-icon"><LucideIcon Name="sun" /></span></button>
             <div class="culture-control">
@@ -24,7 +20,15 @@
             </div>
         </div>
     </header>
-    <main id="main-content" class="auth-main" tabindex="-1">@Body</main>
+    <main id="main-content" class="auth-main" tabindex="-1">
+        <div class="auth-center">
+            <a class="auth-brand" href="/">
+                <span class="app-logo"><LucideIcon Name="building" /></span>
+                <span>@L["AppName"]</span>
+            </a>
+            @Body
+        </div>
+    </main>
 </div>
 <div id="blazor-error-ui" data-nosnippet role="alert">
     <span>@L["ConnectionError"]</span>

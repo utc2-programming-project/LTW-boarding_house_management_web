@@ -1,22 +1,20 @@
 .p2-page-actions { display: flex; align-items: center; gap: 10px; flex: none; }
-.p2-filter-panel { margin-bottom: 20px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
-.property-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
-.search-field { flex: 1 1 260px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--control-border); border-radius: var(--radius-control); color: var(--text-muted); }
-.search-field:focus-within { border-color: var(--focus-ring); outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.search-field input { width: 100%; min-width: 0; height: 42px; border: 0; outline: 0; background: transparent; color: var(--text-primary); }
-.filter-select { flex: 0 1 190px; min-width: 150px; }
-.filter-number { flex: 0 1 140px; min-width: 120px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
-.filter-number input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-subtle); color: var(--text-primary); }
-.filter-select select, .p2-table-options select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-subtle); color: var(--text-primary); }
+/* Trang xếp block nên tự chừa khoảng cách dưới dải card. */
+.p2-page > .stat-grid { margin-bottom: 24px; }
+.filter-bar { margin-bottom: 20px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 14px; border: 1px solid transparent; border-radius: var(--radius-control); font-weight: 600; white-space: nowrap; }
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-secondary { border-color: var(--control-border); background: var(--surface); color: var(--text-primary); }
 .btn-secondary:hover { background: var(--hover-bg); }
 .p2-link-button { padding: 2px 0; border: 0; background: transparent; color: var(--accent-text); font-weight: 600; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+.p2-row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.p2-alert { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px; border: 1px solid var(--error-border); border-radius: var(--radius-card); background: var(--error-bg); color: var(--error-text); }
+:deep(.table-card) { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+:deep(.table-card table) { min-width: 760px; }
+@media (max-width: 640px) { .p2-page-actions { width: 100%; } .p2-page-actions > .btn { flex: 1; justify-content: center; } }
 .p2-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: var(--text-secondary); }
 .p2-table-options select { width: 84px; }
-.p2-alert { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; padding: 14px; border: 1px solid var(--error-border); border-radius: var(--radius-card); background: var(--error-bg); color: var(--error-text); }
 .p2-page ::deep .table-card { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 /* Tỉ lệ cột cố định: Tên 28% · Địa chỉ 32% · Số phòng 12% · Hoạt động 16% · Thao tác 12%. */
 .p2-page ::deep .table-card table { table-layout: fixed; min-width: 900px; }

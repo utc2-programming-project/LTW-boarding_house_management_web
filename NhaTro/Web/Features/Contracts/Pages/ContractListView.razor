@@ -33,64 +33,118 @@
         </Actions>
     </PageHeading>
 
-    <form class="contract-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
-        <label for="contract-keyword">@L["ContractSearchLabel"]</label>
-        <div class="contract-filter-row">
-            <input id="contract-keyword" class="input" @bind="_keyword" placeholder="@L["ContractSearchPlaceholder"]" />
-            <button class="btn btn-secondary" type="submit"><LucideIcon Name="search" />@L["ContractSearchAction"]</button>
+    @if (!_loading && !_failed && _allItems.Count > 0)
+    {
+        <section class="stat-grid" aria-label="@L["ContractStatSummary"]">
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["ContractStatTotal"]
+                        <button type="button" class="stat-help" data-tip="@L["ContractStatTotalHint"]" aria-label="@L["ContractStatTotalHint"]">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="file-signature" /></span>
+                </div>
+                <div class="stat-value">@_allItems.Count <small>@L["ContractStatUnit"]</small></div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ContractStatusActive"]</span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+                </div>
+                <div class="stat-value">@CountOf(ContractDisplayStatus.Active) <small>@L["ContractStatUnit"]</small></div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["ContractStatusExpiringSoon"]
+                        <button type="button" class="stat-help" data-tip="@L["ContractStatExpiringHint"]" aria-label="@L["ContractStatExpiringHint"]">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="alert-triangle" /></span>
+                </div>
+                <div class="stat-value">@CountOf(ContractDisplayStatus.ExpiringSoon) <small>@L["ContractStatUnit"]</small></div>
+            </article>
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["ContractStatusPending"]
+                        <button type="button" class="stat-help" data-tip="@L["ContractStatPendingHint"]" aria-label="@L["ContractStatPendingHint"]">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="inbox" /></span>
+                </div>
+                <div class="stat-value">@CountOf(ContractDisplayStatus.Pending) <small>@L["ContractStatUnit"]</small></div>
+            </article>
+        </section>
+    }
+
+    <form class="filter-bar filter-bar--panel" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="contract-keyword">@L["ContractSearchLabel"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="contract-keyword" class="input" placeholder="@L["ContractSearchPlaceholder"]"
+                       @bind="_keyword" @bind:event="oninput" @bind:after="SearchAsync" />
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="contract-status-filter">@L["ContractStatusLabel"]</label>
+                <select id="contract-status-filter" class="input"
+                        value="@_statusFilter" @onchange="HandleStatusFilterChanged">
+                    <option value="all">@L["ContractFilterStatusAll"]</option>
+                    <option value="pending">@L["ContractStatusPending"]</option>
+                    <option value="upcoming">@L["ContractStatusUpcoming"]</option>
+                    <option value="active">@L["ContractStatusActive"]</option>
+                    <option value="expiring">@L["ContractStatusExpiringSoon"]</option>
+                    <option value="expired">@L["ContractStatusExpired"]</option>
+                    <option value="liquidated">@L["ContractStatusLiquidated"]</option>
+                    <option value="rejected">@L["ContractStatusRejected"]</option>
+                </select>
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="contract-property-filter">@L["ContractPropertyLabel"]</label>
+                <select id="contract-property-filter" class="input"
+                        value="@_propertyFilter" @onchange="HandlePropertyFilterChanged">
+                    <option value="all">@L["ContractFilterPropertyAll"]</option>
+                    @foreach (var propertyName in PropertyOptions)
+                    {
+                        <option value="@propertyName">@propertyName</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="contract-sort-filter">@L["ContractFilterSortLabel"]</label>
+                <select id="contract-sort-filter" class="input"
+                        value="@_sortFilter" @onchange="HandleSortChanged">
+                    <option value="newest">@L["ContractFilterSortNewest"]</option>
+                    <option value="expiring">@L["ContractFilterSortExpiring"]</option>
+                    <option value="room">@L["ContractFilterSortRoom"]</option>
+                </select>
+            </div>
+            <div class="filter-bar__actions">
+                <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="contract-advanced-panel" />
+                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh-cw" /> @L["ContractFilterReset"]
+                </button>
+            </div>
         </div>
-        <div class="contract-filter-row contract-filter-options">
-            <select id="contract-status-filter" class="input" aria-label="@L["ContractStatusLabel"]"
-                    value="@_statusFilter" @onchange="HandleStatusFilterChanged">
-                <option value="all">@L["ContractFilterStatusAll"]</option>
-                <option value="pending">@L["ContractStatusPending"]</option>
-                <option value="upcoming">@L["ContractStatusUpcoming"]</option>
-                <option value="active">@L["ContractStatusActive"]</option>
-                <option value="expiring">@L["ContractStatusExpiringSoon"]</option>
-                <option value="expired">@L["ContractStatusExpired"]</option>
-                <option value="liquidated">@L["ContractStatusLiquidated"]</option>
-                <option value="rejected">@L["ContractStatusRejected"]</option>
-            </select>
-
-            <select id="contract-property-filter" class="input" aria-label="@L["ContractPropertyLabel"]"
-                    value="@_propertyFilter" @onchange="HandlePropertyFilterChanged">
-                <option value="all">@L["ContractFilterPropertyAll"]</option>
-                @foreach (var propertyName in PropertyOptions)
-                {
-                    <option value="@propertyName">@propertyName</option>
-                }
-            </select>
-
-            <select id="contract-sort-filter" class="input" aria-label="@L["ContractFilterSortLabel"]"
-                    value="@_sortFilter" @onchange="HandleSortChanged">
-                <option value="newest">@L["ContractFilterSortNewest"]</option>
-                <option value="expiring">@L["ContractFilterSortExpiring"]</option>
-                <option value="room">@L["ContractFilterSortRoom"]</option>
-            </select>
-
-            <button type="button" class="btn btn-secondary contract-reset-button" @onclick="ResetFiltersAsync">
-                <LucideIcon Name="refresh" />@L["ContractFilterReset"]
-            </button>
-        </div>
-        <div class="contract-filter-row contract-filter-advanced">
-            <label class="contract-field" for="contract-term-from">
-                <span>@L["ContractFilterDateFrom"]</span>
-                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" @bind:after="ResetPage" />
-            </label>
-            <label class="contract-field" for="contract-term-to">
-                <span>@L["ContractFilterDateTo"]</span>
-                <input id="contract-term-to" type="date" class="input" @bind="_termTo" @bind:after="ResetPage" />
-            </label>
-            <label class="contract-field" for="contract-min-rent">
-                <span>@L["ContractFilterMinRent"]</span>
+        <div class="filter-bar__advanced" id="contract-advanced-panel" hidden="@(!_showAdvanced)">
+            <div class="filter-bar__stack">
+                <label for="contract-term-from">@L["ContractFilterDateFrom"]</label>
+                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" />
+            </div>
+            <div class="filter-bar__stack">
+                <label for="contract-term-to">@L["ContractFilterDateTo"]</label>
+                <input id="contract-term-to" type="date" class="input" @bind="_termTo" />
+            </div>
+            <div class="filter-bar__stack">
+                <label for="contract-min-rent">@L["ContractFilterMinRent"]</label>
                 <input id="contract-min-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" @bind:after="ResetPage" />
-            </label>
-            <label class="contract-field" for="contract-max-rent">
-                <span>@L["ContractFilterMaxRent"]</span>
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" />
+            </div>
+            <div class="filter-bar__stack">
+                <label for="contract-max-rent">@L["ContractFilterMaxRent"]</label>
                 <input id="contract-max-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" @bind:after="ResetPage" />
-            </label>
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" />
+            </div>
+            <button class="btn btn-primary filter-bar__submit" type="submit">@L["ContractFilterApply"]</button>
         </div>
         @if (FilterError is { } filterError)
         {
@@ -227,6 +281,7 @@
 
 @code {
     private IReadOnlyList<ContractListItemDto> _items = [];
+    private IReadOnlyList<ContractListItemDto> _allItems = [];
     private string? _keyword;
     private string _statusFilter = "all";
     private string _propertyFilter = "all";
@@ -236,6 +291,7 @@
     private decimal? _minRent;
     private decimal? _maxRent;
     private bool _loading = true;
+    private bool _showAdvanced;
     private bool _failed;
     private bool _canApprove;
     private bool _decisionOpen;
@@ -245,6 +301,12 @@
     private int _page = 1;
     private int _pageSize = 20;
     private Guid? _openMenuId;
+
+    private int AdvancedFilterCount =>
+        (_termFrom is null ? 0 : 1)
+        + (_termTo is null ? 0 : 1)
+        + (_minRent is null ? 0 : 1)
+        + (_maxRent is null ? 0 : 1);
 
     private IEnumerable<string> PropertyOptions => _propertyOptions;
 
@@ -422,6 +484,7 @@
         _termTo = null;
         _minRent = null;
         _maxRent = null;
+        _showAdvanced = false;
         _page = 1;
         await LoadAsync();
     }
@@ -433,6 +496,14 @@
         try
         {
             _items = await Contracts.ListAsync(_keyword);
+            // Dải KPI luôn tính trên toàn bộ hợp đồng, không phụ thuộc từ khoá tìm kiếm.
+            _allItems = string.IsNullOrWhiteSpace(_keyword) ? _items : await Contracts.ListAsync(null);
+
+            if (_propertyFilter != "all" &&
+                !_items.Any(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase)))
+            {
+                _propertyFilter = "all";
+            }
         }
         catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
         finally { _loading = false; }
@@ -460,6 +531,8 @@
     private string ErrorText(Exception ex) => ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
     private ContractDisplayStatus DisplayStatusOf(ContractListItemDto item) =>
         ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam());
+    private int CountOf(ContractDisplayStatus status) =>
+        _allItems.Count(item => DisplayStatusOf(item) == status);
     private static string StatusKey(ContractDisplayStatus status) => status switch
     {
         ContractDisplayStatus.Pending => "pending",

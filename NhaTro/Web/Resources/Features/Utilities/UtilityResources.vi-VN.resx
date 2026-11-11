@@ -154,6 +154,7 @@
   <data name="TableOf" xml:space="preserve"><value>trong tổng số</value></data>
   <data name="TableServicesUnit" xml:space="preserve"><value>dịch vụ</value></data>
   <data name="RowsPerPage" xml:space="preserve"><value>Dòng mỗi trang:</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / trang</value></data>
 
   <data name="EmptyServicesTitle" xml:space="preserve"><value>Không tìm thấy dịch vụ nào</value></data>
   <data name="EmptyServicesDesc" xml:space="preserve"><value>Không có dịch vụ nào khớp với bộ lọc hiện tại. Vui lòng thử tìm kiếm khác hoặc đặt lại bộ lọc.</value></data>
@@ -222,6 +223,10 @@
   <data name="StatusActive" xml:space="preserve"><value>Đang áp dụng</value></data>
   <data name="StatusUpcoming" xml:space="preserve"><value>Sắp hiệu lực</value></data>
   <data name="StatusExpired" xml:space="preserve"><value>Đã hết hạn</value></data>
+  <data name="StatPriceSummary" xml:space="preserve"><value>Tóm tắt phiên bản giá</value></data>
+  <data name="StatPriceVersions" xml:space="preserve"><value>Tổng phiên bản giá</value></data>
+  <data name="StatPriceVersionsHint" xml:space="preserve"><value>Mỗi lần đổi giá tạo một phiên bản; số liệu tính theo dịch vụ đang chọn.</value></data>
+  <data name="StatPriceUnit" xml:space="preserve"><value>phiên bản</value></data>
 
   <data name="ReadingsPageTitle" xml:space="preserve"><value>Ghi chỉ số &amp; Chi phí mẫu</value></data>
   <data name="ReadingsBreadcrumb" xml:space="preserve"><value>Kỳ &amp; chỉ số</value></data>

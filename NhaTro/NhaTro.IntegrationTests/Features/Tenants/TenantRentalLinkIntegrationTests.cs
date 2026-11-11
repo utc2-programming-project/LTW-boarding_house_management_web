@@ -24,8 +24,8 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
     : IClassFixture<SqlServerFixture>
 {
     private static readonly TenantCaller Owner = new("rental-owner", Roles.ChuTro);
-    // TenantService xác định "hôm nay" theo giờ Việt Nam; test phải dùng cùng múi giờ,
-    // nếu dùng DateTime.UtcNow.Date sẽ lệch ngày trong khoảng 17:00–24:00 UTC.
+    // Dịch vụ chốt "hôm nay" theo giờ VN (UTC+7); test phải dùng cùng mốc, nếu lấy ngày UTC
+    // thì sau 17:00 UTC hợp đồng bắt đầu ngày mai (giờ VN) bị coi là đang hiệu lực.
     private static readonly DateTime Today = VietnamTime.ToVietnam(DateTime.UtcNow).Date;
 
     private TenantService NewTenantService(TimeProvider? clock = null) =>

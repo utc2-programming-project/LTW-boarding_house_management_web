@@ -53,91 +53,96 @@
     }
     else
     {
-        <div class="stats-grid">
+        <div class="stat-grid">
             <div class="stat-card">
-                <span class="stat-label">@L["StatDraft"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.DraftCount</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatDraft"]</span>
+                    <span class="stat-icon stat-icon--neutral"><LucideIcon Name="file-text" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.DraftCount</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">@L["StatIssued"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.IssuedCount</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatIssued"]</span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="send" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.IssuedCount</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">@L["StatPaid"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.PaidCount</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatPaid"]</span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.PaidCount</div>
             </div>
-            <div class="stat-card outstanding-card">
-                <span class="stat-label">@L["StatOutstanding"]</span>
-                <span class="stat-number tabular-nums">@MoneyFormatter.Format(_result.Summary.OutstandingAmount)</span>
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatOutstanding"]</span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="wallet" /></span>
+                </div>
+                <div class="stat-value">@MoneyFormatter.Format(_result.Summary.OutstandingAmount)</div>
             </div>
         </div>
 
-        <div class="filters-container">
-            <div class="filters-row">
-                <label class="filter-field">
-                    <span>@L["FilterYear"]</span>
-                    <select class="input" @bind="_year" @bind:after="OnFilterChanged">
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="invoice-keyword">@L["FilterKeyword"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="invoice-keyword" class="input" type="search" autocomplete="off"
+                           placeholder="@L["FilterKeywordPlaceholder"]"
+                           @bind="_keyword" @bind:event="oninput" @bind:after="OnFilterChanged" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="invoice-year">@L["FilterYear"]</label>
+                    <select id="invoice-year" class="input" @bind="_year" @bind:after="OnFilterChanged">
                         <option value="">@L["AllYears"]</option>
                         @foreach (var year in AvailableYears)
                         {
                             <option value="@year">@year</option>
                         }
                     </select>
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterMonth"]</span>
-                    <select class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChanged">
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="invoice-month">@L["FilterMonth"]</label>
+                    <select id="invoice-month" class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChanged">
                         <option value="">@L["AllMonths"]</option>
                         @for (var month = 1; month <= 12; month++)
                         {
                             <option value="@month">@string.Format(L["MonthValue"], month)</option>
                         }
                     </select>
-                </label>
-
-                <label class="filter-field wide">
-                    <span>@L["FilterContract"]</span>
-                    <select class="input" @bind="_contractId" @bind:after="OnFilterChanged">
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="invoice-status">@L["FilterStatus"]</label>
+                    <select id="invoice-status" class="input" @bind="_status" @bind:after="OnFilterChanged">
+                        <option value="">@L["AllStatuses"]</option>
+                        <option value="@InvoiceStatus.Draft">@L["StatusDraft"]</option>
+                        <option value="@InvoiceStatus.Issued">@L["StatusIssued"]</option>
+                        <option value="@InvoiceStatus.Paid">@L["StatusPaid"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="invoice-advanced-panel" />
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
+                        <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
+                    </button>
+                </div>
+            </div>
+            <div class="filter-bar__advanced" id="invoice-advanced-panel" hidden="@(!_showAdvanced)">
+                <div class="filter-bar__stack filter-bar__wide">
+                    <label for="invoice-contract">@L["FilterContract"]</label>
+                    <select id="invoice-contract" class="input" @bind="_contractId" @bind:after="OnFilterChanged">
                         <option value="">@L["AllContracts"]</option>
                         @foreach (var option in _contractOptions)
                         {
                             <option value="@option.ContractId">@option.ContractNumber · @option.RoomCode</option>
                         }
                     </select>
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterStatus"]</span>
-                    <select class="input" @bind="_status" @bind:after="OnFilterChanged">
-                        <option value="">@L["AllStatuses"]</option>
-                        <option value="@InvoiceStatus.Draft">@L["StatusDraft"]</option>
-                        <option value="@InvoiceStatus.Issued">@L["StatusIssued"]</option>
-                        <option value="@InvoiceStatus.Paid">@L["StatusPaid"]</option>
-                    </select>
-                </label>
-
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />
-                    <span>@L["ResetFilter"]</span>
-                </button>
-            </div>
-
-            <div class="filters-row filters-row-secondary">
-                <label class="filter-field wide">
-                    <span>@L["FilterKeyword"]</span>
-                    <input class="input"
-                           type="search"
-                           autocomplete="off"
-                           placeholder="@L["FilterKeywordPlaceholder"]"
-                           @bind="_keyword"
-                           @bind:event="oninput"
-                           @bind:after="OnFilterChanged" />
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterPaymentState"]</span>
-                    <select class="input" @bind="_paymentState" @bind:after="OnFilterChanged">
+                </div>
+                <div class="filter-bar__stack">
+                    <label for="invoice-payment-state">@L["FilterPaymentState"]</label>
+                    <select id="invoice-payment-state" class="input" @bind="_paymentState" @bind:after="OnFilterChanged">
                         <option value="">@L["PaymentStateAll"]</option>
                         <option value="unpaid">@L["PaymentStateUnpaid"]</option>
                         <option value="partial">@L["PaymentStatePartial"]</option>
@@ -146,21 +151,19 @@
                         <option value="payment_rejected">@L["PaymentStateRejected"]</option>
                         <option value="expired">@L["PaymentStateExpired"]</option>
                     </select>
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterMinAmount"]</span>
-                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                </div>
+                <div class="filter-bar__stack">
+                    <label for="invoice-min-amount">@L["FilterMinAmount"]</label>
+                    <input id="invoice-min-amount" class="input" type="number" min="0" step="1000" inputmode="numeric"
                            placeholder="@L["AmountPlaceholder"]"
                            @bind="_minAmount" @bind:after="OnFilterChanged" />
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterMaxAmount"]</span>
-                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                </div>
+                <div class="filter-bar__stack">
+                    <label for="invoice-max-amount">@L["FilterMaxAmount"]</label>
+                    <input id="invoice-max-amount" class="input" type="number" min="0" step="1000" inputmode="numeric"
                            placeholder="@L["AmountPlaceholder"]"
                            @bind="_maxAmount" @bind:after="OnFilterChanged" />
-                </label>
+                </div>
             </div>
         </div>
 
@@ -349,6 +352,14 @@
     private string _minAmount = string.Empty;
     private string _maxAmount = string.Empty;
     private int _page = 1;
+    private bool _showAdvanced;
+
+    private int AdvancedFilterCount =>
+        (_contractId is null ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(_paymentState) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(_minAmount) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(_maxAmount) ? 0 : 1);
+
     private int? _openMenuId;
 
     // Đăng ký dịch vụ (khách thuê) ngay trên trang Hóa đơn.
@@ -570,6 +581,7 @@
         _minAmount = string.Empty;
         _maxAmount = string.Empty;
         _page = 1;
+        _showAdvanced = false;
         await LoadResultAsync();
     }
 

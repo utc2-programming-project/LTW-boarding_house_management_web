@@ -38,55 +38,11 @@
 
 /* ---------- Thanh công cụ ---------- */
 
-.setup-room-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card);
-    background: var(--surface-subtle);
-}
-
-.setup-room-search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 1 1 220px;
-    min-width: 0;
-}
-
-.setup-room-search ::deep .lucide-icon {
-    position: absolute;
-    left: 12px;
-    width: 18px;
-    height: 18px;
-    color: var(--text-muted);
-    pointer-events: none;
-}
-
-.setup-room-search input {
-    width: 100%;
-    min-height: 44px;
-    padding: 9px 12px 9px 38px;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-control);
-    background: var(--surface);
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-
-.setup-room-search input:focus-visible {
-    border-color: var(--focus-ring);
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
-}
-
 .setup-room-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    min-width: 0;
 }
 
 .setup-chip {
@@ -115,30 +71,6 @@
 }
 
 .setup-chip:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
-}
-
-.setup-room-sort {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
-    font-size: 0.875rem;
-}
-
-.setup-room-sort select {
-    min-height: 44px;
-    padding: 8px 12px;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-control);
-    background: var(--surface);
-    color: var(--text-primary);
-    font-size: 0.9375rem;
-}
-
-.setup-room-sort select:focus-visible {
-    border-color: var(--focus-ring);
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
@@ -667,16 +599,9 @@
         justify-content: center;
     }
 
-    .setup-room-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .setup-room-search {
-        flex-basis: auto;
-    }
-
     .setup-room-chips {
+        flex: 1 1 100%;
+        width: 100%;
         flex-wrap: nowrap;
         overflow-x: auto;
         padding-bottom: 2px;
@@ -689,14 +614,6 @@
 
     .setup-chip {
         flex: 0 0 auto;
-    }
-
-    .setup-room-sort {
-        justify-content: space-between;
-    }
-
-    .setup-room-sort select {
-        flex: 1 1 auto;
     }
 
     .setup-selection-bar {

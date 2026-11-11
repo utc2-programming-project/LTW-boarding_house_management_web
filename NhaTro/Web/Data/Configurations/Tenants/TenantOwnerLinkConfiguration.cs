@@ -18,6 +18,10 @@ public class TenantOwnerLinkConfiguration : IEntityTypeConfiguration<TenantOwner
             .HasForeignKey(link => link.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Tenant có query filter xóa mềm và là đầu required của quan hệ này: thiếu filter tương ứng
+        // sẽ làm Include dùng INNER JOIN và rơi liên kết im lặng (EF cảnh báo, test model chặn).
+        builder.HasQueryFilter(link => !link.Tenant.IsDeleted);
+
         builder.HasIndex(link => link.OwnerId);
     }
 }

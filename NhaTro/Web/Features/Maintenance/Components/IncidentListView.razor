@@ -2,6 +2,48 @@
 @using Microsoft.JSInterop
 
 <div class="incident-list" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
+<section class="stat-grid" aria-label="@L["StatSummary"]">
+    <article class="stat-card">
+        <div class="stat-card__top">
+            <span class="stat-label">
+                @L["StatTotal"]
+                <button type="button" class="stat-help" data-tip="@L["StatTotalHint"]" aria-label="@L["StatTotalHint"]">?</button>
+            </span>
+            <span class="stat-icon stat-icon--accent"><LucideIcon Name="wrench" /></span>
+        </div>
+        <div class="stat-value">@_totalCount <small>@L["StatUnit"]</small></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card__top">
+            <span class="stat-label">
+                @L["StatusNew"]
+                <button type="button" class="stat-help" data-tip="@L["StatNewHint"]" aria-label="@L["StatNewHint"]">?</button>
+            </span>
+            <span class="stat-icon stat-icon--info"><LucideIcon Name="inbox" /></span>
+        </div>
+        <div class="stat-value">@_newCount <small>@L["StatUnit"]</small></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card__top">
+            <span class="stat-label">
+                @L["StatusInProgress"]
+                <button type="button" class="stat-help" data-tip="@L["StatInProgressHint"]" aria-label="@L["StatInProgressHint"]">?</button>
+            </span>
+            <span class="stat-icon stat-icon--warning"><LucideIcon Name="refresh-cw" /></span>
+        </div>
+        <div class="stat-value">@_inProgressCount <small>@L["StatUnit"]</small></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card__top">
+            <span class="stat-label">
+                @L["StatusCompleted"]
+                <button type="button" class="stat-help" data-tip="@L["StatCompletedHint"]" aria-label="@L["StatCompletedHint"]">?</button>
+            </span>
+            <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+        </div>
+        <div class="stat-value">@_completedCount <small>@L["StatUnit"]</small></div>
+    </article>
+</section>
 <DataTable @ref="_table" TItem="IncidentItem" Columns="_columns" ItemsProvider="LoadAsync"
            Labels="Labels" Caption="@L["ListCaption"]" PageSize="5" UseFilterToolbar="true">
     <EmptyActions>
@@ -24,6 +66,10 @@
     private readonly Dictionary<int, ElementReference> _detailButtons = [];
     private int? _focusAfterRender;
     private IReadOnlyList<DataTableColumn<IncidentItem>> _columns = [];
+    private int _totalCount;
+    private int _newCount;
+    private int _inProgressCount;
+    private int _completedCount;
 
     private DataTableLabels Labels => new()
     {
@@ -90,6 +136,7 @@
     {
         _detailButtons.Clear();
         var scoped = await Session.ListAsync();
+        await UpdateStatsAsync(scoped);
         IEnumerable<IncidentItem> items = scoped;
         foreach (var filter in request.Filters)
         {
@@ -116,6 +163,26 @@
         var all = sorted.ToArray();
         return new() { Items = all.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToArray(),
             TotalCount = all.Length, Page = request.Page, PageSize = request.PageSize };
+    }
+
+    // Dải KPI tính trên toàn bộ phiếu trong phạm vi người xem, không phụ thuộc bộ lọc của bảng.
+    private async Task UpdateStatsAsync(IReadOnlyList<IncidentItem> scoped)
+    {
+        var total = scoped.Count;
+        var newCount = scoped.Count(item => item.Status == IncidentStatus.New);
+        var inProgress = scoped.Count(item => item.Status == IncidentStatus.InProgress);
+        var completed = scoped.Count(item => item.Status == IncidentStatus.Completed);
+        if (total == _totalCount && newCount == _newCount
+            && inProgress == _inProgressCount && completed == _completedCount)
+        {
+            return;
+        }
+
+        _totalCount = total;
+        _newCount = newCount;
+        _inProgressCount = inProgress;
+        _completedCount = completed;
+        await InvokeAsync(StateHasChanged);
     }
 
     public Task ReloadAsync() => _table?.ReloadAsync() ?? Task.CompletedTask;

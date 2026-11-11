@@ -1,0 +1,186 @@
+/* Stat card dùng chung cho các trang list (Phòng, Khách thuê, Dịch vụ, Hóa đơn,
+   Duyệt thanh toán). Một anatomy duy nhất: label (+ tooltip "?") + icon-box,
+   số lớn + đơn vị. Chỉ dùng token theme; trang không tự định nghĩa lại card. */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    min-width: 0;
+}
+
+/* Quản lý chỉ thấy 3 thẻ vì không có thẻ "Đã có tài khoản". */
+.stat-grid--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.stat-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+}
+
+.stat-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.stat-value {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 14px;
+    color: var(--text-primary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.stat-value small {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+/* Số mang nghĩa cần chú ý (còn phải thu, đang chờ). */
+.stat-card--warning .stat-value {
+    color: var(--warning-text);
+}
+
+.stat-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+}
+
+.stat-icon .lucide-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-icon--accent { background: var(--accent-soft); color: var(--accent-text); }
+.stat-icon--success { background: var(--success-bg); color: var(--success-text); }
+.stat-icon--info { background: var(--info-bg); color: var(--info-text); }
+.stat-icon--warning { background: var(--warning-bg); color: var(--warning-text); }
+.stat-icon--danger { background: var(--error-bg); color: var(--error-text); }
+.stat-icon--neutral { background: var(--neutral-bg); color: var(--neutral-text); }
+
+/* Nút "?" giải thích công dụng của số; tooltip thuần CSS, mở được bằng hover
+   và bàn phím nên không cần JS. */
+.stat-help {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+}
+
+.stat-help:hover,
+.stat-help:focus-visible {
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+}
+
+.stat-help:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.stat-help::after {
+    content: attr(data-tip);
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    left: 50%;
+    width: max-content;
+    max-width: 220px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+    box-shadow: var(--shadow-popover);
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms var(--ease);
+}
+
+.stat-help:hover::after,
+.stat-help:focus-visible::after {
+    opacity: 1;
+}
+
+@media (max-width: 1199.98px) {
+    .stat-grid,
+    .stat-grid--three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .stat-grid,
+    .stat-grid--three {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    /* Trên màn hẹp, canh tooltip sang phải để không tràn khỏi card. */
+    .stat-help::after {
+        left: 0;
+        max-width: calc(100vw - 64px);
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stat-help::after {
+        transition: none;
+    }
+}

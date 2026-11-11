@@ -2,6 +2,7 @@
    (AuthorizeView, Policy riêng cho sự cố). Menu cuộn riêng, khu tài khoản cố định ở đáy. *@
 
 @using System.Security.Claims
+@using Web.Components.Account
 @using Web.Features.Accounts
 @inject IStringLocalizer<Shared> L
 @inject NavigationManager Navigation
@@ -56,6 +57,10 @@
                     </button>
                     <div class="account-menu" id="account-menu" role="menu" aria-label="@L["MyAccount"]" hidden>
                         <a class="account-menu-item" role="menuitem" href="@AccountHref(account.User)"><LucideIcon Name="user" /><span>@L["MyAccount"]</span></a>
+                        @if (AvailableRoles(account.User).Count > 1)
+                        {
+                            <a class="account-menu-item" role="menuitem" href="select-role"><LucideIcon Name="repeat" /><span>@L["SwitchRole"]</span></a>
+                        }
                         <a class="account-menu-item" role="menuitem" href="Account/Manage"><LucideIcon Name="settings" /><span>@L["Settings"]</span></a>
                         <div class="account-menu-sep" role="separator"></div>
                         <div class="account-menu-row" role="group" aria-labelledby="account-menu-appearance-label">
@@ -108,6 +113,14 @@
 
     private static string AccountHref(ClaimsPrincipal user) => user.IsInRole(Roles.KhachThue) ? "/my/tenant-profile" : "/profile";
     private static string Initials(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
+
+    private static IReadOnlyList<string> AvailableRoles(ClaimsPrincipal user)
+    {
+        var value = user.FindFirst(NhaTroClaimsPrincipalFactory.AvailableRolesClaim)?.Value;
+        return string.IsNullOrWhiteSpace(value)
+            ? []
+            : value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+    }
 
     private string AccountTip(ClaimsPrincipal user)
     {

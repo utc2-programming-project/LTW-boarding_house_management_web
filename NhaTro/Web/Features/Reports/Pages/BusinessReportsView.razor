@@ -12,6 +12,8 @@
     <PageHeading Title="@L["Title"]" HelpText="@L["ReportDescription"]">
         <HeadingMeta>
             <p>@L["CurrentData"]</p>
+            <p class="scope-note">@L["ScopeNote"]</p>
+            <p class="updated-at">@D["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
         </HeadingMeta>
         <Actions>
             <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync">
@@ -20,10 +22,11 @@
         </Actions>
     </PageHeading>
 
-    <div class="report-toolbar">
-        <div class="filters">
-            <label>@D["Property"]
-                <select class="property-filter" value="@SelectedPropertyId" @onchange="ChangePropertyAsync" disabled="@Busy">
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__state filter-bar__field">
+                <label class="filter-bar__label" for="report-property">@D["Property"]</label>
+                <select id="report-property" class="input" value="@SelectedPropertyId" @onchange="ChangePropertyAsync" disabled="@Busy">
                     <option value="">@D["AllProperties"]</option>
                     @if (SelectedPropertyId.HasValue && !Properties.Any(p => p.Id == SelectedPropertyId))
                     {
@@ -34,8 +37,10 @@
                         <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + D["Inactive"] : "")</option>
                     }
                 </select>
-            </label>
-            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
+            </div>
+            <div class="filter-bar__actions">
+                <button type="button" class="btn btn-secondary filter-bar__reset" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
+            </div>
         </div>
         @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
         {
@@ -44,10 +49,6 @@
                 <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="RefreshAsync">@D["Retry"]</button>
             </div>
         }
-        <div class="filter-context">
-            <p class="scope-note">@L["ScopeNote"]</p>
-            <p class="updated-at">@D["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
-        </div>
     </div>
 
     <div class="report-tabs" role="tablist" aria-label="@L["Title"]">
@@ -60,22 +61,26 @@
     <section class="report-section" aria-labelledby="room-report-heading">
         <div class="section-heading">
             <h2 id="room-report-heading">@L["RoomReport"]</h2>
-            <div class="filters">
-                <label>@L["RoomActivity"]
-                    <select class="room-activity-filter" value="@(RoomActive ? "true" : "false")" @onchange="ChangeRoomActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                        <option value="true">@L["ActiveRooms"]</option>
-                        <option value="false">@L["InactiveRooms"]</option>
-                    </select>
-                </label>
-                <label>@L["RoomStatus"]
-                    <select class="room-status-filter" @bind="RoomStatusFilter" @bind:after="ChangeRoomFiltersAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                        <option value="">@L["AllStatuses"]</option>
-                        @foreach (var status in Enum.GetValues<RoomStatus>())
-                        {
-                            <option value="@status">@D[status.ToString()]</option>
-                        }
-                    </select>
-                </label>
+            <div class="filter-bar">
+                <div class="filter-bar__row">
+                    <div class="filter-bar__state filter-bar__field">
+                        <label class="filter-bar__label" for="report-room-activity">@L["RoomActivity"]</label>
+                        <select id="report-room-activity" class="input" value="@(RoomActive ? "true" : "false")" @onchange="ChangeRoomActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                            <option value="true">@L["ActiveRooms"]</option>
+                            <option value="false">@L["InactiveRooms"]</option>
+                        </select>
+                    </div>
+                    <div class="filter-bar__state filter-bar__field">
+                        <label class="filter-bar__label" for="report-room-status">@L["RoomStatus"]</label>
+                        <select id="report-room-status" class="input" @bind="RoomStatusFilter" @bind:after="ChangeRoomFiltersAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                            <option value="">@L["AllStatuses"]</option>
+                            @foreach (var status in Enum.GetValues<RoomStatus>())
+                            {
+                                <option value="@status">@D[status.ToString()]</option>
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
         <DashboardPanel Title="@D["RoomStructure"]" State="@RoomState" DeniedText="@D["RoomsDenied"]" Retry="RetryRoomsAsync">
@@ -159,21 +164,25 @@
     <section class="report-section" aria-labelledby="tenant-report-heading">
         <div class="section-heading">
             <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
-            <div class="filters">
-                <label>@L["TenantActivity"]
-                    <select class="tenant-activity-filter" value="@(TenantActive?.ToString().ToLowerInvariant())" @onchange="ChangeTenantActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                        <option value="">@L["AllStatuses"]</option>
-                        <option value="true">@D["TenantActive"]</option>
-                        <option value="false">@D["Inactive"]</option>
-                    </select>
-                </label>
-                <label>@L["RentalStatus"]
-                    <select class="tenant-rental-filter" value="@(TenantRenting?.ToString().ToLowerInvariant())" @onchange="ChangeTenantRentalAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                        <option value="">@L["AllStatuses"]</option>
-                        <option value="true">@L["Renting"]</option>
-                        <option value="false">@L["NotRenting"]</option>
-                    </select>
-                </label>
+            <div class="filter-bar">
+                <div class="filter-bar__row">
+                    <div class="filter-bar__state filter-bar__field">
+                        <label class="filter-bar__label" for="report-tenant-activity">@L["TenantActivity"]</label>
+                        <select id="report-tenant-activity" class="input" value="@(TenantActive?.ToString().ToLowerInvariant())" @onchange="ChangeTenantActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                            <option value="">@L["AllStatuses"]</option>
+                            <option value="true">@D["TenantActive"]</option>
+                            <option value="false">@D["Inactive"]</option>
+                        </select>
+                    </div>
+                    <div class="filter-bar__state filter-bar__field">
+                        <label class="filter-bar__label" for="report-tenant-rental">@L["RentalStatus"]</label>
+                        <select id="report-tenant-rental" class="input" value="@(TenantRenting?.ToString().ToLowerInvariant())" @onchange="ChangeTenantRentalAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                            <option value="">@L["AllStatuses"]</option>
+                            <option value="true">@L["Renting"]</option>
+                            <option value="false">@L["NotRenting"]</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
         <DashboardPanel Title="@L["TenantReport"]" Icon="users" State="@TenantState" DeniedText="@D["TenantsDenied"]" Retry="RetryTenantsAsync">

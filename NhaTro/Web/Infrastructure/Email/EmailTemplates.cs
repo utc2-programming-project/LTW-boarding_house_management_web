@@ -124,6 +124,44 @@ public static class EmailTemplates
                         """));
     }
 
+    public static EmailContent Otp(
+        string accountEmail,
+        string code,
+        string purposeLabel,
+        int lifetimeMinutes)
+    {
+        var account = WebUtility.HtmlEncode(accountEmail);
+        var safeCode = WebUtility.HtmlEncode(code);
+        var purpose = WebUtility.HtmlEncode(purposeLabel);
+        var recipient = new EmailRecipient(accountEmail, accountEmail);
+
+        return IsEnglish
+            ? new EmailContent(
+                Prefix(recipient) + $"Your verification code ({accountEmail})",
+                Layout(
+                    heading: "Verification code",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Use this code to complete {purpose} for
+                        <strong>{account}</strong>.</p>
+                        <p style="margin:0 0 16px;font-size:30px;font-weight:700;letter-spacing:8px">{safeCode}</p>
+                        <p style="margin:0;font-size:13px;color:#6b7280">The code expires in {lifetimeMinutes} minutes
+                        and can be used once. Do not share it with anyone.</p>
+                        """))
+            : new EmailContent(
+                Prefix(recipient) + $"Mã xác thực ({accountEmail})",
+                Layout(
+                    heading: "Mã xác thực",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Dùng mã dưới đây để hoàn tất {purpose} cho
+                        <strong>{account}</strong>.</p>
+                        <p style="margin:0 0 16px;font-size:30px;font-weight:700;letter-spacing:8px">{safeCode}</p>
+                        <p style="margin:0;font-size:13px;color:#6b7280">Mã hết hạn sau {lifetimeMinutes} phút
+                        và chỉ dùng được một lần. Không chia sẻ mã với người khác.</p>
+                        """));
+    }
+
     /// <summary>Thư mời khách thuê đặt mật khẩu để tham gia hệ thống (PLAN-006).</summary>
     public static EmailContent TenantInvitation(
         string? displayName,
@@ -147,7 +185,7 @@ public static class EmailTemplates
                         <p style="margin:0 0 16px"><strong>{owner}</strong> invited you to the boarding-house
                         system with the account <strong>{account}</strong>.</p>
                         {Button("Set your password", inviteLink)}
-                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">The invitation expires in 72 hours.
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">The invitation expires in 15 minutes.
                         If you did not expect this email, you can ignore it.</p>
                         """))
             : new EmailContent(
@@ -160,7 +198,7 @@ public static class EmailTemplates
                         <p style="margin:0 0 16px"><strong>{owner}</strong> mời bạn tham gia hệ thống quản lý
                         nhà trọ với tài khoản <strong>{account}</strong>.</p>
                         {Button("Đặt mật khẩu", inviteLink)}
-                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Lời mời hết hạn sau 72 giờ.
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Lời mời hết hạn sau 15 phút.
                         Nếu bạn không mong đợi thư này, hãy bỏ qua.</p>
                         """));
     }

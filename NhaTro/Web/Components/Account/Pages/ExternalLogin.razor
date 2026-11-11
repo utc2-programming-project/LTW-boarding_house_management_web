@@ -11,9 +11,11 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using Web.Data
+@using Web.Features.Accounts.Contexts
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject PostLoginRouter PostLogin
 @inject IUserStore<ApplicationUser> UserStore
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
@@ -124,7 +126,13 @@
                 "{Name} logged in with {LoginProvider} provider.",
                 externalLoginInfo.Principal.Identity?.Name,
                 externalLoginInfo.LoginProvider);
-            RedirectManager.RedirectTo(ReturnUrl);
+
+            var signedIn = await UserManager.FindByLoginAsync(
+                externalLoginInfo.LoginProvider, externalLoginInfo.ProviderKey);
+            var redirect = signedIn is null
+                ? ReturnUrl
+                : await PostLogin.GetRedirectAsync(signedIn, ReturnUrl);
+            RedirectManager.RedirectTo(redirect);
             return;
         }
         else if (result.IsLockedOut)
@@ -179,7 +187,8 @@
                 else
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
-                    RedirectManager.RedirectTo(ReturnUrl);
+                    var redirect = await PostLogin.GetRedirectAsync(user, ReturnUrl);
+                    RedirectManager.RedirectTo(redirect);
                 }
             }
         }

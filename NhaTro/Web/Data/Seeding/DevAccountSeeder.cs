@@ -6,11 +6,14 @@ using Web.Features.Properties.Entities;
 namespace Web.Data.Seeding;
 
 // Tao 4 user mau cho team test (VHT-6 3a). Chi chay o Development.
-// Mat khau KHONG hardcode: doc tu User Secrets / bien moi truong.
+// Mat khau uu tien doc tu User Secrets / bien moi truong:
 //   dotnet user-secrets set "DevAccounts:Password" "<mat-khau-manh>" --project NhaTro/Web
-// Thieu mat khau thi bo qua (chi gieo role), ghi log canh bao.
+// Development: thieu cau hinh thi dung DefaultPassword va ghi log canh bao.
 public static class DevAccountSeeder
 {
+    /// <summary>Mật khẩu fallback chỉ dùng ở Development khi chưa cấu hình User Secrets.</summary>
+    public const string DefaultPassword = "DevAccounts!234";
+
     // Cong khai de bang "dang nhap nhanh" o trang Login (chi Development) hien dung
     // danh sach tai khoan mau ma khong phai chep lai.
     public static readonly (string Email, string Role)[] Accounts =
@@ -30,7 +33,7 @@ public static class DevAccountSeeder
             if (env.IsDevelopment())
             {
                 logger.LogWarning("DevAccounts:Password not configured; creating development users with a temporary password. Change via user-secrets or environment variables.");
-                password = "DevAccounts!234";
+                password = DefaultPassword;
             }
             else
             {
