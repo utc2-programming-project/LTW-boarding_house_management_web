@@ -16,8 +16,6 @@
 <PageTitle>@L["DetailPageTitle"]</PageTitle>
 
 <div class="invoice-detail-page">
-    <NavBreadcrumb CurrentLabel="@L["DetailBreadcrumb"]" />
-
     @if (_loading)
     {
         <LoadingOverlay Visible="true" Text="@L["Loading"]" />
@@ -37,40 +35,38 @@
     }
     else
     {
-        <header class="page-header">
-            <div>
-                <h1 class="page-title">@L["DetailHeading"] · HD-@Invoice.Id</h1>
-                <p class="page-subtitle">@L["DetailSubtitle"]</p>
-            </div>
-            <div class="header-actions">
-                @if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Draft)
-                {
-                    <button type="button" class="btn btn-primary" disabled="@_issuing" @onclick="IssueAsync">
-                        @if (_issuing)
-                        {
-                            <span class="spinner"></span>
-                            <span>@L["IssuingButton"]</span>
-                        }
-                        else
-                        {
+        <PageHeading Title="@($"{L["DetailHeading"]} · HD-{Invoice.Id}")" CurrentLabel="@L["DetailBreadcrumb"]" HelpText="@L["DetailSubtitle"]">
+            <Actions>
+                <div class="header-actions">
+                    @if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Draft)
+                    {
+                        <button type="button" class="btn btn-primary" disabled="@_issuing" @onclick="IssueAsync">
+                            @if (_issuing)
+                            {
+                                <span class="spinner"></span>
+                                <span>@L["IssuingButton"]</span>
+                            }
+                            else
+                            {
+                                <LucideIcon Name="send" />
+                                <span>@L["SendBillButton"]</span>
+                            }
+                        </button>
+                    }
+                    else if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Issued)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="SendBillAsync">
                             <LucideIcon Name="send" />
                             <span>@L["SendBillButton"]</span>
-                        }
+                        </button>
+                    }
+                    <button type="button" class="btn btn-secondary" @onclick="BackToList">
+                        <LucideIcon Name="arrow-left" />
+                        <span>@L["BackToList"]</span>
                     </button>
-                }
-                else if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Issued)
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="SendBillAsync">
-                        <LucideIcon Name="send" />
-                        <span>@L["SendBillButton"]</span>
-                    </button>
-                }
-                <button type="button" class="btn btn-secondary" @onclick="BackToList">
-                    <LucideIcon Name="arrow-left" />
-                    <span>@L["BackToList"]</span>
-                </button>
-            </div>
-        </header>
+                </div>
+            </Actions>
+        </PageHeading>
 
         <section class="detail-card">
             <div class="detail-grid">

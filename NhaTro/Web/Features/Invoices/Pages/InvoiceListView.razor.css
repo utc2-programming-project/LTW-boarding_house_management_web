@@ -4,27 +4,6 @@
     gap: var(--space-5);
 }
 
-.page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-}
-
-.page-title {
-    margin: 0;
-    font-size: 32px;
-    line-height: 1.25;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.page-subtitle {
-    margin: var(--space-1) 0 0;
-    color: var(--text-secondary);
-    font-size: 16px;
-}
-
 .page-error {
     display: flex;
     align-items: center;

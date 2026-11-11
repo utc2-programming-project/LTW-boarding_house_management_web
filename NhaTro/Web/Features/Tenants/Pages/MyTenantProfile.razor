@@ -6,13 +6,8 @@
 <PageTitle>@L["TenantProfileTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-profile-page" aria-labelledby="tenant-profile-title">
-    <NavBreadcrumb CurrentLabel="@L["MyTenantProfile"]" />
-    <header class="page-heading">
-        <div>
-            <h1 id="tenant-profile-title">@L["TenantProfileTitle"]</h1>
-            <p>@L["TenantProfileSubtitle"]</p>
-        </div>
-    </header>
+    <PageHeading Title="@L["TenantProfileTitle"]" TitleId="tenant-profile-title"
+                 CurrentLabel="@L["MyTenantProfile"]" HelpText="@L["TenantProfileSubtitle"]" />
 
     @if (_loading)
     {
