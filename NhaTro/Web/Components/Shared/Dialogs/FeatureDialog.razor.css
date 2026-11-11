@@ -17,6 +17,8 @@
 .feature-dialog.reject-dialog { width: min(480px, calc(100vw - 32px)); }
 .feature-dialog.setup-confirm-dialog { width: min(460px, calc(100vw - 32px)); }
 .feature-dialog.setup-exit-dialog { width: min(560px, calc(100vw - 32px)); }
+.feature-dialog.tenant-invite-dialog { width: min(640px, calc(100vw - 32px)); }
+.feature-dialog.tenant-qr-dialog { width: min(680px, calc(100vw - 32px)); }
 
 .feature-dialog::backdrop { background: var(--overlay); }
 .feature-dialog[open] { animation: feature-dialog-in 200ms var(--ease); }

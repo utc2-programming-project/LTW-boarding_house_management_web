@@ -1,0 +1,245 @@
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Forms
+@using Web.Components.Shared.Navigation
+@using Web.Features.Properties.DTOs
+@using Web.Features.Rooms.DTOs
+@using Web.Features.Rooms.Services
+@using Web.Features.Tenants.Enums
+@using Web.Features.Tenants.Invitations
+@using Web.Features.Tenants.Services
+
+@inject TenantPageService TenantPages
+@inject RoomPageService Rooms
+@inject QrCodeRenderer QrRenderer
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<FeatureDialog Visible="Visible" Title="@L["QrDialogTitle"]" CloseLabel="@L["Close"]"
+               CssClass="tenant-qr-dialog" Busy="_busy" OnClose="OnClose">
+    <div class="account-form-body">
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert-circle" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_qrDataUrl is not null)
+        {
+            <div class="qr-result">
+                <img src="@_qrDataUrl" alt="@L["QrImageAlt"]" width="220" height="220" />
+                <p class="hint">@string.Format(L["QrExpiresAt"], _expiresAt?.ToLocalTime().ToString("HH:mm dd/MM"))</p>
+                <p class="qr-link"><a href="@_link" target="_blank" rel="noreferrer">@_link</a></p>
+                <p class="note">@L["QrWarning"]</p>
+            </div>
+        }
+        else
+        {
+            <SegmentedTabs TItem="SegmentedItem" Items="KindItems"
+                           KeySelector="@(item => item.Key)"
+                           LabelSelector="@(item => item.Label)"
+                           IconSelector="@(item => item.Icon)"
+                           Value="_kindValue"
+                           ValueChanged="OnKindChanged"
+                           AriaLabel="@L["QrKindLabel"]" />
+
+            <div class="form-field">
+                <label class="form-label" for="qr-property">@L["QrPropertyLabel"]</label>
+                <select id="qr-property" class="input" @bind="_propertyValue" @bind:after="LoadRoomsAsync">
+                    <option value="">@L["QrNoProperty"]</option>
+                    @foreach (var property in _properties)
+                    {
+                        <option value="@property.Id">@property.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="qr-room">@L["QrRoomLabel"]</label>
+                <select id="qr-room" class="input" @bind="_roomValue">
+                    <option value="">@L["QrNoRoom"]</option>
+                    @foreach (var room in _rooms)
+                    {
+                        <option value="@room.Id">@room.Code</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label class="form-label" for="qr-expiry">@L["QrExpiryLabel"]</label>
+                <select id="qr-expiry" class="input" @bind="_expiryValue">
+                    <option value="15">@L["QrExpiry15"]</option>
+                    <option value="60">@L["QrExpiry1h"]</option>
+                    <option value="360">@L["QrExpiry6h"]</option>
+                    <option value="1440">@L["QrExpiry24h"]</option>
+                </select>
+            </div>
+
+            @if (Kind == TenantInvitationKind.ExistingAccount)
+            {
+                <div class="qr-existing-panel">
+                    <div class="form-field">
+                        <label class="form-label" for="qr-search">@L["QrSearchExisting"]</label>
+                        <div class="qr-search-row">
+                            <input id="qr-search" class="input" @bind="_search" />
+                            <button type="button" class="btn btn-secondary" @onclick="SearchExistingAsync">@L["Search"]</button>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-label" for="qr-target">@L["QrSelectExisting"]</label>
+                        <select id="qr-target" class="input" @bind="_targetUserId">
+                            <option value="">@L["QrSelectExistingHint"]</option>
+                            @foreach (var option in _existing)
+                            {
+                                <option value="@option.UserId">@option.FullName@(string.IsNullOrWhiteSpace(option.Email) ? "" : $" · {option.Email}")</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
+
+            <div class="account-form-actions">
+                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="OnClose">@L["Cancel"]</button>
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GenerateAsync">
+                    @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                    @L["QrGenerate"]
+                </button>
+            </div>
+        }
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _wasVisible;
+    private bool _busy;
+    private string? _error;
+    private string _kindValue = "0";
+    private string _propertyValue = string.Empty;
+    private string _roomValue = string.Empty;
+    private string _expiryValue = "1440";
+    private string? _targetUserId;
+    private string? _search;
+    private string? _qrDataUrl;
+    private string? _link;
+    private DateTime? _expiresAt;
+    private IReadOnlyList<PropertyListItem> _properties = [];
+    private IReadOnlyList<RoomListItem> _rooms = [];
+    private IReadOnlyList<ExistingTenantOptionDto> _existing = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !_wasVisible)
+        {
+            await ResetAsync();
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private async Task ResetAsync()
+    {
+        _error = null;
+        _qrDataUrl = null;
+        _link = null;
+        _expiresAt = null;
+        _kindValue = "0";
+        _propertyValue = string.Empty;
+        _roomValue = string.Empty;
+        _expiryValue = "1440";
+        _targetUserId = null;
+        _search = null;
+        _rooms = [];
+        _existing = [];
+        _properties = await Rooms.GetPropertyOptionsAsync();
+    }
+
+    private IReadOnlyList<SegmentedItem> KindItems =>
+    [
+        new("0", L["QrKindNew"], "user-plus"),
+        new("1", L["QrKindExisting"], "users"),
+    ];
+
+    private TenantInvitationKind Kind =>
+        int.TryParse(_kindValue, out var value) && Enum.IsDefined((TenantInvitationKind)value)
+            ? (TenantInvitationKind)value
+            : TenantInvitationKind.NewAccount;
+
+    private void OnKindChanged(string value) => _kindValue = value;
+
+    private int? PropertyId => int.TryParse(_propertyValue, out var value) ? value : null;
+
+    private int? RoomId => int.TryParse(_roomValue, out var value) ? value : null;
+
+    private TenantInvitationExpiry Expiry =>
+        int.TryParse(_expiryValue, out var value) && Enum.IsDefined((TenantInvitationExpiry)value)
+            ? (TenantInvitationExpiry)value
+            : TenantInvitationExpiry.Hours24;
+
+    private async Task LoadRoomsAsync()
+    {
+        _roomValue = string.Empty;
+        if (PropertyId is not { } propertyId)
+        {
+            _rooms = [];
+            return;
+        }
+
+        var result = await Rooms.ListAsync(new RoomFilter { PropertyId = propertyId, Page = 1, PageSize = 100 });
+        _rooms = result.Items;
+    }
+
+    private async Task SearchExistingAsync()
+    {
+        _existing = await TenantPages.SearchExistingTenantsAsync(_search);
+        if (_existing.Count == 0)
+        {
+            _error = L["QrNoExisting"];
+        }
+    }
+
+    private async Task GenerateAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            if (Kind == TenantInvitationKind.ExistingAccount && string.IsNullOrWhiteSpace(_targetUserId))
+            {
+                _error = L["QrSelectExistingRequired"];
+                return;
+            }
+
+            var result = await TenantPages.CreateQrInvitationAsync(new CreateTenantQrRequest
+            {
+                Kind = Kind,
+                PropertyId = PropertyId,
+                RoomId = RoomId,
+                Expiry = Expiry,
+                TargetUserId = _targetUserId,
+            });
+
+            if (!result.Succeeded || string.IsNullOrWhiteSpace(result.RawToken))
+            {
+                _error = result.ErrorCode == TenantInvitationErrorCodes.Forbidden
+                    ? L["InviteTenantForbidden"]
+                    : L["QrFailed"];
+                return;
+            }
+
+            _link = $"{TenantPages.InviteBaseUrl.TrimEnd('/')}/invite/{Uri.EscapeDataString(result.RawToken)}";
+            _qrDataUrl = QrRenderer.ToPngDataUrl(_link);
+            _expiresAt = result.ExpiresAt;
+            Toasts.Success(L["QrCreated"]);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

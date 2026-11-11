@@ -14,11 +14,7 @@
 
 .tenant-trash-note .lucide-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 
-.tenant-trash-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.tenant-trash-search { position: relative; display: flex; flex: 1 1 340px; align-items: center; max-width: 460px; }
-.tenant-trash-search-icon { position: absolute; z-index: 1; left: 12px; display: inline-flex; color: var(--text-muted); pointer-events: none; }
-.tenant-trash-search ::deep .input { padding-left: 40px; border-color: transparent; background: var(--surface-subtle); }
-.tenant-trash-count { color: var(--text-secondary); font-size: .8125rem; }
+.tenant-trash-count { margin-left: auto; color: var(--text-secondary); font-size: .8125rem; white-space: nowrap; }
 
 .tenant-trash-alert {
     display: flex;
@@ -53,7 +49,8 @@
 
 @media (max-width: 767px) {
     .tenant-trash-page { gap: 14px; }
-    .tenant-trash-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
-    .tenant-trash-search { max-width: none; }
+    .tenant-trash-heading { align-items: stretch; flex-direction: column; gap: 12px; }
+    .tenant-trash-heading .btn { align-self: flex-start; }
+    .tenant-trash-count { margin-left: 0; align-self: flex-start; }
     .tenant-trash-pager { justify-content: space-between; }
 }

@@ -120,6 +120,13 @@
   <data name="StatusCompleted" xml:space="preserve">
     <value>Hoàn thành</value>
   </data>
+  <data name="StatSummary" xml:space="preserve"><value>Tóm tắt sự cố</value></data>
+  <data name="StatTotal" xml:space="preserve"><value>Tổng sự cố</value></data>
+  <data name="StatTotalHint" xml:space="preserve"><value>Toàn bộ phiếu sự cố trong phạm vi bạn xem.</value></data>
+  <data name="StatUnit" xml:space="preserve"><value>phiếu</value></data>
+  <data name="StatNewHint" xml:space="preserve"><value>Phiếu vừa tiếp nhận, chưa xử lý.</value></data>
+  <data name="StatInProgressHint" xml:space="preserve"><value>Phiếu đang được xử lý.</value></data>
+  <data name="StatCompletedHint" xml:space="preserve"><value>Phiếu đã xử lý xong.</value></data>
   <data name="CreatedAt" xml:space="preserve">
     <value>Thời điểm tạo</value>
   </data>

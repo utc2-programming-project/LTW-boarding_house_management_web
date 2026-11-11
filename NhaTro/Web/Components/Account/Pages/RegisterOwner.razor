@@ -1,26 +1,22 @@
 @page "/Account/RegisterOwner"
+@layout Layout.AuthLayout
 
 @using System.ComponentModel.DataAnnotations
-@using System.Text
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using Web.Components.Shared.Forms
-@using Web.Data
 @using Web.Features.Accounts
 @using Web.Features.Accounts.DTOs
 
 @inject IAccountService Accounts
-@inject UserManager<ApplicationUser> Users
-@inject IEmailSender<ApplicationUser> EmailSender
-@inject NavigationManager Navigation
+@inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["RegisterOwnerTitle"] · @L["AppName"]</PageTitle>
 
 <section class="auth-page" aria-labelledby="register-owner-title">
     <div class="auth-card">
-        <PageHeading Title="@L["RegisterOwnerTitle"]" TitleId="register-owner-title" HelpText="@L["RegisterOwnerSubtitle"]"
-                     InteractiveHelp="true" Class="auth-heading" />
+        <AuthTabs Active="AuthTab.Register" />
+        <PageHeading Title="@L["RegisterOwnerTitle"]" TitleId="register-owner-title" Class="auth-heading" />
+        <p class="auth-subtitle">@L["RegisterOwnerSubtitle"]</p>
 
         @if (_done)
         {
@@ -28,7 +24,7 @@
                 <LucideIcon Name="check" />
                 <span>@L["RegisterOwnerSuccessText"]</span>
             </div>
-            <p class="hint"><a href="Account/Login">@L["BackToLogin"]</a></p>
+            <p class="auth-alt-action"><a href="Account/Login">@L["BackToLogin"]</a></p>
         }
         else
         {
@@ -47,6 +43,7 @@
                            For="() => Input.FullName">
                     <InputText @bind-Value="Input.FullName" id="register-name" class="input"
                                autocomplete="name" maxlength="200" aria-required="true"
+                               placeholder="@L["FullNamePlaceholder"]"
                                aria-describedby="register-name-error" />
                 </FormField>
 
@@ -54,32 +51,57 @@
                            For="() => Input.Email">
                     <InputText @bind-Value="Input.Email" id="register-email" class="input" type="email"
                                autocomplete="username" maxlength="256" aria-required="true"
+                               placeholder="@L["EmailPlaceholder"]"
                                aria-describedby="register-email-error" />
                 </FormField>
 
                 <FormField TValue="string" Id="register-phone" Label="@L["PhoneLabel"]"
                            For="() => Input.PhoneNumber">
-                    <InputText @bind-Value="Input.PhoneNumber" id="register-phone" class="input"
-                               inputmode="numeric" maxlength="10" autocomplete="tel"
-                               aria-describedby="register-phone-error" />
+                    <LabelSuffix><span class="label-optional">@L["OptionalLabel"]</span></LabelSuffix>
+                    <ChildContent>
+                        <InputText @bind-Value="Input.PhoneNumber" id="register-phone" class="input"
+                                   inputmode="numeric" maxlength="10" autocomplete="tel"
+                                   placeholder="@L["PhonePlaceholder"]"
+                                   aria-describedby="register-phone-error" />
+                    </ChildContent>
                 </FormField>
 
                 <FormField TValue="string" Id="register-password" Label="@L["PasswordLabel"]" Required="true"
-                           For="() => Input.Password">
-                    <InputText @bind-Value="Input.Password" id="register-password" class="input" type="password"
-                               autocomplete="new-password" aria-required="true"
-                               aria-describedby="register-password-error" />
+                           Hint="@L["PasswordMinHint"]" For="() => Input.Password">
+                    <div class="password-wrap">
+                        <InputText @bind-Value="Input.Password" id="register-password" class="input" type="password"
+                                   autocomplete="new-password" aria-required="true"
+                                   placeholder="@L["PasswordPlaceholder"]"
+                                   aria-describedby="register-password-hint register-password-error" />
+                        <button type="button" class="password-toggle" data-password-toggle="register-password"
+                                data-show-label="@L["ShowPassword"]" data-hide-label="@L["HidePassword"]"
+                                aria-label="@L["ShowPassword"]" aria-pressed="false">
+                            <span class="pw-icon-show"><LucideIcon Name="eye" /></span>
+                            <span class="pw-icon-hide"><LucideIcon Name="eye-off" /></span>
+                        </button>
+                    </div>
                 </FormField>
 
                 <FormField TValue="string" Id="register-confirm" Label="@L["ConfirmPasswordLabel"]" Required="true"
                            For="() => Input.ConfirmPassword">
-                    <InputText @bind-Value="Input.ConfirmPassword" id="register-confirm" class="input"
-                               type="password" autocomplete="new-password" aria-required="true"
-                               placeholder="@L["ConfirmPasswordPlaceholder"]"
-                               aria-describedby="register-confirm-error" />
+                    <div class="password-wrap">
+                        <InputText @bind-Value="Input.ConfirmPassword" id="register-confirm" class="input"
+                                   type="password" autocomplete="new-password" aria-required="true"
+                                   placeholder="@L["ConfirmPasswordPlaceholder"]"
+                                   aria-describedby="register-confirm-error" />
+                        <button type="button" class="password-toggle" data-password-toggle="register-confirm"
+                                data-show-label="@L["ShowPassword"]" data-hide-label="@L["HidePassword"]"
+                                aria-label="@L["ShowPassword"]" aria-pressed="false">
+                            <span class="pw-icon-show"><LucideIcon Name="eye" /></span>
+                            <span class="pw-icon-hide"><LucideIcon Name="eye-off" /></span>
+                        </button>
+                    </div>
                 </FormField>
 
-                <p class="note">@L["RegisterOwnerNote"]</p>
+                <p class="auth-callout">
+                    <LucideIcon Name="info" />
+                    <span>@L["RegisterOwnerNote"]</span>
+                </p>
 
                 <button type="submit" class="btn btn-primary btn-block" disabled="@_saving">
                     @if (_saving) { <span class="spinner" aria-hidden="true"></span> }
@@ -87,7 +109,7 @@
                 </button>
             </EditForm>
 
-            <p class="hint">
+            <p class="auth-alt-action">
                 <a href="Account/Login">@L["RegisterOwnerLogin"]</a>
             </p>
         }
@@ -126,30 +148,11 @@
                 return;
             }
 
-            // Xác nhận email là tuỳ chọn: lỗi gửi mail không chặn đăng ký (Admin vẫn duyệt tay).
-            try
-            {
-                var user = await Users.FindByEmailAsync(Input.Email.Trim());
-                if (user is not null)
-                {
-                    var code = await Users.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var link = Navigation.GetUriWithQueryParameters(
-                        Navigation.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                        new Dictionary<string, object?>
-                        {
-                            ["userId"] = user.Id,
-                            ["code"] = code,
-                        });
-                    await EmailSender.SendConfirmationLinkAsync(user, Input.Email.Trim(), link);
-                }
-            }
-            catch
-            {
-                // Bỏ qua: xác nhận email không phải điều kiện bắt buộc để Admin duyệt.
-            }
-
             _done = true;
+
+            // PLAN-022: chuyển sang nhập OTP thay vì gửi liên kết xác nhận.
+            RedirectManager.RedirectTo(
+                $"/Account/VerifyOtp?purpose=OwnerRegistration&email={Uri.EscapeDataString(Input.Email.Trim())}");
         }
         finally
         {

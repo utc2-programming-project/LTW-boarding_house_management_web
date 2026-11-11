@@ -6,47 +6,52 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Forms
 @using Web.Data
+@using Web.Features.Accounts.Contexts
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject PostLoginRouter PostLogin
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@L["TwoFactorLoginTitle"]</PageTitle>
 
-<PageHeading Title="@L["TwoFactorLoginTitle"]" HelpText="@L["TwoFactorLoginDescription"]" InteractiveHelp="true" />
-<hr />
-<StatusMessage Message="@message" />
-<div class="row">
-    <div class="col-md-4">
+<section class="auth-page" aria-labelledby="two-factor-title">
+    <div class="auth-card">
+        <AuthTabs Active="AuthTab.Login" Dimmed="true" />
+        <PageHeading Title="@L["TwoFactorLoginTitle"]" TitleId="two-factor-title"
+                     HelpText="@L["TwoFactorLoginDescription"]" InteractiveHelp="true" Class="auth-heading" />
+
+        <StatusMessage Message="@message" />
+
         <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
             <input type="hidden" name="RememberMe" value="@RememberMe" />
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">@L["AuthenticatorCodeLabel"]</label>
-                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
-            </div>
-            <div class="checkbox mb-3">
-                <label for="remember-machine" class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    @L["RememberThisMachine"]
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">@L["LoginButton"]</button>
-            </div>
+
+            <FormField TValue="string" Id="two-factor-code" Label="@L["AuthenticatorCodeLabel"]" Required="true"
+                       For="() => Input.TwoFactorCode">
+                <InputText @bind-Value="Input.TwoFactorCode" id="two-factor-code" class="input"
+                           autocomplete="one-time-code" inputmode="numeric" aria-required="true" />
+            </FormField>
+
+            <label class="checkbox-label" for="remember-machine">
+                <InputCheckbox @bind-Value="Input.RememberMachine" id="remember-machine" class="checkbox" />
+                <span>@L["RememberThisMachine"]</span>
+            </label>
+
+            <button type="submit" class="btn btn-primary btn-block">@L["LoginButton"]</button>
         </EditForm>
+
+        <p class="hint">
+            @L["TwoFactorNoDevice"]
+            <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">@L["LoginWithRecoveryCodeLink"]</a>.
+        </p>
     </div>
-</div>
-<p>
-    @L["TwoFactorNoDevice"]
-    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">@L["LoginWithRecoveryCodeLink"]</a>.
-</p>
+</section>
 
 @code {
     private string? message;
@@ -79,7 +84,8 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", userId);
-            RedirectManager.RedirectTo(ReturnUrl);
+            var redirect = await PostLogin.GetRedirectAsync(user, ReturnUrl);
+            RedirectManager.RedirectTo(redirect);
         }
         else if (result.IsLockedOut)
         {

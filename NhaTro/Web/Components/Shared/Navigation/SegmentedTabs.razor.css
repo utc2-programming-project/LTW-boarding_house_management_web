@@ -1,0 +1,89 @@
+.segmented-tabs {
+    position: relative;
+    display: flex;
+    gap: 0;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-subtle);
+}
+
+.segmented-tabs.is-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.segmented-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / var(--segment-count, 2));
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+    transform: translateX(calc(var(--segment-index, 0) * 100%));
+    transition: transform 300ms var(--ease), opacity 160ms var(--ease);
+}
+
+.segmented-indicator.is-hidden {
+    opacity: 0;
+}
+
+.segmented-tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    flex: 1 1 0;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    cursor: pointer;
+    transition: color 180ms var(--ease), background-color 180ms var(--ease);
+}
+
+.segmented-tab:hover {
+    color: var(--text-primary);
+}
+
+.segmented-tab[aria-pressed="true"] {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.segmented-tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.segmented-tab .lucide-icon {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 420px) {
+    .segmented-tab {
+        padding-inline: 6px;
+        font-size: 12.5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .segmented-tabs,
+    .segmented-indicator,
+    .segmented-tab {
+        transition: none;
+    }
+}

@@ -18,6 +18,8 @@ using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
 using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Contexts;
+using Web.Features.Accounts.Otp;
 using Web.Features.Approvals.Services;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
@@ -87,6 +89,8 @@ builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumL
 
 // ── 2. Blazor Server + Identity: xác thực và cookie ────────────────────────
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+// Cần cho claims factory/OTP đọc IP và cookie ngữ cảnh trong mọi luồng.
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -101,6 +105,18 @@ builder.Services.AddAuthentication(options =>
 // /api trả 401/403 đúng hợp đồng mục 5, không chuyển hướng về trang đăng nhập.
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    // PLAN-027: cookie phiên chỉ gửi qua HTTPS ở production, không đọc được bằng JS.
+    // Testing chạy TestServer trên http://localhost nên phải SameAsRequest,
+    // nếu không cookie Secure bị bỏ và mọi test đăng nhập sẽ bị 302 về /Account/Login.
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        || builder.Environment.IsEnvironment("Testing")
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+
     var redirectToLogin = options.Events.OnRedirectToLogin;
     options.Events.OnRedirectToLogin = context =>
     {
@@ -161,7 +177,16 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     }).AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
       // VHT-95: SignInManager riêng chặn tài khoản "Chờ duyệt".
       .AddSignInManager<AccountSignInManager>()
+      .AddClaimsPrincipalFactory<NhaTroClaimsPrincipalFactory>()
       .AddDefaultTokenProviders();
+
+// PLAN-022/027: token đặt lại mật khẩu/xác nhận email chỉ sống 15 phút.
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+    options.TokenLifespan = TimeSpan.FromMinutes(15));
+
+// PLAN-025: security stamp được kiểm lại sau 2 phút để khoá chủ trọ có hiệu lực nhanh.
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+    options.ValidationInterval = TimeSpan.FromMinutes(2));
 
 // ── 5. Policy phân quyền ───────────────────────────────────────────────────
 // Policy nghiệp vụ loại trừ Admin ngay từ endpoint (kể cả tài khoản có thêm vai trò nghiệp vụ);
@@ -212,6 +237,16 @@ builder.Services.AddAuthorization(options =>
 
 // ── 6. Service nghiệp vụ (đọc/ghi SQL, tự kiểm quyền và phạm vi) ───────────
 builder.Services.AddScoped<RoleService>();
+// PLAN-022: OTP một lần cho đăng ký/xác thực tài khoản.
+builder.Services.AddOptions<OtpOptions>().Bind(builder.Configuration.GetSection(OtpOptions.SectionName));
+builder.Services.AddScoped<IOtpService, OtpService>();
+// PLAN-023: ngữ cảnh đa vai trò + cookie ngữ cảnh đang chọn.
+builder.Services.AddScoped<RoleContextService>();
+builder.Services.AddScoped<ActiveRoleCookie>();
+builder.Services.AddScoped<PostLoginRouter>();
+// PLAN-025: khoá lan chủ trọ + màn Admin quản lý chủ trọ.
+builder.Services.AddScoped<Web.Features.Accounts.Owners.OwnerAccessGuard>();
+builder.Services.AddScoped<Web.Features.Accounts.Owners.OwnerAdminService>();
 // VHT-95: hồ sơ cá nhân + quản trị tài khoản; quyền kiểm ở server.
 builder.Services.AddScoped<IAccountService, AccountService>();
 
@@ -279,6 +314,8 @@ builder.Services.AddScoped<IRoomChangePolicy>(sp => sp.GetRequiredService<Manage
 // VHT-96: hàng đợi duyệt thao tác Quản lý; mã SW chưa có applier sẽ bị chặn khi duyệt.
 builder.Services.AddScoped<ManagerApprovalService>();
 builder.Services.AddScoped<IManagerApprovalService>(sp => sp.GetRequiredService<ManagerApprovalService>());
+// Trang Hàng đợi duyệt (/approvals): làm giàu yêu cầu bằng tên đối tượng và nội dung đề xuất.
+builder.Services.AddScoped<ApprovalQueuePageService>();
 
 // Khách thuê + tài liệu thuê: kiểm quyền và phạm vi trong service.
 builder.Services.AddScoped<ITenantService, TenantService>();
@@ -377,7 +414,16 @@ builder.Services.AddRateLimiter(rateLimiter =>
                         Window = TimeSpan.FromHours(1),
                         QueueLimit = 0,
                     })
-                : RateLimitPartition.GetNoLimiter("no-limit"));
+                : RateLimitPolicies.IsOtpRequest(http)
+                    ? RateLimitPartition.GetFixedWindowLimiter(
+                        "otp:" + RateLimitPolicies.ClientKey(http),
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 20,
+                            Window = TimeSpan.FromMinutes(15),
+                            QueueLimit = 0,
+                        })
+                    : RateLimitPartition.GetNoLimiter("no-limit"));
 
     rateLimiter.OnRejected = RateLimitPolicies.WriteRejectionAsync;
 });
@@ -440,6 +486,9 @@ else
 // ── 12. Service còn lại: tiện ích, hóa đơn, báo cáo, audit, UI ─────────────
 // PLAN-006: lời mời khách thuê qua email.
 builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationService>();
+// PLAN-024: QR nhiều mốc hạn + mời khách đã có tài khoản.
+builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantQrInvitationService>();
+builder.Services.AddSingleton<Web.Features.Tenants.Invitations.QrCodeRenderer>();
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
@@ -565,7 +614,14 @@ app.Use(async (context, next) =>
     }
 });
 
+// PLAN-027: header bảo mật + chặn POST cross-site; đặt trước antiforgery/endpoint.
+app.UseMiddleware<Web.Infrastructure.Security.SecurityHeadersMiddleware>();
+
 app.UseAntiforgery();
+// PLAN-022: tài khoản chưa xác thực Gmail chỉ được vào trang OTP.
+app.UseMiddleware<PendingVerificationMiddleware>();
+// PLAN-023: tài khoản nhiều ngữ cảnh phải chọn vai trò trước khi vào nghiệp vụ.
+app.UseMiddleware<PendingRoleMiddleware>();
 
 // ── 14. Endpoint ───────────────────────────────────────────────────────────
 // Đổi ngôn ngữ (VI/EN) cho bộ chọn ở topbar và trang auth: ghi cookie ".AspNetCore.Culture"
@@ -621,32 +677,19 @@ app.MapRazorComponents<App>()
 // Endpoint bổ sung cho các Razor component Identity /Account.
 app.MapAdditionalIdentityEndpoints();
 
-// VHT-49 (3A): seed dữ liệu demo vào DB riêng khi chạy rõ tham số --seed-demo.
-// Nhánh này thoát trước các seeder dev để DB demo chỉ có 6 tài khoản demo.
-if (args.Any(arg => string.Equals(arg, "--seed-demo", StringComparison.Ordinal)))
+// ── 15. Khởi tạo dữ liệu ───────────────────────────────────────────────────
+// Nạp/xoá dữ liệu demo bằng file JSON rời: chạy xong thoát, không mở web server.
+// Không truyền cờ thì bỏ qua hoàn toàn; thiếu file JSON cũng là no-op.
+var seedDemo = args.Any(a => string.Equals(a, "--seed-demo", StringComparison.OrdinalIgnoreCase));
+var clearDemo = args.Any(a => string.Equals(a, "--clear-demo", StringComparison.OrdinalIgnoreCase));
+if (seedDemo || clearDemo)
 {
-    await using var demoScope = app.Services.CreateAsyncScope();
-    var demoDb = demoScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await demoDb.Database.MigrateAsync();
-    var demoPassword = app.Configuration["DemoSeed:Password"];
-    if (string.IsNullOrWhiteSpace(demoPassword))
-    {
-        demoPassword = DemoDataSeeder.DefaultPassword;
-    }
-
-    var summary = await DemoDataSeeder.EnsureAsync(demoDb, demoPassword);
-    app.Logger.LogInformation(
-        "Demo 3A: {Users} user, {Properties} nhà, {Rooms} phòng, {Contracts} hợp đồng, {Readings} kỳ chỉ số; đáp án {Totals}",
-        summary.Users,
-        summary.Properties,
-        summary.Rooms,
-        summary.Contracts,
-        summary.Readings,
-        string.Join(", ", summary.PeriodTotals.Select(pair => $"{pair.Key}={pair.Value}")));
+    var succeeded = await DemoDataSeeder.RunAsync(
+        app.Services, app.Environment, app.Configuration, app.Logger, clearDemo);
+    Environment.ExitCode = succeeded ? 0 : 1;
     return;
 }
 
-// ── 15. Khởi tạo dữ liệu ───────────────────────────────────────────────────
 // Chạy dev: áp migration còn thiếu để schema DB khớp model.
 if (app.Environment.IsDevelopment())
 {
@@ -662,9 +705,9 @@ using (var scope = app.Services.CreateScope())
     {
         await RoleSeeder.EnsureAsync(scope.ServiceProvider);
         await AdminSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
-        // VHT-49: khi chạy app trên DB demo, tắt 4 tài khoản dev để DB chỉ còn 6 tài khoản demo.
+        // Có thể tắt tài khoản dev trên DB đang dùng dữ liệu thật bằng DevAccounts:Skip.
         if (app.Environment.IsDevelopment()
-            && !app.Configuration.GetValue("DemoSeed:SkipDevAccounts", false))
+            && !app.Configuration.GetValue("DevAccounts:Skip", false))
         {
             await DevAccountSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
         }

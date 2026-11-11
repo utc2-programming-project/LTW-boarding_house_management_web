@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Accounts.Otp;
+using Web.Features.Accounts.Owners;
 
 namespace Web.Features.Accounts;
 
@@ -21,7 +23,9 @@ namespace Web.Features.Accounts;
 public sealed class AccountService(
     UserManager<ApplicationUser> users,
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    ILogger<AccountService> logger) : IAccountService
+    ILogger<AccountService> logger,
+    IOtpService? otp = null,
+    OwnerAccessGuard? ownerAccess = null) : IAccountService
 {
     public async Task<PagedResult<AccountListItemDto>> ListAsync(
         string? keyword, string? roleFilter, int page, int pageSize,
@@ -79,11 +83,16 @@ public sealed class AccountService(
             {
                 "locked" => query.Where(row =>
                     row.User.LockoutEnd != null && row.User.LockoutEnd >= permanentLockout),
+                "unverified" => query.Where(row =>
+                    (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    !row.User.EmailConfirmed),
                 "pending" => query.Where(row =>
                     (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.EmailConfirmed &&
                     row.User.ApprovedAt == null),
                 "active" => query.Where(row =>
                     (row.User.LockoutEnd == null || row.User.LockoutEnd < permanentLockout) &&
+                    row.User.EmailConfirmed &&
                     row.User.ApprovedAt != null),
                 _ => query,
             };
@@ -106,6 +115,7 @@ public sealed class AccountService(
                 row.User.FullName,
                 row.User.LockoutEnd,
                 row.User.ApprovedAt,
+                row.User.EmailConfirmed,
                 Role = row.RoleName,
             })
             .ToListAsync(ct);
@@ -182,7 +192,7 @@ public sealed class AccountService(
                     Role = row.Role,
                     IsLocked = AccountStatusRules.IsPermanentlyLocked(row.LockoutEnd),
                     LockoutEnd = row.LockoutEnd,
-                    Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd),
+                    Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd, row.EmailConfirmed),
                     ApprovedAt = row.ApprovedAt,
                     OwnerUserId = owner?.OwnerUserId,
                     OwnerName = owner?.OwnerName,
@@ -233,12 +243,17 @@ public sealed class AccountService(
                     user.FullName,
                     user.LockoutEnd,
                     user.ApprovedAt,
+                    user.EmailConfirmed,
                     Role = role.Name!,
                 })
             .ToListAsync(ct);
 
         var statuses = rows
-            .Select(row => new { Row = row, Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd) })
+            .Select(row => new
+            {
+                Row = row,
+                Status = AccountStatusRules.Derive(row.ApprovedAt, row.LockoutEnd, row.EmailConfirmed),
+            })
             .ToList();
 
         var pending = statuses
@@ -379,7 +394,8 @@ public sealed class AccountService(
         {
             UserName = email,
             Email = email,
-            EmailConfirmed = true,
+            // PLAN-022: mọi tài khoản tạo mới phải xác thực Gmail ở lần đăng nhập đầu.
+            EmailConfirmed = false,
             FullName = fullName,
             PhoneNumber = phone,
             // O #5: thao tac cua Admin/ChuTro hieu luc ngay; QuanLy tao ra o trang thai Cho duyet.
@@ -479,7 +495,27 @@ public sealed class AccountService(
         }
 
         await users.AddToRoleAsync(user, Roles.ChuTro);
-        logger.LogInformation("Dang ky chu tro moi {Email}, cho Admin duyet.", email);
+
+        // PLAN-022: kích hoạt bằng OTP thay vì chờ Admin duyệt. Lỗi gửi thư không làm hỏng
+        // đăng ký; người dùng có thể bấm gửi lại ở trang xác thực.
+        if (otp is not null)
+        {
+            try
+            {
+                var issued = await otp.IssueAsync(user.Id, email, OtpPurpose.OwnerRegistration, ct);
+                if (issued.Status is not (OtpIssueStatus.Success or OtpIssueStatus.Cooldown))
+                {
+                    logger.LogWarning(
+                        "Da tao chu tro {Email} nhung chua gui duoc OTP: {Status}.", email, issued.Status);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Khong phat duoc OTP cho chu tro {Email}.", email);
+            }
+        }
+
+        logger.LogInformation("Dang ky chu tro moi {Email}, cho xac thuc OTP.", email);
         return AccountResult.Success();
     }
 
@@ -758,6 +794,13 @@ public sealed class AccountService(
         // Dang nhap hien tai (neu co) van con hieu luc vi cookie chua het han;
         // doi SecurityStamp de Identity tu choi phien cu o lan kiem tra tiep theo.
         await users.UpdateSecurityStampAsync(target);
+
+        // PLAN-025: khoá chủ trọ từ /admin/users cũng phải khoá lan + thu hồi QR.
+        if (targetRole == Roles.ChuTro && ownerAccess is not null)
+        {
+            await ownerAccess.CascadeLockAsync(targetUserId, ct);
+            await ownerAccess.RevokeOpenInvitationsAsync(targetUserId, ct);
+        }
 
         logger.LogInformation("Tai khoan {UserId} bi khoa boi {Caller}.", targetUserId, callerUserId);
         return AccountResult.Success();

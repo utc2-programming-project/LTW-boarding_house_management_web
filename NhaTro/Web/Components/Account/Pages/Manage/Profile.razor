@@ -1,0 +1,114 @@
+@page "/Account/Manage"
+
+@using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Forms
+@using Web.Data
+@using Web.Features.Accounts
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>@L["ProfileTitle"]</PageTitle>
+
+<h2 class="account-section">@L["ProfileTitle"]</h2>
+
+@if (!string.IsNullOrEmpty(_status))
+{
+    <div class="form-alert@(_statusIsError ? "" : " success")" role="alert">
+        <LucideIcon Name="@(_statusIsError ? "alert" : "check")" />
+        <span>@_status</span>
+    </div>
+}
+
+<EditForm Model="Input" FormName="manage-profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <div class="account-form">
+        <div class="account-field">
+            <span class="account-field-label">@L["UsernameLabel"]</span>
+            <p class="account-readonly">@_username</p>
+        </div>
+
+        <FormField TValue="string" Id="Input.PhoneNumber" Label="@L["PhoneLabel"]" For="() => Input.PhoneNumber">
+            <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" autocomplete="tel"
+                       inputmode="numeric" maxlength="10" />
+        </FormField>
+
+        <div class="account-actions">
+            <button type="submit" class="btn btn-primary">@L["SaveChanges"]</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private string? _username;
+    private string? _phoneNumber;
+    private string? _status;
+    private bool _statusIsError;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "manage-profile")]
+    private InputModel Input { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        _username = await UserManager.GetUserNameAsync(user);
+        _phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+
+        // Chỉ điền sẵn ở GET; ở POST phải giữ nguyên giá trị người dùng vừa gửi
+        // (kể cả khi họ xoá trắng ô để bỏ số điện thoại).
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            Input.PhoneNumber = _phoneNumber;
+        }
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            return;
+        }
+
+        var phone = string.IsNullOrWhiteSpace(Input.PhoneNumber) ? null : Input.PhoneNumber.Trim();
+        if (phone is not null && !AccountService.IsValidVietnamPhone(phone))
+        {
+            _status = L["ErrorInvalidPhone"];
+            _statusIsError = true;
+            return;
+        }
+
+        if (!string.Equals(phone, _phoneNumber, StringComparison.Ordinal))
+        {
+            var result = await UserManager.SetPhoneNumberAsync(user, phone);
+            if (!result.Succeeded)
+            {
+                _status = L["ProfilePhoneUpdateFailed"];
+                _statusIsError = true;
+                return;
+            }
+
+            _phoneNumber = phone;
+            Input.PhoneNumber = phone;
+        }
+
+        _status = L["ProfileSaved"];
+        _statusIsError = false;
+    }
+
+    private sealed class InputModel
+    {
+        public string? PhoneNumber { get; set; }
+    }
+}

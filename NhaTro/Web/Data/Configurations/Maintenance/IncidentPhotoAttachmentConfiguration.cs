@@ -16,6 +16,8 @@ public sealed class IncidentPhotoAttachmentConfiguration : IEntityTypeConfigurat
         builder.HasKey(photo => photo.FileId);
         builder.Property(photo => photo.FileId).ValueGeneratedNever();
         builder.HasOne(photo => photo.File).WithOne().HasForeignKey<IncidentPhotoAttachment>(photo => photo.FileId).OnDelete(DeleteBehavior.Restrict);
+        // Đồng bộ filter với StoredFile (xóa mềm): tệp bị ẩn thì ảnh đính kèm cũng biến mất.
+        builder.HasQueryFilter(photo => !photo.File.IsDeleted);
         builder.HasOne(photo => photo.Incident).WithMany().HasForeignKey(photo => photo.IncidentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(photo => photo.ApprovalRequest).WithMany().HasForeignKey(photo => photo.ApprovalRequestId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(photo => new { photo.IncidentId, photo.Kind });

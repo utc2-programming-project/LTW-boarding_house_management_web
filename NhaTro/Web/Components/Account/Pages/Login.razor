@@ -9,9 +9,12 @@
 @using Microsoft.AspNetCore.Identity
 @using Web.Components.Shared.Forms
 @using Web.Data
+@using Web.Features.Accounts.Contexts
 @using Web.Infrastructure.Security
 
 @inject SignInManager<ApplicationUser> SignInManager
+@inject PostLoginRouter PostLogin
+@inject UserManager<ApplicationUser> Users
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
@@ -21,10 +24,11 @@
 
 <PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
 
-<section class="auth-page" aria-labelledby="login-title">
+<section class="auth-page auth-page--quick" aria-labelledby="login-title">
     <div class="auth-card">
-    <PageHeading Title="@L["LoginTitle"]" TitleId="login-title" HelpText="@L["LoginSubtitle"]"
-                 InteractiveHelp="true" Class="auth-heading" />
+        <AuthTabs Active="AuthTab.Login" />
+        <PageHeading Title="@L["LoginTitle"]" TitleId="login-title" Class="auth-heading" />
+        <p class="auth-subtitle">@L["LoginSubtitle"]</p>
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
@@ -39,23 +43,30 @@
                        For="() => Input.Email">
                 <InputText @bind-Value="Input.Email" id="login-email" class="input"
                            autocomplete="username webauthn" aria-required="true"
+                           placeholder="@L["EmailPlaceholder"]"
                            aria-describedby="login-email-error" />
             </FormField>
 
             <FormField TValue="string" Id="login-password" Label="@L["PasswordLabel"]" Required="true"
                        For="() => Input.Password">
-                <div class="password-wrap">
-                    <InputText @bind-Value="Input.Password" id="login-password"
-                               type="password" class="input"
-                               autocomplete="current-password" aria-required="true"
-                               aria-describedby="login-password-error" />
-                    <button type="button" class="password-toggle" data-password-toggle="login-password"
-                            data-show-label="@L["ShowPassword"]" data-hide-label="@L["HidePassword"]"
-                            aria-label="@L["ShowPassword"]" aria-pressed="false">
-                        <span class="pw-icon-show"><LucideIcon Name="eye" /></span>
-                        <span class="pw-icon-hide"><LucideIcon Name="eye-off" /></span>
-                    </button>
-                </div>
+                <LabelAction>
+                    <a class="auth-inline-link" href="Account/ForgotPassword">@L["ForgotPassword"]</a>
+                </LabelAction>
+                <ChildContent>
+                    <div class="password-wrap">
+                        <InputText @bind-Value="Input.Password" id="login-password"
+                                   type="password" class="input"
+                                   autocomplete="current-password" aria-required="true"
+                                   placeholder="@L["PasswordPlaceholder"]"
+                                   aria-describedby="login-password-error" />
+                        <button type="button" class="password-toggle" data-password-toggle="login-password"
+                                data-show-label="@L["ShowPassword"]" data-hide-label="@L["HidePassword"]"
+                                aria-label="@L["ShowPassword"]" aria-pressed="false">
+                            <span class="pw-icon-show"><LucideIcon Name="eye" /></span>
+                            <span class="pw-icon-hide"><LucideIcon Name="eye-off" /></span>
+                        </button>
+                    </div>
+                </ChildContent>
             </FormField>
 
             @* chi hien khi da sai qua nguong; dap an duoc ma hoa trong token an. *@
@@ -71,12 +82,12 @@
                 </FormField>
             }
 
+            @* "Quên mật khẩu?" nằm cùng hàng với label Mật khẩu ở trên. *@
             <div class="remember-row">
                 <label class="checkbox-label" for="login-remember">
                     <InputCheckbox @bind-Value="Input.RememberMe" id="login-remember" class="checkbox" />
                     <span>@L["RememberMe"]</span>
                 </label>
-                <a href="Account/ForgotPassword">@L["ForgotPassword"]</a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" disabled="@_submitting">
@@ -88,13 +99,13 @@
             </button>
         </EditForm>
 
-        <p class="hint">
+        <p class="auth-alt-action">
             <a href="Account/RegisterOwner">@L["RegisterOwnerLink"]</a>
         </p>
-
-        @* Chi hien o Development khi da co mat khau dev (xem DevQuickLogin.razor). *@
-        <DevQuickLogin />
     </div>
+
+    @* Panel nổi cạnh thẻ đăng nhập; chỉ hiện ở Development (xem DevQuickLogin.razor). *@
+    <DevQuickLogin />
 </section>
 
 @code {
@@ -235,8 +246,29 @@
         {
             AttemptGuard.RegisterSuccess(clientIp, Input.Email.Trim());
             Logger.LogInformation("Nguoi dung dang nhap thanh cong.");
-            // ReturnUrl rong -> ve trang chu; tranh NavigateTo lam IdentityRedirectManager loi.
-            RedirectManager.RedirectTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+
+            // PLAN-022: tài khoản chưa xác thực Gmail chỉ được vào trang OTP.
+            var signedInUser = await Users.FindByEmailAsync(Input.Email.Trim());
+            if (signedInUser is null)
+            {
+                RedirectManager.RedirectTo("/");
+                return;
+            }
+
+            if (signedInUser is { EmailConfirmed: false })
+            {
+                var target = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
+                RedirectManager.RedirectTo(
+                    $"Account/VerifyOtp?purpose=FirstLogin&email={Uri.EscapeDataString(Input.Email.Trim())}"
+                    + $"&returnUrl={Uri.EscapeDataString(target)}");
+                return;
+            }
+
+            // PLAN-023: một ngữ cảnh vào thẳng; nhiều ngữ cảnh dừng ở /select-role.
+            var redirect = await PostLogin.GetRedirectAsync(
+                signedInUser,
+                string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+            RedirectManager.RedirectTo(redirect);
             return;
         }
 

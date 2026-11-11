@@ -120,6 +120,13 @@
   <data name="StatusCompleted" xml:space="preserve">
     <value>Completed</value>
   </data>
+  <data name="StatSummary" xml:space="preserve"><value>Incident summary</value></data>
+  <data name="StatTotal" xml:space="preserve"><value>Total incidents</value></data>
+  <data name="StatTotalHint" xml:space="preserve"><value>All incident tickets within your view.</value></data>
+  <data name="StatUnit" xml:space="preserve"><value>tickets</value></data>
+  <data name="StatNewHint" xml:space="preserve"><value>Newly received tickets, not yet processed.</value></data>
+  <data name="StatInProgressHint" xml:space="preserve"><value>Tickets currently being handled.</value></data>
+  <data name="StatCompletedHint" xml:space="preserve"><value>Tickets already resolved.</value></data>
   <data name="CreatedAt" xml:space="preserve">
     <value>Created at</value>
   </data>

@@ -157,13 +157,16 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.ManagerToggles.ExecuteUpdateAsync(s => s.SetProperty(t => t.UpdatedByUserId, (string?)null));
         await db.FileAccessAuditLogs.ExecuteDeleteAsync();
         await db.StoredFiles.IgnoreQueryFilters().ExecuteDeleteAsync();
-        await db.ServicePriceHistories.ExecuteDeleteAsync();
+        // Lịch sử giá có query filter theo ServiceCatalog xóa mềm: bỏ filter để xóa cả dòng
+        // của danh mục đã xóa mềm, nếu không xóa ServiceCatalogs sẽ vướng FK.
+        await db.ServicePriceHistories.IgnoreQueryFilters().ExecuteDeleteAsync();
         // Xóa mềm dịch vụ vẫn còn dòng trong bảng: bỏ qua query filter để dọn sạch.
         await db.ServiceCatalogs.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Rooms.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Properties.IgnoreQueryFilters().ExecuteDeleteAsync();
         // VHT-48 3A: liên kết khách ↔ chủ trọ giữ lịch sử (Restrict) nên xóa trước Tenants.
-        await db.TenantOwnerLinks.ExecuteDeleteAsync();
+        // Filter đồng bộ với Tenant xóa mềm cũng phải bỏ để không sót liên kết.
+        await db.TenantOwnerLinks.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.Tenants.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.UserRoles.ExecuteDeleteAsync();
         await db.RoleClaims.ExecuteDeleteAsync();

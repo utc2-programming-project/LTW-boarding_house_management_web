@@ -13,8 +13,19 @@ public sealed class TenantPageService(
     AuthenticationStateProvider authenticationState,
     ITenantService tenants,
     Web.Features.Tenants.Invitations.TenantInvitationService invitations,
-    Microsoft.AspNetCore.Components.NavigationManager navigation)
+    Microsoft.AspNetCore.Components.NavigationManager navigation,
+    Web.Features.Tenants.Invitations.TenantQrInvitationService? qrInvitations = null,
+    Microsoft.Extensions.Configuration.IConfiguration? configuration = null)
 {
+    /// <summary>Base URL cấu hình cho link mời; fallback BaseUri khi chưa cấu hình.</summary>
+    public string InviteBaseUrl
+    {
+        get
+        {
+            var configured = configuration?["Invitations:PublicBaseUrl"];
+            return string.IsNullOrWhiteSpace(configured) ? navigation.BaseUri : configured;
+        }
+    }
     public async Task<string> GetCurrentRoleAsync()
     {
         var user = (await authenticationState.GetAuthenticationStateAsync()).User;
@@ -49,7 +60,7 @@ public sealed class TenantPageService(
     // PLAN-006: mời khách thuê qua email (liên kết dựng từ BaseUri hiện tại).
     public async Task<Web.Features.Tenants.Invitations.TenantInvitationResult> CreateInvitationAsync(
         Web.Features.Tenants.Invitations.CreateTenantInvitationRequest request, CancellationToken ct = default) =>
-        await invitations.CreateAsync(request, await GetCallerAsync(), navigation.BaseUri, ct);
+        await invitations.CreateAsync(request, await GetCallerAsync(), InviteBaseUrl, ct);
 
     public async Task<IReadOnlyList<Web.Features.Tenants.Invitations.TenantInvitationDto>> ListInvitationsAsync(
         CancellationToken ct = default) =>
@@ -57,6 +68,32 @@ public sealed class TenantPageService(
 
     public async Task<bool> RevokeInvitationAsync(int id, CancellationToken ct = default) =>
         await invitations.RevokeAsync(id, await GetCallerAsync(), ct);
+
+    // PLAN-024: QR nhiều mốc hạn + mời khách đã có tài khoản.
+    public async Task<Web.Features.Tenants.Invitations.TenantInvitationResult> CreateQrInvitationAsync(
+        Web.Features.Tenants.Invitations.CreateTenantQrRequest request, CancellationToken ct = default) =>
+        await qrInvitations!.CreateQrAsync(request, await GetCallerAsync(), InviteBaseUrl, ct);
+
+    public Task<Web.Features.Tenants.Invitations.TenantInvitationDetails?> PeekInvitationAsync(
+        string token, CancellationToken ct = default) =>
+        qrInvitations!.PeekDetailsAsync(token, ct);
+
+    public Task<Web.Features.Tenants.Invitations.TenantInvitationResult> BeginNewTenantAccountAsync(
+        string token,
+        Web.Features.Tenants.Invitations.NewTenantAccountRequest request,
+        CancellationToken ct = default) =>
+        qrInvitations!.BeginNewAccountAsync(token, request, ct);
+
+    public async Task<Web.Features.Tenants.Invitations.TenantInvitationResult> AcceptExistingInvitationAsync(
+        string token, CancellationToken ct = default)
+    {
+        var caller = await GetCallerAsync();
+        return await qrInvitations!.AcceptExistingAsync(token, caller.UserId, ct);
+    }
+
+    public async Task<IReadOnlyList<Web.Features.Tenants.Invitations.ExistingTenantOptionDto>>
+        SearchExistingTenantsAsync(string? keyword, CancellationToken ct = default) =>
+        await qrInvitations!.SearchExistingTenantsAsync(keyword, await GetCallerAsync(), ct);
 
     public Task<TenantResult> UpdateAsync(int id, UpdateTenantRequest request, CancellationToken ct = default) =>
         CallAsync(caller => tenants.UpdateAsync(id, request, caller, ct));

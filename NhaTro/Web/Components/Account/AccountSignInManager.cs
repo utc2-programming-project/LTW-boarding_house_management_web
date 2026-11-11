@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Web.Data;
+using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 
 namespace Web.Components.Account;
 
@@ -12,6 +14,9 @@ namespace Web.Components.Account;
 /// </summary>
 public sealed class AccountSignInManager : SignInManager<ApplicationUser>
 {
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly OwnerAccessGuard _ownerAccess;
+
     public AccountSignInManager(
         UserManager<ApplicationUser> userManager,
         IHttpContextAccessor contextAccessor,
@@ -19,9 +24,12 @@ public sealed class AccountSignInManager : SignInManager<ApplicationUser>
         IOptions<IdentityOptions> optionsAccessor,
         ILogger<SignInManager<ApplicationUser>> logger,
         IAuthenticationSchemeProvider schemes,
-        IUserConfirmation<ApplicationUser> confirmation)
+        IUserConfirmation<ApplicationUser> confirmation,
+        OwnerAccessGuard ownerAccess)
         : base(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
     {
+        _userManager = userManager;
+        _ownerAccess = ownerAccess;
     }
 
     public override async Task<bool> CanSignInAsync(ApplicationUser user)
@@ -37,6 +45,31 @@ public sealed class AccountSignInManager : SignInManager<ApplicationUser>
             return false;
         }
 
-        return user.ApprovedAt is not null;
+        // PLAN-022: tài khoản chưa xác thực Gmail được đăng nhập nhưng chỉ vào trang OTP
+        // (middleware + claim pending_verification giới hạn route).
+        if (!user.EmailConfirmed)
+        {
+            return true;
+        }
+
+        if (user.ApprovedAt is null)
+        {
+            return false;
+        }
+
+        // PLAN-025: Quản lý/khách thuê chỉ đăng nhập nếu còn ít nhất một ngữ cảnh
+        // không thuộc chủ trọ đang bị khoá.
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains(Roles.Admin) || roles.Contains(Roles.ChuTro))
+        {
+            return true;
+        }
+
+        if (roles.Contains(Roles.QuanLy) || roles.Contains(Roles.KhachThue))
+        {
+            return await _ownerAccess.HasAnyAccessibleContextAsync(user.Id, roles);
+        }
+
+        return true;
     }
 }

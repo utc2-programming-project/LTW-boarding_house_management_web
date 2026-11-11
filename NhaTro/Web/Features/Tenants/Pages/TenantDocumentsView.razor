@@ -188,51 +188,43 @@
         <div class="doc-table-card">
             <!-- Search & Filter Toolbar -->
             <div class="doc-toolbar">
-                <div class="doc-search-wrapper">
-                    <span class="doc-search-icon">
-                        <LucideIcon Name="search" />
-                    </span>
-                    <input type="text"
-                           value="@_searchKeyword"
-                           @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
-                           placeholder="@L["SearchDocumentsPlaceholder"]"
-                           aria-label="@L["SearchDocumentsPlaceholder"]"
-                           class="doc-search-input" />
-                </div>
-
-                <div class="doc-filters-wrapper">
-                    <!-- Category filter -->
-                    <div class="doc-select-wrapper">
-                        <select @bind="_selectedCategoryFilter" class="doc-filter-select">
+                <div class="filter-bar__row">
+                    <div class="filter-bar__search">
+                        <label class="sr-only" for="doc-search">@L["SearchDocumentsPlaceholder"]</label>
+                        <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                        <input id="doc-search" class="input" type="search"
+                               value="@_searchKeyword"
+                               @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
+                               placeholder="@L["SearchDocumentsPlaceholder"]" />
+                    </div>
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="doc-category-filter">@L["CategoryAll"]</label>
+                        <select id="doc-category-filter" class="input" @bind="_selectedCategoryFilter">
                             <option value="all">@L["CategoryAll"]</option>
                             <option value="identity">@L["CategoryIdentity"]</option>
                             <option value="contract">@L["CategoryContract"]</option>
                             <option value="residence">@L["CategoryResidence"]</option>
                             <option value="other">@L["CategoryOther"]</option>
                         </select>
-                        <span class="doc-filter-icon-left">
-                            <LucideIcon Name="filter" />
-                        </span>
-                        <span class="doc-select-arrow">
-                            <LucideIcon Name="chevron-down" />
-                        </span>
                     </div>
-
-                    <!-- Sort order -->
-                    <div class="doc-select-wrapper">
-                        <select @bind="_sortOption" class="doc-filter-select">
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="doc-sort-filter">@L["SortNewest"]</label>
+                        <select id="doc-sort-filter" class="input" @bind="_sortOption">
                             <option value="newest">@L["SortNewest"]</option>
                             <option value="oldest">@L["SortOldest"]</option>
                             <option value="name_asc">@L["SortNameAsc"]</option>
                             <option value="size_desc">@L["SortSizeDesc"]</option>
                         </select>
-                        <span class="doc-filter-icon-left">
-                            <LucideIcon Name="arrow-up-down" />
-                        </span>
-                        <span class="doc-select-arrow">
-                            <LucideIcon Name="chevron-down" />
-                        </span>
                     </div>
+                    @if (HasActiveFilter)
+                    {
+                        <div class="filter-bar__actions">
+                            <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters"
+                                    aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
+                                <LucideIcon Name="refresh-cw" />
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -436,6 +428,11 @@
     private string _selectedCategoryFilter = "all";
     private string _sortOption = "newest";
     private bool _showRequirementGuide;
+
+    private bool HasActiveFilter =>
+        !string.IsNullOrWhiteSpace(_searchKeyword)
+        || _selectedCategoryFilter != "all"
+        || _sortOption != "newest";
 
     private bool _uploadModalOpen;
     private bool _previewModalOpen;

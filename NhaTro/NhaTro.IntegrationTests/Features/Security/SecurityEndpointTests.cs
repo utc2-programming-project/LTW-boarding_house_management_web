@@ -125,4 +125,19 @@ public sealed class SecurityEndpointTests(WebAppFixture fixture) : IClassFixture
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [WebAppFact]
+    public async Task Dang_xuat_thieu_antiforgery_van_ket_thuc_phien()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+
+        // Tab cũ / đã đăng xuất ở tab khác có thể mất cookie antiforgery;
+        // logout phải đưa về trang đăng nhập thay vì 500.
+        var response = await client.PostAsync(
+            "/Account/Logout",
+            new FormUrlEncodedContent(new Dictionary<string, string> { ["returnUrl"] = "" }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/login", response.Headers.Location?.OriginalString);
+    }
 }

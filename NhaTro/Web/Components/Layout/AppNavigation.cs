@@ -58,6 +58,7 @@ public static class AppNavigation
         [
             // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
             new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
+            new("OwnerAdmin", "building", "Admin", "/admin/owners"),
             new("ManagerSwitches", "settings", "ChuTro", "/admin/manager-switches", Aliases: ["/manager-switches"]),
         ]),
         new("NavGroupPersonal", "KhachThue",

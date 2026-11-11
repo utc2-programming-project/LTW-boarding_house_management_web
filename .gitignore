@@ -9,10 +9,10 @@ CLAUDE.md
 .github/copilot-instructions.md
 .qoder/
 .agents/
-
+.commandcode/
 # Project-local OpenCode MCP configuration
 /opencode.json
-
+.freebuff/
 # Visual Studio / .NET
 .vs/
 bin/
@@ -23,6 +23,9 @@ TestResults/
 *.user
 *.suo
 *.userprefs
+
+# Demo seed dataset (local only; deleting the file disables --seed-demo)
+NhaTro/Web/Data/Seeding/demo-data.json
 
 # Secrets, local data, logs (never commit)
 secrets.json
@@ -41,6 +44,7 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 docs/Imp/*
+docs/spec/
 
 scripts/*
 !scripts/database/
