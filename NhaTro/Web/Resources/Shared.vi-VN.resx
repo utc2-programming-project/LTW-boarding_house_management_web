@@ -963,6 +963,7 @@
   <data name="TenantDeleteMessage" xml:space="preserve"><value>Hồ sơ sẽ được xóa mềm và có thể khôi phục. Liên kết tài khoản và tệp giấy tờ được giữ lại. Không thể xóa khi khách còn hợp đồng hiệu lực.</value></data>
   <data name="TenantDeleted" xml:space="preserve"><value>Đã đưa hồ sơ vào thùng rác</value></data>
   <data name="TenantDeleteApprovalSubmitted" xml:space="preserve"><value>Đã gửi yêu cầu xóa hồ sơ, đang chờ Chủ trọ duyệt</value></data>
+  <data name="TenantStatusApprovalSubmitted" xml:space="preserve"><value>Đã gửi yêu cầu đổi trạng thái, đang chờ Chủ trọ duyệt</value></data>
   <data name="TenantErrorInUse" xml:space="preserve"><value>Khách thuê đang có hợp đồng hiệu lực, không thể xóa hồ sơ.</value></data>
   <data name="TenantTrashTitle" xml:space="preserve"><value>Thùng rác hồ sơ khách thuê</value></data>
   <data name="TenantTrashSubtitle" xml:space="preserve"><value>Hồ sơ đã xóa mềm có thể khôi phục mà không mất liên kết tài khoản hay tệp giấy tờ.</value></data>
@@ -1001,7 +1002,7 @@
   <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Chỉ có thể liên kết tài khoản mang vai trò Khách thuê.</value></data>
   <data name="TenantErrorGeneric" xml:space="preserve"><value>Không thể thực hiện thao tác. Vui lòng thử lại.</value></data>
   <data name="TenantErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
-  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>Thao tác này cần Chủ trọ duyệt nên chưa được áp dụng.</value></data>
+  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>Đã gửi yêu cầu để Chủ trọ duyệt. Hồ sơ chưa thay đổi cho tới khi được duyệt.</value></data>
   <data name="TenantSummary" xml:space="preserve"><value>Tổng quan khách thuê</value></data>
   <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
   <data name="TenantAllRecordsHint" xml:space="preserve"><value>Hồ sơ trong hệ thống</value></data>
@@ -1432,6 +1433,12 @@
   <data name="ApprovalUiStatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
   <data name="ApprovalUiReason" xml:space="preserve"><value>Lý do từ chối</value></data>
   <data name="ApprovalUiApprove" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="ApprovalUiConfirmApprove" xml:space="preserve"><value>Duyệt yêu cầu này và áp dụng thay đổi?</value></data>
+  <data name="ApprovalUiRoomChange" xml:space="preserve"><value>Phòng {0}</value></data>
+  <data name="ApprovalUiTenantCreate" xml:space="preserve"><value>Hồ sơ khách thuê mới: {0}</value></data>
+  <data name="ApprovalUiTenantUpdate" xml:space="preserve"><value>Cập nhật hồ sơ khách thuê: {0}</value></data>
+  <data name="ApprovalUiTenantStatus" xml:space="preserve"><value>Đổi trạng thái hoạt động: {0}</value></data>
+  <data name="ApprovalUiTenantDelete" xml:space="preserve"><value>Chuyển hồ sơ vào thùng rác: {0}</value></data>
   <data name="ApprovalUiReject" xml:space="preserve"><value>Từ chối</value></data>
   <data name="ApprovalUiTargetUnknown" xml:space="preserve"><value>Đối tượng</value></data>
   <data name="ApprovalUiTargetRoom" xml:space="preserve"><value>Phòng</value></data>
@@ -1440,6 +1447,8 @@
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Kỳ chỉ số</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Sự cố</value></data>
   <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="ApprovalUiTargetReport" xml:space="preserve"><value>Báo cáo</value></data>
+  <data name="P2ApprovalRequested" xml:space="preserve"><value>Đã gửi yêu cầu, đang chờ Chủ trọ duyệt.</value></data>
   <data name="SW-01" xml:space="preserve"><value>Chỉnh sửa thông tin phòng</value></data>
   <data name="SW-02" xml:space="preserve"><value>Chỉnh sửa giá thuê</value></data>
   <data name="SW-03" xml:space="preserve"><value>Đổi trạng thái phòng</value></data>

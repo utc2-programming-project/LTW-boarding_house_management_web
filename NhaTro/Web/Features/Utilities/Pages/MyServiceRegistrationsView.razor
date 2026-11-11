@@ -56,7 +56,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var row in _rows)
+                        @foreach (var row in _pageRows)
                         {
                             <tr>
                                 <td>
@@ -128,6 +128,18 @@
                     </tbody>
                 </table>
             </div>
+
+            <footer class="table-footer">
+                <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, _rows.Count)</span>
+                <div class="pager">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
+                        @UL["Previous"]
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
+                        @UL["Next"]
+                    </button>
+                </div>
+            </footer>
         </div>
     }
 </div>
@@ -165,7 +177,11 @@
 }
 
 @code {
+    private const int PageSize = 20;
+
     private IReadOnlyList<ServiceRegistrationDto> _rows = [];
+    private IReadOnlyList<ServiceRegistrationDto> _pageRows = [];
+    private int _page = 1;
     private bool _loading = true;
     private bool _busy;
     private string? _error;
@@ -183,6 +199,8 @@
         try
         {
             _rows = await RegistrationService.ListMineAsync();
+            _page = PaginationHelper.ClampPage(_page, TotalPages);
+            _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
         }
         catch (Exception)
         {
@@ -192,6 +210,20 @@
         {
             _loading = false;
         }
+    }
+
+    private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
+
+    private void ChangePage(int delta)
+    {
+        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        if (target == _page)
+        {
+            return;
+        }
+
+        _page = target;
+        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
     }
 
     private async Task CancelAsync(ServiceRegistrationDto row)

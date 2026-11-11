@@ -11,6 +11,10 @@ public interface IRoomService
 {
     Task<RoomSummary> GetSummaryAsync(Properties.PropertyCaller caller, CancellationToken ct = default);
 
+    /// <summary>Tổng quan theo một nhà trọ đang chọn (null = toàn phạm vi người gọi).</summary>
+    Task<RoomSummary> GetSummaryForPropertyAsync(Properties.PropertyCaller caller, int? propertyId, CancellationToken ct = default) =>
+        GetSummaryAsync(caller, ct);
+
     Task<PagedResult<RoomListItem>> ListAsync(
         RoomFilter filter, Properties.PropertyCaller caller, CancellationToken ct = default);
 

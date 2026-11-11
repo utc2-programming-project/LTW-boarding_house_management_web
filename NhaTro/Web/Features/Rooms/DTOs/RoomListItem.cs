@@ -14,4 +14,7 @@ public sealed class RoomListItem
     public decimal StandardPrice { get; set; }
     public RoomStatus Status { get; set; }
     public bool IsActive { get; set; }
+
+    /// <summary>Phòng đang có yêu cầu Chờ duyệt (SW-01/02/03).</summary>
+    public bool HasPendingApproval { get; set; }
 }

@@ -146,6 +146,10 @@
             </div>
             <button class="btn btn-primary filter-bar__submit" type="submit">@L["ContractFilterApply"]</button>
         </div>
+        @if (FilterError is { } filterError)
+        {
+            <p class="contract-field-error" role="alert">@filterError</p>
+        }
     </form>
 
     @if (_loading)
@@ -319,10 +323,25 @@
 
     private int LastItem => Math.Min(_page * _pageSize, VisibleItems.Count);
 
+    private string? FilterError
+    {
+        get
+        {
+            if (_termFrom is { } from && _termTo is { } to && from.Date > to.Date)
+                return L["ContractFilterDateRangeInvalid"];
+            if (_minRent is { } min && _maxRent is { } max && min > max)
+                return L["ContractFilterAmountRangeInvalid"];
+            return null;
+        }
+    }
+
     private IReadOnlyList<ContractListItemDto> VisibleItems
     {
         get
         {
+            if (FilterError is not null)
+                return [];
+
             IEnumerable<ContractListItemDto> query = _items;
 
             if (_statusFilter != "all")

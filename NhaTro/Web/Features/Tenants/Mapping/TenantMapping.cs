@@ -9,7 +9,8 @@ namespace Web.Features.Tenants.Mapping;
 public static class TenantMapping
 {
     public static TenantListItemDto ToListItem(
-        Tenant e, bool hasActiveContract = false, bool includeAccountStatus = true, string? roomName = null) => new()
+        Tenant e, bool hasActiveContract = false, bool includeAccountStatus = true,
+        string? roomName = null, bool hasPendingApproval = false) => new()
     {
         Id = e.Id,
         FullName = e.FullName,
@@ -19,6 +20,7 @@ public static class TenantMapping
         HasAccount = includeAccountStatus ? e.UserId is not null : null,
         HasActiveContract = hasActiveContract,
         RoomName = roomName,
+        HasPendingApproval = hasPendingApproval,
     };
 
     public static TenantPickerItemDto ToPickerItem(Tenant e, bool hasActiveContract = false) => new()

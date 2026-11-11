@@ -309,10 +309,6 @@ public sealed class PermissionMatrixInvoicesTests(SqlServerFixture fixture)
             new CreateContractRequest(roomA.Room!.Id, today, today.AddMonths(6), [tenantA.Tenant.Id]), OwnerA);
         var contractB = await contracts.CreateContractAsync(
             new CreateContractRequest(roomB.Room!.Id, today, today.AddMonths(6), [tenantB.Tenant.Id]), OwnerB);
-        await contracts.ApproveContractAsync(
-            contractA.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerA);
-        await contracts.ApproveContractAsync(
-            contractB.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerB);
         Assert.Equal(ContractStatus.Approved, await ContractStatusAsync(contractA.ContractId));
         Assert.Equal(ContractStatus.Approved, await ContractStatusAsync(contractB.ContractId));
 

@@ -5,7 +5,9 @@
 @using Web.Common.Utils
 @using Web.Features.Invoices.Enums
 @using Web.Features.Utilities.Services
+@using Web.Infrastructure.Time
 @inject MonthlyUtilityCalculationPageService PageService
+@inject TimeProvider Clock
 @inject ToastService Toast
 @inject NavigationManager Navigation
 @inject IStringLocalizer<UtilityResources> UL
@@ -104,11 +106,11 @@
 
                 <label class="filter-field wide">
                     <span>@UL["P5CostSearchLabel"]</span>
-                    <input type="search" class="input" placeholder="@UL["P5CostSearchPlaceholder"]" @bind="_search" @bind:event="oninput" />
+                    <input type="search" class="input" placeholder="@UL["P5CostSearchPlaceholder"]" @bind="_search" @bind:event="oninput" @bind:after="ResetPage" />
                 </label>
 
                 <label class="filter-check">
-                    <input type="checkbox" @bind="_onlyUnrecorded" />
+                    <input type="checkbox" @bind="_onlyUnrecorded" @bind:after="ResetPage" />
                     <span>@UL["P5CostOnlyUnrecorded"]</span>
                 </label>
 
@@ -159,7 +161,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var room in FilteredRooms)
+                            @foreach (var room in PagedRooms)
                             {
                                 <tr @key="room.ContractId">
                                     <td class="cell-room" data-label="@UL["P5CostThRoom"]">
@@ -266,7 +268,7 @@
                                                     }
                                                     @if (room.InvoiceId is null)
                                                     {
-                                                        <button type="button" class="icon-btn" title="@(room.HasReadings ? UL["P5CostCreateInvoice"] : UL["P5CostInvoiceMissingReadings"])" aria-label="@UL["P5CostCreateInvoice"]" disabled="@(_creatingInvoice || !room.HasReadings)" @onclick="() => CreateInvoiceAsync(room)">
+                                                        <button type="button" class="icon-btn" title="@(room.HasReadings ? UL["P5CostCreateInvoice"] : UL["P5CostInvoiceMissingReadings"])" aria-label="@UL["P5CostCreateInvoice"]" disabled="@(_creatingInvoice || !room.HasReadings)" @onclick="() => RequestCreateInvoice(room)">
                                                             <LucideIcon Name="arrow-right" />
                                                         </button>
                                                     }
@@ -279,6 +281,18 @@
                         </tbody>
                     </table>
                 </div>
+
+                <footer class="table-footer">
+                    <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, FilteredRooms.Count)</span>
+                    <div class="pager">
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
+                            @UL["Previous"]
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
+                            @UL["Next"]
+                        </button>
+                    </div>
+                </footer>
             </div>
         }
     }
@@ -465,7 +479,7 @@
                         }
                         @if (detail.InvoiceId is null)
                         {
-                            <button type="button" class="btn btn-primary" disabled="@(_creatingInvoice || !detail.HasReadings)" title="@(detail.HasReadings ? null : UL["P5CostInvoiceMissingReadings"].Value)" @onclick="() => CreateInvoiceAsync(detail)">
+                            <button type="button" class="btn btn-primary" disabled="@(_creatingInvoice || !detail.HasReadings)" title="@(detail.HasReadings ? null : UL["P5CostInvoiceMissingReadings"].Value)" @onclick="() => RequestCreateInvoice(detail)">
                                 @if (_creatingInvoice)
                                 {
                                     <span class="spinner" aria-hidden="true"></span>
@@ -580,11 +594,21 @@
     </div>
 }
 
+@if (_invoiceConfirmRoom is { } confirmRoom)
+{
+    <ConfirmDialog Visible="true" Title="@UL["P5CostCreateInvoiceConfirmTitle"]"
+                   Message="@string.Format(UL["P5CostCreateInvoiceConfirmMessage"], confirmRoom.RoomCode, DateFormatter.Format(confirmRoom.PeriodStart), DateFormatter.Format(confirmRoom.PeriodEnd))"
+                   ConfirmText="@UL["P5CostCreateInvoice"]" CancelText="@UL["P5CostClosePanel"]"
+                   BusyText="@UL["P5CostInvoiceCreating"]"
+                   OnConfirm="ConfirmCreateInvoiceAsync" OnCancel="CancelCreateInvoice" />
+}
+
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
     private MonthlyUtilityViewData? _data;
     private MonthlyUtilityRoomCostDto? _detailRoom;
+    private MonthlyUtilityRoomCostDto? _invoiceConfirmRoom;
     private MonthlyUtilityRoomCostDto? _editRoom;
 
     private bool _loading = true;
@@ -607,6 +631,33 @@
     private decimal _editElectricEnd;
     private decimal _editWaterEnd;
     private string _editReason = string.Empty;
+
+    private const int PageSize = 20;
+    private int _page = 1;
+
+    private int TotalPages => PaginationHelper.TotalPages(FilteredRooms.Count, PageSize);
+
+    private IReadOnlyList<MonthlyUtilityRoomCostDto> PagedRooms
+    {
+        get
+        {
+            var page = PaginationHelper.ClampPage(_page, TotalPages);
+            return FilteredRooms.Skip((page - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void ChangePage(int delta)
+    {
+        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        if (target == _page)
+        {
+            return;
+        }
+
+        _page = target;
+    }
+
+    private void ResetPage() => _page = 1;
 
     private IReadOnlyList<MonthlyUtilityRoomCostDto> FilteredRooms
     {
@@ -649,7 +700,7 @@
 
     protected override Task OnInitializedAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = Clock.TodayVietnam();
         _periodStart = new DateOnly(today.Year, today.Month, 1);
         _periodEnd = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
         return LoadAsync();
@@ -660,6 +711,7 @@
         _loading = true;
         _error = null;
         _periodError = null;
+        _page = 1;
         try
         {
             if (_periodEnd < _periodStart)
@@ -673,7 +725,8 @@
 
             if (_detailRoom is not null)
             {
-                _detailRoom = _data.Rooms.FirstOrDefault(room => room.RoomId == _detailRoom.RoomId);
+                // Mỗi dòng là một hợp đồng; một phòng có thể có nhiều hợp đồng trong kỳ lọc.
+                _detailRoom = _data.Rooms.FirstOrDefault(room => room.ContractId == _detailRoom.ContractId);
             }
         }
         catch (UnauthorizedAccessException)
@@ -705,7 +758,7 @@
 
     private async Task ResetFiltersAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = Clock.TodayVietnam();
         _propertyId = null;
         _search = string.Empty;
         _onlyUnrecorded = false;
@@ -853,6 +906,31 @@
         finally
         {
             _saving = false;
+        }
+    }
+
+    private void RequestCreateInvoice(MonthlyUtilityRoomCostDto room)
+    {
+        if (_creatingInvoice || !room.HasReadings) return;
+        _invoiceConfirmRoom = room;
+    }
+
+    private Task CancelCreateInvoice()
+    {
+        _invoiceConfirmRoom = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmCreateInvoiceAsync()
+    {
+        if (_invoiceConfirmRoom is not { } room) return;
+        try
+        {
+            await CreateInvoiceAsync(room);
+        }
+        finally
+        {
+            _invoiceConfirmRoom = null;
         }
     }
 

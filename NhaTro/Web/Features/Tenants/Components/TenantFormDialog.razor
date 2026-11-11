@@ -1,3 +1,5 @@
+@using Web.Infrastructure.Time
+@inject ILogger<TenantFormDialog> Logger
 <TenantDialogShell Visible="Visible" Title="@(Tenant is null ? L["TenantCreateTitle"] : L["TenantUpdateTitle"])"
                    Subtitle="@(Tenant is null ? null : string.Format(L["TenantRecordNumber"], Tenant.Id))"
                    CssClass="tenant-form-dialog" Busy="@_saving" OnClose="OnClose">
@@ -153,6 +155,7 @@
     [Inject] private TenantPageService TenantPages { get; set; } = default!;
     [Inject] private ToastService Toasts { get; set; } = default!;
     [Inject] private IStringLocalizer<Shared> L { get; set; } = default!;
+    [Inject] private TimeProvider Clock { get; set; } = default!;
 
     // Quản lý đang sửa hồ sơ: hiện số đã che làm gợi ý; để trống nghĩa là giữ nguyên số cũ.
     private string? IdNumberPlaceholder => !CanRevealIdNumber && Tenant is not null ? Tenant.IdNumber : null;
@@ -244,8 +247,9 @@
         {
             result = await SaveAsync(confirmDuplicatePhone: false);
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "P3 tenant save failed");
             Toasts.Error(L["TenantErrorGeneric"]);
             return;
         }
@@ -257,6 +261,16 @@
         if (result.Succeeded)
         {
             Toasts.Success(L[Tenant is null ? "TenantCreated" : "TenantUpdated"]);
+            await OnSaved.InvokeAsync();
+            await OnClose.InvokeAsync();
+            return;
+        }
+
+        if (result.ErrorCode == TenantErrorCodes.ApprovalRequired)
+        {
+            // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, hồ sơ chưa đổi.
+            // Đóng form và làm mới danh sách để badge "Chờ duyệt" hiện ngay.
+            Toasts.Success(L["TenantErrorApprovalRequired"]);
             await OnSaved.InvokeAsync();
             await OnClose.InvokeAsync();
             return;
@@ -447,7 +461,7 @@
             Add(nameof(_form.Email), L["TenantValidationEmail"]);
             valid = false;
         }
-        if (_form.DateOfBirth is { } dob && dob > DateOnly.FromDateTime(DateTime.Today))
+        if (_form.DateOfBirth is { } dob && dob > Clock.TodayVietnam())
         {
             Add(nameof(_form.DateOfBirth), L["TenantValidationBirthDate"]);
             valid = false;
@@ -457,7 +471,7 @@
             Add(nameof(_form.IdIssuedDate), L["TenantValidationIssuedDate"]);
             valid = false;
         }
-        if (_form.IdIssuedDate is { } issuedDate && issuedDate > DateOnly.FromDateTime(DateTime.Today))
+        if (_form.IdIssuedDate is { } issuedDate && issuedDate > Clock.TodayVietnam())
         {
             // Ngày cấp CCCD không được trong tương lai so với ngày hiện tại (giờ địa phương VN).
             Add(nameof(_form.IdIssuedDate), L["TenantValidationIssuedDateFuture"]);

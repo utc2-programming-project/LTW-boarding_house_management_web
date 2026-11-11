@@ -36,6 +36,12 @@
                 <LucideIcon Name="refresh-cw" />
             </button>
         }
+        <label class="tenant-trash-page-size" for="tenant-trash-page-size">
+            <span>@L["P2RowsPerPage"]</span>
+            <select id="tenant-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSizeAsync">
+                <option value="10">10</option><option value="20">20</option><option value="50">50</option>
+            </select>
+        </label>
         <span class="filter-bar__meta tenant-trash-count">@string.Format(L["TenantTrashCount"], _total)</span>
     </div>
 
@@ -138,6 +144,7 @@
     private bool _loading = true;
     private bool _error;
     private bool _showRestoreConfirm;
+    private CancellationTokenSource? _searchCts;
 
     private int PageCount => Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
 
@@ -180,8 +187,31 @@
         }
     }
 
-    private Task SearchAsync()
+    private async Task SearchAsync()
     {
+        _searchCts?.Cancel();
+        var cts = _searchCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(300, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private Task ChangePageSizeAsync(ChangeEventArgs args)
+    {
+        if (!int.TryParse(args.Value?.ToString(), out var value) || value is not (10 or 20 or 50))
+        {
+            return Task.CompletedTask;
+        }
+
+        _pageSize = value;
         _page = 1;
         return LoadAsync();
     }

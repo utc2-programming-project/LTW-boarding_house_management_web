@@ -29,6 +29,7 @@ public static class ContractErrorCodes
     public const string DuplicatePendingRequest = nameof(DuplicatePendingRequest);
     public const string InvalidDepositAmount = nameof(InvalidDepositAmount);
     public const string DepositUnchanged = nameof(DepositUnchanged);
+    public const string DepositChangedAfterRequest = nameof(DepositChangedAfterRequest);
 }
 
 public static class ContractErrorMessages

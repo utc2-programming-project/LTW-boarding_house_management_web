@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -17,6 +18,8 @@ using Web.Features.Tenants.DTOs;
 using Web.Features.Tenants.Entities;
 using Web.Features.Tenants.Enums;
 using Web.Features.Tenants.Mapping;
+using Web.Features.Tenants.Services;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Tenants;
 
@@ -28,7 +31,8 @@ public sealed class TenantService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     TimeProvider clock,
     IManagerTogglePolicy togglePolicy,
-    IManagerApprovalService? approvals = null) : ITenantService
+    IManagerApprovalService? approvals = null,
+    IDataProtectionProvider? dataProtection = null) : ITenantService
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
     public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
@@ -93,6 +97,7 @@ public sealed class TenantService(
 
         // Nạp hợp đồng hiện tại một lần cho cả trang (tránh N+1) rồi ghép phòng/trạng thái thuê thật.
         var activeContracts = await LoadActiveContractsAsync(db, rows.Select(t => t.Id).ToArray(), today, ct);
+        var pendingIds = await PendingApprovalTenantIdsAsync(db, rows.Select(t => t.Id), ct);
 
         return new PagedResult<TenantListItemDto>
         {
@@ -103,7 +108,8 @@ public sealed class TenantService(
                     t,
                     active is not null,
                     caller.CanRevealIdNumber,
-                    active?.RoomCode);
+                    active?.RoomCode,
+                    pendingIds.Contains(t.Id));
             }).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
@@ -245,11 +251,7 @@ public sealed class TenantService(
         CreateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
-        var blocked = await CheckToggleAsync(caller, ManagerAction.SW04, ct);
-        if (blocked is not null)
-        {
-            return blocked;
-        }
+        var toggleDecision = await EvaluateToggleAsync(caller, ManagerAction.SW04, ct);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var submittedIdNumber = request.IdNumber;
@@ -304,6 +306,32 @@ public sealed class TenantService(
         // PLAN-005 (điều chỉnh): hồ sơ có thể thuộc nhiều chủ trọ; người tạo tạo liên kết đầu tiên.
         var ownerId = await ResolveOwnerIdAsync(db, caller, ct);
 
+        if (toggleDecision == RoomChangeDecision.RequiresApproval)
+        {
+            return await CreateTenantApprovalAsync(
+                ManagerAction.SW04,
+                $"new-{Guid.NewGuid():N}",
+                propertyId: null,
+                new TenantApprovalPayload
+                {
+                    Action = TenantApprovalActions.Create,
+                    FullName = request.FullName,
+                    PhoneNumber = request.PhoneNumber,
+                    Email = request.Email,
+                    IdNumber = request.IdNumber,
+                    DateOfBirth = request.DateOfBirth,
+                    Gender = request.Gender,
+                    PermanentAddress = request.PermanentAddress,
+                    IdIssuedDate = request.IdIssuedDate,
+                    IdIssuedPlace = request.IdIssuedPlace,
+                    Note = request.Note,
+                    OwnerId = ownerId,
+                },
+                expectedToken: null,
+                caller,
+                ct);
+        }
+
         db.Tenants.Add(entity);
 
         // Bắt vi phạm chỉ mục duy nhất khi hai request đồng thời cùng qua bước kiểm trùng.
@@ -335,11 +363,7 @@ public sealed class TenantService(
         int id, UpdateTenantRequest request, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
-        var blocked = await CheckToggleAsync(caller, ManagerAction.SW05, ct);
-        if (blocked is not null)
-        {
-            return blocked;
-        }
+        var toggleDecision = await EvaluateToggleAsync(caller, ManagerAction.SW05, ct);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         // D9: Quản lý không thấy số CCCD đầy đủ nên form có thể gửi lại chuỗi che; giữ bản gốc để nhận diện.
@@ -412,7 +436,34 @@ public sealed class TenantService(
             }
         }
 
-        
+        if (toggleDecision == RoomChangeDecision.RequiresApproval)
+        {
+            return await CreateTenantApprovalAsync(
+                ManagerAction.SW05,
+                id.ToString(CultureInfo.InvariantCulture),
+                await ApprovalPropertyIdAsync(db, id, caller, ct),
+                new TenantApprovalPayload
+                {
+                    Action = TenantApprovalActions.Update,
+                    TenantId = id,
+                    FullName = request.FullName,
+                    PhoneNumber = request.PhoneNumber,
+                    Email = request.Email,
+                    IdNumber = request.IdNumber,
+                    // Số không đổi thì không đưa CCCD thật vào payload (D9).
+                    IdNumberUnchanged = request.IdNumber == entity.CitizenId,
+                    DateOfBirth = request.DateOfBirth,
+                    Gender = request.Gender,
+                    PermanentAddress = request.PermanentAddress,
+                    IdIssuedDate = request.IdIssuedDate,
+                    IdIssuedPlace = request.IdIssuedPlace,
+                    Note = request.Note,
+                },
+                rowVersion,
+                caller,
+                ct);
+        }
+
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = rowVersion;
         TenantMapping.ApplyUpdate(request, entity);
         entity.UpdatedAt = clock.GetUtcNow().UtcDateTime;
@@ -491,11 +542,7 @@ public sealed class TenantService(
         int id, bool isActive, string rowVersion, TenantCaller caller, CancellationToken ct = default)
     {
         EnsureManager(caller);
-        var blocked = await CheckToggleAsync(caller, ManagerAction.SW06, ct);
-        if (blocked is not null)
-        {
-            return blocked;
-        }
+        var toggleDecision = await EvaluateToggleAsync(caller, ManagerAction.SW06, ct);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
@@ -530,7 +577,30 @@ public sealed class TenantService(
                 }
             }
         }
-        // Ngừng sử dụng khi còn hợp đồng hiệu lực (TenantInUse) chờ bảng hợp đồng VHT-25/VHT-29.
+        // Ngừng sử dụng khi còn hợp đồng hiệu lực: giống quy tắc xoá mềm (VHT-99),
+        // tránh hồ sơ "không hoạt động" nhưng vẫn đang thuê.
+        if (!isActive && await HasActiveContractAsync(db, id, Today(), ct))
+        {
+            return TenantResult.Failure(TenantErrorCodes.TenantInUse, TenantErrorMessages.TenantInUse);
+        }
+
+        if (toggleDecision == RoomChangeDecision.RequiresApproval)
+        {
+            return await CreateTenantApprovalAsync(
+                ManagerAction.SW06,
+                id.ToString(CultureInfo.InvariantCulture),
+                await ApprovalPropertyIdAsync(db, id, caller, ct),
+                new TenantApprovalPayload
+                {
+                    Action = TenantApprovalActions.SetActive,
+                    TenantId = id,
+                    FullName = entity.FullName,
+                    IsActive = isActive,
+                },
+                expectedVersion,
+                caller,
+                ct);
+        }
 
         db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
         entity.IsActive = isActive;
@@ -1135,7 +1205,7 @@ public sealed class TenantService(
             && row.EndDate >= today,
     };
 
-    private DateTime Today() => clock.GetUtcNow().UtcDateTime.Date;
+    private DateTime Today() => VietnamTime.ToVietnam(clock.GetUtcNow().UtcDateTime).Date;
 
     private static TenantRentalResult RentalNotFound() =>
         TenantRentalResult.Failure(TenantErrorCodes.TenantNotFound, TenantErrorMessages.TenantNotFound);
@@ -1145,6 +1215,30 @@ public sealed class TenantService(
         TenantScope.EnsureCanAccess(tenant.UserId, caller.UserId, caller.Role);
         return TenantResult.Success(TenantMapping.ToDetail(
             tenant, includeNote: false, revealIdNumber: true));
+    }
+
+    // Badge "Chờ duyệt" của danh sách: chỉ yêu cầu còn Chờ duyệt.
+    private static async Task<HashSet<int>> PendingApprovalTenantIdsAsync(
+        ApplicationDbContext db, IEnumerable<int> tenantIds, CancellationToken ct)
+    {
+        var keys = tenantIds.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        var pending = await db.ManagerApprovalRequests.AsNoTracking()
+            .Where(request => request.Status == ApprovalRequestStatus.Pending
+                && request.TargetType == ApprovalTargetType.Tenant
+                && keys.Contains(request.TargetKey))
+            .Select(request => request.TargetKey)
+            .Distinct()
+            .ToListAsync(ct);
+
+        return pending
+            .Select(key => int.TryParse(key, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToHashSet();
     }
 
     // Dùng chung cho nguồn báo cáo P8 (VHT-46) để từ khóa khớp đúng danh sách P3.
@@ -1292,19 +1386,50 @@ public sealed class TenantService(
     // Điểm gọi policy công tắc Quản lý (VHT-94): Quản lý tạo/sửa/ngừng hồ sơ khách thuê phải qua
     // SW-04/05/06. Chủ trọ luôn có hiệu lực ngay (D4) vì policy trả Allowed trước khi đọc công tắc.
     // Kiểm trước mọi truy vấn dữ liệu để người bị chặn không dò được hồ sơ trùng hay hồ sơ có tồn tại.
-    // Chờ duyệt hiện chỉ trả lời; hàng đợi duyệt thuộc VHT-96.
-    private async Task<TenantResult?> CheckToggleAsync(
+    private async Task<RoomChangeDecision> EvaluateToggleAsync(
         TenantCaller caller, ManagerAction action, CancellationToken ct)
     {
         var decision = await togglePolicy.EvaluateAsync(action, caller.Role, ct);
-
-        return decision switch
+        if (decision == RoomChangeDecision.Denied)
         {
-            RoomChangeDecision.Denied => throw Forbidden(caller),
-            RoomChangeDecision.RequiresApproval => TenantResult.Failure(
-                TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired),
-            _ => null,
-        };
+            throw Forbidden(caller);
+        }
+
+        return decision;
+    }
+
+    // Đưa thao tác vào hàng đợi duyệt. Dữ liệu nghiệp vụ chỉ đổi khi Chủ trọ duyệt.
+    private async Task<TenantResult> CreateTenantApprovalAsync(
+        ManagerAction action,
+        string targetKey,
+        int? propertyId,
+        TenantApprovalPayload payload,
+        byte[]? expectedToken,
+        TenantCaller caller,
+        CancellationToken ct)
+    {
+        if (approvals is null)
+        {
+            return TenantResult.Failure(TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired);
+        }
+
+        var result = await approvals.CreateAsync(new CreateApprovalRequest
+        {
+            OperationCode = ManagerToggleCatalog.ToCode(action),
+            TargetType = ApprovalTargetType.Tenant,
+            TargetKey = targetKey,
+            PropertyId = propertyId,
+            PayloadJson = JsonSerializer.Serialize(
+                payload with { IdNumber = TenantApprovalPayloadCodec.Protect(dataProtection, payload.IdNumber) },
+                PayloadJsonOptions),
+            ExpectedToken = expectedToken,
+        }, new ApprovalCaller(caller.UserId, caller.Role), ct);
+
+        return result.Succeeded
+            ? TenantResult.Failure(TenantErrorCodes.ApprovalRequired, TenantErrorMessages.ApprovalRequired)
+            : TenantResult.Failure(
+                result.ErrorCode ?? TenantErrorCodes.TenantOperationFailed,
+                result.ErrorMessage ?? TenantErrorMessages.TenantOperationFailed);
     }
 
     private static UnauthorizedAccessException Forbidden(TenantCaller caller) =>

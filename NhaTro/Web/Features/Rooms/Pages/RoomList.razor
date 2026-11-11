@@ -228,7 +228,8 @@
     <RoomFormDialog @key="_formKey" Visible="true" RoomId="_formRoomId" IsOwner="_isOwner"
                     Properties="_properties" InitialPropertyId="@SelectedPropertyId"
                     AllowDelete="_isOwner"
-                    OnClose="CloseForm" OnSaved="OnRoomSavedAsync" OnDeleted="OnRoomDeletedAsync" />
+                    OnClose="CloseForm" OnSaved="OnRoomSavedAsync" OnDeleted="OnRoomDeletedAsync"
+                    OnApprovalRequested="OnRoomApprovalRequestedAsync" />
 }
 @if (_selectedRoom is not null)
 {
@@ -298,12 +299,12 @@
         await InitializeAsync();
     }
 
-    protected override Task OnParametersSetAsync()
+    protected override async Task OnParametersSetAsync()
     {
         // Blazor reuses this page when only the query string changes. Keep the
-        // property selector and table in sync with links from the property list.
+        // property selector, table and summary in sync with links from the property list.
         if (_lastAppliedPropertyId == PropertyId)
-            return Task.CompletedTask;
+            return;
 
         _lastAppliedPropertyId = PropertyId;
         if (_ready)
@@ -311,9 +312,8 @@
             _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             _hasActiveFilters = HasRoomFilters();
             _tableKey++;
+            await LoadSummaryAsync();
         }
-
-        return Task.CompletedTask;
     }
 
     private async Task InitializeAsync()
@@ -353,7 +353,7 @@
     {
         _summaryLoading = true;
         _summaryError = null;
-        try { _summary = await PageService.GetSummaryAsync(); }
+        try { _summary = await PageService.GetSummaryAsync(SelectedPropertyId); }
         catch (Exception ex)
         {
             _summary = null;
@@ -368,7 +368,13 @@
 
     private IReadOnlyList<DataTableColumn<RoomListItem>> BuildColumns()
     {
-        RenderFragment<RoomListItem> code = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Code</button>;
+        RenderFragment<RoomListItem> code = item => @<span class="p2-code-cell">
+            <button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Code</button>
+            @if (item.HasPendingApproval)
+            {
+                <StatusBadge Text="@L["P2ApprovalPending"]" Tone="@BadgeTone.Warning" />
+            }
+        </span>;
         RenderFragment<RoomListItem> status = item => @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
         RenderFragment<RoomListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<RoomListItem> actions = item => @<div class="p2-row-actions">
@@ -423,8 +429,12 @@
         MoneyFormatter.TryParse(_minPriceText, out var minPrice);
         MoneyFormatter.TryParse(_maxPriceText, out var maxPrice);
         int? floor = int.TryParse(_floorText, out var parsedFloor) ? parsedFloor : null;
-        decimal? minArea = decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsedMinArea) ? parsedMinArea : null;
-        decimal? maxArea = decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var parsedMaxArea) ? parsedMaxArea : null;
+        decimal? minArea = string.IsNullOrWhiteSpace(_minAreaText)
+            ? null
+            : TryParseArea(_minAreaText, out var parsedMinArea) ? parsedMinArea : null;
+        decimal? maxArea = string.IsNullOrWhiteSpace(_maxAreaText)
+            ? null
+            : TryParseArea(_maxAreaText, out var parsedMaxArea) ? parsedMaxArea : null;
 
         return await PageService.ListAsync(new RoomFilter
         {
@@ -465,7 +475,7 @@
         }
     }
 
-    private Task ApplyFiltersAsync()
+    private async Task ApplyFiltersAsync()
     {
         _filterError = null;
         var hasMin = string.IsNullOrWhiteSpace(_minPriceText) || MoneyFormatter.TryParse(_minPriceText, out _);
@@ -473,53 +483,58 @@
         if (!hasMin || !hasMax)
         {
             _filterError = L["P2ValidationPriceNumber"];
-            return Task.CompletedTask;
+            return;
         }
 
         if ((!string.IsNullOrWhiteSpace(_minPriceText) && MoneyFormatter.TryParse(_minPriceText, out var negativeMin) && negativeMin < 0)
             || (!string.IsNullOrWhiteSpace(_maxPriceText) && MoneyFormatter.TryParse(_maxPriceText, out var negativeMax) && negativeMax < 0))
         {
             _filterError = L["P2ValidationPriceNumber"];
-            return Task.CompletedTask;
+            return;
         }
 
         if (!string.IsNullOrWhiteSpace(_minPriceText) && !string.IsNullOrWhiteSpace(_maxPriceText)
             && MoneyFormatter.TryParse(_minPriceText, out var min) && MoneyFormatter.TryParse(_maxPriceText, out var max) && min > max)
         {
             _filterError = L["P2ValidationPriceRange"];
-            return Task.CompletedTask;
+            return;
         }
 
         var hasFloor = string.IsNullOrWhiteSpace(_floorText) || int.TryParse(_floorText, out var floorValue) && floorValue is >= 0 and <= 1000;
         if (!hasFloor)
         {
             _filterError = L["P2ValidationFloor"];
-            return Task.CompletedTask;
+            return;
         }
 
-        var hasMinArea = string.IsNullOrWhiteSpace(_minAreaText) || decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaValue) && areaValue >= 0;
-        var hasMaxArea = string.IsNullOrWhiteSpace(_maxAreaText) || decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var maxAreaValue) && maxAreaValue >= 0;
+        var hasMinArea = string.IsNullOrWhiteSpace(_minAreaText) || (TryParseArea(_minAreaText, out var areaValue) && areaValue >= 0);
+        var hasMaxArea = string.IsNullOrWhiteSpace(_maxAreaText) || (TryParseArea(_maxAreaText, out var maxAreaValue) && maxAreaValue >= 0);
         if (!hasMinArea || !hasMaxArea)
         {
             _filterError = L["P2ValidationAreaNumber"];
-            return Task.CompletedTask;
+            return;
         }
 
         if (!string.IsNullOrWhiteSpace(_minAreaText) && !string.IsNullOrWhiteSpace(_maxAreaText)
-            && decimal.TryParse(_minAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaMin)
-            && decimal.TryParse(_maxAreaText, NumberStyles.Number, CultureInfo.CurrentCulture, out var areaMax)
+            && TryParseArea(_minAreaText, out var areaMin)
+            && TryParseArea(_maxAreaText, out var areaMax)
             && areaMin > areaMax)
         {
             _filterError = L["P2ValidationAreaRange"];
-            return Task.CompletedTask;
+            return;
         }
 
         _hasActiveFilters = HasRoomFilters();
         _tableKey++;
-        return Task.CompletedTask;
+        await LoadSummaryAsync();
     }
 
-    private Task ResetFiltersAsync()
+    // Input "type=number" luôn trả dấu chấm thập phân; không parse theo CurrentCulture
+    // vì vi-VN coi dấu chấm là phân cách hàng nghìn ("12.5" sẽ thành 125).
+    private static bool TryParseArea(string text, out decimal value) =>
+        decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+
+    private async Task ResetFiltersAsync()
     {
         _keyword = string.Empty;
         _propertyFilter = string.Empty;
@@ -536,19 +551,19 @@
         _hasActiveFilters = false;
         _tableKey++;
         Navigation.NavigateTo("/rooms", replace: true);
-        return Task.CompletedTask;
+        await LoadSummaryAsync();
     }
 
-    private Task ClearPropertyFilterAsync()
+    private async Task ClearPropertyFilterAsync()
     {
         _propertyFilter = string.Empty;
         _hasActiveFilters = HasRoomFilters();
         _tableKey++;
         Navigation.NavigateTo("/rooms", replace: true);
-        return Task.CompletedTask;
+        await LoadSummaryAsync();
     }
 
-    private Task ClearFiltersFromTableAsync()
+    private async Task ClearFiltersFromTableAsync()
     {
         _keyword = string.Empty;
         _propertyFilter = string.Empty;
@@ -565,7 +580,7 @@
         _hasActiveFilters = false;
         _lastAppliedPropertyId = null;
         Navigation.NavigateTo("/rooms", replace: true);
-        return Task.CompletedTask;
+        await LoadSummaryAsync();
     }
 
     private bool HasRoomFilters() =>
@@ -643,6 +658,13 @@
     {
         _formVisible = false;
         Toasts.Success(L["P2SaveSucceeded"]);
+        await RefreshAfterMutationAsync();
+    }
+
+    private async Task OnRoomApprovalRequestedAsync()
+    {
+        _formVisible = false;
+        Toasts.Success(L["P2ApprovalRequested"]);
         await RefreshAfterMutationAsync();
     }
 
