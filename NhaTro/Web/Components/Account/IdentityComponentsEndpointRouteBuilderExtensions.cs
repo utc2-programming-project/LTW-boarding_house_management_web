@@ -43,14 +43,25 @@ namespace Microsoft.AspNetCore.Routing
 
             accountGroup.MapPost("/Logout", async (
                 HttpContext context,
-                ClaimsPrincipal user,
                 [FromServices] SignInManager<ApplicationUser> signInManager,
-                [FromForm] string returnUrl) =>
+                [FromServices] IAntiforgery antiforgery) =>
             {
+                // VHT-27: không bind [FromForm] để tự kiểm token; thiếu cookie antiforgery
+                // (tab cũ, đã đăng xuất ở tab khác) vẫn phải kết thúc phiên thay vì 500.
+                var valid = await antiforgery.IsRequestValidAsync(context);
+                var returnUrl = string.Empty;
+                if (valid)
+                {
+                    var form = await context.Request.ReadFormAsync(context.RequestAborted);
+                    returnUrl = form["returnUrl"].ToString();
+                }
+
                 // PLAN-027: xoá cache/cookie/storage phía trình duyệt khi kết thúc phiên.
                 context.Response.Headers["Clear-Site-Data"] = "\"cache\", \"cookies\", \"storage\"";
                 await signInManager.SignOutAsync();
-                return TypedResults.LocalRedirect($"~/{returnUrl}");
+                return valid
+                    ? TypedResults.LocalRedirect($"~/{returnUrl}")
+                    : TypedResults.LocalRedirect("/login");
             });
 
             accountGroup.MapPost("/PasskeyCreationOptions", async (
