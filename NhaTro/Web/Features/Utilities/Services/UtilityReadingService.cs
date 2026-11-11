@@ -266,7 +266,7 @@ public sealed class UtilityReadingService(
                         UtilityReadingErrorCodes.ApprovalFailed);
                 }
                 await CreateApprovalRequestAsync(reading, request, reason, caller, cancellationToken);
-                // Persist only the request before reporting ApprovalRequired; the reading stays unchanged.
+                // Lưu yêu cầu duyệt trước khi báo ApprovalRequired; chỉ số chưa thay đổi.
                 await db.SaveChangesAsync(cancellationToken);
                 throw new UtilityReadingException(
                     "Sửa chỉ số đang chờ Chủ trọ duyệt.",
@@ -306,7 +306,7 @@ public sealed class UtilityReadingService(
         }
         catch
         {
-            // A scoped Blazor DbContext retains entities after a failed transaction; do not let retry reuse stale audit state.
+            // DbContext scoped của Blazor giữ entity sau rollback; không để lần thử lại dùng audit cũ.
             if (ownsTransaction)
             {
                 db.ChangeTracker.Clear();
@@ -328,14 +328,7 @@ public sealed class UtilityReadingService(
             throw Forbidden();
         }
 
-        var visibleRoomIds = VisibleRoomIds(caller);
-        var roomId = await db.UtilityReadings.AsNoTracking()
-            .Where(item => item.Id == readingId)
-            .Select(item => (int?)item.RoomId)
-            .SingleOrDefaultAsync(cancellationToken)
-            ?? throw new UtilityReadingNotFoundException("Không tìm thấy chỉ số.", UtilityReadingErrorCodes.ReadingNotFound);
-        if (!await visibleRoomIds.AnyAsync(id => id == roomId, cancellationToken))
-            throw new UtilityReadingAuthorizationException("Chỉ số nằm ngoài phạm vi được phép.", UtilityReadingErrorCodes.OutsideScope);
+        await EnsureReadingInScopeAsync(readingId, caller, cancellationToken);
 
         return await db.Set<UtilityReadingAudit>().AsNoTracking()
             .Where(audit => audit.UtilityReadingId == readingId)
@@ -354,10 +347,7 @@ public sealed class UtilityReadingService(
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// “Latest” means the newest persisted reading of the room, not the preceding calendar period.
-    /// This is also checked again when SW-09 is approved.
-    /// </summary>
+    /// <summary>Kỳ mới nhất là bản ghi chỉ số mới nhất của phòng, không phải kỳ trước theo lịch; applier SW-09 cũng dùng chốt D10 này.</summary>
     public static async Task EnsureAdjustableAsync(
         ApplicationDbContext db,
         UtilityReading reading,
@@ -400,7 +390,8 @@ public sealed class UtilityReadingService(
         DateTimeOffset changedAt)
     {
         var reason = request.Reason?.Trim();
-        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new UtilityReadingException("Phải nhập lý do điều chỉnh chỉ số.", UtilityReadingErrorCodes.AdjustmentReasonRequired);
         var audit = new UtilityReadingAudit
         {
             UtilityReadingId = reading.Id,
@@ -436,15 +427,17 @@ public sealed class UtilityReadingService(
                 UtilityReadingErrorCodes.ReadingNotFound);
         }
 
-        var visibleRoomIds = VisibleRoomIds(caller);
-        if (!await visibleRoomIds.AnyAsync(id => id == reading.RoomId, cancellationToken))
-        {
-            throw new UtilityReadingAuthorizationException(
-                "Chỉ số nằm ngoài phạm vi được phép.",
-                UtilityReadingErrorCodes.OutsideScope);
-        }
+        await EnsureRoomVisibleAsync(reading.RoomId, caller, cancellationToken);
 
         return reading;
+    }
+
+    private async Task EnsureReadingInScopeAsync(int readingId, PropertyCaller caller, CancellationToken cancellationToken)
+    {
+        var roomId = await db.UtilityReadings.AsNoTracking().Where(item => item.Id == readingId)
+            .Select(item => (int?)item.RoomId).SingleOrDefaultAsync(cancellationToken)
+            ?? throw new UtilityReadingNotFoundException("Không tìm thấy chỉ số.", UtilityReadingErrorCodes.ReadingNotFound);
+        await EnsureRoomVisibleAsync(roomId, caller, cancellationToken);
     }
 
     private IQueryable<int> VisibleRoomIds(PropertyCaller caller)
@@ -485,6 +478,13 @@ public sealed class UtilityReadingService(
                 "Không tìm thấy phòng trong phạm vi được phép.",
                 UtilityReadingErrorCodes.RoomNotFound);
         }
+    }
+
+    private async Task EnsureRoomVisibleAsync(int roomId, PropertyCaller caller, CancellationToken cancellationToken)
+    {
+        if (!await VisibleRoomIds(caller).AnyAsync(id => id == roomId, cancellationToken))
+            throw new UtilityReadingAuthorizationException(
+                "Chỉ số nằm ngoài phạm vi được phép.", UtilityReadingErrorCodes.OutsideScope);
     }
 
     private async Task CreateApprovalRequestAsync(

@@ -359,15 +359,8 @@ public sealed class MonthlyUtilityCalculationPageService(
             {
                 return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
             }
-            catch (DbUpdateConcurrencyException exception)
-            {
-                db.ChangeTracker.Clear();
-                logger.LogWarning(exception, "P5 previous-period correction conflicted for reading {ReadingId}", existingReadingId);
-                return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.ConcurrencyConflict);
-            }
             catch (Exception exception)
             {
-                db.ChangeTracker.Clear();
                 logger.LogError(exception, "P5 previous-period correction failed for reading {ReadingId}", existingReadingId);
                 return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.SaveFailed);
             }
@@ -637,7 +630,7 @@ public sealed class MonthlyUtilityCalculationPageService(
         catch (Exception exception)
         {
             logger.LogError(exception, "P5 create invoice failed for contract {ContractId}", contractId);
-            return new MonthlyUtilityInvoiceResult(false, ErrorCode: "SaveFailed");
+            return new MonthlyUtilityInvoiceResult(false, ErrorCode: UtilityReadingErrorCodes.SaveFailed);
         }
     }
 
@@ -646,8 +639,7 @@ public sealed class MonthlyUtilityCalculationPageService(
 
     private static bool IsDuplicateReadingPeriod(DbUpdateException exception) =>
         exception.InnerException is SqlException { Number: 2601 or 2627 } sql
-        && sql.Message.Contains("RoomId", StringComparison.OrdinalIgnoreCase)
-        && sql.Message.Contains("PeriodStart", StringComparison.OrdinalIgnoreCase);
+        && sql.Message.Contains("IX_UtilityReadings_RoomId_PeriodStart", StringComparison.OrdinalIgnoreCase);
 
     private async Task<IReadOnlyList<ContractRow>> LoadContractsAsync(
         PropertyCaller caller,

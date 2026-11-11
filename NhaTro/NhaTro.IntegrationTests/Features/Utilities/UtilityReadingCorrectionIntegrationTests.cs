@@ -5,7 +5,6 @@ using Web.Data;
 using Web.Data.Migrations;
 using Web.Features.Accounts;
 using Web.Features.Properties;
-using Web.Features.Utilities;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Services;
@@ -23,7 +22,7 @@ public sealed class UtilityReadingCorrectionIntegrationTests(SqlServerFixture fi
         {
             var service = NewService(db);
             var result = await service.AdjustAsync(reading.Id, new AdjustUtilityReadingRequest(150m, 15m, "Kiểm tra"), owner);
-            var audit = Assert.Single(await db.UtilityReadingAudits.ToListAsync());
+            var audit = await db.UtilityReadingAudits.SingleAsync();
             Assert.Equal("Kiểm tra", audit.Reason);
             Assert.Equal(100m, audit.OldElectricEnd);
             Assert.Equal(150m, audit.NewElectricEnd);
@@ -45,7 +44,7 @@ public sealed class UtilityReadingCorrectionIntegrationTests(SqlServerFixture fi
             var error = await Assert.ThrowsAsync<ReadingException>(() =>
                 NewService(db).AdjustAsync(reading.Id, new AdjustUtilityReadingRequest(150m, 15m, "Lý do"), owner));
             Assert.Equal(UtilityReadingErrorCodes.NotAdjustable, error.ErrorCode);
-            Assert.Empty(await db.UtilityReadingAudits.ToListAsync());
+            Assert.Equal(0, await db.UtilityReadingAudits.CountAsync());
         }
     }
 
@@ -58,7 +57,7 @@ public sealed class UtilityReadingCorrectionIntegrationTests(SqlServerFixture fi
             var error = await Assert.ThrowsAsync<ReadingException>(() =>
                 NewService(db).AdjustAsync(reading.Id, new AdjustUtilityReadingRequest(150m, 15m, " "), owner));
             Assert.Equal(UtilityReadingErrorCodes.AdjustmentReasonRequired, error.ErrorCode);
-            Assert.Empty(await db.UtilityReadingAudits.ToListAsync());
+            Assert.Equal(0, await db.UtilityReadingAudits.CountAsync());
         }
     }
 

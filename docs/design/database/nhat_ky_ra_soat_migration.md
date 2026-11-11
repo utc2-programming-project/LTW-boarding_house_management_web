@@ -153,6 +153,10 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 
 ## VHT-102 — sửa chỉ số kỳ liền trước (11/11/2026)
 
+**Nguồn rà:** nhánh `VHT-102-sua-chi-so-ky-lien-truoc-va-luu-lich-su`, migration `20261111064205_AddUtilityReadingAuditImmutability`.
+
+**Kết quả:** build solution thành công; `dotnet ef migrations has-pending-model-changes --project NhaTro/Web` không có model change pending (rà ngày 11/11/2026).
+
 | Migration | Nội dung rà soát |
 | --- | --- |
 | `20261111064205_AddUtilityReadingAuditImmutability` | Tạo trigger `TR_UtilityReadingAudits_Immutable`, chặn UPDATE/DELETE trên nhật ký D10. |

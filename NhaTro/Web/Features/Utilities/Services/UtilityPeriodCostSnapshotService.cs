@@ -8,7 +8,7 @@ namespace Web.Features.Utilities.Services;
 public sealed class UtilityTariffUnavailableException(string message, Exception innerException)
     : InvalidOperationException(message, innerException);
 
-/// <summary>Rebuilds the tariff snapshots belonging to one persisted utility reading.</summary>
+/// <summary>Làm mới snapshot biểu giá thuộc một chỉ số điện/nước.</summary>
 public sealed class UtilityPeriodCostSnapshotService(IUtilityTariffService tariffService)
 {
     public const string ElectricScopeCode = "VN-EVN-HOUSEHOLD";
@@ -16,8 +16,7 @@ public sealed class UtilityPeriodCostSnapshotService(IUtilityTariffService tarif
 
     public async Task RefreshAsync(ApplicationDbContext db, int readingId, CancellationToken cancellationToken = default)
     {
-        // Adjustment has already mutated this tracked reading but deliberately has not saved it yet.
-        // Prefer it so snapshot inputs and the eventual audit are one transaction-consistent change.
+        // Ưu tiên entity đang được theo dõi vì AdjustAsync đã đổi chỉ số nhưng chưa lưu.
         var reading = db.UtilityReadings.Local.SingleOrDefault(item => item.Id == readingId)
             ?? await db.UtilityReadings.AsNoTracking()
                 .SingleAsync(item => item.Id == readingId, cancellationToken);
@@ -33,13 +32,13 @@ public sealed class UtilityPeriodCostSnapshotService(IUtilityTariffService tarif
             member => member.ContractId == contract.ContractId, cancellationToken));
 
         var oldSnapshotIds = await db.UtilityBillingPeriodSnapshots.AsNoTracking()
+            // VHT-102 dùng readingId; VHT-51 dùng UtilityReadingPeriod.Id. Không đổi schema tại đây.
             .Where(item => item.BillingPeriodId == readingId)
             .Select(item => item.Id)
             .ToListAsync(cancellationToken);
         if (oldSnapshotIds.Count > 0)
         {
-            // Execute immediately inside the caller transaction so SnapshotForPeriodAsync cannot
-            // see stale database rows and return the old snapshot instead of rebuilding it.
+            // Xóa ngay trong transaction của caller để SnapshotForPeriodAsync không đọc snapshot cũ.
             await db.UtilityBillingCostLineSnapshots
                 .Where(item => oldSnapshotIds.Contains(item.UtilityBillingPeriodSnapshotId))
                 .ExecuteDeleteAsync(cancellationToken);
