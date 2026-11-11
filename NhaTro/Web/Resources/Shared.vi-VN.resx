@@ -647,12 +647,17 @@
     <value>Đăng nhập nhanh để test</value>
   </data>
   <data name="DevQuickLoginHint" xml:space="preserve">
-    <value>Chỉ hiện khi chạy ở máy dev và đã cấu hình mật khẩu test. Bấm để vào thẳng từng vai trò; không bao giờ hiển thị ở môi trường thật.</value>
+    <value>Chỉ hiện ở máy dev. Bấm "Dùng" để vào thẳng vai trò đó.</value>
   </data>
 
   <!-- VHT-16: giao diện quản lý nhà trọ và phòng P2 -->
   <data name="P2PropertiesTitle" xml:space="preserve"><value>Nhà trọ</value></data>
   <data name="P2PropertiesSubtitle" xml:space="preserve"><value>Quản lý các nhà trọ trong phạm vi tài khoản của bạn</value></data>
+  <data name="P2PropertyStatSummary" xml:space="preserve"><value>Tóm tắt nhà trọ</value></data>
+  <data name="P2PropertyStatTotal" xml:space="preserve"><value>Tổng nhà trọ</value></data>
+  <data name="P2PropertyStatTotalHint" xml:space="preserve"><value>Toàn bộ nhà trọ trong phạm vi tài khoản của bạn, không phụ thuộc bộ lọc.</value></data>
+  <data name="P2PropertyStatUnit" xml:space="preserve"><value>nhà</value></data>
+  <data name="P2PropertyStatRoomsHint" xml:space="preserve"><value>Tổng số phòng của tất cả nhà trọ, tính cả phòng đã xoá mềm.</value></data>
   <data name="P2AddProperty" xml:space="preserve"><value>Thêm nhà trọ</value></data>
   <data name="P2PropertyFilters" xml:space="preserve"><value>Bộ lọc nhà trọ</value></data>
   <data name="P2SearchProperties" xml:space="preserve"><value>Tìm theo tên hoặc địa chỉ nhà trọ</value></data>
@@ -850,7 +855,6 @@
   <data name="TenantSecurityHint" xml:space="preserve"><value>CCCD luôn được che trong danh sách</value></data>
   <data name="TenantSearch" xml:space="preserve"><value>Tìm khách thuê</value></data>
   <data name="TenantSearchHint" xml:space="preserve"><value>Tìm theo họ tên, số điện thoại hoặc số CCCD</value></data>
-  <data name="TenantSearchPrivacyHint" xml:space="preserve"><value>Nhập ít nhất 3 ký tự để tìm theo số điện thoại hoặc CCCD</value></data>
   <data name="TenantStatusFilter" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="TenantStatusAll" xml:space="preserve"><value>Tất cả trạng thái</value></data>
   <data name="TenantStatusActive" xml:space="preserve"><value>Đang sử dụng</value></data>
@@ -1369,12 +1373,9 @@
   <data name="MeterReadingSearchLabel" xml:space="preserve"><value>Tìm kiếm</value></data>
   <data name="MeterReadingSearchPlaceholder" xml:space="preserve"><value>Tìm mã phòng, tên phòng, khách thuê, hợp đồng…</value></data>
   <data name="MeterReadingStatusFilter" xml:space="preserve"><value>Trạng thái kỳ</value></data>
-  <data name="MeterReadingAdvancedFilter" xml:space="preserve"><value>Bộ lọc nâng cao</value></data>
-  <data name="MeterReadingAdvancedFilterCount" xml:space="preserve"><value>Bộ lọc nâng cao ({0})</value></data>
   <data name="MeterReadingAdvancedFilterTitle" xml:space="preserve"><value>Trạng thái ghi chỉ số</value></data>
   <data name="MeterReadingAdvancedSelectAll" xml:space="preserve"><value>Chọn tất cả</value></data>
   <data name="MeterReadingAdvancedClear" xml:space="preserve"><value>Bỏ chọn</value></data>
-  <data name="MeterReadingAdvancedHint" xml:space="preserve"><value>Chọn một hoặc nhiều trạng thái. Phòng khớp bất kỳ trạng thái nào đã chọn sẽ hiển thị.</value></data>
   <data name="MeterReadingStatusOptionUnrecorded" xml:space="preserve"><value>Chưa ghi chỉ số (thiếu cả điện và nước)</value></data>
   <data name="MeterReadingStatusOptionRecorded" xml:space="preserve"><value>Đã ghi đủ chỉ số</value></data>
   <data name="MeterReadingStatusOptionLocked" xml:space="preserve"><value>Đã chốt số (khóa kỳ, không sửa được)</value></data>
@@ -1497,7 +1498,7 @@
   <data name="InviteTenantButton" xml:space="preserve"><value>Mời khách thuê</value></data>
   <data name="InviteTenantTitle" xml:space="preserve"><value>Mời khách thuê</value></data>
   <data name="InviteTenantEmailHint" xml:space="preserve"><value>Lời mời sẽ được gửi tới email này.</value></data>
-  <data name="InviteTenantNote" xml:space="preserve"><value>Khách mở email, đặt mật khẩu; hồ sơ tạo ra sẽ thuộc chủ trọ của bạn.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>Khách mở email trong 15 phút, đặt mật khẩu và xác thực OTP; hồ sơ thuộc chủ trọ của bạn.</value></data>
   <data name="InviteTenantSend" xml:space="preserve"><value>Gửi lời mời</value></data>
   <data name="InviteTenantSent" xml:space="preserve"><value>Đã gửi lời mời qua email.</value></data>
   <data name="InviteTenantEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
@@ -1516,8 +1517,8 @@
   <data name="RegisterOwnerTitle" xml:space="preserve"><value>Đăng ký chủ trọ</value></data>
   <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Tạo tài khoản chủ trọ để tự quản lý nhà trọ của bạn.</value></data>
   <data name="RegisterOwnerButton" xml:space="preserve"><value>Gửi đăng ký</value></data>
-  <data name="RegisterOwnerNote" xml:space="preserve"><value>Sau khi gửi, quản trị viên sẽ duyệt tài khoản trước khi bạn đăng nhập được.</value></data>
-  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Đã gửi yêu cầu đăng ký. Tài khoản đang chờ quản trị viên duyệt; hãy kiểm tra email để xác nhận địa chỉ.</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>Sau khi gửi, hệ thống sẽ gửi mã xác thực tới Gmail. Nhập mã để kích hoạt tài khoản và đăng nhập.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Đăng ký thành công. Hãy kiểm tra Gmail để lấy mã xác thực.</value></data>
   <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
   <data name="RegisterOwnerFailed" xml:space="preserve"><value>Không đăng ký được. Kiểm tra lại thông tin và mật khẩu (tối thiểu 8 ký tự, có chữ hoa, chữ thường và số).</value></data>
   <data name="RegisterOwnerLogin" xml:space="preserve"><value>Đã có tài khoản? Đăng nhập</value></data>
@@ -1536,8 +1537,8 @@
   <data name="AccountDeletedAt" xml:space="preserve"><value>Đã xóa lúc</value></data>
   <data name="AccountRestore" xml:space="preserve"><value>Khôi phục</value></data>
   <data name="AccountRestored" xml:space="preserve"><value>Đã khôi phục tài khoản.</value></data>
-  <data name="ForgotPasswordHint" xml:space="preserve"><value>Nhập email đã đăng ký. Hệ thống sẽ gửi liên kết đặt lại mật khẩu.</value></data>
-  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được liên kết trong vài phút. Nhớ kiểm tra cả thư mục Spam.</value></data>
+  <data name="ForgotPasswordHint" xml:space="preserve"><value>Nhập email đã đăng ký. Hệ thống sẽ gửi mã xác nhận để đặt lại mật khẩu.</value></data>
+  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã xác nhận trong vài phút. Nhớ kiểm tra cả thư mục Spam.</value></data>
   <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Dùng đúng email của tài khoản cần đặt lại.</value></data>
   <data name="ResetPasswordConfirmationHint" xml:space="preserve"><value>Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.</value></data>
   <data name="ResetPasswordError" xml:space="preserve"><value>Không đặt lại được mật khẩu: {0}</value></data>
@@ -1718,6 +1719,9 @@
   <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Đăng nhập bằng tài khoản {0} của bạn</value></data>
   <data name="NoExternalAuthServices" xml:space="preserve"><value>Không có dịch vụ xác thực ngoài nào được cấu hình. Xem <a href="https://go.microsoft.com/fwlink/?LinkID=532715">bài viết</a> về thiết lập ứng dụng ASP.NET hỗ trợ đăng nhập qua dịch vụ ngoài.</value></data>
   <data name="ClearFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
+  <data name="FilterAdvanced" xml:space="preserve"><value>Bộ lọc nâng cao</value></data>
+  <data name="FilterAdvancedCount" xml:space="preserve"><value>Bộ lọc nâng cao ({0})</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / trang</value></data>
   <data name="DepositPaidDateLabel" xml:space="preserve"><value>Ngày đóng cọc</value></data>
   <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
   <data name="ContractStatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
@@ -1933,4 +1937,114 @@
   <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>Đã xóa {0} phòng.</value></data>
   <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>Đã xóa {0} phòng, {1} phòng chưa xóa được:</value></data>
   <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Phòng {0}: {1}</value></data>
+  <!-- PLAN-022: xác thực OTP -->
+  <data name="OtpTitle" xml:space="preserve"><value>Xác thực Gmail</value></data>
+  <data name="OtpHeading" xml:space="preserve"><value>Nhập mã xác thực</value></data>
+  <data name="OtpHelp" xml:space="preserve"><value>Mã đã được gửi tới Gmail của bạn. Mã có hiệu lực 10 phút và chỉ dùng một lần.</value></data>
+  <data name="OtpCodeLabel" xml:space="preserve"><value>Mã xác thực</value></data>
+  <data name="OtpCodeHint" xml:space="preserve"><value>Nhập 6 chữ số trong thư xác thực.</value></data>
+  <data name="OtpSubmit" xml:space="preserve"><value>Xác thực</value></data>
+  <data name="OtpResend" xml:space="preserve"><value>Gửi lại mã</value></data>
+  <data name="OtpExpiresAt" xml:space="preserve"><value>Mã có hiệu lực đến {0}.</value></data>
+  <data name="OtpEmailMasked" xml:space="preserve"><value>Đang xác thực cho {0}.</value></data>
+  <data name="OtpSent" xml:space="preserve"><value>Đã gửi mã xác thực tới Gmail của bạn.</value></data>
+  <data name="OtpCellLabel" xml:space="preserve"><value>Chữ số {0}</value></data>
+  <data name="OtpResendIn" xml:space="preserve"><value>Gửi lại sau {0}s</value></data>
+  <data name="AuthTabsLabel" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="AuthTabRegister" xml:space="preserve"><value>Đăng ký</value></data>
+  <data name="AuthTabForgot" xml:space="preserve"><value>Quên mật khẩu</value></data>
+  <data name="OrDivider" xml:space="preserve"><value>hoặc</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>ten@gmail.com</value></data>
+  <data name="FullNamePlaceholder" xml:space="preserve"><value>Nguyễn Văn A</value></data>
+  <data name="PhonePlaceholder" xml:space="preserve"><value>09xx xxx xxx</value></data>
+  <data name="PasswordPlaceholder" xml:space="preserve"><value>••••••••</value></data>
+  <data name="PasswordMinHint" xml:space="preserve"><value>Tối thiểu 8 ký tự</value></data>
+  <data name="OptionalLabel" xml:space="preserve"><value>(tuỳ chọn)</value></data>
+  <data name="DevUseButton" xml:space="preserve"><value>Dùng</value></data>
+  <data name="SendOtpButton" xml:space="preserve"><value>Gửi mã xác nhận</value></data>
+  <data name="OtpResendSuccess" xml:space="preserve"><value>Đã gửi mã mới. Vui lòng kiểm tra Gmail.</value></data>
+  <data name="OtpResendCooldown" xml:space="preserve"><value>Vui lòng chờ {0} giây trước khi gửi lại.</value></data>
+  <data name="OtpExpired" xml:space="preserve"><value>Mã đã hết hạn. Hãy gửi lại mã mới.</value></data>
+  <data name="OtpLocked" xml:space="preserve"><value>Bạn đã nhập sai quá số lần cho phép. Vui lòng thử lại sau {0}.</value></data>
+  <data name="OtpLockedSoon" xml:space="preserve"><value>ít phút</value></data>
+  <data name="OtpNotFound" xml:space="preserve"><value>Không tìm thấy mã xác thực. Hãy gửi lại mã.</value></data>
+  <data name="OtpInvalid" xml:space="preserve"><value>Mã chưa đúng. Bạn còn {0} lần thử.</value></data>
+  <data name="OtpInvalidNoAttempts" xml:space="preserve"><value>Mã chưa đúng. Vui lòng gửi lại mã mới.</value></data>
+  <data name="OtpTooMany" xml:space="preserve"><value>Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau.</value></data>
+  <data name="OtpSendFailed" xml:space="preserve"><value>Không gửi được mã xác thực. Vui lòng thử lại.</value></data>
+  <data name="OtpUserNotFound" xml:space="preserve"><value>Không tìm thấy tài khoản cần xác thực.</value></data>
+  <data name="OtpUpdateFailed" xml:space="preserve"><value>Không cập nhật được tài khoản. Vui lòng thử lại.</value></data>
+  <data name="AccountStatusUnverified" xml:space="preserve"><value>Chưa xác thực Gmail</value></data>
+  <!-- PLAN-023: chọn ngữ cảnh -->
+  <data name="SelectRoleTitle" xml:space="preserve"><value>Chọn vai trò</value></data>
+  <data name="SelectRoleHelp" xml:space="preserve"><value>Tài khoản của bạn có nhiều vai trò. Chọn vai trò bạn muốn dùng trong phiên này.</value></data>
+  <data name="SelectRoleAdminHint" xml:space="preserve"><value>Quản trị toàn bộ hệ thống.</value></data>
+  <data name="SelectRoleOwnerHint" xml:space="preserve"><value>Quản lý nhà trọ, quản lý và khách thuê của bạn.</value></data>
+  <data name="SelectRoleManagerHint" xml:space="preserve"><value>Vận hành các nhà trọ được chủ trọ phân công.</value></data>
+  <data name="SelectRoleTenantHint" xml:space="preserve"><value>Xem phòng, hợp đồng, hoá đơn và gửi yêu cầu của khách thuê.</value></data>
+  <data name="SelectRoleInvalid" xml:space="preserve"><value>Vai trò không hợp lệ. Vui lòng chọn lại.</value></data>
+  <data name="SelectRoleNone" xml:space="preserve"><value>Tài khoản chưa được gán vai trò nào. Vui lòng liên hệ quản trị.</value></data>
+  <data name="SwitchRole" xml:space="preserve"><value>Đổi vai trò</value></data>
+  <!-- PLAN-024: nhận lời mời/QR -->
+  <data name="InviteOwnerLabel" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="InviteExpiresAt" xml:space="preserve"><value>Lời mời hết hạn lúc {0}.</value></data>
+  <data name="InviteSwitchTenant" xml:space="preserve"><value>Chuyển sang vai trò Khách thuê</value></data>
+  <data name="InviteLoginRequired" xml:space="preserve"><value>Hãy đăng nhập bằng tài khoản đã được mời để nhận phòng.</value></data>
+  <data name="InviteWrongAccount" xml:space="preserve"><value>Tài khoản đang đăng nhập không đúng người được mời.</value></data>
+  <data name="InviteAcceptExistingButton" xml:space="preserve"><value>Nhận lời mời</value></data>
+  <data name="InviteAcceptExistingSuccess" xml:space="preserve"><value>Đã nhận lời mời. Chuyển sang vai trò Khách thuê để xem phòng.</value></data>
+  <!-- PLAN-024: hộp thoại QR -->
+  <data name="QrOpenButton" xml:space="preserve"><value>Tạo QR</value></data>
+  <data name="QrDialogTitle" xml:space="preserve"><value>Tạo mã QR mời khách</value></data>
+  <data name="QrImageAlt" xml:space="preserve"><value>Mã QR mời khách thuê</value></data>
+  <data name="QrExpiresAt" xml:space="preserve"><value>QR hết hạn lúc {0}.</value></data>
+  <data name="QrWarning" xml:space="preserve"><value>Chỉ chia sẻ QR cho đúng khách. Mỗi mã dùng một lần và có hạn.</value></data>
+  <data name="QrKindLabel" xml:space="preserve"><value>Loại khách</value></data>
+  <data name="QrKindNew" xml:space="preserve"><value>Khách mới</value></data>
+  <data name="QrKindExisting" xml:space="preserve"><value>Khách đã có tài khoản</value></data>
+  <data name="QrPropertyLabel" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="QrNoProperty" xml:space="preserve"><value>Chỉ gắn chủ trọ</value></data>
+  <data name="QrRoomLabel" xml:space="preserve"><value>Phòng</value></data>
+  <data name="QrNoRoom" xml:space="preserve"><value>Chưa chọn phòng</value></data>
+  <data name="QrExpiryLabel" xml:space="preserve"><value>Hiệu lực</value></data>
+  <data name="QrExpiry15" xml:space="preserve"><value>15 phút</value></data>
+  <data name="QrExpiry1h" xml:space="preserve"><value>1 giờ</value></data>
+  <data name="QrExpiry6h" xml:space="preserve"><value>6 giờ</value></data>
+  <data name="QrExpiry24h" xml:space="preserve"><value>24 giờ</value></data>
+  <data name="QrSearchExisting" xml:space="preserve"><value>Tìm khách đã có tài khoản</value></data>
+  <data name="QrSelectExisting" xml:space="preserve"><value>Chọn khách</value></data>
+  <data name="QrSelectExistingHint" xml:space="preserve"><value>-- Chọn khách --</value></data>
+  <data name="QrSelectExistingRequired" xml:space="preserve"><value>Vui lòng chọn khách đã có tài khoản.</value></data>
+  <data name="QrNoExisting" xml:space="preserve"><value>Không tìm thấy khách phù hợp.</value></data>
+  <data name="QrGenerate" xml:space="preserve"><value>Tạo QR</value></data>
+  <data name="QrCreated" xml:space="preserve"><value>Đã tạo QR.</value></data>
+  <data name="QrFailed" xml:space="preserve"><value>Không tạo được QR.</value></data>
+  <data name="Search" xml:space="preserve"><value>Tìm</value></data>
+  <!-- PLAN-025: Admin quản lý chủ trọ -->
+  <data name="OwnerAdmin" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="OwnerAdminTitle" xml:space="preserve"><value>Quản lý chủ trọ</value></data>
+  <data name="OwnerAdminHelp" xml:space="preserve"><value>Xem, khoá hoặc mở khoá tài khoản chủ trọ. Khoá chủ trọ sẽ chặn quản lý và khách thuê thuộc chủ trọ đó.</value></data>
+  <data name="OwnerAdminSearch" xml:space="preserve"><value>Tìm theo tên, email hoặc số điện thoại</value></data>
+  <data name="OwnerAdminName" xml:space="preserve"><value>Họ tên</value></data>
+  <data name="OwnerAdminEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="OwnerAdminProperties" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="OwnerAdminManagers" xml:space="preserve"><value>Quản lý</value></data>
+  <data name="OwnerAdminTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="OwnerAdminStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="OwnerAdminLock" xml:space="preserve"><value>Khoá</value></data>
+  <data name="OwnerAdminUnlock" xml:space="preserve"><value>Mở khoá</value></data>
+  <data name="OwnerAdminLocked" xml:space="preserve"><value>Đã khoá</value></data>
+  <data name="OwnerAdminActive" xml:space="preserve"><value>Hoạt động</value></data>
+  <data name="OwnerAdminEmpty" xml:space="preserve"><value>Chưa có chủ trọ nào.</value></data>
+  <data name="OwnerAdminLoadFailed" xml:space="preserve"><value>Không tải được danh sách chủ trọ.</value></data>
+  <data name="OwnerAdminTotal" xml:space="preserve"><value>{0} chủ trọ</value></data>
+  <data name="OwnerLockTitle" xml:space="preserve"><value>Khoá chủ trọ?</value></data>
+  <data name="OwnerLockMessage" xml:space="preserve"><value>Quản lý và khách thuê thuộc chủ trọ này sẽ không đăng nhập được. Các lời mời/QR chưa dùng cũng bị thu hồi.</value></data>
+  <data name="OwnerUnlockTitle" xml:space="preserve"><value>Mở khoá chủ trọ?</value></data>
+  <data name="OwnerUnlockMessage" xml:space="preserve"><value>Quản lý và khách thuê thuộc chủ trọ này sẽ đăng nhập lại được.</value></data>
+  <data name="OwnerLocked" xml:space="preserve"><value>Đã khoá chủ trọ.</value></data>
+  <data name="OwnerUnlocked" xml:space="preserve"><value>Đã mở khoá chủ trọ.</value></data>
+  <data name="Previous" xml:space="preserve"><value>Trước</value></data>
+  <data name="Next" xml:space="preserve"><value>Sau</value></data>
 </root>

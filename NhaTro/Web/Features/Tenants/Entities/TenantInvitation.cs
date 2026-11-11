@@ -1,3 +1,5 @@
+using Web.Features.Tenants.Enums;
+
 namespace Web.Features.Tenants.Entities;
 
 /// <summary>
@@ -19,6 +21,25 @@ public class TenantInvitation
 
     /// <summary>Người gửi lời mời (Chủ trọ hoặc Quản lý).</summary>
     public string InvitedByUserId { get; set; } = string.Empty;
+
+    /// <summary>PLAN-024: Email hoặc QR.</summary>
+    public TenantInvitationChannel Channel { get; set; } = TenantInvitationChannel.Email;
+
+    /// <summary>PLAN-024: khách mới tự đăng ký hoặc khách đã có tài khoản.</summary>
+    public TenantInvitationKind Kind { get; set; } = TenantInvitationKind.NewAccount;
+
+    /// <summary>PLAN-024: mốc hạn đã chọn (phút), server tính ExpiresAt.</summary>
+    public int ExpiryPresetMinutes { get; set; } = 1440;
+
+    /// <summary>Phạm vi QR (nullable nếu lời mời chỉ gắn chủ trọ).</summary>
+    public int? PropertyId { get; set; }
+
+    public int? RoomId { get; set; }
+
+    /// <summary>Khách đã có tài khoản được mời (Kind = ExistingAccount).</summary>
+    public string? TargetUserId { get; set; }
+
+    public string? CreatedByUserId { get; set; }
 
     /// <summary>SHA-256 (Base64) của token trong liên kết mời.</summary>
     public string TokenHash { get; set; } = string.Empty;

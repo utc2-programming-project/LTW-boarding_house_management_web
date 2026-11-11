@@ -64,11 +64,11 @@ body { margin:0;background:var(--page-bg);color:var(--text-primary);font-family:
 button,input,select,textarea { font:inherit; }
 /* Dropdown <select>: chevron + popup dùng token theme (Chromium/Edge). Trình duyệt
    chưa hỗ trợ base-select giữ popup gốc; 2 select có mũi tên tự vẽ (.doc-*) giữ nguyên. */
-select:not(.doc-filter-select):not(.doc-tenant-select) { cursor:pointer; }
+select { cursor:pointer; }
 @supports (appearance:base-select) {
- select:not(.doc-filter-select):not(.doc-tenant-select) { appearance:base-select;display:inline-flex;align-items:center;justify-content:space-between;column-gap:8px;white-space:nowrap; }
- select:not(.doc-filter-select):not(.doc-tenant-select)::picker-icon { margin-inline-start:auto;color:var(--text-muted);font-size:10px;transition:rotate 150ms var(--ease); }
- select:not(.doc-filter-select):not(.doc-tenant-select):open::picker-icon { rotate:180deg; }
+ select { appearance:base-select;display:inline-flex;align-items:center;justify-content:space-between;column-gap:8px;white-space:nowrap; }
+ select::picker-icon { margin-inline-start:auto;color:var(--text-muted);font-size:10px;transition:rotate 150ms var(--ease); }
+ select:open::picker-icon { rotate:180deg; }
  ::picker(select) { appearance:base-select;position-area:block-end span-inline-end;position-try-fallbacks:flip-block;min-inline-size:anchor-size(width);margin-block:6px 0;padding:6px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-popover);max-height:320px;color:var(--text-primary); }
  select option { padding:8px 10px;border-radius:8px;font-size:.875rem; }
  select option:hover,select option:focus-visible { background:var(--hover-bg);outline:none; }
@@ -146,6 +146,10 @@ html[data-sidebar-resizing],html[data-sidebar-resizing] * { cursor:col-resize!im
 .app-sidebar .nav-item { display:flex;align-items:center;gap:8px;min-height:44px;padding:10px 12px;border-radius:8px;font-size:.875rem;font-weight:500;line-height:1.429;color:var(--text-secondary)!important;text-decoration:none;overflow-wrap:break-word; }
 .app-sidebar .nav-item[href]:hover,.app-sidebar button.nav-item:hover { background:var(--hover-bg); }
 .app-sidebar .nav-item.active { background:var(--accent-soft);color:var(--accent-text)!important;font-weight:600; }
+.app-sidebar .nav-item { position:relative;transition:background-color 150ms var(--ease),color 150ms var(--ease),transform 160ms var(--ease); }
+.app-sidebar .nav-item[href]:hover { transform:translateX(2px); }
+.app-sidebar .nav-item.active::before { content:"";position:absolute;left:4px;top:10px;bottom:10px;width:3px;border-radius:999px;background:var(--accent);transform:scaleY(1);transform-origin:center;transition:transform 180ms var(--ease); }
+@media (prefers-reduced-motion:reduce){ .app-sidebar .nav-item,.app-sidebar .nav-item[href]:hover{transform:none;transition:none;} .app-sidebar .nav-item.active::before{transition:none;} }
 .app-sidebar .nav-item small { display:block;font-size:.75rem;font-weight:400;line-height:1.5;color:var(--text-muted); }
 .app-sidebar .nav-item.unavailable { cursor:default; }
 .app-workspace { min-width:0;margin-left:var(--sidebar-width);background:var(--page-bg); }

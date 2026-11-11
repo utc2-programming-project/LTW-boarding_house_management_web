@@ -62,6 +62,7 @@
   <data name="TableOf" xml:space="preserve"><value>of</value></data>
   <data name="TableServicesUnit" xml:space="preserve"><value>services</value></data>
   <data name="RowsPerPage" xml:space="preserve"><value>Rows per page:</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
 
   <data name="EmptyServicesTitle" xml:space="preserve"><value>No services found</value></data>
   <data name="EmptyServicesDesc" xml:space="preserve"><value>No services match the current filter criteria. Please try a different query or reset filters.</value></data>
@@ -122,6 +123,10 @@
   <data name="StatusActive" xml:space="preserve"><value>Active</value></data>
   <data name="StatusUpcoming" xml:space="preserve"><value>Upcoming</value></data>
   <data name="StatusExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="StatPriceSummary" xml:space="preserve"><value>Price version summary</value></data>
+  <data name="StatPriceVersions" xml:space="preserve"><value>Total price versions</value></data>
+  <data name="StatPriceVersionsHint" xml:space="preserve"><value>Each price change creates a version; figures follow the selected service.</value></data>
+  <data name="StatPriceUnit" xml:space="preserve"><value>versions</value></data>
 
   <data name="ReadingsPageTitle" xml:space="preserve"><value>Meter Readings &amp; Costs</value></data>
   <data name="ReadingsBreadcrumb" xml:space="preserve"><value>Period &amp; Readings</value></data>

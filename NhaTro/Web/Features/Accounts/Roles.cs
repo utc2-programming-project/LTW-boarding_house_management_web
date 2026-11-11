@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Security.Principal;
 
 namespace Web.Features.Accounts;
@@ -13,11 +14,21 @@ public static class Roles
 
     public static readonly string[] All = [Admin, ChuTro, QuanLy, KhachThue];
 
+    /// <summary>Claim ngữ cảnh đang hoạt động (PLAN-023).</summary>
+    public const string ActiveRoleClaim = "nhatro.active_role";
+
     /// <summary>
-    /// VHT-119: quy tắc chọn vai trò duy nhất cho mọi tầng (Admin → ChuTro → QuanLy → KhachThue).
-    /// Hệ thống vốn chỉ một vai trò/tài khoản; nếu dữ liệu lệch nhiều vai trò thì Chủ trọ thắng
-    /// để không vỡ gắn/gỡ tài khoản và xem CCCD (TenantService.EnsureOwner, TenantCaller.CanRevealIdNumber).
+    /// VHT-119 + PLAN-023: ưu tiên ngữ cảnh đang chọn trong claim; nếu chưa có thì
+    /// fallback thứ tự Admin → ChuTro → QuanLy → KhachThue cho dữ liệu cũ.
     /// </summary>
-    public static string ResolvePrimaryRole(IPrincipal user) =>
-        All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+    public static string ResolvePrimaryRole(IPrincipal user)
+    {
+        var active = (user as ClaimsPrincipal)?.FindFirst(ActiveRoleClaim)?.Value;
+        if (!string.IsNullOrWhiteSpace(active) && All.Contains(active))
+        {
+            return active;
+        }
+
+        return All.FirstOrDefault(user.IsInRole) ?? string.Empty;
+    }
 }

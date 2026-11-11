@@ -51,9 +51,7 @@
             <div class="kpi-card skeleton"></div>
         </div>
 
-        <div class="filters-container">
-            <div class="skeleton kpi-card"></div>
-        </div>
+        <div class="skeleton kpi-card meter-filter-skeleton"></div>
 
         <div class="room-cards-container">
             <div class="skeleton room-card-skeleton"></div>
@@ -103,11 +101,11 @@
             </div>
         </div>
 
-        <!-- Filters: Building & Month/Year Period Picker -->
-        <div class="filters-container">
-            <div class="filters-row">
-                <label class="filter-field wide">
-                    <span>@L["MeterReadingBuildingFilter"]</span>
+        <!-- Bộ lọc kỳ đọc -->
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="select-building">@L["MeterReadingBuildingFilter"]</label>
                     <select id="select-building"
                             class="input"
                             value="@_selectedBuildingId"
@@ -119,10 +117,10 @@
                             <option value="@b.Id">@b.Name (@string.Format(L["MeterReadingRoomCountFormat"], b.TotalRooms))</option>
                         }
                     </select>
-                </label>
+                </div>
 
-                <label class="filter-field">
-                    <span>@L["MeterReadingMonthFilter"]</span>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="select-period-month">@L["MeterReadingMonthFilter"]</label>
                     <select id="select-period-month"
                             class="input"
                             value="@_selectedMonth"
@@ -132,10 +130,10 @@
                             <option value="@m">@string.Format(L["MeterReadingMonthOptionFormat"], m)</option>
                         }
                     </select>
-                </label>
+                </div>
 
-                <label class="filter-field">
-                    <span>@L["MeterReadingYearFilter"]</span>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="select-period-year">@L["MeterReadingYearFilter"]</label>
                     <select id="select-period-year"
                             class="input"
                             value="@_selectedYear"
@@ -145,65 +143,74 @@
                             <option value="@y">@y</option>
                         }
                     </select>
-                </label>
+                </div>
 
-                <div class="filter-field wide">
-                    <span>@L["MeterReadingPeriodFilter"]</span>
-                    <div class="period-display" aria-live="polite">
-                        <LucideIcon Name="calendar" />
-                        <span class="period-display-main">
-                            @string.Format(L["MeterReadingMonthOptionFormat"], _selectedMonth) / @_selectedYear
+                <div class="filter-bar__state period-display" aria-live="polite">
+                    <LucideIcon Name="calendar" />
+                    <span class="period-display-main">
+                        @string.Format(L["MeterReadingMonthOptionFormat"], _selectedMonth) / @_selectedYear
+                    </span>
+                    <span class="period-display-range">
+                        (@_periodStart.ToString("dd/MM/yyyy") – @_periodEnd.ToString("dd/MM/yyyy"))
+                    </span>
+                </div>
+
+                <div class="filter-bar__actions">
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ReloadDataAsync" title="@L["MeterReadingRefreshBtn"]">
+                        <LucideIcon Name="refresh-cw" />
+                        <span>@L["MeterReadingRefreshBtn"]</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tìm kiếm phòng + lọc chi tiết -->
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="meter-search">@L["MeterReadingSearchLabel"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="meter-search"
+                           type="search"
+                           class="input"
+                           autocomplete="off"
+                           placeholder="@L["MeterReadingSearchPlaceholder"]"
+                           @bind="_searchText"
+                           @bind:event="oninput"
+                           @bind:after="ApplyFilters" />
+                </div>
+
+                <div class="filter-bar__actions">
+                    <FilterAdvancedToggle @bind-Expanded="_showAdvancedFilters" ActiveCount="AdvancedFilterCount" PanelId="meter-status-panel" />
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetDetailFilters" disabled="@(!HasDetailFilters)">
+                        <LucideIcon Name="refresh" />
+                        <span>@L["P2ResetFilters"]</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-bar__advanced" id="meter-status-panel" hidden="@(!_showAdvancedFilters)">
+                <div class="filter-bar__group filter-bar__wide">
+                    <div class="filter-bar__group-head">
+                        <span>@L["MeterReadingAdvancedFilterTitle"]</span>
+                        <span class="filter-bar__links">
+                            <button type="button" class="link-button" @onclick="SelectAllStatusFilters">@L["MeterReadingAdvancedSelectAll"]</button>
+                            <button type="button" class="link-button" @onclick="ClearStatusFilters" disabled="@(_statusFilters.Count == 0)">@L["MeterReadingAdvancedClear"]</button>
                         </span>
-                        <span class="period-display-range">
-                            (@_periodStart.ToString("dd/MM/yyyy") – @_periodEnd.ToString("dd/MM/yyyy"))
-                        </span>
+                    </div>
+                    <div class="filter-bar__checks">
+                        @foreach (var option in StatusFilterOptions)
+                        {
+                            <label class="filter-bar__check">
+                                <input type="checkbox"
+                                       checked="@_statusFilters.Contains(option)"
+                                       @onchange="e => ToggleStatusFilter(option, e.Value is true)" />
+                                <span>@GetStatusOptionLabel(option)</span>
+                            </label>
+                        }
                     </div>
                 </div>
 
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ReloadDataAsync" title="@L["MeterReadingRefreshBtn"]">
-                    <LucideIcon Name="refresh-cw" />
-                    <span>@L["MeterReadingRefreshBtn"]</span>
-                </button>
-            </div>
-
-            <!-- Bộ lọc chi tiết: tìm kiếm, trạng thái ghi chỉ số, tầng -->
-            <div class="filters-row filters-row-secondary">
-                <label class="filter-field search-filter" for="meter-search">
-                    <span>@L["MeterReadingSearchLabel"]</span>
-                    <span class="search-input-wrap">
-                        <LucideIcon Name="search" />
-                        <input id="meter-search"
-                               type="search"
-                               class="input"
-                               autocomplete="off"
-                               placeholder="@L["MeterReadingSearchPlaceholder"]"
-                               @bind="_searchText"
-                               @bind:event="oninput"
-                               @bind:after="ApplyFilters" />
-                    </span>
-                </label>
-
-                <div class="filter-field">
-                    <span>@L["MeterReadingStatusFilter"]</span>
-                    <button type="button"
-                            class="btn btn-secondary advanced-filter-toggle @(_showAdvancedFilters ? "open" : "") @(_statusFilters.Count > 0 ? "has-selection" : "")"
-                            @onclick="ToggleAdvancedFilters"
-                            aria-expanded="@(_showAdvancedFilters ? "true" : "false")"
-                            aria-controls="meter-status-panel">
-                        <LucideIcon Name="filter" />
-                        <span>
-                            @(_statusFilters.Count == 0
-                                ? L["MeterReadingAdvancedFilter"].Value
-                                : string.Format(L["MeterReadingAdvancedFilterCount"], _statusFilters.Count))
-                        </span>
-                        <span class="advanced-filter-chevron @(_showAdvancedFilters ? "rotated" : "")">
-                            <LucideIcon Name="chevron-down" />
-                        </span>
-                    </button>
-                </div>
-
-                <label class="filter-field" for="meter-floor-filter">
-                    <span>@L["MeterReadingFloorFilter"]</span>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="meter-floor-filter">@L["MeterReadingFloorFilter"]</label>
                     <select id="meter-floor-filter" class="input" value="@_floorFilter" @onchange="HandleFloorFilterChanged">
                         <option value="all">@L["MeterReadingFloorAll"]</option>
                         @foreach (var floor in AvailableFloors)
@@ -211,41 +218,8 @@
                             <option value="@floor">@GetFloorLabel(floor)</option>
                         }
                     </select>
-                </label>
-
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetDetailFilters" disabled="@(!HasDetailFilters)">
-                    <LucideIcon Name="refresh" />
-                    <span>@L["P2ResetFilters"]</span>
-                </button>
-            </div>
-
-            @if (_showAdvancedFilters)
-            {
-                <div class="advanced-filter-panel" id="meter-status-panel">
-                    <div class="advanced-filter-header">
-                        <div class="advanced-filter-title">
-                            <LucideIcon Name="filter" />
-                            <span>@L["MeterReadingAdvancedFilterTitle"]</span>
-                        </div>
-                        <div class="advanced-filter-actions">
-                            <button type="button" class="link-button" @onclick="SelectAllStatusFilters">@L["MeterReadingAdvancedSelectAll"]</button>
-                            <button type="button" class="link-button" @onclick="ClearStatusFilters" disabled="@(_statusFilters.Count == 0)">@L["MeterReadingAdvancedClear"]</button>
-                        </div>
-                    </div>
-                    <div class="advanced-filter-options">
-                        @foreach (var option in StatusFilterOptions)
-                        {
-                            <label class="advanced-filter-option">
-                                <input type="checkbox"
-                                       checked="@_statusFilters.Contains(option)"
-                                       @onchange="e => ToggleStatusFilter(option, e.Value is true)" />
-                                <span class="advanced-filter-option-label">@GetStatusOptionLabel(option)</span>
-                            </label>
-                        }
-                    </div>
-                    <p class="advanced-filter-hint">@L["MeterReadingAdvancedHint"]</p>
                 </div>
-            }
+            </div>
         </div>
 
         <!-- Empty states -->
@@ -670,7 +644,8 @@
         _expandedRoomId = _expandedRoomId == roomId ? null : roomId;
     }
 
-    private void ToggleAdvancedFilters() => _showAdvancedFilters = !_showAdvancedFilters;
+    private int AdvancedFilterCount =>
+        _statusFilters.Count + (_floorFilter != "all" ? 1 : 0);
 
     private void ToggleStatusFilter(string option, bool isChecked)
     {
@@ -739,6 +714,7 @@
         _searchText = string.Empty;
         _statusFilters.Clear();
         _floorFilter = "all";
+        _showAdvancedFilters = false;
         ApplyFilters();
     }
 

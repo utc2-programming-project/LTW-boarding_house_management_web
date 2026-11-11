@@ -47,35 +47,40 @@
     }
     else
     {
-        <div class="setup-room-toolbar">
-            <div class="setup-room-search">
-                <LucideIcon Name="search" />
-                <input id="setup-room-search" type="search" value="@_keyword" @oninput="SearchChanged"
-                       placeholder="@L["P2SetupRoomsSearchPlaceholder"]" aria-label="@L["P2SetupRoomsSearchPlaceholder"]" />
-            </div>
-            <div class="setup-room-chips" role="group" aria-label="@L["P2SetupRoomsFilterLabel"]">
-                <button class="setup-chip @(_statusFilter is null ? "active" : null)" type="button"
-                        aria-pressed="@(_statusFilter is null ? "true" : "false")" @onclick="() => SetStatus(null)">
-                    @L["P2SetupRoomsFilterAll"]
-                </button>
-                @foreach (var status in Statuses)
-                {
-                    <button class="setup-chip @(_statusFilter == status ? "active" : null)" type="button"
-                            aria-pressed="@(_statusFilter == status ? "true" : "false")" @onclick="() => SetStatus(status)">
-                        @StatusText(status)
+        <div class="filter-bar">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="setup-room-search">@L["P2SetupRoomsSearchPlaceholder"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="setup-room-search" type="search" class="input" value="@_keyword" @oninput="SearchChanged"
+                           placeholder="@L["P2SetupRoomsSearchPlaceholder"]" autocomplete="off" />
+                </div>
+                <div class="setup-room-chips" role="group" aria-label="@L["P2SetupRoomsFilterLabel"]">
+                    <button class="setup-chip @(_statusFilter is null ? "active" : null)" type="button"
+                            aria-pressed="@(_statusFilter is null ? "true" : "false")" @onclick="() => SetStatus(null)">
+                        @L["P2SetupRoomsFilterAll"]
                     </button>
-                }
+                    @foreach (var status in Statuses)
+                    {
+                        <button class="setup-chip @(_statusFilter == status ? "active" : null)" type="button"
+                                aria-pressed="@(_statusFilter == status ? "true" : "false")" @onclick="() => SetStatus(status)">
+                            @StatusText(status)
+                        </button>
+                    }
+                </div>
+                <div class="filter-bar__actions">
+                    <div class="filter-bar__state">
+                        <label class="sr-only" for="setup-room-sort">@L["P2SetupRoomsSortLabel"]</label>
+                        <select id="setup-room-sort" class="input" value="@_sort" @onchange="SortChanged">
+                            <option value="floor-asc">@L["P2SetupRoomsSortFloorAsc"]</option>
+                            <option value="floor-desc">@L["P2SetupRoomsSortFloorDesc"]</option>
+                            <option value="code-asc">@L["P2SetupRoomsSortCodeAsc"]</option>
+                            <option value="price-asc">@L["P2SetupRoomsSortPriceAsc"]</option>
+                            <option value="price-desc">@L["P2SetupRoomsSortPriceDesc"]</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <label class="setup-room-sort">
-                <span>@L["P2SetupRoomsSortLabel"]</span>
-                <select value="@_sort" @onchange="SortChanged">
-                    <option value="floor-asc">@L["P2SetupRoomsSortFloorAsc"]</option>
-                    <option value="floor-desc">@L["P2SetupRoomsSortFloorDesc"]</option>
-                    <option value="code-asc">@L["P2SetupRoomsSortCodeAsc"]</option>
-                    <option value="price-asc">@L["P2SetupRoomsSortPriceAsc"]</option>
-                    <option value="price-desc">@L["P2SetupRoomsSortPriceDesc"]</option>
-                </select>
-            </label>
         </div>
 
         <div class="setup-room-summary" role="status">

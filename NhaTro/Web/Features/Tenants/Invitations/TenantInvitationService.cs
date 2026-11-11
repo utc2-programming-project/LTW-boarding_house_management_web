@@ -11,7 +11,7 @@ namespace Web.Features.Tenants.Invitations;
 
 /// <summary>
 /// PLAN-006: lời mời khách thuê. Token ngẫu nhiên 32 byte, chỉ lưu hash SHA-256;
-/// lời mời hết hạn sau 72 giờ và dùng được một lần.
+/// lời mời email hết hạn sau 15 phút và dùng được một lần.
 /// </summary>
 public sealed class TenantInvitationService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
@@ -20,7 +20,7 @@ public sealed class TenantInvitationService(
     TimeProvider clock,
     ILogger<TenantInvitationService> logger)
 {
-    public const int LifetimeHours = 72;
+    public const int EmailLifetimeMinutes = 15;
 
     public async Task<TenantInvitationResult> CreateAsync(
         CreateTenantInvitationRequest request,
@@ -75,8 +75,12 @@ public sealed class TenantInvitationService(
             Phone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
             OwnerId = ownerId,
             InvitedByUserId = caller.UserId,
+            CreatedByUserId = caller.UserId,
+            Channel = Web.Features.Tenants.Enums.TenantInvitationChannel.Email,
+            Kind = Web.Features.Tenants.Enums.TenantInvitationKind.NewAccount,
+            ExpiryPresetMinutes = EmailLifetimeMinutes,
             TokenHash = HashToken(rawToken),
-            ExpiresAt = clock.GetUtcNow().UtcDateTime.AddHours(LifetimeHours),
+            ExpiresAt = clock.GetUtcNow().UtcDateTime.AddMinutes(EmailLifetimeMinutes),
             CreatedAt = clock.GetUtcNow().UtcDateTime,
         };
         db.TenantInvitations.Add(invitation);
@@ -186,7 +190,8 @@ public sealed class TenantInvitationService(
         {
             UserName = invitation.Email,
             Email = invitation.Email,
-            EmailConfirmed = true,
+            // PLAN-022: vẫn phải xác thực Gmail ở lần đăng nhập đầu.
+            EmailConfirmed = false,
             FullName = invitation.FullName,
             PhoneNumber = invitation.Phone,
             ApprovedAt = clock.GetUtcNow().UtcDateTime,

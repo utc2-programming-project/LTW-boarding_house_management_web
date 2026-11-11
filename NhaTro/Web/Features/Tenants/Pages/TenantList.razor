@@ -26,6 +26,9 @@
                 <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
                     <LucideIcon Name="mail" /> @L["InviteTenantButton"]
                 </button>
+                <button type="button" class="btn btn-secondary" @onclick="OpenQr">
+                    <LucideIcon Name="qr-code" /> @L["QrOpenButton"]
+                </button>
                 <button type="button" class="btn btn-primary" @onclick="OpenCreate">
                     <LucideIcon Name="plus" /> @L["TenantAdd"]
                 </button>
@@ -47,29 +50,49 @@
     }
     else if (!_summaryError)
     {
-        <section class="tenant-stats @(_canRevealIdNumber ? null : "tenant-stats-manager")" aria-label="@L["TenantSummary"]">
-            <article class="tenant-stat-card">
-                <div class="tenant-stat-top"><span>@L["TenantStatTotal"]</span><span class="tenant-stat-icon"><LucideIcon Name="users" /></span></div>
-                <div class="tenant-stat-value">@SummaryValue(_summary!.TotalCount)<small>@L["TenantPeople"]</small></div>
-                <p>@L["TenantAllRecordsHint"]</p>
+        <section class="stat-grid @(_canRevealIdNumber ? null : "stat-grid--three")" aria-label="@L["TenantSummary"]">
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["TenantStatTotal"]
+                        <button type="button" class="stat-help" data-tip="@L["TenantAllRecordsHint"]" aria-label="@L["TenantAllRecordsHint"]">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="users" /></span>
+                </div>
+                <div class="stat-value">@SummaryValue(_summary!.TotalCount) <small>@L["TenantPeople"]</small></div>
             </article>
-            <article class="tenant-stat-card">
-                <div class="tenant-stat-top"><span>@L["TenantStatActive"]</span><span class="tenant-stat-dot" aria-hidden="true"></span></div>
-                <div class="tenant-stat-value">@SummaryValue(_summary!.ActiveCount)<small>@L["TenantRecords"]</small></div>
-                <p>@L["TenantActiveRateHint"]: @Percent(_summary!.ActiveCount, _summary!.TotalCount)%</p>
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["TenantStatActive"]
+                        <button type="button" class="stat-help" data-tip="@ActiveRateTip" aria-label="@ActiveRateTip">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="user" /></span>
+                </div>
+                <div class="stat-value">@SummaryValue(_summary!.ActiveCount) <small>@L["TenantRecords"]</small></div>
             </article>
             @if (_canRevealIdNumber)
             {
-                <article class="tenant-stat-card">
-                    <div class="tenant-stat-top"><span>@L["TenantStatAccounts"]</span><span class="tenant-stat-icon tenant-stat-icon-blue"><LucideIcon Name="user" /></span></div>
-                    <div class="tenant-stat-value">@SummaryValue(_summary!.LinkedAccountCount)<small>@L["TenantAccounts"]</small></div>
-                    <p>@Percent(_summary!.LinkedAccountCount, _summary!.TotalCount)% @L["TenantAccountRateHint"]</p>
+                <article class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["TenantStatAccounts"]
+                            <button type="button" class="stat-help" data-tip="@AccountRateTip" aria-label="@AccountRateTip">?</button>
+                        </span>
+                        <span class="stat-icon stat-icon--info"><LucideIcon Name="key" /></span>
+                    </div>
+                    <div class="stat-value">@SummaryValue(_summary!.LinkedAccountCount) <small>@L["TenantAccounts"]</small></div>
                 </article>
             }
-            <article class="tenant-stat-card">
-                <div class="tenant-stat-top"><span>@L["TenantStatIdCoverage"]</span><span class="tenant-stat-icon tenant-stat-icon-neutral"><LucideIcon Name="shield-check" /></span></div>
-                <div class="tenant-stat-value">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></div>
-                <p><LucideIcon Name="lock" /> @L["TenantSecurityHint"]</p>
+            <article class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["TenantStatIdCoverage"]
+                        <button type="button" class="stat-help" data-tip="@L["TenantSecurityHint"]" aria-label="@L["TenantSecurityHint"]">?</button>
+                    </span>
+                    <span class="stat-icon stat-icon--neutral"><LucideIcon Name="shield-check" /></span>
+                </div>
+                <div class="stat-value">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></div>
             </article>
         </section>
     }
@@ -81,15 +104,15 @@
         </div>
     }
 
-    <section class="tenant-filter-card" aria-label="@L["TenantFilters"]">
-        <div class="tenant-filter-row">
-            <div class="tenant-search-field">
+    <section class="filter-bar filter-bar--panel" aria-label="@L["TenantFilters"]">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
                 <label class="sr-only" for="tenant-search">@L["TenantSearch"]</label>
-                <span class="tenant-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                 <input id="tenant-search" class="input" @bind="_keyword" @bind:event="oninput" @bind:after="ResetTableAsync"
                        placeholder="@L["TenantSearchHint"]" autocomplete="off" />
             </div>
-            <div class="tenant-filter-select">
+            <div class="filter-bar__field filter-bar__select">
                 <label class="sr-only" for="tenant-status-filter">@L["TenantStatusFilter"]</label>
                 <select id="tenant-status-filter" class="input" @bind="_statusFilter" @bind:after="ResetTableAsync">
                     <option value="">@L["TenantStatusAll"]</option>
@@ -97,9 +120,33 @@
                     <option value="inactive">@L["TenantStatusInactive"]</option>
                 </select>
             </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
+                    <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync" aria-label="@L["TenantSort"]">
+                        <option value="created">@L["TenantSortCreatedDesc"]</option>
+                        <option value="name-asc">@L["TenantSortNameAsc"]</option>
+                        <option value="name-desc">@L["TenantSortNameDesc"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
+                    <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync" aria-label="@L["TenantRowsPerPage"]">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="tenant-advanced-panel" />
+                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
+                    <LucideIcon Name="refresh-cw" /> @L["TenantReset"]
+                </button>
+            </div>
+        </div>
+        <div class="filter-bar__advanced" id="tenant-advanced-panel" hidden="@(!_showAdvanced)">
             @if (_canRevealIdNumber)
             {
-                <div class="tenant-filter-select">
+                <div class="filter-bar__field filter-bar__select">
                     <label class="sr-only" for="tenant-account-filter">@L["TenantAccountFilter"]</label>
                     <select id="tenant-account-filter" class="input" @bind="_accountFilter" @bind:after="ResetTableAsync">
                         <option value="">@L["TenantAccountAll"]</option>
@@ -108,7 +155,7 @@
                     </select>
                 </div>
             }
-            <div class="tenant-filter-select">
+            <div class="filter-bar__field filter-bar__select">
                 <label class="sr-only" for="tenant-rental-filter">@L["TenantRentalFilter"]</label>
                 <select id="tenant-rental-filter" class="input" @bind="_rentalFilter" @bind:after="ResetTableAsync">
                     <option value="">@L["TenantRentalAll"]</option>
@@ -116,29 +163,6 @@
                     <option value="not-renting">@L["TenantRentalNone"]</option>
                 </select>
             </div>
-            <div class="tenant-filter-select tenant-sort-select tenant-labeled-select">
-                <label class="tenant-inline-label" for="tenant-sort-filter">@L["TenantSort"]</label>
-                <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
-                    <option value="created">@L["TenantSortCreatedDesc"]</option>
-                    <option value="name-asc">@L["TenantSortNameAsc"]</option>
-                    <option value="name-desc">@L["TenantSortNameDesc"]</option>
-                </select>
-            </div>
-            <div class="tenant-filter-select tenant-page-size tenant-labeled-select">
-                <label class="tenant-inline-label" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
-                <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                </select>
-            </div>
-            <button type="button" class="btn btn-secondary tenant-reset-button" @onclick="ResetFiltersAsync">
-                <LucideIcon Name="refresh-cw" /> @L["TenantReset"]
-            </button>
-        </div>
-        <div class="tenant-filter-footnote">
-            <span><LucideIcon Name="shield-check" /> @L["TenantSearchPrivacyHint"]</span>
-            <span>@L["TenantSecurityHint"]</span>
         </div>
     </section>
 
@@ -164,6 +188,7 @@
 <TenantAccountLinkDialog Visible="_showLinkAccount" Tenant="_selectedTenant"
                           OnClose="CloseLinkAccountAsync" OnLinked="RefreshDetailsAsync" />
 <TenantInviteDialog Visible="_showInvite" OnClose="CloseInvite" OnSent="RefreshAsync" />
+<TenantQrDialog Visible="_showQr" OnClose="CloseQr" />
 
 <ConfirmDialog Visible="_showStatusConfirm"
                Title="@(_nextIsActive ? L["TenantActivateTitle"] : L["TenantDeactivateTitle"])"
@@ -193,6 +218,7 @@
     private string _sortFilter = "created";
     private int _pageSize = 20;
     private int _tableKey;
+    private bool _showAdvanced;
     private bool _canRevealIdNumber;
     private bool _summaryError;
     private bool _exporting;
@@ -201,6 +227,7 @@
     private bool _showForm;
     private bool _showLinkAccount;
     private bool _showInvite;
+    private bool _showQr;
     private bool _showStatusConfirm;
     private bool _showUnlinkConfirm;
     private bool _showDeleteConfirm;
@@ -339,8 +366,12 @@
         _accountFilter = string.Empty;
         _rentalFilter = string.Empty;
         _sortFilter = "created";
+        _showAdvanced = false;
         await ResetTableAsync();
     }
+
+    private int AdvancedFilterCount =>
+        (string.IsNullOrEmpty(_accountFilter) ? 0 : 1) + (string.IsNullOrEmpty(_rentalFilter) ? 0 : 1);
 
     private bool HasActiveTenantFilters =>
         !string.IsNullOrWhiteSpace(_keyword)
@@ -354,6 +385,7 @@
         _statusFilter = string.Empty;
         _accountFilter = string.Empty;
         _rentalFilter = string.Empty;
+        _showAdvanced = false;
         return Task.CompletedTask;
     }
 
@@ -364,6 +396,14 @@
     }
 
     private void OpenInvite() => _showInvite = true;
+
+    private void OpenQr() => _showQr = true;
+
+    private Task CloseQr()
+    {
+        _showQr = false;
+        return Task.CompletedTask;
+    }
 
     private Task CloseInvite()
     {
@@ -671,6 +711,13 @@
 
     private string Percent(int? value, int? total) =>
         total is > 0 && value is not null ? NumberFormatter.Trimmed((double)value.Value / total.Value * 100) : "0";
+
+    // Tooltip "?" của 2 thẻ có tỉ lệ: ghép lại đúng câu mô tả cũ.
+    private string ActiveRateTip =>
+        $"{L["TenantActiveRateHint"]}: {Percent(_summary!.ActiveCount, _summary!.TotalCount)}%";
+
+    private string AccountRateTip =>
+        $"{Percent(_summary!.LinkedAccountCount, _summary!.TotalCount)}% {L["TenantAccountRateHint"]}";
 
     private static string Initial(string value) =>
         string.IsNullOrWhiteSpace(value) ? "?" : value.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[^1][..1].ToUpperInvariant();

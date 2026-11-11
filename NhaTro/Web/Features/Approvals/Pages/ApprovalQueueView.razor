@@ -1,0 +1,549 @@
+@* Hàng đợi duyệt: Chủ trọ quyết định các thao tác Quản lý đã gửi vào hàng đợi.
+   Mỗi yêu cầu hiển thị đối tượng bị tác động, người gửi và nội dung đề xuất đọc từ payload
+   để quyết định được ngay tại chỗ. *@
+@inject ApprovalQueuePageService Queue
+@inject ToastService Toasts
+@inject TimeProvider Clock
+@inject IStringLocalizer<ApprovalResources> L
+@inject IStringLocalizer<Shared> SL
+
+<PageTitle>@L["PageTitle"]</PageTitle>
+
+<section class="approval-queue-page" aria-labelledby="approval-queue-title">
+    <PageHeading Title="@L["PageTitle"]" TitleId="approval-queue-title" HelpText="@L["PageHelp"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@L["Refresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["LoadFailedTitle"]" Description="@L["LoadFailedDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["EmptyTitle"]" Description="@L["EmptyDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Refresh"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="stat-grid stat-grid--three">
+            <div class="stat-card @(PendingCount > 0 ? "stat-card--warning" : null)">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatPending"]</span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="inbox" /></span>
+                </div>
+                <div class="stat-value">@PendingCount</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatToday"]</span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="calendar" /></span>
+                </div>
+                <div class="stat-value">@TodayCount</div>
+            </div>
+            <div class="stat-card @(OldestAgeDays >= 3 ? "stat-card--warning" : null)">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatOldest"]</span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="history" /></span>
+                </div>
+                <div class="stat-value stat-value--text">@OldestText</div>
+            </div>
+        </div>
+
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="approval-keyword">@L["FilterSearchLabel"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="approval-keyword" class="input" type="search" autocomplete="off"
+                           placeholder="@L["FilterSearchPlaceholder"]"
+                           @bind="_keyword" @bind:event="oninput" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="approval-group">@L["FilterGroup"]</label>
+                    <select id="approval-group" class="input" @bind="_group">
+                        <option value="">@L["AllGroups"]</option>
+                        @foreach (var group in GroupOptions)
+                        {
+                            <option value="@group">@GroupText(group)</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="approval-sort">@L["SortLabel"]</label>
+                    <select id="approval-sort" class="input" @bind="_sort">
+                        <option value="@SortOldest">@L["SortOldest"]</option>
+                        <option value="@SortNewest">@L["SortNewest"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
+                        <LucideIcon Name="refresh-cw" /> @L["ResetFilters"]
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (Filtered.Count == 0)
+        {
+            <EmptyStateCard Title="@L["NoResultsTitle"]" Description="@L["NoResultsDescription"]">
+                <button type="button" class="btn btn-secondary" @onclick="ResetFilters">@L["ResetFilters"]</button>
+            </EmptyStateCard>
+        }
+        else
+        {
+            <ul class="approval-list">
+                @foreach (var item in Filtered)
+                {
+                    var expanded = _expanded.Contains(item.Id);
+                    <li class="approval-card" @key="item.Id">
+                        <div class="approval-card__head">
+                            <div class="approval-card__title">
+                                <span class="approval-card__code">@item.OperationCode</span>
+                                <h2>@OperationName(item.OperationCode)</h2>
+                            </div>
+                            <StatusBadge Text="@AgeText(item.RequestedAt)" Tone="@AgeTone(item.RequestedAt)" />
+                        </div>
+
+                        <p class="approval-card__target">
+                            <LucideIcon Name="door" />
+                            <span>@item.TargetLabel</span>
+                        </p>
+
+                        <dl class="approval-card__meta">
+                            <div>
+                                <dt>@L["RequesterLabel"]</dt>
+                                <dd><LucideIcon Name="user" />@RequesterText(item)</dd>
+                            </div>
+                            <div>
+                                <dt>@L["SentAtLabel"]</dt>
+                                <dd class="tabular-nums"><LucideIcon Name="calendar" />@DateFormatter.FormatDateTime(item.RequestedAt)</dd>
+                            </div>
+                            <div>
+                                <dt>@L["GroupLabel"]</dt>
+                                <dd>@GroupText(item.Group)</dd>
+                            </div>
+                        </dl>
+
+                        @if (item.Details.Count > 0)
+                        {
+                            <button type="button" class="approval-card__toggle"
+                                    aria-expanded="@(expanded ? "true" : "false")"
+                                    aria-controls="@DetailId(item)"
+                                    @onclick="() => ToggleDetails(item.Id)">
+                                <LucideIcon Name="chevron-down" />
+                                <span>@(expanded ? L["DetailsToggleHide"] : L["DetailsToggleShow"])</span>
+                            </button>
+                            <dl class="approval-card__details" id="@DetailId(item)" hidden="@(!expanded)">
+                                @foreach (var line in item.Details)
+                                {
+                                    <div>
+                                        <dt>@DetailLabel(line)</dt>
+                                        <dd>@DetailValue(line)</dd>
+                                    </div>
+                                }
+                            </dl>
+                        }
+
+                        @if (!item.CanApply)
+                        {
+                            <p class="approval-card__note" role="note">
+                                <LucideIcon Name="alert-triangle" />
+                                <span>@L["ApplyNotSupported"]</span>
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+                        {
+                            <p class="approval-card__note" role="note">
+                                <LucideIcon Name="info" />
+                                <span><strong>@L["DecisionReasonLabel"]:</strong> @item.DecisionReason</span>
+                            </p>
+                        }
+
+                        <div class="approval-card__actions">
+                            <button type="button" class="btn btn-primary"
+                                    disabled="@(!item.CanApply)"
+                                    title="@ApplyTitle(item)"
+                                    @onclick="() => AskApprove(item)">
+                                <LucideIcon Name="check" />
+                                <span>@L["Approve"]</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" @onclick="() => AskReject(item)">
+                                <LucideIcon Name="close" />
+                                <span>@L["Reject"]</span>
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    }
+</section>
+
+<ConfirmDialog Visible="@(_approveId is not null)"
+               Title="@L["ApproveDialogTitle"]"
+               ConfirmText="@L["Approve"]"
+               CancelText="@L["Cancel"]"
+               BusyText="@L["Busy"]"
+               OnConfirm="ConfirmApproveAsync"
+               OnCancel="CloseApprove">
+    <p>@L["ApproveDialogBody"]</p>
+    @if (ApproveTarget is { } target)
+    {
+        <p class="approval-dialog-target">
+            <strong>@OperationName(target.OperationCode)</strong> · @target.TargetLabel
+        </p>
+    }
+</ConfirmDialog>
+
+<FeatureDialog Visible="@(_rejectId is not null)"
+               Title="@L["RejectDialogTitle"]"
+               CloseLabel="@L["CloseDialog"]"
+               Busy="@_busy"
+               OnClose="CloseReject">
+    @if (RejectTarget is { } rejectTarget)
+    {
+        <p class="approval-dialog-target">
+            <strong>@OperationName(rejectTarget.OperationCode)</strong> · @rejectTarget.TargetLabel
+        </p>
+    }
+
+    <div class="approval-reject">
+        <label for="approval-reject-reason">@L["RejectReasonLabel"]</label>
+        <textarea id="approval-reject-reason" class="input approval-reject__textarea" rows="4"
+                  maxlength="@RejectApprovalRequest.MaxReasonLength"
+                  placeholder="@L["RejectReasonPlaceholder"]"
+                  disabled="@_busy"
+                  @bind="_rejectReason" @bind:event="oninput"></textarea>
+        <p class="approval-reject__hint">@L["RejectReasonHint"]</p>
+        @if (_rejectError is not null)
+        {
+            <p class="approval-reject__error" role="alert">@_rejectError</p>
+        }
+    </div>
+
+    <div class="approval-reject__actions">
+        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="CloseReject">@L["Cancel"]</button>
+        <button type="button" class="btn btn-danger" disabled="@_busy" @onclick="ConfirmRejectAsync">
+            @(_busy ? L["Busy"] : L["Reject"])
+        </button>
+    </div>
+</FeatureDialog>
+
+@code {
+    private const string SortOldest = "oldest";
+    private const string SortNewest = "newest";
+
+    private IReadOnlyList<ApprovalQueueItem> _items = [];
+    private readonly HashSet<Guid> _expanded = [];
+    private bool _loading = true;
+    private bool _failed;
+    private string _keyword = string.Empty;
+    private string _group = string.Empty;
+    private string _sort = SortOldest;
+    private Guid? _approveId;
+    private Guid? _rejectId;
+    private string _rejectReason = string.Empty;
+    private string? _rejectError;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private int PendingCount => _items.Count;
+
+    private int TodayCount
+    {
+        get
+        {
+            var today = VietnamTime.ToVietnam(Clock.GetUtcNow().UtcDateTime).Date;
+            return _items.Count(item => VietnamTime.ToVietnam(item.RequestedAt).Date == today);
+        }
+    }
+
+    private int OldestAgeDays
+    {
+        get
+        {
+            if (_items.Count == 0)
+            {
+                return 0;
+            }
+
+            var oldest = _items.Min(item => item.RequestedAt);
+            return AgeDays(oldest);
+        }
+    }
+
+    private string OldestText => OldestAgeDays < 1
+        ? L["AgeUnderDay"].Value
+        : L["AgeDays", OldestAgeDays].Value;
+
+    private IReadOnlyList<string> GroupOptions =>
+        _items.Select(item => item.Group).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.Ordinal).ToList();
+
+    private IReadOnlyList<ApprovalQueueItem> Filtered
+    {
+        get
+        {
+            var keyword = _keyword.Trim();
+            var matches = _items.Where(item => Matches(item, keyword));
+            return (_sort == SortNewest
+                    ? matches.OrderByDescending(item => item.RequestedAt)
+                    : matches.OrderBy(item => item.RequestedAt))
+                .ToList();
+        }
+    }
+
+    private ApprovalQueueItem? ApproveTarget =>
+        _approveId is { } id ? _items.FirstOrDefault(item => item.Id == id) : null;
+
+    private ApprovalQueueItem? RejectTarget =>
+        _rejectId is { } id ? _items.FirstOrDefault(item => item.Id == id) : null;
+
+    private bool Matches(ApprovalQueueItem item, string keyword)
+    {
+        if (_group.Length > 0 && !string.Equals(item.Group, _group, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (keyword.Length == 0)
+        {
+            return true;
+        }
+
+        return Contains(item.TargetLabel)
+            || Contains(item.RequesterName)
+            || Contains(item.OperationCode)
+            || Contains(OperationName(item.OperationCode));
+
+        bool Contains(string? value) =>
+            !string.IsNullOrWhiteSpace(value)
+            && value.Contains(keyword, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _failed = false;
+        try
+        {
+            var result = await Queue.LoadAsync();
+            if (result.Succeeded)
+            {
+                _items = result.Items;
+                _expanded.RemoveWhere(id => _items.All(item => item.Id != id));
+            }
+            else
+            {
+                _failed = true;
+                _items = [];
+                Toasts.Error(ErrorText(result.ErrorCode));
+            }
+        }
+        catch (Exception)
+        {
+            _failed = true;
+            _items = [];
+            Toasts.Error(L["LoadFailedDescription"].Value);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetFilters()
+    {
+        _keyword = string.Empty;
+        _group = string.Empty;
+        _sort = SortOldest;
+    }
+
+    private void ToggleDetails(Guid id)
+    {
+        if (!_expanded.Remove(id))
+        {
+            _expanded.Add(id);
+        }
+    }
+
+    private void AskApprove(ApprovalQueueItem item) => _approveId = item.Id;
+
+    private void CloseApprove()
+    {
+        if (!_busy)
+        {
+            _approveId = null;
+        }
+    }
+
+    private void AskReject(ApprovalQueueItem item)
+    {
+        _rejectId = item.Id;
+        _rejectReason = string.Empty;
+        _rejectError = null;
+    }
+
+    private void CloseReject()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _rejectId = null;
+        _rejectReason = string.Empty;
+        _rejectError = null;
+    }
+
+    private async Task ConfirmApproveAsync()
+    {
+        if (_approveId is not { } id || _busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = await Queue.ApproveAsync(id);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["ApproveSuccess"].Value);
+            }
+            else
+            {
+                Toasts.Error(ErrorText(result.ErrorCode));
+            }
+
+            _approveId = null;
+            await LoadAsync();
+        }
+        catch (Exception)
+        {
+            Toasts.Error(L["ErrorGeneric"].Value);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_rejectId is not { } id || _busy)
+        {
+            return;
+        }
+
+        var reason = _rejectReason.Trim();
+        if (reason.Length == 0)
+        {
+            _rejectError = L["RejectReasonRequired"].Value;
+            return;
+        }
+
+        if (reason.Length > RejectApprovalRequest.MaxReasonLength)
+        {
+            _rejectError = L["ErrorRejectReasonTooLong"].Value;
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = await Queue.RejectAsync(id, reason);
+            if (result.Succeeded)
+            {
+                Toasts.Success(L["RejectSuccess"].Value);
+                _rejectId = null;
+                _rejectReason = string.Empty;
+                _rejectError = null;
+            }
+            else
+            {
+                // Lý do đã hợp lệ nên lỗi đến từ trạng thái yêu cầu: đóng hộp thoại rồi đọc lại hàng đợi.
+                _rejectId = null;
+                _rejectError = null;
+                Toasts.Error(ErrorText(result.ErrorCode));
+            }
+
+            await LoadAsync();
+        }
+        catch (Exception)
+        {
+            Toasts.Error(L["ErrorGeneric"].Value);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string OperationName(string code)
+    {
+        var name = SL[code];
+        return name.ResourceNotFound ? code : name.Value;
+    }
+
+    private string GroupText(string group)
+    {
+        var text = L[$"Group{group}"];
+        return text.ResourceNotFound ? group : text.Value;
+    }
+
+    private string RequesterText(ApprovalQueueItem item) =>
+        string.IsNullOrWhiteSpace(item.RequesterName) ? L["UnknownRequester"].Value : item.RequesterName;
+
+    private string DetailLabel(ApprovalQueueLine line)
+    {
+        var text = L[line.LabelKey];
+        return text.ResourceNotFound ? line.LabelKey : text.Value;
+    }
+
+    private string DetailValue(ApprovalQueueLine line)
+    {
+        if (line.ValueKey is { Length: > 0 } key)
+        {
+            var value = L[key];
+            return value.ResourceNotFound ? key : value.Value;
+        }
+
+        return string.IsNullOrWhiteSpace(line.Value) ? "—" : line.Value!;
+    }
+
+    private string? ApplyTitle(ApprovalQueueItem item) =>
+        item.CanApply ? null : L["ApplyNotSupported"].Value;
+
+    private int AgeDays(DateTime requestedAtUtc) =>
+        Math.Max(0, (int)Math.Floor((Clock.GetUtcNow().UtcDateTime - requestedAtUtc).TotalDays));
+
+    private string AgeText(DateTime requestedAtUtc) => AgeDays(requestedAtUtc) < 1
+        ? L["AgeUnderDay"].Value
+        : L["AgeDays", AgeDays(requestedAtUtc)].Value;
+
+    private BadgeTone AgeTone(DateTime requestedAtUtc) =>
+        AgeDays(requestedAtUtc) >= 2 ? BadgeTone.Warning : BadgeTone.Neutral;
+
+    private string ErrorText(string? errorCode)
+    {
+        var key = string.IsNullOrWhiteSpace(errorCode) ? "ErrorGeneric" : $"Error{errorCode}";
+        var text = L[key];
+        return text.ResourceNotFound ? L["ErrorGeneric"].Value : text.Value;
+    }
+
+    private static string DetailId(ApprovalQueueItem item) => $"approval-details-{item.Id:N}";
+}

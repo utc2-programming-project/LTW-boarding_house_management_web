@@ -398,6 +398,78 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Accounts.Otp.OtpChallenge", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("ConsumedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("LastSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("Email", "CreatedAt");
+
+                    b.HasIndex("UserId", "Purpose", "ConsumedAt");
+
+                    b.ToTable("OtpChallenges", (string)null);
+                });
+
             modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1470,6 +1542,49 @@ namespace Web.Migrations
                     b.ToTable("StoredFiles");
                 });
 
+            modelBuilder.Entity("Web.Features.Tenants.Entities.PendingRoomAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("InvitationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvitationId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("TenantId", "RoomId", "Status")
+                        .IsUnique();
+
+                    b.ToTable("PendingRoomAssignments", (string)null);
+                });
+
             modelBuilder.Entity("Web.Features.Tenants.Entities.Tenant", b =>
                 {
                     b.Property<int>("Id")
@@ -1578,8 +1693,15 @@ namespace Web.Migrations
                     b.Property<DateTime?>("AcceptedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("Channel")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1588,6 +1710,9 @@ namespace Web.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("ExpiryPresetMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -1599,6 +1724,9 @@ namespace Web.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
                     b.Property<string>("OwnerId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -1608,14 +1736,24 @@ namespace Web.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("RoomId")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<string>("TargetUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("TenantId")
                         .HasColumnType("int");
@@ -1629,8 +1767,12 @@ namespace Web.Migrations
 
                     b.HasIndex("Email");
 
+                    b.HasIndex("ExpiresAt");
+
                     b.HasIndex("TokenHash")
                         .IsUnique();
+
+                    b.HasIndex("Channel", "CreatedAt");
 
                     b.HasIndex("OwnerId", "AcceptedAt");
 

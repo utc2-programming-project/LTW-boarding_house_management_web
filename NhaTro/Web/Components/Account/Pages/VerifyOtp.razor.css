@@ -1,0 +1,102 @@
+/* Giữ trang OTP tự đứng được kể cả khi CSS toàn cục chưa kịp nạp. */
+.auth-page {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Giữ đúng kích thước card như 3 trang auth khác (app.css) để chuyển bước
+   Quên mật khẩu -> nhập OTP không bị đổi chiều rộng/độ đệm. */
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.auth-heading {
+    margin-bottom: 24px;
+}
+
+.otp-target {
+    margin: 0 0 18px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.otp-native-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.otp-cells {
+    display: grid;
+    grid-template-columns: repeat(var(--otp-count, 6), minmax(0, 1fr));
+    gap: 8px;
+}
+
+.otp-cells ::deep .otp-cell {
+    width: 100%;
+    height: 52px;
+    padding: 0;
+    border: 1px solid var(--control-border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    outline: none;
+    transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+
+.otp-cells ::deep .otp-cell:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+@media (max-width: 420px) {
+    .otp-cells {
+        gap: 5px;
+    }
+
+    .otp-cells ::deep .otp-cell {
+        height: 46px;
+        font-size: 18px;
+        border-radius: 8px;
+    }
+}
+
+.otp-back {
+    margin: 18px 0 0;
+}
+
+/* EditForm là component nên cần ::deep để chạm tới thẻ form do nó render. */
+.auth-card ::deep form + form {
+    margin-top: 12px;
+}
+
+.auth-card ::deep form > button[type="submit"] {
+    margin-top: 4px;
+}
+
+.auth-card ::deep .btn-block + .btn-block {
+    margin-top: 8px;
+}
+
+@media (max-width: 767.98px) {
+    .auth-card {
+        padding: 24px 20px;
+    }
+}

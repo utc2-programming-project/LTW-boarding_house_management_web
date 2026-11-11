@@ -42,10 +42,13 @@ namespace Microsoft.AspNetCore.Routing
             });
 
             accountGroup.MapPost("/Logout", async (
+                HttpContext context,
                 ClaimsPrincipal user,
                 [FromServices] SignInManager<ApplicationUser> signInManager,
                 [FromForm] string returnUrl) =>
             {
+                // PLAN-027: xoá cache/cookie/storage phía trình duyệt khi kết thúc phiên.
+                context.Response.Headers["Clear-Site-Data"] = "\"cache\", \"cookies\", \"storage\"";
                 await signInManager.SignOutAsync();
                 return TypedResults.LocalRedirect($"~/{returnUrl}");
             });

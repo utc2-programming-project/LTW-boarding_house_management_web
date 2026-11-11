@@ -51,47 +51,102 @@
     }
     else if (_ready)
     {
-        <section class="p2-filter-panel" aria-label="@L["P2PropertyFilters"]">
-            <form class="property-filters" @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
-                <label class="search-field" for="property-keyword">
-                    <LucideIcon Name="search" />
-                    <span class="sr-only">@L["P2SearchProperties"]</span>
-                    <input id="property-keyword" type="search" maxlength="200" autocomplete="off"
-                           placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput"
-                           @bind:after="ApplyFiltersAsync" />
-                </label>
-                <label class="filter-select" for="property-active">
-                    <span class="sr-only">@L["P2Activity"]</span>
-                    <select id="property-active" @bind="_activeFilter" @bind:after="ApplyFiltersAsync">
-                        <option value="">@L["P2AllActivity"]</option>
-                        <option value="true">@L["P2Active"]</option>
-                        <option value="false">@L["P2Inactive"]</option>
-                    </select>
-                </label>
-                <label class="filter-number" for="property-min-rooms">
-                    <span>@L["P2MinRooms"]</span>
-                    <input id="property-min-rooms" type="number" min="0" inputmode="numeric"
-                           placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount" />
-                </label>
-                <label class="filter-number" for="property-max-rooms">
-                    <span>@L["P2MaxRooms"]</span>
-                    <input id="property-max-rooms" type="number" min="0" inputmode="numeric"
-                           placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount" />
-                </label>
-                <label class="filter-select" for="property-sort">
-                    <span class="sr-only">@L["P2SortBy"]</span>
-                    <select id="property-sort" @bind="_sortFilter" @bind:after="ApplyFiltersAsync">
-                        <option value="name">@L["P2SortName"]</option>
-                        <option value="newest">@L["P2SortNewest"]</option>
-                        <option value="oldest">@L["P2SortOldest"]</option>
-                        <option value="roomCountDesc">@L["P2SortRoomCountDesc"]</option>
-                        <option value="roomCountAsc">@L["P2SortRoomCountAsc"]</option>
-                    </select>
-                </label>
-                <button class="btn btn-primary" type="submit">@L["P2ApplyFilters"]</button>
-                <button class="btn btn-secondary" type="button" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />@L["P2ResetFilters"]
-                </button>
+        @if (_summary is not null)
+        {
+            <section class="stat-grid" aria-label="@L["P2PropertyStatSummary"]">
+                <article class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["P2PropertyStatTotal"]
+                            <button type="button" class="stat-help" data-tip="@L["P2PropertyStatTotalHint"]" aria-label="@L["P2PropertyStatTotalHint"]">?</button>
+                        </span>
+                        <span class="stat-icon stat-icon--accent"><LucideIcon Name="building" /></span>
+                    </div>
+                    <div class="stat-value">@_summary.Total <small>@L["P2PropertyStatUnit"]</small></div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">@L["P2Active"]</span>
+                        <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+                    </div>
+                    <div class="stat-value">@_summary.Active <small>@L["P2PropertyStatUnit"]</small></div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">@L["P2Inactive"]</span>
+                        <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
+                    </div>
+                    <div class="stat-value">@_summary.Inactive <small>@L["P2PropertyStatUnit"]</small></div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["P2TotalRooms"]
+                            <button type="button" class="stat-help" data-tip="@L["P2PropertyStatRoomsHint"]" aria-label="@L["P2PropertyStatRoomsHint"]">?</button>
+                        </span>
+                        <span class="stat-icon stat-icon--info"><LucideIcon Name="door" /></span>
+                    </div>
+                    <div class="stat-value">@_summary.Rooms <small>@L["P2RoomUnit"]</small></div>
+                </article>
+            </section>
+        }
+
+        <section aria-label="@L["P2PropertyFilters"]">
+            <form class="filter-bar filter-bar--panel" novalidate @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+                <div class="filter-bar__row">
+                    <div class="filter-bar__search">
+                        <label class="sr-only" for="property-keyword">@L["P2SearchProperties"]</label>
+                        <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                        <input id="property-keyword" class="input" type="search" maxlength="200" autocomplete="off"
+                               placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput"
+                               @bind:after="ApplyFiltersAsync" />
+                    </div>
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="property-active">@L["P2Activity"]</label>
+                        <select id="property-active" class="input" @bind="_activeFilter" @bind:after="ApplyFiltersAsync">
+                            <option value="">@L["P2AllActivity"]</option>
+                            <option value="true">@L["P2Active"]</option>
+                            <option value="false">@L["P2Inactive"]</option>
+                        </select>
+                    </div>
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="property-sort">@L["P2SortBy"]</label>
+                        <select id="property-sort" class="input" @bind="_sortFilter" @bind:after="ApplyFiltersAsync">
+                            <option value="name">@L["P2SortName"]</option>
+                            <option value="newest">@L["P2SortNewest"]</option>
+                            <option value="oldest">@L["P2SortOldest"]</option>
+                            <option value="roomCountDesc">@L["P2SortRoomCountDesc"]</option>
+                            <option value="roomCountAsc">@L["P2SortRoomCountAsc"]</option>
+                        </select>
+                    </div>
+                    <div class="filter-bar__actions">
+                        <div class="filter-bar__state">
+                            <label class="sr-only" for="property-page-size">@L["P2RowsPerPage"]</label>
+                            <select id="property-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                                <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                                <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                                <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                            </select>
+                        </div>
+                        <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="property-advanced-panel" />
+                        <button class="btn btn-secondary filter-bar__reset" type="button" @onclick="ResetFiltersAsync">
+                            <LucideIcon Name="refresh-cw" /> @L["P2ResetFilters"]
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-bar__advanced" id="property-advanced-panel" hidden="@(!_showAdvanced)">
+                    <div class="filter-bar__stack">
+                        <label for="property-min-rooms">@L["P2MinRooms"]</label>
+                        <input id="property-min-rooms" class="input" type="number" min="0" inputmode="numeric"
+                               placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount" />
+                    </div>
+                    <div class="filter-bar__stack">
+                        <label for="property-max-rooms">@L["P2MaxRooms"]</label>
+                        <input id="property-max-rooms" class="input" type="number" min="0" inputmode="numeric"
+                               placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount" />
+                    </div>
+                    <button class="btn btn-primary filter-bar__submit" type="submit">@L["P2ApplyFilters"]</button>
+                </div>
             </form>
         </section>
 
@@ -106,13 +161,6 @@
                 }
             </EmptyActions>
         </DataTable>
-
-        <div class="p2-table-options">
-            <label for="property-page-size">@L["P2RowsPerPage"]</label>
-            <select id="property-page-size" value="@_pageSize" @onchange="ChangePageSize">
-                <option value="10">10</option><option value="20">20</option><option value="50">50</option>
-            </select>
-        </div>
     }
 </div>
 
@@ -171,8 +219,14 @@
     private bool _ready;
     private bool _isOwner;
     private bool _hasActiveFilters;
+    private bool _showAdvanced;
     private PropertySetupDraft? _draft;
+    private PropertyListSummary? _summary;
     private string? _userId;
+
+    private int AdvancedFilterCount =>
+        (string.IsNullOrWhiteSpace(_minRoomCount) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(_maxRoomCount) ? 0 : 1);
 
     protected override async Task OnInitializedAsync()
     {
@@ -195,6 +249,16 @@
             }
             _isOwner = role == Roles.ChuTro;
             _ready = true;
+
+            try
+            {
+                _summary = await PageService.GetSummaryAsync();
+            }
+            catch (Exception ex)
+            {
+                // Dải KPI chỉ là phụ trợ: lỗi tải số liệu không chặn bảng danh sách.
+                Logger.LogError(ex, "P2 property summary failed");
+            }
         }
         catch (Exception ex)
         {
@@ -262,6 +326,7 @@
         _minRoomCount = string.Empty;
         _maxRoomCount = string.Empty;
         _sortFilter = "name";
+        _showAdvanced = false;
         _hasActiveFilters = false;
         _tableKey++;
         return Task.CompletedTask;
@@ -274,6 +339,7 @@
         _minRoomCount = string.Empty;
         _maxRoomCount = string.Empty;
         _sortFilter = "name";
+        _showAdvanced = false;
         _hasActiveFilters = false;
         return Task.CompletedTask;
     }

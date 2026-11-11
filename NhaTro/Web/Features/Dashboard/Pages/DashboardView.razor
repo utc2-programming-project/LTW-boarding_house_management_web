@@ -14,24 +14,28 @@
             <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
         </Actions>
     </PageHeading>
-    <div class="filters">
-        <label>@L["Property"]
-            <select value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                <option value="">@L["AllProperties"]</option>
-                @foreach (var property in Properties)
-                {
-                    <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + L["Inactive"] : "")</option>
-                }
-            </select>
-        </label>
-        <label>@L["PendingPeriod"]
-            <select @bind="Filter.Period">
-                @foreach (var period in Enum.GetValues<DashboardPeriod>())
-                {
-                    <option value="@period">@L[period.ToString()]</option>
-                }
-            </select>
-        </label>
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__state filter-bar__field">
+                <label class="filter-bar__label" for="dashboard-property">@L["Property"]</label>
+                <select id="dashboard-property" class="input" value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                    <option value="">@L["AllProperties"]</option>
+                    @foreach (var property in Properties)
+                    {
+                        <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + L["Inactive"] : "")</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-bar__state filter-bar__field">
+                <label class="filter-bar__label" for="dashboard-period">@L["PendingPeriod"]</label>
+                <select id="dashboard-period" class="input" @bind="Filter.Period">
+                    @foreach (var period in Enum.GetValues<DashboardPeriod>())
+                    {
+                        <option value="@period">@L[period.ToString()]</option>
+                    }
+                </select>
+            </div>
+        </div>
     </div>
     @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
     {

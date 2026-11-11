@@ -1,4 +1,5 @@
 .incident-list { min-width: 0; }
+.incident-list > .stat-grid { margin-bottom: 20px; }
 
 /* Giữ chữ nút trên một dòng; bảng vẫn cuộn ngang trong khung ở màn hình hẹp. */
 .incident-list ::deep .incident-detail-action {

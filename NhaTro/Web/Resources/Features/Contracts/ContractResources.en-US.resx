@@ -120,6 +120,7 @@
   <data name="ContractFilterSortExpiring" xml:space="preserve"><value>Expiring soonest</value></data>
   <data name="ContractFilterSortRoom" xml:space="preserve"><value>By room code</value></data>
   <data name="ContractFilterReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="ContractFilterApply" xml:space="preserve"><value>Apply</value></data>
   <data name="ContractFilterDateFrom" xml:space="preserve"><value>Effective from</value></data>
   <data name="ContractFilterDateTo" xml:space="preserve"><value>Effective to</value></data>
   <data name="ContractFilterMinRent" xml:space="preserve"><value>Rent from</value></data>
@@ -157,6 +158,12 @@
   <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Rejected</value></data>
   <data name="ContractStatusLiquidated" xml:space="preserve"><value>Liquidated</value></data>
+  <data name="ContractStatSummary" xml:space="preserve"><value>Contract summary</value></data>
+  <data name="ContractStatTotal" xml:space="preserve"><value>Total contracts</value></data>
+  <data name="ContractStatTotalHint" xml:space="preserve"><value>All contracts within your view.</value></data>
+  <data name="ContractStatUnit" xml:space="preserve"><value>contracts</value></data>
+  <data name="ContractStatExpiringHint" xml:space="preserve"><value>Active contracts expiring within 30 days.</value></data>
+  <data name="ContractStatPendingHint" xml:space="preserve"><value>Contracts waiting for the owner to approve.</value></data>
   <data name="ContractRenewAction" xml:space="preserve"><value>Renew</value></data>
   <data name="ContractLiquidateAction" xml:space="preserve"><value>Liquidate</value></data>
   <data name="ContractRenewTitle" xml:space="preserve"><value>Renew contract</value></data>

@@ -1,0 +1,131 @@
+@page "/select-role"
+@layout Layout.AuthLayout
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Web.Data
+@using Web.Features.Accounts
+@using Web.Features.Accounts.Contexts
+
+@inject UserManager<ApplicationUser> Users
+@inject SignInManager<ApplicationUser> SignInManager
+@inject RoleContextService Contexts
+@inject ActiveRoleCookie ActiveRole
+@inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["SelectRoleTitle"] · @L["AppName"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="select-role-title">
+    <div class="auth-card">
+        <PageHeading Title="@L["SelectRoleTitle"]" TitleId="select-role-title"
+                     HelpText="@L["SelectRoleHelp"]" InteractiveHelp="true" Class="auth-heading" />
+
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_roles.Count > 0)
+        {
+            <EditForm Model="Input" FormName="select-role" OnValidSubmit="SelectAsync" method="post">
+                <DataAnnotationsValidator />
+                <div class="role-context-list">
+                    @foreach (var role in _roles)
+                    {
+                        <button type="submit" name="Input.Role" value="@role" class="role-context-card">
+                            <span class="role-context-icon"><LucideIcon Name="@Icon(role)" /></span>
+                            <span class="role-context-text">
+                                <strong>@L[AccountPermissionRules.RoleResourceKey(role)]</strong>
+                                <span>@Hint(role)</span>
+                            </span>
+                        </button>
+                    }
+                </div>
+            </EditForm>
+        }
+        else if (_loaded)
+        {
+            <p class="hint">@L["SelectRoleNone"]</p>
+            <form action="Account/Logout" method="post" data-enhance="false">
+                <AntiforgeryToken />
+                <button type="submit" class="btn btn-secondary btn-block">@L["SignOut"]</button>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromForm(FormName = "select-role")]
+    private InputModel Input { get; set; } = default!;
+
+    private ApplicationUser? _user;
+    private IReadOnlyList<string> _roles = [];
+    private bool _loaded;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new();
+
+        _user = await Users.GetUserAsync(HttpContext.User);
+        if (_user is null)
+        {
+            RedirectManager.RedirectTo("Account/Login");
+            return;
+        }
+
+        _roles = await Contexts.GetAvailableRolesAsync(_user.Id);
+        _loaded = true;
+    }
+
+    private async Task SelectAsync()
+    {
+        if (_user is null)
+        {
+            RedirectManager.RedirectTo("Account/Login");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Input.Role) || !_roles.Contains(Input.Role, StringComparer.Ordinal))
+        {
+            _error = L["SelectRoleInvalid"];
+            return;
+        }
+
+        ActiveRole.Set(HttpContext, Input.Role);
+        await SignInManager.RefreshSignInAsync(_user);
+        RedirectManager.RedirectTo(PostLoginRouter.SafeReturnUrl(ReturnUrl));
+    }
+
+    private string Hint(string role) => L[role switch
+    {
+        Roles.Admin => "SelectRoleAdminHint",
+        Roles.ChuTro => "SelectRoleOwnerHint",
+        Roles.QuanLy => "SelectRoleManagerHint",
+        _ => "SelectRoleTenantHint",
+    }];
+
+    private static string Icon(string role) => role switch
+    {
+        Roles.Admin => "shield-check",
+        Roles.ChuTro => "building",
+        Roles.QuanLy => "users",
+        _ => "door",
+    };
+
+    private sealed class InputModel
+    {
+        [Required]
+        public string Role { get; set; } = string.Empty;
+    }
+}

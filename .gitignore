@@ -9,10 +9,10 @@ CLAUDE.md
 .github/copilot-instructions.md
 .qoder/
 .agents/
-
+.commandcode/
 # Project-local OpenCode MCP configuration
 /opencode.json
-
+.freebuff/
 # Visual Studio / .NET
 .vs/
 bin/

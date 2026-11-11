@@ -30,90 +30,95 @@
     }
     else
     {
-        <div class="stats-grid">
-            <div class="stat-card pending-card">
-                <span class="stat-label">@L["ReviewStatPending"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.PendingCount</span>
+        <div class="stat-grid">
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ReviewStatPending"]</span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="history" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.PendingCount</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">@L["ReviewStatConfirmed"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.ConfirmedCount</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ReviewStatConfirmed"]</span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.ConfirmedCount</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">@L["ReviewStatRejected"]</span>
-                <span class="stat-number tabular-nums">@_result.Summary.RejectedCount</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ReviewStatRejected"]</span>
+                    <span class="stat-icon stat-icon--danger"><LucideIcon Name="circle-x" /></span>
+                </div>
+                <div class="stat-value">@_result.Summary.RejectedCount</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">@L["ReviewStatPendingAmount"]</span>
-                <span class="stat-number tabular-nums">@MoneyFormatter.Format(_result.Summary.PendingAmount)</span>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ReviewStatPendingAmount"]</span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="wallet" /></span>
+                </div>
+                <div class="stat-value">@MoneyFormatter.Format(_result.Summary.PendingAmount)</div>
             </div>
         </div>
 
-        <div class="filters-container">
-            <div class="filters-row">
-                <label class="filter-field">
-                    <span>@L["ReviewFilterStatus"]</span>
-                    <select class="input" @bind="_status" @bind:after="OnFilterChangedAsync">
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="review-keyword">@L["ReviewFilterKeyword"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="review-keyword" class="input" type="search" autocomplete="off"
+                           placeholder="@L["ReviewFilterKeywordPlaceholder"]"
+                           @bind="_keyword" @bind:event="oninput" @bind:after="OnFilterChangedAsync" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="review-status">@L["ReviewFilterStatus"]</label>
+                    <select id="review-status" class="input" @bind="_status" @bind:after="OnFilterChangedAsync">
                         <option value="">@L["ReviewAllStatuses"]</option>
                         <option value="@PaymentStatus.Pending">@L["PaymentStatusPending"]</option>
                         <option value="@PaymentStatus.Confirmed">@L["PaymentStatusConfirmed"]</option>
                         <option value="@PaymentStatus.Rejected">@L["PaymentStatusRejected"]</option>
                     </select>
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterYear"]</span>
-                    <select class="input" @bind="_year" @bind:after="OnFilterChangedAsync">
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="review-year">@L["FilterYear"]</label>
+                    <select id="review-year" class="input" @bind="_year" @bind:after="OnFilterChangedAsync">
                         <option value="">@L["AllYears"]</option>
                         @foreach (var year in AvailableYears)
                         {
                             <option value="@year">@year</option>
                         }
                     </select>
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["FilterMonth"]</span>
-                    <select class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChangedAsync">
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="review-month">@L["FilterMonth"]</label>
+                    <select id="review-month" class="input" disabled="@(_year is null)" @bind="_month" @bind:after="OnFilterChangedAsync">
                         <option value="">@L["AllMonths"]</option>
                         @for (var month = 1; month <= 12; month++)
                         {
                             <option value="@month">@string.Format(L["MonthValue"], month)</option>
                         }
                     </select>
-                </label>
+                </div>
+                <div class="filter-bar__actions">
+                    <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="review-advanced-panel" />
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
+                        <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
+                    </button>
+                </div>
             </div>
-
-            <div class="filters-row filters-row-secondary">
-                <label class="filter-field wide">
-                    <span>@L["ReviewFilterKeyword"]</span>
-                    <input class="input"
-                           type="search"
-                           autocomplete="off"
-                           placeholder="@L["ReviewFilterKeywordPlaceholder"]"
-                           @bind="_keyword"
-                           @bind:event="oninput"
-                           @bind:after="OnFilterChangedAsync" />
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["ReviewFilterMinAmount"]</span>
-                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+            <div class="filter-bar__advanced" id="review-advanced-panel" hidden="@(!_showAdvanced)">
+                <div class="filter-bar__stack">
+                    <label for="review-min-amount">@L["ReviewFilterMinAmount"]</label>
+                    <input id="review-min-amount" class="input" type="number" min="0" step="1000" inputmode="numeric"
                            placeholder="@L["ReviewAmountPlaceholder"]"
                            @bind="_minAmount" @bind:after="OnFilterChangedAsync" />
-                </label>
-
-                <label class="filter-field">
-                    <span>@L["ReviewFilterMaxAmount"]</span>
-                    <input class="input" type="number" min="0" step="1000" inputmode="numeric"
+                </div>
+                <div class="filter-bar__stack">
+                    <label for="review-max-amount">@L["ReviewFilterMaxAmount"]</label>
+                    <input id="review-max-amount" class="input" type="number" min="0" step="1000" inputmode="numeric"
                            placeholder="@L["ReviewAmountPlaceholder"]"
                            @bind="_maxAmount" @bind:after="OnFilterChangedAsync" />
-                </label>
-
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />
-                    <span>@L["ResetFilter"]</span>
-                </button>
+                </div>
             </div>
         </div>
 
@@ -223,6 +228,11 @@
     private bool _loading = true;
     private string? _error;
     private int _page = 1;
+    private bool _showAdvanced;
+
+    private int AdvancedFilterCount =>
+        (string.IsNullOrWhiteSpace(_minAmount) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(_maxAmount) ? 0 : 1);
 
     private static IReadOnlyList<int> AvailableYears
     {
@@ -290,6 +300,7 @@
         _minAmount = string.Empty;
         _maxAmount = string.Empty;
         _page = 1;
+        _showAdvanced = false;
         await ReloadAsync();
     }
 

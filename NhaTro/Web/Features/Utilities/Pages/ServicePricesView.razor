@@ -78,53 +78,95 @@
         }
     </div>
 
+    <div class="stat-grid" aria-label="@L["StatPriceSummary"]">
+        <div class="stat-card">
+            <div class="stat-card__top">
+                <span class="stat-label">
+                    @L["StatPriceVersions"]
+                    <button type="button" class="stat-help" data-tip="@L["StatPriceVersionsHint"]" aria-label="@L["StatPriceVersionsHint"]">?</button>
+                </span>
+                <span class="stat-icon stat-icon--accent"><LucideIcon Name="history" /></span>
+            </div>
+            <div class="stat-value">@_allVersions.Count <small>@L["StatPriceUnit"]</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__top">
+                <span class="stat-label">@L["StatusActive"]</span>
+                <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+            </div>
+            <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Active) <small>@L["StatPriceUnit"]</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__top">
+                <span class="stat-label">@L["StatusUpcoming"]</span>
+                <span class="stat-icon stat-icon--info"><LucideIcon Name="calendar" /></span>
+            </div>
+            <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Upcoming) <small>@L["StatPriceUnit"]</small></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__top">
+                <span class="stat-label">@L["StatusExpired"]</span>
+                <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
+            </div>
+            <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Expired) <small>@L["StatPriceUnit"]</small></div>
+        </div>
+    </div>
+
     <!-- Filter Toolbar -->
-    <div class="filters-container">
-        <div class="filters-row">
-            <label class="filter-field" for="price-keyword-filter">
-                <span class="filter-label">@L["PriceKeywordFilter"]</span>
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="price-keyword-filter">@L["PriceKeywordFilter"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                 <input id="price-keyword-filter" type="search" class="input" autocomplete="off"
                        placeholder="@L["PriceKeywordPlaceholder"]"
                        @bind="_keywordFilter" @bind:event="oninput" @bind:after="OnFilterChanged" />
-            </label>
-
-            <label class="filter-field" for="price-status-filter">
-                <span class="filter-label">@L["ThPriceStatus"]</span>
-                <select id="price-status-filter" class="input select-filter" @bind="_statusFilter" @bind:after="OnFilterChanged">
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="price-status-filter">@L["ThPriceStatus"]</label>
+                <select id="price-status-filter" class="input" @bind="_statusFilter" @bind:after="OnFilterChanged">
                     <option value="all">@L["AllStatuses"]</option>
                     <option value="@((int)PriceVersionStatus.Active)">@L["StatusActive"]</option>
                     <option value="@((int)PriceVersionStatus.Upcoming)">@L["StatusUpcoming"]</option>
                     <option value="@((int)PriceVersionStatus.Expired)">@L["StatusExpired"]</option>
                 </select>
-            </label>
-
-            <label class="filter-field" for="price-scope-filter">
-                <span class="filter-label">@L["ThPriceScope"]</span>
-                <select id="price-scope-filter" class="input select-filter" @bind="_scopeFilter" @bind:after="OnFilterChanged">
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="price-scope-filter">@L["ThPriceScope"]</label>
+                <select id="price-scope-filter" class="input" @bind="_scopeFilter" @bind:after="OnFilterChanged">
                     <option value="">@L["AllScopes"]</option>
                     @foreach (var scope in _scopeOptions)
                     {
                         <option value="@scope.Value">@scope.Label</option>
                     }
                 </select>
-            </label>
-
-            <label class="filter-field" for="price-effective-from-filter">
-                <span class="filter-label">@L["PriceEffectiveFromFilter"]</span>
-                <input id="price-effective-from-filter" type="date" class="input date-filter"
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="price-page-size">@L["RowsPerPage"]</label>
+                    <select id="price-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="price-advanced-panel" />
+                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
+                    <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
+                </button>
+            </div>
+        </div>
+        <div class="filter-bar__advanced" id="price-advanced-panel" hidden="@(!_showAdvanced)">
+            <div class="filter-bar__stack">
+                <label for="price-effective-from-filter">@L["PriceEffectiveFromFilter"]</label>
+                <input id="price-effective-from-filter" type="date" class="input"
                        @bind="_effectiveFromFilter" @bind:after="OnFilterChanged" />
-            </label>
-
-            <label class="filter-field" for="price-effective-to-filter">
-                <span class="filter-label">@L["PriceEffectiveToFilter"]</span>
-                <input id="price-effective-to-filter" type="date" class="input date-filter"
+            </div>
+            <div class="filter-bar__stack">
+                <label for="price-effective-to-filter">@L["PriceEffectiveToFilter"]</label>
+                <input id="price-effective-to-filter" type="date" class="input"
                        @bind="_effectiveToFilter" @bind:after="OnFilterChanged" />
-            </label>
-
-            <button type="button" class="btn btn-secondary btn-reset" @onclick="ResetFilters">
-                <LucideIcon Name="refresh" />
-                <span>@L["ResetFilter"]</span>
-            </button>
+            </div>
         </div>
     </div>
 
@@ -211,15 +253,6 @@
                 </div>
 
                 <div class="pagination-controls">
-                    <label class="page-size-field" for="price-page-size">
-                        <span>@L["RowsPerPage"]</span>
-                        <select id="price-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                        </select>
-                    </label>
-
                     <nav class="pager" aria-label="@L["PaginationLabel"]">
                         <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["PreviousPage"]">
                             <LucideIcon Name="chevron-left" />
@@ -302,7 +335,12 @@
     private bool _isLoading = true;
     private bool _isSampleData = false;
     private bool _canWrite = false;
+    private bool _showAdvanced;
     private string? _loadError;
+
+    private int AdvancedFilterCount =>
+        (_effectiveFromFilter is null ? 0 : 1)
+        + (_effectiveToFilter is null ? 0 : 1);
 
     [Parameter, SupplyParameterFromQuery(Name = "serviceId")]
     public string? ServiceId { get; set; }
@@ -447,6 +485,7 @@
         _keywordFilter = string.Empty;
         _effectiveFromFilter = null;
         _effectiveToFilter = null;
+        _showAdvanced = false;
         _page = 1;
         ApplyFilters();
     }

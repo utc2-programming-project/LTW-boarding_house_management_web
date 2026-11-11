@@ -8,7 +8,8 @@
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
 
-<FeatureDialog Visible="Visible" Title="@L["InviteTenantTitle"]" CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose">
+<FeatureDialog Visible="Visible" Title="@L["InviteTenantTitle"]" CloseLabel="@L["Close"]"
+               CssClass="tenant-invite-dialog" Busy="_saving" OnClose="OnClose">
     <EditForm Model="_model" OnValidSubmit="SubmitAsync">
         <DataAnnotationsValidator />
 

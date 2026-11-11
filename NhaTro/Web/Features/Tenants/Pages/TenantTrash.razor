@@ -22,14 +22,21 @@
         <span>@L["TenantTrashRetentionNote"]</span>
     </div>
 
-    <div class="tenant-trash-toolbar">
-        <div class="tenant-trash-search">
+    <div class="filter-bar__row">
+        <div class="filter-bar__search">
             <label class="sr-only" for="tenant-trash-search">@L["TenantTrashSearch"]</label>
-            <span class="tenant-trash-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+            <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
             <InputText id="tenant-trash-search" class="input" @bind-Value="_keyword"
                        @bind-Value:after="SearchAsync" placeholder="@L["TenantTrashSearchHint"]" autocomplete="off" />
         </div>
-        <span class="tenant-trash-count">@string.Format(L["TenantTrashCount"], _total)</span>
+        @if (HasKeyword)
+        {
+            <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ClearKeywordAsync"
+                    aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
+                <LucideIcon Name="refresh-cw" />
+            </button>
+        }
+        <span class="filter-bar__meta tenant-trash-count">@string.Format(L["TenantTrashCount"], _total)</span>
     </div>
 
     @if (_error)
@@ -128,6 +135,8 @@
 
     private int PageCount => Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
 
+    private bool HasKeyword => !string.IsNullOrWhiteSpace(_keyword);
+
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private async Task LoadAsync()
@@ -169,6 +178,12 @@
     {
         _page = 1;
         return LoadAsync();
+    }
+
+    private Task ClearKeywordAsync()
+    {
+        _keyword = null;
+        return SearchAsync();
     }
 
     private Task PreviousPageAsync()

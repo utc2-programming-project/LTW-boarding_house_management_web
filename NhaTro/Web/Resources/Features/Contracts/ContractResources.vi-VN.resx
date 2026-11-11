@@ -120,6 +120,7 @@
   <data name="ContractFilterSortExpiring" xml:space="preserve"><value>Sắp hết hạn trước</value></data>
   <data name="ContractFilterSortRoom" xml:space="preserve"><value>Theo mã phòng</value></data>
   <data name="ContractFilterReset" xml:space="preserve"><value>Đặt lại</value></data>
+  <data name="ContractFilterApply" xml:space="preserve"><value>Áp dụng</value></data>
   <data name="ContractFilterDateFrom" xml:space="preserve"><value>Hiệu lực từ ngày</value></data>
   <data name="ContractFilterDateTo" xml:space="preserve"><value>Đến ngày</value></data>
   <data name="ContractFilterMinRent" xml:space="preserve"><value>Tiền thuê từ</value></data>
@@ -157,6 +158,12 @@
   <data name="ContractStatusExpired" xml:space="preserve"><value>Hết hạn</value></data>
   <data name="ContractStatusRejected" xml:space="preserve"><value>Đã từ chối</value></data>
   <data name="ContractStatusLiquidated" xml:space="preserve"><value>Đã thanh lý</value></data>
+  <data name="ContractStatSummary" xml:space="preserve"><value>Tóm tắt hợp đồng</value></data>
+  <data name="ContractStatTotal" xml:space="preserve"><value>Tổng hợp đồng</value></data>
+  <data name="ContractStatTotalHint" xml:space="preserve"><value>Toàn bộ hợp đồng trong phạm vi bạn xem.</value></data>
+  <data name="ContractStatUnit" xml:space="preserve"><value>hợp đồng</value></data>
+  <data name="ContractStatExpiringHint" xml:space="preserve"><value>Hợp đồng đang hiệu lực và còn tối đa 30 ngày là hết hạn.</value></data>
+  <data name="ContractStatPendingHint" xml:space="preserve"><value>Hợp đồng đang chờ Chủ trọ duyệt.</value></data>
   <data name="ContractRenewAction" xml:space="preserve"><value>Gia hạn</value></data>
   <data name="ContractLiquidateAction" xml:space="preserve"><value>Thanh lý</value></data>
   <data name="ContractRenewTitle" xml:space="preserve"><value>Gia hạn hợp đồng</value></data>

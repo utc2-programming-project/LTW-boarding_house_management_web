@@ -647,12 +647,17 @@
     <value>Quick sign-in for testing</value>
   </data>
   <data name="DevQuickLoginHint" xml:space="preserve">
-    <value>Only shown when running locally in development with a test password configured. Click to enter each role directly; never shown in a real environment.</value>
+    <value>Development only. Click Use to sign in as that role.</value>
   </data>
 
   <!-- VHT-16: P2 property and room management UI -->
   <data name="P2PropertiesTitle" xml:space="preserve"><value>Properties</value></data>
   <data name="P2PropertiesSubtitle" xml:space="preserve"><value>Manage properties within your account scope</value></data>
+  <data name="P2PropertyStatSummary" xml:space="preserve"><value>Property summary</value></data>
+  <data name="P2PropertyStatTotal" xml:space="preserve"><value>Total properties</value></data>
+  <data name="P2PropertyStatTotalHint" xml:space="preserve"><value>All properties within your account scope, regardless of filters.</value></data>
+  <data name="P2PropertyStatUnit" xml:space="preserve"><value>properties</value></data>
+  <data name="P2PropertyStatRoomsHint" xml:space="preserve"><value>Total rooms across all properties, including soft-deleted rooms.</value></data>
   <data name="P2AddProperty" xml:space="preserve"><value>Add property</value></data>
   <data name="P2PropertyFilters" xml:space="preserve"><value>Property filters</value></data>
   <data name="P2SearchProperties" xml:space="preserve"><value>Search property name or address</value></data>
@@ -850,7 +855,6 @@
   <data name="TenantSecurityHint" xml:space="preserve"><value>ID numbers are always masked in the list</value></data>
   <data name="TenantSearch" xml:space="preserve"><value>Search tenants</value></data>
   <data name="TenantSearchHint" xml:space="preserve"><value>Search by name, phone number, or ID number</value></data>
-  <data name="TenantSearchPrivacyHint" xml:space="preserve"><value>Enter at least 3 characters to search by phone or ID number</value></data>
   <data name="TenantStatusFilter" xml:space="preserve"><value>Status</value></data>
   <data name="TenantStatusAll" xml:space="preserve"><value>All statuses</value></data>
   <data name="TenantStatusActive" xml:space="preserve"><value>Active</value></data>
@@ -1369,12 +1373,9 @@
   <data name="MeterReadingSearchLabel" xml:space="preserve"><value>Search</value></data>
   <data name="MeterReadingSearchPlaceholder" xml:space="preserve"><value>Search room code, room name, tenant, contract…</value></data>
   <data name="MeterReadingStatusFilter" xml:space="preserve"><value>Period status</value></data>
-  <data name="MeterReadingAdvancedFilter" xml:space="preserve"><value>Advanced filters</value></data>
-  <data name="MeterReadingAdvancedFilterCount" xml:space="preserve"><value>Advanced filters ({0})</value></data>
   <data name="MeterReadingAdvancedFilterTitle" xml:space="preserve"><value>Meter reading status</value></data>
   <data name="MeterReadingAdvancedSelectAll" xml:space="preserve"><value>Select all</value></data>
   <data name="MeterReadingAdvancedClear" xml:space="preserve"><value>Clear</value></data>
-  <data name="MeterReadingAdvancedHint" xml:space="preserve"><value>Pick one or more statuses. Rooms matching any selected status are shown.</value></data>
   <data name="MeterReadingStatusOptionUnrecorded" xml:space="preserve"><value>Not recorded (missing both electricity and water)</value></data>
   <data name="MeterReadingStatusOptionRecorded" xml:space="preserve"><value>Fully recorded</value></data>
   <data name="MeterReadingStatusOptionLocked" xml:space="preserve"><value>Locked (period closed, read-only)</value></data>
@@ -1497,7 +1498,7 @@
   <data name="InviteTenantButton" xml:space="preserve"><value>Invite tenant</value></data>
   <data name="InviteTenantTitle" xml:space="preserve"><value>Invite a tenant</value></data>
   <data name="InviteTenantEmailHint" xml:space="preserve"><value>The invitation is sent to this email.</value></data>
-  <data name="InviteTenantNote" xml:space="preserve"><value>The tenant opens the email and sets a password; the profile belongs to your account.</value></data>
+  <data name="InviteTenantNote" xml:space="preserve"><value>The tenant opens the email within 15 minutes, sets a password and verifies OTP; the profile belongs to your account.</value></data>
   <data name="InviteTenantSend" xml:space="preserve"><value>Send invitation</value></data>
   <data name="InviteTenantSent" xml:space="preserve"><value>Invitation sent by email.</value></data>
   <data name="InviteTenantEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
@@ -1516,8 +1517,8 @@
   <data name="RegisterOwnerTitle" xml:space="preserve"><value>Register as a landlord</value></data>
   <data name="RegisterOwnerSubtitle" xml:space="preserve"><value>Create a landlord account to manage your boarding houses.</value></data>
   <data name="RegisterOwnerButton" xml:space="preserve"><value>Submit registration</value></data>
-  <data name="RegisterOwnerNote" xml:space="preserve"><value>An administrator must approve your account before you can sign in.</value></data>
-  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Registration submitted. Your account is waiting for administrator approval; check your email to confirm the address.</value></data>
+  <data name="RegisterOwnerNote" xml:space="preserve"><value>After submitting, we will email a verification code. Enter it to activate your account and sign in.</value></data>
+  <data name="RegisterOwnerSuccessText" xml:space="preserve"><value>Registration successful. Check your email for the verification code.</value></data>
   <data name="RegisterOwnerEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
   <data name="RegisterOwnerFailed" xml:space="preserve"><value>Registration failed. Check your details and password (at least 8 characters with upper case, lower case and a digit).</value></data>
   <data name="RegisterOwnerLogin" xml:space="preserve"><value>Already have an account? Sign in</value></data>
@@ -1536,8 +1537,8 @@
   <data name="AccountDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
   <data name="AccountRestore" xml:space="preserve"><value>Restore</value></data>
   <data name="AccountRestored" xml:space="preserve"><value>Account restored.</value></data>
-  <data name="ForgotPasswordHint" xml:space="preserve"><value>Enter your registered email and we will send a password reset link.</value></data>
-  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>If the email exists in the system, you will receive a link within a few minutes. Remember to check the Spam folder.</value></data>
+  <data name="ForgotPasswordHint" xml:space="preserve"><value>Enter your registered email and we will send a verification code to reset your password.</value></data>
+  <data name="ForgotPasswordConfirmationHint" xml:space="preserve"><value>If the email exists in the system, you will receive a verification code within a few minutes. Remember to check the Spam folder.</value></data>
   <data name="ResetPasswordEmailHint" xml:space="preserve"><value>Use the email of the account you are resetting.</value></data>
   <data name="ResetPasswordConfirmationHint" xml:space="preserve"><value>You can now sign in with your new password.</value></data>
   <data name="ResetPasswordError" xml:space="preserve"><value>Could not reset the password: {0}</value></data>
@@ -1718,6 +1719,9 @@
   <data name="ExternalLoginPickerTitle" xml:space="preserve"><value>Log in using your {0} account</value></data>
   <data name="NoExternalAuthServices" xml:space="preserve"><value>There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article</a> about setting up this ASP.NET application to support logging in via external services.</value></data>
   <data name="ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="FilterAdvanced" xml:space="preserve"><value>Advanced filters</value></data>
+  <data name="FilterAdvancedCount" xml:space="preserve"><value>Advanced filters ({0})</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
   <data name="DepositPaidDateLabel" xml:space="preserve"><value>Deposit payment date</value></data>
   <data name="ContractStatusExpired" xml:space="preserve"><value>Expired</value></data>
   <data name="ContractStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
@@ -1933,4 +1937,114 @@
   <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>{0} rooms deleted.</value></data>
   <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>{0} rooms deleted, {1} could not be deleted:</value></data>
   <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Room {0}: {1}</value></data>
+  <!-- PLAN-022: OTP verification -->
+  <data name="OtpTitle" xml:space="preserve"><value>Email verification</value></data>
+  <data name="OtpHeading" xml:space="preserve"><value>Enter verification code</value></data>
+  <data name="OtpHelp" xml:space="preserve"><value>The code was sent to your email. It is valid for 10 minutes and can be used once.</value></data>
+  <data name="OtpCodeLabel" xml:space="preserve"><value>Verification code</value></data>
+  <data name="OtpCodeHint" xml:space="preserve"><value>Enter the 6 digits from the email.</value></data>
+  <data name="OtpSubmit" xml:space="preserve"><value>Verify</value></data>
+  <data name="OtpResend" xml:space="preserve"><value>Resend code</value></data>
+  <data name="OtpExpiresAt" xml:space="preserve"><value>The code is valid until {0}.</value></data>
+  <data name="OtpEmailMasked" xml:space="preserve"><value>Verifying {0}.</value></data>
+  <data name="OtpSent" xml:space="preserve"><value>A verification code was sent to your email.</value></data>
+  <data name="OtpCellLabel" xml:space="preserve"><value>Digit {0}</value></data>
+  <data name="OtpResendIn" xml:space="preserve"><value>Resend in {0}s</value></data>
+  <data name="AuthTabsLabel" xml:space="preserve"><value>Account</value></data>
+  <data name="AuthTabRegister" xml:space="preserve"><value>Register</value></data>
+  <data name="AuthTabForgot" xml:space="preserve"><value>Forgot password</value></data>
+  <data name="OrDivider" xml:space="preserve"><value>or</value></data>
+  <data name="EmailPlaceholder" xml:space="preserve"><value>you@example.com</value></data>
+  <data name="FullNamePlaceholder" xml:space="preserve"><value>Nguyen Van A</value></data>
+  <data name="PhonePlaceholder" xml:space="preserve"><value>09xx xxx xxx</value></data>
+  <data name="PasswordPlaceholder" xml:space="preserve"><value>••••••••</value></data>
+  <data name="PasswordMinHint" xml:space="preserve"><value>At least 8 characters</value></data>
+  <data name="OptionalLabel" xml:space="preserve"><value>(optional)</value></data>
+  <data name="DevUseButton" xml:space="preserve"><value>Use</value></data>
+  <data name="SendOtpButton" xml:space="preserve"><value>Send verification code</value></data>
+  <data name="OtpResendSuccess" xml:space="preserve"><value>A new code was sent. Please check your email.</value></data>
+  <data name="OtpResendCooldown" xml:space="preserve"><value>Please wait {0} seconds before resending.</value></data>
+  <data name="OtpExpired" xml:space="preserve"><value>The code expired. Please resend a new one.</value></data>
+  <data name="OtpLocked" xml:space="preserve"><value>Too many incorrect attempts. Please try again after {0}.</value></data>
+  <data name="OtpLockedSoon" xml:space="preserve"><value>a few minutes</value></data>
+  <data name="OtpNotFound" xml:space="preserve"><value>Verification code not found. Please resend.</value></data>
+  <data name="OtpInvalid" xml:space="preserve"><value>Incorrect code. You have {0} attempts left.</value></data>
+  <data name="OtpInvalidNoAttempts" xml:space="preserve"><value>Incorrect code. Please resend a new one.</value></data>
+  <data name="OtpTooMany" xml:space="preserve"><value>Too many code requests. Please try again later.</value></data>
+  <data name="OtpSendFailed" xml:space="preserve"><value>Could not send the verification code. Please try again.</value></data>
+  <data name="OtpUserNotFound" xml:space="preserve"><value>Account to verify was not found.</value></data>
+  <data name="OtpUpdateFailed" xml:space="preserve"><value>Could not update the account. Please try again.</value></data>
+  <data name="AccountStatusUnverified" xml:space="preserve"><value>Email unverified</value></data>
+  <!-- PLAN-023: role context -->
+  <data name="SelectRoleTitle" xml:space="preserve"><value>Choose a role</value></data>
+  <data name="SelectRoleHelp" xml:space="preserve"><value>Your account has more than one role. Choose the role for this session.</value></data>
+  <data name="SelectRoleAdminHint" xml:space="preserve"><value>Manage the whole system.</value></data>
+  <data name="SelectRoleOwnerHint" xml:space="preserve"><value>Manage your properties, managers and tenants.</value></data>
+  <data name="SelectRoleManagerHint" xml:space="preserve"><value>Operate the properties assigned by the owner.</value></data>
+  <data name="SelectRoleTenantHint" xml:space="preserve"><value>View your room, contract, invoices and tenant requests.</value></data>
+  <data name="SelectRoleInvalid" xml:space="preserve"><value>Invalid role. Please choose again.</value></data>
+  <data name="SelectRoleNone" xml:space="preserve"><value>This account has no role. Please contact an administrator.</value></data>
+  <data name="SwitchRole" xml:space="preserve"><value>Switch role</value></data>
+  <!-- PLAN-024: invitation/QR -->
+  <data name="InviteOwnerLabel" xml:space="preserve"><value>Owner</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="InviteExpiresAt" xml:space="preserve"><value>The invitation expires at {0}.</value></data>
+  <data name="InviteSwitchTenant" xml:space="preserve"><value>Switch to Tenant role</value></data>
+  <data name="InviteLoginRequired" xml:space="preserve"><value>Sign in with the invited account to accept this room.</value></data>
+  <data name="InviteWrongAccount" xml:space="preserve"><value>The signed-in account is not the invited account.</value></data>
+  <data name="InviteAcceptExistingButton" xml:space="preserve"><value>Accept invitation</value></data>
+  <data name="InviteAcceptExistingSuccess" xml:space="preserve"><value>Invitation accepted. Switch to the Tenant role to view the room.</value></data>
+  <!-- PLAN-024: QR dialog -->
+  <data name="QrOpenButton" xml:space="preserve"><value>Create QR</value></data>
+  <data name="QrDialogTitle" xml:space="preserve"><value>Create tenant QR</value></data>
+  <data name="QrImageAlt" xml:space="preserve"><value>Tenant invitation QR</value></data>
+  <data name="QrExpiresAt" xml:space="preserve"><value>The QR expires at {0}.</value></data>
+  <data name="QrWarning" xml:space="preserve"><value>Share this QR only with the intended tenant. It is single-use and time-limited.</value></data>
+  <data name="QrKindLabel" xml:space="preserve"><value>Tenant type</value></data>
+  <data name="QrKindNew" xml:space="preserve"><value>New tenant</value></data>
+  <data name="QrKindExisting" xml:space="preserve"><value>Existing account</value></data>
+  <data name="QrPropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="QrNoProperty" xml:space="preserve"><value>Owner only</value></data>
+  <data name="QrRoomLabel" xml:space="preserve"><value>Room</value></data>
+  <data name="QrNoRoom" xml:space="preserve"><value>No room selected</value></data>
+  <data name="QrExpiryLabel" xml:space="preserve"><value>Valid for</value></data>
+  <data name="QrExpiry15" xml:space="preserve"><value>15 minutes</value></data>
+  <data name="QrExpiry1h" xml:space="preserve"><value>1 hour</value></data>
+  <data name="QrExpiry6h" xml:space="preserve"><value>6 hours</value></data>
+  <data name="QrExpiry24h" xml:space="preserve"><value>24 hours</value></data>
+  <data name="QrSearchExisting" xml:space="preserve"><value>Find existing tenant</value></data>
+  <data name="QrSelectExisting" xml:space="preserve"><value>Select tenant</value></data>
+  <data name="QrSelectExistingHint" xml:space="preserve"><value>-- Select a tenant --</value></data>
+  <data name="QrSelectExistingRequired" xml:space="preserve"><value>Please select an existing tenant.</value></data>
+  <data name="QrNoExisting" xml:space="preserve"><value>No matching tenant found.</value></data>
+  <data name="QrGenerate" xml:space="preserve"><value>Create QR</value></data>
+  <data name="QrCreated" xml:space="preserve"><value>QR created.</value></data>
+  <data name="QrFailed" xml:space="preserve"><value>Could not create the QR.</value></data>
+  <data name="Search" xml:space="preserve"><value>Search</value></data>
+  <!-- PLAN-025: admin owner management -->
+  <data name="OwnerAdmin" xml:space="preserve"><value>Owners</value></data>
+  <data name="OwnerAdminTitle" xml:space="preserve"><value>Owner management</value></data>
+  <data name="OwnerAdminHelp" xml:space="preserve"><value>View, lock or unlock owner accounts. Locking an owner also blocks that owner's managers and tenants.</value></data>
+  <data name="OwnerAdminSearch" xml:space="preserve"><value>Search by name, email or phone</value></data>
+  <data name="OwnerAdminName" xml:space="preserve"><value>Name</value></data>
+  <data name="OwnerAdminEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="OwnerAdminProperties" xml:space="preserve"><value>Properties</value></data>
+  <data name="OwnerAdminManagers" xml:space="preserve"><value>Managers</value></data>
+  <data name="OwnerAdminTenants" xml:space="preserve"><value>Tenants</value></data>
+  <data name="OwnerAdminStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="OwnerAdminLock" xml:space="preserve"><value>Lock</value></data>
+  <data name="OwnerAdminUnlock" xml:space="preserve"><value>Unlock</value></data>
+  <data name="OwnerAdminLocked" xml:space="preserve"><value>Locked</value></data>
+  <data name="OwnerAdminActive" xml:space="preserve"><value>Active</value></data>
+  <data name="OwnerAdminEmpty" xml:space="preserve"><value>No owners yet.</value></data>
+  <data name="OwnerAdminLoadFailed" xml:space="preserve"><value>Could not load owners.</value></data>
+  <data name="OwnerAdminTotal" xml:space="preserve"><value>{0} owners</value></data>
+  <data name="OwnerLockTitle" xml:space="preserve"><value>Lock this owner?</value></data>
+  <data name="OwnerLockMessage" xml:space="preserve"><value>The owner's managers and tenants will no longer be able to sign in. Unused invitations/QR codes will be revoked.</value></data>
+  <data name="OwnerUnlockTitle" xml:space="preserve"><value>Unlock this owner?</value></data>
+  <data name="OwnerUnlockMessage" xml:space="preserve"><value>The owner's managers and tenants will be able to sign in again.</value></data>
+  <data name="OwnerLocked" xml:space="preserve"><value>Owner locked.</value></data>
+  <data name="OwnerUnlocked" xml:space="preserve"><value>Owner unlocked.</value></data>
+  <data name="Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Next" xml:space="preserve"><value>Next</value></data>
 </root>

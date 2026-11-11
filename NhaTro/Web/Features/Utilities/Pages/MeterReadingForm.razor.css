@@ -993,46 +993,9 @@
     gap: 6px;
 }
 
-.filters-container {
-    padding: var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card);
-    background: var(--surface);
-    box-shadow: var(--shadow-card);
-}
-
-.filters-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--space-3);
-}
-
-.filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    min-width: 140px;
-    color: var(--text-secondary);
-    font-size: .8125rem;
-    font-weight: 500;
-}
-
-.filter-field.wide {
-    flex: 1;
-    min-width: 220px;
-}
-
+/* Kỳ đọc — nhóm điều khiển đặt trong .filter-bar__state */
 .period-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     flex-wrap: wrap;
-    min-height: 38px;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-subtle);
     color: var(--text-primary);
     font-size: .875rem;
     font-weight: 600;
@@ -1056,118 +1019,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-.reset-button {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-
-/* Mọi control trong thanh lọc cao bằng nhau để hàng không bị so le. */
-.filters-container .btn,
-.filters-container .input,
-.filters-container .advanced-filter-toggle,
-.filters-container .period-display {
-    min-height: 44px;
-}
-
-.filters-row-secondary {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border);
-}
-
-.search-filter {
-    flex: 1;
-    min-width: 260px;
-}
-
-.search-input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.search-input-wrap .lucide-icon {
-    position: absolute;
-    left: 11px;
-    width: 16px;
-    height: 16px;
-    color: var(--text-muted);
-    pointer-events: none;
-}
-
-.search-input-wrap .input {
-    padding-left: 34px;
-}
-
-/* Khung lọc nâng cao (tick chọn nhiều trạng thái) */
-.advanced-filter-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    justify-content: flex-start;
-}
-
-.advanced-filter-toggle .lucide-icon {
-    width: 16px;
-    height: 16px;
-}
-
-.advanced-filter-toggle.has-selection {
-    border-color: var(--accent-border);
-    background: var(--accent-soft);
-    color: var(--accent-text);
-}
-
-.advanced-filter-chevron {
-    display: inline-flex;
-    margin-left: auto;
-    transition: transform 150ms;
-}
-
-.advanced-filter-chevron.rotated {
-    transform: rotate(180deg);
-}
-
-.advanced-filter-panel {
-    margin-top: 12px;
-    padding: 14px 16px;
-    border: 1px solid var(--accent-border);
-    border-radius: 12px;
-    background: var(--surface-subtle);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.advanced-filter-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.advanced-filter-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .8125rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.advanced-filter-title .lucide-icon {
-    width: 15px;
-    height: 15px;
-    color: var(--primary);
-}
-
-.advanced-filter-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
+.meter-filter-skeleton {
+    height: 64px;
 }
 
 .link-button {
@@ -1187,62 +1040,6 @@
 .link-button:disabled {
     color: var(--text-muted);
     cursor: not-allowed;
-}
-
-.advanced-filter-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 8px 16px;
-}
-
-.advanced-filter-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    font-size: .8125rem;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background 120ms;
-}
-
-.advanced-filter-option:hover {
-    background: var(--accent-soft);
-}
-
-.advanced-filter-option input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--primary);
-    flex: none;
-    cursor: pointer;
-}
-
-.advanced-filter-option-label {
-    line-height: 18px;
-}
-
-.advanced-filter-hint {
-    margin: 0;
-    font-size: .75rem;
-    line-height: 18px;
-    color: var(--text-muted);
-}
-
-@media (max-width: 767.98px) {
-    .filters-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .filter-field.wide {
-        width: 100%;
-        min-width: 0;
-    }
-    .search-filter {
-        width: 100%;
-        min-width: 0;
-    }
 }
 
 /* KPI Strip (4 cards) */

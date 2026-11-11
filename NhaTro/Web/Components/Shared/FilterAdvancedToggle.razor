@@ -1,0 +1,28 @@
+@inject IStringLocalizer<Shared> L
+
+<button type="button" class="btn btn-secondary filter-bar__toggle"
+        aria-expanded="@(Expanded ? "true" : "false")"
+        aria-controls="@PanelId"
+        aria-label="@AriaLabel"
+        @onclick="Toggle">
+    <LucideIcon Name="filter" />
+    <span>@L["FilterAdvanced"]</span>
+    @if (ActiveCount > 0)
+    {
+        <span class="filter-bar__badge">@ActiveCount</span>
+    }
+    <LucideIcon Name="chevron-down" Class="filter-bar__chevron" />
+</button>
+
+@code {
+    [Parameter] public bool Expanded { get; set; }
+    [Parameter] public EventCallback<bool> ExpandedChanged { get; set; }
+    [Parameter] public int ActiveCount { get; set; }
+    [Parameter] public string PanelId { get; set; } = "filter-advanced-panel";
+
+    private string AriaLabel => ActiveCount > 0
+        ? string.Format(L["FilterAdvancedCount"].Value, ActiveCount)
+        : L["FilterAdvanced"].Value;
+
+    private Task Toggle() => ExpandedChanged.InvokeAsync(!Expanded);
+}
