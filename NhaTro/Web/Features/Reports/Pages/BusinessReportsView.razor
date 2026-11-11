@@ -50,6 +50,13 @@
         </div>
     </div>
 
+    <div class="report-tabs" role="tablist" aria-label="@L["Title"]">
+        <button type="button" role="tab" class="report-tab" aria-selected="@((!ShowTenantReport).ToString().ToLowerInvariant())" @onclick="() => SelectReport(false)">@L["RoomReport"]</button>
+        <button type="button" role="tab" class="report-tab" aria-selected="@ShowTenantReport.ToString().ToLowerInvariant()" @onclick="() => SelectReport(true)">@L["TenantReport"]</button>
+    </div>
+
+    @if (!ShowTenantReport)
+    {
     <section class="report-section" aria-labelledby="room-report-heading">
         <div class="section-heading">
             <h2 id="room-report-heading">@L["RoomReport"]</h2>
@@ -146,7 +153,9 @@
             }
         </DashboardPanel>
     </section>
-
+    }
+    else
+    {
     <section class="report-section" aria-labelledby="tenant-report-heading">
         <div class="section-heading">
             <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
@@ -240,4 +249,5 @@
             }
         </DashboardPanel>
     </section>
+    }
 </div>

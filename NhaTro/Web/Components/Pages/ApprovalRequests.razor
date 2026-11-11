@@ -9,55 +9,78 @@
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@Title</PageTitle>
-<NavBreadcrumb />
-<h1>@Title</h1>
 
-@if (_error)
-{
-    <p role="alert">@L["ApprovalUiError"]</p>
-}
-@if (_items is null && !_error)
-{
-    <p role="status">@L["ApprovalUiLoading"]</p>
-}
-else if (_items is { Count: 0 })
-{
-    <p>@L["ApprovalUiEmpty"]</p>
-}
-else if (_items is not null)
-{
-    @foreach (var item in _items)
+<section class="approval-page" aria-labelledby="approval-title">
+    <NavBreadcrumb />
+    <header class="page-heading">
+        <div>
+            <h1 id="approval-title">@Title</h1>
+            <p>@(Mine ? L["ApprovalUiMineHint"] : L["ApprovalUiQueueHint"])</p>
+        </div>
+        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">
+            <LucideIcon Name="refresh-cw" />@L["ApprovalUiRefresh"]
+        </button>
+    </header>
+
+    @if (_error)
     {
-        <section @key="item.Id" class="card p-3 mb-3">
-            <h2>@item.OperationCode · @L[item.OperationCode]</h2>
-            <p>@L[$"ApprovalUiTarget{item.TargetType}"] @item.TargetKey</p>
-            <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
-                         Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
-            @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
-            {
-                <p>@L["ApprovalUiReason"] · @item.DecisionReason</p>
-            }
-            @if (!Mine)
-            {
-                <div class="mt-2">
-                    <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
-                    @if (_rejecting == item.Id)
-                    {
-                        <label for="approval-reason">@L["ApprovalUiReason"]</label>
-                        <textarea id="approval-reason" maxlength="@RejectApprovalRequest.MaxReasonLength"
-                                  @bind="_reason" @bind:event="oninput" disabled="@_busy"></textarea>
-                        <button class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reason))"
-                                @onclick="() => DecideAsync(item.Id, _reason.Trim())">@L["ApprovalUiReject"]</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-secondary" disabled="@_busy" @onclick="() => StartReject(item.Id)">@L["ApprovalUiReject"]</button>
-                    }
-                </div>
-            }
-        </section>
+        <div class="approval-feedback" role="alert">
+            <LucideIcon Name="alert" />
+            <p>@L["ApprovalUiError"]</p>
+            <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">@L["ApprovalUiRefresh"]</button>
+        </div>
     }
-}
+    else if (_items is null)
+    {
+        <p class="approval-loading" role="status"><LucideIcon Name="refresh-cw" />@L["ApprovalUiLoading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["ApprovalUiEmpty"]" Description="@L["ApprovalUiEmptyHint"]" />
+    }
+    else
+    {
+        <div class="approval-list">
+            @foreach (var item in _items)
+            {
+                <article @key="item.Id" class="approval-card">
+                    <div class="approval-card-head">
+                        <div>
+                            <h2>@item.OperationCode · @L[item.OperationCode]</h2>
+                            <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key">@item.TargetKey</span></p>
+                        </div>
+                        <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
+                                     Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+                    {
+                        <p class="approval-reason"><strong>@L["ApprovalUiReason"]:</strong> @item.DecisionReason</p>
+                    }
+                    @if (!Mine && item.Status == ApprovalRequestStatus.Pending)
+                    {
+                        <div class="approval-actions">
+                            <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
+                            @if (_rejecting == item.Id)
+                            {
+                                <div class="approval-reject">
+                                    <label for="approval-reason">@L["ApprovalUiReason"]</label>
+                                    <textarea id="approval-reason" maxlength="@RejectApprovalRequest.MaxReasonLength"
+                                              @bind="_reason" @bind:event="oninput" disabled="@_busy"></textarea>
+                                </div>
+                                <button type="button" class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reason))"
+                                        @onclick="() => DecideAsync(item.Id, _reason.Trim())">@L["ApprovalUiReject"]</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => StartReject(item.Id)">@L["ApprovalUiReject"]</button>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
 
 @code {
     [Parameter] public bool Mine { get; set; }
@@ -76,6 +99,24 @@ else if (_items is not null)
         var role = Mine ? "QuanLy" : "ChuTro";
         _caller = new(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", user.IsInRole(role) ? role : "");
         await LoadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _error = false;
+        _items = null;
+        try
+        {
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task LoadAsync()
