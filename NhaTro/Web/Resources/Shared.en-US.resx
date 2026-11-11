@@ -665,7 +665,16 @@
     <value>Quick sign-in for testing</value>
   </data>
   <data name="DevQuickLoginHint" xml:space="preserve">
-    <value>Development only. Click Use to sign in as that role.</value>
+    <value>Development only. Click an account to sign in as its role.</value>
+  </data>
+  <data name="QuickLoginDevGroup" xml:space="preserve">
+    <value>Dev accounts</value>
+  </data>
+  <data name="QuickLoginSearch" xml:space="preserve">
+    <value>Search by name or email</value>
+  </data>
+  <data name="QuickLoginEmpty" xml:space="preserve">
+    <value>No matching accounts.</value>
   </data>
 
   <!-- VHT-16: P2 property and room management UI -->
@@ -1980,7 +1989,6 @@
   <data name="PasswordPlaceholder" xml:space="preserve"><value>••••••••</value></data>
   <data name="PasswordMinHint" xml:space="preserve"><value>At least 8 characters</value></data>
   <data name="OptionalLabel" xml:space="preserve"><value>(optional)</value></data>
-  <data name="DevUseButton" xml:space="preserve"><value>Use</value></data>
   <data name="SendOtpButton" xml:space="preserve"><value>Send verification code</value></data>
   <data name="OtpResendSuccess" xml:space="preserve"><value>A new code was sent. Please check your email.</value></data>
   <data name="OtpResendCooldown" xml:space="preserve"><value>Please wait {0} seconds before resending.</value></data>

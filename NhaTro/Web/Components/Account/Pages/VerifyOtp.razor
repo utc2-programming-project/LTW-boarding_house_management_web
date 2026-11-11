@@ -54,7 +54,7 @@
 
             <FormField TValue="string" Id="otp-code" Label="@L["OtpCodeLabel"]" Required="true"
                        Hint="@L["OtpCodeHint"]" For="() => Input.Code">
-                <InputText @bind-Value="Input.Code" id="otp-code" class="input otp-native"
+                <InputText @bind-Value="Input.Code" id="otp-code" class="input otp-native otp-native-hidden"
                            data-otp-source="otp-code"
                            inputmode="numeric" autocomplete="one-time-code" maxlength="@_otpLength"
                            aria-required="true" aria-describedby="otp-code-hint otp-code-error" />

@@ -24,7 +24,7 @@
 
 <PageTitle>@L["LoginTitle"] · @L["AppName"]</PageTitle>
 
-<section class="auth-page" aria-labelledby="login-title">
+<section class="auth-page auth-page--quick" aria-labelledby="login-title">
     <div class="auth-card">
         <AuthTabs Active="AuthTab.Login" />
         <PageHeading Title="@L["LoginTitle"]" TitleId="login-title" Class="auth-heading" />
@@ -102,10 +102,10 @@
         <p class="auth-alt-action">
             <a href="Account/RegisterOwner">@L["RegisterOwnerLink"]</a>
         </p>
-
-        @* Chi hien o Development khi da co mat khau dev (xem DevQuickLogin.razor). *@
-        <DevQuickLogin />
     </div>
+
+    @* Panel nổi cạnh thẻ đăng nhập; chỉ hiện ở Development (xem DevQuickLogin.razor). *@
+    <DevQuickLogin />
 </section>
 
 @code {

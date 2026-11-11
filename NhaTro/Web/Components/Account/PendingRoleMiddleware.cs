@@ -10,6 +10,7 @@ public sealed class PendingRoleMiddleware(RequestDelegate next)
         if (context.User.Identity?.IsAuthenticated == true
             && context.User.HasClaim(NhaTroClaimsPrincipalFactory.PendingRoleClaim, "1")
             && !IsAllowed(context.Request.Path)
+            && !StaticAssetRequest.IsStaticAsset(context.Request)
             && HttpMethods.IsGet(context.Request.Method))
         {
             var returnUrl = context.Request.Path + context.Request.QueryString;
@@ -21,16 +22,13 @@ public sealed class PendingRoleMiddleware(RequestDelegate next)
         await next(context);
     }
 
+    // Chỉ liệt kê trang được phép; tài nguyên tĩnh (css/js/font/_content/_framework...)
+    // do StaticAssetRequest lo nên không chuyển hướng.
     private static bool IsAllowed(PathString path) =>
         path.StartsWithSegments("/select-role")
         || path.StartsWithSegments("/Account/Logout")
         || path.StartsWithSegments("/Account/Login")
         || path.StartsWithSegments("/login")
         || path.StartsWithSegments("/culture")
-        || path.StartsWithSegments("/_framework")
-        || path.StartsWithSegments("/_blazor")
-        || path.StartsWithSegments("/css")
-        || path.StartsWithSegments("/js")
-        || path.StartsWithSegments("/favicon")
         || path.StartsWithSegments("/health");
 }

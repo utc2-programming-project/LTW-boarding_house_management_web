@@ -24,6 +24,9 @@ TestResults/
 *.suo
 *.userprefs
 
+# Demo seed dataset (local only; deleting the file disables --seed-demo)
+NhaTro/Web/Data/Seeding/demo-data.json
+
 # Secrets, local data, logs (never commit)
 secrets.json
 .env
@@ -41,6 +44,7 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 docs/Imp/*
+docs/spec/
 
 scripts/*
 !scripts/database/

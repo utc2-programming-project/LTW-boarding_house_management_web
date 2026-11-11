@@ -1,4 +1,5 @@
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using Web.Data
 @using Web.Data.Seeding
 @using Web.Features.Accounts
@@ -7,43 +8,68 @@
 @inject IWebHostEnvironment Env
 @inject IStringLocalizer<Shared> L
 @inject UserManager<ApplicationUser> Users
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-@* VHT-8: bang "dang nhap nhanh" giup tester vao tung vai tro trong 1 bam.
-   Chi hien o Development, voi tai khoan mau ton tai va mat khau khop,
-   nen khong bao gio lo ra o moi truong that. *@
-@if (Entries.Count > 0)
+@* VHT-8: panel "dang nhap nhanh" dat canh the dang nhap, chi hien o Development.
+   Gom tai khoan dev co dinh va toan bo tai khoan demo @demo.vn dang co trong DB
+   (nho vay xoa demo-data.json / --clear-demo la panel tu trong). *@
+@if (Groups.Count > 0)
 {
-    <div class="auth-divider" aria-hidden="true"><span>@L["OrDivider"]</span></div>
-    <aside class="dev-login" aria-label="@L["DevQuickLoginTitle"]">
-        <p class="dev-login-title">
-            <span class="dev-badge">DEV</span>
-            <span>@L["DevQuickLoginTitle"]</span>
-        </p>
-        <p class="dev-login-hint">@L["DevQuickLoginHint"]</p>
-        <ul class="dev-login-list">
-            @foreach (var entry in Entries)
+    <aside class="quick-login" data-quick-login aria-label="@L["DevQuickLoginTitle"]">
+        <div class="quick-login-head">
+            <p class="quick-login-title">
+                <span class="dev-badge">DEV</span>
+                <span>@L["DevQuickLoginTitle"]</span>
+            </p>
+            <p class="quick-login-hint">@L["DevQuickLoginHint"]</p>
+            <input type="search" class="input quick-login-search"
+                   placeholder="@L["QuickLoginSearch"]" aria-label="@L["QuickLoginSearch"]"
+                   autocomplete="off" data-quick-login-search />
+        </div>
+        <div class="quick-login-scroll">
+            @foreach (var group in Groups)
             {
-                <li class="dev-login-row">
-                    <span class="dev-login-role">@L[AccountPermissionRules.RoleResourceKey(entry.Role)]</span>
-                    <code class="dev-login-email" title="@entry.Email">@entry.Email</code>
-                    <form method="post" action="/login">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="_handler" value="login" />
-                        <input type="hidden" name="Input.Email" value="@entry.Email" />
-                        <input type="hidden" name="Input.Password" value="@entry.Password" />
-                        <input type="hidden" name="Input.RememberMe" value="false" />
-                        <button type="submit" class="btn btn-secondary btn-xs">@L["DevUseButton"]</button>
-                    </form>
-                </li>
+                <details class="quick-login-group" data-quick-login-group open>
+                    <summary class="quick-login-summary">
+                        <span>@group.Title</span>
+                        <span class="quick-login-count">@group.Entries.Count</span>
+                    </summary>
+                    <ul class="quick-login-list">
+                        @foreach (var entry in group.Entries)
+                        {
+                            <li class="quick-login-row" data-quick-login-row data-search="@entry.Search">
+                                <form method="post" action="/login">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="_handler" value="login" />
+                                    <input type="hidden" name="Input.Email" value="@entry.Email" />
+                                    <input type="hidden" name="Input.Password" value="@entry.Password" />
+                                    <input type="hidden" name="Input.RememberMe" value="false" />
+                                    <button type="submit" class="quick-login-button" title="@entry.Email">
+                                        <span class="quick-login-name">@entry.Label</span>
+                                        <span class="quick-login-email">@entry.Email</span>
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </details>
             }
-        </ul>
+            <p class="quick-login-empty" hidden data-quick-login-empty>@L["QuickLoginEmpty"]</p>
+        </div>
     </aside>
 }
 
 @code {
-    private sealed record DevLoginEntry(string Role, string Email, string Password);
+    private const string DemoEmailSuffix = "@demo.vn";
 
-    private List<DevLoginEntry> Entries { get; } = [];
+    private sealed record Entry(string Label, string Email, string Password)
+    {
+        public string Search { get; } = $"{Label} {Email}".ToLowerInvariant();
+    }
+
+    private sealed record Group(string Title, List<Entry> Entries);
+
+    private List<Group> Groups { get; } = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,6 +78,20 @@
         {
             return;
         }
+
+        var devEntries = await LoadDevEntriesAsync();
+        if (devEntries.Count > 0)
+        {
+            Groups.Add(new Group(L["QuickLoginDevGroup"], devEntries));
+        }
+
+        await AddDemoGroupsAsync();
+    }
+
+    /// <summary>Tài khoản mẫu cố định; đã xác thực mật khẩu nên nút bấm luôn đăng nhập được.</summary>
+    private async Task<List<Entry>> LoadDevEntriesAsync()
+    {
+        var entries = new List<Entry>();
 
         // Admin that duoc gieo tu AdminSeed (khong phai tu DevAccounts).
         var adminEmail = Config["AdminSeed:Email"];
@@ -62,9 +102,8 @@
             adminPassword = AdminSeeder.DevelopmentPassword;
         }
 
-        await AddIfValidAsync(Roles.Admin, adminEmail, adminPassword);
+        await AddIfValidAsync(entries, adminEmail, adminPassword);
 
-        // Cac vai tro con lai lay tu danh sach user mau (bo qua admin mau vi da co Admin that).
         var devPassword = Config["DevAccounts:Password"];
         if (string.IsNullOrWhiteSpace(devPassword))
         {
@@ -75,12 +114,83 @@
         {
             if (role != Roles.Admin)
             {
-                await AddIfValidAsync(role, email, devPassword);
+                await AddIfValidAsync(entries, email, devPassword);
             }
+        }
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Toàn bộ tài khoản demo đang có trong DB, gom theo vai trò chính.
+    /// Mật khẩu lấy đúng cấu hình seeder dùng, không kiểm từng tài khoản
+    /// (120 lần băm mật khẩu mỗi lần mở trang là quá chậm).
+    /// </summary>
+    private async Task AddDemoGroupsAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var demoUsers = await db.Users
+            .Where(user => user.Email != null && user.Email.EndsWith(DemoEmailSuffix))
+            .Select(user => new { user.Id, user.Email, user.FullName })
+            .ToListAsync();
+        if (demoUsers.Count == 0)
+        {
+            return;
+        }
+
+        var roleRows = await (from userRole in db.UserRoles
+                              join role in db.Roles on userRole.RoleId equals role.Id
+                              join user in db.Users on userRole.UserId equals user.Id
+                              where user.Email != null && user.Email.EndsWith(DemoEmailSuffix)
+                              select new { user.Id, Role = role.Name })
+                            .ToListAsync();
+        var rolesByUser = roleRows
+            .GroupBy(row => row.Id)
+            .ToDictionary(group => group.Key, group => group.Select(row => row.Role ?? string.Empty).ToList());
+
+        var password = Config["DemoSeed:Password"];
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            password = DemoDataSeeder.DefaultPassword;
+        }
+
+        var byRole = new Dictionary<string, List<Entry>>();
+        foreach (var user in demoUsers)
+        {
+            if (!rolesByUser.TryGetValue(user.Id, out var roles))
+            {
+                continue;
+            }
+
+            var primary = Roles.All.FirstOrDefault(roles.Contains);
+            if (primary is null || user.Email is null)
+            {
+                continue;
+            }
+
+            if (!byRole.TryGetValue(primary, out var list))
+            {
+                list = [];
+                byRole[primary] = list;
+            }
+
+            list.Add(new Entry(user.FullName ?? user.Email, user.Email, password));
+        }
+
+        foreach (var role in Roles.All)
+        {
+            if (!byRole.TryGetValue(role, out var list) || list.Count == 0)
+            {
+                continue;
+            }
+
+            list.Sort((left, right) => string.CompareOrdinal(left.Email, right.Email));
+            Groups.Add(new Group(L[AccountPermissionRules.RoleResourceKey(role)], list));
         }
     }
 
-    private async Task AddIfValidAsync(string role, string email, string password)
+    private async Task AddIfValidAsync(List<Entry> entries, string email, string password)
     {
         var user = await Users.FindByEmailAsync(email);
         if (user is null || !await Users.CheckPasswordAsync(user, password))
@@ -88,6 +198,6 @@
             return;
         }
 
-        Entries.Add(new DevLoginEntry(role, email, password));
+        entries.Add(new Entry(user.FullName ?? email, email, password));
     }
 }

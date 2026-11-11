@@ -540,16 +540,48 @@ html:has(.auth-shell) {
     box-shadow: none;
 }
 
-/* Bảng đăng nhập nhanh cho tester — chỉ hiện khi chạy Development. */
-.dev-login {
-    margin-top: 0;
-    padding: 12px;
-    background: var(--surface-subtle);
-    border: 1px dashed var(--border);
-    border-radius: 12px;
+/* Trang đăng nhập: thẻ form + panel đăng nhập nhanh nổi bên cạnh. */
+.auth-page--quick {
+    gap: 28px;
+    align-items: flex-start;
 }
 
-.dev-login-title {
+.auth-page--quick > .auth-card {
+    flex: 0 0 420px;
+}
+
+/* Panel đăng nhập nhanh cho tester — chỉ render khi chạy Development. */
+.quick-login {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 340px;
+    width: 340px;
+    max-height: calc(100vh - 32px);
+    background: var(--surface);
+    border: 1px solid var(--auth-border);
+    border-radius: 16px;
+    box-shadow: var(--auth-card-shadow);
+    overflow: hidden;
+}
+
+/* Màn rộng: panel nổi hẳn ra mép phải thay vì đẩy bố cục. */
+@media (min-width: 1180px) {
+    .quick-login {
+        position: fixed;
+        top: 50%;
+        right: 24px;
+        z-index: 5;
+        max-height: min(80vh, 720px);
+        transform: translateY(-50%);
+    }
+}
+
+.quick-login-head {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.quick-login-title {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -573,58 +605,154 @@ html:has(.auth-shell) {
     letter-spacing: .04em;
 }
 
-.dev-login-hint {
-    margin: 4px 0 10px;
+.quick-login-hint {
+    margin: 4px 0 0;
     font-size: 12px;
     line-height: 18px;
     color: var(--text-secondary);
 }
 
-.dev-login-list {
+.quick-login-search {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.quick-login-scroll {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow-y: auto;
+}
+
+.quick-login-group {
+    border-radius: 10px;
+}
+
+.quick-login-group + .quick-login-group {
+    margin-top: 4px;
+}
+
+.quick-login-summary {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 0;
-    padding: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
     list-style: none;
 }
 
-/* Mỗi vai trò một hàng: chip vai trò | email | nút "Dùng". */
-.dev-login-row {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    background: var(--surface);
+.quick-login-summary::-webkit-details-marker {
+    display: none;
 }
 
-.dev-login-role {
-    flex: none;
+.quick-login-summary:hover {
+    background: var(--surface-subtle);
+}
+
+.quick-login-count {
     font-size: 12px;
-    line-height: 18px;
-    font-weight: 600;
-    white-space: nowrap;
-    color: var(--accent-text);
+    font-weight: 500;
+    color: var(--text-secondary);
 }
 
-.dev-login-email {
+.quick-login-group[open] > .quick-login-summary {
+    margin-bottom: 2px;
+}
+
+.quick-login-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+}
+
+.quick-login-row form {
+    margin: 0;
+}
+
+.quick-login-button {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.quick-login-button:hover,
+.quick-login-button:focus-visible {
+    background: var(--surface-subtle);
+}
+
+.quick-login-name {
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--text-secondary);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 18px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text-primary);
 }
 
-.btn-xs {
-    min-height: 30px;
-    padding: 0 10px;
-    border-radius: 8px;
-    font-size: 12px;
+.quick-login-email {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 52%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    line-height: 18px;
+    color: var(--text-secondary);
+}
+
+.quick-login-empty {
+    margin: 12px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .auth-page--quick {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .auth-page--quick > .auth-card {
+        flex: none;
+        max-width: 420px;
+        margin-inline: auto;
+    }
+
+    .quick-login {
+        flex: none;
+        width: 100%;
+        max-width: 420px;
+        max-height: none;
+        margin-inline: auto;
+    }
+
+    .quick-login-scroll {
+        max-height: 45vh;
+    }
 }
 
 /* Ô mật khẩu có nút con mắt bên phải. */

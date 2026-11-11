@@ -28,7 +28,9 @@
     line-height: 22px;
 }
 
-.otp-native-hidden {
+/* Input thật do InputText (component con) render nên phải dùng ::deep,
+   nếu không scope attribute của trang không áp vào được và ô trống vẫn hiện. */
+.auth-card ::deep .otp-native-hidden {
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;

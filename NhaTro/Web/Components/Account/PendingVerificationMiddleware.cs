@@ -13,6 +13,7 @@ public sealed class PendingVerificationMiddleware(RequestDelegate next)
         if (context.User.Identity?.IsAuthenticated == true
             && context.User.HasClaim(NhaTroClaimsPrincipalFactory.PendingVerificationClaim, "1")
             && !IsAllowed(context.Request.Path)
+            && !StaticAssetRequest.IsStaticAsset(context.Request)
             && HttpMethods.IsGet(context.Request.Method))
         {
             var email = context.User.FindFirstValue(ClaimTypes.Email)
@@ -28,16 +29,13 @@ public sealed class PendingVerificationMiddleware(RequestDelegate next)
         await next(context);
     }
 
+    // Chỉ liệt kê trang được phép; tài nguyên tĩnh (css/js/font/_content/_framework...)
+    // do StaticAssetRequest lo nên không chuyển hướng.
     private static bool IsAllowed(PathString path) =>
         path.StartsWithSegments("/Account/VerifyOtp")
         || path.StartsWithSegments("/Account/Logout")
         || path.StartsWithSegments("/Account/Login")
         || path.StartsWithSegments("/login")
         || path.StartsWithSegments("/culture")
-        || path.StartsWithSegments("/_framework")
-        || path.StartsWithSegments("/_blazor")
-        || path.StartsWithSegments("/css")
-        || path.StartsWithSegments("/js")
-        || path.StartsWithSegments("/favicon")
         || path.StartsWithSegments("/health");
 }

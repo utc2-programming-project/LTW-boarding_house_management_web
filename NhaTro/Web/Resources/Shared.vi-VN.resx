@@ -665,7 +665,16 @@
     <value>Đăng nhập nhanh để test</value>
   </data>
   <data name="DevQuickLoginHint" xml:space="preserve">
-    <value>Chỉ hiện ở máy dev. Bấm "Dùng" để vào thẳng vai trò đó.</value>
+    <value>Chỉ hiện ở máy dev. Bấm vào một tài khoản để vào thẳng vai trò tương ứng.</value>
+  </data>
+  <data name="QuickLoginDevGroup" xml:space="preserve">
+    <value>Tài khoản dev</value>
+  </data>
+  <data name="QuickLoginSearch" xml:space="preserve">
+    <value>Tìm theo tên hoặc email</value>
+  </data>
+  <data name="QuickLoginEmpty" xml:space="preserve">
+    <value>Không có tài khoản phù hợp.</value>
   </data>
 
   <!-- VHT-16: giao diện quản lý nhà trọ và phòng P2 -->
@@ -1980,7 +1989,6 @@
   <data name="PasswordPlaceholder" xml:space="preserve"><value>••••••••</value></data>
   <data name="PasswordMinHint" xml:space="preserve"><value>Tối thiểu 8 ký tự</value></data>
   <data name="OptionalLabel" xml:space="preserve"><value>(tuỳ chọn)</value></data>
-  <data name="DevUseButton" xml:space="preserve"><value>Dùng</value></data>
   <data name="SendOtpButton" xml:space="preserve"><value>Gửi mã xác nhận</value></data>
   <data name="OtpResendSuccess" xml:space="preserve"><value>Đã gửi mã mới. Vui lòng kiểm tra Gmail.</value></data>
   <data name="OtpResendCooldown" xml:space="preserve"><value>Vui lòng chờ {0} giây trước khi gửi lại.</value></data>

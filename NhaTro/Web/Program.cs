@@ -664,6 +664,18 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 // ── 15. Khởi tạo dữ liệu ───────────────────────────────────────────────────
+// Nạp/xoá dữ liệu demo bằng file JSON rời: chạy xong thoát, không mở web server.
+// Không truyền cờ thì bỏ qua hoàn toàn; thiếu file JSON cũng là no-op.
+var seedDemo = args.Any(a => string.Equals(a, "--seed-demo", StringComparison.OrdinalIgnoreCase));
+var clearDemo = args.Any(a => string.Equals(a, "--clear-demo", StringComparison.OrdinalIgnoreCase));
+if (seedDemo || clearDemo)
+{
+    var succeeded = await DemoDataSeeder.RunAsync(
+        app.Services, app.Environment, app.Configuration, app.Logger, clearDemo);
+    Environment.ExitCode = succeeded ? 0 : 1;
+    return;
+}
+
 // Chạy dev: áp migration còn thiếu để schema DB khớp model.
 if (app.Environment.IsDevelopment())
 {
