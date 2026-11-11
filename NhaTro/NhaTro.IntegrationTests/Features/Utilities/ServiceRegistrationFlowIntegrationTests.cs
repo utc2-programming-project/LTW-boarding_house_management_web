@@ -28,12 +28,13 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
 
         var request = await service.RequestAsync(
             serviceCatalogId: await InternetCatalogIdAsync(world),
+            contractId: world.Data.ContractAId,
             note: "Đăng ký test");
         Assert.Equal(ServiceRegistrationStatus.PendingApproval, request.Status);
 
         // One registration per service per month: duplicate rejected.
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RequestAsync(
-            request.ServiceCatalogId, note: null));
+        await Assert.ThrowsAsync<ServiceRegistrationException>(() => service.RequestAsync(
+            request.ServiceCatalogId, world.Data.ContractAId, note: null));
 
         // Tenant cannot approve.
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.ApproveAsync(request.Id));
@@ -51,18 +52,16 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
 
         var invoice = await landlordService.CreateInvoiceAsync(
             request.Id,
-            amount: 150_000m,
             content: "Internet thang nay",
-            periodStart: today.AddMonths(2),
-            periodEnd: today.AddMonths(3).AddDays(-1),
             dueDate: today.AddMonths(2).AddDays(15));
         Assert.Equal(InvoiceStatus.Draft, invoice.Status);
         Assert.Equal(today.AddMonths(2).AddDays(15), invoice.DueDate);
+        Assert.Equal(150_000m, invoice.TotalAmount);
         Assert.Equal(request.Id, await RegistrationIdAsync(world, invoice.Id));
 
         // Idempotent: call again returns the same invoice.
         var again = await landlordService.CreateInvoiceAsync(
-            request.Id, 150_000m, "Internet thang nay", today.AddMonths(2), today.AddMonths(3).AddDays(-1), today.AddMonths(2).AddDays(15));
+            request.Id, "Internet thang nay", today.AddMonths(2).AddDays(15));
         Assert.Equal(invoice.Id, again.Id);
 
         // Landlord list sees it; tenant history sees it.
@@ -86,17 +85,17 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
 
         var today = DateOnly.FromDateTime(world.Data.Today);
         var service = CreateService(world, world.TenantAAsPropertyCaller);
-        var request = await service.RequestAsync(await InternetCatalogIdAsync(world), note: null);
+        var request = await service.RequestAsync(await InternetCatalogIdAsync(world), world.Data.ContractAId, note: null);
 
         var landlordService = CreateService(world, world.OwnerA);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => landlordService.RejectAsync(request.Id, "  "));
+        await Assert.ThrowsAsync<ServiceRegistrationException>(() => landlordService.RejectAsync(request.Id, "  "));
 
         var rejected = await landlordService.RejectAsync(request.Id, "Đã đầy phòng");
         Assert.Equal(ServiceRegistrationStatus.Rejected, rejected.Status);
         Assert.Equal("Đã đầy phòng", rejected.RejectReason);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => landlordService.CreateInvoiceAsync(
-            request.Id, 150_000m, "x", today, today.AddMonths(1).AddDays(-1), today.AddDays(15)));
+        await Assert.ThrowsAsync<ServiceRegistrationException>(() => landlordService.CreateInvoiceAsync(
+            request.Id, "x", today.AddDays(15)));
     }
 
     [SqlServerFact]
@@ -111,12 +110,12 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
         var catalogId = await InternetCatalogIdAsync(world);
 
         // Pending: tenant cancels directly.
-        var first = await tenantService.RequestAsync(catalogId, note: null);
+        var first = await tenantService.RequestAsync(catalogId, world.Data.ContractAId, note: null);
         var cancelledPending = await tenantService.CancelAsync(first.Id, reason: null);
         Assert.Equal(ServiceRegistrationStatus.Cancelled, cancelledPending.Status);
 
         // New request (cancelled doesn't block new monthly request), approve, then cancel with reason.
-        var second = await tenantService.RequestAsync(catalogId, note: null);
+        var second = await tenantService.RequestAsync(catalogId, world.Data.ContractAId, note: null);
         var approved = await landlordService.ApproveAsync(second.Id);
         Assert.Equal(ServiceRegistrationStatus.Approved, approved.Status);
 

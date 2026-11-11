@@ -19,10 +19,6 @@
             <div class="heading-copy">
                 <h1 class="page-title">@UL["P5CostHeading"]</h1>
                 <p class="page-subtitle">@UL["P5CostSubtitle"]</p>
-                <span class="sql-badge">
-                    <LucideIcon Name="hard-drive" />
-                    <span>@UL["P5CostSqlBadge"]</span>
-                </span>
             </div>
             <div class="header-actions">
                 <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
@@ -270,7 +266,7 @@
                                                     }
                                                     @if (room.InvoiceId is null)
                                                     {
-                                                        <button type="button" class="icon-btn" title="@UL["P5CostCreateInvoice"]" aria-label="@UL["P5CostCreateInvoice"]" disabled="@_creatingInvoice" @onclick="() => CreateInvoiceAsync(room)">
+                                                        <button type="button" class="icon-btn" title="@(room.HasReadings ? UL["P5CostCreateInvoice"] : UL["P5CostInvoiceMissingReadings"])" aria-label="@UL["P5CostCreateInvoice"]" disabled="@(_creatingInvoice || !room.HasReadings)" @onclick="() => CreateInvoiceAsync(room)">
                                                             <LucideIcon Name="arrow-right" />
                                                         </button>
                                                     }
@@ -469,7 +465,7 @@
                         }
                         @if (detail.InvoiceId is null)
                         {
-                            <button type="button" class="btn btn-primary" disabled="@_creatingInvoice" @onclick="() => CreateInvoiceAsync(detail)">
+                            <button type="button" class="btn btn-primary" disabled="@(_creatingInvoice || !detail.HasReadings)" title="@(detail.HasReadings ? null : UL["P5CostInvoiceMissingReadings"].Value)" @onclick="() => CreateInvoiceAsync(detail)">
                                 @if (_creatingInvoice)
                                 {
                                     <span class="spinner" aria-hidden="true"></span>
@@ -900,6 +896,7 @@
         "InvalidItem" or "ItemsRequired" => UL["P5CostInvoiceFailed"],
         "ApprovalRequired" => UL["P5CostApprovalPending"],
         "RoomNotFound" => UL["ErrorRoomNotFound"],
+        "MissingReadings" => UL["P5CostInvoiceMissingReadings"],
         _ => UL["P5CostInvoiceFailed"],
     };
 
@@ -912,6 +909,7 @@
         "NotAdjustable" => UL["P5CostNotAdjustable"],
         "ApprovalRequired" => UL["P5CostApprovalPending"],
         "DuplicatePeriod" => UL["P5CostDuplicatePeriod"],
+        "ConcurrencyConflict" => UL["P5CostConcurrencyConflict"],
         "RoomNotFound" => UL["ErrorRoomNotFound"],
         "ReadingNotFound" => UL["P5CostReadingNotFound"],
         _ => UL["P5CostSaveFailed"],

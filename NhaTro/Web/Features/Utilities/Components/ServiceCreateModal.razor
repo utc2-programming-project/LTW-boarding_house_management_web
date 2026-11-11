@@ -95,52 +95,56 @@
                     </div>
                 </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="create-effective-from-input">
-                        @L["EffectiveFromLabel"] <span class="required-star">*</span>
-                    </label>
-                    <input id="create-effective-from-input"
-                           type="date"
-                           class="input @(_dateError.HasValue ? "invalid" : "")"
-                           @bind="_effectiveFrom"
-                           @bind:after="ValidateDate" />
-                    @if (_dateError.HasValue)
-                    {
-                        <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
-                    }
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-effective-from-input">
+                            @L["EffectiveFromLabel"] <span class="required-star">*</span>
+                        </label>
+                        <input id="create-effective-from-input"
+                               type="date"
+                               class="input @(_dateError.HasValue ? "invalid" : "")"
+                               @bind="_effectiveFrom"
+                               @bind:after="ValidateDate" />
+                        @if (_dateError.HasValue)
+                        {
+                            <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
+                        }
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-effective-to-input">@L["EffectiveToLabel"]</label>
+                        <input id="create-effective-to-input"
+                               type="date"
+                               class="input @(_effectiveToError.HasValue ? "invalid" : "")"
+                               @bind="_effectiveTo"
+                               @bind:after="ValidateDate" />
+                        @if (_effectiveToError.HasValue)
+                        {
+                            <span class="field-error-text" role="alert">@L[$"Error{_effectiveToError.Value}"]</span>
+                        }
+                    </div>
                 </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="create-effective-to-input">@L["EffectiveToLabel"]</label>
-                    <input id="create-effective-to-input"
-                           type="date"
-                           class="input @(_effectiveToError.HasValue ? "invalid" : "")"
-                           @bind="_effectiveTo"
-                           @bind:after="ValidateDate" />
-                    @if (_effectiveToError.HasValue)
-                    {
-                        <span class="field-error-text" role="alert">@L[$"Error{_effectiveToError.Value}"]</span>
-                    }
-                </div>
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
+                        <input id="service-desc-input"
+                               type="text"
+                               class="input"
+                               @bind="_description"
+                               maxlength="500"
+                               placeholder="@L["ServiceDescPlaceholder"]" />
+                    </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
-                    <input id="service-desc-input"
-                           type="text"
-                           class="input"
-                           @bind="_description"
-                           maxlength="500"
-                           placeholder="@L["ServiceDescPlaceholder"]" />
-                </div>
-
-                <div class="form-field-group">
-                    <label class="field-label" for="create-note-input">@L["NoteLabel"]</label>
-                    <input id="create-note-input"
-                           type="text"
-                           class="input"
-                           @bind="_note"
-                           maxlength="500"
-                           placeholder="@L["NotePlaceholder"]" />
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-note-input">@L["NoteLabel"]</label>
+                        <input id="create-note-input"
+                               type="text"
+                               class="input"
+                               @bind="_note"
+                               maxlength="500"
+                               placeholder="@L["NotePlaceholder"]" />
+                    </div>
                 </div>
                 @if (!CanWrite)
                 {

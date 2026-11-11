@@ -30,6 +30,7 @@ public static class UtilityReadingErrorCodes
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
+    public const string ConcurrencyConflict = nameof(ConcurrencyConflict);
 }
 
 public sealed class UtilityReadingAuthorizationException(string message, string errorCode)
@@ -254,7 +255,17 @@ public sealed class UtilityReadingService(
         }
 
         Apply(reading, request, reason, caller.UserId);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new UtilityReadingException(
+                "Chỉ số này vừa được người khác cập nhật. Vui lòng tải lại trang và thử lại.",
+                UtilityReadingErrorCodes.ConcurrencyConflict);
+        }
+
         return ToDto(reading);
     }
 

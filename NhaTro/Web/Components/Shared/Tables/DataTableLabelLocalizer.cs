@@ -26,5 +26,8 @@ public static class DataTableLabelLocalizer
         LastPage = localizer["TableLastPage"],
         Page = localizer["TablePage"],
         Summary = localizer["TableSummary"],
+        PageInfo = localizer["TablePageInfo"],
+        Previous = localizer["TablePrevious"],
+        Next = localizer["TableNext"],
     };
 }

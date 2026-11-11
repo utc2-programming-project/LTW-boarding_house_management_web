@@ -15,6 +15,7 @@
 @inject ToastService Toasts
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TimeProvider Clock
+@inject NavigationManager Navigation
 
 <PageTitle>@L["ContractListTitle"]</PageTitle>
 
@@ -74,21 +75,21 @@
         <div class="contract-filter-row contract-filter-advanced">
             <label class="contract-field" for="contract-term-from">
                 <span>@L["ContractFilterDateFrom"]</span>
-                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" />
+                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" @bind:after="ResetPage" />
             </label>
             <label class="contract-field" for="contract-term-to">
                 <span>@L["ContractFilterDateTo"]</span>
-                <input id="contract-term-to" type="date" class="input" @bind="_termTo" />
+                <input id="contract-term-to" type="date" class="input" @bind="_termTo" @bind:after="ResetPage" />
             </label>
             <label class="contract-field" for="contract-min-rent">
                 <span>@L["ContractFilterMinRent"]</span>
                 <input id="contract-min-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" />
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" @bind:after="ResetPage" />
             </label>
             <label class="contract-field" for="contract-max-rent">
                 <span>@L["ContractFilterMaxRent"]</span>
                 <input id="contract-max-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" />
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" @bind:after="ResetPage" />
             </label>
         </div>
     </form>
@@ -117,39 +118,103 @@
     }
     else
     {
-        <div class="contract-table-wrap">
-            <table class="contract-table" role="table" aria-label="@L["ContractListTitle"]">
-                <thead><tr>
-                    <th scope="col">@L["ContractNumberLabel"]</th><th scope="col">@L["ContractTenantsLabel"]</th><th scope="col">@L["ContractRoomPropertyLabel"]</th>
-                    <th scope="col">@L["ContractTermLabel"]</th><th scope="col" class="numeric">@L["ContractFinanceLabel"]</th><th scope="col">@L["ContractStatusActionsLabel"]</th>
-                </tr></thead>
-                <tbody>
-                @foreach (var item in VisibleItems)
-                {
-                    <tr role="row">
-                        <td role="cell" data-label="@L["ContractNumberLabel"]"><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
-                        <td role="cell" data-label="@L["ContractTenantsLabel"]">@string.Join(", ", item.TenantNames)</td>
-                        <td role="cell" data-label="@L["ContractRoomPropertyLabel"]"><div class="contract-cell-stack"><strong>@item.RoomCode</strong><span class="contract-cell-secondary">@item.PropertyName</span></div></td>
-                        <td role="cell" data-label="@L["ContractTermLabel"]"><div class="contract-cell-stack contract-term"><span>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))</span><span>– @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</span></div></td>
-                        <td role="cell" data-label="@L["ContractFinanceLabel"]">
-                            <dl class="contract-finance tabular-nums">
-                                <div><dt>@L["ContractMonthlyRentShort"]</dt><dd>@MoneyFormatter.Format(item.SnapshotPrice)</dd></div>
-                                <div><dt>@L["ContractDepositShort"]</dt><dd>@MoneyFormatter.Format(item.DepositAmount)</dd></div>
-                            </dl>
-                        </td>
-                        <td role="cell" data-label="@L["ContractStatusActionsLabel"]">
-                            <div class="contract-cell-stack">
-                                <StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" />
-                                <div class="contract-row-actions"><a class="btn btn-secondary" href="@($"/contracts/{item.ContractId}")">@L["ContractViewAction"]</a>
-                            @if (_canApprove && item.Status == ContractStatus.Pending)
-                            { <button class="btn btn-primary" @onclick="() => OpenDecision(item.ContractId)">@L["ContractApproveAction"]</button> }
+        <div class="contract-table-card">
+            <div class="contract-table-wrap">
+                <table class="contract-table" role="table" aria-label="@L["ContractListTitle"]">
+                    <thead><tr>
+                        <th scope="col">@L["ContractNumberLabel"]</th><th scope="col">@L["ContractTenantsLabel"]</th><th scope="col">@L["ContractRoomPropertyLabel"]</th>
+                        <th scope="col">@L["ContractTermLabel"]</th><th scope="col">@L["ContractFinanceLabel"]</th>
+                        <th scope="col" class="contract-actions-col">@L["ContractActionsLabel"]</th>
+                    </tr></thead>
+                    <tbody>
+                    @foreach (var item in PagedItems)
+                    {
+                        <tr role="row">
+                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
+                            <td role="cell" data-label="@L["ContractTenantsLabel"]">@string.Join(", ", item.TenantNames)</td>
+                            <td role="cell" data-label="@L["ContractRoomPropertyLabel"]">
+                                <div class="contract-room-cell">
+                                    <div class="contract-room-line">
+                                        <strong>@item.RoomCode</strong>
+                                        <StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" />
+                                    </div>
+                                    <span class="contract-cell-secondary">@item.PropertyName</span>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
+                            </td>
+                            <td role="cell" data-label="@L["ContractTermLabel"]"><div class="contract-cell-stack contract-term"><span>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))</span><span>– @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</span></div></td>
+                            <td role="cell" data-label="@L["ContractFinanceLabel"]">
+                                <dl class="contract-finance tabular-nums">
+                                    <div><dt>@L["ContractMonthlyRentShort"]</dt><dd>@MoneyFormatter.Format(item.SnapshotPrice)</dd></div>
+                                    <div><dt>@L["ContractDepositShort"]</dt><dd>@MoneyFormatter.Format(item.DepositAmount)</dd></div>
+                                </dl>
+                            </td>
+                            <td role="cell" data-label="@L["ContractActionsLabel"]" class="contract-actions-cell">
+                                <div class="p2-row-actions">
+                                    <button type="button" class="icon-button p2-menu-trigger @(IsMenuOpen(item.ContractId) ? "is-open" : null)"
+                                            title="@L["ContractActionsLabel"]" aria-label="@($"{L["ContractActionsLabel"]}: {item.ContractNumber}")"
+                                            aria-haspopup="menu" aria-expanded="@(IsMenuOpen(item.ContractId) ? "true" : "false")"
+                                            aria-controls="@($"contract-row-menu-{item.ContractId}")"
+                                            @onclick="() => ToggleRowMenu(item.ContractId)">
+                                        <LucideIcon Name="ellipsis" />
+                                    </button>
+                                    @if (IsMenuOpen(item.ContractId))
+                                    {
+                                        <div id="@($"contract-row-menu-{item.ContractId}")" class="p2-row-menu" role="menu" aria-label="@L["ContractActionsLabel"]" data-row-menu>
+                                            <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuView(item)">
+                                                <LucideIcon Name="eye" /><span>@L["ContractViewDetails"]</span>
+                                            </button>
+                                            @if (_canApprove && item.Status == ContractStatus.Pending)
+                                            {
+                                                <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDecision(item)">
+                                                    <LucideIcon Name="badge-check" /><span>@L["ContractApproveAction"]</span>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <footer class="contract-table-footer">
+                <span class="contract-footer-summary">@L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @VisibleItems.Count</span>
+                <div class="contract-footer-controls">
+                    <label class="contract-page-size" for="contract-page-size">
+                        <span>@L["RowsPerPage"]</span>
+                        <select id="contract-page-size" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </label>
+                    @if (TotalPages > 1)
+                    {
+                        <nav class="contract-pager" aria-label="@L["PaginationLabel"]">
+                            <button type="button" class="page-button" aria-label="@L["ContractFirstPage"]" disabled="@(_page == 1)" @onclick="() => GoToPage(1)">
+                                <LucideIcon Name="chevrons-left" />
+                            </button>
+                            <button type="button" class="page-button" aria-label="@L["PreviousPage"]" disabled="@(_page == 1)" @onclick="() => GoToPage(_page - 1)">
+                                <LucideIcon Name="chevron-left" />
+                            </button>
+                            @foreach (var p in PageNumbers)
+                            {
+                                <button type="button" class="page-button @(p == _page ? "current" : null)"
+                                        aria-label="@($"{L["ContractPage"]} {p}")" aria-current="@(p == _page ? "page" : null)"
+                                        @onclick="() => GoToPage(p)">@p</button>
+                            }
+                            <button type="button" class="page-button" aria-label="@L["NextPage"]" disabled="@(_page == TotalPages)" @onclick="() => GoToPage(_page + 1)">
+                                <LucideIcon Name="chevron-right" />
+                            </button>
+                            <button type="button" class="page-button" aria-label="@L["ContractLastPage"]" disabled="@(_page == TotalPages)" @onclick="() => GoToPage(TotalPages)">
+                                <LucideIcon Name="chevrons-right" />
+                            </button>
+                        </nav>
+                    }
+                </div>
+            </footer>
         </div>
     }
 </section>
@@ -172,12 +237,25 @@
     private bool _decisionOpen;
     private bool _decisionBusy;
     private Guid _decisionContractId;
+    private IReadOnlyList<string> _propertyOptions = [];
+    private int _page = 1;
+    private int _pageSize = 20;
+    private Guid? _openMenuId;
 
-    private IEnumerable<string> PropertyOptions => _items
-        .Select(item => item.PropertyName)
-        .Where(name => !string.IsNullOrWhiteSpace(name))
-        .Distinct(StringComparer.OrdinalIgnoreCase)
-        .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase);
+    private IEnumerable<string> PropertyOptions => _propertyOptions;
+
+    private IReadOnlyList<int> PageNumbers => PaginationHelper.PageWindow(_page, TotalPages);
+
+    private IReadOnlyList<ContractListItemDto> PagedItems => VisibleItems
+        .Skip((_page - 1) * _pageSize)
+        .Take(_pageSize)
+        .ToList();
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(VisibleItems.Count / (double)_pageSize));
+
+    private int FirstItem => VisibleItems.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
+
+    private int LastItem => Math.Min(_page * _pageSize, VisibleItems.Count);
 
     private IReadOnlyList<ContractListItemDto> VisibleItems
     {
@@ -231,24 +309,88 @@
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         _canApprove = auth.User.IsInRole("ChuTro");
+        await LoadPropertyOptionsAsync();
         await LoadAsync();
     }
 
-    private async Task SearchAsync() => await LoadAsync();
+    private async Task LoadPropertyOptionsAsync()
+    {
+        try
+        {
+            // Danh sách nhà trọ phải lấy từ toàn bộ hợp đồng, không phải từ kết quả
+            // đang lọc từ khoá, để bộ lọc không mất lựa chọn sau khi tìm kiếm.
+            _propertyOptions = (await Contracts.ListAsync(null))
+                .Select(item => item.PropertyName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+        catch
+        {
+            _propertyOptions = [];
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        ResetPage();
+        await LoadAsync();
+    }
 
     private void HandleStatusFilterChanged(ChangeEventArgs e)
     {
         _statusFilter = e.Value?.ToString() ?? "all";
+        ResetPage();
     }
 
     private void HandlePropertyFilterChanged(ChangeEventArgs e)
     {
         _propertyFilter = e.Value?.ToString() ?? "all";
+        ResetPage();
     }
 
     private void HandleSortChanged(ChangeEventArgs e)
     {
         _sortFilter = e.Value?.ToString() ?? "newest";
+        ResetPage();
+    }
+
+    private void ChangePageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            ResetPage();
+        }
+    }
+
+    private void ResetPage()
+    {
+        _openMenuId = null;
+        _page = 1;
+    }
+
+    private void GoToPage(int page)
+    {
+        _openMenuId = null;
+        _page = PaginationHelper.ClampPage(page, TotalPages);
+    }
+
+    private bool IsMenuOpen(Guid id) => _openMenuId == id;
+
+    private void ToggleRowMenu(Guid id) => _openMenuId = _openMenuId == id ? null : id;
+
+    private void MenuView(ContractListItemDto item)
+    {
+        _openMenuId = null;
+        Navigation.NavigateTo($"/contracts/{item.ContractId}");
+    }
+
+    private void MenuDecision(ContractListItemDto item)
+    {
+        _openMenuId = null;
+        OpenDecision(item.ContractId);
     }
 
     private async Task ResetFiltersAsync()
@@ -261,24 +403,25 @@
         _termTo = null;
         _minRent = null;
         _maxRent = null;
+        _page = 1;
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
+        _openMenuId = null;
         _loading = true; _failed = false;
         try
         {
             _items = await Contracts.ListAsync(_keyword);
-
-            if (_propertyFilter != "all" &&
-                !_items.Any(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase)))
-            {
-                _propertyFilter = "all";
-            }
         }
         catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
         finally { _loading = false; }
+
+        if (_page > TotalPages)
+        {
+            _page = TotalPages;
+        }
     }
     private void OpenDecision(Guid id) { _decisionContractId = id; _decisionOpen = true; }
     private Task CloseDecision() { if (!_decisionBusy) _decisionOpen = false; return Task.CompletedTask; }

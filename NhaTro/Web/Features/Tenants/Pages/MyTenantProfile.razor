@@ -225,10 +225,12 @@
 
             if (result.ErrorCode == TenantErrorCodes.InvalidRequest)
             {
-                Add(nameof(_form.PhoneNumber), L["TenantValidationPhone"]);
-                _editContext.NotifyValidationStateChanged();
+                // Máy khách đã tự kiểm độ dài/số điện thoại nên lỗi còn lại không gắn riêng được cho trường nào.
+                Toasts.Error(L["TenantErrorGeneric"]);
+                return;
             }
-            Toasts.Error(result.ErrorCode == TenantErrorCodes.InvalidRequest ? L["TenantValidationPhone"] : L["TenantErrorGeneric"]);
+
+            Toasts.Error(L["TenantErrorGeneric"]);
             return;
         }
 

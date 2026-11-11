@@ -141,7 +141,8 @@
             {
                 TenantErrorCodes.AccountAlreadyLinked => L["TenantErrorAccountLinked"],
                 TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
-                _ => L["TenantErrorAccountNotTenant"],
+                TenantErrorCodes.InvalidRequest => L["TenantErrorAccountNotTenant"],
+                _ => L["TenantErrorGeneric"],
             });
             return;
         }

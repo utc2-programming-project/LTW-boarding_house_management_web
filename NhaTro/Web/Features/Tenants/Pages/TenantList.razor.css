@@ -24,11 +24,13 @@
 .tenant-filter-select { flex: 1 0 17rem; min-width: min(100%, 17rem); max-width: 100%; }
 .tenant-filter-select .input { width: 100%; border-color: transparent; background-color: var(--surface-subtle); }
 .tenant-sort-select { flex-basis: 20rem; }
-.tenant-page-size { flex: 0 1 15rem; min-width: 12rem; }
 .tenant-labeled-select { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius-control); background: var(--surface-subtle); }
 .tenant-inline-label { flex: none; font-size: .8125rem; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
 .tenant-labeled-select .input { flex: 1 1 auto; width: auto; min-width: 0; border-color: transparent; background: transparent; padding-left: 0; }
 .tenant-reset-button { flex: 0 0 auto; min-height: 44px; }
+.tenant-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -12px; color: var(--text-secondary); }
+.tenant-table-options label { font-size: .875rem; }
+.tenant-table-options select { width: 84px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-subtle); color: var(--text-primary); font-size: .875rem; }
 .tenant-filter-footnote { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .75rem; }
 .tenant-filter-footnote > span { display: inline-flex; align-items: center; gap: 6px; }
 .tenant-filter-footnote .lucide-icon { width: 15px; height: 15px; flex-basis: 15px; color: var(--accent-text); }
@@ -39,13 +41,30 @@
 .tenant-name-button:hover { color: var(--accent-text); text-decoration: underline; }
 .tenant-name-text small { color: var(--text-muted); font-family: ui-monospace,Consolas,monospace; font-size: .6875rem; }
 .tenant-id-mask { font-family: ui-monospace,Consolas,monospace; font-size: .75rem; letter-spacing: .04em; }
-.tenant-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; }
 .tenant-icon-button { display: inline-grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); }
 .tenant-icon-button:hover { background: var(--hover-bg); color: var(--accent-text); }
 .tenant-icon-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .tenant-icon-danger:hover { color: var(--danger); }
 .tenant-icon-success:hover { color: var(--success-text); }
 .tenant-filter-card select { min-width: 0; }
+
+/* Tỉ lệ cột cố định: Họ tên 26% · SĐT 14% · Phòng 11% · CCCD 14% · Trạng thái 13% · Tài khoản 12% · Thao tác 10%. */
+.tenant-list-page ::deep .table-card table { table-layout: fixed; min-width: 1120px; }
+.tenant-list-page ::deep .table-card thead th:nth-child(1) { width: 26%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(2) { width: 14%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(3) { width: 11%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(4) { width: 14%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(5) { width: 13%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(6) { width: 12%; }
+.tenant-list-page ::deep .table-card thead th:nth-child(7) { width: 10%; text-align: center; }
+.tenant-list-page ::deep .table-card tbody td { vertical-align: middle; }
+/* Quản lý không thấy cột Tài khoản: bảng 6 cột, chia lại cho cân. */
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(1) { width: 27%; }
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(2) { width: 15%; }
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(3) { width: 12%; }
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(4) { width: 16%; }
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(5) { width: 17%; }
+.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(6) { width: 13%; text-align: center; }
 
 @media (max-width: 1199px) {
     .tenant-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -69,6 +88,7 @@
     .tenant-filter-select .input { min-height: 44px; }
     .tenant-reset-button { flex: 1 1 100%; }
     .tenant-filter-footnote { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .tenant-table-options { justify-content: flex-start; margin-top: 0; }
 }
 
 @media (max-width: 420px) {
