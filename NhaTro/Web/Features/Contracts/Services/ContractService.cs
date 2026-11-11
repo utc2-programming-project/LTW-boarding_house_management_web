@@ -18,6 +18,7 @@ using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
+using Web.Features.Tenants;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
@@ -60,15 +61,27 @@ public sealed class ContractService : IContractService
             .Select(property => new ContractPropertyOptionDto(property.Id, property.Name))
             .ToListAsync(cancellationToken);
 
+        // Phòng còn giữ trạng thái Available cho tới khi hợp đồng được duyệt, nên phải loại
+        // cả phòng đang có hợp đồng Pending/Approved để người chọn không bấm vào rồi mới bị chặn.
+        var busyRoomIds = _context.Contracts.AsNoTracking()
+            .Where(contract => contract.Status == ContractStatus.Pending
+                || contract.Status == ContractStatus.Approved)
+            .Select(contract => contract.RoomId);
+
         var rooms = await (
             from room in _context.Rooms.AsNoTracking()
             join property in visibleProperties on room.PropertyId equals property.Id
             where room.IsActive && !room.IsDeleted && room.Status == RoomStatus.Available
+                && !busyRoomIds.Contains(room.Id)
             orderby property.Name, room.Code
-            select new ContractRoomOptionDto(room.Id, room.PropertyId, room.Code, room.StandardPrice))
+            select new ContractRoomOptionDto(room.Id, property.Id, room.Code, room.StandardPrice))
             .ToListAsync(cancellationToken);
 
-        var tenants = await _context.Tenants.AsNoTracking()
+        // VHT-119: danh sách chọn khách dùng chung phạm vi với danh sách hồ sơ,
+        // không lộ tên/SĐT khách của chủ trọ khác.
+        var tenants = await Web.Features.Tenants.TenantVisibility
+            .Apply(_context, caller.UserId, caller.Role)
+            .AsNoTracking()
             .Where(tenant => tenant.IsActive && !tenant.IsDeleted)
             .OrderBy(tenant => tenant.FullName)
             .Select(tenant => new ContractTenantOptionDto(tenant.Id, tenant.FullName, tenant.Phone))
@@ -662,12 +675,24 @@ public sealed class ContractService : IContractService
         var currentRoomPrice = room.StandardPrice;
 
         var requestedTenantIds = request.TenantIds.Distinct().ToList();
-        var existingTenantCount = await _context.Tenants
-            .AsNoTracking()
+        // Hồ sơ phải thuộc phạm vi người gọi: đã liên kết với Chủ trọ/Quản lý này hoặc
+        // chưa liên kết với ai (kho hồ sơ dùng chung). Hồ sơ đã thuộc Chủ trọ khác bị chặn
+        // để Quản lý không gắn hồ sơ của tòa khác vào hợp đồng.
+        var visibleTenants = TenantVisibility.Apply(_context, caller.UserId, caller.Role);
+        var visibleIds = visibleTenants
             .Where(tenant => requestedTenantIds.Contains(tenant.Id)
                 && tenant.IsActive
                 && !tenant.IsDeleted)
-            .Select(tenant => tenant.Id)
+            .Select(tenant => tenant.Id);
+        var pooledIds = _context.Tenants
+            .AsNoTracking()
+            .Where(tenant => requestedTenantIds.Contains(tenant.Id)
+                && tenant.IsActive
+                && !tenant.IsDeleted
+                && !_context.TenantOwnerLinks.Any(link => link.TenantId == tenant.Id))
+            .Select(tenant => tenant.Id);
+        var existingTenantCount = await visibleIds
+            .Union(pooledIds)
             .CountAsync(cancellationToken);
 
         if (existingTenantCount != requestedTenantIds.Count)

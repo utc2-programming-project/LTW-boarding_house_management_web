@@ -24,7 +24,7 @@
             </div>
             <dl class="p2-detail-grid">
                 <div><dt>@L["P2Address"]</dt><dd>@(string.IsNullOrWhiteSpace(_detail.Address) ? L["P2NotProvided"] : _detail.Address)</dd></div>
-                <div><dt>@L["P2RoomCount"]</dt><dd>@Property.RoomCount</dd></div>
+                <div><dt>@L["P2RoomCount"]</dt><dd>@_detail.RoomCount</dd></div>
                 <div><dt>@L["P2CreatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.CreatedAt)</dd></div>
                 @if (_detail.UpdatedAt.HasValue)
                 {
@@ -61,7 +61,7 @@
                             @foreach (var assignment in _assignments)
                             {
                                 <li class="p2-manager-row">
-                                    <span class="p2-manager-email">@(string.IsNullOrWhiteSpace(assignment.ManagerEmail) ? assignment.ManagerUserId : assignment.ManagerEmail)</span>
+                                    <span class="p2-manager-email">@(string.IsNullOrWhiteSpace(assignment.ManagerEmail) ? L["P2ManagerUnknown"] : assignment.ManagerEmail)</span>
                                     <span class="p2-manager-since">@L["P2ManagerAssignedSince"]: @DateFormatter.FormatDateTime(assignment.AssignedAt)</span>
                                     <button class="btn btn-secondary" type="button" disabled="@_managerBusy"
                                             @onclick="() => RevokeManagerAsync(assignment.ManagerUserId)">

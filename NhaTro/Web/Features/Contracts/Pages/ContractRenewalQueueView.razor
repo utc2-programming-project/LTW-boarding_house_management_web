@@ -17,9 +17,31 @@
 <section class="renewal-queue-page" aria-labelledby="renewal-queue-title">
     <PageHeading Title="@L["RenewalQueueTitle"]" TitleId="renewal-queue-title" HelpText="@L["RenewalQueueDescription"]">
         <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync"><LucideIcon Name="refresh-cw" />@L["RenewalQueueRefresh"]</button>
             <a class="btn btn-secondary" href="/contracts"><LucideIcon Name="arrow-left" />@L["ContractBackToList"]</a>
         </Actions>
     </PageHeading>
+
+    @if (_items.Count > 0)
+    {
+        <div class="renewal-filter-row">
+            <label class="search-field" for="renewal-keyword">
+                <LucideIcon Name="search" />
+                <span class="sr-only">@L["RenewalQueueSearchPlaceholder"]</span>
+                <input id="renewal-keyword" type="search" autocomplete="off"
+                       placeholder="@L["RenewalQueueSearchPlaceholder"]"
+                       @bind="_keyword" @bind:event="oninput" @bind:after="ResetPage" />
+            </label>
+            <select class="input" aria-label="@L["ContractPropertyLabel"]" value="@_propertyFilter" @onchange="HandlePropertyChanged">
+                <option value="all">@L["ContractFilterPropertyAll"]</option>
+                @foreach (var propertyName in PropertyOptions)
+                {
+                    <option value="@propertyName">@propertyName</option>
+                }
+            </select>
+            <button type="button" class="btn btn-secondary" @onclick="ResetFilters"><LucideIcon Name="refresh" />@L["RenewalQueueResetFilters"]</button>
+        </div>
+    }
 
     @if (_loading)
     {
@@ -35,6 +57,12 @@
     {
         <EmptyStateCard Title="@L["RenewalQueueEmptyTitle"]" Description="@L["RenewalQueueEmptyDescription"]" />
     }
+    else if (FilteredItems.Count == 0)
+    {
+        <EmptyStateCard Title="@L["RenewalQueueFilterEmptyTitle"]" Description="@L["RenewalQueueFilterEmptyDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="ResetFilters">@L["RenewalQueueResetFilters"]</button>
+        </EmptyStateCard>
+    }
     else
     {
         <div class="renewal-table-wrap">
@@ -46,7 +74,7 @@
                     <th>@L["ContractActionsLabel"]</th>
                 </tr></thead>
                 <tbody>
-                @foreach (var item in _items)
+                @foreach (var item in PagedItems)
                 {
                     <tr>
                         <td><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
@@ -63,6 +91,31 @@
                 </tbody>
             </table>
         </div>
+
+        <footer class="table-footer">
+            <div class="pagination-info">
+                @L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @FilteredItems.Count
+            </div>
+            <div class="pagination-controls">
+                <label class="page-size-field" for="renewal-page-size">
+                    <span>@L["RowsPerPage"]</span>
+                    <select id="renewal-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
+                <nav class="pager" aria-label="@L["PaginationLabel"]">
+                    <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["PreviousPage"]">
+                        <LucideIcon Name="chevron-left" />
+                    </button>
+                    <span class="page-indicator">@_page / @TotalPages</span>
+                    <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["NextPage"]">
+                        <LucideIcon Name="chevron-right" />
+                    </button>
+                </nav>
+            </div>
+        </footer>
     }
 </section>
 
@@ -76,8 +129,97 @@
     private bool _decisionOpen;
     private bool _decisionBusy;
     private RenewalRequestItemDto? _decisionRequest;
+    private string? _keyword;
+    private string _propertyFilter = "all";
+    private int _page = 1;
+    private int _pageSize = 20;
+
+    private IEnumerable<string> PropertyOptions => _items
+        .Select(item => item.PropertyName)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase);
+
+    private IReadOnlyList<RenewalRequestItemDto> FilteredItems
+    {
+        get
+        {
+            IEnumerable<RenewalRequestItemDto> query = _items;
+
+            if (!string.IsNullOrWhiteSpace(_keyword))
+            {
+                var keyword = _keyword.Trim();
+                query = query.Where(item =>
+                    Contains(item.ContractNumber, keyword)
+                    || Contains(item.RequesterName, keyword)
+                    || Contains(item.RoomCode, keyword)
+                    || Contains(item.PropertyName, keyword));
+            }
+
+            if (_propertyFilter != "all")
+            {
+                query = query.Where(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return query.ToList();
+        }
+    }
+
+    private IReadOnlyList<RenewalRequestItemDto> PagedItems => FilteredItems
+        .Skip((_page - 1) * _pageSize)
+        .Take(_pageSize)
+        .ToList();
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(FilteredItems.Count / (double)_pageSize));
+
+    private int FirstItem => FilteredItems.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
+
+    private int LastItem => Math.Min(_page * _pageSize, FilteredItems.Count);
+
+    private static bool Contains(string? value, string keyword) =>
+        !string.IsNullOrWhiteSpace(value) && value.Contains(keyword, StringComparison.CurrentCultureIgnoreCase);
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private void ResetPage() => _page = 1;
+
+    private void HandlePropertyChanged(ChangeEventArgs e)
+    {
+        _propertyFilter = e.Value?.ToString() ?? "all";
+        _page = 1;
+    }
+
+    private void ResetFilters()
+    {
+        _keyword = null;
+        _propertyFilter = "all";
+        _page = 1;
+    }
+
+    private void ChangePageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _page = 1;
+        }
+    }
+
+    private void GoToPreviousPage()
+    {
+        if (_page > 1)
+        {
+            _page--;
+        }
+    }
+
+    private void GoToNextPage()
+    {
+        if (_page < TotalPages)
+        {
+            _page++;
+        }
+    }
 
     private async Task LoadAsync()
     {
@@ -104,6 +246,11 @@
         finally
         {
             _loading = false;
+        }
+
+        if (_page > TotalPages)
+        {
+            _page = TotalPages;
         }
     }
 
@@ -136,7 +283,7 @@
             var result = await Renewals.DecideAsync(_decisionRequest.Id, decision);
             if (!result.Succeeded)
             {
-                Toasts.Error(ErrorText(result.ErrorCode, result.ErrorMessage));
+                Toasts.Error(ErrorText(result.ErrorCode));
                 return;
             }
 
@@ -147,7 +294,7 @@
         catch (Exception ex)
         {
             Toasts.Error(ex is IContractServiceError error
-                ? ErrorText(error.ErrorCode, ex.Message)
+                ? ErrorText(error.ErrorCode)
                 : L["RenewalGenericError"].Value);
         }
         finally
@@ -161,18 +308,14 @@
             ? L["RenewalPendingOwnerApproval"].Value
             : L[decision.IsApproved ? "RenewalAcceptSuccess" : "RenewalRejectSuccess"].Value;
 
-    private string ErrorText(string? errorCode, string? detail = null)
+    private string ErrorText(string? errorCode)
     {
         if (errorCode is null)
         {
             return L["RenewalGenericError"].Value;
         }
 
-        // RenewApplyFailed là mã gộp cho những lỗi P4 chưa tách riêng: nói nguyên nhân thật nếu P4 đã cho biết.
-        if (errorCode == ContractRenewalErrorCodes.RenewApplyFailed && !string.IsNullOrWhiteSpace(detail))
-        {
-            return detail;
-        }
+        // Thông điệp P4 là tiếng Việt cố định nên không hiển thị trực tiếp: dùng bản dịch theo ngôn ngữ UI.
 
         return L[$"RenewalError{errorCode}"].Value;
     }

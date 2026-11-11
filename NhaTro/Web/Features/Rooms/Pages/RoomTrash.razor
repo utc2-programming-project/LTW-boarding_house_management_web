@@ -18,7 +18,7 @@
         </Actions>
     </PageHeading>
 
-    <DataTable @ref="_table" TItem="RoomTrashItem" Columns="_columns"
+    <DataTable @ref="_table" @key="_tableKey" TItem="RoomTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
                Caption="@L["P2TrashTable"]" Labels="_tableLabels">
         <EmptyActions>
@@ -47,6 +47,7 @@
     private RoomTrashItem? _restoreRoom;
     private bool _restoreVisible;
     private int _pageSize = 20;
+    private int _tableKey;
 
     protected override void OnInitialized()
     {
@@ -88,6 +89,7 @@
         if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
         {
             _pageSize = value;
+            _tableKey++;
         }
 
         return Task.CompletedTask;

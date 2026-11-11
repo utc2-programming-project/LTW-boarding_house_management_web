@@ -250,10 +250,20 @@
 
 .services-table {
     width: 100%;
+    min-width: 1080px;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 13px;
     text-align: left;
 }
+
+/* Tỉ lệ cột đối xứng: hai cột điều khiển cuối chia đều 12.5% mỗi bên. */
+.services-table th:nth-child(1) { width: 22.5%; }
+.services-table th:nth-child(2) { width: 15%; }
+.services-table th:nth-child(3) { width: 17%; }
+.services-table th:nth-child(4) { width: 20.5%; }
+.services-table th:nth-child(5) { width: 12.5%; }
+.services-table th:nth-child(6) { width: 12.5%; }
 
 .services-table th {
     height: 44px;
@@ -321,16 +331,13 @@
     line-height: 1.4;
 }
 
-.readonly-badge {
-    display: inline-flex;
-    align-items: center;
-    color: var(--text-muted);
-}
+.service-meta-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.service-unit { color: var(--text-secondary); font-size: 12px; line-height: 18px; }
 
-.readonly-badge .lucide-icon {
-    width: 14px;
-    height: 14px;
-}
+/* Dải hiệu lực nằm trên một dòng để các ô dữ liệu cao đều nhau. */
+.service-period { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; color: var(--text-secondary); line-height: 20px; }
+.service-period > span { white-space: nowrap; }
+.service-period-end { color: var(--text-secondary); }
 
 .type-pill {
     display: inline-block;
@@ -365,13 +372,40 @@
 .price-status-upcoming { color: var(--warning-text); }
 .price-status-expired { color: var(--text-muted); }
 
-.readonly-inline-label,
 .service-status-text {
     display: inline-block;
-    margin-left: 6px;
     color: var(--text-secondary);
     font-size: 11px;
     white-space: nowrap;
+}
+
+/* Nhãn tĩnh cho biểu giá mặc định chỉ đọc (thay cho công tắc bị khóa). */
+.readonly-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.readonly-chip .lucide-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+}
+
+.p2-row-menu-item:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    background: transparent;
 }
 
 .tier-view-link {
@@ -438,13 +472,6 @@
     transform: translateX(16px);
 }
 
-/* Action buttons in table */
-.action-buttons-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
 .icon-action-btn {
     display: inline-flex;
     align-items: center;
@@ -464,48 +491,26 @@
     color: var(--text-primary);
 }
 
-.edit-action-btn {
-    color: var(--primary);
-}
-
-.edit-action-btn:hover {
-    background: var(--accent-soft);
-    color: var(--primary-hover);
-}
-
-.delete-action-btn {
-    color: var(--danger);
-}
-
-.delete-action-btn:hover {
-    background: var(--error-bg);
-    color: var(--error-text);
-}
-
 .icon-action-btn .lucide-icon {
     width: 16px;
     height: 16px;
 }
 
-/* Tenant monthly service registration toggle (table row) */
-.register-btn {
-    padding: 6px 12px;
-    font-size: 12.5px;
-    white-space: nowrap;
-}
-
-/* Table Footer */
+/* Table Footer: đồng bộ kiểu chân bảng với trang Hóa đơn. */
 .table-footer {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 12px 20px;
-    background: var(--surface-subtle);
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-    color: var(--text-secondary);
-    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-muted);
+    font-size: .8125rem;
+}
+
+.pager {
+    display: flex;
+    gap: var(--space-2);
 }
 
 /* Empty State */
@@ -610,9 +615,10 @@
 }
 
 .page-title {
-    font-size: 32px;
-    line-height: 1.25;
+    font-size: 28px;
+    line-height: 36px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
     margin: 0;
 }
@@ -620,7 +626,8 @@
 .page-subtitle {
     color: #64748B;
     margin: 4px 0 0;
-    font-size: 16px;
+    font-size: 14px;
+    line-height: 22px;
 }
 
 .table-card {

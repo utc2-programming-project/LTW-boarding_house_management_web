@@ -106,6 +106,17 @@ html[data-sidebar-resizing],html[data-sidebar-resizing] * { cursor:col-resize!im
 .account-menu-item:hover,.account-menu-item:focus-visible { background:var(--hover-bg);color:var(--text-primary); }
 .account-menu-item .lucide-icon { width:18px;height:18px;flex:0 0 18px;color:var(--text-secondary); }
 .account-menu-sep { height:1px;margin:6px 8px;background:var(--border); }
+/* Menu thao tác theo hàng trong bảng (nút "⋯"); row-menu.js định vị bằng position: fixed. */
+.p2-row-actions { position:relative;display:flex;align-items:center;justify-content:center;gap:4px; }
+.p2-menu-trigger.is-open { background:var(--hover-bg);color:var(--text-primary); }
+.p2-row-menu { position:absolute;top:calc(100% + 6px);right:0;z-index:300;display:flex;flex-direction:column;min-width:200px;padding:6px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-popover); }
+.p2-row-menu-item { display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--text-primary);font:inherit;font-size:.875rem;line-height:1.4;text-align:left;white-space:nowrap; }
+.p2-row-menu-item:hover,.p2-row-menu-item:focus-visible { background:var(--hover-bg);color:var(--text-primary); }
+.p2-row-menu-item .lucide-icon { width:18px;height:18px;flex:0 0 18px;color:var(--text-secondary); }
+.p2-row-menu-item.danger { color:var(--danger); }
+.p2-row-menu-item.danger .lucide-icon { color:var(--danger); }
+.p2-row-menu-item.danger:hover,.p2-row-menu-item.danger:focus-visible { background:var(--error-bg);color:var(--danger); }
+.p2-row-menu-sep { height:1px;margin:6px 8px;background:var(--border); }
 /* Giao diện + Ngôn ngữ nằm trong popover tài khoản thay cho các nút rời trên topbar. */
 .account-menu-row { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:4px 10px; }
 .account-menu-row-label { font-size:.8125rem;line-height:1.4;color:var(--text-secondary); }

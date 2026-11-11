@@ -7,6 +7,9 @@
 .page-heading {
     display: flex;
     flex-direction: column;
+    /* theme.css đặt align-items: flex-start cho .page-heading; kế thừa sẽ khiến
+       .page-heading-row co theo nội dung và nút hành động dính sát tiêu đề. */
+    align-items: stretch;
     gap: 0;
 }
 
@@ -15,6 +18,11 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-4, 16px);
+    width: 100%;
+}
+
+.page-heading-row .header-actions {
+    margin-left: auto;
 }
 
 .heading-copy {
@@ -23,36 +31,18 @@
 
 .page-title {
     margin: 8px 0 0;
-    font-size: 32px;
-    line-height: 1.25;
+    font-size: 28px;
+    line-height: 36px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
 }
 
 .page-subtitle {
     margin: var(--space-1, 4px) 0 0;
     color: var(--text-secondary);
-    font-size: 16px;
-}
-
-.sql-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 26px;
-    margin-top: var(--space-2, 8px);
-    padding: 2px 10px;
-    border: 1px solid var(--accent-border, #C7D2FE);
-    border-radius: var(--radius-round, 999px);
-    background: var(--accent-soft, #EEF2FF);
-    color: var(--accent-text, #4338CA);
-    font-size: .75rem;
-    font-weight: 600;
-}
-
-.sql-badge .lucide-icon {
-    width: 14px;
-    height: 14px;
+    font-size: 14px;
+    line-height: 22px;
 }
 
 .header-actions {

@@ -215,7 +215,10 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
     {
         ArgumentNullException.ThrowIfNull(caller);
 
-        var query = ScopeContracts(caller);
+        var query = ScopeContracts(caller)
+            // Bộ lọc hóa đơn chỉ nên liệt kê hợp đồng đã từng có hóa đơn; hợp đồng Pending/Rejected
+            // chưa thể phát sinh hóa đơn nên không thuộc dữ liệu chọn.
+            .Where(contract => context.Invoices.Any(invoice => invoice.ContractId == contract.ContractId));
         return await query
             .AsNoTracking()
             .OrderBy(item => item.ContractNumber)

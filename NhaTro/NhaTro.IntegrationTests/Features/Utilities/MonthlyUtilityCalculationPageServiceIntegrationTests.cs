@@ -135,6 +135,16 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
             await db.SaveChangesAsync();
         }
 
+        // P5 chỉ lập hóa đơn khi phòng đã có chỉ số trong kỳ: ghi chỉ số kỳ hiện tại trước.
+        await world.NewUtilityReadings().RecordAsync(
+            new RecordUtilityReadingRequest(
+                world.Data.RoomAId,
+                today,
+                periodEnd,
+                ElectricEnd: 200m,
+                WaterEnd: 90m),
+            world.OwnerA);
+
         var managerService = CreateService(world, world.OwnerA);
         var created = await managerService.CreateInvoiceAsync(world.Data.ContractAId, today, periodEnd);
         Assert.True(created.Success, created.ErrorCode);

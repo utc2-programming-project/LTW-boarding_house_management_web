@@ -203,9 +203,13 @@
             Toast.Success(UL["RegCancelSuccess"]);
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            Toast.Error(ex.Message);
+            Toast.Error(ResolveError(ex));
+        }
+        catch (Exception)
+        {
+            Toast.Error(UL["RegErrorGeneric"]);
         }
         finally
         {
@@ -244,14 +248,24 @@
             _cancelTarget = null;
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _cancelReasonError = ex.Message;
+            _cancelReasonError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _cancelReasonError = UL["RegErrorGeneric"];
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private string ResolveError(ServiceRegistrationException ex)
+    {
+        var localized = UL[$"RegError{ex.ErrorCode}"];
+        return localized.ResourceNotFound ? UL["RegErrorGeneric"].Value : localized.Value;
     }
 
     private static string StatusClass(ServiceRegistrationStatus status) => status switch

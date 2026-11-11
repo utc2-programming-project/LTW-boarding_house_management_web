@@ -147,6 +147,10 @@
     text-align: right !important;
 }
 
+.text-center {
+    text-align: center !important;
+}
+
 .tabular-nums {
     font-variant-numeric: tabular-nums;
 }
@@ -158,6 +162,21 @@
 .room-code {
     display: block;
     font-weight: 600;
+}
+
+.invoice-room-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.invoice-room-line {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
 }
 
 .property-name,
@@ -233,15 +252,16 @@
 .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 16px;
     flex-wrap: wrap;
 }
 
 .page-title {
-    font-size: 32px;
-    line-height: 1.25;
+    font-size: 28px;
+    line-height: 36px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
     margin: 0;
 }
@@ -249,7 +269,8 @@
 .page-subtitle {
     color: #64748B;
     margin: 4px 0 0;
-    font-size: 16px;
+    font-size: 14px;
+    line-height: 22px;
 }
 
 .table-card {
