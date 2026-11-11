@@ -176,8 +176,10 @@ public sealed record ProbeOutcome(
 /// <summary>Dịch exception của service thật sang kết quả quyền.</summary>
 public static class ProbeRunner
 {
+    // VHT-51 dùng thuộc tính Code; các service cũ dùng ErrorCode.
     public static string? ErrorCodeOf(Exception exception) =>
-        exception.GetType().GetProperty("ErrorCode")?.GetValue(exception) as string;
+        (exception.GetType().GetProperty("ErrorCode") ?? exception.GetType().GetProperty("Code"))
+            ?.GetValue(exception) as string;
 }
 
 /// <summary>Kết quả một ô ma trận sau khi chạy test, dùng cho báo cáo theo ô.</summary>
