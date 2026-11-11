@@ -6,13 +6,8 @@
 <PageTitle>@L["TenantProfileTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-profile-page" aria-labelledby="tenant-profile-title">
-    <NavBreadcrumb CurrentLabel="@L["MyTenantProfile"]" />
-    <header class="page-heading">
-        <div>
-            <h1 id="tenant-profile-title">@L["TenantProfileTitle"]</h1>
-            <p>@L["TenantProfileSubtitle"]</p>
-        </div>
-    </header>
+    <PageHeading Title="@L["TenantProfileTitle"]" TitleId="tenant-profile-title"
+                 CurrentLabel="@L["MyTenantProfile"]" HelpText="@L["TenantProfileSubtitle"]" />
 
     @if (_loading)
     {
@@ -83,10 +78,12 @@
                                            aria-describedby="tenant-own-email-error" aria-invalid="@(_editContext.HasError(() => _form.Email) ? "true" : "false")" />
                             </FormField>
                             <FormField TValue="string" Id="tenant-own-address" Label="@L["TenantPermanentAddress"]"
+                                       LabelFor="tenant-own-address-street"
                                        For="() => _form.PermanentAddress">
-                                <InputTextArea id="tenant-own-address" class="input tenant-profile-address"
-                                               @bind-Value="_form.PermanentAddress" maxlength="300"
-                                               aria-describedby="tenant-own-address-error" aria-invalid="@(_editContext.HasError(() => _form.PermanentAddress) ? "true" : "false")" />
+                                <AddressInput Id="tenant-own-address" @bind-Value="_form.PermanentAddress"
+                                              MaxLength="300"
+                                              AriaDescribedBy="tenant-own-address-error"
+                                              AriaInvalid="@_editContext.HasError(() => _form.PermanentAddress)" />
                             </FormField>
                         </div>
                         <div class="form-actions">
@@ -228,10 +225,12 @@
 
             if (result.ErrorCode == TenantErrorCodes.InvalidRequest)
             {
-                Add(nameof(_form.PhoneNumber), L["TenantValidationPhone"]);
-                _editContext.NotifyValidationStateChanged();
+                // Máy khách đã tự kiểm độ dài/số điện thoại nên lỗi còn lại không gắn riêng được cho trường nào.
+                Toasts.Error(L["TenantErrorGeneric"]);
+                return;
             }
-            Toasts.Error(result.ErrorCode == TenantErrorCodes.InvalidRequest ? L["TenantValidationPhone"] : L["TenantErrorGeneric"]);
+
+            Toasts.Error(L["TenantErrorGeneric"]);
             return;
         }
 

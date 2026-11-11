@@ -3,7 +3,7 @@
 @inject ILogger<PropertyFormDialog> Logger
 
 <FeatureDialog @ref="_featureDialog" Visible="Visible" Title="@(IsEdit ? L["P2EditProperty"].Value : L["P2AddProperty"].Value)"
-               CloseLabel="@L["Close"]" Busy="_saving" OnClose="OnClose" CssClass="property-form-dialog">
+               CloseLabel="@L["Close"]" Busy="_saving" OnClose="HandleDialogClose" CssClass="property-form-dialog">
     <EditForm EditContext="_editContext" OnSubmit="HandleSubmitAsync">
         <div class="p2-form-body">
             @if (!string.IsNullOrWhiteSpace(_error))
@@ -29,8 +29,11 @@
                         <span class="p2-field-error" id="property-name-error" aria-live="polite">@ErrorFor(nameof(_model.Name))</span>
                     </div>
                     <div class="p2-field full">
-                        <label for="property-address">@L["P2Address"]</label>
-                        <InputTextArea id="property-address" @bind-Value="_model.Address" maxlength="500" rows="3" aria-describedby="property-address-error" aria-invalid="@(_editContext.HasError(() => _model.Address) ? "true" : "false")" />
+                        <label for="property-address-street">@L["P2Address"]</label>
+                        <AddressInput Id="property-address" @bind-Value="_model.Address"
+                                      MaxLength="500"
+                                      AriaDescribedBy="property-address-error"
+                                      AriaInvalid="@_editContext.HasError(() => _model.Address)" />
                         <span class="p2-field-error" id="property-address-error" aria-live="polite">@ErrorFor(nameof(_model.Address))</span>
                     </div>
                     <label class="p2-check-field" for="property-is-active">
@@ -52,6 +55,17 @@
     </EditForm>
 </FeatureDialog>
 
+<FeatureDialog Visible="_discardVisible" Title="@L["P2DiscardTitle"]"
+               CloseLabel="@L["Close"]" OnClose="CancelDiscard" CssClass="room-confirm-dialog">
+    <div class="room-confirm">
+        <p>@L["P2DiscardBody"]</p>
+        <div class="room-confirm-actions">
+            <button class="btn btn-secondary" type="button" autofocus @onclick="CancelDiscard">@L["P2DiscardKeep"]</button>
+            <button class="btn btn-danger" type="button" @onclick="DiscardChangesAsync">@L["P2DiscardConfirm"]</button>
+        </div>
+    </div>
+</FeatureDialog>
+
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public int? PropertyId { get; set; }
@@ -65,6 +79,7 @@
     private bool _loading;
     private bool _saving;
     private bool _loadFailed;
+    private bool _discardVisible;
     private string? _error;
     private bool IsEdit => PropertyId.HasValue;
 
@@ -202,5 +217,36 @@
 
     private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_model, field), message);
 
-    private Task CloseDialogAsync() => _featureDialog?.RequestCloseAsync() ?? OnClose.InvokeAsync();
+    private async Task HandleDialogClose()
+    {
+        if (_saving) return;
+
+        if (_editContext.IsModified())
+        {
+            _discardVisible = true;
+            return;
+        }
+
+        await CloseWithoutConfirmAsync();
+    }
+
+    private Task CloseDialogAsync() => HandleDialogClose();
+
+    private async Task DiscardChangesAsync()
+    {
+        _discardVisible = false;
+        await CloseWithoutConfirmAsync();
+    }
+
+    private Task CancelDiscard()
+    {
+        _discardVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task CloseWithoutConfirmAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnClose.InvokeAsync();
+    }
 }

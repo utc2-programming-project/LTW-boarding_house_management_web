@@ -7,6 +7,8 @@ using Web.Data.Tariffs;
 
 namespace Web.Features.Utilities.Services;
 
+public sealed class UtilityTariffNotConfiguredException(string message) : InvalidOperationException(message);
+
 public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtilityTariffService
 {
     public async Task<TariffDto> CalculateForPeriodAsync(
@@ -61,7 +63,7 @@ public sealed class UtilityTariffService(ApplicationDbContext dbContext) : IUtil
 
             if (tariff is null)
             {
-                throw new InvalidOperationException("No tariff is configured for this scope and billing period.");
+                throw new UtilityTariffNotConfiguredException("No tariff is configured for this scope and billing period.");
             }
 
             if (!tariff.IsReadOnly)

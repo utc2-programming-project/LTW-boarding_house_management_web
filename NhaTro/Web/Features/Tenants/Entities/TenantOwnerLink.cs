@@ -9,6 +9,9 @@ public class TenantOwnerLink
 {
     public int TenantId { get; set; }
 
+    /// <summary>Điều hướng để EF lan khóa identity khi tạo hồ sơ + liên kết trong một lần lưu.</summary>
+    public Tenant Tenant { get; set; } = null!;
+
     public string OwnerId { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

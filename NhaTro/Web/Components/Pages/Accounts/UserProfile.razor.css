@@ -2,10 +2,6 @@
     min-width: 0;
 }
 
-.profile-page-heading {
-    margin-bottom: 20px;
-}
-
 .profile-overview {
     display: flex;
     align-items: center;

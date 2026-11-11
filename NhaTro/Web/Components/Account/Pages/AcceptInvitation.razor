@@ -11,15 +11,15 @@
 
 <section class="auth-page" aria-labelledby="invite-title">
     <div class="auth-card">
-        <header class="page-heading auth-heading">
-            <div>
-                <h1 id="invite-title">@L["InviteAcceptTitle"]</h1>
+        <PageHeading Title="@L["InviteAcceptTitle"]" TitleId="invite-title" HelpText="@L["InviteAcceptHelp"]"
+                     InteractiveHelp="true" Class="auth-heading">
+            <HeadingMeta>
                 @if (_account is not null)
                 {
                     <p>@string.Format(L["InviteAcceptAccount"], _account)</p>
                 }
-            </div>
-        </header>
+            </HeadingMeta>
+        </PageHeading>
 
         @if (_succeeded)
         {

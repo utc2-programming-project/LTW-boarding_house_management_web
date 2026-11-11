@@ -33,11 +33,28 @@ public sealed class PropertyService(
             query = query.Where(p => p.Name.Contains(keyword) || (p.Address != null && p.Address.Contains(keyword)));
         }
 
+        // Loc theo khoang so phong (dem phong chua xoa mem) truoc khi phan trang.
+        if (filter.MinRoomCount is { } minRoomCount)
+        {
+            query = query.Where(p => db.Rooms.Count(r => r.PropertyId == p.Id) >= minRoomCount);
+        }
+
+        if (filter.MaxRoomCount is { } maxRoomCount)
+        {
+            query = query.Where(p => db.Rooms.Count(r => r.PropertyId == p.Id) <= maxRoomCount);
+        }
+
         var total = await query.CountAsync(ct);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
-        var rows = await query
-            .OrderBy(p => p.Name)
-            .ThenBy(p => p.Id)
+        var ordered = filter.SortBy switch
+        {
+            "newest" => query.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id),
+            "oldest" => query.OrderBy(p => p.CreatedAt).ThenBy(p => p.Id),
+            "roomCountAsc" => query.OrderBy(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
+            "roomCountDesc" => query.OrderByDescending(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
+            _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id),
+        };
+        var rows = await ordered
             .Skip((int)Math.Min(skip, int.MaxValue))
             .Take(filter.PageSize)
             .Select(p => new
@@ -63,9 +80,13 @@ public sealed class PropertyService(
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var entity = await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
-        return entity is null
-            ? NotFound()
-            : PropertyResult.Success(PropertyMapping.ToDetail(entity));
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        var roomCount = await db.Rooms.CountAsync(room => room.PropertyId == id, ct);
+        return PropertyResult.Success(PropertyMapping.ToDetail(entity, roomCount));
     }
 
     public async Task<PropertyResult> CreateAsync(

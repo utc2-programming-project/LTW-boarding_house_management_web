@@ -37,7 +37,7 @@ Backup trước khi dọn: `C:\Users\ADMIN\AppData\Local\Temp\NhaTroDb_before_cl
 
 | Bảng | Dữ liệu |
 |---|---|
-| `Properties` | `Id=1` — **Nhà trọ Hòa Bình**, `12 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP.HCM`, chủ sở hữu `chutro@nhatro.local` |
+| `Properties` | `Id=1` — **Nhà trọ Hòa Bình**, `12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh`, chủ sở hữu `chutro@nhatro.local` |
 | `Rooms` | `Id=1` — **P101**, tầng 1, 25 m², giá 3.500.000, trạng thái `Available (0)` |
 | `Tenants` | `Id=1` — Toan Alo Toan, SĐT `0384942049`, gắn tài khoản `khachthue@nhatro.local` |
 | `PropertyManagers` | `quanly@nhatro.local` → nhà `Id=1`, `RevokedAt = NULL` |

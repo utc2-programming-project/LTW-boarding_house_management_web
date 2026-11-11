@@ -1,4 +1,6 @@
+@using Web.Infrastructure.Time
 @inject IStringLocalizer<UtilityResources> L
+@inject TimeProvider Clock
 
 @if (IsOpen)
 {
@@ -95,56 +97,60 @@
                     </div>
                 </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="create-effective-from-input">
-                        @L["EffectiveFromLabel"] <span class="required-star">*</span>
-                    </label>
-                    <input id="create-effective-from-input"
-                           type="date"
-                           class="input @(_dateError.HasValue ? "invalid" : "")"
-                           @bind="_effectiveFrom"
-                           @bind:after="ValidateDate" />
-                    @if (_dateError.HasValue)
-                    {
-                        <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
-                    }
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-effective-from-input">
+                            @L["EffectiveFromLabel"] <span class="required-star">*</span>
+                        </label>
+                        <input id="create-effective-from-input"
+                               type="date"
+                               class="input @(_dateError.HasValue ? "invalid" : "")"
+                               @bind="_effectiveFrom"
+                               @bind:after="ValidateDate" />
+                        @if (_dateError.HasValue)
+                        {
+                            <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
+                        }
+                    </div>
+
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-effective-to-input">@L["EffectiveToLabel"]</label>
+                        <input id="create-effective-to-input"
+                               type="date"
+                               class="input @(_effectiveToError.HasValue ? "invalid" : "")"
+                               @bind="_effectiveTo"
+                               @bind:after="ValidateDate" />
+                        @if (_effectiveToError.HasValue)
+                        {
+                            <span class="field-error-text" role="alert">@L[$"Error{_effectiveToError.Value}"]</span>
+                        }
+                    </div>
                 </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="create-effective-to-input">@L["EffectiveToLabel"]</label>
-                    <input id="create-effective-to-input"
-                           type="date"
-                           class="input @(_effectiveToError.HasValue ? "invalid" : "")"
-                           @bind="_effectiveTo"
-                           @bind:after="ValidateDate" />
-                    @if (_effectiveToError.HasValue)
-                    {
-                        <span class="field-error-text" role="alert">@L[$"Error{_effectiveToError.Value}"]</span>
-                    }
-                </div>
+                <div class="grid-2-cols">
+                    <div class="form-field-group">
+                        <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
+                        <input id="service-desc-input"
+                               type="text"
+                               class="input"
+                               @bind="_description"
+                               maxlength="500"
+                               placeholder="@L["ServiceDescPlaceholder"]" />
+                    </div>
 
-                <div class="form-field-group">
-                    <label class="field-label" for="service-desc-input">@L["ServiceDescLabel"]</label>
-                    <input id="service-desc-input"
-                           type="text"
-                           class="input"
-                           @bind="_description"
-                           maxlength="500"
-                           placeholder="@L["ServiceDescPlaceholder"]" />
-                </div>
-
-                <div class="form-field-group">
-                    <label class="field-label" for="create-note-input">@L["NoteLabel"]</label>
-                    <input id="create-note-input"
-                           type="text"
-                           class="input"
-                           @bind="_note"
-                           maxlength="500"
-                           placeholder="@L["NotePlaceholder"]" />
+                    <div class="form-field-group">
+                        <label class="field-label" for="create-note-input">@L["NoteLabel"]</label>
+                        <input id="create-note-input"
+                               type="text"
+                               class="input"
+                               @bind="_note"
+                               maxlength="500"
+                               placeholder="@L["NotePlaceholder"]" />
+                    </div>
                 </div>
                 @if (!CanWrite)
                 {
-                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: #b45309; background-color: #fef3c7; border: 1px solid #fcd34d; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
+                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: var(--warning-text); background-color: var(--warning-bg); border: 1px solid var(--warning-border); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
                         @L["WriteActionBlockedNotice"]
                     </div>
                 }
@@ -171,6 +177,14 @@
     </div>
 }
 
+<ConfirmDialog Visible="_discardVisible"
+               Title="@L["P5DiscardTitle"]"
+               Message="@L["P5DiscardBody"]"
+               ConfirmText="@L["P5DiscardConfirm"]"
+               CancelText="@L["P5DiscardKeep"]"
+               OnConfirm="DiscardChangesAsync"
+               OnCancel="KeepEditing" />
+
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
@@ -194,12 +208,21 @@
     private UtilityErrorCode? _effectiveToError;
     private UtilityErrorCode? _scopeError;
     private bool _wasOpen;
+    private string _snapshot = string.Empty;
+    private bool _discardVisible;
+
+    private bool IsDirty => BuildSnapshot() != _snapshot;
+
+    private string BuildSnapshot() => string.Join('|',
+        _name, (int)_type, (int)_unit, _rate, _buildingId, _effectiveFrom, _effectiveTo,
+        _description ?? string.Empty, _note ?? string.Empty);
 
     protected override void OnParametersSet()
     {
         if (!IsOpen)
         {
             _wasOpen = false;
+            _discardVisible = false;
             return;
         }
 
@@ -210,7 +233,7 @@
         _unit = ServiceUnitCategory.Room;
         _rate = 50_000m;
         _buildingId = Buildings.FirstOrDefault(building => building.Id != "all")?.Id ?? string.Empty;
-        _effectiveFrom = DateOnly.FromDateTime(DateTime.Today);
+        _effectiveFrom = Clock.TodayVietnam();
         _effectiveTo = null;
         _description = string.Empty;
         _note = string.Empty;
@@ -219,6 +242,8 @@
         _dateError = null;
         _effectiveToError = null;
         _scopeError = null;
+        _discardVisible = false;
+        _snapshot = BuildSnapshot();
     }
 
     private void ValidateName()
@@ -274,10 +299,30 @@
 
     private async Task HandleClose()
     {
-        if (!_isSaving)
+        if (_isSaving)
         {
-            await OnClose.InvokeAsync();
+            return;
         }
+
+        if (IsDirty)
+        {
+            _discardVisible = true;
+            return;
+        }
+
+        await OnClose.InvokeAsync();
+    }
+
+    private Task KeepEditing()
+    {
+        _discardVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task DiscardChangesAsync()
+    {
+        _discardVisible = false;
+        await OnClose.InvokeAsync();
     }
 
     private CreateServiceRequest CreateRequest() => new()

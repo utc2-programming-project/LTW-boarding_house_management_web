@@ -25,15 +25,9 @@
 
 <PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
 
-<section aria-labelledby="accounts-title">
-    <NavBreadcrumb />
-
-    <header class="page-heading">
-        <div>
-            <h1 id="accounts-title">@L["AccountsTitle"]</h1>
-            <p>@L["AccountsSubtitle"]</p>
-        </div>
-        <div class="page-heading-actions">
+<section class="accounts-page" aria-labelledby="accounts-title">
+    <PageHeading Title="@L["AccountsTitle"]" TitleId="accounts-title" HelpText="@L["AccountsSubtitle"]">
+        <Actions>
             @if (_assignableRoles.Count > 0)
             {
                 <button type="button" class="btn btn-primary" @onclick="OpenCreate">
@@ -46,8 +40,8 @@
                     <LucideIcon Name="trash" /> @L["AccountTrash"]
                 </button>
             }
-        </div>
-    </header>
+        </Actions>
+    </PageHeading>
 
     <div class="toolbar" role="search">
         <div class="field field-inline">
@@ -73,7 +67,8 @@
 
     <DataTable @ref="_table" TItem="AccountListItemDto" Columns="_columns"
                ItemsProvider="LoadAccountsAsync" PageSize="10" Caption="@L["AccountsTitle"]"
-               Labels="DataTableLabelLocalizer.Create(L)">
+               Labels="DataTableLabelLocalizer.Create(L)"
+               CompactFooter="true" ItemUnitLabel="@L["AccountsCountUnit"]">
 
         <EmptyActions>
             <p class="note">@L["AccountsEmptyHint"]</p>
@@ -140,6 +135,7 @@
 
     private string? _keyword;
     private string? _roleFilter;
+    private string? _openMenuId;
     private string _callerUserId = string.Empty;
     private string _callerRole = string.Empty;
 
@@ -281,39 +277,58 @@
                     {
                         <span class="note">@L["ThisIsYou"]</span>
                     }
-                    else
+                    else if (HasRowActions(user))
                     {
-                        @if (user.Status == AccountStatus.Pending
-                             && AccountPermissionRules.CanApprove(_callerRole, user.Role))
-                        {
-                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenApprove(user)">
-                                @L["Approve"]
+                        <div class="p2-row-actions">
+                            <button type="button"
+                                    class="icon-button p2-menu-trigger @(IsMenuOpen(user.Id) ? "is-open" : null)"
+                                    title="@L["ColumnActions"]"
+                                    aria-label="@($"{L["ColumnActions"]}: {DisplayName(user)}")"
+                                    aria-haspopup="menu"
+                                    aria-expanded="@(IsMenuOpen(user.Id) ? "true" : "false")"
+                                    aria-controls="@($"account-row-menu-{user.Id}")"
+                                    @onclick="() => ToggleRowMenu(user.Id)">
+                                <LucideIcon Name="ellipsis" />
                             </button>
-                        }
-                        @if (_canChangeRole)
-                        {
-                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OpenRoleChange(user)">
-                                @L["ChangeRole"]
-                            </button>
-                        }
-                        @if (_lockableRoles.Contains(user.Role))
-                        {
-                            <button type="button" class="btn @(user.IsLocked ? "btn-secondary" : "btn-danger") btn-sm"
-                                    @onclick="() => OpenLock(user)">
-                                @(user.IsLocked ? L["Unlock"] : L["Lock"])
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm"
-                                    @onclick="() => OpenDelete(user)">
-                                @L["DeleteAccount"]
-                            </button>
-                        }
-                        @if (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy)
-                        {
-                            <button type="button" class="btn btn-secondary btn-sm"
-                                    @onclick="() => OpenManagerAssign(user)">
-                                @L["AssignProperties"]
-                            </button>
-                        }
+                            @if (IsMenuOpen(user.Id))
+                            {
+                                <div id="@($"account-row-menu-{user.Id}")" class="p2-row-menu" role="menu" aria-label="@L["ColumnActions"]" data-row-menu>
+                                    @if (user.Status == AccountStatus.Pending
+                                         && AccountPermissionRules.CanApprove(_callerRole, user.Role))
+                                    {
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuApprove(user)">
+                                            <LucideIcon Name="check" /><span>@L["Approve"]</span>
+                                        </button>
+                                    }
+                                    @if (_canChangeRole)
+                                    {
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuRoleChange(user)">
+                                            <LucideIcon Name="shield" /><span>@L["ChangeRole"]</span>
+                                        </button>
+                                    }
+                                    @if (_lockableRoles.Contains(user.Role))
+                                    {
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuLock(user)">
+                                            <LucideIcon Name="@(user.IsLocked ? "unlock" : "lock")" />
+                                            <span>@(user.IsLocked ? L["Unlock"] : L["Lock"])</span>
+                                        </button>
+                                    }
+                                    @if (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy)
+                                    {
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuAssign(user)">
+                                            <LucideIcon Name="building" /><span>@L["AssignProperties"]</span>
+                                        </button>
+                                    }
+                                    @if (_lockableRoles.Contains(user.Role))
+                                    {
+                                        <div class="p2-row-menu-sep" role="separator"></div>
+                                        <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(user)">
+                                            <LucideIcon Name="trash" /><span>@L["DeleteAccount"]</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     }
                 </span>,
             },
@@ -333,7 +348,51 @@
             keyword, role, request.Page, request.PageSize, _callerUserId, _callerRole);
     }
 
-    private Task ReloadAsync() => _table?.ReloadAsync() ?? Task.CompletedTask;
+    private Task ReloadAsync()
+    {
+        _openMenuId = null;
+        return _table?.ReloadAsync() ?? Task.CompletedTask;
+    }
+
+    private bool HasRowActions(AccountListItemDto user) =>
+        (user.Status == AccountStatus.Pending && AccountPermissionRules.CanApprove(_callerRole, user.Role))
+        || _canChangeRole
+        || _lockableRoles.Contains(user.Role)
+        || (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy);
+
+    private bool IsMenuOpen(string userId) => _openMenuId == userId;
+
+    private void ToggleRowMenu(string userId) => _openMenuId = _openMenuId == userId ? null : userId;
+
+    private void MenuApprove(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenApprove(user);
+    }
+
+    private void MenuRoleChange(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenRoleChange(user);
+    }
+
+    private void MenuLock(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenLock(user);
+    }
+
+    private void MenuAssign(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenManagerAssign(user);
+    }
+
+    private void MenuDelete(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenDelete(user);
+    }
 
     private void OpenCreate() => _createVisible = true;
 

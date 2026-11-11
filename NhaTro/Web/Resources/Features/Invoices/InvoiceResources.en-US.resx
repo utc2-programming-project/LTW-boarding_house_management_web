@@ -28,7 +28,28 @@
   <data name="FilterContract" xml:space="preserve"><value>Contract</value></data>
   <data name="AllContracts" xml:space="preserve"><value>All contracts</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="RegisterServiceButton" xml:space="preserve"><value>Register for a service</value></data>
+  <data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ManageRegistrationsButton" xml:space="preserve"><value>Manage service registrations</value></data>
+  <data name="RegistrationHistoryButton" xml:space="preserve"><value>Registration history</value></data>
+  <data name="RegisterServiceMonthlyNote" xml:space="preserve"><value>Services are monthly; each service can be registered once per month.</value></data>
+  <data name="RegisterServiceSelect" xml:space="preserve"><value>Service</value></data>
+  <data name="RegisterServiceNote" xml:space="preserve"><value>Note (optional)</value></data>
+  <data name="RegisterServiceSubmit" xml:space="preserve"><value>Submit registration request</value></data>
+  <data name="RegisterServiceRequired" xml:space="preserve"><value>Please select a service.</value></data>
+  <data name="RegisterServiceSuccess" xml:space="preserve"><value>Service registration request sent. Please wait for the landlord to approve.</value></data>
+  <data name="AllPaymentStates" xml:space="preserve"><value>All payment states</value></data>
   <data name="AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="FilterKeyword" xml:space="preserve"><value>Search</value></data>
+  <data name="FilterKeywordPlaceholder" xml:space="preserve"><value>Invoice, contract, room, property, tenant…</value></data>
+  <data name="FilterPaymentState" xml:space="preserve"><value>Payment state</value></data>
+  <data name="PaymentStateAll" xml:space="preserve"><value>All payment states</value></data>
+  <data name="PaymentStateUnpaid" xml:space="preserve"><value>Unpaid</value></data>
+  <data name="PaymentStatePartial" xml:space="preserve"><value>Partially paid</value></data>
+  <data name="PaymentStatePaid" xml:space="preserve"><value>Paid</value></data>
+  <data name="FilterMinAmount" xml:space="preserve"><value>Amount from</value></data>
+  <data name="FilterMaxAmount" xml:space="preserve"><value>Amount to</value></data>
+  <data name="AmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
   <data name="ResetFilter" xml:space="preserve"><value>Reset filters</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Draft</value></data>
@@ -61,9 +82,29 @@
   <data name="DetailHeading" xml:space="preserve"><value>Invoice details</value></data>
   <data name="DetailSubtitle" xml:space="preserve"><value>Invoice information and finalized line items.</value></data>
   <data name="BackToList" xml:space="preserve"><value>Invoice list</value></data>
+  <data name="IssueButton" xml:space="preserve"><value>Issue invoice</value></data>
+  <data name="SendBillButton" xml:space="preserve"><value>Send bill to customer</value></data>
+  <data name="SendBillSuccess" xml:space="preserve"><value>Bill sent to the customer.</value></data>
+  <data name="CreateQrButton" xml:space="preserve"><value>Generate QR code</value></data>
+  <data name="RegenerateQrButton" xml:space="preserve"><value>Generate new QR code</value></data>
+  <data name="QrRemainingInstruction" xml:space="preserve"><value>remaining</value></data>
+  <data name="QrExpired" xml:space="preserve"><value>This QR code has expired (30 minutes). Please generate a new one.</value></data>
+  <data name="QrNote" xml:space="preserve"><value>The QR pre-fills the exact amount due (not editable) and stays valid for 30 minutes.</value></data>
+  <data name="QrExpiresAt" xml:space="preserve"><value>Valid until</value></data>
+  <data name="IssuingButton" xml:space="preserve"><value>Issuing…</value></data>
+  <data name="IssueSuccess" xml:space="preserve"><value>Invoice issued.</value></data>
+  <data name="IssueFailed" xml:space="preserve"><value>Could not issue the invoice. Please try again.</value></data>
   <data name="DetailPeriod" xml:space="preserve"><value>Billing period</value></data>
   <data name="DetailCreatedAt" xml:space="preserve"><value>Created at</value></data>
   <data name="DetailIssuedAt" xml:space="preserve"><value>Issued at</value></data>
+  <data name="DetailDueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="DetailPaymentStatus" xml:space="preserve"><value>Payment status</value></data>
+  <data name="QrTitle" xml:space="preserve"><value>Pay by QR code</value></data>
+  <data name="QrBank" xml:space="preserve"><value>Receiving account</value></data>
+  <data name="QrContent" xml:space="preserve"><value>Transfer content</value></data>
+  <data name="PaymentStatePendingConfirmation" xml:space="preserve"><value>Pending confirmation</value></data>
+  <data name="PaymentStateRejected" xml:space="preserve"><value>Proof rejected</value></data>
+  <data name="PaymentStateExpired" xml:space="preserve"><value>Overdue</value></data>
   <data name="DetailContract" xml:space="preserve"><value>Contract</value></data>
   <data name="DetailRoom" xml:space="preserve"><value>Room</value></data>
   <data name="DetailProperty" xml:space="preserve"><value>Property</value></data>
@@ -167,6 +208,11 @@
   <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Pending amount</value></data>
   <data name="ReviewFilterStatus" xml:space="preserve"><value>Status</value></data>
   <data name="ReviewAllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="ReviewFilterKeyword" xml:space="preserve"><value>Search</value></data>
+  <data name="ReviewFilterKeywordPlaceholder" xml:space="preserve"><value>Request, invoice, room, property, tenant…</value></data>
+  <data name="ReviewFilterMinAmount" xml:space="preserve"><value>Amount from</value></data>
+  <data name="ReviewFilterMaxAmount" xml:space="preserve"><value>Amount to</value></data>
+  <data name="ReviewAmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
   <data name="ReviewRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="ReviewThRequest" xml:space="preserve"><value>Request</value></data>
   <data name="ReviewThInvoice" xml:space="preserve"><value>Invoice</value></data>

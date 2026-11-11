@@ -11,7 +11,7 @@
     overflow: hidden;
 }
 
-.contract-modal::backdrop { background: rgba(15, 23, 42, .4); }
+.contract-modal::backdrop { background: var(--overlay); }
 
 .contract-modal-panel {
     max-height: calc(100vh - 48px);
@@ -24,7 +24,7 @@
 .contract-modal label { display: block; margin: 16px 0 8px; font-weight: 600; }
 .contract-modal input { width: 100%; }
 .contract-modal footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-.contract-field-error { color: #B91C1C; font-size: 12px; }
+.contract-field-error { color: var(--error-text); font-size: 12px; }
 .contract-modal-hint { font-size: 13px; }
 
 @media (max-width: 767px) {

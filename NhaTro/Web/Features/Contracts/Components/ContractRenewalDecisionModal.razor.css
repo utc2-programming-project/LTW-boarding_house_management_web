@@ -11,7 +11,7 @@
     overflow: hidden;
 }
 
-.contract-modal::backdrop { background: rgba(15, 23, 42, .4); }
+.contract-modal::backdrop { background: var(--overlay); }
 
 .contract-modal-panel {
     max-height: calc(100vh - 48px);
@@ -26,8 +26,8 @@
 .contract-modal label { display: block; margin: 16px 0 8px; font-weight: 600; }
 .contract-modal textarea { width: 100%; min-height: 112px; resize: vertical; }
 .contract-modal footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-.contract-modal .btn-danger { background: #B91C1C; color: #fff; }
-.contract-field-error { color: #B91C1C; font-size: 12px; }
+.contract-modal .btn-danger { background: var(--danger); color: var(--on-primary); }
+.contract-field-error { color: var(--error-text); font-size: 12px; }
 
 .renewal-decision-summary { display: grid; gap: 8px; margin: 16px 0 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); }
 .renewal-decision-summary > div { display: flex; gap: 12px; justify-content: space-between; }

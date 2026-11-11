@@ -25,4 +25,11 @@ public sealed record DataTableLabels
 
     /// <summary>Định dạng {0} = từ, {1} = đến, {2} = tổng.</summary>
     public string Summary { get; init; } = "Hiển thị {0}–{1} / {2}";
+
+    /// <summary>Chân bảng gọn: {0} = trang, {1} = tổng trang, {2} = tổng bản ghi, {3} = đơn vị.</summary>
+    public string PageInfo { get; init; } = "Trang {0}/{1} · {2} {3}";
+
+    public string Previous { get; init; } = "Trước";
+
+    public string Next { get; init; } = "Sau";
 }

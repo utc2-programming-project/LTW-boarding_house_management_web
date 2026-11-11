@@ -376,11 +376,10 @@ public sealed class PermissionMatrixTenantsTests(SqlServerFixture fixture)
     private async Task ApproveAsync(
         ContractService contracts, int roomId, int tenantId, DateTime today, PropertyCaller caller)
     {
+        // D4: hợp đồng do Chủ trọ tạo có hiệu lực ngay.
         var created = await contracts.CreateContractAsync(
             new CreateContractRequest(roomId, today, today.AddMonths(6), [tenantId]), caller);
-        var approved = await contracts.ApproveContractAsync(
-            created.ContractId, new ApproveContractRequestDto { IsApproved = true }, caller);
-        Assert.Equal(ContractStatus.Approved, approved.Status);
+        Assert.Equal(ContractStatus.Approved, created.Status);
     }
 
     private sealed record SeedData(int FreeTenantId, int TenantInAId, int TenantInBId, int TenantCountBefore);

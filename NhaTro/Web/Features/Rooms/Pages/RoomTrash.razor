@@ -10,18 +10,23 @@
 <PageTitle>@L["P2TrashTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <NavBreadcrumb />
-            <h1>@L["P2TrashTitle"]</h1>
-            <p>@L["P2TrashSubtitle"]</p>
-        </div>
-        <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
-            <LucideIcon Name="door" />@L["P2RoomsTitle"]
-        </button>
-    </header>
+    <PageHeading Title="@L["P2TrashTitle"]" HelpText="@L["P2TrashSubtitle"]">
+        <Actions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
+                <LucideIcon Name="door" />@L["P2RoomsTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
 
-    <DataTable @ref="_table" TItem="RoomTrashItem" Columns="_columns"
+    <div class="filter-toolbar">
+        <div class="filter-field">
+            <label for="room-trash-search">@L["P2RoomCode"]</label>
+            <input id="room-trash-search" type="search" class="filter-input"
+                   placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:after="ReloadAsync" />
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="RoomTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
                Caption="@L["P2TrashTable"]" Labels="_tableLabels">
         <EmptyActions>
@@ -50,6 +55,8 @@
     private RoomTrashItem? _restoreRoom;
     private bool _restoreVisible;
     private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -83,14 +90,23 @@
         await PageService.ListDeletedAsync(new RoomFilter
         {
             Page = request.Page,
-            PageSize = request.PageSize
+            PageSize = request.PageSize,
+            Keyword = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim()
         });
+
+    private Task ReloadAsync()
+    {
+        // Tạo lại bảng để tìm kiếm luôn bắt đầu từ trang 1 (DataTable giữ trang nội bộ).
+        _tableKey++;
+        return Task.CompletedTask;
+    }
 
     private Task ChangePageSize(ChangeEventArgs args)
     {
         if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
         {
             _pageSize = value;
+            _tableKey++;
         }
 
         return Task.CompletedTask;

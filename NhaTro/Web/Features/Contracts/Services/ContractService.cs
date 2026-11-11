@@ -18,6 +18,7 @@ using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
+using Web.Features.Tenants;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
@@ -60,15 +61,27 @@ public sealed class ContractService : IContractService
             .Select(property => new ContractPropertyOptionDto(property.Id, property.Name))
             .ToListAsync(cancellationToken);
 
+        // Phòng còn giữ trạng thái Available cho tới khi hợp đồng được duyệt, nên phải loại
+        // cả phòng đang có hợp đồng Pending/Approved để người chọn không bấm vào rồi mới bị chặn.
+        var busyRoomIds = _context.Contracts.AsNoTracking()
+            .Where(contract => contract.Status == ContractStatus.Pending
+                || contract.Status == ContractStatus.Approved)
+            .Select(contract => contract.RoomId);
+
         var rooms = await (
             from room in _context.Rooms.AsNoTracking()
             join property in visibleProperties on room.PropertyId equals property.Id
             where room.IsActive && !room.IsDeleted && room.Status == RoomStatus.Available
+                && !busyRoomIds.Contains(room.Id)
             orderby property.Name, room.Code
-            select new ContractRoomOptionDto(room.Id, room.PropertyId, room.Code, room.StandardPrice))
+            select new ContractRoomOptionDto(room.Id, property.Id, room.Code, room.StandardPrice))
             .ToListAsync(cancellationToken);
 
-        var tenants = await _context.Tenants.AsNoTracking()
+        // VHT-119: danh sách chọn khách dùng chung phạm vi với danh sách hồ sơ,
+        // không lộ tên/SĐT khách của chủ trọ khác.
+        var tenants = await Web.Features.Tenants.TenantVisibility
+            .Apply(_context, caller.UserId, caller.Role)
+            .AsNoTracking()
             .Where(tenant => tenant.IsActive && !tenant.IsDeleted)
             .OrderBy(tenant => tenant.FullName)
             .Select(tenant => new ContractTenantOptionDto(tenant.Id, tenant.FullName, tenant.Phone))
@@ -207,17 +220,30 @@ public sealed class ContractService : IContractService
 
         var canRenew = false;
         var canLiquidate = false;
+        var canEditDeposit = false;
+        var pendingApproval = ContractPendingApproval.None;
         var today = _timeProvider.TodayVietnam();
-        if ((caller.IsChuTro || caller.IsQuanLy)
-            && ContractLifecycleOperations.IsActionable(
-                contract.Status, contract.StartDate, contract.EndDate, today))
+        ContractLinkDto? successor = null;
+        ContractLinkDto? previous = null;
+        if (caller.IsChuTro || caller.IsQuanLy)
         {
-            var decision = await EvaluateSw07Async(caller, cancellationToken);
-            if (decision != RoomChangeDecision.Denied)
+            successor = await FindLinkAsync(contract.RoomId, contract.ContractId, contract.EndDate.AddDays(1), true, cancellationToken);
+            previous = await FindLinkAsync(contract.RoomId, contract.ContractId, contract.StartDate.AddDays(-1), false, cancellationToken);
+            var pending = await _context.ManagerApprovalRequests.AsNoTracking()
+                .Where(x => x.TargetType == ApprovalTargetType.Contract
+                    && x.TargetKey == contract.ContractId.ToString("D")
+                    && x.Status == ApprovalRequestStatus.Pending)
+                .OrderByDescending(x => x.RequestedAt)
+                .Select(x => new { x.OperationCode, x.PayloadJson }).FirstOrDefaultAsync(cancellationToken);
+            pendingApproval = GetPendingApproval(pending?.OperationCode, pending?.PayloadJson);
+            if (pendingApproval == ContractPendingApproval.None && ContractLifecycleOperations.IsActionable(contract.Status, contract.StartDate, contract.EndDate, today))
             {
-                canLiquidate = true;
-                canRenew = !await ContractLifecycleOperations.HasApprovedSuccessorAsync(
-                    _context, contract.ContractId, contract.RoomId, contract.StartDate, cancellationToken);
+                if (await EvaluateSw07Async(caller, cancellationToken) != RoomChangeDecision.Denied)
+                {
+                    canRenew = successor is null;
+                    canLiquidate = successor is null;
+                }
+                canEditDeposit = successor is null && await EvaluateSw08Async(caller, cancellationToken) != RoomChangeDecision.Denied;
             }
         }
 
@@ -234,7 +260,11 @@ public sealed class ContractService : IContractService
             contract.RejectReason,
             members,
             canRenew,
-            canLiquidate);
+            canLiquidate,
+            canEditDeposit,
+            pendingApproval,
+            successor,
+            previous);
     }
 
     public async Task<ContractResponseDto> ApproveContractAsync(
@@ -412,7 +442,6 @@ public sealed class ContractService : IContractService
                 contract.Status = ContractStatus.Approved;
                 contract.RejectReason = null;
                 contract.SnapshotPrice = room.StandardPrice;
-                contract.DepositAmount = MoneyFormatter.RoundVnd(room.StandardPrice * 0.20m);
                 room.Status = RoomStatus.Rented;
             }
 
@@ -448,6 +477,7 @@ public sealed class ContractService : IContractService
 
         var today = _timeProvider.TodayVietnam();
         var (contract, room, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        await ContractLifecycleOperations.EnsureNoPendingApprovalAsync(_context, contract.ContractId, cancellationToken);
         var decision = await EvaluateSw07Async(caller, cancellationToken);
 
         if (decision == RoomChangeDecision.Denied)
@@ -472,7 +502,7 @@ public sealed class ContractService : IContractService
             return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
         }
 
-        return await ApplyRenewalAsync(contract, room, property, request.EndDate.Date, cancellationToken);
+        return await ApplyRenewalAsync(contract, room, property, request.EndDate.Date, caller.UserId, cancellationToken);
     }
 
     public async Task<ContractActionResultDto> LiquidateContractAsync(
@@ -484,6 +514,7 @@ public sealed class ContractService : IContractService
 
         var today = _timeProvider.TodayVietnam();
         var (contract, room, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        await ContractLifecycleOperations.EnsureNoPendingApprovalAsync(_context, contract.ContractId, cancellationToken);
         var decision = await EvaluateSw07Async(caller, cancellationToken);
 
         if (decision == RoomChangeDecision.Denied)
@@ -507,7 +538,7 @@ public sealed class ContractService : IContractService
             return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
         }
 
-        return await ApplyLiquidationAsync(contract, room, property, today, cancellationToken);
+        return await ApplyLiquidationAsync(contract, room, property, today, caller.UserId, cancellationToken);
     }
 
     public async Task<ContractActionResultDto> UpdateDepositAsync(
@@ -518,33 +549,40 @@ public sealed class ContractService : IContractService
     {
         EnsureCanManage(caller);
 
-        if (depositAmount < 0m)
+        if (depositAmount < 0m || depositAmount > 9_999_999_999_999_999.99m)
         {
             throw new ContractValidationException(
-                "Tiền cọc phải là số không âm.",
+                ContractErrorMessages.InvalidDepositAmount,
                 ContractErrorCodes.InvalidDepositAmount,
                 nameof(depositAmount));
         }
+        var normalizedAmount = MoneyFormatter.RoundVnd(depositAmount);
 
         var (contract, _, property) = await LoadLifecycleTargetAsync(contractId, caller, cancellationToken);
+        if (normalizedAmount == contract.DepositAmount)
+            throw new ContractValidationException(ContractErrorMessages.DepositUnchanged, ContractErrorCodes.DepositUnchanged, nameof(depositAmount));
         var decision = await EvaluateSw08Async(caller, cancellationToken);
 
         if (decision == RoomChangeDecision.Denied)
         {
             throw new ContractOperationException(
-                ContractErrorMessages.ApprovalDenied,
-                ContractErrorCodes.ApprovalDenied);
+                ContractErrorMessages.DepositApprovalDenied,
+                ContractErrorCodes.DepositApprovalDenied);
         }
 
         if (decision == RoomChangeDecision.RequiresApproval)
         {
+            ContractLifecycleOperations.EnsureDepositEditable(contract, _timeProvider.TodayVietnam(),
+                await ContractLifecycleOperations.HasApprovedSuccessorAsync(_context, contract.ContractId, contract.RoomId, contract.StartDate, cancellationToken));
+            await ContractLifecycleOperations.EnsureNoPendingApprovalAsync(_context, contract.ContractId, cancellationToken);
             var approval = await CreateApprovalRequestAsync(
                 contract,
                 property.Id,
                 new ContractApprovalPayload(
                     ContractApprovalActions.UpdateDeposit,
                     null,
-                    MoneyFormatter.RoundVnd(depositAmount)),
+                    normalizedAmount,
+                    contract.DepositAmount),
                 caller,
                 cancellationToken,
                 operationCode: "SW-08");
@@ -552,10 +590,30 @@ public sealed class ContractService : IContractService
             return new ContractActionResultDto(ContractActionOutcome.PendingApproval, null, approval.Id);
         }
 
-        contract.DepositAmount = MoneyFormatter.RoundVnd(depositAmount);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return new ContractActionResultDto(ContractActionOutcome.Applied, contract.ContractId, null);
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            if (await LockContractAsync(contract.ContractId, cancellationToken) is null)
+                throw new ContractNotFoundException(ContractErrorMessages.ContractNotFound, ContractErrorCodes.ContractNotFound);
+            await _context.Entry(contract).ReloadAsync(cancellationToken);
+            await ContractLifecycleOperations.EnsureNoPendingApprovalAsync(_context, contract.ContractId, cancellationToken);
+            ContractLifecycleOperations.EnsureDepositEditable(contract, _timeProvider.TodayVietnam(),
+                await ContractLifecycleOperations.HasApprovedSuccessorAsync(_context, contract.ContractId, contract.RoomId, contract.StartDate, cancellationToken));
+            var oldDeposit = contract.DepositAmount;
+            if (oldDeposit == normalizedAmount)
+                throw new ContractValidationException(ContractErrorMessages.DepositUnchanged, ContractErrorCodes.DepositUnchanged, nameof(depositAmount));
+            contract.DepositAmount = normalizedAmount;
+            ContractLifecycleOperations.AddAudit(_context, ContractLifecycleOperations.ContractAuditActions.DepositUpdated,
+                caller.UserId, property.Id, JsonSerializer.Serialize(new { contractId, oldDeposit, newDeposit = normalizedAmount }), _timeProvider.GetUtcNow());
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new ContractActionResultDto(ContractActionOutcome.Applied, contract.ContractId, null);
+        }
+        catch
+        {
+            await TryRollbackAndReloadAsync(transaction, contract, null);
+            throw;
+        }
     }
 
     public async Task<ContractResponseDto> CreateContractAsync(
@@ -616,12 +674,24 @@ public sealed class ContractService : IContractService
         var currentRoomPrice = room.StandardPrice;
 
         var requestedTenantIds = request.TenantIds.Distinct().ToList();
-        var existingTenantCount = await _context.Tenants
-            .AsNoTracking()
+        // Hồ sơ phải thuộc phạm vi người gọi: đã liên kết với Chủ trọ/Quản lý này hoặc
+        // chưa liên kết với ai (kho hồ sơ dùng chung). Hồ sơ đã thuộc Chủ trọ khác bị chặn
+        // để Quản lý không gắn hồ sơ của tòa khác vào hợp đồng.
+        var visibleTenants = TenantVisibility.Apply(_context, caller.UserId, caller.Role);
+        var visibleIds = visibleTenants
             .Where(tenant => requestedTenantIds.Contains(tenant.Id)
                 && tenant.IsActive
                 && !tenant.IsDeleted)
-            .Select(tenant => tenant.Id)
+            .Select(tenant => tenant.Id);
+        var pooledIds = _context.Tenants
+            .AsNoTracking()
+            .Where(tenant => requestedTenantIds.Contains(tenant.Id)
+                && tenant.IsActive
+                && !tenant.IsDeleted
+                && !_context.TenantOwnerLinks.Any(link => link.TenantId == tenant.Id))
+            .Select(tenant => tenant.Id);
+        var existingTenantCount = await visibleIds
+            .Union(pooledIds)
             .CountAsync(cancellationToken);
 
         if (existingTenantCount != requestedTenantIds.Count)
@@ -632,7 +702,21 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var depositAmount = MoneyFormatter.RoundVnd(currentRoomPrice * 0.20m);
+        if (request.DepositAmount is { } requestedDeposit
+            && (requestedDeposit < 0m || requestedDeposit > 9_999_999_999_999_999.99m))
+        {
+            throw new ContractValidationException(
+                ContractErrorMessages.InvalidDepositAmount,
+                ContractErrorCodes.InvalidDepositAmount,
+                nameof(request.DepositAmount));
+        }
+
+        // D4: Chủ trọ tự tạo hợp đồng thì hợp đồng có hiệu lực ngay (không cần tự duyệt lại);
+        // Quản lý tạo vẫn nằm ở Chờ duyệt để Chủ trọ quyết định.
+        var ownerCreated = caller.IsChuTro;
+        var depositAmount = request.DepositAmount is { } inputDeposit
+            ? MoneyFormatter.RoundVnd(inputDeposit)
+            : MoneyFormatter.RoundVnd(currentRoomPrice * 0.20m);
         var contractId = Guid.NewGuid();
         var contractNumber = $"HD-{contractId:N}".ToUpperInvariant();
         var contract = new Contract
@@ -644,7 +728,7 @@ public sealed class ContractService : IContractService
             DepositAmount = depositAmount,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
-            Status = ContractStatus.Pending,
+            Status = ownerCreated ? ContractStatus.Approved : ContractStatus.Pending,
         };
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -654,7 +738,6 @@ public sealed class ContractService : IContractService
             var lockedRoom = await _context.Rooms
                 .FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {room.Id}")
                 .IgnoreQueryFilters()
-                .AsNoTracking()
                 .SingleOrDefaultAsync(cancellationToken);
 
             if (lockedRoom is null
@@ -687,6 +770,12 @@ public sealed class ContractService : IContractService
                 ContractId = contract.ContractId,
                 TenantId = tenantId,
             }));
+
+            if (ownerCreated)
+            {
+                lockedRoom.Status = RoomStatus.Rented;
+                lockedRoom.UpdatedAt = _timeProvider.UtcNow();
+            }
 
             // PLAN-005 (điều chỉnh): hợp đồng ở tòa của chủ trọ nào thì chủ trọ đó được xem hồ sơ khách,
             // kể cả khách đã thuộc chủ trọ khác — mỗi khách có thể có nhiều liên kết chủ trọ.
@@ -989,6 +1078,7 @@ public sealed class ContractService : IContractService
         Room room,
         Property property,
         DateTime newEndDate,
+        string actorUserId,
         CancellationToken cancellationToken)
     {
         var today = _timeProvider.TodayVietnam();
@@ -1016,7 +1106,11 @@ public sealed class ContractService : IContractService
                 contract, lockedRoom, property, newEndDate, today, cancellationToken);
 
             var renewal = await ContractLifecycleOperations.CreateRenewalAsync(
-                _context, contract, lockedRoom, newEndDate, cancellationToken);
+                _context, contract, lockedRoom, newEndDate, _timeProvider.GetUtcNow(), cancellationToken);
+            await ContractLifecycleOperations.SettlePendingRenewalRequestsAsync(_context, contract.ContractId,
+                RenewalRequestStatus.Approved, actorUserId, _timeProvider.GetUtcNow().UtcDateTime, null, cancellationToken);
+            ContractLifecycleOperations.AddAudit(_context, ContractLifecycleOperations.ContractAuditActions.Renewed,
+                actorUserId, property.Id, JsonSerializer.Serialize(new { contractId = contract.ContractId, newContractId = renewal.ContractId, newEndDate }), _timeProvider.GetUtcNow());
 
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -1043,6 +1137,7 @@ public sealed class ContractService : IContractService
         Room room,
         Property property,
         DateOnly today,
+        string actorUserId,
         CancellationToken cancellationToken)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -1069,6 +1164,10 @@ public sealed class ContractService : IContractService
 
             await ContractLifecycleOperations.LiquidateAsync(
                 _context, contract, lockedRoom, today, cancellationToken);
+            await ContractLifecycleOperations.SettlePendingRenewalRequestsAsync(_context, contract.ContractId,
+                RenewalRequestStatus.Rejected, actorUserId, _timeProvider.GetUtcNow().UtcDateTime, ContractErrorMessages.RenewalRejectedByLiquidation, cancellationToken);
+            ContractLifecycleOperations.AddAudit(_context, ContractLifecycleOperations.ContractAuditActions.Liquidated,
+                actorUserId, property.Id, JsonSerializer.Serialize(new { contractId = contract.ContractId }), _timeProvider.GetUtcNow());
 
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -1094,6 +1193,19 @@ public sealed class ContractService : IContractService
                 $"SELECT * FROM [Contracts] WITH (UPDLOCK, HOLDLOCK) WHERE [ContractId] = {contractId}")
             .AsNoTracking()
             .SingleOrDefaultAsync(cancellationToken);
+
+    private async Task<ContractLinkDto?> FindLinkAsync(int roomId, Guid contractId, DateTime boundary, bool successor, CancellationToken ct) =>
+        await _context.Contracts.AsNoTracking().Where(x => x.RoomId == roomId && x.ContractId != contractId
+                && x.Status == ContractStatus.Approved && (successor ? x.StartDate == boundary : x.EndDate == boundary))
+            .Select(x => new ContractLinkDto(x.ContractId, x.ContractNumber, x.StartDate, x.EndDate)).SingleOrDefaultAsync(ct);
+
+    private static ContractPendingApproval GetPendingApproval(string? operationCode, string? payloadJson)
+    {
+        if (operationCode == "SW-08") return ContractPendingApproval.DepositUpdate;
+        if (operationCode != "SW-07") return ContractPendingApproval.None;
+        try { return JsonSerializer.Deserialize<ContractApprovalPayload>(payloadJson ?? "{}", PayloadJsonOptions)?.Action == ContractApprovalActions.Liquidate ? ContractPendingApproval.Liquidation : ContractPendingApproval.Renewal; }
+        catch (JsonException) { return ContractPendingApproval.Renewal; }
+    }
 
     private static ContractResponseDto ToResponse(Contract contract) => new(
         contract.ContractId,

@@ -9,7 +9,7 @@
                     <LucideIcon Name="shield-check" />
                 </div>
                 <div class="modal-header-text">
-                    <h2 id="tier-modal-title">@L["TierModalTitle"] @ServiceName</h2>
+                    <h2 id="tier-modal-title">@L["TierModalTitle"] @Service?.Name</h2>
                     <p>@L["TierModalSubtitle"]</p>
                 </div>
                 <button type="button" class="modal-close-btn" @onclick="HandleClose" aria-label="@L["CloseBtn"]">
@@ -33,24 +33,33 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var tier in UtilityDraftRules.DefaultElectricTiers)
+                            @if (Service is null || Service.Tiers.Count == 0)
                             {
                                 <tr>
-                                    <td class="font-semibold text-slate-800">@string.Format(L["TierFormulaLabel"], tier.Id)</td>
-                                    <td>
-                                        @if (tier.MaxKwh.HasValue)
-                                        {
-                                            @string.Format(L["TierMaxKwh"], tier.MaxKwh.Value.ToString("N0"))
-                                        }
-                                        else
-                                        {
-                                            @L["TierUnlimited"]
-                                        }
-                                    </td>
-                                    <td class="text-right font-bold tabular-nums text-indigo-700">
-                                        @MoneyFormatter.Format(tier.Rate)
-                                    </td>
+                                    <td colspan="3">@L["TierModalEmpty"]</td>
                                 </tr>
+                            }
+                            else
+                            {
+                                @foreach (var tier in Service.Tiers)
+                                {
+                                    <tr>
+                                        <td class="font-semibold text-slate-800">@string.Format(L["TierFormulaLabel"], tier.TierNumber)</td>
+                                        <td>
+                                            @if (tier.To.HasValue)
+                                            {
+                                                @string.Format(L["TierQuotaRange"], tier.From.ToString("N0"), tier.To.Value.ToString("N0"), UnitLabel())
+                                            }
+                                            else
+                                            {
+                                                @string.Format(L["TierQuotaOpen"], tier.From.ToString("N0"), UnitLabel())
+                                            }
+                                        </td>
+                                        <td class="text-right font-bold tabular-nums text-indigo-700">
+                                            @MoneyFormatter.Format(tier.UnitPrice)
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -68,8 +77,21 @@
 
 @code {
     [Parameter] public bool IsOpen { get; set; }
-    [Parameter] public string ServiceName { get; set; } = string.Empty;
+    [Parameter] public ServiceItemDto? Service { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+
+    private string UnitLabel() => Service is null ? string.Empty : L[GetUnitResourceKey(Service.Unit)].Value;
+
+    private static string GetUnitResourceKey(ServiceUnitCategory unit) => unit switch
+    {
+        ServiceUnitCategory.Room => "UnitRoom",
+        ServiceUnitCategory.Person => "UnitPerson",
+        ServiceUnitCategory.Vehicle => "UnitVehicle",
+        ServiceUnitCategory.Visit => "UnitVisit",
+        ServiceUnitCategory.KilowattHour => "UnitKwh",
+        ServiceUnitCategory.CubicMeter => "UnitM3",
+        _ => "NoData",
+    };
 
     private async Task HandleClose() => await OnClose.InvokeAsync();
 }

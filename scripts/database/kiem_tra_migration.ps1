@@ -97,11 +97,11 @@ function Assert-FinancialSchema([string]$database) {
     $checks = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.check_constraints WHERE name IN ('CK_Payments_Amount', 'CK_Payments_Status', 'CK_Payments_ReviewedAt', 'CK_Payments_RejectionReason')")
     if ($checks -eq 4) { Pass "Du 4 check constraint Payments" } else { Fail "Check Payments thieu ($checks/4)" }
 
-    $unique = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'UX_Payments_InvoiceConfirmed' AND is_unique = 1 AND has_filter = 1 AND filter_definition LIKE '%Status%1%'")
-    if ($unique -eq 1) { Pass "Unique confirmed theo hoa don co filter" } else { Fail "Thieu unique UX_Payments_InvoiceConfirmed" }
+    $unique = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'UX_Payments_InvoiceStatus' AND is_unique = 1 AND has_filter = 1 AND filter_definition LIKE '%Status%1%'")
+    if ($unique -eq 1) { Pass "Unique pending/confirmed theo hoa don co filter" } else { Fail "Thieu unique UX_Payments_InvoiceStatus" }
 
-    $lookup = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'IX_Payments_InvoiceId_RequestedAt'")
-    if ($lookup -eq 1) { Pass "Index tra cuu Payment theo hoa don" } else { Fail "Thieu index IX_Payments_InvoiceId_RequestedAt" }
+    $lookup = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.indexes WHERE name = 'IX_Payments_InvoiceId_Status_RequestedAt'")
+    if ($lookup -eq 1) { Pass "Index tra cuu Payment theo hoa don" } else { Fail "Thieu index IX_Payments_InvoiceId_Status_RequestedAt" }
 
     $fk = [int](Invoke-Sql $database "SELECT COUNT(*) FROM sys.foreign_keys WHERE name IN ('FK_Payments_Invoices_InvoiceId', 'FK_UtilityReadingAudits_UtilityReadings_UtilityReadingId') AND delete_referential_action_desc = 'NO_ACTION'")
     if ($fk -eq 2) { Pass "FK tai chinh dung NO_ACTION" } else { Fail "FK tai chinh sai ($fk/2)" }

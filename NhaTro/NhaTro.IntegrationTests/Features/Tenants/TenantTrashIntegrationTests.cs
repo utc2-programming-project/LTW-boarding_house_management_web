@@ -139,6 +139,48 @@ public sealed class TenantTrashIntegrationTests(SqlServerFixture fixture)
     }
 
     [SqlServerFact]
+    public async Task Chan_tat_trang_thai_khi_con_hop_dong_hieu_luc()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.CreateContext();
+        await SqlServerFixture.SeedAccountAsync(db, Owner.UserId, Roles.ChuTro);
+
+        var service = NewService();
+        var created = await service.CreateAsync(NewTenant("Cường", "0903333333"), Owner);
+        var id = created.Tenant!.Id;
+
+        db.Properties.Add(new Property { Name = "Nhà B", Address = "2 Lê Lợi", OwnerId = Owner.UserId });
+        await db.SaveChangesAsync();
+        var property = await db.Properties.SingleAsync(p => p.OwnerId == Owner.UserId);
+        var room = new Room
+        {
+            PropertyId = property.Id,
+            Code = "P102",
+            AreaM2 = 20m,
+            StandardPrice = 1_000_000m,
+            Status = RoomStatus.Rented,
+        };
+        db.Rooms.Add(room);
+        await db.SaveChangesAsync();
+        await AddContractAsync(db, id, room.Id, ContractStatus.Approved,
+            Today.AddDays(-5), Today.AddDays(5), "HD-ACTIVE-2");
+
+        var blocked = await service.SetActiveAsync(id, false, created.Tenant.RowVersion, Owner);
+        Assert.False(blocked.Succeeded);
+        Assert.Equal(TenantErrorCodes.TenantInUse, blocked.ErrorCode);
+        Assert.True((await service.GetAsync(id, Owner)).Tenant!.IsActive);
+
+        // Hợp đồng hết hiệu lực thì được tắt trạng thái.
+        var contract = await db.Contracts.SingleAsync(c => c.ContractNumber == "HD-ACTIVE-2");
+        contract.EndDate = Today.AddDays(-1);
+        await db.SaveChangesAsync();
+
+        var stopped = await service.SetActiveAsync(id, false, created.Tenant.RowVersion, Owner);
+        Assert.True(stopped.Succeeded, stopped.ErrorMessage);
+        Assert.False(stopped.Tenant!.IsActive);
+    }
+
+    [SqlServerFact]
     public async Task Quan_ly_xoa_di_theo_cong_tac_SW06_va_chi_Chu_tro_khoi_phuc()
     {
         await fixture.ResetAsync();

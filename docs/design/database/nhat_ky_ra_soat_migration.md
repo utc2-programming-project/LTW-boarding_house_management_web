@@ -151,6 +151,25 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 - VHT-28 2A yêu cầu người thứ hai chạy script — vẫn chưa có.
 - SHA sẽ đổi khi VHT-124/126 merge → chạy lại TASK-02/04/06 (script + diff) trước khi publish.
 
+## VHT-102 — sửa chỉ số kỳ liền trước (11/11/2026)
+
+**Nguồn rà:** nhánh `VHT-102-sua-chi-so-ky-lien-truoc-va-luu-lich-su`, migration `20261111064205_AddUtilityReadingAuditImmutability`.
+
+**Kết quả:** build solution thành công; `dotnet ef migrations has-pending-model-changes --project NhaTro/Web` không có model change pending (rà ngày 11/11/2026).
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261111064205_AddUtilityReadingAuditImmutability` | Tạo trigger `TR_UtilityReadingAudits_Immutable`, chặn UPDATE/DELETE trên nhật ký D10. |
+
+## VHT-51 — snapshot dịch vụ và gia cố kỳ ghi chỉ số (09/11/2026)
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261109163100_AddUtilityServicePeriodSnapshots` | Thêm `HasServiceSnapshots` vào `UtilityReadingPeriods`; tạo `UtilityServicePeriodSnapshots`, FK cascade về kỳ, unique `(UtilityReadingPeriodId, SourceServicePriceHistoryId)` và các CHECK số tiền/số lượng. |
+| `20261109195353_HardenUtilityReadingPeriods` | Nới `Unit` của `InvoiceItems` và `UtilityBillingPeriodSnapshots` lên 30 ký tự; thay index `InvoiceId` bằng unique filtered index để một invoice chỉ thuộc một kỳ. |
+
+SVG ERD chưa vẽ thêm bảng snapshot dịch vụ trong lượt này; schema SQL là nguồn đối chiếu cập nhật cho hai migration trên.
+
 ## Lượt 3A — ràng buộc tài chính (VHT-48)
 
 **Nguồn rà:** `dev@b5eac48`, migration mới `20261107152554_AddFinancialConstraints`.
@@ -161,7 +180,7 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 
 | Bảng | Ràng buộc |
 | --- | --- |
-| `Payments` | 4 CHECK (`Amount > 0`, `Status IN (0,1,2)`, `ReviewedAt`/`RejectionReason` khớp Status); unique `UX_Payments_InvoiceConfirmed` `(InvoiceId)` filter `[Status] = 1`; index `(InvoiceId, RequestedAt)` |
+| `Payments` | 4 CHECK (`Amount > 0`, `Status IN (0,1,2)`, `ReviewedAt`/`RejectionReason` khớp Status); unique `UX_Payments_InvoiceStatus` `(InvoiceId, Status)` filter `[Status] IN (0,1)`; index `IX_Payments_InvoiceId_Status_RequestedAt` `(InvoiceId, Status, RequestedAt)` — cả 2 object tạo từ `20261104122603_AddPayments`, lượt 3A chỉ đổi FK sang Restrict |
 | `UtilityReadingAudits` | FK → `UtilityReadings` đổi Cascade → **Restrict** |
 | `ContractRenewalRequests` | FK → `Contracts` đổi Cascade → **Restrict** |
 | `TenantOwnerLinks` | FK → `Tenants` đổi Cascade → **Restrict** |
@@ -179,11 +198,66 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 
 ### Ghi nhận
 
-- `Payments` trên dev chưa có `PaymentProofs`/`PaymentAuditLogs`; xác nhận tiền chưa cập nhật `Invoice.Paid` — chờ VHT-54.
+- `Payments` chưa cập nhật `Invoice.Paid` — xác nhận tiền chưa đối soát tự động, chờ VHT-54. `PaymentProofs`/`PaymentAuditLogs` đã có từ `20261104122603_AddPayments` (bản đầu của mục này ghi thiếu, đính chính ở lượt 3C).
 - `ManagerToggles` không có bảng lịch sử; chỉ cập nhật dòng hiện tại + log ứng dụng.
 - OP38 của ma trận quyền được sửa để mỗi lần thử dùng hóa đơn riêng (DB mới chỉ cho một Confirmed/hóa đơn).
 
 ### Còn lại
 
-- VHT-48 3C: cập nhật ERD theo `docs/imp/VHT-48-erd-delta-tai-chinh-3a.md`.
+- VHT-48 3C: cập nhật ERD theo migration — xử lý ở lượt 3C bên dưới (file delta `docs/imp/VHT-48-erd-delta-tai-chinh-3a.md` được nhắc nhưng không có trong repo).
 - Khi VHT-54 merge: bổ sung Proof/AuditLog và chạy lại case C06/C08.
+
+## Lượt 3C — ERD theo migration (VHT-132)
+
+**Nguồn rà:** `dev@c7d7411` — 41 migration, mới nhất `20261107152554_AddFinancialConstraints`; đối chiếu `ApplicationDbContextModelSnapshot.cs`.
+
+**Phạm vi:** chỉ 2 file ERD (`so_do_quan_he_vht5_schema.sql`, `so_do_quan_he_vht5.svg`) + đính chính nhật ký 3A. Không sửa migration/entity/seed.
+
+**Kết luận:** ERD SQL khớp 31 bảng của snapshot; SVG vẽ đủ 31 bảng và các quan hệ FK. **Chưa kiểm trên DB thật trong lượt này** — 4 lệnh `kiem_tra_migration.ps1`, `sqlcmd` chạy ERD 2 lần, `dotnet ef database update`, diff `sys.*` để người dùng chạy (xem `docs/imp/PLAN-007-erd-theo-migration-3c-vht132.md` §7).
+
+### Delta so với ERD 2E
+
+| Loại | 2E | 3C | Thêm | Bớt |
+| --- | --- | --- | --- | --- |
+| Bảng | 22 | 31 | 9 | 0 |
+| Index | 43 | 62 | 19 | 0 |
+| FK | 28 | 39 | 11 | 0 |
+| CHECK | 38 | 45 | 8 | 1 |
+
+- 9 bảng mới: `ContractRenewalRequests`, `TenantInvitations`, `Payments`, `PaymentProofs`, `PaymentAuditLogs`, `TenantOwnerLinks`, `UtilityReadings`, `UtilityReadingAudits`, `AuditLogEntries`.
+- 6 bảng thêm cột: `AspNetUsers` (xóa mềm tài khoản: `IsDeleted`, `DeletedAt`, `DeletedByUserId`, `OriginalEmail`), `Properties` (`DeletedAt`), `Rooms` (`DeletedAt`, `DeletedBy`), `Tenants` (`DeletedAt`, `DeletedByUserId`, + `IX_Tenants_IsDeleted`), `ServiceCatalogs` (`IsActive`, `Description`, `IsDeleted`, `DeletedAt`, `DeletedBy`), `ServicePriceHistory` (`EffectiveTo`, `Note`).
+- CHECK đổi: `CK_ServicePriceHistory_UnitPrice_NonNegative` → `CK_ServicePriceHistory_UnitPrice_Positive` (thêm `CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate`), theo `20261103044426_EnforceStrictServicePriceHistoryConstraints`.
+- 11 FK mới đều Restrict; 3 FK của 3A (`UtilityReadingAudits`→`UtilityReadings`, `ContractRenewalRequests`→`Contracts`, `TenantOwnerLinks`→`Tenants`) đã vẽ.
+
+### Lệch ngoài dự kiến đã sửa
+
+- `ServicePriceHistory.CreatedByUserId`: ERD còn `INT NOT NULL`, thực tế `nvarchar(450) NULL` + FK → `AspNetUsers` + `IX_ServicePriceHistory_CreatedByUserId` (`20261102081030_ChangeCreatedByUserIdToString`). Seed ERD đổi sang `N'mau-chu-tro'`.
+- `scripts/database/kiem_tra_migration.ps1` assert `UX_Payments_InvoiceConfirmed` nhưng DB tạo `UX_Payments_InvoiceStatus`; đổi 2 dòng sang `UX_Payments_InvoiceStatus` + `IX_Payments_InvoiceId_Status_RequestedAt`.
+- Nhật ký 3A dòng `Payments`: sửa tên unique/index; dòng ghi `PaymentProofs`/`PaymentAuditLogs` chưa có là sai — 2 bảng này có từ `20261104122603_AddPayments`.
+
+### Bằng chứng (máy tự chạy, không cần DB)
+
+| Kiểm | Cách chạy | Kết quả |
+| --- | --- | --- |
+| Đếm bảng ERD SQL | `Select-String 'CREATE TABLE'` | 31 |
+| Diff object ERD SQL vs `HEAD` | regex `CREATE TABLE`/`INDEX`/`FOREIGN KEY`/`CHECK` trên `git show HEAD:` | +9 bảng, +19 index, +11 FK, +8 CHECK, −1 CHECK |
+| Parse SVG | `xml.etree.ElementTree.fromstring` | OK; 31 `<rect>`/31 box, 36 `<polyline>` |
+| Chồng khung | so cặp `rect` | 0 |
+| Đầu mút đường nối | mọi đầu mút phải nằm trên viền một box | 0 treo |
+| Nhãn bị khung che / trùng nhau | so bounding box nhãn với `rect` và với nhãn khác | 3 nhãn bị che có sẵn từ 2E, 0 cặp nhãn đè thật |
+| Soát chéo SQL ↔ SVG | so tên bảng + tên cột + kiểu trên 31 bảng | 0 lệch (chỉ khác cosmetic `decimal(18, 0)` vs `decimal(18,0)`, thứ tự cột `AspNetUsers`/`Tenants`) |
+| `git diff --check` | | sạch (exit 0) |
+
+### Còn lại
+
+- 4 lệnh kiểm DB (§7 plan) chưa có output → mục này chưa ghi "đạt".
+- 3 nhãn bị khung che có sẵn từ 2E (`PropertyId` @(267,673.2), `TariffVersionId` @(1256.2,1798), `PropertyId` @(784.5,264)); không phát sinh từ 3C.
+- Khi `dev` có migration mới: chạy lại diff object + soát chéo trước khi publish ERD.
+## VHT-51 — snapshot dịch vụ và gia cố kỳ ghi chỉ số (09/11/2026)
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261109163100_AddUtilityServicePeriodSnapshots` | Thêm `HasServiceSnapshots` vào `UtilityReadingPeriods`; tạo `UtilityServicePeriodSnapshots`, FK cascade về kỳ, unique `(UtilityReadingPeriodId, SourceServicePriceHistoryId)` và các CHECK số tiền/số lượng. |
+| `20261109195353_HardenUtilityReadingPeriods` | Nới `Unit` của `InvoiceItems` và `UtilityBillingPeriodSnapshots` lên 30 ký tự; thay index `InvoiceId` bằng unique filtered index để một invoice chỉ thuộc một kỳ. |
+
+SVG ERD chưa vẽ thêm bảng snapshot dịch vụ trong lượt này; schema SQL là nguồn đối chiếu cập nhật cho hai migration trên.

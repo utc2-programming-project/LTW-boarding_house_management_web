@@ -363,8 +363,6 @@ public sealed class PermissionMatrixMaintenanceTests(SqlServerFixture fixture)
         var today = DateTime.UtcNow.Date;
         var contractA = await contracts.CreateContractAsync(
             new CreateContractRequest(roomA.Room!.Id, today, today.AddMonths(6), [tenantA.Tenant.Id]), OwnerA);
-        await contracts.ApproveContractAsync(
-            contractA.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerA);
         Assert.Equal(ContractStatus.Approved, await ContractStatusAsync(contractA.ContractId));
 
         var incidents = new IncidentService(fixture, TimeProvider.System, togglePolicy, approvals);

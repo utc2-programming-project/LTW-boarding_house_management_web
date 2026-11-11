@@ -10,6 +10,7 @@
 @using Web.Features.Contracts.Rules
 @using Web.Infrastructure.Time
 @using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Dialogs
 @inject ContractPageService Contracts
 @inject IStringLocalizer<ContractResources> L
 @inject ToastService Toasts
@@ -18,7 +19,6 @@
 
 <PageTitle>@L["ContractDetailTitle"]</PageTitle>
 <section class="contract-detail-page" aria-labelledby="contract-detail-title">
-    <NavBreadcrumb CurrentLabel="@L["ContractDetailTitle"]" />
     @if (_loading) { <LoadingOverlay Visible="true" Text="@L["TableLoading"]" /> }
     else if (_contract is null)
     {
@@ -26,14 +26,32 @@
     }
     else
     {
-        <header class="page-heading"><div><h1 id="contract-detail-title">@_contract.ContractNumber</h1><p>@_contract.PropertyName · @_contract.RoomCode</p></div><StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" /></header>
+        <PageHeading Title="@_contract.ContractNumber" TitleId="contract-detail-title"
+                     CurrentLabel="@L["ContractDetailTitle"]" HelpText="@L["ContractDetailDescription"]">
+            <HeadingMeta>
+                <p>@_contract.PropertyName · @_contract.RoomCode</p>
+            </HeadingMeta>
+            <Actions>
+                <StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" />
+            </Actions>
+        </PageHeading>
         <dl class="contract-detail-grid">
             <div><dt>@L["ContractTenantsLabel"]</dt><dd><ul>@foreach (var member in _contract.Members) { <li>@member.FullName @if (!string.IsNullOrWhiteSpace(member.Phone)) { <span>· @member.Phone</span> }</li> }</ul></dd></div>
             <div><dt>@L["ContractTermLabel"]</dt><dd>@DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))</dd></div>
             <div><dt>@L["ContractRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.SnapshotPrice)</dd></div>
-            <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.DepositAmount)</dd></div>
+            <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.DepositAmount) @if (_contract.CanEditDeposit) { <button type="button" class="btn btn-secondary" @onclick="OpenDeposit">@L["ContractDepositUpdateAction"]</button> }</dd></div>
             @if (!string.IsNullOrWhiteSpace(_contract.RejectReason)) { <div><dt>@L["ContractRejectReasonLabel"]</dt><dd>@_contract.RejectReason</dd></div> }
         </dl>
+        @if (_canManage)
+        {
+            <section aria-label="@L["ContractHistoryTitle"]">
+                <h2>@L["ContractHistoryTitle"]</h2>
+                @if (_contract.Previous is null && _contract.Successor is null) { <p>@L["ContractHistoryEmpty"]</p> }
+                @if (_contract.Previous is not null) { <p>@L["ContractPreviousLabel"]: <a href="@($"/contracts/{_contract.Previous.ContractId}")">@_contract.Previous.ContractNumber</a> · @DateFormatter.Format(DateOnly.FromDateTime(_contract.Previous.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.Previous.EndDate))</p> }
+                @if (_contract.Successor is not null) { <p>@L["ContractSuccessorLabel"]: <a href="@($"/contracts/{_contract.Successor.ContractId}")">@_contract.Successor.ContractNumber</a> · @DateFormatter.Format(DateOnly.FromDateTime(_contract.Successor.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.Successor.EndDate))</p> }
+            </section>
+        }
+        @if (_contract.PendingApproval != ContractPendingApproval.None) { <p class="contract-pending-alert" role="status">@string.Format(L["ContractPendingApprovalBanner"], PendingLabel())</p> }
         <footer class="contract-detail-actions"><a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
             @if (_contract.CanRenew) { <button type="button" class="btn btn-secondary" @onclick="() => OpenLifecycle(true)">@L["ContractRenewAction"]</button> }
             @if (_contract.CanLiquidate) { <button type="button" class="btn btn-danger" @onclick="() => OpenLifecycle(false)">@L["ContractLiquidateAction"]</button> }
@@ -47,17 +65,34 @@
     <ContractLifecycleModal Visible="_lifecycleOpen" IsBusy="_lifecycleBusy" IsRenewal="_lifecycleIsRenewal"
                            EndDate="_contract.EndDate" OnClose="CloseLifecycle" OnConfirm="ConfirmLifecycleAsync" />
 }
+<FeatureDialog Visible="_depositOpen" Title="@L["ContractDepositUpdateTitle"]" CloseLabel="@L["ContractCloseAction"]" Busy="_depositBusy" OnClose="CloseDeposit">
+    <p>@L["ContractDepositUpdateDescription"]</p>
+    @if (_contract is not null)
+    {
+        <p class="tabular-nums">@L["ContractDepositUpdateCurrentLabel"]: @MoneyFormatter.Format(_contract.DepositAmount)</p>
+        <p class="tabular-nums">@L["ContractDepositUpdateSuggestedLabel"]: @MoneyFormatter.Format(MoneyFormatter.RoundVnd(_contract.SnapshotPrice * 0.20m))</p>
+        <label for="deposit-amount">@L["ContractDepositUpdateAmountLabel"]</label>
+        <input id="deposit-amount" class="input tabular-nums" inputmode="numeric" @bind="_depositInput" disabled="@_depositBusy" />
+        @if (_depositError is not null) { <p class="contract-field-error" role="alert">@_depositError</p> }
+        <footer><button type="button" class="btn btn-secondary" disabled="@_depositBusy" @onclick="CloseDeposit">@L["ContractCancelAction"]</button><button type="button" class="btn btn-primary" disabled="@_depositBusy" @onclick="SaveDepositAsync">@L["ContractDepositUpdateAction"]</button></footer>
+    }
+</FeatureDialog>
 
 @code {
     [Parameter] public Guid ContractId { get; set; }
     private ContractDetailDto? _contract;
-    private bool _loading = true, _canApprove, _decisionOpen, _decisionBusy;
+    private bool _loading = true, _canApprove, _canManage, _decisionOpen, _decisionBusy;
     private bool _lifecycleOpen, _lifecycleBusy, _lifecycleIsRenewal;
+    private bool _depositOpen, _depositBusy;
+    private decimal _depositAmount;
+    private string _depositInput = "";
+    private string? _depositError;
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         _canApprove = auth.User.IsInRole("ChuTro");
+        _canManage = _canApprove || auth.User.IsInRole("QuanLy");
         try { _contract = await Contracts.GetAsync(ContractId); }
         catch (Exception ex) { _contract = null; Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
         finally { _loading = false; }
@@ -71,6 +106,25 @@
         finally { _decisionBusy = false; }
     }
     private void OpenLifecycle(bool isRenewal) { _lifecycleIsRenewal = isRenewal; _lifecycleOpen = true; }
+    private void OpenDeposit() { _depositAmount = _contract?.DepositAmount ?? 0m; _depositInput = MoneyFormatter.Format(_depositAmount); _depositError = null; _depositOpen = true; }
+    private Task CloseDeposit() { if (!_depositBusy) _depositOpen = false; return Task.CompletedTask; }
+    private async Task SaveDepositAsync()
+    {
+        if (_contract is null) return;
+        if (!MoneyFormatter.TryParse(_depositInput, out _depositAmount) || _depositAmount < 0m) { _depositError = L["ContractErrorInvalidDepositAmount"]; return; }
+        if (MoneyFormatter.RoundVnd(_depositAmount) == _contract.DepositAmount) { _depositError = L["ContractErrorDepositUnchanged"]; return; }
+        _depositBusy = true;
+        try
+        {
+            var result = await Contracts.UpdateDepositAsync(ContractId, _depositAmount);
+            _depositOpen = false;
+            Toasts.Success(L[result.Outcome == ContractActionOutcome.PendingApproval ? "ContractDepositUpdatePendingApproval" : "ContractDepositUpdateSuccess"]);
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex) { _depositError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]; }
+        finally { _depositBusy = false; }
+    }
+    private string PendingLabel() => _contract?.PendingApproval switch { ContractPendingApproval.Renewal => L["ContractPendingRenewal"], ContractPendingApproval.Liquidation => L["ContractPendingLiquidation"], ContractPendingApproval.DepositUpdate => L["ContractPendingDepositUpdate"], _ => string.Empty };
     private Task CloseLifecycle() { if (!_lifecycleBusy) _lifecycleOpen = false; return Task.CompletedTask; }
     private async Task ConfirmLifecycleAsync(DateTime? endDate)
     {

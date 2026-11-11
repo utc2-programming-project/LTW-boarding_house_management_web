@@ -136,7 +136,8 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal(new DateTime(2026, 11, 22), response.EndDate);
         Assert.Equal(1_000_000m, response.SnapshotPrice);
         Assert.Equal(200_000m, response.DepositAmount);
-        Assert.Equal(ContractStatus.Pending, response.Status);
+        // D4: hợp đồng do Chủ trọ tạo có hiệu lực ngay.
+        Assert.Equal(ContractStatus.Approved, response.Status);
 
         await using var reloadedDb = fixture.CreateContext();
         var savedContract = await reloadedDb.Contracts.SingleAsync(
@@ -204,12 +205,14 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var tenant = await AddTenantAsync(dbContext, "Tenant Duplicate", "0900000098");
+        await AssignManagerAsync(dbContext, roomId);
+        var manager = new PropertyCaller(ManagerId, Roles.QuanLy);
         var service = new ContractService(dbContext);
         var request = Request(roomId, [tenant.Id]);
 
-        await service.CreateContractAsync(request, OwnerCaller);
+        await service.CreateContractAsync(request, manager);
         var exception = await Assert.ThrowsAsync<ContractOperationException>(() =>
-            service.CreateContractAsync(request, OwnerCaller));
+            service.CreateContractAsync(request, manager));
 
         Assert.Equal(ContractErrorCodes.PendingContractExists, exception.ErrorCode);
         await using var reloadedDb = fixture.CreateContext();
@@ -223,17 +226,19 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         await using var dbContext = db;
         var tenant = await AddTenantAsync(dbContext, "Tenant Sequential", "0900000097");
+        await AssignManagerAsync(dbContext, roomId);
+        var manager = new PropertyCaller(ManagerId, Roles.QuanLy);
         var service = new ContractService(dbContext, new FixedTimeProvider(
             new DateTimeOffset(2026, 11, 24, 12, 0, 0, TimeSpan.Zero)));
 
-        await service.CreateContractAsync(Request(roomId, [tenant.Id]), OwnerCaller);
+        await service.CreateContractAsync(Request(roomId, [tenant.Id]), manager);
         await service.CreateContractAsync(
             new CreateContractRequest(
                 roomId,
                 new DateTime(2026, 11, 23),
                 new DateTime(2026, 12, 23),
                 [tenant.Id]),
-            OwnerCaller);
+            manager);
 
         await using var reloadedDb = fixture.CreateContext();
         Assert.Equal(2, await reloadedDb.Contracts.CountAsync());
@@ -245,8 +250,10 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         await ResetDatabaseAsync();
         var (db, roomId) = await CreateDatabaseWithRoomAsync(RoomStatus.Available);
         var tenant = await AddTenantAsync(db, "Tenant Concurrent", "0900000096");
+        await AssignManagerAsync(db, roomId);
         await db.DisposeAsync();
         var request = Request(roomId, [tenant.Id]);
+        var manager = new PropertyCaller(ManagerId, Roles.QuanLy);
 
         async Task<Exception?> TryCreateAsync()
         {
@@ -254,7 +261,7 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             var service = new ContractService(context);
             try
             {
-                await service.CreateContractAsync(request, OwnerCaller);
+                await service.CreateContractAsync(request, manager);
                 return null;
             }
             catch (Exception exception)
@@ -561,7 +568,8 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
             OwnerCaller);
 
         Assert.Equal(1_500_003m, response.SnapshotPrice);
-        Assert.Equal(300_001m, response.DepositAmount);
+        // Tiền cọc do người tạo nhập được giữ nguyên khi duyệt, không bị ghi đè 20%.
+        Assert.Equal(200_000m, response.DepositAmount);
         await using var reloadedDb = fixture.CreateContext();
         var saved = await reloadedDb.Contracts.SingleAsync(item => item.ContractId == contractId);
         Assert.Equal(response.SnapshotPrice, saved.SnapshotPrice);

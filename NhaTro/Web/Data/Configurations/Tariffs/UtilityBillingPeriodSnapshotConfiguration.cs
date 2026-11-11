@@ -20,7 +20,7 @@ public sealed class UtilityBillingPeriodSnapshotConfiguration : IEntityTypeConfi
         builder.HasKey(snapshot => snapshot.Id);
         builder.Property(snapshot => snapshot.Type).HasConversion<int>();
         builder.Property(snapshot => snapshot.ScopeCode).HasMaxLength(50).IsRequired();
-        builder.Property(snapshot => snapshot.Unit).HasMaxLength(20).IsRequired();
+        builder.Property(snapshot => snapshot.Unit).HasMaxLength(30).IsRequired();
         builder.Property(snapshot => snapshot.EffectiveDate).HasColumnType("date");
         builder.Property(snapshot => snapshot.PeriodStart).HasColumnType("date");
         builder.Property(snapshot => snapshot.PeriodEnd).HasColumnType("date");

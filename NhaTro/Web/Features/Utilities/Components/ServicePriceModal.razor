@@ -1,4 +1,6 @@
+@using Web.Infrastructure.Time
 @inject IStringLocalizer<UtilityResources> L
+@inject TimeProvider Clock
 
 @if (IsOpen && Service is not null)
 {
@@ -39,7 +41,7 @@
                                min="1"
                                step="1000"
                                class="input tabular-nums @(_rateError.HasValue ? "invalid" : "")"
-                               @bind="_newRate"
+                               @bind="_newRateInput"
                                @bind:after="ValidateRate"
                                placeholder="" />
                         <span class="input-affix">₫</span>
@@ -53,7 +55,7 @@
                 <div class="grid-2-cols">
                     <div class="form-field-group">
                         <label class="field-label" for="unit-select">@L["ThUnit"]</label>
-                        <select id="unit-select" class="input" @bind="_unit">
+                        <select id="unit-select" class="input" value="@_unit" disabled>
                             @foreach (var unit in Enum.GetValues<ServiceUnitCategory>())
                             {
                                 <option value="@unit">@L[GetUnitResourceKey(unit)]</option>
@@ -79,12 +81,12 @@
                         </label>
                         <input id="effective-from-input"
                                type="date"
-                               class="input @(_dateError == UtilityErrorCode.EffectiveFromIsRequired ? "invalid" : "")"
+                               class="input @(_fromError.HasValue ? "invalid" : "")"
                                @bind="_effectiveFrom"
                                @bind:after="ValidateDates" />
-                        @if (_dateError == UtilityErrorCode.EffectiveFromIsRequired)
+                        @if (_fromError.HasValue)
                         {
-                            <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
+                            <span class="field-error-text" role="alert">@L[$"Error{_fromError.Value}"]</span>
                         }
                     </div>
 
@@ -92,12 +94,12 @@
                         <label class="field-label" for="effective-to-input">@L["EffectiveToLabel"]</label>
                         <input id="effective-to-input"
                                type="date"
-                               class="input @(_dateError.HasValue ? "invalid" : "")"
+                               class="input @(_toError.HasValue ? "invalid" : "")"
                                @bind="_effectiveTo"
                                @bind:after="ValidateDates" />
-                        @if (_dateError.HasValue)
+                        @if (_toError.HasValue)
                         {
-                            <span class="field-error-text" role="alert">@L[$"Error{_dateError.Value}"]</span>
+                            <span class="field-error-text" role="alert">@L[$"Error{_toError.Value}"]</span>
                         }
                     </div>
                 </div>
@@ -113,7 +115,7 @@
                 </div>
                 @if (!CanWrite)
                 {
-                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: #b45309; background-color: #fef3c7; border: 1px solid #fcd34d; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
+                    <div class="field-error-text" role="alert" style="margin-top: 0.75rem; color: var(--warning-text); background-color: var(--warning-bg); border: 1px solid var(--warning-border); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;">
                         @L["WriteActionBlockedNotice"]
                     </div>
                 }
@@ -140,6 +142,14 @@
     </div>
 }
 
+<ConfirmDialog Visible="_discardVisible"
+               Title="@L["P5DiscardTitle"]"
+               Message="@L["P5DiscardBody"]"
+               ConfirmText="@L["P5DiscardConfirm"]"
+               CancelText="@L["P5DiscardKeep"]"
+               OnConfirm="DiscardChangesAsync"
+               OnCancel="KeepEditing" />
+
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public ServiceItemDto? Service { get; set; }
@@ -147,22 +157,31 @@
     [Parameter] public EventCallback<UpdatePriceRequest> OnSave { get; set; }
     [Parameter] public bool CanWrite { get; set; } = false;
 
-    private decimal _newRate;
+    private string _newRateInput = string.Empty;
     private ServiceUnitCategory _unit = ServiceUnitCategory.Room;
     private DateOnly _effectiveFrom;
     private DateOnly? _effectiveTo;
     private string? _note;
     private bool _isSaving;
     private UtilityErrorCode? _rateError;
-    private UtilityErrorCode? _dateError;
+    private UtilityErrorCode? _fromError;
+    private UtilityErrorCode? _toError;
     private string? _initializedServiceId;
     private bool _wasOpen;
+    private string _snapshot = string.Empty;
+    private bool _discardVisible;
+
+    private bool IsDirty => BuildSnapshot() != _snapshot;
+
+    private string BuildSnapshot() => string.Join('|',
+        _newRateInput, (int)_unit, _effectiveFrom, _effectiveTo, _note ?? string.Empty);
 
     protected override void OnParametersSet()
     {
         if (!IsOpen)
         {
             _wasOpen = false;
+            _discardVisible = false;
             return;
         }
 
@@ -170,13 +189,16 @@
 
         _wasOpen = true;
         _initializedServiceId = Service.Id;
-        _newRate = Service.CurrentRate;
+        _newRateInput = Service.CurrentRate.ToString(System.Globalization.CultureInfo.InvariantCulture);
         _unit = Service.Unit;
-        _effectiveFrom = DateOnly.FromDateTime(DateTime.Today);
+        _effectiveFrom = Clock.TodayVietnam();
         _effectiveTo = null;
         _note = string.Empty;
         _rateError = null;
-        _dateError = null;
+        _fromError = null;
+        _toError = null;
+        _discardVisible = false;
+        _snapshot = BuildSnapshot();
     }
 
     private void ValidateRate()
@@ -187,8 +209,9 @@
 
     private void ValidateDates()
     {
-        _dateError = UtilityDraftRules.ValidateUpdatePrice(CreateRequest())
-            .FirstOrDefault(issue => issue.Error is UtilityErrorCode.EffectiveFromIsRequired or UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom)?.Error;
+        var issues = UtilityDraftRules.ValidateUpdatePrice(CreateRequest());
+        _fromError = issues.FirstOrDefault(issue => issue.Error == UtilityErrorCode.EffectiveFromIsRequired)?.Error;
+        _toError = issues.FirstOrDefault(issue => issue.Error == UtilityErrorCode.EffectiveToMustBeAfterEffectiveFrom)?.Error;
     }
 
     private async Task HandleSubmit()
@@ -196,7 +219,7 @@
         ValidateRate();
         ValidateDates();
 
-        if (!CanWrite || _isSaving || _rateError.HasValue || _dateError.HasValue)
+        if (!CanWrite || _isSaving || _rateError.HasValue || _fromError.HasValue || _toError.HasValue)
         {
             return;
         }
@@ -214,16 +237,39 @@
 
     private async Task HandleClose()
     {
-        if (!_isSaving)
+        if (_isSaving)
         {
-            await OnClose.InvokeAsync();
+            return;
         }
+
+        if (IsDirty)
+        {
+            _discardVisible = true;
+            return;
+        }
+
+        await OnClose.InvokeAsync();
     }
+
+    private Task KeepEditing()
+    {
+        _discardVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task DiscardChangesAsync()
+    {
+        _discardVisible = false;
+        await OnClose.InvokeAsync();
+    }
+
+    private decimal ParsedRate => decimal.TryParse(_newRateInput, System.Globalization.NumberStyles.Number,
+        System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : 0m;
 
     private UpdatePriceRequest CreateRequest() => new()
     {
         ServiceId = Service?.Id ?? string.Empty,
-        NewRate = _newRate,
+        NewRate = ParsedRate,
         Unit = _unit,
         EffectiveFrom = _effectiveFrom,
         EffectiveTo = _effectiveTo,

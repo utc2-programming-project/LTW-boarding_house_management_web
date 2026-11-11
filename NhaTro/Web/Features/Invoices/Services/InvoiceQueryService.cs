@@ -97,6 +97,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
                 TenantNames = tenantNames.GetValueOrDefault(invoice.ContractId, []),
                 PeriodStart = invoice.PeriodStart,
                 PeriodEnd = invoice.PeriodEnd,
+                DueDate = invoice.DueDate,
                 Status = invoice.Status,
                 TotalAmount = invoice.TotalAmount,
                 PaidAmount = paidAmount,
@@ -186,6 +187,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             IssuedAt = invoice.IssuedAt,
             PeriodStart = invoice.PeriodStart,
             PeriodEnd = invoice.PeriodEnd,
+            DueDate = invoice.DueDate,
             Status = invoice.Status,
             Items = invoice.Items
                 .OrderBy(item => item.DisplayOrder)
@@ -213,7 +215,10 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
     {
         ArgumentNullException.ThrowIfNull(caller);
 
-        var query = ScopeContracts(caller);
+        var query = ScopeContracts(caller)
+            // Bộ lọc hóa đơn chỉ nên liệt kê hợp đồng đã từng có hóa đơn; hợp đồng Pending/Rejected
+            // chưa thể phát sinh hóa đơn nên không thuộc dữ liệu chọn.
+            .Where(contract => context.Invoices.Any(invoice => invoice.ContractId == contract.ContractId));
         return await query
             .AsNoTracking()
             .OrderBy(item => item.ContractNumber)
@@ -232,6 +237,17 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
                  select property.Name).First()))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<string>> GetContractTenantUserIdsAsync(
+        Guid contractId,
+        CancellationToken cancellationToken = default) =>
+        await (from member in context.ContractMembers.AsNoTracking()
+               join tenant in context.Tenants.IgnoreQueryFilters().AsNoTracking()
+                   on member.TenantId equals tenant.Id
+               where member.ContractId == contractId
+               select tenant.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
 
     private IQueryable<Invoice> ScopeInvoices(PropertyCaller caller)
     {
@@ -279,7 +295,7 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
         throw new UnauthorizedAccessException(ForbiddenMessage);
     }
 
-    private static IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
+    private IQueryable<Invoice> ApplyFilter(IQueryable<Invoice> query, InvoiceFilter filter)
     {
         if (filter.PeriodRange() is { } period)
         {
@@ -297,7 +313,90 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             query = query.Where(invoice => invoice.Status == status);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.Keyword))
+        {
+            var term = filter.Keyword!;
+            var invoiceId = ParsePrefixedNumber(term, "HD");
+            var matchingContracts =
+                from contract in context.Contracts
+                join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractNumber.Contains(term)
+                    || room.Code.Contains(term)
+                    || property.Name.Contains(term)
+                    || context.ContractMembers.Any(member => member.ContractId == contract.ContractId
+                        && context.Tenants.IgnoreQueryFilters()
+                            .Any(tenant => tenant.Id == member.TenantId && tenant.FullName.Contains(term)))
+                select contract.ContractId;
+
+            query = invoiceId is { } id
+                ? query.Where(invoice => matchingContracts.Contains(invoice.ContractId) || invoice.Id == id)
+                : query.Where(invoice => matchingContracts.Contains(invoice.ContractId));
+        }
+
+        if (filter.MinAmount is { } minAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount >= minAmount);
+        }
+
+        if (filter.MaxAmount is { } maxAmount)
+        {
+            query = query.Where(invoice => invoice.TotalAmount <= maxAmount);
+        }
+
+        if (filter.PaymentState is { } paymentState)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var payments = context.Payments.AsNoTracking();
+            query = paymentState switch
+            {
+                InvoicePaymentState.Unpaid => query.Where(invoice =>
+                    !context.Payments.Any(payment =>
+                        payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)),
+                InvoicePaymentState.Partial => query.Where(invoice =>
+                    (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) > 0m
+                    && (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) < invoice.TotalAmount),
+                InvoicePaymentState.Paid => query.Where(invoice =>
+                    invoice.Status == InvoiceStatus.Paid
+                    || (context.Payments
+                        .Where(payment => payment.InvoiceId == invoice.Id && payment.Status == PaymentStatus.Confirmed)
+                        .Sum(payment => (decimal?)payment.Amount) ?? 0m) >= invoice.TotalAmount),
+                InvoicePaymentState.PendingConfirmation => query.Where(invoice =>
+                    invoice.Status == InvoiceStatus.Issued
+                    && payments.Any(payment => payment.InvoiceId == invoice.Id
+                        && payment.Status == PaymentStatus.Pending)),
+                InvoicePaymentState.PaymentRejected => query.Where(invoice =>
+                    invoice.Status == InvoiceStatus.Issued
+                    && payments.Any(payment => payment.InvoiceId == invoice.Id
+                        && payment.Status == PaymentStatus.Rejected)
+                    && !payments.Any(payment => payment.InvoiceId == invoice.Id
+                        && payment.Status == PaymentStatus.Pending)),
+                InvoicePaymentState.Expired => query.Where(invoice =>
+                    invoice.Status == InvoiceStatus.Issued
+                    && invoice.DueDate != null && invoice.DueDate < today
+                    && !payments.Any(payment => payment.InvoiceId == invoice.Id
+                        && (payment.Status == PaymentStatus.Pending || payment.Status == PaymentStatus.Confirmed))),
+                _ => query,
+            };
+        }
+
         return query;
+    }
+
+    /// <summary>Đọc mã dạng "HD-12" hoặc "12"; trả null khi từ khóa không phải mã số.</summary>
+    private static int? ParsePrefixedNumber(string term, string prefix)
+    {
+        var normalized = term.Trim();
+        if (normalized.StartsWith(prefix + "-", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized[(prefix.Length + 1)..];
+        }
+
+        return int.TryParse(normalized, out var value) ? value : null;
     }
 
     private async Task<Dictionary<Guid, IReadOnlyList<string>>> LoadTenantNamesAsync(

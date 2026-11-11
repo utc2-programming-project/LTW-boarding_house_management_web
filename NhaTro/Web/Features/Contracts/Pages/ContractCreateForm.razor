@@ -20,8 +20,7 @@
 
 <PageTitle>@L["ContractCreateHeading"]</PageTitle>
 <section class="contract-page contract-live-form" aria-labelledby="contract-create-title">
-    <NavBreadcrumb />
-    <header class="page-heading"><div><h1 id="contract-create-title">@L["ContractCreateHeading"]</h1><p>@L["ContractCreateDescription"]</p></div></header>
+    <PageHeading Title="@L["ContractCreateHeading"]" TitleId="contract-create-title" HelpText="@L["ContractCreateDescription"]" />
 
     @if (_loading)
     {
@@ -72,18 +71,35 @@
                     <InputDate id="end-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.EndDate) ? "true" : "false")" aria-describedby="end-date-error" TValue="DateOnly?" @bind-Value="_form.EndDate" />
                     <small id="end-date-error" class="contract-field-error">@ErrorFor(nameof(_form.EndDate))</small>
                 </div>
+                <div class="contract-field">
+                    <label for="deposit-amount">@L["ContractDepositLabel"]</label>
+                    <InputNumber id="deposit-amount" class="input tabular-nums" inputmode="numeric"
+                                 aria-invalid="@(_editContext.HasError(() => _form.DepositAmount) ? "true" : "false")" aria-describedby="deposit-hint"
+                                 TValue="decimal?" @bind-Value="_form.DepositAmount" />
+                    <small id="deposit-hint" class="contract-field-hint">@L["ContractDepositHint"]</small>
+                    <small class="contract-field-error">@ErrorFor(nameof(_form.DepositAmount))</small>
+                </div>
             </div>
             @if (SelectedRoom is { } selectedRoom)
             {
-                <div class="contract-price-preview"><span>@L["ContractSnapshotAtApproval"]</span><strong class="tabular-nums">@MoneyFormatter.Format(selectedRoom.StandardPrice)</strong><span>@L["ContractDepositEstimate"]</span><strong class="tabular-nums">@MoneyFormatter.Format(MoneyFormatter.RoundVnd(selectedRoom.StandardPrice * .20m))</strong></div>
+                <div class="contract-price-preview"><span>@L["ContractSnapshotAtApproval"]</span><strong class="tabular-nums">@MoneyFormatter.Format(selectedRoom.StandardPrice)</strong><span>@L["ContractDepositEstimate"]</span><strong class="tabular-nums">@MoneyFormatter.Format(_form.DepositAmount ?? MoneyFormatter.RoundVnd(selectedRoom.StandardPrice * .20m))</strong></div>
             }
             <fieldset class="contract-tenant-picker">
                 <legend>@L["ContractTenantsLabel"]</legend>
                 @if (_options.Tenants.Count == 0) { <p>@L["ContractNoActiveTenants"]</p> }
                 else
                 {
+                    <label class="search-field contract-tenant-search">
+                        <LucideIcon Name="search" />
+                        <span class="sr-only">@L["ContractTenantSearchLabel"]</span>
+                        <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]" @bind="_tenantKeyword" @bind:event="oninput" />
+                    </label>
+                    @if (!FilteredTenants.Any())
+                    {
+                        <p class="contract-field-hint">@L["ContractTenantSearchEmpty"]</p>
+                    }
                     <div class="contract-tenant-options">
-                    @foreach (var tenant in _options.Tenants)
+                    @foreach (var tenant in FilteredTenants)
                     {
                         <label><input type="checkbox" checked="@_form.TenantIds.Contains(tenant.Id)" @onchange="e => ToggleTenant(tenant.Id, e.Value is true)" /> <span>@tenant.FullName</span><small>@tenant.Phone</small></label>
                     }
@@ -102,7 +118,21 @@
 @code {
     private readonly CreateFormModel _form = new();
     private ContractCreateOptionsDto _options = new([], [], []);
+    private string _tenantKeyword = string.Empty;
     private IReadOnlyList<ContractRoomOptionDto> RoomsForProperty => _form.PropertyId is int id ? _options.Rooms.Where(room => room.PropertyId == id).ToList() : [];
+    private IReadOnlyList<ContractTenantOptionDto> FilteredTenants
+    {
+        get
+        {
+            var keyword = _tenantKeyword.Trim();
+            return keyword.Length == 0
+                ? _options.Tenants
+                : _options.Tenants
+                    .Where(tenant => tenant.FullName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                        || tenant.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+        }
+    }
     private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? RoomsForProperty.FirstOrDefault(room => room.Id == id) : null;
     private EditContext _editContext = default!;
     private ValidationMessageStore _messages = default!;
@@ -134,8 +164,11 @@
         finally { _loading = false; }
     }
 
-    private void PropertyChanged() { _form.RoomId = null; }
-    private void RoomChanged() { }
+    private void PropertyChanged() { _form.RoomId = null; _form.DepositAmount = null; }
+    private void RoomChanged()
+    {
+        _form.DepositAmount = SelectedRoom is { } room ? MoneyFormatter.RoundVnd(room.StandardPrice * .20m) : null;
+    }
     private void ToggleTenant(int tenantId, bool selected)
     {
         if (selected && !_form.TenantIds.Contains(tenantId)) _form.TenantIds.Add(tenantId);
@@ -169,6 +202,7 @@
         else if (_form.StartDate > today) AddError(nameof(_form.StartDate), L["ContractErrorFutureStartNotAllowed"]);
         if (_form.EndDate is null) AddError(nameof(_form.EndDate), L["ContractErrorEndDateRequired"]);
         else if (_form.StartDate is DateOnly start && _form.EndDate <= start) AddError(nameof(_form.EndDate), L["ContractErrorInvalidDateRange"]);
+        if (_form.DepositAmount is < 0m) AddError(nameof(_form.DepositAmount), L["ContractErrorInvalidDepositAmount"]);
         if (_form.TenantIds.Count == 0) _tenantError = L["ContractErrorTenantRequired"];
         _editContext.NotifyValidationStateChanged();
         if (ValidationErrors.Count > 0) return;
@@ -180,7 +214,8 @@
                 _form.RoomId!.Value,
                 _form.StartDate!.Value.ToDateTime(TimeOnly.MinValue),
                 _form.EndDate!.Value.ToDateTime(TimeOnly.MinValue),
-                _form.TenantIds),
+                _form.TenantIds,
+                _form.DepositAmount),
                 CancellationToken.None);
             _editContext.MarkAsUnmodified();
             Toasts.Success(L["ContractCreatedSuccess"]);
@@ -203,6 +238,7 @@
         public int? RoomId { get; set; }
         public DateOnly? StartDate { get; set; }
         public DateOnly? EndDate { get; set; }
+        public decimal? DepositAmount { get; set; }
         public List<int> TenantIds { get; } = [];
     }
 }

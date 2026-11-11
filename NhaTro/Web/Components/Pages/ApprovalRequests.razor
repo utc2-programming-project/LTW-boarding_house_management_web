@@ -1,32 +1,33 @@
 @using System.Security.Claims
+@using System.Text.Json
 @using Web.Components.Shared.Feedback
 @using Web.Features.Approvals
 @using Web.Features.Approvals.DTOs
 @using Web.Features.Approvals.Enums
 @using Web.Features.Approvals.Services
+@using Web.Features.Contracts.Services
+@using Web.Common.Utils
 @inject AuthenticationStateProvider Auth
 @inject IManagerApprovalService Approvals
+@inject ContractApprovalSummaryService ContractSummaries
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@Title</PageTitle>
 
 <section class="approval-page" aria-labelledby="approval-title">
-    <NavBreadcrumb />
-    <header class="page-heading">
-        <div>
-            <h1 id="approval-title">@Title</h1>
-            <p>@(Mine ? L["ApprovalUiMineHint"] : L["ApprovalUiQueueHint"])</p>
-        </div>
-        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">
-            <LucideIcon Name="refresh-cw" />@L["ApprovalUiRefresh"]
-        </button>
-    </header>
+    <PageHeading Title="@Title" TitleId="approval-title" HelpText="@(Mine ? L["MyRequestsHelp"] : L["ApprovalsHelp"])">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">
+                <LucideIcon Name="refresh-cw" />@L["ApprovalUiRefresh"]
+            </button>
+        </Actions>
+    </PageHeading>
 
-    @if (_error)
+    @if (_error || _errorMessage is not null)
     {
         <div class="approval-feedback" role="alert">
             <LucideIcon Name="alert" />
-            <p>@L["ApprovalUiError"]</p>
+            <p>@(_errorMessage ?? L["ApprovalUiError"])</p>
             <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">@L["ApprovalUiRefresh"]</button>
         </div>
     }
@@ -47,7 +48,26 @@
                     <div class="approval-card-head">
                         <div>
                             <h2>@item.OperationCode · @L[item.OperationCode]</h2>
-                            <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key">@item.TargetKey</span></p>
+                            @if (_contractSummaries.TryGetValue(item.Id, out var contractSummary))
+                            {
+                                <p class="approval-target">@ActionLabel(contractSummary.Action) <span class="approval-target-key">@contractSummary.ContractNumber · @contractSummary.RoomCode · @contractSummary.PropertyName</span></p>
+                                @if (contractSummary.NewEndDate is not null)
+                                {
+                                    <p class="approval-target"><strong>@L["ApprovalUiNewEndDate"]:</strong> @DateFormatter.Format(DateOnly.FromDateTime(contractSummary.NewEndDate.Value))</p>
+                                }
+                                @if (contractSummary.ProposedDeposit is not null)
+                                {
+                                    <p class="approval-target"><strong>@L["ApprovalUiDepositChange"]:</strong> @(contractSummary.CurrentDeposit is null ? "—" : MoneyFormatter.Format(contractSummary.CurrentDeposit.Value)) → @MoneyFormatter.Format(contractSummary.ProposedDeposit.Value)</p>
+                                }
+                            }
+                            else
+                            {
+                                <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key">@item.TargetKey</span></p>
+                                @if (PayloadSummary(item) is { Length: > 0 } summary)
+                                {
+                                    <p class="approval-target">@summary</p>
+                                }
+                            }
                         </div>
                         <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
                                      Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
@@ -59,7 +79,16 @@
                     @if (!Mine && item.Status == ApprovalRequestStatus.Pending)
                     {
                         <div class="approval-actions">
-                            <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
+                            @if (_confirming == item.Id)
+                            {
+                                <p class="approval-target">@L["ApprovalUiConfirmApprove"]</p>
+                                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
+                                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="CancelConfirm">@L["Cancel"]</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => StartConfirm(item.Id)">@L["ApprovalUiApprove"]</button>
+                            }
                             @if (_rejecting == item.Id)
                             {
                                 <div class="approval-reject">
@@ -89,9 +118,12 @@
     private ApprovalCaller _caller = default!;
     private IReadOnlyList<ApprovalRequestDto>? _items;
     private Guid? _rejecting;
+    private Guid? _confirming;
     private string _reason = "";
     private bool _error;
+    private string? _errorMessage;
     private bool _busy;
+    private IReadOnlyDictionary<Guid, ContractApprovalSummary> _contractSummaries = new Dictionary<Guid, ContractApprovalSummary>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,6 +140,7 @@
 
         _busy = true;
         _error = false;
+        _errorMessage = null;
         _items = null;
         try
         {
@@ -121,14 +154,80 @@
 
     private async Task LoadAsync()
     {
-        var result = Mine ? await Approvals.ListMineAsync(_caller) : await Approvals.ListInboxAsync(_caller);
-        _error = !result.Succeeded;
-        _items = result.Succeeded ? result.Items : null;
+        try
+        {
+            var result = Mine ? await Approvals.ListMineAsync(_caller) : await Approvals.ListInboxAsync(_caller);
+            _error = !result.Succeeded;
+            _errorMessage = result.Succeeded ? null : result.ErrorMessage;
+            _items = result.Succeeded ? result.Items : null;
+            _contractSummaries = _items is not null
+                ? await ContractSummaries.GetAsync(_items, _caller.UserId, _caller.Role)
+                : new Dictionary<Guid, ContractApprovalSummary>();
+        }
+        catch
+        {
+            _error = true;
+            _items = null;
+        }
+    }
+    private string ActionLabel(string action) => L[action switch { "Renew" => "ApprovalUiActionRenew", "Liquidate" => "ApprovalUiActionLiquidate", "UpdateDeposit" => "ApprovalUiActionDeposit", _ => "ApprovalUiActionUnknown" }];
+
+    private string PayloadSummary(ApprovalRequestDto item)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(item.PayloadJson);
+            var root = document.RootElement;
+            var code = item.OperationCode;
+            if (code is "SW-01" or "SW-02" or "SW-03")
+            {
+                var roomCode = ReadString(root, "values", "code");
+                return string.Format(L["ApprovalUiRoomChange"], roomCode ?? item.TargetKey);
+            }
+            if (code == "SW-04")
+                return string.Format(L["ApprovalUiTenantCreate"], ReadString(root, "fullName") ?? item.TargetKey);
+            if (code == "SW-05")
+                return string.Format(L["ApprovalUiTenantUpdate"], ReadString(root, "fullName") ?? item.TargetKey);
+            if (code == "SW-06")
+            {
+                return ReadString(root, "action") == "SetActive"
+                    ? string.Format(L["ApprovalUiTenantStatus"], ReadString(root, "fullName") ?? item.TargetKey)
+                    : string.Format(L["ApprovalUiTenantDelete"], ReadString(root, "fullName") ?? item.TargetKey);
+            }
+            return string.Empty;
+        }
+        catch (JsonException)
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string? ReadString(JsonElement root, params string[] path)
+    {
+        var current = root;
+        foreach (var segment in path)
+        {
+            if (current.ValueKind != JsonValueKind.Object || !current.TryGetProperty(segment, out current))
+                return null;
+        }
+        return current.ValueKind == JsonValueKind.String ? current.GetString() : null;
+    }
+
+    private void StartConfirm(Guid id)
+    {
+        _confirming = id;
+        _rejecting = null;
+    }
+
+    private void CancelConfirm()
+    {
+        _confirming = null;
     }
 
     private void StartReject(Guid id)
     {
         _rejecting = id;
+        _confirming = null;
         _reason = "";
     }
 
@@ -145,10 +244,20 @@
                 : await Approvals.RejectAsync(id, new() { Reason = reason }, _caller);
 
             if (result.Succeeded)
+            {
                 _rejecting = null;
+                _confirming = null;
+            }
 
             await LoadAsync();
-            _error |= !result.Succeeded;
+            if (!result.Succeeded)
+            {
+                _errorMessage = result.ErrorMessage ?? L["ApprovalUiError"];
+            }
+        }
+        catch
+        {
+            _error = true;
         }
         finally
         {

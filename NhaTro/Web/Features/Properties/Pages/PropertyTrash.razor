@@ -10,18 +10,23 @@
 <PageTitle>@L["P2PropertyTrashTitle"] · @L["AppName"]</PageTitle>
 
 <div class="p2-page">
-    <header class="p2-heading">
-        <div>
-            <NavBreadcrumb />
-            <h1>@L["P2PropertyTrashTitle"]</h1>
-            <p>@L["P2PropertyTrashSubtitle"]</p>
-        </div>
-        <button class="btn btn-secondary" type="button" @onclick="GoToProperties">
-            <LucideIcon Name="building" />@L["P2PropertiesTitle"]
-        </button>
-    </header>
+    <PageHeading Title="@L["P2PropertyTrashTitle"]" HelpText="@L["P2PropertyTrashSubtitle"]">
+        <Actions>
+            <button class="btn btn-secondary" type="button" @onclick="GoToProperties">
+                <LucideIcon Name="building" />@L["P2PropertiesTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
 
-    <DataTable @ref="_table" TItem="PropertyTrashItem" Columns="_columns"
+    <div class="filter-toolbar">
+        <div class="filter-field">
+            <label for="property-trash-search">@L["P2PropertyName"]</label>
+            <input id="property-trash-search" type="search" class="filter-input"
+                   placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:after="ReloadAsync" />
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="PropertyTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
                Caption="@L["P2PropertyTrashTable"]" Labels="_tableLabels">
         <EmptyActions>
@@ -50,6 +55,8 @@
     private PropertyTrashItem? _restoreProperty;
     private bool _restoreVisible;
     private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -79,14 +86,23 @@
         await PageService.ListDeletedAsync(new PropertyFilter
         {
             Page = request.Page,
-            PageSize = request.PageSize
+            PageSize = request.PageSize,
+            Keyword = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim()
         });
+
+    private Task ReloadAsync()
+    {
+        // Tạo lại bảng để tìm kiếm luôn bắt đầu từ trang 1 (DataTable giữ trang nội bộ).
+        _tableKey++;
+        return Task.CompletedTask;
+    }
 
     private Task ChangePageSize(ChangeEventArgs args)
     {
         if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
         {
             _pageSize = value;
+            _tableKey++;
         }
 
         return Task.CompletedTask;

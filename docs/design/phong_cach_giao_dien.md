@@ -2,7 +2,7 @@
 
 ## 1. Phong cách chung
 
-- Tham khảo [June.so](https://www.june.so/integration/hubspot): sạch, thoáng, nền sáng, điểm nhấn tím indigo. Thông số dưới đây là của dự án, không phải bộ thông số chính thức của June.
+- Tham khảo hệ thống màu Apple iOS (System Blue, nền grouped, Space Gray): sạch, thoáng, nền xám nhạt, thẻ trắng, điểm nhấn xanh dương. Thông số dưới đây là của dự án, không phải bộ thông số chính thức của Apple.
 - Icon: [Lucide Animated](https://lucide-animated.com/). **Không dùng emoji, icon bàn phím hoặc trộn icon Material.**
 - Giữ Blazor/MudBlazor; chuyển SVG/hiệu ứng Lucide Animated sang dạng tương thích Blazor, giữ giấy phép MIT; không thêm React.
 - Dùng chung quy chuẩn cho mọi chức năng và vai trò; không bổ sung nghiệp vụ.
@@ -41,21 +41,25 @@ Letter spacing: mặc định 0; tiêu đề 28–32px: -0.02em; 20–24px: -0.0
 
 ## 3. Màu sắc
 
+Bảng màu lấy theo hệ thống Apple iOS cho nền/chữ/viền (nền grouped #F2F2F7, Space Gray #1C1C1E, Dark Mode nền đen tuyệt đối); màu nhấn giữ indigo sẵn có của dự án (#4F46E5). Token khai báo tại `NhaTro/Web/wwwroot/css/theme.css`, đồng bộ palette MudBlazor ở `AppTheme.cs`.
+
+**Nguồn màu duy nhất:** mọi mã màu chỉ khai báo trong `theme.css`. Component/CSS scoped chỉ ghi `var(--token)`, không viết hex/rgba trực tiếp và không đặt giá trị dự phòng (`var(--x, #fff)`).
+
 ### Màu giao diện
 
 | Token | Sáng | Tối |
 | --- | --- | --- |
-| page-bg | #F8FAFC | #0F172A |
-| surface | #FFFFFF | #1E293B |
-| surface-subtle | #F1F5F9 | #263449 |
-| sidebar-bg, topbar-bg | #FFFFFF | #111827 |
-| text-primary | #0D131B | #F8FAFC |
-| text-secondary | #475569 | #CBD5E1 |
-| text-muted | #64748B | #94A3B8 |
-| text-disabled | #94A3B8 | #64748B |
-| border — đường chia/card | #E2E8F0 | #334155 |
-| control-border — input/checkbox | #64748B | #94A3B8 |
-| border-hover | #475569 | #CBD5E1 |
+| page-bg | #F2F2F7 | #000000 |
+| surface | #FFFFFF | #1C1C1E |
+| surface-subtle | #F2F2F7 | #2C2C2E |
+| sidebar-bg, topbar-bg | #FFFFFF | #1C1C1E |
+| text-primary | #000000 | #FFFFFF |
+| text-secondary | #3C3C43 | #C7C7CC |
+| text-muted | #8A8A8E | #8E8E93 |
+| text-disabled | #AEAEB2 | #636366 |
+| border — đường chia/card | #C6C6C8 | #38383A |
+| control-border — input/checkbox | #8E8E93 | #8E8E93 |
+| border-hover | #6C6C70 | #AEAEB2 |
 | primary | #4F46E5 | #4F46E5 |
 | primary-hover | #4338CA | #4338CA |
 | primary-pressed | #3730A3 | #3730A3 |
@@ -64,36 +68,37 @@ Letter spacing: mặc định 0; tiêu đề 28–32px: -0.02em; 20–24px: -0.0
 | accent-soft, selected-bg | #EEF2FF | #312E81 |
 | accent-soft-hover | #E0E7FF | #3730A3 |
 | accent-border | #C7D2FE | #818CF8 |
-| hover-bg | #F1F5F9 | #334155 |
-| pressed-bg | #E2E8F0 | #475569 |
-| disabled-bg | #F1F5F9 | #263449 |
+| hover-bg | #F2F2F7 | #2C2C2E |
+| pressed-bg | #E5E5EA | #3A3A3C |
+| disabled-bg | #F2F2F7 | #232325 |
 | focus-ring | #4F46E5 | #A5B4FC |
-| tooltip-bg | #0F172A | #F8FAFC |
-| tooltip-text | #FFFFFF | #0F172A |
-| scrollbar-thumb | #CBD5E1 | #475569 |
+| focus-ring-soft | rgba(79,70,229,0.20) | rgba(165,180,252,0.35) |
+| tooltip-bg | #1C1C1E | #F2F2F7 |
+| tooltip-text | #FFFFFF | #000000 |
+| scrollbar-thumb | #C7C7CC | #48484A |
 
 ### Màu trạng thái — thứ tự: chữ / nền / viền
 
 | Trạng thái | Sáng | Tối |
 | --- | --- | --- |
-| Thành công | #166534 / #F0FDF4 / #BBF7D0 | #86EFAC / #052E16 / #166534 |
-| Cảnh báo | #92400E / #FFFBEB / #FDE68A | #FCD34D / #451A03 / #92400E |
-| Lỗi | #B91C1C / #FEF2F2 / #FECACA | #FCA5A5 / #450A0A / #991B1B |
+| Thành công | #1E7B36 / #E9F8EE / #B7E8C4 | #30D158 / #0C2A16 / #1C5E2C |
+| Cảnh báo | #8A4B00 / #FFF4E5 / #FFDFA8 | #FF9F0A / #2E1F00 / #6B4600 |
+| Lỗi | #D70015 / #FFEBE9 / #FFC2BD | #FF453A / #330D0A / #7A1F18 |
 | Thông tin | #1E40AF / #EFF6FF / #BFDBFE | #93C5FD / #172554 / #1E40AF |
-| Trung tính | #475569 / #F1F5F9 / #CBD5E1 | #CBD5E1 / #334155 / #64748B |
+| Trung tính | #3C3C43 / #F2F2F7 / #D1D1D6 | #D1D1D6 / #2C2C2E / #48484A |
 
-Nút nguy hiểm: nền #B91C1C, hover #991B1B, nhấn #7F1D1D, chữ trắng ở cả hai theme. Trạng thái luôn có nhãn chữ.
+Nút nguy hiểm: nền #D70015, hover #B5000F, nhấn #96000C, chữ trắng ở cả hai theme. Trạng thái luôn có nhãn chữ.
 
 ### Màu biểu đồ
 
 | Series | Sáng | Tối |
 | --- | --- | --- |
 | 1 | #4F46E5 | #A5B4FC |
-| 2 | #0F766E | #5EEAD4 |
-| 3 | #0369A1 | #7DD3FC |
-| 4 | #A16207 | #FCD34D |
-| 5 | #7E22CE | #D8B4FE |
-| 6 | #BE185D | #F9A8D4 |
+| 2 | #0E8A9E | #40C8E0 |
+| 3 | #5856D6 | #7D7AFF |
+| 4 | #C47300 | #FFB340 |
+| 5 | #AF52DE | #D98AF5 |
+| 6 | #D6336C | #FF6B8B |
 
 ## 4. Khoảng cách và hình dạng
 
@@ -118,10 +123,12 @@ Nút nguy hiểm: nền #B91C1C, hover #991B1B, nhấn #7F1D1D, chữ trắng �
 
 | Bóng/lớp phủ | Sáng | Tối |
 | --- | --- | --- |
-| Card | 0 1px 2px rgba(15,23,42,0.04) | 0 1px 2px rgba(0,0,0,0.20) |
-| Popover | 0 8px 24px rgba(15,23,42,0.10) | 0 8px 24px rgba(0,0,0,0.30) |
-| Dialog | 0 24px 64px rgba(15,23,42,0.18) | 0 24px 64px rgba(0,0,0,0.45) |
-| Overlay | rgba(15,23,42,0.40) | rgba(0,0,0,0.60) |
+| Card | 0 1px 2px rgba(0,0,0,0.06) | 0 1px 2px rgba(0,0,0,0.20) |
+| Thumb (switch/slider) | 0 1px 2px rgba(0,0,0,0.20) | 0 1px 2px rgba(0,0,0,0.35) |
+| Accent (nút nhấn) | 0 6px 16px rgba(79,70,229,0.20) | 0 6px 16px rgba(79,70,229,0.35) |
+| Popover | 0 8px 24px rgba(0,0,0,0.10) | 0 8px 24px rgba(0,0,0,0.30) |
+| Dialog | 0 24px 64px rgba(0,0,0,0.18) | 0 24px 64px rgba(0,0,0,0.45) |
+| Overlay | rgba(0,0,0,0.40) | rgba(0,0,0,0.60) |
 
 Z-index: nội dung 0; thanh cố định 100; dropdown 200; overlay drawer 300/drawer 310; overlay dialog 400/dialog 410; toast 500; tooltip 600. Popover trong dialog nằm trên dialog cha. Không dùng gradient, glow hoặc glassmorphism.
 

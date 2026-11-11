@@ -48,4 +48,5 @@
 <data name="PendingPeriod" xml:space="preserve"><value>Kỳ cho báo cáo theo thời gian</value></data>
 <data name="CurrentPeriodNote" xml:space="preserve"><value>Phòng và khách thuê là số liệu hiện trạng theo nhà trọ. Kỳ báo cáo áp dụng cho các báo cáo theo thời gian khi khả dụng.</value></data>
 <data name="ViewReports" xml:space="preserve"><value>Xem báo cáo phòng và khách thuê</value></data>
+<data name="HomeTitle" xml:space="preserve"><value>Trang chủ</value></data>
 </root>

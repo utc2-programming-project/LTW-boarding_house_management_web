@@ -24,7 +24,7 @@
             </div>
             <dl class="p2-detail-grid">
                 <div><dt>@L["P2Address"]</dt><dd>@(string.IsNullOrWhiteSpace(_detail.Address) ? L["P2NotProvided"] : _detail.Address)</dd></div>
-                <div><dt>@L["P2RoomCount"]</dt><dd>@Property.RoomCount</dd></div>
+                <div><dt>@L["P2RoomCount"]</dt><dd>@_detail.RoomCount</dd></div>
                 <div><dt>@L["P2CreatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.CreatedAt)</dd></div>
                 @if (_detail.UpdatedAt.HasValue)
                 {
@@ -35,6 +35,7 @@
                 <button class="btn btn-secondary" type="button" @onclick="ViewRoomsAsync">@L["P2ViewRooms"]</button>
                 @if (IsOwner)
                 {
+                    <button class="btn btn-secondary" type="button" @onclick="ContinueSetupAsync">@L["P2SetupContinue"]</button>
                     <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>
                 }
             </div>
@@ -60,7 +61,7 @@
                             @foreach (var assignment in _assignments)
                             {
                                 <li class="p2-manager-row">
-                                    <span class="p2-manager-email">@(string.IsNullOrWhiteSpace(assignment.ManagerEmail) ? assignment.ManagerUserId : assignment.ManagerEmail)</span>
+                                    <span class="p2-manager-email">@(string.IsNullOrWhiteSpace(assignment.ManagerEmail) ? L["P2ManagerUnknown"] : assignment.ManagerEmail)</span>
                                     <span class="p2-manager-since">@L["P2ManagerAssignedSince"]: @DateFormatter.FormatDateTime(assignment.AssignedAt)</span>
                                     <button class="btn btn-secondary" type="button" disabled="@_managerBusy"
                                             @onclick="() => RevokeManagerAsync(assignment.ManagerUserId)">
@@ -100,6 +101,9 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback<int> OnViewRooms { get; set; }
+
+    /// <summary>PLAN-013: mở lại wizard thiết lập (phòng/giá) cho nhà trọ đã tạo.</summary>
+    [Parameter] public EventCallback<int> OnContinueSetup { get; set; }
 
     private FeatureDialog? _featureDialog;
     private PropertyDetail? _detail;
@@ -224,5 +228,11 @@
     {
         if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
         await OnViewRooms.InvokeAsync(Property.Id);
+    }
+
+    private async Task ContinueSetupAsync()
+    {
+        if (_featureDialog is not null) await _featureDialog.CloseNativeAsync();
+        await OnContinueSetup.InvokeAsync(Property.Id);
     }
 }

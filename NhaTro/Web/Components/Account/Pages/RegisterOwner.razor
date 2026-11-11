@@ -19,12 +19,8 @@
 
 <section class="auth-page" aria-labelledby="register-owner-title">
     <div class="auth-card">
-        <header class="page-heading auth-heading">
-            <div>
-                <h1 id="register-owner-title">@L["RegisterOwnerTitle"]</h1>
-                <p>@L["RegisterOwnerSubtitle"]</p>
-            </div>
-        </header>
+        <PageHeading Title="@L["RegisterOwnerTitle"]" TitleId="register-owner-title" HelpText="@L["RegisterOwnerSubtitle"]"
+                     InteractiveHelp="true" Class="auth-heading" />
 
         @if (_done)
         {

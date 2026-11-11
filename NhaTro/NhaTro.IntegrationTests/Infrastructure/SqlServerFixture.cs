@@ -10,7 +10,7 @@ namespace NhaTro.IntegrationTests.Infrastructure;
 /// nếu không thì dùng SQL Server LocalDB.
 /// Tech-stack quy định: dùng SQL Server database riêng, KHÔNG dùng EF InMemory (không chứng minh
 /// được rowversion/filtered index) và KHÔNG Docker/Testcontainers.
-/// Mỗi lần chạy tạo một database riêng, áp migration, xóa khi xong.
+/// Mỗi lần chạy tạo một database riêng bằng EnsureCreated, xóa khi xong.
 /// </summary>
 public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<ApplicationDbContext>
 {
@@ -123,11 +123,16 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         await db.PaymentProofs.ExecuteDeleteAsync();
         await db.Payments.ExecuteDeleteAsync();
         await db.StoredFiles.ExecuteDeleteAsync();
-        // Thanh toán tham chiếu Invoices bằng Restrict: xóa trước hóa đơn.
-        await db.Payments.ExecuteDeleteAsync();
+        // VHT-51: xóa snapshot tường minh trước kỳ để test không phụ thuộc cascade.
+        await db.UtilityServicePeriodSnapshots.ExecuteDeleteAsync();
+        // VHT-51: kỳ ghi chỉ số tham chiếu Hóa đơn/Hợp đồng/Phòng: xóa trước các bảng đó.
+        await db.UtilityReadingPeriods.ExecuteDeleteAsync();
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
         await db.InvoiceItems.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
+        // Đăng ký dịch vụ (yêu cầu + hiệu lực theo tháng): xóa trước Contracts.
+        await db.ContractServiceRegistrations.ExecuteDeleteAsync();
+        await db.ServiceRegistrationRequests.ExecuteDeleteAsync();
         // P5 (D10): lịch sử sửa chỉ số xóa trước chỉ số; chỉ số tham chiếu Rooms.
         await db.UtilityReadingAudits.ExecuteDeleteAsync();
         await db.UtilityReadings.ExecuteDeleteAsync();

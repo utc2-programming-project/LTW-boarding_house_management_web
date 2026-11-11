@@ -73,8 +73,15 @@
 
     private async Task SubmitAsync()
     {
-        _saving = true;
         _error = null;
+        if (!string.IsNullOrWhiteSpace(_model.PhoneNumber)
+            && !System.Text.RegularExpressions.Regex.IsMatch(_model.PhoneNumber, @"^0\d{9}$"))
+        {
+            _error = L["ErrorInvalidPhone"];
+            return;
+        }
+
+        _saving = true;
         try
         {
             var result = await TenantPages.CreateInvitationAsync(new CreateTenantInvitationRequest
@@ -99,6 +106,10 @@
             await OnSent.InvokeAsync();
             await OnClose.InvokeAsync();
         }
+        catch
+        {
+            _error = L["InviteTenantFailed"];
+        }
         finally
         {
             _saving = false;
@@ -115,7 +126,6 @@
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
-        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải có 10 số, bắt đầu bằng 0.")]
         public string? PhoneNumber { get; set; }
     }
 }

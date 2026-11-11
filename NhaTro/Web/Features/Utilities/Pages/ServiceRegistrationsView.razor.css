@@ -1,0 +1,393 @@
+.registration-history-page,
+.registration-manage-page {
+    padding: 16px;
+    display: grid;
+    gap: 16px;
+}
+
+.table-card {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.registrations-table {
+    width: 100%;
+    min-width: 1080px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+/* Tỉ lệ cột: Mã 11% · Hợp đồng 22% · Phòng 22% · Số lượng 10% · Ngày gửi 15% · Trạng thái 10% · Thao tác 10%. */
+.registrations-table th:nth-child(1) { width: 11%; }
+.registrations-table th:nth-child(2) { width: 22%; }
+.registrations-table th:nth-child(3) { width: 22%; }
+.registrations-table th:nth-child(4) { width: 10%; }
+.registrations-table th:nth-child(5) { width: 15%; }
+.registrations-table th:nth-child(6) { width: 10%; }
+.registrations-table th:nth-child(7) { width: 10%; }
+
+.registrations-table th,
+.registrations-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #F1F5F9;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.registrations-table th {
+    height: 44px;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 12px;
+    background: #F8FAFC;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.room-code {
+    font-weight: 600;
+    display: block;
+}
+
+.room-property,
+.muted {
+    color: #64748B;
+    font-size: 12px;
+    display: block;
+    margin-top: 2px;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.table-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #64748B;
+    font-size: 13px;
+}
+
+.pager {
+    display: flex;
+    gap: 8px;
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge + .status-badge {
+    margin-left: 6px;
+}
+
+.status-open {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.status-invoiced {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.status-closed {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.invoice-link.created {
+    color: #4F46E5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.loading-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748B;
+    padding: 24px 0;
+}
+
+.empty-state,
+.inline-error {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 32px 16px;
+    text-align: center;
+}
+
+.inline-error {
+    color: #B91C1C;
+    border-color: #FECACA;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #C7D2FE;
+    border-top-color: #4F46E5;
+    display: inline-block;
+}
+
+/* Modal dùng chung cho chi tiết + sửa/lập hóa đơn */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+.modal-dialog {
+    background: #FFFFFF;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 720px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.modal-header-text h2 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.modal-header-text p {
+    color: #64748B;
+    font-size: 13px;
+    margin: 4px 0 0;
+}
+
+.modal-body {
+    padding: 16px 20px;
+    display: grid;
+    gap: 14px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 20px 16px;
+    border-top: 1px solid #F1F5F9;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #334155;
+    cursor: pointer;
+}
+
+.icon-btn:hover {
+    background: #F1F5F9;
+}
+
+.icon-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.form-field {
+    display: grid;
+    gap: 6px;
+}
+
+.form-field label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.form-field .input {
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-field .input.is-invalid {
+    border-color: #B91C1C;
+}
+
+.field-error {
+    color: #B91C1C;
+    font-size: 12px;
+}
+
+.form-alert {
+    border: 1px solid #FECACA;
+    background: #FEF2F2;
+    color: #B91C1C;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.summary-lines {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.summary-lines div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 13px;
+}
+
+.summary-lines dt {
+    color: #64748B;
+}
+
+.summary-lines dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.detail-section h3 {
+    font-size: 14px;
+    margin: 0 0 6px;
+}
+
+.detail-section p {
+    margin: 0;
+    font-size: 13px;
+}
+
+.invoice-form {
+    display: grid;
+    gap: 12px;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 12px;
+}
+
+.invoice-form h3 {
+    font-size: 14px;
+    margin: 0;
+}
+
+.invoice-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.invoice-form-fields {
+    display: grid;
+    gap: 12px;
+}
+
+.invoice-form-side {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    align-content: start;
+    border-left: 1px solid #F1F5F9;
+    padding-left: 16px;
+}
+
+.invoice-form-side .bank-info {
+    text-align: center;
+}
+
+.qr-preview {
+    border-radius: 8px;
+    max-width: 180px;
+    height: auto;
+}
+
+@media (max-width: 767px) {
+    .invoice-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .invoice-form-side {
+        border-left: none;
+        border-top: 1px solid #F1F5F9;
+        padding-left: 0;
+        padding-top: 12px;
+    }
+}
+
+.muted {
+    color: #64748B;
+    font-size: 13px;
+    margin: 0;
+}
+
+@media (max-width: 767px) {
+    .edit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-backdrop {
+        padding: 0;
+    }
+
+    .modal-dialog {
+        max-width: none;
+        min-height: 100%;
+        border-radius: 0;
+    }
+}

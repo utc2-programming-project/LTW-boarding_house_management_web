@@ -14,8 +14,8 @@ public sealed class RoomPageService(
 {
     public async Task<string> GetCurrentRoleAsync() => (await callerProvider.GetCallerAsync()).Role;
 
-    public async Task<RoomSummary> GetSummaryAsync(CancellationToken ct = default) =>
-        await rooms.GetSummaryAsync(await callerProvider.GetCallerAsync(), ct);
+    public async Task<RoomSummary> GetSummaryAsync(int? propertyId = null, CancellationToken ct = default) =>
+        await rooms.GetSummaryForPropertyAsync(await callerProvider.GetCallerAsync(), propertyId, ct);
 
     public async Task<PagedResult<RoomListItem>> ListAsync(
         RoomFilter filter, CancellationToken ct = default) =>

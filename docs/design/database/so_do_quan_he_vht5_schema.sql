@@ -1,10 +1,20 @@
 -- Tạo cơ sở dữ liệu NhaTro (chạy lại nhiều lần không lỗi)
 --
--- ĐỒNG BỘ VHT-28 (đợt 2E / VHT-123, 03/11/2026): file này cập nhật theo TOÀN BỘ migration
--- đã merge trên `dev@951ab06` tới 20261103080000_AddIncidentPhotoAttachments. Không vẽ bảng "dự kiến":
+-- ĐỒNG BỘ VHT-28 (đợt 3C / VHT-132, 09/11/2026): file này cập nhật theo TOÀN BỘ migration
+-- đã merge trên `dev@c7d7411` tới 20261107152554_AddFinancialConstraints. Không vẽ bảng "dự kiến":
 -- mọi bảng dưới đây đều đã có migration + entity + configuration trên `dev`.
--- Phạm vi: 21 bảng nghiệp vụ + AspNetUsers (22 bảng vẽ trong hình). Bảng Identity phụ (Roles, UserRoles, Claims,
+-- Phạm vi: 30 bảng nghiệp vụ + AspNetUsers (31 bảng vẽ trong hình). Bảng Identity phụ (Roles, UserRoles, Claims,
 -- Logins, Tokens, Passkeys) không thuộc ERD, xem ghi chú cuối hình SVG.
+-- Delta đợt 3C (VHT-132, 09/11/2026):
+--   * 9 bảng mới: ContractRenewalRequests, Payments, PaymentProofs, PaymentAuditLogs, AuditLogEntries,
+--     UtilityReadings, UtilityReadingAudits, TenantInvitations, TenantOwnerLinks.
+--   * Xóa mềm bổ sung: AspNetUsers + IsDeleted/DeletedAt/DeletedByUserId/OriginalEmail;
+--     Tenants + DeletedAt/DeletedByUserId; Rooms + DeletedAt/DeletedBy; Properties + DeletedAt;
+--     ServiceCatalogs + IsDeleted/DeletedAt/DeletedBy. Tenants.OwnerId thêm rồi bỏ (thay bằng TenantOwnerLinks).
+--   * ServiceCatalogs + IsActive/Description; ServicePriceHistory + EffectiveTo/Note và đổi CHECK
+--     đơn giá > 0, EffectiveTo > EffectiveDate.
+--   * FK tài chính/lịch sử đổi Cascade -> Restrict; unique Payment `UX_Payments_InvoiceStatus`
+--     (InvoiceId, Status) filter Status IN (0,1).
 -- Delta đã bổ sung so với bản VHT-5 (đợt 2A):
 --   * AspNetUsers: + FullName (VHT-8), + ApprovedAt (VHT-95).
 --   * Tenants: + IsActive, RowVersion, Gender, DateOfBirth, IdIssuedDate, IdIssuedPlace,
@@ -53,7 +63,11 @@ BEGIN
         TwoFactorEnabled BIT NOT NULL,  -- bật xác thực 2 bước
         LockoutEnabled BIT NOT NULL,  -- cho phép khóa tài khoản
         LockoutEnd DATETIMEOFFSET,  -- thời điểm hết khóa
-        AccessFailedCount INT NOT NULL  -- số lần đăng nhập sai
+        AccessFailedCount INT NOT NULL,  -- số lần đăng nhập sai
+        IsDeleted BIT NOT NULL CONSTRAINT DF_AspNetUsers_IsDeleted DEFAULT 0,  -- xóa mềm tài khoản
+        DeletedAt DATETIME2,  -- thời điểm xóa mềm
+        DeletedByUserId NVARCHAR(MAX),  -- người xóa (liên kết mềm tới AspNetUsers.Id)
+        OriginalEmail NVARCHAR(MAX)  -- email gốc giữ lại sau khi ẩn tài khoản
     )
 END
 GO
@@ -66,6 +80,20 @@ GO
 -- VHT-95: thời điểm tài khoản được duyệt (NULL = chưa duyệt, không đăng nhập được)
 IF COL_LENGTH(N'dbo.AspNetUsers', N'ApprovedAt') IS NULL
     ALTER TABLE AspNetUsers ADD ApprovedAt DATETIME2 NULL;
+GO
+
+-- Delta 3C (20261106185549_AccountSoftDelete): xóa mềm tài khoản cho DB đã tồn tại
+IF COL_LENGTH(N'dbo.AspNetUsers', N'IsDeleted') IS NULL
+    ALTER TABLE AspNetUsers ADD IsDeleted BIT NOT NULL CONSTRAINT DF_AspNetUsers_IsDeleted2 DEFAULT 0;
+GO
+IF COL_LENGTH(N'dbo.AspNetUsers', N'DeletedAt') IS NULL
+    ALTER TABLE AspNetUsers ADD DeletedAt DATETIME2 NULL;
+GO
+IF COL_LENGTH(N'dbo.AspNetUsers', N'DeletedByUserId') IS NULL
+    ALTER TABLE AspNetUsers ADD DeletedByUserId NVARCHAR(MAX) NULL;
+GO
+IF COL_LENGTH(N'dbo.AspNetUsers', N'OriginalEmail') IS NULL
+    ALTER TABLE AspNetUsers ADD OriginalEmail NVARCHAR(MAX) NULL;
 GO
 
 -- tên đăng nhập không được trùng
@@ -90,9 +118,15 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL,  -- ngày tạo, giờ UTC, app gán
         UpdatedAt DATETIME2,  -- ngày sửa gần nhất, giờ UTC
         IsDeleted BIT NOT NULL,  -- xóa mềm: 1 = ẩn khỏi app, dữ liệu vẫn còn trong DB
+        DeletedAt DATETIME2,  -- Delta 3C: thời điểm xóa mềm (20261105173632_AddPropertyTrash)
         CONSTRAINT FK_Properties_AspNetUsers_OwnerId FOREIGN KEY (OwnerId) REFERENCES AspNetUsers(Id)  -- Restrict: cấm xóa thật AspNetUsers khi còn Properties trỏ tới
     )
 END
+GO
+
+-- Delta 3C: cột DeletedAt cho DB đã tồn tại
+IF COL_LENGTH(N'dbo.Properties', N'DeletedAt') IS NULL
+    ALTER TABLE Properties ADD DeletedAt DATETIME2 NULL;
 GO
 
 -- tìm nhanh các nhà của 1 chủ trọ
@@ -116,9 +150,19 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL,  -- ngày tạo, giờ UTC, app gán
         UpdatedAt DATETIME2,  -- ngày sửa gần nhất, giờ UTC
         IsDeleted BIT NOT NULL,  -- xóa mềm: 1 = ẩn khỏi app, dữ liệu vẫn còn trong DB
+        DeletedAt DATETIME2,  -- Delta 3C: thời điểm xóa mềm (20261104023558_AddRoomSoftDeleteAudit)
+        DeletedBy NVARCHAR(450),  -- Delta 3C: người xóa, liên kết mềm tới AspNetUsers.Id
         CONSTRAINT FK_Rooms_Properties_PropertyId FOREIGN KEY (PropertyId) REFERENCES Properties(Id)  -- Restrict: cấm xóa thật Properties khi còn Rooms trỏ tới
     )
 END
+GO
+
+-- Delta 3C: cột xóa mềm phòng cho DB đã tồn tại
+IF COL_LENGTH(N'dbo.Rooms', N'DeletedAt') IS NULL
+    ALTER TABLE Rooms ADD DeletedAt DATETIME2 NULL;
+GO
+IF COL_LENGTH(N'dbo.Rooms', N'DeletedBy') IS NULL
+    ALTER TABLE Rooms ADD DeletedBy NVARCHAR(450) NULL;
 GO
 
 -- mã phòng không trùng trong cùng 1 nhà (bỏ qua phòng đã xóa mềm)
@@ -149,9 +193,19 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL,  -- ngày tạo, giờ UTC, app gán
         UpdatedAt DATETIME2,  -- ngày sửa gần nhất, giờ UTC
         IsDeleted BIT NOT NULL,  -- xóa mềm: 1 = ẩn khỏi app, dữ liệu vẫn còn trong DB
+        DeletedAt DATETIME2,  -- Delta 3C: thời điểm xóa mềm (20261103044209_AddTenantTrash)
+        DeletedByUserId NVARCHAR(450),  -- Delta 3C: người xóa, liên kết mềm tới AspNetUsers.Id
         CONSTRAINT FK_Tenants_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id)  -- Restrict: cấm xóa thật AspNetUsers khi còn Tenants trỏ tới
     )
 END
+GO
+
+-- Delta 3C: cột xóa mềm khách thuê cho DB đã tồn tại (Tenants.OwnerId thêm rồi bỏ ở 20261106182818)
+IF COL_LENGTH(N'dbo.Tenants', N'DeletedAt') IS NULL
+    ALTER TABLE Tenants ADD DeletedAt DATETIME2 NULL;
+GO
+IF COL_LENGTH(N'dbo.Tenants', N'DeletedByUserId') IS NULL
+    ALTER TABLE Tenants ADD DeletedByUserId NVARCHAR(450) NULL;
 GO
 
 -- VHT-23: cac cot ho so khach them sau, bo sung cho DB da ton tai
@@ -194,6 +248,10 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Tenants_FullName' AND
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Tenants_Phone' AND object_id = OBJECT_ID(N'dbo.Tenants'))
     CREATE INDEX IX_Tenants_Phone ON Tenants(Phone);
+GO
+-- Delta 3C: lọc nhanh hồ sơ trong thùng rác (20261103044209_AddTenantTrash)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Tenants_IsDeleted' AND object_id = OBJECT_ID(N'dbo.Tenants'))
+    CREATE INDEX IX_Tenants_IsDeleted ON Tenants(IsDeleted);
 GO
 
 -- ============================================================================
@@ -419,10 +477,32 @@ BEGIN
         Id INT IDENTITY(1,1) CONSTRAINT PK_ServiceCatalogs PRIMARY KEY,  -- khóa chính, tự tăng
         PropertyId INT,  -- tòa áp dụng, NULL = dùng chung; trỏ tới Properties.Id
         IsReadOnly BIT NOT NULL CONSTRAINT DF_ServiceCatalogs_IsReadOnly DEFAULT 0,  -- 1 = danh mục hệ thống, app không sửa
+        IsActive BIT NOT NULL CONSTRAINT DF_ServiceCatalogs_IsActive DEFAULT 1,  -- Delta 3C: đang dùng (20261102152923)
+        Description NVARCHAR(500),  -- Delta 3C: mô tả dịch vụ (20261103033629)
+        IsDeleted BIT NOT NULL CONSTRAINT DF_ServiceCatalogs_IsDeleted DEFAULT 0,  -- Delta 3C: xóa mềm (20261105135750)
+        DeletedAt DATETIME2,  -- Delta 3C: thời điểm xóa mềm
+        DeletedBy NVARCHAR(450),  -- Delta 3C: người xóa, liên kết mềm tới AspNetUsers.Id
         CreatedAt DATETIME2 NOT NULL,  -- ngày tạo, giờ UTC, app gán
         CONSTRAINT FK_ServiceCatalogs_Properties_PropertyId FOREIGN KEY (PropertyId) REFERENCES Properties(Id)  -- Restrict
     )
 END
+GO
+
+-- Delta 3C: cột danh mục dịch vụ thêm sau, bổ sung cho DB đã tồn tại
+IF COL_LENGTH(N'dbo.ServiceCatalogs', N'IsActive') IS NULL
+    ALTER TABLE ServiceCatalogs ADD IsActive BIT NOT NULL CONSTRAINT DF_ServiceCatalogs_IsActive2 DEFAULT 1;
+GO
+IF COL_LENGTH(N'dbo.ServiceCatalogs', N'Description') IS NULL
+    ALTER TABLE ServiceCatalogs ADD Description NVARCHAR(500) NULL;
+GO
+IF COL_LENGTH(N'dbo.ServiceCatalogs', N'IsDeleted') IS NULL
+    ALTER TABLE ServiceCatalogs ADD IsDeleted BIT NOT NULL CONSTRAINT DF_ServiceCatalogs_IsDeleted2 DEFAULT 0;
+GO
+IF COL_LENGTH(N'dbo.ServiceCatalogs', N'DeletedAt') IS NULL
+    ALTER TABLE ServiceCatalogs ADD DeletedAt DATETIME2 NULL;
+GO
+IF COL_LENGTH(N'dbo.ServiceCatalogs', N'DeletedBy') IS NULL
+    ALTER TABLE ServiceCatalogs ADD DeletedBy NVARCHAR(450) NULL;
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ServiceCatalogs_PropertyId' AND object_id = OBJECT_ID(N'dbo.ServiceCatalogs'))
@@ -440,15 +520,52 @@ BEGIN
         CalculationMethod NVARCHAR(100) NOT NULL,  -- cách tính, không được rỗng
         UnitPrice DECIMAL(18,4) NOT NULL,  -- đơn giá (VND), 4 số lẻ
         EffectiveDate DATE NOT NULL,  -- ngày bắt đầu áp dụng
+        EffectiveTo DATE,  -- Delta 3C: ngày hết hiệu lực, NULL = còn hiệu lực (20261102152923)
+        Note NVARCHAR(500),  -- Delta 3C: ghi chú lần đổi giá (20261102163137)
         CreatedAt DATETIME2 NOT NULL,  -- ngày tạo bản ghi, giờ UTC
-        CreatedByUserId INT NOT NULL,  -- người tạo (số), KHÔNG có FK: schema hiện tại lưu int trong khi AspNetUsers.Id là nvarchar(450)
+        CreatedByUserId NVARCHAR(450),  -- người tạo, trỏ tới AspNetUsers.Id (20261102081030 đổi int -> nvarchar(450))
         CONSTRAINT FK_ServicePriceHistory_ServiceCatalogs_ServiceCatalogId FOREIGN KEY (ServiceCatalogId) REFERENCES ServiceCatalogs(Id),  -- Restrict
+        CONSTRAINT FK_ServicePriceHistory_AspNetUsers_CreatedByUserId FOREIGN KEY (CreatedByUserId) REFERENCES AspNetUsers(Id),  -- Restrict
         CONSTRAINT CK_ServicePriceHistory_Name_NotBlank CHECK (LEN(LTRIM(RTRIM(Name))) > 0),
         CONSTRAINT CK_ServicePriceHistory_Unit_NotBlank CHECK (LEN(LTRIM(RTRIM(Unit))) > 0),
         CONSTRAINT CK_ServicePriceHistory_CalculationMethod_NotBlank CHECK (LEN(LTRIM(RTRIM(CalculationMethod))) > 0),
-        CONSTRAINT CK_ServicePriceHistory_UnitPrice_NonNegative CHECK (UnitPrice >= 0)
+        CONSTRAINT CK_ServicePriceHistory_UnitPrice_Positive CHECK (UnitPrice > 0)
     )
 END
+GO
+
+-- Delta 3C: cột mới cho DB đã tồn tại (phải chạy trước CHECK EffectiveTo bên dưới)
+IF COL_LENGTH(N'dbo.ServicePriceHistory', N'EffectiveTo') IS NULL
+    ALTER TABLE ServicePriceHistory ADD EffectiveTo DATE NULL;
+GO
+IF COL_LENGTH(N'dbo.ServicePriceHistory', N'Note') IS NULL
+    ALTER TABLE ServicePriceHistory ADD Note NVARCHAR(500) NULL;
+GO
+
+-- Delta 3C: đổi CHECK đơn giá cũ (>= 0) sang > 0 cho DB đã tồn tại; thêm CHECK EffectiveTo.
+IF EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_ServicePriceHistory_UnitPrice_NonNegative' AND parent_object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
+    ALTER TABLE ServicePriceHistory DROP CONSTRAINT CK_ServicePriceHistory_UnitPrice_NonNegative;
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_ServicePriceHistory_UnitPrice_Positive' AND parent_object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
+    ALTER TABLE ServicePriceHistory ADD CONSTRAINT CK_ServicePriceHistory_UnitPrice_Positive CHECK (UnitPrice > 0);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate' AND parent_object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
+    ALTER TABLE ServicePriceHistory ADD CONSTRAINT CK_ServicePriceHistory_EffectiveTo_After_EffectiveDate CHECK ([EffectiveTo] IS NULL OR [EffectiveTo] > [EffectiveDate]);
+GO
+
+-- Delta 3C: đổi CreatedByUserId sang nvarchar(450) cho DB đã tồn tại
+IF EXISTS (SELECT 1 FROM sys.columns c JOIN sys.types t ON c.user_type_id = t.user_type_id
+           WHERE c.object_id = OBJECT_ID(N'dbo.ServicePriceHistory') AND c.name = N'CreatedByUserId' AND t.name = 'int')
+    ALTER TABLE ServicePriceHistory ALTER COLUMN CreatedByUserId NVARCHAR(450) NULL;
+GO
+-- Giữ đúng hành vi migration 20261102081030: giá trị không trỏ tới tài khoản nào thì đưa về NULL trước khi thêm FK.
+UPDATE ServicePriceHistory
+SET CreatedByUserId = NULL
+WHERE CreatedByUserId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM AspNetUsers u WHERE u.Id = ServicePriceHistory.CreatedByUserId);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_ServicePriceHistory_AspNetUsers_CreatedByUserId' AND parent_object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
+    ALTER TABLE ServicePriceHistory ADD CONSTRAINT FK_ServicePriceHistory_AspNetUsers_CreatedByUserId FOREIGN KEY (CreatedByUserId) REFERENCES AspNetUsers(Id);
 GO
 
 -- 1 dịch vụ chỉ có 1 giá cho 1 ngày hiệu lực
@@ -457,6 +574,10 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ServicePriceHistory_S
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ServicePriceHistory_EffectiveDate_ServiceCatalogId' AND object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
     CREATE INDEX IX_ServicePriceHistory_EffectiveDate_ServiceCatalogId ON ServicePriceHistory(EffectiveDate, ServiceCatalogId);
+GO
+-- Delta 3C: tìm giá theo người tạo (20261102081030)
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ServicePriceHistory_CreatedByUserId' AND object_id = OBJECT_ID(N'dbo.ServicePriceHistory'))
+    CREATE INDEX IX_ServicePriceHistory_CreatedByUserId ON ServicePriceHistory(CreatedByUserId);
 GO
 
 -- ============================================================================
@@ -523,7 +644,7 @@ BEGIN
         Type INT NOT NULL,  -- 0 Điện, 1 Nước
         ScopeCode NVARCHAR(50) NOT NULL,  -- phạm vi biểu giá đã áp
         BillingPeriodId INT NOT NULL,  -- kỳ tính tiền (số), KHÔNG có FK: P5 chưa có bảng kỳ
-        Unit NVARCHAR(20) NOT NULL,  -- đơn vị: kWh, m³
+        Unit NVARCHAR(30) NOT NULL,  -- đơn vị: kWh, m³
         EffectiveDate DATE NOT NULL,  -- ngày hiệu lực của biểu giá đã dùng
         PeriodStart DATE NOT NULL,  -- đầu kỳ
         PeriodEnd DATE NOT NULL,  -- cuối kỳ, phải >= PeriodStart
@@ -622,9 +743,9 @@ BEGIN
         InvoiceId INT NOT NULL,  -- hóa đơn chứa dòng, trỏ tới Invoices.Id
         ItemType INT NOT NULL,  -- 0 Tiền phòng, 1 Điện, 2 Nước, 3 Dịch vụ, 4 Giảm giá
         Description NVARCHAR(250) NOT NULL,  -- diễn giải dòng
-        Unit NVARCHAR(20),  -- đơn vị tính, được để trống
-        Quantity DECIMAL(18,2) NOT NULL,  -- số lượng, phải > 0
-        UnitPrice DECIMAL(18,2) NOT NULL,  -- đơn giá (>= 0)
+        Unit NVARCHAR(30),  -- đơn vị tính, được để trống
+        Quantity DECIMAL(18,4) NOT NULL,  -- số lượng, phải > 0
+        UnitPrice DECIMAL(18,4) NOT NULL,  -- đơn giá (>= 0)
         Amount DECIMAL(18,2) NOT NULL,  -- thành tiền; âm CHỈ khi ItemType = 4 (giảm giá)
         DisplayOrder INT NOT NULL,  -- thứ tự hiển thị; không unique nên đọc phải sắp kèm Id
         CONSTRAINT FK_InvoiceItems_Invoices_InvoiceId FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),  -- Restrict
@@ -637,6 +758,61 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_InvoiceItems_InvoiceId_DisplayOrder' AND object_id = OBJECT_ID(N'dbo.InvoiceItems'))
     CREATE INDEX IX_InvoiceItems_InvoiceId_DisplayOrder ON InvoiceItems(InvoiceId, DisplayOrder);
+GO
+
+-- VHT-51: placed after Contracts, Rooms and Invoices so all FK targets exist.
+IF OBJECT_ID(N'dbo.UtilityReadingPeriods', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityReadingPeriods
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityReadingPeriods PRIMARY KEY,
+        ContractId UNIQUEIDENTIFIER NOT NULL, RoomId INT NOT NULL,
+        PeriodStart DATE NOT NULL, PeriodEnd DATE NOT NULL,
+        ElectricStart DECIMAL(18,4) NOT NULL, ElectricEnd DECIMAL(18,4) NOT NULL,
+        WaterStart DECIMAL(18,4) NOT NULL, WaterEnd DECIMAL(18,4) NOT NULL,
+        ResidentCount INT NOT NULL, Status INT NOT NULL, InvoiceId INT NULL,
+        HasReadings BIT NOT NULL, HasServiceSnapshots BIT NOT NULL CONSTRAINT DF_UtilityReadingPeriods_HasServiceSnapshots DEFAULT (0),
+        CreatedAt DATETIME2 NOT NULL, UpdatedAt DATETIME2 NOT NULL, RowVersion ROWVERSION NOT NULL,
+        CONSTRAINT FK_UtilityReadingPeriods_Contracts_ContractId FOREIGN KEY (ContractId) REFERENCES Contracts(ContractId),
+        CONSTRAINT FK_UtilityReadingPeriods_Rooms_RoomId FOREIGN KEY (RoomId) REFERENCES Rooms(Id),
+        CONSTRAINT FK_UtilityReadingPeriods_Invoices_InvoiceId FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),
+        CONSTRAINT CK_UtilityReadingPeriods_Period CHECK (PeriodEnd >= PeriodStart),
+        CONSTRAINT CK_UtilityReadingPeriods_Electric CHECK (ElectricStart >= 0 AND ElectricEnd >= ElectricStart),
+        CONSTRAINT CK_UtilityReadingPeriods_Water CHECK (WaterStart >= 0 AND WaterEnd >= WaterStart),
+        CONSTRAINT CK_UtilityReadingPeriods_ResidentCount CHECK (ResidentCount > 0),
+        CONSTRAINT CK_UtilityReadingPeriods_Status CHECK (Status IN (0, 1)),
+        CONSTRAINT CK_UtilityReadingPeriods_InvoicedHasInvoice CHECK (Status = 0 OR InvoiceId IS NOT NULL),
+        CONSTRAINT CK_UtilityReadingPeriods_InvoicedHasReadings CHECK (Status = 0 OR HasReadings = 1),
+        CONSTRAINT CK_UtilityReadingPeriods_ServiceSnapshotsRequireReadings CHECK (HasServiceSnapshots = 0 OR HasReadings = 1)
+    )
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_ContractId_PeriodStart' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE UNIQUE INDEX IX_UtilityReadingPeriods_ContractId_PeriodStart ON UtilityReadingPeriods(ContractId, PeriodStart);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_ContractId_PeriodEnd' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE INDEX IX_UtilityReadingPeriods_ContractId_PeriodEnd ON UtilityReadingPeriods(ContractId, PeriodEnd);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_RoomId' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE INDEX IX_UtilityReadingPeriods_RoomId ON UtilityReadingPeriods(RoomId);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingPeriods_InvoiceId' AND object_id = OBJECT_ID(N'dbo.UtilityReadingPeriods'))
+    CREATE UNIQUE INDEX IX_UtilityReadingPeriods_InvoiceId ON UtilityReadingPeriods(InvoiceId) WHERE InvoiceId IS NOT NULL;
+GO
+IF OBJECT_ID(N'dbo.UtilityServicePeriodSnapshots', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityServicePeriodSnapshots
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityServicePeriodSnapshots PRIMARY KEY,
+        UtilityReadingPeriodId INT NOT NULL, SourceServiceCatalogId INT NOT NULL, SourceServicePriceHistoryId INT NOT NULL,
+        Description NVARCHAR(200) NOT NULL, Unit NVARCHAR(30) NOT NULL,
+        Quantity DECIMAL(18,4) NOT NULL, UnitPrice DECIMAL(18,4) NOT NULL, Amount DECIMAL(18,0) NOT NULL,
+        CONSTRAINT FK_UtilityServicePeriodSnapshots_UtilityReadingPeriods_UtilityReadingPeriodId FOREIGN KEY (UtilityReadingPeriodId) REFERENCES UtilityReadingPeriods(Id) ON DELETE CASCADE,
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_Quantity CHECK (Quantity > 0),
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_UnitPrice CHECK (UnitPrice >= 0),
+        CONSTRAINT CK_UtilityServicePeriodSnapshots_Amount CHECK (Amount >= 0)
+    )
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityServicePeriodSnapshots_UtilityReadingPeriodId_SourceServicePriceHistoryId' AND object_id = OBJECT_ID(N'dbo.UtilityServicePeriodSnapshots'))
+    CREATE UNIQUE INDEX IX_UtilityServicePeriodSnapshots_UtilityReadingPeriodId_SourceServicePriceHistoryId ON UtilityServicePeriodSnapshots(UtilityReadingPeriodId, SourceServicePriceHistoryId);
 GO
 
 -- ============================================================================
@@ -777,6 +953,254 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_IncidentPhotoAttachme
     CREATE INDEX IX_IncidentPhotoAttachments_ApprovalRequestId ON IncidentPhotoAttachments(ApprovalRequestId);
 GO
 
+-- ============================================================================
+-- DELTA 3C (VHT-132) — 9 bảng thêm sau đợt 2E, đối chiếu migration trên dev@c7d7411.
+-- Thứ tự tạo theo phụ thuộc FK: audit/tenant trước, payments sau Invoices,
+-- utility sau Rooms. Mọi FK lịch sử/tài chính đều Restrict (giữ lịch sử).
+-- ============================================================================
+
+-- Nhật ký thao tác tổng hợp (20261105044209_AddAuditUtilityPayment)
+IF OBJECT_ID(N'dbo.AuditLogEntries', N'U') IS NULL
+BEGIN
+    CREATE TABLE AuditLogEntries
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_AuditLogEntries PRIMARY KEY,  -- khóa chính, tự tăng
+        Category INT NOT NULL,  -- nhóm thao tác (enum)
+        Action NVARCHAR(200) NOT NULL,  -- mã hành động
+        ActorUserId NVARCHAR(450),  -- người thực hiện, liên kết mềm tới AspNetUsers.Id
+        PropertyId INT,  -- tòa liên quan, NULL nếu thao tác toàn hệ thống
+        Metadata NVARCHAR(1000),  -- dữ liệu phụ dạng JSON/text
+        OccurredAt DATETIMEOFFSET NOT NULL  -- thời điểm xảy ra
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AuditLogEntries_Category_OccurredAt' AND object_id = OBJECT_ID(N'dbo.AuditLogEntries'))
+    CREATE INDEX IX_AuditLogEntries_Category_OccurredAt ON AuditLogEntries(Category, OccurredAt);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_AuditLogEntries_PropertyId' AND object_id = OBJECT_ID(N'dbo.AuditLogEntries'))
+    CREATE INDEX IX_AuditLogEntries_PropertyId ON AuditLogEntries(PropertyId);
+GO
+
+-- Lời mời tạo hồ sơ khách (20261106181757_TenantInvitations)
+IF OBJECT_ID(N'dbo.TenantInvitations', N'U') IS NULL
+BEGIN
+    CREATE TABLE TenantInvitations
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_TenantInvitations PRIMARY KEY,  -- khóa chính, tự tăng
+        Email NVARCHAR(256) NOT NULL,  -- email được mời
+        FullName NVARCHAR(200) NOT NULL,  -- họ tên dự kiến
+        Phone NVARCHAR(20),  -- số điện thoại, được để trống
+        OwnerId NVARCHAR(450) NOT NULL,  -- chủ trọ gửi lời mời, liên kết mềm tới AspNetUsers.Id
+        InvitedByUserId NVARCHAR(450) NOT NULL,  -- tài khoản bấm mời, liên kết mềm tới AspNetUsers.Id
+        TokenHash NVARCHAR(64) NOT NULL,  -- băm token trong link mời (không lưu token gốc)
+        ExpiresAt DATETIME2 NOT NULL,  -- hết hạn
+        AcceptedAt DATETIME2,  -- thời điểm chấp nhận, NULL = chưa
+        RevokedAt DATETIME2,  -- thời điểm thu hồi, NULL = chưa
+        TenantId INT,  -- hồ sơ khách tạo ra sau khi chấp nhận, liên kết mềm tới Tenants.Id
+        CreatedAt DATETIME2 NOT NULL,  -- ngày tạo
+        RowVersion ROWVERSION NOT NULL  -- chống ghi đè đồng thời
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_TenantInvitations_Email' AND object_id = OBJECT_ID(N'dbo.TenantInvitations'))
+    CREATE INDEX IX_TenantInvitations_Email ON TenantInvitations(Email);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_TenantInvitations_TokenHash' AND object_id = OBJECT_ID(N'dbo.TenantInvitations'))
+    CREATE UNIQUE INDEX IX_TenantInvitations_TokenHash ON TenantInvitations(TokenHash);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_TenantInvitations_OwnerId_AcceptedAt' AND object_id = OBJECT_ID(N'dbo.TenantInvitations'))
+    CREATE INDEX IX_TenantInvitations_OwnerId_AcceptedAt ON TenantInvitations(OwnerId, AcceptedAt);
+GO
+
+-- Yêu cầu gia hạn hợp đồng (20261104033809 + 20261105184406 + 20261107152554)
+IF OBJECT_ID(N'dbo.ContractRenewalRequests', N'U') IS NULL
+BEGIN
+    CREATE TABLE ContractRenewalRequests
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_ContractRenewalRequests PRIMARY KEY,  -- khóa chính GUID
+        ContractId UNIQUEIDENTIFIER NOT NULL,  -- hợp đồng xin gia hạn, trỏ tới Contracts.ContractId
+        RequestedByTenantId INT NOT NULL,  -- khách gửi yêu cầu, trỏ tới Tenants.Id
+        RequestedMonths INT NOT NULL,  -- số tháng xin gia hạn
+        Note NVARCHAR(500),  -- ghi chú của khách
+        Status INT NOT NULL,  -- 0 Chờ duyệt, 1 Đã duyệt, 2 Từ chối
+        RequestedAt DATETIME2 NOT NULL,  -- thời điểm gửi
+        DecidedAt DATETIME2,  -- thời điểm quyết định
+        DecidedByUserId NVARCHAR(450),  -- người quyết định, trỏ tới AspNetUsers.Id
+        RejectReason NVARCHAR(500),  -- lý do từ chối
+        RowVersion ROWVERSION NOT NULL,  -- chống ghi đè đồng thời
+        CONSTRAINT FK_ContractRenewalRequests_Contracts_ContractId FOREIGN KEY (ContractId) REFERENCES Contracts(ContractId),  -- Restrict: giữ lịch sử yêu cầu
+        CONSTRAINT FK_ContractRenewalRequests_Tenants_RequestedByTenantId FOREIGN KEY (RequestedByTenantId) REFERENCES Tenants(Id),  -- Restrict
+        CONSTRAINT FK_ContractRenewalRequests_AspNetUsers_DecidedByUserId FOREIGN KEY (DecidedByUserId) REFERENCES AspNetUsers(Id),  -- Restrict
+        CONSTRAINT CK_ContractRenewalRequests_Months CHECK (RequestedMonths BETWEEN 1 AND 120),
+        CONSTRAINT CK_ContractRenewalRequests_Status CHECK (Status IN (0, 1, 2))
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ContractRenewalRequests_RequestedByTenantId_Status' AND object_id = OBJECT_ID(N'dbo.ContractRenewalRequests'))
+    CREATE INDEX IX_ContractRenewalRequests_RequestedByTenantId_Status ON ContractRenewalRequests(RequestedByTenantId, Status);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ContractRenewalRequests_Status_RequestedAt' AND object_id = OBJECT_ID(N'dbo.ContractRenewalRequests'))
+    CREATE INDEX IX_ContractRenewalRequests_Status_RequestedAt ON ContractRenewalRequests(Status, RequestedAt);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ContractRenewalRequests_DecidedByUserId' AND object_id = OBJECT_ID(N'dbo.ContractRenewalRequests'))
+    CREATE INDEX IX_ContractRenewalRequests_DecidedByUserId ON ContractRenewalRequests(DecidedByUserId);
+GO
+-- 1 hợp đồng chỉ có 1 yêu cầu đang chờ duyệt
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_ContractRenewalRequests_Pending' AND object_id = OBJECT_ID(N'dbo.ContractRenewalRequests'))
+    CREATE UNIQUE INDEX UX_ContractRenewalRequests_Pending ON ContractRenewalRequests(ContractId) WHERE Status = 0;
+GO
+
+-- Khách thuê thuộc nhiều chủ trọ (nhiều-nhiều), thay Tenants.OwnerId đã bỏ (20261106182818)
+IF OBJECT_ID(N'dbo.TenantOwnerLinks', N'U') IS NULL
+BEGIN
+    CREATE TABLE TenantOwnerLinks
+    (
+        TenantId INT NOT NULL,  -- khách thuê, trỏ tới Tenants.Id
+        OwnerId NVARCHAR(450) NOT NULL,  -- chủ trọ, liên kết mềm tới AspNetUsers.Id
+        CreatedAt DATETIME2 NOT NULL,  -- thời điểm tạo liên kết
+        CONSTRAINT PK_TenantOwnerLinks PRIMARY KEY (TenantId, OwnerId),
+        CONSTRAINT FK_TenantOwnerLinks_Tenants_TenantId FOREIGN KEY (TenantId) REFERENCES Tenants(Id)  -- Restrict: giữ liên kết lịch sử
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_TenantOwnerLinks_OwnerId' AND object_id = OBJECT_ID(N'dbo.TenantOwnerLinks'))
+    CREATE INDEX IX_TenantOwnerLinks_OwnerId ON TenantOwnerLinks(OwnerId);
+GO
+
+-- Phiếu thanh toán của hóa đơn (20261104122603_AddPayments + 20261107152554)
+IF OBJECT_ID(N'dbo.Payments', N'U') IS NULL
+BEGIN
+    CREATE TABLE Payments
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_Payments PRIMARY KEY,  -- khóa chính, tự tăng
+        InvoiceId INT NOT NULL,  -- hóa đơn được trả, trỏ tới Invoices.Id
+        Amount DECIMAL(18,2) NOT NULL,  -- số tiền khách báo chuyển
+        TransferredAt DATETIME2 NOT NULL,  -- thời điểm chuyển khoản
+        TransactionCode NVARCHAR(100),  -- mã giao dịch ngân hàng
+        Status INT NOT NULL,  -- 0 Chờ duyệt, 1 Đã xác nhận, 2 Từ chối
+        RequestedAt DATETIME2 NOT NULL,  -- thời điểm gửi
+        RequestedByUserId NVARCHAR(450) NOT NULL,  -- người gửi, liên kết mềm tới AspNetUsers.Id
+        ReviewedAt DATETIME2,  -- thời điểm duyệt/từ chối
+        ReviewedByUserId NVARCHAR(450),  -- người duyệt, liên kết mềm tới AspNetUsers.Id
+        RejectionReason NVARCHAR(500),  -- lý do từ chối
+        RowVersion ROWVERSION NOT NULL,  -- chống ghi đè đồng thời
+        CONSTRAINT FK_Payments_Invoices_InvoiceId FOREIGN KEY (InvoiceId) REFERENCES Invoices(Id),  -- Restrict: giữ lịch sử thanh toán
+        CONSTRAINT CK_Payments_Amount CHECK (Amount > 0),
+        CONSTRAINT CK_Payments_Status CHECK (Status IN (0, 1, 2)),
+        CONSTRAINT CK_Payments_RejectionReason CHECK ((Status <> 2 AND RejectionReason IS NULL) OR (Status = 2 AND RejectionReason IS NOT NULL)),
+        CONSTRAINT CK_Payments_ReviewedAt CHECK ((Status = 0 AND ReviewedAt IS NULL) OR (Status <> 0 AND ReviewedAt IS NOT NULL))
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Payments_InvoiceId_Status_RequestedAt' AND object_id = OBJECT_ID(N'dbo.Payments'))
+    CREATE INDEX IX_Payments_InvoiceId_Status_RequestedAt ON Payments(InvoiceId, Status, RequestedAt);
+GO
+-- 1 hóa đơn chỉ có 1 phiếu đang chờ hoặc đã xác nhận
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_Payments_InvoiceStatus' AND object_id = OBJECT_ID(N'dbo.Payments'))
+    CREATE UNIQUE INDEX UX_Payments_InvoiceStatus ON Payments(InvoiceId, Status) WHERE Status IN (0, 1);
+GO
+
+-- Ảnh chứng từ chuyển khoản của phiếu thanh toán
+IF OBJECT_ID(N'dbo.PaymentProofs', N'U') IS NULL
+BEGIN
+    CREATE TABLE PaymentProofs
+    (
+        PaymentId INT NOT NULL,  -- phiếu thanh toán, trỏ tới Payments.Id
+        FileId UNIQUEIDENTIFIER NOT NULL,  -- tệp chứng từ, trỏ tới StoredFiles.Id
+        CONSTRAINT PK_PaymentProofs PRIMARY KEY (PaymentId, FileId),
+        CONSTRAINT FK_PaymentProofs_Payments_PaymentId FOREIGN KEY (PaymentId) REFERENCES Payments(Id),  -- Restrict
+        CONSTRAINT FK_PaymentProofs_StoredFiles_FileId FOREIGN KEY (FileId) REFERENCES StoredFiles(Id)  -- Restrict
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PaymentProofs_FileId' AND object_id = OBJECT_ID(N'dbo.PaymentProofs'))
+    CREATE UNIQUE INDEX IX_PaymentProofs_FileId ON PaymentProofs(FileId);
+GO
+
+-- Nhật ký đổi trạng thái phiếu thanh toán
+IF OBJECT_ID(N'dbo.PaymentAuditLogs', N'U') IS NULL
+BEGIN
+    CREATE TABLE PaymentAuditLogs
+    (
+        Id BIGINT IDENTITY(1,1) CONSTRAINT PK_PaymentAuditLogs PRIMARY KEY,  -- khóa chính, tự tăng
+        PaymentId INT NOT NULL,  -- phiếu thanh toán, trỏ tới Payments.Id
+        InvoiceId INT NOT NULL,  -- hóa đơn liên quan (lưu kèm để tra cứu nhanh)
+        Action INT NOT NULL,  -- hành động (enum)
+        FromStatus INT,  -- trạng thái trước, NULL khi tạo mới
+        ToStatus INT NOT NULL,  -- trạng thái sau
+        Amount DECIMAL(18,2) NOT NULL,  -- số tiền tại thời điểm đổi
+        ActorUserId NVARCHAR(450) NOT NULL,  -- người thao tác, liên kết mềm tới AspNetUsers.Id
+        ActorRole NVARCHAR(20) NOT NULL,  -- vai trò người thao tác
+        OccurredAt DATETIMEOFFSET NOT NULL,  -- thời điểm xảy ra
+        Note NVARCHAR(500),  -- ghi chú
+        CONSTRAINT FK_PaymentAuditLogs_Payments_PaymentId FOREIGN KEY (PaymentId) REFERENCES Payments(Id)  -- Restrict: giữ lịch sử
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PaymentAuditLogs_InvoiceId_OccurredAt' AND object_id = OBJECT_ID(N'dbo.PaymentAuditLogs'))
+    CREATE INDEX IX_PaymentAuditLogs_InvoiceId_OccurredAt ON PaymentAuditLogs(InvoiceId, OccurredAt);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PaymentAuditLogs_PaymentId_OccurredAt' AND object_id = OBJECT_ID(N'dbo.PaymentAuditLogs'))
+    CREATE INDEX IX_PaymentAuditLogs_PaymentId_OccurredAt ON PaymentAuditLogs(PaymentId, OccurredAt);
+GO
+
+-- Chỉ số điện/nước theo kỳ của phòng (20261105044209_AddAuditUtilityPayment)
+IF OBJECT_ID(N'dbo.UtilityReadings', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityReadings
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityReadings PRIMARY KEY,  -- khóa chính, tự tăng
+        RoomId INT NOT NULL,  -- phòng, trỏ tới Rooms.Id
+        PeriodStart DATE NOT NULL,  -- đầu kỳ
+        PeriodEnd DATE NOT NULL,  -- cuối kỳ
+        ElectricStart DECIMAL(18,2) NOT NULL,  -- chỉ số điện đầu kỳ
+        ElectricEnd DECIMAL(18,2) NOT NULL,  -- chỉ số điện cuối kỳ
+        WaterStart DECIMAL(18,2) NOT NULL,  -- chỉ số nước đầu kỳ
+        WaterEnd DECIMAL(18,2) NOT NULL,  -- chỉ số nước cuối kỳ
+        RecordedByUserId NVARCHAR(MAX) NOT NULL,  -- người ghi chỉ số, liên kết mềm tới AspNetUsers.Id
+        CreatedAt DATETIMEOFFSET NOT NULL,  -- thời điểm tạo
+        UpdatedAt DATETIMEOFFSET,  -- thời điểm sửa gần nhất
+        RowVersion ROWVERSION NOT NULL,  -- chống ghi đè đồng thời
+        CONSTRAINT FK_UtilityReadings_Rooms_RoomId FOREIGN KEY (RoomId) REFERENCES Rooms(Id)  -- Restrict: giữ lịch sử chỉ số
+    )
+END
+GO
+
+-- 1 phòng chỉ có 1 bản ghi chỉ số cho 1 kỳ
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadings_RoomId_PeriodStart' AND object_id = OBJECT_ID(N'dbo.UtilityReadings'))
+    CREATE UNIQUE INDEX IX_UtilityReadings_RoomId_PeriodStart ON UtilityReadings(RoomId, PeriodStart);
+GO
+
+-- Lịch sử sửa chỉ số điện/nước (20261105044209_AddAuditUtilityPayment)
+IF OBJECT_ID(N'dbo.UtilityReadingAudits', N'U') IS NULL
+BEGIN
+    CREATE TABLE UtilityReadingAudits
+    (
+        Id INT IDENTITY(1,1) CONSTRAINT PK_UtilityReadingAudits PRIMARY KEY,  -- khóa chính, tự tăng
+        UtilityReadingId INT NOT NULL,  -- bản ghi chỉ số bị sửa, trỏ tới UtilityReadings.Id
+        OldElectricEnd DECIMAL(18,2) NOT NULL,  -- chỉ số điện cuối kỳ trước khi sửa
+        NewElectricEnd DECIMAL(18,2) NOT NULL,  -- chỉ số điện cuối kỳ sau khi sửa
+        OldWaterEnd DECIMAL(18,2) NOT NULL,  -- chỉ số nước cuối kỳ trước khi sửa
+        NewWaterEnd DECIMAL(18,2) NOT NULL,  -- chỉ số nước cuối kỳ sau khi sửa
+        Reason NVARCHAR(500) NOT NULL,  -- lý do sửa
+        ChangedByUserId NVARCHAR(450) NOT NULL,  -- người sửa, liên kết mềm tới AspNetUsers.Id
+        ChangedAt DATETIMEOFFSET NOT NULL,  -- thời điểm sửa
+        CONSTRAINT FK_UtilityReadingAudits_UtilityReadings_UtilityReadingId FOREIGN KEY (UtilityReadingId) REFERENCES UtilityReadings(Id)  -- Restrict: giữ lịch sử sửa
+    )
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_UtilityReadingAudits_UtilityReadingId' AND object_id = OBJECT_ID(N'dbo.UtilityReadingAudits'))
+    CREATE INDEX IX_UtilityReadingAudits_UtilityReadingId ON UtilityReadingAudits(UtilityReadingId);
+GO
+
 -- Nạp 21 công tắc mặc định (chạy lại không nhân đôi). Mặc định Duyệt, riêng SW-15* mặc định Cho phép.
 INSERT INTO ManagerToggles (Code, Mode, UpdatedAt, UpdatedByUserId)
 SELECT v.Code, v.Mode, CAST('2026-01-01T00:00:00+00:00' AS DATETIMEOFFSET), NULL
@@ -794,9 +1218,11 @@ GO
 -- khách → hợp đồng → hóa đơn, cộng dữ liệu tham chiếu bắt buộc (21 công tắc,
 -- biểu giá điện/nước, danh mục dịch vụ).
 -- KHÔNG nạp: UtilityBillingPeriodSnapshots / UtilityBillingCostLineSnapshots (chỉ sinh
--- khi chốt kỳ trên app), ManagerApprovalRequests (chỉ sinh khi Quản lý gửi thao tác) và
+-- khi chốt kỳ trên app), ManagerApprovalRequests (chỉ sinh khi Quản lý gửi thao tác),
 -- 3 bảng P7 MaintenanceIncidents / MaintenanceIncidentHistories / IncidentPhotoAttachments
--- (chỉ sinh khi báo sự cố trên app).
+-- (chỉ sinh khi báo sự cố trên app) và 9 bảng delta 3C (ContractRenewalRequests, Payments,
+-- PaymentProofs, PaymentAuditLogs, AuditLogEntries, UtilityReadings, UtilityReadingAudits,
+-- TenantInvitations, TenantOwnerLinks) — chỉ sinh khi chạy nghiệp vụ trên app.
 -- Tài khoản mẫu không có mật khẩu nên không đăng nhập được.
 -- ============================================================================
 IF NOT EXISTS (SELECT 1 FROM AspNetUsers WHERE Id = N'mau-chu-tro')
@@ -809,7 +1235,7 @@ BEGIN
 
     -- 2 nhà trọ của chủ trọ (Address được để trống)
     INSERT INTO Properties (Name, Address, OwnerId, IsActive, CreatedAt, IsDeleted)
-    VALUES (N'Trọ An Bình', N'12 Nguyễn Trãi, Quận 5, TP.HCM', N'mau-chu-tro', 1, SYSUTCDATETIME(), 0),
+    VALUES (N'Trọ An Bình', N'12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh', N'mau-chu-tro', 1, SYSUTCDATETIME(), 0),
            (N'Trọ Hoa Mai', NULL, N'mau-chu-tro', 1, SYSUTCDATETIME(), 0);
 
     -- 4 phòng (Status: 0 Trống, 1 Đang thuê, 2 Bảo trì; P101 dùng lại được ở nhà khác; Floor NULL = chưa xác định)
@@ -840,8 +1266,8 @@ BEGIN
     INSERT INTO ServiceCatalogs (PropertyId, IsReadOnly, CreatedAt) VALUES (NULL, 0, SYSUTCDATETIME());
     SET @svcWater = SCOPE_IDENTITY();
     INSERT INTO ServicePriceHistory (ServiceCatalogId, Name, Unit, CalculationMethod, UnitPrice, EffectiveDate, CreatedAt, CreatedByUserId)
-    VALUES (@svcElectric, N'Điện', N'kWh', N'Theo chỉ số đồng hồ', 3500, '2026-01-01', SYSUTCDATETIME(), 0),
-           (@svcWater, N'Nước', N'm³', N'Theo chỉ số đồng hồ', 15000, '2026-01-01', SYSUTCDATETIME(), 0);
+    VALUES (@svcElectric, N'Điện', N'kWh', N'Theo chỉ số đồng hồ', 3500, '2026-01-01', SYSUTCDATETIME(), N'mau-chu-tro'),
+           (@svcWater, N'Nước', N'm³', N'Theo chỉ số đồng hồ', 15000, '2026-01-01', SYSUTCDATETIME(), N'mau-chu-tro');
 
     -- 1 hợp đồng đã duyệt cho phòng P101 + khách đại diện (P4)
     DECLARE @contractA UNIQUEIDENTIFIER = '11111111-1111-1111-1111-111111111111';

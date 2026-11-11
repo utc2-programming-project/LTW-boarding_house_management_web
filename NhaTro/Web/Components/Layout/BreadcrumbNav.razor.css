@@ -1,0 +1,8 @@
+.breadcrumb-heading { margin-bottom: 0; }
+.breadcrumb-heading ol { align-items: center; row-gap: 4px; }
+.breadcrumb-heading li:last-child { flex-wrap: wrap; }
+.breadcrumb-heading h1 { margin: 0; font-size: 1.75rem; line-height: 1.2857; font-weight: 700; letter-spacing: -.02em; color: var(--text-primary); }
+.breadcrumb-heading h1[aria-current] { font-weight: 700; }
+@media (max-width: 640px) {
+    .breadcrumb-heading h1 { font-size: 1.5rem; line-height: 1.3333; letter-spacing: -.01em; }
+}

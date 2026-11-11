@@ -15,13 +15,14 @@ public static class PropertyMapping
         RoomCount = roomCount,
     };
 
-    public static PropertyDetail ToDetail(Property e) => new()
+    public static PropertyDetail ToDetail(Property e, int roomCount = 0) => new()
     {
         Id = e.Id,
         Name = e.Name,
         Address = e.Address,
         OwnerId = e.OwnerId,
         IsActive = e.IsActive,
+        RoomCount = roomCount,
         CreatedAt = e.CreatedAt,
         UpdatedAt = e.UpdatedAt,
     };

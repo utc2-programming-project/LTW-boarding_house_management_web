@@ -1,0 +1,18 @@
+@inject IStringLocalizer<Shared> L
+
+<span class="page-help">
+    <button type="button" class="page-help-button" aria-label="@AccessibleLabel"
+            aria-describedby="@DescriptionId" aria-controls="@DescriptionId" aria-expanded="false">
+        <LucideIcon Name="circle-help" />
+    </button>
+</span>
+
+@code {
+    /// <summary>Id dòng giải thích bên dưới tiêu đề, dùng chung cho static SSR và interactive.</summary>
+    [Parameter, EditorRequired] public string DescriptionId { get; set; } = string.Empty;
+
+    /// <summary>Nhãn truy cập cho nút; mặc định dùng key chung PageHelpLabel.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    private string AccessibleLabel => string.IsNullOrWhiteSpace(Label) ? L["PageHelpLabel"] : Label;
+}

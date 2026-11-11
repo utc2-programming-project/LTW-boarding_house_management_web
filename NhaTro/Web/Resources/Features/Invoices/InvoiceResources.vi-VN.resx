@@ -28,7 +28,28 @@
   <data name="FilterContract" xml:space="preserve"><value>Hợp đồng</value></data>
   <data name="AllContracts" xml:space="preserve"><value>Tất cả hợp đồng</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="RegisterServiceButton" xml:space="preserve"><value>Đăng ký dịch vụ</value></data>
+  <data name="CancelBtn" xml:space="preserve"><value>Hủy</value></data>
+  <data name="ManageRegistrationsButton" xml:space="preserve"><value>Quản lý đăng ký dịch vụ</value></data>
+  <data name="RegistrationHistoryButton" xml:space="preserve"><value>Lịch sử đăng ký</value></data>
+  <data name="RegisterServiceMonthlyNote" xml:space="preserve"><value>Dịch vụ tính theo tháng; 1 dịch vụ chỉ đăng ký 1 lần trong tháng.</value></data>
+  <data name="RegisterServiceSelect" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="RegisterServiceNote" xml:space="preserve"><value>Ghi chú (không bắt buộc)</value></data>
+  <data name="RegisterServiceSubmit" xml:space="preserve"><value>Gửi đăng ký dịch vụ</value></data>
+  <data name="RegisterServiceRequired" xml:space="preserve"><value>Vui lòng chọn dịch vụ.</value></data>
+  <data name="RegisterServiceSuccess" xml:space="preserve"><value>Đã gửi yêu cầu đăng ký dịch vụ. Vui lòng chờ chủ trọ xét duyệt.</value></data>
+  <data name="AllPaymentStates" xml:space="preserve"><value>Tất cả trạng thái thanh toán</value></data>
   <data name="AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="FilterKeyword" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="FilterKeywordPlaceholder" xml:space="preserve"><value>Mã hóa đơn, hợp đồng, phòng, nhà, khách thuê…</value></data>
+  <data name="FilterPaymentState" xml:space="preserve"><value>Trạng thái thanh toán</value></data>
+  <data name="PaymentStateAll" xml:space="preserve"><value>Tất cả tình trạng thu</value></data>
+  <data name="PaymentStateUnpaid" xml:space="preserve"><value>Chưa thanh toán</value></data>
+  <data name="PaymentStatePartial" xml:space="preserve"><value>Thu một phần</value></data>
+  <data name="PaymentStatePaid" xml:space="preserve"><value>Đã thanh toán</value></data>
+  <data name="FilterMinAmount" xml:space="preserve"><value>Số tiền từ</value></data>
+  <data name="FilterMaxAmount" xml:space="preserve"><value>Số tiền đến</value></data>
+  <data name="AmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
   <data name="ResetFilter" xml:space="preserve"><value>Xóa lọc</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Nháp</value></data>
@@ -61,9 +82,29 @@
   <data name="DetailHeading" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
   <data name="DetailSubtitle" xml:space="preserve"><value>Thông tin hóa đơn và các khoản đã chốt.</value></data>
   <data name="BackToList" xml:space="preserve"><value>Danh sách hóa đơn</value></data>
+  <data name="IssueButton" xml:space="preserve"><value>Phát hành hóa đơn</value></data>
+  <data name="SendBillButton" xml:space="preserve"><value>Gửi bill đến khách hàng</value></data>
+  <data name="SendBillSuccess" xml:space="preserve"><value>Đã gửi hóa đơn đến khách hàng.</value></data>
+  <data name="CreateQrButton" xml:space="preserve"><value>Tạo mã QR</value></data>
+  <data name="RegenerateQrButton" xml:space="preserve"><value>Tạo lại mã QR</value></data>
+  <data name="QrRemainingInstruction" xml:space="preserve"><value>còn hiệu lực</value></data>
+  <data name="QrExpired" xml:space="preserve"><value>Mã QR đã hết hạn (30 phút). Vui lòng tạo lại mã mới.</value></data>
+  <data name="QrNote" xml:space="preserve"><value>Mã QR tự động điền số tiền cần đóng (không chỉnh sửa được) và có hiệu lực 30 phút.</value></data>
+  <data name="QrExpiresAt" xml:space="preserve"><value>Hiệu lực đến</value></data>
+  <data name="IssuingButton" xml:space="preserve"><value>Đang phát hành…</value></data>
+  <data name="IssueSuccess" xml:space="preserve"><value>Đã phát hành hóa đơn.</value></data>
+  <data name="IssueFailed" xml:space="preserve"><value>Không thể phát hành hóa đơn. Vui lòng thử lại.</value></data>
   <data name="DetailPeriod" xml:space="preserve"><value>Kỳ hóa đơn</value></data>
   <data name="DetailCreatedAt" xml:space="preserve"><value>Ngày lập</value></data>
   <data name="DetailIssuedAt" xml:space="preserve"><value>Ngày phát hành</value></data>
+  <data name="DetailDueDate" xml:space="preserve"><value>Hạn thanh toán</value></data>
+  <data name="DetailPaymentStatus" xml:space="preserve"><value>Trạng thái thanh toán</value></data>
+  <data name="QrTitle" xml:space="preserve"><value>Thanh toán bằng mã QR</value></data>
+  <data name="QrBank" xml:space="preserve"><value>Tài khoản nhận tiền</value></data>
+  <data name="QrContent" xml:space="preserve"><value>Nội dung chuyển khoản</value></data>
+  <data name="PaymentStatePendingConfirmation" xml:space="preserve"><value>Chờ chủ trọ xác nhận</value></data>
+  <data name="PaymentStateRejected" xml:space="preserve"><value>Minh chứng không hợp lệ</value></data>
+  <data name="PaymentStateExpired" xml:space="preserve"><value>Đã quá hạn</value></data>
   <data name="DetailContract" xml:space="preserve"><value>Hợp đồng</value></data>
   <data name="DetailRoom" xml:space="preserve"><value>Phòng</value></data>
   <data name="DetailProperty" xml:space="preserve"><value>Nhà trọ</value></data>
@@ -167,6 +208,11 @@
   <data name="ReviewStatPendingAmount" xml:space="preserve"><value>Tiền đang chờ</value></data>
   <data name="ReviewFilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="ReviewAllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="ReviewFilterKeyword" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="ReviewFilterKeywordPlaceholder" xml:space="preserve"><value>Mã yêu cầu, hóa đơn, phòng, nhà, khách thuê…</value></data>
+  <data name="ReviewFilterMinAmount" xml:space="preserve"><value>Số tiền từ</value></data>
+  <data name="ReviewFilterMaxAmount" xml:space="preserve"><value>Số tiền đến</value></data>
+  <data name="ReviewAmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
   <data name="ReviewRefresh" xml:space="preserve"><value>Làm mới</value></data>
   <data name="ReviewThRequest" xml:space="preserve"><value>Yêu cầu</value></data>
   <data name="ReviewThInvoice" xml:space="preserve"><value>Hóa đơn</value></data>

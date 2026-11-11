@@ -102,7 +102,7 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
         Assert.Equal(before, await CountContractsAsync());
     }
 
-    /// <summary>Ô E24 ✅: Chủ trọ tạo hợp đồng, trạng thái khởi tạo là Chờ duyệt.</summary>
+    /// <summary>Ô E24 ✅: Chủ trọ tạo hợp đồng, có hiệu lực ngay (D4: không qua Chờ duyệt).</summary>
     [SqlServerFact]
     public async Task Cell_E24_OP23_ChuTro_IsAllowed()
     {
@@ -111,8 +111,8 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
         var created = await NewContracts(db).CreateContractAsync(
             NewRequest(data.RoomFreeId, data.TenantAId), OwnerA);
 
-        Assert.Equal(ContractStatus.Pending, created.Status);
-        Assert.Equal(ContractStatus.Pending, await StatusAsync(created.ContractId));
+        Assert.Equal(ContractStatus.Approved, created.Status);
+        Assert.Equal(ContractStatus.Approved, await StatusAsync(created.ContractId));
     }
 
     /// <summary>
@@ -156,8 +156,10 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
 
     /// <summary>
     /// Ô E25 ✅: Chủ trọ tự tạo rồi tự quyết định được (D4), cả hai nhánh, và hiệu lực ghi thật vào DB.
-    /// Nhánh từ chối chạy trước vì hợp đồng Rejected không chiếm phòng (ContractService chỉ chặn
-    /// Pending/Approved), nên cùng phòng+khách vẫn tạo được hợp đồng thứ hai để duyệt.
+    /// Hợp đồng chờ duyệt được tạo bởi Quản lý (D4: hợp đồng của Chủ trọ có hiệu lực ngay nên
+    /// không còn bản ghi Chờ duyệt do Chủ trọ tạo). Nhánh từ chối chạy trước vì hợp đồng Rejected
+    /// không chiếm phòng (ContractService chỉ chặn Pending/Approved), nên cùng phòng+khách vẫn
+    /// tạo được hợp đồng thứ hai để duyệt.
     /// </summary>
     [SqlServerFact]
     public async Task Cell_E25_OP24_ChuTro_IsAllowed()
@@ -166,7 +168,7 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
         await using var _ = db;
         var contracts = NewContracts(db);
 
-        var toReject = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), OwnerA);
+        var toReject = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), Manager);
         var rejected = await contracts.ApproveContractAsync(
             toReject.ContractId,
             new ApproveContractRequestDto { IsApproved = false, RejectReason = "Khách chưa đủ giấy tờ" },
@@ -175,7 +177,7 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
         Assert.Equal(ContractStatus.Rejected, rejected.Status);
         Assert.Equal(ContractStatus.Rejected, await StatusAsync(toReject.ContractId));
 
-        var toApprove = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), OwnerA);
+        var toApprove = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), Manager);
         var approved = await contracts.ApproveContractAsync(
             toApprove.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerA);
 
@@ -233,7 +235,8 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
         var (db, data) = await SeedAsync();
         await using var _ = db;
         var contracts = NewContracts(db);
-        var created = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), OwnerA);
+        // D4: hợp đồng do Chủ trọ tạo đã có hiệu lực ngay; tạo bằng Quản lý để có bản ghi Chờ duyệt.
+        var created = await contracts.CreateContractAsync(NewRequest(data.RoomFreeId, data.TenantAId), Manager);
 
         await Assert.ThrowsAsync<ContractAuthorizationException>(() => contracts.ApproveContractAsync(
             created.ContractId, new ApproveContractRequestDto { IsApproved = true }, caller));
@@ -333,10 +336,9 @@ public sealed class PermissionMatrixContractsTests(SqlServerFixture fixture)
     private async Task<Guid> CreateApprovedContractAsync(
         ContractService contracts, int roomId, int tenantId, PropertyCaller caller)
     {
+        // D4: hợp đồng do Chủ trọ tạo được duyệt ngay, không còn bước chờ duyệt.
         var created = await contracts.CreateContractAsync(NewRequest(roomId, tenantId), caller);
-        var approved = await contracts.ApproveContractAsync(
-            created.ContractId, new ApproveContractRequestDto { IsApproved = true }, caller);
-        Assert.Equal(ContractStatus.Approved, approved.Status);
+        Assert.Equal(ContractStatus.Approved, created.Status);
         return created.ContractId;
     }
 

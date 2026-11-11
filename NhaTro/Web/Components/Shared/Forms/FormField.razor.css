@@ -13,7 +13,7 @@
     font-size: 14px;
     line-height: 20px;
     font-weight: 500;
-    color: var(--text-primary, #0D131B);
+    color: var(--text-primary);
 }
 
 .label-heading {
@@ -30,21 +30,21 @@
 
 .required {
     margin-left: 4px;
-    color: var(--error-text, #B91C1C);
+    color: var(--error-text);
 }
 
 .hint {
     margin-top: 4px;
     font-size: 12px;
     line-height: 18px;
-    color: var(--text-secondary, #475569);
+    color: var(--text-secondary);
 }
 
 .error ::deep .validation-message {
     margin-top: 4px;
     font-size: 12px;
     line-height: 18px;
-    color: var(--error-text, #B91C1C);
+    color: var(--error-text);
 }
 
 /* Ô nhập nằm trong ChildContent nên cần ::deep để áp dụng style của field.
@@ -54,10 +54,10 @@
     width: 100%;
     height: 44px;
     padding: 0 12px;
-    border: 1px solid var(--control-border, #64748B);
+    border: 1px solid var(--control-border);
     border-radius: 8px;
-    background: var(--surface, #FFFFFF);
-    color: var(--text-primary, #0D131B);
+    background: var(--surface);
+    color: var(--text-primary);
     font-family: inherit;
     font-size: 14px;
     line-height: 22px;
@@ -72,16 +72,16 @@
 }
 
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):hover {
-    border-color: var(--border-hover, #475569);
+    border-color: var(--border-hover);
 }
 
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea)[readonly] {
-    background: var(--surface-subtle, #F1F5F9);
+    background: var(--surface-subtle);
 }
 
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):disabled {
-    background: var(--disabled-bg, #F1F5F9);
-    color: var(--text-disabled, #94A3B8);
+    background: var(--disabled-bg);
+    color: var(--text-disabled);
 }
 
 /* Bỏ viền xanh "valid.modified" mặc định của template (app.css) khi không focus. */
@@ -90,13 +90,13 @@
 }
 
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
-    outline: 2px solid var(--focus-ring, #4F46E5);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
 /* Blazor thêm class "invalid" khi trường có lỗi. */
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea).invalid {
-    border-color: var(--error-text, #B91C1C);
+    border-color: var(--error-text);
 }
 
 .field ::deep :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea).invalid:not(:focus-visible) {

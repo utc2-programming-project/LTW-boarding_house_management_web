@@ -160,6 +160,55 @@ public sealed class PaymentReviewQueryIntegrationTests(SqlServerFixture fixture)
         Assert.Equal(0m, reviewed.PaidAmount);
     }
 
+    [SqlServerFact]
+    public async Task Loc_tu_khoa_ky_va_khoang_so_tien()
+    {
+        var data = await SeedAsync();
+
+        var octoberInvoice = await CreateInvoiceAsync(
+            data.ContractAId,
+            data.ChuTroAId,
+            new DateOnly(Year, 10, 1),
+            new DateOnly(Year, 10, 31));
+        var novemberInvoice = await CreateInvoiceAsync(
+            data.ContractAId,
+            data.ChuTroAId,
+            new DateOnly(Year, 11, 1),
+            new DateOnly(Year, 11, 30));
+
+        var octoberPayment = await SubmitAsync(data, octoberInvoice, "FT-FILTER-OCT");
+        var novemberPayment = await SubmitAsync(data, novemberInvoice, "FT-FILTER-NOV");
+
+        await using var db = fixture.CreateContext();
+        var service = new PaymentReviewQueryService(db);
+
+        var byRequest = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, Keyword = $"YC-{novemberPayment}" },
+            OwnerA(data));
+        var byInvoice = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, Keyword = $"HD-{octoberInvoice}" },
+            OwnerA(data));
+        var byRoom = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, Keyword = TestDataSeeder.RoomACode },
+            OwnerA(data));
+        var byTenant = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, Keyword = "Khách thuê A" },
+            OwnerA(data));
+        var byPeriod = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, Year = Year, Month = 10 },
+            OwnerA(data));
+        var byAmount = await service.GetRequestsAsync(
+            new PaymentReviewFilter { Status = null, MinAmount = Total, MaxAmount = Total },
+            OwnerA(data));
+
+        Assert.Equal([novemberPayment], byRequest.Items.Select(item => item.Payment.Id));
+        Assert.Equal([octoberPayment], byInvoice.Items.Select(item => item.Payment.Id));
+        Assert.Equal(2, byRoom.TotalCount);
+        Assert.Equal(2, byTenant.TotalCount);
+        Assert.Equal([octoberPayment], byPeriod.Items.Select(item => item.Payment.Id));
+        Assert.Equal(2, byAmount.TotalCount);
+    }
+
     private static PropertyCaller OwnerA(SeedData data) =>
         new(data.ChuTroAId, Roles.ChuTro);
 

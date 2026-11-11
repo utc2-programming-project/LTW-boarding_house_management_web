@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using Web.Features.Accounts;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
+using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.DTOs;
@@ -182,6 +184,10 @@ public sealed class ServiceCatalogPageService(
                     BuildingName = T("AllBuildings"),
                     Description = activeTariff.SourceName,
                     HistoryCount = activeTariff.Tiers.Count,
+                    Tiers = activeTariff.Tiers
+                        .OrderBy(tier => tier.TierNumber)
+                        .Select(tier => new ServiceTierRowDto(tier.TierNumber, tier.From, tier.To, tier.UnitPrice))
+                        .ToList(),
                 };
             }).ToList();
 
@@ -324,7 +330,9 @@ public sealed class ServiceCatalogPageService(
         var catalogs = await catalogService.GetServiceCatalogsAsync(caller);
 
         var userIds = catalogs.SelectMany(c => c.PriceHistory).Select(v => v.CreatedByUserId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
-        var userMap = await db.Users.AsNoTracking().Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—"), ct);
+        var userMap = await db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : "—", ct);
 
         foreach (var catalog in catalogs)
         {
@@ -338,7 +346,7 @@ public sealed class ServiceCatalogPageService(
 
             foreach (var version in catalog.PriceHistory)
             {
-                var creatorName = !string.IsNullOrEmpty(version.CreatedByUserId) && userMap.TryGetValue(version.CreatedByUserId, out var name) ? name : (version.CreatedByUserId ?? "—");
+                var creatorName = !string.IsNullOrEmpty(version.CreatedByUserId) && userMap.TryGetValue(version.CreatedByUserId, out var name) ? name : "—";
                 list.Add(MapToPriceVersionDto(catalog, version, buildingScope, buildingName, Today, creatorName));
             }
         }
@@ -388,6 +396,79 @@ public sealed class ServiceCatalogPageService(
 
         return result;
     }
+
+    /// <summary>
+    /// PLAN-012: tổng hợp tình trạng giá của một nhà trọ cho bước thiết lập giá.
+    /// </summary>
+    public async Task<PropertyPriceSetupStatusDto> GetPriceSetupStatusAsync(
+        int propertyId, CancellationToken ct = default)
+    {
+        var services = await GetServicesForCallerAsync(ct: ct);
+        var buildingId = propertyId.ToString(CultureInfo.InvariantCulture);
+
+        var propertyServices = services
+            .Where(service => service.BuildingId == buildingId
+                && service.Active
+                && service.PriceStatus == PriceVersionStatus.Active)
+            .OrderBy(service => service.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        var electric = services.FirstOrDefault(service => IsSystemTariff(service, "TRF-E"));
+        var water = services.FirstOrDefault(service => IsSystemTariff(service, "TRF-W"));
+
+        var buildings = await GetBuildingsForCallerAsync(ct);
+        var copySources = buildings
+            .Where(building => building.Id != "all" && building.Id != buildingId)
+            .ToArray();
+
+        return new PropertyPriceSetupStatusDto(
+            propertyId,
+            electric is not null,
+            electric?.CurrentRate,
+            electric?.Unit,
+            electric?.EffectiveFrom,
+            water is not null,
+            water?.CurrentRate,
+            water?.Unit,
+            water?.EffectiveFrom,
+            propertyServices,
+            copySources);
+    }
+
+    /// <summary>
+    /// PLAN-012: sao chép danh mục/giá đang hiệu lực từ nhà trọ nguồn sang nhà trọ đích.
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage, int Copied, int Skipped)> CopyPricesAsync(
+        int sourcePropertyId, int targetPropertyId, CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        if (!caller.IsChuTro)
+        {
+            return (false, T("ErrorOwnerOnlyService"), 0, 0);
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            var result = await catalogService.CopyPricesFromPropertyAsync(
+                sourcePropertyId, targetPropertyId, caller, ct);
+            return (true, null, result.Copied, result.Skipped);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to copy service prices.");
+            return (false, LocalizeFailure(ex), 0, 0);
+        }
+    }
+
+    private static bool IsSystemTariff(ServiceItemDto service, string codePrefix) =>
+        service.Id.StartsWith("tariff-", StringComparison.OrdinalIgnoreCase)
+        && service.Code.StartsWith(codePrefix, StringComparison.OrdinalIgnoreCase);
 
     public async Task<IReadOnlyList<BuildingOptionDto>> GetEditableBuildingScopesAsync(
         ServiceItemDto service, CancellationToken ct = default)
@@ -588,7 +669,7 @@ public sealed class ServiceCatalogPageService(
 
             var buildingScope = verified.PropertyId.HasValue ? verified.PropertyId.Value.ToString() : "all";
             var creatorUser = !string.IsNullOrEmpty(verifiedVersion.CreatedByUserId)
-                ? await db.Users.AsNoTracking().Where(u => u.Id == verifiedVersion.CreatedByUserId).Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—")).FirstOrDefaultAsync(ct)
+                ? await db.Users.AsNoTracking().Where(u => u.Id == verifiedVersion.CreatedByUserId).Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : "—").FirstOrDefaultAsync(ct)
                 : "—";
             var versionDto = MapToPriceVersionDto(verified, verifiedVersion, buildingScope, propName, Today, creatorUser);
             return (true, null, versionDto);
@@ -747,13 +828,14 @@ public sealed class ServiceCatalogPageService(
 
                 if (contractMember.Count > 0)
                 {
-                    var now = time.UtcNow();
+                    var vnToday = time.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+                    var vnTomorrow = vnToday.AddDays(1);
                     var activeRoomIds = await db.Contracts
                         .AsNoTracking()
                         .Where(c => contractMember.Contains(c.ContractId)
                             && c.Status == ContractStatus.Approved
-                            && c.StartDate <= now
-                            && c.EndDate >= now)
+                            && c.StartDate < vnTomorrow
+                            && c.EndDate >= vnToday)
                         .Select(c => c.RoomId)
                         .ToListAsync(ct);
 
@@ -832,7 +914,7 @@ public sealed class ServiceCatalogPageService(
             BuildingScope = buildingScope,
             BuildingName = buildingName,
             CreatedAt = version.CreatedAt,
-            CreatedBy = !string.IsNullOrWhiteSpace(creatorName) ? creatorName : (!string.IsNullOrWhiteSpace(version.CreatedByUserId) ? version.CreatedByUserId : "—"),
+            CreatedBy = !string.IsNullOrWhiteSpace(creatorName) ? creatorName : "—",
             Note = string.IsNullOrWhiteSpace(version.Note) ? "—" : version.Note,
             IsSessionCreated = false,
         };

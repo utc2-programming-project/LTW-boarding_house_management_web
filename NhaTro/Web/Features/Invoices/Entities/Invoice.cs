@@ -20,6 +20,12 @@ public sealed class Invoice
 
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
 
+    /// <summary>Hạn thanh toán; null nghĩa là không áp hạn (hiển thị không quá hạn).</summary>
+    public DateOnly? DueDate { get; set; }
+
+    /// <summary>Yêu cầu đăng ký dịch vụ mà hóa đơn này được tạo từ (nếu có).</summary>
+    public int? RegistrationId { get; set; }
+
     /// <summary>Tổng hóa đơn VND, bằng tổng thành tiền các dòng đã làm tròn.</summary>
     public decimal TotalAmount { get; set; }
 

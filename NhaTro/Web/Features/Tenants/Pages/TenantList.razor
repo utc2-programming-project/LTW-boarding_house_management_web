@@ -1,42 +1,40 @@
 @page "/tenants"
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject IJSRuntime JS
 @inject TenantPageService TenantPages
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
+@using Web.Infrastructure.Time
+@inject TimeProvider Clock
 
 <PageTitle>@L["TenantsTitle"] · @L["AppName"]</PageTitle>
 
 <section class="tenant-list-page" aria-labelledby="tenants-title">
-    <header class="tenant-page-heading">
-        <div>
-            <NavBreadcrumb />
-            <div class="tenant-title-row">
-                <h1 id="tenants-title">@L["TenantsTitle"]</h1>
-            </div>
-            <p>@L["TenantsSubtitle"]</p>
-        </div>
-        <div class="tenant-page-actions">
-            @if (_canRevealIdNumber)
-            {
-                <a class="btn btn-secondary" href="/tenants/trash">
-                    <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
-                </a>
-                <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
-                    @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
-                    else { <LucideIcon Name="download" /> }
-                    @L["TenantExport"]
+    <PageHeading Title="@L["TenantsTitle"]" TitleId="tenants-title" HelpText="@L["TenantsSubtitle"]">
+        <Actions>
+            <div class="tenant-page-actions">
+                @if (_canRevealIdNumber)
+                {
+                    <a class="btn btn-secondary" href="/tenants/trash">
+                        <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
+                    </a>
+                    <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
+                        @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
+                        else { <LucideIcon Name="download" /> }
+                        @L["TenantExport"]
+                    </button>
+                }
+                <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
+                    <LucideIcon Name="mail" /> @L["InviteTenantButton"]
                 </button>
-            }
-            <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
-                <LucideIcon Name="mail" /> @L["InviteTenantButton"]
-            </button>
-            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
-                <LucideIcon Name="plus" /> @L["TenantAdd"]
-            </button>
-        </div>
-    </header>
+                <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" /> @L["TenantAdd"]
+                </button>
+            </div>
+        </Actions>
+    </PageHeading>
 
     @if (_summaryError)
     {
@@ -91,8 +89,8 @@
             <div class="tenant-search-field">
                 <label class="sr-only" for="tenant-search">@L["TenantSearch"]</label>
                 <span class="tenant-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-                <InputText id="tenant-search" class="input" @bind-Value="_keyword" @bind-Value:after="ResetTableAsync"
-                           placeholder="@L["TenantSearchHint"]" autocomplete="off" />
+                <input id="tenant-search" class="input" @bind="_keyword" @bind:event="oninput" @bind:after="OnKeywordChangedAsync"
+                       placeholder="@L["TenantSearchHint"]" autocomplete="off" />
             </div>
             <div class="tenant-filter-select">
                 <label class="sr-only" for="tenant-status-filter">@L["TenantStatusFilter"]</label>
@@ -121,20 +119,12 @@
                     <option value="not-renting">@L["TenantRentalNone"]</option>
                 </select>
             </div>
-            <div class="tenant-filter-select tenant-sort-select">
-                <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
+            <div class="tenant-filter-select tenant-sort-select tenant-labeled-select">
+                <label class="tenant-inline-label" for="tenant-sort-filter">@L["TenantSort"]</label>
                 <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
                     <option value="created">@L["TenantSortCreatedDesc"]</option>
                     <option value="name-asc">@L["TenantSortNameAsc"]</option>
                     <option value="name-desc">@L["TenantSortNameDesc"]</option>
-                </select>
-            </div>
-            <div class="tenant-filter-select tenant-page-size">
-                <label class="sr-only" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
-                <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
                 </select>
             </div>
             <button type="button" class="btn btn-secondary tenant-reset-button" @onclick="ResetFiltersAsync">
@@ -157,6 +147,15 @@
             </button>
         </EmptyActions>
     </DataTable>
+
+    <div class="tenant-table-options">
+        <label for="tenant-page-size">@L["TenantRowsPerPage"]</label>
+        <select id="tenant-page-size" value="@_pageSize" @onchange="ChangePageSizeAsync">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+        </select>
+    </div>
 </section>
 
 <TenantDetailsDialog Visible="_showDetails" Tenant="_selectedTenant" CanManage="true"
@@ -186,6 +185,7 @@
 
 @code {
     private const int ExportPageSize = 100;
+    private CancellationTokenSource? _keywordDebounce;
     private DataTable<TenantListItemDto>? _table;
     private IReadOnlyList<DataTableColumn<TenantListItemDto>> _columns = [];
     private TenantListSummaryDto? _summary;
@@ -199,6 +199,7 @@
     private int _pageSize = 20;
     private int _tableKey;
     private bool _canRevealIdNumber;
+    private int? _openMenuId;
     private bool _summaryError;
     private bool _exporting;
     private bool _loadingDetail;
@@ -231,6 +232,10 @@
                     <span class="tenant-name-text">
                         <button type="button" class="tenant-name-button" @onclick="() => OpenDetailsAsync(tenant.Id)">@tenant.FullName</button>
                         <small>@string.Format(L["TenantRecordNumber"], tenant.Id)</small>
+                        @if (tenant.HasPendingApproval)
+                        {
+                            <StatusBadge Text="@L["P2ApprovalPending"]" Tone="@BadgeTone.Warning" />
+                        }
                     </span>
                 </div>,
             },
@@ -276,27 +281,34 @@
         {
             Key = "actions",
             Title = L["TenantColumnActions"],
-            Template = tenant => @<span class="tenant-row-actions">
-                <button type="button" class="tenant-icon-button" title="@L["TenantViewDetails"]"
-                        aria-label="@L["TenantViewDetails"]: @tenant.FullName" @onclick="() => OpenDetailsAsync(tenant.Id)">
-                    <LucideIcon Name="eye" />
+            Template = tenant => @<div class="p2-row-actions">
+                <button type="button" class="tenant-icon-button p2-menu-trigger @(IsMenuOpen(tenant.Id) ? "is-open" : null)"
+                        title="@L["TenantColumnActions"]" aria-label="@($"{L["TenantColumnActions"]}: {tenant.FullName}")"
+                        aria-haspopup="menu" aria-expanded="@(IsMenuOpen(tenant.Id) ? "true" : "false")"
+                        aria-controls="@($"tenant-row-menu-{tenant.Id}")"
+                        @onclick="() => ToggleRowMenu(tenant.Id)">
+                    <LucideIcon Name="ellipsis" />
                 </button>
-                <button type="button" class="tenant-icon-button" title="@L["TenantEdit"]"
-                        aria-label="@L["TenantEdit"]: @tenant.FullName" @onclick="() => OpenEditFromListAsync(tenant.Id)">
-                    <LucideIcon Name="pen" />
-                </button>
-                <button type="button" class="tenant-icon-button @(tenant.IsActive ? "tenant-icon-danger" : "tenant-icon-success")"
-                        title="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"])"
-                        aria-label="@(tenant.IsActive ? L["TenantDeactivate"] : L["TenantActivate"]): @tenant.FullName"
-                        @onclick="() => OpenStatusFromListAsync(tenant.Id, !tenant.IsActive)">
-                    <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
-                </button>
-                <button type="button" class="tenant-icon-button tenant-icon-danger"
-                        title="@L["TenantDelete"]" aria-label="@L["TenantDelete"]: @tenant.FullName"
-                        @onclick="() => OpenDeleteFromListAsync(tenant.Id)">
-                    <LucideIcon Name="trash" />
-                </button>
-            </span>,
+                @if (IsMenuOpen(tenant.Id))
+                {
+                    <div id="@($"tenant-row-menu-{tenant.Id}")" class="p2-row-menu" role="menu" aria-label="@L["TenantColumnActions"]" data-row-menu>
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuDetailsAsync(tenant)">
+                            <LucideIcon Name="eye" /><span>@L["TenantViewDetails"]</span>
+                        </button>
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuEditAsync(tenant)">
+                            <LucideIcon Name="pen" /><span>@L["TenantEdit"]</span>
+                        </button>
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuStatusAsync(tenant)">
+                            <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
+                            <span>@(tenant.IsActive ? L["TenantDeactivateButton"] : L["TenantActivateButton"])</span>
+                        </button>
+                        <div class="p2-row-menu-sep" role="separator"></div>
+                        <button class="p2-row-menu-item danger" type="button" role="menuitem" @onclick="() => MenuDeleteAsync(tenant)">
+                            <LucideIcon Name="trash" /><span>@L["TenantDelete"]</span>
+                        </button>
+                    </div>
+                }
+            </div>,
         });
 
         _columns = columns;
@@ -304,6 +316,7 @@
 
     private async Task<Web.Common.Models.PagedResult<TenantListItemDto>> LoadTenantsAsync(DataTableRequest request)
     {
+        _openMenuId = null;
         var filter = new TenantFilterRequest
         {
             Keyword = _keyword,
@@ -331,10 +344,41 @@
         }
     }
 
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+    }
+
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            await ResetTableAsync();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
     private async Task ResetTableAsync()
     {
         _tableKey++;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangePageSizeAsync(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            await ResetTableAsync();
+        }
     }
 
     private async Task ResetFiltersAsync()
@@ -353,13 +397,15 @@
         || !string.IsNullOrEmpty(_accountFilter)
         || !string.IsNullOrEmpty(_rentalFilter);
 
-    private Task ClearTenantFiltersAsync()
+    private async Task ClearTenantFiltersAsync()
     {
         _keyword = null;
         _statusFilter = string.Empty;
         _accountFilter = string.Empty;
         _rentalFilter = string.Empty;
-        return Task.CompletedTask;
+        _sortFilter = "created";
+        // Tạo lại bảng để xoá cả trạng thái sort nội bộ (mũi tên trên header) và về trang 1.
+        await ResetTableAsync();
     }
 
     private void OpenCreate()
@@ -375,6 +421,13 @@
         _showInvite = false;
         return Task.CompletedTask;
     }
+
+    private bool IsMenuOpen(int id) => _openMenuId == id;
+    private void ToggleRowMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
+    private async Task MenuDetailsAsync(TenantListItemDto tenant) { _openMenuId = null; await OpenDetailsAsync(tenant.Id); }
+    private async Task MenuEditAsync(TenantListItemDto tenant) { _openMenuId = null; await OpenEditFromListAsync(tenant.Id); }
+    private async Task MenuStatusAsync(TenantListItemDto tenant) { _openMenuId = null; await OpenStatusFromListAsync(tenant.Id, !tenant.IsActive); }
+    private async Task MenuDeleteAsync(TenantListItemDto tenant) { _openMenuId = null; await OpenDeleteFromListAsync(tenant.Id); }
 
     private async Task OpenEditFromListAsync(int id)
     {
@@ -503,6 +556,14 @@
         }
         if (!result.Succeeded)
         {
+            if (result.ErrorCode == TenantErrorCodes.ApprovalRequired)
+            {
+                // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
+                Toasts.Success(L["TenantStatusApprovalSubmitted"]);
+                await RefreshAsync();
+                return;
+            }
+
             Toasts.Error(ErrorMessage(result.ErrorCode));
             if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
             {
@@ -610,6 +671,8 @@
             {
                 // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
                 Toasts.Success(L["TenantDeleteApprovalSubmitted"]);
+                // Nạp lại để badge "Chờ duyệt" xuất hiện ngay trên dòng vừa xoá.
+                await RefreshAsync();
                 return;
             }
 
@@ -646,7 +709,8 @@
             }
 
             var content = TenantCsvExporter.Build(rows, _canRevealIdNumber, key => L[key]);
-            var fileName = $"tenants_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            var exportNow = VietnamTime.ToVietnam(Clock.GetUtcNow().UtcDateTime);
+            var fileName = $"tenants_{exportNow:yyyyMMdd_HHmm}.csv";
             await JS.InvokeVoidAsync("appTenantExport.download", fileName, content);
             Toasts.Success(string.Format(L["TenantExported"], rows.Count));
         }
@@ -688,6 +752,7 @@
         TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
         TenantErrorCodes.TenantInUse => L["TenantErrorInUse"],
         TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
+        TenantErrorCodes.ApprovalRequired => L["TenantErrorApprovalRequired"],
         _ => L["TenantErrorGeneric"],
     };
 

@@ -30,6 +30,11 @@ public static class UtilityReadingErrorCodes
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
+    public const string ConcurrencyConflict = nameof(ConcurrencyConflict);
+    public const string NoChange = nameof(NoChange);
+    public const string TariffMissing = nameof(TariffMissing);
+    public const string DuplicatePeriod = nameof(DuplicatePeriod);
+    public const string SaveFailed = nameof(SaveFailed);
 }
 
 public sealed class UtilityReadingAuthorizationException(string message, string errorCode)
@@ -58,6 +63,7 @@ public sealed class UtilityReadingNotFoundException(string message, string error
 public sealed class UtilityReadingService(
     ApplicationDbContext db,
     TimeProvider clock,
+    UtilityPeriodCostSnapshotService costSnapshots,
     IManagerTogglePolicy? togglePolicy = null,
     IManagerApprovalService? approvals = null)
 {
@@ -231,6 +237,13 @@ public sealed class UtilityReadingService(
                 UtilityReadingErrorCodes.InvalidReading);
         }
 
+        if (request.ElectricEnd == reading.ElectricEnd && request.WaterEnd == reading.WaterEnd)
+        {
+            throw new UtilityReadingException(
+                "Chỉ số mới trùng với chỉ số cũ, không có gì để điều chỉnh.",
+                UtilityReadingErrorCodes.NoChange);
+        }
+
         if (caller.IsQuanLy)
         {
             var decision = togglePolicy is null
@@ -246,15 +259,60 @@ public sealed class UtilityReadingService(
 
             if (decision == RoomChangeDecision.RequiresApproval)
             {
+                if (db.Database.CurrentTransaction is not null)
+                {
+                    throw new UtilityReadingException(
+                        "Không thể tạo yêu cầu duyệt khi điều chỉnh đang nằm trong transaction của caller.",
+                        UtilityReadingErrorCodes.ApprovalFailed);
+                }
                 await CreateApprovalRequestAsync(reading, request, reason, caller, cancellationToken);
+                // Lưu yêu cầu duyệt trước khi báo ApprovalRequired; chỉ số chưa thay đổi.
+                await db.SaveChangesAsync(cancellationToken);
                 throw new UtilityReadingException(
                     "Sửa chỉ số đang chờ Chủ trọ duyệt.",
                     UtilityReadingErrorCodes.ApprovalRequired);
             }
         }
 
-        Apply(reading, request, reason, caller.UserId);
-        await db.SaveChangesAsync(cancellationToken);
+        var ownsTransaction = db.Database.CurrentTransaction is null;
+        await using var transaction = ownsTransaction
+            ? await db.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+        try
+        {
+            Apply(reading, request, caller.UserId, clock.UtcNow());
+            try
+            {
+                await costSnapshots.RefreshAsync(db, reading.Id, cancellationToken);
+            }
+            catch (UtilityTariffUnavailableException exception)
+            {
+                throw new UtilityReadingException(exception.Message, UtilityReadingErrorCodes.TariffMissing);
+            }
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new UtilityReadingException(
+                    "Chỉ số này vừa được người khác cập nhật. Vui lòng tải lại trang và thử lại.",
+                    UtilityReadingErrorCodes.ConcurrencyConflict);
+            }
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+        }
+        catch
+        {
+            // DbContext scoped của Blazor giữ entity sau rollback; không để lần thử lại dùng audit cũ.
+            if (ownsTransaction)
+            {
+                db.ChangeTracker.Clear();
+            }
+            throw;
+        }
         return ToDto(reading);
     }
 
@@ -270,11 +328,12 @@ public sealed class UtilityReadingService(
             throw Forbidden();
         }
 
-        var reading = await LoadInScopeAsync(readingId, caller, cancellationToken);
+        await EnsureReadingInScopeAsync(readingId, caller, cancellationToken);
 
         return await db.Set<UtilityReadingAudit>().AsNoTracking()
-            .Where(audit => audit.UtilityReadingId == reading.Id)
+            .Where(audit => audit.UtilityReadingId == readingId)
             .OrderByDescending(audit => audit.ChangedAt)
+            .ThenByDescending(audit => audit.Id)
             .Select(audit => new UtilityReadingHistoryDto(
                 audit.Id,
                 audit.UtilityReadingId,
@@ -288,7 +347,7 @@ public sealed class UtilityReadingService(
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>Dùng lại bởi applier SW-09 và probe để cùng một chốt kiểm D10.</summary>
+    /// <summary>Kỳ mới nhất là bản ghi chỉ số mới nhất của phòng, không phải kỳ trước theo lịch; applier SW-09 cũng dùng chốt D10 này.</summary>
     public static async Task EnsureAdjustableAsync(
         ApplicationDbContext db,
         UtilityReading reading,
@@ -310,7 +369,7 @@ public sealed class UtilityReadingService(
             join contract in db.Contracts.AsNoTracking()
                 on invoice.ContractId equals contract.ContractId
             where contract.RoomId == reading.RoomId
-                && invoice.Status == InvoiceStatus.Issued
+                && (invoice.Status == InvoiceStatus.Draft || invoice.Status == InvoiceStatus.Issued || invoice.Status == InvoiceStatus.Paid)
                 && invoice.PeriodStart <= reading.PeriodEnd
                 && reading.PeriodStart <= invoice.PeriodEnd
             select invoice.Id)
@@ -327,10 +386,12 @@ public sealed class UtilityReadingService(
     public static void Apply(
         UtilityReading reading,
         AdjustUtilityReadingRequest request,
-        string reason,
-        string changedByUserId)
+        string changedByUserId,
+        DateTimeOffset changedAt)
     {
-        reading.UpdatedAt = DateTimeOffset.UtcNow;
+        var reason = request.Reason?.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new UtilityReadingException("Phải nhập lý do điều chỉnh chỉ số.", UtilityReadingErrorCodes.AdjustmentReasonRequired);
         var audit = new UtilityReadingAudit
         {
             UtilityReadingId = reading.Id,
@@ -340,7 +401,7 @@ public sealed class UtilityReadingService(
             NewWaterEnd = request.WaterEnd,
             Reason = reason,
             ChangedByUserId = changedByUserId,
-            ChangedAt = DateTimeOffset.UtcNow,
+            ChangedAt = changedAt,
         };
 
         // DbContext được lấy từ navigation của reading (service luôn nạp tracked entity).
@@ -366,15 +427,17 @@ public sealed class UtilityReadingService(
                 UtilityReadingErrorCodes.ReadingNotFound);
         }
 
-        var visibleRoomIds = VisibleRoomIds(caller);
-        if (!await visibleRoomIds.AnyAsync(id => id == reading.RoomId, cancellationToken))
-        {
-            throw new UtilityReadingAuthorizationException(
-                "Chỉ số nằm ngoài phạm vi được phép.",
-                UtilityReadingErrorCodes.OutsideScope);
-        }
+        await EnsureRoomVisibleAsync(reading.RoomId, caller, cancellationToken);
 
         return reading;
+    }
+
+    private async Task EnsureReadingInScopeAsync(int readingId, PropertyCaller caller, CancellationToken cancellationToken)
+    {
+        var roomId = await db.UtilityReadings.AsNoTracking().Where(item => item.Id == readingId)
+            .Select(item => (int?)item.RoomId).SingleOrDefaultAsync(cancellationToken)
+            ?? throw new UtilityReadingNotFoundException("Không tìm thấy chỉ số.", UtilityReadingErrorCodes.ReadingNotFound);
+        await EnsureRoomVisibleAsync(roomId, caller, cancellationToken);
     }
 
     private IQueryable<int> VisibleRoomIds(PropertyCaller caller)
@@ -415,6 +478,13 @@ public sealed class UtilityReadingService(
                 "Không tìm thấy phòng trong phạm vi được phép.",
                 UtilityReadingErrorCodes.RoomNotFound);
         }
+    }
+
+    private async Task EnsureRoomVisibleAsync(int roomId, PropertyCaller caller, CancellationToken cancellationToken)
+    {
+        if (!await VisibleRoomIds(caller).AnyAsync(id => id == roomId, cancellationToken))
+            throw new UtilityReadingAuthorizationException(
+                "Chỉ số nằm ngoài phạm vi được phép.", UtilityReadingErrorCodes.OutsideScope);
     }
 
     private async Task CreateApprovalRequestAsync(
