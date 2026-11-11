@@ -106,9 +106,12 @@ builder.Services.AddAuthentication(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     // PLAN-027: cookie phiên chỉ gửi qua HTTPS ở production, không đọc được bằng JS.
+    // Testing chạy TestServer trên http://localhost nên phải SameAsRequest,
+    // nếu không cookie Secure bị bỏ và mọi test đăng nhập sẽ bị 302 về /Account/Login.
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        || builder.Environment.IsEnvironment("Testing")
         ? CookieSecurePolicy.SameAsRequest
         : CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
