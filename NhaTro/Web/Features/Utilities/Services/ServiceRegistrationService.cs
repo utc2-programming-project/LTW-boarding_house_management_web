@@ -9,6 +9,7 @@ using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Utilities.Services;
 
@@ -86,7 +87,8 @@ public sealed class ServiceRegistrationService(
     IInvoiceService invoices,
     Web.Features.Invoices.Services.IInvoiceQueryService invoiceQuery,
     INotificationService notifications,
-    ILogger<ServiceRegistrationService> logger)
+    ILogger<ServiceRegistrationService> logger,
+    TimeProvider clock)
 {
     // Blazor có thể khởi tạo layout + page song song trên cùng circuit; DbContext
     // là scoped nên phải xếp hàng mọi thao tác (giống MonthlyUtilityCalculationPageService).
@@ -160,7 +162,7 @@ public sealed class ServiceRegistrationService(
             throw new UnauthorizedAccessException("Chi khách thuê mới được đăng ký dịch vụ.");
         }
 
-        var contractIds = await OwnContractIdsAsync(caller, cancellationToken);
+        var contractIds = await OwnContractIdsAsync(caller, cancellationToken, activeOnly: true);
         if (contractIds.Count == 0)
         {
             return [];
@@ -232,7 +234,7 @@ public sealed class ServiceRegistrationService(
                 ServiceRegistrationErrorCodes.CannotRegister);
         }
 
-        var contractIds = await OwnContractIdsAsync(caller, cancellationToken);
+        var contractIds = await OwnContractIdsAsync(caller, cancellationToken, activeOnly: true);
         if (contractIds.Count == 0)
         {
             throw new ServiceRegistrationException(
@@ -248,8 +250,29 @@ public sealed class ServiceRegistrationService(
                 ServiceRegistrationErrorCodes.ContractNotOwned);
         }
 
+        // Dịch vụ gắn với một tòa chỉ đăng ký được cho hợp đồng ở đúng tòa đó.
+        if (catalog.PropertyId is int servicePropertyId)
+        {
+            var contractPropertyId = await db.Contracts
+                .AsNoTracking()
+                .Where(contract => contract.ContractId == contractId)
+                .Join(
+                    db.Rooms.AsNoTracking(),
+                    contract => contract.RoomId,
+                    room => room.Id,
+                    (contract, room) => (int?)room.PropertyId)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (contractPropertyId != servicePropertyId)
+            {
+                throw new ServiceRegistrationException(
+                    "Dịch vụ này không thuộc tòa nhà của hợp đồng đã chọn.",
+                    ServiceRegistrationErrorCodes.CannotRegister);
+            }
+        }
+
         // Dịch vụ theo tháng: 1 dịch vụ chỉ đăng ký 1 lần trong cùng một tháng cho cùng hợp đồng.
-        var monthStart = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var currentMonth = clock.TodayVietnam();
+        var monthStart = new DateOnly(currentMonth.Year, currentMonth.Month, 1);
         var monthEnd = monthStart.AddMonths(1).AddDays(-1);
         var monthlyDuplicate = await db.ServiceRegistrationRequests
             .AsNoTracking()
@@ -931,7 +954,8 @@ public sealed class ServiceRegistrationService(
 
     private async Task<IReadOnlyList<Guid>> OwnContractIdsAsync(
         PropertyCaller caller,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool activeOnly = false)
     {
         var memberContractIds = db.ContractMembers
             .AsNoTracking()
@@ -943,10 +967,20 @@ public sealed class ServiceRegistrationService(
             .Where(item => item.UserId == caller.UserId)
             .Select(item => (Guid?)item.ContractId);
 
-        return await db.Contracts
+        var query = db.Contracts
             .AsNoTracking()
             .Where(contract => contract.Status == ContractStatus.Approved
-                && memberContractIds.Contains(contract.ContractId))
+                && memberContractIds.Contains(contract.ContractId));
+
+        if (activeOnly)
+        {
+            // ContractStatus không được ghi Expired; hiệu lực phải suy ra từ ngày.
+            var today = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+            var tomorrow = today.AddDays(1);
+            query = query.Where(contract => contract.StartDate < tomorrow && contract.EndDate >= today);
+        }
+
+        return await query
             .Select(contract => contract.ContractId)
             .ToListAsync(cancellationToken);
     }

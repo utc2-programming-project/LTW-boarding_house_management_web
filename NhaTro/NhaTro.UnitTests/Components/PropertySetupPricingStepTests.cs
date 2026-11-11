@@ -37,6 +37,7 @@ public sealed class PropertySetupPricingStepTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         Services.AddLogging();
+        Services.AddSingleton<TimeProvider>(_clock);
         Services.AddSingleton(new ToastService());
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer<SharedResource>());
         Services.AddSingleton<IStringLocalizer<UtilityResources>>(new KeyLocalizer<UtilityResources>());

@@ -166,8 +166,16 @@
   <data name="TierColQuota" xml:space="preserve"><value>Định mức</value></data>
   <data name="TierColRate" xml:space="preserve"><value>Đơn giá (₫ / kWh)</value></data>
   <data name="TierUnlimited" xml:space="preserve"><value>Không giới hạn</value></data>
+  <data name="TierQuotaRange" xml:space="preserve"><value>{0} – {1} {2}</value></data>
+  <data name="TierQuotaOpen" xml:space="preserve"><value>Trên {0} {1}</value></data>
+  <data name="TierModalEmpty" xml:space="preserve"><value>Dịch vụ này chưa có biểu giá bậc thang.</value></data>
+  <data name="PriceFilterRangeInvalid" xml:space="preserve"><value>Ngày bắt đầu lọc phải trước hoặc bằng ngày kết thúc lọc.</value></data>
   <data name="TierMaxKwh" xml:space="preserve"><value>Tối đa {0} kWh</value></data>
   <data name="CloseBtn" xml:space="preserve"><value>Đóng</value></data>
+  <data name="P5DiscardTitle" xml:space="preserve"><value>Bỏ thay đổi?</value></data>
+  <data name="P5DiscardBody" xml:space="preserve"><value>Bạn đã nhập dữ liệu nhưng chưa lưu. Đóng bây giờ sẽ mất các thay đổi này.</value></data>
+  <data name="P5DiscardKeep" xml:space="preserve"><value>Tiếp tục nhập</value></data>
+  <data name="P5DiscardConfirm" xml:space="preserve"><value>Bỏ thay đổi</value></data>
 
   <data name="AddModalTitle" xml:space="preserve"><value>Thêm dịch vụ mới</value></data>
   <data name="AddModalSubtitle" xml:space="preserve"><value>Tạo dịch vụ bổ sung tính phí định kỳ</value></data>
@@ -432,6 +440,8 @@
   <data name="P5CostInvoiceCreatedToast" xml:space="preserve"><value>Đã lập hóa đơn nháp. Vui lòng kiểm tra và phát hành.</value></data>
   <data name="P5CostInvoiceFailed" xml:space="preserve"><value>Không thể lập hóa đơn. Vui lòng thử lại.</value></data>
   <data name="P5CostInvoiceMissingReadings" xml:space="preserve"><value>Phòng chưa có chỉ số điện/nước trong kỳ này nên chưa lập được hóa đơn.</value></data>
+  <data name="P5CostCreateInvoiceConfirmTitle" xml:space="preserve"><value>Lập hóa đơn cho phòng này?</value></data>
+  <data name="P5CostCreateInvoiceConfirmMessage" xml:space="preserve"><value>Hệ thống sẽ tạo hóa đơn nháp cho phòng {0} kỳ {1} – {2}. Bạn có thể kiểm tra lại trước khi phát hành.</value></data>
   <data name="P5CostConcurrencyConflict" xml:space="preserve"><value>Dữ liệu vừa được người khác cập nhật. Vui lòng tải lại trang và thử lại.</value></data>
   <data name="P5CostInvoiceDuplicate" xml:space="preserve"><value>Hợp đồng đã có hóa đơn cho kỳ này với dữ liệu khác.</value></data>
   <data name="P5CostStatusOpen" xml:space="preserve"><value>Đang mở</value></data>

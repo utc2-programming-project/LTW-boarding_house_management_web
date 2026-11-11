@@ -10,6 +10,7 @@ using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Services;
+using Web.Infrastructure.Time;
 
 namespace NhaTro.IntegrationTests.Features.Utilities;
 
@@ -142,6 +143,50 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
         }
     }
 
+    [SqlServerFact]
+    public async Task ContractOptions_ExcludeExpiredAndFutureContracts()
+    {
+        await fixture.ResetAsync();
+        await using var world = new PermissionMatrixWorld(fixture);
+        await world.InitializeAsync();
+
+        var catalogId = await InternetCatalogIdAsync(world);
+        var today = TimeProvider.System.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+
+        await SetContractDatesAsync(world, today.AddMonths(-1), today.AddMonths(1));
+        var active = CreateService(world, world.TenantAAsPropertyCaller);
+        Assert.Contains(
+            await active.GetMyContractOptionsAsync(),
+            option => option.ContractId == world.Data.ContractAId);
+
+        // Hết hạn nhưng ContractStatus vẫn Approved: không được xuất hiện/chọn.
+        await SetContractDatesAsync(world, today.AddMonths(-3), today.AddDays(-1));
+        var expired = CreateService(world, world.TenantAAsPropertyCaller);
+        Assert.DoesNotContain(
+            await expired.GetMyContractOptionsAsync(),
+            option => option.ContractId == world.Data.ContractAId);
+        await Assert.ThrowsAsync<ServiceRegistrationException>(() => expired.RequestAsync(
+            catalogId, world.Data.ContractAId, note: null));
+
+        // Chưa tới ngày bắt đầu: cũng không được chọn.
+        await SetContractDatesAsync(world, today.AddDays(1), today.AddMonths(2));
+        var future = CreateService(world, world.TenantAAsPropertyCaller);
+        Assert.DoesNotContain(
+            await future.GetMyContractOptionsAsync(),
+            option => option.ContractId == world.Data.ContractAId);
+        await Assert.ThrowsAsync<ServiceRegistrationException>(() => future.RequestAsync(
+            catalogId, world.Data.ContractAId, note: null));
+    }
+
+    private static async Task SetContractDatesAsync(PermissionMatrixWorld world, DateTime start, DateTime end)
+    {
+        await using var db = world.NewDb();
+        var contract = await db.Contracts.SingleAsync(item => item.ContractId == world.Data.ContractAId);
+        contract.StartDate = start;
+        contract.EndDate = end;
+        await db.SaveChangesAsync();
+    }
+
     private static async Task<int> InternetCatalogIdAsync(PermissionMatrixWorld world)
     {
         await using var db = world.NewDb();
@@ -173,7 +218,8 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
             world.NewInvoices(),
             world.NewInvoiceQuery(),
             new NotificationService(db),
-            NullLogger<ServiceRegistrationService>.Instance);
+            NullLogger<ServiceRegistrationService>.Instance,
+            TimeProvider.System);
     }
 
     private sealed class FixedAuthenticationStateProvider(PropertyCaller caller) : AuthenticationStateProvider

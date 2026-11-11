@@ -44,7 +44,7 @@ public sealed class ContractDepositApprovalApplier(TimeProvider clock) : IApprov
         }
         catch (ContractOperationException ex) { throw new ApprovalApplyException(ex.ErrorCode, ex.Message, ex); }
         if (payload.ExpectedDepositAmount is not null && payload.ExpectedDepositAmount != contract.DepositAmount)
-            throw Invalid(ContractErrorCodes.InvalidStatus, ContractErrorMessages.DepositChangedAfterRequest);
+            throw Invalid(ContractErrorCodes.DepositChangedAfterRequest, ContractErrorMessages.DepositChangedAfterRequest);
 
         var oldDeposit = contract.DepositAmount;
         contract.DepositAmount = Web.Common.Utils.MoneyFormatter.RoundVnd(payload.DepositAmount.Value);

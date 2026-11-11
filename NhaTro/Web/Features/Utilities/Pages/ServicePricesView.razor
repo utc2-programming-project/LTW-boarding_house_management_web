@@ -126,6 +126,10 @@
                 <span>@L["ResetFilter"]</span>
             </button>
         </div>
+        @if (!string.IsNullOrEmpty(_rangeError))
+        {
+            <p class="field-error-text" role="alert">@_rangeError</p>
+        }
     </div>
 
     <!-- Timeline History Table -->
@@ -289,11 +293,14 @@
     private List<PriceVersionDto> _filteredVersions = [];
     private List<(string Value, string Label)> _scopeOptions = [];
     private string _selectedServiceId = string.Empty;
+    // Query param chỉ áp dụng lần đầu để reload sau khi lưu không kéo tab về dịch vụ cũ.
+    private string? _lastAppliedServiceId;
     private string _statusFilter = "all";
     private string _scopeFilter = string.Empty;
     private string _keywordFilter = string.Empty;
     private DateTime? _effectiveFromFilter;
     private DateTime? _effectiveToFilter;
+    private string? _rangeError;
     private int _pageSize = 10;
     private int _page = 1;
     private ServiceItemDto? _currentSelectedService;
@@ -320,9 +327,11 @@
             _callerRole = await PageService.GetCurrentRoleAsync();
             _services = (await PageService.GetServicesForCallerAsync()).ToList();
 
-            if (!string.IsNullOrWhiteSpace(ServiceId) && _services.Any(service => service.Id == ServiceId))
+            if (!string.IsNullOrWhiteSpace(ServiceId) && ServiceId != _lastAppliedServiceId
+                && _services.Any(service => service.Id == ServiceId))
             {
                 _selectedServiceId = ServiceId;
+                _lastAppliedServiceId = ServiceId;
             }
             else if (!_services.Any(service => service.Id == _selectedServiceId))
             {
@@ -383,6 +392,16 @@
 
     private void ApplyFilters()
     {
+        if (_effectiveFromFilter.HasValue && _effectiveToFilter.HasValue
+            && _effectiveFromFilter.Value.Date > _effectiveToFilter.Value.Date)
+        {
+            _rangeError = L["PriceFilterRangeInvalid"];
+            _filteredVersions = [];
+            _page = 1;
+            return;
+        }
+
+        _rangeError = null;
         IEnumerable<PriceVersionDto> query = _allVersions;
 
         if (!string.IsNullOrWhiteSpace(_keywordFilter))

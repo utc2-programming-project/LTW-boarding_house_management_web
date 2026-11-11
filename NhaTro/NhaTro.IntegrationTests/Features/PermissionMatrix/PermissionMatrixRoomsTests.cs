@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Features.Accounts;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Services;
 using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
@@ -391,10 +392,10 @@ public sealed class PermissionMatrixRoomsTests(SqlServerFixture fixture)
 
         var today = DateTime.UtcNow.Date;
         var contracts = new ContractService(db, TimeProvider.System, policy, approvals);
+        // D4: hợp đồng do Chủ trọ tạo có hiệu lực ngay.
         var created = await contracts.CreateContractAsync(
             new CreateContractRequest(roomId, today, today.AddMonths(6), [tenant.Tenant!.Id]), OwnerA);
-        await contracts.ApproveContractAsync(
-            created.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerA);
+        Assert.Equal(ContractStatus.Approved, created.Status);
     }
 
     private sealed record SeedData(

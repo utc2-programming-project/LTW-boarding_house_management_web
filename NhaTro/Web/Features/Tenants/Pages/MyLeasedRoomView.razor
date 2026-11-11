@@ -7,6 +7,7 @@
 @using Web.Features.Contracts.Enums
 @using Web.Features.Contracts.Rules
 @using Web.Features.Contracts.Services
+@using Web.Infrastructure.Time
 @inject TenantDocumentPageService DocumentService
 @inject IContractRenewalService RenewalService
 @inject ToastService Toasts
@@ -374,13 +375,13 @@
                                     </div>
                                     <div class="renew-pending-row">
                                         <span class="renew-pending-label">@L["RenewPendingSentAtLabel"]</span>
-                                        <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.RequestedAt))</span>
+                                        <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(VietnamTime.ToVietnam(item.RequestedAt)))</span>
                                     </div>
                                     @if (item.DecidedAt is { } decidedAt)
                                     {
                                         <div class="renew-pending-row">
                                             <span class="renew-pending-label">@L["RenewDecidedAtLabel"]</span>
-                                            <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(decidedAt))</span>
+                                            <span class="renew-pending-value tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(VietnamTime.ToVietnam(decidedAt)))</span>
                                         </div>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(item.RejectReason))

@@ -1,4 +1,6 @@
+@using Web.Infrastructure.Time
 @inject IStringLocalizer<UtilityResources> L
+@inject TimeProvider Clock
 
 @if (IsOpen)
 {
@@ -175,6 +177,14 @@
     </div>
 }
 
+<ConfirmDialog Visible="_discardVisible"
+               Title="@L["P5DiscardTitle"]"
+               Message="@L["P5DiscardBody"]"
+               ConfirmText="@L["P5DiscardConfirm"]"
+               CancelText="@L["P5DiscardKeep"]"
+               OnConfirm="DiscardChangesAsync"
+               OnCancel="KeepEditing" />
+
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
@@ -198,12 +208,21 @@
     private UtilityErrorCode? _effectiveToError;
     private UtilityErrorCode? _scopeError;
     private bool _wasOpen;
+    private string _snapshot = string.Empty;
+    private bool _discardVisible;
+
+    private bool IsDirty => BuildSnapshot() != _snapshot;
+
+    private string BuildSnapshot() => string.Join('|',
+        _name, (int)_type, (int)_unit, _rate, _buildingId, _effectiveFrom, _effectiveTo,
+        _description ?? string.Empty, _note ?? string.Empty);
 
     protected override void OnParametersSet()
     {
         if (!IsOpen)
         {
             _wasOpen = false;
+            _discardVisible = false;
             return;
         }
 
@@ -214,7 +233,7 @@
         _unit = ServiceUnitCategory.Room;
         _rate = 50_000m;
         _buildingId = Buildings.FirstOrDefault(building => building.Id != "all")?.Id ?? string.Empty;
-        _effectiveFrom = DateOnly.FromDateTime(DateTime.Today);
+        _effectiveFrom = Clock.TodayVietnam();
         _effectiveTo = null;
         _description = string.Empty;
         _note = string.Empty;
@@ -223,6 +242,8 @@
         _dateError = null;
         _effectiveToError = null;
         _scopeError = null;
+        _discardVisible = false;
+        _snapshot = BuildSnapshot();
     }
 
     private void ValidateName()
@@ -278,10 +299,30 @@
 
     private async Task HandleClose()
     {
-        if (!_isSaving)
+        if (_isSaving)
         {
-            await OnClose.InvokeAsync();
+            return;
         }
+
+        if (IsDirty)
+        {
+            _discardVisible = true;
+            return;
+        }
+
+        await OnClose.InvokeAsync();
+    }
+
+    private Task KeepEditing()
+    {
+        _discardVisible = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task DiscardChangesAsync()
+    {
+        _discardVisible = false;
+        await OnClose.InvokeAsync();
     }
 
     private CreateServiceRequest CreateRequest() => new()

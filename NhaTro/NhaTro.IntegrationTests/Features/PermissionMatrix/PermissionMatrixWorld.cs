@@ -388,13 +388,9 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
         var contractA = await contracts.CreateContractAsync(
             new CreateContractRequest(roomA.Room!.Id, today, today.AddMonths(6), [tenantA.Tenant!.Id, tenantAssignableA.Tenant!.Id]), OwnerA);
-        await contracts.ApproveContractAsync(
-            contractA.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerA);
 
         var contractB = await contracts.CreateContractAsync(
             new CreateContractRequest(roomB.Room!.Id, today, today.AddMonths(6), [tenantB.Tenant!.Id, tenantAssignableB.Tenant!.Id]), OwnerB);
-        await contracts.ApproveContractAsync(
-            contractB.ContractId, new ApproveContractRequestDto { IsApproved = true }, OwnerB);
 
         var invoices = NewInvoices();
         var draft = await invoices.CreateDraftAsync(
