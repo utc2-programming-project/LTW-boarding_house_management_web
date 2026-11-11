@@ -296,7 +296,10 @@
                 Template = user => @<span class="row-actions">
                     @if (user.Id == _callerUserId)
                     {
-                        <span class="note">@L["ThisIsYou"]</span>
+                        <span class="account-self">
+                            <LucideIcon Name="user" />
+                            @L["ThisIsYou"]
+                        </span>
                     }
                     else if (HasRowActions(user))
                     {

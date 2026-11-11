@@ -321,6 +321,8 @@ builder.Services.AddScoped<ApprovalQueuePageService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<TenantPageService>();
 builder.Services.AddScoped<TenantDocumentPageService>();
+// Banner + thẻ "Phòng đang thuê" cho khách thấy Chủ trọ/Quản lý của tòa đang ở.
+builder.Services.AddScoped<TenantContactPageService>();
 
 // ── 7. Chặn trường lạ trong JSON của HTTP endpoint ─────────────────────────
 // Không cho client tự gửi trường nhạy cảm (UserId/OwnerId).

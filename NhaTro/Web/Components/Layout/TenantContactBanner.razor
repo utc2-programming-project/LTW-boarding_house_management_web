@@ -1,0 +1,122 @@
+@using Web.Features.Tenants.DTOs
+@using Web.Features.Tenants.Services
+@implements IDisposable
+@inject TenantContactPageService ContactService
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Shared> L
+@inject ILogger<TenantContactBanner> Logger
+
+@* Khách thuê luôn biết Chủ trọ/Quản lý của tòa đang ở để gọi khi cần hỗ trợ.
+   Trang "Phòng đang thuê" đã có thẻ liên hệ chi tiết nên banner tự ẩn ở đó. *@
+@if (_visible)
+{
+    <div class="tenant-contact-banner" role="status">
+        <LucideIcon Name="phone" />
+        <span>
+            @if (_ownerText is not null)
+            {
+                <span>@L["TenantContactOwnerBanner", _ownerText]</span>
+            }
+            @if (_ownerText is not null && _managerText is not null)
+            {
+                <span class="tenant-contact-separator"> · </span>
+            }
+            @if (_managerText is not null)
+            {
+                <span>@L["TenantContactManagerBanner", _managerText]</span>
+            }
+        </span>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private string? _ownerText;
+    private string? _managerText;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            if (IsMyRoomPage())
+            {
+                _visible = false;
+                return;
+            }
+
+            var contact = await ContactService.GetMyContactAsync();
+            _ownerText = PersonText(contact?.Owner);
+            _managerText = ManagersText(contact?.Managers);
+            _visible = _ownerText is not null || _managerText is not null;
+        }
+        catch (Exception ex)
+        {
+            // Trang chưa đăng nhập hoặc circuit chưa có danh tính: không hiện banner.
+            Logger.LogDebug(ex, "Tenant contact banner skipped");
+            _visible = false;
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private bool IsMyRoomPage()
+    {
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        var queryIndex = path.IndexOf('?', StringComparison.Ordinal);
+        if (queryIndex >= 0)
+        {
+            path = path[..queryIndex];
+        }
+
+        var trimmed = path.TrimEnd('/');
+        return trimmed.Equals("/my/room", StringComparison.OrdinalIgnoreCase)
+            || trimmed.Equals("/tenant/my-room", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? PersonText(PropertyContactPersonDto? person)
+    {
+        if (person is null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(person.Name))
+        {
+            return string.IsNullOrWhiteSpace(person.PhoneNumber) ? null : person.PhoneNumber;
+        }
+
+        return string.IsNullOrWhiteSpace(person.PhoneNumber)
+            ? person.Name
+            : $"{person.Name} – {person.PhoneNumber}";
+    }
+
+    private static string? ManagersText(IReadOnlyList<PropertyContactPersonDto>? managers)
+    {
+        if (managers is null || managers.Count == 0)
+        {
+            return null;
+        }
+
+        var labels = managers
+            .Select(PersonText)
+            .Where(label => !string.IsNullOrWhiteSpace(label))
+            .ToList();
+
+        return labels.Count == 0 ? null : string.Join(", ", labels);
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

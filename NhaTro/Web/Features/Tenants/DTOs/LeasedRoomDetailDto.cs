@@ -41,6 +41,9 @@ public sealed class LeasedRoomDetailDto
     public required bool IsActive { get; init; }
 
     public required IReadOnlyList<RoommateDto> Roommates { get; init; }
+
+    /// <summary>Chủ trọ/Quản lý phụ trách tòa nhà của phòng đang thuê; null khi chưa tải được.</summary>
+    public PropertyContactDto? Contact { get; init; }
 }
 
 public sealed class RoommateDto

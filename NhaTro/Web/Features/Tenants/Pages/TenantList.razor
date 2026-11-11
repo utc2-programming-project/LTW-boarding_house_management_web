@@ -95,7 +95,7 @@
                     </span>
                     <span class="stat-icon stat-icon--neutral"><LucideIcon Name="shield-check" /></span>
                 </div>
-                <div class="stat-value">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></div>
+                <div class="stat-value"><span class="stat-percent">@Percent(_summary!.WithIdNumberCount, _summary!.TotalCount)<small>%</small></span></div>
             </article>
         </section>
     }
@@ -179,15 +179,6 @@
             </button>
         </EmptyActions>
     </DataTable>
-
-    <div class="tenant-table-options">
-        <label for="tenant-page-size">@L["TenantRowsPerPage"]</label>
-        <select id="tenant-page-size" value="@_pageSize" @onchange="ChangePageSizeAsync">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-        </select>
-    </div>
 </section>
 
 <TenantDetailsDialog Visible="_showDetails" Tenant="_selectedTenant" CanManage="true"
@@ -405,15 +396,6 @@
     {
         _tableKey++;
         await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task ChangePageSizeAsync(ChangeEventArgs args)
-    {
-        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
-        {
-            _pageSize = value;
-            await ResetTableAsync();
-        }
     }
 
     private async Task ResetFiltersAsync()

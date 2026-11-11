@@ -6,14 +6,17 @@
 
 <section class="incident-approvals" aria-label="@L["ApprovalQueue"]">
     <div class="approval-heading">
-        <h2>@L["ApprovalQueue"]</h2>
+        <h2>
+            <LucideIcon Name="badge-check" />
+            <span>@L["ApprovalQueue"]</span>
+        </h2>
         <button type="button" class="btn btn-secondary refresh-requests" disabled="@_busy" aria-busy="@(_busy ? "true" : null)" @onclick="RefreshAsync">
             <LucideIcon Name="refresh-cw" />
             <span>@L["RefreshQueue"]</span>
         </button>
     </div>
-    @if (_error is not null) { <p role="alert">@_error</p> }
-    @if (_requests.Count == 0) { <p>@L["NoData"]</p> }
+    @if (_error is not null) { <p role="alert" class="approval-error">@_error</p> }
+    @if (_requests.Count == 0) { <EmptyStateCard Title="@L["NoData"]" /> }
     @foreach (var request in _requests)
     {
         <article @key="request.Id">
