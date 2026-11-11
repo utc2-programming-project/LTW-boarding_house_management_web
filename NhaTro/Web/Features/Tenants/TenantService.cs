@@ -953,7 +953,9 @@ public sealed class TenantService(
         if (caller.IsChuTro)
         {
             var ownerId = caller.UserId;
+            // Liên kết có query filter theo Tenant xóa mềm; thùng rác cần thấy cả liên kết đó.
             var myTenantIds = db.TenantOwnerLinks
+                .IgnoreQueryFilters()
                 .Where(link => link.OwnerId == ownerId)
                 .Select(link => link.TenantId);
 
@@ -970,6 +972,7 @@ public sealed class TenantService(
                 select property.OwnerId;
 
             var ownedTenantIds = db.TenantOwnerLinks
+                .IgnoreQueryFilters()
                 .Where(link => ownerIds.Contains(link.OwnerId))
                 .Select(link => link.TenantId);
 
