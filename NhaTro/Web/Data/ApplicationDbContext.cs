@@ -12,6 +12,7 @@ using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
+using Web.Features.Accounts.Otp;
 using Web.Data.Tariffs;
 
 namespace Web.Data
@@ -23,6 +24,9 @@ namespace Web.Data
         // VHT-24: phân công Quản lý theo tòa nhà (nhiều-nhiều, có lịch sử).
         public DbSet<PropertyManager> PropertyManagers => Set<PropertyManager>();
 
+        // PLAN-022: mã OTP một lần cho đăng ký/xác thực tài khoản.
+        public DbSet<OtpChallenge> OtpChallenges => Set<OtpChallenge>();
+
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Tenant> Tenants => Set<Tenant>();
 
@@ -31,6 +35,8 @@ namespace Web.Data
 
         // PLAN-005: hồ sơ khách ↔ chủ trọ (nhiều-nhiều, một khách có thể thuộc nhiều chủ trọ).
         public DbSet<TenantOwnerLink> TenantOwnerLinks => Set<TenantOwnerLink>();
+        // PLAN-024: khách nhận QR/lời mời cho phòng, chờ lập hợp đồng.
+        public DbSet<PendingRoomAssignment> PendingRoomAssignments => Set<PendingRoomAssignment>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
         // VHT-125 (2D): yeu cau gia han hop dong do khach thue gui tu "Phong dang thue".

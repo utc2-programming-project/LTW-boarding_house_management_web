@@ -1,0 +1,326 @@
+/* Thanh lọc dùng chung toàn ứng dụng.
+   Biến thể: mặc định (bare, dùng trong sub-tab/form) và .filter-bar--panel (card cho list chính).
+   Chỉ dùng token theme; trang không tự định nghĩa layout filter. */
+.filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.filter-bar--panel {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.filter-bar__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.filter-bar__search {
+    position: relative;
+    display: flex;
+    flex: 1 1 240px;
+    align-items: center;
+    min-width: 160px;
+    max-width: 28rem;
+}
+
+.filter-bar__search .input {
+    width: 100%;
+    min-height: 40px;
+    padding-left: 38px;
+    border-color: transparent;
+    background: var(--surface-subtle);
+}
+
+.filter-bar__icon {
+    position: absolute;
+    z-index: 1;
+    left: 12px;
+    display: inline-flex;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.filter-bar__icon .lucide-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+}
+
+.filter-bar__field {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.filter-bar__select {
+    flex: 1 1 10rem;
+    min-width: 8.5rem;
+    max-width: 15rem;
+}
+
+.filter-bar__field .input {
+    width: 100%;
+    min-height: 40px;
+    border-color: transparent;
+    background: var(--surface-subtle);
+}
+
+.filter-bar__state {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 10px;
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+}
+
+.filter-bar__state .input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 38px;
+    padding-left: 0;
+    border: 0;
+    background: transparent;
+}
+
+.filter-bar__label {
+    flex: none;
+    color: var(--text-secondary);
+    font-size: .8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.filter-bar__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.filter-bar__reset,
+.filter-bar__toggle {
+    min-height: 40px;
+}
+
+.filter-bar__toggle {
+    gap: 6px;
+}
+
+.filter-bar__badge {
+    display: inline-grid;
+    min-width: 20px;
+    height: 20px;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: .75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.filter-bar__chevron {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    transition: rotate 150ms var(--ease, ease);
+}
+
+.filter-bar__toggle[aria-expanded="true"] .filter-bar__chevron {
+    rotate: 180deg;
+}
+
+.filter-bar__advanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.filter-bar__advanced[hidden] {
+    display: none;
+}
+
+.filter-bar__wide {
+    grid-column: span 2;
+}
+
+.filter-bar__advanced .input {
+    width: 100%;
+    min-height: 40px;
+    border-color: transparent;
+    background: var(--surface-subtle);
+}
+
+.filter-bar__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+.filter-bar__check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    align-self: end;
+    color: var(--text-secondary);
+    font-size: .8125rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.filter-bar__check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.filter-bar__group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+.filter-bar__group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.filter-bar__links {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-bar__checks {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2px 12px;
+}
+
+.filter-bar__checks .filter-bar__check {
+    min-height: 32px;
+    align-self: center;
+    white-space: normal;
+}
+
+.filter-bar__submit {
+    align-self: end;
+}
+
+.filter-bar__meta {
+    color: var(--text-secondary);
+    font-size: .8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.filter-bar__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: .8125rem;
+}
+
+.filter-bar__chips strong {
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 500;
+}
+
+@media (min-width: 1280px) {
+    .filter-bar__row {
+        flex-wrap: nowrap;
+    }
+
+    .filter-bar__search {
+        flex-basis: 0;
+    }
+}
+
+@media (max-width: 1279px) {
+    .filter-bar__search {
+        flex-basis: 100%;
+    }
+
+    .filter-bar__actions {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .filter-bar__row {
+        align-items: stretch;
+    }
+
+    .filter-bar__search,
+    .filter-bar__field,
+    .filter-bar__state,
+    .filter-bar__actions {
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: none;
+    }
+
+    .filter-bar__actions {
+        flex-wrap: wrap;
+    }
+
+    .filter-bar__state .input {
+        font-size: 1rem;
+    }
+
+    .filter-bar__field .input,
+    .filter-bar__advanced .input,
+    .filter-bar__reset,
+    .filter-bar__toggle {
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    .filter-bar__advanced {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-bar__wide {
+        grid-column: auto;
+    }
+
+    .filter-bar__select {
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-bar__chevron {
+        transition: none;
+    }
+}

@@ -512,12 +512,12 @@
                     {
                         _qrImageUri = null;
                         _qrExpiresAt = null;
-                        InvokeAsync(StateHasChanged);
+                        _ = InvokeAsync(StateHasChanged);
                         StopQrTimer();
                         return;
                     }
 
-                    InvokeAsync(StateHasChanged);
+                    _ = InvokeAsync(StateHasChanged);
                 }
             }
             catch (OperationCanceledException)

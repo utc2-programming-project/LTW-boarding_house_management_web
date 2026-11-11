@@ -1,6 +1,8 @@
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Data;
 
@@ -16,6 +18,14 @@ public sealed class NhaTroWebApplicationFactory(string connectionString) : WebAp
     {
         // "Testing" để app bỏ qua DevAccountSeeder; role/test account do TestDataSeeder gieo.
         builder.UseEnvironment("Testing");
+
+        // OtpService chỉ có khóa dev khi IsDevelopment; Testing phải tự cấp khóa để luồng OTP chạy.
+        builder.ConfigureAppConfiguration((_, configuration) =>
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Otp:HmacKey"] = Convert.ToBase64String(
+                    Encoding.UTF8.GetBytes("NhaTro.IntegrationTests.Otp.HmacKey")),
+            }));
 
         builder.ConfigureServices(services =>
         {

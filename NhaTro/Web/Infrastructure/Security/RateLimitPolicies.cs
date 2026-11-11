@@ -69,6 +69,13 @@ public static class RateLimitPolicies
         HttpMethods.IsPost(http.Request.Method)
         && RegisterPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
 
+    // PLAN-022: giới hạn POST xác thực/gửi lại OTP.
+    private static readonly string[] OtpPaths = ["/account/verifyotp", "/verify-otp"];
+
+    public static bool IsOtpRequest(HttpContext http) =>
+        HttpMethods.IsPost(http.Request.Method)
+        && OtpPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Bỏ '/' cuối để "/Account/Login/" không lách được giới hạn; "/" giữ nguyên.
     /// </summary>

@@ -1,4 +1,8 @@
 @page "/approvals"
+@using Web.Features.Approvals.Pages
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
 
-<ApprovalRequests />
+@* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ,
+   còn giao diện hàng đợi nằm trong Features/Approvals để tách khỏi trang
+   "Yêu cầu của tôi" của Quản lý. *@
+<ApprovalQueueView />

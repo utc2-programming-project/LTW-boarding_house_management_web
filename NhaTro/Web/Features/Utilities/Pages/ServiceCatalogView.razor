@@ -64,109 +64,99 @@
     </PageHeading>
 
     <!-- 4 Stat KPI Cards -->
-    <div class="stats-grid">
+    <div class="stat-grid">
         <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-label">@L["StatTotalServices"]</span>
-                <div class="stat-value-row">
-                    <span class="stat-number tabular-nums">@_totalCount</span>
-                    <span class="stat-unit">@L["StatUnitTypes"]</span>
-                </div>
-                <span class="stat-subtext">@L["StatTotalServicesSub"]</span>
+            <div class="stat-card__top">
+                <span class="stat-label">
+                    @L["StatTotalServices"]
+                    <button type="button" class="stat-help" data-tip="@L["StatTotalServicesSub"]" aria-label="@L["StatTotalServicesSub"]">?</button>
+                </span>
+                <span class="stat-icon stat-icon--accent"><LucideIcon Name="package" /></span>
             </div>
-            <div class="stat-icon-box indigo-box">
-                <LucideIcon Name="package" />
-            </div>
+            <div class="stat-value">@_totalCount <small>@L["StatUnitTypes"]</small></div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-label">@L["StatActiveServices"]</span>
-                <div class="stat-value-row">
-                    <span class="stat-number tabular-nums">@_activeCount</span>
-                    <span class="stat-unit">@L["StatUnitServices"]</span>
-                </div>
-                <span class="stat-subtext">@L["StatActiveServicesSub"]</span>
+            <div class="stat-card__top">
+                <span class="stat-label">
+                    @L["StatActiveServices"]
+                    <button type="button" class="stat-help" data-tip="@L["StatActiveServicesSub"]" aria-label="@L["StatActiveServicesSub"]">?</button>
+                </span>
+                <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
             </div>
-            <div class="stat-icon-box green-box">
-                <LucideIcon Name="circle-check" />
-            </div>
+            <div class="stat-value">@_activeCount <small>@L["StatUnitServices"]</small></div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-label">@L["StatPausedServices"]</span>
-                <div class="stat-value-row">
-                    <span class="stat-number tabular-nums">@_pausedCount</span>
-                    <span class="stat-unit">@L["StatUnitServices"]</span>
-                </div>
-                <span class="stat-subtext">@L["StatPausedServicesSub"]</span>
+            <div class="stat-card__top">
+                <span class="stat-label">
+                    @L["StatPausedServices"]
+                    <button type="button" class="stat-help" data-tip="@L["StatPausedServicesSub"]" aria-label="@L["StatPausedServicesSub"]">?</button>
+                </span>
+                <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
             </div>
-            <div class="stat-icon-box slate-box">
-                <LucideIcon Name="pause-circle" />
-            </div>
+            <div class="stat-value">@_pausedCount <small>@L["StatUnitServices"]</small></div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-label">@L["StatReadOnlyTariff"]</span>
-                <div class="stat-value-row">
-                    <span class="stat-number tabular-nums">@_readOnlyCount</span>
-                    <span class="stat-unit">@L["StatUnitServices"]</span>
-                </div>
-                <span class="stat-subtext">@L["StatReadOnlyTariffSub"]</span>
+            <div class="stat-card__top">
+                <span class="stat-label">
+                    @L["StatReadOnlyTariff"]
+                    <button type="button" class="stat-help" data-tip="@L["StatReadOnlyTariffSub"]" aria-label="@L["StatReadOnlyTariffSub"]">?</button>
+                </span>
+                <span class="stat-icon stat-icon--info"><LucideIcon Name="shield-check" /></span>
             </div>
-            <div class="stat-icon-box blue-box">
-                <LucideIcon Name="shield-check" />
-            </div>
+            <div class="stat-value">@_readOnlyCount <small>@L["StatUnitServices"]</small></div>
         </div>
     </div>
 
     <!-- Filter and Search Toolbar -->
-    <div class="filters-container">
-        <div class="filters-row">
-            <div class="search-input-box">
-                <span class="search-icon" aria-hidden="true">
-                    <LucideIcon Name="search" />
-                </span>
-                <input type="text"
-                       class="input search-field"
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="service-search">@L["SearchPlaceholder"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="service-search" type="search" class="input"
                        placeholder="@L["SearchPlaceholder"]"
-                       @bind="_searchTerm"
-                       @bind:event="oninput"
-                       @bind:after="ApplyFilters" />
+                       @bind="_searchTerm" @bind:event="oninput" @bind:after="ApplyFilters" />
             </div>
-
-            <select class="input select-filter" @bind="_selectedBuilding" @bind:after="ApplyFilters">
-                <option value="all">@L["AllBuildings"]</option>
-                @foreach (var b in _visibleBuildings.Where(b => b.Id != "all"))
-                {
-                    <option value="@b.Id">@b.Name</option>
-                }
-            </select>
-
-            <select class="input select-filter" @bind="_selectedType" @bind:after="ApplyFilters">
-                <option value="all">@L["AllTypes"]</option>
-                <option value="meter">@L["MeterType"]</option>
-                <option value="fixed_monthly">@L["FixedMonthlyType"]</option>
-                <option value="custom">@L["CustomType"]</option>
-            </select>
-
-            <select id="service-status-filter" class="input select-filter" @bind="_selectedStatus" @bind:after="ApplyFilters">
-                <option value="all">@L["AllStatuses"]</option>
-                <option value="active">@L["ActiveStatus"]</option>
-                <option value="inactive">@L["InactiveStatus"]</option>
-            </select>
-
-            <button type="button" class="btn btn-secondary btn-reset" @onclick="ResetFilters">
-                <LucideIcon Name="refresh" />
-                <span>@L["ResetFilter"]</span>
-            </button>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="service-building">@L["AllBuildings"]</label>
+                <select id="service-building" class="input" @bind="_selectedBuilding" @bind:after="ApplyFilters">
+                    <option value="all">@L["AllBuildings"]</option>
+                    @foreach (var b in _visibleBuildings.Where(b => b.Id != "all"))
+                    {
+                        <option value="@b.Id">@b.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="service-type">@L["AllTypes"]</label>
+                <select id="service-type" class="input" @bind="_selectedType" @bind:after="ApplyFilters">
+                    <option value="all">@L["AllTypes"]</option>
+                    <option value="meter">@L["MeterType"]</option>
+                    <option value="fixed_monthly">@L["FixedMonthlyType"]</option>
+                    <option value="custom">@L["CustomType"]</option>
+                </select>
+            </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="service-status-filter">@L["AllStatuses"]</label>
+                <select id="service-status-filter" class="input" @bind="_selectedStatus" @bind:after="ApplyFilters">
+                    <option value="all">@L["AllStatuses"]</option>
+                    <option value="active">@L["ActiveStatus"]</option>
+                    <option value="inactive">@L["InactiveStatus"]</option>
+                </select>
+            </div>
+            <div class="filter-bar__actions">
+                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
+                    <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
+                </button>
+            </div>
         </div>
 
         @if (_selectedBuilding != "all")
         {
-            <div class="active-condition-tag">
+            <div class="filter-bar__chips">
                 <span>@L["ActiveFilterCondition"]</span>
                 <span class="condition-chip">
                     <span>@L["BuildingFilterPrefix"] <strong>@GetCurrentBuildingName()</strong></span>

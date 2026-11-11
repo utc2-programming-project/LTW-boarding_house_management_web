@@ -1,0 +1,193 @@
+@page "/admin/owners"
+@attribute [Authorize(Roles = Roles.Admin)]
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Features.Accounts
+@using Web.Features.Accounts.Owners
+
+@inject OwnerAdminService Owners
+@inject AuthenticationStateProvider Auth
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@L["OwnerAdminTitle"] · @L["AppName"]</PageTitle>
+
+<section class="owner-admin-page" aria-labelledby="owner-admin-title">
+    <PageHeading Title="@L["OwnerAdminTitle"]" TitleId="owner-admin-title" HelpText="@L["OwnerAdminHelp"]" />
+
+    <div class="filter-bar">
+        <input class="input" placeholder="@L["OwnerAdminSearch"]" @bind="_keyword" @bind:event="oninput" />
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Search"]</button>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="form-alert" role="alert">
+            <LucideIcon Name="alert" />
+            <span>@_error</span>
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="hint">@L["OwnerAdminEmpty"]</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>@L["OwnerAdminName"]</th>
+                        <th>@L["OwnerAdminEmail"]</th>
+                        <th>@L["OwnerAdminProperties"]</th>
+                        <th>@L["OwnerAdminManagers"]</th>
+                        <th>@L["OwnerAdminTenants"]</th>
+                        <th>@L["OwnerAdminStatus"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var owner in _items)
+                    {
+                        <tr>
+                            <td>@(owner.FullName ?? "—")</td>
+                            <td>@(owner.Email ?? "—")</td>
+                            <td>@owner.PropertyCount</td>
+                            <td>@owner.ManagerCount</td>
+                            <td>@owner.TenantCount</td>
+                            <td>
+                                <span class="status-badge @(owner.IsLocked ? "status-badge--danger" : "status-badge--success")">
+                                    @(owner.IsLocked ? L["OwnerAdminLocked"] : L["OwnerAdminActive"])
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm @(owner.IsLocked ? "btn-primary" : "btn-danger")"
+                                        @onclick="() => AskChangeAsync(owner)">
+                                    @(owner.IsLocked ? L["OwnerAdminUnlock"] : L["OwnerAdminLock"])
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>@string.Format(L["OwnerAdminTotal"], _total)</span>
+            <div class="table-pager">
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="PreviousPageAsync">@L["Previous"]</button>
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page * 20 >= _total)" @onclick="NextPageAsync">@L["Next"]</button>
+            </div>
+        </div>
+    }
+</section>
+
+<ConfirmDialog Visible="_showConfirm"
+               Title="@(_target?.IsLocked == true ? L["OwnerUnlockTitle"] : L["OwnerLockTitle"])"
+               Message="@(_target?.IsLocked == true ? L["OwnerUnlockMessage"] : L["OwnerLockMessage"])"
+               ConfirmText="@(_target?.IsLocked == true ? L["OwnerAdminUnlock"] : L["OwnerAdminLock"])"
+               CancelText="@L["Cancel"]"
+               Danger="@(_target?.IsLocked != true)"
+               OnConfirm="ConfirmChangeAsync"
+               OnCancel="CancelChange" />
+
+@code {
+    private IReadOnlyList<OwnerListItemDto> _items = [];
+    private int _total;
+    private int _page = 1;
+    private string? _keyword;
+    private string? _actorId;
+    private string? _error;
+    private bool _loading;
+    private bool _showConfirm;
+    private OwnerListItemDto? _target;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await Auth.GetAuthenticationStateAsync();
+        _actorId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var result = await Owners.ListAsync(_keyword, _page, 20);
+            _items = result.Items;
+            _total = result.TotalCount;
+        }
+        catch
+        {
+            _error = L["OwnerAdminLoadFailed"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PreviousPageAsync()
+    {
+        _page = Math.Max(1, _page - 1);
+        await LoadAsync();
+    }
+
+    private async Task NextPageAsync()
+    {
+        _page++;
+        await LoadAsync();
+    }
+
+    private Task AskChangeAsync(OwnerListItemDto owner)
+    {
+        _target = owner;
+        _showConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelChange()
+    {
+        _showConfirm = false;
+        _target = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmChangeAsync()
+    {
+        if (_target is null || string.IsNullOrWhiteSpace(_actorId))
+        {
+            return;
+        }
+
+        var target = _target;
+        var lockOwner = !target.IsLocked;
+        var result = lockOwner
+            ? await Owners.LockAsync(target.Id, _actorId)
+            : await Owners.UnlockAsync(target.Id, _actorId);
+
+        if (result.Succeeded)
+        {
+            Toasts.Success(lockOwner ? L["OwnerLocked"] : L["OwnerUnlocked"]);
+        }
+        else
+        {
+            Toasts.Error(result.ErrorMessage ?? L["OwnerAdminLoadFailed"]);
+        }
+
+        _showConfirm = false;
+        _target = null;
+        await LoadAsync();
+    }
+}

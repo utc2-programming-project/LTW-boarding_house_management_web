@@ -32,6 +32,9 @@ public sealed class ServicePriceHistoryConfiguration : IEntityTypeConfiguration<
         builder.HasIndex(version => new { version.EffectiveDate, version.ServiceCatalogId });
         builder.HasIndex(version => version.CreatedByUserId);
 
+        // Đồng bộ filter với ServiceCatalog (xóa mềm): giữ dòng lịch sử nhưng ẩn theo danh mục.
+        builder.HasQueryFilter(version => !version.ServiceCatalog.IsDeleted);
+
         builder.HasOne<ApplicationUser>()
             .WithMany()
             .HasForeignKey(version => version.CreatedByUserId)

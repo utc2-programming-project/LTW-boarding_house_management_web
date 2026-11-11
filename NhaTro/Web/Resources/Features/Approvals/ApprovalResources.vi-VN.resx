@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="PageTitle" xml:space="preserve"><value>Hàng đợi duyệt</value></data>
+  <data name="PageHelp" xml:space="preserve"><value>Các thao tác Quản lý gửi cần bạn duyệt. Duyệt sẽ áp dụng thay đổi ngay; từ chối cần nêu lý do.</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="Loading" xml:space="preserve"><value>Đang tải…</value></data>
+  <data name="LoadFailedTitle" xml:space="preserve"><value>Không tải được hàng đợi</value></data>
+  <data name="LoadFailedDescription" xml:space="preserve"><value>Kết nối hoặc quyền truy cập có thể đã thay đổi. Vui lòng thử lại.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+
+  <data name="StatPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="StatToday" xml:space="preserve"><value>Gửi hôm nay</value></data>
+  <data name="StatOldest" xml:space="preserve"><value>Chờ lâu nhất</value></data>
+  <data name="AgeUnderDay" xml:space="preserve"><value>Dưới 1 ngày</value></data>
+  <data name="AgeDays" xml:space="preserve"><value>{0} ngày</value></data>
+
+  <data name="FilterSearchLabel" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="FilterSearchPlaceholder" xml:space="preserve"><value>Tìm theo phòng, người gửi, mã thao tác…</value></data>
+  <data name="FilterGroup" xml:space="preserve"><value>Nhóm thao tác</value></data>
+  <data name="AllGroups" xml:space="preserve"><value>Tất cả nhóm</value></data>
+  <data name="SortLabel" xml:space="preserve"><value>Sắp xếp</value></data>
+  <data name="SortOldest" xml:space="preserve"><value>Cũ nhất trước</value></data>
+  <data name="SortNewest" xml:space="preserve"><value>Mới nhất trước</value></data>
+  <data name="ResetFilters" xml:space="preserve"><value>Xóa lọc</value></data>
+
+  <data name="GroupP2" xml:space="preserve"><value>Phòng</value></data>
+  <data name="GroupP3" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="GroupP4" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="GroupP5" xml:space="preserve"><value>Điện nước</value></data>
+  <data name="GroupP6" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="GroupP7" xml:space="preserve"><value>Sự cố</value></data>
+  <data name="GroupP8" xml:space="preserve"><value>Báo cáo</value></data>
+  <data name="GroupP9" xml:space="preserve"><value>Khác</value></data>
+
+  <data name="RequesterLabel" xml:space="preserve"><value>Người gửi</value></data>
+  <data name="SentAtLabel" xml:space="preserve"><value>Gửi lúc</value></data>
+  <data name="GroupLabel" xml:space="preserve"><value>Nhóm</value></data>
+  <data name="UnknownRequester" xml:space="preserve"><value>Không xác định</value></data>
+  <data name="DecisionReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="DetailsToggleShow" xml:space="preserve"><value>Xem nội dung đề xuất</value></data>
+  <data name="DetailsToggleHide" xml:space="preserve"><value>Ẩn nội dung đề xuất</value></data>
+  <data name="Approve" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="Reject" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="ApplyNotSupported" xml:space="preserve"><value>Thao tác này chưa hỗ trợ duyệt qua hàng đợi.</value></data>
+
+  <data name="StatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="StatusApproved" xml:space="preserve"><value>Đã duyệt</value></data>
+  <data name="StatusRejected" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="StatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
+
+  <data name="EmptyTitle" xml:space="preserve"><value>Không có yêu cầu chờ duyệt</value></data>
+  <data name="EmptyDescription" xml:space="preserve"><value>Khi Quản lý gửi thao tác cần duyệt, yêu cầu sẽ xuất hiện ở đây.</value></data>
+  <data name="NoResultsTitle" xml:space="preserve"><value>Không có yêu cầu khớp bộ lọc</value></data>
+  <data name="NoResultsDescription" xml:space="preserve"><value>Thử xóa bộ lọc hoặc đổi từ khóa tìm kiếm.</value></data>
+
+  <data name="ApproveDialogTitle" xml:space="preserve"><value>Duyệt yêu cầu?</value></data>
+  <data name="ApproveDialogBody" xml:space="preserve"><value>Thao tác sẽ được áp dụng ngay sau khi bạn duyệt.</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="CloseDialog" xml:space="preserve"><value>Đóng</value></data>
+  <data name="Busy" xml:space="preserve"><value>Đang xử lý…</value></data>
+  <data name="ApproveSuccess" xml:space="preserve"><value>Đã duyệt yêu cầu.</value></data>
+  <data name="RejectSuccess" xml:space="preserve"><value>Đã từ chối yêu cầu.</value></data>
+  <data name="RejectDialogTitle" xml:space="preserve"><value>Từ chối yêu cầu</value></data>
+  <data name="RejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="RejectReasonPlaceholder" xml:space="preserve"><value>Nêu rõ lý do để Quản lý biết cần sửa gì.</value></data>
+  <data name="RejectReasonHint" xml:space="preserve"><value>Bắt buộc, tối đa 500 ký tự.</value></data>
+  <data name="RejectReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+
+  <data name="DetailCurrentRent" xml:space="preserve"><value>Giá thuê hiện tại</value></data>
+  <data name="DetailProposedRent" xml:space="preserve"><value>Giá thuê đề xuất</value></data>
+  <data name="DetailAction" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="ActionRenew" xml:space="preserve"><value>Gia hạn</value></data>
+  <data name="ActionLiquidate" xml:space="preserve"><value>Thanh lý</value></data>
+  <data name="ActionUpdateDeposit" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
+  <data name="DetailNewEndDate" xml:space="preserve"><value>Ngày kết thúc mới</value></data>
+  <data name="DetailNewDeposit" xml:space="preserve"><value>Tiền cọc mới</value></data>
+  <data name="DetailElectricReading" xml:space="preserve"><value>Chỉ số điện (cũ → mới)</value></data>
+  <data name="DetailWaterReading" xml:space="preserve"><value>Chỉ số nước (cũ → mới)</value></data>
+  <data name="DetailAdjustReason" xml:space="preserve"><value>Lý do điều chỉnh</value></data>
+  <data name="DetailPeriod" xml:space="preserve"><value>Kỳ</value></data>
+  <data name="DetailInvoiceLineCount" xml:space="preserve"><value>Số dòng hóa đơn</value></data>
+  <data name="DetailEstimatedTotal" xml:space="preserve"><value>Tạm tính</value></data>
+  <data name="DetailInvoiceTotal" xml:space="preserve"><value>Tổng tiền hóa đơn</value></data>
+  <data name="DetailIncidentTitle" xml:space="preserve"><value>Tiêu đề sự cố</value></data>
+  <data name="DetailDescription" xml:space="preserve"><value>Mô tả</value></data>
+  <data name="DetailPhotoCount" xml:space="preserve"><value>Số ảnh kèm theo</value></data>
+  <data name="DetailNewIncidentStatus" xml:space="preserve"><value>Trạng thái mới</value></data>
+  <data name="IncidentStatusNew" xml:space="preserve"><value>Mới</value></data>
+  <data name="IncidentStatusInProgress" xml:space="preserve"><value>Đang xử lý</value></data>
+  <data name="IncidentStatusCompleted" xml:space="preserve"><value>Hoàn tất</value></data>
+  <data name="DetailAssignee" xml:space="preserve"><value>Người xử lý</value></data>
+  <data name="DetailTechnicalNotes" xml:space="preserve"><value>Ghi chú kỹ thuật</value></data>
+  <data name="DetailRepairCost" xml:space="preserve"><value>Chi phí sửa chữa</value></data>
+  <data name="DetailExpectedPhotos" xml:space="preserve"><value>Số ảnh kết quả</value></data>
+  <data name="DetailReportRange" xml:space="preserve"><value>Khoảng thời gian</value></data>
+  <data name="DetailAllTime" xml:space="preserve"><value>Tất cả thời gian</value></data>
+
+  <data name="ErrorInvalidRequest" xml:space="preserve"><value>Dữ liệu gửi lên không hợp lệ.</value></data>
+  <data name="ErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="ErrorNotFound" xml:space="preserve"><value>Không tìm thấy yêu cầu duyệt.</value></data>
+  <data name="ErrorAlreadyDecided" xml:space="preserve"><value>Yêu cầu đã được xử lý, không thể xử lý lại.</value></data>
+  <data name="ErrorConflict" xml:space="preserve"><value>Dữ liệu đã thay đổi sau khi gửi yêu cầu. Vui lòng tải lại và thử lại.</value></data>
+  <data name="ErrorRejectReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do từ chối.</value></data>
+  <data name="ErrorRejectReasonTooLong" xml:space="preserve"><value>Lý do từ chối không được vượt quá 500 ký tự.</value></data>
+  <data name="ErrorUnknownOperationCode" xml:space="preserve"><value>Mã thao tác không có trong danh mục công tắc Quản lý.</value></data>
+  <data name="ErrorApplierNotRegistered" xml:space="preserve"><value>Mã thao tác chưa có bộ xử lý áp dụng, không thể duyệt.</value></data>
+  <data name="ErrorDuplicatePendingRequest" xml:space="preserve"><value>Đã có yêu cầu chờ duyệt cho thao tác này.</value></data>
+  <data name="ErrorOperationFailed" xml:space="preserve"><value>Không thể thực hiện yêu cầu, vui lòng thử lại.</value></data>
+  <data name="ErrorGeneric" xml:space="preserve"><value>Không thể xử lý yêu cầu. Vui lòng thử lại.</value></data>
+</root>

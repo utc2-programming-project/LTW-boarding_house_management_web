@@ -1,0 +1,50 @@
+.role-context-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.role-context-card {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.role-context-card:hover,
+.role-context-card:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.role-context-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    flex: 0 0 auto;
+}
+
+.role-context-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.role-context-text span {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}

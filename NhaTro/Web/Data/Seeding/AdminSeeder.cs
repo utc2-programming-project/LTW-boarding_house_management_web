@@ -9,6 +9,10 @@ namespace Web.Data.Seeding;
 // Thieu cau hinh thi chi ghi log canh bao, app van chay.
 public static class AdminSeeder
 {
+    /// <summary>Tài khoản Admin fallback chỉ dùng ở Development khi chưa cấu hình User Secrets.</summary>
+    public const string DevelopmentEmail = "admin@nhatro.local";
+    public const string DevelopmentPassword = "DevAdmin!234";
+
     public static async Task EnsureAsync(IServiceProvider services, IConfiguration config, ILogger logger)
     {
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -40,8 +44,8 @@ public static class AdminSeeder
             if (env.IsDevelopment())
             {
                 logger.LogWarning("AdminSeed not configured; creating a development admin account with a temporary password. Change via user-secrets or environment variables.");
-                email ??= "admin@nhatro.local";
-                password ??= "DevAdmin!234"; // development-only default
+                email ??= DevelopmentEmail;
+                password ??= DevelopmentPassword; // development-only default
             }
             else
             {

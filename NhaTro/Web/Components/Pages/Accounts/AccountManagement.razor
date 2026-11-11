@@ -43,25 +43,35 @@
         </Actions>
     </PageHeading>
 
-    <div class="toolbar" role="search">
-        <div class="field field-inline">
-            <label class="label" for="account-search">@L["SearchAccounts"]</label>
-            <div class="password-wrap">
+    <div class="filter-bar filter-bar--panel" role="search">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="account-search">@L["SearchAccounts"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                 <InputText id="account-search" class="input" @bind-Value="_keyword"
                            @bind-Value:after="ReloadAsync" placeholder="@L["SearchAccountsHint"]" />
-                <span class="input-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
             </div>
-        </div>
 
-        <div class="field field-inline">
-            <label class="label" for="account-role">@L["FilterRole"]</label>
-            <select id="account-role" class="input" @bind="_roleFilter" @bind:after="ReloadAsync">
-                <option value="">@L["FilterAllRoles"]</option>
-                @foreach (var role in _filterRoles)
-                {
-                    <option value="@role">@RoleText(role)</option>
-                }
-            </select>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="account-role">@L["FilterRole"]</label>
+                <select id="account-role" class="input" @bind="_roleFilter" @bind:after="ReloadAsync">
+                    <option value="">@L["FilterAllRoles"]</option>
+                    @foreach (var role in _filterRoles)
+                    {
+                        <option value="@role">@RoleText(role)</option>
+                    }
+                </select>
+            </div>
+
+            @if (HasActiveAccountFilters)
+            {
+                <div class="filter-bar__actions">
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ClearAccountFiltersAsync"
+                            aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
+                        <LucideIcon Name="refresh-cw" />
+                    </button>
+                </div>
+            }
         </div>
     </div>
 
@@ -135,6 +145,17 @@
 
     private string? _keyword;
     private string? _roleFilter;
+
+    private bool HasActiveAccountFilters =>
+        !string.IsNullOrWhiteSpace(_keyword) || !string.IsNullOrWhiteSpace(_roleFilter);
+
+    private Task ClearAccountFiltersAsync()
+    {
+        _keyword = null;
+        _roleFilter = null;
+        return ReloadAsync();
+    }
+
     private string? _openMenuId;
     private string _callerUserId = string.Empty;
     private string _callerRole = string.Empty;
@@ -563,6 +584,7 @@
 
     private static BadgeTone StatusTone(AccountStatus status) => status switch
     {
+        AccountStatus.Unverified => BadgeTone.Warning,
         AccountStatus.Pending => BadgeTone.Info,
         AccountStatus.Locked => BadgeTone.Neutral,
         _ => BadgeTone.Success,

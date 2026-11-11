@@ -1,0 +1,53 @@
+@typeparam TItem
+
+<nav class="segmented-tabs @(Disabled ? "is-disabled" : null)" aria-label="@AriaLabel">
+    <span class="segmented-indicator @(Index < 0 ? "is-hidden" : null)"
+          style="--segment-index:@Index;--segment-count:@Items.Count" aria-hidden="true"></span>
+    @foreach (var item in Items)
+    {
+        <button type="button"
+                class="segmented-tab"
+                aria-pressed="@(IsSelected(item) ? "true" : "false")"
+                disabled="@Disabled"
+                @onclick="() => SelectAsync(item)">
+            @if (!string.IsNullOrWhiteSpace(IconOf(item)))
+            {
+                <LucideIcon Name="@IconOf(item)" />
+            }
+            <span>@LabelOf(item)</span>
+        </button>
+    }
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TItem> Items { get; set; } = [];
+
+    [Parameter] public Func<TItem, string> KeySelector { get; set; } = default!;
+
+    [Parameter] public Func<TItem, string> LabelSelector { get; set; } = default!;
+
+    [Parameter] public Func<TItem, string?>? IconSelector { get; set; }
+
+    [Parameter] public string? Value { get; set; }
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter] public string? AriaLabel { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    private int Index => Items
+        .Select((item, index) => new { item, index })
+        .FirstOrDefault(row => string.Equals(KeySelector(row.item), Value, StringComparison.Ordinal))
+        ?.index ?? -1;
+
+    private bool IsSelected(TItem item) =>
+        string.Equals(KeySelector(item), Value, StringComparison.Ordinal);
+
+    private string LabelOf(TItem item) => LabelSelector(item);
+
+    private string? IconOf(TItem item) => IconSelector?.Invoke(item);
+
+    private Task SelectAsync(TItem item) =>
+        ValueChanged.InvokeAsync(KeySelector(item));
+}
