@@ -484,6 +484,8 @@
   <data name="P5CostSaveSuccess" xml:space="preserve"><value>Đã lưu chỉ số.</value></data>
   <data name="P5CostAdjustSuccess" xml:space="preserve"><value>Đã điều chỉnh chỉ số.</value></data>
   <data name="P5CostSaveFailed" xml:space="preserve"><value>Không thể lưu chỉ số. Vui lòng thử lại.</value></data>
+  <data name="P5CostNoChange" xml:space="preserve"><value>Chỉ số mới trùng với chỉ số cũ.</value></data>
+  <data name="P5CostTariffMissing" xml:space="preserve"><value>Chưa cấu hình biểu giá cho kỳ này.</value></data>
   <data name="P5CostNotAdjustable" xml:space="preserve"><value>Kỳ này không thể điều chỉnh.</value></data>
   <data name="P5CostApprovalPending" xml:space="preserve"><value>Yêu cầu đã được gửi duyệt.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>Phòng đã có chỉ số cho kỳ này.</value></data>
