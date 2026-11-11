@@ -29,6 +29,7 @@ public partial class BusinessReportsView
     private DashboardLoadState TenantState = DashboardLoadState.Loading;
     private bool IsOwner;
     private bool Refreshing;
+    private bool ShowTenantReport;
     private DateTime? LastRefreshed;
     private readonly SemaphoreSlim reloadGate = new(1, 1);
     private int scopeVersion;
@@ -38,11 +39,14 @@ public partial class BusinessReportsView
     protected override async Task OnInitializedAsync()
     {
         IsOwner = await PageService.GetRoleAsync() == Roles.ChuTro;
+        
     }
 
     protected override Task OnParametersSetAsync() => ReloadAsync(false, readQuery: true);
 
     private Task RefreshAsync() => ReloadAsync(true);
+
+    private void SelectReport(bool tenant) => ShowTenantReport = tenant;
 
     private async Task ReloadAsync(bool notify, bool readQuery = false)
     {

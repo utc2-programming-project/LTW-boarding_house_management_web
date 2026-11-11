@@ -1422,6 +1422,10 @@
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>
+  <data name="ApprovalUiQueueHint" xml:space="preserve"><value>Requests from managers awaiting owner approval.</value></data>
+  <data name="ApprovalUiMineHint" xml:space="preserve"><value>Requests you have sent and their decision status.</value></data>
+  <data name="ApprovalUiEmptyHint" xml:space="preserve"><value>Requests awaiting approval will appear here.</value></data>
+  <data name="ApprovalUiRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="ApprovalUiAction" xml:space="preserve"><value>Action</value></data>
   <data name="ApprovalUiMode" xml:space="preserve"><value>Mode</value></data>
   <data name="ApprovalUiModeAllow" xml:space="preserve"><value>Allow</value></data>

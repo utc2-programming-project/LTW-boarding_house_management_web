@@ -13,81 +13,103 @@
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@Title</PageTitle>
-<PageHeading Title="@Title" HelpText="@(Mine ? L["MyRequestsHelp"] : L["ApprovalsHelp"])" />
 
-@if (_errorMessage is not null)
-{
-    <p role="alert">@_errorMessage</p>
-}
-@if (_error)
-{
-    <p role="alert">@L["ApprovalUiError"]</p>
-}
-@if (_items is null && !_error)
-{
-    <p role="status">@L["ApprovalUiLoading"]</p>
-}
-else if (_items is { Count: 0 })
-{
-    <p>@L["ApprovalUiEmpty"]</p>
-}
-else if (_items is not null)
-{
-    @foreach (var item in _items)
+<section class="approval-page" aria-labelledby="approval-title">
+    <PageHeading Title="@Title" TitleId="approval-title" HelpText="@(Mine ? L["MyRequestsHelp"] : L["ApprovalsHelp"])">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">
+                <LucideIcon Name="refresh-cw" />@L["ApprovalUiRefresh"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_error || _errorMessage is not null)
     {
-        <section @key="item.Id" class="card p-3 mb-3">
-            <h2>@L[item.OperationCode] <small class="text-muted">@item.OperationCode</small></h2>
-            @if (_contractSummaries.TryGetValue(item.Id, out var contractSummary))
-            {
-                <p>@contractSummary.ContractNumber · @contractSummary.RoomCode · @contractSummary.PropertyName</p>
-                <p>@ActionLabel(contractSummary.Action)</p>
-                @if (contractSummary.NewEndDate is not null) { <p>@L["ApprovalUiNewEndDate"]: @DateFormatter.Format(DateOnly.FromDateTime(contractSummary.NewEndDate.Value))</p> }
-                @if (contractSummary.ProposedDeposit is not null) { <p>@L["ApprovalUiDepositChange"]: @(contractSummary.CurrentDeposit is null ? "—" : MoneyFormatter.Format(contractSummary.CurrentDeposit.Value)) → @MoneyFormatter.Format(contractSummary.ProposedDeposit.Value)</p> }
-            }
-            else
-            {
-                <p>@L[$"ApprovalUiTarget{item.TargetType}"]</p>
-                @if (PayloadSummary(item) is { Length: > 0 } summary)
-                {
-                    <p>@summary</p>
-                }
-            }
-            <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
-                         Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
-            @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
-            {
-                <p>@L["ApprovalUiReason"] · @item.DecisionReason</p>
-            }
-            @if (!Mine)
-            {
-                <div class="mt-2">
-                    @if (_confirming == item.Id)
-                    {
-                        <p>@L["ApprovalUiConfirmApprove"]</p>
-                        <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
-                        <button class="btn btn-secondary" disabled="@_busy" @onclick="CancelConfirm">@L["Cancel"]</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-primary" disabled="@_busy" @onclick="() => StartConfirm(item.Id)">@L["ApprovalUiApprove"]</button>
-                    }
-                    @if (_rejecting == item.Id)
-                    {
-                        <label for="approval-reason">@L["ApprovalUiReason"]</label>
-                        <textarea id="approval-reason" maxlength="@RejectApprovalRequest.MaxReasonLength"
-                                  @bind="_reason" @bind:event="oninput" disabled="@_busy"></textarea>
-                        <button class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reason))"
-                                @onclick="() => DecideAsync(item.Id, _reason.Trim())">@L["ApprovalUiReject"]</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-secondary" disabled="@_busy" @onclick="() => StartReject(item.Id)">@L["ApprovalUiReject"]</button>
-                    }
-                </div>
-            }
-        </section>
+        <div class="approval-feedback" role="alert">
+            <LucideIcon Name="alert" />
+            <p>@(_errorMessage ?? L["ApprovalUiError"])</p>
+            <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="ReloadAsync">@L["ApprovalUiRefresh"]</button>
+        </div>
     }
-}
+    else if (_items is null)
+    {
+        <p class="approval-loading" role="status"><LucideIcon Name="refresh-cw" />@L["ApprovalUiLoading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["ApprovalUiEmpty"]" Description="@L["ApprovalUiEmptyHint"]" />
+    }
+    else
+    {
+        <div class="approval-list">
+            @foreach (var item in _items)
+            {
+                <article @key="item.Id" class="approval-card">
+                    <div class="approval-card-head">
+                        <div>
+                            <h2>@item.OperationCode · @L[item.OperationCode]</h2>
+                            @if (_contractSummaries.TryGetValue(item.Id, out var contractSummary))
+                            {
+                                <p class="approval-target">@ActionLabel(contractSummary.Action) <span class="approval-target-key">@contractSummary.ContractNumber · @contractSummary.RoomCode · @contractSummary.PropertyName</span></p>
+                                @if (contractSummary.NewEndDate is not null)
+                                {
+                                    <p class="approval-target"><strong>@L["ApprovalUiNewEndDate"]:</strong> @DateFormatter.Format(DateOnly.FromDateTime(contractSummary.NewEndDate.Value))</p>
+                                }
+                                @if (contractSummary.ProposedDeposit is not null)
+                                {
+                                    <p class="approval-target"><strong>@L["ApprovalUiDepositChange"]:</strong> @(contractSummary.CurrentDeposit is null ? "—" : MoneyFormatter.Format(contractSummary.CurrentDeposit.Value)) → @MoneyFormatter.Format(contractSummary.ProposedDeposit.Value)</p>
+                                }
+                            }
+                            else
+                            {
+                                <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key">@item.TargetKey</span></p>
+                                @if (PayloadSummary(item) is { Length: > 0 } summary)
+                                {
+                                    <p class="approval-target">@summary</p>
+                                }
+                            }
+                        </div>
+                        <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
+                                     Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+                    {
+                        <p class="approval-reason"><strong>@L["ApprovalUiReason"]:</strong> @item.DecisionReason</p>
+                    }
+                    @if (!Mine && item.Status == ApprovalRequestStatus.Pending)
+                    {
+                        <div class="approval-actions">
+                            @if (_confirming == item.Id)
+                            {
+                                <p class="approval-target">@L["ApprovalUiConfirmApprove"]</p>
+                                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(item.Id, null)">@L["ApprovalUiApprove"]</button>
+                                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="CancelConfirm">@L["Cancel"]</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => StartConfirm(item.Id)">@L["ApprovalUiApprove"]</button>
+                            }
+                            @if (_rejecting == item.Id)
+                            {
+                                <div class="approval-reject">
+                                    <label for="approval-reason">@L["ApprovalUiReason"]</label>
+                                    <textarea id="approval-reason" maxlength="@RejectApprovalRequest.MaxReasonLength"
+                                              @bind="_reason" @bind:event="oninput" disabled="@_busy"></textarea>
+                                </div>
+                                <button type="button" class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reason))"
+                                        @onclick="() => DecideAsync(item.Id, _reason.Trim())">@L["ApprovalUiReject"]</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => StartReject(item.Id)">@L["ApprovalUiReject"]</button>
+                            }
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
 
 @code {
     [Parameter] public bool Mine { get; set; }
@@ -109,6 +131,25 @@ else if (_items is not null)
         var role = Mine ? "QuanLy" : "ChuTro";
         _caller = new(user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "", user.IsInRole(role) ? role : "");
         await LoadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _error = false;
+        _errorMessage = null;
+        _items = null;
+        try
+        {
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task LoadAsync()

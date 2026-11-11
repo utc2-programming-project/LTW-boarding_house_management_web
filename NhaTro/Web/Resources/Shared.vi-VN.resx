@@ -1422,6 +1422,10 @@
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Đang tải…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>Không có dữ liệu.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>Không thể xử lý yêu cầu. Vui lòng tải lại và thử lại.</value></data>
+  <data name="ApprovalUiQueueHint" xml:space="preserve"><value>Yêu cầu từ Quản lý đang chờ Chủ trọ duyệt.</value></data>
+  <data name="ApprovalUiMineHint" xml:space="preserve"><value>Các yêu cầu bạn đã gửi và trạng thái xử lý.</value></data>
+  <data name="ApprovalUiEmptyHint" xml:space="preserve"><value>Khi có yêu cầu cần duyệt, chúng sẽ xuất hiện tại đây.</value></data>
+  <data name="ApprovalUiRefresh" xml:space="preserve"><value>Làm mới</value></data>
   <data name="ApprovalUiAction" xml:space="preserve"><value>Thao tác</value></data>
   <data name="ApprovalUiMode" xml:space="preserve"><value>Chế độ</value></data>
   <data name="ApprovalUiModeAllow" xml:space="preserve"><value>Cho phép</value></data>
