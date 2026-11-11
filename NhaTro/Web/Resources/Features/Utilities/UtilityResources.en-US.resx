@@ -479,6 +479,8 @@
   <data name="P5CostSaveSuccess" xml:space="preserve"><value>Readings saved.</value></data>
   <data name="P5CostAdjustSuccess" xml:space="preserve"><value>Readings adjusted.</value></data>
   <data name="P5CostSaveFailed" xml:space="preserve"><value>Could not save readings. Please try again.</value></data>
+  <data name="P5CostNoChange" xml:space="preserve"><value>The new readings match the current ones.</value></data>
+  <data name="P5CostTariffMissing" xml:space="preserve"><value>No tariff is configured for this period.</value></data>
   <data name="P5CostNotAdjustable" xml:space="preserve"><value>This period cannot be adjusted.</value></data>
   <data name="P5CostApprovalPending" xml:space="preserve"><value>The change was submitted for approval.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>A reading already exists for this room and period.</value></data>
