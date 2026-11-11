@@ -24,14 +24,18 @@ public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppF
     }
 
     [WebAppFact]
-    public async Task Chu_tro_thay_doanh_thu_cong_no_va_viec_can_lam()
+    public async Task Chu_tro_thay_thong_ke_va_viec_can_lam_khong_trung_kpi()
     {
         var html = await LoginAndGetHomeAsync(TestDataSeeder.ChuTroAEmail);
 
-        Assert.Contains("Tổng quan hôm nay", html);
+        Assert.Contains("Cơ cấu phòng", html);
+        Assert.DoesNotContain("Tổng quan hôm nay", html);
         Assert.Contains("Việc cần làm", html);
-        Assert.Contains("Doanh thu tháng", html);
+        Assert.DoesNotContain("Doanh thu tháng", html);
         Assert.Contains("Hoá đơn chưa thu", html);
+        Assert.Contains("Hợp đồng sắp hết hạn", html);
+        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, "class=\"kpi-grid ").Count);
+        Assert.DoesNotContain("quick-action\" href=\"/dashboard\"", html);
         Assert.DoesNotContain("Trang mẫu giao diện", html);
         Assert.DoesNotContain("Layout preview", html);
     }
@@ -41,10 +45,25 @@ public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppF
     {
         var html = await LoginAndGetHomeAsync(TestDataSeeder.QuanLyEmail);
 
-        Assert.Contains("Tổng quan hôm nay", html);
+        Assert.Contains("Cơ cấu phòng", html);
+        Assert.DoesNotContain("Tổng quan hôm nay", html);
         Assert.Contains("Việc cần làm", html);
         Assert.DoesNotContain("Doanh thu tháng", html);
         Assert.DoesNotContain("Công nợ", html);
+    }
+
+    [WebAppFact]
+    public async Task Dashboard_cu_chuyen_ve_trang_chu()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+        var login = await LoginFormClient.PostFreshAsync(client, TestDataSeeder.ChuTroAEmail, TestDataSeeder.Password);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var response = await client.GetAsync("/dashboard");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.Equal("/", new Uri(client.BaseAddress!, response.Headers.Location!).AbsolutePath);
     }
 
     [WebAppFact]

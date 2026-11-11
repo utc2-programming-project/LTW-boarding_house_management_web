@@ -49,7 +49,7 @@ public sealed class AddressInputTests : BunitContext
     }
 
     [Fact]
-    public void Dia_chi_ba_cap_cu_hien_thi_hai_cap_va_phat_ra_chuoi_chuan_hoa()
+    public void Dia_chi_ba_cap_cu_hien_thi_hai_cap_va_khong_tu_ghi_de_gia_tri_da_luu()
     {
         string? emitted = null;
 
@@ -61,6 +61,22 @@ public sealed class AddressInputTests : BunitContext
         Assert.Equal("12 Nguyễn Trãi", cut.Find("#addr-street").GetAttribute("value"));
         Assert.Equal("Phường Bến Thành", cut.Find("#addr-ward").GetAttribute("value"));
         Assert.Equal("Thành phố Hồ Chí Minh", cut.Find("#addr-province").GetAttribute("value"));
+
+        // Chỉ xem hồ sơ cũ thì không được ghi lại địa chỉ, tránh làm mất cấp quận/huyện.
+        Assert.Null(emitted);
+    }
+
+    [Fact]
+    public void Sua_dia_chi_cu_thi_moi_chuan_hoa_ve_hai_cap()
+    {
+        string? emitted = null;
+
+        var cut = Render<AddressInput>(parameters => parameters
+            .Add(p => p.Id, "addr")
+            .Add(p => p.Value, "12 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP.HCM")
+            .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => emitted = value)));
+
+        cut.Find("#addr-street").Input("12 Nguyễn Trãi");
 
         cut.WaitForAssertion(() =>
             Assert.Equal("12 Nguyễn Trãi, Phường Bến Thành, Thành phố Hồ Chí Minh", emitted));
@@ -80,7 +96,7 @@ public sealed class AddressInputTests : BunitContext
     }
 
     [Fact]
-    public void Dia_chi_cu_khong_co_tinh_thi_bo_doan_quan_huyen()
+    public void Dia_chi_cu_khong_co_tinh_hien_thi_phan_con_lai_va_khong_tu_ghi_de()
     {
         string? emitted = null;
 
@@ -90,7 +106,7 @@ public sealed class AddressInputTests : BunitContext
             .Add(p => p.ValueChanged, EventCallback.Factory.Create<string?>(this, value => emitted = value)));
 
         Assert.Equal("12 Nguyễn Trãi", cut.Find("#addr-street").GetAttribute("value"));
-        cut.WaitForAssertion(() => Assert.Equal("12 Nguyễn Trãi", emitted));
+        Assert.Null(emitted);
     }
 
     [Fact]

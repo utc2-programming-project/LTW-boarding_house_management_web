@@ -243,3 +243,11 @@ SVG ERD chưa vẽ thêm bảng snapshot dịch vụ trong lượt này; schema 
 - 4 lệnh kiểm DB (§7 plan) chưa có output → mục này chưa ghi "đạt".
 - 3 nhãn bị khung che có sẵn từ 2E (`PropertyId` @(267,673.2), `TariffVersionId` @(1256.2,1798), `PropertyId` @(784.5,264)); không phát sinh từ 3C.
 - Khi `dev` có migration mới: chạy lại diff object + soát chéo trước khi publish ERD.
+## VHT-51 — snapshot dịch vụ và gia cố kỳ ghi chỉ số (09/11/2026)
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261109163100_AddUtilityServicePeriodSnapshots` | Thêm `HasServiceSnapshots` vào `UtilityReadingPeriods`; tạo `UtilityServicePeriodSnapshots`, FK cascade về kỳ, unique `(UtilityReadingPeriodId, SourceServicePriceHistoryId)` và các CHECK số tiền/số lượng. |
+| `20261109195353_HardenUtilityReadingPeriods` | Nới `Unit` của `InvoiceItems` và `UtilityBillingPeriodSnapshots` lên 30 ký tự; thay index `InvoiceId` bằng unique filtered index để một invoice chỉ thuộc một kỳ. |
+
+SVG ERD chưa vẽ thêm bảng snapshot dịch vụ trong lượt này; schema SQL là nguồn đối chiếu cập nhật cho hai migration trên.

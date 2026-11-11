@@ -3059,6 +3059,35 @@ namespace Web.Migrations
                     b.Navigation("Audits");
                 });
 
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityReadingPeriod", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Invoices.Entities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityServicePeriodSnapshot", b =>
+                {
+                    b.HasOne("Web.Features.Utilities.Entities.UtilityReadingPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("UtilityReadingPeriodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
                 {
                     b.Navigation("Tiers");

@@ -12,6 +12,8 @@ public static class InvoiceErrorCodes
     public const string InvoiceNotFound = nameof(InvoiceNotFound);
     public const string InvalidStatus = nameof(InvalidStatus);
     public const string TotalMismatch = nameof(TotalMismatch);
+    public const string UtilityPeriodMismatch = nameof(UtilityPeriodMismatch);
+    public const string TariffNotConfigured = nameof(TariffNotConfigured);
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
@@ -30,6 +32,8 @@ public static class InvoiceErrorMessages
     public const string InvoiceNotFound = "Không tìm thấy hóa đơn hoặc bạn không có quyền thao tác.";
     public const string InvalidStatus = "Chỉ hóa đơn nháp mới được phát hành.";
     public const string TotalMismatch = "Tổng hóa đơn không khớp với các dòng đã lưu.";
+    public const string UtilityPeriodMismatch = "Kỳ chỉ số điện/nước đã chốt không khớp kỳ hóa đơn.";
+    public const string TariffNotConfigured = "Chưa có biểu giá điện/nước hiệu lực cho kỳ này nên không thể lập hóa đơn thật.";
     public const string ApprovalRequired = "Thao tác đang chờ Chủ trọ duyệt; hóa đơn chưa được ghi.";
     public const string ApprovalDenied = "Công tắc Quản lý đang chặn thao tác với hóa đơn.";
     public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";

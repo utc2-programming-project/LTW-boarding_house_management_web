@@ -24,3 +24,9 @@ public interface IApprovalApplier
         ApplicationDbContext db,
         CancellationToken ct = default);
 }
+
+/// <summary>Lets an operation-specific applier translate database constraints raised at the shared save boundary.</summary>
+public interface IApprovalSaveExceptionMapper
+{
+    ApprovalApplyException? MapSaveException(Exception exception);
+}

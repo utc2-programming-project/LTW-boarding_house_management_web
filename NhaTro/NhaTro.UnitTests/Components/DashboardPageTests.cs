@@ -55,7 +55,7 @@ public sealed class DashboardPageTests : BunitContext
     public void Property_filter_refresh_and_period_use_shared_state()
     {
         Configure(Roles.ChuTro);
-        var page = Render<DashboardView>();
+        var page = Render<DashboardOverview>();
         page.WaitForAssertion(() => Assert.Single(RoomRequests));
         page.FindAll("select")[0].Change("7");
         page.WaitForAssertion(() => Assert.Equal(7, RoomRequests.Last()));
@@ -73,11 +73,30 @@ public sealed class DashboardPageTests : BunitContext
     }
 
     [Fact]
+    public void Refresh_updates_additional_work_without_resetting_property_filter()
+    {
+        Configure(Roles.ChuTro);
+        var refreshes = 0;
+        var page = Render<DashboardOverview>(parameters => parameters
+            .Add(component => component.RefreshAdditionalContent, () => { refreshes++; }));
+        page.WaitForAssertion(() => Assert.Single(RoomRequests));
+        Assert.Equal(0, refreshes);
+
+        page.FindAll("select")[0].Change("7");
+        page.WaitForAssertion(() => Assert.Equal(7, TenantRequests.Last()));
+        page.Find(".page-heading-actions button").Click();
+
+        page.WaitForAssertion(() => Assert.Equal(1, refreshes));
+        page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7, 7 }, RoomRequests));
+        Assert.Equal("7", page.FindAll("select")[0].GetAttribute("value"));
+    }
+
+    [Fact]
     public void Room_denial_preserves_tenant_source()
     {
         DenyRooms = true;
         Configure(Roles.ChuTro);
-        var page = Render<DashboardView>();
+        var page = Render<DashboardOverview>();
         page.WaitForAssertion(() => Assert.Equal(4, page.FindAll("dd").Count));
         Assert.Empty(page.FindAll(".kpi-card a"));
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);

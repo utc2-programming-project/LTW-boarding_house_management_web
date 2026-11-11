@@ -1940,4 +1940,10 @@
   <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>Đã xóa {0} phòng.</value></data>
   <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>Đã xóa {0} phòng, {1} phòng chưa xóa được:</value></data>
   <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Phòng {0}: {1}</value></data>
+  <data name="ApprovalUiNewEndDate" xml:space="preserve"><value>Ngày kết thúc mới</value></data>
+  <data name="ApprovalUiDepositChange" xml:space="preserve"><value>Thay đổi tiền cọc</value></data>
+  <data name="ApprovalUiActionRenew" xml:space="preserve"><value>Gia hạn hợp đồng</value></data>
+  <data name="ApprovalUiActionLiquidate" xml:space="preserve"><value>Thanh lý hợp đồng</value></data>
+  <data name="ApprovalUiActionDeposit" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
+  <data name="ApprovalUiActionUnknown" xml:space="preserve"><value>Thao tác hợp đồng</value></data>
 </root>

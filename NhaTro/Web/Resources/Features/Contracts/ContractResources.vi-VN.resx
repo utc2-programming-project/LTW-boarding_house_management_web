@@ -242,4 +242,24 @@
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Thuê/tháng</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Đặt cọc</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>Xem thông tin hợp đồng, các bên, điều khoản và tình trạng thanh toán.</value></data>
+  <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Cập nhật cọc</value></data>
+  <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
+  <data name="ContractDepositUpdateDescription" xml:space="preserve"><value>Nhập số tiền cọc mới cho hợp đồng còn hiệu lực.</value></data>
+  <data name="ContractDepositUpdateAmountLabel" xml:space="preserve"><value>Tiền cọc mới</value></data>
+  <data name="ContractDepositUpdateCurrentLabel" xml:space="preserve"><value>Tiền cọc hiện tại</value></data>
+  <data name="ContractDepositUpdateSuccess" xml:space="preserve"><value>Đã cập nhật tiền cọc.</value></data>
+  <data name="ContractDepositUpdatePendingApproval" xml:space="preserve"><value>Yêu cầu cập nhật cọc đã gửi Chủ trọ duyệt.</value></data>
+  <data name="ContractDepositUpdateUnchanged" xml:space="preserve"><value>Tiền cọc mới phải khác tiền cọc hiện tại.</value></data>
+  <data name="ContractPendingApprovalBanner" xml:space="preserve"><value>{0} đang chờ Chủ trọ duyệt.</value></data>
+  <data name="ContractPendingRenewal" xml:space="preserve"><value>Gia hạn</value></data>
+  <data name="ContractPendingLiquidation" xml:space="preserve"><value>Thanh lý</value></data>
+  <data name="ContractPendingDepositUpdate" xml:space="preserve"><value>Cập nhật cọc</value></data>
+  <data name="ContractErrorInvalidDepositAmount" xml:space="preserve"><value>Tiền cọc phải là số không âm và không vượt quá giới hạn cho phép.</value></data>
+  <data name="ContractErrorDepositUnchanged" xml:space="preserve"><value>Tiền cọc mới phải khác tiền cọc hiện tại.</value></data>
+  <data name="ContractErrorDepositApprovalDenied" xml:space="preserve"><value>Công tắc cập nhật cọc đang chặn thao tác.</value></data>
+  <data name="ContractHistoryTitle" xml:space="preserve"><value>Lịch sử hợp đồng</value></data>
+  <data name="ContractSuccessorLabel" xml:space="preserve"><value>Hợp đồng kế nhiệm</value></data>
+  <data name="ContractPreviousLabel" xml:space="preserve"><value>Hợp đồng tiền nhiệm</value></data>
+  <data name="ContractHistoryEmpty" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Gợi ý 20% giá thuê</value></data>
 </root>
