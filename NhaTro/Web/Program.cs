@@ -235,8 +235,18 @@ builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractDepositApprovalApplier>();
 builder.Services.AddScoped<ContractApprovalSummaryService>();
-// VHT-99: duyệt SW-06 = đưa hồ sơ khách thuê vào thùng rác.
+// VHT-99: duyệt SW-06 = đưa hồ sơ khách thuê vào thùng rác (hoặc bật/tắt trạng thái).
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
+// P3: duyệt SW-04 (tạo) và SW-05 (sửa) hồ sơ khách thuê.
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Tenants.Services.TenantCreateApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, Web.Features.Tenants.Services.TenantUpdateApprovalApplier>();
+// P2: duyệt SW-01/02/03 = sửa thông tin / giá / trạng thái phòng.
+builder.Services.AddScoped<IApprovalApplier>(sp => new Web.Features.Rooms.Services.RoomUpdateApprovalApplier(
+    sp.GetRequiredService<TimeProvider>(), "SW-01"));
+builder.Services.AddScoped<IApprovalApplier>(sp => new Web.Features.Rooms.Services.RoomUpdateApprovalApplier(
+    sp.GetRequiredService<TimeProvider>(), "SW-02"));
+builder.Services.AddScoped<IApprovalApplier>(sp => new Web.Features.Rooms.Services.RoomUpdateApprovalApplier(
+    sp.GetRequiredService<TimeProvider>(), "SW-03"));
 // SW-10/SW-11: chờ Chủ trọ duyệt trước khi vào sổ / phát hành hóa đơn.
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Invoices.Services.InvoiceIssueApprovalApplier>();

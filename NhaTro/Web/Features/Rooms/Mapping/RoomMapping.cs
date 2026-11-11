@@ -6,7 +6,7 @@ namespace Web.Features.Rooms.Mapping;
 // Mapping thu cong entity <-> DTO (khong dung AutoMapper theo tech-stack).
 public static class RoomMapping
 {
-    public static RoomListItem ToListItem(Room e, string propertyName) => new()
+    public static RoomListItem ToListItem(Room e, string propertyName, bool hasPendingApproval = false) => new()
     {
         Id = e.Id,
         PropertyId = e.PropertyId,
@@ -17,6 +17,7 @@ public static class RoomMapping
         StandardPrice = e.StandardPrice,
         Status = e.Status,
         IsActive = e.IsActive,
+        HasPendingApproval = hasPendingApproval,
     };
 
     public static RoomDetail ToDetail(Room e, string propertyName) => new()

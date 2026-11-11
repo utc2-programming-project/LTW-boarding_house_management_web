@@ -442,7 +442,6 @@ public sealed class ContractService : IContractService
                 contract.Status = ContractStatus.Approved;
                 contract.RejectReason = null;
                 contract.SnapshotPrice = room.StandardPrice;
-                contract.DepositAmount = MoneyFormatter.RoundVnd(room.StandardPrice * 0.20m);
                 room.Status = RoomStatus.Rented;
             }
 
@@ -703,7 +702,21 @@ public sealed class ContractService : IContractService
                 nameof(request.TenantIds));
         }
 
-        var depositAmount = MoneyFormatter.RoundVnd(currentRoomPrice * 0.20m);
+        if (request.DepositAmount is { } requestedDeposit
+            && (requestedDeposit < 0m || requestedDeposit > 9_999_999_999_999_999.99m))
+        {
+            throw new ContractValidationException(
+                ContractErrorMessages.InvalidDepositAmount,
+                ContractErrorCodes.InvalidDepositAmount,
+                nameof(request.DepositAmount));
+        }
+
+        // D4: Chủ trọ tự tạo hợp đồng thì hợp đồng có hiệu lực ngay (không cần tự duyệt lại);
+        // Quản lý tạo vẫn nằm ở Chờ duyệt để Chủ trọ quyết định.
+        var ownerCreated = caller.IsChuTro;
+        var depositAmount = request.DepositAmount is { } inputDeposit
+            ? MoneyFormatter.RoundVnd(inputDeposit)
+            : MoneyFormatter.RoundVnd(currentRoomPrice * 0.20m);
         var contractId = Guid.NewGuid();
         var contractNumber = $"HD-{contractId:N}".ToUpperInvariant();
         var contract = new Contract
@@ -715,7 +728,7 @@ public sealed class ContractService : IContractService
             DepositAmount = depositAmount,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
-            Status = ContractStatus.Pending,
+            Status = ownerCreated ? ContractStatus.Approved : ContractStatus.Pending,
         };
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -725,7 +738,6 @@ public sealed class ContractService : IContractService
             var lockedRoom = await _context.Rooms
                 .FromSqlInterpolated($"SELECT * FROM [Rooms] WITH (UPDLOCK, HOLDLOCK) WHERE [Id] = {room.Id}")
                 .IgnoreQueryFilters()
-                .AsNoTracking()
                 .SingleOrDefaultAsync(cancellationToken);
 
             if (lockedRoom is null
@@ -758,6 +770,12 @@ public sealed class ContractService : IContractService
                 ContractId = contract.ContractId,
                 TenantId = tenantId,
             }));
+
+            if (ownerCreated)
+            {
+                lockedRoom.Status = RoomStatus.Rented;
+                lockedRoom.UpdatedAt = _timeProvider.UtcNow();
+            }
 
             // PLAN-005 (điều chỉnh): hợp đồng ở tòa của chủ trọ nào thì chủ trọ đó được xem hồ sơ khách,
             // kể cả khách đã thuộc chủ trọ khác — mỗi khách có thể có nhiều liên kết chủ trọ.

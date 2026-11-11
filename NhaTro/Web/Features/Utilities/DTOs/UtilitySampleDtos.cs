@@ -50,6 +50,9 @@ public sealed class ServiceItemDto
     public string? Description { get; set; }
     public int HistoryCount { get; set; } = 1;
 
+    /// <summary>Biểu giá bậc thang thật của dịch vụ (rỗng với dịch vụ tính giá phẳng).</summary>
+    public IReadOnlyList<ServiceTierRowDto> Tiers { get; set; } = [];
+
     public ServiceItemDto Copy() => new()
     {
         Id = Id,
@@ -69,8 +72,12 @@ public sealed class ServiceItemDto
         BuildingName = BuildingName,
         Description = Description,
         HistoryCount = HistoryCount,
+        Tiers = Tiers,
     };
 }
+
+/// <summary>Một bậc giá thật của biểu giá điện/nước: From là ngưỡng dưới, To là ngưỡng trên (null = không giới hạn).</summary>
+public sealed record ServiceTierRowDto(int TierNumber, decimal From, decimal? To, decimal UnitPrice);
 
 public sealed class PriceVersionDto
 {

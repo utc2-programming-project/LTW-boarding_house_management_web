@@ -222,6 +222,9 @@
 
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSaved { get; set; }
+
+    /// <summary>Quản lý lưu thay đổi cần Chủ trọ duyệt: báo cho trang gọi thay vì coi như đã lưu.</summary>
+    [Parameter] public EventCallback OnApprovalRequested { get; set; }
     [Parameter] public EventCallback<RoomDetail> OnSavedDetail { get; set; }
     [Parameter] public EventCallback OnDeleted { get; set; }
 
@@ -421,6 +424,9 @@
             if (result.ErrorCode == RoomErrorCodes.ApprovalRequired)
             {
                 _approvalPending = true;
+                // Yêu cầu đã vào hàng duyệt: làm mới danh sách/summary để badge "Chờ duyệt"
+                // xuất hiện ngay, không bắt người dùng tải lại trang.
+                await OnApprovalRequested.InvokeAsync();
                 return;
             }
 

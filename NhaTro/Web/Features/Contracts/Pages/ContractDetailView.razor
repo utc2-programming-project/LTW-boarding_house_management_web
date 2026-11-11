@@ -70,7 +70,7 @@
     @if (_contract is not null)
     {
         <p class="tabular-nums">@L["ContractDepositUpdateCurrentLabel"]: @MoneyFormatter.Format(_contract.DepositAmount)</p>
-        <p class="tabular-nums">@L["ContractDepositUpdateSuggestedLabel"]: @MoneyFormatter.Format(_contract.SnapshotPrice * 0.20m)</p>
+        <p class="tabular-nums">@L["ContractDepositUpdateSuggestedLabel"]: @MoneyFormatter.Format(MoneyFormatter.RoundVnd(_contract.SnapshotPrice * 0.20m))</p>
         <label for="deposit-amount">@L["ContractDepositUpdateAmountLabel"]</label>
         <input id="deposit-amount" class="input tabular-nums" inputmode="numeric" @bind="_depositInput" disabled="@_depositBusy" />
         @if (_depositError is not null) { <p class="contract-field-error" role="alert">@_depositError</p> }

@@ -166,8 +166,16 @@
   <data name="TierColQuota" xml:space="preserve"><value>Quota</value></data>
   <data name="TierColRate" xml:space="preserve"><value>Rate (₫ / kWh)</value></data>
   <data name="TierUnlimited" xml:space="preserve"><value>Unlimited</value></data>
+  <data name="TierQuotaRange" xml:space="preserve"><value>{0} – {1} {2}</value></data>
+  <data name="TierQuotaOpen" xml:space="preserve"><value>Above {0} {1}</value></data>
+  <data name="TierModalEmpty" xml:space="preserve"><value>This service has no tiered tariff yet.</value></data>
+  <data name="PriceFilterRangeInvalid" xml:space="preserve"><value>The filter start date must be on or before the filter end date.</value></data>
   <data name="TierMaxKwh" xml:space="preserve"><value>Up to {0} kWh</value></data>
   <data name="CloseBtn" xml:space="preserve"><value>Close</value></data>
+  <data name="P5DiscardTitle" xml:space="preserve"><value>Discard changes?</value></data>
+  <data name="P5DiscardBody" xml:space="preserve"><value>You have unsaved input. Closing now will discard these changes.</value></data>
+  <data name="P5DiscardKeep" xml:space="preserve"><value>Keep editing</value></data>
+  <data name="P5DiscardConfirm" xml:space="preserve"><value>Discard changes</value></data>
 
   <data name="AddModalTitle" xml:space="preserve"><value>Add New Service</value></data>
   <data name="AddModalSubtitle" xml:space="preserve"><value>Create supplementary recurring service</value></data>
@@ -432,6 +440,8 @@
   <data name="P5CostInvoiceCreatedToast" xml:space="preserve"><value>Draft invoice created. Please review and issue it.</value></data>
   <data name="P5CostInvoiceFailed" xml:space="preserve"><value>Could not create the invoice. Please try again.</value></data>
   <data name="P5CostInvoiceMissingReadings" xml:space="preserve"><value>This room has no meter readings for the period, so an invoice cannot be created yet.</value></data>
+  <data name="P5CostCreateInvoiceConfirmTitle" xml:space="preserve"><value>Create an invoice for this room?</value></data>
+  <data name="P5CostCreateInvoiceConfirmMessage" xml:space="preserve"><value>A draft invoice will be created for room {0} for the period {1} – {2}. You can review it before issuing.</value></data>
   <data name="P5CostConcurrencyConflict" xml:space="preserve"><value>The data was just updated by someone else. Please reload the page and try again.</value></data>
   <data name="P5CostInvoiceDuplicate" xml:space="preserve"><value>This contract already has an invoice for this period with different data.</value></data>
   <data name="P5CostStatusOpen" xml:space="preserve"><value>Open</value></data>

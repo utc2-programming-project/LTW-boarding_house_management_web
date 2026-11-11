@@ -6,6 +6,8 @@
 @inject TenantPageService TenantPages
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
+@using Web.Infrastructure.Time
+@inject TimeProvider Clock
 
 <PageTitle>@L["TenantsTitle"] · @L["AppName"]</PageTitle>
 
@@ -230,6 +232,10 @@
                     <span class="tenant-name-text">
                         <button type="button" class="tenant-name-button" @onclick="() => OpenDetailsAsync(tenant.Id)">@tenant.FullName</button>
                         <small>@string.Format(L["TenantRecordNumber"], tenant.Id)</small>
+                        @if (tenant.HasPendingApproval)
+                        {
+                            <StatusBadge Text="@L["P2ApprovalPending"]" Tone="@BadgeTone.Warning" />
+                        }
                     </span>
                 </div>,
             },
@@ -391,13 +397,15 @@
         || !string.IsNullOrEmpty(_accountFilter)
         || !string.IsNullOrEmpty(_rentalFilter);
 
-    private Task ClearTenantFiltersAsync()
+    private async Task ClearTenantFiltersAsync()
     {
         _keyword = null;
         _statusFilter = string.Empty;
         _accountFilter = string.Empty;
         _rentalFilter = string.Empty;
-        return Task.CompletedTask;
+        _sortFilter = "created";
+        // Tạo lại bảng để xoá cả trạng thái sort nội bộ (mũi tên trên header) và về trang 1.
+        await ResetTableAsync();
     }
 
     private void OpenCreate()
@@ -548,6 +556,14 @@
         }
         if (!result.Succeeded)
         {
+            if (result.ErrorCode == TenantErrorCodes.ApprovalRequired)
+            {
+                // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
+                Toasts.Success(L["TenantStatusApprovalSubmitted"]);
+                await RefreshAsync();
+                return;
+            }
+
             Toasts.Error(ErrorMessage(result.ErrorCode));
             if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict)
             {
@@ -655,6 +671,8 @@
             {
                 // Quản lý ở chế độ "Duyệt": yêu cầu đã vào hàng đợi, dữ liệu chưa đổi.
                 Toasts.Success(L["TenantDeleteApprovalSubmitted"]);
+                // Nạp lại để badge "Chờ duyệt" xuất hiện ngay trên dòng vừa xoá.
+                await RefreshAsync();
                 return;
             }
 
@@ -691,7 +709,8 @@
             }
 
             var content = TenantCsvExporter.Build(rows, _canRevealIdNumber, key => L[key]);
-            var fileName = $"tenants_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            var exportNow = VietnamTime.ToVietnam(Clock.GetUtcNow().UtcDateTime);
+            var fileName = $"tenants_{exportNow:yyyyMMdd_HHmm}.csv";
             await JS.InvokeVoidAsync("appTenantExport.download", fileName, content);
             Toasts.Success(string.Format(L["TenantExported"], rows.Count));
         }

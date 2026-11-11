@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityBusiness")]
 @using Web.Common.Utils
+@using Web.Infrastructure.Time
 @inject IStringLocalizer<UtilityResources> L
 @inject ServiceCatalogPageService PageService
 @inject ContractServiceRegistrationService RegistrationService
@@ -9,6 +10,7 @@
 @inject ToastService Toast
 @inject NavigationManager Navigation
 @inject ILogger<ServiceCatalogView> Logger
+@inject TimeProvider Clock
 
 <PageTitle>@L["CatalogPageTitle"]</PageTitle>
 
@@ -227,7 +229,7 @@
                                 <td class="text-right cell-rate tabular-nums">
                                     @if (service.RateType == ServiceRateType.Tiered)
                                     {
-                                        <button type="button" class="tier-view-link" @onclick="() => OpenTierModal(service.Name)">
+                                        <button type="button" class="tier-view-link" @onclick="() => OpenTierModal(service)">
                                             <span>@L["TieredTariffLabel"]</span>
                                             <LucideIcon Name="eye" />
                                         </button>
@@ -302,13 +304,11 @@
 
                                                 @if (_callerRole == Roles.KhachThue && !service.IsReadOnly && service.Type != ServiceTypeCategory.Meter)
                                                 {
-                                                    var alreadyRegistered = _registeredServiceIds.Contains(GetCatalogId(service));
-                                                    var pending = _pendingServiceIds.Contains(GetCatalogId(service));
                                                     <button type="button" class="p2-row-menu-item" role="menuitem"
-                                                            disabled="@(_togglingServiceId.Contains(GetCatalogId(service)) || pending || alreadyRegistered)"
+                                                            disabled="@_togglingServiceId.Contains(GetCatalogId(service))"
                                                             @onclick="() => MenuRegister(service)">
                                                         <LucideIcon Name="send" />
-                                                        <span>@(pending ? L["ServicePendingApprovalBtn"] : alreadyRegistered ? L["ServiceAlreadyRegisteredBtn"] : L["ServiceRegisterBtn"])</span>
+                                                        <span>@L["ServiceRegisterBtn"]</span>
                                                     </button>
                                                 }
 
@@ -391,7 +391,7 @@
 </AuthorizeView>
 
 <ServiceTierModal IsOpen="@_isTierModalOpen"
-                  ServiceName="@_tierServiceName"
+                  Service="@_tierService"
                   OnClose="() => _isTierModalOpen = false" />
 
 <AuthorizeView Policy="UtilityManage">
@@ -424,7 +424,7 @@
                 <dl class="summary-lines">
                     <div><dt>@L["ServiceRequestName"]</dt><dd>@_registrationTarget.Name</dd></div>
                     <div><dt>@L["ServiceRequestPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_registrationTarget.CurrentRate)</dd></div>
-                    <div><dt>@L["ServiceRequestMonth"]</dt><dd class="tabular-nums">@DateOnly.FromDateTime(DateTime.Today).ToString("MM/yyyy")</dd></div>
+                    <div><dt>@L["ServiceRequestMonth"]</dt><dd class="tabular-nums">@Clock.TodayVietnam().ToString("MM/yyyy")</dd></div>
                 </dl>
                 <p class="muted">@L["ServiceRequestMonthlyNote"]</p>
                 <div class="form-field">
@@ -447,6 +447,14 @@
                     <label for="registration-note">@L["ServiceRequestNote"]</label>
                     <input id="registration-note" type="text" class="input" placeholder="@L["ServiceRequestNotePlaceholder"]" @bind="_registrationNote" />
                 </div>
+                @if (IsRegisteredForSelectedContract)
+                {
+                    <div class="form-alert" role="status"><span>@L["ServiceAlreadyRegisteredBtn"]</span></div>
+                }
+                else if (IsPendingForSelectedContract)
+                {
+                    <div class="form-alert" role="status"><span>@L["ServicePendingApprovalBtn"]</span></div>
+                }
                 @if (_registrationError is not null)
                 {
                     <div class="form-alert" role="alert"><span>@_registrationError</span></div>
@@ -455,12 +463,20 @@
             </div>
             <footer class="modal-footer">
                 <button type="button" class="btn btn-secondary" disabled="@_submittingRegistration" @onclick="CloseRegistrationModal">@L["CancelBtn"]</button>
-                <button type="button" class="btn btn-primary" disabled="@(_submittingRegistration || _registrationContractId is null)" @onclick="SubmitRegistrationAsync">
+                <button type="button" class="btn btn-primary" disabled="@(_submittingRegistration || _registrationContractId is null || IsRegisteredForSelectedContract || IsPendingForSelectedContract)" @onclick="SubmitRegistrationAsync">
                     @(_submittingRegistration ? L["LoadingText"] : L["ServiceRequestSubmit"])
                 </button>
             </footer>
         </div>
     </div>
+
+    <ConfirmDialog Visible="_registrationDiscard"
+                   Title="@L["P5DiscardTitle"]"
+                   Message="@L["P5DiscardBody"]"
+                   ConfirmText="@L["P5DiscardConfirm"]"
+                   CancelText="@L["P5DiscardKeep"]"
+                   OnConfirm="DiscardRegistrationChangesAsync"
+                   OnCancel="KeepRegistrationEditing" />
 }
 
 @code {
@@ -493,11 +509,11 @@
     private bool _isDeleteConfirmOpen;
     private ServiceItemDto? _selectedService;
     private ServiceItemDto? _deleteTarget;
-    private string _tierServiceName = string.Empty;
+    private ServiceItemDto? _tierService;
 
-    private IReadOnlySet<int> _registeredServiceIds = new HashSet<int>();
+    private IReadOnlySet<(Guid ContractId, int ServiceCatalogId)> _registeredServices = new HashSet<(Guid, int)>();
     private readonly HashSet<int> _togglingServiceId = [];
-    private IReadOnlySet<int> _pendingServiceIds = new HashSet<int>();
+    private readonly HashSet<(Guid ContractId, int ServiceCatalogId)> _pendingRegistrations = [];
     private IReadOnlyList<ServiceRegistrationContractOptionDto> _contractOptions = [];
 
     private ServiceItemDto? _registrationTarget;
@@ -505,6 +521,7 @@
     private string _registrationNote = string.Empty;
     private string? _registrationError;
     private bool _submittingRegistration;
+    private bool _registrationDiscard;
 
     private int TotalPages => PaginationHelper.TotalPages(_filteredServices.Count, PageSize);
 
@@ -514,7 +531,7 @@
         _isLoading = false;
     }
 
-    private async Task LoadDataAsync()
+    private async Task LoadDataAsync(bool resetPage = true)
     {
         try
         {
@@ -522,16 +539,20 @@
             _visibleBuildings = (await PageService.GetBuildingsForCallerAsync()).ToList();
 
             _allServices = (await PageService.GetServicesForCallerAsync()).ToList();
-            _registeredServiceIds = string.Equals(_callerRole, Roles.KhachThue, StringComparison.OrdinalIgnoreCase)
-                ? await RegistrationService.GetMyRegisteredServiceIdsAsync()
-                : new HashSet<int>();
+            _registeredServices = string.Equals(_callerRole, Roles.KhachThue, StringComparison.OrdinalIgnoreCase)
+                ? (await RegistrationService.GetMyRegisteredServicesAsync())
+                    .Select(item => (item.ContractId, item.ServiceCatalogId))
+                    .ToHashSet()
+                : new HashSet<(Guid, int)>();
             if (string.Equals(_callerRole, Roles.KhachThue, StringComparison.OrdinalIgnoreCase))
             {
                 var requests = await RegistrationRequestService.ListMineAsync();
-                _pendingServiceIds = requests
-                    .Where(request => request.Status == Web.Features.Utilities.Entities.ServiceRegistrationStatus.PendingApproval)
-                    .Select(request => request.ServiceCatalogId)
-                    .ToHashSet();
+                _pendingRegistrations.Clear();
+                foreach (var request in requests.Where(request =>
+                             request.Status == Web.Features.Utilities.Entities.ServiceRegistrationStatus.PendingApproval))
+                {
+                    _pendingRegistrations.Add((request.ContractId, request.ServiceCatalogId));
+                }
                 _contractOptions = await RegistrationRequestService.GetMyContractOptionsAsync();
             }
             _totalCount = _allServices.Count;
@@ -542,7 +563,7 @@
             _isSampleData = PageService.IsSampleData;
             _canWrite = PageService.CheckWriteSupport().CanWrite && string.Equals(_callerRole, Roles.ChuTro, StringComparison.OrdinalIgnoreCase);
             _loadError = null;
-            ApplyFilters();
+            ApplyFiltersCore(resetPage);
         }
         catch (Exception ex)
         {
@@ -563,18 +584,47 @@
         return id;
     }
 
+    private bool IsRegisteredForSelectedContract =>
+        _registrationContractId is Guid contractId
+        && _registrationTarget is not null
+        && _registeredServices.Contains((contractId, GetCatalogId(_registrationTarget)));
+
+    private bool IsPendingForSelectedContract =>
+        _registrationContractId is Guid contractId
+        && _registrationTarget is not null
+        && _pendingRegistrations.Contains((contractId, GetCatalogId(_registrationTarget)));
+
     private void OpenRegistrationModal(ServiceItemDto service)
     {
         _registrationTarget = service;
         _registrationContractId = _contractOptions.FirstOrDefault()?.ContractId;
         _registrationNote = string.Empty;
         _registrationError = null;
+        _registrationDiscard = false;
     }
 
     private void CloseRegistrationModal()
     {
         if (_submittingRegistration) return;
+        if (!string.IsNullOrWhiteSpace(_registrationNote))
+        {
+            _registrationDiscard = true;
+            return;
+        }
         _registrationTarget = null;
+    }
+
+    private Task KeepRegistrationEditing()
+    {
+        _registrationDiscard = false;
+        return Task.CompletedTask;
+    }
+
+    private Task DiscardRegistrationChangesAsync()
+    {
+        _registrationDiscard = false;
+        _registrationTarget = null;
+        return Task.CompletedTask;
     }
 
     private async Task SubmitRegistrationAsync()
@@ -588,7 +638,7 @@
                 GetCatalogId(_registrationTarget),
                 _registrationContractId.Value,
                 _registrationNote);
-            _pendingServiceIds = _pendingServiceIds.Append(request.ServiceCatalogId).ToHashSet();
+            _pendingRegistrations.Add((_registrationContractId!.Value, request.ServiceCatalogId));
             Toast.Success(L["ServiceRequestSuccess"]);
             _registrationTarget = null;
         }
@@ -644,7 +694,9 @@
         RequestDelete(service);
     }
 
-    private void ApplyFilters()
+    private void ApplyFilters() => ApplyFiltersCore(resetPage: true);
+
+    private void ApplyFiltersCore(bool resetPage)
     {
         _openMenuId = null;
         IEnumerable<ServiceItemDto> query = _allServices;
@@ -685,8 +737,13 @@
         }
 
         _filteredServices = query.ToList();
-        _page = 1;
-        _pageServices = _filteredServices.Take(PageSize).ToList();
+        if (resetPage)
+        {
+            _page = 1;
+        }
+
+        _page = PaginationHelper.ClampPage(_page, TotalPages);
+        _pageServices = _filteredServices.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
     }
 
     private void ChangePage(int delta)
@@ -719,15 +776,32 @@
 
     private async Task HandleToggleActive(string serviceId)
     {
-        var res = await PageService.ToggleServiceActiveAsync(serviceId);
-        if (res.Success)
+        if (!int.TryParse(serviceId, out var catalogId) || !_togglingServiceId.Add(catalogId))
         {
-            await LoadDataAsync();
-            Toast.Success(_isSampleData ? L["ToastServiceToggled"] : L["ToastServiceToggledSuccessSql"]);
+            return;
         }
-        else
+
+        try
         {
-            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            var res = await PageService.ToggleServiceActiveAsync(serviceId);
+            if (res.Success)
+            {
+                await LoadDataAsync(resetPage: false);
+                Toast.Success(_isSampleData ? L["ToastServiceToggled"] : L["ToastServiceToggledSuccessSql"]);
+            }
+            else
+            {
+                Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to toggle service status.");
+            Toast.Error(L["ErrorUnknown"]);
+        }
+        finally
+        {
+            _togglingServiceId.Remove(catalogId);
         }
     }
 
@@ -751,23 +825,32 @@
             return;
         }
 
-        var res = await PageService.DeleteServiceAsync(_deleteTarget.Id);
-        _isDeleteConfirmOpen = false;
-        if (res.Success)
+        try
         {
-            _deleteTarget = null;
-            await LoadDataAsync();
-            Toast.Success(L["ToastServiceDeletedSuccess"]);
+            var res = await PageService.DeleteServiceAsync(_deleteTarget.Id);
+            _isDeleteConfirmOpen = false;
+            if (res.Success)
+            {
+                _deleteTarget = null;
+                await LoadDataAsync(resetPage: false);
+                Toast.Success(L["ToastServiceDeletedSuccess"]);
+            }
+            else
+            {
+                Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            _isDeleteConfirmOpen = false;
+            Logger.LogError(ex, "Failed to delete service.");
+            Toast.Error(L["ErrorUnknown"]);
         }
     }
 
-    private void OpenTierModal(string serviceName)
+    private void OpenTierModal(ServiceItemDto service)
     {
-        _tierServiceName = serviceName;
+        _tierService = service;
         _isTierModalOpen = true;
     }
 
@@ -781,7 +864,7 @@
     {
         if (service.RateType == ServiceRateType.Tiered)
         {
-            OpenTierModal(service.Name);
+            OpenTierModal(service);
         }
         else
         {
@@ -791,31 +874,47 @@
 
     private async Task HandleSavePrice(UpdatePriceRequest req)
     {
-        var res = await PageService.UpdateServicePriceAsync(req);
-        if (res.Success)
+        try
         {
-            await LoadDataAsync();
-            Toast.Success(_isSampleData ? L["ToastPriceUpdatedSuccess"] : L["ToastPriceUpdatedSuccessSql"]);
-            _isUpdateModalOpen = false;
+            var res = await PageService.UpdateServicePriceAsync(req);
+            if (res.Success)
+            {
+                await LoadDataAsync(resetPage: false);
+                Toast.Success(_isSampleData ? L["ToastPriceUpdatedSuccess"] : L["ToastPriceUpdatedSuccessSql"]);
+                _isUpdateModalOpen = false;
+            }
+            else
+            {
+                Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            Logger.LogError(ex, "Failed to update service price.");
+            Toast.Error(L["ErrorUnknown"]);
         }
     }
 
     private async Task HandleCreateService(CreateServiceRequest req)
     {
-        var res = await PageService.AddServiceAsync(req);
-        if (res.Success)
+        try
         {
-            await LoadDataAsync();
-            Toast.Success(_isSampleData ? L["ToastCreatedSuccess"] : L["ToastCreatedSuccessSql"]);
-            _isCreateModalOpen = false;
+            var res = await PageService.AddServiceAsync(req);
+            if (res.Success)
+            {
+                await LoadDataAsync(resetPage: false);
+                Toast.Success(_isSampleData ? L["ToastCreatedSuccess"] : L["ToastCreatedSuccessSql"]);
+                _isCreateModalOpen = false;
+            }
+            else
+            {
+                Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Toast.Error(res.ErrorMessage ?? L["ErrorUnknown"]);
+            Logger.LogError(ex, "Failed to create service.");
+            Toast.Error(L["ErrorUnknown"]);
         }
     }
 

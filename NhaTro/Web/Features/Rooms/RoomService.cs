@@ -1,12 +1,21 @@
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
+using Web.Features.Approvals;
+using Web.Features.Approvals.DTOs;
+using Web.Features.Approvals.Enums;
+using Web.Features.Approvals.Services;
 using Web.Features.Properties;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 using Web.Features.Rooms.Mapping;
+using Web.Features.Rooms.Services;
+using Web.Features.Settings;
+using Web.Features.Settings.Enums;
 
 namespace Web.Features.Rooms;
 
@@ -18,14 +27,27 @@ public sealed class RoomService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     TimeProvider clock,
     IRoomChangePolicy changePolicy,
-    IRoomUsageChecker usageChecker) : IRoomService
+    IRoomUsageChecker usageChecker,
+    IManagerApprovalService? approvals = null) : IRoomService
 {
-    public async Task<RoomSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default)
+    private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
+
+    public Task<RoomSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+        GetSummaryCoreAsync(caller, null, ct);
+
+    public Task<RoomSummary> GetSummaryForPropertyAsync(PropertyCaller caller, int? propertyId, CancellationToken ct = default) =>
+        GetSummaryCoreAsync(caller, propertyId, ct);
+
+    private async Task<RoomSummary> GetSummaryCoreAsync(PropertyCaller caller, int? propertyId, CancellationToken ct)
     {
         EnsureCanRead(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         var rooms = ScopeRooms(db, caller);
+        if (propertyId is int selectedPropertyId)
+        {
+            rooms = rooms.Where(room => room.PropertyId == selectedPropertyId);
+        }
         var counts = await rooms
             .GroupBy(room => new { room.Status, room.IsActive })
             .Select(group => new { group.Key.Status, group.Key.IsActive, Count = group.Count() })
@@ -62,9 +84,12 @@ public sealed class RoomService(
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
             .ToListAsync(ct);
 
+        var pendingIds = await PendingApprovalRoomIdsAsync(db, rows.Select(row => row.Room.Id), ct);
+
         return new PagedResult<RoomListItem>
         {
-            Items = rows.Select(x => RoomMapping.ToListItem(x.Room, x.PropertyName)).ToList(),
+            Items = rows.Select(x => RoomMapping.ToListItem(
+                x.Room, x.PropertyName, pendingIds.Contains(x.Room.Id))).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
             TotalCount = total,
@@ -162,6 +187,7 @@ public sealed class RoomService(
 
         // Điểm gọi policy công tắc (VHT-94): Quản lý sửa thông tin/giá/trạng thái phải qua công tắc.
         // Chủ trọ luôn có hiệu lực ngay (D4).
+        RoomChangeKind? approvalKind = null;
         if (!caller.IsChuTro)
         {
             foreach (var kind in ChangedKinds(entity, request))
@@ -176,10 +202,16 @@ public sealed class RoomService(
 
                 if (decision == RoomChangeDecision.RequiresApproval)
                 {
-                    // VHT-7 chưa làm hàng đợi duyệt (VHT-96): trả trạng thái chờ duyệt, không ghi.
-                    return RoomResult.Failure(RoomErrorCodes.ApprovalRequired, RoomErrorMessages.ApprovalRequired);
+                    // Một lần sửa có thể chạm nhiều công tắc; gửi một yêu cầu duy nhất mang
+                    // toàn bộ đề xuất để Chủ trọ quyết định trọn vẹn, không áp dụng nửa vời.
+                    approvalKind ??= kind;
                 }
             }
+        }
+
+        if (approvalKind is { } kindToApprove)
+        {
+            return await CreateUpdateApprovalAsync(db, entity, request, kindToApprove, caller, ct);
         }
 
         RoomMapping.ApplySave(request, entity);
@@ -196,6 +228,45 @@ public sealed class RoomService(
 
         var propertyName = await PropertyNameAsync(db, entity.PropertyId, ct);
         return RoomResult.Success(RoomMapping.ToDetail(entity, propertyName));
+    }
+
+    // SW-01/02/03 ở chế độ "Duyệt": tạo yêu cầu Chờ duyệt, không ghi dữ liệu phòng.
+    private async Task<RoomResult> CreateUpdateApprovalAsync(
+        ApplicationDbContext db,
+        Room entity,
+        RoomSave request,
+        RoomChangeKind kind,
+        PropertyCaller caller,
+        CancellationToken ct)
+    {
+        if (approvals is null)
+        {
+            return RoomResult.Failure(RoomErrorCodes.ApprovalRequired, RoomErrorMessages.ApprovalRequired);
+        }
+
+        var action = kind switch
+        {
+            RoomChangeKind.ChangePrice => ManagerAction.SW02,
+            RoomChangeKind.ChangeStatus => ManagerAction.SW03,
+            _ => ManagerAction.SW01,
+        };
+        var payload = JsonSerializer.Serialize(
+            new RoomUpdateApprovalPayload(request, entity.UpdatedAt?.Ticks ?? 0), PayloadJsonOptions);
+
+        var result = await approvals.CreateAsync(new CreateApprovalRequest
+        {
+            OperationCode = ManagerToggleCatalog.ToCode(action),
+            TargetType = ApprovalTargetType.Room,
+            TargetKey = entity.Id.ToString(CultureInfo.InvariantCulture),
+            PropertyId = entity.PropertyId,
+            PayloadJson = payload,
+        }, new ApprovalCaller(caller.UserId, caller.Role), ct);
+
+        return result.Succeeded
+            ? RoomResult.Failure(RoomErrorCodes.ApprovalRequired, RoomErrorMessages.ApprovalRequired)
+            : RoomResult.Failure(
+                result.ErrorCode ?? RoomErrorCodes.InvalidRequest,
+                result.ErrorMessage ?? RoomErrorMessages.InvalidRequest);
     }
 
     public async Task<RoomResult> DeleteAsync(
@@ -348,7 +419,9 @@ public sealed class RoomService(
         bool includeDeleted = false)
     {
         var rooms = includeDeleted ? db.Rooms.IgnoreQueryFilters() : db.Rooms;
-        return RoomScope.Apply(rooms, db.Properties, db.PropertyManagers, caller);
+        // Thùng rác phòng phải thấy cả phòng thuộc nhà trọ đã xóa mềm (khớp TrashedRoomCount ở thùng rác nhà trọ).
+        var properties = includeDeleted ? db.Properties.IgnoreQueryFilters() : db.Properties;
+        return RoomScope.Apply(rooms, properties, db.PropertyManagers, caller);
     }
 
     private static IQueryable<Room> ApplyFilter(IQueryable<Room> query, RoomFilter filter)
@@ -418,7 +491,7 @@ public sealed class RoomService(
 
     // Trùng mã chỉ xét trong cùng một nhà trọ, chỉ tính phòng chưa xóa mềm
     // (khớp unique filtered index IX_Rooms_PropertyId_Code của ERD VHT-5).
-    private static Task<bool> RoomCodeExistsAsync(
+    internal static Task<bool> RoomCodeExistsAsync(
         ApplicationDbContext db,
         int propertyId,
         string code,
@@ -427,6 +500,30 @@ public sealed class RoomService(
         db.Rooms.AnyAsync(
             r => r.PropertyId == propertyId && r.Code == code && (excludeRoomId == null || r.Id != excludeRoomId),
             ct);
+
+    // Hiển thị badge "Chờ duyệt" trên danh sách: chỉ xét yêu cầu còn hiệu lực.
+    private static async Task<HashSet<int>> PendingApprovalRoomIdsAsync(
+        ApplicationDbContext db, IEnumerable<int> roomIds, CancellationToken ct)
+    {
+        var keys = roomIds.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        var pending = await db.ManagerApprovalRequests.AsNoTracking()
+            .Where(request => request.Status == ApprovalRequestStatus.Pending
+                && request.TargetType == ApprovalTargetType.Room
+                && keys.Contains(request.TargetKey))
+            .Select(request => request.TargetKey)
+            .Distinct()
+            .ToListAsync(ct);
+
+        return pending
+            .Select(key => int.TryParse(key, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToHashSet();
+    }
 
     private static Task<string> PropertyNameAsync(ApplicationDbContext db, int propertyId, CancellationToken ct) =>
         db.Properties.Where(p => p.Id == propertyId).Select(p => p.Name).FirstAsync(ct);
@@ -465,7 +562,7 @@ public sealed class RoomService(
     }
 
     // Kiểm SAU Normalize để khớp cột DB (Code 50, AreaM2 decimal(10,2), StandardPrice decimal(18,2)).
-    private static RoomResult? Validate(RoomSave request)
+    internal static RoomResult? Validate(RoomSave request)
     {
         if (string.IsNullOrEmpty(request.Code))
         {

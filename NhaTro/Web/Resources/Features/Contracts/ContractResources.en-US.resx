@@ -85,7 +85,7 @@
   <data name="ContractTemplateFooter" xml:space="preserve"><value>Standard 4P form (Room - Fees - Legal - Penalties).</value></data>
   <data name="ContractCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="ContractSaveDraft" xml:space="preserve"><value>Save draft</value></data>
-  <data name="ContractSubmitApproval" xml:space="preserve"><value>Submit for approval</value></data>
+  <data name="ContractSubmitApproval" xml:space="preserve"><value>Create contract</value></data>
   <data name="ContractValidationTitle" xml:space="preserve"><value>Please review these fields:</value></data>
   <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Select a property.</value></data>
   <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Select a room.</value></data>
@@ -124,6 +124,8 @@
   <data name="ContractFilterDateTo" xml:space="preserve"><value>Effective to</value></data>
   <data name="ContractFilterMinRent" xml:space="preserve"><value>Rent from</value></data>
   <data name="ContractFilterMaxRent" xml:space="preserve"><value>Rent to</value></data>
+  <data name="ContractFilterDateRangeInvalid" xml:space="preserve"><value>The "effective from" date must be on or before the "effective to" date.</value></data>
+  <data name="ContractFilterAmountRangeInvalid" xml:space="preserve"><value>The minimum rent must be less than or equal to the maximum rent.</value></data>
   <data name="ContractAmountPlaceholder" xml:space="preserve"><value>e.g. 500000</value></data>
   <data name="ContractFilterEmptyTitle" xml:space="preserve"><value>No contracts match the filters</value></data>
   <data name="ContractFilterEmptyDesc" xml:space="preserve"><value>Try another keyword or clear some filters to see other contracts.</value></data>
@@ -196,8 +198,8 @@
   <data name="RenewalErrorInvalidMonths" xml:space="preserve"><value>The renewal period must be greater than 0 and within the allowed limit.</value></data>
   <data name="RenewalErrorNoteTooLong" xml:space="preserve"><value>The renewal note exceeds the allowed length.</value></data>
   <data name="RenewalErrorDuplicatePending" xml:space="preserve"><value>This contract already has a renewal request awaiting a decision.</value></data>
-  <data name="ContractCreateDescription" xml:space="preserve"><value>The contract is saved as Pending approval. Rent and deposit are snapshotted when the owner approves it.</value></data>
-  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent (snapshotted on approval)</value></data>
+  <data name="ContractCreateDescription" xml:space="preserve"><value>Owner-created contracts take effect immediately. Manager-created contracts stay pending until the owner approves them.</value></data>
+  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent</value></data>
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
   <data name="ContractTenantSearchLabel" xml:space="preserve"><value>Search tenants</value></data>
@@ -208,7 +210,7 @@
   <data name="RenewalQueueFilterEmptyDescription" xml:space="preserve"><value>Try another keyword or clear the filters to see all pending requests.</value></data>
   <data name="RenewalQueueRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="RenewalQueueResetFilters" xml:space="preserve"><value>Clear filters</value></data>
-  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
+  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created.</value></data>
   <data name="ContractUnsavedChanges" xml:space="preserve"><value>This form has unsaved changes.</value></data>
   <data name="ContractConfirmLeave" xml:space="preserve"><value>Leave the form and discard unsaved changes?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Loading.</value></data>
@@ -277,6 +279,7 @@
   <data name="ContractPendingDepositUpdate" xml:space="preserve"><value>Deposit update</value></data>
   <data name="ContractErrorInvalidDepositAmount" xml:space="preserve"><value>The deposit must be non-negative and within the allowed limit.</value></data>
   <data name="ContractErrorDepositUnchanged" xml:space="preserve"><value>The new deposit must differ from the current deposit.</value></data>
+  <data name="ContractErrorDepositChangedAfterRequest" xml:space="preserve"><value>The deposit changed after the request was submitted. Please cancel and resubmit.</value></data>
   <data name="ContractErrorDepositApprovalDenied" xml:space="preserve"><value>The deposit update switch is blocking this action.</value></data>
   <data name="ContractHistoryTitle" xml:space="preserve"><value>Contract history</value></data>
   <data name="ContractSuccessorLabel" xml:space="preserve"><value>Successor contract</value></data>

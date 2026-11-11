@@ -18,6 +18,14 @@
         </Actions>
     </PageHeading>
 
+    <div class="filter-toolbar">
+        <div class="filter-field">
+            <label for="property-trash-search">@L["P2PropertyName"]</label>
+            <input id="property-trash-search" type="search" class="filter-input"
+                   placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:after="ReloadAsync" />
+        </div>
+    </div>
+
     <DataTable @ref="_table" @key="_tableKey" TItem="PropertyTrashItem" Columns="_columns"
                ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
                Caption="@L["P2PropertyTrashTable"]" Labels="_tableLabels">
@@ -48,6 +56,7 @@
     private bool _restoreVisible;
     private int _pageSize = 20;
     private int _tableKey;
+    private string _keyword = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -77,8 +86,16 @@
         await PageService.ListDeletedAsync(new PropertyFilter
         {
             Page = request.Page,
-            PageSize = request.PageSize
+            PageSize = request.PageSize,
+            Keyword = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim()
         });
+
+    private Task ReloadAsync()
+    {
+        // Tạo lại bảng để tìm kiếm luôn bắt đầu từ trang 1 (DataTable giữ trang nội bộ).
+        _tableKey++;
+        return Task.CompletedTask;
+    }
 
     private Task ChangePageSize(ChangeEventArgs args)
     {

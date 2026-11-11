@@ -31,4 +31,7 @@ public class TenantListItemDto
     /// Null khi khách chưa thuê.
     /// </summary>
     public string? RoomName { get; init; }
+
+    /// <summary>Hồ sơ đang có yêu cầu Chờ duyệt (SW-04/05/06) gắn với người gọi.</summary>
+    public bool HasPendingApproval { get; init; }
 }

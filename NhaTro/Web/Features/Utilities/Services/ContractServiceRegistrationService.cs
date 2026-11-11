@@ -4,6 +4,7 @@ using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Utilities.Entities;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Utilities.Services;
 
@@ -15,31 +16,33 @@ namespace Web.Features.Utilities.Services;
 public sealed class ContractServiceRegistrationService(
     ApplicationDbContext db,
     P2CallerProvider callerProvider,
-    ILogger<ContractServiceRegistrationService> logger)
+    ILogger<ContractServiceRegistrationService> logger,
+    TimeProvider clock)
 {
-    /// <summary>Danh sách ServiceCatalogId mà khách thuê đã đăng ký cho các hợp đồng của mình.</summary>
-    public async Task<IReadOnlySet<int>> GetMyRegisteredServiceIdsAsync(
+    public sealed record RegisteredServiceDto(Guid ContractId, int ServiceCatalogId);
+
+    /// <summary>Danh sách (hợp đồng, dịch vụ) mà khách thuê đã đăng ký trong tháng hiện tại.</summary>
+    public async Task<IReadOnlyList<RegisteredServiceDto>> GetMyRegisteredServicesAsync(
         CancellationToken cancellationToken = default)
     {
         var caller = await callerProvider.GetCallerAsync();
         if (!caller.IsKhachThue)
         {
-            return new HashSet<int>();
+            return [];
         }
 
         var contractIds = await OwnActiveContractIdsAsync(caller, cancellationToken);
         if (contractIds.Count == 0)
         {
-            return new HashSet<int>();
+            return [];
         }
 
-        var monthStart = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
-        var ids = await db.ContractServiceRegistrations
+        var monthStart = new DateOnly(clock.TodayVietnam().Year, clock.TodayVietnam().Month, 1);
+        return await db.ContractServiceRegistrations
             .AsNoTracking()
             .Where(item => contractIds.Contains(item.ContractId) && item.MonthStart == monthStart)
-            .Select(item => item.ServiceCatalogId)
+            .Select(item => new RegisteredServiceDto(item.ContractId, item.ServiceCatalogId))
             .ToListAsync(cancellationToken);
-        return ids.ToHashSet();
     }
 
     /// <summary>
@@ -68,9 +71,27 @@ public sealed class ContractServiceRegistrationService(
             throw new InvalidOperationException("Không tìm thấy hợp đồng hiệu lực của bạn.");
         }
 
+        var monthStart = new DateOnly(clock.TodayVietnam().Year, clock.TodayVietnam().Month, 1);
+        var activeContractPropertyIds = await db.Contracts
+            .AsNoTracking()
+            .Where(contract => contractIds.Contains(contract.ContractId))
+            .Join(
+                db.Rooms.AsNoTracking(),
+                contract => contract.RoomId,
+                room => room.Id,
+                (contract, room) => new { contract.ContractId, room.PropertyId })
+            .ToDictionaryAsync(item => item.ContractId, item => item.PropertyId, cancellationToken);
+
         foreach (var contractId in contractIds)
         {
-            var monthStart = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
+            // Dịch vụ gắn tòa chỉ áp dụng cho hợp đồng ở đúng tòa đó; dịch vụ dùng chung thì áp dụng mọi hợp đồng.
+            if (catalog.PropertyId is int servicePropertyId
+                && (!activeContractPropertyIds.TryGetValue(contractId, out var contractPropertyId)
+                    || contractPropertyId != servicePropertyId))
+            {
+                continue;
+            }
+
             var existing = await db.ContractServiceRegistrations
                 .SingleOrDefaultAsync(
                     item => item.ContractId == contractId && item.ServiceCatalogId == serviceCatalogId
@@ -88,7 +109,7 @@ public sealed class ContractServiceRegistrationService(
                     ServiceCatalogId = serviceCatalogId,
                     MonthStart = monthStart,
                     RegisteredByUserId = caller.UserId,
-                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = clock.GetUtcNow(),
                 });
             }
         }

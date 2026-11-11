@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Properties.Entities;
 using Web.Features.Rooms;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
@@ -575,6 +576,20 @@ public sealed class TenantServiceIntegrationTests(SqlServerFixture fixture)
 
         var created = await NewTenantService().CreateAsync(NewTenant("An", "0901234567"), Owner);
         var id = created.Tenant!.Id;
+
+        // Quản lý chỉ thấy hồ sơ thuộc tòa được giao; gán ql-1 vào tòa của chủ sở hữu hồ sơ.
+        await SqlServerFixture.SeedAccountAsync(db, Owner.UserId, Roles.ChuTro);
+        await SqlServerFixture.SeedAccountAsync(db, "ql-1", Roles.QuanLy);
+        var property = new Property { Name = "Tòa cho Quản lý", OwnerId = Owner.UserId };
+        db.Properties.Add(property);
+        await db.SaveChangesAsync();
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = property.Id,
+            ManagerUserId = "ql-1",
+            AssignedByUserId = Owner.UserId,
+        });
+        await db.SaveChangesAsync();
 
         // Sửa hồ sơ: Không thể -> 403.
         var deniedUpdate = NewTenantService(NewTogglePolicy(("SW-05", ManagerToggleMode.Deny)));

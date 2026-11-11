@@ -210,7 +210,8 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
         var registrationService = new ContractServiceRegistrationService(
             world.NewDb(),
             new P2CallerProvider(new FixedAuthenticationStateProvider(world.TenantAAsPropertyCaller)),
-            NullLogger<ContractServiceRegistrationService>.Instance);
+            NullLogger<ContractServiceRegistrationService>.Instance,
+            TimeProvider.System);
         var registered = await registrationService.ToggleAsync(second.Id);
         Assert.True(registered);
 

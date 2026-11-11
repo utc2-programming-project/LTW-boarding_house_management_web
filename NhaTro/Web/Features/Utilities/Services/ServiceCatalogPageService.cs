@@ -184,6 +184,10 @@ public sealed class ServiceCatalogPageService(
                     BuildingName = T("AllBuildings"),
                     Description = activeTariff.SourceName,
                     HistoryCount = activeTariff.Tiers.Count,
+                    Tiers = activeTariff.Tiers
+                        .OrderBy(tier => tier.TierNumber)
+                        .Select(tier => new ServiceTierRowDto(tier.TierNumber, tier.From, tier.To, tier.UnitPrice))
+                        .ToList(),
                 };
             }).ToList();
 
@@ -824,13 +828,14 @@ public sealed class ServiceCatalogPageService(
 
                 if (contractMember.Count > 0)
                 {
-                    var now = time.UtcNow();
+                    var vnToday = time.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+                    var vnTomorrow = vnToday.AddDays(1);
                     var activeRoomIds = await db.Contracts
                         .AsNoTracking()
                         .Where(c => contractMember.Contains(c.ContractId)
                             && c.Status == ContractStatus.Approved
-                            && c.StartDate <= now
-                            && c.EndDate >= now)
+                            && c.StartDate < vnTomorrow
+                            && c.EndDate >= vnToday)
                         .Select(c => c.RoomId)
                         .ToListAsync(ct);
 

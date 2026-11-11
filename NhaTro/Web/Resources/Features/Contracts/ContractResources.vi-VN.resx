@@ -85,7 +85,7 @@
   <data name="ContractTemplateFooter" xml:space="preserve"><value>Biểu mẫu chuẩn 4P (Phòng - Phí - Pháp lý - Phạt vi phạm).</value></data>
   <data name="ContractCancel" xml:space="preserve"><value>Hủy bỏ</value></data>
   <data name="ContractSaveDraft" xml:space="preserve"><value>Lưu nháp</value></data>
-  <data name="ContractSubmitApproval" xml:space="preserve"><value>Gửi duyệt hợp đồng</value></data>
+  <data name="ContractSubmitApproval" xml:space="preserve"><value>Tạo hợp đồng</value></data>
   <data name="ContractValidationTitle" xml:space="preserve"><value>Vui lòng kiểm tra các trường sau:</value></data>
   <data name="ContractErrorPropertyRequired" xml:space="preserve"><value>Vui lòng chọn nhà trọ.</value></data>
   <data name="ContractErrorRoomRequired" xml:space="preserve"><value>Vui lòng chọn phòng.</value></data>
@@ -124,6 +124,8 @@
   <data name="ContractFilterDateTo" xml:space="preserve"><value>Đến ngày</value></data>
   <data name="ContractFilterMinRent" xml:space="preserve"><value>Tiền thuê từ</value></data>
   <data name="ContractFilterMaxRent" xml:space="preserve"><value>Tiền thuê đến</value></data>
+  <data name="ContractFilterDateRangeInvalid" xml:space="preserve"><value>Ngày "hiệu lực từ" phải trước hoặc bằng ngày "đến ngày".</value></data>
+  <data name="ContractFilterAmountRangeInvalid" xml:space="preserve"><value>Tiền thuê "từ" phải nhỏ hơn hoặc bằng tiền thuê "đến".</value></data>
   <data name="ContractAmountPlaceholder" xml:space="preserve"><value>VD: 500000</value></data>
   <data name="ContractFilterEmptyTitle" xml:space="preserve"><value>Không có hợp đồng khớp bộ lọc</value></data>
   <data name="ContractFilterEmptyDesc" xml:space="preserve"><value>Thử đổi từ khóa hoặc bỏ bớt bộ lọc để xem các hợp đồng khác.</value></data>
@@ -196,8 +198,8 @@
   <data name="RenewalErrorInvalidMonths" xml:space="preserve"><value>Số tháng gia hạn phải lớn hơn 0 và không vượt quá giới hạn cho phép.</value></data>
   <data name="RenewalErrorNoteTooLong" xml:space="preserve"><value>Lời nhắn gia hạn vượt quá độ dài cho phép.</value></data>
   <data name="RenewalErrorDuplicatePending" xml:space="preserve"><value>Hợp đồng này đã có yêu cầu gia hạn đang chờ xử lý.</value></data>
-  <data name="ContractCreateDescription" xml:space="preserve"><value>Hợp đồng sẽ được lưu ở trạng thái Chờ duyệt. Giá thuê và tiền cọc được chốt khi Chủ trọ duyệt.</value></data>
-  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Giá chuẩn hiện tại (được chốt khi duyệt)</value></data>
+  <data name="ContractCreateDescription" xml:space="preserve"><value>Chủ trọ tạo hợp đồng: có hiệu lực ngay. Quản lý tạo: hợp đồng ở trạng thái Chờ duyệt để Chủ trọ quyết định.</value></data>
+  <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Giá chuẩn hiện tại</value></data>
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
   <data name="ContractTenantSearchLabel" xml:space="preserve"><value>Tìm khách thuê</value></data>
@@ -208,7 +210,7 @@
   <data name="RenewalQueueFilterEmptyDescription" xml:space="preserve"><value>Thử từ khóa khác hoặc xóa bộ lọc để xem toàn bộ yêu cầu đang chờ.</value></data>
   <data name="RenewalQueueRefresh" xml:space="preserve"><value>Làm mới</value></data>
   <data name="RenewalQueueResetFilters" xml:space="preserve"><value>Xóa bộ lọc</value></data>
-  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng ở trạng thái Chờ duyệt.</value></data>
+  <data name="ContractCreatedSuccess" xml:space="preserve"><value>Đã tạo hợp đồng.</value></data>
   <data name="ContractUnsavedChanges" xml:space="preserve"><value>Biểu mẫu có thay đổi chưa lưu.</value></data>
   <data name="ContractConfirmLeave" xml:space="preserve"><value>Rời biểu mẫu và bỏ các thay đổi chưa lưu?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Đang tải…</value></data>
@@ -277,6 +279,7 @@
   <data name="ContractPendingDepositUpdate" xml:space="preserve"><value>Cập nhật cọc</value></data>
   <data name="ContractErrorInvalidDepositAmount" xml:space="preserve"><value>Tiền cọc phải là số không âm và không vượt quá giới hạn cho phép.</value></data>
   <data name="ContractErrorDepositUnchanged" xml:space="preserve"><value>Tiền cọc mới phải khác tiền cọc hiện tại.</value></data>
+  <data name="ContractErrorDepositChangedAfterRequest" xml:space="preserve"><value>Tiền cọc đã thay đổi sau khi gửi yêu cầu. Vui lòng hủy và gửi lại.</value></data>
   <data name="ContractErrorDepositApprovalDenied" xml:space="preserve"><value>Công tắc cập nhật cọc đang chặn thao tác.</value></data>
   <data name="ContractHistoryTitle" xml:space="preserve"><value>Lịch sử hợp đồng</value></data>
   <data name="ContractSuccessorLabel" xml:space="preserve"><value>Hợp đồng kế nhiệm</value></data>
