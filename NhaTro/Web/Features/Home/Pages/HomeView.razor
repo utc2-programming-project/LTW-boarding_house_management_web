@@ -1,6 +1,8 @@
 @page "/"
 @attribute [Authorize]
 @rendermode InteractiveServer
+@using Web.Features.Dashboard.Components
+@inject AuthenticationStateProvider Authentication
 @inject HomePageService PageService
 @inject IStringLocalizer<HomeResource> L
 @inject TimeProvider Time
@@ -9,26 +11,42 @@
 <PageTitle>@L["Title"]</PageTitle>
 
 <div class="home-page">
-    <PageHeading Title="@HeadingTitle" HelpText="@L["HomeDescription"]">
-        <HeadingMeta>
-            <p class="home-meta">
-                @if (Snapshot is { } roleSnapshot)
+    @if (!IsManagement)
+    {
+        <PageHeading Title="@HeadingTitle" HelpText="@L["HomeDescription"]">
+            <HeadingMeta>
+                <p class="home-meta">
+                    @if (Snapshot is { } roleSnapshot)
+                    {
+                        <span class="role-badge">@RoleLabel(roleSnapshot.Role)</span>
+                    }
+                    <span>@DateFormatter.Format(Time.TodayVietnam())</span>
+                    @if (LastRefreshed is { } refreshed)
+                    {
+                        <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
+                    }
+                </p>
+            </HeadingMeta>
+            <Actions>
+                <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
+                    <LucideIcon Name="refresh" />@L["Refresh"]
+                </button>
+            </Actions>
+        </PageHeading>
+    }
+    else if (WorkInitialized)
+    {
+        <DashboardOverview RefreshAdditionalContent="LoadAsync" AdditionalContentBusy="Busy">
+            <HeaderContent>
+                @if (Snapshot is { } managementSnapshot)
                 {
-                    <span class="role-badge">@RoleLabel(roleSnapshot.Role)</span>
+                    <HomeQuickActions Role="@managementSnapshot.Role" />
+                    <p class="work-scope-note">@L["WorkScopeNote"]</p>
+                    @WorkCards(managementSnapshot)
                 }
-                <span>@DateFormatter.Format(Time.TodayVietnam())</span>
-                @if (LastRefreshed is { } refreshed)
-                {
-                    <span>· @L["Updated"] @refreshed.ToString("HH:mm")</span>
-                }
-            </p>
-        </HeadingMeta>
-        <Actions>
-            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
-                <LucideIcon Name="refresh" />@L["Refresh"]
-            </button>
-        </Actions>
-    </PageHeading>
+            </HeaderContent>
+        </DashboardOverview>
+    }
 
     @if (PageState == HomeLoadState.Loading)
     {
@@ -43,14 +61,28 @@
     }
     else if (Snapshot is { } snapshot)
     {
+        @if (!IsManagement)
+        {
         <section class="home-section" aria-labelledby="kpi-heading">
             <h2 id="kpi-heading" class="section-label">@L["KpiTitle"]</h2>
             <HomeKpiGrid Section="@snapshot.Kpis" Retry="LoadAsync" />
         </section>
+        }
 
-        <HomeQuickActions Role="@snapshot.Role" />
+        @if (!IsManagement)
+        {
+            <HomeQuickActions Role="@snapshot.Role" />
+        }
 
-        <div class="home-grid">
+        @if (!IsManagement)
+        {
+            @WorkCards(snapshot)
+        }
+    }
+</div>
+
+@code {
+    private RenderFragment WorkCards(HomeSnapshot snapshot) => @<div class="home-grid">
             <HomePanel Title="@L["ActionsTitle"]" Icon="check" State="@snapshot.Actions.State" Retry="LoadAsync">
                 <HomeActionList Section="@snapshot.Actions" />
             </HomePanel>
@@ -161,11 +193,8 @@
                     }
                 </HomePanel>
             }
-        </div>
-    }
-</div>
+        </div>;
 
-@code {
     // Giữ ảnh chụp của lượt prerender để lượt interactive không tải lại từ đầu (tránh nháy "Đang tải").
     // [PersistentState] chỉ chấp nhận property public.
     [PersistentState]
@@ -176,6 +205,8 @@
 
     private HomeLoadState PageState = HomeLoadState.Loading;
     private bool Busy;
+    private bool IsManagement;
+    private bool WorkInitialized;
 
     private string DisplayName => Snapshot?.DisplayName ?? "";
 
@@ -205,9 +236,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var principal = (await Authentication.GetAuthenticationStateAsync()).User;
+        var role = Roles.ResolvePrimaryRole(principal);
+        IsManagement = role is Roles.ChuTro or Roles.QuanLy;
         if (Snapshot is not null)
         {
             PageState = HomeLoadState.Loaded;
+            WorkInitialized = true;
             return;
         }
 
@@ -226,7 +261,7 @@
 
         try
         {
-            Snapshot = await PageService.LoadAsync();
+            Snapshot = await PageService.LoadAsync(includeManagementKpis: false);
             PageState = HomeLoadState.Loaded;
             LastRefreshed = VietnamTime.ToVietnam(Time.UtcNow());
         }
@@ -245,6 +280,7 @@
         finally
         {
             Busy = false;
+            WorkInitialized = true;
         }
     }
 }

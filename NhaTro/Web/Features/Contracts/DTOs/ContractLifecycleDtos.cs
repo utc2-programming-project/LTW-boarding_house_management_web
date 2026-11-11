@@ -25,7 +25,18 @@ public sealed record ContractActionResultDto(
 public sealed record ContractApprovalPayload(
     string Action,
     DateTime? EndDate,
-    decimal? DepositAmount = null);
+    decimal? DepositAmount = null,
+    decimal? ExpectedDepositAmount = null);
+
+public enum ContractPendingApproval
+{
+    None = 0,
+    Renewal = 1,
+    Liquidation = 2,
+    DepositUpdate = 3,
+}
+
+public sealed record ContractLinkDto(Guid ContractId, string ContractNumber, DateTime StartDate, DateTime EndDate);
 
 public static class ContractApprovalActions
 {

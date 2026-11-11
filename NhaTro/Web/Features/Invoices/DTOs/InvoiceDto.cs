@@ -34,6 +34,9 @@ public sealed class InvoiceDto
     /// <summary>Ngày cuối kỳ (bao gồm), ngày thuần không cộng trừ múi giờ.</summary>
     public required DateOnly PeriodEnd { get; init; }
 
+    /// <summary>Hạn thanh toán; null khi không áp hạn.</summary>
+    public DateOnly? DueDate { get; init; }
+
     public required InvoiceStatus Status { get; init; }
 
     public required IReadOnlyList<InvoiceItemDto> Items { get; init; }

@@ -173,6 +173,11 @@ public sealed class ManagerApprovalService(
         {
             return Failure(ApprovalErrorCodes.Conflict, ApprovalErrorMessages.Conflict);
         }
+        catch (DbUpdateException)
+        {
+            db.ChangeTracker.Clear();
+            return Failure(ApprovalErrorCodes.Conflict, ApprovalErrorMessages.Conflict);
+        }
 
         await transaction.CommitAsync(ct);
         return ApprovalResult.Success(ToDto(request));
@@ -226,6 +231,16 @@ public sealed class ManagerApprovalService(
         catch (DbUpdateConcurrencyException)
         {
             // Đối tượng (hoặc chính yêu cầu) đã bị luồng khác sửa ⇒ không áp dụng.
+            db.ChangeTracker.Clear();
+            return Failure(ApprovalErrorCodes.Conflict, ApprovalErrorMessages.Conflict);
+        }
+        catch (DbUpdateException ex) when (applier is IApprovalSaveExceptionMapper mapper && mapper.MapSaveException(ex) is { } mapped)
+        {
+            db.ChangeTracker.Clear();
+            return Failure(mapped.ErrorCode, mapped.Message);
+        }
+        catch (DbUpdateException)
+        {
             db.ChangeTracker.Clear();
             return Failure(ApprovalErrorCodes.Conflict, ApprovalErrorMessages.Conflict);
         }

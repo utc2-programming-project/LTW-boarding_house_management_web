@@ -404,17 +404,19 @@
             query = query.Where(v => string.Equals(v.BuildingScope, _scopeFilter, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Lọc theo khoảng ngày là lọc "giao nhau": một bảng giá được hiển thị khi
+        // khoảng hiệu lực của nó chạm khoảng người dùng chọn. Bảng giá chưa có ngày
+        // kết thúc vẫn còn hiệu lực nên không bị loại khỏi khoảng lọc.
         if (_effectiveFromFilter.HasValue)
         {
-            var effectiveFrom = DateOnly.FromDateTime(_effectiveFromFilter.Value);
-            query = query.Where(v => v.EffectiveFrom >= effectiveFrom);
+            var rangeStart = DateOnly.FromDateTime(_effectiveFromFilter.Value);
+            query = query.Where(v => v.EffectiveTo == null || v.EffectiveTo.Value >= rangeStart);
         }
 
         if (_effectiveToFilter.HasValue)
         {
-            var effectiveTo = DateOnly.FromDateTime(_effectiveToFilter.Value);
-            // Bảng giá chưa đặt ngày kết thúc vẫn còn hiệu lực nên phải giữ lại.
-            query = query.Where(v => v.EffectiveTo == null || v.EffectiveTo.Value <= effectiveTo);
+            var rangeEnd = DateOnly.FromDateTime(_effectiveToFilter.Value);
+            query = query.Where(v => v.EffectiveFrom <= rangeEnd);
         }
 
         _filteredVersions = query.ToList();
@@ -515,7 +517,10 @@
         var res = await PageService.UpdateServicePriceAsync(req);
         if (res.Success)
         {
+            var filters = (_statusFilter, _scopeFilter, _keywordFilter, _effectiveFromFilter, _effectiveToFilter, _page);
             await LoadDataAsync();
+            (_statusFilter, _scopeFilter, _keywordFilter, _effectiveFromFilter, _effectiveToFilter, _page) = filters;
+            ApplyFilters();
             Toast.Success(_isSampleData ? L["ToastPriceUpdatedSuccess"] : L["ToastPriceUpdatedSuccessSql"]);
             _isPriceModalOpen = false;
         }

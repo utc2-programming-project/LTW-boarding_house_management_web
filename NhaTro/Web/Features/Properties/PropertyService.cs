@@ -80,9 +80,13 @@ public sealed class PropertyService(
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var entity = await ScopeQuery(db, caller).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
-        return entity is null
-            ? NotFound()
-            : PropertyResult.Success(PropertyMapping.ToDetail(entity));
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        var roomCount = await db.Rooms.CountAsync(room => room.PropertyId == id, ct);
+        return PropertyResult.Success(PropertyMapping.ToDetail(entity, roomCount));
     }
 
     public async Task<PropertyResult> CreateAsync(

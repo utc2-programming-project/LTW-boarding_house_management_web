@@ -71,6 +71,12 @@
   <data name="Notifications" xml:space="preserve">
     <value>Thông báo</value>
   </data>
+  <data name="NotificationMarkAllRead" xml:space="preserve">
+    <value>Đánh dấu đã đọc tất cả</value>
+  </data>
+  <data name="NotificationEmpty" xml:space="preserve">
+    <value>Chưa có thông báo nào.</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Đăng nhập</value>
   </data>
@@ -407,6 +413,9 @@
   <data name="AccountsEmptyHint" xml:space="preserve">
     <value>Không có tài khoản nào khớp bộ lọc hiện tại.</value>
   </data>
+  <data name="AccountsCountUnit" xml:space="preserve">
+    <value>tài khoản</value>
+  </data>
   <data name="Confirm" xml:space="preserve">
     <value>Xác nhận</value>
   </data>
@@ -625,6 +634,15 @@
   <data name="TableSummary" xml:space="preserve">
     <value>Hiển thị {0}–{1} / {2}</value>
   </data>
+  <data name="TablePageInfo" xml:space="preserve">
+    <value>Trang {0}/{1} · {2} {3}</value>
+  </data>
+  <data name="TablePrevious" xml:space="preserve">
+    <value>Trước</value>
+  </data>
+  <data name="TableNext" xml:space="preserve">
+    <value>Sau</value>
+  </data>
 
   <!-- VHT-8: khong du quyen -->
   <data name="AccessDeniedTitle" xml:space="preserve">
@@ -789,7 +807,7 @@
   <data name="P2CreatedAt" xml:space="preserve"><value>Ngày tạo</value></data>
   <data name="P2UpdatedAt" xml:space="preserve"><value>Cập nhật lần cuối</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Chờ duyệt</value></data>
-  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Tính năng duyệt sẽ được bổ sung trong giai đoạn sau.</value></data>
+  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Thay đổi cần Chủ trọ duyệt nên chưa được lưu.</value></data>
   <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Chuyển phòng vào thùng rác?</value></data>
   <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Phòng {0} sẽ được chuyển vào thùng rác.</value></data>
   <data name="P2MoveToTrash" xml:space="preserve"><value>Chuyển vào thùng rác</value></data>
@@ -802,6 +820,7 @@
   <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Phân công Quản lý</value></data>
   <data name="P2ManagerPanelHint" xml:space="preserve"><value>Quản lý chỉ thấy nhà trọ và phòng được phân công đang hiệu lực.</value></data>
   <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>Chưa có Quản lý nào được phân công cho nhà trọ này.</value></data>
+  <data name="P2ManagerUnknown" xml:space="preserve"><value>Quản lý (chưa có email)</value></data>
   <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Phân công từ</value></data>
   <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Chọn tài khoản Quản lý</value></data>
   <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Chọn tài khoản Quản lý —</value></data>
@@ -909,7 +928,7 @@
   <data name="TenantIdIssuedDate" xml:space="preserve"><value>Ngày cấp</value></data>
   <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Nơi cấp</value></data>
   <data name="TenantInternalNote" xml:space="preserve"><value>Ghi chú nội bộ</value></data>
-  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Số CCCD của Quản lý luôn được che.</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Số CCCD được che bớt khi hiển thị trong danh sách.</value></data>
   <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Nhập đầy đủ số CCCD/CMND. Sau khi lưu, số này sẽ được che.</value></data>
   <data name="TenantIdManagerEditHint" xml:space="preserve"><value>Số hiện tại đang được che. Để trống để giữ số cũ, hoặc nhập đầy đủ số mới để thay đổi.</value></data>
   <data name="TenantValidationIdNumber" xml:space="preserve"><value>Số giấy tờ không hợp lệ: nhập tối thiểu 8 chữ hoặc số và không dùng dấu *.</value></data>
@@ -969,6 +988,7 @@
   <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Chỉ có thể liên kết tài khoản mang vai trò Khách thuê.</value></data>
   <data name="TenantErrorGeneric" xml:space="preserve"><value>Không thể thực hiện thao tác. Vui lòng thử lại.</value></data>
   <data name="TenantErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>Thao tác này cần Chủ trọ duyệt nên chưa được áp dụng.</value></data>
   <data name="TenantSummary" xml:space="preserve"><value>Tổng quan khách thuê</value></data>
   <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Không tải được số liệu tổng quan.</value></data>
   <data name="TenantAllRecordsHint" xml:space="preserve"><value>Hồ sơ trong hệ thống</value></data>
@@ -1288,6 +1308,7 @@
   <data name="MeterReadingNavHome" xml:space="preserve"><value>Trang chủ</value></data>
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Dịch vụ &amp; Tiện ích</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Ghi chỉ số điện nước</value></data>
+  <data name="P5CostNav" xml:space="preserve"><value>Chỉ số &amp; chi phí</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu. Vui lòng thử lại.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Không thể lưu chỉ số.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Đã chốt kỳ thành công cho phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>
@@ -1933,4 +1954,10 @@
   <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>Đã xóa {0} phòng.</value></data>
   <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>Đã xóa {0} phòng, {1} phòng chưa xóa được:</value></data>
   <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Phòng {0}: {1}</value></data>
+  <data name="ApprovalUiNewEndDate" xml:space="preserve"><value>Ngày kết thúc mới</value></data>
+  <data name="ApprovalUiDepositChange" xml:space="preserve"><value>Thay đổi tiền cọc</value></data>
+  <data name="ApprovalUiActionRenew" xml:space="preserve"><value>Gia hạn hợp đồng</value></data>
+  <data name="ApprovalUiActionLiquidate" xml:space="preserve"><value>Thanh lý hợp đồng</value></data>
+  <data name="ApprovalUiActionDeposit" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
+  <data name="ApprovalUiActionUnknown" xml:space="preserve"><value>Thao tác hợp đồng</value></data>
 </root>

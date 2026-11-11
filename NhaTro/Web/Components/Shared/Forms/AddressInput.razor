@@ -126,7 +126,6 @@
     private bool _wardManual;
     private string? _lastEmitted;
     private bool _initialized;
-    private bool _normalizeOnRender;
     private Province? _selectedProvince;
 
     private IEnumerable<Province> SortedProvinces => Catalog.Provinces
@@ -165,9 +164,6 @@
             ParseExternalValue(Value);
             _lastEmitted = Value;
             _initialized = true;
-            // Địa chỉ 3 cấp cũ cần được ghi lại thành 2 cấp ngay khi form mở, để
-            // giá trị hiển thị và giá trị lưu không lệch nhau.
-            _normalizeOnRender = !string.IsNullOrWhiteSpace(Value);
             return;
         }
 
@@ -177,18 +173,13 @@
         {
             ParseExternalValue(Value);
             _lastEmitted = Value;
-            _normalizeOnRender = !string.IsNullOrWhiteSpace(Value);
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!_normalizeOnRender) return;
-        _normalizeOnRender = false;
-
-        if (string.Equals(Compose(), Value, StringComparison.Ordinal)) return;
-        await EmitAsync();
-    }
+    // Không tự ghi lại địa chỉ ngay khi mở form: hồ sơ cũ có thể đang lưu địa chỉ
+    // 3 cấp (số nhà, phường/xã, quận/huyện, tỉnh/thành phố). Việc tự chuẩn hóa sẽ
+    // làm mất cấp quận/huyện đã lưu. Chỉ phát ra giá trị mới khi người dùng thật sự
+    // sửa một trường địa chỉ; nếu không, giá trị cũ được giữ nguyên.
 
     private async Task OnStreetInputAsync(ChangeEventArgs args)
     {

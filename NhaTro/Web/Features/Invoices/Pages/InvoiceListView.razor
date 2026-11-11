@@ -3,15 +3,42 @@
 @page "/my-invoices"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
+@using Web.Features.Utilities
+@using Web.Features.Utilities.Services
 @inject IInvoiceQueryService InvoiceQuery
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
+@inject Web.Features.Utilities.Services.ServiceRegistrationService RegistrationService
+@inject Web.Features.Utilities.Services.ServiceCatalogPageService ServiceCatalogPageService
+@inject ToastService Toast
 @inject IStringLocalizer<InvoiceResources> L
+@inject IStringLocalizer<UtilityResources> UL
 
 <PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
 
 <div class="invoice-page">
-    <PageHeading Title="@L[IsMyInvoices ? "MyHeading" : "Heading"]" HelpText="@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]" />
+    <PageHeading Title="@L[IsMyInvoices ? "MyHeading" : "Heading"]" HelpText="@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]">
+        <Actions>
+            @if (IsMyInvoices)
+            {
+                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/my/service-registrations")'>
+                    <LucideIcon Name="history" />
+                    <span>@L["RegistrationHistoryButton"]</span>
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="OpenRegistrationModal">
+                    <LucideIcon Name="plus" />
+                    <span>@L["RegisterServiceButton"]</span>
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/service-registrations")'>
+                    <LucideIcon Name="clipboard-list" />
+                    <span>@L["ManageRegistrationsButton"]</span>
+                </button>
+            }
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -114,7 +141,10 @@
                         <option value="">@L["PaymentStateAll"]</option>
                         <option value="unpaid">@L["PaymentStateUnpaid"]</option>
                         <option value="partial">@L["PaymentStatePartial"]</option>
+                        <option value="pending_confirmation">@L["PaymentStatePendingConfirmation"]</option>
                         <option value="paid">@L["PaymentStatePaid"]</option>
+                        <option value="payment_rejected">@L["PaymentStateRejected"]</option>
+                        <option value="expired">@L["PaymentStateExpired"]</option>
                     </select>
                 </label>
 
@@ -143,13 +173,13 @@
                             <tr>
                                 <th>@L["ThInvoice"]</th>
                                 <th>@L["ThPeriod"]</th>
+                                <th>@L["DetailDueDate"]</th>
                                 <th>@L["ThContract"]</th>
                                 <th>@L["ThRoomProperty"]</th>
                                 <th>@L["ThTenants"]</th>
-                                <th>@L["ThStatus"]</th>
                                 <th class="text-right">@L["ThTotal"]</th>
                                 <th class="text-right">@L["ThOutstanding"]</th>
-                                <th class="text-right">@L["ThActions"]</th>
+                                <th class="text-center">@L["ThActions"]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -158,10 +188,16 @@
                                 <tr>
                                     <td class="font-semibold">HD-@invoice.Id</td>
                                     <td class="tabular-nums">@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
+                                    <td class="tabular-nums">@(invoice.DueDate is null ? "—" : DateFormatter.Format(invoice.DueDate.Value))</td>
                                     <td>@invoice.ContractNumber</td>
                                     <td>
-                                        <span class="room-code">@invoice.RoomCode</span>
-                                        <span class="property-name">@invoice.PropertyName</span>
+                                        <div class="invoice-room-cell">
+                                            <div class="invoice-room-line">
+                                                <span class="room-code">@invoice.RoomCode</span>
+                                                <StatusBadge Text="@StatusText(invoice.Status)" Tone="@StatusTone(invoice.Status)" />
+                                            </div>
+                                            <span class="property-name">@invoice.PropertyName</span>
+                                        </div>
                                     </td>
                                     <td>
                                         @if (invoice.TenantNames.Count == 0)
@@ -173,21 +209,31 @@
                                             <span>@string.Join(", ", invoice.TenantNames)</span>
                                         }
                                     </td>
-                                    <td>
-                                        <StatusBadge Text="@StatusText(invoice.Status)" Tone="@StatusTone(invoice.Status)" />
-                                    </td>
                                     <td class="text-right tabular-nums">@MoneyFormatter.Format(invoice.TotalAmount)</td>
                                     <td class="text-right tabular-nums @(invoice.OutstandingAmount > 0 ? "outstanding" : "")">
                                         @MoneyFormatter.Format(invoice.OutstandingAmount)
                                     </td>
-                                    <td class="text-right">
-                                        <button type="button"
-                                                class="icon-action-btn"
-                                                title="@L["ViewDetail"]"
-                                                aria-label="@L["ViewDetail"]"
-                                                @onclick="() => OpenDetail(invoice.Id)">
-                                            <LucideIcon Name="eye" />
-                                        </button>
+                                    <td class="text-center">
+                                        <div class="p2-row-actions">
+                                            <button type="button"
+                                                    class="icon-button p2-menu-trigger @(IsMenuOpen(invoice.Id) ? "is-open" : null)"
+                                                    title="@L["ThActions"]"
+                                                    aria-label="@($"{L["ThActions"]}: HD-{invoice.Id}")"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="@(IsMenuOpen(invoice.Id) ? "true" : "false")"
+                                                    aria-controls="@($"invoice-row-menu-{invoice.Id}")"
+                                                    @onclick="() => ToggleRowMenu(invoice.Id)">
+                                                <LucideIcon Name="ellipsis" />
+                                            </button>
+                                            @if (IsMenuOpen(invoice.Id))
+                                            {
+                                                <div id="@($"invoice-row-menu-{invoice.Id}")" class="p2-row-menu" role="menu" aria-label="@L["ThActions"]" data-row-menu>
+                                                    <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDetail(invoice.Id)">
+                                                        <LucideIcon Name="eye" /><span>@L["ViewDetail"]</span>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -214,6 +260,63 @@
         </div>
     }
 </div>
+
+@if (_registrationOpen)
+{
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="invoice-registration-title" @onclick="CloseRegistrationModal">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="invoice-registration-title">@L["RegisterServiceButton"]</h2>
+                    <p>@L["RegisterServiceMonthlyNote"]</p>
+                </div>
+                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal">✕</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-field">
+                    <label for="registration-contract">@UL["ServiceRequestContractLabel"]</label>
+                    <select id="registration-contract" class="input" @bind="_registrationContractId" disabled="@(_registrationContractOptions.Count <= 1)">
+                        @foreach (var contract in _registrationContractOptions)
+                        {
+                            <option value="@contract.ContractId">@contract.RoomCode · @contract.PropertyName · @contract.ContractNumber</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="registration-service">@L["RegisterServiceSelect"]</label>
+                    <select id="registration-service" class="input" @bind="_registrationServiceId">
+                        @foreach (var service in _services)
+                        {
+                            <option value="@service.Id">@service.Name — @MoneyFormatter.Format(service.CurrentRate)</option>
+                        }
+                    </select>
+                </div>
+                @if (_selectedService is not null)
+                {
+                    <dl class="summary-lines">
+                        <div><dt>@L["ServiceRequestName"]</dt><dd>@_selectedService.Name</dd></div>
+                        <div><dt>@L["ServiceRequestPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_selectedService.CurrentRate)</dd></div>
+                        <div><dt>@L["ServiceRequestMonth"]</dt><dd class="tabular-nums">@DateOnly.FromDateTime(DateTime.Today).ToString("MM/yyyy")</dd></div>
+                    </dl>
+                }
+                <div class="form-field">
+                    <label for="registration-note">@L["RegisterServiceNote"]</label>
+                    <input id="registration-note" type="text" class="input" @bind="_registrationNote" />
+                </div>
+                @if (_registrationError is not null)
+                {
+                    <div class="form-alert" role="alert"><span>@_registrationError</span></div>
+                }
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" disabled="@_submittingRegistration" @onclick="CloseRegistrationModal">@L["CancelBtn"]</button>
+                <button type="button" class="btn btn-primary" disabled="@(_submittingRegistration || _registrationContractId is null)" @onclick="SubmitRegistrationAsync">
+                    @(_submittingRegistration ? L["Loading"] : L["RegisterServiceSubmit"])
+                </button>
+            </footer>
+        </div>
+    </div>
+}
 
 @code {
     private const int PageSize = 20;
@@ -246,6 +349,20 @@
     private string _minAmount = string.Empty;
     private string _maxAmount = string.Empty;
     private int _page = 1;
+    private int? _openMenuId;
+
+    // Đăng ký dịch vụ (khách thuê) ngay trên trang Hóa đơn.
+    private bool _registrationOpen;
+    private bool _submittingRegistration;
+    private IReadOnlyList<Web.Features.Utilities.DTOs.ServiceItemDto> _services = [];
+    private string _registrationServiceId = string.Empty;
+    private string _registrationNote = string.Empty;
+    private string? _registrationError;
+    private IReadOnlyList<ServiceRegistrationContractOptionDto> _registrationContractOptions = [];
+    private Guid? _registrationContractId;
+
+    private Web.Features.Utilities.DTOs.ServiceItemDto? _selectedService =>
+        _services.FirstOrDefault(service => service.Id == _registrationServiceId);
 
     private bool IsMyInvoices =>
         Navigation.Uri.Contains("/my/invoices", StringComparison.OrdinalIgnoreCase) ||
@@ -264,12 +381,107 @@
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
-    protected override Task OnInitializedAsync() => ReloadAsync();
+    protected override Task OnInitializedAsync()
+    {
+        // Tới từ P5 ("Tới lập hóa đơn") với ?contractId=&periodStart= → lọc sẵn.
+        if (QueryPeriodStart is { } periodStart)
+        {
+            _year = periodStart.Year;
+            _month = periodStart.Month;
+        }
+
+        if (!string.IsNullOrWhiteSpace(QueryContractId)
+            && Guid.TryParse(QueryContractId, out var queryContractId)
+            && queryContractId != Guid.Empty)
+        {
+            _contractId = queryContractId;
+        }
+
+        return ReloadAsync();
+    }
+
+    private async Task OpenRegistrationModal()
+    {
+        _registrationOpen = true;
+        _registrationError = null;
+        _registrationNote = string.Empty;
+        try
+        {
+            _registrationContractOptions = await RegistrationService.GetMyContractOptionsAsync();
+            _registrationContractId = _registrationContractOptions.FirstOrDefault()?.ContractId;
+
+            var services = await ServiceCatalogPageService.GetServicesForCallerAsync();
+            _services = services
+                .Where(service => !service.IsReadOnly && service.Type != Web.Features.Utilities.DTOs.ServiceTypeCategory.Meter)
+                .ToList();
+            _registrationServiceId = _services.FirstOrDefault()?.Id ?? string.Empty;
+
+            if (_registrationContractOptions.Count == 0)
+            {
+                _registrationError = UL["RegErrorNoActiveContract"];
+            }
+        }
+        catch (Exception)
+        {
+            _registrationError = L["ErrorLoad"];
+        }
+    }
+
+    private void CloseRegistrationModal()
+    {
+        if (_submittingRegistration) return;
+        _registrationOpen = false;
+    }
+
+    private async Task SubmitRegistrationAsync()
+    {
+        if (_submittingRegistration) return;
+        _submittingRegistration = true;
+        _registrationError = null;
+        try
+        {
+            if (!int.TryParse(_registrationServiceId, out var serviceId) || serviceId <= 0)
+            {
+                _registrationError = L["RegisterServiceRequired"];
+                return;
+            }
+
+            if (_registrationContractId is not { } contractId)
+            {
+                _registrationError = UL["RegErrorNoActiveContract"];
+                return;
+            }
+
+            await RegistrationService.RequestAsync(serviceId, contractId, _registrationNote);
+            Toast.Success(L["RegisterServiceSuccess"]);
+            _registrationOpen = false;
+        }
+        catch (ServiceRegistrationException ex)
+        {
+            var localized = UL[$"RegError{ex.ErrorCode}"];
+            _registrationError = localized.ResourceNotFound ? UL["RegErrorGeneric"].Value : localized.Value;
+        }
+        catch (Exception)
+        {
+            _registrationError = UL["RegErrorGeneric"];
+        }
+        finally
+        {
+            _submittingRegistration = false;
+        }
+    }
+
+    [SupplyParameterFromQuery(Name = "contractId")]
+    public string? QueryContractId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "periodStart")]
+    public DateOnly? QueryPeriodStart { get; set; }
 
     private async Task ReloadAsync()
     {
         _loading = true;
         _error = null;
+        _openMenuId = null;
 
         try
         {
@@ -307,6 +519,7 @@
     {
         _loading = true;
         _error = null;
+        _openMenuId = null;
 
         try
         {
@@ -334,7 +547,10 @@
         {
             "unpaid" => InvoicePaymentState.Unpaid,
             "partial" => InvoicePaymentState.Partial,
+            "pending_confirmation" => InvoicePaymentState.PendingConfirmation,
             "paid" => InvoicePaymentState.Paid,
+            "payment_rejected" => InvoicePaymentState.PaymentRejected,
+            "expired" => InvoicePaymentState.Expired,
             _ => (InvoicePaymentState?)null,
         },
         MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
@@ -380,6 +596,16 @@
     }
 
     private void OpenDetail(int invoiceId) => Navigation.NavigateTo($"{DetailBase}/{invoiceId}");
+
+    private bool IsMenuOpen(int invoiceId) => _openMenuId == invoiceId;
+
+    private void ToggleRowMenu(int invoiceId) => _openMenuId = _openMenuId == invoiceId ? null : invoiceId;
+
+    private void MenuDetail(int invoiceId)
+    {
+        _openMenuId = null;
+        OpenDetail(invoiceId);
+    }
 
     private string StatusText(InvoiceStatus status) => status switch
     {

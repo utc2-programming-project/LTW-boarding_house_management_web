@@ -193,14 +193,35 @@
   <data name="ContractErrorFutureStartNotAllowed" xml:space="preserve"><value>Contracts cannot be created or approved with a future start date.</value></data>
   <data name="ContractErrorRoomUnavailable" xml:space="preserve"><value>The room is inactive, so a contract cannot be created or approved.</value></data>
   <data name="ContractErrorPendingContractExists" xml:space="preserve"><value>The room already has a pending or active contract for this period.</value></data>
+  <data name="RenewalErrorInvalidMonths" xml:space="preserve"><value>The renewal period must be greater than 0 and within the allowed limit.</value></data>
+  <data name="RenewalErrorNoteTooLong" xml:space="preserve"><value>The renewal note exceeds the allowed length.</value></data>
+  <data name="RenewalErrorDuplicatePending" xml:space="preserve"><value>This contract already has a renewal request awaiting a decision.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>The contract is saved as Pending approval. Rent and deposit are snapshotted when the owner approves it.</value></data>
   <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent (snapshotted on approval)</value></data>
   <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
+  <data name="ContractTenantSearchLabel" xml:space="preserve"><value>Search tenants</value></data>
+  <data name="ContractTenantSearchPlaceholder" xml:space="preserve"><value>Search by full name or phone number</value></data>
+  <data name="ContractTenantSearchEmpty" xml:space="preserve"><value>No matching tenants.</value></data>
+  <data name="RenewalQueueSearchPlaceholder" xml:space="preserve"><value>Search by contract, room, property or tenant</value></data>
+  <data name="RenewalQueueFilterEmptyTitle" xml:space="preserve"><value>No requests match the filters</value></data>
+  <data name="RenewalQueueFilterEmptyDescription" xml:space="preserve"><value>Try another keyword or clear the filters to see all pending requests.</value></data>
+  <data name="RenewalQueueRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="RenewalQueueResetFilters" xml:space="preserve"><value>Clear filters</value></data>
   <data name="ContractCreatedSuccess" xml:space="preserve"><value>Contract created and awaiting approval.</value></data>
   <data name="ContractUnsavedChanges" xml:space="preserve"><value>This form has unsaved changes.</value></data>
   <data name="ContractConfirmLeave" xml:space="preserve"><value>Leave the form and discard unsaved changes?</value></data>
   <data name="TableLoading" xml:space="preserve"><value>Loading.</value></data>
+  <data name="TableShowing" xml:space="preserve"><value>Showing</value></data>
+  <data name="TableOf" xml:space="preserve"><value>of</value></data>
+  <data name="RowsPerPage" xml:space="preserve"><value>Rows per page:</value></data>
+  <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>
+  <data name="PreviousPage" xml:space="preserve"><value>Previous page</value></data>
+  <data name="NextPage" xml:space="preserve"><value>Next page</value></data>
+  <data name="ContractFirstPage" xml:space="preserve"><value>First page</value></data>
+  <data name="ContractLastPage" xml:space="preserve"><value>Last page</value></data>
+  <data name="ContractPage" xml:space="preserve"><value>Page</value></data>
+  <data name="ContractViewDetails" xml:space="preserve"><value>View details</value></data>
   <data name="RenewalQueueTitle" xml:space="preserve"><value>Room renewal requests</value></data>
   <data name="RenewalQueueDescription" xml:space="preserve"><value>Tenants send these requests from "My room". Accepting extends the contract by exactly the months requested.</value></data>
   <data name="RenewalQueueNavLabel" xml:space="preserve"><value>Renewal requests</value></data>
@@ -242,4 +263,24 @@
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>View contract information, parties, terms and payment status.</value></data>
+  <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ContractDepositUpdateDescription" xml:space="preserve"><value>Enter a new deposit amount for the active contract.</value></data>
+  <data name="ContractDepositUpdateAmountLabel" xml:space="preserve"><value>New deposit</value></data>
+  <data name="ContractDepositUpdateCurrentLabel" xml:space="preserve"><value>Current deposit</value></data>
+  <data name="ContractDepositUpdateSuccess" xml:space="preserve"><value>Deposit updated.</value></data>
+  <data name="ContractDepositUpdatePendingApproval" xml:space="preserve"><value>The deposit update was sent to the owner for approval.</value></data>
+  <data name="ContractDepositUpdateUnchanged" xml:space="preserve"><value>The new deposit must differ from the current deposit.</value></data>
+  <data name="ContractPendingApprovalBanner" xml:space="preserve"><value>{0} is awaiting owner approval.</value></data>
+  <data name="ContractPendingRenewal" xml:space="preserve"><value>Renewal</value></data>
+  <data name="ContractPendingLiquidation" xml:space="preserve"><value>Liquidation</value></data>
+  <data name="ContractPendingDepositUpdate" xml:space="preserve"><value>Deposit update</value></data>
+  <data name="ContractErrorInvalidDepositAmount" xml:space="preserve"><value>The deposit must be non-negative and within the allowed limit.</value></data>
+  <data name="ContractErrorDepositUnchanged" xml:space="preserve"><value>The new deposit must differ from the current deposit.</value></data>
+  <data name="ContractErrorDepositApprovalDenied" xml:space="preserve"><value>The deposit update switch is blocking this action.</value></data>
+  <data name="ContractHistoryTitle" xml:space="preserve"><value>Contract history</value></data>
+  <data name="ContractSuccessorLabel" xml:space="preserve"><value>Successor contract</value></data>
+  <data name="ContractPreviousLabel" xml:space="preserve"><value>Previous contract</value></data>
+  <data name="ContractHistoryEmpty" xml:space="preserve"><value>No data available</value></data>
+  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Suggested 20% of rent</value></data>
 </root>

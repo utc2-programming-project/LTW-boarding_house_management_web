@@ -1,0 +1,285 @@
+@page "/my/service-registrations"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UtilityBusiness")]
+@using Web.Common.Utils
+@using Web.Features.Utilities.Entities
+@using Web.Features.Utilities.Services
+@inject ServiceRegistrationService RegistrationService
+@inject ToastService Toast
+@inject NavigationManager Navigation
+@inject IStringLocalizer<UtilityResources> UL
+
+<PageTitle>@UL["RegHistoryPageTitle"]</PageTitle>
+
+<div class="registration-history-page">
+    <NavBreadcrumb />
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">@UL["RegHistoryTitle"]</h1>
+            <p class="page-subtitle">@UL["RegHistorySubtitle"]</p>
+        </div>
+        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+            <LucideIcon Name="refresh" />
+            <span>@UL["P5CostRefresh"]</span>
+        </button>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="loading-line" role="status"><span class="spinner" aria-hidden="true"></span><span>@UL["P5CostLoading"]</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="inline-error" role="alert"><span>@_error</span></div>
+    }
+    else if (_rows.Count == 0)
+    {
+        <div class="empty-state">
+            <h2>@UL["P5CostEmptyTitle"]</h2>
+            <p>@UL["RegHistoryEmpty"]</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>@UL["P5CostThRoom"]</th>
+                            <th>@UL["ServiceRequestQuantity"]</th>
+                            <th>@UL["RegColRequestedAt"]</th>
+                            <th>@UL["RegColStatus"]</th>
+                            <th>@UL["RegColReviewInfo"]</th>
+                            <th>@UL["RegColInvoice"]</th>
+                            <th class="text-right">@UL["P5CostThActions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _rows)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="room-code">@row.ServiceName</span>
+                                    <span class="room-property">@row.RoomCode · @row.PropertyName</span>
+                                    <span class="muted">@DateFormatter.Format(row.StartDate)@(row.EndDate is { } end ? $" – {DateFormatter.Format(end)}" : "")</span>
+                                    @if (!string.IsNullOrWhiteSpace(row.Note))
+                                    {
+                                        <span class="muted">@row.Note</span>
+                                    }
+                                </td>
+                                <td class="text-right tabular-nums">@row.Quantity.ToString("0.##")</td>
+                                <td class="tabular-nums">@DateFormatter.FormatDateTime(row.RequestedAt.UtcDateTime)</td>
+                                <td><span class="status-badge @StatusClass(row.Status)">@StatusLabel(row.Status)</span></td>
+                                <td>
+                                    @if (row.Status == ServiceRegistrationStatus.Rejected)
+                                    {
+                                        <span>@row.RejectReason</span>
+                                    }
+                                    else if (row.ReviewedAt is { } reviewedAt)
+                                    {
+                                        <span class="tabular-nums">@DateFormatter.FormatDateTime(reviewedAt.UtcDateTime)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (row.InvoiceId is { } invoiceId)
+                                    {
+                                        <a class="invoice-link created" href="/my/invoices/@invoiceId">
+                                            <LucideIcon Name="receipt" />
+                                            <span>HD-@invoiceId</span>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-right cell-actions">
+                                    @if (row.Status == ServiceRegistrationStatus.PendingApproval)
+                                    {
+                                        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => CancelAsync(row)">
+                                            <span>@UL["RegCancelButton"]</span>
+                                        </button>
+                                    }
+                                    else if (row.Status == ServiceRegistrationStatus.Approved && row.CancelStatus == ServiceRegistrationCancelStatus.Pending)
+                                    {
+                                        <span class="status-badge status-open">@UL["RegCancelPendingNote"]</span>
+                                    }
+                                    else if (row.Status == ServiceRegistrationStatus.Approved && row.CancelStatus == ServiceRegistrationCancelStatus.None)
+                                    {
+                                        <button type="button" class="btn btn-secondary" @onclick="() => OpenCancelRequest(row)">
+                                            <span>@UL["RegCancelRequestButton"]</span>
+                                        </button>
+                                    }
+                                    else if (row.Status == ServiceRegistrationStatus.Approved && row.CancelStatus == ServiceRegistrationCancelStatus.Rejected)
+                                    {
+                                        <span class="muted">@row.CancelRejectReason</span>
+                                        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => OpenCancelRequest(row)">
+                                            <span>@UL["RegCancelRequestButton"]</span>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@if (_cancelTarget is not null)
+{
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cancel-request-title" @onclick="CloseCancelRequest">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="cancel-request-title">@UL["RegCancelRequestTitle"]</h2>
+                    <p>@_cancelTarget.ServiceName</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseCancelRequest">✕</button>
+            </header>
+            <div class="modal-body">
+                <div class="form-field">
+                    <label for="cancel-reason">@UL["RegCancelReasonLabel"]</label>
+                    <input id="cancel-reason" type="text" class="input @(_cancelReasonError is not null ? "is-invalid" : "")" @bind="_cancelReason" />
+                    @if (_cancelReasonError is not null)
+                    {
+                        <span class="field-error" role="alert">@_cancelReasonError</span>
+                    }
+                </div>
+                <p class="muted">@UL["RegCancelRequestNote"]</p>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="CloseCancelRequest">@UL["P5CostCancelButton"]</button>
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="SubmitCancelRequestAsync">
+                    @UL["RegCancelRequestSubmit"]
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ServiceRegistrationDto> _rows = [];
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    private ServiceRegistrationDto? _cancelTarget;
+    private string _cancelReason = string.Empty;
+    private string? _cancelReasonError;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rows = await RegistrationService.ListMineAsync();
+        }
+        catch (Exception)
+        {
+            _error = UL["P5CostLoadError"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CancelAsync(ServiceRegistrationDto row)
+    {
+        _busy = true;
+        try
+        {
+            await RegistrationService.CancelAsync(row.Id, reason: null);
+            Toast.Success(UL["RegCancelSuccess"]);
+            await LoadAsync();
+        }
+        catch (ServiceRegistrationException ex)
+        {
+            Toast.Error(ResolveError(ex));
+        }
+        catch (Exception)
+        {
+            Toast.Error(UL["RegErrorGeneric"]);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void OpenCancelRequest(ServiceRegistrationDto row)
+    {
+        _cancelTarget = row;
+        _cancelReason = string.Empty;
+        _cancelReasonError = null;
+    }
+
+    private void CloseCancelRequest()
+    {
+        if (_busy) return;
+        _cancelTarget = null;
+    }
+
+    private async Task SubmitCancelRequestAsync()
+    {
+        if (_cancelTarget is null) return;
+        _cancelReasonError = null;
+        if (string.IsNullOrWhiteSpace(_cancelReason))
+        {
+            _cancelReasonError = UL["RegCancelReasonRequired"];
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await RegistrationService.CancelAsync(_cancelTarget.Id, _cancelReason);
+            Toast.Success(UL["RegCancelRequestSuccess"]);
+            _cancelTarget = null;
+            await LoadAsync();
+        }
+        catch (ServiceRegistrationException ex)
+        {
+            _cancelReasonError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _cancelReasonError = UL["RegErrorGeneric"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string ResolveError(ServiceRegistrationException ex)
+    {
+        var localized = UL[$"RegError{ex.ErrorCode}"];
+        return localized.ResourceNotFound ? UL["RegErrorGeneric"].Value : localized.Value;
+    }
+
+    private static string StatusClass(ServiceRegistrationStatus status) => status switch
+    {
+        ServiceRegistrationStatus.PendingApproval => "status-open",
+        ServiceRegistrationStatus.Approved => "status-invoiced",
+        _ => "status-closed",
+    };
+
+    private string StatusLabel(ServiceRegistrationStatus status) => status switch
+    {
+        ServiceRegistrationStatus.PendingApproval => UL["RegStatusPending"],
+        ServiceRegistrationStatus.Approved => UL["RegStatusApproved"],
+        ServiceRegistrationStatus.Cancelled => UL["RegStatusCancelled"],
+        _ => UL["RegStatusRejected"],
+    };
+}

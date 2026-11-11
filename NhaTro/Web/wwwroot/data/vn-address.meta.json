@@ -1,0 +1,15 @@
+{
+    "source":  "provinces.open-api.vn",
+    "apiVersion":  "v2",
+    "provinceEndpoint":  "https://provinces.open-api.vn/api/v2/p/",
+    "wardEndpoint":  "https://provinces.open-api.vn/api/v2/w/",
+    "downloadedAtUtc":  "2026-11-11T06:00:59.9565923Z",
+    "provinceCount":  34,
+    "wardCount":  3321,
+    "administrativeModel":  "2 cấp: tỉnh/thành phố + phường/xã/đặc khu (sau sáp nhập 2025)",
+    "refreshCadence":  "Chạy lại 3 tháng/lần hoặc ngay sau khi có nghị quyết thay đổi đơn vị hành chính.",
+    "notes":  [
+                  "Ứng dụng chỉ đọc tệp JSON này lúc chạy, không gọi API bên ngoài.",
+                  "Thông tin Đồng Nai trở thành thành phố trực thuộc trung ương từ 30/4/2026 cần đối chiếu văn bản chính thức (chưa kiểm chứng trong mã nguồn)."
+              ]
+}

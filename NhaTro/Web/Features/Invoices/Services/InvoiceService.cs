@@ -76,10 +76,12 @@ public sealed class InvoiceService : IInvoiceService
             EnsureToggleAllowed(decision);
         }
 
-        var existing = await FindByPeriodAsync(
-            request.ContractId,
-            request.PeriodStart,
-            cancellationToken);
+        var existing = request.RegistrationId is null
+            ? await FindByPeriodAsync(
+                request.ContractId,
+                request.PeriodStart,
+                cancellationToken)
+            : null;
         if (existing is not null)
         {
             if (Matches(existing, request.PeriodEnd, items, total))
@@ -106,6 +108,8 @@ public sealed class InvoiceService : IInvoiceService
             ContractId = request.ContractId,
             PeriodStart = request.PeriodStart,
             PeriodEnd = request.PeriodEnd,
+            DueDate = request.DueDate,
+            RegistrationId = request.RegistrationId,
             Status = InvoiceStatus.Draft,
             TotalAmount = total,
             CreatedAt = now,
@@ -536,7 +540,9 @@ public sealed class InvoiceService : IInvoiceService
             .AsNoTracking()
             .Include(invoice => invoice.Items)
             .SingleOrDefaultAsync(
-                invoice => invoice.ContractId == contractId && invoice.PeriodStart == periodStart,
+                // Chỉ hóa đơn theo tháng/P5 (không phải dịch vụ theo yêu cầu) mới độc nhất mỗi kỳ.
+                invoice => invoice.ContractId == contractId && invoice.PeriodStart == periodStart
+                    && invoice.RegistrationId == null,
                 cancellationToken);
 
     private static bool Matches(
@@ -563,8 +569,8 @@ public sealed class InvoiceService : IInvoiceService
         {
             var expected = InvoiceCalculationRules.ToItem(items[index]);
             var actual = existingItems[index];
-            // Quantity/UnitPrice của bảng hóa đơn là decimal(18,2); Amount mới là số tiền
-            // snapshot đã chốt. So sánh theo đúng độ chính xác đã lưu để lần gửi lặp khớp.
+            // Quantity/UnitPrice are persisted at four decimal places so a P5 service snapshot
+            // retains its source precision. Compare at the database precision for idempotency.
             if (actual.ItemType != expected.ItemType
                 || actual.Description != expected.Description
                 || actual.Unit != expected.Unit
@@ -580,5 +586,5 @@ public sealed class InvoiceService : IInvoiceService
     }
 
     private static decimal ToStoredDecimal(decimal value) =>
-        decimal.Round(value, 2, MidpointRounding.AwayFromZero);
+        decimal.Round(value, 4, MidpointRounding.AwayFromZero);
 }

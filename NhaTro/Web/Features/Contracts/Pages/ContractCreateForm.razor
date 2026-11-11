@@ -81,8 +81,17 @@
                 @if (_options.Tenants.Count == 0) { <p>@L["ContractNoActiveTenants"]</p> }
                 else
                 {
+                    <label class="search-field contract-tenant-search">
+                        <LucideIcon Name="search" />
+                        <span class="sr-only">@L["ContractTenantSearchLabel"]</span>
+                        <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]" @bind="_tenantKeyword" @bind:event="oninput" />
+                    </label>
+                    @if (!FilteredTenants.Any())
+                    {
+                        <p class="contract-field-hint">@L["ContractTenantSearchEmpty"]</p>
+                    }
                     <div class="contract-tenant-options">
-                    @foreach (var tenant in _options.Tenants)
+                    @foreach (var tenant in FilteredTenants)
                     {
                         <label><input type="checkbox" checked="@_form.TenantIds.Contains(tenant.Id)" @onchange="e => ToggleTenant(tenant.Id, e.Value is true)" /> <span>@tenant.FullName</span><small>@tenant.Phone</small></label>
                     }
@@ -101,7 +110,21 @@
 @code {
     private readonly CreateFormModel _form = new();
     private ContractCreateOptionsDto _options = new([], [], []);
+    private string _tenantKeyword = string.Empty;
     private IReadOnlyList<ContractRoomOptionDto> RoomsForProperty => _form.PropertyId is int id ? _options.Rooms.Where(room => room.PropertyId == id).ToList() : [];
+    private IReadOnlyList<ContractTenantOptionDto> FilteredTenants
+    {
+        get
+        {
+            var keyword = _tenantKeyword.Trim();
+            return keyword.Length == 0
+                ? _options.Tenants
+                : _options.Tenants
+                    .Where(tenant => tenant.FullName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                        || tenant.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+        }
+    }
     private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? RoomsForProperty.FirstOrDefault(room => room.Id == id) : null;
     private EditContext _editContext = default!;
     private ValidationMessageStore _messages = default!;

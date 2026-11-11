@@ -45,7 +45,7 @@ public sealed class HomePageService(
 {
     private const int ExpiringWindowDays = 30;
 
-    public async Task<HomeSnapshot> LoadAsync(CancellationToken ct = default)
+    public async Task<HomeSnapshot> LoadAsync(CancellationToken ct = default, bool includeManagementKpis = true)
     {
         var principal = (await authentication.GetAuthenticationStateAsync()).User;
         var role = Roles.ResolvePrimaryRole(principal);
@@ -57,8 +57,8 @@ public sealed class HomePageService(
         var caller = await callers.GetCallerAsync();
         var snapshot = role switch
         {
-            Roles.ChuTro => await LoadOwnerAsync(caller, ct),
-            Roles.QuanLy => await LoadManagerAsync(caller, ct),
+            Roles.ChuTro => await LoadOwnerAsync(caller, includeManagementKpis, ct),
+            Roles.QuanLy => await LoadManagerAsync(caller, includeManagementKpis, ct),
             Roles.Admin => await LoadAdminAsync(caller, ct),
             Roles.KhachThue => await LoadTenantAsync(caller, ct),
             _ => throw new UnauthorizedAccessException("A supported role is required for the home page."),
@@ -82,16 +82,20 @@ public sealed class HomePageService(
         }
     }
 
-    private async Task<HomeSnapshot> LoadOwnerAsync(PropertyCaller caller, CancellationToken ct)
+    private async Task<HomeSnapshot> LoadOwnerAsync(PropertyCaller caller, bool includeKpis, CancellationToken ct)
     {
         var today = time.TodayVietnam();
         var month = DashboardPeriodRange.Resolve(DashboardPeriod.Month, time);
 
-        var rooms = await TryAsync("rooms", () => dashboard.GetRoomKpisAsync(null, ct), (RoomReportKpis?)null);
-        var tenants = await TryAsync("tenants", () => dashboard.GetTenantKpisAsync(null, ct), (TenantReportKpis?)null);
-        var revenueReport = await TryAsync("revenue",
-            () => revenue.GetAsync(new RevenueReportFilter(month.Start, month.End), caller, ct),
-            (RevenueReportDto?)null);
+        var rooms = includeKpis
+            ? await TryAsync("rooms", () => dashboard.GetRoomKpisAsync(null, ct), (RoomReportKpis?)null)
+            : (State: HomeLoadState.Loaded, Value: (RoomReportKpis?)null);
+        var tenants = includeKpis
+            ? await TryAsync("tenants", () => dashboard.GetTenantKpisAsync(null, ct), (TenantReportKpis?)null)
+            : (State: HomeLoadState.Loaded, Value: (TenantReportKpis?)null);
+        var revenueReport = includeKpis
+            ? await TryAsync("revenue", () => revenue.GetAsync(new RevenueReportFilter(month.Start, month.End), caller, ct), (RevenueReportDto?)null)
+            : (State: HomeLoadState.Loaded, Value: (RevenueReportDto?)null);
         var invoiceList = await TryAsync("invoices",
             () => invoices.GetInvoicesAsync(new InvoiceFilter { Page = 1, PageSize = 20 }, caller, ct),
             (InvoiceListResult?)null);
@@ -104,36 +108,39 @@ public sealed class HomePageService(
             (IReadOnlyList<ContractListItemDto>)[]);
 
         var kpis = new List<HomeKpi>();
-        if (rooms.Value is { } roomKpis)
+        if (includeKpis)
         {
-            kpis.Add(new("HomeKpiRented", Count(roomKpis.Rented),
-                "HomeKpiTotalRooms", Count(roomKpis.Total), "/rooms"));
-            kpis.Add(new("HomeKpiAvailable", Count(roomKpis.Available),
-                "HomeKpiMaintenance", Count(roomKpis.Maintenance), "/rooms"));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiRented", "HomeKpiAvailable");
-        }
+            if (rooms.Value is { } roomKpis)
+            {
+                kpis.Add(new("HomeKpiRented", Count(roomKpis.Rented),
+                    "HomeKpiTotalRooms", Count(roomKpis.Total), "/rooms"));
+                kpis.Add(new("HomeKpiAvailable", Count(roomKpis.Available),
+                    "HomeKpiMaintenance", Count(roomKpis.Maintenance), "/rooms"));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiRented", "HomeKpiAvailable");
+            }
 
-        if (tenants.Value is { } tenantKpis)
-        {
-            kpis.Add(new("HomeKpiTenants", Count(tenantKpis.Renting),
-                "HomeKpiTenantTotal", Count(tenantKpis.Total), "/tenants"));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiTenants");
-        }
+            if (tenants.Value is { } tenantKpis)
+            {
+                kpis.Add(new("HomeKpiTenants", Count(tenantKpis.Renting),
+                    "HomeKpiTenantTotal", Count(tenantKpis.Total), "/tenants"));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiTenants");
+            }
 
-        if (revenueReport.Value is { } revenueData)
-        {
-            kpis.Add(new("HomeKpiRevenue", MoneyFormatter.Format(revenueData.TotalRevenue),
-                "HomeKpiOutstanding", MoneyFormatter.Format(revenueData.Outstanding)));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiRevenue");
+            if (revenueReport.Value is { } revenueData)
+            {
+                kpis.Add(new("HomeKpiRevenue", MoneyFormatter.Format(revenueData.TotalRevenue),
+                    "HomeKpiOutstanding", MoneyFormatter.Format(revenueData.Outstanding)));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiRevenue");
+            }
         }
 
         var actions = BuildManagerActions(invoiceList.Value, inbox.Value, contractRows.Value, incidentRows.Value, today);
@@ -147,12 +154,16 @@ public sealed class HomePageService(
             new([], HomeLoadState.Loaded));
     }
 
-    private async Task<HomeSnapshot> LoadManagerAsync(PropertyCaller caller, CancellationToken ct)
+    private async Task<HomeSnapshot> LoadManagerAsync(PropertyCaller caller, bool includeKpis, CancellationToken ct)
     {
         var today = time.TodayVietnam();
 
-        var rooms = await TryAsync("rooms", () => dashboard.GetRoomKpisAsync(null, ct), (RoomReportKpis?)null);
-        var tenants = await TryAsync("tenants", () => dashboard.GetTenantKpisAsync(null, ct), (TenantReportKpis?)null);
+        var rooms = includeKpis
+            ? await TryAsync("rooms", () => dashboard.GetRoomKpisAsync(null, ct), (RoomReportKpis?)null)
+            : (State: HomeLoadState.Loaded, Value: (RoomReportKpis?)null);
+        var tenants = includeKpis
+            ? await TryAsync("tenants", () => dashboard.GetTenantKpisAsync(null, ct), (TenantReportKpis?)null)
+            : (State: HomeLoadState.Loaded, Value: (TenantReportKpis?)null);
         var invoiceList = await TryAsync("invoices",
             () => invoices.GetInvoicesAsync(new InvoiceFilter { Page = 1, PageSize = 20 }, caller, ct),
             (InvoiceListResult?)null);
@@ -166,36 +177,39 @@ public sealed class HomePageService(
 
         // Quản lý không xem doanh thu/công nợ tổng hợp (VHT-40 D15).
         var kpis = new List<HomeKpi>();
-        if (rooms.Value is { } roomKpis)
+        if (includeKpis)
         {
-            kpis.Add(new("HomeKpiRented", Count(roomKpis.Rented),
-                "HomeKpiTotalRooms", Count(roomKpis.Total), "/rooms"));
-            kpis.Add(new("HomeKpiAvailable", Count(roomKpis.Available),
-                "HomeKpiMaintenance", Count(roomKpis.Maintenance), "/rooms"));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiRented", "HomeKpiAvailable");
-        }
+            if (rooms.Value is { } roomKpis)
+            {
+                kpis.Add(new("HomeKpiRented", Count(roomKpis.Rented),
+                    "HomeKpiTotalRooms", Count(roomKpis.Total), "/rooms"));
+                kpis.Add(new("HomeKpiAvailable", Count(roomKpis.Available),
+                    "HomeKpiMaintenance", Count(roomKpis.Maintenance), "/rooms"));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiRented", "HomeKpiAvailable");
+            }
 
-        if (tenants.Value is { } tenantKpis)
-        {
-            kpis.Add(new("HomeKpiTenants", Count(tenantKpis.Renting),
-                "HomeKpiTenantTotal", Count(tenantKpis.Total), "/tenants"));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiTenants");
-        }
+            if (tenants.Value is { } tenantKpis)
+            {
+                kpis.Add(new("HomeKpiTenants", Count(tenantKpis.Renting),
+                    "HomeKpiTenantTotal", Count(tenantKpis.Total), "/tenants"));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiTenants");
+            }
 
-        if (contractRows.State == HomeLoadState.Loaded)
-        {
-            kpis.Add(new("HomeKpiExpiring", Count(Expiring(contractRows.Value ?? [], today).Count),
-                "HomeKpiExpiringHint", null, "/contracts"));
-        }
-        else
-        {
-            AddUnavailable(kpis, "HomeKpiExpiring");
+            if (contractRows.State == HomeLoadState.Loaded)
+            {
+                kpis.Add(new("HomeKpiExpiring", Count(Expiring(contractRows.Value ?? [], today).Count),
+                    "HomeKpiExpiringHint", null, "/contracts"));
+            }
+            else
+            {
+                AddUnavailable(kpis, "HomeKpiExpiring");
+            }
         }
 
         var actions = BuildManagerActions(invoiceList.Value, mine.Value, contractRows.Value, incidentRows.Value, today);
