@@ -27,6 +27,21 @@
   <data name="ServiceRequestNotePlaceholder" xml:space="preserve"><value>Ví dụ: dùng cho 2 người…</value></data>
   <data name="ServiceRequestSubmit" xml:space="preserve"><value>Gửi đăng ký dịch vụ</value></data>
   <data name="ServiceRequestSuccess" xml:space="preserve"><value>Đã gửi yêu cầu đăng ký dịch vụ. Vui lòng chờ chủ trọ xét duyệt.</value></data>
+  <data name="ServiceRequestContractLabel" xml:space="preserve"><value>Hợp đồng đăng ký</value></data>
+  <data name="ServicePendingApprovalBtn" xml:space="preserve"><value>Đang chờ duyệt</value></data>
+  <data name="RegErrorGeneric" xml:space="preserve"><value>Không thể xử lý yêu cầu dịch vụ. Vui lòng thử lại.</value></data>
+  <data name="RegErrorNoActiveContract" xml:space="preserve"><value>Bạn chưa có hợp đồng đang hiệu lực để đăng ký dịch vụ.</value></data>
+  <data name="RegErrorContractNotOwned" xml:space="preserve"><value>Hợp đồng đã chọn không thuộc về bạn.</value></data>
+  <data name="RegErrorCannotRegister" xml:space="preserve"><value>Dịch vụ này không thể đăng ký.</value></data>
+  <data name="RegErrorAlreadyRegistered" xml:space="preserve"><value>Dịch vụ này đã được đăng ký trong tháng này.</value></data>
+  <data name="RegErrorNotManager" xml:space="preserve"><value>Chỉ chủ trọ mới được thực hiện thao tác này.</value></data>
+  <data name="RegErrorRequestNotFound" xml:space="preserve"><value>Không tìm thấy yêu cầu đăng ký dịch vụ.</value></data>
+  <data name="RegErrorInvalidState" xml:space="preserve"><value>Yêu cầu này không còn ở trạng thái xử lý được.</value></data>
+  <data name="RegErrorReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do.</value></data>
+  <data name="RegErrorPriceNotFound" xml:space="preserve"><value>Dịch vụ chưa có đơn giá hiệu lực nên chưa lập được hóa đơn.</value></data>
+  <data name="RegErrorEmptyContent" xml:space="preserve"><value>Vui lòng nhập nội dung hóa đơn.</value></data>
+  <data name="RegErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này.</value></data>
+  <data name="RegErrorOutsideScope" xml:space="preserve"><value>Yêu cầu này nằm ngoài phạm vi nhà trọ bạn quản lý.</value></data>
   <data name="ServiceRequestPendingNote" xml:space="preserve"><value>Yêu cầu sẽ được chủ trọ duyệt trước khi dịch vụ được tính vào hóa đơn. Bạn xem tiến trình ở trang “Lịch sử đăng ký dịch vụ”.</value></data>
   <data name="RegHistoryPageTitle" xml:space="preserve"><value>Lịch sử đăng ký dịch vụ</value></data>
   <data name="RegHistoryTitle" xml:space="preserve"><value>Lịch sử đăng ký dịch vụ</value></data>
@@ -34,6 +49,8 @@
   <data name="RegHistoryEmpty" xml:space="preserve"><value>Bạn chưa gửi yêu cầu đăng ký dịch vụ nào.</value></data>
   <data name="RegColRequestedAt" xml:space="preserve"><value>Ngày gửi</value></data>
   <data name="RegColStatus" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="RegColQuantity" xml:space="preserve"><value>Số lượng</value></data>
+  <data name="RegPageInfo" xml:space="preserve"><value>Trang {0}/{1} · {2} yêu cầu</value></data>
   <data name="RegColReviewInfo" xml:space="preserve"><value>Lý do / ngày xử lý</value></data>
   <data name="RegColInvoice" xml:space="preserve"><value>Hóa đơn liên quan</value></data>
   <data name="RegStatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
@@ -42,6 +59,7 @@
   <data name="RegStatusCancelled" xml:space="preserve"><value>Đã hủy</value></data>
   <data name="RegCancelButton" xml:space="preserve"><value>Hủy đăng ký</value></data>
   <data name="RegCancelPendingNote" xml:space="preserve"><value>Đã gửi yêu cầu hủy — chờ chủ trọ quyết định.</value></data>
+  <data name="RegCancelPendingBadge" xml:space="preserve"><value>Chờ hủy</value></data>
   <data name="RegCancelRequestButton" xml:space="preserve"><value>Yêu cầu hủy</value></data>
   <data name="RegCancelRequestTitle" xml:space="preserve"><value>Yêu cầu hủy đăng ký (đã duyệt)</value></data>
   <data name="RegCancelReasonLabel" xml:space="preserve"><value>Lý do hủy (bắt buộc)</value></data>
@@ -75,6 +93,10 @@
   <data name="RegInvoiceAmount" xml:space="preserve"><value>Số tiền cần thanh toán (₫)</value></data>
   <data name="RegInvoiceDueDate" xml:space="preserve"><value>Hạn thanh toán</value></data>
   <data name="RegInvoiceContent" xml:space="preserve"><value>Nội dung hóa đơn</value></data>
+  <data name="RegInvoiceService" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="RegInvoicePeriod" xml:space="preserve"><value>Kỳ tính</value></data>
+  <data name="RegInvoiceQuantity" xml:space="preserve"><value>Số lượng</value></data>
+  <data name="RegInvoiceUnitPrice" xml:space="preserve"><value>Đơn giá</value></data>
   <data name="RegBankAccount" xml:space="preserve"><value>Tài khoản ngân hàng nhận tiền</value></data>
   <data name="CatalogSubtitle" xml:space="preserve"><value>Thiết lập dịch vụ khác và xem biểu giá áp dụng để tính hóa đơn định kỳ.</value></data>
 
@@ -113,6 +135,8 @@
   <data name="ThServiceName" xml:space="preserve"><value>Tên dịch vụ</value></data>
   <data name="ThServiceType" xml:space="preserve"><value>Loại dịch vụ</value></data>
   <data name="ThUnit" xml:space="preserve"><value>Đơn vị tính</value></data>
+  <data name="ThTypeUnit" xml:space="preserve"><value>Loại / Đơn vị</value></data>
+  <data name="ThEffectiveRange" xml:space="preserve"><value>Thời hạn hiệu lực</value></data>
   <data name="ThRate" xml:space="preserve"><value>Đơn giá áp dụng</value></data>
   <data name="ThEffectiveFrom" xml:space="preserve"><value>Bắt đầu hiệu lực</value></data>
   <data name="ThEffectiveTo" xml:space="preserve"><value>Hết hiệu lực</value></data>
@@ -121,6 +145,7 @@
 
   <data name="ReadOnlyTitle" xml:space="preserve"><value>Biểu giá chỉ đọc theo D7</value></data>
   <data name="NoData" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+  <data name="NoEndDate" xml:space="preserve"><value>Không thời hạn</value></data>
   <data name="EditPriceTooltip" xml:space="preserve"><value>Chỉnh sửa đơn giá</value></data>
   <data name="ViewDetailTooltip" xml:space="preserve"><value>Xem chi tiết</value></data>
   <data name="PriceHistoryTooltip" xml:space="preserve"><value>Lịch sử giá</value></data>
@@ -274,6 +299,9 @@
   <data name="TieredTariffLabel" xml:space="preserve"><value>Biểu giá bậc thang</value></data>
   <data name="ReadOnlyStatus" xml:space="preserve"><value>Chỉ xem</value></data>
   <data name="TableResultCount" xml:space="preserve"><value>{0} dịch vụ</value></data>
+  <data name="TablePageInfo" xml:space="preserve"><value>Trang {0}/{1} · {2} dịch vụ</value></data>
+  <data name="Previous" xml:space="preserve"><value>Trước</value></data>
+  <data name="Next" xml:space="preserve"><value>Sau</value></data>
   <data name="PricesEmptyDescription" xml:space="preserve"><value>Chưa có phiên bản giá mẫu trong phạm vi này.</value></data>
   <data name="UnitRoom" xml:space="preserve"><value>Phòng</value></data>
   <data name="UnitPerson" xml:space="preserve"><value>Người</value></data>
@@ -364,7 +392,6 @@
   <data name="P5CostPageTitle" xml:space="preserve"><value>Chỉ số &amp; chi phí điện nước</value></data>
   <data name="P5CostHeading" xml:space="preserve"><value>Chỉ số và chi phí điện nước</value></data>
   <data name="P5CostSubtitle" xml:space="preserve"><value>Tính chi phí điện, nước và dịch vụ theo chỉ số thực tế của từng phòng.</value></data>
-  <data name="P5CostSqlBadge" xml:space="preserve"><value>Dữ liệu SQL thật</value></data>
   <data name="P5CostRefresh" xml:space="preserve"><value>Làm mới</value></data>
   <data name="P5CostLoading" xml:space="preserve"><value>Đang tải dữ liệu...</value></data>
   <data name="P5CostLoadErrorTitle" xml:space="preserve"><value>Không tải được dữ liệu</value></data>
@@ -404,6 +431,8 @@
   <data name="P5CostInvoiceCreating" xml:space="preserve"><value>Đang lập hóa đơn…</value></data>
   <data name="P5CostInvoiceCreatedToast" xml:space="preserve"><value>Đã lập hóa đơn nháp. Vui lòng kiểm tra và phát hành.</value></data>
   <data name="P5CostInvoiceFailed" xml:space="preserve"><value>Không thể lập hóa đơn. Vui lòng thử lại.</value></data>
+  <data name="P5CostInvoiceMissingReadings" xml:space="preserve"><value>Phòng chưa có chỉ số điện/nước trong kỳ này nên chưa lập được hóa đơn.</value></data>
+  <data name="P5CostConcurrencyConflict" xml:space="preserve"><value>Dữ liệu vừa được người khác cập nhật. Vui lòng tải lại trang và thử lại.</value></data>
   <data name="P5CostInvoiceDuplicate" xml:space="preserve"><value>Hợp đồng đã có hóa đơn cho kỳ này với dữ liệu khác.</value></data>
   <data name="P5CostStatusOpen" xml:space="preserve"><value>Đang mở</value></data>
   <data name="P5CostStatusClosed" xml:space="preserve"><value>Đã chốt</value></data>
@@ -450,7 +479,6 @@
   <data name="P5CostSaveSuccess" xml:space="preserve"><value>Đã lưu chỉ số.</value></data>
   <data name="P5CostAdjustSuccess" xml:space="preserve"><value>Đã điều chỉnh chỉ số.</value></data>
   <data name="P5CostSaveFailed" xml:space="preserve"><value>Không thể lưu chỉ số. Vui lòng thử lại.</value></data>
-  <data name="P5CostConcurrencyConflict" xml:space="preserve"><value>Dữ liệu kỳ vừa bị người khác thay đổi. Vui lòng tải lại.</value></data>
   <data name="P5CostNoChange" xml:space="preserve"><value>Chỉ số mới trùng với chỉ số cũ.</value></data>
   <data name="P5CostTariffMissing" xml:space="preserve"><value>Chưa cấu hình biểu giá cho kỳ này.</value></data>
   <data name="P5CostNotAdjustable" xml:space="preserve"><value>Kỳ này không thể điều chỉnh.</value></data>

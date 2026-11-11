@@ -289,7 +289,16 @@ public sealed class UtilityReadingService(
             {
                 throw new UtilityReadingException(exception.Message, UtilityReadingErrorCodes.TariffMissing);
             }
-            await db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new UtilityReadingException(
+                    "Chỉ số này vừa được người khác cập nhật. Vui lòng tải lại trang và thử lại.",
+                    UtilityReadingErrorCodes.ConcurrencyConflict);
+            }
             if (transaction is not null)
             {
                 await transaction.CommitAsync(cancellationToken);

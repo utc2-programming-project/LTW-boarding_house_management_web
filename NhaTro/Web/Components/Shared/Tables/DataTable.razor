@@ -172,8 +172,19 @@
     {
         var (firstItem, lastItem) = PaginationHelper.ItemRange(_page, PageSize, _total);
         <div class="table-footer">
-            <span class="summary">@(string.Format(Labels.Summary, firstItem, lastItem, _total))</span>
-            @if (TotalPages > 1)
+            @if (CompactFooter)
+            {
+                <span class="summary">@(string.Format(Labels.PageInfo, _page, TotalPages, _total, ItemUnitLabel))</span>
+                <div class="pager">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(_page - 1)">@Labels.Previous</button>
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(_page + 1)">@Labels.Next</button>
+                </div>
+            }
+            else
+            {
+                <span class="summary">@(string.Format(Labels.Summary, firstItem, lastItem, _total))</span>
+            }
+            @if (!CompactFooter && TotalPages > 1)
             {
                 <nav class="pager" aria-label="@Labels.Pagination">
                     <button type="button" class="page-button" aria-label="@Labels.FirstPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(1)">
@@ -238,6 +249,14 @@
 
     [Parameter]
     public DataTableLabels Labels { get; set; } = new();
+
+    /// <summary>Chân bảng gọn: "Trang x/y · n đơn vị" kèm hai nút Trước/Sau thay cho dãy số trang.</summary>
+    [Parameter]
+    public bool CompactFooter { get; set; }
+
+    /// <summary>Đơn vị đếm ở chân bảng gọn, ví dụ "tài khoản".</summary>
+    [Parameter]
+    public string? ItemUnitLabel { get; set; }
 
     /// <summary>Nút kêu gọi hành động khi bảng rỗng và chưa lọc gì, ví dụ "Thêm phòng".</summary>
     [Parameter]

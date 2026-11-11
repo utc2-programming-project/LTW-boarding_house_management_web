@@ -831,7 +831,8 @@ public sealed class ServiceCatalogPageServiceIntegrationTests(SqlServerFixture f
         Assert.Equal("—", catalogVersion.Note);
         Assert.True(catalogVersion.CreatedAt.HasValue);
         Assert.NotEqual(default, catalogVersion.CreatedAt.Value);
-        Assert.False(string.IsNullOrWhiteSpace(catalogVersion.CreatedBy) || catalogVersion.CreatedBy == "—");
+        // Tài khoản không có FullName thì hiển thị "—" thay vì username/email (che dữ liệu tài khoản).
+        Assert.Equal("—", catalogVersion.CreatedBy);
 
         // Utility tariffs retain SourceName without being overwritten
         var allVersions = await pageService.GetPriceVersionsForCallerAsync("all");

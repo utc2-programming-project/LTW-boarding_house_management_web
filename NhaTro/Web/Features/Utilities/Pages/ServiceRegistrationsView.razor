@@ -15,17 +15,14 @@
 <PageTitle>@UL["RegManagePageTitle"]</PageTitle>
 
 <div class="registration-manage-page">
-    <NavBreadcrumb />
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@UL["RegManageTitle"]</h1>
-            <p class="page-subtitle">@UL["RegManageSubtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
-            <LucideIcon Name="refresh" />
-            <span>@UL["P5CostRefresh"]</span>
-        </button>
-    </header>
+    <PageHeading Title="@UL["RegManageTitle"]" HelpText="@UL["RegManageSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@UL["P5CostRefresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -52,14 +49,14 @@
                             <th>@UL["RegColRequestId"]</th>
                             <th>@UL["RegColTenant"]</th>
                             <th>@UL["P5CostThRoom"]</th>
-                            <th>@UL["ServiceRequestQuantity"]</th>
+                            <th class="text-center">@UL["RegColQuantity"]</th>
                             <th>@UL["RegColRequestedAt"]</th>
                             <th>@UL["RegColStatus"]</th>
-                            <th class="text-right">@UL["P5CostThActions"]</th>
+                            <th class="text-center">@UL["P5CostThActions"]</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var row in _rows)
+                        @foreach (var row in _pageRows)
                         {
                             <tr>
                                 <td class="tabular-nums">#@row.Id</td>
@@ -75,19 +72,54 @@
                                     <span class="room-code">@row.ServiceName</span>
                                     <span class="room-property">@row.RoomCode · @row.PropertyName</span>
                                 </td>
-                                <td class="text-right tabular-nums">@row.Quantity.ToString("0.##")</td>
+                                <td class="text-center tabular-nums">@row.Quantity.ToString("0.##")</td>
                                 <td class="tabular-nums">@DateFormatter.FormatDateTime(row.RequestedAt.UtcDateTime)</td>
-                                <td><span class="status-badge @StatusClass(row.Status)">@StatusLabel(row.Status)</span></td>
-                                <td class="text-right cell-actions">
-                                    <button type="button" class="icon-btn" title="@UL["P5CostDetails"]" aria-label="@UL["P5CostDetails"]" @onclick="() => _detail = row">
-                                        <LucideIcon Name="eye" />
-                                    </button>
+                                <td>
+                                    <span class="status-badge @StatusClass(row.Status)">@StatusLabel(row.Status)</span>
+                                    @if (row.Status == ServiceRegistrationStatus.Approved && row.CancelStatus == ServiceRegistrationCancelStatus.Pending)
+                                    {
+                                        <span class="status-badge status-open">@UL["RegCancelPendingBadge"]</span>
+                                    }
+                                </td>
+                                <td class="text-center cell-actions">
+                                    <div class="p2-row-actions">
+                                        <button type="button"
+                                                class="icon-button p2-menu-trigger @(IsMenuOpen(row.Id) ? "is-open" : null)"
+                                                title="@UL["P5CostThActions"]"
+                                                aria-label="@($"{UL["P5CostThActions"]}: #{row.Id}")"
+                                                aria-haspopup="menu"
+                                                aria-expanded="@(IsMenuOpen(row.Id) ? "true" : "false")"
+                                                aria-controls="@($"registration-row-menu-{row.Id}")"
+                                                @onclick="() => ToggleRowMenu(row.Id)">
+                                            <LucideIcon Name="ellipsis" />
+                                        </button>
+                                        @if (IsMenuOpen(row.Id))
+                                        {
+                                            <div id="@($"registration-row-menu-{row.Id}")" class="p2-row-menu" role="menu" aria-label="@UL["P5CostThActions"]" data-row-menu>
+                                                <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDetail(row)">
+                                                    <LucideIcon Name="eye" /><span>@UL["P5CostDetails"]</span>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+
+            <footer class="table-footer">
+                <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, _rows.Count)</span>
+                <div class="pager">
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
+                        @UL["Previous"]
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
+                        @UL["Next"]
+                    </button>
+                </div>
+            </footer>
         </div>
     }
 </div>
@@ -148,32 +180,42 @@
                 {
                     <div class="invoice-form">
                         <h3>@UL["RegCreateInvoiceTitle"]</h3>
-                        <div class="invoice-form-grid">
-                            <div class="invoice-form-fields">
-                                <div class="form-field">
-                                    <label for="invoice-amount">@UL["RegInvoiceAmount"]</label>
-                                    <input id="invoice-amount" type="number" step="1000" min="1" class="input tabular-nums" @bind="_invoiceAmount" @bind:after="RefreshInvoiceQr" />
+                        @if (_invoicePreview is null)
+                        {
+                            <p class="muted">@UL["LoadingText"]</p>
+                        }
+                        else
+                        {
+                            <dl class="summary-lines">
+                                <div><dt>@UL["RegInvoiceService"]</dt><dd>@_invoicePreview.ServiceName</dd></div>
+                                <div><dt>@UL["RegInvoicePeriod"]</dt><dd class="tabular-nums">@DateFormatter.Format(_invoicePreview.PeriodStart) – @DateFormatter.Format(_invoicePreview.PeriodEnd)</dd></div>
+                                <div><dt>@UL["RegInvoiceQuantity"]</dt><dd class="tabular-nums">@_invoicePreview.Quantity.ToString("0.##") @_invoicePreview.Unit</dd></div>
+                                <div><dt>@UL["RegInvoiceUnitPrice"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_invoicePreview.UnitPrice)</dd></div>
+                                <div><dt>@UL["RegInvoiceAmount"]</dt><dd class="tabular-nums"><strong>@MoneyFormatter.Format(_invoicePreview.Amount)</strong></dd></div>
+                            </dl>
+                            <div class="invoice-form-grid">
+                                <div class="invoice-form-fields">
+                                    <div class="form-field">
+                                        <label for="invoice-due">@UL["RegInvoiceDueDate"]</label>
+                                        <input id="invoice-due" type="date" class="input" @bind="_invoiceDueDate" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="invoice-content">@UL["RegInvoiceContent"]</label>
+                                        <input id="invoice-content" type="text" class="input" @bind="_invoiceContent" @bind:after="RefreshInvoiceQr" />
+                                    </div>
                                 </div>
-                                <div class="form-field">
-                                    <label for="invoice-due">@UL["RegInvoiceDueDate"]</label>
-                                    <input id="invoice-due" type="date" class="input" @bind="_invoiceDueDate" />
-                                </div>
-                                <div class="form-field">
-                                    <label for="invoice-content">@UL["RegInvoiceContent"]</label>
-                                    <input id="invoice-content" type="text" class="input" @bind="_invoiceContent" @bind:after="RefreshInvoiceQr" />
+                                <div class="invoice-form-side">
+                                    <div class="form-field bank-info">
+                                        <span>@UL["RegBankAccount"]</span>
+                                        <strong>@BankOptions.Value.DisplayAccount</strong>
+                                    </div>
+                                    @if (_invoiceQr is not null)
+                                    {
+                                        <img class="qr-preview" src="@_invoiceQr" alt="VietQR" width="180" height="180" />
+                                    }
                                 </div>
                             </div>
-                            <div class="invoice-form-side">
-                                <div class="form-field bank-info">
-                                    <span>@UL["RegBankAccount"]</span>
-                                    <strong>@BankOptions.Value.DisplayAccount</strong>
-                                </div>
-                                @if (_invoiceQr is not null)
-                                {
-                                    <img class="qr-preview" src="@_invoiceQr" alt="VietQR" width="180" height="180" />
-                                }
-                            </div>
-                        </div>
+                        }
                     </div>
                 }
 
@@ -196,11 +238,21 @@
                         <span>@UL["RegApproveButton"]</span>
                     </button>
                 }
+                else if (detail.Status == ServiceRegistrationStatus.Approved && detail.CancelStatus == ServiceRegistrationCancelStatus.Pending)
+                {
+                    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => RejectCancelAsync(detail)">
+                        <span>@UL["RegCancelRejectButton"]</span>
+                    </button>
+                    <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => ApproveCancelAsync(detail)">
+                        <LucideIcon Name="check" />
+                        <span>@UL["RegCancelApproveButton"]</span>
+                    </button>
+                }
                 else if (detail.Status == ServiceRegistrationStatus.Approved && detail.InvoiceId is null)
                 {
                     @if (!_invoiceFormOpen)
                     {
-                        <button type="button" class="btn btn-primary" @onclick="() => OpenInvoiceForm(detail)">
+                        <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => OpenInvoiceFormAsync(detail)">
                             <span>@UL["RegCreateInvoiceButton"]</span>
                         </button>
                     }
@@ -211,16 +263,6 @@
                             @(_busy ? UL["P5CostSavingButton"] : UL["RegCreateInvoiceConfirm"])
                         </button>
                     }
-                }
-                else if (detail.Status == ServiceRegistrationStatus.Approved && detail.CancelStatus == ServiceRegistrationCancelStatus.Pending)
-                {
-                    <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="() => RejectCancelAsync(detail)">
-                        <span>@UL["RegCancelRejectButton"]</span>
-                    </button>
-                    <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="() => ApproveCancelAsync(detail)">
-                        <LucideIcon Name="check" />
-                        <span>@UL["RegCancelApproveButton"]</span>
-                    </button>
                 }
                 else if (detail.InvoiceId is { } invoiceId)
                 {
@@ -235,7 +277,12 @@
 }
 
 @code {
+    private const int PageSize = 20;
+
     private IReadOnlyList<ServiceRegistrationDto> _rows = [];
+    private IReadOnlyList<ServiceRegistrationDto> _pageRows = [];
+    private int _page = 1;
+    private int? _openMenuId;
     private ServiceRegistrationDto? _detail;
     private bool _loading = true;
     private bool _busy;
@@ -247,10 +294,13 @@
     private string? _actionError;
 
     private bool _invoiceFormOpen;
+    private ServiceRegistrationInvoicePreviewDto? _invoicePreview;
     private decimal _invoiceAmount;
     private DateOnly _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
     private string _invoiceContent = string.Empty;
     private string? _invoiceQr;
+
+    private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -258,9 +308,12 @@
     {
         _loading = true;
         _error = null;
+        _openMenuId = null;
         try
         {
             _rows = await RegistrationService.ListForLandlordAsync();
+            _page = PaginationHelper.ClampPage(_page, TotalPages);
+            _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
         }
         catch (Exception)
         {
@@ -270,6 +323,29 @@
         {
             _loading = false;
         }
+    }
+
+    private void ChangePage(int delta)
+    {
+        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        if (target == _page)
+        {
+            return;
+        }
+
+        _page = target;
+        _openMenuId = null;
+        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+    }
+
+    private bool IsMenuOpen(int registrationId) => _openMenuId == registrationId;
+
+    private void ToggleRowMenu(int registrationId) => _openMenuId = _openMenuId == registrationId ? null : registrationId;
+
+    private void MenuDetail(ServiceRegistrationDto row)
+    {
+        _openMenuId = null;
+        OpenDetail(row);
     }
 
     private async Task ApproveAsync(ServiceRegistrationDto row)
@@ -284,9 +360,13 @@
             _detail = null;
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _actionError = ex.Message;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _actionError = UL["RegErrorGeneric"];
         }
         finally
         {
@@ -313,9 +393,13 @@
             _detail = null;
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _actionError = ex.Message;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _actionError = UL["RegErrorGeneric"];
         }
         finally
         {
@@ -323,14 +407,49 @@
         }
     }
 
-    private void OpenInvoiceForm(ServiceRegistrationDto row)
+    private void OpenDetail(ServiceRegistrationDto row)
+    {
+        _detail = row;
+        _invoiceFormOpen = false;
+        _invoicePreview = null;
+        _invoiceQr = null;
+        _actionError = null;
+        _reasonError = null;
+        _cancelRejectReasonError = null;
+        _rejectReason = string.Empty;
+        _cancelRejectReason = string.Empty;
+    }
+
+    private async Task OpenInvoiceFormAsync(ServiceRegistrationDto row)
     {
         _invoiceFormOpen = true;
         _actionError = null;
-        _invoiceAmount = MoneyFormatter.RoundVnd(row.Quantity * 100000m);
+        _invoicePreview = null;
+        _invoiceQr = null;
         _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
         _invoiceContent = row.ServiceName;
-        RefreshInvoiceQr();
+        try
+        {
+            _invoicePreview = await RegistrationService.PreviewInvoiceAsync(row.Id);
+            _invoiceAmount = _invoicePreview.Amount;
+            RefreshInvoiceQr();
+        }
+        catch (ServiceRegistrationException ex)
+        {
+            _invoiceFormOpen = false;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _invoiceFormOpen = false;
+            _actionError = UL["RegErrorGeneric"];
+        }
+    }
+
+    private string ResolveError(ServiceRegistrationException ex)
+    {
+        var localized = UL[$"RegError{ex.ErrorCode}"];
+        return localized.ResourceNotFound ? UL["RegErrorGeneric"].Value : localized.Value;
     }
 
     private void RefreshInvoiceQr()
@@ -352,21 +471,20 @@
         _actionError = null;
         try
         {
-            var periodStart = row.StartDate;
-            var periodEnd = _invoiceDueDate;
             var invoice = await RegistrationService.CreateInvoiceAsync(
                 row.Id,
-                _invoiceAmount,
                 _invoiceContent,
-                periodStart,
-                periodEnd,
                 _invoiceDueDate);
             Toast.Success(UL["P5CostInvoiceCreatedToast"]);
             Navigation.NavigateTo($"/invoices/{invoice.Id}");
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _actionError = ex.Message;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _actionError = UL["RegErrorGeneric"];
         }
         finally
         {
@@ -385,9 +503,13 @@
             _detail = null;
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _actionError = ex.Message;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _actionError = UL["RegErrorGeneric"];
         }
         finally
         {
@@ -414,9 +536,13 @@
             _detail = null;
             await LoadAsync();
         }
-        catch (Exception ex)
+        catch (ServiceRegistrationException ex)
         {
-            _actionError = ex.Message;
+            _actionError = ResolveError(ex);
+        }
+        catch (Exception)
+        {
+            _actionError = UL["RegErrorGeneric"];
         }
         finally
         {

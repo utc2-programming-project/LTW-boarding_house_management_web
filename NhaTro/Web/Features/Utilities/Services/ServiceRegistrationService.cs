@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices.DTOs;
@@ -37,6 +37,44 @@ public sealed record ServiceRegistrationDto(
     string? CancelRejectReason,
     int? InvoiceId);
 
+public static class ServiceRegistrationErrorCodes
+{
+    public const string Forbidden = nameof(Forbidden);
+    public const string NoActiveContract = nameof(NoActiveContract);
+    public const string ContractNotOwned = nameof(ContractNotOwned);
+    public const string CannotRegister = nameof(CannotRegister);
+    public const string AlreadyRegistered = nameof(AlreadyRegistered);
+    public const string RequestNotFound = nameof(RequestNotFound);
+    public const string InvalidState = nameof(InvalidState);
+    public const string ReasonRequired = nameof(ReasonRequired);
+    public const string PriceNotFound = nameof(PriceNotFound);
+    public const string OutsideScope = nameof(OutsideScope);
+    public const string EmptyContent = nameof(EmptyContent);
+}
+
+public sealed class ServiceRegistrationException(string message, string errorCode)
+    : InvalidOperationException(message)
+{
+    public string ErrorCode { get; } = errorCode;
+}
+
+/// <summary>Hợp đồng hiệu lực của khách để chọn khi gửi yêu cầu đăng ký dịch vụ.</summary>
+public sealed record ServiceRegistrationContractOptionDto(
+    Guid ContractId,
+    string ContractNumber,
+    string RoomCode,
+    string PropertyName);
+
+/// <summary>Thông tin hóa đơn sẽ tạo từ yêu cầu đã duyệt, tính theo bảng giá thật.</summary>
+public sealed record ServiceRegistrationInvoicePreviewDto(
+    string ServiceName,
+    decimal Quantity,
+    decimal UnitPrice,
+    string Unit,
+    decimal Amount,
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd);
+
 /// <summary>
 /// Quy trình đăng ký dịch vụ có xét duyệt:
 /// khách gửi yêu cầu (PENDING_APPROVAL) → chủ trọ duyệt/từ chối (bắt buộc lý do) →
@@ -53,6 +91,8 @@ public sealed class ServiceRegistrationService(
     // Blazor có thể khởi tạo layout + page song song trên cùng circuit; DbContext
     // là scoped nên phải xếp hàng mọi thao tác (giống MonthlyUtilityCalculationPageService).
     private readonly SemaphoreSlim _operationGate = new(1, 1);
+
+    private static readonly string[] PerPersonUnits = ["người", "nguoi", "person"];
 
     private async Task<T> GateAsync<T>(Func<Task<T>> work)
     {
@@ -110,8 +150,69 @@ public sealed class ServiceRegistrationService(
         return await LoadAsync(contractIds, cancellationToken);
     }
 
+    /// <summary>Hợp đồng hiệu lực của chính khách thuê, dùng cho ô chọn hợp đồng khi đăng ký dịch vụ.</summary>
+    public async Task<IReadOnlyList<ServiceRegistrationContractOptionDto>> GetMyContractOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var caller = await callerProvider.GetCallerAsync();
+        if (!caller.IsKhachThue)
+        {
+            throw new UnauthorizedAccessException("Chi khách thuê mới được đăng ký dịch vụ.");
+        }
+
+        var contractIds = await OwnContractIdsAsync(caller, cancellationToken);
+        if (contractIds.Count == 0)
+        {
+            return [];
+        }
+
+        var contracts = await db.Contracts
+            .AsNoTracking()
+            .Where(contract => contractIds.Contains(contract.ContractId))
+            .Select(contract => new
+            {
+                contract.ContractId,
+                contract.ContractNumber,
+                contract.RoomId,
+            })
+            .ToListAsync(cancellationToken);
+
+        var roomIds = contracts.Select(item => item.RoomId).Distinct().ToList();
+        var rooms = await db.Rooms
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(room => roomIds.Contains(room.Id))
+            .Select(room => new { room.Id, room.Code, room.PropertyId })
+            .ToDictionaryAsync(room => room.Id, cancellationToken);
+        var propertyIds = rooms.Values.Select(room => room.PropertyId).Distinct().ToList();
+        var properties = await db.Properties
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(property => propertyIds.Contains(property.Id))
+            .Select(property => new { property.Id, property.Name })
+            .ToDictionaryAsync(property => property.Id, cancellationToken);
+
+        return contracts
+            .Select(item =>
+            {
+                var room = rooms.GetValueOrDefault(item.RoomId);
+                var propertyName = room is null
+                    ? string.Empty
+                    : properties.GetValueOrDefault(room.PropertyId)?.Name ?? string.Empty;
+                return new ServiceRegistrationContractOptionDto(
+                    item.ContractId,
+                    item.ContractNumber,
+                    room?.Code ?? string.Empty,
+                    propertyName);
+            })
+            .OrderBy(item => item.PropertyName, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(item => item.RoomCode, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
     public async Task<ServiceRegistrationDto> RequestAsync(
         int serviceCatalogId,
+        Guid contractId,
         string? note,
         CancellationToken cancellationToken = default)
     {
@@ -126,16 +227,28 @@ public sealed class ServiceRegistrationService(
             .SingleOrDefaultAsync(item => item.Id == serviceCatalogId, cancellationToken);
         if (catalog is null || catalog.IsReadOnly || catalog.IsDeleted || !catalog.IsActive)
         {
-            throw new InvalidOperationException("Dịch vụ này không thể đăng ký.");
+            throw new ServiceRegistrationException(
+                "Dịch vụ này không thể đăng ký.",
+                ServiceRegistrationErrorCodes.CannotRegister);
         }
 
         var contractIds = await OwnContractIdsAsync(caller, cancellationToken);
         if (contractIds.Count == 0)
         {
-            throw new InvalidOperationException("Không tìm thấy hợp đồng hiệu lực của bạn.");
+            throw new ServiceRegistrationException(
+                "Không tìm thấy hợp đồng hiệu lực của bạn.",
+                ServiceRegistrationErrorCodes.NoActiveContract);
         }
 
-        // Dịch vụ theo tháng: 1 dịch vụ chỉ đăng ký 1 lần trong cùng một tháng.
+        // Chỉ được gửi cho hợp đồng của chính mình: không tự áp dịch vụ cho mọi phòng đang thuê.
+        if (!contractIds.Contains(contractId))
+        {
+            throw new ServiceRegistrationException(
+                "Hợp đồng đã chọn không thuộc về bạn.",
+                ServiceRegistrationErrorCodes.ContractNotOwned);
+        }
+
+        // Dịch vụ theo tháng: 1 dịch vụ chỉ đăng ký 1 lần trong cùng một tháng cho cùng hợp đồng.
         var monthStart = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1);
         var monthEnd = monthStart.AddMonths(1).AddDays(-1);
         var monthlyDuplicate = await db.ServiceRegistrationRequests
@@ -146,54 +259,48 @@ public sealed class ServiceRegistrationService(
                     && item.ServiceCatalogId == serviceCatalogId
                     && item.StartDate.Year == monthStart.Year
                     && item.StartDate.Month == monthStart.Month
-                    && contractIds.Contains(item.ContractId),
+                    && item.ContractId == contractId,
                 cancellationToken);
         if (monthlyDuplicate)
         {
-            throw new InvalidOperationException("Dịch vụ này đã được đăng ký trong tháng này.");
+            throw new ServiceRegistrationException(
+                "Dịch vụ này đã được đăng ký trong tháng này.",
+                ServiceRegistrationErrorCodes.AlreadyRegistered);
         }
 
-        var rows = new List<ServiceRegistrationRequest>();
-        foreach (var contractId in contractIds)
+        var row = new ServiceRegistrationRequest
         {
-            rows.Add(new ServiceRegistrationRequest
-            {
-                ContractId = contractId,
-                ServiceCatalogId = serviceCatalogId,
-                ServiceName = await CurrentServiceNameAsync(catalog, db, cancellationToken),
-                Quantity = 1m,
-                StartDate = monthStart,
-                EndDate = monthEnd,
-                Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
-                Status = ServiceRegistrationStatus.PendingApproval,
-                RequestedByUserId = caller.UserId,
-                RequestedAt = DateTimeOffset.UtcNow,
-            });
-        }
+            ContractId = contractId,
+            ServiceCatalogId = serviceCatalogId,
+            ServiceName = await CurrentServiceNameAsync(catalog, db, cancellationToken),
+            Quantity = 1m,
+            StartDate = monthStart,
+            EndDate = monthEnd,
+            Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(),
+            Status = ServiceRegistrationStatus.PendingApproval,
+            RequestedByUserId = caller.UserId,
+            RequestedAt = DateTimeOffset.UtcNow,
+        };
 
-        db.ServiceRegistrationRequests.AddRange(rows);
+        db.ServiceRegistrationRequests.Add(row);
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation(
-            "Tenant {UserId} requested service {ServiceId} for {Count} contract(s)",
+            "Tenant {UserId} requested service {ServiceId} for contract {ContractId}",
             caller.UserId,
             serviceCatalogId,
-            contractIds.Count);
+            contractId);
 
-        foreach (var contractId in contractIds)
+        var ownerId = await OwnerUserIdAsync(contractId, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(ownerId))
         {
-            var ownerId = await OwnerUserIdAsync(contractId, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(ownerId))
-            {
-                await notifications.NotifyAsync(
-                    ownerId!,
-                    "Yêu cầu đăng ký dịch vụ mới",
-                    $"Khách thuê vừa đăng ký dịch vụ {rows[0].ServiceName}.",
-                    "/service-registrations");
-            }
+            await notifications.NotifyAsync(
+                ownerId!,
+                "Yêu cầu đăng ký dịch vụ mới",
+                $"Khách thuê vừa đăng ký dịch vụ {row.ServiceName}.",
+                "/service-registrations");
         }
 
-        var first = rows[0];
-        return await ToDtoAsync(first, cancellationToken);
+        return await ToDtoAsync(row, cancellationToken);
     }
 
     public async Task<ServiceRegistrationDto> ApproveAsync(int requestId, CancellationToken cancellationToken = default)
@@ -214,7 +321,9 @@ public sealed class ServiceRegistrationService(
 
         if (request.Status != ServiceRegistrationStatus.PendingApproval)
         {
-            throw new InvalidOperationException("Yêu cầu này không thể duyệt (đã xử lý trước đó).");
+            throw new ServiceRegistrationException(
+                "Yêu cầu này không thể duyệt (đã xử lý trước đó).",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         request.Status = ServiceRegistrationStatus.Approved;
@@ -269,13 +378,17 @@ public sealed class ServiceRegistrationService(
 
         if (string.IsNullOrWhiteSpace(reason))
         {
-            throw new InvalidOperationException("Bắt buộc nhập lý do từ chối.");
+            throw new ServiceRegistrationException(
+                "Bắt buộc nhập lý do từ chối.",
+                ServiceRegistrationErrorCodes.ReasonRequired);
         }
 
         var request = await LoadManageableAsync(requestId, caller, cancellationToken);
         if (request.Status != ServiceRegistrationStatus.PendingApproval)
         {
-            throw new InvalidOperationException("Yêu cầu này không thể từ chối (đã xử lý trước đó).");
+            throw new ServiceRegistrationException(
+                "Yêu cầu này không thể từ chối (đã xử lý trước đó).",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         request.Status = ServiceRegistrationStatus.Rejected;
@@ -317,7 +430,9 @@ public sealed class ServiceRegistrationService(
             .SingleOrDefaultAsync(item => item.Id == requestId, cancellationToken);
         if (request is null || !ownContractIds.Contains(request.ContractId))
         {
-            throw new InvalidOperationException("Không tìm thấy yêu cầu đăng ký của bạn.");
+            throw new ServiceRegistrationException(
+                "Không tìm thấy yêu cầu đăng ký của bạn.",
+                ServiceRegistrationErrorCodes.RequestNotFound);
         }
 
         // Entity có thể đã bị chủ trọ xử lý ở context khác: nạp lại giá trị hiện tại.
@@ -334,7 +449,9 @@ public sealed class ServiceRegistrationService(
 
         if (request.Status != ServiceRegistrationStatus.Approved)
         {
-            throw new InvalidOperationException("Yêu cầu này không thể hủy.");
+            throw new ServiceRegistrationException(
+                "Yêu cầu này không thể hủy.",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         if (request.CancelStatus == ServiceRegistrationCancelStatus.Pending)
@@ -344,7 +461,9 @@ public sealed class ServiceRegistrationService(
 
         if (string.IsNullOrWhiteSpace(reason))
         {
-            throw new InvalidOperationException("Đã duyệt thì phải nhập lý do hủy.");
+            throw new ServiceRegistrationException(
+                "Đã duyệt thì phải nhập lý do hủy.",
+                ServiceRegistrationErrorCodes.ReasonRequired);
         }
 
         request.CancelStatus = ServiceRegistrationCancelStatus.Pending;
@@ -377,7 +496,9 @@ public sealed class ServiceRegistrationService(
         if (request.Status != ServiceRegistrationStatus.Approved
             || request.CancelStatus != ServiceRegistrationCancelStatus.Pending)
         {
-            throw new InvalidOperationException("Không có yêu cầu hủy nào đang chờ duyệt.");
+            throw new ServiceRegistrationException(
+                "Không có yêu cầu hủy nào đang chờ duyệt.",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         request.CancelStatus = ServiceRegistrationCancelStatus.Approved;
@@ -425,14 +546,18 @@ public sealed class ServiceRegistrationService(
 
         if (string.IsNullOrWhiteSpace(reason))
         {
-            throw new InvalidOperationException("Bắt buộc nhập lý do không đồng ý hủy.");
+            throw new ServiceRegistrationException(
+                "Bắt buộc nhập lý do không đồng ý hủy.",
+                ServiceRegistrationErrorCodes.ReasonRequired);
         }
 
         var request = await LoadManageableAsync(requestId, caller, cancellationToken);
         if (request.Status != ServiceRegistrationStatus.Approved
             || request.CancelStatus != ServiceRegistrationCancelStatus.Pending)
         {
-            throw new InvalidOperationException("Không có yêu cầu hủy nào đang chờ duyệt.");
+            throw new ServiceRegistrationException(
+                "Không có yêu cầu hủy nào đang chờ duyệt.",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         request.CancelStatus = ServiceRegistrationCancelStatus.Rejected;
@@ -455,15 +580,37 @@ public sealed class ServiceRegistrationService(
     }
 
     /// <summary>
-    /// Tạo hóa đơn nháp từ yêu cầu đã duyệt. Trả về DTO hóa đơn.
-    /// Chỉ chủ trọ/quản lý; yêu cầu chưa duyệt không được tạo hóa đơn.
+    /// Tính trước hóa đơn từ yêu cầu đã duyệt: đơn giá lấy từ bảng giá thật của dịch vụ,
+    /// kỳ là đúng tháng của yêu cầu. UI chỉ hiển thị, không tự nhập số tiền.
+    /// </summary>
+    public async Task<ServiceRegistrationInvoicePreviewDto> PreviewInvoiceAsync(
+        int requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var caller = await callerProvider.GetCallerAsync();
+        if (!caller.IsManager)
+        {
+            throw new UnauthorizedAccessException("Chi chủ trọ/quản lý mới xem được hóa đơn dịch vụ.");
+        }
+
+        var request = await LoadManageableAsync(requestId, caller, cancellationToken);
+        if (request.Status != ServiceRegistrationStatus.Approved)
+        {
+            throw new ServiceRegistrationException(
+                "Chỉ yêu cầu đã duyệt mới được tạo hóa đơn.",
+                ServiceRegistrationErrorCodes.InvalidState);
+        }
+
+        return await BuildInvoicePreviewAsync(request, cancellationToken);
+    }
+
+    /// <summary>
+    /// Tạo hóa đơn nháp từ yêu cầu đã duyệt. Số tiền và kỳ do server tính từ bảng giá,
+    /// không nhận số tiền tùy ý từ UI. Chỉ chủ trọ/quản lý; yêu cầu chưa duyệt bị chặn.
     /// </summary>
     public async Task<InvoiceDto> CreateInvoiceAsync(
         int requestId,
-        decimal amount,
         string content,
-        DateOnly periodStart,
-        DateOnly periodEnd,
         DateOnly dueDate,
         CancellationToken cancellationToken = default)
     {
@@ -473,25 +620,19 @@ public sealed class ServiceRegistrationService(
             throw new UnauthorizedAccessException("Chi chủ trọ/quản lý mới tạo được hóa đơn.");
         }
 
-        if (amount <= 0m)
-        {
-            throw new InvalidOperationException("Số tiền hóa đơn phải lớn hơn 0.");
-        }
-
         if (string.IsNullOrWhiteSpace(content))
         {
-            throw new InvalidOperationException("Nội dung hóa đơn không được để trống.");
-        }
-
-        if (periodEnd < periodStart)
-        {
-            throw new InvalidOperationException("Ngày kết thúc kỳ phải bằng hoặc sau ngày bắt đầu.");
+            throw new ServiceRegistrationException(
+                "Nội dung hóa đơn không được để trống.",
+                ServiceRegistrationErrorCodes.EmptyContent);
         }
 
         var request = await LoadManageableAsync(requestId, caller, cancellationToken);
         if (request.Status != ServiceRegistrationStatus.Approved)
         {
-            throw new InvalidOperationException("Chỉ yêu cầu đã duyệt mới được tạo hóa đơn.");
+            throw new ServiceRegistrationException(
+                "Chỉ yêu cầu đã duyệt mới được tạo hóa đơn.",
+                ServiceRegistrationErrorCodes.InvalidState);
         }
 
         if (request.InvoiceId is { } existingInvoiceId)
@@ -499,13 +640,13 @@ public sealed class ServiceRegistrationService(
             return await invoiceQuery.GetInvoiceAsync(existingInvoiceId, caller, cancellationToken);
         }
 
-        var unitPrice = amount / Math.Max(request.Quantity, 0.0001m);
+        var preview = await BuildInvoicePreviewAsync(request, cancellationToken);
         var invoice = await invoices.CreateDraftAsync(
             new CreateInvoiceRequest
             {
                 ContractId = request.ContractId,
-                PeriodStart = periodStart,
-                PeriodEnd = periodEnd,
+                PeriodStart = preview.PeriodStart,
+                PeriodEnd = preview.PeriodEnd,
                 DueDate = dueDate,
                 RegistrationId = request.Id,
                 Items =
@@ -514,18 +655,16 @@ public sealed class ServiceRegistrationService(
                     {
                         ItemType = InvoiceItemType.Service,
                         Description = $"{request.ServiceName} ({content.Trim()})",
-                        Unit = "lượt",
-                        Quantity = request.Quantity,
-                        UnitPrice = MoneyRound(unitPrice),
-                        Amount = amount,
+                        Unit = preview.Unit,
+                        Quantity = preview.Quantity,
+                        UnitPrice = preview.UnitPrice,
+                        Amount = preview.Amount,
                     },
                 ],
             },
             caller,
             cancellationToken);
 
-        var entity = await db.Invoices
-            .SingleAsync(item => item.Id == invoice.Id, cancellationToken);
         request.InvoiceId = invoice.Id;
         await db.SaveChangesAsync(cancellationToken);
 
@@ -542,8 +681,81 @@ public sealed class ServiceRegistrationService(
         return await invoiceQuery.GetInvoiceAsync(invoice.Id, caller, cancellationToken);
     }
 
+    private async Task<ServiceRegistrationInvoicePreviewDto> BuildInvoicePreviewAsync(
+        ServiceRegistrationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var periodStart = new DateOnly(request.StartDate.Year, request.StartDate.Month, 1);
+        var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+
+        // Kỳ hóa đơn không được vượt ra ngoài thời hạn hợp đồng (hợp đồng bắt đầu/kết thúc giữa tháng).
+        var contractRange = await db.Contracts
+            .AsNoTracking()
+            .Where(contract => contract.ContractId == request.ContractId)
+            .Select(contract => new { contract.StartDate, contract.EndDate })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (contractRange is not null)
+        {
+            var contractStart = DateOnly.FromDateTime(contractRange.StartDate);
+            var contractEnd = DateOnly.FromDateTime(contractRange.EndDate);
+            if (periodStart < contractStart)
+            {
+                periodStart = contractStart;
+            }
+
+            if (periodEnd > contractEnd)
+            {
+                periodEnd = contractEnd;
+            }
+        }
+
+        // Đơn giá hiệu lực tại ngày bắt đầu kỳ; nếu bảng giá không ghi ngày kết thúc thì vẫn còn hiệu lực.
+        var price = await db.ServicePriceHistories
+            .AsNoTracking()
+            .Where(version => version.ServiceCatalogId == request.ServiceCatalogId
+                && version.EffectiveDate <= request.StartDate
+                && (version.EffectiveTo == null || version.EffectiveTo >= request.StartDate))
+            .OrderByDescending(version => version.EffectiveDate)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? await db.ServicePriceHistories
+                .AsNoTracking()
+                .Where(version => version.ServiceCatalogId == request.ServiceCatalogId)
+                .OrderByDescending(version => version.EffectiveDate)
+                .FirstOrDefaultAsync(cancellationToken);
+
+        if (price is null || price.UnitPrice <= 0m)
+        {
+            throw new ServiceRegistrationException(
+                "Dịch vụ chưa có đơn giá hiệu lực.",
+                ServiceRegistrationErrorCodes.PriceNotFound);
+        }
+
+        var quantity = request.Quantity <= 0m ? 1m : request.Quantity;
+        // Dịch vụ tính theo đầu người phải nhân với số cư dân của hợp đồng, giống hóa đơn P5;
+        // request.Quantity luôn là 1 nên nếu giữ nguyên sẽ thu thiếu tiền.
+        if (IsPerPersonUnit(price.Unit))
+        {
+            var residents = await db.ContractMembers
+                .CountAsync(member => member.ContractId == request.ContractId, cancellationToken);
+            quantity = Math.Max(1, residents);
+        }
+
+        return new ServiceRegistrationInvoicePreviewDto(
+            request.ServiceName,
+            quantity,
+            price.UnitPrice,
+            string.IsNullOrWhiteSpace(price.Unit) ? "lượt" : price.Unit,
+            MoneyRound(price.UnitPrice * quantity),
+            periodStart,
+            periodEnd);
+    }
+
     private static decimal MoneyRound(decimal value) =>
         Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    private static bool IsPerPersonUnit(string unit) =>
+        Array.Exists(PerPersonUnits, candidate =>
+            string.Equals(candidate, unit.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private async Task<ServiceRegistrationDto> ToDtoAsync(
         ServiceRegistrationRequest row,
@@ -695,7 +907,9 @@ public sealed class ServiceRegistrationService(
             .SingleOrDefaultAsync(item => item.Id == requestId, cancellationToken);
         if (request is null)
         {
-            throw new InvalidOperationException("Không tìm thấy yêu cầu đăng ký.");
+            throw new ServiceRegistrationException(
+                "Không tìm thấy yêu cầu đăng ký.",
+                ServiceRegistrationErrorCodes.RequestNotFound);
         }
 
         // Entity có thể đã bị xử lý ở context khác: nạp lại trước khi kiểm tra trạng thái.

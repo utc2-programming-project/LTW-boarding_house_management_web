@@ -144,6 +144,10 @@
     text-align: right !important;
 }
 
+.text-center {
+    text-align: center !important;
+}
+
 .tabular-nums {
     font-variant-numeric: tabular-nums;
 }

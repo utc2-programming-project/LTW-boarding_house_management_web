@@ -6,6 +6,7 @@
 .contract-detail-grid dd { margin: 8px 0 0; font-weight: 600; }
 .contract-detail-grid ul { margin: 0; padding-left: 20px; }
 .contract-detail-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.contract-pending-alert { margin: 20px 0 0; padding: 16px; border: 1px solid var(--warning-border); border-radius: 8px; background: var(--warning-bg); color: var(--warning-text); }
 @media (max-width: 767px) {
     .contract-detail-page .page-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
     .contract-detail-grid { grid-template-columns: 1fr; padding: 16px; }

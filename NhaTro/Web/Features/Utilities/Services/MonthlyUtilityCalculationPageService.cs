@@ -87,13 +87,21 @@ public sealed class MonthlyUtilityCalculationPageService(
             .Where(reading => roomIds.Contains(reading.RoomId))
             .ToListAsync(cancellationToken);
 
+        // Bộ lọc có thể trải nhiều kỳ: lấy bản ghi chỉ số mới nhất trong khoảng lọc của
+        // từng phòng thay vì đòi khớp đúng ngày bắt đầu (khi đó bảng sẽ trống).
         var exactReadings = readings
-            .Where(reading => reading.PeriodStart == periodStart)
-            .ToDictionary(reading => reading.RoomId);
+            .Where(reading => reading.PeriodStart >= periodStart && reading.PeriodStart <= periodEnd)
+            .GroupBy(reading => reading.RoomId)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderByDescending(reading => reading.PeriodStart)
+                    .ThenByDescending(reading => reading.Id)
+                    .First());
 
         var readingIds = exactReadings.Values.Select(reading => reading.Id).ToList();
         var snapshots = await LoadSnapshotsAsync(readingIds, cancellationToken);
-        var invoices = await LoadInvoicesAsync(contractIds, periodStart, cancellationToken);
+        var invoices = await LoadInvoicesAsync(contractIds, periodStart, periodEnd, cancellationToken);
         var invoicedPeriods = await LoadInvoicedPeriodsAsync(contractIds, cancellationToken);
 
         var tenantNames = await LoadTenantNamesAsync(contractIds, cancellationToken);
@@ -104,30 +112,52 @@ public sealed class MonthlyUtilityCalculationPageService(
             periodEnd,
             cancellationToken);
 
-        // Khách thuê đăng ký dịch vụ theo hợp đồng: hợp đồng nào đã đăng ký ít nhất
-        // một dịch vụ thì chỉ tính các dịch vụ đã đăng ký; chưa đăng ký vẫn áp tất cả.
+        // Khách thuê đăng ký dịch vụ theo hợp đồng/tháng: hợp đồng nào đã từng có đăng ký
+        // được duyệt trong tháng thì chỉ tính đúng các dịch vụ còn hiệu lực. Nhờ vậy hủy
+        // dịch vụ cuối cùng không làm toàn bộ dịch vụ bị tính lại (fallback chỉ áp cho
+        // hợp đồng chưa từng đăng ký gì trong tháng).
+        var rangeMonthStart = new DateOnly(periodStart.Year, periodStart.Month, 1);
+        var rangeMonthEnd = new DateOnly(periodEnd.Year, periodEnd.Month, 1);
         var registrationRows = await db.ContractServiceRegistrations
             .AsNoTracking()
-            .Where(item => contractIds.Contains(item.ContractId) && item.MonthStart == periodStart)
+            .Where(item => contractIds.Contains(item.ContractId)
+                && item.MonthStart >= rangeMonthStart
+                && item.MonthStart <= rangeMonthEnd)
             .ToListAsync(cancellationToken);
-        var registrationsByContract = registrationRows
-            .GroupBy(item => item.ContractId)
+        var registrationsByContractMonth = registrationRows
+            .GroupBy(item => (item.ContractId, item.MonthStart))
             .ToDictionary(
                 group => group.Key,
                 group => group.Select(item => item.ServiceCatalogId).ToHashSet());
+        // Tháng đã từng có đăng ký được duyệt (kể cả đăng ký đã duyệt rồi bị hủy) vẫn được
+        // tính là "đã đăng ký": nếu không, hủy dịch vụ cuối cùng sẽ làm fallback bật lại toàn bộ
+        // dịch vụ của tòa.
+        var registeredRequestMonths = (await db.ServiceRegistrationRequests
+                .AsNoTracking()
+                .Where(item => contractIds.Contains(item.ContractId)
+                    && (item.Status == ServiceRegistrationStatus.Approved
+                        || (item.Status == ServiceRegistrationStatus.Cancelled
+                            && item.CancelStatus == ServiceRegistrationCancelStatus.Approved))
+                    && item.StartDate >= rangeMonthStart
+                    && item.StartDate <= periodEnd)
+                .Select(item => new { item.ContractId, item.StartDate })
+                .ToListAsync(cancellationToken))
+            .Select(item => (item.ContractId, new DateOnly(item.StartDate.Year, item.StartDate.Month, 1)))
+            .ToHashSet();
 
         var rows = new List<MonthlyUtilityRoomCostDto>(contracts.Count);
         foreach (var contract in contracts.OrderBy(item => item.RoomCode, StringComparer.OrdinalIgnoreCase))
         {
             exactReadings.TryGetValue(contract.RoomId, out var reading);
-            var previous = FindPreviousReading(readings, contract.RoomId, periodStart);
-            var latest = FindLatestReading(readings, contract.RoomId);
-            var invoice = invoices.GetValueOrDefault(contract.ContractId);
 
             // Kỳ hiển thị phải là kỳ thật của bản ghi chỉ số, không phải khoảng ngày
-            // người dùng đang lọc (bộ lọc có thể rộng hơn một kỳ).
+            // người dùng đang lọc (bộ lọc có thể rộng hơn một kỳ). Số liệu đầu kỳ lấy
+            // theo kỳ thật đó để không lệch khi lọc nhiều tháng.
             var rowPeriodStart = reading?.PeriodStart ?? periodStart;
             var rowPeriodEnd = reading?.PeriodEnd ?? periodEnd;
+            var invoice = invoices.GetValueOrDefault((contract.ContractId, rowPeriodStart));
+            var previous = FindPreviousReading(readings, contract.RoomId, rowPeriodStart);
+            var latest = FindLatestReading(readings, contract.RoomId);
 
             var isInvoiced = invoice is not null
                 && invoice.Status is InvoiceStatus.Issued or InvoiceStatus.Paid;
@@ -180,10 +210,15 @@ public sealed class MonthlyUtilityCalculationPageService(
                 cancellationToken);
 
             var propertyServices = servicesByProperty.GetValueOrDefault(contract.PropertyId, []);
-            if (registrationsByContract.TryGetValue(contract.ContractId, out var registeredIds) && registeredIds.Count > 0)
+            var rowMonthStart = new DateOnly(rowPeriodStart.Year, rowPeriodStart.Month, 1);
+            var hasRegisteredServices = registrationsByContractMonth.TryGetValue(
+                (contract.ContractId, rowMonthStart),
+                out var registeredIds);
+            if (hasRegisteredServices
+                || registeredRequestMonths.Contains((contract.ContractId, rowMonthStart)))
             {
                 propertyServices = propertyServices
-                    .Where(version => registeredIds.Contains(version.ServiceCatalogId))
+                    .Where(version => registeredIds is not null && registeredIds.Contains(version.ServiceCatalogId))
                     .ToList();
             }
 
@@ -501,6 +536,16 @@ public sealed class MonthlyUtilityCalculationPageService(
             return new MonthlyUtilityInvoiceResult(false, ErrorCode: "RoomNotFound");
         }
 
+        if (room.InvoiceId is not null)
+        {
+            return new MonthlyUtilityInvoiceResult(false, ErrorCode: "DuplicateInvoice");
+        }
+
+        if (!room.HasReadings)
+        {
+            return new MonthlyUtilityInvoiceResult(false, ErrorCode: "MissingReadings");
+        }
+
         var items = new List<Web.Features.Invoices.DTOs.InvoiceItemInputDto>();
         if (room.RentAmount > 0m)
         {
@@ -740,22 +785,25 @@ public sealed class MonthlyUtilityCalculationPageService(
             .Select(group => new { ContractId = group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.ContractId, item => Math.Max(1, item.Count), cancellationToken);
 
-    private async Task<Dictionary<Guid, InvoiceRow>> LoadInvoicesAsync(
+    private async Task<Dictionary<(Guid ContractId, DateOnly PeriodStart), InvoiceRow>> LoadInvoicesAsync(
         IReadOnlyList<Guid> contractIds,
         DateOnly periodStart,
+        DateOnly periodEnd,
         CancellationToken cancellationToken) =>
         (await db.Invoices
             .AsNoTracking()
             .Include(invoice => invoice.Items)
             .Where(invoice => contractIds.Contains(invoice.ContractId)
-                && invoice.PeriodStart == periodStart
+                && invoice.PeriodStart >= periodStart
+                && invoice.PeriodStart <= periodEnd
                 // Chỉ hóa đơn theo tháng/P5 mới quyết trạng thái kỳ; hóa đơn dịch vụ
                 // theo yêu cầu là hóa đơn riêng, không thay tổng tiền của kỳ.
                 && invoice.RegistrationId == null)
             .ToListAsync(cancellationToken))
-        .GroupBy(invoice => invoice.ContractId)
-        .ToDictionary(group => group.Key, group => new InvoiceRow(
-            group.OrderByDescending(invoice => invoice.Id).First()));
+        .GroupBy(invoice => (invoice.ContractId, invoice.PeriodStart))
+        .ToDictionary(
+            group => group.Key,
+            group => new InvoiceRow(group.OrderByDescending(invoice => invoice.Id).First()));
 
     private async Task<Dictionary<Guid, IReadOnlyList<InvoicedPeriodRow>>> LoadInvoicedPeriodsAsync(
         IReadOnlyList<Guid> contractIds,

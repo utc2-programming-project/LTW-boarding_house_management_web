@@ -1,6 +1,7 @@
 @page "/rooms"
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject RoomPageService PageService
 @inject NavigationManager Navigation
 @inject ToastService Toasts
@@ -29,7 +30,7 @@
     @if (_summaryLoading)
     {
         <div class="p2-alert warning" role="status">
-            <span class="p2-alert-message">@L["Retrying"]</span>
+            <span class="p2-alert-message">@L["P2Loading"]</span>
         </div>
     }
     else if (_summaryError is not null)
@@ -95,7 +96,7 @@
                         <span class="sr-only">@L["P2SearchRooms"]</span>
                         <input id="room-keyword" type="search" maxlength="50" autocomplete="off"
                                placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:event="oninput"
-                               @bind:after="ApplyFiltersAsync" />
+                               @bind:after="OnKeywordChangedAsync" />
                     </label>
                     <label class="filter-select" for="room-property">
                         <span class="sr-only">@L["P2Property"]</span>
@@ -218,6 +219,8 @@
     [SupplyParameterFromQuery(Name = "propertyId")]
     public int? PropertyId { get; set; }
 
+    private CancellationTokenSource? _keywordDebounce;
+
     private DataTable<RoomListItem>? _table;
     private IReadOnlyList<DataTableColumn<RoomListItem>> _columns = [];
     private DataTableLabels _tableLabels = new();
@@ -225,6 +228,7 @@
     private RoomSummary? _summary;
     private RoomListItem? _selectedRoom;
     private RoomListItem? _deleteRoom;
+    private int? _openMenuId;
     private string _keyword = string.Empty;
     private string _propertyFilter = string.Empty;
     private string _statusFilter = string.Empty;
@@ -334,11 +338,30 @@
         RenderFragment<RoomListItem> status = item => @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
         RenderFragment<RoomListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<RoomListItem> actions = item => @<div class="p2-row-actions">
-            <button class="icon-button" type="button" aria-label="@L["P2ViewDetails"]" title="@L["P2ViewDetails"]" @onclick="() => OpenDetails(item)"><LucideIcon Name="eye" /></button>
-            <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
-            @if (_isOwner)
+            <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
+                    aria-label="@L["P2Actions"]" title="@L["P2Actions"]"
+                    aria-haspopup="menu" aria-expanded="@(IsMenuOpen(item.Id) ? "true" : "false")"
+                    aria-controls="@($"row-menu-{item.Id}")"
+                    @onclick="() => ToggleRowMenu(item.Id)">
+                <LucideIcon Name="ellipsis" />
+            </button>
+            @if (IsMenuOpen(item.Id))
             {
-                <button class="icon-button danger-action" type="button" aria-label="@L["P2MoveToTrash"]" title="@L["P2MoveToTrash"]" @onclick="() => RequestDelete(item)"><LucideIcon Name="trash" /></button>
+                <div id="@($"row-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["P2Actions"]" data-row-menu>
+                    <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuDetails(item)">
+                        <LucideIcon Name="eye" /><span>@L["P2ViewDetails"]</span>
+                    </button>
+                    <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuEdit(item)">
+                        <LucideIcon Name="edit" /><span>@L["P2Edit"]</span>
+                    </button>
+                    @if (_isOwner)
+                    {
+                        <div class="p2-row-menu-sep" role="separator"></div>
+                        <button class="p2-row-menu-item danger" type="button" role="menuitem" @onclick="() => MenuDelete(item)">
+                            <LucideIcon Name="trash" /><span>@L["P2MoveToTrash"]</span>
+                        </button>
+                    }
+                </div>
             }
         </div>;
 
@@ -357,6 +380,7 @@
 
     private async Task<PagedResult<RoomListItem>> LoadRoomsAsync(DataTableRequest request)
     {
+        _openMenuId = null;
         int? propertyId = int.TryParse(_propertyFilter, out var parsedProperty) ? parsedProperty : null;
         RoomStatus? status = int.TryParse(_statusFilter, out var parsedStatus) && Enum.IsDefined((RoomStatus)parsedStatus)
             ? (RoomStatus)parsedStatus
@@ -383,6 +407,28 @@
             Page = request.Page,
             PageSize = request.PageSize
         });
+    }
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+    }
+
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            await ApplyFiltersAsync();
+        }
+        catch (TaskCanceledException)
+        {
+        }
     }
 
     private Task ApplyFiltersAsync()
@@ -542,6 +588,12 @@
         _formKey++;
         _formVisible = true;
     }
+    private bool IsMenuOpen(int id) => _openMenuId == id;
+    private void ToggleRowMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
+    private void MenuDetails(RoomListItem item) { _openMenuId = null; OpenDetails(item); }
+    private void MenuEdit(RoomListItem item) { _openMenuId = null; OpenEdit(item.Id); }
+    private void MenuDelete(RoomListItem item) { _openMenuId = null; RequestDelete(item); }
+
     private void OpenEdit(int id) { _formRoomId = id; _formKey++; _formVisible = true; }
     private void OpenDetails(RoomListItem item) => _selectedRoom = item;
     private void CloseForm() => _formVisible = false;

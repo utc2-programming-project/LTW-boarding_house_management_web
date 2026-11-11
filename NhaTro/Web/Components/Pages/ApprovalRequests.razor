@@ -4,8 +4,11 @@
 @using Web.Features.Approvals.DTOs
 @using Web.Features.Approvals.Enums
 @using Web.Features.Approvals.Services
+@using Web.Features.Contracts.Services
+@using Web.Common.Utils
 @inject AuthenticationStateProvider Auth
 @inject IManagerApprovalService Approvals
+@inject ContractApprovalSummaryService ContractSummaries
 @inject IStringLocalizer<Shared> L
 
 <PageTitle>@Title</PageTitle>
@@ -29,7 +32,14 @@ else if (_items is not null)
     {
         <section @key="item.Id" class="card p-3 mb-3">
             <h2>@item.OperationCode · @L[item.OperationCode]</h2>
-            <p>@L[$"ApprovalUiTarget{item.TargetType}"] @item.TargetKey</p>
+            @if (_contractSummaries.TryGetValue(item.Id, out var contractSummary))
+            {
+                <p>@contractSummary.ContractNumber · @contractSummary.RoomCode · @contractSummary.PropertyName</p>
+                <p>@ActionLabel(contractSummary.Action)</p>
+                @if (contractSummary.NewEndDate is not null) { <p>@L["ApprovalUiNewEndDate"]: @DateFormatter.Format(DateOnly.FromDateTime(contractSummary.NewEndDate.Value))</p> }
+                @if (contractSummary.ProposedDeposit is not null) { <p>@L["ApprovalUiDepositChange"]: @(contractSummary.CurrentDeposit is null ? "—" : MoneyFormatter.Format(contractSummary.CurrentDeposit.Value)) → @MoneyFormatter.Format(contractSummary.ProposedDeposit.Value)</p> }
+            }
+            else { <p>@L[$"ApprovalUiTarget{item.TargetType}"]</p> }
             <StatusBadge Text="@L[$"ApprovalUiStatus{item.Status}"]"
                          Tone="@(item.Status == ApprovalRequestStatus.Pending ? BadgeTone.Warning : BadgeTone.Neutral)" />
             @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
@@ -68,6 +78,7 @@ else if (_items is not null)
     private string _reason = "";
     private bool _error;
     private bool _busy;
+    private IReadOnlyDictionary<Guid, ContractApprovalSummary> _contractSummaries = new Dictionary<Guid, ContractApprovalSummary>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,7 +93,11 @@ else if (_items is not null)
         var result = Mine ? await Approvals.ListMineAsync(_caller) : await Approvals.ListInboxAsync(_caller);
         _error = !result.Succeeded;
         _items = result.Succeeded ? result.Items : null;
+        _contractSummaries = _items is not null
+            ? await ContractSummaries.GetAsync(_items, _caller.UserId, _caller.Role)
+            : new Dictionary<Guid, ContractApprovalSummary>();
     }
+    private string ActionLabel(string action) => L[action switch { "Renew" => "ApprovalUiActionRenew", "Liquidate" => "ApprovalUiActionLiquidate", "UpdateDeposit" => "ApprovalUiActionDeposit", _ => "ApprovalUiActionUnknown" }];
 
     private void StartReject(Guid id)
     {

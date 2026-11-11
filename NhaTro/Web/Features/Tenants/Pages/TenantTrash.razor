@@ -45,6 +45,12 @@
             <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
         </div>
     }
+    else if (_items.Count == 0 && !string.IsNullOrWhiteSpace(_keyword))
+    {
+        <EmptyStateCard Title="@L["TableNoResults"]" Description="@L["TableNoResultsDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="ClearSearchAsync">@L["TableClearFilters"]</button>
+        </EmptyStateCard>
+    }
     else if (_items.Count == 0)
     {
         <EmptyStateCard Title="@L["TenantTrashEmptyTitle"]" Description="@L["TenantTrashEmptyDescription"]" />
@@ -167,6 +173,13 @@
 
     private Task SearchAsync()
     {
+        _page = 1;
+        return LoadAsync();
+    }
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = null;
         _page = 1;
         return LoadAsync();
     }
