@@ -233,6 +233,8 @@ builder.Services.AddScoped<IIncidentFileScope, IncidentFileScope>();
 builder.Services.AddScoped<IApprovalApplier, IncidentCreateApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, IncidentStatusApprovalApplier>();
 builder.Services.AddScoped<IApprovalApplier, ContractApprovalApplier>();
+builder.Services.AddScoped<IApprovalApplier, ContractDepositApprovalApplier>();
+builder.Services.AddScoped<ContractApprovalSummaryService>();
 // VHT-99: duyệt SW-06 = đưa hồ sơ khách thuê vào thùng rác.
 builder.Services.AddScoped<IApprovalApplier, TenantDeleteApprovalApplier>();
 // SW-10/SW-11: chờ Chủ trọ duyệt trước khi vào sổ / phát hành hóa đơn.
