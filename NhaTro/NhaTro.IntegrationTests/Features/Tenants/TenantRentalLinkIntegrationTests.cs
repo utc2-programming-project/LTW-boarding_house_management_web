@@ -11,6 +11,7 @@ using Web.Features.Rooms.Enums;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.DTOs;
+using Web.Infrastructure.Time;
 
 namespace NhaTro.IntegrationTests.Features.Tenants;
 
@@ -23,7 +24,9 @@ public sealed class TenantRentalLinkIntegrationTests(SqlServerFixture fixture)
     : IClassFixture<SqlServerFixture>
 {
     private static readonly TenantCaller Owner = new("rental-owner", Roles.ChuTro);
-    private static readonly DateTime Today = DateTime.UtcNow.Date;
+    // TenantService xác định "hôm nay" theo giờ Việt Nam; test phải dùng cùng múi giờ,
+    // nếu dùng DateTime.UtcNow.Date sẽ lệch ngày trong khoảng 17:00–24:00 UTC.
+    private static readonly DateTime Today = VietnamTime.ToVietnam(DateTime.UtcNow).Date;
 
     private TenantService NewTenantService(TimeProvider? clock = null) =>
         new(fixture, clock ?? TimeProvider.System, new AllowAllTogglePolicy());
