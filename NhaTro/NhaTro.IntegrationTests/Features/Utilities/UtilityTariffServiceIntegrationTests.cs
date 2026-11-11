@@ -173,7 +173,7 @@ public sealed class UtilityTariffServiceIntegrationTests(SqlServerFixture fixtur
         await using var db = fixture.CreateContext();
         var service = new UtilityTariffService(db);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CalculateForPeriodAsync(
+        await Assert.ThrowsAsync<UtilityTariffNotConfiguredException>(() => service.CalculateForPeriodAsync(
             TariffType.Water,
             "NO-SUCH-SCOPE",
             new DateOnly(2026, 1, 1),

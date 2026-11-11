@@ -1929,11 +1929,13 @@ public static class PermissionMatrixProbeExecutor
                     {
                         try
                         {
+                            var current = (await utilities.ViewAsync(world.OwnerA, roomId: roomId))
+                                .Single(item => item.Id == reading.Id);
                             var updated = await utilities.AdjustAsync(
                                 reading.Id,
                                 new AdjustUtilityReadingRequest(
-                                    reading.ElectricEnd + 10m,
-                                    reading.WaterEnd + 5m,
+                                    current.ElectricEnd + 10m,
+                                    current.WaterEnd + 5m,
                                     "Điều chỉnh sai số kỳ trước"),
                                 caller);
                             return ProbeOutcome.Allowed(
@@ -1954,14 +1956,16 @@ public static class PermissionMatrixProbeExecutor
 
         try
         {
+            var current = (await utilities.ViewAsync(world.OwnerA, roomId: roomId))
+                .Single(item => item.Id == reading.Id);
             var updated = await utilities.AdjustAsync(
                 reading.Id,
                 new AdjustUtilityReadingRequest(
-                    reading.ElectricEnd + 10m,
-                    reading.WaterEnd + 5m,
+                    current.ElectricEnd + 10m,
+                    current.WaterEnd + 5m,
                     "Điều chỉnh sai số kỳ trước"),
                 caller);
-            return updated.ElectricEnd == reading.ElectricEnd + 10m
+            return updated.ElectricEnd == current.ElectricEnd + 10m
                 ? ProbeOutcome.Allowed("Cập nhật chỉ số kỳ liền trước và ghi lịch sử.")
                 : ProbeOutcome.Denied("Không cập nhật được chỉ số.");
         }

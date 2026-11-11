@@ -114,6 +114,7 @@ namespace Web.Data
 
             builder.Entity<UtilityReadingAudit>(entity =>
             {
+                entity.ToTable("UtilityReadingAudits", table => table.HasTrigger("TR_UtilityReadingAudits_Immutable"));
                 entity.Property(item => item.Reason).HasMaxLength(500);
                 entity.Property(item => item.ChangedByUserId).HasMaxLength(450);
                 entity.Property(item => item.OldElectricEnd).HasPrecision(18, 2);

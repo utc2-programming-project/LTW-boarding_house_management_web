@@ -233,10 +233,13 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
     {
         var db = world.NewDb();
         var callerProvider = new P2CallerProvider(new FixedAuthenticationStateProvider(caller));
+        var tariffs = new UtilityTariffService(db);
+        var snapshots = new UtilityPeriodCostSnapshotService(tariffs);
         return new MonthlyUtilityCalculationPageService(
             db,
-            new UtilityReadingService(db, TimeProvider.System),
-            new UtilityTariffService(db),
+            new UtilityReadingService(db, TimeProvider.System, snapshots),
+            snapshots,
+            tariffs,
             callerProvider,
             world.NewInvoices(),
             new FixedLocalizer(),
