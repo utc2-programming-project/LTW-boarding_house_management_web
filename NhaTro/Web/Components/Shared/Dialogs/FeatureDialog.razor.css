@@ -14,6 +14,7 @@
 }
 .feature-dialog.property-form-dialog { width: min(640px, calc(100vw - 32px)); }
 .feature-dialog.room-form-dialog { width: min(800px, calc(100vw - 32px)); }
+.feature-dialog.reject-dialog { width: min(480px, calc(100vw - 32px)); }
 .feature-dialog.setup-confirm-dialog { width: min(460px, calc(100vw - 32px)); }
 .feature-dialog.setup-exit-dialog { width: min(560px, calc(100vw - 32px)); }
 

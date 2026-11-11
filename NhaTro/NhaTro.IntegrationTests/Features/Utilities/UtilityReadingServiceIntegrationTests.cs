@@ -14,6 +14,10 @@ using Web.Features.Utilities.Entities;
 using Web.Features.Utilities.Enums;
 using Web.Features.Utilities.Services;
 
+using UtilityPeriodException = Web.Features.Utilities.UtilityReadingException;
+using UtilityPeriodNotFoundException = Web.Features.Utilities.UtilityReadingNotFoundException;
+using UtilityPeriodAuthorizationException = Web.Features.Utilities.UtilityReadingAuthorizationException;
+
 namespace NhaTro.IntegrationTests.Features.Utilities;
 
 /// <summary>
@@ -49,12 +53,12 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
             data.ContractId, OctoberStart, OctoberEnd, owner);
         Assert.Equal(october.Id, reopened.Id);
 
-        var duplicate = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var duplicate = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.OpenPeriodAsync(data.ContractId, OctoberStart, new DateOnly(Year, 10, 30), owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.DuplicatePeriod), duplicate.Code);
 
         // Không chen kỳ chồng lấn (tính cả hai đầu) vào chuỗi chỉ số.
-        var overlapping = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var overlapping = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.OpenPeriodAsync(
                 data.ContractId,
                 new DateOnly(Year, 10, 15),
@@ -70,7 +74,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         Assert.Equal(16m, november.WaterStart);
 
         // Kỳ trước đã có kỳ sau: không mở chen ngược thời gian.
-        var earlier = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var earlier = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.OpenPeriodAsync(
                 data.ContractId,
                 new DateOnly(Year, 9, 1),
@@ -117,14 +121,14 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         Assert.Equal(2, snapshots.Count);
 
         var electric = snapshots.Single(snapshot => snapshot.Type == TariffType.Electric);
-        Assert.Equal(UtilityReadingService.ElectricScopeCode, electric.ScopeCode);
+        Assert.Equal(UtilityReadingPeriodService.ElectricScopeCode, electric.ScopeCode);
         Assert.Equal(160m, electric.Quantity);
         Assert.Equal(344_500m, electric.Total);
         // Snapshot giữ đủ các bậc của biểu giá để đối chiếu, kể cả bậc chưa dùng.
         Assert.Equal(6, electric.CostLines.Count);
 
         var water = snapshots.Single(snapshot => snapshot.Type == TariffType.Water);
-        Assert.Equal(UtilityReadingService.WaterScopeCode, water.ScopeCode);
+        Assert.Equal(UtilityReadingPeriodService.WaterScopeCode, water.ScopeCode);
         Assert.Equal(16m, water.Quantity);
         Assert.Equal(196_600m, water.Total);
         Assert.Equal(1, water.ResidentCount);
@@ -207,7 +211,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
                 .SetProperty(item => item.HasServiceSnapshots, false));
         db.ChangeTracker.Clear();
 
-        var exception = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var exception = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.BuildInvoiceRequestAsync(period.Id, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.ServiceSnapshotsMissing), exception.Code);
     }
@@ -229,7 +233,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
             {
                 return await service.OpenPeriodAsync(data.ContractId, startDate, endDate, owner);
             }
-            catch (UtilityReadingException exception)
+            catch (UtilityPeriodException exception)
             {
                 return exception;
             }
@@ -244,8 +248,8 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
 
         Assert.IsType<UtilityReadingPeriodDto>(
             Assert.Single(results, result => result is UtilityReadingPeriodDto));
-        var rejected = Assert.IsType<UtilityReadingException>(
-            Assert.Single(results, result => result is UtilityReadingException));
+        var rejected = Assert.IsType<UtilityPeriodException>(
+            Assert.Single(results, result => result is UtilityPeriodException));
         // Luồng nào lấy khóa hợp đồng trước quyết định mã lỗi: luồng sau thấy kỳ chồng lấn,
         // hoặc luồng trước thấy đã có kỳ bắt đầu muộn hơn.
         Assert.Contains(rejected.Code, new[]
@@ -265,13 +269,13 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext();
         var service = NewService(db); var owner = Owner(data);
         var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
-        var noReadings = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
+        var noReadings = await Assert.ThrowsAsync<UtilityPeriodException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodHasNoReadings), noReadings.Code);
         await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
         var invoice = new Invoice { ContractId = data.ContractId, PeriodStart = OctoberStart, PeriodEnd = OctoberEnd, Status = InvoiceStatus.Issued, TotalAmount = 1m, CreatedAt = DateTime.UtcNow };
         db.Invoices.Add(invoice); await db.SaveChangesAsync();
         await db.UtilityReadingPeriods.Where(x => x.Id == period.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.InvoiceId, invoice.Id)); db.ChangeTracker.Clear();
-        var locked = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
+        var locked = await Assert.ThrowsAsync<UtilityPeriodException>(() => service.BackfillServiceSnapshotsAsync(period.Id, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodLocked), locked.Code);
     }
 
@@ -298,7 +302,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
             {
                 return await service.SaveReadingsAsync(periodId, electricEnd, 16m, owner, timeout.Token);
             }
-            catch (UtilityReadingException exception)
+            catch (UtilityPeriodException exception)
             {
                 return exception;
             }
@@ -311,8 +315,8 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
 
         Assert.IsType<UtilityReadingPeriodDto>(
             Assert.Single(results, result => result is UtilityReadingPeriodDto));
-        var rejected = Assert.IsType<UtilityReadingException>(
-            Assert.Single(results, result => result is UtilityReadingException));
+        var rejected = Assert.IsType<UtilityPeriodException>(
+            Assert.Single(results, result => result is UtilityPeriodException));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodAlreadyHasReadings), rejected.Code);
     }
 
@@ -339,8 +343,8 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner); await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
         var invoice = new Invoice { ContractId = data.ContractId, PeriodStart = new DateOnly(Year, 9, 1), PeriodEnd = new DateOnly(Year, 9, 30), Status = InvoiceStatus.Issued, TotalAmount = 1m, CreatedAt = DateTime.UtcNow };
         db.Invoices.Add(invoice); await db.SaveChangesAsync(); await db.UtilityReadingPeriods.Where(x => x.Id == period.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.InvoiceId, invoice.Id)); db.ChangeTracker.Clear();
-        var dto = await Assert.ThrowsAsync<UtilityReadingException>(() => service.GetPeriodAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), dto.Code);
-        var source = await Assert.ThrowsAsync<UtilityReadingException>(() => service.BuildInvoiceRequestAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), source.Code);
+        var dto = await Assert.ThrowsAsync<UtilityPeriodException>(() => service.GetPeriodAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), dto.Code);
+        var source = await Assert.ThrowsAsync<UtilityPeriodException>(() => service.BuildInvoiceRequestAsync(period.Id, owner)); Assert.Equal(nameof(UtilityReadingErrorCode.InvoicePeriodMismatch), source.Code);
     }
 
     [SqlServerFact]
@@ -358,7 +362,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
     {
         var data = await SeedApprovedContractAsync(); await using var db = fixture.CreateContext(); var service = NewService(db); var owner = Owner(data);
         var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
-        await Assert.ThrowsAsync<UtilityReadingException>(() => service.SaveReadingsAsync(period.Id, -1m, 16m, owner));
+        await Assert.ThrowsAsync<UtilityPeriodException>(() => service.SaveReadingsAsync(period.Id, -1m, 16m, owner));
         var saved = await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
         Assert.True(saved.HasReadings); Assert.Equal(160m, saved.ElectricEnd);
     }
@@ -387,7 +391,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         await service.SaveReadingsAsync(period.Id, 160m, 16m, owner);
 
         // VHT-51 chỉ ghi lần đầu; sửa chỉ số (kèm lý do + lịch sử) thuộc VHT-102.
-        var second = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var second = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.SaveReadingsAsync(period.Id, 175m, 17m, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodAlreadyHasReadings), second.Code);
 
@@ -415,7 +419,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         var october = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
 
         // Kỳ trước chưa ghi chỉ số: mở kỳ sau sẽ lấy sai mốc đầu kỳ nên bị chặn.
-        var blocked = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var blocked = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.OpenPeriodAsync(data.ContractId, NovemberStart, NovemberEnd, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PreviousPeriodHasNoReadings), blocked.Code);
 
@@ -464,7 +468,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         await db.SaveChangesAsync();
 
         // Kỳ 10 chưa đọc thì kỳ 11 không được ghi, tránh dây chuyền chỉ số sai.
-        var blocked = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var blocked = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.SaveReadingsAsync(november.Id, 200m, 20m, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PreviousPeriodHasNoReadings), blocked.Code);
 
@@ -515,7 +519,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         var owner = Owner(data);
         var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
 
-        var exception = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var exception = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.BuildInvoiceRequestAsync(period.Id, owner));
 
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodHasNoReadings), exception.Code);
@@ -663,7 +667,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         Assert.Equal(3_541_100m, InvoiceCalculationRules.CalculateTotal(request.Items));
 
         // D10: kỳ đã phát hành hóa đơn thì khóa vĩnh viễn.
-        var lockedException = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var lockedException = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.SaveReadingsAsync(period.Id, 200m, 20m, owner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodLocked), lockedException.Code);
     }
@@ -695,7 +699,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         stored.InvoiceId = invoice.Id;
         await db.SaveChangesAsync();
 
-        var exception = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+        var exception = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
             service.SaveReadingsAsync(period.Id, 200m, 20m, owner));
 
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodLocked), exception.Code);
@@ -725,7 +729,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         var data = await SeedApprovedContractAsync();
         await using var db = fixture.CreateContext();
         var owner = Owner(data);
-        var failing = new UtilityReadingService(
+        var failing = new UtilityReadingPeriodService(
             db,
             new WaterFailingTariffService(new UtilityTariffService(db)),
             TimeProvider.System);
@@ -762,21 +766,21 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
 
         var period = await service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, owner);
 
-        var otherContract = await Assert.ThrowsAsync<UtilityReadingNotFoundException>(() =>
+        var otherContract = await Assert.ThrowsAsync<UtilityPeriodNotFoundException>(() =>
             service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, otherOwner));
         Assert.Equal(nameof(UtilityReadingErrorCode.ContractNotFound), otherContract.Code);
 
-        var forbidden = await Assert.ThrowsAsync<UtilityReadingAuthorizationException>(() =>
+        var forbidden = await Assert.ThrowsAsync<UtilityPeriodAuthorizationException>(() =>
             service.OpenPeriodAsync(data.ContractId, OctoberStart, OctoberEnd, tenant));
         Assert.Equal(nameof(UtilityReadingErrorCode.Forbidden), forbidden.Code);
 
         Assert.Null(await service.GetPeriodAsync(period.Id, otherOwner));
 
-        var hidden = await Assert.ThrowsAsync<UtilityReadingNotFoundException>(() =>
+        var hidden = await Assert.ThrowsAsync<UtilityPeriodNotFoundException>(() =>
             service.SaveReadingsAsync(period.Id, 10m, 1m, otherOwner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodNotFound), hidden.Code);
 
-        var hiddenSource = await Assert.ThrowsAsync<UtilityReadingNotFoundException>(() =>
+        var hiddenSource = await Assert.ThrowsAsync<UtilityPeriodNotFoundException>(() =>
             service.BuildInvoiceRequestAsync(period.Id, otherOwner));
         Assert.Equal(nameof(UtilityReadingErrorCode.PeriodNotFound), hiddenSource.Code);
 
@@ -803,7 +807,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
         await using (var db = fixture.CreateContext())
         {
             var service = NewService(db);
-            var outside = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+            var outside = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
                 service.OpenPeriodAsync(
                     data.ContractId,
                     new DateOnly(Year - 1, 12, 1),
@@ -811,7 +815,7 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
                     Owner(data)));
             Assert.Equal(nameof(UtilityReadingErrorCode.PeriodOutsideContract), outside.Code);
 
-            var reversed = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+            var reversed = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
                 service.OpenPeriodAsync(
                     data.ContractId,
                     OctoberEnd,
@@ -826,13 +830,13 @@ public sealed class UtilityReadingServiceIntegrationTests(SqlServerFixture fixtu
             var pending = await SeedContractAsync(db, ContractStatus.Pending);
             var service = NewService(db);
 
-            var unapproved = await Assert.ThrowsAsync<UtilityReadingException>(() =>
+            var unapproved = await Assert.ThrowsAsync<UtilityPeriodException>(() =>
                 service.OpenPeriodAsync(pending.ContractId, OctoberStart, OctoberEnd, Owner(pending)));
             Assert.Equal(nameof(UtilityReadingErrorCode.ContractNotApproved), unapproved.Code);
         }
     }
 
-    private static UtilityReadingService NewService(ApplicationDbContext db) =>
+    private static UtilityReadingPeriodService NewService(ApplicationDbContext db) =>
         new(db, new UtilityTariffService(db), TimeProvider.System);
 
     private static PropertyCaller Owner(SeedData data) =>

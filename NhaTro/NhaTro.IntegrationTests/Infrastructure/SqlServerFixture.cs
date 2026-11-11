@@ -130,6 +130,9 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // Hóa đơn (VHT-35) tham chiếu Contracts bằng Restrict: xóa dòng hóa đơn rồi hóa đơn trước hợp đồng.
         await db.InvoiceItems.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
+        // Đăng ký dịch vụ (yêu cầu + hiệu lực theo tháng): xóa trước Contracts.
+        await db.ContractServiceRegistrations.ExecuteDeleteAsync();
+        await db.ServiceRegistrationRequests.ExecuteDeleteAsync();
         // P5 (D10): lịch sử sửa chỉ số xóa trước chỉ số; chỉ số tham chiếu Rooms.
         await db.UtilityReadingAudits.ExecuteDeleteAsync();
         await db.UtilityReadings.ExecuteDeleteAsync();

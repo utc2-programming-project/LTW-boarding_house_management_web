@@ -376,5 +376,10 @@ public sealed class P6MoneyTransactionIntegrationTests(SqlServerFixture fixture)
             PropertyCaller caller,
             CancellationToken cancellationToken = default) =>
             inner.GetContractOptionsAsync(caller, cancellationToken);
+
+    public Task<IReadOnlyList<string>> GetContractTenantUserIdsAsync(
+        Guid contractId,
+        CancellationToken cancellationToken = default) =>
+        inner.GetContractTenantUserIdsAsync(contractId, cancellationToken);
     }
 }

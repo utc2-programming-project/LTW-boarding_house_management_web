@@ -71,6 +71,12 @@
   <data name="Notifications" xml:space="preserve">
     <value>Thông báo</value>
   </data>
+  <data name="NotificationMarkAllRead" xml:space="preserve">
+    <value>Đánh dấu đã đọc tất cả</value>
+  </data>
+  <data name="NotificationEmpty" xml:space="preserve">
+    <value>Chưa có thông báo nào.</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Đăng nhập</value>
   </data>
@@ -1288,6 +1294,7 @@
   <data name="MeterReadingNavHome" xml:space="preserve"><value>Trang chủ</value></data>
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Dịch vụ &amp; Tiện ích</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Ghi chỉ số điện nước</value></data>
+  <data name="P5CostNav" xml:space="preserve"><value>Chỉ số &amp; chi phí</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu. Vui lòng thử lại.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Không thể lưu chỉ số.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Đã chốt kỳ thành công cho phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>

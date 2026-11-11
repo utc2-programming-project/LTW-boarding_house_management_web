@@ -266,7 +266,7 @@ public sealed class InvoiceIssuanceServiceIntegrationTests(SqlServerFixture fixt
 
     private static InvoiceIssuanceService NewService(ApplicationDbContext db)
     {
-        var readings = new UtilityReadingService(db, new UtilityTariffService(db));
+        var readings = new UtilityReadingPeriodService(db, new UtilityTariffService(db));
         return new InvoiceIssuanceService(db, new InvoiceService(db, new InvoiceQueryService(db)), readings);
     }
 
@@ -349,7 +349,7 @@ public sealed class InvoiceIssuanceServiceIntegrationTests(SqlServerFixture fixt
             },
             owner);
 
-        var readings = new UtilityReadingService(db, new UtilityTariffService(db));
+        var readings = new UtilityReadingPeriodService(db, new UtilityTariffService(db));
         var period = await readings.OpenPeriodAsync(
             contract.ContractId,
             PeriodStart,

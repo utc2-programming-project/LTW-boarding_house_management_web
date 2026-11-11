@@ -76,10 +76,12 @@ public sealed class InvoiceService : IInvoiceService
             EnsureToggleAllowed(decision);
         }
 
-        var existing = await FindByPeriodAsync(
-            request.ContractId,
-            request.PeriodStart,
-            cancellationToken);
+        var existing = request.RegistrationId is null
+            ? await FindByPeriodAsync(
+                request.ContractId,
+                request.PeriodStart,
+                cancellationToken)
+            : null;
         if (existing is not null)
         {
             if (Matches(existing, request.PeriodEnd, items, total))
@@ -106,6 +108,8 @@ public sealed class InvoiceService : IInvoiceService
             ContractId = request.ContractId,
             PeriodStart = request.PeriodStart,
             PeriodEnd = request.PeriodEnd,
+            DueDate = request.DueDate,
+            RegistrationId = request.RegistrationId,
             Status = InvoiceStatus.Draft,
             TotalAmount = total,
             CreatedAt = now,
@@ -536,7 +540,9 @@ public sealed class InvoiceService : IInvoiceService
             .AsNoTracking()
             .Include(invoice => invoice.Items)
             .SingleOrDefaultAsync(
-                invoice => invoice.ContractId == contractId && invoice.PeriodStart == periodStart,
+                // Chỉ hóa đơn theo tháng/P5 (không phải dịch vụ theo yêu cầu) mới độc nhất mỗi kỳ.
+                invoice => invoice.ContractId == contractId && invoice.PeriodStart == periodStart
+                    && invoice.RegistrationId == null,
                 cancellationToken);
 
     private static bool Matches(

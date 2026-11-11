@@ -374,6 +374,9 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
+// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
+builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
+    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
@@ -428,17 +431,24 @@ builder.Services.AddScoped<Web.Features.Tenants.Invitations.TenantInvitationServ
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilitySampleStateService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.MeterReadingPageService>();
+// VHT-58: màn hình chỉ số/chi phí P5 đọc SQL thật (kỳ, snapshot biểu giá, hóa đơn P6).
+builder.Services.AddScoped<Web.Features.Utilities.Services.MonthlyUtilityCalculationPageService>();
+// Khách thuê đăng ký dịch vụ hằng tháng theo hợp đồng.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ContractServiceRegistrationService>();
+// Quy trình đăng ký dịch vụ có xét duyệt + tạo hóa đơn từ yêu cầu.
+builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceRegistrationService>();
+builder.Services.AddScoped<Web.Features.Notifications.INotificationService, Web.Features.Notifications.NotificationService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 // VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingService,
-    Web.Features.Utilities.Services.UtilityReadingService>();
+    Web.Features.Utilities.Services.UtilityReadingPeriodService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
 // D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
-// P5 (legacy, tiền VHT-51): chỉ số điện/nước trên UtilityReadings + lịch sử sửa (D10, SW-09).
-builder.Services.AddScoped<Web.Features.Utilities.Services.LegacyUtilityReadingService>();
+// P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
+builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
 // P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
@@ -451,9 +461,6 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceQueryService,
 // VHT-53: lập/phát hành hóa đơn từ nguồn chi phí đã chốt, chống trùng kỳ.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceService,
     Web.Features.Invoices.Services.InvoiceService>();
-// VHT-137 (3B): ghép dòng hóa đơn từ tiền thuê + chi phí VHT-51 + đơn giá dịch vụ thật.
-builder.Services.AddScoped<Web.Features.Invoices.Services.IInvoiceIssuanceService,
-    Web.Features.Invoices.Services.InvoiceIssuanceService>();
 // VHT-54: gửi/xác nhận/từ chối thanh toán, ghi tiền và audit trong một transaction.
 builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentService,
     Web.Features.Invoices.Services.PaymentService>();

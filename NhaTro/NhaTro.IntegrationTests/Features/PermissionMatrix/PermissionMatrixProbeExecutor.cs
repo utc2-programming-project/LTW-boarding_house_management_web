@@ -80,7 +80,7 @@ public static class PermissionMatrixProbeExecutor
         <= 16 => "Web.Features.Rooms.RoomService",
         <= 21 => "Web.Features.Tenants.TenantService",
         <= 27 => "Web.Features.Contracts.Services.ContractService",
-        <= 32 => "Web.Features.Utilities.Services.LegacyUtilityReadingService",
+        <= 32 => "Web.Features.Utilities.Services.UtilityReadingService",
         33 => "Web.Features.Utilities.Services.ServiceCatalogService",
         <= 34 => "Web.Features.Invoices.InvoiceQueryService",
         <= 36 => "Web.Features.Invoices.InvoiceService",

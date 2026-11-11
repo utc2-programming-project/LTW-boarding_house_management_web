@@ -62,6 +62,13 @@ public sealed class AppNavigationTests
         var readings = NavigationResolver.Resolve("/meter-readings");
         Assert.Equal(new[] { "Services", "MeterReadingNavReadings" }, readings!.Chain.Select(item => item.Key));
         Assert.Equal("Services", readings.SidebarItem?.Key);
+
+        var costs = NavigationResolver.Resolve("/services/readings/costs");
+        Assert.Equal(
+            new[] { "Services", "MeterReadingNavReadings", "P5CostNav" },
+            costs!.Chain.Select(item => item.Key));
+        Assert.Equal("P5CostNav", costs.Leaf.Key);
+        Assert.Equal("Services", costs.SidebarItem?.Key);
     }
 
     [Fact]

@@ -22,4 +22,9 @@ public interface IInvoiceQueryService
     Task<IReadOnlyList<InvoiceContractOptionDto>> GetContractOptionsAsync(
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
+
+    /// <summary>User Id các khách thuê trong hợp đồng (dùng để gửi thông báo hóa đơn).</summary>
+    Task<IReadOnlyList<string>> GetContractTenantUserIdsAsync(
+        Guid contractId,
+        CancellationToken cancellationToken = default);
 }
