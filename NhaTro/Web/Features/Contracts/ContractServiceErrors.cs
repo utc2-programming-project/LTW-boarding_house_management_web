@@ -24,9 +24,11 @@ public static class ContractErrorCodes
     public const string InvalidRenewalEndDate = nameof(InvalidRenewalEndDate);
     public const string ContractAlreadyRenewed = nameof(ContractAlreadyRenewed);
     public const string ApprovalDenied = nameof(ApprovalDenied);
+    public const string DepositApprovalDenied = nameof(DepositApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
     public const string DuplicatePendingRequest = nameof(DuplicatePendingRequest);
     public const string InvalidDepositAmount = nameof(InvalidDepositAmount);
+    public const string DepositUnchanged = nameof(DepositUnchanged);
 }
 
 public static class ContractErrorMessages
@@ -54,6 +56,11 @@ public static class ContractErrorMessages
     public const string InvalidRenewalEndDate = "Ngày kết thúc mới phải sau ngày kết thúc hiện tại.";
     public const string ContractAlreadyRenewed = "Hợp đồng đã được gia hạn.";
     public const string ApprovalDenied = "Công tắc SW-07 đang chặn thao tác gia hạn / thanh lý hợp đồng.";
+    public const string DepositApprovalDenied = "Công tắc SW-08 đang chặn thao tác cập nhật tiền cọc.";
+    public const string InvalidDepositAmount = "Tiền cọc phải là số không âm và nằm trong miền giá trị hợp lệ.";
+    public const string DepositChangedAfterRequest = "Tiền cọc đã thay đổi sau khi gửi yêu cầu. Vui lòng hủy và gửi lại.";
+    public const string RenewalRejectedByLiquidation = "Hợp đồng đã được thanh lý.";
+    public const string DepositUnchanged = "Tiền cọc mới phải khác tiền cọc hiện tại.";
     public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";
     public const string DuplicatePendingRequest = "Đã có yêu cầu chờ duyệt cho hợp đồng này.";
 }

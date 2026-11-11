@@ -242,4 +242,24 @@
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>View contract information, parties, terms and payment status.</value></data>
+  <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ContractDepositUpdateDescription" xml:space="preserve"><value>Enter a new deposit amount for the active contract.</value></data>
+  <data name="ContractDepositUpdateAmountLabel" xml:space="preserve"><value>New deposit</value></data>
+  <data name="ContractDepositUpdateCurrentLabel" xml:space="preserve"><value>Current deposit</value></data>
+  <data name="ContractDepositUpdateSuccess" xml:space="preserve"><value>Deposit updated.</value></data>
+  <data name="ContractDepositUpdatePendingApproval" xml:space="preserve"><value>The deposit update was sent to the owner for approval.</value></data>
+  <data name="ContractDepositUpdateUnchanged" xml:space="preserve"><value>The new deposit must differ from the current deposit.</value></data>
+  <data name="ContractPendingApprovalBanner" xml:space="preserve"><value>{0} is awaiting owner approval.</value></data>
+  <data name="ContractPendingRenewal" xml:space="preserve"><value>Renewal</value></data>
+  <data name="ContractPendingLiquidation" xml:space="preserve"><value>Liquidation</value></data>
+  <data name="ContractPendingDepositUpdate" xml:space="preserve"><value>Deposit update</value></data>
+  <data name="ContractErrorInvalidDepositAmount" xml:space="preserve"><value>The deposit must be non-negative and within the allowed limit.</value></data>
+  <data name="ContractErrorDepositUnchanged" xml:space="preserve"><value>The new deposit must differ from the current deposit.</value></data>
+  <data name="ContractErrorDepositApprovalDenied" xml:space="preserve"><value>The deposit update switch is blocking this action.</value></data>
+  <data name="ContractHistoryTitle" xml:space="preserve"><value>Contract history</value></data>
+  <data name="ContractSuccessorLabel" xml:space="preserve"><value>Successor contract</value></data>
+  <data name="ContractPreviousLabel" xml:space="preserve"><value>Previous contract</value></data>
+  <data name="ContractHistoryEmpty" xml:space="preserve"><value>No data available</value></data>
+  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Suggested 20% of rent</value></data>
 </root>

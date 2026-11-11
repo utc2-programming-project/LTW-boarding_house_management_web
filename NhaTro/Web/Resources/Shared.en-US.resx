@@ -1940,4 +1940,10 @@
   <data name="P2SetupRoomsBulkDone" xml:space="preserve"><value>{0} rooms deleted.</value></data>
   <data name="P2SetupRoomsBulkPartial" xml:space="preserve"><value>{0} rooms deleted, {1} could not be deleted:</value></data>
   <data name="P2SetupRoomsDeleteError" xml:space="preserve"><value>Room {0}: {1}</value></data>
+  <data name="ApprovalUiNewEndDate" xml:space="preserve"><value>New end date</value></data>
+  <data name="ApprovalUiDepositChange" xml:space="preserve"><value>Deposit change</value></data>
+  <data name="ApprovalUiActionRenew" xml:space="preserve"><value>Renew contract</value></data>
+  <data name="ApprovalUiActionLiquidate" xml:space="preserve"><value>Liquidate contract</value></data>
+  <data name="ApprovalUiActionDeposit" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ApprovalUiActionUnknown" xml:space="preserve"><value>Contract operation</value></data>
 </root>
