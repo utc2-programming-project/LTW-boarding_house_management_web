@@ -13,7 +13,7 @@ public class TenantOwnerLinkConfiguration : IEntityTypeConfiguration<TenantOwner
 
         builder.Property(link => link.OwnerId).HasMaxLength(450).IsRequired();
 
-        builder.HasOne<Tenant>()
+        builder.HasOne(link => link.Tenant)
             .WithMany()
             .HasForeignKey(link => link.TenantId)
             .OnDelete(DeleteBehavior.Restrict);

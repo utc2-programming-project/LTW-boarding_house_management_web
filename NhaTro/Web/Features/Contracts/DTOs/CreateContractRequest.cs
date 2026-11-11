@@ -5,4 +5,5 @@ public sealed record CreateContractRequest(
     int RoomId,
     DateTime StartDate,
     DateTime EndDate,
-    List<int> TenantIds);
+    List<int> TenantIds,
+    decimal? DepositAmount = null);

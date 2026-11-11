@@ -6,11 +6,13 @@
 @using Web.Features.Invoices
 @using Web.Features.Utilities.Entities
 @using Web.Features.Utilities.Services
+@using Web.Infrastructure.Time
 @inject ServiceRegistrationService RegistrationService
 @inject ToastService Toast
 @inject NavigationManager Navigation
 @inject IOptions<BankAccountOptions> BankOptions
 @inject IStringLocalizer<UtilityResources> UL
+@inject TimeProvider Clock
 
 <PageTitle>@UL["RegManagePageTitle"]</PageTitle>
 
@@ -296,13 +298,17 @@
     private bool _invoiceFormOpen;
     private ServiceRegistrationInvoicePreviewDto? _invoicePreview;
     private decimal _invoiceAmount;
-    private DateOnly _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
+    private DateOnly _invoiceDueDate;
     private string _invoiceContent = string.Empty;
     private string? _invoiceQr;
 
     private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override Task OnInitializedAsync()
+    {
+        _invoiceDueDate = Clock.TodayVietnam().AddDays(10);
+        return LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -426,7 +432,7 @@
         _actionError = null;
         _invoicePreview = null;
         _invoiceQr = null;
-        _invoiceDueDate = DateOnly.FromDateTime(DateTime.Today).AddDays(10);
+        _invoiceDueDate = Clock.TodayVietnam().AddDays(10);
         _invoiceContent = row.ServiceName;
         try
         {

@@ -31,7 +31,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         IQueryable<int> allowedPropertyIds;
         if (caller.IsKhachThue || string.Equals(caller.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
         {
-            var now = _timeProvider.UtcNow();
+            var vnToday = _timeProvider.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+            var vnTomorrow = vnToday.AddDays(1);
             allowedPropertyIds = (from member in _context.ContractMembers
                                   join tenant in _context.Tenants on member.TenantId equals tenant.Id
                                   join contract in _context.Contracts on member.ContractId equals contract.ContractId
@@ -39,8 +40,8 @@ public sealed class ServiceCatalogService : IServiceCatalogService
                                   where tenant.UserId == caller.UserId
                                         && tenant.IsActive
                                         && contract.Status == ContractStatus.Approved
-                                        && contract.StartDate <= now
-                                        && contract.EndDate >= now
+                                        && contract.StartDate < vnTomorrow
+                                        && contract.EndDate >= vnToday
                                   select room.PropertyId).Distinct();
         }
         else

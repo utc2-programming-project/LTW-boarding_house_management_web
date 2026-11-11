@@ -191,7 +191,7 @@ public sealed class ContractDepositIntegrationTests(SqlServerFixture fixture) : 
         var approved = await ApproveAsync(pending.ApprovalRequestId!.Value);
 
         Assert.False(approved.Succeeded);
-        Assert.Equal(ContractErrorCodes.InvalidStatus, approved.ErrorCode);
+        Assert.Equal(ContractErrorCodes.DepositChangedAfterRequest, approved.ErrorCode);
         Assert.Equal(ContractErrorMessages.DepositChangedAfterRequest, approved.ErrorMessage);
         db.ChangeTracker.Clear();
         Assert.Equal(400_000m, await DepositAsync(db, seeded.Contract.ContractId));

@@ -7,6 +7,7 @@
 @using Web.Features.Contracts.Components
 @using Web.Features.Contracts.DTOs
 @using Web.Features.Contracts.Services
+@using Web.Infrastructure.Time
 @using Web.Components.Shared.Feedback
 @inject ContractRenewalPageService Renewals
 @inject IStringLocalizer<ContractResources> L
@@ -82,7 +83,7 @@
                         <td class="numeric tabular-nums">@L["RenewalMonthsValue", item.RequestedMonths]</td>
                         <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.CurrentEndDate))</td>
                         <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.ProposedEndDate))</td>
-                        <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.RequestedAt))</td>
+                        <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(VietnamTime.ToVietnam(item.RequestedAt)))</td>
                         <td class="renewal-row-actions">
                             <button class="btn btn-primary" @onclick="() => OpenDecision(item)">@L["RenewalDecideAction"]</button>
                         </td>

@@ -950,6 +950,7 @@
   <data name="TenantDeleteMessage" xml:space="preserve"><value>The record is soft-deleted and can be restored. Account links and document files are kept. A tenant with an active contract cannot be deleted.</value></data>
   <data name="TenantDeleted" xml:space="preserve"><value>Tenant record moved to trash</value></data>
   <data name="TenantDeleteApprovalSubmitted" xml:space="preserve"><value>Delete request submitted and waiting for the owner's approval</value></data>
+  <data name="TenantStatusApprovalSubmitted" xml:space="preserve"><value>Status change request submitted and waiting for the owner's approval</value></data>
   <data name="TenantErrorInUse" xml:space="preserve"><value>This tenant has an active contract and cannot be deleted.</value></data>
   <data name="TenantTrashTitle" xml:space="preserve"><value>Tenant profile trash</value></data>
   <data name="TenantTrashSubtitle" xml:space="preserve"><value>Soft-deleted records can be restored without losing account links or document files.</value></data>
@@ -988,7 +989,7 @@
   <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Only an account with the Tenant role can be linked.</value></data>
   <data name="TenantErrorGeneric" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
   <data name="TenantErrorForbidden" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
-  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>This action needs landlord approval, so it has not been applied.</value></data>
+  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>The request was sent to the landlord for approval. The record is unchanged until it is approved.</value></data>
   <data name="TenantSummary" xml:space="preserve"><value>Tenant overview</value></data>
   <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Could not load tenant summary.</value></data>
   <data name="TenantAllRecordsHint" xml:space="preserve"><value>Records in this system</value></data>
@@ -1422,6 +1423,12 @@
   <data name="ApprovalUiStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
   <data name="ApprovalUiReason" xml:space="preserve"><value>Rejection reason</value></data>
   <data name="ApprovalUiApprove" xml:space="preserve"><value>Approve</value></data>
+  <data name="ApprovalUiConfirmApprove" xml:space="preserve"><value>Approve this request and apply the change?</value></data>
+  <data name="ApprovalUiRoomChange" xml:space="preserve"><value>Room {0}</value></data>
+  <data name="ApprovalUiTenantCreate" xml:space="preserve"><value>New tenant profile: {0}</value></data>
+  <data name="ApprovalUiTenantUpdate" xml:space="preserve"><value>Tenant profile update: {0}</value></data>
+  <data name="ApprovalUiTenantStatus" xml:space="preserve"><value>Active status change: {0}</value></data>
+  <data name="ApprovalUiTenantDelete" xml:space="preserve"><value>Move profile to trash: {0}</value></data>
   <data name="ApprovalUiReject" xml:space="preserve"><value>Reject</value></data>
   <data name="ApprovalUiTargetUnknown" xml:space="preserve"><value>Target</value></data>
   <data name="ApprovalUiTargetRoom" xml:space="preserve"><value>Room</value></data>
@@ -1430,6 +1437,8 @@
   <data name="ApprovalUiTargetUtilityPeriod" xml:space="preserve"><value>Meter reading period</value></data>
   <data name="ApprovalUiTargetIncident" xml:space="preserve"><value>Incident</value></data>
   <data name="ApprovalUiTargetInvoice" xml:space="preserve"><value>Invoice</value></data>
+  <data name="ApprovalUiTargetReport" xml:space="preserve"><value>Report</value></data>
+  <data name="P2ApprovalRequested" xml:space="preserve"><value>Request sent and awaiting owner approval.</value></data>
   <data name="SW-01" xml:space="preserve"><value>Edit room details</value></data>
   <data name="SW-02" xml:space="preserve"><value>Edit room rent</value></data>
   <data name="SW-03" xml:space="preserve"><value>Change room status</value></data>
