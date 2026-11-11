@@ -137,7 +137,7 @@
                                 <th>@L["ReviewThRequestedAt"]</th>
                                 <th class="text-right">@L["ReviewThAmount"]</th>
                                 <th>@L["ReviewThStatus"]</th>
-                                <th class="text-right">@L["ReviewThActions"]</th>
+                                <th class="text-center">@L["ReviewThActions"]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -166,14 +166,27 @@
                                     <td>
                                         <StatusBadge Text="@PaymentStatusText(item.Payment.Status)" Tone="@PaymentStatusTone(item.Payment.Status)" />
                                     </td>
-                                    <td class="text-right">
-                                        <button type="button"
-                                                class="icon-action-btn"
-                                                title="@L["ReviewViewDetail"]"
-                                                aria-label="@L["ReviewViewDetail"]"
-                                                @onclick="() => OpenDetail(item.Payment.Id)">
-                                            <LucideIcon Name="eye" />
-                                        </button>
+                                    <td class="text-center">
+                                        <div class="p2-row-actions">
+                                            <button type="button"
+                                                    class="icon-button p2-menu-trigger @(IsMenuOpen(item.Payment.Id) ? "is-open" : null)"
+                                                    title="@L["ReviewThActions"]"
+                                                    aria-label="@($"{L["ReviewThActions"]}: YC-{item.Payment.Id}")"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="@(IsMenuOpen(item.Payment.Id) ? "true" : "false")"
+                                                    aria-controls="@($"review-row-menu-{item.Payment.Id}")"
+                                                    @onclick="() => ToggleRowMenu(item.Payment.Id)">
+                                                <LucideIcon Name="ellipsis" />
+                                            </button>
+                                            @if (IsMenuOpen(item.Payment.Id))
+                                            {
+                                                <div id="@($"review-row-menu-{item.Payment.Id}")" class="p2-row-menu" role="menu" aria-label="@L["ReviewThActions"]" data-row-menu>
+                                                    <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDetail(item.Payment.Id)">
+                                                        <LucideIcon Name="eye" /><span>@L["ReviewViewDetail"]</span>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -234,6 +247,8 @@
         (string.IsNullOrWhiteSpace(_minAmount) ? 0 : 1)
         + (string.IsNullOrWhiteSpace(_maxAmount) ? 0 : 1);
 
+    private int? _openMenuId;
+
     private static IReadOnlyList<int> AvailableYears
     {
         get
@@ -251,6 +266,7 @@
     {
         _loading = true;
         _error = null;
+        _openMenuId = null;
 
         try
         {
@@ -327,6 +343,16 @@
     }
 
     private void OpenDetail(int paymentId) => Navigation.NavigateTo($"/payment-requests/{paymentId}");
+
+    private bool IsMenuOpen(int paymentId) => _openMenuId == paymentId;
+
+    private void ToggleRowMenu(int paymentId) => _openMenuId = _openMenuId == paymentId ? null : paymentId;
+
+    private void MenuDetail(int paymentId)
+    {
+        _openMenuId = null;
+        OpenDetail(paymentId);
+    }
 
     private string PaymentStatusText(PaymentStatus status) => status switch
     {

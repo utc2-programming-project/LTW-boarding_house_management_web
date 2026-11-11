@@ -9,6 +9,95 @@
   <data name="CatalogBreadcrumb" xml:space="preserve"><value>Services &amp; Tariffs</value></data>
   <data name="CatalogOverviewNav" xml:space="preserve"><value>Overview</value></data>
   <data name="CatalogHeading" xml:space="preserve"><value>Service Catalog &amp; Tariffs</value></data>
+  <data name="ServiceRegisterBtn" xml:space="preserve"><value>Register</value></data>
+  <data name="ServiceAlreadyRegisteredBtn" xml:space="preserve"><value>Registered</value></data>
+  <data name="ServiceUnregisterBtn" xml:space="preserve"><value>Registered — Cancel</value></data>
+  <data name="ServiceRegisterSuccess" xml:space="preserve"><value>Service registered. Monthly invoices will include this service.</value></data>
+  <data name="ServiceUnregisterSuccess" xml:space="preserve"><value>Service registration cancelled.</value></data>
+  <data name="ServiceRegisterFailed" xml:space="preserve"><value>Could not update the service registration. Please try again.</value></data>
+  <data name="ServiceRequestTitle" xml:space="preserve"><value>Register for a service</value></data>
+  <data name="ServiceRequestName" xml:space="preserve"><value>Service</value></data>
+  <data name="ServiceRequestPrice" xml:space="preserve"><value>Price</value></data>
+  <data name="ServiceRequestMonth" xml:space="preserve"><value>Applies to month</value></data>
+  <data name="ServiceRequestMonthlyNote" xml:space="preserve"><value>Services are monthly; each service can be registered once per month.</value></data>
+  <data name="ServiceRequestQuantity" xml:space="preserve"><value>Quantity / number of uses</value></data>
+  <data name="ServiceRequestStart" xml:space="preserve"><value>Start date</value></data>
+  <data name="ServiceRequestEnd" xml:space="preserve"><value>End date (optional)</value></data>
+  <data name="ServiceRequestNote" xml:space="preserve"><value>Note / extra request</value></data>
+  <data name="ServiceRequestNotePlaceholder" xml:space="preserve"><value>e.g. for 2 people…</value></data>
+  <data name="ServiceRequestSubmit" xml:space="preserve"><value>Send registration request</value></data>
+  <data name="ServiceRequestSuccess" xml:space="preserve"><value>Service registration request sent. Please wait for the landlord to approve.</value></data>
+  <data name="ServiceRequestContractLabel" xml:space="preserve"><value>Registration contract</value></data>
+  <data name="ServicePendingApprovalBtn" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="RegErrorGeneric" xml:space="preserve"><value>Could not process the service request. Please try again.</value></data>
+  <data name="RegErrorNoActiveContract" xml:space="preserve"><value>You have no active contract to register services for.</value></data>
+  <data name="RegErrorContractNotOwned" xml:space="preserve"><value>The selected contract does not belong to you.</value></data>
+  <data name="RegErrorCannotRegister" xml:space="preserve"><value>This service cannot be registered.</value></data>
+  <data name="RegErrorAlreadyRegistered" xml:space="preserve"><value>This service has already been registered this month.</value></data>
+  <data name="RegErrorNotManager" xml:space="preserve"><value>Only the landlord can perform this action.</value></data>
+  <data name="RegErrorRequestNotFound" xml:space="preserve"><value>Service registration request not found.</value></data>
+  <data name="RegErrorInvalidState" xml:space="preserve"><value>This request is no longer in a processable state.</value></data>
+  <data name="RegErrorReasonRequired" xml:space="preserve"><value>Please enter a reason.</value></data>
+  <data name="RegErrorPriceNotFound" xml:space="preserve"><value>This service has no effective price, so no invoice can be created.</value></data>
+  <data name="RegErrorEmptyContent" xml:space="preserve"><value>Please enter the invoice content.</value></data>
+  <data name="RegErrorForbidden" xml:space="preserve"><value>You do not have permission for this action.</value></data>
+  <data name="RegErrorOutsideScope" xml:space="preserve"><value>This request is outside the properties you manage.</value></data>
+  <data name="ServiceRequestPendingNote" xml:space="preserve"><value>The landlord approves the request before the service is charged. Track its progress on the “Service registration history” page.</value></data>
+  <data name="RegHistoryPageTitle" xml:space="preserve"><value>Service registration history</value></data>
+  <data name="RegHistoryTitle" xml:space="preserve"><value>Service registration history</value></data>
+  <data name="RegHistorySubtitle" xml:space="preserve"><value>All service registration requests you have sent.</value></data>
+  <data name="RegHistoryEmpty" xml:space="preserve"><value>You have not sent any service registration request yet.</value></data>
+  <data name="RegColRequestedAt" xml:space="preserve"><value>Requested at</value></data>
+  <data name="RegColStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="RegColQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="RegPageInfo" xml:space="preserve"><value>Page {0}/{1} · {2} requests</value></data>
+  <data name="RegColReviewInfo" xml:space="preserve"><value>Reason / reviewed at</value></data>
+  <data name="RegColInvoice" xml:space="preserve"><value>Related invoice</value></data>
+  <data name="RegStatusPending" xml:space="preserve"><value>Pending approval</value></data>
+  <data name="RegStatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="RegStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="RegStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="RegCancelButton" xml:space="preserve"><value>Cancel registration</value></data>
+  <data name="RegCancelPendingNote" xml:space="preserve"><value>Cancellation requested — waiting for the landlord's decision.</value></data>
+  <data name="RegCancelPendingBadge" xml:space="preserve"><value>Cancel requested</value></data>
+  <data name="RegCancelRequestButton" xml:space="preserve"><value>Request cancellation</value></data>
+  <data name="RegCancelRequestTitle" xml:space="preserve"><value>Request cancellation (approved)</value></data>
+  <data name="RegCancelReasonLabel" xml:space="preserve"><value>Cancellation reason (required)</value></data>
+  <data name="RegCancelReasonRequired" xml:space="preserve"><value>Approved registrations require a cancellation reason.</value></data>
+  <data name="RegCancelRequestNote" xml:space="preserve"><value>The landlord decides. If rejected, you still pay for the service as usual.</value></data>
+  <data name="RegCancelRequestSubmit" xml:space="preserve"><value>Send cancellation request</value></data>
+  <data name="RegCancelSuccess" xml:space="preserve"><value>Registration request cancelled.</value></data>
+  <data name="RegCancelRequestSuccess" xml:space="preserve"><value>Cancellation requested. Please wait for the landlord's decision.</value></data>
+  <data name="RegCancelApproveButton" xml:space="preserve"><value>Approve cancellation</value></data>
+  <data name="RegCancelRejectButton" xml:space="preserve"><value>Reject cancellation</value></data>
+  <data name="RegCancelRejectReasonLabel" xml:space="preserve"><value>Reason for refusing cancellation (required)</value></data>
+  <data name="RegCancelRejectReasonRequired" xml:space="preserve"><value>Please enter a reason for refusing cancellation.</value></data>
+  <data name="RegCancelApprovedSuccess" xml:space="preserve"><value>Registration cancelled at the tenant's request.</value></data>
+  <data name="RegCancelRejectedSuccess" xml:space="preserve"><value>Cancellation refused; the tenant still pays as usual.</value></data>
+  <data name="RegManagePageTitle" xml:space="preserve"><value>Service registrations</value></data>
+  <data name="RegManageTitle" xml:space="preserve"><value>Service registrations</value></data>
+  <data name="RegManageSubtitle" xml:space="preserve"><value>Approve or reject tenant service registration requests.</value></data>
+  <data name="RegManageEmpty" xml:space="preserve"><value>No service registration requests yet.</value></data>
+  <data name="RegColRequestId" xml:space="preserve"><value>Request ID</value></data>
+  <data name="RegColTenant" xml:space="preserve"><value>Contract</value></data>
+  <data name="RegDetailTitle" xml:space="preserve"><value>Service request: {0}</value></data>
+  <data name="RegApproveButton" xml:space="preserve"><value>Approve</value></data>
+  <data name="RegRejectButton" xml:space="preserve"><value>Reject</value></data>
+  <data name="RegRejectReasonLabel" xml:space="preserve"><value>Rejection reason (required)</value></data>
+  <data name="RegRejectReasonRequired" xml:space="preserve"><value>Please enter a rejection reason.</value></data>
+  <data name="RegApproveSuccess" xml:space="preserve"><value>Service registration request approved.</value></data>
+  <data name="RegRejectSuccess" xml:space="preserve"><value>Service registration request rejected.</value></data>
+  <data name="RegCreateInvoiceTitle" xml:space="preserve"><value>Create invoice for the approved request</value></data>
+  <data name="RegCreateInvoiceButton" xml:space="preserve"><value>Create invoice</value></data>
+  <data name="RegCreateInvoiceConfirm" xml:space="preserve"><value>Confirm invoice creation</value></data>
+  <data name="RegInvoiceAmount" xml:space="preserve"><value>Amount due (VND)</value></data>
+  <data name="RegInvoiceDueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="RegInvoiceContent" xml:space="preserve"><value>Invoice content</value></data>
+  <data name="RegInvoiceService" xml:space="preserve"><value>Service</value></data>
+  <data name="RegInvoicePeriod" xml:space="preserve"><value>Billing period</value></data>
+  <data name="RegInvoiceQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="RegInvoiceUnitPrice" xml:space="preserve"><value>Unit price</value></data>
+  <data name="RegBankAccount" xml:space="preserve"><value>Receiving bank account</value></data>
   <data name="CatalogSubtitle" xml:space="preserve"><value>Configure other utility services and view active tariffs for periodic billing calculation.</value></data>
 
   <data name="DemoTopline" xml:space="preserve"><value>Sample data — not persisted to SQL (UI Prototype v2.4 / Phase 2A)</value></data>
@@ -46,6 +135,8 @@
   <data name="ThServiceName" xml:space="preserve"><value>Service Name</value></data>
   <data name="ThServiceType" xml:space="preserve"><value>Service Type</value></data>
   <data name="ThUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="ThTypeUnit" xml:space="preserve"><value>Type / Unit</value></data>
+  <data name="ThEffectiveRange" xml:space="preserve"><value>Effective period</value></data>
   <data name="ThRate" xml:space="preserve"><value>Applied Rate</value></data>
   <data name="ThEffectiveFrom" xml:space="preserve"><value>Effective From</value></data>
   <data name="ThEffectiveTo" xml:space="preserve"><value>Effective To</value></data>
@@ -54,6 +145,7 @@
 
   <data name="ReadOnlyTitle" xml:space="preserve"><value>Read-only tariff per D7 decision</value></data>
   <data name="NoData" xml:space="preserve"><value>No data</value></data>
+  <data name="NoEndDate" xml:space="preserve"><value>No end date</value></data>
   <data name="EditPriceTooltip" xml:space="preserve"><value>Edit Rate</value></data>
   <data name="ViewDetailTooltip" xml:space="preserve"><value>View Details</value></data>
   <data name="PriceHistoryTooltip" xml:space="preserve"><value>Price History</value></data>
@@ -212,6 +304,9 @@
   <data name="TieredTariffLabel" xml:space="preserve"><value>Tiered tariff</value></data>
   <data name="ReadOnlyStatus" xml:space="preserve"><value>Read only</value></data>
   <data name="TableResultCount" xml:space="preserve"><value>{0} services</value></data>
+  <data name="TablePageInfo" xml:space="preserve"><value>Page {0}/{1} · {2} services</value></data>
+  <data name="Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="Next" xml:space="preserve"><value>Next</value></data>
   <data name="PricesEmptyDescription" xml:space="preserve"><value>There are no sample price versions in this scope.</value></data>
   <data name="UnitRoom" xml:space="preserve"><value>Room</value></data>
   <data name="UnitPerson" xml:space="preserve"><value>Person</value></data>
@@ -299,6 +394,100 @@
   <data name="PaginationLabel" xml:space="preserve"><value>Pagination</value></data>
   <data name="PreviousPage" xml:space="preserve"><value>Previous page</value></data>
   <data name="NextPage" xml:space="preserve"><value>Next page</value></data>
+  <data name="P5CostPageTitle" xml:space="preserve"><value>Utility readings &amp; costs</value></data>
+  <data name="P5CostHeading" xml:space="preserve"><value>Utility readings and costs</value></data>
+  <data name="P5CostSubtitle" xml:space="preserve"><value>Calculate electricity, water, and service costs from actual readings for each room.</value></data>
+  <data name="P5CostRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="P5CostLoading" xml:space="preserve"><value>Loading data...</value></data>
+  <data name="P5CostLoadErrorTitle" xml:space="preserve"><value>Could not load data</value></data>
+  <data name="P5CostLoadError" xml:space="preserve"><value>Could not load readings and costs. Please try again.</value></data>
+  <data name="P5CostRetry" xml:space="preserve"><value>Try again</value></data>
+  <data name="P5CostStatRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="P5CostStatRecorded" xml:space="preserve"><value>Readings recorded</value></data>
+  <data name="P5CostStatInvoiced" xml:space="preserve"><value>Invoiced</value></data>
+  <data name="P5CostStatTotal" xml:space="preserve"><value>Total cost</value></data>
+  <data name="P5CostPropertyFilter" xml:space="preserve"><value>Property</value></data>
+  <data name="P5CostAllProperties" xml:space="preserve"><value>All properties</value></data>
+  <data name="P5CostPeriodStart" xml:space="preserve"><value>From date</value></data>
+  <data name="P5CostPeriodEnd" xml:space="preserve"><value>To date</value></data>
+  <data name="P5CostSearchLabel" xml:space="preserve"><value>Search</value></data>
+  <data name="P5CostSearchPlaceholder" xml:space="preserve"><value>Room code, tenant, contract...</value></data>
+  <data name="P5CostResetFilter" xml:space="preserve"><value>Reset</value></data>
+  <data name="P5CostOnlyUnrecorded" xml:space="preserve"><value>Unrecorded rooms only</value></data>
+  <data name="P5CostFormulaHint" xml:space="preserve"><value>Formula: (end reading − start reading) × tiered unit price + service charges. Room total includes rent. Amounts never change when switching language.</value></data>
+  <data name="P5CostEmptyTitle" xml:space="preserve"><value>No data</value></data>
+  <data name="P5CostEmptyDescription" xml:space="preserve"><value>No rooms match the selected scope and period.</value></data>
+  <data name="P5CostThRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="P5CostThElectricUsage" xml:space="preserve"><value>Electricity (kWh)</value></data>
+  <data name="P5CostThElectricAmount" xml:space="preserve"><value>Electric amount</value></data>
+  <data name="P5CostThWaterUsage" xml:space="preserve"><value>Water (m³)</value></data>
+  <data name="P5CostThWaterAmount" xml:space="preserve"><value>Water amount</value></data>
+  <data name="P5CostThServices" xml:space="preserve"><value>Other services</value></data>
+  <data name="P5CostThTotal" xml:space="preserve"><value>Room service total</value></data>
+  <data name="P5CostThInvoiceStatus" xml:space="preserve"><value>Invoice status</value></data>
+  <data name="P5CostThActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="P5CostNoData" xml:space="preserve"><value>No data</value></data>
+  <data name="P5CostServiceCount" xml:space="preserve"><value>{0} services</value></data>
+  <data name="P5CostInvoiceCreated" xml:space="preserve"><value>Invoice created</value></data>
+  <data name="P5CostInvoicePending" xml:space="preserve"><value>Pending invoice</value></data>
+  <data name="P5CostDetails" xml:space="preserve"><value>View details</value></data>
+  <data name="P5CostEditReading" xml:space="preserve"><value>Record reading</value></data>
+  <data name="P5CostCreateInvoice" xml:space="preserve"><value>Create invoice</value></data>
+  <data name="P5CostInvoiceCreating" xml:space="preserve"><value>Creating invoice…</value></data>
+  <data name="P5CostInvoiceCreatedToast" xml:space="preserve"><value>Draft invoice created. Please review and issue it.</value></data>
+  <data name="P5CostInvoiceFailed" xml:space="preserve"><value>Could not create the invoice. Please try again.</value></data>
+  <data name="P5CostInvoiceMissingReadings" xml:space="preserve"><value>This room has no meter readings for the period, so an invoice cannot be created yet.</value></data>
+  <data name="P5CostConcurrencyConflict" xml:space="preserve"><value>The data was just updated by someone else. Please reload the page and try again.</value></data>
+  <data name="P5CostInvoiceDuplicate" xml:space="preserve"><value>This contract already has an invoice for this period with different data.</value></data>
+  <data name="P5CostStatusOpen" xml:space="preserve"><value>Open</value></data>
+  <data name="P5CostStatusClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="P5CostStatusInvoiced" xml:space="preserve"><value>Invoiced</value></data>
+  <data name="P5CostDetailTitle" xml:space="preserve"><value>Room {0} details</value></data>
+  <data name="P5CostClosePanel" xml:space="preserve"><value>Close</value></data>
+  <data name="P5CostElectricSection" xml:space="preserve"><value>Electricity</value></data>
+  <data name="P5CostWaterSection" xml:space="preserve"><value>Water</value></data>
+  <data name="P5CostBeforeLabel" xml:space="preserve"><value>Start reading</value></data>
+  <data name="P5CostAfterLabel" xml:space="preserve"><value>End reading</value></data>
+  <data name="P5CostUsageLabel" xml:space="preserve"><value>Usage</value></data>
+  <data name="P5CostAvgUnitPrice" xml:space="preserve"><value>Average unit price</value></data>
+  <data name="P5CostAmountLabel" xml:space="preserve"><value>Amount</value></data>
+  <data name="P5CostTierLabel" xml:space="preserve"><value>Tier</value></data>
+  <data name="P5CostQuantityLabel" xml:space="preserve"><value>Quantity</value></data>
+  <data name="P5CostUnitPriceLabel" xml:space="preserve"><value>Unit price</value></data>
+  <data name="P5CostServiceSection" xml:space="preserve"><value>Service charges</value></data>
+  <data name="P5CostRentLabel" xml:space="preserve"><value>Rent</value></data>
+  <data name="P5CostTotalLabel" xml:space="preserve"><value>Total</value></data>
+  <data name="P5CostCorrectionsTitle" xml:space="preserve"><value>Correction history</value></data>
+  <data name="P5CostCorrectionsCount" xml:space="preserve"><value>{0} corrections</value></data>
+  <data name="P5CostCorrectionsCountOne" xml:space="preserve"><value>1 correction</value></data>
+  <data name="P5CostCorrectionsEmpty" xml:space="preserve"><value>No corrections yet.</value></data>
+  <data name="P5CostCorrectionField" xml:space="preserve"><value>Field</value></data>
+  <data name="P5CostCorrectionDiff" xml:space="preserve"><value>Change</value></data>
+  <data name="P5CostCorrectionReason" xml:space="preserve"><value>Reason</value></data>
+  <data name="P5CostCorrectionChangedAt" xml:space="preserve"><value>Changed at</value></data>
+  <data name="P5CostCorrectionElectric" xml:space="preserve"><value>Electric reading</value></data>
+  <data name="P5CostCorrectionWater" xml:space="preserve"><value>Water reading</value></data>
+  <data name="P5CostCorrectPrevious" xml:space="preserve"><value>Edit previous period</value></data>
+  <data name="P5CostCorrectPreviousTitle" xml:space="preserve"><value>Edit previous period reading</value></data>
+  <data name="P5CostEditTitle" xml:space="preserve"><value>Record this period's reading</value></data>
+  <data name="P5CostEditDescription" xml:space="preserve"><value>Room {0} · period {1} – {2}</value></data>
+  <data name="P5CostPreviousPeriodNote" xml:space="preserve"><value>You are editing {0} – {1}. The current period's start reading will be updated accordingly.</value></data>
+  <data name="P5CostElectricEndLabel" xml:space="preserve"><value>Electricity end reading</value></data>
+  <data name="P5CostWaterEndLabel" xml:space="preserve"><value>Water end reading</value></data>
+  <data name="P5CostStartReadingHint" xml:space="preserve"><value>Start reading: {0}</value></data>
+  <data name="P5CostReasonLabel" xml:space="preserve"><value>Correction reason</value></data>
+  <data name="P5CostReasonPlaceholder" xml:space="preserve"><value>Enter a reason...</value></data>
+  <data name="P5CostCancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="P5CostSaveButton" xml:space="preserve"><value>Save</value></data>
+  <data name="P5CostSavingButton" xml:space="preserve"><value>Saving...</value></data>
+  <data name="P5CostAdjustReading" xml:space="preserve"><value>Adjust reading</value></data>
+  <data name="P5CostSaveSuccess" xml:space="preserve"><value>Readings saved.</value></data>
+  <data name="P5CostAdjustSuccess" xml:space="preserve"><value>Readings adjusted.</value></data>
+  <data name="P5CostSaveFailed" xml:space="preserve"><value>Could not save readings. Please try again.</value></data>
+  <data name="P5CostNotAdjustable" xml:space="preserve"><value>This period cannot be adjusted.</value></data>
+  <data name="P5CostApprovalPending" xml:space="preserve"><value>The change was submitted for approval.</value></data>
+  <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>A reading already exists for this room and period.</value></data>
+  <data name="P5CostReadingNotFound" xml:space="preserve"><value>Reading for this period was not found.</value></data>
   <data name="ErrorCopySameProperty" xml:space="preserve"><value>Prices cannot be copied from the same property.</value></data>
   <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>You do not have access to the source property.</value></data>
 </root>

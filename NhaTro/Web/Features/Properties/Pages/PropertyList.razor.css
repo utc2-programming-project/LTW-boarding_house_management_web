@@ -13,6 +13,20 @@
 :deep(.table-card) { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 :deep(.table-card table) { min-width: 760px; }
 @media (max-width: 640px) { .p2-page-actions { width: 100%; } .p2-page-actions > .btn { flex: 1; justify-content: center; } }
+.p2-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: var(--text-secondary); }
+.p2-table-options select { width: 84px; }
+.p2-page ::deep .table-card { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+/* Tỉ lệ cột cố định: Tên 28% · Địa chỉ 32% · Số phòng 12% · Hoạt động 16% · Thao tác 12%. */
+.p2-page ::deep .table-card table { table-layout: fixed; min-width: 900px; }
+.p2-page ::deep .table-card thead th:nth-child(1) { width: 28%; }
+.p2-page ::deep .table-card thead th:nth-child(2) { width: 32%; }
+.p2-page ::deep .table-card thead th:nth-child(3) { width: 12%; }
+.p2-page ::deep .table-card thead th:nth-child(4) { width: 16%; }
+.p2-page ::deep .table-card thead th:nth-child(5) { width: 12%; text-align: center; }
+.p2-page ::deep .table-card tbody td { vertical-align: middle; }
+.p2-page ::deep .table-card tbody td:nth-child(1), .p2-page ::deep .table-card tbody td:nth-child(2) { overflow-wrap: break-word; }
+@media (max-width: 900px) { .property-filters .btn { flex: 1 1 140px; } }
+@media (max-width: 640px) { .p2-page-actions { width: 100%; } .p2-page-actions > .btn { flex: 1; justify-content: center; } .search-field, .filter-select, .filter-number { flex: 1 1 100%; min-width: 0; } .p2-table-options { justify-content: flex-start; } }
 
 .setup-draft-banner { border-color: var(--warning-border); background: var(--warning-bg); color: var(--text-primary); }
 .setup-draft-banner p { margin: 4px 0 0; color: var(--text-secondary); }

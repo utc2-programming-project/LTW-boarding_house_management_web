@@ -4,6 +4,17 @@ namespace NhaTro.UnitTests.Components;
 
 public sealed class AppNavigationTests
 {
+    [Fact]
+    public void Home_is_the_single_entry_for_home_and_dashboard()
+    {
+        var section = AppNavigation.Sections.First();
+        var home = Assert.Single(section.Items);
+        Assert.Equal("Home", home.Key);
+        Assert.Equal("/", home.Href);
+        Assert.Equal("Home", NavigationResolver.Resolve("/dashboard")!.SidebarItem!.Key);
+        Assert.DoesNotContain(AppNavigation.Items, item => item.Key == "Dashboard");
+    }
+
     [Theory]
     [InlineData("Pricing")]
     [InlineData("MeterReadings")]
@@ -62,17 +73,24 @@ public sealed class AppNavigationTests
         var readings = NavigationResolver.Resolve("/meter-readings");
         Assert.Equal(new[] { "Services", "MeterReadingNavReadings" }, readings!.Chain.Select(item => item.Key));
         Assert.Equal("Services", readings.SidebarItem?.Key);
+
+        var costs = NavigationResolver.Resolve("/services/readings/costs");
+        Assert.Equal(
+            new[] { "Services", "MeterReadingNavReadings", "P5CostNav" },
+            costs!.Chain.Select(item => item.Key));
+        Assert.Equal("P5CostNav", costs.Leaf.Key);
+        Assert.Equal("Services", costs.SidebarItem?.Key);
     }
 
     [Fact]
-    public void Resolver_dashboard_la_trang_dich_khong_co_cap_cha()
+    public void Resolver_dashboard_cu_tro_ve_home_khong_co_cap_cha()
     {
         var dashboard = NavigationResolver.Resolve("/dashboard");
 
         Assert.NotNull(dashboard);
         Assert.Null(dashboard!.Section.TitleKey);
-        Assert.Equal("Dashboard", dashboard.Leaf.Key);
-        Assert.Equal("Dashboard", dashboard.SidebarItem?.Key);
+        Assert.Equal("Home", dashboard.Leaf.Key);
+        Assert.Equal("Home", dashboard.SidebarItem?.Key);
     }
 
     [Fact]

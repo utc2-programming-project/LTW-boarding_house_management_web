@@ -9,8 +9,7 @@ public static class AppNavigation
     [
         new(null, "Admin,ChuTro,QuanLy,KhachThue",
         [
-            new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/"),
-            new("Dashboard", "chart", "ChuTro,QuanLy", "/dashboard"),
+            new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/", Aliases: ["/dashboard"]),
         ]),
         new("NavGroupProperty", "ChuTro,QuanLy,KhachThue",
         [
@@ -36,7 +35,12 @@ public static class AppNavigation
                 [
                     new("PricingNav", "", "ChuTro,QuanLy,KhachThue", "/services/prices", ShowInSidebar: false),
                     new("MeterReadingNavReadings", "", "ChuTro,QuanLy,KhachThue", "/services/readings",
-                        ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"]),
+                        ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"],
+                        Children:
+                        [
+                            new("P5CostNav", "", "ChuTro,QuanLy,KhachThue", "/services/readings/costs",
+                                ShowInSidebar: false),
+                        ]),
                 ]),
             new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
             new("PaymentRequests", "check", "ChuTro,QuanLy", "/payment-requests"),

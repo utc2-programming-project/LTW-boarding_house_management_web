@@ -71,6 +71,12 @@
   <data name="Notifications" xml:space="preserve">
     <value>Notifications</value>
   </data>
+  <data name="NotificationMarkAllRead" xml:space="preserve">
+    <value>Mark all as read</value>
+  </data>
+  <data name="NotificationEmpty" xml:space="preserve">
+    <value>No notifications yet.</value>
+  </data>
   <data name="SignIn" xml:space="preserve">
     <value>Sign in</value>
   </data>
@@ -407,6 +413,9 @@
   <data name="AccountsEmptyHint" xml:space="preserve">
     <value>No accounts match the current filters.</value>
   </data>
+  <data name="AccountsCountUnit" xml:space="preserve">
+    <value>accounts</value>
+  </data>
   <data name="Confirm" xml:space="preserve">
     <value>Confirm</value>
   </data>
@@ -625,6 +634,15 @@
   <data name="TableSummary" xml:space="preserve">
     <value>Showing {0}–{1} of {2}</value>
   </data>
+  <data name="TablePageInfo" xml:space="preserve">
+    <value>Page {0}/{1} · {2} {3}</value>
+  </data>
+  <data name="TablePrevious" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="TableNext" xml:space="preserve">
+    <value>Next</value>
+  </data>
 
   <!-- VHT-8: access denied -->
   <data name="AccessDeniedTitle" xml:space="preserve">
@@ -794,7 +812,7 @@
   <data name="P2CreatedAt" xml:space="preserve"><value>Created</value></data>
   <data name="P2UpdatedAt" xml:space="preserve"><value>Last updated</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Pending approval</value></data>
-  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Approval will be available in a future update.</value></data>
+  <data name="P2ApprovalPendingHint" xml:space="preserve"><value>The change needs landlord approval, so it has not been saved.</value></data>
   <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Move room to trash?</value></data>
   <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Room {0} will be moved to trash.</value></data>
   <data name="P2MoveToTrash" xml:space="preserve"><value>Move to trash</value></data>
@@ -807,6 +825,7 @@
   <data name="P2ManagerPanelTitle" xml:space="preserve"><value>Manager assignment</value></data>
   <data name="P2ManagerPanelHint" xml:space="preserve"><value>A manager only sees the properties and rooms actively assigned to them.</value></data>
   <data name="P2ManagerNoneAssigned" xml:space="preserve"><value>No manager is assigned to this property yet.</value></data>
+  <data name="P2ManagerUnknown" xml:space="preserve"><value>Manager (no email)</value></data>
   <data name="P2ManagerAssignedSince" xml:space="preserve"><value>Assigned since</value></data>
   <data name="P2ManagerCandidateLabel" xml:space="preserve"><value>Select a manager account</value></data>
   <data name="P2ManagerCandidatePlaceholder" xml:space="preserve"><value>— Select a manager account —</value></data>
@@ -913,7 +932,7 @@
   <data name="TenantIdIssuedDate" xml:space="preserve"><value>Issue date</value></data>
   <data name="TenantIdIssuedPlace" xml:space="preserve"><value>Place of issue</value></data>
   <data name="TenantInternalNote" xml:space="preserve"><value>Internal note</value></data>
-  <data name="TenantIdMaskedHint" xml:space="preserve"><value>Managers always see a masked ID number.</value></data>
+  <data name="TenantIdMaskedHint" xml:space="preserve"><value>The ID number is partially hidden in the list.</value></data>
   <data name="TenantIdManagerCreateHint" xml:space="preserve"><value>Enter the full ID number. It is masked after saving.</value></data>
   <data name="TenantIdManagerEditHint" xml:space="preserve"><value>The current number is masked. Leave it empty to keep it, or type the full new number to replace it.</value></data>
   <data name="TenantValidationIdNumber" xml:space="preserve"><value>Invalid ID number: enter at least 8 letters or digits and do not use the * character.</value></data>
@@ -973,6 +992,7 @@
   <data name="TenantErrorAccountNotTenant" xml:space="preserve"><value>Only an account with the Tenant role can be linked.</value></data>
   <data name="TenantErrorGeneric" xml:space="preserve"><value>Could not complete the action. Please try again.</value></data>
   <data name="TenantErrorForbidden" xml:space="preserve"><value>You do not have permission to perform this action.</value></data>
+  <data name="TenantErrorApprovalRequired" xml:space="preserve"><value>This action needs landlord approval, so it has not been applied.</value></data>
   <data name="TenantSummary" xml:space="preserve"><value>Tenant overview</value></data>
   <data name="TenantSummaryLoadFailed" xml:space="preserve"><value>Could not load tenant summary.</value></data>
   <data name="TenantAllRecordsHint" xml:space="preserve"><value>Records in this system</value></data>
@@ -1292,6 +1312,7 @@
   <data name="MeterReadingNavHome" xml:space="preserve"><value>Home</value></data>
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Services &amp; Utilities</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Meter Readings</value></data>
+  <data name="P5CostNav" xml:space="preserve"><value>Readings &amp; costs</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Could not load data. Please try again.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Failed to save meter reading.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Successfully finalized period for room {0} in temporary memory (mock data).</value></data>
@@ -1954,7 +1975,6 @@
   <data name="AuthTabRegister" xml:space="preserve"><value>Register</value></data>
   <data name="AuthTabForgot" xml:space="preserve"><value>Forgot password</value></data>
   <data name="OrDivider" xml:space="preserve"><value>or</value></data>
-  <data name="EmailPlaceholder" xml:space="preserve"><value>you@example.com</value></data>
   <data name="FullNamePlaceholder" xml:space="preserve"><value>Nguyen Van A</value></data>
   <data name="PhonePlaceholder" xml:space="preserve"><value>09xx xxx xxx</value></data>
   <data name="PasswordPlaceholder" xml:space="preserve"><value>••••••••</value></data>
@@ -2047,4 +2067,10 @@
   <data name="OwnerUnlocked" xml:space="preserve"><value>Owner unlocked.</value></data>
   <data name="Previous" xml:space="preserve"><value>Previous</value></data>
   <data name="Next" xml:space="preserve"><value>Next</value></data>
+  <data name="ApprovalUiNewEndDate" xml:space="preserve"><value>New end date</value></data>
+  <data name="ApprovalUiDepositChange" xml:space="preserve"><value>Deposit change</value></data>
+  <data name="ApprovalUiActionRenew" xml:space="preserve"><value>Renew contract</value></data>
+  <data name="ApprovalUiActionLiquidate" xml:space="preserve"><value>Liquidate contract</value></data>
+  <data name="ApprovalUiActionDeposit" xml:space="preserve"><value>Update deposit</value></data>
+  <data name="ApprovalUiActionUnknown" xml:space="preserve"><value>Contract operation</value></data>
 </root>

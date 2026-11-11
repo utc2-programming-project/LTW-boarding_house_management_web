@@ -216,6 +216,7 @@
     private bool _formVisible;
     private bool _deleteVisible;
     private PropertyListItem? _deleteProperty;
+    private int? _openMenuId;
     private bool _ready;
     private bool _isOwner;
     private bool _hasActiveFilters;
@@ -273,11 +274,30 @@
         RenderFragment<PropertyListItem> name = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Name</button>;
         RenderFragment<PropertyListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<PropertyListItem> actions = item => @<div class="p2-row-actions">
-            <button class="icon-button" type="button" aria-label="@L["P2ViewDetails"]" title="@L["P2ViewDetails"]" @onclick="() => OpenDetails(item)"><LucideIcon Name="eye" /></button>
-            @if (_isOwner)
+            <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
+                    aria-label="@L["P2Actions"]" title="@L["P2Actions"]"
+                    aria-haspopup="menu" aria-expanded="@(IsMenuOpen(item.Id) ? "true" : "false")"
+                    aria-controls="@($"row-menu-{item.Id}")"
+                    @onclick="() => ToggleRowMenu(item.Id)">
+                <LucideIcon Name="ellipsis" />
+            </button>
+            @if (IsMenuOpen(item.Id))
             {
-                <button class="icon-button" type="button" aria-label="@L["P2Edit"]" title="@L["P2Edit"]" @onclick="() => OpenEdit(item.Id)"><LucideIcon Name="edit" /></button>
-                <button class="icon-button danger-action" type="button" aria-label="@L["P2DeleteProperty"]" title="@L["P2DeleteProperty"]" @onclick="() => RequestDelete(item)"><LucideIcon Name="trash" /></button>
+                <div id="@($"row-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["P2Actions"]" data-row-menu>
+                    <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuDetails(item)">
+                        <LucideIcon Name="eye" /><span>@L["P2ViewDetails"]</span>
+                    </button>
+                    @if (_isOwner)
+                    {
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuEdit(item)">
+                            <LucideIcon Name="edit" /><span>@L["P2Edit"]</span>
+                        </button>
+                        <div class="p2-row-menu-sep" role="separator"></div>
+                        <button class="p2-row-menu-item danger" type="button" role="menuitem" @onclick="() => MenuDelete(item)">
+                            <LucideIcon Name="trash" /><span>@L["P2DeleteProperty"]</span>
+                        </button>
+                    }
+                </div>
             }
         </div>;
 
@@ -293,6 +313,7 @@
 
     private async Task<PagedResult<PropertyListItem>> LoadPropertiesAsync(DataTableRequest request)
     {
+        _openMenuId = null;
         var active = bool.TryParse(_activeFilter, out var parsed) ? parsed : (bool?)null;
         var minRooms = int.TryParse(_minRoomCount, out var min) && min >= 0 ? min : (int?)null;
         var maxRooms = int.TryParse(_maxRoomCount, out var max) && max >= 0 ? max : (int?)null;
@@ -353,6 +374,12 @@
         }
         return Task.CompletedTask;
     }
+
+    private bool IsMenuOpen(int id) => _openMenuId == id;
+    private void ToggleRowMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
+    private void MenuDetails(PropertyListItem item) { _openMenuId = null; OpenDetails(item); }
+    private void MenuEdit(PropertyListItem item) { _openMenuId = null; OpenEdit(item.Id); }
+    private void MenuDelete(PropertyListItem item) { _openMenuId = null; RequestDelete(item); }
 
     private void OpenCreate() => Navigation.NavigateTo("/properties/new");
     private void OpenEdit(int id) { _formPropertyId = id; _formKey++; _formVisible = true; }

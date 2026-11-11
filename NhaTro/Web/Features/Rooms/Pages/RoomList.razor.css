@@ -13,12 +13,28 @@
 .p2-link-button { padding: 2px 0; border: 0; background: transparent; color: var(--accent-text); font-weight: 600; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
 .p2-row-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .danger-action { color: var(--danger)!important; }
+.p2-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: var(--text-secondary); }
+.p2-table-options select { width: 84px; }
 .p2-alert { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; padding: 14px; border: 1px solid; border-radius: var(--radius-card); }
 .p2-alert.error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-text); }
 .p2-alert.warning { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning-text); }
 :deep(.table-card) { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 :deep(.table-card) { min-width: 0; overflow-x: auto; }
 :deep(.table-card table) { min-width: 1120px; }
+/* Tỉ lệ cột cố định: Mã 10% · Nhà trọ 22% · Tầng 7% · Diện tích 9% · Giá 12% · Trạng thái 14% · Hoạt động 15% · Thao tác 11%. */
+.p2-page ::deep .table-card table { table-layout: fixed; min-width: 1080px; }
+.p2-page ::deep .table-card thead th:nth-child(1) { width: 10%; }
+.p2-page ::deep .table-card thead th:nth-child(2) { width: 22%; }
+.p2-page ::deep .table-card thead th:nth-child(3) { width: 7%; }
+.p2-page ::deep .table-card thead th:nth-child(4) { width: 9%; }
+.p2-page ::deep .table-card thead th:nth-child(5) { width: 12%; }
+.p2-page ::deep .table-card thead th:nth-child(6) { width: 14%; }
+.p2-page ::deep .table-card thead th:nth-child(7) { width: 15%; }
+.p2-page ::deep .table-card thead th:nth-child(8) { width: 11%; text-align: center; }
+.p2-page ::deep .table-card tbody td { vertical-align: middle; }
+.p2-page ::deep .table-card tbody td:nth-child(2) { overflow-wrap: break-word; }
+@media (max-width: 1200px) { .room-filter-primary .filter-select { flex: 1 1 140px; } .room-filter-advanced .price-field { flex: 1 1 120px; } }
+@media (max-width: 900px) { .p2-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .room-filter-row { flex-direction: column; align-items: stretch; } .room-filter-row > * { width: 100%; } }
 @media (max-width: 767.98px) {
     .p2-page-actions { width: 100%; }
     .p2-page-actions > .btn { flex: 1; }

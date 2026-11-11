@@ -21,9 +21,12 @@
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <!-- D8: xuất báo cáo Excel (chỉ P8), không dùng cho PDF. -->
     <PackageReference Include="ClosedXML" Version="0.105.1" />
+    <PackageReference Include="QRCoder" Version="1.8.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="SkiaSharp" Version="4.153.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.153.1" />
     <!-- SqlClient kéo Pkcs vào bắc cầu; ghim bản đã vá security advisory thay cho 9.0.11. -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>

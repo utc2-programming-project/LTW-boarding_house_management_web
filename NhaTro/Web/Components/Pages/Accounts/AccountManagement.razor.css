@@ -1,0 +1,29 @@
+/* Tỉ lệ cột cố định cho cân đối:
+   Tài khoản 20% · Email 18% · SĐT 12% · Vai trò 11% · Chủ trọ/Nhà trọ 21% · Trạng thái 10% · Thao tác 8%. */
+.accounts-page ::deep .table-card table {
+    table-layout: fixed;
+    min-width: 1080px;
+}
+
+.accounts-page ::deep .table-card thead th:nth-child(1) { width: 20%; }
+.accounts-page ::deep .table-card thead th:nth-child(2) { width: 18%; }
+.accounts-page ::deep .table-card thead th:nth-child(3) { width: 12%; }
+.accounts-page ::deep .table-card thead th:nth-child(4) { width: 11%; }
+.accounts-page ::deep .table-card thead th:nth-child(5) { width: 21%; }
+.accounts-page ::deep .table-card thead th:nth-child(6) { width: 10%; }
+.accounts-page ::deep .table-card thead th:nth-child(7) { width: 8%; text-align: center; }
+
+.accounts-page ::deep .table-card tbody td {
+    vertical-align: middle;
+}
+
+/* Nút ⋯ nằm giữa ô thao tác (span inline-flex mặc định bám trái). */
+.accounts-page ::deep .table-card tbody td .row-actions {
+    display: block;
+}
+
+.accounts-page ::deep .table-card tbody td:nth-child(1),
+.accounts-page ::deep .table-card tbody td:nth-child(2),
+.accounts-page ::deep .table-card tbody td:nth-child(5) {
+    overflow-wrap: break-word;
+}

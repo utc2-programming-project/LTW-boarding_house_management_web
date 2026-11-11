@@ -49,4 +49,7 @@ public sealed class ContractPageService(P2CallerProvider callerProvider, IContra
             contractId,
             await callerProvider.GetCallerAsync(),
             cancellationToken);
+
+    public async Task<ContractActionResultDto> UpdateDepositAsync(Guid contractId, decimal depositAmount, CancellationToken cancellationToken = default) =>
+        await contracts.UpdateDepositAsync(contractId, depositAmount, await callerProvider.GetCallerAsync(), cancellationToken);
 }

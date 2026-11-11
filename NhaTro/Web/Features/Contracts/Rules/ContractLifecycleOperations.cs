@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Utils;
 using Web.Data;
-using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
+using Web.Features.Audit.Entities;
+using Web.Features.Approvals.Entities;
+using Web.Features.Approvals.Enums;
+using Web.Features.Contracts.DTOs;
+using Web.Features.Utilities.Entities;
 
 namespace Web.Features.Contracts.Rules;
 
@@ -15,6 +19,12 @@ namespace Web.Features.Contracts.Rules;
 /// </summary>
 public static class ContractLifecycleOperations
 {
+    public static class ContractAuditActions
+    {
+        public const string DepositUpdated = "ContractDepositUpdated";
+        public const string Renewed = "ContractRenewed";
+        public const string Liquidated = "ContractLiquidated";
+    }
     /// <summary>Hợp đồng đã duyệt và hôm nay nằm trong thời hạn (bao gồm cả ngày kết thúc).</summary>
     public static bool IsActionable(
         ContractStatus status,
@@ -50,6 +60,49 @@ public static class ContractLifecycleOperations
                 && other.StartDate > startDate,
             cancellationToken);
 
+    public static void EnsureDepositEditable(Contract contract, DateOnly today, bool hasSuccessor)
+    {
+        if (!IsActionable(contract.Status, contract.StartDate, contract.EndDate, today) || hasSuccessor)
+        {
+            throw new ContractOperationException(ContractErrorMessages.ContractNotActive, ContractErrorCodes.ContractNotActive);
+        }
+    }
+
+    public static async Task EnsureNoPendingApprovalAsync(ApplicationDbContext db, Guid contractId, CancellationToken ct = default)
+    {
+        var key = contractId.ToString("D");
+        if (await db.Set<ManagerApprovalRequest>().AnyAsync(x => x.TargetType == ApprovalTargetType.Contract && x.TargetKey == key && x.Status == ApprovalRequestStatus.Pending, ct))
+        {
+            throw new ContractOperationException(ContractErrorMessages.DuplicatePendingRequest, ContractErrorCodes.DuplicatePendingRequest);
+        }
+    }
+
+    public static async Task SettlePendingRenewalRequestsAsync(ApplicationDbContext db, Guid contractId, RenewalRequestStatus status, string actorUserId, DateTime decidedAt, string? reason, CancellationToken ct = default)
+    {
+        var requests = await db.ContractRenewalRequests.Where(x => x.ContractId == contractId && x.Status == RenewalRequestStatus.Pending).ToListAsync(ct);
+        foreach (var request in requests)
+        {
+            request.Status = status;
+            request.DecidedByUserId = actorUserId;
+            request.DecidedAt = decidedAt;
+            request.RejectReason = reason;
+        }
+    }
+
+    public static async Task CopyFutureServiceRegistrationsAsync(ApplicationDbContext db, Guid fromContractId, Guid toContractId, DateOnly fromMonth, DateTimeOffset createdAt, CancellationToken ct = default)
+    {
+        var registrations = await db.Set<ContractServiceRegistration>()
+            .Where(x => x.ContractId == fromContractId && x.MonthStart >= fromMonth).ToListAsync(ct);
+        db.Set<ContractServiceRegistration>().AddRange(registrations.Select(x => new ContractServiceRegistration
+        {
+            ContractId = toContractId, ServiceCatalogId = x.ServiceCatalogId, MonthStart = x.MonthStart,
+            RegisteredByUserId = x.RegisteredByUserId, CreatedAt = createdAt,
+        }));
+    }
+
+    public static void AddAudit(ApplicationDbContext db, string action, string actorUserId, int propertyId, string metadata, DateTimeOffset occurredAt) =>
+        db.Set<AuditLogEntry>().Add(new AuditLogEntry { Category = AuditLogCategory.Business, Action = action, ActorUserId = actorUserId, PropertyId = propertyId, Metadata = metadata, OccurredAt = occurredAt });
+
     public static Task<bool> HasOverlappingApprovedAsync(
         ApplicationDbContext db,
         int roomId,
@@ -72,6 +125,7 @@ public static class ContractLifecycleOperations
         Contract current,
         Room room,
         DateTime newEndDate,
+        DateTimeOffset createdAt,
         CancellationToken cancellationToken = default)
     {
         var contractId = Guid.NewGuid();
@@ -99,6 +153,9 @@ public static class ContractLifecycleOperations
             TenantId = tenantId,
         }));
 
+        await CopyFutureServiceRegistrationsAsync(db, current.ContractId, renewal.ContractId,
+            new DateOnly(renewal.StartDate.Year, renewal.StartDate.Month, 1), createdAt, cancellationToken);
+
         return renewal;
     }
 
@@ -124,7 +181,7 @@ public static class ContractLifecycleOperations
                 && todayDate <= other.EndDate,
             cancellationToken);
 
-        if (!hasOtherCurrent)
+        if (room.Status == RoomStatus.Rented && !hasOtherCurrent)
         {
             room.Status = RoomStatus.Available;
         }

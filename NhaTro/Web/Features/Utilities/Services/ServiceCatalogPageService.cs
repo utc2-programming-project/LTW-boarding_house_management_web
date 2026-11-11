@@ -326,7 +326,9 @@ public sealed class ServiceCatalogPageService(
         var catalogs = await catalogService.GetServiceCatalogsAsync(caller);
 
         var userIds = catalogs.SelectMany(c => c.PriceHistory).Select(v => v.CreatedByUserId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
-        var userMap = await db.Users.AsNoTracking().Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—"), ct);
+        var userMap = await db.Users.AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : "—", ct);
 
         foreach (var catalog in catalogs)
         {
@@ -340,7 +342,7 @@ public sealed class ServiceCatalogPageService(
 
             foreach (var version in catalog.PriceHistory)
             {
-                var creatorName = !string.IsNullOrEmpty(version.CreatedByUserId) && userMap.TryGetValue(version.CreatedByUserId, out var name) ? name : (version.CreatedByUserId ?? "—");
+                var creatorName = !string.IsNullOrEmpty(version.CreatedByUserId) && userMap.TryGetValue(version.CreatedByUserId, out var name) ? name : "—";
                 list.Add(MapToPriceVersionDto(catalog, version, buildingScope, buildingName, Today, creatorName));
             }
         }
@@ -663,7 +665,7 @@ public sealed class ServiceCatalogPageService(
 
             var buildingScope = verified.PropertyId.HasValue ? verified.PropertyId.Value.ToString() : "all";
             var creatorUser = !string.IsNullOrEmpty(verifiedVersion.CreatedByUserId)
-                ? await db.Users.AsNoTracking().Where(u => u.Id == verifiedVersion.CreatedByUserId).Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : (u.Email ?? u.UserName ?? "—")).FirstOrDefaultAsync(ct)
+                ? await db.Users.AsNoTracking().Where(u => u.Id == verifiedVersion.CreatedByUserId).Select(u => !string.IsNullOrWhiteSpace(u.FullName) ? u.FullName : "—").FirstOrDefaultAsync(ct)
                 : "—";
             var versionDto = MapToPriceVersionDto(verified, verifiedVersion, buildingScope, propName, Today, creatorUser);
             return (true, null, versionDto);
@@ -907,7 +909,7 @@ public sealed class ServiceCatalogPageService(
             BuildingScope = buildingScope,
             BuildingName = buildingName,
             CreatedAt = version.CreatedAt,
-            CreatedBy = !string.IsNullOrWhiteSpace(creatorName) ? creatorName : (!string.IsNullOrWhiteSpace(version.CreatedByUserId) ? version.CreatedByUserId : "—"),
+            CreatedBy = !string.IsNullOrWhiteSpace(creatorName) ? creatorName : "—",
             Note = string.IsNullOrWhiteSpace(version.Note) ? "—" : version.Note,
             IsSessionCreated = false,
         };

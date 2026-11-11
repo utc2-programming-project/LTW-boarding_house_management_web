@@ -43,6 +43,9 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         var cut = RenderOwner();
 
         cut.WaitForAssertion(() => Assert.Equal(1, RowCount(cut)));
+        cut.Find("tbody .p2-menu-trigger").Click();
+        cut.WaitForAssertion(() => Assert.Contains(
+            cut.FindAll(".p2-row-menu-item"), item => item.TextContent.Trim() == "P2DeleteProperty"));
     }
 
     [Fact]
@@ -52,8 +55,11 @@ public sealed class PropertyDeleteComponentTests : BunitContext
 
         var cut = Render(new ManagerAuthenticationProvider());
 
-        cut.WaitForAssertion(() => Assert.NotNull(cut.Find("tbody")));
-        Assert.Equal(0, RowCount(cut));
+        cut.WaitForAssertion(() => Assert.Equal(1, RowCount(cut)));
+        cut.Find("tbody .p2-menu-trigger").Click();
+        cut.WaitForAssertion(() => Assert.Equal(
+            new[] { "P2ViewDetails" },
+            cut.FindAll(".p2-row-menu-item").Select(item => item.TextContent.Trim()).ToArray()));
     }
 
     [Fact]
@@ -64,7 +70,7 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         var cut = RenderOwner();
         cut.WaitForAssertion(() => Assert.Equal(2, RowCount(cut)));
 
-        cut.FindAll("button[aria-label='P2DeleteProperty']")[0].Click();
+        OpenDeleteMenu(cut, row: 0);
         cut.WaitForAssertion(() =>
             Assert.Equal("P2DeletePropertyTitle", cut.Find(".confirm-dialog .title").TextContent.Trim()));
 
@@ -83,7 +89,7 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         var cut = RenderOwner();
         cut.WaitForAssertion(() => Assert.Equal(1, RowCount(cut)));
 
-        cut.Find("button[aria-label='P2DeleteProperty']").Click();
+        OpenDeleteMenu(cut);
         Confirm(cut);
 
         cut.WaitForAssertion(() => Assert.Equal("P2PropertyHasRooms", _toasts.Toasts[0].Text));
@@ -98,7 +104,7 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         var cut = RenderOwner();
         cut.WaitForAssertion(() => Assert.Equal(1, RowCount(cut)));
 
-        cut.Find("button[aria-label='P2DeleteProperty']").Click();
+        OpenDeleteMenu(cut);
         cut.WaitForAssertion(() => Assert.NotNull(cut.Find(".confirm-dialog")));
 
         cut.Find(".confirm-dialog .footer button:first-child").Click();
@@ -122,7 +128,18 @@ public sealed class PropertyDeleteComponentTests : BunitContext
     }
 
     private static int RowCount(IRenderedComponent<PropertyList> cut) =>
-        cut.FindAll("tbody button[aria-label='P2DeleteProperty']").Count;
+        cut.FindAll("tbody .p2-menu-trigger").Count;
+
+    // Thao tác xóa nằm trong menu "⋯" của dòng: mở menu rồi chọn mục xóa.
+    private static void OpenDeleteMenu(IRenderedComponent<PropertyList> cut, int row = 0)
+    {
+        cut.FindAll("tbody .p2-menu-trigger")[row].Click();
+        cut.WaitForAssertion(() => Assert.Contains(
+            cut.FindAll(".p2-row-menu-item"), item => item.TextContent.Trim() == "P2DeleteProperty"));
+        cut.FindAll(".p2-row-menu-item")
+            .Single(item => item.TextContent.Trim() == "P2DeleteProperty")
+            .Click();
+    }
 
     // Nút xác nhận là nút thứ hai trong footer của ConfirmDialog.
     private static void Confirm(IRenderedComponent<PropertyList> cut) =>
