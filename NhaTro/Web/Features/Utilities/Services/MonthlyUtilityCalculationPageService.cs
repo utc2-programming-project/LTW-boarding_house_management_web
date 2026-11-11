@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Utils;
 using Web.Data;
@@ -21,6 +22,7 @@ namespace Web.Features.Utilities.Services;
 public sealed class MonthlyUtilityCalculationPageService(
     ApplicationDbContext db,
     UtilityReadingService readingService,
+    UtilityPeriodCostSnapshotService costSnapshots,
     IUtilityTariffService tariffService,
     P2CallerProvider callerProvider,
     Web.Features.Invoices.Services.IInvoiceService invoiceService,
@@ -298,21 +300,49 @@ public sealed class MonthlyUtilityCalculationPageService(
             return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.InvalidReading);
         }
 
+        // AdjustAsync owns its transaction. In particular, an SW-09 request must survive
+        // the ApprovalRequired result instead of being rolled back by this page transaction.
+        if (request.ReadingId is { } existingReadingId)
+        {
+            try
+            {
+                await readingService.AdjustAsync(existingReadingId,
+                    new AdjustUtilityReadingRequest(request.ElectricEnd, request.WaterEnd, request.Reason ?? string.Empty),
+                    caller, cancellationToken);
+                return new MonthlyUtilitySaveResult(true, existingReadingId);
+            }
+            catch (UtilityReadingException exception)
+            {
+                return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode,
+                    PendingApproval: exception.ErrorCode == UtilityReadingErrorCodes.ApprovalRequired);
+            }
+            catch (UtilityReadingAuthorizationException exception)
+            {
+                return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
+            }
+            catch (UtilityReadingNotFoundException exception)
+            {
+                return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
+            }
+            catch (DbUpdateConcurrencyException exception)
+            {
+                db.ChangeTracker.Clear();
+                logger.LogWarning(exception, "P5 previous-period correction conflicted for reading {ReadingId}", existingReadingId);
+                return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.ConcurrencyConflict);
+            }
+            catch (Exception exception)
+            {
+                db.ChangeTracker.Clear();
+                logger.LogError(exception, "P5 previous-period correction failed for reading {ReadingId}", existingReadingId);
+                return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.SaveFailed);
+            }
+        }
+
         try
         {
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
             int readingId;
-            if (request.ReadingId is { } existingReadingId)
-            {
-                await readingService.AdjustAsync(
-                    existingReadingId,
-                    new AdjustUtilityReadingRequest(request.ElectricEnd, request.WaterEnd, request.Reason ?? string.Empty),
-                    caller,
-                    cancellationToken);
-                readingId = existingReadingId;
-            }
-            else
             {
                 var duplicate = await db.UtilityReadings
                     .AsNoTracking()
@@ -323,7 +353,7 @@ public sealed class MonthlyUtilityCalculationPageService(
                 if (duplicate)
                 {
                     await transaction.RollbackAsync(cancellationToken);
-                    return new MonthlyUtilitySaveResult(false, ErrorCode: "DuplicatePeriod");
+                    return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.DuplicatePeriod);
                 }
 
                 var saved = await readingService.RecordAsync(
@@ -338,20 +368,12 @@ public sealed class MonthlyUtilityCalculationPageService(
                 readingId = saved.Id;
             }
 
-            await RefreshSnapshotsAsync(readingId, cancellationToken);
+            await costSnapshots.RefreshAsync(db, readingId, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return new MonthlyUtilitySaveResult(true, readingId);
         }
         catch (UtilityReadingException exception)
         {
-            if (exception.ErrorCode == UtilityReadingErrorCodes.ApprovalRequired)
-            {
-                return new MonthlyUtilitySaveResult(
-                    false,
-                    ErrorCode: exception.ErrorCode,
-                    PendingApproval: true);
-            }
-
             return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
         }
         catch (UtilityReadingAuthorizationException exception)
@@ -362,15 +384,28 @@ public sealed class MonthlyUtilityCalculationPageService(
         {
             return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            logger.LogWarning(exception, "P5 monthly utility save conflicted for room {RoomId}", request.RoomId);
+            return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.ConcurrencyConflict);
+        }
         catch (DbUpdateException exception)
         {
             logger.LogWarning(exception, "P5 monthly utility save failed for room {RoomId}", request.RoomId);
-            return new MonthlyUtilitySaveResult(false, ErrorCode: "DuplicatePeriod");
+            return new MonthlyUtilitySaveResult(false, ErrorCode:
+                IsDuplicateReadingPeriod(exception)
+                    ? UtilityReadingErrorCodes.DuplicatePeriod
+                    : UtilityReadingErrorCodes.SaveFailed);
+        }
+        catch (UtilityTariffUnavailableException exception)
+        {
+            logger.LogWarning(exception, "P5 tariff is missing for room {RoomId}", request.RoomId);
+            return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.TariffMissing);
         }
         catch (Exception exception)
         {
             logger.LogError(exception, "P5 monthly utility save failed for room {RoomId}", request.RoomId);
-            return new MonthlyUtilitySaveResult(false, ErrorCode: "SaveFailed");
+            return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.SaveFailed);
         }
     }
 
@@ -408,14 +443,11 @@ public sealed class MonthlyUtilityCalculationPageService(
 
         try
         {
-            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             await readingService.AdjustAsync(
                 readingId,
                 new AdjustUtilityReadingRequest(electricEnd, waterEnd, reason),
                 caller,
                 cancellationToken);
-            await RefreshSnapshotsAsync(readingId, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
             return new MonthlyUtilitySaveResult(true, readingId);
         }
         catch (UtilityReadingException exception)
@@ -433,10 +465,15 @@ public sealed class MonthlyUtilityCalculationPageService(
         {
             return new MonthlyUtilitySaveResult(false, ErrorCode: exception.ErrorCode);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            logger.LogWarning(exception, "P5 previous-period correction conflicted for reading {ReadingId}", readingId);
+            return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.ConcurrencyConflict);
+        }
         catch (Exception exception)
         {
             logger.LogError(exception, "P5 previous-period correction failed for reading {ReadingId}", readingId);
-            return new MonthlyUtilitySaveResult(false, ErrorCode: "SaveFailed");
+            return new MonthlyUtilitySaveResult(false, ErrorCode: UtilityReadingErrorCodes.SaveFailed);
         }
     }
 
@@ -562,68 +599,10 @@ public sealed class MonthlyUtilityCalculationPageService(
     private static string FormatRoomPeriod(MonthlyUtilityRoomCostDto room) =>
         $"{room.PeriodStart:dd/MM/yyyy} - {room.PeriodEnd:dd/MM/yyyy}";
 
-    private async Task RefreshSnapshotsAsync(int readingId, CancellationToken cancellationToken)
-    {
-        var reading = await db.UtilityReadings
-            .AsNoTracking()
-            .SingleAsync(item => item.Id == readingId, cancellationToken);
-
-        var contract = await db.Contracts
-            .AsNoTracking()
-            .Where(item => item.RoomId == reading.RoomId
-                && item.Status == ContractStatus.Approved
-                && item.StartDate <= reading.PeriodEnd.ToDateTime(TimeOnly.MaxValue)
-                && item.EndDate >= reading.PeriodStart.ToDateTime(TimeOnly.MinValue))
-            .OrderByDescending(item => item.StartDate)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var residentCount = contract is null
-            ? 1
-            : Math.Max(1, await db.ContractMembers.CountAsync(
-                member => member.ContractId == contract.ContractId,
-                cancellationToken));
-
-        var oldSnapshots = await db.UtilityBillingPeriodSnapshots
-            .Include(snapshot => snapshot.CostLines)
-            .Where(snapshot => snapshot.BillingPeriodId == readingId)
-            .ToListAsync(cancellationToken);
-
-        if (oldSnapshots.Count > 0)
-        {
-            db.UtilityBillingCostLineSnapshots.RemoveRange(oldSnapshots.SelectMany(snapshot => snapshot.CostLines));
-            db.UtilityBillingPeriodSnapshots.RemoveRange(oldSnapshots);
-            await db.SaveChangesAsync(cancellationToken);
-        }
-
-        var electricUsage = Math.Max(0m, reading.ElectricEnd - reading.ElectricStart);
-        var waterUsage = Math.Max(0m, reading.WaterEnd - reading.WaterStart);
-
-        if (electricUsage > 0m)
-        {
-            await tariffService.SnapshotForPeriodAsync(
-                readingId,
-                TariffType.Electric,
-                ElectricScopeCode,
-                reading.PeriodStart,
-                reading.PeriodEnd,
-                electricUsage,
-                residentCount,
-                cancellationToken);
-        }
-
-        if (waterUsage > 0m)
-        {
-            await tariffService.SnapshotForPeriodAsync(
-                readingId,
-                TariffType.Water,
-                WaterScopeCode,
-                reading.PeriodStart,
-                reading.PeriodEnd,
-                waterUsage,
-                residentCount,
-                cancellationToken);
-        }
-    }
+    private static bool IsDuplicateReadingPeriod(DbUpdateException exception) =>
+        exception.InnerException is SqlException { Number: 2601 or 2627 } sql
+        && sql.Message.Contains("RoomId", StringComparison.OrdinalIgnoreCase)
+        && sql.Message.Contains("PeriodStart", StringComparison.OrdinalIgnoreCase);
 
     private async Task<IReadOnlyList<ContractRow>> LoadContractsAsync(
         PropertyCaller caller,
@@ -785,7 +764,9 @@ public sealed class MonthlyUtilityCalculationPageService(
             .AsNoTracking()
             .Where(invoice => contractIds.Contains(invoice.ContractId)
                 && invoice.RegistrationId == null
-                && (invoice.Status == InvoiceStatus.Issued || invoice.Status == InvoiceStatus.Paid))
+                && (invoice.Status == InvoiceStatus.Draft
+                    || invoice.Status == InvoiceStatus.Issued
+                    || invoice.Status == InvoiceStatus.Paid))
             .Select(invoice => new InvoicedPeriodRow(
                 invoice.ContractId,
                 invoice.PeriodStart,

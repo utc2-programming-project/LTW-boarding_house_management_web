@@ -151,6 +151,12 @@ Quan hệ: `Contracts 1—N Invoices 1—N InvoiceItems`, xóa `Restrict` cả h
 - VHT-28 2A yêu cầu người thứ hai chạy script — vẫn chưa có.
 - SHA sẽ đổi khi VHT-124/126 merge → chạy lại TASK-02/04/06 (script + diff) trước khi publish.
 
+## VHT-102 — sửa chỉ số kỳ liền trước (11/11/2026)
+
+| Migration | Nội dung rà soát |
+| --- | --- |
+| `20261111064205_AddUtilityReadingAuditImmutability` | Tạo trigger `TR_UtilityReadingAudits_Immutable`, chặn UPDATE/DELETE trên nhật ký D10. |
+
 ## VHT-51 — snapshot dịch vụ và gia cố kỳ ghi chỉ số (09/11/2026)
 
 | Migration | Nội dung rà soát |

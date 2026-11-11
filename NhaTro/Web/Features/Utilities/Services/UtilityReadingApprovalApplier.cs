@@ -8,6 +8,7 @@ using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Utilities.Services;
 
@@ -15,7 +16,9 @@ namespace Web.Features.Utilities.Services;
 /// Áp dụng yêu cầu SW-09 khi Chủ trọ duyệt: kiểm lại D10 trên dữ liệu tại thời điểm duyệt
 /// rồi mới ghi chỉ số và lịch sử. Chạy trong transaction của hàng đợi nên không tự SaveChanges.
 /// </summary>
-public sealed class UtilityReadingApprovalApplier : IApprovalApplier
+public sealed class UtilityReadingApprovalApplier(
+    UtilityPeriodCostSnapshotService costSnapshots,
+    TimeProvider clock) : IApprovalApplier
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -62,6 +65,15 @@ public sealed class UtilityReadingApprovalApplier : IApprovalApplier
             throw Invalid(UtilityReadingErrorCodes.ReadingNotFound);
         }
 
+        if (request.ExpectedToken is { Length: > 0 } expected
+            && reading.RowVersion.Length > 0
+            && !expected.SequenceEqual(reading.RowVersion))
+        {
+            throw new ApprovalApplyException(
+                UtilityReadingErrorCodes.ConcurrencyConflict,
+                "Chỉ số đã bị thay đổi sau khi gửi yêu cầu duyệt. Vui lòng từ chối và tạo lại yêu cầu.");
+        }
+
         var roomPropertyId = await db.Rooms.IgnoreQueryFilters().AsNoTracking()
             .Where(room => room.Id == reading.RoomId)
             .Select(room => (int?)room.PropertyId)
@@ -84,12 +96,25 @@ public sealed class UtilityReadingApprovalApplier : IApprovalApplier
         {
             throw Invalid(UtilityReadingErrorCodes.InvalidReading);
         }
+        if (payload.ElectricEnd == reading.ElectricEnd && payload.WaterEnd == reading.WaterEnd)
+        {
+            throw new ApprovalApplyException(UtilityReadingErrorCodes.NoChange,
+                "Chỉ số mới trùng với chỉ số cũ, không có gì để điều chỉnh.");
+        }
 
         UtilityReadingService.Apply(
             reading,
             new AdjustUtilityReadingRequest(payload.ElectricEnd, payload.WaterEnd, reason),
-            reason,
-            request.RequestedByUserId ?? string.Empty);
+            request.RequestedByUserId ?? string.Empty,
+            clock.UtcNow());
+        try
+        {
+            await costSnapshots.RefreshAsync(db, reading.Id, ct);
+        }
+        catch (UtilityTariffUnavailableException exception)
+        {
+            throw new ApprovalApplyException(UtilityReadingErrorCodes.TariffMissing, exception.Message, exception);
+        }
     }
 
     private static ApprovalApplyException Invalid(string errorCode) =>
