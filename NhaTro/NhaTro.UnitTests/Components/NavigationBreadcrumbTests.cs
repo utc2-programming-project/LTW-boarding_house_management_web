@@ -25,7 +25,7 @@ public sealed class NavigationBreadcrumbTests : BunitContext
 
         var items = cut.FindAll("ol li");
         Assert.Single(items);
-        Assert.Equal("Dashboard", items[0].TextContent.Trim());
+        Assert.Equal("Home", items[0].TextContent.Trim());
     }
 
     [Fact]

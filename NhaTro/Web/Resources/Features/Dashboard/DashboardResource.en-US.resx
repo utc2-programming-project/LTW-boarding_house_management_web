@@ -48,4 +48,5 @@
 <data name="PendingPeriod" xml:space="preserve"><value>Period for time-based reports</value></data>
 <data name="CurrentPeriodNote" xml:space="preserve"><value>Room and tenant figures reflect the current property scope. The reporting period applies to time-based reports when available.</value></data>
 <data name="ViewReports" xml:space="preserve"><value>View room and tenant reports</value></data>
+<data name="HomeTitle" xml:space="preserve"><value>Home</value></data>
 </root>
