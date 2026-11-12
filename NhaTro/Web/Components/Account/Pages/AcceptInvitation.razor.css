@@ -1,0 +1,39 @@
+/* Khối thông tin lời mời: tách khỏi form, mỗi dòng một icon để quét nhanh. */
+.invite-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+}
+
+.invite-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.invite-row strong {
+    font-weight: 600;
+}
+
+/* Icon do component con render nên phải dùng ::deep mới ăn scope. */
+.invite-row ::deep .lucide-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+/* Hạn dùng là thông tin phụ, không phải dữ liệu chính của lời mời. */
+.invite-row--expiry {
+    color: var(--text-secondary);
+    font-size: 13px;
+}

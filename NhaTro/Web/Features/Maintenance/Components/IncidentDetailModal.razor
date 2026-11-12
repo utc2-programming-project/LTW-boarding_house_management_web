@@ -67,9 +67,20 @@
         }
         @if (_error is not null) { <div class="detail-error" role="alert"><p>@_error</p><button class="btn btn-secondary" disabled="@Busy" @onclick="RefreshAsync">@L["Retry"]</button></div> }
         @foreach (var error in _photoErrors) { <p class="detail-error" role="alert">@error</p> }
-        <div class="detail-actions"><button class="btn btn-secondary" disabled="@Busy" @onclick="CloseAsync">@L["Close"]</button></div>
+        <div class="detail-actions">
+            @if (!TenantView && _item is not null)
+            {
+                <button type="button" class="btn btn-danger" disabled="@Busy" @onclick="RequestDelete">@L["DeleteIncident"]</button>
+            }
+            <button class="btn btn-secondary" disabled="@Busy" @onclick="CloseAsync">@L["Close"]</button>
+        </div>
     </div>
 </FeatureDialog>
+
+<ConfirmDialog Visible="_deleteVisible" Title="@L["DeleteIncidentTitle"]"
+               Message="@string.Format(L["DeleteIncidentMessage"], _item?.Title ?? string.Empty)"
+               ConfirmText="@L["DeleteIncidentConfirm"]" CancelText="@L["Cancel"]" Danger="true"
+               OnConfirm="DeleteAsync" OnCancel="CancelDelete" />
 @code {
     [Parameter, EditorRequired] public IncidentPageService Session { get; set; } = default!;
     [Parameter] public int IncidentId { get; set; }
@@ -91,6 +102,7 @@
     private bool _loading = true;
     private bool _saving;
     private bool _uploading;
+    private bool _deleteVisible;
     private int _photoVersion;
     private bool Busy => _loading || _saving || _uploading;
     private bool UpdateDisabled => Busy || _updateMode == IncidentMode.Deny || _item?.Pending.Any(p => p.Action == IncidentAction.Update) == true;
@@ -159,6 +171,28 @@
             await OnChanged.InvokeAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException) { _error = L[ex is IncidentPageException ? ex.Message : "SaveFailed"]; Toasts.Error(_error); }
+        finally { _saving = false; }
+    }
+    private void RequestDelete() => _deleteVisible = true;
+    private void CancelDelete() => _deleteVisible = false;
+    private async Task DeleteAsync()
+    {
+        if (Busy) return;
+        _saving = true;
+        _error = null;
+        try
+        {
+            await Session.DeleteAsync(IncidentId);
+            _deleteVisible = false;
+            Toasts.Success(L["IncidentDeleted"]);
+            await OnChanged.InvokeAsync();
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = L[ex is IncidentPageException ? ex.Message : "DeleteFailed"];
+            Toasts.Error(_error);
+        }
         finally { _saving = false; }
     }
     private Task CloseAsync() => _dialog?.RequestCloseAsync() ?? Task.CompletedTask;

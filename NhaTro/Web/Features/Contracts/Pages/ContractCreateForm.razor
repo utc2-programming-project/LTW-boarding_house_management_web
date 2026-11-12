@@ -85,11 +85,11 @@
                 <div class="contract-price-preview"><span>@L["ContractSnapshotAtApproval"]</span><strong class="tabular-nums">@MoneyFormatter.Format(selectedRoom.StandardPrice)</strong><span>@L["ContractDepositEstimate"]</span><strong class="tabular-nums">@MoneyFormatter.Format(_form.DepositAmount ?? MoneyFormatter.RoundVnd(selectedRoom.StandardPrice * .20m))</strong></div>
             }
             <fieldset class="contract-tenant-picker">
-                <legend>@L["ContractTenantsLabel"]</legend>
+                <legend><span class="contract-tenant-legend"><LucideIcon Name="users" />@L["ContractTenantsLabel"]</span></legend>
                 @if (_options.Tenants.Count == 0) { <p>@L["ContractNoActiveTenants"]</p> }
                 else
                 {
-                    <label class="search-field contract-tenant-search">
+                    <label class="contract-tenant-search">
                         <LucideIcon Name="search" />
                         <span class="sr-only">@L["ContractTenantSearchLabel"]</span>
                         <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]" @bind="_tenantKeyword" @bind:event="oninput" />
@@ -109,7 +109,7 @@
             @if (_tenantError is not null) { <p class="contract-field-error" role="alert">@_tenantError</p> }
             <footer class="contract-action-bar">
                 <a class="btn btn-secondary" href="/contracts">@L["ContractCancel"]</a>
-                <button type="submit" class="btn btn-primary" disabled="@_submitting"><LucideIcon Name="@( _submitting ? "loader" : "send")" />@L[_submitting ? "ContractProcessing" : "ContractSubmitApproval"]</button>
+                <button type="submit" class="btn btn-primary" disabled="@_submitting"><LucideIcon Name="send" />@L[_submitting ? "ContractProcessing" : "ContractSubmitApproval"]</button>
             </footer>
         </EditForm>
     }

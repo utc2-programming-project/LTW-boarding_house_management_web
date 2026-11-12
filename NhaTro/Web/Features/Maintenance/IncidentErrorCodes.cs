@@ -10,4 +10,8 @@ public static class IncidentErrorCodes
     public const string RepairCostInvalid = "RepairCostInvalid";
     public const string Conflict = "Conflict";
     public const string ApprovalFailed = "ApprovalFailed";
+    public const string NotInTrash = "IncidentNotInTrash";
+    public const string HasPendingApproval = "IncidentHasPendingApproval";
+    public const string HasDependencies = "IncidentHasDependencies";
+    public const string RoomDeleted = "IncidentRoomDeleted";
 }

@@ -18,16 +18,5 @@ public static class DataTableLabelLocalizer
         LoadFailed = localizer["TableLoadFailed"],
         NoData = localizer["NoData"],
         Retry = localizer["TableRetry"],
-        FilterBy = localizer["TableFilterBy"],
-        Pagination = localizer["TablePagination"],
-        FirstPage = localizer["TableFirstPage"],
-        PreviousPage = localizer["TablePreviousPage"],
-        NextPage = localizer["TableNextPage"],
-        LastPage = localizer["TableLastPage"],
-        Page = localizer["TablePage"],
-        Summary = localizer["TableSummary"],
-        PageInfo = localizer["TablePageInfo"],
-        Previous = localizer["TablePrevious"],
-        Next = localizer["TableNext"],
     };
 }

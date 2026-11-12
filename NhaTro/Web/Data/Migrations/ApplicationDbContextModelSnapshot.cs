@@ -187,6 +187,18 @@ namespace Web.Migrations
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("BankAccountName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("BankCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -598,12 +610,22 @@ namespace Web.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<decimal>("DepositAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RejectReason")
                         .HasMaxLength(500)
@@ -626,6 +648,8 @@ namespace Web.Migrations
 
                     b.HasIndex("ContractNumber")
                         .IsUnique();
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("RoomId");
 
@@ -729,8 +753,18 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateOnly?>("DueDate")
                         .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("IssuedAt")
                         .HasColumnType("datetime2");
@@ -762,11 +796,13 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IsDeleted");
+
                     b.HasIndex("RegistrationId");
 
                     b.HasIndex("ContractId", "PeriodStart")
                         .IsUnique()
-                        .HasFilter("[RegistrationId] IS NULL");
+                        .HasFilter("[RegistrationId] IS NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("PeriodStart", "Status");
 
@@ -1018,10 +1054,20 @@ namespace Web.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<decimal?>("RepairCost")
                         .HasPrecision(18)
@@ -1060,6 +1106,8 @@ namespace Web.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsDeleted");
 
                     b.HasIndex("ReportedByUserId");
 
@@ -1535,6 +1583,13 @@ namespace Web.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1582,6 +1637,8 @@ namespace Web.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UploadedByUserId");
+
+                    b.HasIndex("IsDeleted", "DeletedAt");
 
                     b.HasIndex("RelatedEntityType", "RelatedEntityId");
 
@@ -1858,6 +1915,16 @@ namespace Web.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateOnly>("MonthStart")
                         .HasColumnType("date");
 
@@ -1874,7 +1941,8 @@ namespace Web.Migrations
                     b.HasIndex("ContractId");
 
                     b.HasIndex("ContractId", "ServiceCatalogId", "MonthStart")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("ContractServiceRegistrations");
                 });
@@ -3082,11 +3150,13 @@ namespace Web.Migrations
 
             modelBuilder.Entity("Web.Features.Tenants.Entities.TenantOwnerLink", b =>
                 {
-                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Web.Features.Utilities.Entities.ServiceCatalog", b =>

@@ -9,7 +9,7 @@
 
 <PageTitle>@L["PageTitle"]</PageTitle>
 
-<section class="approval-queue-page" aria-labelledby="approval-queue-title">
+<section class="approval-queue-page page-stack" aria-labelledby="approval-queue-title">
     <PageHeading Title="@L["PageTitle"]" TitleId="approval-queue-title" HelpText="@L["PageHelp"]">
         <Actions>
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
@@ -88,9 +88,7 @@
                     </select>
                 </div>
                 <div class="filter-bar__actions">
-                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
-                        <LucideIcon Name="refresh-cw" /> @L["ResetFilters"]
-                    </button>
+                    <FilterResetButton OnClick="ResetFilters" />
                 </div>
             </div>
         </div>
@@ -98,7 +96,9 @@
         @if (Filtered.Count == 0)
         {
             <EmptyStateCard Title="@L["NoResultsTitle"]" Description="@L["NoResultsDescription"]">
-                <button type="button" class="btn btn-secondary" @onclick="ResetFilters">@L["ResetFilters"]</button>
+                <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
+                    <LucideIcon Name="refresh-cw" /> @L["ResetFilters"]
+                </button>
             </EmptyStateCard>
         }
         else
@@ -107,44 +107,66 @@
                 @foreach (var item in Filtered)
                 {
                     var expanded = _expanded.Contains(item.Id);
-                    <li class="approval-card" @key="item.Id">
+                    <li class="approval-card @(_highlighted.Contains(item.Id) ? "is-highlighted" : null)" @key="item.Id">
                         <div class="approval-card__head">
-                            <div class="approval-card__title">
-                                <span class="approval-card__code">@item.OperationCode</span>
-                                <h2>@OperationName(item.OperationCode)</h2>
+                            <div class="approval-card__headline">
+                                <div class="approval-card__title">
+                                    <span class="approval-card__code">@item.OperationCode</span>
+                                    <h2>@OperationName(item.OperationCode)</h2>
+                                </div>
+                                <p class="approval-card__target">
+                                    <LucideIcon Name="@TargetIcon(item.TargetType)" />
+                                    <span>@item.TargetLabel</span>
+                                </p>
                             </div>
                             <StatusBadge Text="@AgeText(item.RequestedAt)" Tone="@AgeTone(item.RequestedAt)" />
                         </div>
 
-                        <p class="approval-card__target">
-                            <LucideIcon Name="door" />
-                            <span>@item.TargetLabel</span>
-                        </p>
+                        <div class="approval-card__meta-row">
+                            <dl class="approval-card__meta">
+                                <div>
+                                    <dt><LucideIcon Name="user" />@L["RequesterLabel"]</dt>
+                                    <dd>@RequesterText(item)</dd>
+                                </div>
+                                <div>
+                                    <dt><LucideIcon Name="calendar" />@L["SentAtLabel"]</dt>
+                                    <dd class="tabular-nums">@DateFormatter.FormatDateTime(item.RequestedAt)</dd>
+                                </div>
+                                <div>
+                                    <dt><LucideIcon Name="folder" />@L["GroupLabel"]</dt>
+                                    <dd>@GroupText(item.Group)</dd>
+                                </div>
+                            </dl>
+                            <div class="approval-card__meta-actions">
+                                @if (item.Details.Count > 0)
+                                {
+                                    <button type="button" class="approval-card__toggle"
+                                            aria-expanded="@(expanded ? "true" : "false")"
+                                            aria-controls="@DetailId(item)"
+                                            @onclick="() => ToggleDetails(item.Id)">
+                                        <span>@(expanded ? L["DetailsToggleHide"] : L["DetailsToggleShow"])</span>
+                                        <LucideIcon Name="chevron-down" />
+                                    </button>
+                                }
 
-                        <dl class="approval-card__meta">
-                            <div>
-                                <dt>@L["RequesterLabel"]</dt>
-                                <dd><LucideIcon Name="user" />@RequesterText(item)</dd>
+                                <div class="approval-card__actions">
+                                    <button type="button" class="btn btn-secondary" @onclick="() => AskReject(item)">
+                                        <LucideIcon Name="close" />
+                                        <span>@L["Reject"]</span>
+                                    </button>
+                                    <button type="button" class="btn btn-primary"
+                                            disabled="@(!item.CanApply)"
+                                            title="@ApplyTitle(item)"
+                                            @onclick="() => AskApprove(item)">
+                                        <LucideIcon Name="check" />
+                                        <span>@L["Approve"]</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <dt>@L["SentAtLabel"]</dt>
-                                <dd class="tabular-nums"><LucideIcon Name="calendar" />@DateFormatter.FormatDateTime(item.RequestedAt)</dd>
-                            </div>
-                            <div>
-                                <dt>@L["GroupLabel"]</dt>
-                                <dd>@GroupText(item.Group)</dd>
-                            </div>
-                        </dl>
+                        </div>
 
                         @if (item.Details.Count > 0)
                         {
-                            <button type="button" class="approval-card__toggle"
-                                    aria-expanded="@(expanded ? "true" : "false")"
-                                    aria-controls="@DetailId(item)"
-                                    @onclick="() => ToggleDetails(item.Id)">
-                                <LucideIcon Name="chevron-down" />
-                                <span>@(expanded ? L["DetailsToggleHide"] : L["DetailsToggleShow"])</span>
-                            </button>
                             <dl class="approval-card__details" id="@DetailId(item)" hidden="@(!expanded)">
                                 @foreach (var line in item.Details)
                                 {
@@ -171,20 +193,6 @@
                                 <span><strong>@L["DecisionReasonLabel"]:</strong> @item.DecisionReason</span>
                             </p>
                         }
-
-                        <div class="approval-card__actions">
-                            <button type="button" class="btn btn-primary"
-                                    disabled="@(!item.CanApply)"
-                                    title="@ApplyTitle(item)"
-                                    @onclick="() => AskApprove(item)">
-                                <LucideIcon Name="check" />
-                                <span>@L["Approve"]</span>
-                            </button>
-                            <button type="button" class="btn btn-secondary" @onclick="() => AskReject(item)">
-                                <LucideIcon Name="close" />
-                                <span>@L["Reject"]</span>
-                            </button>
-                        </div>
                     </li>
                 }
             </ul>
@@ -246,20 +254,79 @@
     private const string SortOldest = "oldest";
     private const string SortNewest = "newest";
 
+    /// <summary>Mã phòng từ badge ở danh sách phòng (/approvals?q=A107), null khi mở từ menu.</summary>
+    [Parameter]
+    public string? InitialQuery { get; set; }
+
     private IReadOnlyList<ApprovalQueueItem> _items = [];
     private readonly HashSet<Guid> _expanded = [];
+    private readonly HashSet<Guid> _highlighted = [];
     private bool _loading = true;
     private bool _failed;
     private string _keyword = string.Empty;
     private string _group = string.Empty;
     private string _sort = SortOldest;
+    private string? _appliedQuery;
+    private string _focusFromQuery = string.Empty;
     private Guid? _approveId;
     private Guid? _rejectId;
     private string _rejectReason = string.Empty;
     private string? _rejectError;
     private bool _busy;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyQuery();
+        await LoadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Blazor dùng lại trang khi chỉ đổi query: link từ phòng khác phải lọc lại.
+        if (string.Equals(InitialQuery?.Trim(), _appliedQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ApplyQuery();
+        if (!_loading)
+        {
+            await LoadAsync();
+        }
+    }
+
+    /// <summary>Nhận ?q= từ danh sách phòng: điền sẵn ô tìm kiếm và mở sẵn yêu cầu khớp.</summary>
+    private void ApplyQuery()
+    {
+        var query = InitialQuery?.Trim();
+        if (string.IsNullOrEmpty(query) || string.Equals(query, _appliedQuery, StringComparison.Ordinal))
+        {
+            _appliedQuery = query;
+            return;
+        }
+
+        _appliedQuery = query;
+        _keyword = query;
+        _focusFromQuery = query;
+        _highlighted.Clear();
+    }
+
+    /// <summary>Sau khi tải: bung chi tiết + tô sáng đúng yêu cầu mà link trỏ tới.</summary>
+    private void ApplyQueryFocus()
+    {
+        if (_focusFromQuery.Length == 0)
+        {
+            return;
+        }
+
+        var keyword = _focusFromQuery;
+        _focusFromQuery = string.Empty;
+        foreach (var item in _items.Where(item => Matches(item, keyword)))
+        {
+            _expanded.Add(item.Id);
+            _highlighted.Add(item.Id);
+        }
+    }
 
     private int PendingCount => _items.Count;
 
@@ -345,6 +412,7 @@
             {
                 _items = result.Items;
                 _expanded.RemoveWhere(id => _items.All(item => item.Id != id));
+                ApplyQueryFocus();
             }
             else
             {
@@ -370,6 +438,9 @@
         _keyword = string.Empty;
         _group = string.Empty;
         _sort = SortOldest;
+        _highlighted.Clear();
+        _appliedQuery = null;
+        _focusFromQuery = string.Empty;
     }
 
     private void ToggleDetails(Guid id)
@@ -504,6 +575,18 @@
         var text = L[$"Group{group}"];
         return text.ResourceNotFound ? group : text.Value;
     }
+
+    private static string TargetIcon(ApprovalTargetType targetType) => targetType switch
+    {
+        ApprovalTargetType.Room => "door",
+        ApprovalTargetType.Tenant => "user",
+        ApprovalTargetType.Contract => "file-text",
+        ApprovalTargetType.Invoice => "receipt",
+        ApprovalTargetType.UtilityPeriod => "zap",
+        ApprovalTargetType.Incident => "wrench",
+        ApprovalTargetType.Report => "chart",
+        _ => "file",
+    };
 
     private string RequesterText(ApprovalQueueItem item) =>
         string.IsNullOrWhiteSpace(item.RequesterName) ? L["UnknownRequester"].Value : item.RequesterName;

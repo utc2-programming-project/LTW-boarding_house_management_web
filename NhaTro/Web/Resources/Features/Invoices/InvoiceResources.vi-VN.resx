@@ -101,6 +101,8 @@
   <data name="DetailPaymentStatus" xml:space="preserve"><value>Trạng thái thanh toán</value></data>
   <data name="QrTitle" xml:space="preserve"><value>Thanh toán bằng mã QR</value></data>
   <data name="QrBank" xml:space="preserve"><value>Tài khoản nhận tiền</value></data>
+  <data name="QrBankNotConfigured" xml:space="preserve"><value>Chưa cấu hình</value></data>
+  <data name="QrMissingBankNotice" xml:space="preserve"><value>Chủ trọ chưa nhập tài khoản nhận tiền nên chưa thể tạo mã QR chuyển khoản. Vui lòng liên hệ chủ trọ để được hướng dẫn thanh toán.</value></data>
   <data name="QrContent" xml:space="preserve"><value>Nội dung chuyển khoản</value></data>
   <data name="PaymentStatePendingConfirmation" xml:space="preserve"><value>Chờ chủ trọ xác nhận</value></data>
   <data name="PaymentStateRejected" xml:space="preserve"><value>Minh chứng không hợp lệ</value></data>
@@ -269,4 +271,41 @@
   <data name="ReviewErrorRejectionReasonTooLong" xml:space="preserve"><value>Lý do từ chối tối đa 500 ký tự.</value></data>
   <data name="ReviewErrorConcurrency" xml:space="preserve"><value>Dữ liệu vừa thay đổi. Hãy kiểm tra kết quả trước khi thử lại.</value></data>
   <data name="ReviewErrorUnknown" xml:space="preserve"><value>Đã xảy ra lỗi khi xử lý yêu cầu thanh toán.</value></data>
+  <data name="Restore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="RowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / trang</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Ngày xóa</value></data>
+  <data name="Purge" xml:space="preserve"><value>Xóa vĩnh viễn</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Xóa vĩnh viễn?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>Hóa đơn “{0}” sẽ bị xóa hẳn cùng các dòng chi tiết.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Gõ chính xác “{0}” để xác nhận</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Chưa khớp. Hãy gõ đúng mã hóa đơn ở trên.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Đã xóa vĩnh viễn.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Dọn sạch thùng rác</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Dọn sạch thùng rác?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Mọi hóa đơn nháp đã xóa sẽ bị xóa vĩnh viễn. Hóa đơn còn thanh toán/kỳ chỉ số sẽ được giữ lại.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>XÓA TẤT CẢ</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Đã xóa {0} mục, bỏ qua {1} mục còn dữ liệu liên quan.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Không có mục nào có thể xóa.</value></data>
+  <data name="InvoiceTrashTitle" xml:space="preserve"><value>Thùng rác hóa đơn</value></data>
+  <data name="InvoiceTrashSubtitle" xml:space="preserve"><value>Hóa đơn nháp đã xóa có thể khôi phục hoặc xóa vĩnh viễn.</value></data>
+  <data name="InvoiceTrashOpen" xml:space="preserve"><value>Thùng rác hóa đơn</value></data>
+  <data name="InvoiceTrashSearchLabel" xml:space="preserve"><value>Tìm hóa đơn đã xóa</value></data>
+  <data name="InvoiceTrashSearchPlaceholder" xml:space="preserve"><value>Tìm theo mã, hợp đồng, phòng hoặc nhà trọ</value></data>
+  <data name="InvoiceTrashRestoreTitle" xml:space="preserve"><value>Khôi phục hóa đơn?</value></data>
+  <data name="InvoiceTrashRestoreMessage" xml:space="preserve"><value>Khôi phục hóa đơn HD-{0}?</value></data>
+  <data name="InvoiceTrashRestored" xml:space="preserve"><value>Đã khôi phục hóa đơn.</value></data>
+  <data name="InvoiceDeleteAction" xml:space="preserve"><value>Xóa hóa đơn nháp</value></data>
+  <data name="InvoiceDeleteTitle" xml:space="preserve"><value>Xóa hóa đơn nháp?</value></data>
+  <data name="InvoiceDeleteMessage" xml:space="preserve"><value>Hóa đơn HD-{0} sẽ được chuyển vào thùng rác.</value></data>
+  <data name="InvoiceDeleteConfirm" xml:space="preserve"><value>Xóa</value></data>
+  <data name="InvoiceDeleted" xml:space="preserve"><value>Đã chuyển hóa đơn vào thùng rác.</value></data>
+  <data name="InvoiceGenericError" xml:space="preserve"><value>Không thể hoàn tất thao tác hóa đơn.</value></data>
+  <data name="InvoiceErrorNotDeletable" xml:space="preserve"><value>Chỉ hóa đơn nháp mới được xóa.</value></data>
+  <data name="InvoiceErrorNotInTrash" xml:space="preserve"><value>Hóa đơn không còn trong thùng rác.</value></data>
+  <data name="InvoiceErrorHasDependencies" xml:space="preserve"><value>Không thể xóa vì hóa đơn còn thanh toán, kỳ chỉ số hoặc yêu cầu đăng ký.</value></data>
+  <data name="InvoiceErrorContractDeleted" xml:space="preserve"><value>Hợp đồng của hóa đơn đã bị xóa; hãy khôi phục hợp đồng trước.</value></data>
+  <data name="InvoiceErrorDuplicatePeriod" xml:space="preserve"><value>Hợp đồng đã có hóa đơn sống trong cùng kỳ.</value></data>
+  <data name="InvoiceErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thao tác hóa đơn này.</value></data>
+  <data name="InvoiceErrorInvoiceNotFound" xml:space="preserve"><value>Không tìm thấy hóa đơn.</value></data>
 </root>

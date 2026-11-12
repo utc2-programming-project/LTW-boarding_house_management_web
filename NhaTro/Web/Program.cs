@@ -438,9 +438,11 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
-// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
-builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
-    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
+// PLAN-028: tài khoản nhận tiền lấy theo chủ trọ sở hữu hóa đơn (nhập ở /profile).
+builder.Services.AddScoped<Web.Features.Invoices.Services.IOwnerBankAccountService,
+    Web.Features.Invoices.Services.OwnerBankAccountService>();
+// PLAN-028: báo banner "chưa nhập tài khoản nhận tiền" khi Chủ trọ vừa lưu ở /profile.
+builder.Services.AddScoped<Web.Features.Invoices.Services.OwnerBankAccountNotifier>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();

@@ -129,6 +129,59 @@
 .profile-field-name { grid-area: name; }
 .profile-field-phone { grid-area: phone; }
 
+/* PLAN-028: khối tài khoản nhận tiền (chỉ Chủ trọ). */
+.profile-fields-owner {
+    grid-template-areas:
+        "name phone"
+        "bankhead bankhead"
+        "bank bank-number"
+        "bankname bankname";
+}
+
+.profile-field-bank-heading {
+    grid-area: bankhead;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.profile-field-bank-heading h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.profile-field-bank-heading p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: .8125rem;
+    line-height: 1.5;
+}
+
+.profile-bank-icon {
+    display: grid;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid var(--accent-border);
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.profile-bank-icon ::deep .lucide-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.profile-field-bank { grid-area: bank; }
+.profile-field-bank-number { grid-area: bank-number; }
+.profile-field-bank-name { grid-area: bankname; }
+
 .profile-fields ::deep .field {
     min-width: 0;
     margin: 0;
@@ -213,6 +266,16 @@
             "name"
             "phone";
         gap: 16px;
+    }
+
+    .profile-fields-owner {
+        grid-template-areas:
+            "name"
+            "phone"
+            "bankhead"
+            "bank"
+            "bank-number"
+            "bankname";
     }
 
     .profile-actions {

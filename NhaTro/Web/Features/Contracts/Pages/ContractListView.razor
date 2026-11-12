@@ -12,6 +12,7 @@
 @using Web.Components.Shared.Feedback
 @inject ContractPageService Contracts
 @inject IStringLocalizer<ContractResources> L
+@inject IStringLocalizer<Shared> SL
 @inject ToastService Toasts
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TimeProvider Clock
@@ -19,15 +20,18 @@
 
 <PageTitle>@L["ContractListTitle"]</PageTitle>
 
-<section class="contract-list-page" aria-labelledby="contract-list-title">
+<section class="contract-list-page page-stack" aria-labelledby="contract-list-title">
     <PageHeading Title="@L["ContractListTitle"]" TitleId="contract-list-title" HelpText="@L["ContractListDescription"]">
         <Actions>
+            <AuthorizeView Roles="ChuTro">
+                <Authorized>
+                    <a class="btn btn-secondary" href="/contracts/trash"><LucideIcon Name="trash" />@L["ContractTrashOpen"]</a>
+                </Authorized>
+            </AuthorizeView>
             <AuthorizeView Roles="ChuTro,QuanLy">
                 <Authorized>
-                    <div class="contract-heading-actions">
-                        <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
-                        <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
-                    </div>
+                    <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
+                    <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
                 </Authorized>
             </AuthorizeView>
         </Actions>
@@ -40,7 +44,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatTotal"]
-                        <button type="button" class="stat-help" data-tip="@L["ContractStatTotalHint"]" aria-label="@L["ContractStatTotalHint"]">?</button>
+                        <HelpTip Text="@L["ContractStatTotalHint"]" />
                     </span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="file-signature" /></span>
                 </div>
@@ -57,7 +61,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatusExpiringSoon"]
-                        <button type="button" class="stat-help" data-tip="@L["ContractStatExpiringHint"]" aria-label="@L["ContractStatExpiringHint"]">?</button>
+                        <HelpTip Text="@L["ContractStatExpiringHint"]" />
                     </span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="alert-triangle" /></span>
                 </div>
@@ -67,7 +71,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatusPending"]
-                        <button type="button" class="stat-help" data-tip="@L["ContractStatPendingHint"]" aria-label="@L["ContractStatPendingHint"]">?</button>
+                        <HelpTip Text="@L["ContractStatPendingHint"]" />
                     </span>
                     <span class="stat-icon stat-icon--info"><LucideIcon Name="inbox" /></span>
                 </div>
@@ -119,36 +123,45 @@
                 </select>
             </div>
             <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="contract-page-size">@SL["P2RowsPerPage"]</label>
+                    <select id="contract-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(SL["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(SL["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(SL["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
                 <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="contract-advanced-panel" />
-                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh-cw" /> @L["ContractFilterReset"]
-                </button>
+                <FilterResetButton OnClick="ResetFiltersAsync" />
             </div>
         </div>
         <div class="filter-bar__advanced" id="contract-advanced-panel" hidden="@(!_showAdvanced)">
             <div class="filter-bar__stack">
                 <label for="contract-term-from">@L["ContractFilterDateFrom"]</label>
-                <input id="contract-term-from" type="date" class="input" @bind="_termFrom" />
+                <input id="contract-term-from" type="date" class="input"
+                       @bind="_termFrom" @bind:after="ResetPage" />
             </div>
             <div class="filter-bar__stack">
                 <label for="contract-term-to">@L["ContractFilterDateTo"]</label>
-                <input id="contract-term-to" type="date" class="input" @bind="_termTo" />
+                <input id="contract-term-to" type="date" class="input"
+                       @bind="_termTo" @bind:after="ResetPage" />
             </div>
             <div class="filter-bar__stack">
                 <label for="contract-min-rent">@L["ContractFilterMinRent"]</label>
                 <input id="contract-min-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent" />
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_minRent"
+                       @bind:after="ResetPage" />
             </div>
             <div class="filter-bar__stack">
                 <label for="contract-max-rent">@L["ContractFilterMaxRent"]</label>
                 <input id="contract-max-rent" type="number" min="0" step="1000" class="input"
-                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent" />
+                       placeholder="@L["ContractAmountPlaceholder"]" @bind="_maxRent"
+                       @bind:after="ResetPage" />
             </div>
-            <button class="btn btn-primary filter-bar__submit" type="submit">@L["ContractFilterApply"]</button>
         </div>
         @if (FilterError is { } filterError)
         {
-            <p class="contract-field-error" role="alert">@filterError</p>
+            <p class="filter-bar__error" role="alert">@filterError</p>
         }
     </form>
 
@@ -171,7 +184,9 @@
     else if (VisibleItems.Count == 0)
     {
         <EmptyStateCard Title="@L["ContractFilterEmptyTitle"]" Description="@L["ContractFilterEmptyDesc"]">
-            <button class="btn btn-secondary" @onclick="ResetFiltersAsync">@L["ContractFilterReset"]</button>
+            <button class="btn btn-secondary" @onclick="ResetFiltersAsync">
+                <LucideIcon Name="refresh-cw" /> @L["ContractFilterReset"]
+            </button>
         </EmptyStateCard>
     }
     else
@@ -188,15 +203,50 @@
                     @foreach (var item in PagedItems)
                     {
                         <tr role="row">
-                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
-                            <td role="cell" data-label="@L["ContractTenantsLabel"]">@string.Join(", ", item.TenantNames)</td>
+                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a class="cell-link" href="@AppLinks.Contract(item.ContractId)" title="@SL["CellLinkOpenContract"]">@item.ContractNumber</a></td>
+                            <td role="cell" data-label="@L["ContractTenantsLabel"]">
+                                @if (item.TenantNames.Count == 0)
+                                {
+                                    <span class="contract-cell-secondary">—</span>
+                                }
+                                else if (!CanFollowLinks)
+                                {
+                                    <span>@string.Join(", ", item.TenantNames)</span>
+                                }
+                                else
+                                {
+                                    @for (var i = 0; i < item.TenantNames.Count; i++)
+                                    {
+                                        var tenantName = item.TenantNames[i];
+                                        if (i > 0)
+                                        {
+                                            <span>, </span>
+                                        }
+                                        <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
+                                    }
+                                }
+                            </td>
                             <td role="cell" data-label="@L["ContractRoomPropertyLabel"]">
                                 <div class="contract-room-cell">
                                     <div class="contract-room-line">
-                                        <strong>@item.RoomCode</strong>
+                                        @if (CanFollowLinks)
+                                        {
+                                            <a class="cell-link" href="@AppLinks.RoomsByCode(item.RoomCode)" title="@SL["CellLinkOpenRoom"]">@item.RoomCode</a>
+                                        }
+                                        else
+                                        {
+                                            <strong>@item.RoomCode</strong>
+                                        }
                                         <StatusBadge Tone="@StatusTone(item)" Text="@StatusLabel(item)" />
                                     </div>
-                                    <span class="contract-cell-secondary">@item.PropertyName</span>
+                                    @if (CanFollowLinks)
+                                    {
+                                        <a class="cell-link is-quiet contract-cell-secondary" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" title="@SL["CellLinkOpenProperty"]">@item.PropertyName</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="contract-cell-secondary">@item.PropertyName</span>
+                                    }
                                 </div>
                             </td>
                             <td role="cell" data-label="@L["ContractTermLabel"]"><div class="contract-cell-stack contract-term"><span>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))</span><span>– @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</span></div></td>
@@ -227,6 +277,13 @@
                                                     <LucideIcon Name="badge-check" /><span>@L["ContractApproveAction"]</span>
                                                 </button>
                                             }
+                                            @if (item.Status is ContractStatus.Pending or ContractStatus.Rejected)
+                                            {
+                                                <div class="p2-row-menu-sep" role="separator"></div>
+                                                <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(item)">
+                                                    <LucideIcon Name="trash" /><span>@L["ContractDeleteAction"]</span>
+                                                </button>
+                                            }
                                         </div>
                                     }
                                 </div>
@@ -237,52 +294,29 @@
                 </table>
             </div>
 
-            <footer class="contract-table-footer">
-                <span class="contract-footer-summary">@L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @VisibleItems.Count</span>
-                <div class="contract-footer-controls">
-                    <label class="contract-page-size" for="contract-page-size">
-                        <span>@L["RowsPerPage"]</span>
-                        <select id="contract-page-size" value="@_pageSize" @onchange="ChangePageSize">
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                        </select>
-                    </label>
-                    @if (TotalPages > 1)
-                    {
-                        <nav class="contract-pager" aria-label="@L["PaginationLabel"]">
-                            <button type="button" class="page-button" aria-label="@L["ContractFirstPage"]" disabled="@(_page == 1)" @onclick="() => GoToPage(1)">
-                                <LucideIcon Name="chevrons-left" />
-                            </button>
-                            <button type="button" class="page-button" aria-label="@L["PreviousPage"]" disabled="@(_page == 1)" @onclick="() => GoToPage(_page - 1)">
-                                <LucideIcon Name="chevron-left" />
-                            </button>
-                            @foreach (var p in PageNumbers)
-                            {
-                                <button type="button" class="page-button @(p == _page ? "current" : null)"
-                                        aria-label="@($"{L["ContractPage"]} {p}")" aria-current="@(p == _page ? "page" : null)"
-                                        @onclick="() => GoToPage(p)">@p</button>
-                            }
-                            <button type="button" class="page-button" aria-label="@L["NextPage"]" disabled="@(_page == TotalPages)" @onclick="() => GoToPage(_page + 1)">
-                                <LucideIcon Name="chevron-right" />
-                            </button>
-                            <button type="button" class="page-button" aria-label="@L["ContractLastPage"]" disabled="@(_page == TotalPages)" @onclick="() => GoToPage(TotalPages)">
-                                <LucideIcon Name="chevrons-right" />
-                            </button>
-                        </nav>
-                    }
-                </div>
-            </footer>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="VisibleItems.Count"
+                        PageChanged="GoToPage" />
         </div>
     }
 </section>
 
 <ContractApproveModal Visible="_decisionOpen" IsBusy="_decisionBusy" OnClose="CloseDecision" OnDecide="DecideAsync" />
 
+<ConfirmDialog Visible="_deleteVisible" Title="@L["ContractDeleteTitle"]"
+               Message="@string.Format(L["ContractDeleteMessage"], _deleteContractNumber)"
+               ConfirmText="@L["ContractDeleteConfirm"]" CancelText="@SL["Cancel"]" Danger="true"
+               OnConfirm="DeleteContractAsync" OnCancel="CancelDeleteContract" />
+
 @code {
     private IReadOnlyList<ContractListItemDto> _items = [];
     private IReadOnlyList<ContractListItemDto> _allItems = [];
     private string? _keyword;
+
+    /// <summary>Từ khóa từ link chéo (?q=HD-001 hoặc ?q=A107): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
     private string _statusFilter = "all";
     private string _propertyFilter = "all";
     private string _sortFilter = "newest";
@@ -294,6 +328,10 @@
     private bool _showAdvanced;
     private bool _failed;
     private bool _canApprove;
+    private bool _isTenant;
+
+    // Khách thuê chỉ thấy text: /rooms và /tenants chặn vai trò này.
+    private bool CanFollowLinks => !_isTenant;
     private bool _decisionOpen;
     private bool _decisionBusy;
     private Guid _decisionContractId;
@@ -301,6 +339,9 @@
     private int _page = 1;
     private int _pageSize = 20;
     private Guid? _openMenuId;
+    private bool _deleteVisible;
+    private Guid? _deleteContractId;
+    private string _deleteContractNumber = string.Empty;
 
     private int AdvancedFilterCount =>
         (_termFrom is null ? 0 : 1)
@@ -309,8 +350,6 @@
         + (_maxRent is null ? 0 : 1);
 
     private IEnumerable<string> PropertyOptions => _propertyOptions;
-
-    private IReadOnlyList<int> PageNumbers => PaginationHelper.PageWindow(_page, TotalPages);
 
     private IReadOnlyList<ContractListItemDto> PagedItems => VisibleItems
         .Skip((_page - 1) * _pageSize)
@@ -390,7 +429,26 @@
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         _canApprove = auth.User.IsInRole("ChuTro");
+        // Khách thuê vào được /contracts nhưng không vào được /rooms, /tenants.
+        _isTenant = auth.User.IsInRole("KhachThue");
+        _lastAppliedKeywordQuery = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
+        _keyword = _lastAppliedKeywordQuery;
         await LoadPropertyOptionsAsync();
+        await LoadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=A107): Blazor dùng lại trang nên phải lọc lại theo query mới.
+        var query = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
+        if (string.Equals(query, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = query;
+        _keyword = query;
+        ResetPage();
         await LoadAsync();
     }
 
@@ -439,7 +497,7 @@
 
     private void ChangePageSize(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        if (int.TryParse(e.Value?.ToString(), out var size) && size is 10 or 20 or 50)
         {
             _pageSize = size;
             ResetPage();
@@ -472,6 +530,47 @@
     {
         _openMenuId = null;
         OpenDecision(item.ContractId);
+    }
+
+    private void MenuDelete(ContractListItemDto item)
+    {
+        _openMenuId = null;
+        _deleteContractId = item.ContractId;
+        _deleteContractNumber = item.ContractNumber;
+        _deleteVisible = true;
+    }
+
+    private void CancelDeleteContract()
+    {
+        _deleteVisible = false;
+        _deleteContractId = null;
+        _deleteContractNumber = string.Empty;
+    }
+
+    private async Task DeleteContractAsync()
+    {
+        if (_deleteContractId is not Guid contractId)
+        {
+            CancelDeleteContract();
+            return;
+        }
+
+        _deleteVisible = false;
+        try
+        {
+            await Contracts.DeleteAsync(contractId);
+            Toasts.Success(L["ContractDeleted"]);
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error(ErrorText(ex));
+        }
+        finally
+        {
+            _deleteContractId = null;
+            _deleteContractNumber = string.Empty;
+        }
     }
 
     private async Task ResetFiltersAsync()

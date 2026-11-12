@@ -1041,3 +1041,23 @@ html:has(.auth-shell) {
 /* Nhóm nút hành động ở góc phải page-heading (Tạo tài khoản + Thùng rác). */
 .page-heading-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+/* Cột định danh bấm được trong bảng (mã phòng, số hợp đồng, tên khách…):
+   một class dùng chung thay vì mỗi trang tự định nghĩa .p2-link-button.
+   Gạch chân chỉ hiện khi hover/focus để bảng không bị rối. */
+.cell-link {
+    color: var(--accent-text);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+}
+
+.cell-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.cell-link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Link nằm trong ô có sẵn nội dung phụ: không ép đậm để giữ thứ bậc. */
+.cell-link.is-quiet { font-weight: 500; }
+

@@ -36,6 +36,12 @@ public partial class BusinessReportsView
 
     private bool Busy => Refreshing || RoomState == DashboardLoadState.Loading || TenantState == DashboardLoadState.Loading;
 
+    private (int From, int To) RoomItemRange =>
+        PaginationHelper.ItemRange(RoomPage, PageSize, RoomResult?.Rooms.TotalCount ?? 0);
+
+    private (int From, int To) TenantItemRange =>
+        PaginationHelper.ItemRange(TenantPage, PageSize, TenantResult?.Tenants.TotalCount ?? 0);
+
     protected override async Task OnInitializedAsync()
     {
         IsOwner = await PageService.GetRoleAsync() == Roles.ChuTro;

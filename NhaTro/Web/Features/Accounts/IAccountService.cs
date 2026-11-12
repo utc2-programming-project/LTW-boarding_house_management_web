@@ -64,6 +64,13 @@ public interface IAccountService
     Task<IReadOnlyList<DeletedAccountDto>> ListDeletedAsync(
         string callerRole, CancellationToken ct = default);
 
+    /// <summary>Xóa vĩnh viễn tài khoản khỏi thùng rác; chặn khi còn dữ liệu nghiệp vụ tham chiếu.</summary>
+    Task<AccountResult> PurgeAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    Task<TrashPurgeSummary> PurgeAllAsync(
+        string callerUserId, string callerRole, CancellationToken ct = default);
+
     /// <summary>VHT-95: duyet tai khoan dang Cho duyet (o #6).</summary>
     Task<AccountResult> ApproveAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);

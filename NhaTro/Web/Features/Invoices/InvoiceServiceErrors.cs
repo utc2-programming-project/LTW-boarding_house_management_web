@@ -17,6 +17,11 @@ public static class InvoiceErrorCodes
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
+    public const string NotDeletable = nameof(NotDeletable);
+    public const string NotInTrash = nameof(NotInTrash);
+    public const string HasDependencies = nameof(HasDependencies);
+    public const string ContractDeleted = nameof(ContractDeleted);
+    public const string DuplicatePeriod = nameof(DuplicatePeriod);
 }
 
 public static class InvoiceErrorMessages
@@ -39,6 +44,11 @@ public static class InvoiceErrorMessages
     public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";
     public const string ApprovalComposite =
         "Lập và phát hành cùng lúc không đi qua hàng đợi duyệt; hãy gửi từng bước để Chủ trọ duyệt.";
+    public const string NotDeletable = "Chỉ hóa đơn nháp mới được xóa.";
+    public const string NotInTrash = "Hóa đơn không còn trong thùng rác.";
+    public const string HasDependencies = "Không thể xóa vì hóa đơn còn thanh toán, kỳ chỉ số hoặc yêu cầu đăng ký.";
+    public const string ContractDeleted = "Hợp đồng của hóa đơn đã bị xóa; hãy khôi phục hợp đồng trước.";
+    public const string DuplicatePeriod = "Hợp đồng đã có hóa đơn sống trong cùng kỳ.";
 }
 
 public interface IInvoiceServiceError

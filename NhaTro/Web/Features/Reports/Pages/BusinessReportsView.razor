@@ -39,7 +39,7 @@
                 </select>
             </div>
             <div class="filter-bar__actions">
-                <button type="button" class="btn btn-secondary filter-bar__reset" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
+                <FilterResetButton OnClick="ClearFiltersAsync" Disabled="Busy" />
             </div>
         </div>
         @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
@@ -153,7 +153,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <ReportPager Page="@RoomPage" PageSize="@PageSize" TotalCount="@rooms.Rooms.TotalCount" Disabled="@Busy" Label="@L["RoomReport"]" PageChanged="ChangeRoomPageAsync" />
+                    <TablePager Page="RoomPage" TotalPages="@PaginationHelper.TotalPages(rooms.Rooms.TotalCount, PageSize)"
+                                From="@RoomItemRange.From" To="@RoomItemRange.To" Total="rooms.Rooms.TotalCount"
+                                Disabled="Busy" PageChanged="ChangeRoomPageAsync" />
                 }
             }
         </DashboardPanel>
@@ -253,7 +255,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <ReportPager Page="@TenantPage" PageSize="@PageSize" TotalCount="@tenants.Tenants.TotalCount" Disabled="@Busy" Label="@L["TenantReport"]" PageChanged="ChangeTenantPageAsync" />
+                    <TablePager Page="TenantPage" TotalPages="@PaginationHelper.TotalPages(tenants.Tenants.TotalCount, PageSize)"
+                                From="@TenantItemRange.From" To="@TenantItemRange.To" Total="tenants.Tenants.TotalCount"
+                                Disabled="Busy" PageChanged="ChangeTenantPageAsync" />
                 }
             }
         </DashboardPanel>

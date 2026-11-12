@@ -103,6 +103,21 @@ public static class DevAccountSeeder
             {
                 await userManager.AddToRoleAsync(user, role);
             }
+
+            // PLAN-028: gieo sẵn tài khoản nhận tiền cho Chủ trọ mẫu để luồng VietQR
+            // ở trang hóa đơn của khách thuê chạy được ngay khi demo (đổi/xóa ở /profile).
+            if (role == Roles.ChuTro && string.IsNullOrWhiteSpace(user.BankCode))
+            {
+                user.BankCode = "VIETCOMBANK";
+                user.BankAccountNumber = "0071000123456";
+                user.BankAccountName = "NGUYEN VAN CHU TRO";
+                var bankSaved = await userManager.UpdateAsync(user);
+                if (!bankSaved.Succeeded)
+                {
+                    logger.LogWarning("Khong gieo duoc tai khoan nhan tien mau cho {Email}: {Errors}", email,
+                        string.Join(", ", bankSaved.Errors.Select(e => e.Description)));
+                }
+            }
         }
 
         if (env.IsDevelopment())

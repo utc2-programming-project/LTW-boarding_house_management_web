@@ -1,13 +1,14 @@
 @inject IStringLocalizer<IncidentResource> L
+@inject IStringLocalizer<Web.Shared> SL
 @using Microsoft.JSInterop
 
-<div class="incident-list" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
+<div class="incident-list page-stack" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
 <section class="stat-grid" aria-label="@L["StatSummary"]">
     <article class="stat-card">
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatTotal"]
-                <button type="button" class="stat-help" data-tip="@L["StatTotalHint"]" aria-label="@L["StatTotalHint"]">?</button>
+                <HelpTip Text="@L["StatTotalHint"]" />
             </span>
             <span class="stat-icon stat-icon--accent"><LucideIcon Name="wrench" /></span>
         </div>
@@ -17,7 +18,7 @@
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusNew"]
-                <button type="button" class="stat-help" data-tip="@L["StatNewHint"]" aria-label="@L["StatNewHint"]">?</button>
+                <HelpTip Text="@L["StatNewHint"]" />
             </span>
             <span class="stat-icon stat-icon--info"><LucideIcon Name="inbox" /></span>
         </div>
@@ -27,7 +28,7 @@
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusInProgress"]
-                <button type="button" class="stat-help" data-tip="@L["StatInProgressHint"]" aria-label="@L["StatInProgressHint"]">?</button>
+                <HelpTip Text="@L["StatInProgressHint"]" />
             </span>
             <span class="stat-icon stat-icon--warning"><LucideIcon Name="refresh-cw" /></span>
         </div>
@@ -37,15 +38,69 @@
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusCompleted"]
-                <button type="button" class="stat-help" data-tip="@L["StatCompletedHint"]" aria-label="@L["StatCompletedHint"]">?</button>
+                <HelpTip Text="@L["StatCompletedHint"]" />
             </span>
             <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
         </div>
         <div class="stat-value">@_completedCount <small>@L["StatUnit"]</small></div>
     </article>
 </section>
-<DataTable @ref="_table" TItem="IncidentItem" Columns="_columns" ItemsProvider="LoadAsync"
-           Labels="Labels" Caption="@L["ListCaption"]" PageSize="5" UseFilterToolbar="true">
+<form class="filter-bar filter-bar--panel" novalidate @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+    <div class="filter-bar__row">
+        <div class="filter-bar__search">
+            <label class="sr-only" for="incident-title-filter">@L["Title"]</label>
+            <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+            <input id="incident-title-filter" class="input" type="search" autocomplete="off"
+                   placeholder="@L["SearchTitle"]" @bind="_fTitle" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+        </div>
+        <div class="filter-bar__field filter-bar__text">
+            <label class="sr-only" for="incident-room-filter">@L["PropertyRoom"]</label>
+            <input id="incident-room-filter" class="input" type="search" autocomplete="off"
+                   placeholder="@L["SearchRoom"]" @bind="_fRoom" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+        </div>
+        <div class="filter-bar__field filter-bar__select">
+            <label class="sr-only" for="incident-category-filter">@L["Category"]</label>
+            <select id="incident-category-filter" class="input" @bind="_fCategory" @bind:after="ApplyFiltersAsync">
+                <option value="">@L["AllFilterValues"]</option>
+                @foreach (var value in Enum.GetValues<IncidentCategory>())
+                {
+                    <option value="@value">@L[$"Category{value}"]</option>
+                }
+            </select>
+        </div>
+        <div class="filter-bar__field filter-bar__select">
+            <label class="sr-only" for="incident-urgency-filter">@L["Urgency"]</label>
+            <select id="incident-urgency-filter" class="input" @bind="_fUrgency" @bind:after="ApplyFiltersAsync">
+                <option value="">@L["AllFilterValues"]</option>
+                @foreach (var value in Enum.GetValues<IncidentUrgency>())
+                {
+                    <option value="@value">@L[$"Urgency{value}"]</option>
+                }
+            </select>
+        </div>
+        <div class="filter-bar__field filter-bar__select">
+            <label class="sr-only" for="incident-status-filter">@L["Status"]</label>
+            <select id="incident-status-filter" class="input" @bind="_fStatus" @bind:after="ApplyFiltersAsync">
+                <option value="">@L["AllFilterValues"]</option>
+                @foreach (var value in Enum.GetValues<IncidentStatus>())
+                {
+                    <option value="@value">@L[$"Status{value}"]</option>
+                }
+            </select>
+        </div>
+        <div class="filter-bar__field filter-bar__text">
+            <label class="sr-only" for="incident-created-filter">@L["CreatedAt"]</label>
+            <input id="incident-created-filter" class="input" type="search" autocomplete="off"
+                   placeholder="@L["SearchCreatedDate"]" @bind="_fCreated" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+        </div>
+        <div class="filter-bar__actions">
+            <FilterResetButton OnClick="ClearFiltersAsync" />
+        </div>
+    </div>
+</form>
+<DataTable @key="_tableKey" @ref="_table" TItem="IncidentItem" Columns="_columns" ItemsProvider="LoadAsync"
+           Labels="Labels" Caption="@L["ListCaption"]" PageSize="5"
+           HasActiveFilters="HasFilters" OnClearFilters="ClearFilterStateAsync">
     <EmptyActions>
         @if (CanCreate)
         {
@@ -63,6 +118,9 @@
     [Parameter] public EventCallback<int> OnDetail { get; set; }
     [Parameter] public EventCallback OnCreate { get; set; }
     [Parameter] public bool CanCreate { get; set; }
+
+    /// <summary>Khách thuê không được vào /rooms nên cột phòng giữ dạng text.</summary>
+    [Parameter] public bool CanFollowLinks { get; set; } = true;
     private DataTable<IncidentItem>? _table;
     private ElementReference _listRegion;
     private readonly Dictionary<int, ElementReference> _detailButtons = [];
@@ -72,43 +130,51 @@
     private int _newCount;
     private int _inProgressCount;
     private int _completedCount;
+    private string _fTitle = string.Empty;
+    private string _fRoom = string.Empty;
+    private string _fCategory = string.Empty;
+    private string _fUrgency = string.Empty;
+    private string _fStatus = string.Empty;
+    private string _fCreated = string.Empty;
+    private int _tableKey;
+
+    private bool HasFilters =>
+        !string.IsNullOrWhiteSpace(_fTitle)
+        || !string.IsNullOrWhiteSpace(_fRoom)
+        || !string.IsNullOrWhiteSpace(_fCategory)
+        || !string.IsNullOrWhiteSpace(_fUrgency)
+        || !string.IsNullOrWhiteSpace(_fStatus)
+        || !string.IsNullOrWhiteSpace(_fCreated);
 
     private DataTableLabels Labels => new()
     {
         Loading = L["Loading"], EmptyTitle = L["NoData"], EmptyDescription = L["EmptyDescription"],
         NoResultsTitle = L["NoResults"], ClearFilters = L["ClearFilters"],
         LoadFailed = L["LoadFailed"],
-        Retry = L["Retry"], FilterBy = L["FilterBy"], Pagination = L["Pagination"],
-        FirstPage = L["FirstPage"], PreviousPage = L["PreviousPage"], NextPage = L["NextPage"],
-        LastPage = L["LastPage"], Page = L["Page"], Summary = L["PageSummary"]
+        Retry = L["Retry"]
     };
 
     protected override void OnInitialized()
     {
         _columns =
         [
-            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true, Filterable = true, FilterPlaceholder = L["SearchTitle"] },
-            new() { Key = "Room", Title = L["PropertyRoom"], Value = RoomText, Sortable = true, Filterable = true, FilterPlaceholder = L["SearchRoom"] },
-            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Filterable = true, FilterOptions = FilterOptions<IncidentCategory>("Category") },
-            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Filterable = true, FilterOptions = FilterOptions<IncidentUrgency>("Urgency") },
-            new() { Key = "Status", Title = L["Status"], Filterable = true, FilterOptions = FilterOptions<IncidentStatus>("Status"), Template = i => @<div>
+            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true },
+            new() { Key = "Room", Title = L["PropertyRoom"], Template = RoomCell, Sortable = true },
+            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"] },
+            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"] },
+            new() { Key = "Status", Title = L["Status"], Template = i => @<div>
                     <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
                 @if (i.Pending.Count > 0)
                 {
                     <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
                 }
             </div> },
-            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true, Filterable = true, FilterPlaceholder = L["SearchCreatedDate"] },
+            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true },
             new() { Key = "Actions", Title = L["Actions"], Template = i => @<button type="button" class="btn btn-secondary incident-detail-action"
                 @ref="_detailButtons[i.Id]"
                 aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button> }
         ];
     }
-
-    // Giá trị enum dùng để lọc chính xác, nhãn được dịch theo ngôn ngữ hiện tại.
-    private IReadOnlyList<DataTableFilterOption> FilterOptions<TEnum>(string prefix) where TEnum : struct, Enum =>
-        [new("", L["AllFilterValues"]), .. Enum.GetValues<TEnum>().Select(value =>
-            new DataTableFilterOption(value.ToString(), L[$"{prefix}{value}"]))];
 
     private static string Text(IncidentItem item, string text) => text;
 
@@ -134,25 +200,74 @@
         return room is null ? item.RoomLabel : $"{room.PropertyName} / {room.Name}";
     }
 
+    // Cột phòng: bấm sang danh sách phòng đã lọc theo mã phòng (chỉ vai trò nghiệp vụ).
+    private RenderFragment<IncidentItem> RoomCell => item => @<text>
+        @if (CanFollowLinks)
+        {
+            <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(RoomName(item))" title="@SL["CellLinkOpenRoom"]">@RoomText(item)</a>
+        }
+        else
+        {
+            <span>@RoomText(item)</span>
+        }
+    </text>;
+
+    private string RoomName(IncidentItem item) =>
+        Rooms.FirstOrDefault(r => r.Id == item.RoomId)?.Name ?? item.RoomLabel;
+
+    private Task ApplyFiltersAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ClearFilterStateAsync()
+    {
+        _fTitle = string.Empty;
+        _fRoom = string.Empty;
+        _fCategory = string.Empty;
+        _fUrgency = string.Empty;
+        _fStatus = string.Empty;
+        _fCreated = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        await ClearFilterStateAsync();
+        _tableKey++;
+    }
+
     private async Task<PagedResult<IncidentItem>> LoadAsync(DataTableRequest request)
     {
         _detailButtons.Clear();
         var scoped = await Session.ListAsync();
         await UpdateStatsAsync(scoped);
         IEnumerable<IncidentItem> items = scoped;
-        foreach (var filter in request.Filters)
+        if (!string.IsNullOrWhiteSpace(_fTitle))
         {
-            items = filter.Key switch
-            {
-                "Title" => items.Where(i => i.Title.Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
-                "Room" => items.Where(i => RoomText(i).Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
-                "Category" => items.Where(i => i.Category.ToString() == filter.Value),
-                "Urgency" => items.Where(i => i.Urgency.ToString() == filter.Value),
-                "Status" => items.Where(i => i.Status.ToString() == filter.Value),
-                "Created" => items.Where(i => DateFormatter.FormatDateTime(i.CreatedAtUtc)
-                    .Contains(filter.Value, StringComparison.CurrentCultureIgnoreCase)),
-                _ => items
-            };
+            items = items.Where(i => i.Title.Contains(_fTitle, StringComparison.CurrentCultureIgnoreCase));
+        }
+        if (!string.IsNullOrWhiteSpace(_fRoom))
+        {
+            items = items.Where(i => RoomText(i).Contains(_fRoom, StringComparison.CurrentCultureIgnoreCase));
+        }
+        if (Enum.TryParse<IncidentCategory>(_fCategory, out var category))
+        {
+            items = items.Where(i => i.Category == category);
+        }
+        if (Enum.TryParse<IncidentUrgency>(_fUrgency, out var urgency))
+        {
+            items = items.Where(i => i.Urgency == urgency);
+        }
+        if (Enum.TryParse<IncidentStatus>(_fStatus, out var status))
+        {
+            items = items.Where(i => i.Status == status);
+        }
+        if (!string.IsNullOrWhiteSpace(_fCreated))
+        {
+            items = items.Where(i => DateFormatter.FormatDateTime(i.CreatedAtUtc)
+                .Contains(_fCreated, StringComparison.CurrentCultureIgnoreCase));
         }
         var ordered = request.SortKey switch
         {

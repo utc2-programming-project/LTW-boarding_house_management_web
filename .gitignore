@@ -13,6 +13,9 @@ CLAUDE.md
 # Project-local OpenCode MCP configuration
 /opencode.json
 .freebuff/
+.opencode/
+docs/huong_dan/
+
 # Visual Studio / .NET
 .vs/
 bin/
@@ -52,3 +55,5 @@ scripts/*
 !scripts/data/
 !scripts/data/*.ps1   
 docs/imp/
+
+

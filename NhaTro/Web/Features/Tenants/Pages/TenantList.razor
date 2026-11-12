@@ -11,31 +11,29 @@
 
 <PageTitle>@L["TenantsTitle"] · @L["AppName"]</PageTitle>
 
-<section class="tenant-list-page" aria-labelledby="tenants-title">
+<section class="tenant-list-page page-stack" aria-labelledby="tenants-title">
     <PageHeading Title="@L["TenantsTitle"]" TitleId="tenants-title" HelpText="@L["TenantsSubtitle"]">
         <Actions>
-            <div class="tenant-page-actions">
-                @if (_canRevealIdNumber)
-                {
-                    <a class="btn btn-secondary" href="/tenants/trash">
-                        <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
-                    </a>
-                    <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
-                        @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
-                        else { <LucideIcon Name="download" /> }
-                        @L["TenantExport"]
-                    </button>
-                }
-                <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
-                    <LucideIcon Name="mail" /> @L["InviteTenantButton"]
+            @if (_canRevealIdNumber)
+            {
+                <a class="btn btn-secondary" href="/tenants/trash">
+                    <LucideIcon Name="trash" /> @L["TenantTrashOpen"]
+                </a>
+                <button type="button" class="btn btn-secondary" @onclick="ExportAsync" disabled="@_exporting">
+                    @if (_exporting) { <span class="spinner" aria-hidden="true"></span> }
+                    else { <LucideIcon Name="download" /> }
+                    @L["TenantExport"]
                 </button>
-                <button type="button" class="btn btn-secondary" @onclick="OpenQr">
-                    <LucideIcon Name="qr-code" /> @L["QrOpenButton"]
-                </button>
-                <button type="button" class="btn btn-primary" @onclick="OpenCreate">
-                    <LucideIcon Name="plus" /> @L["TenantAdd"]
-                </button>
-            </div>
+            }
+            <button type="button" class="btn btn-secondary" @onclick="OpenInvite">
+                <LucideIcon Name="mail" /> @L["InviteTenantButton"]
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="OpenQr">
+                <LucideIcon Name="qr-code" /> @L["QrOpenButton"]
+            </button>
+            <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+                <LucideIcon Name="plus" /> @L["TenantAdd"]
+            </button>
         </Actions>
     </PageHeading>
 
@@ -58,7 +56,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["TenantStatTotal"]
-                        <button type="button" class="stat-help" data-tip="@L["TenantAllRecordsHint"]" aria-label="@L["TenantAllRecordsHint"]">?</button>
+                        <HelpTip Text="@L["TenantAllRecordsHint"]" />
                     </span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="users" /></span>
                 </div>
@@ -68,7 +66,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["TenantStatActive"]
-                        <button type="button" class="stat-help" data-tip="@ActiveRateTip" aria-label="@ActiveRateTip">?</button>
+                        <HelpTip Text="@ActiveRateTip" />
                     </span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="user" /></span>
                 </div>
@@ -80,7 +78,7 @@
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["TenantStatAccounts"]
-                            <button type="button" class="stat-help" data-tip="@AccountRateTip" aria-label="@AccountRateTip">?</button>
+                            <HelpTip Text="@AccountRateTip" />
                         </span>
                         <span class="stat-icon stat-icon--info"><LucideIcon Name="key" /></span>
                     </div>
@@ -91,7 +89,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["TenantStatIdCoverage"]
-                        <button type="button" class="stat-help" data-tip="@L["TenantSecurityHint"]" aria-label="@L["TenantSecurityHint"]">?</button>
+                        <HelpTip Text="@L["TenantSecurityHint"]" />
                     </span>
                     <span class="stat-icon stat-icon--neutral"><LucideIcon Name="shield-check" /></span>
                 </div>
@@ -123,15 +121,15 @@
                     <option value="inactive">@L["TenantStatusInactive"]</option>
                 </select>
             </div>
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
+                <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
+                    <option value="created">@L["TenantSortCreatedDesc"]</option>
+                    <option value="name-asc">@L["TenantSortNameAsc"]</option>
+                    <option value="name-desc">@L["TenantSortNameDesc"]</option>
+                </select>
+            </div>
             <div class="filter-bar__actions">
-                <div class="filter-bar__state">
-                    <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
-                    <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync" aria-label="@L["TenantSort"]">
-                        <option value="created">@L["TenantSortCreatedDesc"]</option>
-                        <option value="name-asc">@L["TenantSortNameAsc"]</option>
-                        <option value="name-desc">@L["TenantSortNameDesc"]</option>
-                    </select>
-                </div>
                 <div class="filter-bar__state">
                     <label class="sr-only" for="tenant-page-size">@L["TenantRowsPerPage"]</label>
                     <select id="tenant-page-size" class="input" @bind="_pageSize" @bind:after="ResetTableAsync" aria-label="@L["TenantRowsPerPage"]">
@@ -141,9 +139,7 @@
                     </select>
                 </div>
                 <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="tenant-advanced-panel" />
-                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh-cw" /> @L["TenantReset"]
-                </button>
+                <FilterResetButton OnClick="ResetFiltersAsync" />
             </div>
         </div>
         <div class="filter-bar__advanced" id="tenant-advanced-panel" hidden="@(!_showAdvanced)">
@@ -216,6 +212,16 @@
     private TenantDetailDto? _selectedTenant;
     private TenantDetailDto? _formTenant;
     private string? _keyword;
+    private string? _lastAppliedKeywordQuery;
+    private int? _lastAppliedTenantId;
+
+    /// <summary>Từ khóa từ link chéo (?q=Nguyễn A): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    /// <summary>Id khách từ link chéo (?tenantId=8): mở ngay hồ sơ chi tiết.</summary>
+    [SupplyParameterFromQuery(Name = "tenantId")]
+    public int? TenantIdQuery { get; set; }
     private string _statusFilter = string.Empty;
     private string _accountFilter = string.Empty;
     private string _rentalFilter = string.Empty;
@@ -242,7 +248,41 @@
     {
         _canRevealIdNumber = await TenantPages.GetCurrentRoleAsync() == Roles.ChuTro;
         BuildColumns();
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedTenantId = TenantIdQuery;
+        _keyword = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
         await LoadSummaryAsync();
+        await OpenTenantFromQueryAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=, ?tenantId=): Blazor dùng lại trang nên phải tự áp dụng lại.
+        var queryChanged = !string.Equals(_lastAppliedKeywordQuery, KeywordQuery, StringComparison.Ordinal);
+        var tenantChanged = _lastAppliedTenantId != TenantIdQuery;
+        if (!queryChanged && !tenantChanged)
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedTenantId = TenantIdQuery;
+        if (queryChanged)
+        {
+            _keyword = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
+            _tableKey++;
+        }
+
+        await OpenTenantFromQueryAsync();
+    }
+
+    // ?tenantId=8: mở hồ sơ khách thuê đúng người, không cần gõ lại ô tìm kiếm.
+    private async Task OpenTenantFromQueryAsync()
+    {
+        if (TenantIdQuery is { } tenantId && tenantId > 0)
+        {
+            await OpenDetailsAsync(tenantId);
+        }
     }
 
     private void BuildColumns()
@@ -275,7 +315,17 @@
             {
                 Key = "room",
                 Title = L["TenantColumnRoom"],
-                Value = tenant => string.IsNullOrWhiteSpace(tenant.RoomName) ? L["NoData"].Value : tenant.RoomName,
+                Template = tenant => @<text>
+                    @if (string.IsNullOrWhiteSpace(tenant.RoomName))
+                    {
+                        <span>@L["NoData"]</span>
+                    }
+                    else
+                    {
+                        <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(tenant.RoomName)"
+                           title="@L["CellLinkOpenRoom"]">@tenant.RoomName</a>
+                    }
+                </text>,
             },
             new()
             {
@@ -325,7 +375,7 @@
                             <LucideIcon Name="pen" /><span>@L["TenantEdit"]</span>
                         </button>
                         <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuStatusAsync(tenant)">
-                            <LucideIcon Name="@(tenant.IsActive ? "user-off" : "unlock")" />
+                            <LucideIcon Name="@(tenant.IsActive ? "user-off" : "user-check")" />
                             <span>@(tenant.IsActive ? L["TenantDeactivateButton"] : L["TenantActivateButton"])</span>
                         </button>
                         <div class="p2-row-menu-sep" role="separator"></div>
