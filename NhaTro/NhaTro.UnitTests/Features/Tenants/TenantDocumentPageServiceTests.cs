@@ -4,7 +4,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
+using Web.Features.Properties.Entities;
+using Web.Features.Rooms.Entities;
 using Web.Features.Storage;
 using Web.Features.Storage.DTOs;
 using Web.Features.Tenants;
@@ -321,6 +324,153 @@ public class TenantDocumentPageServiceTests
         Assert.Null(room.Floor);
     }
 
+    [Fact]
+    public async Task GetMyLeasedRoom_Map_thong_tin_lien_he_chu_tro_va_quan_ly()
+    {
+        await using var db = CreateInMemoryDbContext();
+        db.Users.AddRange(
+            new ApplicationUser
+            {
+                Id = "owner-1",
+                UserName = "owner",
+                FullName = "Chu Tro A",
+                PhoneNumber = "0901111111",
+            },
+            new ApplicationUser
+            {
+                Id = "manager-1",
+                UserName = "manager",
+                FullName = "Quan Ly B",
+                PhoneNumber = "0902222222",
+            });
+        db.Properties.Add(new Property { Id = 1, Name = "Nhà trọ Bình An", OwnerId = "owner-1" });
+        db.PropertyManagers.Add(new PropertyManager
+        {
+            PropertyId = 1,
+            ManagerUserId = "manager-1",
+            AssignedByUserId = "owner-1",
+        });
+        await db.SaveChangesAsync();
+
+        var authStateProvider = new FakeAuthStateProvider(Roles.KhachThue, "tenant-1");
+        var currentRental = CreateSampleRental(101);
+        var fakeTenantService = new FakeRentalTenantService(new TenantRentalOverviewDto
+        {
+            TenantId = 1,
+            FullName = "Nguyen Van A",
+            Rentals = [currentRental],
+            CurrentRental = currentRental
+        });
+        var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
+        var contactService = new TenantContactPageService(
+            authStateProvider, new TestDbContextFactory(db), TimeProvider.System);
+        var service = new TenantDocumentPageService(
+            authStateProvider, new FakeTenantDocumentService(), db, pageService, null, contactService);
+
+        var room = await service.GetMyLeasedRoomAsync();
+
+        Assert.NotNull(room);
+        Assert.NotNull(room.Contact);
+        Assert.Equal("Chu Tro A", room.Contact.Owner!.Name);
+        Assert.Equal("0901111111", room.Contact.Owner.PhoneNumber);
+        Assert.Single(room.Contact.Managers);
+        Assert.Equal("Quan Ly B", room.Contact.Managers[0].Name);
+        Assert.Equal("0902222222", room.Contact.Managers[0].PhoneNumber);
+    }
+
+    [Fact]
+    public async Task GetMyContact_Tra_ve_null_khi_khong_phai_khach_thue()
+    {
+        await using var db = CreateInMemoryDbContext();
+        var service = new TenantContactPageService(
+            new FakeAuthStateProvider(Roles.QuanLy, "manager-1"),
+            new TestDbContextFactory(db),
+            TimeProvider.System);
+
+        var contact = await service.GetMyContactAsync();
+
+        Assert.Null(contact);
+    }
+
+    [Fact]
+    public async Task GetMyContact_Tim_dung_toa_nha_va_chi_lay_quan_ly_dang_hieu_luc()
+    {
+        await using var db = CreateInMemoryDbContext();
+        db.Users.AddRange(
+            new ApplicationUser
+            {
+                Id = "owner-1",
+                UserName = "owner",
+                FullName = "Chu Tro A",
+                PhoneNumber = "0901111111",
+            },
+            new ApplicationUser
+            {
+                Id = "manager-1",
+                UserName = "manager1",
+                FullName = "Quan Ly B",
+                PhoneNumber = "0902222222",
+            },
+            new ApplicationUser
+            {
+                Id = "manager-2",
+                UserName = "manager2",
+                FullName = "Quan Ly C",
+                PhoneNumber = "0903333333",
+            });
+        db.Properties.Add(new Property { Id = 7, Name = "Nhà trọ Bình An", OwnerId = "owner-1" });
+        db.PropertyManagers.AddRange(
+            new PropertyManager
+            {
+                PropertyId = 7,
+                ManagerUserId = "manager-1",
+                AssignedByUserId = "owner-1",
+            },
+            new PropertyManager
+            {
+                PropertyId = 7,
+                ManagerUserId = "manager-2",
+                AssignedByUserId = "owner-1",
+                RevokedAt = DateTime.UtcNow,
+            });
+        db.Tenants.Add(new Web.Features.Tenants.Entities.Tenant
+        {
+            Id = 5,
+            FullName = "Khach Thue",
+            Phone = "0900000000",
+            UserId = "tenant-1",
+        });
+        db.Rooms.Add(new Room { Id = 99, PropertyId = 7, Code = "P.99" });
+
+        var contract = new Contract
+        {
+            ContractId = Guid.NewGuid(),
+            ContractNumber = "HD-2026-099",
+            RoomId = 99,
+            StartDate = DateTime.UtcNow.Date.AddDays(-5),
+            EndDate = DateTime.UtcNow.Date.AddDays(5),
+            SnapshotPrice = 3_500_000m,
+            DepositAmount = 3_500_000m,
+            Status = ContractStatus.Approved,
+        };
+        db.Contracts.Add(contract);
+        db.ContractMembers.Add(new ContractMember { ContractId = contract.ContractId, TenantId = 5 });
+        await db.SaveChangesAsync();
+
+        var service = new TenantContactPageService(
+            new FakeAuthStateProvider(Roles.KhachThue, "tenant-1"),
+            new TestDbContextFactory(db),
+            TimeProvider.System);
+
+        var contact = await service.GetMyContactAsync();
+
+        Assert.NotNull(contact);
+        Assert.Equal("Chu Tro A", contact.Owner!.Name);
+        Assert.Equal("0901111111", contact.Owner.PhoneNumber);
+        Assert.Single(contact.Managers);
+        Assert.Equal("Quan Ly B", contact.Managers[0].Name);
+    }
+
     private static ApplicationDbContext CreateInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -483,6 +633,14 @@ public class TenantDocumentPageServiceTests
 
         public Task<bool> DeleteAsync(int tenantId, Guid fileId, TenantCaller caller, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+    }
+
+    private sealed class TestDbContextFactory(ApplicationDbContext db) : IDbContextFactory<ApplicationDbContext>
+    {
+        public ApplicationDbContext CreateDbContext() => db;
+
+        public Task<ApplicationDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(db);
     }
 
     private sealed class FakeAuthStateProvider : AuthenticationStateProvider

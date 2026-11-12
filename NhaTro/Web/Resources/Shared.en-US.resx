@@ -761,6 +761,14 @@
   <data name="ManagerOwnerBanner" xml:space="preserve"><value>Your owner: {0}</value></data>
   <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>You have not been assigned to any owner yet. Contact your owner to be assigned a building.</value></data>
   <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Could not load owner information.</value></data>
+  <data name="TenantContactOwnerBanner" xml:space="preserve"><value>Your owner: {0}</value></data>
+  <data name="TenantContactManagerBanner" xml:space="preserve"><value>Manager: {0}</value></data>
+  <data name="TenantContactTitle" xml:space="preserve"><value>Owner &amp; manager contact</value></data>
+  <data name="TenantContactDesc" xml:space="preserve"><value>Call directly for support with your room, invoices, or incidents.</value></data>
+  <data name="TenantContactOwnerLabel" xml:space="preserve"><value>Owner</value></data>
+  <data name="TenantContactManagerLabel" xml:space="preserve"><value>Manager</value></data>
+  <data name="TenantContactPhoneMissing" xml:space="preserve"><value>No phone number on file</value></data>
+  <data name="TenantContactNoManager" xml:space="preserve"><value>No manager assigned</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Rooms</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Track rooms, rental prices, and occupancy status</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Add room</value></data>
@@ -1422,6 +1430,10 @@
   <data name="ApprovalUiLoading" xml:space="preserve"><value>Loading…</value></data>
   <data name="ApprovalUiEmpty" xml:space="preserve"><value>No items.</value></data>
   <data name="ApprovalUiError" xml:space="preserve"><value>The operation failed. Reload and try again.</value></data>
+  <data name="ApprovalUiQueueHint" xml:space="preserve"><value>Requests from managers awaiting owner approval.</value></data>
+  <data name="ApprovalUiMineHint" xml:space="preserve"><value>Requests you have sent and their decision status.</value></data>
+  <data name="ApprovalUiEmptyHint" xml:space="preserve"><value>Requests awaiting approval will appear here.</value></data>
+  <data name="ApprovalUiRefresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="ApprovalUiAction" xml:space="preserve"><value>Action</value></data>
   <data name="ApprovalUiMode" xml:space="preserve"><value>Mode</value></data>
   <data name="ApprovalUiModeAllow" xml:space="preserve"><value>Allow</value></data>

@@ -4,6 +4,9 @@
 
 .tenant-summary-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid var(--error-border); border-radius: 8px; background: var(--error-bg); color: var(--error-text); }
 
+/* Số và dấu % đứng liền nhau; gap 8px của .stat-value chỉ dành cho số + đơn vị chữ. */
+.stat-percent { display: inline-flex; align-items: baseline; }
+
 .tenant-filter-card { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
 .tenant-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .tenant-search-field { position: relative; display: flex; flex: 1 1 340px; align-items: center; min-width: 200px; }
@@ -16,14 +19,12 @@
 .tenant-inline-label { flex: none; font-size: .8125rem; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
 .tenant-labeled-select .input { flex: 1 1 auto; width: auto; min-width: 0; border-color: transparent; background: transparent; padding-left: 0; }
 .tenant-reset-button { flex: 0 0 auto; min-height: 44px; }
-.tenant-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: -12px; color: var(--text-secondary); }
-.tenant-table-options label { font-size: .875rem; }
-.tenant-table-options select { width: 84px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-subtle); color: var(--text-primary); font-size: .875rem; }
 .tenant-filter-footnote { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: .75rem; }
 .tenant-filter-footnote > span { display: inline-flex; align-items: center; gap: 6px; }
 .tenant-filter-footnote .lucide-icon { width: 15px; height: 15px; flex-basis: 15px; color: var(--accent-text); }
 
 .tenant-name-cell { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+.tenant-avatar { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-card); background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
 .tenant-name-text { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .tenant-name-button { width: fit-content; max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: .8125rem; font-weight: 650; text-align: left; overflow-wrap: anywhere; }
 .tenant-name-button:hover { color: var(--accent-text); text-decoration: underline; }
@@ -71,7 +72,6 @@
     .tenant-filter-select .input { min-height: 44px; }
     .tenant-reset-button { flex: 1 1 100%; }
     .tenant-filter-footnote { align-items: flex-start; flex-direction: column; gap: 8px; }
-    .tenant-table-options { justify-content: flex-start; margin-top: 0; }
 }
 
 @media (max-width: 420px) {

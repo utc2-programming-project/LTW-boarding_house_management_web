@@ -228,6 +228,78 @@
             </div>
         </section>
 
+        <section class="leased-room-panel" aria-labelledby="leased-room-contact-title">
+            <div class="leased-room-panel-header leased-room-contact-header">
+                <div>
+                    <h2 id="leased-room-contact-title">@L["TenantContactTitle"]</h2>
+                    <p>@L["TenantContactDesc"]</p>
+                </div>
+            </div>
+
+            <div class="leased-room-contact-grid">
+                <div class="leased-room-contact-card">
+                    <div class="leased-room-contact-avatar" aria-hidden="true">@OwnerInitial()</div>
+                    <div class="leased-room-contact-details">
+                        <span class="leased-room-contact-role">@L["TenantContactOwnerLabel"]</span>
+                        @if (_leasedRoom.Contact?.Owner is { } owner)
+                        {
+                            <span class="leased-room-contact-name">@owner.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(owner.PhoneNumber))
+                            {
+                                <a class="leased-room-contact-phone" href="@($"tel:{owner.PhoneNumber}")">
+                                    <LucideIcon Name="phone" />
+                                    <span class="tabular-nums">@owner.PhoneNumber</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="leased-room-contact-phone-empty">@L["TenantContactPhoneMissing"]</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="leased-room-contact-name">@L["NoData"]</span>
+                        }
+                    </div>
+                </div>
+
+                @if (_leasedRoom.Contact is { Managers.Count: > 0 } contact)
+                {
+                    @foreach (var manager in contact.Managers)
+                    {
+                        <div class="leased-room-contact-card">
+                            <div class="leased-room-contact-avatar" aria-hidden="true">@Initial(manager.Name)</div>
+                            <div class="leased-room-contact-details">
+                                <span class="leased-room-contact-role">@L["TenantContactManagerLabel"]</span>
+                                <span class="leased-room-contact-name">@manager.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(manager.PhoneNumber))
+                                {
+                                    <a class="leased-room-contact-phone" href="@($"tel:{manager.PhoneNumber}")">
+                                        <LucideIcon Name="phone" />
+                                        <span class="tabular-nums">@manager.PhoneNumber</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="leased-room-contact-phone-empty">@L["TenantContactPhoneMissing"]</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="leased-room-contact-card">
+                        <div class="leased-room-contact-avatar" aria-hidden="true">?</div>
+                        <div class="leased-room-contact-details">
+                            <span class="leased-room-contact-role">@L["TenantContactManagerLabel"]</span>
+                            <span class="leased-room-contact-name leased-room-contact-muted">@L["TenantContactNoManager"]</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
         <section class="leased-room-panel leased-room-roommates" aria-labelledby="leased-room-roommates-title">
             <div class="leased-room-panel-header leased-room-roommates-header">
                 <div>
@@ -614,10 +686,13 @@
         _ => L["NoData"]
     };
 
-    private static string Initial(string fullName)
+    private static string Initial(string? fullName)
     {
         if (string.IsNullOrWhiteSpace(fullName)) return "K";
         var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return parts[^1][..1].ToUpperInvariant();
     }
+
+    private string OwnerInitial() =>
+        _leasedRoom?.Contact?.Owner is { } owner ? Initial(owner.Name) : "?";
 }
