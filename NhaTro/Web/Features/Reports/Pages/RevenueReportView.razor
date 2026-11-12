@@ -124,7 +124,7 @@
                                         <td class="numeric">@MoneyFormatter.Format(line.Total)</td>
                                         <td class="numeric">@MoneyFormatter.Format(line.Paid)</td>
                                         <td class="numeric">@MoneyFormatter.Format(line.Outstanding)</td>
-                                        <td>@line.Status</td>
+                                        <td>@StatusText(line.Status)</td>
                                     </tr>
                                 }
                             </tbody>
@@ -238,6 +238,13 @@
         DebtPage = Clamp(page, DebtLines.Count);
         return Task.CompletedTask;
     }
+
+    private string StatusText(string status) => status switch
+    {
+        nameof(InvoiceStatus.Issued) => L["StatusIssued"],
+        nameof(InvoiceStatus.Paid) => L["StatusPaid"],
+        _ => status,
+    };
 
     private static int Clamp(int page, int totalCount)
     {

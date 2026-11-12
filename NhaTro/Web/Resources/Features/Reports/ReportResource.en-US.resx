@@ -98,6 +98,8 @@
 <data name="InvoiceLines" xml:space="preserve"><value>Invoice lines</value></data>
 <data name="InvoiceTotal" xml:space="preserve"><value>Invoice total</value></data>
 <data name="Paid" xml:space="preserve"><value>Paid</value></data>
+<data name="StatusIssued" xml:space="preserve"><value>Issued</value></data>
+<data name="StatusPaid" xml:space="preserve"><value>Paid</value></data>
 <data name="DebtInvoices" xml:space="preserve"><value>Outstanding invoices</value></data>
 <data name="NoDebt" xml:space="preserve"><value>No outstanding balance</value></data>
 <data name="NoDebtDescription" xml:space="preserve"><value>No invoice has an outstanding amount within the selected scope and period.</value></data>

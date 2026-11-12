@@ -98,6 +98,8 @@
 <data name="InvoiceLines" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
 <data name="InvoiceTotal" xml:space="preserve"><value>Tổng hóa đơn</value></data>
 <data name="Paid" xml:space="preserve"><value>Đã thu</value></data>
+<data name="StatusIssued" xml:space="preserve"><value>Đã phát hành</value></data>
+<data name="StatusPaid" xml:space="preserve"><value>Đã thu</value></data>
 <data name="DebtInvoices" xml:space="preserve"><value>Hóa đơn còn nợ</value></data>
 <data name="NoDebt" xml:space="preserve"><value>Không có công nợ</value></data>
 <data name="NoDebtDescription" xml:space="preserve"><value>Không có hóa đơn nào còn số tiền phải thu trong phạm vi và kỳ đã chọn.</value></data>
