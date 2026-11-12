@@ -1,28 +1,28 @@
 @inject IStringLocalizer<DashboardResource> L
 <div class="kpi-grid @(IsOwner ? "kpi-grid-owner" : null)">
-@foreach (var key in Keys)
+@foreach (var card in Cards)
 {
-    var isRoom = key is "TotalRooms" or "Occupancy";
     <article class="kpi-card">
-        <h2>@L[key]</h2>
-        @if (!isRoom)
-        {
-            <UnwiredNotice FilterDescription="@FilterDescription" />
-        }
-        else if (State == DashboardLoadState.Loading)
+        <h2>@card.Label</h2>
+        @if (card.State == DashboardLoadState.Loading)
         {
             <p class="skeleton" role="status">@L["Loading"]</p>
         }
-        else if (State is DashboardLoadState.Error or DashboardLoadState.Denied)
+        else if (card.State is DashboardLoadState.Error or DashboardLoadState.Denied)
         {
             <p class="value">—</p>
-            <p>@L[State == DashboardLoadState.Denied ? "RoomsDenied" : "Error"]</p>
-            <button type="button" class="btn btn-secondary" @onclick="Retry">@L["Retry"]</button>
+            <p>@L[card.State == DashboardLoadState.Denied ? card.DeniedKey : "Error"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="card.Retry">@L["Retry"]</button>
+        }
+        else if (card.Href is null)
+        {
+            <p class="value">@card.Value</p>
+            <p>@card.NoteLabel</p>
         }
         else
         {
-            <a class="value" href="@RoomsHref">@(key == "TotalRooms" ? DashboardFormat.FormatNumber(Kpis?.Total) : DashboardFormat.FormatOccupancy(Kpis is null ? null : DashboardFormat.OccupancyPercent(Kpis.Rented, Kpis.Total, Kpis.Maintenance)))</a>
-            <p>@L["CurrentData"]</p>
+            <a class="value" href="@card.Href">@card.Value</a>
+            <p>@card.NoteLabel</p>
         }
     </article>
 }
@@ -34,5 +34,51 @@
     [Parameter] public EventCallback Retry { get; set; }
     [Parameter] public string RoomsHref { get; set; } = "/rooms";
     [Parameter] public string FilterDescription { get; set; } = "";
-    private string[] Keys => IsOwner ? ["TotalRooms", "Occupancy", "Revenue", "Debt", "Incidents"] : ["TotalRooms", "Occupancy", "Incidents"];
+    [Parameter] public RevenueReportDto? Revenue { get; set; }
+    [Parameter] public DashboardLoadState RevenueState { get; set; } = DashboardLoadState.Loaded;
+    [Parameter] public string RevenueHref { get; set; } = "/reports";
+    [Parameter] public EventCallback RevenueRetry { get; set; }
+    [Parameter] public IncidentReportKpis? Incidents { get; set; }
+    [Parameter] public DashboardLoadState IncidentState { get; set; } = DashboardLoadState.Loaded;
+    [Parameter] public string IncidentsHref { get; set; } = "/reports";
+    [Parameter] public EventCallback IncidentRetry { get; set; }
+
+    private sealed record Card(
+        string Label,
+        string? Value,
+        DashboardLoadState State,
+        string DeniedKey,
+        string NoteLabel,
+        string? Href,
+        EventCallback Retry);
+
+    private IReadOnlyList<Card> Cards
+    {
+        get
+        {
+            var cards = new List<Card>
+            {
+                new(L["TotalRooms"], DashboardFormat.FormatNumber(Kpis?.Total), State, "RoomsDenied",
+                    L["CurrentData"], RoomsHref, Retry),
+                new(L["Occupancy"],
+                    DashboardFormat.FormatOccupancy(Kpis is null
+                        ? null
+                        : DashboardFormat.OccupancyPercent(Kpis.Rented, Kpis.Total, Kpis.Maintenance)),
+                    State, "RoomsDenied", L["CurrentData"], RoomsHref, Retry),
+            };
+
+            if (IsOwner)
+            {
+                cards.Add(new(L["Revenue"], MoneyFormatter.Format(Revenue?.TotalRevenue), RevenueState,
+                    "RevenueDenied", L["PeriodData"], RevenueHref, RevenueRetry));
+                cards.Add(new(L["Debt"], MoneyFormatter.Format(Revenue?.Outstanding), RevenueState,
+                    "RevenueDenied", L["PeriodData"], RevenueHref, RevenueRetry));
+            }
+
+            cards.Add(new(L["Incidents"], DashboardFormat.FormatNumber(Incidents?.Total), IncidentState,
+                "IncidentsDenied", L["PeriodData"], IncidentsHref, IncidentRetry));
+
+            return cards;
+        }
+    }
 }

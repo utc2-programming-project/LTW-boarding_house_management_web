@@ -1,0 +1,22 @@
+@inject IStringLocalizer<DashboardResource> L
+@if (Kpis is { Total: 0 })
+{
+    <EmptyStateCard Title="@L["Empty"]" />
+}
+else if (Kpis is not null)
+{
+    <dl>
+        <dt>@L["IncidentTotal"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Total)</dd>
+        <dt>@L["IncidentNew"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.New)</dd>
+        <dt>@L["IncidentInProgress"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.InProgress)</dd>
+        <dt>@L["IncidentCompleted"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Completed)</dd>
+        <dt>@L["IncidentUrgent"]</dt><dd>@DashboardFormat.FormatNumber(Kpis.Urgent)</dd>
+    </dl>
+}
+<p>@L["PeriodData"]</p>
+<a href="@ReportsHref">@L["ViewReports"]</a>
+
+@code {
+    [Parameter] public IncidentReportKpis? Kpis { get; set; }
+    [Parameter] public string ReportsHref { get; set; } = "/reports";
+}

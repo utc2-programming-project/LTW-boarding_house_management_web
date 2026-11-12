@@ -21,9 +21,9 @@
 <data name="CurrentData" xml:space="preserve"><value>Current data</value></data>
 <data name="TotalRooms" xml:space="preserve"><value>Total active rooms</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Occupancy rate</value></data>
-<data name="Revenue" xml:space="preserve"><value>Expected monthly revenue</value></data>
-<data name="Debt" xml:space="preserve"><value>Total outstanding debt</value></data>
-<data name="Incidents" xml:space="preserve"><value>Pending incidents</value></data>
+<data name="Revenue" xml:space="preserve"><value>Recognized revenue</value></data>
+<data name="Debt" xml:space="preserve"><value>Outstanding receivables</value></data>
+<data name="Incidents" xml:space="preserve"><value>Incidents in period</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>The owner has not permitted room reports</value></data>
 <data name="TenantsDenied" xml:space="preserve"><value>The owner has not permitted tenant reports</value></data>
 <data name="PropertiesDenied" xml:space="preserve"><value>Property access is not permitted</value></data>
@@ -39,7 +39,7 @@
 <data name="TenantActive" xml:space="preserve"><value>Active profiles</value></data>
 <data name="TenantLinked" xml:space="preserve"><value>Linked accounts</value></data>
 <data name="ViewTenants" xml:space="preserve"><value>View tenants</value></data>
-<data name="RevenueChart" xml:space="preserve"><value>Six-month revenue</value></data>
+<data name="RevenueChart" xml:space="preserve"><value>Revenue by period</value></data>
 <data name="ExpiringContracts" xml:space="preserve"><value>Expiring contracts</value></data>
 <data name="RoomScopeNote" xml:space="preserve"><value>Only active rooms are counted. The room list includes inactive rooms by default.</value></data>
 <data name="RefreshSuccess" xml:space="preserve"><value>Data refreshed</value></data>
@@ -49,4 +49,12 @@
 <data name="CurrentPeriodNote" xml:space="preserve"><value>Room and tenant figures reflect the current property scope. The reporting period applies to time-based reports when available.</value></data>
 <data name="ViewReports" xml:space="preserve"><value>View room and tenant reports</value></data>
 <data name="HomeTitle" xml:space="preserve"><value>Home</value></data>
+<data name="PeriodData" xml:space="preserve"><value>Figures for the selected reporting period</value></data>
+<data name="RevenueDenied" xml:space="preserve"><value>Only owners can view revenue and receivables</value></data>
+<data name="IncidentsDenied" xml:space="preserve"><value>You do not have permission to view incident reports</value></data>
+<data name="IncidentTotal" xml:space="preserve"><value>Total incidents</value></data>
+<data name="IncidentNew" xml:space="preserve"><value>New</value></data>
+<data name="IncidentInProgress" xml:space="preserve"><value>In progress</value></data>
+<data name="IncidentCompleted" xml:space="preserve"><value>Completed</value></data>
+<data name="IncidentUrgent" xml:space="preserve"><value>Urgent</value></data>
 </root>

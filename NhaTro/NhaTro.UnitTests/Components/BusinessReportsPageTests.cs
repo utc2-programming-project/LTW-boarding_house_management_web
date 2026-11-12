@@ -4,8 +4,10 @@ using System.Security.Claims;
 using Bunit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Common.Models;
+using Web.Data;
 using Web.Components.Layout;
 using Web.Components.Shared.Feedback;
 using Web.Features.Accounts;
@@ -17,6 +19,7 @@ using Web.Features.Properties.Services;
 using Web.Features.Reports;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Pages;
+using Web.Features.Reports.Services;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Rooms.Enums;
 using Web.Features.Tenants;
@@ -78,8 +81,13 @@ public sealed class BusinessReportsPageTests : BunitContext
                 },
             });
         });
-        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)),
-            properties, rooms, tenants, TimeProvider.System));
+        var revenue = new RevenueReportService(NewDb());
+        var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
+        var costs = Proxy<ICostReportService>((_, _) => Task.FromResult(new CostReportResult()));
+        var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult()));
+        var export = new ReportExportService(NewDb());
+        Services.AddSingleton(new ReportsPageService(new P2CallerProvider(new Authentication(role)),
+            properties, rooms, tenants, revenue, contracts, costs, incidents, export));
         ComponentFactories.AddStub<RoomStructureChart>();
     }
 
@@ -148,7 +156,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         DenyRooms = true;
         Configure(Roles.QuanLy);
         var page = Render<BusinessReportsView>();
-        page.WaitForAssertion(() => Assert.Equal(2, page.FindAll(".report-tabs button[role=\"tab\"]").Count));
+        page.WaitForAssertion(() => Assert.Equal(5, page.FindAll(".report-tabs button[role=\"tab\"]").Count));
         page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
         Assert.Empty(page.FindAll(".room-table"));
@@ -206,6 +214,14 @@ public sealed class BusinessReportsPageTests : BunitContext
         var item = Assert.Single(AppNavigation.Items, item => item.Key == "Reports");
         Assert.Equal("/reports", item.Href);
         Assert.Equal("ChuTro,QuanLy", item.Roles);
+    }
+
+    private static ApplicationDbContext NewDb()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase($"vht140-reports-{Guid.NewGuid()}")
+            .Options;
+        return new ApplicationDbContext(options);
     }
 
     private static void GoToPage(IRenderedComponent<BusinessReportsView> page, int number) =>
