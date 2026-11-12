@@ -188,6 +188,9 @@
   <data name="ManagerSwitchesSubtitle" xml:space="preserve">
     <value>Mỗi công tắc quyết định Quản lý được làm gì với một nghiệp vụ: làm ngay, phải chờ Chủ trọ duyệt hoặc bị chặn.</value>
   </data>
+  <data name="AuditLog" xml:space="preserve">
+    <value>Nhật ký thao tác</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Hàng đợi duyệt</value>
   </data>

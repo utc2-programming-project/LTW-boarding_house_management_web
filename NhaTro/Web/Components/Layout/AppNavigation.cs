@@ -67,6 +67,8 @@ public static class AppNavigation
             new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
             new("OwnerAdmin", "building", "Admin", "/admin/owners"),
             new("DocumentTrashTitle", "", "ChuTro,QuanLy", "/documents/trash", ShowInSidebar: false),
+            // VHT-104: Admin đọc sổ tài khoản/hệ thống, Chủ trọ đọc sổ nghiệp vụ trong phạm vi.
+            new("AuditLog", "history", "Admin,ChuTro", "/admin/audit-log"),
             new("ManagerSwitches", "settings", "ChuTro", "/admin/manager-switches", Aliases: ["/manager-switches"]),
         ]),
         new("NavGroupPersonal", "KhachThue",

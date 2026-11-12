@@ -46,7 +46,8 @@ public sealed class ContractDepositIntegrationTests(SqlServerFixture fixture) : 
         await service.UpdateDepositAsync(contract.ContractId, 300_000m, new PropertyCaller(owner, Roles.ChuTro));
         db.ChangeTracker.Clear();
         Assert.Equal(300_000m, await db.Contracts.Where(x => x.ContractId == contract.ContractId).Select(x => x.DepositAmount).SingleAsync());
-        Assert.True(await db.AuditLogEntries.AnyAsync(x => x.Action == "ContractDepositUpdated"));
+        // VHT-104: nhật ký nghiệp vụ ghi ra file của chủ trọ, không còn ở bảng AuditLogEntries.
+        Assert.Contains("ContractDepositUpdated", await ReadAuditFileAsync(owner));
     }
 
     [SqlServerFact]
@@ -158,16 +159,16 @@ public sealed class ContractDepositIntegrationTests(SqlServerFixture fixture) : 
 
         db.ChangeTracker.Clear();
         Assert.Equal(350_000m, await DepositAsync(db, seeded.Contract.ContractId));
-        Assert.Equal(1, await db.AuditLogEntries.CountAsync(
-            entry => entry.Action == ContractLifecycleOperations.ContractAuditActions.DepositUpdated));
+        Assert.Equal(1, CountAction(await ReadAuditFileAsync(Owner),
+            ContractLifecycleOperations.ContractAuditActions.DepositUpdated));
 
         var second = await ApproveAsync(pending.ApprovalRequestId!.Value);
         Assert.False(second.Succeeded);
         Assert.Equal(ApprovalErrorCodes.AlreadyDecided, second.ErrorCode);
         db.ChangeTracker.Clear();
         Assert.Equal(350_000m, await DepositAsync(db, seeded.Contract.ContractId));
-        Assert.Equal(1, await db.AuditLogEntries.CountAsync(
-            entry => entry.Action == ContractLifecycleOperations.ContractAuditActions.DepositUpdated));
+        Assert.Equal(1, CountAction(await ReadAuditFileAsync(Owner),
+            ContractLifecycleOperations.ContractAuditActions.DepositUpdated));
     }
 
     [SqlServerFact]
@@ -381,6 +382,16 @@ public sealed class ContractDepositIntegrationTests(SqlServerFixture fixture) : 
         await using var db = fixture.CreateContext();
         return await NewApprovals(db).ApproveAsync(requestId, OwnerApprover);
     }
+
+    /// <summary>Đọc thẳng file nhật ký để không phụ thuộc cửa sổ hạn lưu (test dùng FixedClock).</summary>
+    private async Task<string> ReadAuditFileAsync(string ownerId)
+    {
+        var path = fixture.AuditStore.OwnerFilePath(ownerId);
+        return File.Exists(path) ? await File.ReadAllTextAsync(path) : string.Empty;
+    }
+
+    private static int CountAction(string auditFile, string action) =>
+        auditFile.Split('\n').Count(line => line.Contains(action, StringComparison.Ordinal));
 
     private static Task<decimal> DepositAsync(ApplicationDbContext db, Guid contractId) =>
         db.Contracts.AsNoTracking()

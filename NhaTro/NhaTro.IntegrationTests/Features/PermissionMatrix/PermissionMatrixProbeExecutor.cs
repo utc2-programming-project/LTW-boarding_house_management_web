@@ -754,7 +754,7 @@ public static class PermissionMatrixProbeExecutor
         {
             if (role == Roles.Admin)
             {
-                var rows = await audit.QueryAsync(caller);
+                var rows = (await audit.QueryAsync(caller)).Items;
                 var valid = rows.Count > 0
                     && rows.All(row => row.Category == "Account")
                     && rows.All(row => row.PropertyId is null);
@@ -766,7 +766,7 @@ public static class PermissionMatrixProbeExecutor
 
             if (role == Roles.ChuTro)
             {
-                var rows = await audit.QueryAsync(caller);
+                var rows = (await audit.QueryAsync(caller)).Items;
                 var valid = rows.Count > 0
                     && rows.All(row => row.Category == "Business")
                     && rows.All(row => row.PropertyId == world.Data.PropertyAId);
@@ -777,7 +777,7 @@ public static class PermissionMatrixProbeExecutor
                         "Lỗi: Chủ trọ không đọc được nhật ký nghiệp vụ trong phạm vi của mình.");
             }
 
-            var forbidden = await audit.QueryAsync(caller);
+            var forbidden = (await audit.QueryAsync(caller)).Items;
             return ProbeOutcome.Allowed(
                 $"Lỗi: vai trò {role} vẫn đọc được {forbidden.Count} dòng nhật ký.");
         }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Web.Data;
+using Web.Infrastructure.Auditing;
 
 namespace NhaTro.IntegrationTests.Infrastructure;
 
@@ -20,6 +22,11 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
     private const string TestSqlServerEnvironmentVariable = "NHATRO_TEST_SQLSERVER";
 
     private readonly string _databaseName = $"NhaTro_It_{Guid.NewGuid():N}";
+
+    /// <summary>VHT-104: mỗi fixture một thư mục audit tạm riêng để test song song không ghi lẫn.</summary>
+    public AuditLogFileStore AuditStore { get; } = new(
+        Path.Combine(Path.GetTempPath(), "NhaTro_It_Audit", Guid.NewGuid().ToString("N")),
+        retentionDays: 3);
 
     /// <summary>False khi SQL Server được cấu hình hoặc LocalDB mặc định không truy cập được; test sẽ Skip.</summary>
     public static bool Available { get; } = Probe();
@@ -83,6 +90,11 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
 
         try
         {
+            if (Directory.Exists(AuditStore.RootDirectory))
+            {
+                Directory.Delete(AuditStore.RootDirectory, recursive: true);
+            }
+
             SqlConnection.ClearAllPools();
             await using var connection = new SqlConnection(MasterConnectionString);
             await connection.OpenAsync();
@@ -102,6 +114,8 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
     public ApplicationDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlServer(ConnectionString)
+            // VHT-104: nhật ký thao tác ghi file, không ghi DB.
+            .AddInterceptors(new AuditLogSaveInterceptor(AuditStore, NullLogger<AuditLogSaveInterceptor>.Instance))
             .Options);
 
     public ApplicationDbContext CreateDbContext() => CreateContext();
@@ -115,6 +129,14 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
     /// <summary>Xóa dữ liệu giữa các test, theo thứ tự khóa ngoại.</summary>
     public async Task ResetAsync()
     {
+        // VHT-104: log là file; mỗi test bắt đầu với thư mục audit sạch.
+        if (Directory.Exists(AuditStore.RootDirectory))
+        {
+            Directory.Delete(AuditStore.RootDirectory, recursive: true);
+        }
+
+        Directory.CreateDirectory(AuditStore.RootDirectory);
+
         await using var db = CreateContext();
         // StoredFiles co FK toi AspNetUsers: xoa truoc Users, sau Rooms/Properties/Tenants.
         await db.IncidentPhotoAttachments.ExecuteDeleteAsync();
