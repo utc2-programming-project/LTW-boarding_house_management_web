@@ -163,13 +163,13 @@ public sealed class P6RecoveryBackend
 
     public static BunitJSModuleInterop Register(BunitContext context, AuthenticationStateProvider authentication,
         P6RecoveryBackend backend, PaymentReviewPageService? reviewPage = null,
-        BankAccountOptions? bankAccount = null)
+        OwnerBankAccount? bankAccount = null)
     {
         context.Services.AddLogging();
         context.Services.AddLocalization(o => o.ResourcesPath = "Resources");
         context.Services.AddSingleton<AuthenticationStateProvider>(authentication);
         context.Services.AddSingleton(new ToastService());
-        context.Services.AddSingleton(Options.Create(bankAccount ?? new BankAccountOptions()));
+        context.Services.AddSingleton<IOwnerBankAccountService>(new StubBankAccounts(bankAccount));
         context.Services.AddSingleton(backend.CreatePaymentPage(authentication));
         context.Services.AddSingleton(reviewPage ?? backend.CreateReviewPage(authentication, backend.CreateReviewQuery()));
         context.Services.AddTransient<PaymentRecoveryService>();
@@ -177,6 +177,18 @@ public sealed class P6RecoveryBackend
         var module = context.JSInterop.SetupModule(ModulePath);
         module.Mode = JSRuntimeMode.Loose;
         return module;
+    }
+
+    private sealed class StubBankAccounts(OwnerBankAccount? account) : IOwnerBankAccountService
+    {
+        public Task<OwnerBankAccount?> GetForUserAsync(string userId, CancellationToken ct = default) =>
+            Task.FromResult(account);
+
+        public Task<OwnerBankAccount?> GetForContractAsync(Guid contractId, CancellationToken ct = default) =>
+            Task.FromResult(account);
+
+        public Task<OwnerBankAccount?> GetForInvoiceAsync(int invoiceId, CancellationToken ct = default) =>
+            Task.FromResult(account);
     }
 
     public static PaymentReviewItemDto ReviewItem(PaymentDto payment) => new()

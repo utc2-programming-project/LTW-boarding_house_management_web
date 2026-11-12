@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Maintenance.DTOs;
 using Web.Features.Properties;
 
@@ -17,4 +18,19 @@ public interface IIncidentService
 
     Task<IncidentResult> UpdateAsync(
         int incidentId, IncidentUpdateRequest request, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IncidentResult> DeleteAsync(
+        int incidentId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IncidentResult> RestoreAsync(
+        int incidentId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<IncidentTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IncidentResult> PurgeAsync(
+        int incidentId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
 }

@@ -48,7 +48,16 @@
         @if (CanManage)
         {
             <section class="tenant-detail-section tenant-documents-section" aria-labelledby="tenant-documents-heading">
-                <h3 id="tenant-documents-heading">@L["TenantDocumentsTitle"]</h3>
+                <div class="tenant-documents-heading-row">
+                    <h3 id="tenant-documents-heading">@L["TenantDocumentsTitle"]</h3>
+                    <AuthorizeView Roles="ChuTro,QuanLy">
+                        <Authorized>
+                            <a class="btn btn-secondary btn-sm" href="/documents/trash">
+                                <LucideIcon Name="trash" /> @L["DocumentTrashOpen"]
+                            </a>
+                        </Authorized>
+                    </AuthorizeView>
+                </div>
                 @if (_documentsLoading)
                 {
                     <p class="tenant-documents-message">@L["DocumentsLoading"]</p>
@@ -121,6 +130,11 @@
             <span>@L["TenantCreatedAt"] <strong>@DateFormatter.FormatDateTime(Tenant.CreatedAt.UtcDateTime)</strong></span>
             <span>@L["TenantUpdatedAt"] <strong>@DateFormatter.FormatDateTime(Tenant.UpdatedAt?.UtcDateTime)</strong></span>
         </p>
+
+        @if (CanManage)
+        {
+            <p class="note">@L["TenantDeactivateHint"]</p>
+        }
     }
     </ChildContent>
     <Footer>
@@ -132,7 +146,7 @@
                     <LucideIcon Name="trash" /> @L["TenantDelete"]
                 </button>
                 <button type="button" class="btn btn-secondary" @onclick="() => OnSetActive.InvokeAsync(!Tenant.IsActive)">
-                    <LucideIcon Name="@(Tenant.IsActive ? "lock" : "unlock")" />
+                    <LucideIcon Name="@(Tenant.IsActive ? "user-off" : "user-check")" />
                     @(Tenant.IsActive ? L["TenantDeactivateButton"] : L["TenantActivateButton"])
                 </button>
                 <button type="button" class="btn btn-primary" @onclick="() => OnEdit.InvokeAsync(Tenant)">

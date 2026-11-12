@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Properties.Services;
 
@@ -52,4 +53,19 @@ public sealed class ContractPageService(P2CallerProvider callerProvider, IContra
 
     public async Task<ContractActionResultDto> UpdateDepositAsync(Guid contractId, decimal depositAmount, CancellationToken cancellationToken = default) =>
         await contracts.UpdateDepositAsync(contractId, depositAmount, await callerProvider.GetCallerAsync(), cancellationToken);
+
+    public async Task<ContractActionResultDto> DeleteAsync(Guid contractId, CancellationToken cancellationToken = default) =>
+        await contracts.DeleteAsync(contractId, await callerProvider.GetCallerAsync(), cancellationToken);
+
+    public async Task<ContractActionResultDto> RestoreAsync(Guid contractId, CancellationToken cancellationToken = default) =>
+        await contracts.RestoreAsync(contractId, await callerProvider.GetCallerAsync(), cancellationToken);
+
+    public async Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(CancellationToken cancellationToken = default) =>
+        await contracts.ListDeletedAsync(await callerProvider.GetCallerAsync(), cancellationToken);
+
+    public async Task<ContractActionResultDto> PurgeAsync(Guid contractId, CancellationToken cancellationToken = default) =>
+        await contracts.PurgeAsync(contractId, await callerProvider.GetCallerAsync(), cancellationToken);
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(CancellationToken cancellationToken = default) =>
+        await contracts.PurgeAllAsync(await callerProvider.GetCallerAsync(), cancellationToken);
 }

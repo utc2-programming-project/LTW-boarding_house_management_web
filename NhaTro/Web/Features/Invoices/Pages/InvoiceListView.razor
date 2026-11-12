@@ -5,7 +5,9 @@
 @attribute [Authorize(Policy = "InvoiceView")]
 @using Web.Features.Utilities
 @using Web.Features.Utilities.Services
+@using Web.Features.Accounts
 @inject IInvoiceQueryService InvoiceQuery
+@inject IInvoiceService InvoiceService
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
 @inject Web.Features.Utilities.Services.ServiceRegistrationService RegistrationService
@@ -13,10 +15,11 @@
 @inject ToastService Toast
 @inject IStringLocalizer<InvoiceResources> L
 @inject IStringLocalizer<UtilityResources> UL
+@inject IStringLocalizer<Web.Shared> SL
 
 <PageTitle>@L[IsMyInvoices ? "MyPageTitle" : "PageTitle"]</PageTitle>
 
-<div class="invoice-page">
+<div class="invoice-page page-stack">
     <PageHeading Title="@L[IsMyInvoices ? "MyHeading" : "Heading"]" HelpText="@L[IsMyInvoices ? "MySubtitle" : "Subtitle"]">
         <Actions>
             @if (IsMyInvoices)
@@ -32,8 +35,16 @@
             }
             else
             {
+                <AuthorizeView Roles="ChuTro">
+                    <Authorized>
+                        <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/invoices/trash")'>
+                            <LucideIcon Name="trash" />
+                            <span>@L["InvoiceTrashOpen"]</span>
+                        </button>
+                    </Authorized>
+                </AuthorizeView>
                 <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/service-registrations")'>
-                    <LucideIcon Name="clipboard-list" />
+                    <LucideIcon Name="file-text" />
                     <span>@L["ManageRegistrationsButton"]</span>
                 </button>
             }
@@ -124,9 +135,7 @@
                 </div>
                 <div class="filter-bar__actions">
                     <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="invoice-advanced-panel" />
-                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
-                        <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
-                    </button>
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
                 </div>
             </div>
             <div class="filter-bar__advanced" id="invoice-advanced-panel" hidden="@(!_showAdvanced)">
@@ -189,23 +198,61 @@
                             @foreach (var invoice in _result.Items)
                             {
                                 <tr>
-                                    <td class="font-semibold">HD-@invoice.Id</td>
+                                    <td class="font-semibold">
+                                        @* Hóa đơn của chính mình: khách thuê vẫn mở được /my/invoices/{id}. *@
+                                        <a class="cell-link" href="@AppLinks.Invoice(invoice.Id, DetailBase)" title="@SL["CellLinkOpenInvoice"]">HD-@invoice.Id</a>
+                                    </td>
                                     <td class="tabular-nums">@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
                                     <td class="tabular-nums">@(invoice.DueDate is null ? "—" : DateFormatter.Format(invoice.DueDate.Value))</td>
-                                    <td>@invoice.ContractNumber</td>
+                                    <td>
+                                        @if (CanFollowLinks)
+                                        {
+                                            <a class="cell-link is-quiet" href="@AppLinks.Contract(invoice.ContractId)" title="@SL["CellLinkOpenContract"]">@invoice.ContractNumber</a>
+                                        }
+                                        else
+                                        {
+                                            <span>@invoice.ContractNumber</span>
+                                        }
+                                    </td>
                                     <td>
                                         <div class="invoice-room-cell">
                                             <div class="invoice-room-line">
-                                                <span class="room-code">@invoice.RoomCode</span>
+                                                @if (CanFollowLinks)
+                                                {
+                                                    <a class="cell-link room-code" href="@AppLinks.RoomsByCode(invoice.RoomCode)" title="@SL["CellLinkOpenRoom"]">@invoice.RoomCode</a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="room-code">@invoice.RoomCode</span>
+                                                }
                                                 <StatusBadge Text="@StatusText(invoice.Status)" Tone="@StatusTone(invoice.Status)" />
                                             </div>
-                                            <span class="property-name">@invoice.PropertyName</span>
+                                            @if (CanFollowLinks)
+                                            {
+                                                <a class="cell-link is-quiet property-name" href="@AppLinks.PropertiesByKeyword(invoice.PropertyName)" title="@SL["CellLinkOpenProperty"]">@invoice.PropertyName</a>
+                                            }
+                                            else
+                                            {
+                                                <span class="property-name">@invoice.PropertyName</span>
+                                            }
                                         </div>
                                     </td>
                                     <td>
                                         @if (invoice.TenantNames.Count == 0)
                                         {
                                             <span class="muted">@L["NoTenants"]</span>
+                                        }
+                                        else if (CanFollowLinks)
+                                        {
+                                            @for (var i = 0; i < invoice.TenantNames.Count; i++)
+                                            {
+                                                var tenantName = invoice.TenantNames[i];
+                                                if (i > 0)
+                                                {
+                                                    <span>, </span>
+                                                }
+                                                <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
+                                            }
                                         }
                                         else
                                         {
@@ -234,6 +281,13 @@
                                                     <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDetail(invoice.Id)">
                                                         <LucideIcon Name="eye" /><span>@L["ViewDetail"]</span>
                                                     </button>
+                                                    @if (!IsMyInvoices && invoice.Status == InvoiceStatus.Draft)
+                                                    {
+                                                        <div class="p2-row-menu-sep" role="separator"></div>
+                                                        <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(invoice.Id)">
+                                                            <LucideIcon Name="trash" /><span>@L["InvoiceDeleteAction"]</span>
+                                                        </button>
+                                                    }
                                                 </div>
                                             }
                                         </div>
@@ -244,17 +298,8 @@
                     </table>
                 </div>
 
-                <footer class="table-footer">
-                    <span>@string.Format(L["PageInfo"], _result.Page, TotalPages, _result.TotalCount)</span>
-                    <div class="pager">
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page <= 1)" @onclick="PreviousPageAsync">
-                            @L["Previous"]
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page >= TotalPages)" @onclick="NextPageAsync">
-                            @L["Next"]
-                        </button>
-                    </div>
-                </footer>
+                <TablePager Page="_result.Page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_result.TotalCount"
+                            PageChanged="GoToPageAsync" />
             }
             else
             {
@@ -321,8 +366,15 @@
     </div>
 }
 
+<ConfirmDialog Visible="_deleteVisible" Title="@L["InvoiceDeleteTitle"]"
+               Message="@string.Format(L["InvoiceDeleteMessage"], _deleteInvoiceId ?? 0)"
+               ConfirmText="@L["InvoiceDeleteConfirm"]" CancelText="@L["CancelBtn"]" Danger="true"
+               OnConfirm="DeleteInvoiceAsync" OnCancel="CancelDeleteInvoice" />
+
 @code {
     private const int PageSize = 20;
+    private bool _deleteVisible;
+    private int? _deleteInvoiceId;
 
     private InvoiceListResult _result = new()
     {
@@ -381,6 +433,11 @@
 
     private string DetailBase => IsMyInvoices ? "/my/invoices" : "/invoices";
 
+    // Khách thuê xem /my/invoices: không link sang trang nghiệp vụ (sẽ bị chặn quyền).
+    private bool _isTenant;
+
+    private bool CanFollowLinks => !IsMyInvoices && !_isTenant;
+
     private IReadOnlyList<int> AvailableYears
     {
         get
@@ -391,6 +448,10 @@
     }
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    private int FirstItem => _result.TotalCount == 0 ? 0 : (_result.Page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_result.Page * PageSize, _result.TotalCount);
 
     protected override Task OnInitializedAsync()
     {
@@ -408,7 +469,27 @@
             _contractId = queryContractId;
         }
 
+        _lastAppliedKeywordQuery = KeywordQuery;
+        if (KeywordQuery is { Length: > 0 })
+        {
+            _keyword = KeywordQuery.Trim();
+        }
+
         return ReloadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=A107): Blazor dùng lại trang nên phải lọc lại theo query mới.
+        if (string.Equals(KeywordQuery, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        _page = 1;
+        await ReloadAsync();
     }
 
     private async Task OpenRegistrationModal()
@@ -488,6 +569,12 @@
     [SupplyParameterFromQuery(Name = "periodStart")]
     public DateOnly? QueryPeriodStart { get; set; }
 
+    /// <summary>Từ khóa từ link chéo (?q=A107 hoặc ?q=HD-001): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
+
     private async Task ReloadAsync()
     {
         _loading = true;
@@ -535,6 +622,8 @@
         try
         {
             var caller = await CallerProvider.GetCallerAsync();
+            // Khách thuê không vào được /rooms, /tenants: chỉ hiện link cho vai trò nghiệp vụ.
+            _isTenant = caller.Role == Roles.KhachThue;
             _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
         }
         catch (Exception)
@@ -585,25 +674,15 @@
         await LoadResultAsync();
     }
 
-    private async Task PreviousPageAsync()
+    private async Task GoToPageAsync(int page)
     {
-        if (_page <= 1)
+        var target = PaginationHelper.ClampPage(page, TotalPages);
+        if (target == _page)
         {
             return;
         }
 
-        _page--;
-        await LoadResultAsync();
-    }
-
-    private async Task NextPageAsync()
-    {
-        if (_page >= TotalPages)
-        {
-            return;
-        }
-
-        _page++;
+        _page = target;
         await LoadResultAsync();
     }
 
@@ -612,6 +691,48 @@
     private bool IsMenuOpen(int invoiceId) => _openMenuId == invoiceId;
 
     private void ToggleRowMenu(int invoiceId) => _openMenuId = _openMenuId == invoiceId ? null : invoiceId;
+
+    private void MenuDelete(int invoiceId)
+    {
+        _openMenuId = null;
+        _deleteInvoiceId = invoiceId;
+        _deleteVisible = true;
+    }
+
+    private void CancelDeleteInvoice()
+    {
+        _deleteVisible = false;
+        _deleteInvoiceId = null;
+    }
+
+    private async Task DeleteInvoiceAsync()
+    {
+        if (_deleteInvoiceId is not int invoiceId)
+        {
+            CancelDeleteInvoice();
+            return;
+        }
+
+        _deleteVisible = false;
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            await InvoiceService.DeleteDraftAsync(invoiceId, caller);
+            Toast.Success(L["InvoiceDeleted"]);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error(ErrorText(ex));
+        }
+        finally
+        {
+            _deleteInvoiceId = null;
+        }
+    }
+
+    private string ErrorText(Exception ex) =>
+        ex is IInvoiceServiceError error ? L[$"InvoiceError{error.ErrorCode}"] : L["InvoiceGenericError"];
 
     private void MenuDetail(int invoiceId)
     {

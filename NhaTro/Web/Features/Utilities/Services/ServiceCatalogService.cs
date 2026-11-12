@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Audit.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Utilities.DTOs;
@@ -289,6 +291,244 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         catalog.DeletedBy = caller.UserId;
         catalog.IsActive = false;
         await _context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<ServiceCatalogTrashItemDto>> ListDeletedAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        PropertyCaller caller,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
+
+        var propertyIds = await _context.Properties
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(property => property.OwnerId == caller.UserId)
+            .Select(property => property.Id)
+            .ToListAsync(ct);
+
+        var catalogs = await _context.ServiceCatalogs
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Include(catalog => catalog.PriceHistory)
+            .Where(catalog => catalog.IsDeleted
+                && catalog.PropertyId.HasValue
+                && propertyIds.Contains(catalog.PropertyId.Value))
+            .ToListAsync(ct);
+
+        var propertyNames = await _context.Properties
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(property => propertyIds.Contains(property.Id))
+            .ToDictionaryAsync(property => property.Id, property => property.Name, ct);
+
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        var items = catalogs
+            .Select(catalog =>
+            {
+                var latest = catalog.PriceHistory
+                    .OrderByDescending(version => version.EffectiveDate)
+                    .ThenByDescending(version => version.Id)
+                    .FirstOrDefault();
+                var propertyName = propertyNames.TryGetValue(catalog.PropertyId!.Value, out var name)
+                    ? name
+                    : $"#{catalog.PropertyId}";
+                return new ServiceCatalogTrashItemDto(
+                    catalog.Id,
+                    catalog.PropertyId,
+                    propertyName,
+                    latest?.Name ?? $"#{catalog.Id}",
+                    latest?.Unit ?? string.Empty,
+                    latest?.UnitPrice ?? 0m,
+                    catalog.PriceHistory.Count,
+                    catalog.DeletedAt,
+                    catalog.DeletedBy);
+            })
+            .Where(item => term is null
+                || item.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.DeletedAt)
+            .ThenByDescending(item => item.Id)
+            .ToList();
+
+        return new PagedResult<ServiceCatalogTrashItemDto>
+        {
+            Items = items.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+            TotalCount = items.Count,
+            Page = page,
+            PageSize = pageSize,
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task RestoreServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var catalog = await _context.ServiceCatalogs
+            .IgnoreQueryFilters()
+            .Include(item => item.PriceHistory)
+            .SingleOrDefaultAsync(item => item.Id == serviceCatalogId && item.IsDeleted, ct);
+        if (catalog is null)
+        {
+            throw WithKey(new InvalidOperationException("Dịch vụ không còn trong thùng rác."), "ErrorTrashItemNotFound");
+        }
+
+        if (catalog.PropertyId is not int propertyId)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể khôi phục danh mục hệ thống."), "ErrorSystemCatalogReadOnly");
+        }
+
+        var ownsProperty = await _context.Properties
+            .IgnoreQueryFilters()
+            .AnyAsync(property => property.Id == propertyId && property.OwnerId == caller.UserId, ct);
+        if (!ownsProperty)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền khôi phục dịch vụ của nhà trọ này.");
+        }
+
+        var propertyAlive = await _context.Properties.AnyAsync(property => property.Id == propertyId, ct);
+        if (!propertyAlive)
+        {
+            throw WithKey(
+                new InvalidOperationException("Nhà trọ của dịch vụ đã bị xóa; hãy khôi phục nhà trọ trước."),
+                "ErrorPropertyDeleted");
+        }
+
+        catalog.IsDeleted = false;
+        catalog.DeletedAt = null;
+        catalog.DeletedBy = null;
+        catalog.IsActive = true;
+        await _context.SaveChangesAsync(ct);
+    }
+
+    /// <inheritdoc />
+    public Task PurgeServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller,
+        CancellationToken ct = default) =>
+        PurgeCoreAsync(serviceCatalogId, caller, ct);
+
+    /// <inheritdoc />
+    public async Task<TrashPurgeSummary> PurgeAllServiceCatalogsAsync(
+        PropertyCaller caller,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var propertyIds = await _context.Properties
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(property => property.OwnerId == caller.UserId)
+            .Select(property => property.Id)
+            .ToListAsync(ct);
+
+        var ids = await _context.ServiceCatalogs
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(catalog => catalog.IsDeleted
+                && catalog.PropertyId.HasValue
+                && propertyIds.Contains(catalog.PropertyId.Value))
+            .Select(catalog => catalog.Id)
+            .ToListAsync(ct);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            try
+            {
+                await PurgeCoreAsync(id, caller, ct);
+                purged++;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException or DbUpdateException)
+            {
+                skipped++;
+                _context.ChangeTracker.Clear();
+            }
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private async Task PurgeCoreAsync(int serviceCatalogId, PropertyCaller caller, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        EnsureCanManage(caller);
+
+        var catalog = await _context.ServiceCatalogs
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == serviceCatalogId && item.IsDeleted, ct);
+        if (catalog is null)
+        {
+            throw WithKey(new InvalidOperationException("Dịch vụ không còn trong thùng rác."), "ErrorTrashItemNotFound");
+        }
+
+        if (catalog.PropertyId is not int propertyId)
+        {
+            throw WithKey(new UnauthorizedAccessException("Không thể xóa vĩnh viễn danh mục hệ thống."), "ErrorSystemCatalogReadOnly");
+        }
+
+        var ownsProperty = await _context.Properties
+            .IgnoreQueryFilters()
+            .AnyAsync(property => property.Id == propertyId && property.OwnerId == caller.UserId, ct);
+        if (!ownsProperty)
+        {
+            throw new UnauthorizedAccessException("Bạn không có quyền xóa vĩnh viễn dịch vụ của nhà trọ này.");
+        }
+
+        var inUse = await _context.ContractServiceRegistrations
+            .IgnoreQueryFilters()
+            .AnyAsync(item => item.ServiceCatalogId == serviceCatalogId, ct)
+            || await _context.ServiceRegistrationRequests
+            .AnyAsync(item => item.ServiceCatalogId == serviceCatalogId, ct);
+        if (inUse)
+        {
+            throw WithKey(
+                new InvalidOperationException("Dịch vụ còn đăng ký dịch vụ; hãy xóa các đăng ký trước."),
+                "ErrorServiceInUse");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var versions = await _context.ServicePriceHistories
+                .IgnoreQueryFilters()
+                .Where(version => version.ServiceCatalogId == serviceCatalogId)
+                .ToListAsync(ct);
+            _context.ServicePriceHistories.RemoveRange(versions);
+            _context.ServiceCatalogs.Remove(catalog);
+            _context.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "service.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = propertyId,
+                Metadata = $"ServiceCatalog #{catalog.Id}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+            await _context.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            _context.ChangeTracker.Clear();
+            throw WithKey(
+                new InvalidOperationException("Không thể xóa vĩnh viễn vì còn dữ liệu liên quan."),
+                "ErrorHasDependencies");
+        }
     }
 
     /// <inheritdoc />

@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Properties;
 
@@ -34,4 +35,19 @@ public interface IInvoiceService
         CreateInvoiceRequest request,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
+
+    Task DeleteDraftAsync(
+        int invoiceId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task RestoreAsync(
+        int invoiceId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<InvoiceTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task PurgeAsync(
+        int invoiceId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
 }

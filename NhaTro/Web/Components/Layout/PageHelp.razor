@@ -1,15 +1,11 @@
+@using Web.Components.Shared.Feedback
 @inject IStringLocalizer<Shared> L
 
-<span class="page-help">
-    <button type="button" class="page-help-button" aria-label="@AccessibleLabel"
-            aria-describedby="@DescriptionId" aria-controls="@DescriptionId" aria-expanded="false">
-        <LucideIcon Name="circle-help" />
-    </button>
-</span>
+<HelpTip Text="@Text" Label="@AccessibleLabel" AlignEnd="true" />
 
 @code {
-    /// <summary>Id dòng giải thích bên dưới tiêu đề, dùng chung cho static SSR và interactive.</summary>
-    [Parameter, EditorRequired] public string DescriptionId { get; set; } = string.Empty;
+    /// <summary>Nội dung giải thích của nút dấu hỏi; rỗng thì không hiện nút.</summary>
+    [Parameter, EditorRequired] public string? Text { get; set; }
 
     /// <summary>Nhãn truy cập cho nút; mặc định dùng key chung PageHelpLabel.</summary>
     [Parameter] public string? Label { get; set; }

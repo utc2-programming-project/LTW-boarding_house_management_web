@@ -7,7 +7,7 @@
 @inject IInvoiceQueryService InvoiceQuery
 @inject Web.Features.Invoices.Services.IInvoiceService InvoiceService
 @inject Web.Features.Notifications.INotificationService Notifications
-@inject Microsoft.Extensions.Options.IOptions<Web.Features.Invoices.BankAccountOptions> BankAccount
+@inject Web.Features.Invoices.Services.IOwnerBankAccountService OwnerBank
 @inject PaymentPageService PaymentPage
 @inject PaymentRecoveryService PaymentRecovery
 @inject P2CallerProvider CallerProvider
@@ -186,13 +186,28 @@
             </div>
         </section>
 
-        @if (Invoice.Status != InvoiceStatus.Draft && BankAccount.Value.IsConfigured && _caller is { IsKhachThue: true })
+        @if (Invoice.Status != InvoiceStatus.Draft && _caller is { IsKhachThue: true })
         {
             <section class="qr-card">
                 <h2 class="section-title">@L["QrTitle"]</h2>
                 <div class="qr-payment-layout">
                     <div class="qr-zone">
-                        @if (_qrExpired)
+                        @if (_bankAccount is not { IsConfigured: true })
+                        {
+                            @if (IsInvoicePaid)
+                            {
+                                <LucideIcon Name="circle-check" Class="qr-paid-icon" />
+                            }
+                            else
+                            {
+                                @* PLAN-028: Chủ trọ chưa nhập tài khoản nhận tiền nên không sinh được VietQR. *@
+                                <div class="qr-missing-bank" role="alert">
+                                    <LucideIcon Name="alert-triangle" />
+                                    <p>@L["QrMissingBankNotice"]</p>
+                                </div>
+                            }
+                        }
+                        else if (_qrExpired)
                         {
                             <p class="qr-expired" role="status">@L["QrExpired"]</p>
                             <button type="button" class="btn btn-primary" @onclick="GenerateQr">
@@ -218,7 +233,7 @@
                     </div>
                     <div class="qr-side">
                         <dl class="qr-info">
-                            <div><dt>@L["QrBank"]</dt><dd>@BankAccount.Value.DisplayAccount</dd></div>
+                            <div><dt>@L["QrBank"]</dt><dd>@(_bankAccount?.DisplayAccount ?? L["QrBankNotConfigured"])</dd></div>
                             <div><dt>@L["SummaryTotal"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</dd></div>
                             <div><dt>@L["QrContent"]</dt><dd>HD-@Invoice.Id</dd></div>
                         </dl>
@@ -481,6 +496,7 @@
     private bool _recoveryConnected;
     private bool _recoveryReady;
     private string? _qrImageUri;
+    private Web.Features.Invoices.Services.OwnerBankAccount? _bankAccount;
     private DateTimeOffset? _qrExpiresAt;
     private bool _qrExpired => _qrExpiresAt is { } expires && DateTimeOffset.UtcNow > expires;
     private string? _qrRemaining => _qrExpiresAt is { } expires && expires > DateTimeOffset.UtcNow
@@ -491,10 +507,10 @@
 
     private void GenerateQr()
     {
-        if (_invoice is null || !BankAccount.Value.IsConfigured) return;
+        if (_invoice is null || _bankAccount is not { IsConfigured: true }) return;
         _qrImageUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
-            BankAccount.Value.Code,
-            BankAccount.Value.AccountNumber,
+            _bankAccount.BankCode,
+            _bankAccount.AccountNumber,
             _invoice.TotalAmount,
             $"HD-{_invoice.Id}"));
         _qrExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
@@ -587,6 +603,9 @@
         Toasts.Success(L["SendBillSuccess"]);
         await ReloadAsync();
     }
+
+    private bool IsInvoicePaid =>
+        Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed;
 
     private string PaymentStateText => (_invoice?.Status, _latestPayment?.Status) switch
     {
@@ -764,6 +783,7 @@
         _formError = null;
         _resultCheckMessage = null;
         _requiresResultCheck = false;
+        _bankAccount = null;
 
         try
         {
@@ -771,6 +791,10 @@
             _caller = caller;
             _invoice = await InvoiceQuery.GetInvoiceAsync(Id, caller);
             _latestPayment = _invoice.LatestPayment;
+            // PLAN-028: QR chỉ hiển thị cho khách thuê; lấy TK của chủ trọ sở hữu phòng.
+            _bankAccount = caller.IsKhachThue
+                ? await OwnerBank.GetForInvoiceAsync(_invoice.Id)
+                : null;
             ResetForm();
             await LoadPaymentHistoryAsync();
         }

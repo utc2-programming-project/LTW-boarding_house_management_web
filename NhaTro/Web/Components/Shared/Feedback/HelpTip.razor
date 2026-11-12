@@ -1,0 +1,27 @@
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <span class="help-tip @(AlignEnd ? "help-tip--end" : null)">
+        <button type="button" class="help-tip-button" aria-label="@AccessibleLabel" aria-describedby="@(DescribedById)">
+            <LucideIcon Name="circle-help" />
+        </button>
+        <span id="@_bubbleId" class="help-tip-bubble" role="tooltip">@Text</span>
+    </span>
+}
+
+@code {
+    /// <summary>Nội dung giải thích hiện trong bong bóng; rỗng thì không render nút.</summary>
+    [Parameter, EditorRequired] public string? Text { get; set; }
+
+    /// <summary>Nhãn cho trình đọc màn hình; bỏ trống thì dùng chính nội dung giải thích.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Canh bong bóng về mép phải nút, dùng khi nút nằm gần mép phải khung.</summary>
+    [Parameter] public bool AlignEnd { get; set; }
+
+    private readonly string _bubbleId = $"help-tip-{Guid.NewGuid():N}";
+
+    private string AccessibleLabel => string.IsNullOrWhiteSpace(Label) ? Text ?? string.Empty : Label;
+
+    /// <summary>Chỉ trỏ tới bong bóng khi nhãn khác nội dung, tránh đọc lặp hai lần.</summary>
+    private string? DescribedById => string.IsNullOrWhiteSpace(Label) ? null : _bubbleId;
+}

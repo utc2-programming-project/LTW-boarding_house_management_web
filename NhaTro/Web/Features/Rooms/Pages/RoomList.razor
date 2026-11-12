@@ -10,19 +10,17 @@
 
 <PageTitle>@L["P2RoomsTitle"] · @L["AppName"]</PageTitle>
 
-<div class="p2-page">
+<div class="p2-page page-stack">
     <PageHeading Title="@L["P2RoomsTitle"]" HelpText="@L["P2RoomsSubtitle"]">
         <Actions>
             @if (_isOwner)
             {
-                <div class="p2-page-actions">
-                    <a class="btn btn-secondary" href="/rooms/trash">
-                        <LucideIcon Name="trash" />@L["P2RoomTrashOpen"]
-                    </a>
-                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                        <LucideIcon Name="plus" />@L["P2AddRoom"]
-                    </button>
-                </div>
+                <a class="btn btn-secondary" href="/rooms/trash">
+                    <LucideIcon Name="trash" />@L["P2RoomTrashOpen"]
+                </a>
+                <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" />@L["P2AddRoom"]
+                </button>
             }
         </Actions>
     </PageHeading>
@@ -48,7 +46,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2TotalRooms"]
-                        <button type="button" class="stat-help" data-tip="@L["P2RoomsInScope"]" aria-label="@L["P2RoomsInScope"]">?</button>
+                        <HelpTip Text="@L["P2RoomsInScope"]" />
                     </span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="door" /></span>
                 </div>
@@ -58,7 +56,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Available"]
-                        <button type="button" class="stat-help" data-tip="@L["P2ReadyForRent"]" aria-label="@L["P2ReadyForRent"]">?</button>
+                        <HelpTip Text="@L["P2ReadyForRent"]" />
                     </span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="unlock" /></span>
                 </div>
@@ -68,7 +66,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Rented"]
-                        <button type="button" class="stat-help" data-tip="@L["P2CurrentlyOccupied"]" aria-label="@L["P2CurrentlyOccupied"]">?</button>
+                        <HelpTip Text="@L["P2CurrentlyOccupied"]" />
                     </span>
                     <span class="stat-icon stat-icon--info"><LucideIcon Name="key" /></span>
                 </div>
@@ -78,7 +76,7 @@
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Maintenance"]
-                        <button type="button" class="stat-help" data-tip="@L["P2UnavailableForRent"]" aria-label="@L["P2UnavailableForRent"]">?</button>
+                        <HelpTip Text="@L["P2UnavailableForRent"]" />
                     </span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="wrench" /></span>
                 </div>
@@ -155,44 +153,47 @@
                             </select>
                         </div>
                         <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="room-advanced-panel" />
-                        <button class="btn btn-secondary filter-bar__reset" type="button" @onclick="ResetFiltersAsync">
-                            <LucideIcon Name="refresh-cw" /> @L["P2ResetFilters"]
-                        </button>
+                        <FilterResetButton OnClick="ResetFiltersAsync" />
                     </div>
                 </div>
                 <div class="filter-bar__advanced" id="room-advanced-panel" hidden="@(!_showAdvanced)">
                     <div class="filter-bar__stack">
                         <label for="room-min-price">@L["P2MinPrice"]</label>
                         <input id="room-min-price" class="input" type="number" min="0" step="1" inputmode="numeric"
-                               placeholder="@L["P2AmountPlaceholder"]" @bind="_minPriceText" />
+                               placeholder="@L["P2AmountPlaceholder"]" @bind="_minPriceText"
+                               @bind:after="ApplyFiltersAsync" />
                     </div>
                     <div class="filter-bar__stack">
                         <label for="room-max-price">@L["P2MaxPrice"]</label>
                         <input id="room-max-price" class="input" type="number" min="0" step="1" inputmode="numeric"
-                               placeholder="@L["P2AmountPlaceholder"]" @bind="_maxPriceText" />
+                               placeholder="@L["P2AmountPlaceholder"]" @bind="_maxPriceText"
+                               @bind:after="ApplyFiltersAsync" />
                     </div>
                     <div class="filter-bar__stack">
                         <label for="room-floor-filter">@L["P2Floor"]</label>
                         <input id="room-floor-filter" class="input" type="number" min="0" max="1000" step="1" inputmode="numeric"
-                               placeholder="@L["P2AllFloors"]" @bind="_floorText" />
+                               placeholder="@L["P2AllFloors"]" @bind="_floorText"
+                               @bind:after="ApplyFiltersAsync" />
                     </div>
                     <div class="filter-bar__stack">
                         <label for="room-min-area">@L["P2AreaFrom"]</label>
-                        <input id="room-min-area" class="input" type="number" min="0" step="0.01" inputmode="decimal" @bind="_minAreaText" />
+                        <input id="room-min-area" class="input" type="number" min="0" step="0.01" inputmode="decimal"
+                               @bind="_minAreaText" @bind:after="ApplyFiltersAsync" />
                     </div>
                     <div class="filter-bar__stack">
                         <label for="room-max-area">@L["P2AreaTo"]</label>
-                        <input id="room-max-area" class="input" type="number" min="0" step="0.01" inputmode="decimal" @bind="_maxAreaText" />
+                        <input id="room-max-area" class="input" type="number" min="0" step="0.01" inputmode="decimal"
+                               @bind="_maxAreaText" @bind:after="ApplyFiltersAsync" />
                     </div>
                     <label class="filter-bar__check" for="room-only-available">
-                        <input id="room-only-available" type="checkbox" @bind="_onlyAvailable" />
+                        <input id="room-only-available" type="checkbox" @bind="_onlyAvailable"
+                               @bind:after="ApplyFiltersAsync" />
                         <span>@L["P2OnlyAvailable"]</span>
                     </label>
-                    <button class="btn btn-primary filter-bar__submit" type="submit">@L["P2ApplyFilters"]</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(_filterError))
                 {
-                    <p class="filter-error" role="alert">@_filterError</p>
+                    <p class="filter-bar__error" role="alert">@_filterError</p>
                 }
                 @if (_propertyFilter.Length > 0 && int.TryParse(_propertyFilter, out var propertyId))
                 {
@@ -233,7 +234,7 @@
 }
 @if (_selectedRoom is not null)
 {
-    <RoomDetailsDialog Room="_selectedRoom" IsOwner="_isOwner" OnClose="CloseDetails"
+    <RoomDetailsDialog @key="_selectedRoom.Id" Room="_selectedRoom" IsOwner="_isOwner" OnClose="CloseDetails"
                        OnEdit="EditSelected" OnDelete="RequestDelete" />
 }
 <ConfirmDialog Visible="_deleteVisible" Title="@L["P2DeleteRoomTitle"]"
@@ -244,6 +245,14 @@
 @code {
     [SupplyParameterFromQuery(Name = "propertyId")]
     public int? PropertyId { get; set; }
+
+    /// <summary>Từ khóa từ link chéo (?q=A107): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    /// <summary>Id phòng từ link chéo (?roomId=12): mở ngay dialog chi tiết.</summary>
+    [SupplyParameterFromQuery(Name = "roomId")]
+    public int? RoomIdQuery { get; set; }
 
     private CancellationTokenSource? _keywordDebounce;
 
@@ -283,6 +292,8 @@
     private int? _formRoomId;
     private int? SelectedPropertyId => int.TryParse(_propertyFilter, out var value) ? value : null;
     private int? _lastAppliedPropertyId;
+    private string? _lastAppliedKeywordQuery;
+    private int? _lastAppliedRoomId;
 
     private int AdvancedFilterCount =>
         (string.IsNullOrWhiteSpace(_minPriceText) ? 0 : 1)
@@ -302,18 +313,33 @@
     protected override async Task OnParametersSetAsync()
     {
         // Blazor reuses this page when only the query string changes. Keep the
-        // property selector, table and summary in sync with links from the property list.
-        if (_lastAppliedPropertyId == PropertyId)
+        // property selector, table and summary in sync with links from other pages.
+        var propertyChanged = _lastAppliedPropertyId != PropertyId;
+        var queryChanged = !string.Equals(_lastAppliedKeywordQuery, KeywordQuery, StringComparison.Ordinal)
+            || _lastAppliedRoomId != RoomIdQuery;
+        if (!propertyChanged && !queryChanged)
             return;
 
         _lastAppliedPropertyId = PropertyId;
-        if (_ready)
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedRoomId = RoomIdQuery;
+        if (!_ready)
+            return;
+
+        if (propertyChanged)
         {
             _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
-            _hasActiveFilters = HasRoomFilters();
-            _tableKey++;
-            await LoadSummaryAsync();
         }
+
+        if (queryChanged)
+        {
+            _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        }
+
+        _hasActiveFilters = HasRoomFilters();
+        _tableKey++;
+        await LoadSummaryAsync();
+        OpenRoomFromQuery();
     }
 
     private async Task InitializeAsync()
@@ -334,9 +360,13 @@
             _properties = await PageService.GetPropertyOptionsAsync();
             _propertyFilter = PropertyId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
             _lastAppliedPropertyId = PropertyId;
+            _lastAppliedKeywordQuery = KeywordQuery;
+            _lastAppliedRoomId = RoomIdQuery;
+            _keyword = KeywordQuery?.Trim() ?? string.Empty;
             _hasActiveFilters = HasRoomFilters();
             _ready = true;
             await LoadSummaryAsync();
+            OpenRoomFromQuery();
         }
         catch (Exception ex)
         {
@@ -370,12 +400,35 @@
     {
         RenderFragment<RoomListItem> code = item => @<span class="p2-code-cell">
             <button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Code</button>
-            @if (item.HasPendingApproval)
+            @if (item.PendingApproval is { } approval)
             {
-                <StatusBadge Text="@L["P2ApprovalPending"]" Tone="@BadgeTone.Warning" />
+                @* Badge là link tới đúng hàng đợi, hover/focus mở thẻ giải thích (js/hover-tip.js). *@
+                <a class="p2-approval-chip" href="@ApprovalQueueHref(item)" data-hover-tip
+                   aria-describedby="@($"room-approval-tip-{item.Id}")">
+                    <LucideIcon Name="history" />
+                    <span>@L["P2ApprovalPending"]</span>
+                    <span class="hover-tip" id="@($"room-approval-tip-{item.Id}")" role="tooltip">
+                        <span class="hover-tip__title">
+                            <LucideIcon Name="history" />
+                            <span>@L["P2ApprovalPendingTipTitle"]</span>
+                        </span>
+                        <span class="hover-tip__line">@L["P2ApprovalPendingTipWhat", OperationName(approval.OperationCode), item.Code]</span>
+                        <span class="hover-tip__meta">
+                            <span><LucideIcon Name="user" />@RequesterName(approval)</span>
+                            <span class="tabular-nums"><LucideIcon Name="calendar" />@DateFormatter.FormatDateTime(approval.RequestedAt)</span>
+                        </span>
+                        <span class="hover-tip__cta">
+                            <span>@(_isOwner ? L["P2ApprovalPendingTipCtaOwner"].Value : L["P2ApprovalPendingTipCtaManager"].Value)</span>
+                            <LucideIcon Name="arrow-right" />
+                        </span>
+                    </span>
+                </a>
             }
         </span>;
         RenderFragment<RoomListItem> status = item => @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
+        // Cột "Nhà" là link sang danh sách nhà và mở sẵn dialog chi tiết theo id.
+        RenderFragment<RoomListItem> property = item => @<a class="cell-link is-quiet"
+            href="@AppLinks.Property(item.PropertyId)" title="@L["CellLinkOpenProperty"]">@item.PropertyName</a>;
         RenderFragment<RoomListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<RoomListItem> actions = item => @<div class="p2-row-actions">
             <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
@@ -408,7 +461,7 @@
         return
         [
             new() { Key = "code", Title = L["P2RoomCode"], Template = code },
-            new() { Key = "property", Title = L["P2Property"], Value = item => item.PropertyName },
+            new() { Key = "property", Title = L["P2Property"], Template = property },
             new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
             new() { Key = "area", Title = L["P2Area"], Value = FormatArea, IsNumeric = true },
             new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
@@ -617,6 +670,24 @@
         _ => L["P2StatusUnknown"]
     };
 
+    // Tên thao tác (SW-01/02/03) dùng chung key với màn hình Công tắc/Hàng đợi duyệt.
+    private string OperationName(string code)
+    {
+        var name = L[code];
+        return name.ResourceNotFound ? code : name.Value;
+    }
+
+    private string RequesterName(RoomPendingApproval approval) =>
+        string.IsNullOrWhiteSpace(approval.RequesterName)
+            ? L["P2ApprovalPendingTipUnknownRequester"].Value
+            : approval.RequesterName!;
+
+    // Chủ trọ mở hàng đợi của mình; Quản lý mở danh sách yêu cầu đã gửi.
+    // q = mã phòng để trang đích lọc sẵn và mở sẵn đúng yêu cầu.
+    private string ApprovalQueueHref(RoomListItem item) => _isOwner
+        ? $"/approvals?q={Uri.EscapeDataString(item.Code)}"
+        : "/my/requests";
+
     private static BadgeTone StatusTone(RoomStatus status) => status switch
     {
         RoomStatus.Available => BadgeTone.Success,
@@ -647,6 +718,17 @@
 
     private void OpenEdit(int id) { _formRoomId = id; _formKey++; _formVisible = true; }
     private void OpenDetails(RoomListItem item) => _selectedRoom = item;
+
+    // ?roomId=12 (từ bảng khác) mở thẳng dialog chi tiết; dialog tự tải mã phòng theo id.
+    private void OpenRoomFromQuery()
+    {
+        if (RoomIdQuery is not { } roomId || roomId <= 0)
+        {
+            return;
+        }
+
+        _selectedRoom = new RoomListItem { Id = roomId };
+    }
     private void CloseForm() => _formVisible = false;
     private void CloseDetails() => _selectedRoom = null;
     private void EditSelected() { if (_selectedRoom is not null) OpenEdit(_selectedRoom.Id); _selectedRoom = null; }

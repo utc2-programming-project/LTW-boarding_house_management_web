@@ -6,6 +6,7 @@ using Web.Features.Invoices;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Enums;
 using Web.Features.Invoices.Pages;
+using Web.Features.Invoices.Services;
 using Web.Features.Properties.Services;
 
 namespace NhaTro.UnitTests.Components;
@@ -27,11 +28,8 @@ public sealed class PaymentRecoveryInvoiceTests : P6RecoveryBunitContext
             this,
             auth,
             _backend,
-            bankAccount: new BankAccountOptions
-            {
-                AccountNumber = "0011002233",
-                AccountName = "Nguyen Van A",
-            });
+            bankAccount: new OwnerBankAccount(
+                "TECHCOMBANK", "Techcombank", "2145181026", "CAO TRUNG TINH"));
 
         Services.AddSingleton(auth);
         Services.AddSingleton(_backend.CreateInvoiceQuery());

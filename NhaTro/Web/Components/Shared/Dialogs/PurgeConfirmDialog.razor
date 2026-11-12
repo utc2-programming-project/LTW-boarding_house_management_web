@@ -1,0 +1,75 @@
+@using Web.Common.SoftDelete
+
+<ConfirmDialog Visible="Visible" Title="@Title"
+               ConfirmText="@ConfirmText" CancelText="@CancelText" BusyText="@BusyText"
+               Danger="Danger" ConfirmDisabled="@(!PurgeTextMatcher.Matches(_input, ExpectedText))"
+               OnConfirm="OnConfirm" OnCancel="OnCancel">
+    <p>@Message</p>
+    <div class="purge-confirm">
+        <label class="label" for="@_inputId">@PromptText</label>
+        <input id="@_inputId" class="input" type="text" autocomplete="off"
+               value="@_input" @oninput="OnInput" />
+        @if (_showMismatch)
+        {
+            <p class="purge-confirm__error" role="alert">@MismatchText</p>
+        }
+    </div>
+</ConfirmDialog>
+
+@code {
+    private readonly string _inputId = $"purge-{Guid.NewGuid():N}";
+    private string _input = string.Empty;
+    private bool _wasVisible;
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Message { get; set; }
+
+    /// <summary>Tên/mã người dùng phải gõ đúng để bật nút xác nhận.</summary>
+    [Parameter, EditorRequired]
+    public string ExpectedText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string PromptText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string MismatchText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string ConfirmText { get; set; } = "Đồng ý";
+
+    [Parameter]
+    public string CancelText { get; set; } = "Hủy";
+
+    [Parameter]
+    public string BusyText { get; set; } = "Đang xử lý…";
+
+    [Parameter]
+    public bool Danger { get; set; } = true;
+
+    [Parameter]
+    public EventCallback OnConfirm { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private bool _showMismatch =>
+        !string.IsNullOrEmpty(_input) && !PurgeTextMatcher.Matches(_input, ExpectedText);
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            _input = string.Empty;
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private void OnInput(ChangeEventArgs args) => _input = args.Value?.ToString() ?? string.Empty;
+}

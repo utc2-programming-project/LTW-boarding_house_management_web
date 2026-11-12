@@ -23,6 +23,14 @@ namespace Web.Data
         public string? DeletedByUserId { get; set; }
 
         public string? OriginalEmail { get; set; }
+
+        // PLAN-028: tai khoan nhan tien cua chu tro, nhap o /profile va dung cho QR VietQR.
+        // Nullable: tai khoan cu va vai tro khac khong bat buoc.
+        public string? BankCode { get; set; }
+
+        public string? BankAccountNumber { get; set; }
+
+        public string? BankAccountName { get; set; }
     }
 
 }

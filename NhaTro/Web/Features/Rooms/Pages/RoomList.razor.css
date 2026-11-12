@@ -1,21 +1,123 @@
-.p2-page-actions { display: flex; align-items: center; gap: 10px; flex: none; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 14px; border: 1px solid transparent; border-radius: var(--radius-control); font-weight: 600; white-space: nowrap; }
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-secondary { border-color: var(--control-border); background: var(--surface); color: var(--text-primary); }
 .btn-secondary:hover { background: var(--hover-bg); }
 .btn-danger { border-color: var(--danger); background: var(--danger); color: var(--on-primary); }
-.filter-bar { margin-bottom: 20px; }
-/* Trang này xếp block (không dùng flex gap) nên tự chừa khoảng cách dưới dải card. */
-.p2-page > .stat-grid { margin-bottom: 24px; }
-.filter-error { margin: 8px 0 0; color: var(--error-text)!important; }
 .text-button { padding: 3px 6px; border: 0; background: transparent; color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
 .p2-link-button { padding: 2px 0; border: 0; background: transparent; color: var(--accent-text); font-weight: 600; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
 .p2-row-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .danger-action { color: var(--danger)!important; }
-.p2-table-options { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 12px; color: var(--text-secondary); }
-.p2-table-options select { width: 84px; }
-.p2-alert { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; padding: 14px; border: 1px solid; border-radius: var(--radius-card); }
+.p2-alert { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px; border: 1px solid; border-radius: var(--radius-card); }
+.p2-alert-message { min-width: 0; }
+.p2-code-cell { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+
+/* Badge "Chờ duyệt" = link tới hàng đợi. Hover/focus mới bung thẻ giải thích nên
+   bảng vẫn gọn; thẻ dùng position:fixed vì .table-card cuộn ngang sẽ cắt phần tử absolute. */
+.p2-approval-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 2px 8px;
+    border: 1px solid var(--warning-border);
+    border-radius: 6px;
+    background: var(--warning-bg);
+    /* theme.css tô màu mọi link trong .app-shell bằng selector (0,3,1) nên phải
+       !important mới giữ được màu cảnh báo (cùng cách .danger-action đang làm). */
+    color: var(--warning-text) !important;
+    font-family: var(--font-family);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.p2-approval-chip .lucide-icon { flex: none; width: 14px; height: 14px; }
+
+.p2-approval-chip:hover,
+.p2-approval-chip:focus-visible {
+    border-color: var(--warning-text);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-border) 60%, transparent);
+}
+
+.p2-approval-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.hover-tip {
+    position: fixed;
+    z-index: 420;
+    display: block;
+    width: max-content;
+    max-width: min(22rem, calc(100vw - 24px));
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-popover);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 140ms var(--ease), transform 140ms var(--ease);
+}
+
+.hover-tip.is-open { opacity: 1; visibility: visible; transform: none; }
+
+.hover-tip__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    color: var(--warning-text);
+    font-weight: 700;
+}
+
+.hover-tip__title .lucide-icon { flex: none; width: 15px; height: 15px; }
+
+.hover-tip__line { display: block; color: var(--text-primary); }
+
+.hover-tip__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.hover-tip__meta > span { display: inline-flex; align-items: center; gap: 4px; }
+
+.hover-tip__meta .lucide-icon { flex: none; width: 13px; height: 13px; color: var(--text-muted); }
+
+.hover-tip__cta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hover-tip__cta .lucide-icon { flex: none; width: 14px; height: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .hover-tip,
+    .p2-approval-chip { transition: none; }
+}
 .p2-alert.error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-text); }
 .p2-alert.warning { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning-text); }
 :deep(.table-card) { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
@@ -33,11 +135,8 @@
 .p2-page ::deep .table-card thead th:nth-child(8) { width: 11%; text-align: center; }
 .p2-page ::deep .table-card tbody td { vertical-align: middle; }
 .p2-page ::deep .table-card tbody td:nth-child(2) { overflow-wrap: break-word; }
-@media (max-width: 1200px) { .room-filter-primary .filter-select { flex: 1 1 140px; } .room-filter-advanced .price-field { flex: 1 1 120px; } }
-@media (max-width: 900px) { .p2-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .room-filter-row { flex-direction: column; align-items: stretch; } .room-filter-row > * { width: 100%; } }
+@media (max-width: 900px) { .p2-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 767.98px) {
-    .p2-page-actions { width: 100%; }
-    .p2-page-actions > .btn { flex: 1; }
     .p2-alert { align-items: stretch; flex-direction: column; }
     .p2-alert .btn { width: 100%; white-space: normal; }
 }

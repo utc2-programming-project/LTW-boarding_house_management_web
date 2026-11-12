@@ -40,6 +40,9 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasDatabaseName("UX_Payments_InvoiceStatus");
         builder.HasIndex(payment => new { payment.InvoiceId, payment.Status, payment.RequestedAt });
 
+        // Đồng bộ filter với Invoice (xóa mềm); hóa đơn có thanh toán không được xóa nên không mất sổ tiền.
+        builder.HasQueryFilter(payment => !payment.Invoice.IsDeleted);
+
         builder.HasOne(payment => payment.Invoice)
             .WithMany()
             .HasForeignKey(payment => payment.InvoiceId)

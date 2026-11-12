@@ -11,11 +11,12 @@
 @using Web.Components.Shared.Feedback
 @inject ContractRenewalPageService Renewals
 @inject IStringLocalizer<ContractResources> L
+@inject IStringLocalizer<Shared> SL
 @inject ToastService Toasts
 
 <PageTitle>@L["RenewalQueueTitle"]</PageTitle>
 
-<section class="renewal-queue-page" aria-labelledby="renewal-queue-title">
+<section class="renewal-queue-page page-stack" aria-labelledby="renewal-queue-title">
     <PageHeading Title="@L["RenewalQueueTitle"]" TitleId="renewal-queue-title" HelpText="@L["RenewalQueueDescription"]">
         <Actions>
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync"><LucideIcon Name="refresh-cw" />@L["RenewalQueueRefresh"]</button>
@@ -25,22 +26,37 @@
 
     @if (_items.Count > 0)
     {
-        <div class="renewal-filter-row">
-            <label class="search-field" for="renewal-keyword">
-                <LucideIcon Name="search" />
-                <span class="sr-only">@L["RenewalQueueSearchPlaceholder"]</span>
-                <input id="renewal-keyword" type="search" autocomplete="off"
-                       placeholder="@L["RenewalQueueSearchPlaceholder"]"
-                       @bind="_keyword" @bind:event="oninput" @bind:after="ResetPage" />
-            </label>
-            <select class="input" aria-label="@L["ContractPropertyLabel"]" value="@_propertyFilter" @onchange="HandlePropertyChanged">
-                <option value="all">@L["ContractFilterPropertyAll"]</option>
-                @foreach (var propertyName in PropertyOptions)
-                {
-                    <option value="@propertyName">@propertyName</option>
-                }
-            </select>
-            <button type="button" class="btn btn-secondary" @onclick="ResetFilters"><LucideIcon Name="refresh" />@L["RenewalQueueResetFilters"]</button>
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="renewal-keyword">@L["RenewalQueueSearchPlaceholder"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="renewal-keyword" type="search" class="input" autocomplete="off"
+                           placeholder="@L["RenewalQueueSearchPlaceholder"]"
+                           @bind="_keyword" @bind:event="oninput" @bind:after="ResetPage" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="renewal-property">@L["ContractPropertyLabel"]</label>
+                    <select id="renewal-property" class="input" value="@_propertyFilter" @onchange="HandlePropertyChanged">
+                        <option value="all">@L["ContractFilterPropertyAll"]</option>
+                        @foreach (var propertyName in PropertyOptions)
+                        {
+                            <option value="@propertyName">@propertyName</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <div class="filter-bar__state">
+                        <label class="sr-only" for="renewal-page-size">@SL["P2RowsPerPage"]</label>
+                        <select id="renewal-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">@string.Format(SL["RowsPerPageOption"].Value, 10)</option>
+                            <option value="20">@string.Format(SL["RowsPerPageOption"].Value, 20)</option>
+                            <option value="50">@string.Format(SL["RowsPerPageOption"].Value, 50)</option>
+                        </select>
+                    </div>
+                    <FilterResetButton OnClick="ResetFilters" />
+                </div>
+            </div>
         </div>
     }
 
@@ -61,7 +77,9 @@
     else if (FilteredItems.Count == 0)
     {
         <EmptyStateCard Title="@L["RenewalQueueFilterEmptyTitle"]" Description="@L["RenewalQueueFilterEmptyDescription"]">
-            <button type="button" class="btn btn-secondary" @onclick="ResetFilters">@L["RenewalQueueResetFilters"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
+                <LucideIcon Name="refresh-cw" /> @L["RenewalQueueResetFilters"]
+            </button>
         </EmptyStateCard>
     }
     else
@@ -93,30 +111,8 @@
             </table>
         </div>
 
-        <footer class="table-footer">
-            <div class="pagination-info">
-                @L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @FilteredItems.Count
-            </div>
-            <div class="pagination-controls">
-                <label class="page-size-field" for="renewal-page-size">
-                    <span>@L["RowsPerPage"]</span>
-                    <select id="renewal-page-size" class="input page-size-select" value="@_pageSize" @onchange="ChangePageSize">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                </label>
-                <nav class="pager" aria-label="@L["PaginationLabel"]">
-                    <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["PreviousPage"]">
-                        <LucideIcon Name="chevron-left" />
-                    </button>
-                    <span class="page-indicator">@_page / @TotalPages</span>
-                    <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["NextPage"]">
-                        <LucideIcon Name="chevron-right" />
-                    </button>
-                </nav>
-            </div>
-        </footer>
+        <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="FilteredItems.Count"
+                    PageChanged="GoToPage" />
     }
 </section>
 
@@ -199,28 +195,14 @@
 
     private void ChangePageSize(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        if (int.TryParse(e.Value?.ToString(), out var size) && size is 10 or 20 or 50)
         {
             _pageSize = size;
             _page = 1;
         }
     }
 
-    private void GoToPreviousPage()
-    {
-        if (_page > 1)
-        {
-            _page--;
-        }
-    }
-
-    private void GoToNextPage()
-    {
-        if (_page < TotalPages)
-        {
-            _page++;
-        }
-    }
+    private void GoToPage(int page) => _page = PaginationHelper.ClampPage(page, TotalPages);
 
     private async Task LoadAsync()
     {

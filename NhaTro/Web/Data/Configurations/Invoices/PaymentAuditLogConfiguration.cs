@@ -24,6 +24,9 @@ public sealed class PaymentAuditLogConfiguration : IEntityTypeConfiguration<Paym
         builder.HasIndex(log => new { log.PaymentId, log.OccurredAt });
         builder.HasIndex(log => new { log.InvoiceId, log.OccurredAt });
 
+        // Đồng bộ filter với Payment/Invoice (xóa mềm).
+        builder.HasQueryFilter(log => !log.Payment.Invoice.IsDeleted);
+
         builder.HasOne(log => log.Payment)
             .WithMany()
             .HasForeignKey(log => log.PaymentId)

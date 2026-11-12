@@ -1,11 +1,15 @@
 @page "/admin/owners"
 @attribute [Authorize(Roles = Roles.Admin)]
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Web.Common.Models
+@using Web.Common.Utils
 @using Web.Components.Shared.Dialogs
 @using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Tables
 @using Web.Features.Accounts
 @using Web.Features.Accounts.Owners
 
@@ -16,79 +20,27 @@
 
 <PageTitle>@L["OwnerAdminTitle"] · @L["AppName"]</PageTitle>
 
-<section class="owner-admin-page" aria-labelledby="owner-admin-title">
+<section class="page-stack" aria-labelledby="owner-admin-title">
     <PageHeading Title="@L["OwnerAdminTitle"]" TitleId="owner-admin-title" HelpText="@L["OwnerAdminHelp"]" />
 
-    <div class="filter-bar">
-        <input class="input" placeholder="@L["OwnerAdminSearch"]" @bind="_keyword" @bind:event="oninput" />
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Search"]</button>
-    </div>
-
-    @if (_error is not null)
-    {
-        <div class="form-alert" role="alert">
-            <LucideIcon Name="alert" />
-            <span>@_error</span>
-        </div>
-    }
-
-    @if (_loading)
-    {
-        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
-    }
-    else if (_items.Count == 0)
-    {
-        <p class="hint">@L["OwnerAdminEmpty"]</p>
-    }
-    else
-    {
-        <div class="table-wrap">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>@L["OwnerAdminName"]</th>
-                        <th>@L["OwnerAdminEmail"]</th>
-                        <th>@L["OwnerAdminProperties"]</th>
-                        <th>@L["OwnerAdminManagers"]</th>
-                        <th>@L["OwnerAdminTenants"]</th>
-                        <th>@L["OwnerAdminStatus"]</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var owner in _items)
-                    {
-                        <tr>
-                            <td>@(owner.FullName ?? "—")</td>
-                            <td>@(owner.Email ?? "—")</td>
-                            <td>@owner.PropertyCount</td>
-                            <td>@owner.ManagerCount</td>
-                            <td>@owner.TenantCount</td>
-                            <td>
-                                <span class="status-badge @(owner.IsLocked ? "status-badge--danger" : "status-badge--success")">
-                                    @(owner.IsLocked ? L["OwnerAdminLocked"] : L["OwnerAdminActive"])
-                                </span>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm @(owner.IsLocked ? "btn-primary" : "btn-danger")"
-                                        @onclick="() => AskChangeAsync(owner)">
-                                    @(owner.IsLocked ? L["OwnerAdminUnlock"] : L["OwnerAdminLock"])
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="table-footer">
-            <span>@string.Format(L["OwnerAdminTotal"], _total)</span>
-            <div class="table-pager">
-                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="PreviousPageAsync">@L["Previous"]</button>
-                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page * 20 >= _total)" @onclick="NextPageAsync">@L["Next"]</button>
+    <form class="filter-bar filter-bar--panel" role="search" @onsubmit="SubmitSearchAsync" @onsubmit:preventDefault>
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="owner-search">@L["OwnerAdminSearch"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="owner-search" class="input" type="search"
+                       placeholder="@L["OwnerAdminSearch"]" @bind="_keyword" @bind:event="oninput"
+                       @bind:after="OnKeywordChangedAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <FilterResetButton OnClick="ResetAsync" />
             </div>
         </div>
-    }
+    </form>
+
+    <DataTable @key="_tableKey" @ref="_table" TItem="OwnerListItemDto" Columns="_columns"
+               ItemsProvider="LoadAsync" PageSize="PageSize"
+               Caption="@L["OwnerAdminTitle"]" Labels="DataTableLabelLocalizer.Create(L)" />
 </section>
 
 <ConfirmDialog Visible="_showConfirm"
@@ -101,53 +53,127 @@
                OnCancel="CancelChange" />
 
 @code {
-    private IReadOnlyList<OwnerListItemDto> _items = [];
-    private int _total;
-    private int _page = 1;
+    private const int PageSize = 20;
+
+    private DataTable<OwnerListItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<OwnerListItemDto>> _columns = [];
+    private int _tableKey;
+    private CancellationTokenSource? _keywordDebounce;
     private string? _keyword;
     private string? _actorId;
-    private string? _error;
-    private bool _loading;
     private bool _showConfirm;
     private OwnerListItemDto? _target;
+
+    protected override void OnInitialized()
+    {
+        _columns =
+        [
+            new()
+            {
+                Key = "name",
+                Title = L["OwnerAdminName"],
+                Value = owner => string.IsNullOrWhiteSpace(owner.FullName) ? L["NoData"] : owner.FullName,
+            },
+            new()
+            {
+                Key = "email",
+                Title = L["OwnerAdminEmail"],
+                Value = owner => string.IsNullOrWhiteSpace(owner.Email) ? L["NoData"] : owner.Email,
+            },
+            new()
+            {
+                Key = "properties",
+                Title = L["OwnerAdminProperties"],
+                Value = owner => owner.PropertyCount.ToString(System.Globalization.CultureInfo.CurrentCulture),
+                IsNumeric = true,
+            },
+            new()
+            {
+                Key = "managers",
+                Title = L["OwnerAdminManagers"],
+                Value = owner => owner.ManagerCount.ToString(System.Globalization.CultureInfo.CurrentCulture),
+                IsNumeric = true,
+            },
+            new()
+            {
+                Key = "tenants",
+                Title = L["OwnerAdminTenants"],
+                Value = owner => owner.TenantCount.ToString(System.Globalization.CultureInfo.CurrentCulture),
+                IsNumeric = true,
+            },
+            new()
+            {
+                Key = "status",
+                Title = L["OwnerAdminStatus"],
+                Template = owner => @<StatusBadge Tone="@(owner.IsLocked ? BadgeTone.Error : BadgeTone.Success)"
+                                                  Text="@(owner.IsLocked ? L["OwnerAdminLocked"] : L["OwnerAdminActive"])" />,
+            },
+            new()
+            {
+                Key = "actions",
+                Title = L["Actions"],
+                Template = owner => @<div class="p2-row-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" @onclick="() => AskChangeAsync(owner)">
+                        <LucideIcon Name="@(owner.IsLocked ? "unlock" : "lock")" />
+                        <span>@(owner.IsLocked ? L["OwnerAdminUnlock"] : L["OwnerAdminLock"])</span>
+                    </button>
+                </div>,
+            },
+        ];
+    }
 
     protected override async Task OnInitializedAsync()
     {
         var state = await Auth.GetAuthenticationStateAsync();
         _actorId = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        await LoadAsync();
     }
 
-    private async Task LoadAsync()
+    private Task SubmitSearchAsync()
     {
-        _loading = true;
-        _error = null;
+        // Tạo lại bảng để tìm kiếm luôn bắt đầu từ trang 1 (DataTable giữ trang nội bộ).
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
         try
         {
-            var result = await Owners.ListAsync(_keyword, _page, 20);
-            _items = result.Items;
-            _total = result.TotalCount;
+            await Task.Delay(300, token);
+            await SubmitSearchAsync();
         }
-        catch
+        catch (TaskCanceledException)
         {
-            _error = L["OwnerAdminLoadFailed"];
-        }
-        finally
-        {
-            _loading = false;
         }
     }
 
-    private async Task PreviousPageAsync()
+    public void Dispose()
     {
-        _page = Math.Max(1, _page - 1);
-        await LoadAsync();
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
     }
 
-    private async Task NextPageAsync()
+    private Task ResetAsync()
     {
-        _page++;
-        await LoadAsync();
+        _keyword = null;
+        return SubmitSearchAsync();
+    }
+
+    private async Task<PagedResult<OwnerListItemDto>> LoadAsync(DataTableRequest request)
+    {
+        var result = await Owners.ListAsync(_keyword, request.Page, request.PageSize);
+
+        return new PagedResult<OwnerListItemDto>
+        {
+            Items = result.Items,
+            TotalCount = result.TotalCount,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
     }
 
     private Task AskChangeAsync(OwnerListItemDto owner)
@@ -188,6 +214,10 @@
 
         _showConfirm = false;
         _target = null;
-        await LoadAsync();
+
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
     }
 }

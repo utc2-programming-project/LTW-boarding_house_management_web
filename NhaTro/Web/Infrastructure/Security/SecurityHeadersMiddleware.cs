@@ -4,7 +4,7 @@ namespace Web.Infrastructure.Security;
 /// PLAN-027: header bảo mật nền tảng + chặn POST cross-site khi trình duyệt gửi
 /// Origin/Sec-Fetch-Site. Antiforgery vẫn là lớp chính.
 /// </summary>
-public sealed class SecurityHeadersMiddleware(RequestDelegate next)
+public sealed class SecurityHeadersMiddleware(RequestDelegate next, ILogger<SecurityHeadersMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -28,7 +28,18 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 
         if (!IsSafeMethod(context.Request.Method) && !IsTrustedSource(context))
         {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            // Không trả 400 rỗng: Chrome/Edge thay 400 không body bằng trang lỗi của trình duyệt.
+            // Ghi log lý do rồi nạp lại chính trang đó bằng GET để người dùng thấy giao diện + token mới.
+            logger.LogWarning(
+                "Chặn {Method} {Path}: nguồn không tin cậy (Sec-Fetch-Site='{FetchSite}', Origin='{Origin}').",
+                context.Request.Method,
+                context.Request.Path,
+                context.Request.Headers["Sec-Fetch-Site"].ToString(),
+                context.Request.Headers.Origin.ToString());
+
+            context.Response.StatusCode = StatusCodes.Status303SeeOther;
+            context.Response.Headers.Location =
+                $"{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
             return;
         }
 
@@ -55,9 +66,12 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
             return true;
         }
 
+        // Chromium gửi "Origin: null" cho POST từ trang có Referrer-Policy: no-referrer
+        // (/invite, /Account/ResetPassword). Đó là same-origin, không phải cross-site:
+        // Sec-Fetch-Site ở trên và antiforgery vẫn là lớp chặn thật.
         if (string.Equals(origin, "null", StringComparison.OrdinalIgnoreCase))
         {
-            return false;
+            return true;
         }
 
         // So host thay vì scheme để không chặn nhầm khi IIS/reverse proxy đổi scheme.

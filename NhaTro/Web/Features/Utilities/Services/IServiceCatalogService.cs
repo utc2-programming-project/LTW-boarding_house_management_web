@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Properties;
 using Web.Features.Utilities.DTOs;
 
@@ -23,6 +24,27 @@ public interface IServiceCatalogService
     Task DeleteServiceCatalogAsync(
         int serviceCatalogId,
         PropertyCaller caller);
+
+    Task<PagedResult<ServiceCatalogTrashItemDto>> ListDeletedAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        PropertyCaller caller,
+        CancellationToken ct = default);
+
+    Task RestoreServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller,
+        CancellationToken ct = default);
+
+    Task PurgeServiceCatalogAsync(
+        int serviceCatalogId,
+        PropertyCaller caller,
+        CancellationToken ct = default);
+
+    Task<TrashPurgeSummary> PurgeAllServiceCatalogsAsync(
+        PropertyCaller caller,
+        CancellationToken ct = default);
 
     /// <summary>
     /// PLAN-012: sao chép danh mục dịch vụ và giá đang hiệu lực từ nhà trọ nguồn sang nhà trọ đích.
