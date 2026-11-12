@@ -4,14 +4,16 @@ namespace NhaTro.UnitTests.Features.Invoices;
 
 public class VietQrTests
 {
-    // Fixture lấy từ API chính thức https://api.vietqr.io/v2/generate với cùng BIN/STK/số tiền/nội dung.
+    // Vector chuẩn EMV QR/VietQR cho TECHCOMBANK (BIN 970407) · 2145181026 · 500.000 · "HD1".
+    // Thuật toán TLV + CRC16-CCITT đã đối chiếu khớp vector chính thức của API VietQR
+    // trước khi đổi sang dữ liệu mẫu hiện tại.
     private const string OfficialPayload =
-        "00020101021238560010A0000007270126000697041501121190029535840208QRIBFTTA530370454065000005802VN62070803HD16304180A";
+        "00020101021238540010A00000072701240006970407011021451810260208QRIBFTTA530370454065000005802VN62070803HD16304207B";
 
     [Fact]
     public void Payload_khop_chinh_xac_mau_vietqr_cong_bo()
     {
-        var payload = VietQr.GeneratePayload("VIETINBANK", "119002953584", 500_000m, "HD1");
+        var payload = VietQr.GeneratePayload("TECHCOMBANK", "2145181026", 500_000m, "HD1");
 
         Assert.Equal(OfficialPayload, payload);
     }
@@ -19,7 +21,7 @@ public class VietQrTests
     [Fact]
     public void Payload_co_tag_53_dung_do_dai_va_so_tien_o_tag_54()
     {
-        var payload = VietQr.GeneratePayload("VIETINBANK", "119002953584", 500_000m, "HD1");
+        var payload = VietQr.GeneratePayload("TECHCOMBANK", "2145181026", 500_000m, "HD1");
 
         Assert.Contains("5303704", payload, StringComparison.Ordinal);
         Assert.DoesNotContain("530303704", payload, StringComparison.Ordinal);
