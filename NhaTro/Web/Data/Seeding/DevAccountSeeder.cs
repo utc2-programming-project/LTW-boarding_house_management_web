@@ -108,9 +108,9 @@ public static class DevAccountSeeder
             // ở trang hóa đơn của khách thuê chạy được ngay khi demo (đổi/xóa ở /profile).
             if (role == Roles.ChuTro && string.IsNullOrWhiteSpace(user.BankCode))
             {
-                user.BankCode = "VIETCOMBANK";
-                user.BankAccountNumber = "0071000123456";
-                user.BankAccountName = "NGUYEN VAN CHU TRO";
+                user.BankCode = "TECHCOMBANK";
+                user.BankAccountNumber = "2145181026";
+                user.BankAccountName = "CAO TRUNG TINH";
                 var bankSaved = await userManager.UpdateAsync(user);
                 if (!bankSaved.Succeeded)
                 {

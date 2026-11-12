@@ -37,23 +37,23 @@ public sealed class ProfileBankAccountTests(SqlServerFixture fixture)
         var service = NewAccountService();
         var result = await service.UpdateMyProfileAsync(new UpdateMyProfileRequest
         {
-            BankCode = "vietinbank",
-            BankAccountNumber = "1190 0295 3584",
-            BankAccountName = "Nguyen  Van A",
+            BankCode = "techcombank",
+            BankAccountNumber = "2145 1810 26",
+            BankAccountName = "Cao  Trung Tinh",
         }, "owner-a");
 
         Assert.True(result.Succeeded, result.ErrorCode);
-        Assert.Equal("VIETINBANK", result.Value!.BankCode);
-        Assert.Equal("VietinBank", result.Value.BankName);
-        Assert.Equal("119002953584", result.Value.BankAccountNumber);
-        Assert.Equal("NGUYEN VAN A", result.Value.BankAccountName);
+        Assert.Equal("TECHCOMBANK", result.Value!.BankCode);
+        Assert.Equal("Techcombank", result.Value.BankName);
+        Assert.Equal("2145181026", result.Value.BankAccountNumber);
+        Assert.Equal("CAO TRUNG TINH", result.Value.BankAccountName);
         Assert.True(result.Value.HasBankAccount);
 
         var ownerBank = new OwnerBankAccountService(fixture);
         var account = await ownerBank.GetForUserAsync("owner-a");
         Assert.NotNull(account);
-        Assert.Equal("119002953584", account!.AccountNumber);
-        Assert.Equal("VietinBank · 119002953584 · NGUYEN VAN A", account.DisplayAccount);
+        Assert.Equal("2145181026", account!.AccountNumber);
+        Assert.Equal("Techcombank · 2145181026 · CAO TRUNG TINH", account.DisplayAccount);
     }
 
     [SqlServerFact]
@@ -67,9 +67,9 @@ public sealed class ProfileBankAccountTests(SqlServerFixture fixture)
 
         var result = await NewAccountService().UpdateMyProfileAsync(new UpdateMyProfileRequest
         {
-            BankCode = "VIETINBANK",
-            BankAccountNumber = "119002953584",
-            BankAccountName = "NGUYEN VAN A",
+            BankCode = "TECHCOMBANK",
+            BankAccountNumber = "2145181026",
+            BankAccountName = "CAO TRUNG TINH",
         }, "khach-a");
 
         Assert.False(result.Succeeded);
@@ -87,9 +87,9 @@ public sealed class ProfileBankAccountTests(SqlServerFixture fixture)
 
         var result = await NewAccountService().UpdateMyProfileAsync(new UpdateMyProfileRequest
         {
-            BankCode = "VIETINBANK",
+            BankCode = "TECHCOMBANK",
             BankAccountNumber = "12ab",
-            BankAccountName = "NGUYEN VAN A",
+            BankAccountName = "CAO TRUNG TINH",
         }, "owner-a");
 
         Assert.False(result.Succeeded);
@@ -107,9 +107,9 @@ public sealed class ProfileBankAccountTests(SqlServerFixture fixture)
             await SqlServerFixture.SeedAccountAsync(db, "owner-b", Roles.ChuTro);
 
             var owner = await db.Users.SingleAsync(u => u.Id == "owner-a");
-            owner.BankCode = "VIETINBANK";
-            owner.BankAccountNumber = "119002953584";
-            owner.BankAccountName = "NGUYEN VAN A";
+            owner.BankCode = "TECHCOMBANK";
+            owner.BankAccountNumber = "2145181026";
+            owner.BankAccountName = "CAO TRUNG TINH";
             await db.SaveChangesAsync();
 
             var property = new Property { Name = "Nhà A", OwnerId = "owner-a" };
@@ -156,9 +156,9 @@ public sealed class ProfileBankAccountTests(SqlServerFixture fixture)
         var account = await service.GetForInvoiceAsync(invoiceId);
 
         Assert.NotNull(account);
-        Assert.Equal("VIETINBANK", account!.BankCode);
-        Assert.Equal("119002953584", account.AccountNumber);
-        Assert.Equal("NGUYEN VAN A", account.AccountName);
+        Assert.Equal("TECHCOMBANK", account!.BankCode);
+        Assert.Equal("2145181026", account.AccountNumber);
+        Assert.Equal("CAO TRUNG TINH", account.AccountName);
     }
 
     private AccountService NewAccountService()

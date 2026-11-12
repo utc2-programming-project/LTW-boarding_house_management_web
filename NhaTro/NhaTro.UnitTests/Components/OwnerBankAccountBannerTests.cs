@@ -17,7 +17,7 @@ namespace NhaTro.UnitTests.Components;
 public sealed class OwnerBankAccountBannerTests : BunitContext
 {
     private static readonly OwnerBankAccount Configured =
-        new("VCB", "Vietcombank", "0123456789", "NGUYEN VAN A");
+        new("TECHCOMBANK", "Techcombank", "2145181026", "CAO TRUNG TINH");
 
     public OwnerBankAccountBannerTests()
     {

@@ -29,7 +29,7 @@ public sealed class PaymentRecoveryInvoiceTests : P6RecoveryBunitContext
             auth,
             _backend,
             bankAccount: new OwnerBankAccount(
-                "VCB", "Vietcombank", "0011002233", "Nguyen Van A"));
+                "TECHCOMBANK", "Techcombank", "2145181026", "CAO TRUNG TINH"));
 
         Services.AddSingleton(auth);
         Services.AddSingleton(_backend.CreateInvoiceQuery());
