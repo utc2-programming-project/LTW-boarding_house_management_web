@@ -12,6 +12,7 @@
 @inject TenantQrInvitationService Qr
 @inject IOtpService Otp
 @inject UserManager<ApplicationUser> Users
+@inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<Shared> L
 
@@ -19,18 +20,27 @@
 
 <section class="auth-page" aria-labelledby="invite-title">
     <div class="auth-card">
-        <PageHeading Title="@L["InviteAcceptTitle"]" TitleId="invite-title" HelpText="@L["InviteAcceptHelp"]"
-                     InteractiveHelp="true" Class="auth-heading" />
+        <PageHeading Title="@L["InviteAcceptTitle"]" TitleId="invite-title" Class="auth-heading" />
+        <p class="auth-subtitle">@L["InviteAcceptHelp"]</p>
 
         @if (_details is not null && !_details.IsExpired && !_details.IsRevoked && !_details.IsAccepted)
         {
             <div class="invite-summary">
-                <p><strong>@L["InviteOwnerLabel"]:</strong> @_details.OwnerName</p>
+                <div class="invite-row">
+                    <LucideIcon Name="user" />
+                    <span><strong>@L["InviteOwnerLabel"]:</strong> @_details.OwnerName</span>
+                </div>
                 @if (!string.IsNullOrWhiteSpace(_details.PropertyName))
                 {
-                    <p><strong>@L["InvitePropertyLabel"]:</strong> @_details.PropertyName@(string.IsNullOrWhiteSpace(_details.RoomCode) ? "" : $" · {_details.RoomCode}")</p>
+                    <div class="invite-row">
+                        <LucideIcon Name="building" />
+                        <span><strong>@L["InvitePropertyLabel"]:</strong> @_details.PropertyName@(string.IsNullOrWhiteSpace(_details.RoomCode) ? "" : $" · {_details.RoomCode}")</span>
+                    </div>
                 }
-                <p class="hint">@string.Format(L["InviteExpiresAt"], _details.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</p>
+                <div class="invite-row invite-row--expiry">
+                    <LucideIcon Name="calendar" />
+                    <span>@string.Format(L["InviteExpiresAt"], _details.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</span>
+                </div>
             </div>
         }
 
@@ -42,15 +52,7 @@
             </div>
         }
 
-        @if (_success is not null)
-        {
-            <div class="form-alert" role="status">
-                <LucideIcon Name="check" />
-                <span>@_success</span>
-            </div>
-            <p class="hint"><a href="/select-role?returnUrl=%2Fmy%2Froom">@L["InviteSwitchTenant"]</a></p>
-        }
-        else if (_details is null || _details.IsRevoked || _details.IsAccepted || _details.IsExpired)
+        @if (_details is null || _details.IsRevoked || _details.IsAccepted || _details.IsExpired)
         {
             <div class="form-alert" role="alert">
                 <LucideIcon Name="alert" />
@@ -93,7 +95,14 @@
                 </FormField>
 
                 <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
-                    @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                    @if (_busy)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="key" />
+                    }
                     @L["InviteAcceptSubmit"]
                 </button>
             </EditForm>
@@ -106,7 +115,7 @@
                     <LucideIcon Name="user" />
                     <span>@L["InviteLoginRequired"]</span>
                 </div>
-                <p class="hint">
+                <p class="auth-alt-action">
                     <a href="@LoginUrl">@L["BackToLogin"]</a>
                 </p>
             }
@@ -116,13 +125,20 @@
                     <LucideIcon Name="alert" />
                     <span>@L["InviteWrongAccount"]</span>
                 </div>
-                <p class="hint"><a href="/Account/Logout">@L["SignOut"]</a></p>
+                <p class="auth-alt-action"><a href="/Account/Logout">@L["SignOut"]</a></p>
             }
             else
             {
                 <EditForm Model="Input" FormName="accept-existing-invitation" OnValidSubmit="SubmitExistingAsync" method="post">
                     <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
-                        @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                        @if (_busy)
+                        {
+                            <span class="spinner" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <LucideIcon Name="circle-check" />
+                        }
                         @L["InviteAcceptExistingButton"]
                     </button>
                 </EditForm>
@@ -145,7 +161,6 @@
 
     private TenantInvitationDetails? _details;
     private string? _error;
-    private string? _success;
     private bool _busy;
     private bool _authenticated;
     private bool _isTargetUser;
@@ -235,7 +250,15 @@
                 return;
             }
 
-            _success = L["InviteAcceptExistingSuccess"];
+            // Backend đã nhận: làm mới cookie để claim có ngữ cảnh Khách thuê vừa nhận,
+            // rồi đưa người dùng về trang chủ (nhiều ngữ cảnh thì middleware tự đẩy sang /select-role).
+            var user = await Users.FindByIdAsync(_currentUserId!);
+            if (user is not null)
+            {
+                await SignInManager.RefreshSignInAsync(user);
+            }
+
+            RedirectManager.RedirectTo("/");
         }
         finally
         {

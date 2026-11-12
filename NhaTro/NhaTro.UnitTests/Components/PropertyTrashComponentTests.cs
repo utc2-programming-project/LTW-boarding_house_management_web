@@ -53,7 +53,7 @@ public sealed class PropertyTrashComponentTests : BunitContext
 
         var cut = Render<PropertyTrash>();
 
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("tbody button")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("tbody .p2-row-actions button.btn-secondary")));
         Assert.Contains("Trọ bị xóa", cut.Find("tbody").TextContent);
         Assert.Contains("P2PropertyTrashTitle", cut.Find("h1").TextContent);
     }
@@ -104,11 +104,12 @@ public sealed class PropertyTrashComponentTests : BunitContext
             Assert.NotNull(cut.Find("a[href='/properties/trash']")));
     }
 
+    // Mỗi dòng có 2 nút: Khôi phục (btn-secondary) và Xóa vĩnh viễn (btn-danger).
     private static int RestoreButtonCount(IRenderedComponent<PropertyTrash> cut) =>
-        cut.FindAll("tbody button").Count;
+        cut.FindAll("tbody .p2-row-actions button.btn-secondary").Count;
 
     private static void ClickFirstRestoreButton(IRenderedComponent<PropertyTrash> cut) =>
-        cut.FindAll("tbody button")[0].Click();
+        cut.FindAll("tbody .p2-row-actions button.btn-secondary")[0].Click();
 
     private sealed class FakePropertyService : IPropertyService
     {
@@ -165,6 +166,14 @@ public sealed class PropertyTrashComponentTests : BunitContext
             Trash.RemoveAll(item => item.Id == id);
             return Task.FromResult(PropertyResult.Success());
         }
+
+        public Task<PropertyResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeManagerService : IPropertyManagerService

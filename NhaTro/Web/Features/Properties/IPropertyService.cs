@@ -35,4 +35,11 @@ public interface IPropertyService
     /// <summary>Đưa nhà trọ ra khỏi thùng rác (chỉ Chủ trọ). Các phòng chưa xóa mềm hiện lại.</summary>
     Task<PropertyResult> RestoreAsync(
         int id, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Xóa vĩnh viễn nhà trọ khỏi thùng rác; chặn khi còn phòng/dịch vụ/yêu cầu duyệt.</summary>
+    Task<PropertyResult> PurgeAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default);
+
+    Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken ct = default);
 }

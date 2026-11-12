@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Security.Claims;
 using Bunit;
@@ -96,11 +97,11 @@ public sealed class BusinessReportsPageTests : BunitContext
         Configure(Roles.ChuTro);
         var page = Render<BusinessReportsView>();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".room-table tbody tr")));
-        page.FindAll(".report-pager nav button")[1].Click();
+        GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
         page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
-        page.FindAll(".report-pager nav button")[1].Click();
+        GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, TenantRequests.Last().Page));
 
         page.Find("#report-property").Change("7");
@@ -125,7 +126,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         Configure(Roles.ChuTro);
         var page = Render<BusinessReportsView>();
         page.WaitForAssertion(() => Assert.Single(TenantRequests));
-        page.FindAll(".report-pager nav button")[1].Click();
+        GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
         var tenantCalls = TenantRequests.Count;
 
@@ -170,7 +171,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         Configure(Roles.ChuTro);
         var page = Render<BusinessReportsView>();
         page.WaitForAssertion(() => Assert.Single(RoomRequests));
-        page.FindAll(".report-pager nav button")[1].Click();
+        GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
         RoomCount = 1;
         page.Find(".page-heading-actions button").Click();
@@ -222,6 +223,11 @@ public sealed class BusinessReportsPageTests : BunitContext
             .Options;
         return new ApplicationDbContext(options);
     }
+
+    private static void GoToPage(IRenderedComponent<BusinessReportsView> page, int number) =>
+        page.WaitForAssertion(() => page.FindAll(".table-pager__pages button")
+            .Single(button => button.TextContent.Trim() == number.ToString(CultureInfo.InvariantCulture))
+            .Click());
 
     private static T Proxy<T>(Func<MethodInfo?, object?[]?, object?> handler) where T : class
     {

@@ -1,0 +1,290 @@
+@page "/invoices/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@using Web.Common.Models
+@using Web.Features.Accounts
+@using Web.Common.SoftDelete
+@using Web.Features.Invoices.Enums
+@using Web.Features.Invoices.Services
+@inject IInvoiceService InvoiceService
+@inject P2CallerProvider CallerProvider
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<InvoiceResources> L
+@inject ILogger<InvoiceTrash> Logger
+
+<PageTitle>@L["InvoiceTrashTitle"] · @L["PageTitle"]</PageTitle>
+
+<div class="page-stack">
+    <PageHeading Title="@L["InvoiceTrashTitle"]" HelpText="@L["InvoiceTrashSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-danger" @onclick="OpenEmptyTrash">
+                <LucideIcon Name="trash" />@L["EmptyTrash"]
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="GoToInvoices">
+                <LucideIcon Name="receipt" />@L["PageTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="invoice-trash-search">@L["InvoiceTrashSearchLabel"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="invoice-trash-search" type="search" class="input"
+                       placeholder="@L["InvoiceTrashSearchPlaceholder"]" @bind="_keyword" @bind:after="ReloadAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="invoice-trash-page-size">@L["RowsPerPage"]</label>
+                    <select id="invoice-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearSearchAsync" />
+            </div>
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="InvoiceTrashItemDto" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["InvoiceTrashTitle"]" Labels="_tableLabels" />
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["InvoiceTrashRestoreTitle"]"
+               Message="@string.Format(L["InvoiceTrashRestoreMessage"], _restoreItem?.Id ?? 0)"
+               ConfirmText="@L["Restore"]" CancelText="@L["CancelBtn"]"
+               OnConfirm="RestoreAsync" OnCancel="CloseRestore" />
+
+<PurgeConfirmDialog Visible="_purgeVisible" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], $"HD-{_purgeItem?.Id ?? 0}")"
+                    ExpectedText="@($"HD-{_purgeItem?.Id ?? 0}")"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], $"HD-{_purgeItem?.Id ?? 0}")"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@L["CancelBtn"]"
+                    OnConfirm="PurgeAsync" OnCancel="ClosePurge" />
+
+<PurgeConfirmDialog Visible="_emptyVisible" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@L["CancelBtn"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="CloseEmptyTrash" />
+
+@code {
+    private DataTable<InvoiceTrashItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<InvoiceTrashItemDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private InvoiceTrashItemDto? _restoreItem;
+    private InvoiceTrashItemDto? _purgeItem;
+    private bool _restoreVisible;
+    private bool _purgeVisible;
+    private bool _emptyVisible;
+    private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<InvoiceTrashItemDto>> BuildColumns()
+    {
+        RenderFragment<InvoiceTrashItemDto> actions = item => @<div class="p2-row-actions">
+            <button type="button" class="btn btn-secondary" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+            <button type="button" class="btn btn-danger" @onclick="() => RequestPurge(item)">
+                <LucideIcon Name="trash" />@L["Purge"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "invoice", Title = L["ThInvoice"], Value = item => $"HD-{item.Id}" },
+            new() { Key = "contract", Title = L["ThContract"], Value = item => item.ContractNumber },
+            new() { Key = "room", Title = L["ThRoomProperty"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
+            new() { Key = "period", Title = L["ThPeriod"], Value = item => $"{DateFormatter.Format(item.PeriodStart)} – {DateFormatter.Format(item.PeriodEnd)}" },
+            new() { Key = "total", Title = L["ThTotal"], Value = item => MoneyFormatter.Format(item.TotalAmount), IsNumeric = true },
+            new() { Key = "status", Title = L["ThStatus"], Value = item => L[$"Status{item.Status}"].Value },
+            TrashColumns.DeletedAt<InvoiceTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
+            TrashColumns.Actions(L["ThActions"], actions),
+        ];
+    }
+
+    private async Task<PagedResult<InvoiceTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
+    {
+        var caller = await CallerProvider.GetCallerAsync();
+        var items = await InvoiceService.ListDeletedAsync(caller);
+        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
+        var filtered = items
+            .Where(item => term is null
+                || $"HD-{item.Id}".Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return new PagedResult<InvoiceTrashItemDto>
+        {
+            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
+            TotalCount = filtered.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = string.Empty;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(InvoiceTrashItemDto item)
+    {
+        _restoreItem = item;
+        _restoreVisible = true;
+    }
+
+    private void CloseRestore()
+    {
+        _restoreVisible = false;
+        _restoreItem = null;
+    }
+
+    private void RequestPurge(InvoiceTrashItemDto item)
+    {
+        _purgeItem = item;
+        _purgeVisible = true;
+    }
+
+    private void ClosePurge()
+    {
+        _purgeVisible = false;
+        _purgeItem = null;
+    }
+
+    private void OpenEmptyTrash() => _emptyVisible = true;
+
+    private void CloseEmptyTrash() => _emptyVisible = false;
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreItem is null)
+        {
+            CloseRestore();
+            return;
+        }
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            await InvoiceService.RestoreAsync(_restoreItem.Id, caller);
+            CloseRestore();
+            Toasts.Success(L["InvoiceTrashRestored"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IInvoiceServiceError or UnauthorizedAccessException)
+        {
+            CloseRestore();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Invoice restore failed");
+            CloseRestore();
+            Toasts.Error(L["InvoiceGenericError"]);
+        }
+    }
+
+    private async Task PurgeAsync()
+    {
+        if (_purgeItem is null)
+        {
+            ClosePurge();
+            return;
+        }
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            await InvoiceService.PurgeAsync(_purgeItem.Id, caller);
+            ClosePurge();
+            Toasts.Success(L["PurgeSuccess"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IInvoiceServiceError or UnauthorizedAccessException)
+        {
+            ClosePurge();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Invoice purge failed");
+            ClosePurge();
+            Toasts.Error(L["InvoiceGenericError"]);
+        }
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            var summary = await InvoiceService.PurgeAllAsync(caller);
+            CloseEmptyTrash();
+            if (summary.Purged == 0 && summary.Skipped == 0)
+            {
+                Toasts.Success(L["EmptyTrashNothing"]);
+            }
+            else
+            {
+                Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+            }
+
+            await ReloadTableAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Invoice empty trash failed");
+            CloseEmptyTrash();
+            Toasts.Error(L["InvoiceGenericError"]);
+        }
+    }
+
+    private async Task ReloadTableAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private string ErrorText(Exception ex) =>
+        ex is IInvoiceServiceError error ? L[$"InvoiceError{error.ErrorCode}"] : L["InvoiceGenericError"];
+
+    private void GoToInvoices() => Navigation.NavigateTo("/invoices");
+}

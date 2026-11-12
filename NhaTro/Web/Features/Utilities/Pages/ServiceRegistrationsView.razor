@@ -1,24 +1,33 @@
 @page "/service-registrations"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "UtilityRecord")]
-@using Microsoft.Extensions.Options
 @using Web.Common.Utils
 @using Web.Features.Invoices
+@using Web.Features.Invoices.Services
 @using Web.Features.Utilities.Entities
 @using Web.Features.Utilities.Services
 @using Web.Infrastructure.Time
 @inject ServiceRegistrationService RegistrationService
 @inject ToastService Toast
 @inject NavigationManager Navigation
-@inject IOptions<BankAccountOptions> BankOptions
+@inject IOwnerBankAccountService OwnerBank
 @inject IStringLocalizer<UtilityResources> UL
+@inject IStringLocalizer<Web.Shared> SL
 @inject TimeProvider Clock
 
 <PageTitle>@UL["RegManagePageTitle"]</PageTitle>
 
-<div class="registration-manage-page">
+<div class="registration-manage-page page-stack">
     <PageHeading Title="@UL["RegManageTitle"]" HelpText="@UL["RegManageSubtitle"]">
         <Actions>
+            <AuthorizeView Roles="ChuTro">
+                <Authorized>
+                    <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/registrations/trash")'>
+                        <LucideIcon Name="trash" />
+                        <span>@UL["ServiceRegistrationTrashOpen"]</span>
+                    </button>
+                </Authorized>
+            </AuthorizeView>
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
                 <LucideIcon Name="refresh" />
                 <span>@UL["P5CostRefresh"]</span>
@@ -68,11 +77,21 @@
                                     {
                                         <span class="room-property">@string.Join(", ", row.TenantPhones)</span>
                                     }
-                                    <span class="room-property">@row.ContractNumber</span>
+                                    <span class="room-property">
+                                        <a class="cell-link is-quiet" href="@AppLinks.Contract(row.ContractId)"
+                                           title="@SL["CellLinkOpenContract"]">@row.ContractNumber</a>
+                                    </span>
                                 </td>
                                 <td>
-                                    <span class="room-code">@row.ServiceName</span>
-                                    <span class="room-property">@row.RoomCode · @row.PropertyName</span>
+                                    <a class="cell-link room-code" href="@AppLinks.ServicePrices(row.ServiceCatalogId)"
+                                       title="@SL["CellLinkOpenService"]">@row.ServiceName</a>
+                                    <span class="room-property">
+                                        <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(row.RoomCode)"
+                                           title="@SL["CellLinkOpenRoom"]">@row.RoomCode</a>
+                                        <span> · </span>
+                                        <a class="cell-link is-quiet" href="@AppLinks.PropertiesByKeyword(row.PropertyName)"
+                                           title="@SL["CellLinkOpenProperty"]">@row.PropertyName</a>
+                                    </span>
                                 </td>
                                 <td class="text-center tabular-nums">@row.Quantity.ToString("0.##")</td>
                                 <td class="tabular-nums">@DateFormatter.FormatDateTime(row.RequestedAt.UtcDateTime)</td>
@@ -111,17 +130,8 @@
                 </table>
             </div>
 
-            <footer class="table-footer">
-                <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, _rows.Count)</span>
-                <div class="pager">
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
-                        @UL["Previous"]
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
-                        @UL["Next"]
-                    </button>
-                </div>
-            </footer>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_rows.Count"
+                        PageChanged="GoToPage" />
         </div>
     }
 </div>
@@ -209,7 +219,7 @@
                                 <div class="invoice-form-side">
                                     <div class="form-field bank-info">
                                         <span>@UL["RegBankAccount"]</span>
-                                        <strong>@BankOptions.Value.DisplayAccount</strong>
+                                        <strong>@(_bankAccount?.DisplayAccount ?? UL["RegBankAccountMissing"])</strong>
                                     </div>
                                     @if (_invoiceQr is not null)
                                     {
@@ -282,6 +292,7 @@
     private const int PageSize = 20;
 
     private IReadOnlyList<ServiceRegistrationDto> _rows = [];
+    private IReadOnlyList<ServiceRegistrationDto> _allRows = [];
     private IReadOnlyList<ServiceRegistrationDto> _pageRows = [];
     private int _page = 1;
     private int? _openMenuId;
@@ -301,14 +312,70 @@
     private DateOnly _invoiceDueDate;
     private string _invoiceContent = string.Empty;
     private string? _invoiceQr;
+    private OwnerBankAccount? _bankAccount;
 
     private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
+
+    private int FirstItem => _rows.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_page * PageSize, _rows.Count);
 
     protected override Task OnInitializedAsync()
     {
         _invoiceDueDate = Clock.TodayVietnam().AddDays(10);
+        _lastAppliedKeywordQuery = NormalizeKeyword(KeywordQuery);
         return LoadAsync();
     }
+
+    protected override Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=HD-001): Blazor dùng lại trang nên phải lọc lại theo query mới.
+        var keyword = NormalizeKeyword(KeywordQuery);
+        if (string.Equals(keyword, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        {
+            return Task.CompletedTask;
+        }
+
+        _lastAppliedKeywordQuery = keyword;
+        _page = 1;
+        ApplyKeyword();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Từ khóa từ link chéo (?q=HD-001 / A107 / tên dịch vụ): lọc ngay trong trang.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
+
+    private static string? NormalizeKeyword(string? keyword) =>
+        string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+
+    private void ApplyKeyword()
+    {
+        _rows = FilterByKeyword(_allRows);
+        _page = PaginationHelper.ClampPage(_page, TotalPages);
+        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+    }
+
+    private IReadOnlyList<ServiceRegistrationDto> FilterByKeyword(IReadOnlyList<ServiceRegistrationDto> rows)
+    {
+        if (_lastAppliedKeywordQuery is not { } keyword)
+        {
+            return rows;
+        }
+
+        return rows.Where(row =>
+                Contains(row.ContractNumber, keyword)
+                || Contains(row.RoomCode, keyword)
+                || Contains(row.PropertyName, keyword)
+                || Contains(row.ServiceName, keyword)
+                || row.TenantNames.Any(name => Contains(name, keyword)))
+            .ToList();
+    }
+
+    private static bool Contains(string? value, string keyword) =>
+        value?.Contains(keyword, StringComparison.CurrentCultureIgnoreCase) == true;
 
     private async Task LoadAsync()
     {
@@ -317,9 +384,8 @@
         _openMenuId = null;
         try
         {
-            _rows = await RegistrationService.ListForLandlordAsync();
-            _page = PaginationHelper.ClampPage(_page, TotalPages);
-            _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+            _allRows = await RegistrationService.ListForLandlordAsync();
+            ApplyKeyword();
         }
         catch (Exception)
         {
@@ -331,9 +397,9 @@
         }
     }
 
-    private void ChangePage(int delta)
+    private void GoToPage(int page)
     {
-        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        var target = PaginationHelper.ClampPage(page, TotalPages);
         if (target == _page)
         {
             return;
@@ -419,6 +485,7 @@
         _invoiceFormOpen = false;
         _invoicePreview = null;
         _invoiceQr = null;
+        _bankAccount = null;
         _actionError = null;
         _reasonError = null;
         _cancelRejectReasonError = null;
@@ -438,6 +505,8 @@
         {
             _invoicePreview = await RegistrationService.PreviewInvoiceAsync(row.Id);
             _invoiceAmount = _invoicePreview.Amount;
+            // PLAN-028: TK nhận tiền của chủ trọ sở hữu phòng trong hợp đồng.
+            _bankAccount = await OwnerBank.GetForContractAsync(row.ContractId);
             RefreshInvoiceQr();
         }
         catch (ServiceRegistrationException ex)
@@ -460,14 +529,14 @@
 
     private void RefreshInvoiceQr()
     {
-        var bank = BankOptions.Value;
-        if (!bank.IsConfigured || _invoiceAmount <= 0m)
+        var bank = _bankAccount;
+        if (bank is not { IsConfigured: true } || _invoiceAmount <= 0m)
         {
             _invoiceQr = null;
             return;
         }
 
-        var payload = VietQr.GeneratePayload(bank.Code, bank.AccountNumber, _invoiceAmount, _invoiceContent);
+        var payload = VietQr.GeneratePayload(bank.BankCode, bank.AccountNumber, _invoiceAmount, _invoiceContent);
         _invoiceQr = VietQr.ImageDataUri(payload);
     }
 

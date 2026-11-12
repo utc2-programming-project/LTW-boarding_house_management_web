@@ -293,4 +293,36 @@
   <data name="ContractPreviousLabel" xml:space="preserve"><value>Hợp đồng tiền nhiệm</value></data>
   <data name="ContractHistoryEmpty" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
   <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Gợi ý 20% giá thuê</value></data>
+  <data name="Restore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / trang</value></data>
+  <data name="Purge" xml:space="preserve"><value>Xóa vĩnh viễn</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Xóa vĩnh viễn?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>Hợp đồng “{0}” sẽ bị xóa hẳn khỏi hệ thống và không thể khôi phục.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Gõ chính xác “{0}” để xác nhận</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Chưa khớp. Hãy gõ đúng mã hợp đồng ở trên.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Đã xóa vĩnh viễn.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Dọn sạch thùng rác</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Dọn sạch thùng rác?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Mọi hợp đồng có thể xóa sẽ bị xóa vĩnh viễn. Hợp đồng còn hóa đơn/kỳ chỉ số sẽ được giữ lại.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>XÓA TẤT CẢ</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Đã xóa {0} mục, bỏ qua {1} mục còn dữ liệu liên quan.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Không có mục nào có thể xóa.</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Ngày xóa</value></data>
+  <data name="ContractTrashTitle" xml:space="preserve"><value>Thùng rác hợp đồng</value></data>
+  <data name="ContractTrashSubtitle" xml:space="preserve"><value>Hợp đồng Chờ duyệt hoặc Đã từ chối đã xóa có thể khôi phục hoặc xóa vĩnh viễn.</value></data>
+  <data name="ContractTrashOpen" xml:space="preserve"><value>Thùng rác hợp đồng</value></data>
+  <data name="ContractTrashSearchLabel" xml:space="preserve"><value>Tìm hợp đồng đã xóa</value></data>
+  <data name="ContractTrashSearchPlaceholder" xml:space="preserve"><value>Tìm theo mã hợp đồng, phòng hoặc nhà trọ</value></data>
+  <data name="ContractTrashRestoreTitle" xml:space="preserve"><value>Khôi phục hợp đồng?</value></data>
+  <data name="ContractTrashRestoreMessage" xml:space="preserve"><value>Khôi phục hợp đồng “{0}”?</value></data>
+  <data name="ContractTrashRestored" xml:space="preserve"><value>Đã khôi phục hợp đồng.</value></data>
+  <data name="ContractDeleteAction" xml:space="preserve"><value>Xóa hợp đồng</value></data>
+  <data name="ContractDeleteTitle" xml:space="preserve"><value>Xóa hợp đồng?</value></data>
+  <data name="ContractDeleteMessage" xml:space="preserve"><value>Hợp đồng “{0}” sẽ được chuyển vào thùng rác.</value></data>
+  <data name="ContractDeleteConfirm" xml:space="preserve"><value>Xóa</value></data>
+  <data name="ContractDeleted" xml:space="preserve"><value>Đã chuyển hợp đồng vào thùng rác.</value></data>
+  <data name="ContractErrorNotDeletable" xml:space="preserve"><value>Chỉ hợp đồng Chờ duyệt hoặc Đã từ chối mới được xóa.</value></data>
+  <data name="ContractErrorNotInTrash" xml:space="preserve"><value>Hợp đồng không còn trong thùng rác.</value></data>
+  <data name="ContractErrorHasDependencies" xml:space="preserve"><value>Không thể xóa vì hợp đồng còn hóa đơn, yêu cầu gia hạn hoặc kỳ ghi chỉ số.</value></data>
+  <data name="ContractErrorRoomDeleted" xml:space="preserve"><value>Phòng của hợp đồng đã bị xóa; hãy khôi phục phòng trước.</value></data>
 </root>

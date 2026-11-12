@@ -21,7 +21,7 @@
         @if (_error is not null)
         {
             <div class="form-alert" role="alert">
-                <LucideIcon Name="alert-circle" />
+                <LucideIcon Name="alert" />
                 <span>@_error</span>
             </div>
         }
@@ -30,7 +30,7 @@
         {
             <div class="qr-result">
                 <img src="@_qrDataUrl" alt="@L["QrImageAlt"]" width="220" height="220" />
-                <p class="hint">@string.Format(L["QrExpiresAt"], _expiresAt?.ToLocalTime().ToString("HH:mm dd/MM"))</p>
+                <p class="qr-result-meta">@string.Format(L["QrExpiresAt"], _expiresAt?.ToLocalTime().ToString("HH:mm dd/MM"))</p>
                 <p class="qr-link"><a href="@_link" target="_blank" rel="noreferrer">@_link</a></p>
                 <p class="note">@L["QrWarning"]</p>
             </div>
@@ -45,66 +45,75 @@
                            ValueChanged="OnKindChanged"
                            AriaLabel="@L["QrKindLabel"]" />
 
-            <div class="form-field">
-                <label class="form-label" for="qr-property">@L["QrPropertyLabel"]</label>
-                <select id="qr-property" class="input" @bind="_propertyValue" @bind:after="LoadRoomsAsync">
+            <FormField TValue="string" Id="qr-property" Label="@L["QrPropertyLabel"]" For="() => _propertyValue">
+                <select id="qr-property" class="input" @bind="_propertyValue" @bind:after="LoadRoomsAsync"
+                        aria-describedby="qr-property-error">
                     <option value="">@L["QrNoProperty"]</option>
                     @foreach (var property in _properties)
                     {
                         <option value="@property.Id">@property.Name</option>
                     }
                 </select>
-            </div>
+            </FormField>
 
-            <div class="form-field">
-                <label class="form-label" for="qr-room">@L["QrRoomLabel"]</label>
-                <select id="qr-room" class="input" @bind="_roomValue">
+            <FormField TValue="string" Id="qr-room" Label="@L["QrRoomLabel"]" For="() => _roomValue">
+                <select id="qr-room" class="input" @bind="_roomValue" aria-describedby="qr-room-error">
                     <option value="">@L["QrNoRoom"]</option>
                     @foreach (var room in _rooms)
                     {
                         <option value="@room.Id">@room.Code</option>
                     }
                 </select>
-            </div>
+            </FormField>
 
-            <div class="form-field">
-                <label class="form-label" for="qr-expiry">@L["QrExpiryLabel"]</label>
-                <select id="qr-expiry" class="input" @bind="_expiryValue">
+            <FormField TValue="string" Id="qr-expiry" Label="@L["QrExpiryLabel"]" For="() => _expiryValue">
+                <select id="qr-expiry" class="input" @bind="_expiryValue" aria-describedby="qr-expiry-error">
                     <option value="15">@L["QrExpiry15"]</option>
                     <option value="60">@L["QrExpiry1h"]</option>
                     <option value="360">@L["QrExpiry6h"]</option>
                     <option value="1440">@L["QrExpiry24h"]</option>
                 </select>
-            </div>
+            </FormField>
 
             @if (Kind == TenantInvitationKind.ExistingAccount)
             {
                 <div class="qr-existing-panel">
-                    <div class="form-field">
-                        <label class="form-label" for="qr-search">@L["QrSearchExisting"]</label>
+                    <FormField TValue="string" Id="qr-search" Label="@L["QrSearchExisting"]" For="() => _search">
                         <div class="qr-search-row">
-                            <input id="qr-search" class="input" @bind="_search" />
-                            <button type="button" class="btn btn-secondary" @onclick="SearchExistingAsync">@L["Search"]</button>
+                            <input id="qr-search" class="input" @bind="_search" aria-describedby="qr-search-error" />
+                            <button type="button" class="btn btn-secondary" @onclick="SearchExistingAsync">
+                                <LucideIcon Name="search" />
+                                @L["Search"]
+                            </button>
                         </div>
-                    </div>
+                    </FormField>
 
-                    <div class="form-field">
-                        <label class="form-label" for="qr-target">@L["QrSelectExisting"]</label>
-                        <select id="qr-target" class="input" @bind="_targetUserId">
+                    <FormField TValue="string" Id="qr-target" Label="@L["QrSelectExisting"]" For="() => _targetUserId">
+                        <select id="qr-target" class="input" @bind="_targetUserId" aria-describedby="qr-target-error">
                             <option value="">@L["QrSelectExistingHint"]</option>
                             @foreach (var option in _existing)
                             {
                                 <option value="@option.UserId">@option.FullName@(string.IsNullOrWhiteSpace(option.Email) ? "" : $" · {option.Email}")</option>
                             }
                         </select>
-                    </div>
+                    </FormField>
                 </div>
             }
 
             <div class="account-form-actions">
-                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="OnClose">@L["Cancel"]</button>
+                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="OnClose">
+                    <LucideIcon Name="close" />
+                    @L["Cancel"]
+                </button>
                 <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GenerateAsync">
-                    @if (_busy) { <span class="spinner" aria-hidden="true"></span> }
+                    @if (_busy)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="qr-code" />
+                    }
                     @L["QrGenerate"]
                 </button>
             </div>

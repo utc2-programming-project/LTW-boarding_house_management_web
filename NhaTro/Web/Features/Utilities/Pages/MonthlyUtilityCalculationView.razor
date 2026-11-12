@@ -39,7 +39,7 @@
                 <div class="stat-card skeleton tall"></div>
             }
         </div>
-        <div class="filters-card skeleton short"></div>
+        <div class="filter-bar filter-bar--panel skeleton short"></div>
         <div class="table-card skeleton table-skeleton"></div>
         <div class="loading-line" role="status">
             <span class="spinner" aria-hidden="true"></span>
@@ -81,50 +81,51 @@
             </div>
         </div>
 
-        <div class="filters-card">
-            <div class="filters-row">
-                <label class="filter-field">
-                    <span>@UL["P5CostPropertyFilter"]</span>
-                    <select class="input" @bind="_propertyId" @bind:after="LoadAsync">
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="cost-property">@UL["P5CostPropertyFilter"]</label>
+                    <select id="cost-property" class="input" @bind="_propertyId" @bind:after="LoadAsync">
                         <option value="">@UL["P5CostAllProperties"]</option>
                         @foreach (var property in _data.Properties)
                         {
                             <option value="@property.Id">@property.Name</option>
                         }
                     </select>
-                </label>
+                </div>
 
-                <label class="filter-field">
-                    <span>@UL["P5CostPeriodStart"]</span>
-                    <input type="date" class="input" @bind="_periodStart" @bind:after="OnPeriodChangedAsync" />
-                </label>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="cost-period-start">@UL["P5CostPeriodStart"]</label>
+                    <input id="cost-period-start" type="date" class="input" @bind="_periodStart" @bind:after="OnPeriodChangedAsync" />
+                </div>
 
-                <label class="filter-field">
-                    <span>@UL["P5CostPeriodEnd"]</span>
-                    <input type="date" class="input" @bind="_periodEnd" @bind:after="OnPeriodChangedAsync" />
-                </label>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="cost-period-end">@UL["P5CostPeriodEnd"]</label>
+                    <input id="cost-period-end" type="date" class="input" @bind="_periodEnd" @bind:after="OnPeriodChangedAsync" />
+                </div>
 
-                <label class="filter-field wide">
-                    <span>@UL["P5CostSearchLabel"]</span>
-                    <input type="search" class="input" placeholder="@UL["P5CostSearchPlaceholder"]" @bind="_search" @bind:event="oninput" @bind:after="ResetPage" />
-                </label>
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="cost-search">@UL["P5CostSearchLabel"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="cost-search" type="search" class="input" placeholder="@UL["P5CostSearchPlaceholder"]"
+                           @bind="_search" @bind:event="oninput" @bind:after="ResetPage" />
+                </div>
 
-                <label class="filter-check">
-                    <input type="checkbox" @bind="_onlyUnrecorded" @bind:after="ResetPage" />
+                <label class="filter-bar__check" for="cost-only-unrecorded">
+                    <input id="cost-only-unrecorded" type="checkbox" @bind="_onlyUnrecorded" @bind:after="ResetPage" />
                     <span>@UL["P5CostOnlyUnrecorded"]</span>
                 </label>
 
-                <button type="button" class="btn btn-secondary reset-button" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />
-                    <span>@UL["P5CostResetFilter"]</span>
-                </button>
+                <div class="filter-bar__actions">
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
+                </div>
             </div>
 
             @if (_periodError is not null)
             {
-                <p class="period-error" role="alert">@_periodError</p>
+                <p class="filter-bar__error" role="alert">@_periodError</p>
             }
-            <p class="formula-hint">
+            <p class="filter-bar__meta formula-hint">
                 <LucideIcon Name="info" />
                 <span>@UL["P5CostFormulaHint"]</span>
             </p>
@@ -132,15 +133,12 @@
 
         @if (FilteredRooms.Count == 0)
         {
-            <div class="empty-state">
-                <div class="empty-icon"><LucideIcon Name="inbox" /></div>
-                <h2>@UL["P5CostEmptyTitle"]</h2>
-                <p>@UL["P5CostEmptyDescription"]</p>
+            <EmptyStateCard Title="@UL["P5CostEmptyTitle"]" Description="@UL["P5CostEmptyDescription"]">
                 <button type="button" class="btn btn-secondary" @onclick="ResetFiltersAsync">
-                    <LucideIcon Name="refresh" />
+                    <LucideIcon Name="refresh-cw" />
                     <span>@UL["P5CostResetFilter"]</span>
                 </button>
-            </div>
+            </EmptyStateCard>
         }
         else
         {
@@ -282,17 +280,8 @@
                     </table>
                 </div>
 
-                <footer class="table-footer">
-                    <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, FilteredRooms.Count)</span>
-                    <div class="pager">
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
-                            @UL["Previous"]
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
-                            @UL["Next"]
-                        </button>
-                    </div>
-                </footer>
+                <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="FilteredRooms.Count"
+                            PageChanged="GoToPage" />
             </div>
         }
     }
@@ -637,6 +626,10 @@
 
     private int TotalPages => PaginationHelper.TotalPages(FilteredRooms.Count, PageSize);
 
+    private int FirstItem => FilteredRooms.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_page * PageSize, FilteredRooms.Count);
+
     private IReadOnlyList<MonthlyUtilityRoomCostDto> PagedRooms
     {
         get
@@ -646,16 +639,7 @@
         }
     }
 
-    private void ChangePage(int delta)
-    {
-        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
-        if (target == _page)
-        {
-            return;
-        }
-
-        _page = target;
-    }
+    private void GoToPage(int page) => _page = PaginationHelper.ClampPage(page, TotalPages);
 
     private void ResetPage() => _page = 1;
 

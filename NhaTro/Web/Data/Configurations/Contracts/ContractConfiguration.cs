@@ -20,6 +20,9 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.Property(contract => contract.RejectReason).HasMaxLength(500);
 
         builder.HasIndex(contract => contract.ContractNumber).IsUnique();
+        builder.Property(contract => contract.DeletedBy).HasMaxLength(450);
+        builder.HasQueryFilter(contract => !contract.IsDeleted);
+        builder.HasIndex(contract => contract.IsDeleted);
         builder.HasOne<Room>()
             .WithMany()
             .HasForeignKey(contract => contract.RoomId)

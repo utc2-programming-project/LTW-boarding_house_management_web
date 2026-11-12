@@ -21,6 +21,8 @@ public static class TenantErrorCodes
     /// cần nhóm chốt tên mã; tạm dùng để UI hỏi "vẫn lưu".
     /// </summary>
     public const string DuplicatePhone = nameof(DuplicatePhone);
+    public const string TenantHasDependencies = nameof(TenantHasDependencies);
+    public const string NotInTrash = nameof(NotInTrash);
 }
 
 /// <summary>Thông báo lỗi tiếng Việt hiển thị (mục 9).</summary>
@@ -49,4 +51,6 @@ public static class TenantErrorMessages
     public const string AccountNotFound = "Không tìm thấy tài khoản";
     public const string AccountNotTenant = "Tài khoản không phải khách thuê";
     public const string ApprovalRequired = "Thay đổi đang chờ Chủ trọ duyệt";
+    public const string TenantHasDependencies = "Hồ sơ còn thành viên hợp đồng nên không thể xóa vĩnh viễn";
+    public const string NotInTrash = "Hồ sơ không còn trong thùng rác";
 }

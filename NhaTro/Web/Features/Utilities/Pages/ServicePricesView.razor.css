@@ -1,9 +1,3 @@
-.service-prices-page {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
 .sample-data-note {
     display: flex;
     align-items: center;
@@ -252,79 +246,5 @@
     font-size: 14px;
     line-height: 22px;
     color: var(--text-secondary);
-}
-
-/* Table Footer & Pagination */
-.table-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 12px 20px;
-    background: var(--surface-subtle);
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-    color: var(--text-secondary);
-    flex-wrap: wrap;
-}
-
-.pagination-info {
-    font-variant-numeric: tabular-nums;
-}
-
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.pager {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.pager-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background 150ms, border-color 150ms;
-}
-
-.pager-btn:hover:not(:disabled) {
-    background: var(--hover-bg);
-}
-
-.pager-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.pager-btn ::deep .lucide-icon {
-    width: 16px;
-    height: 16px;
-}
-
-.page-indicator {
-    min-width: 56px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-@media (max-width: 767.98px) {
-    .table-footer {
-        flex-direction: column;
-        align-items: flex-start;
-    }
 }
 

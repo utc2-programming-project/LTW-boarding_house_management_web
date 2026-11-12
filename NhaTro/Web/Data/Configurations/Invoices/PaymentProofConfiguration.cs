@@ -17,7 +17,7 @@ public sealed class PaymentProofConfiguration : IEntityTypeConfiguration<Payment
         builder.HasIndex(proof => proof.FileId).IsUnique();
 
         // Đồng bộ filter với StoredFile (xóa mềm): tệp bị ẩn thì liên kết minh chứng cũng biến mất.
-        builder.HasQueryFilter(proof => !proof.File.IsDeleted);
+        builder.HasQueryFilter(proof => !proof.File.IsDeleted && !proof.Payment.Invoice.IsDeleted);
 
         builder.HasOne(proof => proof.File)
             .WithMany()

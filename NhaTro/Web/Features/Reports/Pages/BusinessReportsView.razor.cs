@@ -86,6 +86,21 @@ public partial class BusinessReportsView
 
     private RevenueReportFilter RevenueFilter => new(From, To, SelectedPropertyId, RevenueDateBasis);
 
+    private (int From, int To) RoomItemRange =>
+        PaginationHelper.ItemRange(RoomPage, PageSize, RoomResult?.Rooms.TotalCount ?? 0);
+
+    private (int From, int To) TenantItemRange =>
+        PaginationHelper.ItemRange(TenantPage, PageSize, TenantResult?.Tenants.TotalCount ?? 0);
+
+    private (int From, int To) ContractItemRange =>
+        PaginationHelper.ItemRange(ContractPage, PageSize, ContractResult?.Contracts.TotalCount ?? 0);
+
+    private (int From, int To) CostItemRange =>
+        PaginationHelper.ItemRange(CostPage, PageSize, CostResult?.Readings.TotalCount ?? 0);
+
+    private (int From, int To) IncidentItemRange =>
+        PaginationHelper.ItemRange(IncidentPage, PageSize, IncidentResult?.Incidents.TotalCount ?? 0);
+
     protected override async Task OnInitializedAsync()
     {
         IsOwner = await PageService.IsOwnerAsync();

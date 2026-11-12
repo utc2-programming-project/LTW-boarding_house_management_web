@@ -89,6 +89,14 @@ public sealed class RoomTrashLinkComponentTests : BunitContext
         public Task<PropertyResult> RestoreAsync(
             int id, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
+
+        public Task<PropertyResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeRoomService : IRoomService
@@ -124,6 +132,14 @@ public sealed class RoomTrashLinkComponentTests : BunitContext
 
         public Task<PagedResult<RoomTrashItem>> ListDeletedAsync(
             RoomFilter filter, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<RoomResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
         public Task<List<RoomOption>> SearchForPickerAsync(

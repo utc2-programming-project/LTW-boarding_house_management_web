@@ -15,7 +15,7 @@ public static class VietQr
     /// <summary>Tạo chuỗi payload VietQR có sẵn số tiền + nội dung + CRC.</summary>
     public static string GeneratePayload(string bankCode, string accountNumber, decimal amount, string message)
     {
-        var bankId = GetBankBin(bankCode);
+        var bankId = VietQrBankCatalog.GetBin(bankCode);
         if (string.IsNullOrEmpty(bankId))
         {
             throw new ArgumentException($"Không tìm thấy mã ngân hàng cho: {bankCode}", nameof(bankCode));
@@ -39,7 +39,7 @@ public static class VietQr
             .Append("000201")
             .Append("010212")
             .Append(field38)
-            .Append(Field("5303", "704"))
+            .Append(Field("53", "704"))
             .Append(Field("54", integerAmount))
             .Append(Field("58", "VN"))
             .Append(Field("62", additionalData))
@@ -105,25 +105,4 @@ public static class VietQr
 
         return crc.ToString("X4", CultureInfo.InvariantCulture);
     }
-
-    private static string GetBankBin(string bankCode) => bankCode.Trim().ToUpperInvariant() switch
-    {
-        "BIDV" => "970418",
-        "ICB" or "VIETINBANK" => "970415",
-        "VCB" or "VIETCOMBANK" => "970436",
-        "VBA" or "AGRIBANK" => "970405",
-        "OCB" => "970448",
-        "MB" or "MBBANK" => "970422",
-        "TCB" or "TECHCOMBANK" => "970407",
-        "ACB" => "970416",
-        "VPB" or "VPBANK" => "970432",
-        "TPB" or "TPBANK" => "970423",
-        "STB" or "SACOMBANK" => "970403",
-        "HDB" or "HDBANK" => "970437",
-        "VIB" => "970441",
-        "SHB" => "970443",
-        "EIB" or "EXIMBANK" => "970431",
-        "MSB" => "970426",
-        _ => string.Empty,
-    };
 }

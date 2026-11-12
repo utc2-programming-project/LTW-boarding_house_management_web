@@ -30,9 +30,12 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         // hóa đơn dịch vụ theo yêu cầu đăng ký (RegistrationId NOT NULL) được phép cùng kỳ.
         builder.HasIndex(invoice => new { invoice.ContractId, invoice.PeriodStart })
             .IsUnique()
-            .HasFilter("[RegistrationId] IS NULL");
+            .HasFilter("[RegistrationId] IS NULL AND [IsDeleted] = 0");
         builder.HasIndex(invoice => new { invoice.PeriodStart, invoice.Status });
         builder.HasIndex(invoice => invoice.RegistrationId);
+        builder.Property(invoice => invoice.DeletedBy).HasMaxLength(450);
+        builder.HasQueryFilter(invoice => !invoice.IsDeleted);
+        builder.HasIndex(invoice => invoice.IsDeleted);
 
         builder.HasOne<Contract>()
             .WithMany()

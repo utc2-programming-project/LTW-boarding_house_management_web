@@ -10,7 +10,7 @@
                     <CurrentContent>
                         @if (HasHelp)
                         {
-                            <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                            <PageHelp Text="@HelpText" Label="@HelpLabel" />
                         }
                     </CurrentContent>
                     <HeadingSuffix>@HeadingSuffix</HeadingSuffix>
@@ -24,7 +24,7 @@
                     <CurrentContent>
                         @if (HasHelp)
                         {
-                            <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                            <PageHelp Text="@HelpText" Label="@HelpLabel" />
                         }
                     </CurrentContent>
                     <HeadingSuffix>@HeadingSuffix</HeadingSuffix>
@@ -37,14 +37,10 @@
                 <h1 id="@TitleId">@Title</h1>
                 @if (HasHelp)
                 {
-                    <PageHelp DescriptionId="@_helpId" Label="@HelpLabel" />
+                    <PageHelp Text="@HelpText" Label="@HelpLabel" />
                 }
                 @HeadingSuffix
             </div>
-        }
-        @if (HasHelp)
-        {
-            <p id="@_helpId" class="page-heading-description" hidden>@HelpText</p>
         }
         @HeadingMeta
     </div>
@@ -87,9 +83,8 @@
 
     [Parameter] public string? Class { get; set; }
 
-    /// <summary>Giữ tương thích các trang gọi hiện có; trợ giúp dùng script chung cho cả static SSR.</summary>
+    /// <summary>Giữ tương thích các trang gọi hiện có; trợ giúp nay chạy thuần CSS nên không cần khởi tạo.</summary>
     [Parameter] public bool InteractiveHelp { get; set; }
 
     private bool HasHelp => !string.IsNullOrWhiteSpace(HelpText);
-    private readonly string _helpId = $"page-heading-help-{Guid.NewGuid():N}";
 }

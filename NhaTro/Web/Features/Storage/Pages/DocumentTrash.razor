@@ -1,0 +1,280 @@
+@page "/documents/trash"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy + "," + Roles.KhachThue)]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Web.Common.Models
+@using Web.Common.SoftDelete
+@using Web.Common.Utils
+@using Web.Components.Layout
+@using Web.Components.Shared
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Tables
+@using Web.Features.Accounts
+@using Web.Features.Storage
+@using Web.Features.Storage.DTOs
+@using Web.Features.Storage.Services
+@inject FileService Files
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<Shared> L
+@inject ILogger<DocumentTrash> Logger
+
+<PageTitle>@L["DocumentTrashTitle"] · @L["AppName"]</PageTitle>
+
+<div class="page-stack">
+    <PageHeading Title="@L["DocumentTrashTitle"]" HelpText="@L["DocumentTrashSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-danger" @onclick="OpenEmptyTrash">
+                <LucideIcon Name="trash" />@L["EmptyTrash"]
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="GoToDocuments">
+                <LucideIcon Name="file-text" />@L["MyDocuments"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="document-trash-search">@L["DocumentTrashSearchLabel"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="document-trash-search" type="search" class="input"
+                       placeholder="@L["DocumentTrashSearchPlaceholder"]" @bind="_keyword" @bind:after="ReloadAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="document-trash-page-size">@L["P2RowsPerPage"]</label>
+                    <select id="document-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearSearchAsync" />
+            </div>
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="StoredFileTrashItemDto" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["DocumentTrashTitle"]" Labels="_tableLabels" />
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["DocumentTrashRestoreTitle"]"
+               Message="@string.Format(L["DocumentTrashRestoreMessage"], _restoreItem?.FileName ?? string.Empty)"
+               ConfirmText="@L["Restore"]" CancelText="@L["Cancel"]"
+               OnConfirm="RestoreAsync" OnCancel="CloseRestore" />
+
+<PurgeConfirmDialog Visible="_purgeVisible" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], _purgeItem?.FileName ?? string.Empty)"
+                    ExpectedText="@(_purgeItem?.FileName ?? string.Empty)"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], _purgeItem?.FileName ?? string.Empty)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@L["Cancel"]"
+                    OnConfirm="PurgeAsync" OnCancel="ClosePurge" />
+
+<PurgeConfirmDialog Visible="_emptyVisible" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@L["Cancel"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="CloseEmptyTrash" />
+
+@code {
+    private DataTable<StoredFileTrashItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<StoredFileTrashItemDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private StorageCaller _caller = new(string.Empty, string.Empty);
+    private StoredFileTrashItemDto? _restoreItem;
+    private StoredFileTrashItemDto? _purgeItem;
+    private bool _restoreVisible;
+    private bool _purgeVisible;
+    private bool _emptyVisible;
+    private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthState.GetAuthenticationStateAsync()).User;
+        _caller = StorageCaller.FromPrincipal(user);
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<StoredFileTrashItemDto>> BuildColumns()
+    {
+        RenderFragment<StoredFileTrashItemDto> actions = item => @<div class="p2-row-actions">
+            <button type="button" class="btn btn-secondary" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+            <button type="button" class="btn btn-danger" @onclick="() => RequestPurge(item)">
+                <LucideIcon Name="trash" />@L["Purge"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "file", Title = L["DocumentTrashColumnFile"], Value = item => item.FileName },
+            new() { Key = "category", Title = L["DocumentTrashColumnCategory"], Value = item => item.FileCategory.ToString() },
+            new() { Key = "related", Title = L["DocumentTrashColumnRelated"], Value = item => $"{item.RelatedEntityType} #{item.RelatedEntityId}" },
+            new() { Key = "uploaded", Title = L["DocumentTrashColumnUploaded"], Value = item => DateFormatter.FormatDateTime(item.UploadedAt.UtcDateTime) },
+            TrashColumns.DeletedAt<StoredFileTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
+            TrashColumns.Actions(L["P2Actions"], actions),
+        ];
+    }
+
+    private async Task<PagedResult<StoredFileTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
+    {
+        var items = await Files.ListDeletedAsync(_caller);
+        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
+        var filtered = items
+            .Where(item => term is null
+                || item.FileName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.RelatedEntityId.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return new PagedResult<StoredFileTrashItemDto>
+        {
+            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
+            TotalCount = filtered.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = string.Empty;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(StoredFileTrashItemDto item)
+    {
+        _restoreItem = item;
+        _restoreVisible = true;
+    }
+
+    private void CloseRestore()
+    {
+        _restoreVisible = false;
+        _restoreItem = null;
+    }
+
+    private void RequestPurge(StoredFileTrashItemDto item)
+    {
+        _purgeItem = item;
+        _purgeVisible = true;
+    }
+
+    private void ClosePurge()
+    {
+        _purgeVisible = false;
+        _purgeItem = null;
+    }
+
+    private void OpenEmptyTrash() => _emptyVisible = true;
+
+    private void CloseEmptyTrash() => _emptyVisible = false;
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreItem is null)
+        {
+            CloseRestore();
+            return;
+        }
+
+        var result = await Files.RestoreAsync(_restoreItem.Id, _caller);
+        CloseRestore();
+        if (!result.Succeeded)
+        {
+            Toasts.Error(ErrorText(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["DocumentTrashRestored"]);
+        await ReloadTableAsync();
+    }
+
+    private async Task PurgeAsync()
+    {
+        if (_purgeItem is null)
+        {
+            ClosePurge();
+            return;
+        }
+
+        var result = await Files.PurgeAsync(_purgeItem.Id, _caller);
+        ClosePurge();
+        if (!result.Succeeded)
+        {
+            Toasts.Error(ErrorText(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["PurgeSuccess"]);
+        await ReloadTableAsync();
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        var summary = await Files.PurgeAllAsync(_caller);
+        CloseEmptyTrash();
+        if (summary.Purged == 0 && summary.Skipped == 0)
+        {
+            Toasts.Success(L["EmptyTrashNothing"]);
+        }
+        else
+        {
+            Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+        }
+
+        await ReloadTableAsync();
+    }
+
+    private async Task ReloadTableAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private string ErrorText(string? code) => code switch
+    {
+        StorageErrorCodes.FileInUse => L["DocumentErrorFileInUse"],
+        StorageErrorCodes.RelatedEntityDeleted => L["DocumentErrorRelatedEntityDeleted"],
+        StorageErrorCodes.StorageFailed => L["DocumentErrorStorageFailed"],
+        StorageErrorCodes.NotInTrash => L["DocumentErrorNotInTrash"],
+        StorageErrorCodes.Forbidden => L["DocumentErrorForbidden"],
+        _ => L["PurgeFailed"],
+    };
+
+    private void GoToDocuments() => Navigation.NavigateTo("/my/documents");
+}

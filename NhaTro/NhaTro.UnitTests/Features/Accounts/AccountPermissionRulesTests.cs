@@ -126,12 +126,28 @@ public class AccountPermissionRulesTests
     }
 
     [Fact]
-    public void ChuTro_khoa_duoc_QuanLy_va_KhachThue()
+    public void ChuTro_khong_khoa_duoc_tai_khoan_nao()
     {
-        Assert.Null(AccountPermissionRules.CheckLock(
+        // Chot lai 12/11/2026: khoa tai khoan la thao tac toan he thong, chi Admin.
+        Assert.Equal(AccountErrorCodes.Forbidden, AccountPermissionRules.CheckLock(
             Roles.ChuTro, "chutro-1", "quanly-9", Roles.QuanLy, unlock: false));
-        Assert.Null(AccountPermissionRules.CheckLock(
+        Assert.Equal(AccountErrorCodes.Forbidden, AccountPermissionRules.CheckLock(
             Roles.ChuTro, "chutro-1", "khach-9", Roles.KhachThue, unlock: false));
+    }
+
+    [Fact]
+    public void ChuTro_mo_khoa_cung_bi_chan()
+    {
+        Assert.Equal(AccountErrorCodes.Forbidden, AccountPermissionRules.CheckLock(
+            Roles.ChuTro, "chutro-1", "khach-9", Roles.KhachThue, unlock: true));
+    }
+
+    [Fact]
+    public void ChuTro_van_duyet_duoc_QuanLy_va_KhachThue()
+    {
+        Assert.True(AccountPermissionRules.CanApprove(Roles.ChuTro, Roles.QuanLy));
+        Assert.True(AccountPermissionRules.CanApprove(Roles.ChuTro, Roles.KhachThue));
+        Assert.False(AccountPermissionRules.CanApprove(Roles.ChuTro, Roles.ChuTro));
     }
 
     [Fact]

@@ -92,7 +92,7 @@ public sealed class PermissionMatrixAccountsTests(SqlServerFixture fixture)
         Assert.Equal(before, await UserCountAsync(db));
     }
 
-    /// <summary>Ô F7 ❌: Khóa/mở tài khoản là cố định cho Chủ trọ và Admin (A49), Quản lý bị chặn.</summary>
+    /// <summary>Ô F7 ❌: Khóa/mở tài khoản là cố định cho Admin (A49), Chủ trọ và Quản lý bị chặn.</summary>
     [SqlServerFact]
     public async Task Cell_F7_OP06_QuanLy_IsDenied()
     {
@@ -264,9 +264,9 @@ public sealed class PermissionMatrixAccountsTests(SqlServerFixture fixture)
     public async Task Cell_D7_OP06_Admin_IsAllowed() =>
         await PermissionMatrixModuleProbe.AssertCellAsync(fixture, "D7");
 
-    /// <summary>Ô E7 ✅: OP06 - ChuTro (probe hành vi thật).</summary>
+    /// <summary>Ô E7 ❌: OP06 - ChuTro (probe hành vi thật). Khóa tài khoản chỉ dành cho Admin.</summary>
     [SqlServerFact]
-    public async Task Cell_E7_OP06_ChuTro_IsAllowed() =>
+    public async Task Cell_E7_OP06_ChuTro_IsDenied() =>
         await PermissionMatrixModuleProbe.AssertCellAsync(fixture, "E7");
 
     /// <summary>Ô D8 ✅: OP07 - Admin (probe hành vi thật).</summary>

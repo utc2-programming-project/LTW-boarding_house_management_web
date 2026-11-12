@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Properties;
 
@@ -47,4 +48,19 @@ public interface IContractService
         decimal depositAmount,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
+
+    Task<ContractActionResultDto> DeleteAsync(
+        Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<ContractActionResultDto> RestoreAsync(
+        Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<ContractActionResultDto> PurgeAsync(
+        Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);
+
+    Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken cancellationToken = default);
 }

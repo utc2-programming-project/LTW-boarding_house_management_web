@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Contracts.Entities;
@@ -776,6 +777,97 @@ public sealed class ServiceCatalogPageService(
         {
             logger.LogError(ex, "Failed to delete service catalog.");
             return (false, LocalizeFailure(ex));
+        }
+    }
+
+    public async Task<PagedResult<ServiceCatalogTrashItemDto>> ListDeletedServicesAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            return await catalogService.ListDeletedAsync(keyword, page, pageSize, caller, ct);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new PagedResult<ServiceCatalogTrashItemDto>();
+        }
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> RestoreDeletedServiceAsync(
+        int serviceId,
+        CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            await catalogService.RestoreServiceCatalogAsync(serviceId, caller, ct);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to restore service catalog {ServiceId}.", serviceId);
+            return (false, LocalizeFailure(ex));
+        }
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> PurgeDeletedServiceAsync(
+        int serviceId,
+        CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            await catalogService.PurgeServiceCatalogAsync(serviceId, caller, ct);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to purge service catalog {ServiceId}.", serviceId);
+            return (false, LocalizeFailure(ex));
+        }
+    }
+
+    public async Task<(bool Success, string? ErrorMessage, TrashPurgeSummary? Summary)> PurgeAllDeletedServicesAsync(
+        CancellationToken ct = default)
+    {
+        var role = await GetCurrentRoleAsync();
+        var userId = await GetCurrentUserIdAsync();
+        var caller = new PropertyCaller(userId, role);
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
+
+        try
+        {
+            var summary = await catalogService.PurgeAllServiceCatalogsAsync(caller, ct);
+            return (true, null, summary);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to purge all service catalogs.");
+            return (false, LocalizeFailure(ex), null);
         }
     }
 

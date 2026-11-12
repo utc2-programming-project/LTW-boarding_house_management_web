@@ -17,4 +17,8 @@ public static class StorageErrorCodes
     public const string RelatedEntityNotFound = "RelatedEntityNotFound";
     public const string FileCountExceeded = "FileCountExceeded";
     public const string DuplicateDocumentType = "DuplicateDocumentType";
+    public const string FileInUse = "FileInUse";
+    public const string StorageFailed = "StorageFailed";
+    public const string RelatedEntityDeleted = "RelatedEntityDeleted";
+    public const string NotInTrash = "NotInTrash";
 }

@@ -5,7 +5,7 @@ namespace Web.Components.Shared.Tables;
 /// <summary>Mô tả một cột của <see cref="DataTable{TItem}"/>.</summary>
 public sealed class DataTableColumn<TItem>
 {
-    /// <summary>Khóa cột, gửi về nơi lấy dữ liệu qua <see cref="DataTableRequest"/> để sắp xếp/lọc.</summary>
+    /// <summary>Khóa cột, gửi về nơi lấy dữ liệu qua <see cref="DataTableRequest"/> để sắp xếp.</summary>
     public required string Key { get; init; }
 
     /// <summary>Tiêu đề đã dịch.</summary>
@@ -21,13 +21,4 @@ public sealed class DataTableColumn<TItem>
     public bool IsNumeric { get; init; }
 
     public bool Sortable { get; init; }
-
-    public bool Filterable { get; init; }
-
-    /// <summary>Các lựa chọn cho bộ lọc dạng select; null giữ ô nhập văn bản.</summary>
-    public IReadOnlyList<DataTableFilterOption>? FilterOptions { get; init; }
-
-    public string? FilterPlaceholder { get; init; }
 }
-
-public sealed record DataTableFilterOption(string Value, string Label);

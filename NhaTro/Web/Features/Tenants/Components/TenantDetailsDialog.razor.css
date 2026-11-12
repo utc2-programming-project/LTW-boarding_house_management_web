@@ -120,6 +120,8 @@
 
 .tenant-detail-dates strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .tenant-dialog-footer { flex-wrap: wrap; }
+.tenant-documents-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tenant-documents-heading-row h3 { margin: 0; }
 
 @media (max-width: 767.98px) {
     .tenant-detail-grid { grid-template-columns: 1fr; }

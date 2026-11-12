@@ -2,12 +2,14 @@
 @page "/my/invoices/{Id:int}"
 @page "/my-invoices/{Id:int}"
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 @attribute [Authorize(Policy = "InvoiceView")]
 @inject IInvoiceQueryService InvoiceQuery
 @inject Web.Features.Invoices.Services.IInvoiceService InvoiceService
 @inject Web.Features.Notifications.INotificationService Notifications
-@inject Microsoft.Extensions.Options.IOptions<Web.Features.Invoices.BankAccountOptions> BankAccount
+@inject Web.Features.Invoices.Services.IOwnerBankAccountService OwnerBank
 @inject PaymentPageService PaymentPage
+@inject PaymentRecoveryService PaymentRecovery
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
 @inject ToastService Toasts
@@ -184,13 +186,28 @@
             </div>
         </section>
 
-        @if (Invoice.Status != InvoiceStatus.Draft && BankAccount.Value.IsConfigured && _caller is { IsKhachThue: true })
+        @if (Invoice.Status != InvoiceStatus.Draft && _caller is { IsKhachThue: true })
         {
             <section class="qr-card">
                 <h2 class="section-title">@L["QrTitle"]</h2>
                 <div class="qr-payment-layout">
                     <div class="qr-zone">
-                        @if (_qrExpired)
+                        @if (_bankAccount is not { IsConfigured: true })
+                        {
+                            @if (IsInvoicePaid)
+                            {
+                                <LucideIcon Name="circle-check" Class="qr-paid-icon" />
+                            }
+                            else
+                            {
+                                @* PLAN-028: Chủ trọ chưa nhập tài khoản nhận tiền nên không sinh được VietQR. *@
+                                <div class="qr-missing-bank" role="alert">
+                                    <LucideIcon Name="alert-triangle" />
+                                    <p>@L["QrMissingBankNotice"]</p>
+                                </div>
+                            }
+                        }
+                        else if (_qrExpired)
                         {
                             <p class="qr-expired" role="status">@L["QrExpired"]</p>
                             <button type="button" class="btn btn-primary" @onclick="GenerateQr">
@@ -216,7 +233,7 @@
                     </div>
                     <div class="qr-side">
                         <dl class="qr-info">
-                            <div><dt>@L["QrBank"]</dt><dd>@BankAccount.Value.DisplayAccount</dd></div>
+                            <div><dt>@L["QrBank"]</dt><dd>@(_bankAccount?.DisplayAccount ?? L["QrBankNotConfigured"])</dd></div>
                             <div><dt>@L["SummaryTotal"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</dd></div>
                             <div><dt>@L["QrContent"]</dt><dd>HD-@Invoice.Id</dd></div>
                         </dl>
@@ -338,7 +355,7 @@
                                     </div>
 
                                     <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary" disabled="@_submitting">
+                                        <button type="submit" class="btn btn-primary" data-payment-write disabled="@(_submitting || !_recoveryReady)">
                                             @if (_submitting)
                                             {
                                                 <span class="spinner"></span>
@@ -475,7 +492,11 @@
     private bool _submitting;
     private bool _issuing;
     private bool _checkingResult;
+    private DotNetObjectReference<InvoiceDetailView>? _recoveryRef;
+    private bool _recoveryConnected;
+    private bool _recoveryReady;
     private string? _qrImageUri;
+    private Web.Features.Invoices.Services.OwnerBankAccount? _bankAccount;
     private DateTimeOffset? _qrExpiresAt;
     private bool _qrExpired => _qrExpiresAt is { } expires && DateTimeOffset.UtcNow > expires;
     private string? _qrRemaining => _qrExpiresAt is { } expires && expires > DateTimeOffset.UtcNow
@@ -486,10 +507,10 @@
 
     private void GenerateQr()
     {
-        if (_invoice is null || !BankAccount.Value.IsConfigured) return;
+        if (_invoice is null || _bankAccount is not { IsConfigured: true }) return;
         _qrImageUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
-            BankAccount.Value.Code,
-            BankAccount.Value.AccountNumber,
+            _bankAccount.BankCode,
+            _bankAccount.AccountNumber,
             _invoice.TotalAmount,
             $"HD-{_invoice.Id}"));
         _qrExpiresAt = DateTimeOffset.UtcNow.AddMinutes(30);
@@ -535,9 +556,25 @@
         _qrTimerCts = null;
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         StopQrTimer();
+
+        if (_recoveryRef is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await PaymentRecovery.DisconnectAsync(_recoveryRef);
+        }
+        catch (Exception)
+        {
+        }
+
+        _recoveryRef.Dispose();
+        _recoveryRef = null;
     }
 
     private async Task SendBillAsync()
@@ -566,6 +603,9 @@
         Toasts.Success(L["SendBillSuccess"]);
         await ReloadAsync();
     }
+
+    private bool IsInvoicePaid =>
+        Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed;
 
     private string PaymentStateText => (_invoice?.Status, _latestPayment?.Status) switch
     {
@@ -634,6 +674,102 @@
 
     protected override Task OnParametersSetAsync() => ReloadAsync();
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _recoveryRef = DotNetObjectReference.Create(this);
+        try
+        {
+            await PaymentRecovery.ConnectAsync(_recoveryRef);
+            _recoveryConnected = true;
+        }
+        catch (Exception)
+        {
+            // Không có JS/storage không chặn trang; người dùng vẫn tra thủ công được.
+        }
+
+        // Chỉ mở nút gửi sau khi đã kiểm marker một lần, tránh khe hở trước tra cứu.
+        _recoveryReady = true;
+        StateHasChanged();
+        await TryRecoverPendingAsync();
+    }
+
+    private string RecoveryTarget => $"invoice:{Id}";
+
+    /// <summary>
+    /// Sau khôi phục circuit hoặc tải lại: chỉ tra đọc nếu còn marker chưa rõ kết quả.
+    /// Không tự gọi lại lệnh ghi.
+    /// </summary>
+    [JSInvokable]
+    public async Task OnReconnectedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            if (_submitting || _invoice is null || _caller is null)
+            {
+                return;
+            }
+
+            if (!_requiresResultCheck && !await HasPendingRecoveryAsync())
+            {
+                return;
+            }
+
+            _requiresResultCheck = true;
+            await CheckResultAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task TryRecoverPendingAsync()
+    {
+        if (!_recoveryConnected || _checkingResult || _invoice is null || _caller is null)
+        {
+            return;
+        }
+
+        if (!await HasPendingRecoveryAsync())
+        {
+            return;
+        }
+
+        _requiresResultCheck = true;
+        StateHasChanged();
+        await CheckResultAsync();
+    }
+
+    private async Task<bool> HasPendingRecoveryAsync()
+    {
+        if (_caller is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await PaymentRecovery.HasAsync(RecoveryTarget, _caller.UserId);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private async Task ClearRecoveryAsync()
+    {
+        try
+        {
+            await PaymentRecovery.ClearAsync(RecoveryTarget);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
     private async Task ReloadAsync()
     {
         _loading = true;
@@ -647,6 +783,7 @@
         _formError = null;
         _resultCheckMessage = null;
         _requiresResultCheck = false;
+        _bankAccount = null;
 
         try
         {
@@ -654,6 +791,10 @@
             _caller = caller;
             _invoice = await InvoiceQuery.GetInvoiceAsync(Id, caller);
             _latestPayment = _invoice.LatestPayment;
+            // PLAN-028: QR chỉ hiển thị cho khách thuê; lấy TK của chủ trọ sở hữu phòng.
+            _bankAccount = caller.IsKhachThue
+                ? await OwnerBank.GetForInvoiceAsync(_invoice.Id)
+                : null;
             ResetForm();
             await LoadPaymentHistoryAsync();
         }
@@ -674,6 +815,8 @@
         {
             _loading = false;
         }
+
+        await TryRecoverPendingAsync();
     }
 
     private async Task IssueAsync()
@@ -734,7 +877,8 @@
 
     private async Task SubmitAsync()
     {
-        if (_submitting || _checkingResult || _requiresResultCheck || _invoice is null || _caller is null || !_caller.IsKhachThue)
+        if (_submitting || _checkingResult || _requiresResultCheck || !_recoveryReady
+            || _invoice is null || _caller is null || !_caller.IsKhachThue)
         {
             return;
         }
@@ -778,6 +922,22 @@
             _selectedFiles = [];
             _fileInputVersion++;
 
+            bool marked;
+            try
+            {
+                marked = await PaymentRecovery.MarkAsync(RecoveryTarget, "submit", _caller.UserId);
+            }
+            catch (Exception)
+            {
+                marked = false;
+            }
+
+            if (!marked)
+            {
+                _formError = L["PaymentRecoveryStoreFailed"];
+                return;
+            }
+
             var payment = await PaymentPage.SubmitAsync(
                 Invoice.Id,
                 amount,
@@ -787,19 +947,23 @@
 
             _latestPayment = payment;
             _preparedProofIds = [];
+            await ClearRecoveryAsync();
             Toasts.Success(L["PaymentSubmittedSuccess"]);
             await RefreshAfterSubmitAsync();
         }
         catch (PaymentNotFoundException exception)
         {
+            await ClearRecoveryAsync();
             _formError = ServiceErrorText(exception);
         }
         catch (PaymentAuthorizationException exception)
         {
+            await ClearRecoveryAsync();
             _formError = ServiceErrorText(exception);
         }
         catch (PaymentValidationException exception)
         {
+            await ClearRecoveryAsync();
             _formError = ServiceErrorText(exception);
             if (exception.ErrorCode is PaymentErrorCodes.ProofRequired or PaymentErrorCodes.InvalidProof)
             {
@@ -818,9 +982,11 @@
             ClearProofSelection();
             await LoadPaymentHistoryAsync();
             _paymentsError = null;
+            await ClearRecoveryAsync();
         }
         catch (PaymentOperationException exception)
         {
+            await ClearRecoveryAsync();
             _formError = ServiceErrorText(exception);
         }
         catch (Exception)
@@ -851,6 +1017,7 @@
             await LoadPaymentHistoryAsync();
             _latestPayment = latest ?? _payments.FirstOrDefault() ?? _invoice.LatestPayment;
             _requiresResultCheck = false;
+            await ClearRecoveryAsync();
 
             if (latest is null)
             {

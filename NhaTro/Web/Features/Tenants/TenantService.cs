@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Text.Json;
 using Web.Data;
 using Web.Features.Approvals;
+using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
@@ -13,13 +14,16 @@ using Web.Features.Rooms;
 using Web.Features.Settings;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
+using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
 using Web.Features.Tenants.DTOs;
 using Web.Features.Tenants.Entities;
 using Web.Features.Tenants.Enums;
 using Web.Features.Tenants.Mapping;
 using Web.Features.Tenants.Services;
+using Web.Infrastructure.Storage;
 using Web.Infrastructure.Time;
+using TrashPurgeSummary = Web.Common.Models.TrashPurgeSummary;
 
 namespace Web.Features.Tenants;
 
@@ -32,7 +36,8 @@ public sealed class TenantService(
     TimeProvider clock,
     IManagerTogglePolicy togglePolicy,
     IManagerApprovalService? approvals = null,
-    IDataProtectionProvider? dataProtection = null) : ITenantService
+    IDataProtectionProvider? dataProtection = null,
+    IFileStorage? fileStorage = null) : ITenantService
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
     public async Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default)
@@ -782,6 +787,124 @@ public sealed class TenantService(
             PageSize = filter.PageSize,
             TotalCount = total,
         };
+    }
+
+    public async Task<TenantResult> PurgeAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default)
+    {
+        EnsureOwner(caller);
+
+        if (!TryParseRowVersion(rowVersion, out var expectedVersion))
+        {
+            return TenantResult.Failure(TenantErrorCodes.InvalidRequest, TenantErrorMessages.InvalidRequest);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await TrashScopeQuery(db, caller)
+            .FirstOrDefaultAsync(t => t.Id == id && t.IsDeleted, ct);
+        if (entity is null)
+        {
+            return TenantResult.Failure(TenantErrorCodes.NotInTrash, TenantErrorMessages.NotInTrash);
+        }
+
+        if (await db.ContractMembers.IgnoreQueryFilters().AnyAsync(m => m.TenantId == id, ct))
+        {
+            return TenantResult.Failure(
+                TenantErrorCodes.TenantHasDependencies, TenantErrorMessages.TenantHasDependencies);
+        }
+
+        db.Entry(entity).Property(t => t.RowVersion).OriginalValue = expectedVersion;
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var links = await db.TenantOwnerLinks.IgnoreQueryFilters()
+                .Where(link => link.TenantId == id)
+                .ToListAsync(ct);
+            db.TenantOwnerLinks.RemoveRange(links);
+
+            var assignments = await db.PendingRoomAssignments
+                .Where(item => item.TenantId == id)
+                .ToListAsync(ct);
+            db.PendingRoomAssignments.RemoveRange(assignments);
+
+            var relatedId = id.ToString(CultureInfo.InvariantCulture);
+            var files = await db.StoredFiles.IgnoreQueryFilters()
+                .Where(file => file.RelatedEntityType == RelatedEntityType.Tenant
+                    && file.RelatedEntityId == relatedId)
+                .ToListAsync(ct);
+            db.StoredFiles.RemoveRange(files);
+
+            db.Tenants.Remove(entity);
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "tenant.purge",
+                ActorUserId = caller.UserId,
+                Metadata = $"Tenant #{entity.Id}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            foreach (var file in files)
+            {
+                TryDeletePhysical(file.RelativePath);
+            }
+
+            return TenantResult.Success();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync(ct);
+            return TenantResult.Failure(TenantErrorCodes.ConcurrencyConflict, TenantErrorMessages.ConcurrencyConflict);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return TenantResult.Failure(
+                TenantErrorCodes.TenantHasDependencies, TenantErrorMessages.TenantHasDependencies);
+        }
+    }
+
+    public async Task<Web.Common.Models.TrashPurgeSummary> PurgeAllAsync(
+        TenantCaller caller, CancellationToken ct = default)
+    {
+        EnsureOwner(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var rows = await TrashScopeQuery(db, caller).AsNoTracking()
+            .Where(t => t.IsDeleted)
+            .Select(t => new { t.Id, t.RowVersion })
+            .ToListAsync(ct);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var row in rows)
+        {
+            var result = await PurgeAsync(
+                row.Id, Convert.ToBase64String(row.RowVersion), caller, ct);
+            if (result.Succeeded) purged++;
+            else skipped++;
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private void TryDeletePhysical(string relativePath)
+    {
+        if (fileStorage is null)
+        {
+            return;
+        }
+
+        try
+        {
+            fileStorage.Delete(relativePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Tệp đã mất hoặc không xóa được: metadata vẫn bị xóa để không giữ tham chiếu mồ côi.
+        }
     }
 
     public async Task<TenantResult> LinkAccountAsync(

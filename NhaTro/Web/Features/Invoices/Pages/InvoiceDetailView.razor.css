@@ -424,6 +424,39 @@
     font-weight: 600;
 }
 
+/* PLAN-028: chủ trọ chưa nhập tài khoản nhận tiền nên không sinh được mã QR. */
+.qr-missing-bank {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-4);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-control);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    font-size: .875rem;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.qr-missing-bank .lucide-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.qr-missing-bank p {
+    margin: 0;
+}
+
+.qr-paid-icon {
+    width: 96px;
+    height: 96px;
+    color: var(--success-text);
+}
+
 .qr-side {
     display: grid;
     gap: 12px;
@@ -475,4 +508,10 @@
 .qr-info dd {
     font-weight: 600;
     margin: 0;
+}
+
+/* VHT-143: trong lúc mất kết nối, chặn bấm nút ghi P6 cho tới khi tra xong kết quả. */
+html[data-connection-lost] [data-payment-write] {
+    pointer-events: none;
+    opacity: .6;
 }

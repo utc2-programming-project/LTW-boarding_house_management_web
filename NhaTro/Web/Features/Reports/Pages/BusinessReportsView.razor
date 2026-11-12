@@ -47,7 +47,7 @@
                 <input id="report-to" type="date" class="input" value="@DateValue(To)" @onchange="ChangeToAsync" disabled="@Busy" />
             </div>
             <div class="filter-bar__actions">
-                <button type="button" class="btn btn-secondary filter-bar__reset" disabled="@Busy" @onclick="ClearFiltersAsync">@L["ClearFilters"]</button>
+                <FilterResetButton OnClick="ClearFiltersAsync" Disabled="Busy" />
             </div>
         </div>
         @if (DateRangeInvalid)
@@ -176,7 +176,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <ReportPager Page="@RoomPage" PageSize="@PageSize" TotalCount="@rooms.Rooms.TotalCount" Disabled="@Busy" Label="@L["RoomReport"]" PageChanged="ChangeRoomPageAsync" />
+                        <TablePager Page="RoomPage" TotalPages="@PaginationHelper.TotalPages(rooms.Rooms.TotalCount, PageSize)"
+                                    From="@RoomItemRange.From" To="@RoomItemRange.To" Total="rooms.Rooms.TotalCount"
+                                    Disabled="Busy" PageChanged="ChangeRoomPageAsync" />
                     }
                 }
             </DashboardPanel>
@@ -276,7 +278,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <ReportPager Page="@TenantPage" PageSize="@PageSize" TotalCount="@tenants.Tenants.TotalCount" Disabled="@Busy" Label="@L["TenantReport"]" PageChanged="ChangeTenantPageAsync" />
+                        <TablePager Page="TenantPage" TotalPages="@PaginationHelper.TotalPages(tenants.Tenants.TotalCount, PageSize)"
+                                    From="@TenantItemRange.From" To="@TenantItemRange.To" Total="tenants.Tenants.TotalCount"
+                                    Disabled="Busy" PageChanged="ChangeTenantPageAsync" />
                     }
                 }
             </DashboardPanel>
@@ -358,7 +362,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <ReportPager Page="@ContractPage" PageSize="@PageSize" TotalCount="@contracts.Contracts.TotalCount" Disabled="@Busy" Label="@L["ContractReport"]" PageChanged="ChangeContractPageAsync" />
+                        <TablePager Page="ContractPage" TotalPages="@PaginationHelper.TotalPages(contracts.Contracts.TotalCount, PageSize)"
+                                    From="@ContractItemRange.From" To="@ContractItemRange.To" Total="contracts.Contracts.TotalCount"
+                                    Disabled="Busy" PageChanged="ChangeContractPageAsync" />
                     }
                 }
             </DashboardPanel>
@@ -422,7 +428,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <ReportPager Page="@CostPage" PageSize="@PageSize" TotalCount="@costs.Readings.TotalCount" Disabled="@Busy" Label="@L["CostReport"]" PageChanged="ChangeCostPageAsync" />
+                        <TablePager Page="CostPage" TotalPages="@PaginationHelper.TotalPages(costs.Readings.TotalCount, PageSize)"
+                                    From="@CostItemRange.From" To="@CostItemRange.To" Total="costs.Readings.TotalCount"
+                                    Disabled="Busy" PageChanged="ChangeCostPageAsync" />
                     }
                 }
             </DashboardPanel>
@@ -518,7 +526,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <ReportPager Page="@IncidentPage" PageSize="@PageSize" TotalCount="@incidents.Incidents.TotalCount" Disabled="@Busy" Label="@L["IncidentReport"]" PageChanged="ChangeIncidentPageAsync" />
+                        <TablePager Page="IncidentPage" TotalPages="@PaginationHelper.TotalPages(incidents.Incidents.TotalCount, PageSize)"
+                                    From="@IncidentItemRange.From" To="@IncidentItemRange.To" Total="incidents.Incidents.TotalCount"
+                                    Disabled="Busy" PageChanged="ChangeIncidentPageAsync" />
                     }
                 }
             </DashboardPanel>

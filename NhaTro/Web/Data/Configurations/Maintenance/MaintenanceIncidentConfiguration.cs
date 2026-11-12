@@ -35,6 +35,9 @@ public sealed class MaintenanceIncidentConfiguration : IEntityTypeConfiguration<
         builder.Property(incident => incident.RowVersion).IsRowVersion();
 
         builder.HasIndex(incident => incident.RoomId);
+        builder.Property(incident => incident.DeletedBy).HasMaxLength(450);
+        builder.HasQueryFilter(incident => !incident.IsDeleted);
+        builder.HasIndex(incident => incident.IsDeleted);
         builder.HasOne<Room>().WithMany().HasForeignKey(incident => incident.RoomId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(incident => incident.ReportedByUserId)

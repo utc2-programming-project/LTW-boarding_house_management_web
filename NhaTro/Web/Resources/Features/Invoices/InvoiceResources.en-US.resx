@@ -101,6 +101,8 @@
   <data name="DetailPaymentStatus" xml:space="preserve"><value>Payment status</value></data>
   <data name="QrTitle" xml:space="preserve"><value>Pay by QR code</value></data>
   <data name="QrBank" xml:space="preserve"><value>Receiving account</value></data>
+  <data name="QrBankNotConfigured" xml:space="preserve"><value>Not configured</value></data>
+  <data name="QrMissingBankNotice" xml:space="preserve"><value>The owner has not added a receiving bank account, so a transfer QR code cannot be created. Please contact the owner for payment instructions.</value></data>
   <data name="QrContent" xml:space="preserve"><value>Transfer content</value></data>
   <data name="PaymentStatePendingConfirmation" xml:space="preserve"><value>Pending confirmation</value></data>
   <data name="PaymentStateRejected" xml:space="preserve"><value>Proof rejected</value></data>
@@ -165,6 +167,7 @@
   <data name="PaymentChecking" xml:space="preserve"><value>Checking...</value></data>
   <data name="PaymentResultUnknown" xml:space="preserve"><value>We could not confirm the submission result. Check the result before trying again.</value></data>
   <data name="PaymentNoResultYet" xml:space="preserve"><value>No payment request was recorded. You can submit again.</value></data>
+  <data name="PaymentRecoveryStoreFailed" xml:space="preserve"><value>Could not store the recovery state in this browser. Please try again.</value></data>
   <data name="PaymentPendingNotice" xml:space="preserve"><value>Your payment request is waiting for the landlord to confirm. The amount is not added to paid yet.</value></data>
   <data name="PaymentRejectedNotice" xml:space="preserve"><value>Your previous payment request was rejected. Review the reason and submit again.</value></data>
   <data name="PaymentPaidNotice" xml:space="preserve"><value>This invoice has been paid in full.</value></data>
@@ -269,4 +272,41 @@
   <data name="ReviewErrorRejectionReasonTooLong" xml:space="preserve"><value>The rejection reason is limited to 500 characters.</value></data>
   <data name="ReviewErrorConcurrency" xml:space="preserve"><value>The data just changed. Check the result before trying again.</value></data>
   <data name="ReviewErrorUnknown" xml:space="preserve"><value>Something went wrong while processing the payment request.</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="RowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="Purge" xml:space="preserve"><value>Delete permanently</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Delete permanently?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>Invoice “{0}” and its line items will be permanently removed.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Type exactly “{0}” to confirm</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Does not match. Type the invoice number exactly as shown above.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Permanently deleted.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Empty trash</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Empty the trash?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Every deleted draft invoice will be permanently deleted. Invoices with payments/readings will be kept.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>DELETE ALL</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Deleted {0}, skipped {1} with related data.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Nothing can be deleted.</value></data>
+  <data name="InvoiceTrashTitle" xml:space="preserve"><value>Invoice trash</value></data>
+  <data name="InvoiceTrashSubtitle" xml:space="preserve"><value>Deleted draft invoices can be restored or permanently removed.</value></data>
+  <data name="InvoiceTrashOpen" xml:space="preserve"><value>Invoice trash</value></data>
+  <data name="InvoiceTrashSearchLabel" xml:space="preserve"><value>Search deleted invoices</value></data>
+  <data name="InvoiceTrashSearchPlaceholder" xml:space="preserve"><value>Search by invoice number, contract, room or property</value></data>
+  <data name="InvoiceTrashRestoreTitle" xml:space="preserve"><value>Restore invoice?</value></data>
+  <data name="InvoiceTrashRestoreMessage" xml:space="preserve"><value>Restore invoice HD-{0}?</value></data>
+  <data name="InvoiceTrashRestored" xml:space="preserve"><value>Invoice restored.</value></data>
+  <data name="InvoiceDeleteAction" xml:space="preserve"><value>Delete draft invoice</value></data>
+  <data name="InvoiceDeleteTitle" xml:space="preserve"><value>Delete draft invoice?</value></data>
+  <data name="InvoiceDeleteMessage" xml:space="preserve"><value>Invoice HD-{0} will be moved to the trash.</value></data>
+  <data name="InvoiceDeleteConfirm" xml:space="preserve"><value>Delete</value></data>
+  <data name="InvoiceDeleted" xml:space="preserve"><value>Invoice moved to the trash.</value></data>
+  <data name="InvoiceGenericError" xml:space="preserve"><value>Could not complete the invoice operation.</value></data>
+  <data name="InvoiceErrorNotDeletable" xml:space="preserve"><value>Only draft invoices can be deleted.</value></data>
+  <data name="InvoiceErrorNotInTrash" xml:space="preserve"><value>The invoice is no longer in the trash.</value></data>
+  <data name="InvoiceErrorHasDependencies" xml:space="preserve"><value>Cannot delete because the invoice still has payments, reading periods or registration requests.</value></data>
+  <data name="InvoiceErrorContractDeleted" xml:space="preserve"><value>The invoice's contract was deleted; restore the contract first.</value></data>
+  <data name="InvoiceErrorDuplicatePeriod" xml:space="preserve"><value>The contract already has a live invoice for the same period.</value></data>
+  <data name="InvoiceErrorForbidden" xml:space="preserve"><value>You do not have permission to operate on this invoice.</value></data>
+  <data name="InvoiceErrorInvoiceNotFound" xml:space="preserve"><value>Invoice not found.</value></data>
 </root>

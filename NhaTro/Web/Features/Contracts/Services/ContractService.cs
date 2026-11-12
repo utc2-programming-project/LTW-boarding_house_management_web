@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using System.Text.Json;
+using Web.Common.Models;
 using Web.Common.Utils;
 using Web.Data;
 using Web.Features.Approvals;
+using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
@@ -829,6 +831,222 @@ public sealed class ContractService : IContractService
             contract.Status,
             contract.RejectReason);
     }
+
+    public async Task<ContractActionResultDto> DeleteAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCanManage(caller);
+
+        var contract = await ApplyCallerScope(_context.Contracts.AsNoTracking(), caller)
+            .SingleOrDefaultAsync(item => item.ContractId == contractId, cancellationToken);
+        if (contract is null)
+        {
+            throw new ContractNotFoundException(
+                ContractErrorMessages.ContractNotFound, ContractErrorCodes.ContractNotFound);
+        }
+
+        if (contract.Status is not (ContractStatus.Pending or ContractStatus.Rejected))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.NotDeletable, ContractErrorCodes.NotDeletable);
+        }
+
+        if (await HasContractDependenciesAsync(contractId, cancellationToken))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.HasDependencies, ContractErrorCodes.HasDependencies);
+        }
+
+        var tracked = await _context.Contracts
+            .SingleAsync(item => item.ContractId == contractId, cancellationToken);
+        tracked.IsDeleted = true;
+        tracked.DeletedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        tracked.DeletedBy = caller.UserId;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new ContractActionResultDto(ContractActionOutcome.Applied, contractId, null);
+    }
+
+    public async Task<ContractActionResultDto> RestoreAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden, ContractErrorCodes.Forbidden);
+        }
+
+        var contract = await _context.Contracts
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.ContractId == contractId && item.IsDeleted, cancellationToken)
+            ?? throw new ContractNotFoundException(
+                ContractErrorMessages.NotInTrash, ContractErrorCodes.NotInTrash);
+
+        var inScope = await ApplyCallerScope(_context.Contracts.IgnoreQueryFilters(), caller)
+            .AnyAsync(item => item.ContractId == contractId, cancellationToken);
+        if (!inScope)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden, ContractErrorCodes.Forbidden);
+        }
+
+        if (!await _context.Rooms.AnyAsync(room => room.Id == contract.RoomId, cancellationToken))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.RoomDeleted, ContractErrorCodes.RoomDeleted);
+        }
+
+        contract.IsDeleted = false;
+        contract.DeletedAt = null;
+        contract.DeletedBy = null;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new ContractActionResultDto(ContractActionOutcome.Applied, contractId, null);
+    }
+
+    public async Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            return [];
+        }
+
+        return await (
+                from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.IsDeleted && property.OwnerId == caller.UserId
+                orderby contract.DeletedAt descending, contract.ContractNumber
+                select new ContractTrashItemDto(
+                    contract.ContractId,
+                    contract.ContractNumber,
+                    room.Code,
+                    property.Name,
+                    contract.Status,
+                    contract.StartDate,
+                    contract.EndDate,
+                    contract.DeletedAt,
+                    contract.DeletedBy))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ContractActionResultDto> PurgeAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden, ContractErrorCodes.Forbidden);
+        }
+
+        var contract = await _context.Contracts
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.ContractId == contractId && item.IsDeleted, cancellationToken)
+            ?? throw new ContractNotFoundException(
+                ContractErrorMessages.NotInTrash, ContractErrorCodes.NotInTrash);
+
+        var inScope = await ApplyCallerScope(_context.Contracts.IgnoreQueryFilters(), caller)
+            .AnyAsync(item => item.ContractId == contractId, cancellationToken);
+        if (!inScope)
+        {
+            throw new ContractAuthorizationException(
+                ContractErrorMessages.Forbidden, ContractErrorCodes.Forbidden);
+        }
+
+        if (await HasContractDependenciesAsync(contractId, cancellationToken))
+        {
+            throw new ContractOperationException(
+                ContractErrorMessages.HasDependencies, ContractErrorCodes.HasDependencies);
+        }
+
+        var propertyId = await (
+                from room in _context.Rooms.IgnoreQueryFilters().AsNoTracking()
+                join property in _context.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+                where room.Id == contract.RoomId
+                select (int?)property.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var members = await _context.ContractMembers
+                .Where(member => member.ContractId == contractId)
+                .ToListAsync(cancellationToken);
+            _context.ContractMembers.RemoveRange(members);
+            _context.Contracts.Remove(contract);
+            if (propertyId is int id)
+            {
+                _context.AuditLogEntries.Add(new AuditLogEntry
+                {
+                    Category = AuditLogCategory.Business,
+                    Action = "contract.purge",
+                    ActorUserId = caller.UserId,
+                    PropertyId = id,
+                    Metadata = $"Contract {contract.ContractNumber}",
+                    OccurredAt = DateTimeOffset.UtcNow,
+                });
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return new ContractActionResultDto(ContractActionOutcome.Applied, contractId, null);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw new ContractOperationException(
+                ContractErrorMessages.HasDependencies, ContractErrorCodes.HasDependencies);
+        }
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        var ids = await (
+                from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.IsDeleted && property.OwnerId == caller.UserId
+                select contract.ContractId)
+            .ToListAsync(cancellationToken);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            try
+            {
+                await PurgeAsync(id, caller, cancellationToken);
+                purged++;
+            }
+            catch (Exception ex) when (ex is ContractOperationException or ContractAuthorizationException or DbUpdateException)
+            {
+                skipped++;
+                _context.ChangeTracker.Clear();
+            }
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private async Task<bool> HasContractDependenciesAsync(Guid contractId, CancellationToken cancellationToken) =>
+        await _context.Invoices.IgnoreQueryFilters().AnyAsync(item => item.ContractId == contractId, cancellationToken)
+        || await _context.ContractRenewalRequests.AnyAsync(item => item.ContractId == contractId, cancellationToken)
+        || await _context.UtilityReadingPeriods.AnyAsync(item => item.ContractId == contractId, cancellationToken);
 
     private IQueryable<Contract> ApplyCallerScope(IQueryable<Contract> contracts, PropertyCaller caller)
     {

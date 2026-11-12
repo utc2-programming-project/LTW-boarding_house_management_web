@@ -8,9 +8,12 @@
 
 <PageTitle>@L["TenantTrashTitle"] · @L["AppName"]</PageTitle>
 
-<section class="tenant-trash-page" aria-labelledby="tenant-trash-title">
+<section class="page-stack" aria-labelledby="tenant-trash-title">
     <PageHeading Title="@L["TenantTrashTitle"]" TitleId="tenant-trash-title" HelpText="@L["TenantTrashSubtitle"]">
         <Actions>
+            <button type="button" class="btn btn-danger" @onclick="() => _showEmptyConfirm = true">
+                <LucideIcon Name="trash" /> @L["EmptyTrash"]
+            </button>
             <a class="btn btn-secondary" href="/tenants">
                 <LucideIcon Name="arrow-left" /> @L["TenantTrashBack"]
             </a>
@@ -22,27 +25,27 @@
         <span>@L["TenantTrashRetentionNote"]</span>
     </div>
 
-    <div class="filter-bar__row">
-        <div class="filter-bar__search">
-            <label class="sr-only" for="tenant-trash-search">@L["TenantTrashSearch"]</label>
-            <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-            <InputText id="tenant-trash-search" class="input" @bind-Value="_keyword"
-                       @bind-Value:after="SearchAsync" placeholder="@L["TenantTrashSearchHint"]" autocomplete="off" />
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="tenant-trash-search">@L["TenantTrashSearch"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <InputText id="tenant-trash-search" class="input" @bind-Value="_keyword"
+                           @bind-Value:after="SearchAsync" placeholder="@L["TenantTrashSearchHint"]" autocomplete="off" />
+            </div>
+            <div class="filter-bar__actions">
+                <span class="filter-bar__meta">@string.Format(L["TenantTrashCount"], _total)</span>
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="tenant-trash-page-size">@L["P2RowsPerPage"]</label>
+                    <select id="tenant-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSizeAsync">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearKeywordAsync" />
+            </div>
         </div>
-        @if (HasKeyword)
-        {
-            <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ClearKeywordAsync"
-                    aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
-                <LucideIcon Name="refresh-cw" />
-            </button>
-        }
-        <label class="tenant-trash-page-size" for="tenant-trash-page-size">
-            <span>@L["P2RowsPerPage"]</span>
-            <select id="tenant-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSizeAsync">
-                <option value="10">10</option><option value="20">20</option><option value="50">50</option>
-            </select>
-        </label>
-        <span class="filter-bar__meta tenant-trash-count">@string.Format(L["TenantTrashCount"], _total)</span>
     </div>
 
     @if (_error)
@@ -104,9 +107,14 @@
                             </td>
                             <td>@item.DocumentCount</td>
                             <td>
-                                <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RequestRestore(item)">
-                                    <LucideIcon Name="refresh" /> @L["TenantTrashRestore"]
-                                </button>
+                                <div class="p2-row-actions">
+                                    <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RequestRestore(item)">
+                                        <LucideIcon Name="refresh" /> @L["TenantTrashRestore"]
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RequestPurge(item)">
+                                        <LucideIcon Name="trash" /> @L["Purge"]
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -114,18 +122,8 @@
             </table>
         </div>
 
-        @if (PageCount > 1)
-        {
-            <nav class="tenant-trash-pager" aria-label="@L["TablePagination"]">
-                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="PreviousPageAsync">
-                    <LucideIcon Name="chevron-left" /> @L["TablePreviousPage"]
-                </button>
-                <span>@L["TablePage"] @_page / @PageCount</span>
-                <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= PageCount)" @onclick="NextPageAsync">
-                    @L["TableNextPage"] <LucideIcon Name="chevron-right" />
-                </button>
-            </nav>
-        }
+        <TablePager Page="_page" TotalPages="PageCount" From="FirstItem" To="LastItem" Total="_total"
+                    PageChanged="GoToPageAsync" />
     }
 </section>
 
@@ -134,9 +132,28 @@
                CancelText="@L["Cancel"]" BusyText="@L["TenantTrashRestoring"]"
                OnConfirm="ConfirmRestoreAsync" OnCancel="CancelRestore" />
 
+<PurgeConfirmDialog Visible="_showPurgeConfirm" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], _purgeTarget?.FullName ?? string.Empty)"
+                    ExpectedText="@(_purgeTarget?.FullName ?? string.Empty)"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], _purgeTarget?.FullName ?? string.Empty)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@L["Cancel"]"
+                    OnConfirm="ConfirmPurgeAsync" OnCancel="CancelPurge" />
+
+<PurgeConfirmDialog Visible="_showEmptyConfirm" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@L["Cancel"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="() => _showEmptyConfirm = false" />
+
 @code {
     private IReadOnlyList<TenantTrashItemDto> _items = [];
     private TenantTrashItemDto? _restoreTarget;
+    private TenantTrashItemDto? _purgeTarget;
+    private bool _showPurgeConfirm;
+    private bool _showEmptyConfirm;
     private string? _keyword;
     private int _page = 1;
     private int _pageSize = 20;
@@ -148,7 +165,9 @@
 
     private int PageCount => Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
 
-    private bool HasKeyword => !string.IsNullOrWhiteSpace(_keyword);
+    private int FirstItem => _total == 0 ? 0 : (_page - 1) * _pageSize + 1;
+
+    private int LastItem => Math.Min(_page * _pageSize, _total);
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -229,17 +248,11 @@
         return LoadAsync();
     }
 
-    private Task PreviousPageAsync()
+    private Task GoToPageAsync(int page)
     {
-        if (_page <= 1) return Task.CompletedTask;
-        _page--;
-        return LoadAsync();
-    }
-
-    private Task NextPageAsync()
-    {
-        if (_page >= PageCount) return Task.CompletedTask;
-        _page++;
+        var target = PaginationHelper.ClampPage(page, PageCount);
+        if (target == _page) return Task.CompletedTask;
+        _page = target;
         return LoadAsync();
     }
 
@@ -301,6 +314,89 @@
 
         Toasts.Success(L["TenantTrashRestored"]);
         _restoreTarget = null;
+        await LoadAsync();
+    }
+
+    private Task RequestPurge(TenantTrashItemDto item)
+    {
+        _purgeTarget = item;
+        _showPurgeConfirm = true;
+        return Task.CompletedTask;
+    }
+
+    private Task CancelPurge()
+    {
+        _showPurgeConfirm = false;
+        _purgeTarget = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmPurgeAsync()
+    {
+        if (_purgeTarget is null)
+        {
+            _showPurgeConfirm = false;
+            return;
+        }
+
+        TenantResult result;
+        try
+        {
+            result = await TenantPages.PurgeAsync(_purgeTarget.Id, _purgeTarget.RowVersion);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _showPurgeConfirm = false;
+            Toasts.Error(L["TenantErrorForbidden"]);
+            return;
+        }
+        catch
+        {
+            _showPurgeConfirm = false;
+            Toasts.Error(L["PurgeFailed"]);
+            return;
+        }
+
+        _showPurgeConfirm = false;
+        if (!result.Succeeded)
+        {
+            Toasts.Error(result.ErrorCode switch
+            {
+                TenantErrorCodes.TenantHasDependencies => L["PurgeHasDependencies"],
+                TenantErrorCodes.NotInTrash => L["PurgeNotInTrash"],
+                TenantErrorCodes.ConcurrencyConflict => L["TenantErrorConflict"],
+                TenantErrorCodes.Forbidden => L["TenantErrorForbidden"],
+                _ => L["PurgeFailed"],
+            });
+            if (result.ErrorCode == TenantErrorCodes.ConcurrencyConflict) await LoadAsync();
+            return;
+        }
+
+        Toasts.Success(L["PurgeSuccess"]);
+        _purgeTarget = null;
+        await LoadAsync();
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        _showEmptyConfirm = false;
+        try
+        {
+            var summary = await TenantPages.PurgeAllAsync();
+            if (summary.Purged == 0 && summary.Skipped == 0)
+            {
+                Toasts.Success(L["EmptyTrashNothing"]);
+            }
+            else
+            {
+                Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+            }
+        }
+        catch
+        {
+            Toasts.Error(L["PurgeFailed"]);
+        }
+
         await LoadAsync();
     }
 

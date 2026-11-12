@@ -130,7 +130,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <ReportPager Page="@LinePage" PageSize="@PageSize" TotalCount="@report.Lines.Count" Disabled="@Busy" Label="@L["InvoiceLines"]" PageChanged="ChangeLinePageAsync" />
+                    <TablePager Page="LinePage" TotalPages="@PaginationHelper.TotalPages(report.Lines.Count, PageSize)"
+                                From="@LineItemRange.From" To="@LineItemRange.To" Total="report.Lines.Count"
+                                Disabled="Busy" PageChanged="ChangeLinePageAsync" />
                 }
             </section>
 
@@ -170,7 +172,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <ReportPager Page="@DebtPage" PageSize="@PageSize" TotalCount="@DebtLines.Count" Disabled="@Busy" Label="@L["DebtInvoices"]" PageChanged="ChangeDebtPageAsync" />
+                    <TablePager Page="DebtPage" TotalPages="@PaginationHelper.TotalPages(DebtLines.Count, PageSize)"
+                                From="@DebtItemRange.From" To="@DebtItemRange.To" Total="DebtLines.Count"
+                                Disabled="Busy" PageChanged="ChangeDebtPageAsync" />
                 }
             </section>
         </div>
@@ -200,6 +204,12 @@
 
     private IEnumerable<RevenueReportLineDto> PagedDebtLines =>
         DebtLines.Skip((Clamp(DebtPage, DebtLines.Count) - 1) * PageSize).Take(PageSize);
+
+    private (int From, int To) LineItemRange =>
+        PaginationHelper.ItemRange(Clamp(LinePage, Result?.Lines.Count ?? 0), PageSize, Result?.Lines.Count ?? 0);
+
+    private (int From, int To) DebtItemRange =>
+        PaginationHelper.ItemRange(Clamp(DebtPage, DebtLines.Count), PageSize, DebtLines.Count);
 
     protected override void OnParametersSet()
     {

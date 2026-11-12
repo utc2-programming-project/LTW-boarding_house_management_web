@@ -15,5 +15,10 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 
         // VHT-95: null = Cho duyet. Migration backfill tai khoan cu de khong bi chan dang nhap.
         builder.Property(u => u.ApprovedAt);
+
+        // PLAN-028: tai khoan nhan tien cho QR VietQR.
+        builder.Property(u => u.BankCode).HasMaxLength(30);
+        builder.Property(u => u.BankAccountNumber).HasMaxLength(30);
+        builder.Property(u => u.BankAccountName).HasMaxLength(200);
     }
 }
