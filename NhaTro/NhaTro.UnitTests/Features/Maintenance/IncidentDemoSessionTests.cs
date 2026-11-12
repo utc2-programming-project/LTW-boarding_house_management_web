@@ -96,7 +96,7 @@ public sealed class IncidentDemoSessionTests
         var session = new IncidentDemoSession(new DemoAuthentication(User(Roles.QuanLy)), TimeProvider.System);
         await session.InitializeAsync();
         Assert.True(await session.CreateAsync(Form(101)));
-        var pending = Assert.Single((await session.ListAsync()).Where(i => i.AwaitingCreation));
+        var pending = Assert.Single(await session.ListAsync(), i => i.AwaitingCreation);
         Assert.Equal(IncidentDemoAction.Create, Assert.Single(pending.Pending).Action);
         await session.SetModeAsync(IncidentDemoAction.Update, IncidentDemoMode.Allow);
         await Assert.ThrowsAsync<IncidentDemoException>(() => session.UpdateAsync(pending.Id, IncidentDemoStatus.InProgress, ""));

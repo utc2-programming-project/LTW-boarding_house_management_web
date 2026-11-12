@@ -37,6 +37,12 @@ public sealed class Invoice : ISoftDeletable
     /// <summary>Thời điểm chuyển từ Draft sang Issued; null khi còn nháp.</summary>
     public DateTime? IssuedAt { get; set; }
 
+    /// <summary>
+    /// Id bản ghi chỉnh sửa cuối cùng đã gửi cho khách. Null nghĩa là chưa gửi lần nào.
+    /// Dùng để biết hoá đơn đã chủ trọ sửa nhưng khách chưa nhận được bản mới.
+    /// </summary>
+    public int? LastSentRevisionId { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public DateTime? DeletedAt { get; set; }

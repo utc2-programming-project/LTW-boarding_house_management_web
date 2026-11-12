@@ -11,18 +11,15 @@
 
 <PageTitle>@UL["RegHistoryPageTitle"]</PageTitle>
 
-<div class="registration-history-page">
-    <NavBreadcrumb />
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@UL["RegHistoryTitle"]</h1>
-            <p class="page-subtitle">@UL["RegHistorySubtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
-            <LucideIcon Name="refresh" />
-            <span>@UL["P5CostRefresh"]</span>
-        </button>
-    </header>
+<div class="registration-history-page page-stack">
+    <PageHeading Title="@UL["RegHistoryTitle"]" HelpText="@UL["RegHistorySubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@UL["P5CostRefresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {

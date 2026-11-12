@@ -57,9 +57,33 @@
                     }
                     else if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Issued)
                     {
-                        <button type="button" class="btn btn-secondary" @onclick="SendBillAsync">
-                            <LucideIcon Name="send" />
-                            <span>@L["SendBillButton"]</span>
+                        @if (CanRevise)
+                        {
+                            <button type="button" class="btn btn-secondary" disabled="@_revising" @onclick="OpenRevise">
+                                <LucideIcon Name="edit" />
+                                <span>@L["ReviseButton"]</span>
+                            </button>
+                        }
+                        @if (CanDelete)
+                        {
+                            <button type="button" class="btn btn-secondary invoice-delete-action" disabled="@_deleting" @onclick="OpenDelete">
+                                <LucideIcon Name="trash" />
+                                <span>@L["DeleteIssuedButton"]</span>
+                            </button>
+                        }
+                        @* Có bản chỉnh sửa chưa gửi thì nút gửi bill nổi bật để chủ trọ gửi bản mới. *@
+                        <button type="button" class="@(Invoice.HasUnsentChanges ? "btn btn-primary" : "btn btn-secondary")"
+                                disabled="@_sending" @onclick="SendBillAsync">
+                            @if (_sending)
+                            {
+                                <span class="spinner"></span>
+                                <span>@L["SendingBill"]</span>
+                            }
+                            else
+                            {
+                                <LucideIcon Name="send" />
+                                <span>@L["SendBillButton"]</span>
+                            }
                         </button>
                     }
                     <button type="button" class="btn btn-secondary" @onclick="BackToList">
@@ -184,6 +208,36 @@
                     <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.OutstandingAmount)</strong>
                 </div>
             </div>
+
+            @if (Invoice.Revisions.Count > 0)
+            {
+                <section class="revision-panel">
+                    <div class="section-title-row">
+                        <h3 class="section-title">@L["RevisionHistoryTitle"]</h3>
+                        <span class="revision-count">@Invoice.Revisions.Count</span>
+                    </div>
+                    <p class="muted">@L["RevisionHistoryHint"]</p>
+                    <ul class="revision-list">
+                        @foreach (var revision in Invoice.Revisions)
+                        {
+                            <li>
+                                <div class="revision-reason">@revision.Reason</div>
+                                <div class="revision-meta">
+                                    <span>@DateFormatter.FormatDateTime(revision.ChangedAt)</span>
+                                    @if (revision.PreviousTotalAmount != revision.NewTotalAmount)
+                                    {
+                                        <span class="revision-amount">
+                                            @MoneyFormatter.Format(revision.PreviousTotalAmount)
+                                            <LucideIcon Name="arrow-right" />
+                                            @MoneyFormatter.Format(revision.NewTotalAmount)
+                                        </span>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
         </section>
 
         @if (Invoice.Status != InvoiceStatus.Draft && _caller is { IsKhachThue: true })
@@ -314,7 +368,7 @@
                                         </div>
                                     }
                                     <div class="payment-fixed-amount">
-                                        <span>@L["PaymentAmount"]</span>
+                                        <span class="payment-fixed-amount__label">@L["PaymentAmount"]</span>
                                         <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</strong>
                                     </div>
                                     <div class="payment-field full">
@@ -468,6 +522,25 @@
     }
 </div>
 
+@if (_reviseOpen && Invoice is not null && _caller is not null)
+{
+    <InvoiceRevisionDialog Invoice="Invoice" Caller="_caller" Busy="_revising"
+                           OnSubmit="ReviseAsync" OnCancel="CloseRevise" />
+}
+
+@if (_deleteVisible && Invoice is not null)
+{
+    <ConfirmDialog Visible="true"
+                   Title="@L["DeleteIssuedTitle"]"
+                   Message="@string.Format(L["DeleteIssuedMessage"], Invoice.Id, MoneyFormatter.Format(Invoice.TotalAmount))"
+                   ConfirmText="@L["DeleteIssuedConfirm"]"
+                   CancelText="@L["ReviseCancel"]"
+                   BusyText="@L["Deleting"]"
+                   Danger="true"
+                   OnConfirm="DeleteIssuedAsync"
+                   OnCancel="CancelDelete" />
+}
+
 @code {
     [Parameter]
     public int Id { get; set; }
@@ -491,6 +564,11 @@
     private string? _resultCheckMessage;
     private bool _submitting;
     private bool _issuing;
+    private bool _reviseOpen;
+    private bool _revising;
+    private bool _sending;
+    private bool _deleteVisible;
+    private bool _deleting;
     private bool _checkingResult;
     private DotNetObjectReference<InvoiceDetailView>? _recoveryRef;
     private bool _recoveryConnected;
@@ -579,33 +657,152 @@
 
     private async Task SendBillAsync()
     {
-        if (_invoice is null || _caller is null || _caller.IsKhachThue) return;
-        // Draft: phát hành rồi gửi; Đã phát hành: chỉ gửi lại thông báo.
-        if (_invoice.Status == InvoiceStatus.Draft)
+        if (_invoice is null || _caller is null || _caller.IsKhachThue || _sending) return;
+        _sending = true;
+        try
         {
-            var issued = await InvoiceService.IssueAsync(_invoice.Id, _caller);
-            _invoice = issued;
-        }
-
-        var tenantUserIds = await InvoiceQuery.GetContractTenantUserIdsAsync(_invoice.ContractId);
-        foreach (var tenantUserId in tenantUserIds)
-        {
-            if (!string.IsNullOrWhiteSpace(tenantUserId))
+            // Draft: phát hành rồi gửi; Đã phát hành: gửi lại thông báo cho khách.
+            if (_invoice.Status == InvoiceStatus.Draft)
             {
-                await Notifications.NotifyAsync(
-                    tenantUserId,
-                    "Có hóa đơn cần thanh toán",
-                    $"Hóa đơn HD-{_invoice.Id} ({MoneyFormatter.Format(_invoice.TotalAmount)}). Vui lòng vào xem và thanh toán.",
-                    $"/my/invoices/{_invoice.Id}");
+                var issued = await InvoiceService.IssueAsync(_invoice.Id, _caller);
+                _invoice = issued;
             }
-        }
 
-        Toasts.Success(L["SendBillSuccess"]);
-        await ReloadAsync();
+            // Bản chỉnh sửa mới nhất (nếu có) đi kèm thông báo để khách biết chính xác.
+            var latestRevision = _invoice.Revisions.FirstOrDefault();
+            var message = latestRevision is null
+                ? $"Hóa đơn HD-{_invoice.Id} ({MoneyFormatter.Format(_invoice.TotalAmount)}). Vui lòng vào xem và thanh toán."
+                : string.Format(
+                    L["ReviseNotifyMessage"].Value,
+                    _invoice.Id,
+                    MoneyFormatter.Format(_invoice.TotalAmount),
+                    latestRevision.Reason);
+
+            var tenantUserIds = await InvoiceQuery.GetContractTenantUserIdsAsync(_invoice.ContractId);
+            foreach (var tenantUserId in tenantUserIds)
+            {
+                if (!string.IsNullOrWhiteSpace(tenantUserId))
+                {
+                    await Notifications.NotifyAsync(
+                        tenantUserId,
+                        latestRevision is null ? "Có hóa đơn cần thanh toán" : L["ReviseNotifyTitle"].Value,
+                        message,
+                        $"/my/invoices/{_invoice.Id}");
+                }
+            }
+
+            // Đánh dấu bản hiện tại đã gửi cho khách.
+            await InvoiceService.MarkBillSentAsync(_invoice.Id, _caller);
+
+            Toasts.Success(L["SendBillSuccess"]);
+            await ReloadAsync();
+        }
+        catch (Exception exception) when (exception is IInvoiceServiceError)
+        {
+            Toasts.Error(InvoiceServiceErrorText(exception));
+        }
+        finally
+        {
+            _sending = false;
+        }
     }
 
     private bool IsInvoicePaid =>
         Invoice.Status == InvoiceStatus.Paid || _latestPayment?.Status == PaymentStatus.Confirmed;
+
+    /// <summary>
+    /// Chủ trọ chỉnh sửa được hoá đơn đã phát hành khi khách CHƯA gửi yêu cầu thanh toán.
+    /// Khách đã gửi yêu cầu (đang chờ xác nhận) hoặc đã thanh toán thì không được sửa.
+    /// </summary>
+    private bool CanRevise =>
+        _caller is { IsChuTro: true }
+        && Invoice.Status == InvoiceStatus.Issued
+        && !Invoice.HasPaymentRequest;
+
+    /// <summary>
+    /// Chủ trọ xóa được hoá đơn đã gửi khi khách CHƯA gửi yêu cầu thanh toán.
+    /// </summary>
+    private bool CanDelete =>
+        _caller is { IsChuTro: true }
+        && Invoice.Status == InvoiceStatus.Issued
+        && !Invoice.HasPaymentRequest;
+
+    private void OpenDelete()
+    {
+        if (!CanDelete) return;
+        _deleteVisible = true;
+    }
+
+    private void CancelDelete()
+    {
+        _deleteVisible = false;
+    }
+
+    private async Task DeleteIssuedAsync()
+    {
+        if (_invoice is null || _caller is null || _deleting) return;
+        _deleting = true;
+        try
+        {
+            await InvoiceService.DeleteIssuedAsync(_invoice.Id, _caller);
+            _deleteVisible = false;
+            Toasts.Success(L["DeleteIssuedSuccess"]);
+            await ReloadAsync();
+        }
+        catch (Exception exception) when (exception is IInvoiceServiceError)
+        {
+            Toasts.Error(InvoiceServiceErrorText(exception));
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private void OpenRevise()
+    {
+        if (!CanRevise) return;
+        _reviseOpen = true;
+    }
+
+    private void CloseRevise()
+    {
+        _reviseOpen = false;
+    }
+
+    private async Task ReviseAsync(ReviseInvoiceRequest request)
+    {
+        if (_invoice is null || _caller is null || _revising) return;
+        _revising = true;
+        try
+        {
+            // Chỉ lưu. Khách CHƯA nhận bản mới cho tới khi chủ trọ bấm "Gửi bill đến khách hàng".
+            var revised = await InvoiceService.ReviseAsync(_invoice.Id, request, _caller);
+            _invoice = revised;
+            _reviseOpen = false;
+            Toasts.Success(L["ReviseSuccess"]);
+            await ReloadAsync();
+        }
+        catch (Exception exception) when (exception is IInvoiceServiceError)
+        {
+            Toasts.Error(InvoiceServiceErrorText(exception));
+        }
+        finally
+        {
+            _revising = false;
+        }
+    }
+
+    private string InvoiceServiceErrorText(Exception exception)
+    {
+        var code = (exception as IInvoiceServiceError)?.ErrorCode;
+        if (code is not null && InvoiceErrorKeys.TryGetValue(code, out var key))
+        {
+            return L[key];
+        }
+
+        return string.IsNullOrWhiteSpace(exception.Message) ? L["ReviseErrorUnknown"] : exception.Message;
+    }
 
     private string PaymentStateText => (_invoice?.Status, _latestPayment?.Status) switch
     {
@@ -657,6 +854,19 @@
             [PaymentErrorCodes.PaymentNotFound] = "PayErrorPaymentNotFound",
             [PaymentErrorCodes.InvalidPaymentStatus] = "PayErrorInvalidPaymentStatus",
             [PaymentErrorCodes.ConcurrencyConflict] = "PayErrorConcurrencyConflict",
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> InvoiceErrorKeys =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [InvoiceErrorCodes.NotEditable] = "ReviseErrorNotEditable",
+            [InvoiceErrorCodes.PaymentAlreadyRequested] = "ReviseErrorPaymentRequested",
+            [InvoiceErrorCodes.RevisionReasonRequired] = "ReviseErrorReasonRequired",
+            [InvoiceErrorCodes.RevisionOwnerOnly] = "ReviseErrorOwnerOnly",
+            [InvoiceErrorCodes.Forbidden] = "ReviseErrorForbidden",
+            [InvoiceErrorCodes.InvoiceNotFound] = "ReviseErrorNotFound",
+            [InvoiceErrorCodes.ItemsRequired] = "ReviseErrorItemsRequired",
+            [InvoiceErrorCodes.InvalidItem] = "ReviseErrorInvalidItem",
         };
 
     private static readonly IReadOnlyDictionary<string, string> UploadErrorKeys =

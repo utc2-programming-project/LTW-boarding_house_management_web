@@ -1,24 +1,36 @@
 @implements IDisposable
+@using Microsoft.JSInterop
 @inject IStringLocalizer<IncidentResource> L
+@inject IJSRuntime JS
 
 <div class="photo-picker">
-    <label for="@_inputId">@L["Attachments"]</label>
-    <div class="photo-select-row">
-        <div class="photo-select @((Disabled || _reading || Photos.Count >= Capacity) ? "is-disabled" : null) @(_error is not null ? "invalid" : null)">
-            <span aria-hidden="true">@L["ChoosePhotos"]</span>
-            <InputFile @key="_inputVersion" id="@_inputId" OnChange="ReadAsync" multiple
-                       accept=".jpg,.jpeg,.png" disabled="@(Disabled || _reading || Photos.Count >= Capacity)"
-                       aria-label="@L["ChoosePhotos"]" title="@L["ChoosePhotos"]" aria-invalid="@(_error is not null)"
-                       aria-describedby="@(_inputId + "-selection " + _inputId + "-hint " + _inputId + "-error")" />
-        </div>
-        <p id="@(_inputId + "-selection")" role="status">@(Photos.Count == 0 ? L["NoPhotosSelected"] : L["PhotosSelected", Photos.Count])</p>
-    </div>
-    <p id="@(_inputId + "-hint")">@L["PhotoHint", Capacity]</p>
+    <label class="photo-label" for="@_inputId">@L["Attachments"]</label>
+
+    @* InputFile ẩn; vùng kéo-thả bên dưới mở hộp chọn tệp và nhận tệp kéo vào
+       qua appDocumentUpload (dùng chung với form hồ sơ giấy tờ). *@
+    <InputFile @key="_inputVersion" id="@_inputId" class="hidden-native-input" OnChange="ReadAsync" multiple
+               accept=".jpg,.jpeg,.png" disabled="@IsDisabled"
+               aria-describedby="@(_inputId + "-hint " + _inputId + "-error")" />
+
+    <button type="button" id="@_zoneId"
+            class="drop-zone-card @(_error is not null ? "drop-zone-error" : null) @(IsDisabled ? "is-disabled" : null)"
+            disabled="@IsDisabled" aria-controls="@_inputId" @onclick="OpenFilePickerAsync">
+        <span class="drop-cloud-icon" aria-hidden="true"><LucideIcon Name="upload" /></span>
+        <span class="drop-primary-text">@L["DragDropPhotos"] <span class="browse-link">@L["ChoosePhotos"]</span></span>
+        <span id="@(_inputId + "-hint")" class="drop-secondary-text">@L["PhotoHint", Capacity]</span>
+    </button>
+
     @if (_reading)
     {
-        <p role="status">@L["ReadingPhotos"]</p>
+        <p class="photo-status" role="status">@L["ReadingPhotos"]</p>
     }
+    else if (Photos.Count > 0)
+    {
+        <p class="photo-status" role="status">@L["PhotosSelected", Photos.Count]</p>
+    }
+
     <div id="@(_inputId + "-error")" class="photo-error" role="alert">@_error</div>
+
     <div class="photo-grid">
         @foreach (var photo in Photos)
         {
@@ -39,11 +51,22 @@
     [Parameter] public int Capacity { get; set; } = IncidentSelectedPhoto.MaxCount;
     [Parameter] public bool Disabled { get; set; }
     private readonly string _inputId = $"incident-photo-{Guid.NewGuid():N}";
+    private readonly string _zoneId = $"incident-photo-zone-{Guid.NewGuid():N}";
     private readonly CancellationTokenSource _lifetime = new();
     private string? _error;
     private bool _reading;
     private bool _disposed;
     private int _inputVersion;
+    private bool _dropZoneWatched;
+
+    private bool IsDisabled => Disabled || _reading || Photos.Count >= Capacity;
+
+    private async Task OpenFilePickerAsync()
+    {
+        if (IsDisabled) return;
+
+        await JS.InvokeVoidAsync("appDocumentUpload.openFilePicker", _inputId);
+    }
 
     private async Task ReadAsync(InputFileChangeEventArgs args)
     {
@@ -84,6 +107,18 @@
         _error = null;
         await PhotosChanged.InvokeAsync(Photos.Where(p => !ReferenceEquals(p, photo)).ToArray());
         _inputVersion++;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_disposed || _dropZoneWatched || IsDisabled) return;
+
+        _dropZoneWatched = true;
+        try
+        {
+            await JS.InvokeVoidAsync("appDocumentUpload.watchDropZone", _zoneId, _inputId);
+        }
+        catch (JSDisconnectedException) { }
     }
 
     public void Dispose()

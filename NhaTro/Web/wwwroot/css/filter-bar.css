@@ -24,6 +24,13 @@
     min-width: 0;
 }
 
+/* Hàng có nhãn xếp dọc (.filter-bar__stack) cao hơn các ô điều khiển ~22px,
+   nên căn giữa sẽ làm select/ngày thấp hơn ô tìm kiếm, checkbox và nút reset.
+   Căn theo đáy để mọi điều khiển nằm chung một đường cơ sở. */
+.filter-bar__row:has(.filter-bar__stack) {
+    align-items: flex-end;
+}
+
 .filter-bar__search {
     position: relative;
     display: flex;

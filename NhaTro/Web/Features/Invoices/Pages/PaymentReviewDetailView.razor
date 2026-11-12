@@ -204,23 +204,38 @@
                Busy="@_rejecting"
                OnClose="CloseReject">
     <form class="reject-form" @onsubmit="SubmitRejectAsync" @onsubmit:preventDefault>
-        <label class="reject-field">
-            <span class="detail-label">@L["ReviewRejectReasonLabel"]</span>
-            <textarea class="input"
+        <div class="reject-intro">
+            <LucideIcon Name="alert-triangle" />
+            <p>@L["ReviewRejectIntro"]</p>
+        </div>
+
+        <div class="reject-field">
+            <label class="reject-label" for="payment-reject-reason">
+                @L["ReviewRejectReasonLabel"]
+                <span aria-hidden="true">*</span>
+            </label>
+            <textarea id="payment-reject-reason"
+                      class="input"
                       rows="4"
                       maxlength="500"
                       placeholder="@L["ReviewRejectReasonPlaceholder"]"
                       @bind="_rejectReason"
                       disabled="@_rejecting"></textarea>
-            <span class="note">@(_rejectReason?.Length ?? 0)/500</span>
-        </label>
+            <div class="reject-field-foot">
+                <span class="reject-hint">@L["ReviewRejectHint"]</span>
+                <span class="reject-counter">@(_rejectReason?.Length ?? 0)/500</span>
+            </div>
+        </div>
 
         @if (_rejectError is not null)
         {
-            <p class="field-error" role="alert">@_rejectError</p>
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_rejectError</span>
+            </div>
         }
 
-        <div class="form-actions">
+        <div class="reject-actions">
             <button type="button" class="btn btn-secondary" disabled="@_rejecting" @onclick="CancelReject">
                 @L["ReviewRejectCancel"]
             </button>
@@ -228,6 +243,10 @@
                 @if (_rejecting)
                 {
                     <span class="spinner"></span>
+                }
+                else
+                {
+                    <LucideIcon Name="x" />
                 }
                 <span>@L[_rejecting ? "ReviewRejectSubmitting" : "ReviewRejectSubmit"]</span>
             </button>

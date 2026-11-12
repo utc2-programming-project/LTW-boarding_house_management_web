@@ -45,6 +45,9 @@ public sealed class HomePageService(
 {
     private const int ExpiringWindowDays = 30;
 
+    /// <summary>Link danh sách hoá đơn chưa thu (dùng cho KPI + mục "Việc cần làm").</summary>
+    private const string UnpaidInvoicesHref = "/my/invoices?paymentState=unpaid";
+
     public async Task<HomeSnapshot> LoadAsync(CancellationToken ct = default, bool includeManagementKpis = true)
     {
         var principal = (await authentication.GetAuthenticationStateAsync()).User;
@@ -280,9 +283,9 @@ public sealed class HomePageService(
         var kpis = new List<HomeKpi>();
         if (invoiceList.Value is { } invoiceResult)
         {
-            kpis.Add(new("HomeKpiUnpaidInvoices", Count(invoiceResult.Summary.IssuedCount), Href: "/my/invoices"));
+            kpis.Add(new("HomeKpiUnpaidInvoices", Count(invoiceResult.Summary.IssuedCount), Href: UnpaidInvoicesHref));
             kpis.Add(new("HomeKpiOutstandingAmount", MoneyFormatter.Format(invoiceResult.Summary.OutstandingAmount),
-                Href: "/my/invoices"));
+                Href: UnpaidInvoicesHref));
         }
         else
         {
@@ -313,7 +316,7 @@ public sealed class HomePageService(
         var actions = new List<HomeAction>();
         if (invoiceList.Value is { } invoiceResultForActions)
         {
-            actions.Add(new("HomeActionUnpaidInvoices", invoiceResultForActions.Summary.IssuedCount, "/my/invoices"));
+            actions.Add(new("HomeActionUnpaidInvoices", invoiceResultForActions.Summary.IssuedCount, UnpaidInvoicesHref));
         }
 
         if (incidentRows.State == HomeLoadState.Loaded)
@@ -392,6 +395,7 @@ public sealed class HomePageService(
                     .Where(invoice => invoice.Status == InvoiceStatus.Issued)
                     .Take(5)
                     .Select(invoice => new HomeInvoiceItem(
+                        invoice.Id,
                         invoice.RoomCode,
                         invoice.PropertyName,
                         invoice.PeriodStart,

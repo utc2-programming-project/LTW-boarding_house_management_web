@@ -176,11 +176,37 @@
     box-shadow: var(--shadow-card);
 }
 
+/* Form từ chối minh chứng thanh toán: đồng bộ với các form khác trong app
+   (nhãn + ô nhập + gợi ý + hành động bám đáy dialog). */
 .reject-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 6px 6px 2px;
+    padding: 24px 24px 0;
+}
+
+.reject-intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--warning-border, #FDE68A);
+    border-radius: 10px;
+    background: var(--warning-bg, #FFFBEB);
+    color: var(--warning-text, #92400E);
+}
+
+.reject-intro .lucide-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+}
+
+.reject-intro p {
+    margin: 0;
+    font-size: .875rem;
+    line-height: 1.5;
 }
 
 .reject-field {
@@ -189,35 +215,109 @@
     gap: 8px;
 }
 
-.reject-field .detail-label {
-    font-size: 13px;
+.reject-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .8125rem;
     font-weight: 600;
-    color: var(--text-secondary, #475569);
+    color: var(--text-primary);
+}
+
+.reject-label span {
+    color: var(--error-text, #B91C1C);
 }
 
 .reject-field textarea {
     resize: vertical;
-    min-height: 110px;
+    height: auto;
+    min-height: 108px;
     border-radius: 10px;
     font-size: 14px;
     line-height: 1.5;
     padding: 10px 12px;
     box-sizing: border-box;
     width: 100%;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--control-border, #CBD5E1);
+    outline: none;
 }
 
-.reject-field .note {
-    font-size: 12px;
+.reject-field textarea:hover {
+    border-color: var(--border-hover, #94A3B8);
+}
+
+.reject-field textarea:focus-visible {
+    outline: 2px solid var(--focus-ring, #4F46E5);
+    outline-offset: 2px;
+}
+
+.reject-field textarea::placeholder {
     color: var(--text-muted, #64748B);
-    text-align: right;
 }
 
-.form-actions {
+.reject-field-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.reject-hint {
+    font-size: .75rem;
+    color: var(--text-secondary, #475569);
+}
+
+.reject-counter {
+    flex: none;
+    font-size: .75rem;
+    color: var(--text-muted, #64748B);
+    font-variant-numeric: tabular-nums;
+}
+
+.form-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--error-border, #FECACA);
+    border-radius: 8px;
+    background: var(--error-bg, #FEF2F2);
+    color: var(--error-text, #B91C1C);
+    font-size: .875rem;
+}
+
+.form-alert .lucide-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.reject-actions {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-3);
-    padding-top: 8px;
-    border-top: 1px solid #F1F5F9;
+    margin: 0 -24px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+@media (max-width: 767px) {
+    .reject-form {
+        padding: 16px 16px 0;
+    }
+
+    .reject-actions {
+        margin: 0 -16px;
+        padding: 12px 16px;
+    }
+
+    .reject-actions .btn {
+        flex: 1 1 100%;
+        min-height: 44px;
+    }
 }
 
 .field-error {

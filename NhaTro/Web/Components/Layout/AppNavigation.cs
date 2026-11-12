@@ -37,6 +37,8 @@ public static class AppNavigation
                     new("ServiceTrashTitle", "", "ChuTro", "/services/trash", ShowInSidebar: false),
                     new("ServiceRegistrationTrashTitle", "", "ChuTro", "/services/registrations/trash", ShowInSidebar: false),
                     new("PricingNav", "", "ChuTro,QuanLy,KhachThue", "/services/prices", ShowInSidebar: false),
+                    new("ServiceRegistrationsNav", "", "ChuTro,QuanLy", "/service-registrations", ShowInSidebar: false),
+                    new("RegHistoryNav", "", "KhachThue", "/my/service-registrations", ShowInSidebar: false),
                     new("MeterReadingNavReadings", "", "ChuTro,QuanLy,KhachThue", "/services/readings",
                         ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"],
                         Children:

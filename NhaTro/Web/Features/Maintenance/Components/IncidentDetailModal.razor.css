@@ -1,4 +1,4 @@
-.detail-body { padding: 24px; }
+.detail-body { padding: 24px 24px 0; }
 .sample-note { margin: 0 0 16px; color: var(--text-secondary); font-size: .8125rem; }
 .detail-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 h3 { margin: 0 0 12px; font-size: 1rem; font-weight: 600; }
@@ -24,15 +24,30 @@ figcaption { margin-top: 8px; font-size: .75rem; overflow-wrap: anywhere; }
 .history { list-style: none; padding: 0; margin: 0; }
 .history li { display: grid; gap: 4px; padding: 12px 0 12px 16px; border-left: 2px solid var(--accent-border); }
 .history .tabular-nums { font-size: .75rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.detail-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+/* Chân form cố định: đầu dialog đã cố định nhờ .feature-dialog-header,
+   hành động bám đáy vùng cuộn nên không phải cuộn xuống mới đóng được. */
+.detail-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 24px -24px 0;
+    padding: 16px 24px;
+    background: var(--surface-subtle);
+    border-top: 1px solid var(--border);
+}
 .detail-error { color: var(--error-text); margin-top: 20px; }
 .detail-error p { color: inherit; }
 .approval-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 @media (max-width: 767px) {
-    .detail-body { padding: 16px; }
+    .detail-body { padding: 16px 16px 0; }
     .detail-grid { grid-template-columns: 1fr; }
     .processing-panel { padding: 16px; }
     .processing-panel input, .processing-panel textarea { font-size: 1rem; min-height: 44px; }
     .approval-actions > button { min-height: 44px; flex: 1; }
     .processing-panel > button, .detail-actions > button { width: 100%; min-height: 44px; }
+    .detail-actions { margin: 16px -16px 0; padding: 12px 16px; }
 }

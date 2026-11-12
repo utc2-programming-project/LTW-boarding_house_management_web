@@ -434,6 +434,8 @@
   <data name="P5CostThTotal" xml:space="preserve"><value>Tổng dịch vụ phòng</value></data>
   <data name="P5CostThInvoiceStatus" xml:space="preserve"><value>Trạng thái hóa đơn</value></data>
   <data name="P5CostThActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="P5CostThPeriod" xml:space="preserve"><value>Kỳ</value></data>
+  <data name="P5CostCreateInvoiceConfirmNote" xml:space="preserve"><value>Hoá đơn sẽ được tạo ở trạng thái nháp để bạn kiểm tra trước khi phát hành cho khách.</value></data>
   <data name="P5CostNoData" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
   <data name="P5CostServiceCount" xml:space="preserve"><value>{0} dịch vụ</value></data>
   <data name="P5CostInvoiceCreated" xml:space="preserve"><value>Đã lập hóa đơn</value></data>
@@ -468,6 +470,10 @@
   <data name="P5CostRentLabel" xml:space="preserve"><value>Tiền phòng</value></data>
   <data name="P5CostTotalLabel" xml:space="preserve"><value>Tổng cộng</value></data>
   <data name="P5CostCorrectionsTitle" xml:space="preserve"><value>Lịch sử điều chỉnh</value></data>
+  <data name="P5CostInvoiceRevisionsTitle" xml:space="preserve"><value>Lịch sử chỉnh sửa hóa đơn</value></data>
+  <data name="P5CostInvoiceRevisionsHint" xml:space="preserve"><value>Lý do Chủ trọ nêu khi chỉnh sửa hóa đơn đã gửi khách.</value></data>
+  <data name="P5CostInvoiceRevisionsCount" xml:space="preserve"><value>{0} lần chỉnh sửa</value></data>
+  <data name="P5CostInvoiceRevisionsCountOne" xml:space="preserve"><value>1 lần chỉnh sửa</value></data>
   <data name="P5CostCorrectionsCount" xml:space="preserve"><value>{0} lần điều chỉnh</value></data>
   <data name="P5CostCorrectionsCountOne" xml:space="preserve"><value>1 lần điều chỉnh</value></data>
   <data name="P5CostCorrectionsEmpty" xml:space="preserve"><value>Chưa có điều chỉnh nào.</value></data>

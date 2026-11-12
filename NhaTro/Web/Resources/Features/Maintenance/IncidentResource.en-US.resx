@@ -208,6 +208,9 @@
   <data name="Attachments" xml:space="preserve">
     <value>Attachments</value>
   </data>
+  <data name="DragDropPhotos" xml:space="preserve">
+    <value>Drag and drop photos here, or</value>
+  </data>
   <data name="PhotoHint" xml:space="preserve">
     <value>JPG/JPEG/PNG, up to 5 MB per photo. Each report allows 3 report photos and 3 result photos. At most {0} photos in this selection, including selected photos.</value>
   </data>

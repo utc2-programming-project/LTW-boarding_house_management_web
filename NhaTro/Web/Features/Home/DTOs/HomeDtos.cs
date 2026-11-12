@@ -35,6 +35,7 @@ public sealed record HomeContractItem(
     int DaysLeft);
 
 public sealed record HomeInvoiceItem(
+    int InvoiceId,
     string RoomCode,
     string PropertyName,
     DateOnly PeriodStart,
