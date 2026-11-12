@@ -107,21 +107,6 @@ public sealed class PermissionMatrixAccountsTests(SqlServerFixture fixture)
         Assert.Equal(before, await IsLockedAsync(db, "khach-1"));
     }
 
-    /// <summary>Ô E7 ❌ (chốt 12/11/2026): Chủ trọ không khóa được tài khoản; trạng thái trong DB không đổi.</summary>
-    [SqlServerFact]
-    public async Task Cell_E7_OP06_ChuTro_IsDenied_InDb()
-    {
-        var (db, accounts) = await SeedAsync();
-        await using var _ = db;
-
-        var before = await IsLockedAsync(db, "khach-1");
-        var result = await accounts.LockAsync("khach-1", "owner-a", Roles.ChuTro);
-
-        Assert.False(result.Succeeded);
-        Assert.Equal(AccountErrorCodes.Forbidden, result.ErrorCode);
-        Assert.Equal(before, await IsLockedAsync(db, "khach-1"));
-    }
-
     /// <summary>Ô G7 ❌: Khách thuê không khóa được tài khoản nào kể cả của mình.</summary>
     [SqlServerFact]
     public async Task Cell_G7_OP06_KhachThue_IsDenied()

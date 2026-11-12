@@ -3,7 +3,7 @@
   "generatedBy": "scripts/permission_matrix/build_manifest.py",
   "workbook": {
     "path": "docs/task/thao_tac_va_quyen.xlsx",
-    "sha256": "48fdd0c2c64a9fde3fff2ecb983da6432bbedb770c43e321a15adb4b347799a3",
+    "sha256": "be13b89ff4ef5ce8da3c3803146d7cae3e1da24786927815b518b7c8bd4e76a8",
     "sheets": [
       "Ma trận quyền",
       "Công tắc Quản lý",
@@ -86,9 +86,9 @@
     "cellCount": 180,
     "applicableCellCount": 173,
     "symbolCounts": {
-      "✅": 67,
+      "✅": 66,
       "⚠️": 14,
-      "❌": 76,
+      "❌": 77,
       "⚙️": 16,
       "—": 7
     },
