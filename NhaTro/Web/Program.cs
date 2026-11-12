@@ -16,6 +16,7 @@ using Web.Data;
 using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
 using Web.Endpoints.Files;
+using Web.Endpoints.Reports;
 using Web.Endpoints.Tenants;
 using Web.Features.Accounts;
 using Web.Features.Accounts.Contexts;
@@ -673,6 +674,7 @@ app.MapGet("/culture/current", (HttpContext http) =>
 app.MapStaticAssets();
 // Tệp dùng chung: kiểm quyền trong service, chặn Admin bằng policy "Business".
 app.MapFileEndpoints();
+app.MapReportExportEndpoints();
 // Health live/ready (ẩn danh, chỉ trả trạng thái).
 app.MapHealthEndpoints();
 // VHT-26: giấy tờ P3 (metadata, upload, tải, thay, xóa mềm) có kiểm phạm vi hồ sơ.

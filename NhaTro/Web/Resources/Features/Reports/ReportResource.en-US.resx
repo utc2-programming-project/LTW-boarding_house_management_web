@@ -33,4 +33,10 @@
 <data name="Previous" xml:space="preserve"><value>Previous</value></data>
 <data name="Next" xml:space="preserve"><value>Next</value></data>
 <data name="ReportDescription" xml:space="preserve"><value>View revenue, receivables and operating performance within your account scope.</value></data>
+<data name="ExportExcel" xml:space="preserve"><value>Export Excel</value></data>
+<data name="ExportDenied" xml:space="preserve"><value>You cannot export this report.</value></data>
+<data name="ExportApprovalRequired" xml:space="preserve"><value>The export request is awaiting approval.</value></data>
+<data name="ExportApprovalDenied" xml:space="preserve"><value>The export is not allowed.</value></data>
+<data name="ExportTooLarge" xml:space="preserve"><value>The data exceeds the export limit.</value></data>
+<data name="ExportFailed" xml:space="preserve"><value>The report could not be exported.</value></data>
 </root>

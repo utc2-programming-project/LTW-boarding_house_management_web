@@ -33,4 +33,10 @@
 <data name="Previous" xml:space="preserve"><value>Trang trước</value></data>
 <data name="Next" xml:space="preserve"><value>Trang sau</value></data>
 <data name="ReportDescription" xml:space="preserve"><value>Xem doanh thu, công nợ và hiệu suất vận hành theo phạm vi tài khoản của bạn.</value></data>
+<data name="ExportExcel" xml:space="preserve"><value>Xuat Excel</value></data>
+<data name="ExportDenied" xml:space="preserve"><value>Ban khong duoc phep xuat bao cao.</value></data>
+<data name="ExportApprovalRequired" xml:space="preserve"><value>Yeu cau xuat dang cho duyet.</value></data>
+<data name="ExportApprovalDenied" xml:space="preserve"><value>Khong duoc phep xuat bao cao.</value></data>
+<data name="ExportTooLarge" xml:space="preserve"><value>Du lieu vuot gioi han xuat.</value></data>
+<data name="ExportFailed" xml:space="preserve"><value>Khong the xuat bao cao.</value></data>
 </root>

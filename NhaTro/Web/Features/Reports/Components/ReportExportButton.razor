@@ -1,0 +1,21 @@
+@using Web.Features.Reports.DTOs
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Web.Features.Reports.ReportResource> L
+
+<a class="btn btn-secondary" href="@Url">
+    <LucideIcon Name="download" />@L["ExportExcel"]
+</a>
+
+@code {
+    [Parameter, EditorRequired] public ReportExportSection Section { get; set; }
+    [Parameter] public int? PropertyId { get; set; }
+    [Parameter] public string? ReturnUrl { get; set; } = "/reports";
+
+    private string Url => Navigation.GetUriWithQueryParameters(
+        $"/api/reports/export/{Section}",
+        new Dictionary<string, object?>
+        {
+            ["propertyId"] = PropertyId,
+            ["returnUrl"] = ReturnUrl,
+        });
+}
