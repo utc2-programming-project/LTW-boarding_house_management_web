@@ -538,6 +538,8 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQueryService,
     Web.Features.Invoices.Services.PaymentReviewQueryService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
+// VHT-143: ngữ cảnh tra cứu P6 tối thiểu sau reconnect/tải lại.
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentRecoveryService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();
