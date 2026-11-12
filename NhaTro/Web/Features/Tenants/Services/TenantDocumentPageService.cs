@@ -26,7 +26,8 @@ public sealed class TenantDocumentPageService(
     ITenantDocumentService documentService,
     ApplicationDbContext db,
     TenantPageService? tenantPageService = null,
-    IOptions<StorageOptions>? storageOptions = null)
+    IOptions<StorageOptions>? storageOptions = null,
+    TenantContactPageService? contactPageService = null)
 {
     public async Task<string> GetCurrentRoleAsync()
     {
@@ -164,6 +165,26 @@ public sealed class TenantDocumentPageService(
             .Select(r => r.Floor)
             .FirstOrDefaultAsync(ct);
 
+        // Liên hệ Chủ trọ/Quản lý của đúng tòa nhà đang thuê. Lỗi tải liên hệ không được
+        // làm hỏng trang phòng đang thuê, nên chỉ bỏ trống phần liên hệ.
+        PropertyContactDto? contact = null;
+        if (contactPageService is not null)
+        {
+            try
+            {
+                contact = await contactPageService.GetForPropertyAsync(rental.PropertyId, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                // Liên hệ là thông tin phụ: lỗi tải không được làm hỏng trang phòng đang thuê.
+                contact = null;
+            }
+        }
+
         return new LeasedRoomDetailDto
         {
             ContractId = rental.ContractId,
@@ -189,7 +210,8 @@ public sealed class TenantDocumentPageService(
                 FullName = roommate.FullName,
                 PhoneNumber = roommate.PhoneNumber,
                 IsCurrentUser = roommate.TenantId == overview!.TenantId,
-            }).ToList()
+            }).ToList(),
+            Contact = contact,
         };
     }
 

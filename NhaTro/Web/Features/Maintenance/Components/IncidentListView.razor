@@ -49,7 +49,9 @@
     <EmptyActions>
         @if (CanCreate)
         {
-            <button type="button" class="btn btn-primary" @onclick="OnCreate">@L["CreateIncident"]</button>
+            <button type="button" class="btn btn-primary" @onclick="OnCreate">
+                <LucideIcon Name="plus" /> @L["CreateIncident"]
+            </button>
         }
     </EmptyActions>
 </DataTable>

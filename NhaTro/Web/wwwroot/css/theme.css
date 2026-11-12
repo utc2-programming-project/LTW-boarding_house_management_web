@@ -118,8 +118,9 @@ html[data-sidebar-resizing],html[data-sidebar-resizing] * { cursor:col-resize!im
 .p2-row-menu-item.danger:hover,.p2-row-menu-item.danger:focus-visible { background:var(--error-bg);color:var(--danger); }
 .p2-row-menu-sep { height:1px;margin:6px 8px;background:var(--border); }
 /* Giao diện + Ngôn ngữ nằm trong popover tài khoản thay cho các nút rời trên topbar. */
-.account-menu-row { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:4px 10px; }
-.account-menu-row-label { font-size:.8125rem;line-height:1.4;color:var(--text-secondary); }
+/* Nhãn nhóm Giao diện/Ngôn ngữ thụt đúng cột chữ của item (10px pad + 18px icon + 10px gap). */
+.account-menu-row { display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;padding:4px 10px 4px 38px; }
+.account-menu-row-label { font-size:.875rem;line-height:1.4;color:var(--text-secondary); }
 .account-menu-theme { display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:30px;height:30px;padding:0;border:1px solid var(--control-border);border-radius:8px;background:var(--surface-subtle);color:var(--text-secondary); }
 .account-menu-theme:hover,.account-menu-theme:focus-visible { background:var(--hover-bg);color:var(--text-primary); }
 .account-menu-theme .lucide-icon { width:16px;height:16px; }
@@ -309,7 +310,7 @@ html[data-sidebar-resizing],html[data-sidebar-resizing] * { cursor:col-resize!im
 
  /* Hieu ung rieng cho tung nhom icon. */
  .lucide-icon[data-icon="plus"],.lucide-icon[data-icon="settings"] { --icon-anim:icon-rotate-180; }
- .lucide-icon[data-icon="refresh"],.lucide-icon[data-icon="refresh-cw"] { --icon-anim:icon-rotate-50; }
+ .lucide-icon[data-icon="refresh"],.lucide-icon[data-icon="refresh-cw"],.lucide-icon[data-icon="repeat"] { --icon-anim:icon-rotate-50; }
  .lucide-icon[data-icon="close"],.lucide-icon[data-icon="x"] { --icon-anim:icon-rotate-90; }
  .lucide-icon[data-icon="key"] { --icon-anim:icon-key; }
  .lucide-icon[data-icon="moon"] { --icon-anim:icon-wiggle; }

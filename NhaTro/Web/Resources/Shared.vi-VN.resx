@@ -761,6 +761,14 @@
   <data name="ManagerOwnerBanner" xml:space="preserve"><value>Chủ trọ của bạn: {0}</value></data>
   <data name="ManagerNoOwnerBanner" xml:space="preserve"><value>Bạn chưa được phân công cho Chủ trọ nào. Vui lòng liên hệ Chủ trọ để được phân công tòa nhà.</value></data>
   <data name="ManagerOwnerLoadFailed" xml:space="preserve"><value>Không tải được thông tin Chủ trọ.</value></data>
+  <data name="TenantContactOwnerBanner" xml:space="preserve"><value>Chủ trọ của bạn: {0}</value></data>
+  <data name="TenantContactManagerBanner" xml:space="preserve"><value>Quản lý: {0}</value></data>
+  <data name="TenantContactTitle" xml:space="preserve"><value>Liên hệ chủ trọ &amp; quản lý</value></data>
+  <data name="TenantContactDesc" xml:space="preserve"><value>Gọi trực tiếp khi cần hỗ trợ về phòng, hóa đơn hoặc sự cố.</value></data>
+  <data name="TenantContactOwnerLabel" xml:space="preserve"><value>Chủ trọ</value></data>
+  <data name="TenantContactManagerLabel" xml:space="preserve"><value>Quản lý</value></data>
+  <data name="TenantContactPhoneMissing" xml:space="preserve"><value>Chưa cập nhật số điện thoại</value></data>
+  <data name="TenantContactNoManager" xml:space="preserve"><value>Chưa có quản lý được phân công</value></data>
   <data name="P2RoomsTitle" xml:space="preserve"><value>Phòng</value></data>
   <data name="P2RoomsSubtitle" xml:space="preserve"><value>Theo dõi phòng, giá thuê và trạng thái sử dụng</value></data>
   <data name="P2AddRoom" xml:space="preserve"><value>Thêm phòng</value></data>

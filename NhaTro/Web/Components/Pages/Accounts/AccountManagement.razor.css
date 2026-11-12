@@ -17,9 +17,35 @@
     vertical-align: middle;
 }
 
-/* Nút ⋯ nằm giữa ô thao tác (span inline-flex mặc định bám trái). */
+/* Thanh lọc là card riêng: tách khỏi card bảng để hai khối không dính nhau. */
+.accounts-page > .filter-bar {
+    margin-bottom: var(--space-5);
+}
+
+/* Cột Thao tác: nút ⋯ và nhãn "Đây là bạn" cùng căn giữa cột. */
+.accounts-page ::deep .table-card tbody td:nth-child(7) {
+    text-align: center;
+}
+
 .accounts-page ::deep .table-card tbody td .row-actions {
     display: block;
+}
+
+/* Nhãn "Đây là bạn" gọn, có icon và cùng kiểu chữ phụ với các ô khác. */
+.accounts-page ::deep .account-self {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.accounts-page ::deep .account-self .lucide-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
 }
 
 .accounts-page ::deep .table-card tbody td:nth-child(1),
