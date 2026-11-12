@@ -476,3 +476,9 @@
     font-weight: 600;
     margin: 0;
 }
+
+/* VHT-143: trong lúc mất kết nối, chặn bấm nút ghi P6 cho tới khi tra xong kết quả. */
+html[data-connection-lost] [data-payment-write] {
+    pointer-events: none;
+    opacity: .6;
+}
