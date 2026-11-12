@@ -21,9 +21,9 @@
 <data name="CurrentData" xml:space="preserve"><value>Số liệu hiện tại</value></data>
 <data name="TotalRooms" xml:space="preserve"><value>Tổng phòng đang hoạt động</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
-<data name="Revenue" xml:space="preserve"><value>Doanh thu dự kiến tháng</value></data>
-<data name="Debt" xml:space="preserve"><value>Tổng công nợ</value></data>
-<data name="Incidents" xml:space="preserve"><value>Sự cố chờ xử lý</value></data>
+<data name="Revenue" xml:space="preserve"><value>Doanh thu ghi nhận</value></data>
+<data name="Debt" xml:space="preserve"><value>Công nợ còn phải thu</value></data>
+<data name="Incidents" xml:space="preserve"><value>Sự cố trong kỳ</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Phòng</value></data>
 <data name="TenantsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Khách thuê</value></data>
 <data name="PropertiesDenied" xml:space="preserve"><value>Chưa được phép xem danh sách nhà</value></data>
@@ -39,7 +39,7 @@
 <data name="TenantActive" xml:space="preserve"><value>Đang hoạt động</value></data>
 <data name="TenantLinked" xml:space="preserve"><value>Có tài khoản</value></data>
 <data name="ViewTenants" xml:space="preserve"><value>Xem khách thuê</value></data>
-<data name="RevenueChart" xml:space="preserve"><value>Doanh thu 6 tháng</value></data>
+<data name="RevenueChart" xml:space="preserve"><value>Doanh thu theo kỳ</value></data>
 <data name="ExpiringContracts" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
 <data name="RoomScopeNote" xml:space="preserve"><value>Chỉ thống kê phòng đang hoạt động. Danh sách phòng mặc định gồm cả phòng tạm ngưng.</value></data>
 <data name="RefreshSuccess" xml:space="preserve"><value>Đã làm mới dữ liệu</value></data>
@@ -49,4 +49,12 @@
 <data name="CurrentPeriodNote" xml:space="preserve"><value>Phòng và khách thuê là số liệu hiện trạng theo nhà trọ. Kỳ báo cáo áp dụng cho các báo cáo theo thời gian khi khả dụng.</value></data>
 <data name="ViewReports" xml:space="preserve"><value>Xem báo cáo phòng và khách thuê</value></data>
 <data name="HomeTitle" xml:space="preserve"><value>Trang chủ</value></data>
+<data name="PeriodData" xml:space="preserve"><value>Số liệu trong kỳ báo cáo đã chọn</value></data>
+<data name="RevenueDenied" xml:space="preserve"><value>Chỉ chủ trọ được xem doanh thu và công nợ</value></data>
+<data name="IncidentsDenied" xml:space="preserve"><value>Bạn không có quyền xem báo cáo sự cố</value></data>
+<data name="IncidentTotal" xml:space="preserve"><value>Tổng sự cố</value></data>
+<data name="IncidentNew" xml:space="preserve"><value>Mới</value></data>
+<data name="IncidentInProgress" xml:space="preserve"><value>Đang xử lý</value></data>
+<data name="IncidentCompleted" xml:space="preserve"><value>Hoàn tất</value></data>
+<data name="IncidentUrgent" xml:space="preserve"><value>Khẩn cấp</value></data>
 </root>

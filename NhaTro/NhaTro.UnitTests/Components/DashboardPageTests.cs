@@ -2,8 +2,10 @@ using System.Reflection;
 using System.Security.Claims;
 using Bunit;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Common.Models;
+using Web.Data;
 using Web.Components.Shared.Feedback;
 using Web.Features.Accounts;
 using Web.Features.Dashboard.Components;
@@ -14,6 +16,7 @@ using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Services;
 using Web.Features.Reports;
 using Web.Features.Reports.DTOs;
+using Web.Features.Reports.Services;
 
 namespace NhaTro.UnitTests.Components;
 
@@ -47,7 +50,13 @@ public sealed class DashboardPageTests : BunitContext
                 Kpis = new() { Total = 15, Active = 12, Renting = 8, LinkedAccountCount = 5 }
             });
         });
-        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)), properties, rooms, tenants, TimeProvider.System));
+        var revenue = new RevenueReportService(NewDb());
+        var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult
+        {
+            Kpis = new() { Total = 2, New = 1, InProgress = 1 },
+        }));
+        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)),
+            properties, rooms, tenants, revenue, incidents, TimeProvider.System));
         ComponentFactories.AddStub<RoomStructureChart>();
     }
 
@@ -61,7 +70,9 @@ public sealed class DashboardPageTests : BunitContext
         page.WaitForAssertion(() => Assert.Equal(7, RoomRequests.Last()));
         page.WaitForAssertion(() => Assert.Equal(new int?[] { null, 7 }, TenantRequests));
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);
-        Assert.All(page.FindAll(".kpi-card a"), a => Assert.Equal("/rooms?propertyId=7", a.GetAttribute("href")));
+        var hrefs = page.FindAll(".kpi-card a").Select(a => a.GetAttribute("href")).ToList();
+        Assert.Contains("/rooms?propertyId=7", hrefs);
+        Assert.Contains("/reports?propertyId=7", hrefs);
         var count = RoomRequests.Count;
         page.FindAll("select")[1].Change("Year");
         Assert.Equal(count, RoomRequests.Count);
@@ -98,8 +109,16 @@ public sealed class DashboardPageTests : BunitContext
         Configure(Roles.ChuTro);
         var page = Render<DashboardOverview>();
         page.WaitForAssertion(() => Assert.Equal(4, page.FindAll("dd").Count));
-        Assert.Empty(page.FindAll(".kpi-card a"));
+        Assert.DoesNotContain(page.FindAll(".kpi-card a"), a => a.GetAttribute("href")!.StartsWith("/rooms"));
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);
+    }
+
+    private static ApplicationDbContext NewDb()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase($"vht140-dashboard-{Guid.NewGuid()}")
+            .Options;
+        return new ApplicationDbContext(options);
     }
 
     private static T Proxy<T>(Func<MethodInfo?, object?[]?, object?> handler) where T : class

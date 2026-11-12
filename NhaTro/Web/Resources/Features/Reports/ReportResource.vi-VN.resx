@@ -33,4 +33,88 @@
 <data name="Previous" xml:space="preserve"><value>Trang trước</value></data>
 <data name="Next" xml:space="preserve"><value>Trang sau</value></data>
 <data name="ReportDescription" xml:space="preserve"><value>Xem doanh thu, công nợ và hiệu suất vận hành theo phạm vi tài khoản của bạn.</value></data>
+<data name="FromDate" xml:space="preserve"><value>Từ ngày</value></data>
+<data name="ToDate" xml:space="preserve"><value>Đến ngày</value></data>
+<data name="InvalidDateRange" xml:space="preserve"><value>Từ ngày phải trước hoặc bằng đến ngày.</value></data>
+<data name="DateFilterNote" xml:space="preserve"><value>Bộ lọc ngày chỉ áp dụng cho doanh thu, hợp đồng, chi phí và sự cố. Phòng và khách thuê luôn hiển thị số liệu hiện tại.</value></data>
+<data name="Period" xml:space="preserve"><value>Kỳ</value></data>
+<data name="NoData" xml:space="preserve"><value>Không có dữ liệu</value></data>
+<data name="NoPeriodData" xml:space="preserve"><value>Không có dữ liệu theo kỳ trong phạm vi đã chọn.</value></data>
+<data name="Status" xml:space="preserve"><value>Trạng thái</value></data>
+<data name="Total" xml:space="preserve"><value>Tổng</value></data>
+<data name="Keyword" xml:space="preserve"><value>Từ khóa</value></data>
+<data name="ContractReport" xml:space="preserve"><value>Báo cáo hợp đồng</value></data>
+<data name="ContractDenied" xml:space="preserve"><value>Bạn không có quyền xem báo cáo hợp đồng.</value></data>
+<data name="ContractNumber" xml:space="preserve"><value>Số hợp đồng</value></data>
+<data name="ContractPeriod" xml:space="preserve"><value>Thời hạn hợp đồng</value></data>
+<data name="ContractStatus" xml:space="preserve"><value>Trạng thái hợp đồng</value></data>
+<data name="Members" xml:space="preserve"><value>Số thành viên</value></data>
+<data name="RentAmount" xml:space="preserve"><value>Tiền thuê</value></data>
+<data name="DepositAmount" xml:space="preserve"><value>Tiền cọc</value></data>
+<data name="Pending" xml:space="preserve"><value>Chờ duyệt</value></data>
+<data name="Approved" xml:space="preserve"><value>Đã duyệt</value></data>
+<data name="Rejected" xml:space="preserve"><value>Từ chối</value></data>
+<data name="Liquidated" xml:space="preserve"><value>Đã thanh lý</value></data>
+<data name="CostReport" xml:space="preserve"><value>Báo cáo chi phí điện nước</value></data>
+<data name="CostDenied" xml:space="preserve"><value>Bạn không có quyền xem báo cáo chi phí điện nước.</value></data>
+<data name="ReadingCount" xml:space="preserve"><value>Số bản ghi chỉ số</value></data>
+<data name="ElectricUsage" xml:space="preserve"><value>Điện tiêu thụ (kWh)</value></data>
+<data name="ElectricAmount" xml:space="preserve"><value>Tiền điện</value></data>
+<data name="WaterUsage" xml:space="preserve"><value>Nước tiêu thụ (m³)</value></data>
+<data name="WaterAmount" xml:space="preserve"><value>Tiền nước</value></data>
+<data name="TotalAmount" xml:space="preserve"><value>Tổng chi phí</value></data>
+<data name="MissingSnapshot" xml:space="preserve"><value>Thiếu ảnh chỉ số</value></data>
+<data name="SnapshotStatus" xml:space="preserve"><value>Ảnh chỉ số</value></data>
+<data name="SnapshotOk" xml:space="preserve"><value>Đủ ảnh</value></data>
+<data name="EffectiveInPeriod" xml:space="preserve"><value>Hiệu lực trong kỳ</value></data>
+<data name="IncidentReport" xml:space="preserve"><value>Báo cáo sự cố</value></data>
+<data name="IncidentDenied" xml:space="preserve"><value>Bạn không có quyền xem báo cáo sự cố.</value></data>
+<data name="IncidentTitle" xml:space="preserve"><value>Tiêu đề sự cố</value></data>
+<data name="CreatedAt" xml:space="preserve"><value>Thời điểm tạo</value></data>
+<data name="RepairCost" xml:space="preserve"><value>Chi phí sửa chữa</value></data>
+<data name="Category" xml:space="preserve"><value>Danh mục</value></data>
+<data name="Urgency" xml:space="preserve"><value>Mức độ khẩn</value></data>
+<data name="New" xml:space="preserve"><value>Mới</value></data>
+<data name="InProgress" xml:space="preserve"><value>Đang xử lý</value></data>
+<data name="Completed" xml:space="preserve"><value>Hoàn tất</value></data>
+<data name="Urgent" xml:space="preserve"><value>Khẩn cấp</value></data>
+<data name="Emergency" xml:space="preserve"><value>Khẩn cấp đặc biệt</value></data>
+<data name="Normal" xml:space="preserve"><value>Bình thường</value></data>
+<data name="Electrical" xml:space="preserve"><value>Điện</value></data>
+<data name="Water" xml:space="preserve"><value>Nước</value></data>
+<data name="Furniture" xml:space="preserve"><value>Nội thất</value></data>
+<data name="Equipment" xml:space="preserve"><value>Thiết bị</value></data>
+<data name="Other" xml:space="preserve"><value>Khác</value></data>
+<data name="RevenueReport" xml:space="preserve"><value>Báo cáo doanh thu và công nợ</value></data>
+<data name="RevenueDenied" xml:space="preserve"><value>Chỉ chủ trọ được xem doanh thu và công nợ.</value></data>
+<data name="ByProperty" xml:space="preserve"><value>Theo nhà trọ</value></data>
+<data name="RecognizedRevenue" xml:space="preserve"><value>Doanh thu ghi nhận</value></data>
+<data name="Outstanding" xml:space="preserve"><value>Còn phải thu</value></data>
+<data name="TotalInvoiced" xml:space="preserve"><value>Tổng giá trị hóa đơn</value></data>
+<data name="InvoiceCount" xml:space="preserve"><value>Số hóa đơn</value></data>
+<data name="PaidInvoiceCount" xml:space="preserve"><value>Hóa đơn đã thu đủ</value></data>
+<data name="PendingRejectedNote" xml:space="preserve"><value>Chờ xác nhận: {0} · Từ chối: {1}. Hai khoản này không cộng vào doanh thu.</value></data>
+<data name="RevenueByPeriod" xml:space="preserve"><value>Doanh thu theo kỳ</value></data>
+<data name="InvoiceLines" xml:space="preserve"><value>Chi tiết hóa đơn</value></data>
+<data name="InvoiceTotal" xml:space="preserve"><value>Tổng hóa đơn</value></data>
+<data name="Paid" xml:space="preserve"><value>Đã thu</value></data>
+<data name="DebtInvoices" xml:space="preserve"><value>Hóa đơn còn nợ</value></data>
+<data name="NoDebt" xml:space="preserve"><value>Không có công nợ</value></data>
+<data name="NoDebtDescription" xml:space="preserve"><value>Không có hóa đơn nào còn số tiền phải thu trong phạm vi và kỳ đã chọn.</value></data>
+<data name="DateBasis" xml:space="preserve"><value>Cơ sở ghi nhận doanh thu</value></data>
+<data name="InvoicePeriodBasis" xml:space="preserve"><value>Theo kỳ hóa đơn</value></data>
+<data name="PaymentDateBasis" xml:space="preserve"><value>Theo ngày thanh toán</value></data>
+<data name="InvoicePeriodNote" xml:space="preserve"><value>Doanh thu ghi nhận theo kỳ của hóa đơn hợp lệ, không phụ thuộc ngày thanh toán. Công nợ tính trên hóa đơn đã phát hành.</value></data>
+<data name="PaymentDateNote" xml:space="preserve"><value>Doanh thu ghi nhận theo ngày xác nhận thanh toán. Công nợ vẫn tính trên hóa đơn đã phát hành trong kỳ lọc.</value></data>
+<data name="ChartType" xml:space="preserve"><value>Kiểu biểu đồ</value></data>
+<data name="ColumnChart" xml:space="preserve"><value>Cột</value></data>
+<data name="LineChart" xml:space="preserve"><value>Đường</value></data>
+<data name="ChartDataTable" xml:space="preserve"><value>Bảng số liệu của biểu đồ</value></data>
+<data name="UnknownPeriod" xml:space="preserve"><value>Không xác định kỳ</value></data>
+<data name="ExportExcel" xml:space="preserve"><value>Xuất Excel</value></data>
+<data name="ExportSuccess" xml:space="preserve"><value>Đã xuất tệp Excel.</value></data>
+<data name="ExportApprovalRequired" xml:space="preserve"><value>Cần được phê duyệt trước khi xuất báo cáo.</value></data>
+<data name="ExportApprovalDenied" xml:space="preserve"><value>Yêu cầu xuất báo cáo đã bị từ chối.</value></data>
+<data name="ExportForbidden" xml:space="preserve"><value>Bạn không có quyền xuất báo cáo.</value></data>
+<data name="ExportFailed" xml:space="preserve"><value>Xuất báo cáo thất bại. Vui lòng thử lại.</value></data>
 </root>

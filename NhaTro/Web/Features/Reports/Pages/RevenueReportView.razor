@@ -1,0 +1,284 @@
+@inject IStringLocalizer<ReportResource> L
+@inject IStringLocalizer<DashboardResource> D
+@inject ReportsPageService PageService
+@inject ToastService Toasts
+@inject IJSRuntime JS
+@inject ILogger<RevenueReportView> Logger
+
+<DashboardPanel Title="@L["RevenueReport"]" Icon="chart" State="@State" DeniedText="@L["RevenueDenied"]" Retry="@Retry">
+    @if (Result is { } report)
+    {
+        <div class="revenue-view">
+            <div class="revenue-toolbar">
+                <div class="filter-bar__state filter-bar__field">
+                    <label class="filter-bar__label" for="revenue-date-basis">@L["DateBasis"]</label>
+                    <select id="revenue-date-basis" class="input" value="@Filter.DateBasis" @onchange="ChangeDateBasisAsync" disabled="@Busy">
+                        <option value="@RevenueDateBasis.InvoicePeriod">@L["InvoicePeriodBasis"]</option>
+                        <option value="@RevenueDateBasis.PaymentDate">@L["PaymentDateBasis"]</option>
+                    </select>
+                </div>
+                @if (CanExport)
+                {
+                    <button type="button" class="btn btn-secondary" disabled="@(Busy || Exporting)" @onclick="ExportAsync">
+                        <LucideIcon Name="download" />@L["ExportExcel"]
+                    </button>
+                }
+            </div>
+            <p class="scope-note">@L[Filter.DateBasis == RevenueDateBasis.InvoicePeriod ? "InvoicePeriodNote" : "PaymentDateNote"]</p>
+
+            <dl class="kpis kpis-five">
+                <div class="kpi-card">
+                    <dt>@L["RecognizedRevenue"]</dt>
+                    <dd>@MoneyFormatter.Format(report.TotalRevenue)</dd>
+                </div>
+                <div class="kpi-card">
+                    <dt>@L["TotalInvoiced"]</dt>
+                    <dd>@MoneyFormatter.Format(report.TotalInvoiced)</dd>
+                </div>
+                <div class="kpi-card">
+                    <dt>@L["InvoiceCount"]</dt>
+                    <dd>@DashboardFormat.FormatNumber(report.InvoiceCount)</dd>
+                </div>
+                <div class="kpi-card">
+                    <dt>@L["PaidInvoiceCount"]</dt>
+                    <dd>@DashboardFormat.FormatNumber(report.PaidInvoiceCount)</dd>
+                </div>
+                <div class="kpi-card">
+                    <dt>@L["Outstanding"]</dt>
+                    <dd>@MoneyFormatter.Format(report.Outstanding)</dd>
+                </div>
+            </dl>
+            <p class="scope-note">@L["PendingRejectedNote", MoneyFormatter.Format(report.PendingAmount), MoneyFormatter.Format(report.RejectedAmount)]</p>
+
+            <section class="revenue-section" aria-labelledby="revenue-property-heading">
+                <h3 id="revenue-property-heading">@L["ByProperty"]</h3>
+                @if (report.Properties is null || report.Properties.Count == 0)
+                {
+                    <EmptyStateCard Title="@L["NoData"]" />
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table>
+                            <caption>@L["ByProperty"]</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">@D["Property"]</th>
+                                    <th scope="col" class="numeric">@L["TotalInvoiced"]</th>
+                                    <th scope="col" class="numeric">@L["RecognizedRevenue"]</th>
+                                    <th scope="col" class="numeric">@L["Outstanding"]</th>
+                                    <th scope="col" class="numeric">@L["InvoiceCount"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var property in report.Properties)
+                                {
+                                    <tr>
+                                        <td>@property.PropertyName</td>
+                                        <td class="numeric">@MoneyFormatter.Format(property.TotalInvoiced)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(property.RecognizedRevenue)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(property.Outstanding)</td>
+                                        <td class="numeric">@DashboardFormat.FormatNumber(property.InvoiceCount)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+
+            <section class="revenue-section" aria-labelledby="revenue-chart-heading">
+                <h3 id="revenue-chart-heading">@L["RevenueByPeriod"]</h3>
+                <RevenueChart Periods="@report.Periods" />
+            </section>
+
+            <section class="revenue-section" aria-labelledby="revenue-lines-heading">
+                <h3 id="revenue-lines-heading">@L["InvoiceLines"]</h3>
+                @if (report.Lines.Count == 0)
+                {
+                    <EmptyStateCard Title="@L["NoData"]" Description="@L["EmptyDescription"]" />
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table>
+                            <caption>@L["InvoiceLines"]</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">@L["RoomCode"]</th>
+                                    <th scope="col">@D["Property"]</th>
+                                    <th scope="col">@L["Period"]</th>
+                                    <th scope="col" class="numeric">@L["InvoiceTotal"]</th>
+                                    <th scope="col" class="numeric">@L["Paid"]</th>
+                                    <th scope="col" class="numeric">@L["Outstanding"]</th>
+                                    <th scope="col">@L["Status"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in PagedLines)
+                                {
+                                    <tr>
+                                        <td>@line.RoomCode</td>
+                                        <td>@line.PropertyName</td>
+                                        <td>@DateFormatter.Format(line.PeriodStart) – @DateFormatter.Format(line.PeriodEnd)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Total)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Paid)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Outstanding)</td>
+                                        <td>@line.Status</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <ReportPager Page="@LinePage" PageSize="@PageSize" TotalCount="@report.Lines.Count" Disabled="@Busy" Label="@L["InvoiceLines"]" PageChanged="ChangeLinePageAsync" />
+                }
+            </section>
+
+            <section class="revenue-section" aria-labelledby="revenue-debt-heading">
+                <h3 id="revenue-debt-heading">@L["DebtInvoices"]</h3>
+                @if (DebtLines.Count == 0)
+                {
+                    <EmptyStateCard Title="@L["NoDebt"]" Description="@L["NoDebtDescription"]" />
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table>
+                            <caption>@L["DebtInvoices"]</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">@L["RoomCode"]</th>
+                                    <th scope="col">@D["Property"]</th>
+                                    <th scope="col">@L["Period"]</th>
+                                    <th scope="col" class="numeric">@L["InvoiceTotal"]</th>
+                                    <th scope="col" class="numeric">@L["Paid"]</th>
+                                    <th scope="col" class="numeric">@L["Outstanding"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var line in PagedDebtLines)
+                                {
+                                    <tr>
+                                        <td>@line.RoomCode</td>
+                                        <td>@line.PropertyName</td>
+                                        <td>@DateFormatter.Format(line.PeriodStart) – @DateFormatter.Format(line.PeriodEnd)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Total)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Paid)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(line.Outstanding)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <ReportPager Page="@DebtPage" PageSize="@PageSize" TotalCount="@DebtLines.Count" Disabled="@Busy" Label="@L["DebtInvoices"]" PageChanged="ChangeDebtPageAsync" />
+                }
+            </section>
+        </div>
+    }
+</DashboardPanel>
+
+@code {
+    private const int PageSize = 20;
+    private int LinePage = 1;
+    private int DebtPage = 1;
+    private bool Exporting;
+    private RevenueReportDto? lastResult;
+
+    [Parameter, EditorRequired] public RevenueReportFilter Filter { get; set; } = new();
+    [Parameter] public RevenueReportDto? Result { get; set; }
+    [Parameter] public DashboardLoadState State { get; set; } = DashboardLoadState.Loading;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool CanExport { get; set; }
+    [Parameter] public EventCallback Retry { get; set; }
+    [Parameter] public EventCallback<RevenueDateBasis> DateBasisChanged { get; set; }
+
+    private IReadOnlyList<RevenueReportLineDto> DebtLines =>
+        Result?.Lines.Where(line => line.Outstanding > 0m).ToList() ?? [];
+
+    private IEnumerable<RevenueReportLineDto> PagedLines =>
+        Result?.Lines.Skip((Clamp(LinePage, Result.Lines.Count) - 1) * PageSize).Take(PageSize) ?? [];
+
+    private IEnumerable<RevenueReportLineDto> PagedDebtLines =>
+        DebtLines.Skip((Clamp(DebtPage, DebtLines.Count) - 1) * PageSize).Take(PageSize);
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(Result, lastResult))
+        {
+            lastResult = Result;
+            LinePage = 1;
+            DebtPage = 1;
+        }
+    }
+
+    private async Task ChangeDateBasisAsync(ChangeEventArgs args)
+    {
+        if (Busy || !Enum.TryParse<RevenueDateBasis>(args.Value?.ToString(), out var basis)) return;
+        await DateBasisChanged.InvokeAsync(basis);
+    }
+
+    private Task ChangeLinePageAsync(int page)
+    {
+        LinePage = Clamp(page, Result?.Lines.Count ?? 0);
+        return Task.CompletedTask;
+    }
+
+    private Task ChangeDebtPageAsync(int page)
+    {
+        DebtPage = Clamp(page, DebtLines.Count);
+        return Task.CompletedTask;
+    }
+
+    private static int Clamp(int page, int totalCount)
+    {
+        var totalPages = PaginationHelper.TotalPages(totalCount, PageSize);
+        return Math.Clamp(page, 1, Math.Max(1, totalPages));
+    }
+
+    private async Task ExportAsync()
+    {
+        if (Exporting || Busy) return;
+        Exporting = true;
+        try
+        {
+            var content = await PageService.ExportRevenueExcelAsync(Filter);
+            using var stream = new MemoryStream(content);
+            var fileName = $"bao-cao-doanh-thu-{DateTime.Now:yyyyMMdd-HHmm}.xlsx";
+            await JS.InvokeVoidAsync(
+                "appTenantExport.downloadStream",
+                fileName,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                new DotNetStreamReference(stream));
+            Toasts.Success(L["ExportSuccess"]);
+        }
+        catch (ReportExportException ex) when (ex.ErrorCode == ReportExportErrorCodes.ApprovalRequired)
+        {
+            Toasts.Error(L["ExportApprovalRequired"]);
+        }
+        catch (ReportExportException ex) when (ex.ErrorCode == ReportExportErrorCodes.ApprovalDenied)
+        {
+            Toasts.Error(L["ExportApprovalDenied"]);
+        }
+        catch (ReportExportException ex) when (ex.ErrorCode == ReportExportErrorCodes.Forbidden)
+        {
+            Toasts.Error(L["ExportForbidden"]);
+        }
+        catch (ReportExportAuthorizationException ex) when (ex.ErrorCode == ReportExportErrorCodes.Forbidden)
+        {
+            Toasts.Error(L["ExportForbidden"]);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Toasts.Error(L["ExportForbidden"]);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Revenue export failed");
+            Toasts.Error(L["ExportFailed"]);
+        }
+        finally
+        {
+            Exporting = false;
+        }
+    }
+}

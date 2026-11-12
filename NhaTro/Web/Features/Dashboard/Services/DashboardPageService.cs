@@ -3,6 +3,7 @@ using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Services;
 using Web.Features.Reports;
 using Web.Features.Reports.DTOs;
+using Web.Features.Reports.Services;
 using Web.Features.Tenants;
 
 namespace Web.Features.Dashboard.Services;
@@ -10,7 +11,8 @@ namespace Web.Features.Dashboard.Services;
 public sealed record DashboardPropertyOption(int Id, string Name, bool IsActive);
 
 public sealed class DashboardPageService(P2CallerProvider callers, IPropertyService properties,
-    IRoomReportService rooms, ITenantReportService tenants, TimeProvider time)
+    IRoomReportService rooms, ITenantReportService tenants, RevenueReportService revenue,
+    IIncidentReportService incidents, TimeProvider time)
 {
     // Policy công tắc đang dùng DbContext scoped: tránh hai nguồn đọc đồng thời cùng context.
     private readonly SemaphoreSlim reportGate = new(1, 1);
@@ -57,4 +59,32 @@ public sealed class DashboardPageService(P2CallerProvider callers, IPropertyServ
     }
 
     public DateTime GetLastRefreshedAtUtc() => time.GetUtcNow().UtcDateTime;
+
+    /// <summary>VHT-140: doanh thu/công nợ theo kỳ và nhà trọ; service nguồn tự chặn vai trò D5.</summary>
+    public async Task<RevenueReportDto> GetRevenueReportAsync(RevenueReportFilter filter, CancellationToken ct = default)
+    {
+        await reportGate.WaitAsync(ct);
+        try
+        {
+            return await revenue.GetAsync(filter, await callers.GetCallerAsync(), ct);
+        }
+        finally { reportGate.Release(); }
+    }
+
+    public async Task<IncidentReportKpis> GetIncidentKpisAsync(
+        DateOnly from, DateOnly to, int? propertyId, CancellationToken ct = default)
+        => (await GetIncidentReportAsync(new IncidentReportFilter
+        {
+            From = from, To = to, PropertyId = propertyId, PageSize = 1,
+        }, ct)).Kpis;
+
+    public async Task<IncidentReportResult> GetIncidentReportAsync(IncidentReportFilter filter, CancellationToken ct = default)
+    {
+        await reportGate.WaitAsync(ct);
+        try
+        {
+            return await incidents.GetAsync(filter, await callers.GetCallerAsync(), ct);
+        }
+        finally { reportGate.Release(); }
+    }
 }

@@ -520,6 +520,8 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
 // P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
+// VHT-140: điểm gọi chung các nguồn báo cáo P8 (phòng, khách, doanh thu, hợp đồng, chi phí, sự cố).
+builder.Services.AddScoped<Web.Features.Reports.Services.ReportsPageService>();
 // D8: xuất Excel P8 + SW-16.
 builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Reports.Services.ReportExportApprovalApplier>();
