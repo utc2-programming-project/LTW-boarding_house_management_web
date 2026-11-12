@@ -165,6 +165,14 @@ public sealed class PropertyTrashComponentTests : BunitContext
             Trash.RemoveAll(item => item.Id == id);
             return Task.FromResult(PropertyResult.Success());
         }
+
+        public Task<PropertyResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeManagerService : IPropertyManagerService

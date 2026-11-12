@@ -240,6 +240,14 @@ public class RoomComponentTests : BunitContext
             RoomFilter filter, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
+        public Task<RoomResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<List<RoomOption>> SearchForPickerAsync(
             RoomOptionRequest request, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
