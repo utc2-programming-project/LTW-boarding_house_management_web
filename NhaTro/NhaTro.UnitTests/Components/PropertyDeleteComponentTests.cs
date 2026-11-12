@@ -211,6 +211,14 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         public Task<PropertyResult> RestoreAsync(
             int id, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
+
+        public Task<PropertyResult> PurgeAsync(
+            int id, PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            PropertyCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeManagerService : IPropertyManagerService

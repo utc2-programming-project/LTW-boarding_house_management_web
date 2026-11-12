@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Audit.Entities;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
@@ -17,6 +19,9 @@ using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 using Web.Features.Rooms;
 using Web.Features.Settings.Services;
+using Web.Features.Storage.Entities;
+using Web.Features.Storage.Enums;
+using Web.Infrastructure.Storage;
 
 namespace Web.Features.Maintenance.Services;
 
@@ -24,7 +29,8 @@ public sealed class IncidentService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     TimeProvider clock,
     IManagerTogglePolicy togglePolicy,
-    IManagerApprovalService approvals) : IIncidentService
+    IManagerApprovalService approvals,
+    IFileStorage? fileStorage = null) : IIncidentService
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -300,6 +306,265 @@ public sealed class IncidentService(
         }
 
         return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
+    }
+
+    public async Task<IncidentResult> DeleteAsync(
+        int incidentId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!CanUpdate(caller))
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var incident = await InScopeIncidents(db, caller, Today())
+            .AsTracking()
+            .SingleOrDefaultAsync(item => item.Id == incidentId, cancellationToken);
+        if (incident is null)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.NotFound);
+        }
+
+        var hasPendingApproval = await db.IncidentPhotoAttachments
+            .AnyAsync(item => item.IncidentId == incidentId && item.ApprovalRequestId != null, cancellationToken);
+        if (hasPendingApproval)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.HasPendingApproval);
+        }
+
+        var detail = await ToDetailAsync(db, incidentId, caller, cancellationToken);
+        var now = clock.GetUtcNow().UtcDateTime;
+        incident.IsDeleted = true;
+        incident.DeletedAt = now;
+        incident.DeletedBy = caller.UserId;
+        incident.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        return IncidentResult.Success(detail);
+    }
+
+    public async Task<IncidentResult> RestoreAsync(
+        int incidentId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var incident = await db.MaintenanceIncidents
+            .IgnoreQueryFilters()
+            .AsTracking()
+            .SingleOrDefaultAsync(item => item.Id == incidentId && item.IsDeleted, cancellationToken);
+        if (incident is null)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.NotInTrash);
+        }
+
+        var propertyId = await OwnedPropertyIdAsync(db, incident.RoomId, caller.UserId, cancellationToken);
+        if (propertyId is null)
+        {
+            var roomExists = await db.Rooms.IgnoreQueryFilters()
+                .AnyAsync(room => room.Id == incident.RoomId, cancellationToken);
+            return IncidentResult.Failure(roomExists ? IncidentErrorCodes.Forbidden : IncidentErrorCodes.RoomDeleted);
+        }
+
+        var roomAlive = await db.Rooms.AnyAsync(room => room.Id == incident.RoomId, cancellationToken);
+        if (!roomAlive)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.RoomDeleted);
+        }
+
+        incident.IsDeleted = false;
+        incident.DeletedAt = null;
+        incident.DeletedBy = null;
+        incident.UpdatedAt = clock.GetUtcNow().UtcDateTime;
+        await db.SaveChangesAsync(cancellationToken);
+        return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
+    }
+
+    public async Task<IReadOnlyList<IncidentTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro)
+        {
+            return [];
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await (
+                from incident in db.MaintenanceIncidents.IgnoreQueryFilters().AsNoTracking()
+                join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on incident.RoomId equals room.Id
+                join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+                where incident.IsDeleted && property.OwnerId == caller.UserId
+                orderby incident.DeletedAt descending, incident.Id descending
+                select new IncidentTrashItemDto(
+                    incident.Id,
+                    incident.RoomId,
+                    property.Name,
+                    room.Code,
+                    incident.Title,
+                    incident.Category,
+                    incident.Status,
+                    incident.CreatedAt,
+                    incident.DeletedAt,
+                    incident.DeletedBy))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IncidentResult> PurgeAsync(
+        int incidentId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var incident = await db.MaintenanceIncidents
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == incidentId && item.IsDeleted, cancellationToken);
+        if (incident is null)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.NotInTrash);
+        }
+
+        var propertyId = await OwnedPropertyIdAsync(db, incident.RoomId, caller.UserId, cancellationToken);
+        if (propertyId is null)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.Forbidden);
+        }
+
+        var hasPendingApproval = await db.IncidentPhotoAttachments
+            .AnyAsync(item => item.IncidentId == incidentId && item.ApprovalRequestId != null, cancellationToken);
+        if (hasPendingApproval)
+        {
+            return IncidentResult.Failure(IncidentErrorCodes.HasPendingApproval);
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var history = await db.MaintenanceIncidentHistories
+                .Where(item => item.IncidentId == incidentId)
+                .ToListAsync(cancellationToken);
+            var photos = await db.IncidentPhotoAttachments
+                .Where(item => item.IncidentId == incidentId)
+                .ToListAsync(cancellationToken);
+            var fileIds = photos.Select(photo => photo.FileId).ToHashSet();
+            var relatedId = incidentId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var files = await db.StoredFiles
+                .IgnoreQueryFilters()
+                .Where(file => fileIds.Contains(file.Id)
+                    || (file.RelatedEntityType == RelatedEntityType.MaintenanceIncident
+                        && file.RelatedEntityId == relatedId))
+                .ToListAsync(cancellationToken);
+
+            db.MaintenanceIncidentHistories.RemoveRange(history);
+            db.IncidentPhotoAttachments.RemoveRange(photos);
+            db.StoredFiles.RemoveRange(files);
+            db.MaintenanceIncidents.Remove(incident);
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "incident.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = propertyId,
+                Metadata = $"MaintenanceIncident #{incident.Id}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            foreach (var file in files)
+            {
+                TryDeletePhysical(file.RelativePath);
+            }
+
+            return IncidentResult.Success();
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return IncidentResult.Failure(IncidentErrorCodes.HasDependencies);
+        }
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro)
+        {
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var ids = await (
+                from incident in db.MaintenanceIncidents.IgnoreQueryFilters().AsNoTracking()
+                join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on incident.RoomId equals room.Id
+                join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+                where incident.IsDeleted && property.OwnerId == caller.UserId
+                select incident.Id)
+            .ToListAsync(cancellationToken);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            try
+            {
+                var result = await PurgeAsync(id, caller, cancellationToken);
+                if (result.Succeeded) purged++;
+                else skipped++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                skipped++;
+            }
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private static Task<int?> OwnedPropertyIdAsync(
+        ApplicationDbContext db,
+        int roomId,
+        string ownerId,
+        CancellationToken cancellationToken) =>
+        (from room in db.Rooms.IgnoreQueryFilters().AsNoTracking()
+         join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+         where room.Id == roomId && property.OwnerId == ownerId
+         select (int?)property.Id)
+        .FirstOrDefaultAsync(cancellationToken);
+
+    private void TryDeletePhysical(string relativePath)
+    {
+        if (fileStorage is null)
+        {
+            return;
+        }
+
+        try
+        {
+            fileStorage.Delete(relativePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Tệp đã mất hoặc không xóa được: metadata vẫn bị xóa để không giữ tham chiếu mồ côi.
+        }
     }
 
     private static bool CanCreate(PropertyCaller caller) =>

@@ -6,9 +6,15 @@ namespace Web.Features.Accounts;
 ///
 /// D1 (chot 12/10/2026) + o #5/#6/#7 cua thao_tac_va_quyen.xlsx:
 ///  - Admin   : quan ly toan bo tai khoan, cap/doi vai tro, khoa/mo khoa.
-///  - ChuTro  : tao QuanLy + KhachThue (hieu luc ngay), duyet/khoa trong pham vi minh. KHONG doi vai tro.
+///  - ChuTro  : tao QuanLy + KhachThue (hieu luc ngay), duyet trong pham vi minh. KHONG doi vai tro.
 ///  - QuanLy  : sua ho so minh, tao tai khoan KhachThue (Cho duyet) trong toa duoc giao.
 ///  - KhachThue: chi ho so ca nhan.
+///
+/// Chot lai 12/11/2026: khoa/mo khoa va xoa tai khoan la thao tac TOAN HE THONG
+/// (LockoutEnd dung chung cho moi vai tro, khong theo toa) nen chi Admin duoc lam.
+/// ChuTro dung quan he bang nghiep vu: thanh ly hop dong de dung cho thue,
+/// thu hoi phan cong de dung Quan ly — khong cham vao tai khoan dang nhap.
+/// Duyet/kich hoat tai khoan van cho ChuTro de khong chan luong tao tai khoan cua Quan ly.
 /// </summary>
 public static class AccountPermissionRules
 {
@@ -27,9 +33,20 @@ public static class AccountPermissionRules
     public static bool CanCreateRole(string callerRole, string targetRole) =>
         AssignableRoles(callerRole).Contains(targetRole);
 
-    /// <summary>Nguoi goi co duoc duyet tai khoan vai tro nay khong (o #6, cung pham vi voi khoa).</summary>
+    /// <summary>Nguoi goi co duoc duyet tai khoan vai tro nay khong (o #6).</summary>
     public static bool CanApprove(string callerRole, string targetRole) =>
-        LockableRoles(callerRole).Contains(targetRole);
+        ApprovableRoles(callerRole).Contains(targetRole);
+
+    /// <summary>
+    /// Vai tro ma nguoi goi duoc duyet/kich hoat tai khoan. Tach khoi <see cref="LockableRoles"/>
+    /// vi duyet la thao tac trong pham vi (ChuTro duyet QuanLy/KhachThue), con khoa la toan he thong.
+    /// </summary>
+    public static IReadOnlyList<string> ApprovableRoles(string callerRole) => callerRole switch
+    {
+        Roles.Admin => Roles.All,
+        Roles.ChuTro => [Roles.QuanLy, Roles.KhachThue],
+        _ => [],
+    };
 
     /// <summary>Chi Admin duoc doi vai tro (D1: ChuTro "KHONG doi vai tro").</summary>
     public static bool CanChangeRole(string callerRole) => callerRole == Roles.Admin;
@@ -63,12 +80,13 @@ public static class AccountPermissionRules
         return null;
     }
 
-    /// <summary>Vai tro ma nguoi goi duoc phep khoa/mo khoa.</summary>
+    /// <summary>Vai tro ma nguoi goi duoc phep khoa/mo khoa. Chi Admin — khoa la trang thai toan he thong.</summary>
     public static IReadOnlyList<string> LockableRoles(string callerRole) => callerRole switch
     {
         Roles.Admin => Roles.All,
-        // D1: ChuTro chi duyet/kich hoat/khoa QuanLy va KhachThue.
-        Roles.ChuTro => [Roles.QuanLy, Roles.KhachThue],
+        // Chot lai 12/11/2026: ChuTro khong khoa tai khoan. Tai khoan la danh tinh dung chung
+        // cho moi toa (khach co the thue nhieu chu tro, Quan ly co the quan ly nhieu toa),
+        // nen khoa o mot ben se cat dang nhap cua nguoi do o moi noi.
         _ => [],
     };
 

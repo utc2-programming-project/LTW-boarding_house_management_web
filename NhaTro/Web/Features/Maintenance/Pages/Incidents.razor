@@ -5,11 +5,18 @@
 @inject IStringLocalizer<IncidentResource> L
 
 <PageTitle>@L["PageTitle"]</PageTitle>
-<div class="incidents-page">
+<div class="incidents-page page-stack">
     <PageHeading Title="@L[_tenant ? "TenantHeading" : "PageTitle"]" HelpText="@L[_tenant ? "TenantSubtitle" : "LiveStaffSubtitle"]">
         <Actions>
             @if (!_loading && _error is null)
             {
+                <AuthorizeView Roles="ChuTro">
+                    <Authorized>
+                        <a class="btn btn-secondary" href="/incidents/trash">
+                            <LucideIcon Name="trash" /> @L["TrashTitle"]
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
                 <button type="button" class="btn btn-primary" disabled="@(_createMode == IncidentMode.Deny || _rooms.Count == 0)" @onclick="() => _creating = true">
                     <LucideIcon Name="plus" /> @L["CreateIncident"]
                 </button>
@@ -25,6 +32,7 @@
     {
         @if (_createMode == IncidentMode.Deny) { <p>@L["ActionDenied"]</p> }
         <IncidentListView @ref="_list" Session="Session" Rooms="_rooms" CanCreate="@(_createMode != IncidentMode.Deny && _rooms.Count > 0)"
+                          CanFollowLinks="!_tenant"
                           OnCreate="() => _creating = true" OnDetail="id => _detailId = id" />
         @if (!_tenant) { <IncidentApprovalPanel Session="Session" OnChanged="ReloadAsync" /> }
         @if (_creating) { <IncidentReportForm Session="Session" Rooms="_rooms" Mode="_createMode" OnClose="CloseCreateAsync" OnSaved="CloseCreateAsync" /> }
@@ -43,7 +51,20 @@
     private bool _creating;
     private int? _detailId;
     private string? _error;
-    protected override Task OnInitializedAsync() => InitializeAsync();
+
+    /// <summary>Id sự cố từ link chéo (?incidentId=5): mở ngay modal chi tiết.</summary>
+    [SupplyParameterFromQuery(Name = "incidentId")]
+    public int? IncidentIdQuery { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        if (IncidentIdQuery is { } incidentId && incidentId > 0)
+        {
+            _detailId = incidentId;
+        }
+
+        return InitializeAsync();
+    }
     private async Task InitializeAsync()
     {
         _loading = true;

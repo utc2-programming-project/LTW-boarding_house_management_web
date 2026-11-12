@@ -3,7 +3,7 @@
   "generatedBy": "scripts/permission_matrix/build_manifest.py",
   "workbook": {
     "path": "docs/task/thao_tac_va_quyen.xlsx",
-    "sha256": "48fdd0c2c64a9fde3fff2ecb983da6432bbedb770c43e321a15adb4b347799a3",
+    "sha256": "be13b89ff4ef5ce8da3c3803146d7cae3e1da24786927815b518b7c8bd4e76a8",
     "sheets": [
       "Ma trận quyền",
       "Công tắc Quản lý",
@@ -64,7 +64,7 @@
       },
       {
         "cell": "A49",
-        "text": "Cố định, không theo công tắc: duyệt/kích hoạt/khóa tài khoản (Chủ trọ cho Quản lý/Khách; Admin cho mọi tài khoản), sửa/cấp role (chỉ Admin), duyệt/từ chối hợp đồng (chỉ Chủ trọ), tạo hợp đồng của Quản lý (luôn Chờ duyệt), xác nhận thanh toán của Quản lý. Thao tác của Chủ trọ luôn có hiệu lực ngay."
+        "text": "Cố định, không theo công tắc: duyệt/kích hoạt tài khoản (Chủ trọ cho Quản lý/Khách; Admin cho mọi tài khoản), khóa/mở khóa tài khoản (chỉ Admin), xóa tài khoản (chỉ Admin), sửa/cấp role (chỉ Admin), duyệt/từ chối hợp đồng (chỉ Chủ trọ), tạo hợp đồng của Quản lý (luôn Chờ duyệt), xác nhận thanh toán của Quản lý. Thao tác của Chủ trọ luôn có hiệu lực ngay."
       },
       {
         "cell": "A50",
@@ -86,9 +86,9 @@
     "cellCount": 180,
     "applicableCellCount": 173,
     "symbolCounts": {
-      "✅": 67,
+      "✅": 66,
       "⚠️": 14,
-      "❌": 76,
+      "❌": 77,
       "⚙️": 16,
       "—": 7
     },
@@ -900,9 +900,9 @@
       "module": "P1",
       "operationName": "Duyệt / kích hoạt / khóa tài khoản",
       "excelRow": 7,
-      "scope": "Mọi tài khoản (Admin) / tài khoản Quản lý và Khách thuê (Chủ trọ)",
-      "allowedExample": "Admin khóa / mở khóa tài khoản Chủ trọ; Chủ trọ duyệt tài khoản do Quản lý tạo; Chủ trọ mở khóa Quản lý/Khách",
-      "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ khóa tài khoản Admin hoặc chính mình",
+      "scope": "Mọi tài khoản (Admin)",
+      "allowedExample": "Admin khóa / mở khóa tài khoản; Chủ trọ duyệt/kích hoạt tài khoản Quản lý và Khách thuê trong phạm vi của mình",
+      "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ và Quản lý khóa/mở khóa tài khoản (kể cả tài khoản trong phạm vi của mình)",
       "statusNote": "",
       "implementationNote": "",
       "cells": [
@@ -920,9 +920,9 @@
           "symbol": "✅",
           "applicable": true,
           "expectedPermission": "ALLOW",
-          "scope": "Mọi tài khoản (Admin) / tài khoản Quản lý và Khách thuê (Chủ trọ)",
-          "allowedExample": "Admin khóa / mở khóa tài khoản Chủ trọ; Chủ trọ duyệt tài khoản do Quản lý tạo; Chủ trọ mở khóa Quản lý/Khách",
-          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ khóa tài khoản Admin hoặc chính mình",
+          "scope": "Mọi tài khoản (Admin)",
+          "allowedExample": "Admin khóa / mở khóa tài khoản; Chủ trọ duyệt/kích hoạt tài khoản Quản lý và Khách thuê trong phạm vi của mình",
+          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ và Quản lý khóa/mở khóa tài khoản (kể cả tài khoản trong phạm vi của mình)",
           "statusNote": "",
           "implementationNote": ""
         },
@@ -937,12 +937,12 @@
           "operationName": "Duyệt / kích hoạt / khóa tài khoản",
           "role": "ChuTro",
           "roleHeader": "Chủ trọ",
-          "symbol": "✅",
+          "symbol": "❌",
           "applicable": true,
-          "expectedPermission": "ALLOW",
-          "scope": "Mọi tài khoản (Admin) / tài khoản Quản lý và Khách thuê (Chủ trọ)",
-          "allowedExample": "Admin khóa / mở khóa tài khoản Chủ trọ; Chủ trọ duyệt tài khoản do Quản lý tạo; Chủ trọ mở khóa Quản lý/Khách",
-          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ khóa tài khoản Admin hoặc chính mình",
+          "expectedPermission": "DENY",
+          "scope": "Mọi tài khoản (Admin)",
+          "allowedExample": "Admin khóa / mở khóa tài khoản; Chủ trọ duyệt/kích hoạt tài khoản Quản lý và Khách thuê trong phạm vi của mình",
+          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ và Quản lý khóa/mở khóa tài khoản (kể cả tài khoản trong phạm vi của mình)",
           "statusNote": "",
           "implementationNote": ""
         },
@@ -960,9 +960,9 @@
           "symbol": "❌",
           "applicable": true,
           "expectedPermission": "DENY",
-          "scope": "Mọi tài khoản (Admin) / tài khoản Quản lý và Khách thuê (Chủ trọ)",
-          "allowedExample": "Admin khóa / mở khóa tài khoản Chủ trọ; Chủ trọ duyệt tài khoản do Quản lý tạo; Chủ trọ mở khóa Quản lý/Khách",
-          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ khóa tài khoản Admin hoặc chính mình",
+          "scope": "Mọi tài khoản (Admin)",
+          "allowedExample": "Admin khóa / mở khóa tài khoản; Chủ trọ duyệt/kích hoạt tài khoản Quản lý và Khách thuê trong phạm vi của mình",
+          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ và Quản lý khóa/mở khóa tài khoản (kể cả tài khoản trong phạm vi của mình)",
           "statusNote": "",
           "implementationNote": ""
         },
@@ -980,9 +980,9 @@
           "symbol": "❌",
           "applicable": true,
           "expectedPermission": "DENY",
-          "scope": "Mọi tài khoản (Admin) / tài khoản Quản lý và Khách thuê (Chủ trọ)",
-          "allowedExample": "Admin khóa / mở khóa tài khoản Chủ trọ; Chủ trọ duyệt tài khoản do Quản lý tạo; Chủ trọ mở khóa Quản lý/Khách",
-          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ khóa tài khoản Admin hoặc chính mình",
+          "scope": "Mọi tài khoản (Admin)",
+          "allowedExample": "Admin khóa / mở khóa tài khoản; Chủ trọ duyệt/kích hoạt tài khoản Quản lý và Khách thuê trong phạm vi của mình",
+          "deniedExample": "Quản lý tự duyệt tài khoản mình vừa tạo; Chủ trọ và Quản lý khóa/mở khóa tài khoản (kể cả tài khoản trong phạm vi của mình)",
           "statusNote": "",
           "implementationNote": ""
         }

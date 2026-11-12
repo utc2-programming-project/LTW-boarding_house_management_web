@@ -259,7 +259,7 @@ Phát ghi kết quả; tác giả backend/UI cùng trình diễn. Chỉ tick khi
 
 | Đạt | Phần | Backend / UI | Bằng chứng cần có |
 | --- | --- | --- | --- |
-| [ ] | P1 — Accounts / Tài khoản, quyền | Tính / Tính | Login/logout, cá nhân, Admin quản lý tài khoản/vai trò, Chủ trọ duyệt/khóa tài khoản, vòng đời tài khoản (chờ duyệt/hoạt động/khóa), phạm vi quản lý; 4 vai trò và truy cập trái quyền đã test; ma trận xlsx đạt. |
+| [ ] | P1 — Accounts / Tài khoản, quyền | Tính / Tính | Login/logout, cá nhân, Admin quản lý tài khoản/vai trò, Chủ trọ duyệt tài khoản (khóa/mở khóa chỉ Admin), vòng đời tài khoản (chờ duyệt/hoạt động/khóa), phạm vi quản lý; 4 vai trò và truy cập trái quyền đã test; ma trận xlsx đạt. |
 | [ ] | P2 — Rooms / Phòng | Tính / Phúc | Nhà trọ/phòng, giá/hiện trạng, chủ trọ xem/thiết lập giá, QL cập nhật, khách xem phòng thuê; đọc lại SQL. QL đổi giá/sửa theo công tắc; xóa vào thùng rác và khôi phục. |
 | [ ] | P3 — Tenants / Khách thuê | Phát / Phúc | Hồ sơ/liên kết user, khách sửa cá nhân đúng quyền; giấy tờ private, query nguồn report đúng phạm vi; thùng rác hồ sơ khách; Quản lý chỉ thấy trường được phép (CCCD che). |
 | [ ] | P4 — Contracts / Hợp đồng | Đào / Đào | Tạo/duyệt/gia hạn/thanh lý/cọc theo đặc tả; cập nhật phòng nguyên tử, snapshot, khách xem đúng hợp đồng; QL tạo → Chờ duyệt; Chủ trọ duyệt/từ chối; gia hạn/thanh lý/cọc theo công tắc. |

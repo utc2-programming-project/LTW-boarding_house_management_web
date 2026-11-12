@@ -18,10 +18,16 @@ public sealed class DashboardComponentTests : BunitContext
     {
         var component = Render<KPICardGrid>(p => p.Add(c => c.IsOwner, owner)
             .Add(c => c.State, DashboardLoadState.Loaded).Add(c => c.Kpis, new RoomReportKpis { Total = 8, Rented = 5, Maintenance = 2 })
-            .Add(c => c.RoomsHref, "/rooms?propertyId=7"));
+            .Add(c => c.RoomsHref, "/rooms?propertyId=7")
+            .Add(c => c.Revenue, new RevenueReportDto(1000m, 250m, 2, 1, []))
+            .Add(c => c.Incidents, new IncidentReportKpis { Total = 2 })
+            .Add(c => c.RevenueHref, "/reports?propertyId=7")
+            .Add(c => c.IncidentsHref, "/reports?propertyId=7"));
         Assert.Equal(count, component.FindAll("article").Count);
-        Assert.Equal(owner ? 3 : 1, component.FindAll(".unwired").Count);
-        Assert.All(component.FindAll("a"), a => Assert.Equal("/rooms?propertyId=7", a.GetAttribute("href")));
+        Assert.DoesNotContain("unwired", component.Markup);
+        var hrefs = component.FindAll("a").Select(a => a.GetAttribute("href")).Distinct().ToList();
+        Assert.Contains("/rooms?propertyId=7", hrefs);
+        Assert.Contains("/reports?propertyId=7", hrefs);
         Assert.Contains("83,3 %", component.Markup);
     }
 
@@ -29,9 +35,12 @@ public sealed class DashboardComponentTests : BunitContext
     public void Denial_does_not_render_room_values()
     {
         var component = Render<KPICardGrid>(p => p.Add(c => c.State, DashboardLoadState.Denied)
-            .Add(c => c.Kpis, new RoomReportKpis { Total = 987 }));
+            .Add(c => c.Kpis, new RoomReportKpis { Total = 987 })
+            .Add(c => c.Incidents, new IncidentReportKpis { Total = 0 })
+            .Add(c => c.RoomsHref, "/rooms")
+            .Add(c => c.IncidentsHref, "/reports"));
         Assert.DoesNotContain("987", component.Markup);
-        Assert.Empty(component.FindAll("a"));
+        Assert.DoesNotContain(component.FindAll("a"), a => a.GetAttribute("href")!.StartsWith("/rooms"));
         Assert.Equal(2, component.FindAll("button").Count);
     }
 

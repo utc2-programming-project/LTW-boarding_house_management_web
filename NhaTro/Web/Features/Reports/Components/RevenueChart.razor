@@ -1,0 +1,65 @@
+@inject IStringLocalizer<ReportResource> L
+
+@if (Periods is null || Periods.Count == 0)
+{
+    <EmptyStateCard Title="@L["NoData"]" Description="@L["NoPeriodData"]" />
+}
+else
+{
+    <div class="revenue-chart">
+        <div class="revenue-chart__toolbar" role="group" aria-label="@L["ChartType"]">
+            <button type="button" class="btn btn-secondary" aria-pressed="@((!LineChart).ToString().ToLowerInvariant())" @onclick="() => LineChart = false">@L["ColumnChart"]</button>
+            <button type="button" class="btn btn-secondary" aria-pressed="@(LineChart.ToString().ToLowerInvariant())" @onclick="() => LineChart = true">@L["LineChart"]</button>
+        </div>
+        <div class="revenue-chart__visual">
+            <MudChart T="double" ChartType="@(LineChart ? ChartType.Line : ChartType.Bar)" ChartSeries="@Series" ChartLabels="@Labels" ChartOptions="@Options" Height="280px" Width="100%" />
+        </div>
+        <div class="table-scroll">
+            <table>
+                <caption>@L["ChartDataTable"]</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">@L["Period"]</th>
+                        <th scope="col" class="numeric">@L["RecognizedRevenue"]</th>
+                        <th scope="col" class="numeric">@L["Outstanding"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var period in Periods)
+                    {
+                        <tr>
+                            <td>@(string.IsNullOrWhiteSpace(period.PeriodKey) || period.PeriodKey == "unknown" ? L["UnknownPeriod"] : period.PeriodKey)</td>
+                            <td class="numeric">@MoneyFormatter.Format(period.RecognizedRevenue)</td>
+                            <td class="numeric">@MoneyFormatter.Format(period.Outstanding)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<RevenuePeriodGroupDto>? Periods { get; set; }
+
+    private bool LineChart;
+
+    private string[] Labels => (Periods ?? [])
+        .Select(period => string.IsNullOrWhiteSpace(period.PeriodKey) || period.PeriodKey == "unknown"
+            ? L["UnknownPeriod"].Value
+            : period.PeriodKey)
+        .ToArray();
+
+    private List<ChartSeries<double>> Series => Periods is null
+        ? []
+        :
+        [
+            new() { Name = L["RecognizedRevenue"], Data = Periods.Select(period => (double)period.RecognizedRevenue).ToArray() },
+            new() { Name = L["Outstanding"], Data = Periods.Select(period => (double)period.Outstanding).ToArray() },
+        ];
+
+    private readonly ChartOptions Options = new()
+    {
+        ChartPalette = ["var(--chart-1)", "var(--chart-2)"],
+    };
+}

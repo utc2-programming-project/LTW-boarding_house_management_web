@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
+using Web.Common.Models;
 using Web.Features.Accounts;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
@@ -139,6 +140,26 @@ public sealed class IncidentPageService(AuthenticationStateProvider authenticati
         return (await photos.ListAsync(id, requestId, new(caller.UserId, caller.Role)))
             .Select(p => new IncidentStoredPhoto(p.File.Id, p.File.FileName, p.Kind == IncidentPhotoKind.Result, p.Pending)).ToArray();
     }
+    public async Task DeleteAsync(int id)
+    {
+        var result = await incidents.DeleteAsync(id, await CallerAsync());
+        if (!result.Succeeded) throw new IncidentPageException(result.ErrorCode ?? "DeleteFailed");
+    }
+    public async Task RestoreDeletedAsync(int id)
+    {
+        var result = await incidents.RestoreAsync(id, await CallerAsync());
+        if (!result.Succeeded) throw new IncidentPageException(result.ErrorCode ?? "RestoreFailed");
+    }
+    public async Task PurgeDeletedAsync(int id)
+    {
+        var result = await incidents.PurgeAsync(id, await CallerAsync());
+        if (!result.Succeeded) throw new IncidentPageException(result.ErrorCode ?? "PurgeFailed");
+    }
+    public async Task<IReadOnlyList<IncidentTrashItemDto>> ListDeletedAsync() =>
+        await incidents.ListDeletedAsync(await CallerAsync());
+    public async Task<TrashPurgeSummary> PurgeAllDeletedAsync() =>
+        await incidents.PurgeAllAsync(await CallerAsync());
+
     public async Task DecideAsync(Guid id, bool? approve, string reason = "")
     {
         var caller = await CallerAsync();

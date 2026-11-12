@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -555,6 +556,14 @@ public class TenantDocumentPageServiceTests
 
         public Task<Web.Features.Tenants.DTOs.PagedResult<TenantTrashItemDto>> ListTrashAsync(
             TenantTrashFilterRequest filter, TenantCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TenantResult> PurgeAsync(
+            int id, string rowVersion, TenantCaller caller, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<TrashPurgeSummary> PurgeAllAsync(
+            TenantCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
         public Task<TenantResult> LinkAccountAsync(int id, string accountUserId, string rowVersion, TenantCaller caller, CancellationToken ct = default) =>

@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Web.Common.Models;
 using Web.Data;
 using Web.Features.Approvals;
+using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
@@ -303,6 +305,247 @@ public sealed class InvoiceService : IInvoiceService
             throw;
         }
     }
+
+    public async Task DeleteDraftAsync(
+        int invoiceId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+
+        var invoice = await _context.Invoices
+            .SingleOrDefaultAsync(item => item.Id == invoiceId, cancellationToken)
+            ?? throw new InvoiceNotFoundException(
+                InvoiceErrorMessages.InvoiceNotFound, InvoiceErrorCodes.InvoiceNotFound);
+
+        await LoadManageableContractAsync(invoice.ContractId, caller, cancellationToken);
+
+        if (invoice.Status != InvoiceStatus.Draft)
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.NotDeletable, InvoiceErrorCodes.NotDeletable);
+        }
+
+        if (await HasInvoiceDependenciesAsync(invoiceId, cancellationToken))
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.HasDependencies, InvoiceErrorCodes.HasDependencies);
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        invoice.IsDeleted = true;
+        invoice.DeletedAt = now;
+        invoice.DeletedBy = caller.UserId;
+        invoice.UpdatedAt = now;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RestoreAsync(
+        int invoiceId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            throw new InvoiceAuthorizationException(
+                InvoiceErrorMessages.Forbidden, InvoiceErrorCodes.Forbidden);
+        }
+
+        var invoice = await _context.Invoices
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == invoiceId && item.IsDeleted, cancellationToken)
+            ?? throw new InvoiceNotFoundException(
+                InvoiceErrorMessages.NotInTrash, InvoiceErrorCodes.NotInTrash);
+
+        var owned = await (
+                from contract in _context.Contracts
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractId == invoice.ContractId && property.OwnerId == caller.UserId
+                select contract.ContractId)
+            .AnyAsync(cancellationToken);
+        if (!owned)
+        {
+            throw new InvoiceAuthorizationException(
+                InvoiceErrorMessages.Forbidden, InvoiceErrorCodes.Forbidden);
+        }
+
+        var contractAlive = await _context.Contracts
+            .AnyAsync(item => item.ContractId == invoice.ContractId, cancellationToken);
+        if (!contractAlive)
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.ContractDeleted, InvoiceErrorCodes.ContractDeleted);
+        }
+
+        if (invoice.RegistrationId is null)
+        {
+            var duplicate = await _context.Invoices.AnyAsync(item =>
+                item.Id != invoiceId
+                && item.ContractId == invoice.ContractId
+                && item.PeriodStart == invoice.PeriodStart
+                && item.RegistrationId == null,
+                cancellationToken);
+            if (duplicate)
+            {
+                throw new InvoiceOperationException(
+                    InvoiceErrorMessages.DuplicatePeriod, InvoiceErrorCodes.DuplicatePeriod);
+            }
+        }
+
+        invoice.IsDeleted = false;
+        invoice.DeletedAt = null;
+        invoice.DeletedBy = null;
+        invoice.UpdatedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<InvoiceTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            return [];
+        }
+
+        return await (
+                from invoice in _context.Invoices.IgnoreQueryFilters().AsNoTracking()
+                join contract in _context.Contracts.IgnoreQueryFilters() on invoice.ContractId equals contract.ContractId
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where invoice.IsDeleted && property.OwnerId == caller.UserId
+                orderby invoice.DeletedAt descending, invoice.Id descending
+                select new InvoiceTrashItemDto(
+                    invoice.Id,
+                    contract.ContractNumber,
+                    room.Code,
+                    property.Name,
+                    invoice.PeriodStart,
+                    invoice.PeriodEnd,
+                    invoice.TotalAmount,
+                    invoice.Status,
+                    invoice.DeletedAt,
+                    invoice.DeletedBy))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task PurgeAsync(
+        int invoiceId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            throw new InvoiceAuthorizationException(
+                InvoiceErrorMessages.Forbidden, InvoiceErrorCodes.Forbidden);
+        }
+
+        var invoice = await _context.Invoices
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == invoiceId && item.IsDeleted, cancellationToken)
+            ?? throw new InvoiceNotFoundException(
+                InvoiceErrorMessages.NotInTrash, InvoiceErrorCodes.NotInTrash);
+
+        var owned = await (
+                from contract in _context.Contracts
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where contract.ContractId == invoice.ContractId && property.OwnerId == caller.UserId
+                select contract.ContractId)
+            .AnyAsync(cancellationToken);
+        if (!owned)
+        {
+            throw new InvoiceAuthorizationException(
+                InvoiceErrorMessages.Forbidden, InvoiceErrorCodes.Forbidden);
+        }
+
+        if (await HasInvoiceDependenciesAsync(invoiceId, cancellationToken))
+        {
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.HasDependencies, InvoiceErrorCodes.HasDependencies);
+        }
+
+        var propertyId = await (
+                from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
+                join room in _context.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
+                where contract.ContractId == invoice.ContractId
+                select (int?)room.PropertyId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var items = await _context.InvoiceItems
+                .Where(item => item.InvoiceId == invoiceId)
+                .ToListAsync(cancellationToken);
+            _context.InvoiceItems.RemoveRange(items);
+            _context.Invoices.Remove(invoice);
+            if (propertyId is int id)
+            {
+                _context.AuditLogEntries.Add(new AuditLogEntry
+                {
+                    Category = AuditLogCategory.Business,
+                    Action = "invoice.purge",
+                    ActorUserId = caller.UserId,
+                    PropertyId = id,
+                    Metadata = $"Invoice #{invoice.Id}",
+                    OccurredAt = DateTimeOffset.UtcNow,
+                });
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw new InvoiceOperationException(
+                InvoiceErrorMessages.HasDependencies, InvoiceErrorCodes.HasDependencies);
+        }
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        if (!caller.IsChuTro)
+        {
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        var ids = await (
+                from invoice in _context.Invoices.IgnoreQueryFilters().AsNoTracking()
+                join contract in _context.Contracts.IgnoreQueryFilters() on invoice.ContractId equals contract.ContractId
+                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+                where invoice.IsDeleted && property.OwnerId == caller.UserId
+                select invoice.Id)
+            .ToListAsync(cancellationToken);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            try
+            {
+                await PurgeAsync(id, caller, cancellationToken);
+                purged++;
+            }
+            catch (Exception ex) when (ex is InvoiceOperationException or InvoiceAuthorizationException or DbUpdateException)
+            {
+                skipped++;
+                _context.ChangeTracker.Clear();
+            }
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private async Task<bool> HasInvoiceDependenciesAsync(int invoiceId, CancellationToken cancellationToken) =>
+        await _context.Payments.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken)
+        || await _context.UtilityReadingPeriods.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken)
+        || await _context.ServiceRegistrationRequests.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken);
 
     private async Task<Contract> LoadManageableContractAsync(
         Guid contractId,

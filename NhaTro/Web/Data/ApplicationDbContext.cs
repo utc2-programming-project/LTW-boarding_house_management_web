@@ -133,8 +133,12 @@ namespace Web.Data
             builder.Entity<ContractServiceRegistration>(entity =>
             {
                 entity.Property(item => item.RegisteredByUserId).HasMaxLength(450);
+                entity.Property(item => item.DeletedBy).HasMaxLength(450);
                 entity.Property(item => item.MonthStart).HasColumnType("date");
-                entity.HasIndex(item => new { item.ContractId, item.ServiceCatalogId, item.MonthStart }).IsUnique();
+                entity.HasQueryFilter(item => !item.IsDeleted);
+                entity.HasIndex(item => new { item.ContractId, item.ServiceCatalogId, item.MonthStart })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
                 entity.HasIndex(item => item.ContractId);
             });
 

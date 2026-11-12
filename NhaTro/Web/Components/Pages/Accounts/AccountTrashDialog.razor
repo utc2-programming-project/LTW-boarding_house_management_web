@@ -18,6 +18,11 @@
     }
     else
     {
+        <div class="trash-actions">
+            <button type="button" class="btn btn-danger btn-sm" @onclick="() => _showEmpty = true">
+                @L["EmptyTrash"]
+            </button>
+        </div>
         <div class="table-scroll">
             <table class="account-table">
                 <thead>
@@ -36,10 +41,16 @@
                             <td>@(string.IsNullOrWhiteSpace(item.FullName) ? L["NoData"].Value : item.FullName)</td>
                             <td>@(item.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
                             <td>
-                                <button type="button" class="btn btn-secondary btn-sm"
-                                        @onclick="() => RestoreAsync(item)">
-                                    @L["AccountRestore"]
-                                </button>
+                                <div class="p2-row-actions">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                            @onclick="() => RestoreAsync(item)">
+                                        @L["AccountRestore"]
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            @onclick="() => RequestPurge(item)">
+                                        @L["Purge"]
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -49,6 +60,22 @@
     }
 </FeatureDialog>
 
+<PurgeConfirmDialog Visible="_showPurge" Title="@L["PurgeTitle"]"
+                Message="@string.Format(L["PurgeMessage"], _purgeTarget?.OriginalEmail ?? string.Empty)"
+                ExpectedText="@(_purgeTarget?.OriginalEmail ?? string.Empty)"
+                PromptText="@string.Format(L["PurgeTypePrompt"], _purgeTarget?.OriginalEmail ?? string.Empty)"
+                MismatchText="@L["PurgeMismatch"]"
+                ConfirmText="@L["Purge"]" CancelText="@L["Cancel"]"
+                OnConfirm="ConfirmPurgeAsync" OnCancel="CancelPurge" />
+
+<PurgeConfirmDialog Visible="_showEmpty" Title="@L["EmptyTrashTitle"]"
+                Message="@L["EmptyTrashMessage"]"
+                ExpectedText="@L["TrashEmptyPhrase"]"
+                PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                MismatchText="@L["PurgeMismatch"]"
+                ConfirmText="@L["EmptyTrash"]" CancelText="@L["Cancel"]"
+                OnConfirm="EmptyTrashAsync" OnCancel="() => _showEmpty = false" />
+
 @code {
     [Parameter] public bool Visible { get; set; }
     [Parameter] public string CallerUserId { get; set; } = string.Empty;
@@ -56,8 +83,11 @@
     [Parameter] public EventCallback OnClose { get; set; }
 
     private IReadOnlyList<DeletedAccountDto> _items = [];
+    private DeletedAccountDto? _purgeTarget;
     private bool _loading;
     private bool _wasVisible;
+    private bool _showPurge;
+    private bool _showEmpty;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -92,6 +122,55 @@
         }
 
         Toasts.Success(L["AccountRestored"]);
+        await LoadAsync();
+    }
+
+    private void RequestPurge(DeletedAccountDto item)
+    {
+        _purgeTarget = item;
+        _showPurge = true;
+    }
+
+    private void CancelPurge()
+    {
+        _showPurge = false;
+        _purgeTarget = null;
+    }
+
+    private async Task ConfirmPurgeAsync()
+    {
+        if (_purgeTarget is null)
+        {
+            _showPurge = false;
+            return;
+        }
+
+        var result = await Accounts.PurgeAsync(_purgeTarget.Id, CallerUserId, CallerRole);
+        _showPurge = false;
+        if (!result.Succeeded)
+        {
+            Toasts.Error(L[AccountErrorCodes.ResourceKey(result.ErrorCode)]);
+            return;
+        }
+
+        Toasts.Success(L["PurgeSuccess"]);
+        _purgeTarget = null;
+        await LoadAsync();
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        _showEmpty = false;
+        var summary = await Accounts.PurgeAllAsync(CallerUserId, CallerRole);
+        if (summary.Purged == 0 && summary.Skipped == 0)
+        {
+            Toasts.Success(L["EmptyTrashNothing"]);
+        }
+        else
+        {
+            Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+        }
+
         await LoadAsync();
     }
 }

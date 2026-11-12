@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Audit.Entities;
 using Web.Features.Accounts.Otp;
 using Web.Features.Accounts.Owners;
+using Web.Features.Invoices;
 
 namespace Web.Features.Accounts;
 
@@ -315,8 +317,33 @@ public sealed class AccountService(
             return AccountResultOf<MyProfileDto>.Failure(AccountErrorCodes.InvalidPhone);
         }
 
+        // PLAN-028: tai khoan nhan tien chi danh cho ChuTro; gui du 3 truong hoac xoa het.
+        var bankCode = NormalizeBankCode(request.BankCode);
+        var bankNumber = NormalizeBankAccountNumber(request.BankAccountNumber);
+        var bankName = NormalizeBankAccountName(request.BankAccountName);
+        var hasBankInput = bankCode is not null || bankNumber is not null || bankName is not null;
+        if (hasBankInput)
+        {
+            var roles = await users.GetRolesAsync(user);
+            if (!roles.Contains(Roles.ChuTro))
+            {
+                return AccountResultOf<MyProfileDto>.Failure(AccountErrorCodes.Forbidden);
+            }
+
+            if (bankCode is null || bankNumber is null || bankName is null
+                || VietQrBankCatalog.Find(bankCode) is null
+                || bankNumber.Length is < 6 or > 20
+                || bankName.Length is < 5 or > 50)
+            {
+                return AccountResultOf<MyProfileDto>.Failure(AccountErrorCodes.InvalidBankAccount);
+            }
+        }
+
         user.FullName = fullName;
         user.PhoneNumber = phone;
+        user.BankCode = bankCode;
+        user.BankAccountNumber = bankNumber;
+        user.BankAccountName = bankName;
 
         var result = await users.UpdateAsync(user);
         if (!result.Succeeded)
@@ -650,6 +677,88 @@ public sealed class AccountService(
             user.DeletedAt)).ToList();
     }
 
+    public async Task<AccountResult> PurgeAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin)
+        {
+            return AccountResult.Failure(AccountErrorCodes.Forbidden);
+        }
+
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null || !target.IsDeleted)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var inUse = await db.Tenants.IgnoreQueryFilters().AnyAsync(t => t.UserId == targetUserId, ct)
+            || await db.Properties.IgnoreQueryFilters().AnyAsync(p => p.OwnerId == targetUserId, ct)
+            || await db.PropertyManagers.AnyAsync(m =>
+                m.ManagerUserId == targetUserId
+                || m.AssignedByUserId == targetUserId
+                || m.RevokedByUserId == targetUserId, ct)
+            || await db.ManagerApprovalRequests.AnyAsync(r =>
+                r.RequestedByUserId == targetUserId
+                || r.DecidedByUserId == targetUserId, ct)
+            || await db.MaintenanceIncidents.IgnoreQueryFilters()
+                .AnyAsync(i => i.ReportedByUserId == targetUserId, ct)
+            || await db.ServicePriceHistories.IgnoreQueryFilters()
+                .AnyAsync(v => v.CreatedByUserId == targetUserId, ct)
+            || await db.ManagerToggles.AnyAsync(t => t.UpdatedByUserId == targetUserId, ct);
+        if (inUse)
+        {
+            return AccountResult.Failure(AccountErrorCodes.AccountInUse);
+        }
+
+        var deleted = await users.DeleteAsync(target);
+        if (!deleted.Succeeded)
+        {
+            logger.LogWarning(
+                "Xoa vinh vien tai khoan {UserId} that bai: {Errors}",
+                targetUserId, string.Join(", ", deleted.Errors.Select(e => e.Code)));
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        db.AuditLogEntries.Add(new AuditLogEntry
+        {
+            Category = AuditLogCategory.Account,
+            Action = "account.purge",
+            ActorUserId = callerUserId,
+            Metadata = $"User {targetUserId}",
+            OccurredAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync(ct);
+
+        return AccountResult.Success();
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        if (callerRole != Roles.Admin)
+        {
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var ids = await db.Users.AsNoTracking()
+            .Where(user => user.IsDeleted)
+            .Select(user => user.Id)
+            .ToListAsync(ct);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            var result = await PurgeAsync(id, callerUserId, callerRole, ct);
+            if (result.Succeeded) purged++;
+            else skipped++;
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
     public async Task<AccountResult> ApproveAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
     {
@@ -920,6 +1029,12 @@ public sealed class AccountService(
             FullName = user.FullName,
             Role = roles.FirstOrDefault() ?? string.Empty,
             HasPassword = await users.HasPasswordAsync(user),
+            BankCode = user.BankCode,
+            BankName = string.IsNullOrWhiteSpace(user.BankCode)
+                ? null
+                : VietQrBankCatalog.GetName(user.BankCode),
+            BankAccountNumber = user.BankAccountNumber,
+            BankAccountName = user.BankAccountName,
         };
     }
 
@@ -1059,6 +1174,34 @@ public sealed class AccountService(
 
     private static string CollapseSpaces(string value) =>
         string.Join(' ', value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+    // PLAN-028: chuan hoa 3 truong tai khoan nhan tien; null = nguoi dung de trong.
+    private static string? NormalizeBankCode(string? code)
+    {
+        var trimmed = code?.Trim().ToUpperInvariant();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed;
+    }
+
+    private static string? NormalizeBankAccountNumber(string? number)
+    {
+        if (string.IsNullOrWhiteSpace(number))
+        {
+            return null;
+        }
+
+        var digits = new string(number.Where(char.IsAsciiDigit).ToArray());
+        return digits.Length == 0 ? null : digits;
+    }
+
+    private static string? NormalizeBankAccountName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        return CollapseSpaces(name).ToUpperInvariant();
+    }
 
     /// <summary>Dòng phân công Quản lý → tòa nhà, kèm Chủ trọ sở hữu tòa.</summary>
     private sealed record ManagerAssignmentRow(

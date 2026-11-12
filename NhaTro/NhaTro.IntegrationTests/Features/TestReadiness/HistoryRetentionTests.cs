@@ -92,8 +92,8 @@ public sealed class HistoryRetentionTests(SqlServerFixture fixture)
         await using var db = world.NewDb();
 
         await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt)
-            VALUES ({world.Data.ContractAId}, '2030-01-01', '2030-01-31', 1, 1000, SYSDATETIMEOFFSET())
+            INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt, IsDeleted)
+            VALUES ({world.Data.ContractAId}, '2030-01-01', '2030-01-31', 1, 1000, SYSDATETIMEOFFSET(), 0)
             """);
         var invoiceId = await db.Invoices.AsNoTracking()
             .Where(item => item.ContractId == world.Data.ContractAId)

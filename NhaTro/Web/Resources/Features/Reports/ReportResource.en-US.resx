@@ -33,4 +33,90 @@
 <data name="Previous" xml:space="preserve"><value>Previous</value></data>
 <data name="Next" xml:space="preserve"><value>Next</value></data>
 <data name="ReportDescription" xml:space="preserve"><value>View revenue, receivables and operating performance within your account scope.</value></data>
+<data name="FromDate" xml:space="preserve"><value>From date</value></data>
+<data name="ToDate" xml:space="preserve"><value>To date</value></data>
+<data name="InvalidDateRange" xml:space="preserve"><value>From date must be on or before to date.</value></data>
+<data name="DateFilterNote" xml:space="preserve"><value>Date filters apply to revenue, contracts, costs and incidents only. Rooms and tenants always show current data.</value></data>
+<data name="Period" xml:space="preserve"><value>Period</value></data>
+<data name="NoData" xml:space="preserve"><value>No data</value></data>
+<data name="NoPeriodData" xml:space="preserve"><value>No period data within the selected scope.</value></data>
+<data name="Status" xml:space="preserve"><value>Status</value></data>
+<data name="Total" xml:space="preserve"><value>Total</value></data>
+<data name="Keyword" xml:space="preserve"><value>Keyword</value></data>
+<data name="ContractReport" xml:space="preserve"><value>Contract report</value></data>
+<data name="ContractDenied" xml:space="preserve"><value>You do not have permission to view contract reports.</value></data>
+<data name="ContractNumber" xml:space="preserve"><value>Contract number</value></data>
+<data name="ContractPeriod" xml:space="preserve"><value>Contract period</value></data>
+<data name="ContractStatus" xml:space="preserve"><value>Contract status</value></data>
+<data name="Members" xml:space="preserve"><value>Members</value></data>
+<data name="RentAmount" xml:space="preserve"><value>Rent amount</value></data>
+<data name="DepositAmount" xml:space="preserve"><value>Deposit</value></data>
+<data name="Pending" xml:space="preserve"><value>Pending</value></data>
+<data name="Approved" xml:space="preserve"><value>Approved</value></data>
+<data name="Rejected" xml:space="preserve"><value>Rejected</value></data>
+<data name="Liquidated" xml:space="preserve"><value>Liquidated</value></data>
+<data name="CostReport" xml:space="preserve"><value>Utility cost report</value></data>
+<data name="CostDenied" xml:space="preserve"><value>You do not have permission to view utility cost reports.</value></data>
+<data name="ReadingCount" xml:space="preserve"><value>Readings</value></data>
+<data name="ElectricUsage" xml:space="preserve"><value>Electric usage (kWh)</value></data>
+<data name="ElectricAmount" xml:space="preserve"><value>Electric amount</value></data>
+<data name="WaterUsage" xml:space="preserve"><value>Water usage (m³)</value></data>
+<data name="WaterAmount" xml:space="preserve"><value>Water amount</value></data>
+<data name="TotalAmount" xml:space="preserve"><value>Total cost</value></data>
+<data name="MissingSnapshot" xml:space="preserve"><value>Missing snapshots</value></data>
+<data name="SnapshotStatus" xml:space="preserve"><value>Meter photo</value></data>
+<data name="SnapshotOk" xml:space="preserve"><value>Complete</value></data>
+<data name="EffectiveInPeriod" xml:space="preserve"><value>Effective in period</value></data>
+<data name="IncidentReport" xml:space="preserve"><value>Incident report</value></data>
+<data name="IncidentDenied" xml:space="preserve"><value>You do not have permission to view incident reports.</value></data>
+<data name="IncidentTitle" xml:space="preserve"><value>Incident title</value></data>
+<data name="CreatedAt" xml:space="preserve"><value>Created at</value></data>
+<data name="RepairCost" xml:space="preserve"><value>Repair cost</value></data>
+<data name="Category" xml:space="preserve"><value>Category</value></data>
+<data name="Urgency" xml:space="preserve"><value>Urgency</value></data>
+<data name="New" xml:space="preserve"><value>New</value></data>
+<data name="InProgress" xml:space="preserve"><value>In progress</value></data>
+<data name="Completed" xml:space="preserve"><value>Completed</value></data>
+<data name="Urgent" xml:space="preserve"><value>Urgent</value></data>
+<data name="Emergency" xml:space="preserve"><value>Emergency</value></data>
+<data name="Normal" xml:space="preserve"><value>Normal</value></data>
+<data name="Electrical" xml:space="preserve"><value>Electrical</value></data>
+<data name="Water" xml:space="preserve"><value>Water</value></data>
+<data name="Furniture" xml:space="preserve"><value>Furniture</value></data>
+<data name="Equipment" xml:space="preserve"><value>Equipment</value></data>
+<data name="Other" xml:space="preserve"><value>Other</value></data>
+<data name="RevenueReport" xml:space="preserve"><value>Revenue and receivables report</value></data>
+<data name="RevenueDenied" xml:space="preserve"><value>Only owners can view revenue and receivables.</value></data>
+<data name="ByProperty" xml:space="preserve"><value>By property</value></data>
+<data name="RecognizedRevenue" xml:space="preserve"><value>Recognized revenue</value></data>
+<data name="Outstanding" xml:space="preserve"><value>Outstanding</value></data>
+<data name="TotalInvoiced" xml:space="preserve"><value>Total invoiced</value></data>
+<data name="InvoiceCount" xml:space="preserve"><value>Invoices</value></data>
+<data name="PaidInvoiceCount" xml:space="preserve"><value>Fully paid invoices</value></data>
+<data name="PendingRejectedNote" xml:space="preserve"><value>Pending: {0} · Rejected: {1}. Neither amount is counted as revenue.</value></data>
+<data name="RevenueByPeriod" xml:space="preserve"><value>Revenue by period</value></data>
+<data name="InvoiceLines" xml:space="preserve"><value>Invoice lines</value></data>
+<data name="InvoiceTotal" xml:space="preserve"><value>Invoice total</value></data>
+<data name="Paid" xml:space="preserve"><value>Paid</value></data>
+<data name="StatusIssued" xml:space="preserve"><value>Issued</value></data>
+<data name="StatusPaid" xml:space="preserve"><value>Paid</value></data>
+<data name="DebtInvoices" xml:space="preserve"><value>Outstanding invoices</value></data>
+<data name="NoDebt" xml:space="preserve"><value>No outstanding balance</value></data>
+<data name="NoDebtDescription" xml:space="preserve"><value>No invoice has an outstanding amount within the selected scope and period.</value></data>
+<data name="DateBasis" xml:space="preserve"><value>Revenue date basis</value></data>
+<data name="InvoicePeriodBasis" xml:space="preserve"><value>Invoice period</value></data>
+<data name="PaymentDateBasis" xml:space="preserve"><value>Payment date</value></data>
+<data name="InvoicePeriodNote" xml:space="preserve"><value>Revenue is recognized in the period of valid invoices regardless of payment date. Receivables are calculated on issued invoices.</value></data>
+<data name="PaymentDateNote" xml:space="preserve"><value>Revenue is recognized on the payment confirmation date. Receivables are still calculated on invoices issued within the selected period.</value></data>
+<data name="ChartType" xml:space="preserve"><value>Chart type</value></data>
+<data name="ColumnChart" xml:space="preserve"><value>Column</value></data>
+<data name="LineChart" xml:space="preserve"><value>Line</value></data>
+<data name="ChartDataTable" xml:space="preserve"><value>Chart data table</value></data>
+<data name="UnknownPeriod" xml:space="preserve"><value>Unknown period</value></data>
+<data name="ExportExcel" xml:space="preserve"><value>Export Excel</value></data>
+<data name="ExportSuccess" xml:space="preserve"><value>Excel file exported.</value></data>
+<data name="ExportApprovalRequired" xml:space="preserve"><value>Approval is required before exporting this report.</value></data>
+<data name="ExportApprovalDenied" xml:space="preserve"><value>The export request was rejected.</value></data>
+<data name="ExportForbidden" xml:space="preserve"><value>You are not allowed to export reports.</value></data>
+<data name="ExportFailed" xml:space="preserve"><value>Export failed. Please try again.</value></data>
 </root>

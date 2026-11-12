@@ -1,27 +1,23 @@
 .account-form-body {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 24px;
+    gap: var(--space-5);
+    padding: var(--space-6);
 }
 
-.form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* Body đã có gap nên bỏ margin mặc định của FormField và .form-alert. */
+.account-form-body ::deep .field {
+    margin-bottom: 0;
 }
 
-.form-label {
-    font-size: 14px;
-    line-height: 20px;
-    font-weight: 500;
-    color: var(--text-primary);
+.account-form-body .form-alert {
+    margin-bottom: 0;
 }
 
 .qr-existing-panel {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-5);
     animation: qr-panel-in 180ms var(--ease);
 }
 
@@ -30,50 +26,66 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Ô tìm + nút Tìm: input co giãn, nút giữ nguyên bề rộng để nhãn không rớt dòng. */
 .qr-search-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: var(--space-2);
 }
 
-.qr-search-row .input {
-    flex: 1 1 auto;
-    min-width: 0;
+.qr-search-row .btn {
+    white-space: nowrap;
 }
 
 .qr-result {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 8px 0;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
     text-align: center;
 }
 
 .qr-result img {
     width: 220px;
     height: 220px;
-    padding: 8px;
+    padding: var(--space-2);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #fff;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.qr-result .note {
+    margin: 0;
+}
+
+.qr-result-meta {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
 }
 
 .qr-link {
     max-width: 100%;
     margin: 0;
-    font-size: 12px;
-    line-height: 18px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-muted);
     word-break: break-all;
+}
+
+.qr-link a {
+    color: var(--accent-text);
 }
 
 .account-form-actions {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 4px;
-    padding-top: 16px;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
     border-top: 1px solid var(--border);
 }
 
@@ -85,7 +97,7 @@
 
 @media (max-width: 479px) {
     .account-form-body {
-        padding: 16px;
+        padding: var(--space-4);
     }
 
     .account-form-actions .btn {

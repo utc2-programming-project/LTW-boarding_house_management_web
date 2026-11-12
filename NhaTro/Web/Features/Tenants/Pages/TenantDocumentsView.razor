@@ -11,7 +11,7 @@
 
 <PageTitle>@L["TenantDocumentsTitle"] · @L["AppName"]</PageTitle>
 
-<div class="doc-page-container">
+<div class="doc-page-container page-stack">
     <PageHeading Title="@L["TenantDocumentsTitle"]" HelpText="@L["TenantDocumentsSubtitle"]">
         <HeadingSuffix>
             @if (_documentsList is not null)
@@ -22,7 +22,10 @@
             }
         </HeadingSuffix>
         <Actions>
-            <div class="doc-actions-row">
+            <a class="btn btn-secondary" href="/documents/trash">
+                <LucideIcon Name="trash" />
+                <span>@L["DocumentTrashOpen"]</span>
+            </a>
             @if (_documentsList?.CanExport == true && (_documentsList?.Items.Count ?? 0) > 0)
             {
                 <button type="button" class="btn btn-secondary" @onclick="ExportDocumentsCsvAsync" disabled="@_exporting">
@@ -45,7 +48,6 @@
                     <span>@L["UploadDocument"]</span>
                 </button>
             }
-            </div>
         </Actions>
     </PageHeading>
 
@@ -184,60 +186,53 @@
     }
     else
     {
-        <!-- 4. Documents Table Card (DocumentsTable.tsx) -->
-        <div class="doc-table-card">
-            <!-- Search & Filter Toolbar -->
-            <div class="doc-toolbar">
-                <div class="filter-bar__row">
-                    <div class="filter-bar__search">
-                        <label class="sr-only" for="doc-search">@L["SearchDocumentsPlaceholder"]</label>
-                        <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-                        <input id="doc-search" class="input" type="search"
-                               value="@_searchKeyword"
-                               @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
-                               placeholder="@L["SearchDocumentsPlaceholder"]" />
-                    </div>
-                    <div class="filter-bar__field filter-bar__select">
-                        <label class="sr-only" for="doc-category-filter">@L["CategoryAll"]</label>
-                        <select id="doc-category-filter" class="input" @bind="_selectedCategoryFilter">
-                            <option value="all">@L["CategoryAll"]</option>
-                            <option value="identity">@L["CategoryIdentity"]</option>
-                            <option value="contract">@L["CategoryContract"]</option>
-                            <option value="residence">@L["CategoryResidence"]</option>
-                            <option value="other">@L["CategoryOther"]</option>
-                        </select>
-                    </div>
-                    <div class="filter-bar__field filter-bar__select">
-                        <label class="sr-only" for="doc-sort-filter">@L["SortNewest"]</label>
-                        <select id="doc-sort-filter" class="input" @bind="_sortOption">
-                            <option value="newest">@L["SortNewest"]</option>
-                            <option value="oldest">@L["SortOldest"]</option>
-                            <option value="name_asc">@L["SortNameAsc"]</option>
-                            <option value="size_desc">@L["SortSizeDesc"]</option>
-                        </select>
-                    </div>
-                    @if (HasActiveFilter)
-                    {
-                        <div class="filter-bar__actions">
-                            <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters"
-                                    aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
-                                <LucideIcon Name="refresh-cw" />
-                            </button>
-                        </div>
-                    }
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="doc-search">@L["SearchDocumentsPlaceholder"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="doc-search" class="input" type="search"
+                           value="@_searchKeyword"
+                           @oninput="(e) => _searchKeyword = e.Value?.ToString() ?? string.Empty"
+                           placeholder="@L["SearchDocumentsPlaceholder"]" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="doc-category-filter">@L["CategoryAll"]</label>
+                    <select id="doc-category-filter" class="input" @bind="_selectedCategoryFilter">
+                        <option value="all">@L["CategoryAll"]</option>
+                        <option value="identity">@L["CategoryIdentity"]</option>
+                        <option value="contract">@L["CategoryContract"]</option>
+                        <option value="residence">@L["CategoryResidence"]</option>
+                        <option value="other">@L["CategoryOther"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="doc-sort-filter">@L["SortNewest"]</label>
+                    <select id="doc-sort-filter" class="input" @bind="_sortOption">
+                        <option value="newest">@L["SortNewest"]</option>
+                        <option value="oldest">@L["SortOldest"]</option>
+                        <option value="name_asc">@L["SortNameAsc"]</option>
+                        <option value="size_desc">@L["SortSizeDesc"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <FilterResetButton OnClick="ResetFilters" />
                 </div>
             </div>
+        </div>
 
+        <!-- 4. Documents Table Card (DocumentsTable.tsx) -->
+        <div class="doc-table-card">
             <!-- Data Table -->
             <div class="doc-table-responsive">
                 <table class="doc-data-table">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 180px;">@L["DocumentType"]</th>
+                            <th scope="col">@L["DocumentType"]</th>
                             <th scope="col">@L["DocumentFileName"]</th>
-                            <th scope="col" class="text-right" style="width: 140px;">@L["DocumentSize"]</th>
-                            <th scope="col" class="text-right" style="width: 180px;">@L["DocumentUploadedAt"]</th>
-                            <th scope="col" class="text-right" style="width: 140px;">@L["Actions"]</th>
+                            <th scope="col" class="text-right">@L["DocumentSize"]</th>
+                            <th scope="col" class="text-right">@L["DocumentUploadedAt"]</th>
+                            <th scope="col" class="text-right">@L["Actions"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -245,13 +240,12 @@
                         {
                             <tr>
                                 <td colspan="5" class="doc-empty-table-cell">
-                                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 0;">
-                                        <p style="margin: 0; color: var(--text-secondary);">@L["NoDocumentsMatchFilters"]</p>
-                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="ResetFilters">
-                                            <LucideIcon Name="filter-x" />
+                                    <EmptyStateCard Title="@L["NoDocumentsMatchFilters"]">
+                                        <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
+                                            <LucideIcon Name="refresh-cw" />
                                             <span>@L["ClearFilters"]</span>
                                         </button>
-                                    </div>
+                                    </EmptyStateCard>
                                 </td>
                             </tr>
                         }
@@ -428,11 +422,6 @@
     private string _selectedCategoryFilter = "all";
     private string _sortOption = "newest";
     private bool _showRequirementGuide;
-
-    private bool HasActiveFilter =>
-        !string.IsNullOrWhiteSpace(_searchKeyword)
-        || _selectedCategoryFilter != "all"
-        || _sortOption != "newest";
 
     private bool _uploadModalOpen;
     private bool _previewModalOpen;

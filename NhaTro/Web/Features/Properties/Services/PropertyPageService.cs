@@ -55,6 +55,12 @@ public sealed class PropertyPageService(
     public async Task<PropertyResult> RestoreAsync(int id, CancellationToken ct = default) =>
         await properties.RestoreAsync(id, await callerProvider.GetCallerAsync(), ct);
 
+    public async Task<PropertyResult> PurgeAsync(int id, CancellationToken ct = default) =>
+        await properties.PurgeAsync(id, await callerProvider.GetCallerAsync(), ct);
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(CancellationToken ct = default) =>
+        await properties.PurgeAllAsync(await callerProvider.GetCallerAsync(), ct);
+
     public async Task<PropertyManagerListResult> ListManagersAsync(
         int propertyId, bool includeHistory = false, CancellationToken ct = default) =>
         await propertyManagers.ListAssignmentsAsync(
