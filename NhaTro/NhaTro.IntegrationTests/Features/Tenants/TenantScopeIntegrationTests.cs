@@ -155,13 +155,13 @@ public sealed class TenantScopeIntegrationTests(SqlServerFixture fixture)
         var service = NewService();
 
         var pickerA = await service.SearchForPickerAsync(new TenantPickerRequest(), OwnerA);
-        Assert.Equal(1, pickerA.Count);
+        Assert.Single(pickerA);
         Assert.Contains(pickerA, item => item.Id == seed.TenantAId);
         Assert.DoesNotContain(pickerA, item => item.Id == seed.PoolTenantId);
         Assert.DoesNotContain(pickerA, item => item.Id == seed.TenantBId);
 
         var pickerManager = await service.SearchForPickerAsync(new TenantPickerRequest(), ManagerA);
-        Assert.Equal(1, pickerManager.Count);
+        Assert.Single(pickerManager);
 
         var pickerB = await service.SearchForPickerAsync(new TenantPickerRequest(), OwnerB);
         Assert.Contains(pickerB, item => item.Id == seed.TenantBId);

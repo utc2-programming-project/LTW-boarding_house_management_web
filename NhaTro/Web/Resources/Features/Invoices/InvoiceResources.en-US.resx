@@ -19,6 +19,7 @@
   <data name="StatIssued" xml:space="preserve"><value>Issued</value></data>
   <data name="StatPaid" xml:space="preserve"><value>Paid</value></data>
   <data name="StatOutstanding" xml:space="preserve"><value>Outstanding</value></data>
+  <data name="StatOutstandingTitle" xml:space="preserve"><value>View unpaid invoices</value></data>
 
   <data name="FilterYear" xml:space="preserve"><value>Year</value></data>
   <data name="FilterMonth" xml:space="preserve"><value>Month</value></data>
@@ -125,6 +126,36 @@
   <data name="ItemTypeWater" xml:space="preserve"><value>Water</value></data>
   <data name="ItemTypeService" xml:space="preserve"><value>Service</value></data>
   <data name="ItemTypeDiscount" xml:space="preserve"><value>Discount</value></data>
+  <data name="ReviseButton" xml:space="preserve"><value>Revise invoice</value></data>
+  <data name="ReviseTitle" xml:space="preserve"><value>Revise invoice sent to tenant</value></data>
+  <data name="ReviseSubtitle" xml:space="preserve"><value>You can revise it while the tenant has not submitted a payment request. A reason is required and the tenant will see it. Changes are only saved here; click "Send bill to tenant" to send the updated invoice.</value></data>
+  <data name="ReviseReasonLabel" xml:space="preserve"><value>Reason for revision</value></data>
+  <data name="ReviseReasonPlaceholder" xml:space="preserve"><value>Example: wrong electricity amount for November, re-checked with the meter reading…</value></data>
+  <data name="ReviseReasonHint" xml:space="preserve"><value>This reason is shown to the tenant together with the revised invoice.</value></data>
+  <data name="ReviseCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ReviseSubmit" xml:space="preserve"><value>Save changes</value></data>
+  <data name="SendingBill" xml:space="preserve"><value>Sending…</value></data>
+  <data name="DeleteIssuedButton" xml:space="preserve"><value>Delete invoice</value></data>
+  <data name="DeleteIssuedTitle" xml:space="preserve"><value>Delete invoice sent to tenant?</value></data>
+  <data name="DeleteIssuedMessage" xml:space="preserve"><value>Invoice HD-{0} ({1}) will be moved to the trash and the tenant will no longer see it. You can restore it later from the invoice trash. You can only delete it while the tenant has not submitted a payment request.</value></data>
+  <data name="DeleteIssuedConfirm" xml:space="preserve"><value>Delete invoice</value></data>
+  <data name="DeleteIssuedSuccess" xml:space="preserve"><value>The invoice was moved to the trash. The tenant will no longer see it.</value></data>
+  <data name="Deleting" xml:space="preserve"><value>Deleting…</value></data>
+  <data name="ReviseSaving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="ReviseSuccess" xml:space="preserve"><value>Changes saved. Click "Send bill to tenant" to send the updated invoice to the tenant.</value></data>
+  <data name="ReviseErrorUnknown" xml:space="preserve"><value>Could not revise the invoice. Please try again.</value></data>
+  <data name="ReviseErrorNotEditable" xml:space="preserve"><value>Only an issued invoice that the tenant has not requested payment for can be revised.</value></data>
+  <data name="ReviseErrorPaymentRequested" xml:space="preserve"><value>The tenant has already submitted a payment request, so the invoice cannot be revised. Handle the payment request first.</value></data>
+  <data name="ReviseErrorReasonRequired" xml:space="preserve"><value>Please enter a reason for revising the invoice.</value></data>
+  <data name="ReviseErrorOwnerOnly" xml:space="preserve"><value>Only the owner can revise an invoice that was sent to a tenant.</value></data>
+  <data name="ReviseErrorForbidden" xml:space="preserve"><value>You are not allowed to revise this invoice.</value></data>
+  <data name="ReviseErrorNotFound" xml:space="preserve"><value>Invoice not found or you are not allowed to manage it.</value></data>
+  <data name="ReviseErrorItemsRequired" xml:space="preserve"><value>The invoice must have at least one rent or service line.</value></data>
+  <data name="ReviseErrorInvalidItem" xml:space="preserve"><value>Invalid invoice line.</value></data>
+  <data name="RevisionHistoryTitle" xml:space="preserve"><value>This invoice was revised</value></data>
+  <data name="RevisionHistoryHint" xml:space="preserve"><value>Reason given by the owner when revising the invoice sent to you.</value></data>
+  <data name="ReviseNotifyTitle" xml:space="preserve"><value>Your invoice was revised</value></data>
+  <data name="ReviseNotifyMessage" xml:space="preserve"><value>Invoice HD-{0} was revised (new total {1} ₫). Reason: {2}</value></data>
   <data name="SummaryTotal" xml:space="preserve"><value>Invoice total</value></data>
   <data name="SummaryPaid" xml:space="preserve"><value>Paid</value></data>
   <data name="SummaryOutstanding" xml:space="preserve"><value>Outstanding</value></data>
@@ -250,6 +281,8 @@
   <data name="ReviewRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
   <data name="ReviewRejectReasonPlaceholder" xml:space="preserve"><value>For example: the image is blurry and the amount or transaction code cannot be read.</value></data>
   <data name="ReviewRejectSubmit" xml:space="preserve"><value>Reject</value></data>
+  <data name="ReviewRejectIntro" xml:space="preserve"><value>The tenant's payment request will be rejected and they need to send new proof. The rejection reason is shown to the tenant.</value></data>
+  <data name="ReviewRejectHint" xml:space="preserve"><value>Be explicit so the tenant knows which proof to provide again.</value></data>
   <data name="ReviewRejectSubmitting" xml:space="preserve"><value>Rejecting...</value></data>
   <data name="ReviewRejectSuccess" xml:space="preserve"><value>The proof was rejected. The customer can submit a new request.</value></data>
   <data name="ReviewRejectCancel" xml:space="preserve"><value>Cancel</value></data>
@@ -297,6 +330,7 @@
   <data name="InvoiceTrashRestoreMessage" xml:space="preserve"><value>Restore invoice HD-{0}?</value></data>
   <data name="InvoiceTrashRestored" xml:space="preserve"><value>Invoice restored.</value></data>
   <data name="InvoiceDeleteAction" xml:space="preserve"><value>Delete draft invoice</value></data>
+  <data name="InvoiceDeleteIssuedAction" xml:space="preserve"><value>Delete invoice</value></data>
   <data name="InvoiceDeleteTitle" xml:space="preserve"><value>Delete draft invoice?</value></data>
   <data name="InvoiceDeleteMessage" xml:space="preserve"><value>Invoice HD-{0} will be moved to the trash.</value></data>
   <data name="InvoiceDeleteConfirm" xml:space="preserve"><value>Delete</value></data>
@@ -307,6 +341,9 @@
   <data name="InvoiceErrorHasDependencies" xml:space="preserve"><value>Cannot delete because the invoice still has payments, reading periods or registration requests.</value></data>
   <data name="InvoiceErrorContractDeleted" xml:space="preserve"><value>The invoice's contract was deleted; restore the contract first.</value></data>
   <data name="InvoiceErrorDuplicatePeriod" xml:space="preserve"><value>The contract already has a live invoice for the same period.</value></data>
+  <data name="InvoiceErrorNotDeletableIssued" xml:space="preserve"><value>Only draft invoices can be deleted from the invoice list. Use the delete action for invoices already sent to the tenant.</value></data>
+  <data name="InvoiceErrorHasPaymentRequest" xml:space="preserve"><value>The tenant has already submitted a payment request, so the invoice cannot be deleted. Handle the payment request first.</value></data>
+  <data name="InvoiceErrorRevisionOwnerOnly" xml:space="preserve"><value>Only the owner can revise an invoice that was sent to the tenant.</value></data>
   <data name="InvoiceErrorForbidden" xml:space="preserve"><value>You do not have permission to operate on this invoice.</value></data>
   <data name="InvoiceErrorInvoiceNotFound" xml:space="preserve"><value>Invoice not found.</value></data>
 </root>

@@ -194,7 +194,7 @@ public sealed class IncidentFileScopeIntegrationTests(SqlServerFixture fixture) 
 
         // Còn đúng một slot kết quả: upload đồng thời chỉ một lần thắng; nhóm báo độc lập.
         var racing = await Task.WhenAll(Enumerable.Range(0, 3).Select(_ => service.UploadAsync(PhotoRequest("7", IncidentPhotoKind.Result), owner)));
-        Assert.Single(racing.Where(r => r.Succeeded));
+        Assert.Single(racing, r => r.Succeeded);
         Assert.All(racing.Where(r => !r.Succeeded), r => Assert.Equal(StorageErrorCodes.FileCountExceeded, r.ErrorCode));
         Assert.True((await service.UploadAsync(PhotoRequest("7"), owner)).Succeeded);
         Assert.Equal(6, (await service.ListAsync(RelatedEntityType.MaintenanceIncident, "7", tenantCaller)).Count);

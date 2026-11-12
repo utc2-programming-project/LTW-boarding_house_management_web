@@ -15,21 +15,14 @@
 <PageTitle>@UL["P5CostPageTitle"]</PageTitle>
 
 <div class="monthly-cost-page">
-    <div class="page-heading">
-        <NavBreadcrumb />
-        <div class="page-heading-row">
-            <div class="heading-copy">
-                <h1 class="page-title">@UL["P5CostHeading"]</h1>
-                <p class="page-subtitle">@UL["P5CostSubtitle"]</p>
-            </div>
-            <div class="header-actions">
-                <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
-                    <LucideIcon Name="refresh" />
-                    <span>@UL["P5CostRefresh"]</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <PageHeading Title="@UL["P5CostHeading"]" HelpText="@UL["P5CostSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@UL["P5CostRefresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -246,32 +239,46 @@
                                         }
                                     </td>
                                     <td class="text-right cell-actions" data-label="@UL["P5CostThActions"]">
-                                        <div class="row-actions">
-                                            <button type="button" class="icon-btn" title="@UL["P5CostDetails"]" aria-label="@UL["P5CostDetails"]" @onclick="() => OpenDetails(room)">
-                                                <LucideIcon Name="eye" />
+                                        <div class="p2-row-actions">
+                                            <button type="button"
+                                                    class="icon-button p2-menu-trigger @(IsMenuOpen(room.ContractId) ? "is-open" : null)"
+                                                    title="@UL["P5CostThActions"]"
+                                                    aria-label="@($"{UL["P5CostThActions"]}: {room.RoomCode}")"
+                                                    aria-haspopup="menu"
+                                                    aria-expanded="@(IsMenuOpen(room.ContractId) ? "true" : "false")"
+                                                    aria-controls="@($"cost-row-menu-{room.ContractId}")"
+                                                    @onclick="() => ToggleRowMenu(room.ContractId)">
+                                                <LucideIcon Name="ellipsis" />
                                             </button>
-                                            <AuthorizeView Policy="UtilityRecord">
-                                                <Authorized>
-                                                    @if (!room.IsInvoiced && room.CanAdjust)
-                                                    {
-                                                        <button type="button" class="icon-btn" title="@UL["P5CostEditReading"]" aria-label="@UL["P5CostEditReading"]" @onclick="() => OpenEdit(room, false)">
-                                                            <LucideIcon Name="edit" />
-                                                        </button>
-                                                    }
-                                                    else if (!room.IsInvoiced && !room.HasReadings)
-                                                    {
-                                                        <button type="button" class="icon-btn" title="@UL["P5CostEditReading"]" aria-label="@UL["P5CostEditReading"]" @onclick="() => OpenEdit(room, false)">
-                                                            <LucideIcon Name="plus" />
-                                                        </button>
-                                                    }
-                                                    @if (room.InvoiceId is null)
-                                                    {
-                                                        <button type="button" class="icon-btn" title="@(room.HasReadings ? UL["P5CostCreateInvoice"] : UL["P5CostInvoiceMissingReadings"])" aria-label="@UL["P5CostCreateInvoice"]" disabled="@(_creatingInvoice || !room.HasReadings)" @onclick="() => RequestCreateInvoice(room)">
-                                                            <LucideIcon Name="arrow-right" />
-                                                        </button>
-                                                    }
-                                                </Authorized>
-                                            </AuthorizeView>
+                                            @if (IsMenuOpen(room.ContractId))
+                                            {
+                                                <div id="@($"cost-row-menu-{room.ContractId}")" class="p2-row-menu" role="menu" aria-label="@UL["P5CostThActions"]" data-row-menu>
+                                                    <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuDetails(room)">
+                                                        <LucideIcon Name="eye" /><span>@UL["P5CostDetails"]</span>
+                                                    </button>
+                                                    <AuthorizeView Policy="UtilityRecord">
+                                                        <Authorized>
+                                                            @if (!room.IsInvoiced && (room.CanAdjust || !room.HasReadings))
+                                                            {
+                                                                <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuEditReading(room)">
+                                                                    <LucideIcon Name="@(room.HasReadings ? "edit" : "plus")" />
+                                                                    <span>@UL["P5CostEditReading"]</span>
+                                                                </button>
+                                                            }
+                                                            @if (room.InvoiceId is null)
+                                                            {
+                                                                <button type="button" class="p2-row-menu-item" role="menuitem"
+                                                                        disabled="@(_creatingInvoice || !room.HasReadings)"
+                                                                        title="@(room.HasReadings ? null : UL["P5CostInvoiceMissingReadings"].Value)"
+                                                                        @onclick="() => MenuCreateInvoice(room)">
+                                                                    <LucideIcon Name="receipt" />
+                                                                    <span>@UL["P5CostCreateInvoice"]</span>
+                                                                </button>
+                                                            }
+                                                        </Authorized>
+                                                    </AuthorizeView>
+                                                </div>
+                                            }
                                         </div>
                                     </td>
                                 </tr>
@@ -407,6 +414,36 @@
                         <div class="strong total"><dt>@UL["P5CostTotalLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(detail.TotalAmount)</dd></div>
                     </dl>
                 </section>
+
+                @if (detail.InvoiceRevisions.Count > 0)
+                {
+                    <section class="detail-section invoice-revision-section">
+                        <div class="section-title-row">
+                            <h3><LucideIcon Name="receipt" /> @UL["P5CostInvoiceRevisionsTitle"]</h3>
+                            <span class="chip">@string.Format(detail.InvoiceRevisions.Count == 1 ? UL["P5CostInvoiceRevisionsCountOne"] : UL["P5CostInvoiceRevisionsCount"], detail.InvoiceRevisions.Count)</span>
+                        </div>
+                        <p class="muted">@UL["P5CostInvoiceRevisionsHint"]</p>
+                        <div class="invoice-revision-list">
+                            @foreach (var revision in detail.InvoiceRevisions)
+                            {
+                                <div class="invoice-revision-item">
+                                    <div class="invoice-revision-reason">@revision.Reason</div>
+                                    <div class="invoice-revision-meta">
+                                        <span class="tabular-nums">@FormatMoment(revision.ChangedAt)</span>
+                                        @if (revision.PreviousTotalAmount != revision.NewTotalAmount)
+                                        {
+                                            <span class="invoice-revision-amount tabular-nums">
+                                                @MoneyFormatter.Format(revision.PreviousTotalAmount)
+                                                <LucideIcon Name="arrow-right" />
+                                                @MoneyFormatter.Format(revision.NewTotalAmount)
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
 
                 <section class="detail-section">
                     <div class="section-title-row">
@@ -585,11 +622,48 @@
 
 @if (_invoiceConfirmRoom is { } confirmRoom)
 {
-    <ConfirmDialog Visible="true" Title="@UL["P5CostCreateInvoiceConfirmTitle"]"
-                   Message="@string.Format(UL["P5CostCreateInvoiceConfirmMessage"], confirmRoom.RoomCode, DateFormatter.Format(confirmRoom.PeriodStart), DateFormatter.Format(confirmRoom.PeriodEnd))"
-                   ConfirmText="@UL["P5CostCreateInvoice"]" CancelText="@UL["P5CostClosePanel"]"
-                   BusyText="@UL["P5CostInvoiceCreating"]"
-                   OnConfirm="ConfirmCreateInvoiceAsync" OnCancel="CancelCreateInvoice" />
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cost-create-invoice-title" @onclick="CancelCreateInvoice">
+        <div class="modal-dialog invoice-create-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-text">
+                    <h2 id="cost-create-invoice-title">@UL["P5CostCreateInvoiceConfirmTitle"]</h2>
+                    <p>@string.Format(UL["P5CostCreateInvoiceConfirmMessage"], confirmRoom.RoomCode, DateFormatter.Format(confirmRoom.PeriodStart), DateFormatter.Format(confirmRoom.PeriodEnd))</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CancelCreateInvoice">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+            <div class="modal-body">
+                <dl class="summary-lines">
+                    <div><dt>@UL["P5CostThRoom"]</dt><dd>@confirmRoom.RoomCode · @confirmRoom.PropertyName</dd></div>
+                    <div><dt>@UL["P5CostThPeriod"]</dt><dd class="tabular-nums">@DateFormatter.Format(confirmRoom.PeriodStart) – @DateFormatter.Format(confirmRoom.PeriodEnd)</dd></div>
+                    <div><dt>@UL["P5CostRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(confirmRoom.RentAmount)</dd></div>
+                    <div><dt>@UL["P5CostElectricSection"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(confirmRoom.ElectricCost)</dd></div>
+                    <div><dt>@UL["P5CostWaterSection"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(confirmRoom.WaterCost)</dd></div>
+                    <div><dt>@UL["P5CostServiceSection"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(confirmRoom.ServiceCost)</dd></div>
+                    <div class="strong total"><dt>@UL["P5CostTotalLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(confirmRoom.TotalAmount)</dd></div>
+                </dl>
+                <p class="muted">@UL["P5CostCreateInvoiceConfirmNote"]</p>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" disabled="@_creatingInvoice" @onclick="CancelCreateInvoice">
+                    @UL["P5CostClosePanel"]
+                </button>
+                <button type="button" class="btn btn-primary" disabled="@_creatingInvoice" @onclick="ConfirmCreateInvoiceAsync">
+                    @if (_creatingInvoice)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@UL["P5CostInvoiceCreating"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="receipt" />
+                        <span>@UL["P5CostCreateInvoice"]</span>
+                    }
+                </button>
+            </footer>
+        </div>
+    </div>
 }
 
 @code {
@@ -899,6 +973,34 @@
         _invoiceConfirmRoom = room;
     }
 
+    // --- Menu thao tác 3 chấm (đồng bộ với các trang danh sách khác) ---
+    private Guid? _openMenuContractId;
+
+    private bool IsMenuOpen(Guid contractId) => _openMenuContractId == contractId;
+
+    private void ToggleRowMenu(Guid contractId)
+    {
+        _openMenuContractId = _openMenuContractId == contractId ? null : contractId;
+    }
+
+    private void MenuDetails(MonthlyUtilityRoomCostDto room)
+    {
+        _openMenuContractId = null;
+        OpenDetails(room);
+    }
+
+    private void MenuEditReading(MonthlyUtilityRoomCostDto room)
+    {
+        _openMenuContractId = null;
+        OpenEdit(room, false);
+    }
+
+    private void MenuCreateInvoice(MonthlyUtilityRoomCostDto room)
+    {
+        _openMenuContractId = null;
+        RequestCreateInvoice(room);
+    }
+
     private Task CancelCreateInvoice()
     {
         _invoiceConfirmRoom = null;
@@ -1009,6 +1111,9 @@
 
     private static string FormatMoment(DateTimeOffset value) =>
         DateFormatter.FormatDateTime(value.UtcDateTime);
+
+    private static string FormatMoment(DateTime value) =>
+        DateFormatter.FormatDateTime(value);
 
     private static string InvoiceDetailHref(int invoiceId) => $"/invoices/{invoiceId}";
 }

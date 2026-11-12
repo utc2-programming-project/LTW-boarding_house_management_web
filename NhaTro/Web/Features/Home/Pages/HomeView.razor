@@ -121,7 +121,7 @@
             }
             else
             {
-                <HomePanel Title="@L["OpenInvoicesTitle"]" Icon="receipt" Href="@InvoicesHref"
+                <HomePanel Title="@L["OpenInvoicesTitle"]" Icon="receipt" Href="@UnpaidInvoicesHref"
                            State="@snapshot.OpenInvoices.State" Retry="LoadAsync">
                     @if (snapshot.OpenInvoices.Items.Count == 0)
                     {
@@ -147,7 +147,14 @@
                                                 <span class="muted">@invoice.PropertyName</span>
                                             </td>
                                             <td>@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
-                                            <td class="num">@MoneyFormatter.Format(invoice.Outstanding)</td>
+                                            <td class="num">
+                                                @* Số tiền còn nợ: nổi bật + bấm để mở hoá đơn cần thanh toán. *@
+                                                <a class="home-due-link" href="@InvoiceHref(invoice.InvoiceId)" title="@L["OpenInvoiceTitle"]">
+                                                    <LucideIcon Name="wallet" />
+                                                    <span class="tabular-nums">@MoneyFormatter.Format(invoice.Outstanding)</span>
+                                                    <LucideIcon Name="arrow-right" />
+                                                </a>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -224,6 +231,11 @@
     }
 
     private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my/invoices" : "/invoices";
+
+    /// <summary>Link danh sách chỉ lọc hoá đơn chưa thu (panel "Hoá đơn chưa thu").</summary>
+    private string UnpaidInvoicesHref => $"{InvoicesHref}?paymentState=unpaid";
+
+    private string InvoiceHref(int invoiceId) => AppLinks.Invoice(invoiceId, InvoicesHref);
 
     private string RoleLabel(string role) => role switch
     {

@@ -52,4 +52,19 @@ public sealed class InvoiceDto
 
     /// <summary>Yêu cầu thanh toán mới nhất để hiển thị trạng thái chờ/đã từ chối; null nếu chưa gửi.</summary>
     public PaymentDto? LatestPayment { get; init; }
+
+    /// <summary>Lịch sử Chủ trọ chỉnh sửa hoá đơn (mới nhất trước). Khách thuê thấy lý do.</summary>
+    public IReadOnlyList<InvoiceRevisionDto> Revisions { get; init; } = [];
+
+    /// <summary>
+    /// Khách đã gửi yêu cầu thanh toán (đang chờ xác nhận) hoặc đã thanh toán.
+    /// Khi đã có yêu cầu thì Chủ trọ không được chỉnh sửa/xóa hoá đơn nữa.
+    /// </summary>
+    public bool HasPaymentRequest { get; init; }
+
+    /// <summary>
+    /// Hoá đơn đã được Chủ trọ chỉnh sửa nhưng bản mới CHƯA gửi cho khách.
+    /// Khi đúng, nút "Gửi bill đến khách hàng" được ưu tiên để chủ trọ gửi bản mới.
+    /// </summary>
+    public bool HasUnsentChanges { get; init; }
 }

@@ -25,6 +25,7 @@
 <data name="QuickActionsTitle" xml:space="preserve"><value>Lối tắt</value></data>
 <data name="OpenInvoicesTitle" xml:space="preserve"><value>Hoá đơn chưa thu</value></data>
 <data name="OpenInvoicesEmpty" xml:space="preserve"><value>Không có hoá đơn chưa thu.</value></data>
+<data name="OpenInvoiceTitle" xml:space="preserve"><value>Mở hoá đơn để thanh toán</value></data>
 <data name="ExpiringTitle" xml:space="preserve"><value>Hợp đồng sắp hết hạn</value></data>
 <data name="ExpiringEmpty" xml:space="preserve"><value>Không có hợp đồng nào hết hạn trong 30 ngày tới.</value></data>
 <data name="PendingAccountsTitle" xml:space="preserve"><value>Tài khoản chờ duyệt</value></data>

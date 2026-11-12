@@ -7,7 +7,8 @@
 @inject ILogger<TenantContactBanner> Logger
 
 @* Khách thuê luôn biết Chủ trọ/Quản lý của tòa đang ở để gọi khi cần hỗ trợ.
-   Trang "Phòng đang thuê" đã có thẻ liên hệ chi tiết nên banner tự ẩn ở đó. *@
+   Banner hiển thị ở mọi trang của khách thuê, kể cả "Phòng của tôi" (trang đó vẫn có
+   thẻ liên hệ chi tiết ở cuối trang). *@
 @if (_visible)
 {
     <div class="tenant-contact-banner" role="status">
@@ -44,12 +45,6 @@
     {
         try
         {
-            if (IsMyRoomPage())
-            {
-                _visible = false;
-                return;
-            }
-
             var contact = await ContactService.GetMyContactAsync();
             _ownerText = PersonText(contact?.Owner);
             _managerText = ManagersText(contact?.Managers);
@@ -70,20 +65,6 @@
             await LoadAsync();
             StateHasChanged();
         });
-    }
-
-    private bool IsMyRoomPage()
-    {
-        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
-        var queryIndex = path.IndexOf('?', StringComparison.Ordinal);
-        if (queryIndex >= 0)
-        {
-            path = path[..queryIndex];
-        }
-
-        var trimmed = path.TrimEnd('/');
-        return trimmed.Equals("/my/room", StringComparison.OrdinalIgnoreCase)
-            || trimmed.Equals("/tenant/my-room", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? PersonText(PropertyContactPersonDto? person)

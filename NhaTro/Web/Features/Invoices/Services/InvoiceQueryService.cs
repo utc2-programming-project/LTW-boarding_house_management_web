@@ -175,6 +175,30 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             .Sum(payment => payment.Amount);
         var latestPayment = payments.FirstOrDefault();
 
+        // Lịch sử chỉnh sửa hoá đơn (mới nhất trước) để khách thuê thấy lý do Chủ trọ đã sửa.
+        var revisions = await context.InvoiceRevisions
+            .AsNoTracking()
+            .Where(revision => revision.InvoiceId == invoice.Id)
+            .OrderByDescending(revision => revision.ChangedAt)
+            .ThenByDescending(revision => revision.Id)
+            .Select(revision => new InvoiceRevisionDto
+            {
+                Id = revision.Id,
+                Reason = revision.Reason,
+                PreviousTotalAmount = revision.PreviousTotalAmount,
+                NewTotalAmount = revision.NewTotalAmount,
+                ChangedAt = revision.ChangedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        // Đã có yêu cầu thanh toán (đang chờ xác nhận) hoặc đã thanh toán thì Chủ trọ không sửa được.
+        var hasPaymentRequest = payments.Any(payment =>
+            payment.Status is PaymentStatus.Pending or PaymentStatus.Confirmed);
+
+        // Hoá đơn đã sửa nhưng bản mới chưa gửi cho khách: LastSentRevisionId lệch với revision mới nhất.
+        var latestRevisionId = revisions.Count > 0 ? revisions.Max(revision => revision.Id) : (int?)null;
+        var hasUnsentChanges = latestRevisionId is { } latest && invoice.LastSentRevisionId != latest;
+
         return new InvoiceDto
         {
             Id = invoice.Id,
@@ -206,6 +230,9 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
             PaidAmount = paidAmount,
             OutstandingAmount = Math.Max(0m, invoice.TotalAmount - paidAmount),
             LatestPayment = latestPayment is null ? null : PaymentMapping.ToDto(latestPayment),
+            Revisions = revisions,
+            HasPaymentRequest = hasPaymentRequest,
+            HasUnsentChanges = hasUnsentChanges,
         };
     }
 
@@ -252,7 +279,10 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
     private IQueryable<Invoice> ScopeInvoices(PropertyCaller caller)
     {
         var contractIds = ScopeContracts(caller).Select(contract => contract.ContractId);
-        return context.Invoices.Where(invoice => contractIds.Contains(invoice.ContractId));
+        // Lọc tường minh hoá đơn đã xoá mềm: không phụ thuộc query filter của EF
+        // (bộ lọc có thể bị bỏ qua khi entity tham gia quan hệ bắt buộc).
+        return context.Invoices
+            .Where(invoice => !invoice.IsDeleted && contractIds.Contains(invoice.ContractId));
     }
 
     /// <summary>

@@ -86,13 +86,19 @@
                 </div>
                 <div class="stat-value">@_result.Summary.PaidCount</div>
             </div>
-            <div class="stat-card stat-card--warning">
+            @* Số tiền còn phải thu: nổi bật + bấm để lọc ra đúng các hoá đơn chưa thu. *@
+            <a class="stat-card stat-card--warning stat-card--link"
+               href="@($"{DetailBase}?paymentState=unpaid")"
+               title="@L["StatOutstandingTitle"]">
                 <div class="stat-card__top">
                     <span class="stat-label">@L["StatOutstanding"]</span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="wallet" /></span>
                 </div>
-                <div class="stat-value">@MoneyFormatter.Format(_result.Summary.OutstandingAmount)</div>
-            </div>
+                <div class="stat-value">
+                    @MoneyFormatter.Format(_result.Summary.OutstandingAmount)
+                    <LucideIcon Name="arrow-right" Class="stat-value__arrow" />
+                </div>
+            </a>
         </div>
 
         <div class="filter-bar filter-bar--panel">
@@ -260,8 +266,22 @@
                                         }
                                     </td>
                                     <td class="text-right tabular-nums">@MoneyFormatter.Format(invoice.TotalAmount)</td>
-                                    <td class="text-right tabular-nums @(invoice.OutstandingAmount > 0 ? "outstanding" : "")">
-                                        @MoneyFormatter.Format(invoice.OutstandingAmount)
+                                    <td class="text-right tabular-nums">
+                                        @* Hoá đơn còn nợ: làm nổi bật + bấm để mở hoá đơn thanh toán. *@
+                                        @if (invoice.OutstandingAmount > 0)
+                                        {
+                                            <a class="outstanding-link"
+                                               href="@AppLinks.Invoice(invoice.Id, DetailBase)"
+                                               title="@SL["CellLinkOpenInvoice"]">
+                                                <LucideIcon Name="wallet" />
+                                                <span>@MoneyFormatter.Format(invoice.OutstandingAmount)</span>
+                                                <LucideIcon Name="arrow-right" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="outstanding-settled">@MoneyFormatter.Format(invoice.OutstandingAmount)</span>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         <div class="p2-row-actions">
@@ -286,6 +306,14 @@
                                                         <div class="p2-row-menu-sep" role="separator"></div>
                                                         <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(invoice.Id)">
                                                             <LucideIcon Name="trash" /><span>@L["InvoiceDeleteAction"]</span>
+                                                        </button>
+                                                    }
+                                                    else if (!IsMyInvoices && invoice.Status == InvoiceStatus.Issued && invoice.OutstandingAmount > 0m)
+                                                    {
+                                                        @* Hoá đơn đã gửi khách mà khách chưa thanh toán: cho xóa (vào thùng rác). *@
+                                                        <div class="p2-row-menu-sep" role="separator"></div>
+                                                        <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(invoice.Id)">
+                                                            <LucideIcon Name="trash" /><span>@L["InvoiceDeleteIssuedAction"]</span>
                                                         </button>
                                                     }
                                                 </div>
@@ -366,15 +394,30 @@
     </div>
 }
 
-<ConfirmDialog Visible="_deleteVisible" Title="@L["InvoiceDeleteTitle"]"
-               Message="@string.Format(L["InvoiceDeleteMessage"], _deleteInvoiceId ?? 0)"
+<ConfirmDialog Visible="_deleteVisible"
+               Title="@(_deleteIssued ? L["DeleteIssuedTitle"] : L["InvoiceDeleteTitle"])"
+               Message="@(_deleteIssued
+                   ? string.Format(L["DeleteIssuedMessage"], _deleteInvoiceId ?? 0, MoneyFormatter.Format(_result.Items.FirstOrDefault(invoice => invoice.Id == _deleteInvoiceId)?.TotalAmount ?? 0m))
+                   : string.Format(L["InvoiceDeleteMessage"], _deleteInvoiceId ?? 0))"
                ConfirmText="@L["InvoiceDeleteConfirm"]" CancelText="@L["CancelBtn"]" Danger="true"
                OnConfirm="DeleteInvoiceAsync" OnCancel="CancelDeleteInvoice" />
 
 @code {
     private const int PageSize = 20;
+
+    /// <summary>Các giá trị hợp lệ cho ?paymentState= (khớp option của bộ lọc).</summary>
+    private static readonly string[] PaymentStateOptions =
+    [
+        "unpaid",
+        "partial",
+        "pending_confirmation",
+        "paid",
+        "payment_rejected",
+        "expired",
+    ];
     private bool _deleteVisible;
     private int? _deleteInvoiceId;
+    private bool _deleteIssued;
 
     private InvoiceListResult _result = new()
     {
@@ -475,6 +518,13 @@
             _keyword = KeywordQuery.Trim();
         }
 
+        // Link từ KPI/panel trang chủ: ?paymentState=unpaid → lọc sẵn hoá đơn chưa thu.
+        if (!string.IsNullOrWhiteSpace(QueryPaymentState)
+            && PaymentStateOptions.Contains(QueryPaymentState))
+        {
+            _paymentState = QueryPaymentState;
+        }
+
         return ReloadAsync();
     }
 
@@ -572,6 +622,10 @@
     /// <summary>Từ khóa từ link chéo (?q=A107 hoặc ?q=HD-001): điền sẵn ô tìm kiếm.</summary>
     [SupplyParameterFromQuery(Name = "q")]
     public string? KeywordQuery { get; set; }
+
+    /// <summary>Lọc sẵn trạng thái thanh toán từ link (?paymentState=unpaid): dùng cho KPI/panel trang chủ.</summary>
+    [SupplyParameterFromQuery(Name = "paymentState")]
+    public string? QueryPaymentState { get; set; }
 
     private string? _lastAppliedKeywordQuery;
 
@@ -696,6 +750,7 @@
     {
         _openMenuId = null;
         _deleteInvoiceId = invoiceId;
+        _deleteIssued = _result.Items.Any(invoice => invoice.Id == invoiceId && invoice.Status == InvoiceStatus.Issued);
         _deleteVisible = true;
     }
 
@@ -717,8 +772,19 @@
         try
         {
             var caller = await CallerProvider.GetCallerAsync();
-            await InvoiceService.DeleteDraftAsync(invoiceId, caller);
-            Toast.Success(L["InvoiceDeleted"]);
+            var item = _result.Items.FirstOrDefault(invoice => invoice.Id == invoiceId);
+            if (item is { Status: InvoiceStatus.Issued })
+            {
+                // Hoá đơn đã gửi khách: xoá mềm để vào thùng rác (chỉ khi khách chưa yêu cầu thanh toán).
+                await InvoiceService.DeleteIssuedAsync(invoiceId, caller);
+                Toast.Success(L["InvoiceDeleted"]);
+            }
+            else
+            {
+                await InvoiceService.DeleteDraftAsync(invoiceId, caller);
+                Toast.Success(L["InvoiceDeleted"]);
+            }
+
             await ReloadAsync();
         }
         catch (Exception ex)

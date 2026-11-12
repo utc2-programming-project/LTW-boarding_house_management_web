@@ -43,6 +43,8 @@ namespace Web.Data
         public DbSet<ContractRenewalRequest> ContractRenewalRequests => Set<ContractRenewalRequest>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+        // Lịch sử Chủ trọ chỉnh sửa hoá đơn đã phát hành (chưa thanh toán): khách thuê thấy lý do.
+        public DbSet<InvoiceRevision> InvoiceRevisions => Set<InvoiceRevision>();
         // VHT-54: yêu cầu thanh toán, minh chứng và audit nghiệp vụ P6.
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<PaymentProof> PaymentProofs => Set<PaymentProof>();

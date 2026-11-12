@@ -434,6 +434,8 @@
   <data name="P5CostThTotal" xml:space="preserve"><value>Room service total</value></data>
   <data name="P5CostThInvoiceStatus" xml:space="preserve"><value>Invoice status</value></data>
   <data name="P5CostThActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="P5CostThPeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="P5CostCreateInvoiceConfirmNote" xml:space="preserve"><value>The invoice will be created as a draft so you can review it before issuing it to the tenant.</value></data>
   <data name="P5CostNoData" xml:space="preserve"><value>No data</value></data>
   <data name="P5CostServiceCount" xml:space="preserve"><value>{0} services</value></data>
   <data name="P5CostInvoiceCreated" xml:space="preserve"><value>Invoice created</value></data>
@@ -468,6 +470,10 @@
   <data name="P5CostRentLabel" xml:space="preserve"><value>Rent</value></data>
   <data name="P5CostTotalLabel" xml:space="preserve"><value>Total</value></data>
   <data name="P5CostCorrectionsTitle" xml:space="preserve"><value>Correction history</value></data>
+  <data name="P5CostInvoiceRevisionsTitle" xml:space="preserve"><value>Invoice revision history</value></data>
+  <data name="P5CostInvoiceRevisionsHint" xml:space="preserve"><value>Reason given by the owner when revising the invoice sent to the tenant.</value></data>
+  <data name="P5CostInvoiceRevisionsCount" xml:space="preserve"><value>{0} revisions</value></data>
+  <data name="P5CostInvoiceRevisionsCountOne" xml:space="preserve"><value>1 revision</value></data>
   <data name="P5CostCorrectionsCount" xml:space="preserve"><value>{0} corrections</value></data>
   <data name="P5CostCorrectionsCountOne" xml:space="preserve"><value>1 correction</value></data>
   <data name="P5CostCorrectionsEmpty" xml:space="preserve"><value>No corrections yet.</value></data>

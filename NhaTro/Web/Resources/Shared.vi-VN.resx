@@ -1349,6 +1349,8 @@
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Dịch vụ &amp; Tiện ích</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Ghi chỉ số điện nước</value></data>
   <data name="P5CostNav" xml:space="preserve"><value>Chỉ số &amp; chi phí</value></data>
+  <data name="ServiceRegistrationsNav" xml:space="preserve"><value>Quản lý đăng ký dịch vụ</value></data>
+  <data name="RegHistoryNav" xml:space="preserve"><value>Lịch sử đăng ký dịch vụ</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Không thể tải dữ liệu. Vui lòng thử lại.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Không thể lưu chỉ số.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Đã chốt kỳ thành công cho phòng {0} vào bộ nhớ tạm (dữ liệu mẫu).</value></data>

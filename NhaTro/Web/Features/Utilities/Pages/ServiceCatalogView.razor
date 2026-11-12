@@ -424,7 +424,7 @@
                         <select id="registration-contract" class="input" @bind="_registrationContractId" disabled="@(_contractOptions.Count <= 1)">
                             @foreach (var contract in _contractOptions)
                             {
-                                <option value="@contract.ContractId">@contract.RoomCode · @contract.PropertyName · @contract.ContractNumber</option>
+                                <option value="@contract.ContractId">@contract.RoomCode · @contract.PropertyName</option>
                             }
                         </select>
                     }

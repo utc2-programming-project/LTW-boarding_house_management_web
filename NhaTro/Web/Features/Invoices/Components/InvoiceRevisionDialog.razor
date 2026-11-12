@@ -1,0 +1,192 @@
+@using Web.Features.Invoices.DTOs
+@using Web.Features.Invoices.Enums
+@using Web.Features.Invoices.Rules
+@inject IStringLocalizer<InvoiceResources> L
+
+@* Chủ trọ chỉnh sửa hoá đơn đã phát hành (khách chưa gửi yêu cầu thanh toán).
+   Bắt buộc nhập lý do; lý do được lưu và hiển thị cho khách thuê. *@
+<div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="invoice-revise-title" @onclick="Cancel">
+    <div class="modal-dialog revise-dialog" @onclick:stopPropagation="true">
+        <header class="modal-header">
+            <div class="modal-header-text">
+                <h2 id="invoice-revise-title">@L["ReviseTitle"]</h2>
+                <p>@L["ReviseSubtitle"]</p>
+            </div>
+            <button type="button" class="icon-action-btn" aria-label="@L["ReviseCancel"]" @onclick="Cancel">
+                <LucideIcon Name="x" />
+            </button>
+        </header>
+
+        <div class="modal-body">
+            @if (_error is not null)
+            {
+                <div class="form-alert" role="alert">
+                    <LucideIcon Name="alert" />
+                    <span>@_error</span>
+                </div>
+            }
+
+            <div class="table-responsive">
+                <table class="revise-table">
+                    <thead>
+                        <tr>
+                            <th>@L["ThItemType"]</th>
+                            <th>@L["ThDescription"]</th>
+                            <th class="text-right">@L["ThQuantity"]</th>
+                            <th class="text-right">@L["ThUnitPrice"]</th>
+                            <th class="text-right">@L["ThAmount"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in _lines)
+                        {
+                            <tr>
+                                <td>@ItemTypeText(line.ItemType)</td>
+                                <td>
+                                    <input type="text" class="input" maxlength="250"
+                                           value="@line.Description"
+                                           @onchange="e => line.Description = e.Value?.ToString() ?? string.Empty" />
+                                </td>
+                                <td class="text-right">
+                                    <input type="number" class="input" step="0.01" min="0.01" style="max-width:110px"
+                                           value="@line.Quantity.ToString("0.##", CultureInfo.InvariantCulture)"
+                                           @onchange="e => line.Quantity = ParseDecimal(e.Value?.ToString())" />
+                                </td>
+                                <td class="text-right">
+                                    <input type="number" class="input" step="1000" min="0" style="max-width:140px"
+                                           value="@line.UnitPrice.ToString("0", CultureInfo.InvariantCulture)"
+                                           @onchange="e => line.UnitPrice = ParseDecimal(e.Value?.ToString())" />
+                                </td>
+                                <td class="text-right tabular-nums">@MoneyFormatter.Format(LineAmount(line))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">@L["SummaryTotal"]</td>
+                            <td class="text-right tabular-nums">@MoneyFormatter.Format(NewTotal)</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <label class="revise-reason-label" for="invoice-revise-reason">
+                @L["ReviseReasonLabel"]
+                <span aria-hidden="true">*</span>
+            </label>
+            <textarea id="invoice-revise-reason" class="input" rows="3" maxlength="1000"
+                      placeholder="@L["ReviseReasonPlaceholder"]"
+                      @onchange="e => _reason = e.Value?.ToString() ?? string.Empty"></textarea>
+            <p class="muted">@L["ReviseReasonHint"]</p>
+        </div>
+
+        <footer class="modal-footer">
+            <button type="button" class="btn btn-secondary" disabled="@Busy" @onclick="Cancel">@L["ReviseCancel"]</button>
+            <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="SaveAsync">
+                @if (Busy)
+                {
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span>@L["ReviseSaving"]</span>
+                }
+                else
+                {
+                    <LucideIcon Name="check" />
+                    <span>@L["ReviseSubmit"]</span>
+                }
+            </button>
+        </footer>
+    </div>
+</div>
+
+@code {
+    private sealed class ReviseLine
+    {
+        public required InvoiceItemType ItemType { get; init; }
+        public required string Description { get; set; }
+        public string? Unit { get; init; }
+        public decimal Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    private List<ReviseLine> _lines = [];
+    private string _reason = string.Empty;
+    private string? _error;
+
+    [Parameter, EditorRequired] public InvoiceDto Invoice { get; set; } = default!;
+    [Parameter, EditorRequired] public PropertyCaller Caller { get; set; } = default!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<ReviseInvoiceRequest> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _lines = Invoice.Items
+            .Select(item => new ReviseLine
+            {
+                ItemType = item.ItemType,
+                Description = item.Description,
+                Unit = item.Unit,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+            })
+            .ToList();
+    }
+
+    private decimal NewTotal => _lines.Sum(LineAmount);
+
+    private static decimal LineAmount(ReviseLine line) =>
+        line.ItemType == InvoiceItemType.Discount
+            ? -InvoiceCalculationRules.CalculateItemAmount(line.Quantity * line.UnitPrice)
+            : InvoiceCalculationRules.CalculateItemAmount(line.Quantity * line.UnitPrice);
+
+    private static decimal ParseDecimal(string? raw) =>
+        decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : 0m;
+
+    private string ItemTypeText(InvoiceItemType type) => type switch
+    {
+        InvoiceItemType.Rent => L["ItemTypeRent"].Value,
+        InvoiceItemType.Electric => L["ItemTypeElectric"].Value,
+        InvoiceItemType.Water => L["ItemTypeWater"].Value,
+        InvoiceItemType.Service => L["ItemTypeService"].Value,
+        InvoiceItemType.Discount => L["ItemTypeDiscount"].Value,
+        _ => type.ToString(),
+    };
+
+    private async Task SaveAsync()
+    {
+        if (Busy) return;
+
+        if (string.IsNullOrWhiteSpace(_reason))
+        {
+            _error = L["ReviseReasonRequired"];
+            return;
+        }
+
+        if (_lines.Count == 0)
+        {
+            _error = L["ReviseItemsRequired"];
+            return;
+        }
+
+        _error = null;
+        var request = new ReviseInvoiceRequest
+        {
+            Reason = _reason.Trim(),
+            Items = _lines
+                .Select(line => new InvoiceItemInputDto
+                {
+                    ItemType = line.ItemType,
+                    Description = line.Description,
+                    Unit = line.Unit,
+                    Quantity = line.Quantity,
+                    UnitPrice = line.UnitPrice,
+                    Amount = null,
+                })
+                .ToArray(),
+        };
+
+        await OnSubmit.InvokeAsync(request);
+    }
+
+    private Task Cancel() => OnCancel.InvokeAsync();
+}

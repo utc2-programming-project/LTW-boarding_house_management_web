@@ -34,7 +34,7 @@ public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppF
         Assert.DoesNotContain("Doanh thu tháng", html);
         Assert.Contains("Hoá đơn chưa thu", html);
         Assert.Contains("Hợp đồng sắp hết hạn", html);
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, "class=\"kpi-grid ").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(html, "class=\"kpi-grid "));
         Assert.DoesNotContain("quick-action\" href=\"/dashboard\"", html);
         Assert.DoesNotContain("Trang mẫu giao diện", html);
         Assert.DoesNotContain("Layout preview", html);

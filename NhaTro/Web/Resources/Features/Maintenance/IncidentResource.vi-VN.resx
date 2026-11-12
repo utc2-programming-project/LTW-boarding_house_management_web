@@ -208,6 +208,9 @@
   <data name="Attachments" xml:space="preserve">
     <value>Hình ảnh đính kèm</value>
   </data>
+  <data name="DragDropPhotos" xml:space="preserve">
+    <value>Kéo thả ảnh vào đây hoặc</value>
+  </data>
   <data name="PhotoHint" xml:space="preserve">
     <value>JPG/JPEG/PNG, tối đa 5 MB mỗi ảnh. Mỗi phiếu có tối đa 3 ảnh báo và 3 ảnh kết quả. Lượt này còn tối đa {0} ảnh, tính cả ảnh đã chọn.</value>
   </data>

@@ -1349,6 +1349,8 @@
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Services &amp; Utilities</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Meter Readings</value></data>
   <data name="P5CostNav" xml:space="preserve"><value>Readings &amp; costs</value></data>
+  <data name="ServiceRegistrationsNav" xml:space="preserve"><value>Service registrations</value></data>
+  <data name="RegHistoryNav" xml:space="preserve"><value>Service registration history</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Could not load data. Please try again.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Failed to save meter reading.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Successfully finalized period for room {0} in temporary memory (mock data).</value></data>
