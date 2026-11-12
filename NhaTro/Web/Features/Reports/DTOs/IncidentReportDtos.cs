@@ -1,0 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+using Web.Common.Models;
+using Web.Features.Maintenance.Enums;
+namespace Web.Features.Reports.DTOs;
+public sealed class IncidentReportFilter { public DateOnly? From { get; set; } public DateOnly? To { get; set; } public int? PropertyId { get; set; } public int? RoomId { get; set; } public IncidentStatus? Status { get; set; } public IncidentCategory? Category { get; set; } public IncidentUrgency? Urgency { get; set; } [Range(1,int.MaxValue)] public int Page { get; set; }=1; [Range(1,100)] public int PageSize { get; set; }=20; public void Normalize(){if(Page<1)Page=1;if(PageSize<1)PageSize=20;else if(PageSize>100)PageSize=100;} }
+public sealed class IncidentReportKpis { public int Total { get; init; } public int New { get; init; } public int InProgress { get; init; } public int Completed { get; init; } public int Urgent { get; init; } }
+public sealed class IncidentReportItem { public required int IncidentId { get; init; } public required int RoomId { get; init; } public required string RoomCode { get; init; } public required int PropertyId { get; init; } public required string PropertyName { get; init; } public required string Title { get; init; } public required IncidentCategory Category { get; init; } public required IncidentUrgency Urgency { get; init; } public required IncidentStatus Status { get; init; } public required DateTime CreatedAtUtc { get; init; } public decimal? RepairCost { get; init; } }
+public sealed class IncidentReportResult { public IncidentReportKpis Kpis { get; init; }=new(); public PagedResult<IncidentReportItem> Incidents { get; init; }=new(); }

@@ -1,0 +1,1 @@
+using Web.Features.Properties; using Web.Features.Reports.DTOs; namespace Web.Features.Reports; public interface IIncidentReportService { Task<IncidentReportResult> GetAsync(IncidentReportFilter filter, PropertyCaller caller, CancellationToken ct=default); }
