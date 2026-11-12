@@ -44,9 +44,10 @@ public sealed class HistoryRetentionTests(SqlServerFixture fixture)
             await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Properties WHERE Id = {propertyId}");
         }
 
-        await using var verify = world.NewDb();
-        Assert.True(await verify.Set<AuditLogEntry>().AsNoTracking()
-            .AnyAsync(entry => entry.PropertyId == propertyId && entry.Action == "PropertyCreated"));
+        // VHT-104: nhật ký ghi ra file theo chủ trọ, sống độc lập với dòng Property đã xóa.
+        var auditEntries = await fixture.AuditStore.ReadAsync(
+            AuditLogCategory.Business, PermissionMatrixWorld.OwnerAId);
+        Assert.Contains(auditEntries, entry => entry.PropertyId == propertyId && entry.Action == "PropertyCreated");
     }
 
     [SqlServerFact]

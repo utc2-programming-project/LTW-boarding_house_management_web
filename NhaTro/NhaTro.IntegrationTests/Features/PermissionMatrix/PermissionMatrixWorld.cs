@@ -202,7 +202,7 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
         TogglePolicy,
         NewApprovals());
 
-    public AuditLogService NewAuditLogs() => new(SharedDb);
+    public AuditLogService NewAuditLogs() => new(_fixture.AuditStore, SharedDb);
 
     public UtilityReadingService NewUtilityReadings() => new(
         SharedDb, TimeProvider.System,

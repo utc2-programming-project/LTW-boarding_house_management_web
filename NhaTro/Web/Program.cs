@@ -37,6 +37,7 @@ using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Email;
 using Web.Infrastructure.Addresses;
+using Web.Infrastructure.Auditing;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -145,10 +146,23 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // ── 3. EF Core ─────────────────────────────────────────────────────────────
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+
+// D16/VHT-104: nhật ký thao tác lưu file JSONL (một file hệ thống + một file mỗi chủ trọ), không ghi DB.
+var auditOptions = builder.Configuration.GetSection(AuditOptions.SectionName).Get<AuditOptions>() ?? new AuditOptions();
+var auditRoot = AuditLogFileStore.ResolveRoot(
+    auditOptions.Directory,
+    builder.Configuration["Logging:Directory"],
+    builder.Environment.ContentRootPath);
+builder.Services.AddSingleton(new AuditLogFileStore(auditRoot, auditOptions.RetentionDays));
+builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection(AuditOptions.SectionName));
+builder.Services.AddSingleton<AuditLogSaveInterceptor>();
+
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+    options.UseSqlServer(connectionString)
+        .AddInterceptors(serviceProvider.GetRequiredService<AuditLogSaveInterceptor>()));
 builder.Services.AddDbContextFactory<ApplicationDbContext>(
-    options => options.UseSqlServer(connectionString),
+    (serviceProvider, options) => options.UseSqlServer(connectionString)
+        .AddInterceptors(serviceProvider.GetRequiredService<AuditLogSaveInterceptor>()),
     ServiceLifetime.Scoped);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -513,8 +527,10 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingServic
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
-// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
+// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ (lưu file, VHT-104).
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
+builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogPageService>();
+builder.Services.AddHostedService<AuditLogCleanupService>();
 // P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
@@ -695,6 +711,14 @@ if (seedDemo || clearDemo)
     var succeeded = await DemoDataSeeder.RunAsync(
         app.Services, app.Environment, app.Configuration, app.Logger, clearDemo);
     Environment.ExitCode = succeeded ? 0 : 1;
+    return;
+}
+
+// VHT-104: DB demo đã có dữ liệu thì không seed lại toàn bộ; cờ này chỉ đổ nhật ký mẫu ra file.
+if (args.Any(a => string.Equals(a, "--seed-audit-demo", StringComparison.OrdinalIgnoreCase)))
+{
+    var seeded = await AuditDemoSeeder.RunAsync(app.Services, app.Environment, app.Logger);
+    Environment.ExitCode = seeded ? 0 : 1;
     return;
 }
 

@@ -59,6 +59,7 @@ public static class DemoDataSeeder
         await using var scope = services.CreateAsyncScope();
         var provider = scope.ServiceProvider;
         var db = provider.GetRequiredService<ApplicationDbContext>();
+        var auditStore = provider.GetRequiredService<Web.Infrastructure.Auditing.AuditLogFileStore>();
         var databaseName = db.Database.GetDbConnection().Database;
 
         if (!environment.IsDevelopment())
@@ -106,9 +107,13 @@ public static class DemoDataSeeder
         }
 
         var marker = $"\"seedName\":\"{document.SeedName}\"";
-        if (await db.AuditLogEntries.AnyAsync(
-                entry => entry.Action == CompletedAction && entry.Metadata != null && entry.Metadata.Contains(document.SeedName),
-                cancellationToken))
+        // VHT-104: dấu hoàn tất seed nằm trong file nhật ký, không còn ở bảng AuditLogEntries.
+        var alreadySeeded = (await auditStore.ReadAsync(
+                Web.Features.Audit.Entities.AuditLogCategory.Account, ownerId: null, cancellationToken))
+            .Any(entry => entry.Action == CompletedAction
+                && entry.Metadata is not null
+                && entry.Metadata.Contains(document.SeedName, StringComparison.Ordinal));
+        if (alreadySeeded)
         {
             logger.LogInformation("DemoSeed: bộ '{Seed}' đã nạp trước đó; bỏ qua.", document.SeedName);
             return true;
@@ -185,24 +190,6 @@ public static class DemoDataSeeder
             await InsertIdentityAsync(db, "AppNotifications", document.Notifications, cancellationToken);
             await InsertIdentityAsync(db, "FileAccessAuditLogs", document.FileAccessLogs, cancellationToken);
 
-            document.AuditLogs.Add(new AuditLogEntry
-            {
-                // ID tường minh: IDENTITY_INSERT đang bật cho bảng này, bỏ trống Id sẽ lỗi 545.
-                Id = document.AuditLogs.Count == 0 ? 1 : document.AuditLogs.Max(item => item.Id) + 1,
-                Category = AuditLogCategory.Account,
-                Action = CompletedAction,
-                ActorUserId = null,
-                OccurredAt = new DateTimeOffset(document.SeedNow, TimeSpan.FromHours(7)),
-                Metadata = JsonSerializer.Serialize(new
-                {
-                    seedName = document.SeedName,
-                    schemaVersion = document.SchemaVersion,
-                    seedNow = document.SeedNow,
-                    marker,
-                }),
-            });
-            await InsertIdentityAsync(db, "AuditLogEntries", document.AuditLogs, cancellationToken);
-
             await transaction.CommitAsync(cancellationToken);
         }
         catch
@@ -210,6 +197,33 @@ public static class DemoDataSeeder
             await transaction.RollbackAsync(cancellationToken);
             DeleteWrittenFiles(writtenFiles, logger);
             throw;
+        }
+
+        // VHT-104: nhật ký demo ghi ra file sau khi DB commit; dùng thời điểm hiện tại để
+        // không bị hạn lưu 3 ngày dọn ngay khi vừa seed.
+        var audit = provider.GetRequiredService<Web.Features.Audit.Services.AuditLogService>();
+        await audit.RecordAsync(
+            Web.Features.Audit.Entities.AuditLogCategory.Account,
+            CompletedAction,
+            metadata: JsonSerializer.Serialize(new
+            {
+                seedName = document.SeedName,
+                schemaVersion = document.SchemaVersion,
+                seedNow = document.SeedNow,
+                marker,
+            }),
+            cancellationToken: cancellationToken);
+
+        foreach (var log in document.AuditLogs)
+        {
+            await audit.RecordAsync(
+                log.Category,
+                log.Action,
+                log.ActorUserId,
+                log.PropertyId,
+                log.Metadata,
+                DateTimeOffset.UtcNow,
+                cancellationToken);
         }
 
         LogSummary(document, logger);
@@ -252,7 +266,6 @@ public static class DemoDataSeeder
             ("PendingRoomAssignments", () => AnyAsync<PendingRoomAssignment>(db, cancellationToken)),
             ("AppNotifications", () => AnyAsync<AppNotification>(db, cancellationToken)),
             ("FileAccessAuditLogs", () => AnyAsync<FileAccessAuditLog>(db, cancellationToken)),
-            ("AuditLogEntries", () => AnyAsync<AuditLogEntry>(db, cancellationToken)),
         ];
 
         var occupied = new List<string>();

@@ -60,7 +60,10 @@
 }
 
 @code {
+    // Dữ liệu demo trên máy dev có thể dùng @demo.vn (bộ seed chuẩn) hoặc @demo.local
+    // (bộ seed cũ); nhận cả hai để panel đăng nhập nhanh không bị rỗng.
     private const string DemoEmailSuffix = "@demo.vn";
+    private const string LegacyDemoEmailSuffix = "@demo.local";
 
     private sealed record Entry(string Label, string Email, string Password)
     {
@@ -131,7 +134,8 @@
         await using var db = await DbFactory.CreateDbContextAsync();
 
         var demoUsers = await db.Users
-            .Where(user => user.Email != null && user.Email.EndsWith(DemoEmailSuffix))
+            .Where(user => user.Email != null
+                && (user.Email.EndsWith(DemoEmailSuffix) || user.Email.EndsWith(LegacyDemoEmailSuffix)))
             .Select(user => new { user.Id, user.Email, user.FullName })
             .ToListAsync();
         if (demoUsers.Count == 0)
@@ -142,7 +146,8 @@
         var roleRows = await (from userRole in db.UserRoles
                               join role in db.Roles on userRole.RoleId equals role.Id
                               join user in db.Users on userRole.UserId equals user.Id
-                              where user.Email != null && user.Email.EndsWith(DemoEmailSuffix)
+                              where user.Email != null
+                                  && (user.Email.EndsWith(DemoEmailSuffix) || user.Email.EndsWith(LegacyDemoEmailSuffix))
                               select new { user.Id, Role = role.Name })
                             .ToListAsync();
         var rolesByUser = roleRows

@@ -1,0 +1,20 @@
+.audit-page { display: flex; flex-direction: column; gap: 24px; }
+
+/* Bảng 4 cột cho Admin (thời điểm, người thao tác, hành động, chi tiết). */
+.audit-page ::deep .table-card table { table-layout: fixed; min-width: 860px; }
+.audit-page ::deep .table-card thead th:nth-child(1) { width: 17%; }
+.audit-page ::deep .table-card thead th:nth-child(2) { width: 17%; }
+.audit-page ::deep .table-card thead th:nth-child(3) { width: 18%; }
+.audit-page ::deep .table-card thead th:nth-child(4) { width: 48%; }
+.audit-page ::deep .table-card tbody td { vertical-align: top; overflow-wrap: anywhere; }
+
+/* Chủ trọ có thêm cột tòa nhà: 5 cột chia lại. */
+.audit-page ::deep .table-card:has(thead th:nth-child(5)) thead th:nth-child(1) { width: 16%; }
+.audit-page ::deep .table-card:has(thead th:nth-child(5)) thead th:nth-child(2) { width: 16%; }
+.audit-page ::deep .table-card:has(thead th:nth-child(5)) thead th:nth-child(3) { width: 16%; }
+.audit-page ::deep .table-card:has(thead th:nth-child(5)) thead th:nth-child(4) { width: 14%; }
+.audit-page ::deep .table-card:has(thead th:nth-child(5)) thead th:nth-child(5) { width: 38%; }
+
+@media (max-width: 767.98px) {
+    .audit-page { gap: 16px; }
+}
