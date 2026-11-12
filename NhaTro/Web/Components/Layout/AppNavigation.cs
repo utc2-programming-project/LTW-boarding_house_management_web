@@ -23,6 +23,7 @@ public static class AppNavigation
             new("Contracts", "file", "ChuTro,QuanLy,KhachThue", "/contracts",
                 Children:
                 [
+                    new("ContractTrashTitle", "", "ChuTro", "/contracts/trash", ShowInSidebar: false),
                     new("ContractCreateNav", "", "ChuTro,QuanLy", "/contracts/create", ShowInSidebar: false),
                     new("ContractRenewalsNav", "", "ChuTro,QuanLy", "/contracts/renewals", ShowInSidebar: false),
                 ]),
@@ -33,7 +34,11 @@ public static class AppNavigation
             new("Services", "settings", "ChuTro,QuanLy,KhachThue", "/services",
                 Children:
                 [
+                    new("ServiceTrashTitle", "", "ChuTro", "/services/trash", ShowInSidebar: false),
+                    new("ServiceRegistrationTrashTitle", "", "ChuTro", "/services/registrations/trash", ShowInSidebar: false),
                     new("PricingNav", "", "ChuTro,QuanLy,KhachThue", "/services/prices", ShowInSidebar: false),
+                    new("ServiceRegistrationsNav", "", "ChuTro,QuanLy", "/service-registrations", ShowInSidebar: false),
+                    new("RegHistoryNav", "", "KhachThue", "/my/service-registrations", ShowInSidebar: false),
                     new("MeterReadingNavReadings", "", "ChuTro,QuanLy,KhachThue", "/services/readings",
                         ShowInSidebar: false, Aliases: ["/meter-readings", "/services/meter-reading"],
                         Children:
@@ -42,13 +47,15 @@ public static class AppNavigation
                                 ShowInSidebar: false),
                         ]),
                 ]),
-            new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices"),
+            new("Invoices", "receipt", "ChuTro,QuanLy", "/invoices",
+                Children: [new("InvoiceTrashTitle", "", "ChuTro", "/invoices/trash", ShowInSidebar: false)]),
             new("PaymentRequests", "check", "ChuTro,QuanLy", "/payment-requests"),
             new("MyInvoices", "receipt", "KhachThue", "/my/invoices", Aliases: ["/my-invoices"]),
         ]),
         new("NavGroupOperations", "ChuTro,QuanLy,KhachThue",
         [
-            new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents"),
+            new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents",
+                Children: [new("TrashTitle", "", "ChuTro", "/incidents/trash", ShowInSidebar: false)]),
             new("ReportIncident", "wrench", "KhachThue", "/incidents"),
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
             new("Approvals", "check", "ChuTro", "/approvals"),
@@ -59,11 +66,13 @@ public static class AppNavigation
             // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
             new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
             new("OwnerAdmin", "building", "Admin", "/admin/owners"),
+            new("DocumentTrashTitle", "", "ChuTro,QuanLy", "/documents/trash", ShowInSidebar: false),
             new("ManagerSwitches", "settings", "ChuTro", "/admin/manager-switches", Aliases: ["/manager-switches"]),
         ]),
         new("NavGroupPersonal", "KhachThue",
         [
-            new("MyDocuments", "file-text", "KhachThue", "/my/documents", Aliases: ["/documents"]),
+            new("MyDocuments", "file-text", "KhachThue", "/my/documents", Aliases: ["/documents"],
+                Children: [new("DocumentTrashTitle", "", "KhachThue", "/documents/trash", ShowInSidebar: false)]),
         ]),
     ];
 

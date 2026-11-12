@@ -22,6 +22,9 @@ public static class AccountErrorCodes
     public const string InvalidEmail = nameof(InvalidEmail);
     public const string InvalidPhone = nameof(InvalidPhone);
 
+    /// <summary>PLAN-028: thong tin tai khoan nhan tien khong hop le (ngan hang/so TK/ten TK).</summary>
+    public const string InvalidBankAccount = nameof(InvalidBankAccount);
+
     // VHT-95: vong doi tai khoan.
     /// <summary>Tai khoan nam ngoai pham vi du lieu nguoi goi duoc thao tac.</summary>
     public const string OutOfScope = nameof(OutOfScope);
@@ -57,6 +60,7 @@ public static class AccountErrorCodes
         Unauthorized => "ErrorForbidden",
         UserNotFound => "ErrorUserNotFound",
         InvalidPhone => "ErrorInvalidPhone",
+        InvalidBankAccount => "ErrorInvalidBankAccount",
         DuplicateEmail => "ErrorDuplicateEmail",
         WeakPassword => "ErrorWeakPassword",
         InvalidEmail => "ErrorInvalidEmail",

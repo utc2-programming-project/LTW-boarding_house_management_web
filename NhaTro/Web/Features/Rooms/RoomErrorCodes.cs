@@ -15,6 +15,8 @@ public static class RoomErrorCodes
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string RoomOperationFailed = nameof(RoomOperationFailed);
     public const string InactiveRoomStatus = nameof(InactiveRoomStatus);
+    public const string RoomHasDependencies = nameof(RoomHasDependencies);
+    public const string NotInTrash = nameof(NotInTrash);
 }
 
 /// <summary>Thông báo lỗi tiếng Việt hiển thị trên UI.</summary>
@@ -35,4 +37,6 @@ public static class RoomErrorMessages
     public const string InvalidFloor = "Tầng không hợp lệ";
     public const string InvalidStatus = "Trạng thái phòng không hợp lệ";
     public const string InactiveRoomStatus = "Phòng ngừng hoạt động phải ở trạng thái Còn trống";
+    public const string RoomHasDependencies = "Phòng còn hợp đồng, sự cố hoặc kỳ ghi chỉ số nên không thể xóa vĩnh viễn";
+    public const string NotInTrash = "Phòng không còn trong thùng rác";
 }

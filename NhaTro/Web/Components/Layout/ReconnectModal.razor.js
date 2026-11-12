@@ -8,6 +8,15 @@ retryButton.addEventListener("click", retry);
 const resumeButton = document.getElementById("components-resume-button");
 resumeButton.addEventListener("click", resume);
 
+let lastReconnectedAt = 0;
+
+function notifyReconnected() {
+    const now = Date.now();
+    if (now - lastReconnectedAt < 1000) return;
+    lastReconnectedAt = now;
+    window.dispatchEvent(new CustomEvent("app:reconnected"));
+}
+
 function handleReconnectStateChanged(event) {
     if (event.detail.state === "show") {
         const warning = document.getElementById("components-reconnect-unsaved");
@@ -15,8 +24,10 @@ function handleReconnectStateChanged(event) {
         if (!reconnectModal.open) {
             reconnectModal.showModal();
         }
+        window.dispatchEvent(new CustomEvent("app:connection-lost"));
     } else if (event.detail.state === "hide") {
         reconnectModal.close();
+        notifyReconnected();
     } else if (event.detail.state === "failed") {
         document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
     } else if (event.detail.state === "rejected") {
@@ -41,6 +52,7 @@ async function retry() {
                 location.reload();
             } else {
                 reconnectModal.close();
+                notifyReconnected();
             }
         }
     } catch (err) {
@@ -54,6 +66,8 @@ async function resume() {
         const successful = await Blazor.resumeCircuit();
         if (!successful) {
             location.reload();
+        } else {
+            notifyReconnected();
         }
     } catch {
         reconnectModal.classList.replace("components-reconnect-paused", "components-reconnect-resume-failed");

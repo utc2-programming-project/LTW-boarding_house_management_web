@@ -15,6 +15,12 @@ public sealed class RoomListItem
     public RoomStatus Status { get; set; }
     public bool IsActive { get; set; }
 
-    /// <summary>Phòng đang có yêu cầu Chờ duyệt (SW-01/02/03).</summary>
-    public bool HasPendingApproval { get; set; }
+    /// <summary>
+    /// Yêu cầu Chờ duyệt (SW-01/02/03) đang gắn với phòng; null khi phòng không chờ duyệt.
+    /// Có chi tiết để tooltip trên danh sách nói rõ ai gửi, sửa gì, lúc nào.
+    /// </summary>
+    public RoomPendingApproval? PendingApproval { get; set; }
+
+    /// <summary>Dạng rút gọn cho nơi chỉ cần biết có/không; luôn khớp với <see cref="PendingApproval"/>.</summary>
+    public bool HasPendingApproval => PendingApproval is not null;
 }

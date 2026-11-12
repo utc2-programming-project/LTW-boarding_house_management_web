@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
 using Web.Features.Approvals;
+using Web.Features.Audit.Entities;
+using Web.Features.Storage.Entities;
+using Web.Features.Storage.Enums;
+using Web.Infrastructure.Storage;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
@@ -28,7 +32,8 @@ public sealed class RoomService(
     TimeProvider clock,
     IRoomChangePolicy changePolicy,
     IRoomUsageChecker usageChecker,
-    IManagerApprovalService? approvals = null) : IRoomService
+    IManagerApprovalService? approvals = null,
+    IFileStorage? fileStorage = null) : IRoomService
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -84,12 +89,12 @@ public sealed class RoomService(
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
             .ToListAsync(ct);
 
-        var pendingIds = await PendingApprovalRoomIdsAsync(db, rows.Select(row => row.Room.Id), ct);
+        var pendingApprovals = await PendingApprovalByRoomAsync(db, rows.Select(row => row.Room.Id), ct);
 
         return new PagedResult<RoomListItem>
         {
             Items = rows.Select(x => RoomMapping.ToListItem(
-                x.Room, x.PropertyName, pendingIds.Contains(x.Room.Id))).ToList(),
+                x.Room, x.PropertyName, pendingApprovals.GetValueOrDefault(x.Room.Id))).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
             TotalCount = total,
@@ -372,6 +377,112 @@ public sealed class RoomService(
         return RoomResult.Success(RoomMapping.ToDetail(entity, propertyName));
     }
 
+    public async Task<RoomResult> PurgeAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanManage(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await ScopeRooms(db, caller, includeDeleted: true)
+            .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted, ct);
+        if (entity is null)
+        {
+            return RoomResult.Failure(RoomErrorCodes.NotInTrash, RoomErrorMessages.NotInTrash);
+        }
+
+        var inUse = await db.Contracts.IgnoreQueryFilters().AnyAsync(c => c.RoomId == id, ct)
+            || await db.MaintenanceIncidents.IgnoreQueryFilters().AnyAsync(i => i.RoomId == id, ct)
+            || await db.UtilityReadingPeriods.AnyAsync(p => p.RoomId == id, ct)
+            || await db.UtilityReadings.AnyAsync(r => r.RoomId == id, ct);
+        if (inUse)
+        {
+            return RoomResult.Failure(
+                RoomErrorCodes.RoomHasDependencies, RoomErrorMessages.RoomHasDependencies);
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var assignments = await db.PendingRoomAssignments
+                .Where(item => item.RoomId == id)
+                .ToListAsync(ct);
+            db.PendingRoomAssignments.RemoveRange(assignments);
+
+            var relatedId = id.ToString(CultureInfo.InvariantCulture);
+            var files = await db.StoredFiles
+                .IgnoreQueryFilters()
+                .Where(file => file.RelatedEntityType == RelatedEntityType.Room
+                    && file.RelatedEntityId == relatedId)
+                .ToListAsync(ct);
+            db.StoredFiles.RemoveRange(files);
+            db.Rooms.Remove(entity);
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "room.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = entity.PropertyId,
+                Metadata = $"Room {entity.Code}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+
+            foreach (var file in files)
+            {
+                TryDeletePhysical(file.RelativePath);
+            }
+
+            return RoomResult.Success();
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return RoomResult.Failure(
+                RoomErrorCodes.RoomHasDependencies, RoomErrorMessages.RoomHasDependencies);
+        }
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanManage(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var ids = await ScopeRooms(db, caller, includeDeleted: true)
+            .Where(r => r.IsDeleted)
+            .Select(r => r.Id)
+            .ToListAsync(ct);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            var result = await PurgeAsync(id, caller, ct);
+            if (result.Succeeded) purged++;
+            else skipped++;
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private void TryDeletePhysical(string relativePath)
+    {
+        if (fileStorage is null)
+        {
+            return;
+        }
+
+        try
+        {
+            fileStorage.Delete(relativePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Tệp đã mất hoặc không xóa được: metadata vẫn bị xóa để không giữ tham chiếu mồ côi.
+        }
+    }
+
     public async Task<List<RoomOption>> SearchForPickerAsync(
         RoomOptionRequest request, PropertyCaller caller, CancellationToken ct = default)
     {
@@ -501,8 +612,9 @@ public sealed class RoomService(
             r => r.PropertyId == propertyId && r.Code == code && (excludeRoomId == null || r.Id != excludeRoomId),
             ct);
 
-    // Hiển thị badge "Chờ duyệt" trên danh sách: chỉ xét yêu cầu còn hiệu lực.
-    private static async Task<HashSet<int>> PendingApprovalRoomIdsAsync(
+    // Badge "Chờ duyệt" trên danh sách: chỉ xét yêu cầu còn hiệu lực, kèm người gửi
+    // + loại thay đổi + thời điểm để tooltip giải thích được ngay tại dòng.
+    private static async Task<Dictionary<int, RoomPendingApproval>> PendingApprovalByRoomAsync(
         ApplicationDbContext db, IEnumerable<int> roomIds, CancellationToken ct)
     {
         var keys = roomIds.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
@@ -511,18 +623,49 @@ public sealed class RoomService(
             return [];
         }
 
-        var pending = await db.ManagerApprovalRequests.AsNoTracking()
+        var requests = await db.ManagerApprovalRequests.AsNoTracking()
             .Where(request => request.Status == ApprovalRequestStatus.Pending
                 && request.TargetType == ApprovalTargetType.Room
                 && keys.Contains(request.TargetKey))
-            .Select(request => request.TargetKey)
-            .Distinct()
+            .Select(request => new
+            {
+                request.Id,
+                request.TargetKey,
+                request.OperationCode,
+                request.RequestedAt,
+                request.RequestedByUserId,
+            })
             .ToListAsync(ct);
 
-        return pending
-            .Select(key => int.TryParse(key, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : 0)
-            .Where(id => id > 0)
-            .ToHashSet();
+        if (requests.Count == 0)
+        {
+            return [];
+        }
+
+        var requesterIds = requests.Select(request => request.RequestedByUserId).Distinct().ToList();
+        var requesterNames = await db.Users.AsNoTracking()
+            .Where(user => requesterIds.Contains(user.Id))
+            .Select(user => new { user.Id, user.FullName })
+            .ToDictionaryAsync(user => user.Id, user => user.FullName, ct);
+
+        var result = new Dictionary<int, RoomPendingApproval>();
+        // Duyệt mới nhất trước: mỗi phòng chỉ giữ một yêu cầu để badge khớp hàng đợi.
+        foreach (var request in requests.OrderByDescending(item => item.RequestedAt))
+        {
+            if (!int.TryParse(request.TargetKey, NumberStyles.None, CultureInfo.InvariantCulture, out var roomId)
+                || roomId <= 0)
+            {
+                continue;
+            }
+
+            result[roomId] = new RoomPendingApproval(
+                request.Id,
+                request.OperationCode,
+                request.RequestedAt,
+                requesterNames.GetValueOrDefault(request.RequestedByUserId));
+        }
+
+        return result;
     }
 
     private static Task<string> PropertyNameAsync(ApplicationDbContext db, int propertyId, CancellationToken ct) =>

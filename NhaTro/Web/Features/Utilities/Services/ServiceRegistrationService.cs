@@ -537,7 +537,9 @@ public sealed class ServiceRegistrationService(
                 cancellationToken);
         if (registration is not null)
         {
-            db.ContractServiceRegistrations.Remove(registration);
+            registration.IsDeleted = true;
+            registration.DeletedAt = DateTime.UtcNow;
+            registration.DeletedBy = caller.UserId;
         }
 
         await db.SaveChangesAsync(cancellationToken);

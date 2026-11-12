@@ -173,7 +173,7 @@
         _editContext.OnValidationRequested += (_, _) => _messages.Clear();
         _columns =
         [
-            new() { Key = "code", Title = "Mã phòng", Value = r => r.Code, Sortable = true, Filterable = true },
+            new() { Key = "code", Title = "Mã phòng", Value = r => r.Code, Sortable = true },
             new() { Key = "status", Title = "Trạng thái", Template = _statusCell, Sortable = true },
             new() { Key = "price", Title = "Giá thuê", Value = r => MoneyFormatter.Format(r.Price), IsNumeric = true, Sortable = true },
             new() { Key = "updated", Title = "Cập nhật", Value = r => DateFormatter.Format(r.Updated), Sortable = true },
@@ -186,11 +186,6 @@
         await Task.Delay(400); // để thấy trạng thái đang tải
 
         IEnumerable<DemoRoom> query = _rooms;
-
-        if (request.Filters.TryGetValue("code", out var code))
-        {
-            query = query.Where(r => r.Code.Contains(code, StringComparison.OrdinalIgnoreCase));
-        }
 
         if (request.SortKey is not null)
         {

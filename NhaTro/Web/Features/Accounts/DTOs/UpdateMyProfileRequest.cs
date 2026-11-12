@@ -11,4 +11,11 @@ public sealed class UpdateMyProfileRequest
 
     /// <summary>So dien thoai Viet Nam 10 chu so (dac ta VHT-8).</summary>
     public string? PhoneNumber { get; set; }
+
+    // PLAN-028: tai khoan nhan tien. Gui ca 3 rong = xoa cau hinh; gui thieu 1 trong 3 = loi.
+    public string? BankCode { get; set; }
+
+    public string? BankAccountNumber { get; set; }
+
+    public string? BankAccountName { get; set; }
 }

@@ -40,6 +40,12 @@ public sealed class RoomPageService(
     public async Task<RoomResult> RestoreAsync(int id, CancellationToken ct = default) =>
         await rooms.RestoreAsync(id, await callerProvider.GetCallerAsync(), ct);
 
+    public async Task<RoomResult> PurgeAsync(int id, CancellationToken ct = default) =>
+        await rooms.PurgeAsync(id, await callerProvider.GetCallerAsync(), ct);
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(CancellationToken ct = default) =>
+        await rooms.PurgeAllAsync(await callerProvider.GetCallerAsync(), ct);
+
     public async Task<IReadOnlyList<PropertyListItem>> GetPropertyOptionsAsync(CancellationToken ct = default)
     {
         const int pageSize = 100;

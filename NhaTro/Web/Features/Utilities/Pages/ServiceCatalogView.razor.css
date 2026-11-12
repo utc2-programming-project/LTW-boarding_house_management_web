@@ -1,9 +1,3 @@
-.service-catalog-page {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
 .sample-data-note {
     display: flex;
     align-items: center;
@@ -350,23 +344,6 @@
     height: 16px;
 }
 
-/* Table Footer: đồng bộ kiểu chân bảng với trang Hóa đơn. */
-.table-footer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    color: var(--text-muted);
-    font-size: .8125rem;
-}
-
-.pager {
-    display: flex;
-    gap: var(--space-2);
-}
-
 /* Empty State */
 .empty-state-box {
     display: flex;
@@ -482,17 +459,6 @@
     margin: 4px 0 0;
     font-size: 14px;
     line-height: 22px;
-}
-
-.table-card {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.table-responsive {
-    overflow-x: auto;
 }
 
 .registrations-table {
@@ -694,6 +660,21 @@
     font-size: 14px;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* <select> dùng appearance: base-select của theme. Giữ mũi tên trong khung khi
+   nhãn dài: cho phép co lại và cắt chữ thay vì đẩy ::picker-icon ra ngoài. */
+.form-field select.input {
+    min-width: 0;
+    max-width: 100%;
+    /* Theme đặt white-space: nowrap cho select; nhãn dài làm ::picker-icon
+       (mũi tên) tràn ra ngoài khung. Cho phép xuống dòng để mũi tên nằm trong khung. */
+    white-space: normal;
+}
+
+.form-field select.input::picker-icon {
+    flex: 0 0 auto;
+    margin-inline-start: 8px;
 }
 
 .form-field .input.is-invalid {

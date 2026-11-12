@@ -113,6 +113,13 @@ public sealed class TenantPageService(
         int id, string rowVersion, CancellationToken ct = default) =>
         CallAsync(caller => tenants.RestoreAsync(id, rowVersion, caller, ct));
 
+    public Task<TenantResult> PurgeAsync(
+        int id, string rowVersion, CancellationToken ct = default) =>
+        CallAsync(caller => tenants.PurgeAsync(id, rowVersion, caller, ct));
+
+    public async Task<Web.Common.Models.TrashPurgeSummary> PurgeAllAsync(CancellationToken ct = default) =>
+        await tenants.PurgeAllAsync(await GetCallerAsync(), ct);
+
     public async Task<Web.Common.Models.PagedResult<TenantTrashItemDto>> ListTrashAsync(
         TenantTrashFilterRequest filter, CancellationToken ct = default)
     {

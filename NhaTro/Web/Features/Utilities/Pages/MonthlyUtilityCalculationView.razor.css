@@ -4,54 +4,6 @@
     gap: var(--space-5, 20px);
 }
 
-.page-heading {
-    display: flex;
-    flex-direction: column;
-    /* theme.css đặt align-items: flex-start cho .page-heading; kế thừa sẽ khiến
-       .page-heading-row co theo nội dung và nút hành động dính sát tiêu đề. */
-    align-items: stretch;
-    gap: 0;
-}
-
-.page-heading-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4, 16px);
-    width: 100%;
-}
-
-.page-heading-row .header-actions {
-    margin-left: auto;
-}
-
-.heading-copy {
-    min-width: 0;
-}
-
-.page-title {
-    margin: 8px 0 0;
-    font-size: 28px;
-    line-height: 36px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-
-.page-subtitle {
-    margin: var(--space-1, 4px) 0 0;
-    color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 22px;
-}
-
-.header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2, 8px);
-}
-
 /* Stats */
 .stats-grid {
     display: grid;
@@ -87,75 +39,11 @@
     color: var(--primary, #4F46E5);
 }
 
-/* Filters */
-.filters-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3, 12px);
-    padding: var(--space-4, 16px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card, 12px);
-    background: var(--surface);
-}
-
-.filters-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--space-3, 12px);
-}
-
-.filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1, 4px);
-    min-width: 140px;
-    color: var(--text-secondary);
-    font-size: .8125rem;
-    font-weight: 500;
-}
-
-.filter-field.wide {
-    flex: 1 1 220px;
-}
-
-.filter-field .input {
-    width: 100%;
-}
-
-.filter-check {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2, 8px);
-    min-height: 40px;
-    color: var(--text-secondary);
-    font-size: .8125rem;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.filter-check input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary, #4F46E5);
-    cursor: pointer;
-}
-
-.reset-button {
-    margin-left: auto;
-}
-
-.period-error {
-    margin: 0;
-    color: var(--error-text, #B91C1C);
-    font-size: .8125rem;
-    font-weight: 600;
-}
-
+/* Filters dùng .filter-bar chung (wwwroot/css/filter-bar.css). */
 .formula-hint {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-1);
     margin: 0;
     color: var(--text-muted);
     font-size: .75rem;
@@ -349,6 +237,13 @@
     gap: 6px;
 }
 
+/* Cột thao tác dùng menu 3 chấm (p2-row-menu) đồng bộ các trang danh sách khác. */
+.cell-actions .p2-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
 .icon-btn {
     display: inline-flex;
     align-items: center;
@@ -529,6 +424,30 @@
     background: var(--surface);
     box-shadow: var(--shadow-popover);
     overflow: hidden;
+    animation: modal-in 200ms var(--ease);
+}
+
+/* Modal xác nhận lập hoá đơn: hộp thoại gọn, đồng bộ với các form khác. */
+.invoice-create-dialog {
+    max-width: 520px;
+    background: var(--surface);
+    border-radius: var(--radius-dialog, 16px);
+    box-shadow: var(--shadow-dialog);
+}
+
+.invoice-create-dialog .modal-body {
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.invoice-create-dialog .modal-footer {
+    padding: 12px 20px 16px;
+    background: var(--surface-subtle);
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: scale(.98); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .detail-dialog {
@@ -660,6 +579,58 @@
     font-size: 1rem;
 }
 
+/* Lịch sử Chủ trọ chỉnh sửa hoá đơn (hiển thị trong panel chi tiết phòng). */
+.invoice-revision-section {
+    padding: 16px;
+    border: 1px solid var(--warning-border, #FDE68A);
+    border-radius: 12px;
+    background: var(--warning-bg, #FFFBEB);
+}
+
+.invoice-revision-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.invoice-revision-item {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.invoice-revision-reason {
+    font-size: .875rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.invoice-revision-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: .75rem;
+    color: var(--text-secondary);
+}
+
+.invoice-revision-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.invoice-revision-amount .lucide-icon {
+    width: 14px;
+    height: 14px;
+}
+
 .detail-section {
     display: flex;
     flex-direction: column;
@@ -789,36 +760,8 @@
 }
 
 @media (max-width: 767px) {
-    .page-heading-row {
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .header-actions {
-        width: 100%;
-    }
-
-    .header-actions .btn {
-        width: 100%;
-    }
-
     .stats-grid {
         grid-template-columns: minmax(0, 1fr);
-    }
-
-    .filters-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-field,
-    .filter-field.wide {
-        width: 100%;
-        min-width: 0;
-    }
-
-    .reset-button {
-        margin-left: 0;
     }
 
     .table-responsive {
@@ -898,6 +841,10 @@
         justify-content: flex-end;
     }
 
+    .cell-actions .p2-row-actions {
+        width: 100%;
+    }
+
     .icon-btn {
         width: 44px;
         height: 44px;
@@ -940,6 +887,10 @@
     }
 
     .loading-line .spinner {
+        animation: none;
+    }
+
+    .modal-dialog {
         animation: none;
     }
 }

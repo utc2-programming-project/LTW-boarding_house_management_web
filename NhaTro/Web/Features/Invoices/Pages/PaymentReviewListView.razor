@@ -4,10 +4,11 @@
 @inject PaymentReviewPageService ReviewPage
 @inject NavigationManager Navigation
 @inject IStringLocalizer<InvoiceResources> L
+@inject IStringLocalizer<Web.Shared> SL
 
 <PageTitle>@L["ReviewPageTitle"]</PageTitle>
 
-<div class="payment-review-page">
+<div class="payment-review-page page-stack">
     <PageHeading Title="@L["ReviewHeading"]" HelpText="@L["ReviewSubtitle"]">
         <Actions>
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
@@ -101,9 +102,7 @@
                 </div>
                 <div class="filter-bar__actions">
                     <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="review-advanced-panel" />
-                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFiltersAsync">
-                        <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
-                    </button>
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
                 </div>
             </div>
             <div class="filter-bar__advanced" id="review-advanced-panel" hidden="@(!_showAdvanced)">
@@ -144,11 +143,15 @@
                             @foreach (var item in _result.Items)
                             {
                                 <tr>
-                                    <td class="font-semibold tabular-nums">YC-@item.Payment.Id</td>
-                                    <td class="font-semibold tabular-nums">HD-@item.InvoiceId</td>
+                                    <td class="font-semibold tabular-nums">
+                                        <a class="cell-link" href="@AppLinks.PaymentRequest(item.Payment.Id)" title="@SL["CellLinkOpenPayment"]">YC-@item.Payment.Id</a>
+                                    </td>
+                                    <td class="font-semibold tabular-nums">
+                                        <a class="cell-link" href="@AppLinks.Invoice(item.InvoiceId)" title="@SL["CellLinkOpenInvoice"]">HD-@item.InvoiceId</a>
+                                    </td>
                                     <td>
-                                        <span class="room-code">@item.RoomCode</span>
-                                        <span class="property-name">@item.PropertyName</span>
+                                        <a class="cell-link room-code" href="@AppLinks.RoomsByCode(item.RoomCode)" title="@SL["CellLinkOpenRoom"]">@item.RoomCode</a>
+                                        <a class="cell-link is-quiet property-name" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" title="@SL["CellLinkOpenProperty"]">@item.PropertyName</a>
                                     </td>
                                     <td>
                                         @if (item.TenantNames.Count == 0)
@@ -157,7 +160,15 @@
                                         }
                                         else
                                         {
-                                            <span>@string.Join(", ", item.TenantNames)</span>
+                                            @for (var i = 0; i < item.TenantNames.Count; i++)
+                                            {
+                                                var tenantName = item.TenantNames[i];
+                                                if (i > 0)
+                                                {
+                                                    <span>, </span>
+                                                }
+                                                <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
+                                            }
                                         }
                                     </td>
                                     <td class="tabular-nums">@DateFormatter.Format(item.PeriodStart) – @DateFormatter.Format(item.PeriodEnd)</td>
@@ -194,17 +205,8 @@
                     </table>
                 </div>
 
-                <footer class="table-footer">
-                    <span>@string.Format(L["PageInfo"], _result.Page, TotalPages, _result.TotalCount)</span>
-                    <div class="pager">
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page <= 1)" @onclick="PreviousPageAsync">
-                            @L["Previous"]
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-sm" disabled="@(_result.Page >= TotalPages)" @onclick="NextPageAsync">
-                            @L["Next"]
-                        </button>
-                    </div>
-                </footer>
+                <TablePager Page="_result.Page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_result.TotalCount"
+                            PageChanged="GoToPageAsync" />
             }
             else
             {
@@ -260,7 +262,40 @@
 
     private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
-    protected override Task OnInitializedAsync() => ReloadAsync();
+    private int FirstItem => _result.TotalCount == 0 ? 0 : (_result.Page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_result.Page * PageSize, _result.TotalCount);
+
+    protected override Task OnInitializedAsync()
+    {
+        _lastAppliedKeywordQuery = KeywordQuery;
+        if (KeywordQuery is { Length: > 0 })
+        {
+            _keyword = KeywordQuery.Trim();
+        }
+
+        return ReloadAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=A107): Blazor dùng lại trang nên phải lọc lại theo query mới.
+        if (string.Equals(KeywordQuery, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        _page = 1;
+        await ReloadAsync();
+    }
+
+    /// <summary>Từ khóa từ link chéo (?q=A107 hoặc ?q=HD-001): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
 
     private async Task ReloadAsync()
     {
@@ -320,25 +355,15 @@
         await ReloadAsync();
     }
 
-    private async Task PreviousPageAsync()
+    private async Task GoToPageAsync(int page)
     {
-        if (_page <= 1)
+        var target = PaginationHelper.ClampPage(page, TotalPages);
+        if (target == _page)
         {
             return;
         }
 
-        _page--;
-        await ReloadAsync();
-    }
-
-    private async Task NextPageAsync()
-    {
-        if (_page >= TotalPages)
-        {
-            return;
-        }
-
-        _page++;
+        _page = target;
         await ReloadAsync();
     }
 

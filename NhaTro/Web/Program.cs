@@ -439,9 +439,11 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
-// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
-builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
-    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
+// PLAN-028: tài khoản nhận tiền lấy theo chủ trọ sở hữu hóa đơn (nhập ở /profile).
+builder.Services.AddScoped<Web.Features.Invoices.Services.IOwnerBankAccountService,
+    Web.Features.Invoices.Services.OwnerBankAccountService>();
+// PLAN-028: báo banner "chưa nhập tài khoản nhận tiền" khi Chủ trọ vừa lưu ở /profile.
+builder.Services.AddScoped<Web.Features.Invoices.Services.OwnerBankAccountNotifier>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
@@ -521,6 +523,8 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
 // P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
+// VHT-140: điểm gọi chung các nguồn báo cáo P8 (phòng, khách, doanh thu, hợp đồng, chi phí, sự cố).
+builder.Services.AddScoped<Web.Features.Reports.Services.ReportsPageService>();
 // D8: xuất Excel P8 + SW-16.
 builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Reports.Services.ReportExportApprovalApplier>();
@@ -539,6 +543,8 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQueryService,
     Web.Features.Invoices.Services.PaymentReviewQueryService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
+// VHT-143: ngữ cảnh tra cứu P6 tối thiểu sau reconnect/tải lại.
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentRecoveryService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();

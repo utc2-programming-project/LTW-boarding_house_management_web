@@ -1,5 +1,3 @@
-.renewal-queue-page { max-width: 1440px; margin: 0 auto; }
-.renewal-queue-page .page-heading { margin: 20px 0 24px; }
 .renewal-queue-page .page-heading p { margin: 8px 0 0; color: var(--text-secondary); }
 .renewal-table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .renewal-table { width: 100%; min-width: 1040px; border-collapse: collapse; }

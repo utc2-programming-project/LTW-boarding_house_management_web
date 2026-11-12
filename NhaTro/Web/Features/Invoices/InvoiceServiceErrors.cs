@@ -17,6 +17,17 @@ public static class InvoiceErrorCodes
     public const string ApprovalRequired = nameof(ApprovalRequired);
     public const string ApprovalDenied = nameof(ApprovalDenied);
     public const string ApprovalFailed = nameof(ApprovalFailed);
+    public const string NotDeletable = nameof(NotDeletable);
+    public const string NotInTrash = nameof(NotInTrash);
+    public const string HasDependencies = nameof(HasDependencies);
+    public const string ContractDeleted = nameof(ContractDeleted);
+    public const string DuplicatePeriod = nameof(DuplicatePeriod);
+    public const string NotEditable = nameof(NotEditable);
+    public const string NotDeletableIssued = nameof(NotDeletableIssued);
+    public const string HasPaymentRequest = nameof(HasPaymentRequest);
+    public const string PaymentAlreadyRequested = nameof(PaymentAlreadyRequested);
+    public const string RevisionReasonRequired = nameof(RevisionReasonRequired);
+    public const string RevisionOwnerOnly = nameof(RevisionOwnerOnly);
 }
 
 public static class InvoiceErrorMessages
@@ -39,6 +50,18 @@ public static class InvoiceErrorMessages
     public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";
     public const string ApprovalComposite =
         "Lập và phát hành cùng lúc không đi qua hàng đợi duyệt; hãy gửi từng bước để Chủ trọ duyệt.";
+    public const string NotDeletable = "Chỉ hóa đơn nháp mới được xóa.";
+    public const string NotInTrash = "Hóa đơn không còn trong thùng rác.";
+    public const string HasDependencies = "Không thể xóa vì hóa đơn còn thanh toán, kỳ chỉ số hoặc yêu cầu đăng ký.";
+    public const string ContractDeleted = "Hợp đồng của hóa đơn đã bị xóa; hãy khôi phục hợp đồng trước.";
+    public const string DuplicatePeriod = "Hợp đồng đã có hóa đơn sống trong cùng kỳ.";
+    public const string NotEditable = "Chỉ hóa đơn đã phát hành mà khách chưa yêu cầu thanh toán mới được chỉnh sửa.";
+    public const string NotDeletableIssued = "Chỉ hóa đơn nháp mới được xóa từ danh sách hóa đơn. Hãy dùng chức năng xóa hóa đơn đã gửi khách.";
+    public const string HasPaymentRequest = "Khách đã gửi yêu cầu thanh toán nên không thể xóa hóa đơn. Hãy xử lý yêu cầu thanh toán trước.";
+    public const string PaymentAlreadyRequested =
+        "Khách đã gửi yêu cầu thanh toán nên không thể chỉnh sửa hóa đơn. Hãy xử lý yêu cầu thanh toán trước.";
+    public const string RevisionReasonRequired = "Vui lòng nhập lý do chỉnh sửa hóa đơn.";
+    public const string RevisionOwnerOnly = "Chỉ Chủ trọ mới được chỉnh sửa hóa đơn đã gửi cho khách.";
 }
 
 public interface IInvoiceServiceError

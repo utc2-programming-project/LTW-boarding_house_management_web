@@ -52,6 +52,13 @@ public interface ITenantService
     Task<PagedResult<TenantTrashItemDto>> ListTrashAsync(
         TenantTrashFilterRequest filter, TenantCaller caller, CancellationToken ct = default);
 
+    /// <summary>Xóa vĩnh viễn hồ sơ khỏi thùng rác; chặn khi còn thành viên hợp đồng.</summary>
+    Task<TenantResult> PurgeAsync(
+        int id, string rowVersion, TenantCaller caller, CancellationToken ct = default);
+
+    Task<Web.Common.Models.TrashPurgeSummary> PurgeAllAsync(
+        TenantCaller caller, CancellationToken ct = default);
+
     /// <summary>
     /// Gắn tài khoản đăng nhập (vai trò Khách thuê) vào hồ sơ. Chặn liên kết nhầm:
     /// tài khoản phải tồn tại, đúng vai trò Khách thuê, chưa gắn hồ sơ khác.

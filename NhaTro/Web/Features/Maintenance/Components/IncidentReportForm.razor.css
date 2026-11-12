@@ -1,19 +1,37 @@
-.report-body { padding: 24px; }
+.report-body { padding: 24px 24px 0; }
 .sample-note { margin: 0 0 20px; font-size: .8125rem; color: var(--text-secondary); }
 .pending-note { padding: 12px; color: var(--warning-text); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 8px; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .full-width { grid-column: 1 / -1; min-width: 0; }
 .form-grid ::deep .field { margin-bottom: 0; }
-.form-grid ::deep input:not([type=file]), .form-grid ::deep select, .form-grid ::deep textarea { display: block; width: 100%; min-height: 40px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
+.form-grid ::deep input:not([type=file]), .form-grid ::deep textarea { display: block; width: 100%; min-height: 40px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
+/* <select> dùng appearance: base-select của theme: KHÔNG ép display:block, nếu không
+   ::picker-icon (mũi tên) rơi xuống dòng và nhảy vị trí khi mở/đóng popup. */
+.form-grid ::deep select { width: 100%; min-height: 40px; padding: 8px 12px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
 .form-grid ::deep textarea { resize: vertical; }
 .form-grid ::deep .invalid { border-color: var(--error-text) !important; }
-.form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+/* Chân form cố định: đầu dialog đã cố định nhờ .feature-dialog-header,
+   còn hành động luôn bám đáy vùng cuộn để không phải cuộn xuống mới gửi được. */
+.form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 24px -24px 0;
+    padding: 16px 24px;
+    background: var(--surface-subtle);
+    border-top: 1px solid var(--border);
+}
 .form-actions .btn-primary { min-width: 180px; }
 .form-error { color: var(--error-text); }
 @media (max-width: 767px) {
-    .report-body { padding: 16px; }
+    .report-body { padding: 16px 16px 0; }
     .form-grid { grid-template-columns: 1fr; }
     .form-grid ::deep input:not([type=file]), .form-grid ::deep select, .form-grid ::deep textarea { min-height: 44px; font-size: 1rem; }
+    .form-actions { margin: 16px -16px 0; padding: 12px 16px; }
     .form-actions > button { width: 100%; min-height: 44px; }
 }

@@ -4,38 +4,6 @@
 <div class="table-card">
     <div role="status" class="visually-hidden">@(_loading ? Labels.Loading : null)</div>
 
-    @if (UseFilterToolbar)
-    {
-        <div class="filter-toolbar">
-            @foreach (var col in Columns.Where(c => c.Filterable))
-            {
-                var fieldId = $"{_filterId}-{col.Key}";
-                <div class="filter-field">
-                    <label for="@fieldId">@col.Title</label>
-                    @if (col.FilterOptions is { } options)
-                    {
-                        <select id="@fieldId" class="filter-input" value="@(_filters.GetValueOrDefault(col.Key) ?? "")"
-                                @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())">
-                            @foreach (var option in options)
-                            {
-                                <option value="@option.Value">@option.Label</option>
-                            }
-                        </select>
-                    }
-                    else
-                    {
-                        <input id="@fieldId" type="text" class="filter-input" placeholder="@col.FilterPlaceholder"
-                               value="@_filters.GetValueOrDefault(col.Key)"
-                               @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())" />
-                    }
-                </div>
-            }
-            <div class="filter-toolbar-actions">
-                <button type="button" class="btn btn-secondary" disabled="@(!HasFilters)" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
-            </div>
-        </div>
-    }
-
     <div class="table-scroll" aria-busy="@(_loading ? "true" : null)">
         <table>
             @if (!string.IsNullOrWhiteSpace(Caption))
@@ -72,23 +40,6 @@
                         </th>
                     }
                 </tr>
-                @if (!UseFilterToolbar && Columns.Any(c => c.Filterable))
-                {
-                    <tr class="filter-row">
-                        @foreach (var col in Columns)
-                        {
-                            <td>
-                                @if (col.Filterable)
-                                {
-                                    <input type="text" class="filter-input"
-                                           aria-label="@($"{Labels.FilterBy} {col.Title}")"
-                                           value="@_filters.GetValueOrDefault(col.Key)"
-                                           @onchange="e => FilterChangedAsync(col.Key, e.Value?.ToString())" />
-                                }
-                            </td>
-                        }
-                    </tr>
-                }
             </thead>
             <tbody>
                 @if (_loading)
@@ -118,13 +69,10 @@
                 {
                     <tr>
                         <td colspan="@Columns.Count" class="state-cell">
-                            @if (HasFilters)
+                            @if (HasActiveFilters)
                             {
                                 <EmptyStateCard Title="@Labels.NoResultsTitle" Description="@Labels.NoResultsDescription">
-                                    @if (!UseFilterToolbar)
-                                    {
-                                        <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
-                                    }
+                                    <button type="button" class="btn btn-secondary" @onclick="ClearFiltersAsync">@Labels.ClearFilters</button>
                                 </EmptyStateCard>
                             }
                             else
@@ -171,51 +119,14 @@
     @if (!_loading && !_failed && _total > 0)
     {
         var (firstItem, lastItem) = PaginationHelper.ItemRange(_page, PageSize, _total);
-        <div class="table-footer">
-            @if (CompactFooter)
-            {
-                <span class="summary">@(string.Format(Labels.PageInfo, _page, TotalPages, _total, ItemUnitLabel))</span>
-                <div class="pager">
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(_page - 1)">@Labels.Previous</button>
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(_page + 1)">@Labels.Next</button>
-                </div>
-            }
-            else
-            {
-                <span class="summary">@(string.Format(Labels.Summary, firstItem, lastItem, _total))</span>
-            }
-            @if (!CompactFooter && TotalPages > 1)
-            {
-                <nav class="pager" aria-label="@Labels.Pagination">
-                    <button type="button" class="page-button" aria-label="@Labels.FirstPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(1)">
-                        <LucideIcon Name="chevrons-left" />
-                    </button>
-                    <button type="button" class="page-button" aria-label="@Labels.PreviousPage" disabled="@(_page == 1)" @onclick="() => GoToPageAsync(_page - 1)">
-                        <LucideIcon Name="chevron-left" />
-                    </button>
-                    @foreach (var p in PaginationHelper.PageWindow(_page, TotalPages))
-                    {
-                        <button type="button" class="page-button @(p == _page ? "current" : null)"
-                                aria-label="@($"{Labels.Page} {p}")" aria-current="@(p == _page ? "page" : null)"
-                                @onclick="() => GoToPageAsync(p)">@p</button>
-                    }
-                    <button type="button" class="page-button" aria-label="@Labels.NextPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(_page + 1)">
-                        <LucideIcon Name="chevron-right" />
-                    </button>
-                    <button type="button" class="page-button" aria-label="@Labels.LastPage" disabled="@(_page == TotalPages)" @onclick="() => GoToPageAsync(TotalPages)">
-                        <LucideIcon Name="chevrons-right" />
-                    </button>
-                </nav>
-            }
-        </div>
+        <TablePager Page="_page" TotalPages="TotalPages" From="firstItem" To="lastItem" Total="_total"
+                    PageChanged="GoToPageAsync" />
     }
 </div>
 
 @code {
     private const int SkeletonRows = 5;
-    private readonly string _filterId = $"table-filter-{Guid.NewGuid():N}";
 
-    private readonly Dictionary<string, string> _filters = new();
     private IReadOnlyList<TItem> _items = [];
     private int _total;
     private int _page = 1;
@@ -239,24 +150,12 @@
     [Parameter]
     public int PageSize { get; set; } = 10;
 
-    /// <summary>Hiển thị bộ lọc có nhãn phía trên bảng thay cho hàng lọc trong bảng.</summary>
-    [Parameter]
-    public bool UseFilterToolbar { get; set; }
-
     /// <summary>Mô tả bảng cho trình đọc màn hình (không hiển thị).</summary>
     [Parameter]
     public string? Caption { get; set; }
 
     [Parameter]
     public DataTableLabels Labels { get; set; } = new();
-
-    /// <summary>Chân bảng gọn: "Trang x/y · n đơn vị" kèm hai nút Trước/Sau thay cho dãy số trang.</summary>
-    [Parameter]
-    public bool CompactFooter { get; set; }
-
-    /// <summary>Đơn vị đếm ở chân bảng gọn, ví dụ "tài khoản".</summary>
-    [Parameter]
-    public string? ItemUnitLabel { get; set; }
 
     /// <summary>Nút kêu gọi hành động khi bảng rỗng và chưa lọc gì, ví dụ "Thêm phòng".</summary>
     [Parameter]
@@ -272,15 +171,13 @@
 
     private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
 
-    private bool HasFilters => _filters.Count > 0 || HasActiveFilters;
-
     protected override Task OnInitializedAsync() => LoadAsync();
 
     /// <summary>Tải lại trang hiện tại, ví dụ sau khi thêm/sửa/xóa.</summary>
     public Task ReloadAsync() => LoadAsync();
 
     private DataTableRequest BuildRequest() =>
-        new(_page, PageSize, _sortKey, _sortDescending, new Dictionary<string, string>(_filters));
+        new(_page, PageSize, _sortKey, _sortDescending);
 
     private async Task LoadAsync()
     {
@@ -336,25 +233,10 @@
         return LoadAsync();
     }
 
-    private Task FilterChangedAsync(string key, string? value)
-    {
-        var text = value?.Trim();
-        if (string.IsNullOrEmpty(text))
-        {
-            _filters.Remove(key);
-        }
-        else
-        {
-            _filters[key] = text;
-        }
-
-        _page = 1;
-        return LoadAsync();
-    }
+    private bool IsSorted(string key, bool descending) => _sortKey == key && _sortDescending == descending;
 
     private async Task ClearFiltersAsync()
     {
-        _filters.Clear();
         if (HasActiveFilters)
         {
             await OnClearFilters.InvokeAsync();
@@ -363,8 +245,6 @@
         _page = 1;
         await LoadAsync();
     }
-
-    private bool IsSorted(string key, bool descending) => _sortKey == key && _sortDescending == descending;
 
     private string? AriaSort(DataTableColumn<TItem> col)
     {

@@ -14,6 +14,9 @@ public sealed class IncidentResult
     public static IncidentResult Success(IncidentDetailDto incident) =>
         new() { Succeeded = true, Incident = incident };
 
+    public static IncidentResult Success() =>
+        new() { Succeeded = true };
+
     public static IncidentResult ApprovalCreated(ApprovalRequestDto request) =>
         new() { Succeeded = true, ApprovalRequest = request };
 

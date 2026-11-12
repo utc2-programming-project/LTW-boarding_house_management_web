@@ -1,0 +1,12 @@
+.purge-confirm {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.purge-confirm__error {
+    margin: 0;
+    color: var(--danger, #b42318);
+    font-size: 13px;
+    line-height: 18px;
+}

@@ -1,0 +1,296 @@
+@page "/contracts/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Models
+@using Web.Features.Accounts
+@using Web.Common.SoftDelete
+@using Web.Common.Utils
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Feedback
+@using Web.Features.Contracts
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Services
+@inject ContractPageService Contracts
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<ContractResources> L
+@inject IStringLocalizer<Shared> SL
+@inject ILogger<ContractTrash> Logger
+
+<PageTitle>@L["ContractTrashTitle"] · @L["ContractListTitle"]</PageTitle>
+
+<div class="page-stack">
+    <PageHeading Title="@L["ContractTrashTitle"]" HelpText="@L["ContractTrashSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-danger" @onclick="OpenEmptyTrash">
+                <LucideIcon Name="trash" />@L["EmptyTrash"]
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="GoToContracts">
+                <LucideIcon Name="file-signature" />@L["ContractListTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="contract-trash-search">@L["ContractTrashSearchLabel"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="contract-trash-search" type="search" class="input"
+                       placeholder="@L["ContractTrashSearchPlaceholder"]" @bind="_keyword" @bind:after="ReloadAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="contract-trash-page-size">@L["RowsPerPage"]</label>
+                    <select id="contract-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearSearchAsync" />
+            </div>
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="ContractTrashItemDto" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["ContractTrashTitle"]" Labels="_tableLabels" />
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["ContractTrashRestoreTitle"]"
+               Message="@string.Format(L["ContractTrashRestoreMessage"], _restoreItem?.ContractNumber ?? string.Empty)"
+               ConfirmText="@L["Restore"]" CancelText="@SL["Cancel"]"
+               OnConfirm="RestoreAsync" OnCancel="CloseRestore" />
+
+<PurgeConfirmDialog Visible="_purgeVisible" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], _purgeItem?.ContractNumber ?? string.Empty)"
+                    ExpectedText="@(_purgeItem?.ContractNumber ?? string.Empty)"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], _purgeItem?.ContractNumber ?? string.Empty)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@SL["Cancel"]"
+                    OnConfirm="PurgeAsync" OnCancel="ClosePurge" />
+
+<PurgeConfirmDialog Visible="_emptyVisible" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@SL["Cancel"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="CloseEmptyTrash" />
+
+@code {
+    private DataTable<ContractTrashItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<ContractTrashItemDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private ContractTrashItemDto? _restoreItem;
+    private ContractTrashItemDto? _purgeItem;
+    private bool _restoreVisible;
+    private bool _purgeVisible;
+    private bool _emptyVisible;
+    private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<ContractTrashItemDto>> BuildColumns()
+    {
+        RenderFragment<ContractTrashItemDto> actions = item => @<div class="p2-row-actions">
+            <button type="button" class="btn btn-secondary" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+            <button type="button" class="btn btn-danger" @onclick="() => RequestPurge(item)">
+                <LucideIcon Name="trash" />@L["Purge"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "number", Title = L["ContractNumberLabel"], Value = item => item.ContractNumber },
+            new() { Key = "property", Title = L["ContractRoomPropertyLabel"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
+            new() { Key = "status", Title = L["ContractStatusLabel"], Value = item => L[StatusKey(item.Status)].Value },
+            new() { Key = "term", Title = L["ContractTermLabel"], Value = item => $"{DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))} – {DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))}" },
+            TrashColumns.DeletedAt<ContractTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
+            TrashColumns.Actions(L["ContractActionsLabel"], actions),
+        ];
+    }
+
+    private async Task<PagedResult<ContractTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
+    {
+        var items = await Contracts.ListDeletedAsync();
+        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
+        var filtered = items
+            .Where(item => term is null
+                || item.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return new PagedResult<ContractTrashItemDto>
+        {
+            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
+            TotalCount = filtered.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = string.Empty;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(ContractTrashItemDto item)
+    {
+        _restoreItem = item;
+        _restoreVisible = true;
+    }
+
+    private void CloseRestore()
+    {
+        _restoreVisible = false;
+        _restoreItem = null;
+    }
+
+    private void RequestPurge(ContractTrashItemDto item)
+    {
+        _purgeItem = item;
+        _purgeVisible = true;
+    }
+
+    private void ClosePurge()
+    {
+        _purgeVisible = false;
+        _purgeItem = null;
+    }
+
+    private void OpenEmptyTrash() => _emptyVisible = true;
+
+    private void CloseEmptyTrash() => _emptyVisible = false;
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreItem is null)
+        {
+            CloseRestore();
+            return;
+        }
+
+        try
+        {
+            await Contracts.RestoreAsync(_restoreItem.ContractId);
+            CloseRestore();
+            Toasts.Success(L["ContractTrashRestored"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IContractServiceError or UnauthorizedAccessException)
+        {
+            CloseRestore();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Contract restore failed");
+            CloseRestore();
+            Toasts.Error(L["ContractGenericError"]);
+        }
+    }
+
+    private async Task PurgeAsync()
+    {
+        if (_purgeItem is null)
+        {
+            ClosePurge();
+            return;
+        }
+
+        try
+        {
+            await Contracts.PurgeAsync(_purgeItem.ContractId);
+            ClosePurge();
+            Toasts.Success(L["PurgeSuccess"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IContractServiceError or UnauthorizedAccessException)
+        {
+            ClosePurge();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Contract purge failed");
+            ClosePurge();
+            Toasts.Error(L["ContractGenericError"]);
+        }
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        try
+        {
+            var summary = await Contracts.PurgeAllAsync();
+            CloseEmptyTrash();
+            if (summary.Purged == 0 && summary.Skipped == 0)
+            {
+                Toasts.Success(L["EmptyTrashNothing"]);
+            }
+            else
+            {
+                Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+            }
+
+            await ReloadTableAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Contract empty trash failed");
+            CloseEmptyTrash();
+            Toasts.Error(L["ContractGenericError"]);
+        }
+    }
+
+    private async Task ReloadTableAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private string ErrorText(Exception ex) =>
+        ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
+
+    private static string StatusKey(ContractStatus status) => status switch
+    {
+        ContractStatus.Pending => "ContractStatusPending",
+        ContractStatus.Approved => "ContractStatusActive",
+        ContractStatus.Rejected => "ContractStatusRejected",
+        _ => "ContractStatusLiquidated",
+    };
+
+    private void GoToContracts() => Navigation.NavigateTo("/contracts");
+}

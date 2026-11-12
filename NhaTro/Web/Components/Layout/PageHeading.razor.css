@@ -1,8 +1,6 @@
 .page-heading-main { position: relative; min-width: 0; }
-.page-heading-description { margin: 8px 0 0; color: var(--text-secondary); font-size: .875rem; line-height: 1.5714; overflow-wrap: anywhere; }
-.page-heading-description[hidden] { display: none; }
 .page-heading-title { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.page-heading-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.page-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: none; }
 @media (max-width: 640px) {
     .page-heading-actions { width: 100%; }
     .page-heading-actions > * { flex: 1 1 auto; }

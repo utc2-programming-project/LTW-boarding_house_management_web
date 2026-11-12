@@ -9,7 +9,7 @@
 
 <PageTitle>@L["PricesPageTitle"]</PageTitle>
 
-<div class="service-prices-page">
+<div class="service-prices-page page-stack">
     @if (_isLoading)
     {
         <div class="page-loading">
@@ -83,7 +83,7 @@
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatPriceVersions"]
-                    <button type="button" class="stat-help" data-tip="@L["StatPriceVersionsHint"]" aria-label="@L["StatPriceVersionsHint"]">?</button>
+                    <HelpTip Text="@L["StatPriceVersionsHint"]" />
                 </span>
                 <span class="stat-icon stat-icon--accent"><LucideIcon Name="history" /></span>
             </div>
@@ -151,9 +151,7 @@
                     </select>
                 </div>
                 <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="price-advanced-panel" />
-                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
-                    <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
-                </button>
+                <FilterResetButton OnClick="ResetFilters" />
             </div>
         </div>
         <div class="filter-bar__advanced" id="price-advanced-panel" hidden="@(!_showAdvanced)">
@@ -170,7 +168,7 @@
         </div>
         @if (!string.IsNullOrEmpty(_rangeError))
         {
-            <p class="field-error-text" role="alert">@_rangeError</p>
+            <p class="filter-bar__error" role="alert">@_rangeError</p>
         }
     </div>
 
@@ -251,23 +249,8 @@
                 </table>
             </div>
 
-            <footer class="table-footer">
-                <div class="pagination-info">
-                    @L["TableShowing"] @FirstItem–@LastItem @L["TableOf"] @_filteredVersions.Count
-                </div>
-
-                <div class="pagination-controls">
-                    <nav class="pager" aria-label="@L["PaginationLabel"]">
-                        <button type="button" class="pager-btn" disabled="@(_page <= 1)" @onclick="GoToPreviousPage" aria-label="@L["PreviousPage"]">
-                            <LucideIcon Name="chevron-left" />
-                        </button>
-                        <span class="page-indicator">@_page / @TotalPages</span>
-                        <button type="button" class="pager-btn" disabled="@(_page >= TotalPages)" @onclick="GoToNextPage" aria-label="@L["NextPage"]">
-                            <LucideIcon Name="chevron-right" />
-                        </button>
-                    </nav>
-                </div>
-            </footer>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_filteredVersions.Count"
+                        PageChanged="GoToPage" />
         }
         else
         {
@@ -520,21 +503,7 @@
         }
     }
 
-    private void GoToPreviousPage()
-    {
-        if (_page > 1)
-        {
-            _page--;
-        }
-    }
-
-    private void GoToNextPage()
-    {
-        if (_page < TotalPages)
-        {
-            _page++;
-        }
-    }
+    private void GoToPage(int page) => _page = PaginationHelper.ClampPage(page, TotalPages);
 
     private IEnumerable<PriceVersionDto> PagedVersions =>
         _filteredVersions.Skip((_page - 1) * _pageSize).Take(_pageSize);
