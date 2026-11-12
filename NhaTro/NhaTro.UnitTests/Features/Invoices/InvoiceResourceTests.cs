@@ -45,6 +45,8 @@ public sealed class InvoiceResourceTests
             "PaymentSubmittedSuccess",
             "PaymentCheckResult",
             "PaymentResultUnknown",
+            "PaymentNoResultYet",
+            "PaymentRecoveryStoreFailed",
             "PaymentPendingNotice",
             "PaymentRejectedNotice",
             "PaymentPaidNotice",

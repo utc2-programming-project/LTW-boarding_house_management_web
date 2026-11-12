@@ -167,6 +167,7 @@
   <data name="PaymentChecking" xml:space="preserve"><value>Đang kiểm tra...</value></data>
   <data name="PaymentResultUnknown" xml:space="preserve"><value>Chưa xác định được kết quả gửi. Vui lòng kiểm tra kết quả trước khi thử lại.</value></data>
   <data name="PaymentNoResultYet" xml:space="preserve"><value>Chưa ghi nhận yêu cầu thanh toán nào. Bạn có thể gửi lại.</value></data>
+  <data name="PaymentRecoveryStoreFailed" xml:space="preserve"><value>Không lưu được trạng thái tra cứu trên trình duyệt. Vui lòng thử lại.</value></data>
   <data name="PaymentPendingNotice" xml:space="preserve"><value>Yêu cầu thanh toán đang chờ chủ nhà xác nhận. Số tiền chưa được cộng vào đã thanh toán.</value></data>
   <data name="PaymentRejectedNotice" xml:space="preserve"><value>Yêu cầu thanh toán trước đó bị từ chối. Bạn có thể kiểm tra lý do và gửi lại.</value></data>
   <data name="PaymentPaidNotice" xml:space="preserve"><value>Hóa đơn đã được thanh toán đủ.</value></data>

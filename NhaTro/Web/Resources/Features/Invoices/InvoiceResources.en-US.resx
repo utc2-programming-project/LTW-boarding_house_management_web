@@ -167,6 +167,7 @@
   <data name="PaymentChecking" xml:space="preserve"><value>Checking...</value></data>
   <data name="PaymentResultUnknown" xml:space="preserve"><value>We could not confirm the submission result. Check the result before trying again.</value></data>
   <data name="PaymentNoResultYet" xml:space="preserve"><value>No payment request was recorded. You can submit again.</value></data>
+  <data name="PaymentRecoveryStoreFailed" xml:space="preserve"><value>Could not store the recovery state in this browser. Please try again.</value></data>
   <data name="PaymentPendingNotice" xml:space="preserve"><value>Your payment request is waiting for the landlord to confirm. The amount is not added to paid yet.</value></data>
   <data name="PaymentRejectedNotice" xml:space="preserve"><value>Your previous payment request was rejected. Review the reason and submit again.</value></data>
   <data name="PaymentPaidNotice" xml:space="preserve"><value>This invoice has been paid in full.</value></data>
