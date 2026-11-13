@@ -27,8 +27,6 @@ TestResults/
 *.suo
 *.userprefs
 debug/
-# Demo seed dataset (local only; deleting the file disables --seed-demo)
-NhaTro/Web/Data/Seeding/demo-data.json
 
 # Secrets, local data, logs (never commit)
 secrets.json
