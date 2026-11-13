@@ -1,9 +1,3 @@
-.invoice-page {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-}
-
 .page-error {
     display: flex;
     align-items: center;
@@ -17,82 +11,6 @@
 
 .page-error p {
     margin: 0;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-4);
-}
-
-.stat-card {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card);
-    background: var(--surface);
-    box-shadow: var(--shadow-card);
-}
-
-.stat-label {
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.stat-number {
-    color: var(--text-primary);
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 36px;
-}
-
-.outstanding-card .stat-number {
-    color: var(--warning-text);
-}
-
-.filters-container {
-    padding: var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card);
-    background: var(--surface);
-}
-
-.filters-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--space-3);
-}
-
-.filter-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    min-width: 130px;
-    color: var(--text-secondary);
-    font-size: .8125rem;
-    font-weight: 500;
-}
-
-.filter-field.wide {
-    flex: 1 1 260px;
-}
-
-.filter-field .input {
-    width: 100%;
-}
-
-.filters-row-secondary {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--border);
-}
-
-.reset-button {
-    margin-left: auto;
 }
 
 .table-card {
@@ -189,6 +107,74 @@
     font-weight: 600;
 }
 
+/* Thẻ KPI "Còn phải thu" bấm được: lọc ra đúng các hoá đơn chưa thu. */
+.stat-card--link {
+    display: flex;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color .15s var(--ease), transform .15s var(--ease);
+}
+
+.stat-card--link:hover {
+    border-color: var(--warning-text);
+    transform: translateY(-1px);
+}
+
+.stat-card--link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.stat-value__arrow {
+    width: 18px;
+    height: 18px;
+    color: var(--warning-text);
+    opacity: .7;
+}
+
+/* Số tiền còn phải thu: nổi bật như một nút nhỏ, bấm để mở hoá đơn. */
+.outstanding-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-pill);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .15s var(--ease), border-color .15s var(--ease);
+}
+
+.outstanding-link:hover {
+    border-color: var(--warning-text);
+    background: color-mix(in srgb, var(--warning-bg) 70%, var(--warning-border));
+    color: var(--warning-text);
+    text-decoration: none;
+}
+
+.outstanding-link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.outstanding-link ::deep svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+}
+
+.outstanding-link ::deep svg:last-child {
+    opacity: .7;
+}
+
+.outstanding-settled {
+    color: var(--text-muted);
+}
+
 .discount {
     color: var(--success-text);
 }
@@ -211,37 +197,6 @@
     color: var(--accent-text);
 }
 
-.table-footer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    color: var(--text-muted);
-    font-size: .8125rem;
-}
-
-.pager {
-    display: flex;
-    gap: var(--space-2);
-}
-
-@media (max-width: 900px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .reset-button {
-        margin-left: 0;
-    }
-}
-
-@media (max-width: 560px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-}
 .registration-history-page,
 .registration-manage-page {
     padding: 16px;
@@ -271,13 +226,6 @@
     margin: 4px 0 0;
     font-size: 14px;
     line-height: 22px;
-}
-
-.table-card {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    overflow: hidden;
 }
 
 .table-responsive {

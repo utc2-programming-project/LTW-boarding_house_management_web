@@ -1,7 +1,9 @@
 @page "/payment-requests/{PaymentId:int}"
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 @attribute [Authorize(Policy = "PaymentReview")]
 @inject PaymentReviewPageService ReviewPage
+@inject PaymentRecoveryService PaymentRecovery
 @inject NavigationManager Navigation
 @inject ToastService Toasts
 @inject IStringLocalizer<InvoiceResources> L
@@ -173,11 +175,11 @@
         @if (CanReview)
         {
             <section class="action-bar">
-                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="OpenConfirm">
+                <button type="button" class="btn btn-primary" data-payment-write disabled="@_busy" @onclick="OpenConfirm">
                     <LucideIcon Name="circle-check" />
                     <span>@L["ReviewConfirmAction"]</span>
                 </button>
-                <button type="button" class="btn btn-danger" disabled="@_busy" @onclick="OpenReject">
+                <button type="button" class="btn btn-danger" data-payment-write disabled="@_busy" @onclick="OpenReject">
                     <LucideIcon Name="x" />
                     <span>@L["ReviewRejectAction"]</span>
                 </button>
@@ -202,30 +204,49 @@
                Busy="@_rejecting"
                OnClose="CloseReject">
     <form class="reject-form" @onsubmit="SubmitRejectAsync" @onsubmit:preventDefault>
-        <label class="reject-field">
-            <span class="detail-label">@L["ReviewRejectReasonLabel"]</span>
-            <textarea class="input"
+        <div class="reject-intro">
+            <LucideIcon Name="alert-triangle" />
+            <p>@L["ReviewRejectIntro"]</p>
+        </div>
+
+        <div class="reject-field">
+            <label class="reject-label" for="payment-reject-reason">
+                @L["ReviewRejectReasonLabel"]
+                <span aria-hidden="true">*</span>
+            </label>
+            <textarea id="payment-reject-reason"
+                      class="input"
                       rows="4"
                       maxlength="500"
                       placeholder="@L["ReviewRejectReasonPlaceholder"]"
                       @bind="_rejectReason"
                       disabled="@_rejecting"></textarea>
-            <span class="note">@(_rejectReason?.Length ?? 0)/500</span>
-        </label>
+            <div class="reject-field-foot">
+                <span class="reject-hint">@L["ReviewRejectHint"]</span>
+                <span class="reject-counter">@(_rejectReason?.Length ?? 0)/500</span>
+            </div>
+        </div>
 
         @if (_rejectError is not null)
         {
-            <p class="field-error" role="alert">@_rejectError</p>
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_rejectError</span>
+            </div>
         }
 
-        <div class="form-actions">
+        <div class="reject-actions">
             <button type="button" class="btn btn-secondary" disabled="@_rejecting" @onclick="CancelReject">
                 @L["ReviewRejectCancel"]
             </button>
-            <button type="submit" class="btn btn-danger" disabled="@_rejecting">
+            <button type="submit" class="btn btn-danger" data-payment-write disabled="@_rejecting">
                 @if (_rejecting)
                 {
                     <span class="spinner"></span>
+                }
+                else
+                {
+                    <LucideIcon Name="x" />
                 }
                 <span>@L[_rejecting ? "ReviewRejectSubmitting" : "ReviewRejectSubmit"]</span>
             </button>
@@ -248,6 +269,10 @@
     private string? _resultCheckMessage;
     private bool _requiresResultCheck;
     private bool _checkingResult;
+    private DotNetObjectReference<PaymentReviewDetailView>? _recoveryRef;
+    private bool _recoveryConnected;
+    private bool _recoveryReady;
+    private string? _callerUserId;
 
     private bool _busy;
     private bool _confirmVisible;
@@ -262,6 +287,7 @@
 
     private bool CanReview =>
         _item is { Payment.Status: PaymentStatus.Pending } &&
+        _recoveryReady &&
         !_busy &&
         !_checkingResult &&
         !_requiresResultCheck;
@@ -280,6 +306,115 @@
 
     protected override Task OnParametersSetAsync() => ReloadAsync();
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _recoveryRef = DotNetObjectReference.Create(this);
+        try
+        {
+            await PaymentRecovery.ConnectAsync(_recoveryRef);
+            _recoveryConnected = true;
+        }
+        catch (Exception)
+        {
+            // Không có JS/storage không chặn trang; người dùng vẫn tra thủ công được.
+        }
+
+        // Chỉ mở thao tác sau khi đã kiểm marker một lần, tránh khe hở trước tra cứu.
+        _recoveryReady = true;
+        StateHasChanged();
+        await TryRecoverPendingAsync();
+    }
+
+    private string RecoveryTarget => $"payment:{PaymentId}";
+
+    [JSInvokable]
+    public async Task OnReconnectedAsync()
+    {
+        await InvokeAsync(async () =>
+        {
+            if (_busy || _rejecting || _item is null || _callerUserId is null)
+            {
+                return;
+            }
+
+            if (!_requiresResultCheck && !await HasPendingRecoveryAsync())
+            {
+                return;
+            }
+
+            _requiresResultCheck = true;
+            await CheckResultAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task TryRecoverPendingAsync()
+    {
+        if (!_recoveryConnected || _checkingResult || _item is null || _callerUserId is null)
+        {
+            return;
+        }
+
+        if (!await HasPendingRecoveryAsync())
+        {
+            return;
+        }
+
+        _requiresResultCheck = true;
+        StateHasChanged();
+        await CheckResultAsync();
+    }
+
+    private async Task<bool> HasPendingRecoveryAsync()
+    {
+        if (_callerUserId is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await PaymentRecovery.HasAsync(RecoveryTarget, _callerUserId);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private async Task ClearRecoveryAsync()
+    {
+        try
+        {
+            await PaymentRecovery.ClearAsync(RecoveryTarget);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private async Task<bool> MarkRecoveryAsync(string operation)
+    {
+        if (_callerUserId is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return await PaymentRecovery.MarkAsync(RecoveryTarget, operation, _callerUserId);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     private async Task ReloadAsync()
     {
         _loading = true;
@@ -289,10 +424,12 @@
         _resultCheckMessage = null;
         _requiresResultCheck = false;
         _item = null;
+        _callerUserId = null;
         _proofFiles = new Dictionary<Guid, FileMetadataDto>();
 
         try
         {
+            _callerUserId = (await ReviewPage.CallerAsync()).UserId;
             _item = await ReviewPage.DetailAsync(PaymentId);
             await LoadProofFilesAsync();
         }
@@ -313,6 +450,8 @@
         {
             _loading = false;
         }
+
+        await TryRecoverPendingAsync();
     }
 
     private async Task LoadProofFilesAsync()
@@ -347,20 +486,30 @@
 
         try
         {
+            if (!await MarkRecoveryAsync("confirm"))
+            {
+                _confirmVisible = false;
+                _actionError = L["PaymentRecoveryStoreFailed"];
+                return;
+            }
+
             var updated = await ReviewPage.ConfirmAsync(_item.Payment.Id);
             ApplyPayment(updated);
             _confirmVisible = false;
+            await ClearRecoveryAsync();
             Toasts.Success(L["ReviewConfirmSuccess"]);
             await RefreshAfterActionAsync(null);
         }
         catch (PaymentAuthorizationException exception)
         {
             _confirmVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentNotFoundException exception)
         {
             _confirmVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentOperationException exception)
@@ -370,11 +519,13 @@
         {
             _confirmVisible = false;
             await RefreshAfterActionAsync(null);
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentOperationException exception)
         {
             _confirmVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (Exception)
@@ -416,25 +567,35 @@
 
         try
         {
+            if (!await MarkRecoveryAsync("reject"))
+            {
+                _rejectError = L["PaymentRecoveryStoreFailed"];
+                return;
+            }
+
             var updated = await ReviewPage.RejectAsync(_item.Payment.Id, reason);
             ApplyPayment(updated);
             _rejectVisible = false;
             _rejectReason = string.Empty;
+            await ClearRecoveryAsync();
             Toasts.Success(L["ReviewRejectSuccess"]);
             await RefreshAfterActionAsync(null);
         }
         catch (PaymentAuthorizationException exception)
         {
             _rejectVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentNotFoundException exception)
         {
             _rejectVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentValidationException exception)
         {
+            await ClearRecoveryAsync();
             _rejectError = ServiceErrorText(exception);
         }
         catch (PaymentOperationException exception)
@@ -444,11 +605,13 @@
         {
             _rejectVisible = false;
             await RefreshAfterActionAsync(null);
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (PaymentOperationException exception)
         {
             _rejectVisible = false;
+            await ClearRecoveryAsync();
             _actionError = ServiceErrorText(exception);
         }
         catch (Exception)
@@ -470,20 +633,30 @@
             return;
         }
 
+        var hadUnclearOperation = _requiresResultCheck;
         _checkingResult = true;
         _actionError = null;
         _resultCheckMessage = null;
 
         try
         {
-            _item = await ReviewPage.DetailAsync(PaymentId);
+            var item = await ReviewPage.DetailAsync(PaymentId);
+            _item = item;
             await LoadProofFilesAsync();
-            _requiresResultCheck = false;
-            _resultCheckMessage = L["ReviewResultChecked"];
+
+            // Còn Pending sau khi tra nghĩa là chưa xác định được thao tác trước: giữ khóa,
+            // không tự gọi lại ConfirmAsync/RejectAsync; người dùng chỉ được tra lại.
+            _requiresResultCheck = hadUnclearOperation && item.Payment.Status == PaymentStatus.Pending;
+            if (!_requiresResultCheck)
+            {
+                await ClearRecoveryAsync();
+                _resultCheckMessage = L["ReviewResultChecked"];
+            }
         }
         catch (KeyNotFoundException)
         {
             _requiresResultCheck = false;
+            await ClearRecoveryAsync();
             _notFound = true;
         }
         catch (Exception exception)
@@ -620,4 +793,23 @@
         PaymentStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_recoveryRef is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await PaymentRecovery.DisconnectAsync(_recoveryRef);
+        }
+        catch (Exception)
+        {
+        }
+
+        _recoveryRef.Dispose();
+        _recoveryRef = null;
+    }
 }

@@ -25,6 +25,7 @@
 <data name="QuickActionsTitle" xml:space="preserve"><value>Shortcuts</value></data>
 <data name="OpenInvoicesTitle" xml:space="preserve"><value>Unpaid invoices</value></data>
 <data name="OpenInvoicesEmpty" xml:space="preserve"><value>No unpaid invoices.</value></data>
+<data name="OpenInvoiceTitle" xml:space="preserve"><value>Open invoice to pay</value></data>
 <data name="ExpiringTitle" xml:space="preserve"><value>Contracts ending soon</value></data>
 <data name="ExpiringEmpty" xml:space="preserve"><value>No contracts end in the next 30 days.</value></data>
 <data name="PendingAccountsTitle" xml:space="preserve"><value>Accounts awaiting approval</value></data>

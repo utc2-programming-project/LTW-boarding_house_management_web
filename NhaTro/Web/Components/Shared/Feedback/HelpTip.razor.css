@@ -1,0 +1,118 @@
+/* Nút "?" duy nhất cho toàn app: hover/focus là bong bóng nổi lên, không chiếm chỗ trong trang. */
+.help-tip {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+}
+
+.help-tip-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: help;
+    touch-action: manipulation;
+}
+
+/* Vùng bấm mở rộng tới 44px mà không đổi kích thước hiển thị của nút. */
+.help-tip-button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+}
+
+.help-tip-button ::deep .lucide-icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    color: inherit;
+}
+
+.help-tip-button:hover,
+.help-tip-button:focus,
+.help-tip-button:focus-visible {
+    background: var(--hover-bg);
+    color: var(--accent-text);
+}
+
+.help-tip-button:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.help-tip-bubble {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + var(--space-2));
+    left: 0;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(18rem, calc(100vw - var(--space-8)));
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-popover);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 120ms var(--ease);
+}
+
+/* Mũi nhọn neo bong bóng vào nút "?", tâm mũi nhọn trùng tâm nút. */
+.help-tip-bubble::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: calc((28px - 8px) / 2);
+    width: 8px;
+    height: 8px;
+    margin-bottom: calc(-1 * var(--space-1));
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    border-radius: 1px;
+    background: var(--surface);
+    transform: rotate(45deg);
+}
+
+.help-tip--end .help-tip-bubble {
+    left: auto;
+    right: 0;
+}
+
+.help-tip--end .help-tip-bubble::before {
+    left: auto;
+    right: calc((28px - 8px) / 2);
+}
+
+.help-tip-button:hover + .help-tip-bubble,
+.help-tip-button:focus + .help-tip-bubble,
+.help-tip-button:focus-visible + .help-tip-bubble {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .help-tip-bubble {
+        transition: none;
+    }
+}

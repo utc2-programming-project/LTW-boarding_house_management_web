@@ -9,6 +9,8 @@ public static class PropertyErrorCodes
     public const string PropertyHasRooms = nameof(PropertyHasRooms);
     public const string PropertyOperationFailed = nameof(PropertyOperationFailed);
     public const string ApprovalRequired = nameof(ApprovalRequired);
+    public const string PropertyHasDependencies = nameof(PropertyHasDependencies);
+    public const string NotInTrash = nameof(NotInTrash);
 }
 
 /// <summary>Thông báo lỗi tiếng Việt hiển thị trên UI.</summary>
@@ -20,6 +22,8 @@ public static class PropertyErrorMessages
     public const string PropertyHasRooms = "Nhà trọ còn phòng, không thể xóa";
     public const string PropertyOperationFailed = "Không thể thực hiện, vui lòng thử lại";
     public const string ApprovalRequired = "Thao tác đang chờ Chủ trọ duyệt";
+    public const string PropertyHasDependencies = "Nhà trọ còn phòng, dịch vụ hoặc yêu cầu duyệt nên không thể xóa vĩnh viễn";
+    public const string NotInTrash = "Nhà trọ không còn trong thùng rác";
     public const string InvalidName = "Tên nhà trọ là bắt buộc";
     public const string InvalidLength = "Dữ liệu vượt quá độ dài cho phép";
 }

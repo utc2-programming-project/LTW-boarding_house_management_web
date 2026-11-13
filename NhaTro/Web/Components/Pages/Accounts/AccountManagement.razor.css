@@ -17,11 +17,6 @@
     vertical-align: middle;
 }
 
-/* Thanh lọc là card riêng: tách khỏi card bảng để hai khối không dính nhau. */
-.accounts-page > .filter-bar {
-    margin-bottom: var(--space-5);
-}
-
 /* Cột Thao tác: nút ⋯ và nhãn "Đây là bạn" cùng căn giữa cột. */
 .accounts-page ::deep .table-card tbody td:nth-child(7) {
     text-align: center;

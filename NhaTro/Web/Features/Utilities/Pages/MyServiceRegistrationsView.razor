@@ -11,18 +11,15 @@
 
 <PageTitle>@UL["RegHistoryPageTitle"]</PageTitle>
 
-<div class="registration-history-page">
-    <NavBreadcrumb />
-    <header class="page-header">
-        <div>
-            <h1 class="page-title">@UL["RegHistoryTitle"]</h1>
-            <p class="page-subtitle">@UL["RegHistorySubtitle"]</p>
-        </div>
-        <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
-            <LucideIcon Name="refresh" />
-            <span>@UL["P5CostRefresh"]</span>
-        </button>
-    </header>
+<div class="registration-history-page page-stack">
+    <PageHeading Title="@UL["RegHistoryTitle"]" HelpText="@UL["RegHistorySubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />
+                <span>@UL["P5CostRefresh"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -129,17 +126,8 @@
                 </table>
             </div>
 
-            <footer class="table-footer">
-                <span>@string.Format(UL["RegPageInfo"], _page, TotalPages, _rows.Count)</span>
-                <div class="pager">
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
-                        @UL["Previous"]
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
-                        @UL["Next"]
-                    </button>
-                </div>
-            </footer>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_rows.Count"
+                        PageChanged="GoToPage" />
         </div>
     }
 </div>
@@ -214,9 +202,13 @@
 
     private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
 
-    private void ChangePage(int delta)
+    private int FirstItem => _rows.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_page * PageSize, _rows.Count);
+
+    private void GoToPage(int page)
     {
-        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        var target = PaginationHelper.ClampPage(page, TotalPages);
         if (target == _page)
         {
             return;

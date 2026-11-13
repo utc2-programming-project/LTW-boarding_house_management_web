@@ -9,20 +9,37 @@
 
 <PageTitle>@L["P2TrashTitle"] · @L["AppName"]</PageTitle>
 
-<div class="p2-page">
+<div class="page-stack">
     <PageHeading Title="@L["P2TrashTitle"]" HelpText="@L["P2TrashSubtitle"]">
         <Actions>
+            <button class="btn btn-danger" type="button" @onclick="OpenEmptyTrash">
+                <LucideIcon Name="trash" />@L["EmptyTrash"]
+            </button>
             <button class="btn btn-secondary" type="button" @onclick="GoToRooms">
                 <LucideIcon Name="door" />@L["P2RoomsTitle"]
             </button>
         </Actions>
     </PageHeading>
 
-    <div class="filter-toolbar">
-        <div class="filter-field">
-            <label for="room-trash-search">@L["P2RoomCode"]</label>
-            <input id="room-trash-search" type="search" class="filter-input"
-                   placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:after="ReloadAsync" />
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="room-trash-search">@L["P2RoomCode"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="room-trash-search" type="search" class="input"
+                       placeholder="@L["P2SearchRooms"]" @bind="_keyword" @bind:after="ReloadAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="trash-page-size">@L["P2RowsPerPage"]</label>
+                    <select id="trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearSearchAsync" />
+            </div>
         </div>
     </div>
 
@@ -33,13 +50,6 @@
             <button class="btn btn-secondary" type="button" @onclick="GoToRooms">@L["P2RoomsTitle"]</button>
         </EmptyActions>
     </DataTable>
-
-    <div class="p2-table-options">
-        <label for="trash-page-size">@L["P2RowsPerPage"]</label>
-        <select id="trash-page-size" value="@_pageSize" @onchange="ChangePageSize">
-            <option value="10">10</option><option value="20">20</option><option value="50">50</option>
-        </select>
-    </div>
 </div>
 
 <ConfirmDialog Visible="_restoreVisible" Title="@L["P2TrashRestoreTitle"]"
@@ -48,12 +58,31 @@
                BusyText="@L["P2TrashRestoring"]"
                OnConfirm="RestoreAsync" OnCancel="CancelRestore" />
 
+<PurgeConfirmDialog Visible="_purgeVisible" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], _purgeItem?.Code ?? string.Empty)"
+                    ExpectedText="@(_purgeItem?.Code ?? string.Empty)"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], _purgeItem?.Code ?? string.Empty)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@L["Cancel"]"
+                    OnConfirm="PurgeAsync" OnCancel="CancelPurge" />
+
+<PurgeConfirmDialog Visible="_emptyVisible" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@L["Cancel"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="CancelEmptyTrash" />
+
 @code {
     private DataTable<RoomTrashItem>? _table;
     private IReadOnlyList<DataTableColumn<RoomTrashItem>> _columns = [];
     private DataTableLabels _tableLabels = new();
     private RoomTrashItem? _restoreRoom;
+    private RoomTrashItem? _purgeItem;
     private bool _restoreVisible;
+    private bool _purgeVisible;
+    private bool _emptyVisible;
     private int _pageSize = 20;
     private int _tableKey;
     private string _keyword = string.Empty;
@@ -71,6 +100,9 @@
         RenderFragment<RoomTrashItem> actions = item => @<div class="p2-row-actions">
             <button class="btn btn-secondary" type="button" @onclick="() => RequestRestore(item)">
                 <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+            <button class="btn btn-danger" type="button" @onclick="() => RequestPurge(item)">
+                <LucideIcon Name="trash" />@L["Purge"]
             </button>
         </div>;
 
@@ -93,6 +125,12 @@
             PageSize = request.PageSize,
             Keyword = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim()
         });
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = string.Empty;
+        return ReloadAsync();
+    }
 
     private Task ReloadAsync()
     {
@@ -168,6 +206,60 @@
             Toasts.Error(L["P2TrashRestoreFailed"]);
             CancelRestore();
         }
+    }
+
+    private void RequestPurge(RoomTrashItem item)
+    {
+        _purgeItem = item;
+        _purgeVisible = true;
+    }
+
+    private void CancelPurge()
+    {
+        _purgeVisible = false;
+        _purgeItem = null;
+    }
+
+    private void OpenEmptyTrash() => _emptyVisible = true;
+
+    private void CancelEmptyTrash() => _emptyVisible = false;
+
+    private async Task PurgeAsync()
+    {
+        if (_purgeItem is null)
+        {
+            CancelPurge();
+            return;
+        }
+
+        var result = await PageService.PurgeAsync(_purgeItem.Id);
+        CancelPurge();
+        if (!result.Succeeded)
+        {
+            Toasts.Error(result.ErrorCode == RoomErrorCodes.RoomHasDependencies
+                ? L["PurgeHasDependencies"]
+                : L["PurgeFailed"]);
+            return;
+        }
+
+        Toasts.Success(L["PurgeSuccess"]);
+        if (_table is not null) await _table.ReloadAsync();
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        var summary = await PageService.PurgeAllAsync();
+        CancelEmptyTrash();
+        if (summary.Purged == 0 && summary.Skipped == 0)
+        {
+            Toasts.Success(L["EmptyTrashNothing"]);
+        }
+        else
+        {
+            Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+        }
+
+        if (_table is not null) await _table.ReloadAsync();
     }
 
     private void GoToRooms() => Navigation.NavigateTo("/rooms");

@@ -293,4 +293,36 @@
   <data name="ContractPreviousLabel" xml:space="preserve"><value>Previous contract</value></data>
   <data name="ContractHistoryEmpty" xml:space="preserve"><value>No data available</value></data>
   <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Suggested 20% of rent</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
+  <data name="Purge" xml:space="preserve"><value>Delete permanently</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Delete permanently?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>Contract “{0}” will be permanently removed and cannot be restored.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Type exactly “{0}” to confirm</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Does not match. Type the contract number exactly as shown above.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Permanently deleted.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Empty trash</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Empty the trash?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Every eligible contract will be permanently deleted. Contracts with invoices/readings will be kept.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>DELETE ALL</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Deleted {0}, skipped {1} with related data.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Nothing can be deleted.</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="ContractTrashTitle" xml:space="preserve"><value>Contract trash</value></data>
+  <data name="ContractTrashSubtitle" xml:space="preserve"><value>Deleted Pending/Rejected contracts can be restored or permanently removed.</value></data>
+  <data name="ContractTrashOpen" xml:space="preserve"><value>Contract trash</value></data>
+  <data name="ContractTrashSearchLabel" xml:space="preserve"><value>Search deleted contracts</value></data>
+  <data name="ContractTrashSearchPlaceholder" xml:space="preserve"><value>Search by contract number, room or property</value></data>
+  <data name="ContractTrashRestoreTitle" xml:space="preserve"><value>Restore contract?</value></data>
+  <data name="ContractTrashRestoreMessage" xml:space="preserve"><value>Restore contract “{0}”?</value></data>
+  <data name="ContractTrashRestored" xml:space="preserve"><value>Contract restored.</value></data>
+  <data name="ContractDeleteAction" xml:space="preserve"><value>Delete contract</value></data>
+  <data name="ContractDeleteTitle" xml:space="preserve"><value>Delete contract?</value></data>
+  <data name="ContractDeleteMessage" xml:space="preserve"><value>Contract “{0}” will be moved to the trash.</value></data>
+  <data name="ContractDeleteConfirm" xml:space="preserve"><value>Delete</value></data>
+  <data name="ContractDeleted" xml:space="preserve"><value>Contract moved to the trash.</value></data>
+  <data name="ContractErrorNotDeletable" xml:space="preserve"><value>Only Pending or Rejected contracts can be deleted.</value></data>
+  <data name="ContractErrorNotInTrash" xml:space="preserve"><value>The contract is no longer in the trash.</value></data>
+  <data name="ContractErrorHasDependencies" xml:space="preserve"><value>Cannot delete because the contract still has invoices, renewal requests or reading periods.</value></data>
+  <data name="ContractErrorRoomDeleted" xml:space="preserve"><value>The contract's room was deleted; restore the room first.</value></data>
 </root>

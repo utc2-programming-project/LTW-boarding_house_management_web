@@ -5,4 +5,10 @@
 @* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ,
    còn giao diện hàng đợi nằm trong Features/Approvals để tách khỏi trang
    "Yêu cầu của tôi" của Quản lý. *@
-<ApprovalQueueView />
+<ApprovalQueueView InitialQuery="@Query" />
+
+@code {
+    /// <summary>Mã phòng từ badge "Chờ duyệt" ở danh sách phòng: /approvals?q=A107.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? Query { get; set; }
+}

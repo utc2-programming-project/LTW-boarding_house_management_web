@@ -1,0 +1,81 @@
+@using System.Security.Claims
+@using Web.Features.Accounts
+@using Web.Features.Invoices.Services
+@implements IDisposable
+@inject AuthenticationStateProvider AuthState
+@inject IOwnerBankAccountService BankAccounts
+@inject OwnerBankAccountNotifier BankAccountNotifier
+@inject NavigationManager Navigation
+@inject IStringLocalizer<Shared> L
+@inject ILogger<OwnerBankAccountBanner> Logger
+
+@* PLAN-028: Chủ trọ chưa nhập tài khoản nhận tiền thì khách thuê không tạo được mã QR
+   chuyển khoản. Nhắc ngay trên mọi trang, kèm lối tắt tới /profile. *@
+@if (_visible)
+{
+    <div class="owner-bank-banner" role="status">
+        <LucideIcon Name="alert-triangle" />
+        <span class="owner-bank-banner-text">@L["OwnerBankMissingBanner"]</span>
+        <a class="btn btn-secondary owner-bank-banner-action" href="/profile">@L["OwnerBankMissingBannerAction"]</a>
+    </div>
+}
+
+@code {
+    private bool _visible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        BankAccountNotifier.Changed += OnBankAccountChanged;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            var user = (await AuthState.GetAuthenticationStateAsync()).User;
+            if (Roles.ResolvePrimaryRole(user) != Roles.ChuTro)
+            {
+                _visible = false;
+                return;
+            }
+
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            var account = string.IsNullOrWhiteSpace(userId)
+                ? null
+                : await BankAccounts.GetForUserAsync(userId);
+            _visible = account is not { IsConfigured: true };
+        }
+        catch (Exception ex)
+        {
+            // Trang chưa đăng nhập hoặc circuit chưa có danh tính: không hiện banner.
+            Logger.LogDebug(ex, "Owner bank account banner skipped");
+            _visible = false;
+        }
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async void OnBankAccountChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        BankAccountNotifier.Changed -= OnBankAccountChanged;
+    }
+}

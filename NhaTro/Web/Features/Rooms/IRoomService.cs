@@ -43,6 +43,12 @@ public interface IRoomService
     Task<RoomResult> RestoreAsync(
         int id, Properties.PropertyCaller caller, CancellationToken ct = default);
 
+    Task<RoomResult> PurgeAsync(
+        int id, Properties.PropertyCaller caller, CancellationToken ct = default);
+
+    Task<Web.Common.Models.TrashPurgeSummary> PurgeAllAsync(
+        Properties.PropertyCaller caller, CancellationToken ct = default);
+
     /// <summary>Dữ liệu chọn phòng bàn giao cho Đào (hợp đồng VHT-11/VHT-29) và query P8.</summary>
     Task<List<RoomOption>> SearchForPickerAsync(
         RoomOptionRequest request, Properties.PropertyCaller caller, CancellationToken ct = default);

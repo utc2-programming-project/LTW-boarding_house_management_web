@@ -44,9 +44,10 @@ public sealed class HistoryRetentionTests(SqlServerFixture fixture)
             await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Properties WHERE Id = {propertyId}");
         }
 
-        await using var verify = world.NewDb();
-        Assert.True(await verify.Set<AuditLogEntry>().AsNoTracking()
-            .AnyAsync(entry => entry.PropertyId == propertyId && entry.Action == "PropertyCreated"));
+        // VHT-104: nhật ký ghi ra file theo chủ trọ, sống độc lập với dòng Property đã xóa.
+        var auditEntries = await fixture.AuditStore.ReadAsync(
+            AuditLogCategory.Business, PermissionMatrixWorld.OwnerAId);
+        Assert.Contains(auditEntries, entry => entry.PropertyId == propertyId && entry.Action == "PropertyCreated");
     }
 
     [SqlServerFact]
@@ -91,8 +92,8 @@ public sealed class HistoryRetentionTests(SqlServerFixture fixture)
         await using var db = world.NewDb();
 
         await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt)
-            VALUES ({world.Data.ContractAId}, '2030-01-01', '2030-01-31', 1, 1000, SYSDATETIMEOFFSET())
+            INSERT INTO Invoices (ContractId, PeriodStart, PeriodEnd, Status, TotalAmount, CreatedAt, IsDeleted)
+            VALUES ({world.Data.ContractAId}, '2030-01-01', '2030-01-31', 1, 1000, SYSDATETIMEOFFSET(), 0)
             """);
         var invoiceId = await db.Invoices.AsNoTracking()
             .Where(item => item.ContractId == world.Data.ContractAId)

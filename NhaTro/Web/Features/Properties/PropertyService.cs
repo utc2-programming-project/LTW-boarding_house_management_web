@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
+using Web.Features.Audit.Entities;
 using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Entities;
 using Web.Features.Properties.Mapping;
@@ -237,6 +238,79 @@ public sealed class PropertyService(
         await db.SaveChangesAsync(ct);
 
         return PropertyResult.Success(PropertyMapping.ToDetail(entity));
+    }
+
+    public async Task<PropertyResult> PurgeAsync(
+        int id, PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanWrite(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var entity = await db.Properties.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted && p.OwnerId == caller.UserId, ct);
+        if (entity is null)
+        {
+            return PropertyResult.Failure(PropertyErrorCodes.NotInTrash, PropertyErrorMessages.NotInTrash);
+        }
+
+        var inUse = await db.Rooms.IgnoreQueryFilters().AnyAsync(r => r.PropertyId == id, ct)
+            || await db.ServiceCatalogs.IgnoreQueryFilters().AnyAsync(c => c.PropertyId == id, ct)
+            || await db.ManagerApprovalRequests.AnyAsync(r => r.PropertyId == id, ct);
+        if (inUse)
+        {
+            return PropertyResult.Failure(
+                PropertyErrorCodes.PropertyHasDependencies,
+                PropertyErrorMessages.PropertyHasDependencies);
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var managers = await db.PropertyManagers.Where(m => m.PropertyId == id).ToListAsync(ct);
+            db.PropertyManagers.RemoveRange(managers);
+            db.Properties.Remove(entity);
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "property.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = id,
+                Metadata = $"Property {entity.Name}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return PropertyResult.Success();
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return PropertyResult.Failure(
+                PropertyErrorCodes.PropertyHasDependencies,
+                PropertyErrorMessages.PropertyHasDependencies);
+        }
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanWrite(caller);
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var ids = await db.Properties.IgnoreQueryFilters()
+            .Where(p => p.IsDeleted && p.OwnerId == caller.UserId)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        var purged = 0;
+        var skipped = 0;
+        foreach (var id in ids)
+        {
+            var result = await PurgeAsync(id, caller, ct);
+            if (result.Succeeded) purged++;
+            else skipped++;
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
     }
 
     // Phạm vi (VHT-6/VHT-24): Chủ trọ chỉ thấy nhà có OwnerId của mình;

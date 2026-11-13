@@ -434,6 +434,8 @@
   <data name="P5CostThTotal" xml:space="preserve"><value>Tổng dịch vụ phòng</value></data>
   <data name="P5CostThInvoiceStatus" xml:space="preserve"><value>Trạng thái hóa đơn</value></data>
   <data name="P5CostThActions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="P5CostThPeriod" xml:space="preserve"><value>Kỳ</value></data>
+  <data name="P5CostCreateInvoiceConfirmNote" xml:space="preserve"><value>Hoá đơn sẽ được tạo ở trạng thái nháp để bạn kiểm tra trước khi phát hành cho khách.</value></data>
   <data name="P5CostNoData" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
   <data name="P5CostServiceCount" xml:space="preserve"><value>{0} dịch vụ</value></data>
   <data name="P5CostInvoiceCreated" xml:space="preserve"><value>Đã lập hóa đơn</value></data>
@@ -468,6 +470,10 @@
   <data name="P5CostRentLabel" xml:space="preserve"><value>Tiền phòng</value></data>
   <data name="P5CostTotalLabel" xml:space="preserve"><value>Tổng cộng</value></data>
   <data name="P5CostCorrectionsTitle" xml:space="preserve"><value>Lịch sử điều chỉnh</value></data>
+  <data name="P5CostInvoiceRevisionsTitle" xml:space="preserve"><value>Lịch sử chỉnh sửa hóa đơn</value></data>
+  <data name="P5CostInvoiceRevisionsHint" xml:space="preserve"><value>Lý do Chủ trọ nêu khi chỉnh sửa hóa đơn đã gửi khách.</value></data>
+  <data name="P5CostInvoiceRevisionsCount" xml:space="preserve"><value>{0} lần chỉnh sửa</value></data>
+  <data name="P5CostInvoiceRevisionsCountOne" xml:space="preserve"><value>1 lần chỉnh sửa</value></data>
   <data name="P5CostCorrectionsCount" xml:space="preserve"><value>{0} lần điều chỉnh</value></data>
   <data name="P5CostCorrectionsCountOne" xml:space="preserve"><value>1 lần điều chỉnh</value></data>
   <data name="P5CostCorrectionsEmpty" xml:space="preserve"><value>Chưa có điều chỉnh nào.</value></data>
@@ -502,4 +508,56 @@
   <data name="P5CostReadingNotFound" xml:space="preserve"><value>Không tìm thấy chỉ số của kỳ.</value></data>
   <data name="ErrorCopySameProperty" xml:space="preserve"><value>Không thể sao chép giá từ chính nhà trọ này.</value></data>
   <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>Bạn không có quyền xem nhà trọ nguồn.</value></data>
+  <data name="RegBankAccountMissing" xml:space="preserve"><value>Chủ trọ chưa cấu hình tài khoản nhận tiền.</value></data>
+  <data name="P2RowsPerPage" xml:space="preserve"><value>Số dòng mỗi trang</value></data>
+  <data name="P2Actions" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="Restore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="Purge" xml:space="preserve"><value>Xóa vĩnh viễn</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Xóa vĩnh viễn?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>Mục “{0}” sẽ bị xóa hẳn khỏi hệ thống và không thể khôi phục.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Gõ chính xác “{0}” để xác nhận</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Chưa khớp. Hãy gõ đúng tên/mã hiển thị ở trên.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Đã xóa vĩnh viễn.</value></data>
+  <data name="PurgeFailed" xml:space="preserve"><value>Không xóa được. Vui lòng thử lại.</value></data>
+  <data name="PurgeNotInTrash" xml:space="preserve"><value>Mục này không còn trong thùng rác.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Dọn sạch thùng rác</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Dọn sạch thùng rác?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Mọi mục có thể xóa sẽ bị xóa vĩnh viễn. Mục còn dữ liệu liên quan sẽ được giữ lại.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>XÓA TẤT CẢ</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Đã xóa {0} mục, bỏ qua {1} mục còn dữ liệu liên quan.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Không có mục nào có thể xóa.</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Ngày xóa</value></data>
+  <data name="ServiceTrashTitle" xml:space="preserve"><value>Thùng rác dịch vụ</value></data>
+  <data name="ServiceTrashSubtitle" xml:space="preserve"><value>Dịch vụ đã xóa có thể khôi phục hoặc xóa vĩnh viễn.</value></data>
+  <data name="ServiceTrashOpen" xml:space="preserve"><value>Thùng rác dịch vụ</value></data>
+  <data name="ServiceTrashSearchLabel" xml:space="preserve"><value>Tìm dịch vụ đã xóa</value></data>
+  <data name="ServiceTrashSearchPlaceholder" xml:space="preserve"><value>Tìm theo tên dịch vụ hoặc nhà trọ</value></data>
+  <data name="ServiceTrashRestoreTitle" xml:space="preserve"><value>Khôi phục dịch vụ?</value></data>
+  <data name="ServiceTrashRestoreMessage" xml:space="preserve"><value>Khôi phục “{0}” về danh mục dịch vụ?</value></data>
+  <data name="ServiceTrashRestored" xml:space="preserve"><value>Đã khôi phục dịch vụ.</value></data>
+  <data name="ServiceTrashColumnName" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="ServiceTrashColumnProperty" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="ServiceTrashColumnUnit" xml:space="preserve"><value>Đơn vị</value></data>
+  <data name="ServiceTrashColumnPrice" xml:space="preserve"><value>Đơn giá</value></data>
+  <data name="ServiceTrashColumnVersions" xml:space="preserve"><value>Số phiên bản giá</value></data>
+  <data name="ServiceRegistrationTrashTitle" xml:space="preserve"><value>Thùng rác đăng ký dịch vụ</value></data>
+  <data name="ServiceRegistrationTrashSubtitle" xml:space="preserve"><value>Đăng ký dịch vụ đã hủy có thể khôi phục hoặc xóa vĩnh viễn.</value></data>
+  <data name="ServiceRegistrationTrashOpen" xml:space="preserve"><value>Thùng rác đăng ký</value></data>
+  <data name="ServiceRegistrationTrashSearchLabel" xml:space="preserve"><value>Tìm đăng ký đã xóa</value></data>
+  <data name="ServiceRegistrationTrashSearchPlaceholder" xml:space="preserve"><value>Tìm theo hợp đồng, phòng, nhà trọ hoặc dịch vụ</value></data>
+  <data name="ServiceRegistrationTrashRestoreTitle" xml:space="preserve"><value>Khôi phục đăng ký?</value></data>
+  <data name="ServiceRegistrationTrashRestoreMessage" xml:space="preserve"><value>Khôi phục đăng ký “{0}” cho tháng này?</value></data>
+  <data name="ServiceRegistrationTrashRestored" xml:space="preserve"><value>Đã khôi phục đăng ký dịch vụ.</value></data>
+  <data name="ServiceRegistrationTrashColumnContract" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="ServiceRegistrationTrashColumnRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="ServiceRegistrationTrashColumnProperty" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="ServiceRegistrationTrashColumnService" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="ServiceRegistrationTrashColumnMonth" xml:space="preserve"><value>Tháng</value></data>
+  <data name="ServiceRegistrationServiceDeleted" xml:space="preserve"><value>Dịch vụ đã bị xóa; hãy khôi phục dịch vụ trước.</value></data>
+  <data name="ServiceRegistrationDuplicate" xml:space="preserve"><value>Đã có đăng ký dịch vụ này trong cùng tháng.</value></data>
+  <data name="ErrorTrashItemNotFound" xml:space="preserve"><value>Mục này không còn trong thùng rác.</value></data>
+  <data name="ErrorPropertyDeleted" xml:space="preserve"><value>Nhà trọ đã bị xóa; hãy khôi phục nhà trọ trước.</value></data>
+  <data name="ErrorServiceInUse" xml:space="preserve"><value>Dịch vụ còn đăng ký dịch vụ; hãy xóa các đăng ký trước.</value></data>
+  <data name="ErrorHasDependencies" xml:space="preserve"><value>Không thể xóa vì còn dữ liệu liên quan.</value></data>
 </root>

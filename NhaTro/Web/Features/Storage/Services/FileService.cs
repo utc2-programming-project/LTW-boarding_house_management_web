@@ -1,6 +1,7 @@
 using System.Security.Principal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Web.Common.Models;
 using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Properties;
@@ -506,6 +507,8 @@ public sealed class FileService(
                 || !Web.Features.Maintenance.Rules.IncidentPhotoRules.IsPublished(photo.ApprovalRequest?.Status)
                 || !await incidentPhotos.CanReadAsync(db, file, caller, cancellationToken)) return false;
             file.IsDeleted = true;
+            file.DeletedAt = timeProvider.GetUtcNow().UtcDateTime;
+            file.DeletedBy = caller.UserId;
             await db.SaveChangesAsync(cancellationToken);
             await AuditAsync(caller, FileAccessAction.Delete, file.Id, file.FileCategory,
                 file.RelatedEntityType, file.RelatedEntityId, true, null, cancellationToken);
@@ -540,6 +543,195 @@ public sealed class FileService(
             file.RelatedEntityType, file.RelatedEntityId, true, null, cancellationToken);
         return true;
     }
+
+    public async Task<IReadOnlyList<StoredFileTrashItemDto>> ListDeletedAsync(
+        StorageCaller caller,
+        RelatedEntityType? relatedEntityType = null,
+        string? relatedEntityId = null,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureBusinessAllowed(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var query = db.StoredFiles
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(file => file.IsDeleted);
+
+        if (relatedEntityType is { } type)
+        {
+            query = query.Where(file => file.RelatedEntityType == type);
+        }
+
+        if (!string.IsNullOrWhiteSpace(relatedEntityId))
+        {
+            query = query.Where(file => file.RelatedEntityId == relatedEntityId);
+        }
+
+        var files = await query
+            .OrderByDescending(file => file.DeletedAt)
+            .ThenByDescending(file => file.UploadedAt)
+            .ToListAsync(cancellationToken);
+
+        var items = new List<StoredFileTrashItemDto>();
+        foreach (var file in files)
+        {
+            if (await CanManageTrashedFileAsync(db, file, caller, cancellationToken))
+            {
+                items.Add(new StoredFileTrashItemDto(
+                    file.Id,
+                    file.FileName,
+                    file.FileCategory,
+                    file.RelatedEntityType,
+                    file.RelatedEntityId,
+                    file.FileSizeBytes,
+                    file.UploadedAt,
+                    file.DeletedAt,
+                    file.DeletedBy));
+            }
+        }
+
+        return items;
+    }
+
+    public async Task<StorageTrashResult> RestoreAsync(
+        Guid id,
+        StorageCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureBusinessAllowed(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var file = await db.StoredFiles
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == id && item.IsDeleted, cancellationToken);
+        if (file is null)
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.NotInTrash);
+        }
+
+        if (!await CanManageTrashedFileAsync(db, file, caller, cancellationToken))
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.Forbidden);
+        }
+
+        if (!await RelatedEntityAliveAsync(db, file, cancellationToken))
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.RelatedEntityDeleted);
+        }
+
+        file.IsDeleted = false;
+        file.DeletedAt = null;
+        file.DeletedBy = null;
+        await db.SaveChangesAsync(cancellationToken);
+        return StorageTrashResult.Success();
+    }
+
+    public async Task<StorageTrashResult> PurgeAsync(
+        Guid id,
+        StorageCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureBusinessAllowed(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var file = await db.StoredFiles
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.Id == id && item.IsDeleted, cancellationToken);
+        if (file is null)
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.NotInTrash);
+        }
+
+        if (!await CanManageTrashedFileAsync(db, file, caller, cancellationToken))
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.Forbidden);
+        }
+
+        var inUse = await db.PaymentProofs.IgnoreQueryFilters()
+                .AnyAsync(proof => proof.FileId == id, cancellationToken)
+            || await db.IncidentPhotoAttachments
+                .AnyAsync(photo => photo.FileId == id, cancellationToken);
+        if (inUse)
+        {
+            return StorageTrashResult.Failure(StorageErrorCodes.FileInUse);
+        }
+
+        try
+        {
+            fileStorage.Delete(file.RelativePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or StoragePathViolationException)
+        {
+            logger.LogWarning(ex, "Không xóa được tệp vật lý {FileId}.", id);
+            return StorageTrashResult.Failure(StorageErrorCodes.StorageFailed);
+        }
+
+        db.StoredFiles.Remove(file);
+        await db.SaveChangesAsync(cancellationToken);
+        return StorageTrashResult.Success();
+    }
+
+    public async Task<TrashPurgeSummary> PurgeAllAsync(
+        StorageCaller caller,
+        RelatedEntityType? relatedEntityType = null,
+        string? relatedEntityId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var items = await ListDeletedAsync(caller, relatedEntityType, relatedEntityId, cancellationToken);
+        var purged = 0;
+        var skipped = 0;
+        foreach (var item in items)
+        {
+            var result = await PurgeAsync(item.Id, caller, cancellationToken);
+            if (result.Succeeded) purged++;
+            else skipped++;
+        }
+
+        return new TrashPurgeSummary(purged, skipped);
+    }
+
+    private async Task<bool> CanManageTrashedFileAsync(
+        ApplicationDbContext db,
+        StoredFile file,
+        StorageCaller caller,
+        CancellationToken cancellationToken)
+    {
+        if (file.RelatedEntityType == RelatedEntityType.IncidentApproval)
+        {
+            return false;
+        }
+
+        if (file.RelatedEntityType == RelatedEntityType.Tenant)
+        {
+            return TenantDocumentPermissionRules.CanDelete(
+                await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken));
+        }
+
+        if (file.RelatedEntityType == RelatedEntityType.MaintenanceIncident)
+        {
+            return StoragePermissionRules.CanDelete(caller.Role)
+                && await CanManageIncidentFileAsync(file.RelatedEntityId, caller, cancellationToken);
+        }
+
+        return StoragePermissionRules.CanDelete(caller.Role)
+            && (file.RelatedEntityType != RelatedEntityType.Room
+                || await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken));
+    }
+
+    private static async Task<bool> RelatedEntityAliveAsync(
+        ApplicationDbContext db,
+        StoredFile file,
+        CancellationToken cancellationToken) => file.RelatedEntityType switch
+    {
+        RelatedEntityType.Tenant => int.TryParse(file.RelatedEntityId, out var tenantId)
+            && await db.Tenants.AnyAsync(item => item.Id == tenantId, cancellationToken),
+        RelatedEntityType.Room => int.TryParse(file.RelatedEntityId, out var roomId)
+            && await db.Rooms.AnyAsync(item => item.Id == roomId, cancellationToken),
+        RelatedEntityType.MaintenanceIncident => int.TryParse(file.RelatedEntityId, out var incidentId)
+            && await db.MaintenanceIncidents.AnyAsync(item => item.Id == incidentId, cancellationToken),
+        _ => true,
+    };
 
     private async Task<bool> CanDownloadAsync(
         ApplicationDbContext db,

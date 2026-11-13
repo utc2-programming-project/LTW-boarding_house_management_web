@@ -11,19 +11,17 @@
 
 <PageTitle>@L["P2PropertiesTitle"] · @L["AppName"]</PageTitle>
 
-<div class="p2-page">
+<div class="p2-page page-stack">
     <PageHeading Title="@L["P2PropertiesTitle"]" HelpText="@L["P2PropertiesSubtitle"]">
         <Actions>
             @if (_isOwner)
             {
-                <div class="p2-page-actions">
-                    <a class="btn btn-secondary" href="/properties/trash">
-                        <LucideIcon Name="trash" />@L["P2PropertyTrashOpen"]
-                    </a>
-                    <button class="btn btn-primary" type="button" @onclick="OpenCreate">
-                        <LucideIcon Name="plus" />@L["P2AddProperty"]
-                    </button>
-                </div>
+                <a class="btn btn-secondary" href="/properties/trash">
+                    <LucideIcon Name="trash" />@L["P2PropertyTrashOpen"]
+                </a>
+                <button class="btn btn-primary" type="button" @onclick="OpenCreate">
+                    <LucideIcon Name="plus" />@L["P2AddProperty"]
+                </button>
             }
         </Actions>
     </PageHeading>
@@ -58,7 +56,7 @@
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["P2PropertyStatTotal"]
-                            <button type="button" class="stat-help" data-tip="@L["P2PropertyStatTotalHint"]" aria-label="@L["P2PropertyStatTotalHint"]">?</button>
+                            <HelpTip Text="@L["P2PropertyStatTotalHint"]" />
                         </span>
                         <span class="stat-icon stat-icon--accent"><LucideIcon Name="building" /></span>
                     </div>
@@ -82,7 +80,7 @@
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["P2TotalRooms"]
-                            <button type="button" class="stat-help" data-tip="@L["P2PropertyStatRoomsHint"]" aria-label="@L["P2PropertyStatRoomsHint"]">?</button>
+                            <HelpTip Text="@L["P2PropertyStatRoomsHint"]" />
                         </span>
                         <span class="stat-icon stat-icon--info"><LucideIcon Name="door" /></span>
                     </div>
@@ -129,23 +127,22 @@
                             </select>
                         </div>
                         <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="property-advanced-panel" />
-                        <button class="btn btn-secondary filter-bar__reset" type="button" @onclick="ResetFiltersAsync">
-                            <LucideIcon Name="refresh-cw" /> @L["P2ResetFilters"]
-                        </button>
+                        <FilterResetButton OnClick="ResetFiltersAsync" />
                     </div>
                 </div>
                 <div class="filter-bar__advanced" id="property-advanced-panel" hidden="@(!_showAdvanced)">
                     <div class="filter-bar__stack">
                         <label for="property-min-rooms">@L["P2MinRooms"]</label>
                         <input id="property-min-rooms" class="input" type="number" min="0" inputmode="numeric"
-                               placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount" />
+                               placeholder="@L["P2MinRoomsPlaceholder"]" @bind="_minRoomCount"
+                               @bind:after="ApplyFiltersAsync" />
                     </div>
                     <div class="filter-bar__stack">
                         <label for="property-max-rooms">@L["P2MaxRooms"]</label>
                         <input id="property-max-rooms" class="input" type="number" min="0" inputmode="numeric"
-                               placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount" />
+                               placeholder="@L["P2MaxRoomsPlaceholder"]" @bind="_maxRoomCount"
+                               @bind:after="ApplyFiltersAsync" />
                     </div>
-                    <button class="btn btn-primary filter-bar__submit" type="submit">@L["P2ApplyFilters"]</button>
                 </div>
             </form>
         </section>
@@ -171,7 +168,7 @@
 }
 @if (_selectedProperty is not null)
 {
-    <PropertyDetailsDialog Property="_selectedProperty" IsOwner="_isOwner"
+    <PropertyDetailsDialog @key="_selectedProperty.Id" Property="_selectedProperty" IsOwner="_isOwner"
                            OnClose="CloseDetails" OnEdit="EditSelected" OnViewRooms="ViewRooms"
                            OnContinueSetup="ContinueSetup" />
 }
@@ -204,6 +201,17 @@
     private DataTableLabels _tableLabels = new();
     private PropertyListItem? _selectedProperty;
     private string _keyword = string.Empty;
+
+    /// <summary>Từ khóa từ link chéo (?q=Trọ A): điền sẵn ô tìm kiếm.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    /// <summary>Id nhà từ link chéo (?propertyId=3): mở ngay dialog chi tiết.</summary>
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
+    private int? _lastAppliedPropertyId;
     private string _activeFilter = string.Empty;
     private string _minRoomCount = string.Empty;
     private string _maxRoomCount = string.Empty;
@@ -233,7 +241,46 @@
     {
         _tableLabels = DataTableLabelLocalizer.Create(L);
         _columns = BuildColumns();
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedPropertyId = PropertyIdQuery;
+        _keyword = KeywordQuery?.Trim() ?? string.Empty;
         await InitializeAsync();
+        OpenPropertyFromQuery();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=, ?propertyId=): Blazor dùng lại trang nên phải tự áp dụng lại.
+        var queryChanged = !string.Equals(_lastAppliedKeywordQuery, KeywordQuery, StringComparison.Ordinal);
+        var propertyChanged = _lastAppliedPropertyId != PropertyIdQuery;
+        if (!queryChanged && !propertyChanged)
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedPropertyId = PropertyIdQuery;
+        if (!_ready)
+        {
+            return;
+        }
+
+        if (queryChanged)
+        {
+            _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        }
+
+        await ApplyFiltersAsync();
+        OpenPropertyFromQuery();
+    }
+
+    // ?propertyId=3: dialog tự tải tên/số liệu theo id nên chỉ cần dựng item tối thiểu.
+    private void OpenPropertyFromQuery()
+    {
+        if (PropertyIdQuery is { } propertyId && propertyId > 0)
+        {
+            _selectedProperty = new PropertyListItem { Id = propertyId };
+        }
     }
 
     private async Task InitializeAsync()
@@ -272,6 +319,9 @@
     private IReadOnlyList<DataTableColumn<PropertyListItem>> BuildColumns()
     {
         RenderFragment<PropertyListItem> name = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Name</button>;
+        // Số phòng là link sang danh sách phòng đã lọc theo nhà này.
+        RenderFragment<PropertyListItem> roomCount = item => @<a class="cell-link" href="@AppLinks.RoomsOfProperty(item.Id)"
+            title="@L["CellLinkFilterRelated", item.Name]">@item.RoomCount.ToString(CultureInfo.CurrentCulture)</a>;
         RenderFragment<PropertyListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<PropertyListItem> actions = item => @<div class="p2-row-actions">
             <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
@@ -305,7 +355,7 @@
         [
             new() { Key = "name", Title = L["P2PropertyName"], Template = name, Sortable = false },
             new() { Key = "address", Title = L["P2Address"], Value = item => string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address },
-            new() { Key = "roomCount", Title = L["P2RoomCount"], Value = item => item.RoomCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true },
+            new() { Key = "roomCount", Title = L["P2RoomCount"], Template = roomCount, IsNumeric = true },
             new() { Key = "activity", Title = L["P2Activity"], Template = activity },
             new() { Key = "actions", Title = L["P2Actions"], Template = actions }
         ];

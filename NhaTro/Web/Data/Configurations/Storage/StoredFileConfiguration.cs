@@ -18,12 +18,14 @@ public class StoredFileConfiguration : IEntityTypeConfiguration<StoredFile>
         builder.Property(f => f.UploadedByUserId).HasMaxLength(450).IsRequired();
         builder.Property(f => f.RelatedEntityId).HasMaxLength(450).IsRequired();
         builder.Property(f => f.Description).HasMaxLength(500);
+        builder.Property(f => f.DeletedBy).HasMaxLength(450);
 
         // Xóa mềm: danh sách/tải chỉ thấy tệp chưa xóa; tra cứu để xóa dùng IgnoreQueryFilters.
         builder.HasQueryFilter(f => !f.IsDeleted);
 
         builder.HasIndex(f => new { f.RelatedEntityType, f.RelatedEntityId });
         builder.HasIndex(f => f.UploadedByUserId);
+        builder.HasIndex(f => new { f.IsDeleted, f.DeletedAt });
 
         builder.HasOne<Web.Data.ApplicationUser>()
             .WithMany()

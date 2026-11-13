@@ -103,6 +103,13 @@ public sealed class MonthlyUtilityCalculationPageService(
         var snapshots = await LoadSnapshotsAsync(readingIds, cancellationToken);
         var invoices = await LoadInvoicesAsync(contractIds, periodStart, periodEnd, cancellationToken);
         var invoicedPeriods = await LoadInvoicedPeriodsAsync(contractIds, cancellationToken);
+        // Lịch sử Chủ trọ chỉnh sửa hoá đơn (theo hợp đồng + kỳ) để panel chi tiết
+        // hiện cả thay đổi trên hoá đơn, không chỉ thay đổi chỉ số điện/nước.
+        var invoiceRevisions = await LoadInvoiceRevisionsAsync(
+            contractIds,
+            periodStart,
+            periodEnd,
+            cancellationToken);
 
         var tenantNames = await LoadTenantNamesAsync(contractIds, cancellationToken);
         var residentCounts = await LoadResidentCountsAsync(contractIds, cancellationToken);
@@ -288,7 +295,8 @@ public sealed class MonthlyUtilityCalculationPageService(
                         previous.ElectricEnd,
                         previous.WaterStart,
                         previous.WaterEnd),
-                BuildCorrections(reading)));
+                BuildCorrections(reading),
+                invoiceRevisions.GetValueOrDefault((contract.ContractId, rowPeriodStart), [])));
         }
 
         return new MonthlyUtilityViewData(rows, properties, propertyId, periodStart, periodEnd);
@@ -797,6 +805,49 @@ public sealed class MonthlyUtilityCalculationPageService(
             group => group.Key,
             group => new InvoiceRow(group.OrderByDescending(invoice => invoice.Id).First()));
 
+    private async Task<Dictionary<(Guid ContractId, DateOnly PeriodStart), IReadOnlyList<MonthlyUtilityInvoiceRevisionDto>>>
+        LoadInvoiceRevisionsAsync(
+            IReadOnlyList<Guid> contractIds,
+            DateOnly periodStart,
+            DateOnly periodEnd,
+            CancellationToken cancellationToken) =>
+        (await db.InvoiceRevisions
+            .AsNoTracking()
+            .Where(revision => db.Invoices.Any(invoice =>
+                    invoice.Id == revision.InvoiceId
+                    && contractIds.Contains(invoice.ContractId)
+                    && invoice.PeriodStart >= periodStart
+                    && invoice.PeriodStart <= periodEnd))
+            .OrderByDescending(revision => revision.ChangedAt)
+            .ThenByDescending(revision => revision.Id)
+            .Select(revision => new
+            {
+                revision.InvoiceId,
+                revision.Reason,
+                revision.PreviousTotalAmount,
+                revision.NewTotalAmount,
+                revision.ChangedAt,
+                ContractId = db.Invoices
+                    .Where(invoice => invoice.Id == revision.InvoiceId)
+                    .Select(invoice => invoice.ContractId)
+                    .First(),
+                PeriodStart = db.Invoices
+                    .Where(invoice => invoice.Id == revision.InvoiceId)
+                    .Select(invoice => invoice.PeriodStart)
+                    .First(),
+            })
+            .ToListAsync(cancellationToken))
+        .GroupBy(row => (row.ContractId, row.PeriodStart))
+        .ToDictionary(
+            group => group.Key,
+            group => (IReadOnlyList<MonthlyUtilityInvoiceRevisionDto>)group
+                .Select(row => new MonthlyUtilityInvoiceRevisionDto(
+                    row.Reason,
+                    row.PreviousTotalAmount,
+                    row.NewTotalAmount,
+                    row.ChangedAt))
+                .ToList());
+
     private async Task<Dictionary<Guid, IReadOnlyList<InvoicedPeriodRow>>> LoadInvoicedPeriodsAsync(
         IReadOnlyList<Guid> contractIds,
         CancellationToken cancellationToken) =>
@@ -1117,6 +1168,16 @@ public sealed record MonthlyUtilityCorrectionDto(
     string ChangedByUserId,
     DateTimeOffset ChangedAt);
 
+/// <summary>
+/// Một lần Chủ trọ chỉnh sửa hoá đơn của kỳ (khách chưa thanh toán).
+/// Hiển thị ở panel chi tiết phòng của trang chỉ số &amp; chi phí điện nước.
+/// </summary>
+public sealed record MonthlyUtilityInvoiceRevisionDto(
+    string Reason,
+    decimal PreviousTotalAmount,
+    decimal NewTotalAmount,
+    DateTime ChangedAt);
+
 public sealed record MonthlyUtilityPreviousReadingDto(
     int Id,
     DateOnly PeriodStart,
@@ -1162,7 +1223,8 @@ public sealed record MonthlyUtilityRoomCostDto(
     bool CanCorrectPrevious,
     bool CanManage,
     MonthlyUtilityPreviousReadingDto? PreviousReading,
-    IReadOnlyList<MonthlyUtilityCorrectionDto> Corrections)
+    IReadOnlyList<MonthlyUtilityCorrectionDto> Corrections,
+    IReadOnlyList<MonthlyUtilityInvoiceRevisionDto> InvoiceRevisions)
 {
     public bool IsInvoiced => State == MonthlyUtilityPeriodState.Invoiced;
 }

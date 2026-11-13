@@ -41,6 +41,7 @@
 
                 <section class="tenant-profile-readonly" aria-labelledby="tenant-profile-details-title">
                     <div class="tenant-profile-section-heading">
+                        <span class="tenant-profile-section-icon" aria-hidden="true"><LucideIcon Name="user" /></span>
                         <div>
                             <h3 id="tenant-profile-details-title">@L["TenantPersonalSection"]</h3>
                             <p>@L["TenantProfileReadonly"]</p>
@@ -58,6 +59,7 @@
 
                 <section class="tenant-profile-editable" aria-labelledby="tenant-profile-edit-title">
                     <div class="tenant-profile-section-heading">
+                        <span class="tenant-profile-section-icon" aria-hidden="true"><LucideIcon Name="pen" /></span>
                         <div>
                             <h3 id="tenant-profile-edit-title">@L["TenantProfileEditable"]</h3>
                             <p>@L["TenantProfileEditHint"]</p>
@@ -97,7 +99,8 @@
                 </section>
 
                 <div class="tenant-profile-security">
-                    <div>
+                    <span class="tenant-profile-section-icon" aria-hidden="true"><LucideIcon Name="lock" /></span>
+                    <div class="tenant-profile-security-copy">
                         <h3>@L["SecuritySection"]</h3>
                         <p>@L["ChangePasswordHint"]</p>
                     </div>

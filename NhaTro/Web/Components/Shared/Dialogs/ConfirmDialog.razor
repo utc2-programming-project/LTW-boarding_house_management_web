@@ -16,7 +16,7 @@
     <div class="footer">
         <button type="button" class="btn btn-secondary" autofocus disabled="@_busy" @onclick="CancelAsync">@CancelText</button>
         <button type="button" class="btn @(Danger ? "btn-danger" : "btn-primary")"
-                disabled="@_busy" aria-busy="@(_busy ? "true" : null)" @onclick="ConfirmAsync">
+                disabled="@(_busy || ConfirmDisabled)" aria-busy="@(_busy ? "true" : null)" @onclick="ConfirmAsync">
             @(_busy ? BusyText : ConfirmText)
         </button>
     </div>
@@ -61,6 +61,10 @@
     /// <summary>Thao tác nguy hiểm (xóa...): nút xác nhận màu đỏ.</summary>
     [Parameter]
     public bool Danger { get; set; }
+
+    /// <summary>Khóa nút xác nhận, ví dụ khi người dùng chưa gõ đúng tên/mã xác nhận.</summary>
+    [Parameter]
+    public bool ConfirmDisabled { get; set; }
 
     /// <summary>Chạy khi bấm đồng ý. Trong lúc chờ, hai nút bị khóa để không gửi lặp.</summary>
     [Parameter]

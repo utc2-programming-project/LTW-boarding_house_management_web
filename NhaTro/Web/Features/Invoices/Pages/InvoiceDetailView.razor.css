@@ -349,6 +349,102 @@
     }
 }
 
+/* Nút xóa hoá đơn đã gửi: nền phụ, chữ màu nguy hiểm. */
+.invoice-delete-action {
+    color: var(--danger);
+}
+
+.invoice-delete-action:hover:not(:disabled) {
+    border-color: var(--danger);
+    background: var(--error-bg);
+    color: var(--danger);
+}
+
+/* Lịch sử chỉnh sửa hoá đơn (Chủ trọ sửa sau khi gửi khách). */
+.revision-panel {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    border: 1px solid var(--warning-border, #FDE68A);
+    border-radius: var(--radius-control);
+    background: var(--warning-bg, #FFFBEB);
+}
+
+.revision-panel .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.revision-panel .section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.revision-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--warning-border, #FDE68A);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--warning-text, #92400E);
+}
+
+.revision-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.revision-list li {
+    padding: var(--space-3);
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.revision-reason {
+    font-size: .9375rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.revision-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: 6px;
+    font-size: .75rem;
+    color: var(--text-secondary);
+}
+
+.revision-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.revision-amount .lucide-icon {
+    width: 14px;
+    height: 14px;
+}
+
 .header-actions {
     display: flex;
     gap: 8px;
@@ -379,9 +475,11 @@
     align-items: start;
 }
 
+/* Cột phải của khối QR: giữ khoảng cách đều (16px) giữa các khối để
+   không xuất hiện lỗ trống lớn giữa "Nội dung chuyển khoản" và khung số tiền. */
 .qr-side {
     display: grid;
-    gap: 12px;
+    gap: var(--space-4);
     border-left: 1px solid #E5E7EB;
     padding-left: 24px;
     align-content: start;
@@ -424,23 +522,73 @@
     font-weight: 600;
 }
 
-.qr-side {
-    display: grid;
-    gap: 12px;
+/* PLAN-028: chủ trọ chưa nhập tài khoản nhận tiền nên không sinh được mã QR. */
+.qr-missing-bank {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-4);
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius-control);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    font-size: .875rem;
+    line-height: 1.5;
+    text-align: left;
 }
 
+.qr-missing-bank .lucide-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.qr-missing-bank p {
+    margin: 0;
+}
+
+.qr-paid-icon {
+    width: 96px;
+    height: 96px;
+    color: var(--success-text);
+}
+
+.qr-side {
+    display: grid;
+    gap: var(--space-4);
+}
+
+/* Khung số tiền cố định: đặt nhãn trên, số tiền dưới — đồng bộ với các
+   dòng thông tin phía trên (Nội dung chuyển khoản / Tổng hoá đơn) để không
+   bị khoảng trống ngang lớn, và padding trên/dưới đều nhau. */
 .payment-fixed-amount {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
     background: #F8FAFC;
+    border: 1px solid #E5E7EB;
     border-radius: 8px;
-    padding: 10px 12px;
+    padding: 12px 14px;
 }
 
 .payment-fixed-amount strong {
     font-size: 16px;
+    line-height: 1.5;
+}
+
+.payment-fixed-amount__label {
+    font-size: 12px;
+    color: var(--text-muted, #64748B);
+    line-height: 1.5;
+}
+
+/* Trong cột QR, khung số tiền nằm ngay dưới khối thông tin chuyển khoản:
+   bỏ margin-top của form để không mở ra khoảng trống lớn. */
+.qr-side .payment-form {
+    margin-top: 0;
 }
 
 @media (max-width: 767px) {
@@ -475,4 +623,10 @@
 .qr-info dd {
     font-weight: 600;
     margin: 0;
+}
+
+/* VHT-143: trong lúc mất kết nối, chặn bấm nút ghi P6 cho tới khi tra xong kết quả. */
+html[data-connection-lost] [data-payment-write] {
+    pointer-events: none;
+    opacity: .6;
 }

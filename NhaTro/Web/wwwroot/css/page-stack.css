@@ -1,0 +1,23 @@
+/* Nhịp dọc dùng chung cho mọi trang danh sách.
+   Bốn tầng theo thứ tự: heading → thống kê → lọc → danh sách, cách đều 24px.
+   Trang chỉ gắn class .page-stack lên phần tử gốc; KHÔNG tự đặt gap/margin
+   cho các tầng con, để mọi màn hình giữ cùng một nhịp. */
+
+.page-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-width: 0;
+}
+
+.page-stack > .page-heading {
+    margin-bottom: 0;
+}
+
+.page-stack > .stat-grid,
+.page-stack > .stat-grid--three,
+.page-stack > .filter-bar,
+.page-stack > .table-card,
+.page-stack > .p2-alert {
+    margin-block: 0;
+}

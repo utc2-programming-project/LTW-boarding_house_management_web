@@ -188,6 +188,9 @@
   <data name="ManagerSwitchesSubtitle" xml:space="preserve">
     <value>Each switch controls what managers may do with one workflow: act immediately, wait for the owner's approval, or be blocked.</value>
   </data>
+  <data name="AuditLog" xml:space="preserve">
+    <value>Activity log</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Approval queue</value>
   </data>
@@ -367,6 +370,9 @@
   </data>
   <data name="AccountsSubtitle" xml:space="preserve">
     <value>Browse users, lock or unlock accounts, and assign roles.</value>
+  </data>
+  <data name="AccountLockAdminOnlyHint" xml:space="preserve">
+    <value>Only administrators can lock accounts. To end a rental, liquidate the contract; to end an assignment, revoke the manager's assignment.</value>
   </data>
   <data name="SearchAccounts" xml:space="preserve">
     <value>Search</value>
@@ -830,6 +836,20 @@
   <data name="P2UpdatedAt" xml:space="preserve"><value>Last updated</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Pending approval</value></data>
   <data name="P2ApprovalPendingHint" xml:space="preserve"><value>The change needs landlord approval, so it has not been saved.</value></data>
+  <data name="P2ApprovalPendingTipTitle" xml:space="preserve"><value>Awaiting landlord approval</value></data>
+  <data name="P2ApprovalPendingTipWhat" xml:space="preserve"><value>{0} for room {1}.</value></data>
+  <data name="P2ApprovalPendingTipUnknownRequester" xml:space="preserve"><value>Manager</value></data>
+  <data name="P2ApprovalPendingTipCtaOwner" xml:space="preserve"><value>Click to open the approval queue</value></data>
+  <data name="P2ApprovalPendingTipCtaManager" xml:space="preserve"><value>Click to open my requests</value></data>
+  <data name="CellLinkOpenRoom" xml:space="preserve"><value>Open room details</value></data>
+  <data name="CellLinkOpenProperty" xml:space="preserve"><value>Open property details</value></data>
+  <data name="CellLinkOpenTenant" xml:space="preserve"><value>Open tenant profile</value></data>
+  <data name="CellLinkOpenContract" xml:space="preserve"><value>Open contract details</value></data>
+  <data name="CellLinkOpenInvoice" xml:space="preserve"><value>Open invoice details</value></data>
+  <data name="CellLinkOpenPayment" xml:space="preserve"><value>Open payment details</value></data>
+  <data name="CellLinkOpenIncident" xml:space="preserve"><value>Open incident details</value></data>
+  <data name="CellLinkOpenService" xml:space="preserve"><value>View service price list</value></data>
+  <data name="CellLinkFilterRelated" xml:space="preserve"><value>View related items: {0}</value></data>
   <data name="P2DeleteRoomTitle" xml:space="preserve"><value>Move room to trash?</value></data>
   <data name="P2DeleteRoomConfirm" xml:space="preserve"><value>Room {0} will be moved to trash.</value></data>
   <data name="P2MoveToTrash" xml:space="preserve"><value>Move to trash</value></data>
@@ -1022,8 +1042,9 @@
   <data name="TenantExportFailed" xml:space="preserve"><value>Could not export the tenant list.</value></data>
   <data name="TenantActivateTitle" xml:space="preserve"><value>Reactivate tenant record</value></data>
   <data name="TenantDeactivateTitle" xml:space="preserve"><value>Deactivate tenant record</value></data>
-  <data name="TenantActivateButton" xml:space="preserve"><value>Reactivate</value></data>
-  <data name="TenantDeactivateButton" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="TenantActivateButton" xml:space="preserve"><value>Reactivate profile</value></data>
+  <data name="TenantDeactivateButton" xml:space="preserve"><value>Deactivate profile</value></data>
+  <data name="TenantDeactivateHint" xml:space="preserve"><value>Deactivating a profile only removes the tenant from new-contract pickers and service registration; the tenant can still sign in and view invoices. To block sign-in, an administrator must lock the account on the Account administration page.</value></data>
   <data name="TenantDuplicatePhoneTitle" xml:space="preserve"><value>Confirm duplicate phone number</value></data>
   <data name="TenantCreatedAt" xml:space="preserve"><value>Created:</value></data>
   <data name="TenantUpdatedAt" xml:space="preserve"><value>Updated:</value></data>
@@ -1331,6 +1352,8 @@
   <data name="MeterReadingNavServices" xml:space="preserve"><value>Services &amp; Utilities</value></data>
   <data name="MeterReadingNavReadings" xml:space="preserve"><value>Meter Readings</value></data>
   <data name="P5CostNav" xml:space="preserve"><value>Readings &amp; costs</value></data>
+  <data name="ServiceRegistrationsNav" xml:space="preserve"><value>Service registrations</value></data>
+  <data name="RegHistoryNav" xml:space="preserve"><value>Service registration history</value></data>
   <data name="MeterReadingLoadDataError" xml:space="preserve"><value>Could not load data. Please try again.</value></data>
   <data name="MeterReadingSaveError" xml:space="preserve"><value>Failed to save meter reading.</value></data>
   <data name="MeterReadingLockSuccess" xml:space="preserve"><value>Successfully finalized period for room {0} in temporary memory (mock data).</value></data>
@@ -2102,4 +2125,49 @@
   <data name="ApprovalUiActionLiquidate" xml:space="preserve"><value>Liquidate contract</value></data>
   <data name="ApprovalUiActionDeposit" xml:space="preserve"><value>Update deposit</value></data>
   <data name="ApprovalUiActionUnknown" xml:space="preserve"><value>Contract operation</value></data>
+  <data name="ProfileBankSection" xml:space="preserve"><value>Receiving bank account</value></data>
+  <data name="ProfileBankHint" xml:space="preserve"><value>Used to generate transfer QR codes for tenants. If left blank, tenants cannot create a payment QR code.</value></data>
+  <data name="OwnerBankMissingBanner" xml:space="preserve"><value>You have not added a receiving bank account. Add one so tenants can generate a QR code and transfer money.</value></data>
+  <data name="OwnerBankMissingBannerAction" xml:space="preserve"><value>Add bank account</value></data>
+  <data name="BankLabel" xml:space="preserve"><value>Bank</value></data>
+  <data name="BankSelectPlaceholder" xml:space="preserve"><value>Select a bank</value></data>
+  <data name="BankAccountNumberLabel" xml:space="preserve"><value>Account number</value></data>
+  <data name="BankAccountNumberHint" xml:space="preserve"><value>Digits only, 6–20 characters.</value></data>
+  <data name="BankAccountNameLabel" xml:space="preserve"><value>Account holder name</value></data>
+  <data name="BankAccountNameHint" xml:space="preserve"><value>Uppercase, no diacritics, exactly as registered with the bank.</value></data>
+  <data name="ErrorInvalidBankAccount" xml:space="preserve"><value>Receiving bank account information is invalid.</value></data>
+  <data name="Purge" xml:space="preserve"><value>Delete permanently</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Delete permanently?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>“{0}” will be permanently removed and cannot be restored.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Type exactly “{0}” to confirm</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Does not match. Type the name/code exactly as shown above.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Permanently deleted.</value></data>
+  <data name="PurgeFailed" xml:space="preserve"><value>Could not delete. Please try again.</value></data>
+  <data name="PurgeHasDependencies" xml:space="preserve"><value>Cannot delete because related data still exists. Remove or move those items first.</value></data>
+  <data name="PurgeNotInTrash" xml:space="preserve"><value>This item is no longer in the trash.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Empty trash</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Empty the trash?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Every eligible item will be permanently deleted. Items with related data will be kept.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>DELETE ALL</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Deleted {0}, skipped {1} with related data.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Nothing can be deleted.</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="TrashDeletedBy" xml:space="preserve"><value>Deleted by</value></data>
+  <data name="DocumentTrashTitle" xml:space="preserve"><value>Document trash</value></data>
+  <data name="DocumentTrashSubtitle" xml:space="preserve"><value>Deleted documents can be restored or permanently removed.</value></data>
+  <data name="DocumentTrashOpen" xml:space="preserve"><value>Document trash</value></data>
+  <data name="DocumentTrashSearchLabel" xml:space="preserve"><value>Search deleted documents</value></data>
+  <data name="DocumentTrashSearchPlaceholder" xml:space="preserve"><value>Search by file name or related ID</value></data>
+  <data name="DocumentTrashColumnFile" xml:space="preserve"><value>File name</value></data>
+  <data name="DocumentTrashColumnCategory" xml:space="preserve"><value>File type</value></data>
+  <data name="DocumentTrashColumnRelated" xml:space="preserve"><value>Related to</value></data>
+  <data name="DocumentTrashColumnUploaded" xml:space="preserve"><value>Uploaded at</value></data>
+  <data name="DocumentTrashRestoreTitle" xml:space="preserve"><value>Restore document?</value></data>
+  <data name="DocumentTrashRestoreMessage" xml:space="preserve"><value>Restore file “{0}”?</value></data>
+  <data name="DocumentTrashRestored" xml:space="preserve"><value>Document restored.</value></data>
+  <data name="DocumentErrorFileInUse" xml:space="preserve"><value>This file is used as payment proof or incident photo; remove those records first.</value></data>
+  <data name="DocumentErrorRelatedEntityDeleted" xml:space="preserve"><value>The related entity was deleted; restore it first.</value></data>
+  <data name="DocumentErrorStorageFailed" xml:space="preserve"><value>Could not delete the physical file. Please try again.</value></data>
+  <data name="DocumentErrorNotInTrash" xml:space="preserve"><value>The file is no longer in the trash.</value></data>
+  <data name="DocumentErrorForbidden" xml:space="preserve"><value>You do not have permission to operate on this file.</value></data>
 </root>

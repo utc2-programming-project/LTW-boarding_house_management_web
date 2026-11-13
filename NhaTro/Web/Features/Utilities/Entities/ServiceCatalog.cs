@@ -1,7 +1,9 @@
+using Web.Common.SoftDelete;
+
 namespace Web.Features.Utilities.Entities;
 
 /// <summary>A service identity and its scope. Price details are stored as immutable versions.</summary>
-public sealed class ServiceCatalog
+public sealed class ServiceCatalog : ISoftDeletable
 {
     public int Id { get; set; }
 

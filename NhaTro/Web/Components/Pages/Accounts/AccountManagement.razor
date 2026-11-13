@@ -2,8 +2,8 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 
-@* Trang quản lý tài khoản (/admin/users): xem/lọc danh sách, tạo tài khoản theo phạm vi
-   tòa nhà, duyệt - đổi vai trò - khóa/mở khóa. *@
+@* Trang quản lý tài khoản (/admin/users): xem/lọc danh sách, tạo tài khoản theo phạm vi,
+   duyệt tài khoản. Khóa/mở khóa và xóa tài khoản là thao tác toàn hệ thống nên chỉ Admin. *@
 
 @using Microsoft.AspNetCore.Authorization
 @using Web.Common.Models
@@ -25,7 +25,7 @@
 
 <PageTitle>@L["AccountsTitle"] · @L["AppName"]</PageTitle>
 
-<section class="accounts-page" aria-labelledby="accounts-title">
+<section class="accounts-page page-stack" aria-labelledby="accounts-title">
     <PageHeading Title="@L["AccountsTitle"]" TitleId="accounts-title" HelpText="@L["AccountsSubtitle"]">
         <Actions>
             @if (_assignableRoles.Count > 0)
@@ -42,6 +42,11 @@
             }
         </Actions>
     </PageHeading>
+
+    @if (_callerRole is Roles.ChuTro or Roles.QuanLy)
+    {
+        <p class="note">@L["AccountLockAdminOnlyHint"]</p>
+    }
 
     <div class="filter-bar filter-bar--panel" role="search">
         <div class="filter-bar__row">
@@ -63,23 +68,15 @@
                 </select>
             </div>
 
-            @if (HasActiveAccountFilters)
-            {
-                <div class="filter-bar__actions">
-                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ClearAccountFiltersAsync"
-                            aria-label="@L["ClearFilters"]" title="@L["ClearFilters"]">
-                        <LucideIcon Name="refresh-cw" />
-                    </button>
-                </div>
-            }
+            <div class="filter-bar__actions">
+                <FilterResetButton OnClick="ClearAccountFiltersAsync" />
+            </div>
         </div>
     </div>
 
     <DataTable @ref="_table" TItem="AccountListItemDto" Columns="_columns"
                ItemsProvider="LoadAccountsAsync" PageSize="10" Caption="@L["AccountsTitle"]"
-               Labels="DataTableLabelLocalizer.Create(L)"
-               CompactFooter="true" ItemUnitLabel="@L["AccountsCountUnit"]">
-
+               Labels="DataTableLabelLocalizer.Create(L)">
         <EmptyActions>
             <p class="note">@L["AccountsEmptyHint"]</p>
         </EmptyActions>
@@ -145,9 +142,6 @@
 
     private string? _keyword;
     private string? _roleFilter;
-
-    private bool HasActiveAccountFilters =>
-        !string.IsNullOrWhiteSpace(_keyword) || !string.IsNullOrWhiteSpace(_roleFilter);
 
     private Task ClearAccountFiltersAsync()
     {
@@ -361,15 +355,10 @@
 
     private async Task<PagedResult<AccountListItemDto>> LoadAccountsAsync(DataTableRequest request)
     {
-        var keyword = string.IsNullOrWhiteSpace(_keyword)
-            ? request.Filters.GetValueOrDefault("name")
-            : _keyword;
-        var role = string.IsNullOrWhiteSpace(_roleFilter)
-            ? request.Filters.GetValueOrDefault("role")
-            : _roleFilter;
-
         return await Accounts.ListAsync(
-            keyword, role, request.Page, request.PageSize, _callerUserId, _callerRole);
+            string.IsNullOrWhiteSpace(_keyword) ? null : _keyword,
+            string.IsNullOrWhiteSpace(_roleFilter) ? null : _roleFilter,
+            request.Page, request.PageSize, _callerUserId, _callerRole);
     }
 
     private Task ReloadAsync()

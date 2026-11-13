@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Web.Features.Accounts
 @using Web.Features.Accounts.DTOs
+@using Web.Features.Invoices
 @using Web.Components.Shared.Feedback
 @using Web.Components.Shared.Forms
 
@@ -12,6 +13,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject IStringLocalizer<Shared> L
 @inject ToastService Toasts
+@inject Web.Features.Invoices.Services.OwnerBankAccountNotifier BankAccountNotifier
 
 @* VHT-8: ho so ca nhan (/profile). Ca 4 vai tro deu vao duoc, chi sua duoc cua chinh minh. *@
 
@@ -55,7 +57,7 @@
                 </div>
 
                 <EditForm EditContext="_editContext" OnValidSubmit="SaveProfileAsync">
-                    <div class="profile-fields">
+                    <div class="profile-fields @(_profile.Role == Roles.ChuTro ? "profile-fields-owner" : "")">
                         <div class="profile-field-name">
                             <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
                                        For="() => _form.FullName">
@@ -71,6 +73,47 @@
                                            aria-describedby="profile-phone-hint profile-phone-error" aria-invalid="@(_editContext.HasError(() => _form.PhoneNumber) ? "true" : "false")" />
                             </FormField>
                         </div>
+
+                        @if (_profile.Role == Roles.ChuTro)
+                        {
+                            <div class="profile-field-bank-heading">
+                                <span class="profile-bank-icon" aria-hidden="true"><LucideIcon Name="wallet" /></span>
+                                <div>
+                                    <h3>@L["ProfileBankSection"]</h3>
+                                    <p>@L["ProfileBankHint"]</p>
+                                </div>
+                            </div>
+
+                            <div class="profile-field-bank">
+                                <FormField TValue="string" Id="profile-bank-code" Label="@L["BankLabel"]" Required="true"
+                                           For="() => _form.BankCode">
+                                    <InputSelect TValue="string" @bind-Value="_form.BankCode" id="profile-bank-code"
+                                                 aria-describedby="profile-bank-code-error" aria-invalid="@(_editContext.HasError(() => _form.BankCode) ? "true" : "false")">
+                                        <option value="">@L["BankSelectPlaceholder"]</option>
+                                        @foreach (var bank in VietQrBankCatalog.All)
+                                        {
+                                            <option value="@bank.Code">@bank.Name</option>
+                                        }
+                                    </InputSelect>
+                                </FormField>
+                            </div>
+
+                            <div class="profile-field-bank-number">
+                                <FormField TValue="string" Id="profile-bank-number" Label="@L["BankAccountNumberLabel"]" Required="true"
+                                           Hint="@L["BankAccountNumberHint"]" For="() => _form.BankAccountNumber">
+                                    <InputText @bind-Value="_form.BankAccountNumber" id="profile-bank-number" inputmode="numeric" maxlength="20"
+                                               aria-describedby="profile-bank-number-hint profile-bank-number-error" aria-invalid="@(_editContext.HasError(() => _form.BankAccountNumber) ? "true" : "false")" />
+                                </FormField>
+                            </div>
+
+                            <div class="profile-field-bank-name">
+                                <FormField TValue="string" Id="profile-bank-name" Label="@L["BankAccountNameLabel"]" Required="true"
+                                           Hint="@L["BankAccountNameHint"]" For="() => _form.BankAccountName">
+                                    <InputText @bind-Value="_form.BankAccountName" id="profile-bank-name" maxlength="50"
+                                               aria-describedby="profile-bank-name-hint profile-bank-name-error" aria-invalid="@(_editContext.HasError(() => _form.BankAccountName) ? "true" : "false")" />
+                                </FormField>
+                            </div>
+                        }
 
                     </div>
 
@@ -135,6 +178,9 @@
     {
         public string? FullName { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? BankCode { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? BankAccountName { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
@@ -160,7 +206,7 @@
             _profile = result.Succeeded ? result.Value : null;
             if (_profile is not null)
             {
-                _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+                _form = ToForm(_profile);
                 _emailReadonly = _profile.Email ?? _profile.UserName;
                 _editContext = CreateEditContext();
             }
@@ -178,9 +224,18 @@
     private void ResetForm()
     {
         if (_profile is null) return;
-        _form = new ProfileForm { FullName = _profile.FullName, PhoneNumber = _profile.PhoneNumber };
+        _form = ToForm(_profile);
         _editContext = CreateEditContext();
     }
+
+    private static ProfileForm ToForm(MyProfileDto profile) => new()
+    {
+        FullName = profile.FullName,
+        PhoneNumber = profile.PhoneNumber,
+        BankCode = profile.BankCode,
+        BankAccountNumber = profile.BankAccountNumber,
+        BankAccountName = profile.BankAccountName,
+    };
 
     // EditForm chạy OnValidSubmit nên cần một bộ kiểm tra gắn vào EditContext; nếu không, form luôn "hợp lệ"
     // và lỗi chỉ hiện sau khi service trả về. Dùng ValidationMessageStore để message theo ngôn ngữ đang chọn.
@@ -216,6 +271,49 @@
         {
             messages.Add(new FieldIdentifier(form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
         }
+
+        if (_profile?.Role == Roles.ChuTro)
+        {
+            ValidateBankAccount(form, messages);
+        }
+    }
+
+    // PLAN-028: hoặc để trống cả 3 (không dùng QR), hoặc nhập đủ 3 và đúng định dạng.
+    private void ValidateBankAccount(ProfileForm form, ValidationMessageStore messages)
+    {
+        var code = form.BankCode?.Trim();
+        var number = form.BankAccountNumber?.Trim();
+        var name = form.BankAccountName?.Trim();
+        if (string.IsNullOrEmpty(code) && string.IsNullOrEmpty(number) && string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(code))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankCode)),
+                string.Format(L["TenantValidationRequired"], L["BankLabel"]));
+        }
+
+        if (string.IsNullOrEmpty(number))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountNumber)),
+                string.Format(L["TenantValidationRequired"], L["BankAccountNumberLabel"]));
+        }
+        else if (!number.All(char.IsAsciiDigit) || number.Length is < 6 or > 20)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountNumber)), L["ErrorInvalidBankAccount"]);
+        }
+
+        if (string.IsNullOrEmpty(name))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountName)),
+                string.Format(L["TenantValidationRequired"], L["BankAccountNameLabel"]));
+        }
+        else if (name.Length is < 5 or > 50)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountName)), L["ErrorInvalidBankAccount"]);
+        }
     }
 
     private async Task SaveProfileAsync()
@@ -229,7 +327,14 @@
             if (string.IsNullOrEmpty(userId)) return;
 
             var result = await Accounts.UpdateMyProfileAsync(
-                new UpdateMyProfileRequest { FullName = _form.FullName, PhoneNumber = _form.PhoneNumber },
+                new UpdateMyProfileRequest
+                {
+                    FullName = _form.FullName,
+                    PhoneNumber = _form.PhoneNumber,
+                    BankCode = _form.BankCode,
+                    BankAccountNumber = _form.BankAccountNumber,
+                    BankAccountName = _form.BankAccountName,
+                },
                 userId);
             if (!result.Succeeded)
             {
@@ -238,12 +343,19 @@
                     _messages.Add(new FieldIdentifier(_form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
                     _editContext.NotifyValidationStateChanged();
                 }
+                else if (result.ErrorCode == AccountErrorCodes.InvalidBankAccount)
+                {
+                    _messages.Add(new FieldIdentifier(_form, nameof(ProfileForm.BankCode)), L["ErrorInvalidBankAccount"]);
+                    _editContext.NotifyValidationStateChanged();
+                }
                 Toasts.Error(MessageFor(result.ErrorCode));
                 return;
             }
 
             _profile = result.Value;
             _emailReadonly = _profile?.Email ?? _emailReadonly;
+            // PLAN-028: báo banner "chưa nhập tài khoản nhận tiền" cập nhật ngay sau khi lưu.
+            BankAccountNotifier.NotifyChanged();
             Toasts.Success(L["ProfileSaved"]);
         }
         catch
@@ -259,6 +371,7 @@
     private string MessageFor(string? code) => code switch
     {
         AccountErrorCodes.InvalidPhone => L["ErrorInvalidPhone"],
+        AccountErrorCodes.InvalidBankAccount => L["ErrorInvalidBankAccount"],
         AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
         _ => L["ErrorGeneric"],
     };

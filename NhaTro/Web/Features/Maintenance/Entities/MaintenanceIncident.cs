@@ -1,8 +1,9 @@
+using Web.Common.SoftDelete;
 using Web.Features.Maintenance.Enums;
 
 namespace Web.Features.Maintenance.Entities;
 
-public sealed class MaintenanceIncident
+public sealed class MaintenanceIncident : ISoftDeletable
 {
     public int Id { get; set; }
     public int RoomId { get; set; }
@@ -17,6 +18,13 @@ public sealed class MaintenanceIncident
     public decimal? RepairCost { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? DeletedAt { get; set; }
+
+    public string? DeletedBy { get; set; }
+
     public byte[] RowVersion { get; set; } = [];
     public ICollection<MaintenanceIncidentHistory> History { get; set; } = new List<MaintenanceIncidentHistory>();
 }

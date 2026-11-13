@@ -28,5 +28,8 @@ public sealed class InvoiceItemConfiguration : IEntityTypeConfiguration<InvoiceI
         builder.Property(item => item.Amount).HasPrecision(18, 2);
 
         builder.HasIndex(item => new { item.InvoiceId, item.DisplayOrder });
+
+        // Đồng bộ filter với Invoice (xóa mềm): dòng của hóa đơn đã xóa cũng bị ẩn.
+        builder.HasQueryFilter(item => !item.Invoice.IsDeleted);
     }
 }

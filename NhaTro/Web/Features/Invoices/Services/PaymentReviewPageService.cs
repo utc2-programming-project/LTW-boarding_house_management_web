@@ -1,4 +1,5 @@
 using Web.Features.Invoices.DTOs;
+using Web.Features.Properties;
 using Web.Features.Storage.DTOs;
 
 namespace Web.Features.Invoices.Services;
@@ -12,6 +13,9 @@ public sealed class PaymentReviewPageService(
     IPaymentReviewQueryService reviewQuery,
     IPaymentService payments)
 {
+    /// <summary>Caller server-side dùng cho ngữ cảnh phục hồi P6 (VHT-143).</summary>
+    public async Task<PropertyCaller> CallerAsync() => await paymentPage.CallerAsync();
+
     public async Task<PaymentReviewListResult> ListAsync(
         PaymentReviewFilter filter,
         CancellationToken cancellationToken = default) =>

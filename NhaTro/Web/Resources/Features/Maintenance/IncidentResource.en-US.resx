@@ -208,6 +208,9 @@
   <data name="Attachments" xml:space="preserve">
     <value>Attachments</value>
   </data>
+  <data name="DragDropPhotos" xml:space="preserve">
+    <value>Drag and drop photos here, or</value>
+  </data>
   <data name="PhotoHint" xml:space="preserve">
     <value>JPG/JPEG/PNG, up to 5 MB per photo. Each report allows 3 report photos and 3 result photos. At most {0} photos in this selection, including selected photos.</value>
   </data>
@@ -470,4 +473,39 @@
   <data name="ChoosePhotos" xml:space="preserve"><value>Choose images</value></data>
   <data name="NoPhotosSelected" xml:space="preserve"><value>No images selected</value></data>
   <data name="PhotosSelected" xml:space="preserve"><value>Images selected: {0}</value></data>
+  <data name="Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="RowsPerPage" xml:space="preserve"><value>Rows per page</value></data>
+  <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
+  <data name="TrashTitle" xml:space="preserve"><value>Incident trash</value></data>
+  <data name="TrashSubtitle" xml:space="preserve"><value>Deleted incidents can be restored or permanently removed.</value></data>
+  <data name="TrashSearchLabel" xml:space="preserve"><value>Search deleted incidents</value></data>
+  <data name="TrashSearchPlaceholder" xml:space="preserve"><value>Search by title, property or room</value></data>
+  <data name="TrashRestoreTitle" xml:space="preserve"><value>Restore incident?</value></data>
+  <data name="TrashRestoreMessage" xml:space="preserve"><value>Restore “{0}”?</value></data>
+  <data name="TrashRestored" xml:space="preserve"><value>Incident restored.</value></data>
+  <data name="TrashDeletedAt" xml:space="preserve"><value>Deleted at</value></data>
+  <data name="Purge" xml:space="preserve"><value>Delete permanently</value></data>
+  <data name="PurgeTitle" xml:space="preserve"><value>Delete permanently?</value></data>
+  <data name="PurgeMessage" xml:space="preserve"><value>“{0}” and its photos/history will be permanently removed.</value></data>
+  <data name="PurgeTypePrompt" xml:space="preserve"><value>Type exactly “{0}” to confirm</value></data>
+  <data name="PurgeMismatch" xml:space="preserve"><value>Does not match. Type the title exactly as shown above.</value></data>
+  <data name="PurgeSuccess" xml:space="preserve"><value>Permanently deleted.</value></data>
+  <data name="PurgeFailed" xml:space="preserve"><value>Could not delete. Please try again.</value></data>
+  <data name="PurgeNotInTrash" xml:space="preserve"><value>This item is no longer in the trash.</value></data>
+  <data name="EmptyTrash" xml:space="preserve"><value>Empty trash</value></data>
+  <data name="EmptyTrashTitle" xml:space="preserve"><value>Empty the trash?</value></data>
+  <data name="EmptyTrashMessage" xml:space="preserve"><value>Every eligible incident will be permanently deleted. Incidents with pending approval photos will be kept.</value></data>
+  <data name="TrashEmptyPhrase" xml:space="preserve"><value>DELETE ALL</value></data>
+  <data name="EmptyTrashSuccess" xml:space="preserve"><value>Deleted {0}, skipped {1} with related data.</value></data>
+  <data name="EmptyTrashNothing" xml:space="preserve"><value>Nothing can be deleted.</value></data>
+  <data name="DeleteIncident" xml:space="preserve"><value>Delete incident</value></data>
+  <data name="DeleteIncidentTitle" xml:space="preserve"><value>Delete incident?</value></data>
+  <data name="DeleteIncidentMessage" xml:space="preserve"><value>“{0}” will be moved to the trash.</value></data>
+  <data name="DeleteIncidentConfirm" xml:space="preserve"><value>Delete</value></data>
+  <data name="IncidentDeleted" xml:space="preserve"><value>Incident moved to the trash.</value></data>
+  <data name="DeleteFailed" xml:space="preserve"><value>Could not delete the incident.</value></data>
+  <data name="IncidentNotInTrash" xml:space="preserve"><value>The incident is no longer in the trash.</value></data>
+  <data name="IncidentHasPendingApproval" xml:space="preserve"><value>The incident has photos awaiting approval; process them first.</value></data>
+  <data name="IncidentHasDependencies" xml:space="preserve"><value>Cannot delete because related data still exists.</value></data>
+  <data name="IncidentRoomDeleted" xml:space="preserve"><value>The incident's room was deleted; restore the room first.</value></data>
 </root>

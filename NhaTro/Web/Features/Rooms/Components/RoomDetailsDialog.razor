@@ -56,7 +56,17 @@
     private RoomDetail? _detail;
     private string? _error;
     private bool _loading = true;
-    private string DialogTitle => $"{L["P2RoomDetails"].Value} · {Room.Code}";
+    // Tiêu đề dùng mã phòng tải từ service: link ?roomId= chỉ mang id nên chưa biết mã.
+    private string DialogTitle
+    {
+        get
+        {
+            var code = _detail?.Code ?? Room.Code;
+            return string.IsNullOrWhiteSpace(code)
+                ? L["P2RoomDetails"].Value
+                : $"{L["P2RoomDetails"].Value} · {code}";
+        }
+    }
 
     protected override async Task OnInitializedAsync()
         => await LoadAsync();

@@ -37,6 +37,7 @@ using Web.Features.Storage.Services;
 using Web.Infrastructure.ErrorHandling;
 using Web.Infrastructure.Email;
 using Web.Infrastructure.Addresses;
+using Web.Infrastructure.Auditing;
 using Web.Infrastructure.Storage;
 using MudBlazor.Services;
 using Serilog;
@@ -145,10 +146,23 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // ── 3. EF Core ─────────────────────────────────────────────────────────────
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+
+// D16/VHT-104: nhật ký thao tác lưu file JSONL (một file hệ thống + một file mỗi chủ trọ), không ghi DB.
+var auditOptions = builder.Configuration.GetSection(AuditOptions.SectionName).Get<AuditOptions>() ?? new AuditOptions();
+var auditRoot = AuditLogFileStore.ResolveRoot(
+    auditOptions.Directory,
+    builder.Configuration["Logging:Directory"],
+    builder.Environment.ContentRootPath);
+builder.Services.AddSingleton(new AuditLogFileStore(auditRoot, auditOptions.RetentionDays));
+builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection(AuditOptions.SectionName));
+builder.Services.AddSingleton<AuditLogSaveInterceptor>();
+
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+    options.UseSqlServer(connectionString)
+        .AddInterceptors(serviceProvider.GetRequiredService<AuditLogSaveInterceptor>()));
 builder.Services.AddDbContextFactory<ApplicationDbContext>(
-    options => options.UseSqlServer(connectionString),
+    (serviceProvider, options) => options.UseSqlServer(connectionString)
+        .AddInterceptors(serviceProvider.GetRequiredService<AuditLogSaveInterceptor>()),
     ServiceLifetime.Scoped);
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -438,9 +452,11 @@ builder.Services.AddRateLimiter(rateLimiter =>
 // Giới hạn đọc từ cấu hình và kiểm tra ngay lúc khởi động.
 builder.Services.AddOptions<StorageOptions>().Bind(builder.Configuration.GetSection(StorageOptions.SectionName)).ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<StorageOptions>, StorageOptionsValidator>();
-// Tài khoản ngân hàng nhận tiền cho VietQR thanh toán hóa đơn (BIDV 8800084909).
-builder.Services.AddOptions<Web.Features.Invoices.BankAccountOptions>()
-    .Bind(builder.Configuration.GetSection(Web.Features.Invoices.BankAccountOptions.SectionName));
+// PLAN-028: tài khoản nhận tiền lấy theo chủ trọ sở hữu hóa đơn (nhập ở /profile).
+builder.Services.AddScoped<Web.Features.Invoices.Services.IOwnerBankAccountService,
+    Web.Features.Invoices.Services.OwnerBankAccountService>();
+// PLAN-028: báo banner "chưa nhập tài khoản nhận tiền" khi Chủ trọ vừa lưu ở /profile.
+builder.Services.AddScoped<Web.Features.Invoices.Services.OwnerBankAccountNotifier>();
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IFileAccessAuditWriter, FileAccessAuditWriter>();
 builder.Services.AddScoped<FileService>();
@@ -513,13 +529,17 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityReadingServic
 builder.Services.AddScoped<Web.Features.Utilities.Services.IServiceCatalogService,
     Web.Features.Utilities.Services.ServiceCatalogService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageService>();
-// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ.
+// D16: nhật ký thao tác tách sổ hệ thống/nghiệp vụ (lưu file, VHT-104).
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
+builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogPageService>();
+builder.Services.AddHostedService<AuditLogCleanupService>();
 // P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
 // P6: báo cáo doanh thu/công nợ (OP39); thanh toán dùng IPaymentService VHT-54 bên dưới.
 builder.Services.AddScoped<Web.Features.Reports.Services.RevenueReportService>();
+// VHT-140: điểm gọi chung các nguồn báo cáo P8 (phòng, khách, doanh thu, hợp đồng, chi phí, sự cố).
+builder.Services.AddScoped<Web.Features.Reports.Services.ReportsPageService>();
 // D8: xuất Excel P8 + SW-16.
 builder.Services.AddScoped<Web.Features.Reports.Services.ReportExportService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Reports.Services.ReportExportApprovalApplier>();
@@ -538,6 +558,8 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentPageService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQueryService,
     Web.Features.Invoices.Services.PaymentReviewQueryService>();
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
+// VHT-143: ngữ cảnh tra cứu P6 tối thiểu sau reconnect/tải lại.
+builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentRecoveryService>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();
@@ -693,6 +715,14 @@ if (seedDemo || clearDemo)
     var succeeded = await DemoDataSeeder.RunAsync(
         app.Services, app.Environment, app.Configuration, app.Logger, clearDemo);
     Environment.ExitCode = succeeded ? 0 : 1;
+    return;
+}
+
+// VHT-104: DB demo đã có dữ liệu thì không seed lại toàn bộ; cờ này chỉ đổ nhật ký mẫu ra file.
+if (args.Any(a => string.Equals(a, "--seed-audit-demo", StringComparison.OrdinalIgnoreCase)))
+{
+    var seeded = await AuditDemoSeeder.RunAsync(app.Services, app.Environment, app.Logger);
+    Environment.ExitCode = seeded ? 0 : 1;
     return;
 }
 

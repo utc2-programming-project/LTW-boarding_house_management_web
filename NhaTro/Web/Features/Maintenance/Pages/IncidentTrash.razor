@@ -1,0 +1,283 @@
+@page "/incidents/trash"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@using Web.Common.SoftDelete
+@inject IncidentPageService Session
+@inject NavigationManager Navigation
+@inject ToastService Toasts
+@inject IStringLocalizer<IncidentResource> L
+@inject ILogger<IncidentTrash> Logger
+
+<PageTitle>@L["TrashTitle"] · @L["PageTitle"]</PageTitle>
+
+<div class="page-stack">
+    <PageHeading Title="@L["TrashTitle"]" HelpText="@L["TrashSubtitle"]">
+        <Actions>
+            <button type="button" class="btn btn-danger" @onclick="OpenEmptyTrash">
+                <LucideIcon Name="trash" />@L["EmptyTrash"]
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="GoToIncidents">
+                <LucideIcon Name="wrench" />@L["PageTitle"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__search">
+                <label class="sr-only" for="incident-trash-search">@L["TrashSearchLabel"]</label>
+                <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                <input id="incident-trash-search" type="search" class="input"
+                       placeholder="@L["TrashSearchPlaceholder"]" @bind="_keyword" @bind:after="ReloadAsync" />
+            </div>
+            <div class="filter-bar__actions">
+                <div class="filter-bar__state">
+                    <label class="sr-only" for="incident-trash-page-size">@L["RowsPerPage"]</label>
+                    <select id="incident-trash-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                        <option value="10">@string.Format(L["RowsPerPageOption"].Value, 10)</option>
+                        <option value="20">@string.Format(L["RowsPerPageOption"].Value, 20)</option>
+                        <option value="50">@string.Format(L["RowsPerPageOption"].Value, 50)</option>
+                    </select>
+                </div>
+                <FilterResetButton OnClick="ClearSearchAsync" />
+            </div>
+        </div>
+    </div>
+
+    <DataTable @ref="_table" @key="_tableKey" TItem="IncidentTrashItemDto" Columns="_columns"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               Caption="@L["TrashTitle"]" Labels="_tableLabels" />
+</div>
+
+<ConfirmDialog Visible="_restoreVisible" Title="@L["TrashRestoreTitle"]"
+               Message="@string.Format(L["TrashRestoreMessage"], _restoreItem?.Title ?? string.Empty)"
+               ConfirmText="@L["Restore"]" CancelText="@L["Cancel"]"
+               OnConfirm="RestoreAsync" OnCancel="CloseRestore" />
+
+<PurgeConfirmDialog Visible="_purgeVisible" Title="@L["PurgeTitle"]"
+                    Message="@string.Format(L["PurgeMessage"], _purgeItem?.Title ?? string.Empty)"
+                    ExpectedText="@(_purgeItem?.Title ?? string.Empty)"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], _purgeItem?.Title ?? string.Empty)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["Purge"]" CancelText="@L["Cancel"]"
+                    OnConfirm="PurgeAsync" OnCancel="ClosePurge" />
+
+<PurgeConfirmDialog Visible="_emptyVisible" Title="@L["EmptyTrashTitle"]"
+                    Message="@L["EmptyTrashMessage"]"
+                    ExpectedText="@L["TrashEmptyPhrase"]"
+                    PromptText="@string.Format(L["PurgeTypePrompt"], L["TrashEmptyPhrase"].Value)"
+                    MismatchText="@L["PurgeMismatch"]"
+                    ConfirmText="@L["EmptyTrash"]" CancelText="@L["Cancel"]"
+                    OnConfirm="EmptyTrashAsync" OnCancel="CloseEmptyTrash" />
+
+@code {
+    private DataTable<IncidentTrashItemDto>? _table;
+    private IReadOnlyList<DataTableColumn<IncidentTrashItemDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+    private IncidentTrashItemDto? _restoreItem;
+    private IncidentTrashItemDto? _purgeItem;
+    private bool _restoreVisible;
+    private bool _purgeVisible;
+    private bool _emptyVisible;
+    private int _pageSize = 20;
+    private int _tableKey;
+    private string _keyword = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(L);
+        _columns = BuildColumns();
+    }
+
+    private IReadOnlyList<DataTableColumn<IncidentTrashItemDto>> BuildColumns()
+    {
+        RenderFragment<IncidentTrashItemDto> actions = item => @<div class="p2-row-actions">
+            <button type="button" class="btn btn-secondary" @onclick="() => RequestRestore(item)">
+                <LucideIcon Name="refresh-cw" />@L["Restore"]
+            </button>
+            <button type="button" class="btn btn-danger" @onclick="() => RequestPurge(item)">
+                <LucideIcon Name="trash" />@L["Purge"]
+            </button>
+        </div>;
+
+        return
+        [
+            new() { Key = "title", Title = L["Title"], Value = item => item.Title },
+            new() { Key = "room", Title = L["PropertyRoom"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
+            new() { Key = "category", Title = L["Category"], Value = item => L[$"Category{item.Category}"].Value },
+            new() { Key = "status", Title = L["Status"], Value = item => L[$"Status{item.Status}"].Value },
+            new() { Key = "created", Title = L["CreatedAt"], Value = item => DateFormatter.FormatDateTime(item.CreatedAt) },
+            TrashColumns.DeletedAt<IncidentTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
+            TrashColumns.Actions(L["Actions"], actions),
+        ];
+    }
+
+    private async Task<PagedResult<IncidentTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
+    {
+        var items = await Session.ListDeletedAsync();
+        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
+        var filtered = items
+            .Where(item => term is null
+                || item.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return new PagedResult<IncidentTrashItemDto>
+        {
+            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
+            TotalCount = filtered.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private Task ClearSearchAsync()
+    {
+        _keyword = string.Empty;
+        return ReloadAsync();
+    }
+
+    private Task ReloadAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangePageSize(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var value) && value is 10 or 20 or 50)
+        {
+            _pageSize = value;
+            _tableKey++;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestRestore(IncidentTrashItemDto item)
+    {
+        _restoreItem = item;
+        _restoreVisible = true;
+    }
+
+    private void CloseRestore()
+    {
+        _restoreVisible = false;
+        _restoreItem = null;
+    }
+
+    private void RequestPurge(IncidentTrashItemDto item)
+    {
+        _purgeItem = item;
+        _purgeVisible = true;
+    }
+
+    private void ClosePurge()
+    {
+        _purgeVisible = false;
+        _purgeItem = null;
+    }
+
+    private void OpenEmptyTrash() => _emptyVisible = true;
+
+    private void CloseEmptyTrash() => _emptyVisible = false;
+
+    private async Task RestoreAsync()
+    {
+        if (_restoreItem is null)
+        {
+            CloseRestore();
+            return;
+        }
+
+        try
+        {
+            await Session.RestoreDeletedAsync(_restoreItem.Id);
+            CloseRestore();
+            Toasts.Success(L["TrashRestored"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IncidentPageException or UnauthorizedAccessException)
+        {
+            CloseRestore();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Incident restore failed");
+            CloseRestore();
+            Toasts.Error(L["PurgeFailed"]);
+        }
+    }
+
+    private async Task PurgeAsync()
+    {
+        if (_purgeItem is null)
+        {
+            ClosePurge();
+            return;
+        }
+
+        try
+        {
+            await Session.PurgeDeletedAsync(_purgeItem.Id);
+            ClosePurge();
+            Toasts.Success(L["PurgeSuccess"]);
+            await ReloadTableAsync();
+        }
+        catch (Exception ex) when (ex is IncidentPageException or UnauthorizedAccessException)
+        {
+            ClosePurge();
+            Toasts.Error(ErrorText(ex));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Incident purge failed");
+            ClosePurge();
+            Toasts.Error(L["PurgeFailed"]);
+        }
+    }
+
+    private async Task EmptyTrashAsync()
+    {
+        try
+        {
+            var summary = await Session.PurgeAllDeletedAsync();
+            CloseEmptyTrash();
+            if (summary.Purged == 0 && summary.Skipped == 0)
+            {
+                Toasts.Success(L["EmptyTrashNothing"]);
+            }
+            else
+            {
+                Toasts.Success(string.Format(L["EmptyTrashSuccess"], summary.Purged, summary.Skipped));
+            }
+
+            await ReloadTableAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Incident empty trash failed");
+            CloseEmptyTrash();
+            Toasts.Error(L["PurgeFailed"]);
+        }
+    }
+
+    private async Task ReloadTableAsync()
+    {
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private string ErrorText(Exception ex) => ex switch
+    {
+        IncidentPageException page => L[page.Message].Value,
+        UnauthorizedAccessException => L["Forbidden"].Value,
+        _ => L["PurgeFailed"].Value,
+    };
+
+    private void GoToIncidents() => Navigation.NavigateTo("/incidents");
+}

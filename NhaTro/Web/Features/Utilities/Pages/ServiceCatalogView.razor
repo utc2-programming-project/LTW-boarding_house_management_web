@@ -4,6 +4,7 @@
 @using Web.Common.Utils
 @using Web.Infrastructure.Time
 @inject IStringLocalizer<UtilityResources> L
+@inject IStringLocalizer<Web.Shared> SL
 @inject ServiceCatalogPageService PageService
 @inject ContractServiceRegistrationService RegistrationService
 @inject Web.Features.Utilities.Services.ServiceRegistrationService RegistrationRequestService
@@ -14,7 +15,7 @@
 
 <PageTitle>@L["CatalogPageTitle"]</PageTitle>
 
-<div class="service-catalog-page">
+<div class="service-catalog-page page-stack">
     @if (_isLoading)
     {
         <div class="page-loading">
@@ -51,6 +52,14 @@
                     <LucideIcon Name="zap" />
                     <span>@L["MeterReadingBtn"]</span>
                 </button>
+                <AuthorizeView Roles="ChuTro">
+                    <Authorized>
+                        <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/services/trash")'>
+                            <LucideIcon Name="trash" />
+                            <span>@L["ServiceTrashOpen"]</span>
+                        </button>
+                    </Authorized>
+                </AuthorizeView>
                 <AuthorizeView Policy="UtilityManage">
                     <Authorized>
                         <button id="service-create-open-btn" type="button" class="btn btn-primary" @onclick="() => _isCreateModalOpen = true">
@@ -69,7 +78,7 @@
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatTotalServices"]
-                    <button type="button" class="stat-help" data-tip="@L["StatTotalServicesSub"]" aria-label="@L["StatTotalServicesSub"]">?</button>
+                    <HelpTip Text="@L["StatTotalServicesSub"]" />
                 </span>
                 <span class="stat-icon stat-icon--accent"><LucideIcon Name="package" /></span>
             </div>
@@ -80,7 +89,7 @@
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatActiveServices"]
-                    <button type="button" class="stat-help" data-tip="@L["StatActiveServicesSub"]" aria-label="@L["StatActiveServicesSub"]">?</button>
+                    <HelpTip Text="@L["StatActiveServicesSub"]" />
                 </span>
                 <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
             </div>
@@ -91,7 +100,7 @@
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatPausedServices"]
-                    <button type="button" class="stat-help" data-tip="@L["StatPausedServicesSub"]" aria-label="@L["StatPausedServicesSub"]">?</button>
+                    <HelpTip Text="@L["StatPausedServicesSub"]" />
                 </span>
                 <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
             </div>
@@ -102,7 +111,7 @@
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatReadOnlyTariff"]
-                    <button type="button" class="stat-help" data-tip="@L["StatReadOnlyTariffSub"]" aria-label="@L["StatReadOnlyTariffSub"]">?</button>
+                    <HelpTip Text="@L["StatReadOnlyTariffSub"]" />
                 </span>
                 <span class="stat-icon stat-icon--info"><LucideIcon Name="shield-check" /></span>
             </div>
@@ -148,9 +157,7 @@
                 </select>
             </div>
             <div class="filter-bar__actions">
-                <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ResetFilters">
-                    <LucideIcon Name="refresh-cw" /> @L["ResetFilter"]
-                </button>
+                <FilterResetButton OnClick="ResetFilters" />
             </div>
         </div>
 
@@ -191,7 +198,7 @@
                                 <!-- Tên dịch vụ -->
                                 <td class="cell-name">
                                     <div class="service-name-cell">
-                                        <span class="service-name font-semibold text-indigo-900">@service.Name</span>
+                                        <a class="service-name cell-link" href="@AppLinks.ServicePrices(service.Id)" title="@SL["CellLinkOpenService"]">@service.Name</a>
                                         @if (!string.IsNullOrWhiteSpace(service.Description))
                                         {
                                             <span class="service-description">@service.Description</span>
@@ -332,19 +339,8 @@
                 </table>
             </div>
 
-            <footer class="table-footer">
-                <span class="pagination-info">
-                    @string.Format(L["TablePageInfo"], _page, TotalPages, _filteredServices.Count)
-                </span>
-                <div class="pager">
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page <= 1)" @onclick="() => ChangePage(-1)">
-                        @L["Previous"]
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-sm" disabled="@(_page >= TotalPages)" @onclick="() => ChangePage(1)">
-                        @L["Next"]
-                    </button>
-                </div>
-            </footer>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_filteredServices.Count"
+                        PageChanged="GoToPage" />
         }
         else
         {
@@ -355,7 +351,7 @@
                 <h3 class="empty-title">@L["EmptyServicesTitle"]</h3>
                 <p class="empty-desc">@L["EmptyServicesDesc"]</p>
                 <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
-                    <LucideIcon Name="refresh" />
+                    <LucideIcon Name="refresh-cw" />
                     <span>@L["ClearFilterBtn"]</span>
                 </button>
             </div>
@@ -428,7 +424,7 @@
                         <select id="registration-contract" class="input" @bind="_registrationContractId" disabled="@(_contractOptions.Count <= 1)">
                             @foreach (var contract in _contractOptions)
                             {
-                                <option value="@contract.ContractId">@contract.RoomCode · @contract.PropertyName · @contract.ContractNumber</option>
+                                <option value="@contract.ContractId">@contract.RoomCode · @contract.PropertyName</option>
                             }
                         </select>
                     }
@@ -515,11 +511,40 @@
 
     private int TotalPages => PaginationHelper.TotalPages(_filteredServices.Count, PageSize);
 
+    private int FirstItem => _filteredServices.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+
+    private int LastItem => Math.Min(_page * PageSize, _filteredServices.Count);
+
     protected override async Task OnInitializedAsync()
     {
+        _lastAppliedKeywordQuery = KeywordQuery;
+        if (KeywordQuery is { Length: > 0 })
+        {
+            _searchTerm = KeywordQuery.Trim();
+        }
+
         await LoadDataAsync();
         _isLoading = false;
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Link từ bảng khác (?q=điện): Blazor dùng lại trang nên phải áp dụng lại bộ lọc.
+        if (string.Equals(KeywordQuery, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _searchTerm = KeywordQuery?.Trim() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    /// <summary>Từ khóa từ link chéo (?q=điện): điền sẵn ô tìm kiếm dịch vụ.</summary>
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? KeywordQuery { get; set; }
+
+    private string? _lastAppliedKeywordQuery;
 
     private async Task LoadDataAsync(bool resetPage = true)
     {
@@ -736,9 +761,9 @@
         _pageServices = _filteredServices.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
     }
 
-    private void ChangePage(int delta)
+    private void GoToPage(int page)
     {
-        var target = PaginationHelper.ClampPage(_page + delta, TotalPages);
+        var target = PaginationHelper.ClampPage(page, TotalPages);
         if (target == _page)
         {
             return;

@@ -30,6 +30,10 @@ public static class ContractErrorCodes
     public const string InvalidDepositAmount = nameof(InvalidDepositAmount);
     public const string DepositUnchanged = nameof(DepositUnchanged);
     public const string DepositChangedAfterRequest = nameof(DepositChangedAfterRequest);
+    public const string NotDeletable = nameof(NotDeletable);
+    public const string NotInTrash = nameof(NotInTrash);
+    public const string HasDependencies = nameof(HasDependencies);
+    public const string RoomDeleted = nameof(RoomDeleted);
 }
 
 public static class ContractErrorMessages
@@ -64,6 +68,10 @@ public static class ContractErrorMessages
     public const string DepositUnchanged = "Tiền cọc mới phải khác tiền cọc hiện tại.";
     public const string ApprovalFailed = "Không thể gửi yêu cầu duyệt. Vui lòng thử lại.";
     public const string DuplicatePendingRequest = "Đã có yêu cầu chờ duyệt cho hợp đồng này.";
+    public const string NotDeletable = "Chỉ hợp đồng Chờ duyệt hoặc Đã từ chối mới được xóa.";
+    public const string NotInTrash = "Hợp đồng không còn trong thùng rác.";
+    public const string HasDependencies = "Không thể xóa vì hợp đồng còn hóa đơn, yêu cầu gia hạn hoặc kỳ ghi chỉ số.";
+    public const string RoomDeleted = "Phòng của hợp đồng đã bị xóa; hãy khôi phục phòng trước.";
 }
 
 public interface IContractServiceError
