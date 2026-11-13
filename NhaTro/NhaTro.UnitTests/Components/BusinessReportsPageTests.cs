@@ -5,6 +5,7 @@ using Bunit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Common.Models;
 using Web.Data;
@@ -92,7 +93,7 @@ public sealed class BusinessReportsPageTests : BunitContext
                 },
             });
         });
-        var revenue = new RevenueReportService(NewDb());
+        var revenue = new RevenueReportService(new PooledDbContextFactory<ApplicationDbContext>(NewDb().Options));
         var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
         var costs = Proxy<ICostReportService>((_, _) => Task.FromResult(new CostReportResult()));
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult()));

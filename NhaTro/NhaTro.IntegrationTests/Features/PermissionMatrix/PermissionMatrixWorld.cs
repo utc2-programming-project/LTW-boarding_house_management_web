@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -211,7 +212,8 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
     public PaymentService NewPayments() => new(SharedDb, TimeProvider.System);
 
-    public RevenueReportService NewRevenueReports() => new(SharedDb);
+    public RevenueReportService NewRevenueReports() =>
+        new(new PooledDbContextFactory<ApplicationDbContext>(SharedDb.Options));
 
     public ReportExportService NewReportExports() => new(
         NewRevenueReports(),

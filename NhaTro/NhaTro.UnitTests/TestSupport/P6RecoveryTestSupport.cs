@@ -11,6 +11,7 @@ using Web.Common.Models;
 using Web.Components.Shared.Feedback;
 using Web.Configuration.Options;
 using Web.Features.Accounts;
+using Web.Features.Contracts.Services;
 using Web.Features.Invoices;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Enums;
@@ -78,7 +79,15 @@ public sealed class P6RecoveryBackend
     public Func<InvoiceDto> Invoice { get; set; } = P6RecoveryData.Invoice;
 
     public PaymentPageService CreatePaymentPage(AuthenticationStateProvider authentication) =>
-        new(authentication, CreatePaymentService(), CreateFileService(), Options.Create(new StorageOptions()));
+        new(authentication,
+            CreatePaymentService(),
+            CreateDepositService(),
+            CreateFileService(),
+            Options.Create(new StorageOptions()));
+
+    private static IContractDepositPaymentService CreateDepositService() =>
+        Proxy<IContractDepositPaymentService>((method, _) =>
+            throw new NotSupportedException(method!.Name));
 
     public PaymentReviewPageService CreateReviewPage(
         AuthenticationStateProvider authentication,
