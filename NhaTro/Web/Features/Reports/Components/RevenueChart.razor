@@ -1,4 +1,7 @@
+@using System.Globalization
 @inject IStringLocalizer<ReportResource> L
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 @if (Periods is null || Periods.Count == 0)
 {
@@ -7,12 +10,107 @@
 else
 {
     <div class="revenue-chart">
-        <div class="revenue-chart__toolbar" role="group" aria-label="@L["ChartType"]">
-            <button type="button" class="btn btn-secondary" aria-pressed="@((!LineChart).ToString().ToLowerInvariant())" @onclick="() => LineChart = false">@L["ColumnChart"]</button>
-            <button type="button" class="btn btn-secondary" aria-pressed="@(LineChart.ToString().ToLowerInvariant())" @onclick="() => LineChart = true">@L["LineChart"]</button>
+        <div class="revenue-chart__head">
+            <div class="revenue-chart__toolbar" role="group" aria-label="@L["ChartType"]">
+                <button type="button" class="btn btn-secondary" aria-pressed="@((!LineChart).ToString().ToLowerInvariant())" @onclick="() => LineChart = false">@L["ColumnChart"]</button>
+                <button type="button" class="btn btn-secondary" aria-pressed="@(LineChart.ToString().ToLowerInvariant())" @onclick="() => LineChart = true">@L["LineChart"]</button>
+            </div>
+            <ul class="chart-legend" aria-hidden="true">
+                @for (var series = 0; series < 2; series++)
+                {
+                    <li><span class="legend-dot" style="@($"background:{SeriesColors[series]};box-shadow:0 0 0 3px color-mix(in srgb,{SeriesColors[series]} 18%,transparent)")"></span>@SeriesNames[series]</li>
+                }
+            </ul>
         </div>
-        <div class="revenue-chart__visual">
-            <MudChart T="double" ChartType="@(LineChart ? ChartType.Line : ChartType.Bar)" ChartSeries="@Series" ChartLabels="@Labels" ChartOptions="@Options" Height="280px" Width="100%" />
+        <div class="revenue-chart__visual" @ref="_host">
+            <svg class="chart-svg" width="@F(Width)" height="@F(Height)" viewBox="@($"0 0 {F(Width)} {F(Height)}")" role="img" aria-label="@L["RevenueByPeriod"]">
+                <title>@L["RevenueByPeriod"]</title>
+                <defs>
+                    @for (var series = 0; series < 2; series++)
+                    {
+                        <linearGradient id="@BarGradientId(series)" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" style="@($"stop-color:{SeriesColors[series]}")" />
+                            <stop offset="100%" style="@($"stop-color:{SeriesSoftColors[series]}")" />
+                        </linearGradient>
+                        <linearGradient id="@AreaGradientId(series)" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" style="@($"stop-color:{SeriesColors[series]};stop-opacity:.26")" />
+                            <stop offset="100%" style="@($"stop-color:{SeriesColors[series]};stop-opacity:0")" />
+                        </linearGradient>
+                        <linearGradient id="@LineGradientId(series)" gradientUnits="userSpaceOnUse" x1="@F(PadLeft)" y1="0" x2="@F(Width - PadRight)" y2="0">
+                            <stop offset="0%" style="@($"stop-color:{SeriesColors[series]}")" />
+                            <stop offset="100%" style="@($"stop-color:{SeriesSoftColors[series]}")" />
+                        </linearGradient>
+                        <filter id="@GlowId(series)" x="-40%" y="-40%" width="180%" height="180%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur" />
+                            <feFlood style="@($"flood-color:{SeriesColors[series]};flood-opacity:.28")" />
+                            <feComposite in2="blur" operator="in" />
+                            <feMerge>
+                                <feMergeNode />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    }
+                </defs>
+
+                @foreach (var tick in AxisTicks)
+                {
+                    <line class="chart-gridline" x1="@F(PadLeft)" y1="@F(tick.Y)" x2="@F(Width - PadRight)" y2="@F(tick.Y)" />
+                    @AxisText("chart-axis-y", PadLeft - 10, tick.Y, CompactMoney(tick.Value), "end", "middle")
+                }
+
+                @{
+                    var data = new[] { SeriesData(0), SeriesData(1) };
+                }
+                @if (LineChart)
+                {
+                    @for (var series = 0; series < 2; series++)
+                    {
+                        var values = data[series];
+                        <path class="chart-area" d="@AreaPath(values)" style="@($"fill:url(#{AreaGradientId(series)})")" />
+                        <path class="chart-line" d="@LinePath(values)" style="@($"stroke:url(#{LineGradientId(series)})")" filter="@($"url(#{GlowId(series)})")" />
+                        @for (var index = 0; index < values.Length; index++)
+                        {
+                            <circle class="chart-point-halo" cx="@F(GroupCenter(index))" cy="@F(ValueY(values[index]))" r="8" style="@($"fill:{SeriesColors[series]}")" />
+                            <circle class="chart-point" cx="@F(GroupCenter(index))" cy="@F(ValueY(values[index]))" r="4" style="@($"fill:{SeriesColors[series]};stroke:var(--surface)")" />
+                        }
+                    }
+                }
+                else
+                {
+                    @for (var index = 0; index < (Periods?.Count ?? 0); index++)
+                    {
+                        @for (var series = 0; series < 2; series++)
+                        {
+                            var value = data[series][index];
+                            var barHeight = Math.Max(0, PlotHeight * value / MaxValue);
+                            <rect class="chart-bar" x="@F(BarX(index, series))" y="@F(PadTop + PlotHeight - barHeight)" width="@F(BarWidth)" height="@F(barHeight)" rx="@F(BarWidth / 2)" ry="@F(BarWidth / 2)" style="@($"fill:url(#{BarGradientId(series)})")" filter="@($"url(#{GlowId(series)})")" />
+                        }
+                    }
+                }
+
+                @for (var index = 0; index < (Periods?.Count ?? 0); index++)
+                {
+                    if (ShowXLabel(index))
+                    {
+                        @AxisText("chart-axis-x", GroupCenter(index), Height - 10, PeriodLabel(index), "middle")
+                    }
+                }
+
+                @for (var index = 0; index < (Periods?.Count ?? 0); index++)
+                {
+                    <rect class="chart-hit" x="@F(PadLeft + GroupWidth * index)" y="@F(PadTop)" width="@F(GroupWidth)" height="@F(PlotHeight)" @onmouseenter="() => HoverIndex = index" @onmouseleave="() => HoverIndex = null" />
+                }
+            </svg>
+
+            @if (Periods is { } periods && HoverIndex is { } hoverIndex && hoverIndex < periods.Count)
+            {
+                var hover = periods[hoverIndex];
+                <div class="chart-tooltip" style="@($"left:{F(TooltipLeft(hoverIndex))}px;top:8px")" role="status">
+                    <span class="chart-tooltip__title">@PeriodLabel(hoverIndex)</span>
+                    <span class="chart-tooltip__row"><span class="chart-tooltip__dot" style="@($"background:{SeriesColors[0]}")"></span>@SeriesNames[0]<b>@MoneyFormatter.Format(hover.RecognizedRevenue)</b></span>
+                    <span class="chart-tooltip__row"><span class="chart-tooltip__dot" style="@($"background:{SeriesColors[1]}")"></span>@SeriesNames[1]<b>@MoneyFormatter.Format(hover.Outstanding)</b></span>
+                </div>
+            }
         </div>
         <div class="table-scroll">
             <table>
@@ -25,7 +123,7 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var period in Periods)
+                    @foreach (var period in Periods!)
                     {
                         <tr>
                             <td>@(string.IsNullOrWhiteSpace(period.PeriodKey) || period.PeriodKey == "unknown" ? L["UnknownPeriod"] : period.PeriodKey)</td>
@@ -40,26 +138,160 @@ else
 }
 
 @code {
+    private const double PadLeft = 64;
+    private const double PadRight = 16;
+    private const double PadTop = 16;
+    private const double PadBottom = 30;
+    private const int AxisSteps = 4;
+
+    private static readonly string[] SeriesColors = ["var(--chart-1)", "var(--chart-2)"];
+    private static readonly string[] SeriesSoftColors = ["var(--chart-1-soft)", "var(--chart-2-soft)"];
+    private readonly string _chartId = "chart-" + Guid.NewGuid().ToString("N")[..8];
+    private ElementReference _host;
+    private DotNetObjectReference<RevenueChart>? _self;
+    private bool _observed;
+
     [Parameter] public IReadOnlyList<RevenuePeriodGroupDto>? Periods { get; set; }
 
     private bool LineChart;
+    private int? HoverIndex;
+    private double Width = 640;
 
-    private string[] Labels => (Periods ?? [])
-        .Select(period => string.IsNullOrWhiteSpace(period.PeriodKey) || period.PeriodKey == "unknown"
-            ? L["UnknownPeriod"].Value
-            : period.PeriodKey)
-        .ToArray();
-
-    private List<ChartSeries<double>> Series => Periods is null
-        ? []
-        :
-        [
-            new() { Name = L["RecognizedRevenue"], Data = Periods.Select(period => (double)period.RecognizedRevenue).ToArray() },
-            new() { Name = L["Outstanding"], Data = Periods.Select(period => (double)period.Outstanding).ToArray() },
-        ];
-
-    private readonly ChartOptions Options = new()
+    private string[] SeriesNames => [L["RecognizedRevenue"].Value, L["Outstanding"].Value];
+    private double Height => Math.Clamp(Math.Round(Width * 0.48), 220, 300);
+    private double PlotWidth => Math.Max(10, Width - PadLeft - PadRight);
+    private double PlotHeight => Math.Max(10, Height - PadTop - PadBottom);
+    private double GroupWidth => PlotWidth / Math.Max(1, Periods?.Count ?? 0);
+    private double BarWidth => Math.Clamp((GroupWidth - 12) / 2 - 3, 4, 14);
+    private double MaxValue => NiceMax((Periods ?? []).SelectMany(period => new[] { (double)period.RecognizedRevenue, (double)period.Outstanding }).DefaultIfEmpty(0).Max());
+    private IEnumerable<AxisTick> AxisTicks
     {
-        ChartPalette = ["var(--chart-1)", "var(--chart-2)"],
-    };
+        get
+        {
+            var max = MaxValue;
+            for (var step = 0; step <= AxisSteps; step++)
+            {
+                yield return new AxisTick(max * step / AxisSteps, PadTop + PlotHeight * (1 - (double)step / AxisSteps));
+            }
+        }
+    }
+
+    private double GroupCenter(int index) => PadLeft + GroupWidth * (index + 0.5);
+
+    private double ValueY(double value) => PadTop + PlotHeight * (1 - value / MaxValue);
+
+    private double BarX(int index, int series)
+    {
+        const double gap = 4;
+        var total = BarWidth * 2 + gap;
+        return GroupCenter(index) - total / 2 + series * (BarWidth + gap);
+    }
+
+    private double[] SeriesData(int series) =>
+        (Periods ?? []).Select(period => series == 0 ? (double)period.RecognizedRevenue : (double)period.Outstanding).ToArray();
+
+    private string LinePath(double[] values) =>
+        string.Join(" ", values.Select((value, index) => $"{(index == 0 ? "M" : "L")} {F(GroupCenter(index))} {F(ValueY(value))}"));
+
+    private string AreaPath(double[] values)
+    {
+        var baseline = PadTop + PlotHeight;
+        var points = values.Select((value, index) => $"L {F(GroupCenter(index))} {F(ValueY(value))}");
+        return $"M {F(GroupCenter(0))} {F(baseline)} {string.Join(" ", points)} L {F(GroupCenter(values.Length - 1))} {F(baseline)} Z";
+    }
+
+    private bool ShowXLabel(int index)
+    {
+        var count = Periods?.Count ?? 0;
+        if (count <= 1) return true;
+        var maxLabels = Math.Max(2, (int)(PlotWidth / 56));
+        var step = (int)Math.Ceiling(count / (double)maxLabels);
+        return index % step == 0;
+    }
+
+    private string PeriodLabel(int index)
+    {
+        var period = Periods![index];
+        return string.IsNullOrWhiteSpace(period.PeriodKey) || period.PeriodKey == "unknown"
+            ? L["UnknownPeriod"].Value
+            : period.PeriodKey;
+    }
+
+    private double TooltipLeft(int index) => Math.Clamp(GroupCenter(index), 96, Width - 96);
+
+    private string BarGradientId(int series) => $"{_chartId}-bar-{series}";
+
+    private string AreaGradientId(int series) => $"{_chartId}-area-{series}";
+
+    private string LineGradientId(int series) => $"{_chartId}-line-{series}";
+
+    private string GlowId(int series) => $"{_chartId}-glow-{series}";
+
+    private static double NiceMax(double value)
+    {
+        if (value <= 0) return 1;
+        var power = Math.Pow(10, Math.Floor(Math.Log10(value)));
+        var normalized = value / power;
+        var step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10;
+        return step * power;
+    }
+
+    private static string CompactMoney(double value)
+    {
+        var abs = Math.Abs(value);
+        if (abs >= 1_000_000_000) return $"{NumberFormatter.Trimmed(Math.Round(value / 1_000_000_000, 1, MidpointRounding.AwayFromZero))} tỷ";
+        if (abs >= 1_000_000) return $"{NumberFormatter.Trimmed(Math.Round(value / 1_000_000, 1, MidpointRounding.AwayFromZero))} tr";
+        if (abs >= 1_000) return $"{NumberFormatter.Trimmed(Math.Round(value / 1_000, 1, MidpointRounding.AwayFromZero))} k";
+        return NumberFormatter.Trimmed(value);
+    }
+
+    private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static MarkupString AxisText(string cls, double x, double y, string text, string anchor, string baseline = "auto") =>
+        new($"<text class=\"{cls}\" x=\"{F(x)}\" y=\"{F(y)}\" text-anchor=\"{anchor}\" dominant-baseline=\"{baseline}\">{System.Net.WebUtility.HtmlEncode(text)}</text>");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Chỉ quan sát khi khung SVG thực sự được render; nếu Periods rỗng thì @ref chưa có,
+        // truyền ElementReference mặc định vào ResizeObserver sẽ làm sập circuit.
+        if (_observed || Periods is not { Count: > 0 }) return;
+        _observed = true;
+        _self = DotNetObjectReference.Create(this);
+        try
+        {
+            await JS.InvokeVoidAsync("nhatroCharts.observe", _host, _self);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    [JSInvokable]
+    public void OnChartWidthChanged(double width)
+    {
+        var next = Math.Max(280, Math.Round(width));
+        if (Math.Abs(next - Width) < 1) return;
+        Width = next;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _self?.Dispose();
+        try
+        {
+            await JS.InvokeVoidAsync("nhatroCharts.unobserve", _host);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    private sealed record AxisTick(double Value, double Y);
 }

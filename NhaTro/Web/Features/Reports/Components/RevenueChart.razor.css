@@ -1,8 +1,26 @@
 .revenue-chart { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.revenue-chart__head { display:flex; align-items:center; justify-content:space-between; gap:12px 24px; flex-wrap:wrap; }
 .revenue-chart__toolbar { display:flex; gap:8px; flex-wrap:wrap; }
 .revenue-chart__toolbar .btn[aria-pressed="true"] { border-color:var(--focus-ring); color:var(--accent-text); font-weight:600; }
-.revenue-chart__visual { min-width:0; }
-.revenue-chart__visual ::deep .mud-chart { width:100%; min-height:0; }
+.revenue-chart__visual { position:relative; min-width:0; }
+.chart-svg { display:block; width:100%; height:auto; overflow:visible; font-family:var(--font-family); }
+.chart-legend { display:flex; flex-wrap:wrap; gap:16px; margin:0; padding:0; list-style:none; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
+.chart-legend li { display:inline-flex; align-items:center; gap:8px; }
+.legend-dot { width:12px; height:12px; flex:0 0 12px; border-radius:var(--radius-pill); }
+.chart-gridline { stroke:var(--border); stroke-width:1; stroke-dasharray:3 7; stroke-linecap:round; opacity:.55; }
+/* Nhãn trục được phát ra bằng MarkupString nên không mang attribute scope của CSS isolation. */
+.chart-svg ::deep .chart-axis-y, .chart-svg ::deep .chart-axis-x { fill:var(--text-muted); font-size:11px; font-weight:500; font-variant-numeric:tabular-nums; }
+.chart-bar { transition:opacity 150ms var(--ease); }
+.chart-bar:hover { opacity:.88; }
+.chart-line { fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.chart-point-halo { opacity:.18; }
+.chart-point { stroke-width:2; }
+.chart-hit { fill:transparent; }
+.chart-tooltip { position:absolute; z-index:2; display:flex; flex-direction:column; gap:4px; min-width:190px; padding:12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-primary); box-shadow:var(--shadow-popover); font-size:.75rem; line-height:1.5; transform:translateX(-50%); pointer-events:none; }
+.chart-tooltip__title { font-weight:600; color:var(--text-primary); }
+.chart-tooltip__row { display:flex; align-items:center; gap:8px; color:var(--text-secondary); }
+.chart-tooltip__row b { margin-left:auto; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+.chart-tooltip__dot { width:8px; height:8px; flex:0 0 8px; border-radius:var(--radius-pill); }
 .revenue-chart ::deep .table-scroll { margin:0; }
 .table-scroll { overflow-x:auto; max-width:100%; border:1px solid var(--border); border-radius:var(--radius-card); }
 table { width:100%; border-collapse:collapse; text-align:left; font-size:.875rem; line-height:1.375rem; }
@@ -13,8 +31,13 @@ td { height:52px; }
 tbody tr:hover { background:var(--hover-bg); }
 tbody tr:last-child td { border-bottom:0; }
 .numeric { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+@media (prefers-reduced-motion:no-preference) {
+    .chart-bar { transform-box:fill-box; transform-origin:bottom; animation:chart-bar-rise 480ms var(--ease) both; }
+    .chart-line,.chart-point,.chart-area { animation:chart-fade-in 420ms var(--ease) both; }
+}
+@keyframes chart-bar-rise { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+@keyframes chart-fade-in { from { opacity:0; } to { opacity:1; } }
 @media(max-width:767px) {
-    .revenue-chart__visual ::deep .mud-chart { height:240px; }
     .revenue-chart__toolbar .btn { min-height:44px; }
     table { min-width:520px; }
 }
