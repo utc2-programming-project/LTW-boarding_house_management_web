@@ -1,4 +1,4 @@
-@page "/reports"
+﻿@page "/reports"
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
 @inject ReportsPageService PageService
@@ -34,7 +34,7 @@
                     }
                     @foreach (var property in Properties)
                     {
-                        <option value="@property.Id">@property.Name@(!property.IsActive ? " — " + D["Inactive"] : "")</option>
+                        <option value="@property.Id">@property.Name@(!property.IsActive ? " â€” " + D["Inactive"] : "")</option>
                     }
                 </select>
             </div>
@@ -84,6 +84,7 @@
         <section class="report-section" aria-labelledby="room-report-heading">
             <div class="section-heading">
                 <h2 id="room-report-heading">@L["RoomReport"]</h2>
+                <ReportExportButton Section="ReportExportSection.Rooms" PropertyId="SelectedPropertyId" />
                 <div class="filter-bar">
                     <div class="filter-bar__row">
                         <div class="filter-bar__state filter-bar__field">
@@ -228,6 +229,7 @@
         <section class="report-section" aria-labelledby="tenant-report-heading">
             <div class="section-heading">
                 <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
+                <ReportExportButton Section="ReportExportSection.Tenants" PropertyId="SelectedPropertyId" />
                 <div class="filter-bar">
                     <div class="filter-bar__row">
                         <div class="filter-bar__state filter-bar__field">
@@ -306,11 +308,11 @@
                                             <td>@tenant.PhoneNumber</td>
                                             <td>@(tenant.IsActive ? D["TenantActive"] : D["Inactive"])</td>
                                             <td>@(tenant.HasActiveContract ? L["Renting"] : L["NotRenting"])</td>
-                                            <td>@(tenant.PropertyName ?? "—")</td>
-                                            <td>@(tenant.RoomCode ?? "—")</td>
+                                            <td>@(tenant.PropertyName ?? "â€”")</td>
+                                            <td>@(tenant.RoomCode ?? "â€”")</td>
                                             @if (IsOwner)
                                             {
-                                                <td>@(tenant.HasAccount is null ? "—" : L[tenant.HasAccount.Value ? "Yes" : "No"].Value)</td>
+                                                <td>@(tenant.HasAccount is null ? "â€”" : L[tenant.HasAccount.Value ? "Yes" : "No"].Value)</td>
                                             }
                                         </tr>
                                     }
@@ -390,7 +392,7 @@
                                             <td>@contract.ContractNumber</td>
                                             <td>@contract.RoomCode</td>
                                             <td>@contract.PropertyName</td>
-                                            <td>@DateFormatter.Format(contract.StartDate) – @DateFormatter.Format(contract.EndDate)</td>
+                                            <td>@DateFormatter.Format(contract.StartDate) â€“ @DateFormatter.Format(contract.EndDate)</td>
                                             <td class="numeric">@MoneyFormatter.Format(contract.RentAmount)</td>
                                             <td class="numeric">@MoneyFormatter.Format(contract.DepositAmount)</td>
                                             <td class="numeric">@DashboardFormat.FormatNumber(contract.MemberCount)</td>
@@ -455,7 +457,7 @@
                                         <tr>
                                             <td>@reading.RoomCode</td>
                                             <td>@reading.PropertyName</td>
-                                            <td>@DateFormatter.Format(reading.PeriodStart) – @DateFormatter.Format(reading.PeriodEnd)</td>
+                                            <td>@DateFormatter.Format(reading.PeriodStart) â€“ @DateFormatter.Format(reading.PeriodEnd)</td>
                                             <td class="numeric">@NumberFormatter.Trimmed(reading.ElectricUsage)</td>
                                             <td class="numeric">@MoneyFormatter.Format(reading.ElectricAmount)</td>
                                             <td class="numeric">@NumberFormatter.Trimmed(reading.WaterUsage)</td>

@@ -2867,7 +2867,7 @@ public static class PermissionMatrixProbeExecutor
                     {
                         try
                         {
-                            var bytes = await exports.ExportRevenueExcelAsync(caller);
+                            var bytes = await exports.ExportRoomsExcelAsync(caller);
                             return bytes.Length > 0
                                 ? ProbeOutcome.Allowed($"Xuất Excel {bytes.Length} byte")
                                 : ProbeOutcome.Denied("Xuất Excel trả tệp rỗng");
@@ -2882,7 +2882,7 @@ public static class PermissionMatrixProbeExecutor
 
         try
         {
-            var bytes = await exports.ExportRevenueExcelAsync(caller);
+            var bytes = await exports.ExportRoomsExcelAsync(caller);
             if (symbol == MatrixSymbol.Forbidden)
             {
                 return ProbeOutcome.Allowed(

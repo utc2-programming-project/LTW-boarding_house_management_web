@@ -3,6 +3,7 @@ using Web.Features.Approvals;
 using Web.Features.Approvals.Entities;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
+using Web.Features.Reports.DTOs;
 
 namespace Web.Features.Reports.Services;
 
@@ -21,7 +22,7 @@ public sealed class ReportExportApprovalApplier : IApprovalApplier
     {
         if (request.TargetType != ApprovalTargetType.Report
             || string.IsNullOrWhiteSpace(request.TargetKey)
-            || !request.TargetKey.StartsWith("export:", StringComparison.Ordinal))
+            || !IsValidTargetKey(request.TargetKey))
         {
             throw new ApprovalApplyException(
                 ReportExportErrorCodes.Forbidden,
@@ -29,5 +30,14 @@ public sealed class ReportExportApprovalApplier : IApprovalApplier
         }
 
         return Task.CompletedTask;
+    }
+
+    private static bool IsValidTargetKey(string targetKey)
+    {
+        var parts = targetKey.Split(':', StringSplitOptions.None);
+        return parts.Length == 6
+            && parts[0] == "export"
+            && Enum.TryParse<ReportExportSection>(parts[1], true, out var section)
+            && Enum.IsDefined(section);
     }
 }

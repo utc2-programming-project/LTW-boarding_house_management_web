@@ -96,7 +96,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
         var costs = Proxy<ICostReportService>((_, _) => Task.FromResult(new CostReportResult()));
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult()));
-        var export = new ReportExportService(NewDb());
+        var export = new ReportExportService(revenue, rooms, tenants, contracts, costs, incidents, NewDb());
         Services.AddSingleton(new ReportsPageService(new P2CallerProvider(new Authentication(role)),
             properties, rooms, tenants, revenue, contracts, costs, incidents, export));
         ComponentFactories.AddStub<RoomStructureChart>();
