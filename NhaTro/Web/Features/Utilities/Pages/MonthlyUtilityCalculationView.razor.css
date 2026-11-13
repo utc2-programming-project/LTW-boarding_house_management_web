@@ -177,6 +177,12 @@
     color: #047857;
 }
 
+.status-none {
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #64748B;
+}
+
 .no-data {
     color: var(--text-muted);
     font-size: .75rem;
@@ -456,6 +462,75 @@
 
 .edit-dialog {
     max-width: 520px;
+}
+
+/* Lập phiếu ghi chỉ số cho tháng mới */
+.period-create-dialog {
+    max-width: 560px;
+}
+
+.period-create-dialog .edit-grid {
+    min-width: 0;
+}
+
+.period-create-dialog .form-field {
+    overflow: hidden;
+}
+
+.period-create-dialog .form-field select {
+    min-width: 0;
+    max-width: 100%;
+    text-overflow: ellipsis;
+}
+
+.period-create-dialog .modal-body {
+    overflow-x: hidden;
+}
+
+.modal-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--primary-soft, #EFF6FF);
+    color: var(--primary, #2563EB);
+}
+
+.period-range-block {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 12px);
+    padding: var(--space-3, 12px) var(--space-4, 16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card, 12px);
+    background: var(--surface-subtle, #F8FAFC);
+}
+
+.period-range-block > .lucide-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.period-range-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.period-range-label {
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+
+.period-range-item strong {
+    color: var(--text-primary);
+    font-size: .875rem;
 }
 
 .modal-header {

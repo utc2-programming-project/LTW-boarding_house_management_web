@@ -11,6 +11,7 @@ using Web.Features.Invoices.Enums;
 using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Utilities.DTOs;
+using Web.Features.Utilities.Enums;
 using Web.Features.Utilities.Services;
 
 namespace NhaTro.IntegrationTests.Features.Utilities;
@@ -111,6 +112,84 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
         var afterRoom = Assert.Single(after.Rooms);
         Assert.False(afterRoom.IsInvoiced);
         Assert.False(afterRoom.CanCorrectPrevious);
+    }
+
+    [SqlServerFact]
+    public async Task CreatePeriodAsync_CreatesOpenSheetWithOpeningReadings_AndRejectsDuplicate()
+    {
+        await fixture.ResetAsync();
+        await using var world = new PermissionMatrixWorld(fixture);
+        await world.InitializeAsync();
+
+        var today = DateOnly.FromDateTime(world.Data.Today);
+        var target = new DateOnly(today.Year, today.Month, 1).AddMonths(1);
+        var periodStart = new DateOnly(target.Year, target.Month, 1);
+        var periodEnd = new DateOnly(
+            target.Year,
+            target.Month,
+            DateTime.DaysInMonth(target.Year, target.Month));
+
+        var service = CreateService(world, world.Manager);
+        var created = await service.CreatePeriodAsync(world.Data.ContractAId, target.Year, target.Month);
+        Assert.True(created.Success, created.ErrorCode);
+        Assert.NotNull(created.PeriodId);
+
+        await using (var db = world.NewDb())
+        {
+            var period = await db.UtilityReadingPeriods.SingleAsync(item => item.Id == created.PeriodId);
+            Assert.Equal(world.Data.ContractAId, period.ContractId);
+            Assert.Equal(world.Data.RoomAId, period.RoomId);
+            Assert.Equal(periodStart, period.PeriodStart);
+            Assert.Equal(periodEnd, period.PeriodEnd);
+            // Kỳ trước mẫu có ElectricityEnd=120, WaterEnd=60; phiếu mới kế thừa mốc này.
+            Assert.Equal(120m, period.ElectricStart);
+            Assert.Equal(period.ElectricStart, period.ElectricEnd);
+            Assert.Equal(60m, period.WaterStart);
+            Assert.Equal(period.WaterStart, period.WaterEnd);
+            Assert.False(period.HasReadings);
+            Assert.Equal(UtilityReadingPeriodStatus.Open, period.Status);
+        }
+
+        var duplicate = await service.CreatePeriodAsync(world.Data.ContractAId, target.Year, target.Month);
+        Assert.False(duplicate.Success);
+        Assert.Equal("DuplicatePeriod", duplicate.ErrorCode);
+
+        var data = await service.LoadAsync(null, periodStart, periodEnd);
+        var room = Assert.Single(data.Rooms);
+        Assert.True(room.HasPeriod);
+        Assert.Equal(created.PeriodId, room.PeriodId);
+        Assert.Equal(MonthlyUtilityPeriodState.Open, room.State);
+        Assert.False(room.HasReadings);
+
+        // Ghi chỉ số qua trang phải cập nhật đúng phiếu đã lập (HasReadings = true).
+        var saved = await service.SaveAsync(new MonthlyUtilitySaveRequest(
+            world.Data.RoomAId,
+            world.Data.ContractAId,
+            ReadingId: null,
+            periodStart,
+            periodEnd,
+            150m,
+            80m,
+            Reason: null));
+        Assert.True(saved.Success, saved.ErrorCode);
+
+        await using (var db = world.NewDb())
+        {
+            var period = await db.UtilityReadingPeriods.SingleAsync(item => item.Id == created.PeriodId);
+            Assert.True(period.HasReadings);
+            Assert.Equal(150m, period.ElectricEnd);
+            Assert.Equal(80m, period.WaterEnd);
+        }
+
+        var afterSave = await service.LoadAsync(null, periodStart, periodEnd);
+        var savedRoom = Assert.Single(afterSave.Rooms);
+        Assert.True(savedRoom.HasPeriod);
+        Assert.True(savedRoom.HasReadings);
+
+        var forbidden = await CreateService(world, world.TenantAAsPropertyCaller)
+            .CreatePeriodAsync(world.Data.ContractAId, target.Year, target.Month);
+        Assert.False(forbidden.Success);
+        Assert.Equal(UtilityReadingErrorCodes.Forbidden, forbidden.ErrorCode);
     }
 
     [SqlServerFact]

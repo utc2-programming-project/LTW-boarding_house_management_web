@@ -214,7 +214,15 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
     public RevenueReportService NewRevenueReports() => new(SharedDb);
 
     public ReportExportService NewReportExports() => new(
-        SharedDb, TogglePolicy, NewApprovals());
+        NewRevenueReports(),
+        new RoomReportService(_fixture, TogglePolicy),
+        new TenantReportService(_fixture, TimeProvider.System, TogglePolicy),
+        new ContractReportService(_fixture, TogglePolicy),
+        new CostReportService(_fixture, TogglePolicy),
+        new IncidentReportService(_fixture, TogglePolicy),
+        SharedDb,
+        TogglePolicy,
+        NewApprovals());
 
     public IncidentService NewIncidents() => new(_fixture, TimeProvider.System, TogglePolicy, NewApprovals());
 
