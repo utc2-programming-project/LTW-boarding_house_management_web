@@ -212,8 +212,7 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
     public PaymentService NewPayments() => new(SharedDb, TimeProvider.System);
 
-    public RevenueReportService NewRevenueReports() =>
-        new(new PooledDbContextFactory<ApplicationDbContext>(SharedDb.Options));
+    public RevenueReportService NewRevenueReports() => new(_fixture);
 
     public ReportExportService NewReportExports() => new(
         NewRevenueReports(),

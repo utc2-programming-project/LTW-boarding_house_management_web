@@ -51,7 +51,7 @@ public sealed class DashboardPageTests : BunitContext
                 Kpis = new() { Total = 15, Active = 12, Renting = 8, LinkedAccountCount = 5 }
             });
         });
-        var revenue = new RevenueReportService(new PooledDbContextFactory<ApplicationDbContext>(NewDb().Options));
+        var revenue = new RevenueReportService(NewDbFactory());
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult
         {
             Kpis = new() { Total = 2, New = 1, InProgress = 1 },
@@ -114,13 +114,15 @@ public sealed class DashboardPageTests : BunitContext
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);
     }
 
-    private static ApplicationDbContext NewDb()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+    private static ApplicationDbContext NewDb() => new(NewDbOptions());
+
+    private static IDbContextFactory<ApplicationDbContext> NewDbFactory() =>
+        new PooledDbContextFactory<ApplicationDbContext>(NewDbOptions());
+
+    private static DbContextOptions<ApplicationDbContext> NewDbOptions() =>
+        new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase($"vht140-dashboard-{Guid.NewGuid()}")
             .Options;
-        return new ApplicationDbContext(options);
-    }
 
     private static T Proxy<T>(Func<MethodInfo?, object?[]?, object?> handler) where T : class
     {

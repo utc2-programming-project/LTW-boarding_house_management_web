@@ -93,7 +93,7 @@ public sealed class BusinessReportsPageTests : BunitContext
                 },
             });
         });
-        var revenue = new RevenueReportService(new PooledDbContextFactory<ApplicationDbContext>(NewDb().Options));
+        var revenue = new RevenueReportService(NewDbFactory());
         var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
         var costs = Proxy<ICostReportService>((_, _) => Task.FromResult(new CostReportResult()));
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult()));
@@ -244,13 +244,15 @@ public sealed class BusinessReportsPageTests : BunitContext
         Assert.Equal("ChuTro,QuanLy", item.Roles);
     }
 
-    private static ApplicationDbContext NewDb()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+    private static ApplicationDbContext NewDb() => new(NewDbOptions());
+
+    private static IDbContextFactory<ApplicationDbContext> NewDbFactory() =>
+        new PooledDbContextFactory<ApplicationDbContext>(NewDbOptions());
+
+    private static DbContextOptions<ApplicationDbContext> NewDbOptions() =>
+        new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase($"vht140-reports-{Guid.NewGuid()}")
             .Options;
-        return new ApplicationDbContext(options);
-    }
 
     private static void GoToPage(IRenderedComponent<BusinessReportsView> page, int number) =>
         page.WaitForAssertion(() => page.FindAll(".table-pager__pages button")

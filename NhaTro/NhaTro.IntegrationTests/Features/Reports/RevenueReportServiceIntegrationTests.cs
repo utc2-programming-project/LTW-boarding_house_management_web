@@ -204,8 +204,8 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
     private static PropertyCaller Owner(Seed seed) =>
         new(seed.OwnerAId, Roles.ChuTro);
 
-    private static RevenueReportService NewService(ApplicationDbContext db, TimeProvider? time = null) =>
-        new(new PooledDbContextFactory<ApplicationDbContext>(db.Options), time);
+    private RevenueReportService NewService(ApplicationDbContext db, TimeProvider? time = null) =>
+        new(fixture, time);
 
     private async Task<Seed> PrepareAsync()
     {
