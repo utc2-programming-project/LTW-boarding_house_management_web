@@ -20,6 +20,7 @@ public partial class BusinessReportsView
     public enum ReportTab { Rooms, Tenants, Contracts, Costs, Incidents, Revenue }
 
     [SupplyParameterFromQuery] public int? PropertyId { get; set; }
+    [SupplyParameterFromQuery] public string? ExportError { get; set; }
 
     private ReportTab ActiveTab = ReportTab.Rooms;
     private IReadOnlyList<DashboardPropertyOption> Properties = [];
@@ -106,7 +107,21 @@ public partial class BusinessReportsView
         IsOwner = await PageService.IsOwnerAsync();
     }
 
-    protected override Task OnParametersSetAsync() => ReloadAsync(false, readQuery: true);
+    protected override async Task OnParametersSetAsync()
+    {
+        await ReloadAsync(false, readQuery: true);
+        if (!string.IsNullOrWhiteSpace(ExportError))
+        {
+            Toasts.Error(ExportError switch
+            {
+                "Forbidden" => L["ExportDenied"],
+                "ApprovalRequired" => L["ExportApprovalRequired"],
+                "ApprovalDenied" => L["ExportApprovalDenied"],
+                "VolumeExceeded" => L["ExportTooLarge"],
+                _ => L["ExportFailed"],
+            });
+        }
+    }
 
     private Task RefreshAsync() => ReloadAsync(true);
 
