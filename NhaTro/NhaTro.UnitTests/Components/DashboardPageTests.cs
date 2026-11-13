@@ -30,6 +30,7 @@ public sealed class DashboardPageTests : BunitContext
     {
         Services.AddLogging();
         Services.AddLocalization(o => o.ResourcesPath = "Resources");
+        JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<ToastService>();
         Services.AddSingleton(TimeProvider.System);
         var properties = Proxy<IPropertyService>((method, args) => Task.FromResult(new PagedResult<PropertyListItem>

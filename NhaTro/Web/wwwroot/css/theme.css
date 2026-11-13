@@ -34,6 +34,7 @@
  --neutral-text:#3C3C43;--neutral-bg:#F2F2F7;--neutral-border:#D1D1D6;
  --danger:#D70015;--danger-hover:#B5000F;--danger-pressed:#96000C;
  --chart-1:#4F46E5;--chart-2:#0E8A9E;--chart-3:#5856D6;--chart-4:#C47300;--chart-5:#AF52DE;--chart-6:#D6336C;
+ --chart-1-soft:#A5B4FC;--chart-2-soft:#7DD3DF;--chart-3-soft:#B4B2F0;--chart-4-soft:#F2C078;--chart-5-soft:#E0B4F5;--chart-6-soft:#F5A0B8;--chart-highlight:rgba(255,255,255,.22);
  --shadow-card:0 1px 2px rgba(0,0,0,.06);--shadow-thumb:0 1px 2px rgba(0,0,0,.20);--shadow-accent:0 6px 16px rgba(79,70,229,.20);--shadow-popover:0 8px 24px rgba(0,0,0,.10);--shadow-dialog:0 24px 64px rgba(0,0,0,.18);--overlay:rgba(0,0,0,.40);
  --font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;
@@ -56,6 +57,7 @@
  --info-text:#93C5FD;--info-bg:#172554;--info-border:#1E40AF;
  --neutral-text:#D1D1D6;--neutral-bg:#2C2C2E;--neutral-border:#48484A;
  --chart-1:#A5B4FC;--chart-2:#40C8E0;--chart-3:#7D7AFF;--chart-4:#FFB340;--chart-5:#D98AF5;--chart-6:#FF6B8B;
+ --chart-1-soft:#4338CA;--chart-2-soft:#0C5A66;--chart-3-soft:#453FB0;--chart-4-soft:#8A5400;--chart-5-soft:#7A3E8F;--chart-6-soft:#8F2F45;--chart-highlight:rgba(255,255,255,.22);
  --shadow-card:0 1px 2px rgba(0,0,0,.20);--shadow-thumb:0 1px 2px rgba(0,0,0,.35);--shadow-accent:0 6px 16px rgba(79,70,229,.35);--shadow-popover:0 8px 24px rgba(0,0,0,.30);--shadow-dialog:0 24px 64px rgba(0,0,0,.45);--overlay:rgba(0,0,0,.60);
 }
 html { font-size:16px;scrollbar-color:var(--scrollbar-thumb) var(--page-bg); }
