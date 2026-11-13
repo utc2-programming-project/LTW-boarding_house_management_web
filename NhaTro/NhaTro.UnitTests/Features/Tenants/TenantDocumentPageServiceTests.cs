@@ -328,7 +328,7 @@ public class TenantDocumentPageServiceTests
     [Fact]
     public async Task GetMyLeasedRoom_Map_thong_tin_lien_he_chu_tro_va_quan_ly()
     {
-        await using var db = CreateInMemoryDbContext();
+        await using var db = CreateInMemoryDbContext(out var dbOptions);
         db.Users.AddRange(
             new ApplicationUser
             {
@@ -364,7 +364,7 @@ public class TenantDocumentPageServiceTests
         });
         var pageService = new TenantPageService(authStateProvider, fakeTenantService, null!, null!);
         var contactService = new TenantContactPageService(
-            authStateProvider, new TestDbContextFactory(db), TimeProvider.System);
+            authStateProvider, new TestDbContextFactory(dbOptions), TimeProvider.System);
         var service = new TenantDocumentPageService(
             authStateProvider, new FakeTenantDocumentService(), db, pageService, null, contactService);
 
@@ -382,10 +382,10 @@ public class TenantDocumentPageServiceTests
     [Fact]
     public async Task GetMyContact_Tra_ve_null_khi_khong_phai_khach_thue()
     {
-        await using var db = CreateInMemoryDbContext();
+        await using var db = CreateInMemoryDbContext(out var dbOptions);
         var service = new TenantContactPageService(
-            new FakeAuthStateProvider(Roles.QuanLy, "manager-1"),
-            new TestDbContextFactory(db),
+            new FakeAuthStateProvider(Roles.KhachThue, "tenant-1"),
+            new TestDbContextFactory(dbOptions),
             TimeProvider.System);
 
         var contact = await service.GetMyContactAsync();
@@ -396,7 +396,7 @@ public class TenantDocumentPageServiceTests
     [Fact]
     public async Task GetMyContact_Tim_dung_toa_nha_va_chi_lay_quan_ly_dang_hieu_luc()
     {
-        await using var db = CreateInMemoryDbContext();
+        await using var db = CreateInMemoryDbContext(out var dbOptions);
         db.Users.AddRange(
             new ApplicationUser
             {
@@ -460,7 +460,7 @@ public class TenantDocumentPageServiceTests
 
         var service = new TenantContactPageService(
             new FakeAuthStateProvider(Roles.KhachThue, "tenant-1"),
-            new TestDbContextFactory(db),
+            new TestDbContextFactory(dbOptions),
             TimeProvider.System);
 
         var contact = await service.GetMyContactAsync();
@@ -472,9 +472,12 @@ public class TenantDocumentPageServiceTests
         Assert.Equal("Quan Ly B", contact.Managers[0].Name);
     }
 
-    private static ApplicationDbContext CreateInMemoryDbContext()
+    private static ApplicationDbContext CreateInMemoryDbContext() =>
+        CreateInMemoryDbContext(out _);
+
+    private static ApplicationDbContext CreateInMemoryDbContext(out DbContextOptions<ApplicationDbContext> options)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+        options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         return new ApplicationDbContext(options);
@@ -644,12 +647,13 @@ public class TenantDocumentPageServiceTests
             throw new NotSupportedException();
     }
 
-    private sealed class TestDbContextFactory(ApplicationDbContext db) : IDbContextFactory<ApplicationDbContext>
+    private sealed class TestDbContextFactory(DbContextOptions<ApplicationDbContext> options)
+        : IDbContextFactory<ApplicationDbContext>
     {
-        public ApplicationDbContext CreateDbContext() => db;
+        public ApplicationDbContext CreateDbContext() => new(options);
 
         public Task<ApplicationDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(db);
+            Task.FromResult(CreateDbContext());
     }
 
     private sealed class FakeAuthStateProvider : AuthenticationStateProvider

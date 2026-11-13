@@ -28,6 +28,9 @@ public sealed class ContractDepositPaymentConfiguration : IEntityTypeConfigurati
 
         builder.HasIndex(payment => new { payment.ContractId, payment.RequestedAt });
 
+        // Đồng bộ filter với Contract (xóa mềm): hợp đồng bị ẩn thì phiếu cọc cũng biến mất.
+        builder.HasQueryFilter(payment => !payment.Contract.IsDeleted);
+
         builder.HasOne(payment => payment.Contract)
             .WithMany()
             .HasForeignKey(payment => payment.ContractId)
