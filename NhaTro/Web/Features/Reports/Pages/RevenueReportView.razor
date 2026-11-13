@@ -10,8 +10,8 @@
     {
         <div class="revenue-view">
             <div class="revenue-toolbar">
-                <div class="filter-bar__state filter-bar__field">
-                    <label class="filter-bar__label" for="revenue-date-basis">@L["DateBasis"]</label>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="revenue-date-basis">@L["DateBasis"]</label>
                     <select id="revenue-date-basis" class="input" value="@Filter.DateBasis" @onchange="ChangeDateBasisAsync" disabled="@Busy">
                         <option value="@RevenueDateBasis.InvoicePeriod">@L["InvoicePeriodBasis"]</option>
                         <option value="@RevenueDateBasis.PaymentDate">@L["PaymentDateBasis"]</option>

@@ -39,6 +39,13 @@
 .account-table .actions .btn { min-height:36px; padding:4px 12px; }
 .account-table .input { max-width:240px; }
 
+/* Hộp thoại thùng rác tài khoản: menu 3 chấm không được bị cắt bởi khung cuộn. */
+.account-trash-scroll { overflow: visible; }
+.account-trash-table { table-layout: fixed; }
+.account-trash-table th:last-child,
+.account-trash-table td:last-child { width: 120px; text-align: center; }
+.account-trash-table td:last-child .p2-row-actions { justify-content: center; }
+
 .switches-page .page-heading { margin-bottom:24px; }
 .switches-page > .account-hint { margin:0 0 16px; }
 
