@@ -506,6 +506,33 @@
   <data name="P5CostApprovalPending" xml:space="preserve"><value>The change was submitted for approval.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>A reading already exists for this room and period.</value></data>
   <data name="P5CostReadingNotFound" xml:space="preserve"><value>Reading for this period was not found.</value></data>
+  <data name="P5CostCreatePeriod" xml:space="preserve"><value>Create sheet</value></data>
+  <data name="P5CostCreatePeriodTitle" xml:space="preserve"><value>Create meter reading sheet</value></data>
+  <data name="P5CostCreatePeriodSubtitle" xml:space="preserve"><value>Create a sheet for a new month; electricity and water readings can be entered later.</value></data>
+  <data name="P5CostPeriodPropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="P5CostPeriodRoomLabel" xml:space="preserve"><value>Room</value></data>
+  <data name="P5CostPeriodSelectRoom" xml:space="preserve"><value>-- Select a room --</value></data>
+  <data name="P5CostPeriodRoomHint" xml:space="preserve"><value>Choose a rented room for the month.</value></data>
+  <data name="P5CostPeriodNoRooms" xml:space="preserve"><value>No rented rooms in this month.</value></data>
+  <data name="P5CostPeriodLoadingRooms" xml:space="preserve"><value>Loading rooms...</value></data>
+  <data name="P5CostPeriodMonthLabel" xml:space="preserve"><value>Month</value></data>
+  <data name="P5CostPeriodYearLabel" xml:space="preserve"><value>Year</value></data>
+  <data name="P5CostPeriodMonthOption" xml:space="preserve"><value>Month {0}</value></data>
+  <data name="P5CostPeriodStartDateLabel" xml:space="preserve"><value>Start date</value></data>
+  <data name="P5CostPeriodEndDateLabel" xml:space="preserve"><value>End date</value></data>
+  <data name="P5CostPeriodAutoRangeHint" xml:space="preserve"><value>The period runs from the first to the last day of the selected month.</value></data>
+  <data name="P5CostPeriodCreateButton" xml:space="preserve"><value>Create sheet</value></data>
+  <data name="P5CostPeriodCreatingButton" xml:space="preserve"><value>Creating...</value></data>
+  <data name="P5CostPeriodCreateSuccess" xml:space="preserve"><value>Created a meter reading sheet for room {0}, {1}/{2}.</value></data>
+  <data name="P5CostPeriodSelectRoomError" xml:space="preserve"><value>Please select a room.</value></data>
+  <data name="P5CostPeriodDuplicate" xml:space="preserve"><value>A meter reading sheet already exists for this room and month.</value></data>
+  <data name="P5CostPeriodOverlap" xml:space="preserve"><value>The period overlaps another sheet of this room.</value></data>
+  <data name="P5CostPeriodHasLater" xml:space="preserve"><value>A sheet already exists for a later month, so this month cannot be created.</value></data>
+  <data name="P5CostPeriodContractNotFound" xml:space="preserve"><value>No active rental contract was found for this room in this month.</value></data>
+  <data name="P5CostPeriodInvalidMonth" xml:space="preserve"><value>Invalid month/year.</value></data>
+  <data name="P5CostPeriodLoadRoomsFailed" xml:space="preserve"><value>Could not load the room list. Please try again.</value></data>
+  <data name="P5CostPeriodCreateFailed" xml:space="preserve"><value>Could not create the meter reading sheet. Please try again.</value></data>
+  <data name="P5CostStatusNoSheet" xml:space="preserve"><value>No sheet yet</value></data>
   <data name="ErrorCopySameProperty" xml:space="preserve"><value>Prices cannot be copied from the same property.</value></data>
   <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>You do not have access to the source property.</value></data>
   <data name="RegBankAccountMissing" xml:space="preserve"><value>The owner has not configured a receiving bank account.</value></data>

@@ -9,6 +9,7 @@ using Web.Features.Properties;
 using Web.Features.Properties.Services;
 using Web.Features.Utilities.DTOs;
 using Web.Features.Utilities.Entities;
+using Web.Features.Utilities.Enums;
 using Web.Features.Utilities.Services;
 
 namespace Web.Features.Utilities.Services;
@@ -103,6 +104,9 @@ public sealed class MonthlyUtilityCalculationPageService(
         var snapshots = await LoadSnapshotsAsync(readingIds, cancellationToken);
         var invoices = await LoadInvoicesAsync(contractIds, periodStart, periodEnd, cancellationToken);
         var invoicedPeriods = await LoadInvoicedPeriodsAsync(contractIds, cancellationToken);
+        // Phiếu ghi chỉ số đã lập cho từng hợp đồng/kỳ. Dùng để phân biệt phòng
+        // "chưa lập phiếu" với phòng "đã lập phiếu nhưng chưa ghi chỉ số".
+        var readingPeriods = await LoadReadingPeriodsAsync(contractIds, periodStart, periodEnd, cancellationToken);
         // Lịch sử Chủ trọ chỉnh sửa hoá đơn (theo hợp đồng + kỳ) để panel chi tiết
         // hiện cả thay đổi trên hoá đơn, không chỉ thay đổi chỉ số điện/nước.
         var invoiceRevisions = await LoadInvoiceRevisionsAsync(
@@ -119,38 +123,69 @@ public sealed class MonthlyUtilityCalculationPageService(
             periodEnd,
             cancellationToken);
 
-        // Khách thuê đăng ký dịch vụ theo hợp đồng/tháng: hợp đồng nào đã từng có đăng ký
-        // được duyệt trong tháng thì chỉ tính đúng các dịch vụ còn hiệu lực. Nhờ vậy hủy
-        // dịch vụ cuối cùng không làm toàn bộ dịch vụ bị tính lại (fallback chỉ áp cho
-        // hợp đồng chưa từng đăng ký gì trong tháng).
-        var rangeMonthStart = new DateOnly(periodStart.Year, periodStart.Month, 1);
+        // Dịch vụ phụ theo hợp đồng: tự động gia hạn theo tháng (khách không phải đăng ký
+        // lại mỗi tháng), trừ khi khách đã hủy gói đó ở cuối tháng trước → tháng sau dịch vụ
+        // đó biến mất ("Chưa có dữ liệu"). Chỉ giữ fallback "tất cả dịch vụ của tòa" cho
+        // hợp đồng chưa từng có lịch sử đăng ký dịch vụ nào (hợp đồng cũ trước khi có tính
+        // năng đăng ký).
         var rangeMonthEnd = new DateOnly(periodEnd.Year, periodEnd.Month, 1);
+        var registrationRequests = await db.ServiceRegistrationRequests
+            .AsNoTracking()
+            .Where(item => contractIds.Contains(item.ContractId)
+                && (item.Status == ServiceRegistrationStatus.Approved
+                    || (item.Status == ServiceRegistrationStatus.Cancelled
+                        && item.CancelStatus == ServiceRegistrationCancelStatus.Approved))
+                && item.StartDate <= periodEnd)
+            .ToListAsync(cancellationToken);
+
         var registrationRows = await db.ContractServiceRegistrations
             .AsNoTracking()
             .Where(item => contractIds.Contains(item.ContractId)
-                && item.MonthStart >= rangeMonthStart
                 && item.MonthStart <= rangeMonthEnd)
             .ToListAsync(cancellationToken);
-        var registrationsByContractMonth = registrationRows
-            .GroupBy(item => (item.ContractId, item.MonthStart))
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(item => item.ServiceCatalogId).ToHashSet());
-        // Tháng đã từng có đăng ký được duyệt (kể cả đăng ký đã duyệt rồi bị hủy) vẫn được
-        // tính là "đã đăng ký": nếu không, hủy dịch vụ cuối cùng sẽ làm fallback bật lại toàn bộ
-        // dịch vụ của tòa.
-        var registeredRequestMonths = (await db.ServiceRegistrationRequests
-                .AsNoTracking()
-                .Where(item => contractIds.Contains(item.ContractId)
-                    && (item.Status == ServiceRegistrationStatus.Approved
-                        || (item.Status == ServiceRegistrationStatus.Cancelled
-                            && item.CancelStatus == ServiceRegistrationCancelStatus.Approved))
-                    && item.StartDate >= rangeMonthStart
-                    && item.StartDate <= periodEnd)
-                .Select(item => new { item.ContractId, item.StartDate })
-                .ToListAsync(cancellationToken))
-            .Select(item => (item.ContractId, new DateOnly(item.StartDate.Year, item.StartDate.Month, 1)))
-            .ToHashSet();
+
+        // Lịch sử đăng ký/hủy theo hợp đồng: mỗi sự kiện (đăng ký hoặc hủy) gắn với tháng
+        // StartDate. Dịch vụ nào có sự kiện muộn nhất <= tháng đang xem là đăng ký thì còn
+        // hiệu lực; nếu là hủy thì không hiệu lực.
+        var eventsByContract = new Dictionary<Guid, List<(int ServiceId, DateOnly Month, bool IsRegistration)>>();
+        foreach (var request in registrationRequests)
+        {
+            var month = new DateOnly(request.StartDate.Year, request.StartDate.Month, 1);
+            if (month > rangeMonthEnd)
+            {
+                continue;
+            }
+
+            if (!eventsByContract.TryGetValue(request.ContractId, out var events))
+            {
+                events = new List<(int, DateOnly, bool)>();
+                eventsByContract[request.ContractId] = events;
+            }
+
+            events.Add((request.ServiceCatalogId, month,
+                request.Status == ServiceRegistrationStatus.Approved));
+        }
+
+        foreach (var row in registrationRows)
+        {
+            if (row.MonthStart > rangeMonthEnd)
+            {
+                continue;
+            }
+
+            if (!eventsByContract.TryGetValue(row.ContractId, out var events))
+            {
+                events = new List<(int, DateOnly, bool)>();
+                eventsByContract[row.ContractId] = events;
+            }
+
+            if (!events.Any(item => item.ServiceId == row.ServiceCatalogId && item.Month == row.MonthStart))
+            {
+                events.Add((row.ServiceCatalogId, row.MonthStart, true));
+            }
+        }
+
+        var contractsWithHistory = eventsByContract.Keys.ToHashSet();
 
         var rows = new List<MonthlyUtilityRoomCostDto>(contracts.Count);
         foreach (var contract in contracts.OrderBy(item => item.RoomCode, StringComparer.OrdinalIgnoreCase))
@@ -163,6 +198,7 @@ public sealed class MonthlyUtilityCalculationPageService(
             var rowPeriodStart = reading?.PeriodStart ?? periodStart;
             var rowPeriodEnd = reading?.PeriodEnd ?? periodEnd;
             var invoice = invoices.GetValueOrDefault((contract.ContractId, rowPeriodStart));
+            var readingPeriod = readingPeriods.GetValueOrDefault((contract.ContractId, rowPeriodStart));
             var previous = FindPreviousReading(readings, contract.RoomId, rowPeriodStart);
             var latest = FindLatestReading(readings, contract.RoomId);
 
@@ -218,14 +254,24 @@ public sealed class MonthlyUtilityCalculationPageService(
 
             var propertyServices = servicesByProperty.GetValueOrDefault(contract.PropertyId, []);
             var rowMonthStart = new DateOnly(rowPeriodStart.Year, rowPeriodStart.Month, 1);
-            var hasRegisteredServices = registrationsByContractMonth.TryGetValue(
-                (contract.ContractId, rowMonthStart),
-                out var registeredIds);
-            if (hasRegisteredServices
-                || registeredRequestMonths.Contains((contract.ContractId, rowMonthStart)))
+            // Hợp đồng đã từng đăng ký dịch vụ: chỉ tính những dịch vụ còn hiệu lực ở tháng
+            // đang xem (tự gia hạn nếu chưa hủy; biến mất nếu đã hủy ở tháng trước).
+            // Hợp đồng chưa từng đăng ký: giữ nguyên tất cả dịch vụ của tòa (legacy).
+            if (contractsWithHistory.Contains(contract.ContractId))
             {
+                var contractEvents = eventsByContract[contract.ContractId];
+                var activeServiceIds = contractEvents
+                    .Where(item => item.Month <= rowMonthStart)
+                    .GroupBy(item => item.ServiceId)
+                    .Select(group => group
+                        .OrderByDescending(item => item.Month)
+                        .First())
+                    .Where(item => item.IsRegistration)
+                    .Select(item => item.ServiceId)
+                    .ToHashSet();
+
                 propertyServices = propertyServices
-                    .Where(version => registeredIds is not null && registeredIds.Contains(version.ServiceCatalogId))
+                    .Where(version => activeServiceIds.Contains(version.ServiceCatalogId))
                     .ToList();
             }
 
@@ -296,7 +342,9 @@ public sealed class MonthlyUtilityCalculationPageService(
                         previous.WaterStart,
                         previous.WaterEnd),
                 BuildCorrections(reading),
-                invoiceRevisions.GetValueOrDefault((contract.ContractId, rowPeriodStart), [])));
+                invoiceRevisions.GetValueOrDefault((contract.ContractId, rowPeriodStart), []),
+                readingPeriod?.PeriodId,
+                readingPeriod is not null));
         }
 
         return new MonthlyUtilityViewData(rows, properties, propertyId, periodStart, periodEnd);
@@ -402,6 +450,24 @@ public sealed class MonthlyUtilityCalculationPageService(
                     caller,
                     cancellationToken);
                 readingId = saved.Id;
+
+                // Nếu phòng đã được lập phiếu ghi chỉ số cho kỳ này thì cập nhật luôn
+                // để phiếu chuyển từ "chờ ghi chỉ số" sang "đã ghi chỉ số".
+                var period = await db.UtilityReadingPeriods
+                    .FirstOrDefaultAsync(
+                        item => item.ContractId == request.ContractId
+                            && item.PeriodStart == request.PeriodStart,
+                        cancellationToken);
+                if (period is not null)
+                {
+                    period.ElectricStart = saved.ElectricStart;
+                    period.ElectricEnd = saved.ElectricEnd;
+                    period.WaterStart = saved.WaterStart;
+                    period.WaterEnd = saved.WaterEnd;
+                    period.HasReadings = true;
+                    period.UpdatedAt = DateTime.UtcNow;
+                    await db.SaveChangesAsync(cancellationToken);
+                }
             }
 
             await costSnapshots.RefreshAsync(db, readingId, cancellationToken);
@@ -642,6 +708,206 @@ public sealed class MonthlyUtilityCalculationPageService(
         }
     }
 
+    /// <summary>
+    /// Danh sách phòng đang thuê trong khoảng ngày đã chọn, dùng cho form lập phiếu ghi chỉ số.
+    /// Chỉ trả về phòng thuộc phạm vi của người gọi và hợp đồng còn hiệu lực trong kỳ.
+    /// </summary>
+    public async Task<IReadOnlyList<MonthlyUtilityRoomOptionDto>> LoadPeriodRoomOptionsAsync(
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        CancellationToken cancellationToken = default)
+    {
+        await _operationGate.WaitAsync(cancellationToken);
+        try
+        {
+            var caller = await callerProvider.GetCallerAsync();
+            if (!caller.IsManager)
+            {
+                return [];
+            }
+
+            var contracts = await LoadContractsAsync(caller, null, periodStart, periodEnd, cancellationToken);
+            var tenantNames = await LoadTenantNamesAsync(
+                contracts.Select(contract => contract.ContractId).ToList(),
+                cancellationToken);
+
+            return contracts
+                .OrderBy(contract => contract.PropertyName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(contract => contract.RoomCode, StringComparer.OrdinalIgnoreCase)
+                .Select(contract => new MonthlyUtilityRoomOptionDto(
+                    contract.ContractId,
+                    contract.RoomId,
+                    contract.ContractNumber,
+                    contract.RoomCode,
+                    contract.PropertyId,
+                    contract.PropertyName,
+                    tenantNames.GetValueOrDefault(contract.ContractId, string.Empty),
+                    DateOnly.FromDateTime(contract.StartDate),
+                    DateOnly.FromDateTime(contract.EndDate)))
+                .ToList();
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Lập phiếu ghi chỉ số (kỳ ở trạng thái mở, chưa có chỉ số) cho một hợp đồng/tháng.
+    /// Chỉ số đầu kỳ lấy từ kỳ hoặc bản ghi chỉ số gần nhất trước kỳ mới.
+    /// </summary>
+    public async Task<MonthlyUtilityPeriodCreateResult> CreatePeriodAsync(
+        Guid contractId,
+        int year,
+        int month,
+        CancellationToken cancellationToken = default)
+    {
+        await _operationGate.WaitAsync(cancellationToken);
+        try
+        {
+            return await CreatePeriodCoreAsync(contractId, year, month, cancellationToken);
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
+    }
+
+    private async Task<MonthlyUtilityPeriodCreateResult> CreatePeriodCoreAsync(
+        Guid contractId,
+        int year,
+        int month,
+        CancellationToken cancellationToken)
+    {
+        var caller = await callerProvider.GetCallerAsync();
+        if (!caller.IsManager)
+        {
+            return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: UtilityReadingErrorCodes.Forbidden);
+        }
+
+        if (year < 2000 || year > 2100 || month is < 1 or > 12)
+        {
+            return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: UtilityReadingErrorCodes.InvalidPeriod);
+        }
+
+        var periodStart = new DateOnly(year, month, 1);
+        var periodEnd = new DateOnly(year, month, DateTime.DaysInMonth(year, month));
+
+        try
+        {
+            var contracts = await LoadContractsAsync(caller, null, periodStart, periodEnd, cancellationToken);
+            var contract = contracts.FirstOrDefault(item => item.ContractId == contractId);
+            if (contract is null)
+            {
+                return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "ContractNotFound");
+            }
+
+            var duplicate = await db.UtilityReadingPeriods
+                .AsNoTracking()
+                .AnyAsync(
+                    period => period.ContractId == contractId && period.PeriodStart == periodStart,
+                    cancellationToken);
+            if (duplicate)
+            {
+                return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "DuplicatePeriod");
+            }
+
+            var overlapping = await db.UtilityReadingPeriods
+                .AsNoTracking()
+                .AnyAsync(
+                    period => period.ContractId == contractId
+                        && period.PeriodStart <= periodEnd
+                        && period.PeriodEnd >= periodStart,
+                    cancellationToken);
+            if (overlapping)
+            {
+                return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "OverlappingPeriod");
+            }
+
+            var hasLaterPeriod = await db.UtilityReadingPeriods
+                .AsNoTracking()
+                .AnyAsync(
+                    period => period.ContractId == contractId && period.PeriodStart > periodStart,
+                    cancellationToken);
+            if (hasLaterPeriod)
+            {
+                return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "PeriodHasLaterPeriod");
+            }
+
+            var previousPeriod = await db.UtilityReadingPeriods
+                .AsNoTracking()
+                .Where(period => period.ContractId == contractId && period.PeriodStart < periodStart)
+                .OrderByDescending(period => period.PeriodStart)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            decimal electricOpening;
+            decimal waterOpening;
+            if (previousPeriod is not null)
+            {
+                electricOpening = previousPeriod.ElectricEnd;
+                waterOpening = previousPeriod.WaterEnd;
+            }
+            else
+            {
+                // Chưa có phiếu trước: lấy mốc cuối của bản ghi chỉ số gần nhất (nếu có)
+                // để dây chuyền chỉ số không bị đứt khi dữ liệu cũ chỉ có UtilityReadings.
+                var previousReading = await db.UtilityReadings
+                    .AsNoTracking()
+                    .Where(reading => reading.RoomId == contract.RoomId && reading.PeriodStart < periodStart)
+                    .OrderByDescending(reading => reading.PeriodStart)
+                    .ThenByDescending(reading => reading.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+                electricOpening = previousReading?.ElectricEnd ?? 0m;
+                waterOpening = previousReading?.WaterEnd ?? 0m;
+            }
+
+            var residentCount = await db.ContractMembers
+                .CountAsync(member => member.ContractId == contractId, cancellationToken);
+            if (residentCount <= 0)
+            {
+                residentCount = 1;
+            }
+
+            var now = DateTime.UtcNow;
+            var created = new UtilityReadingPeriod
+            {
+                ContractId = contractId,
+                RoomId = contract.RoomId,
+                PeriodStart = periodStart,
+                PeriodEnd = periodEnd,
+                ElectricStart = electricOpening,
+                ElectricEnd = electricOpening,
+                WaterStart = waterOpening,
+                WaterEnd = waterOpening,
+                ResidentCount = residentCount,
+                Status = UtilityReadingPeriodStatus.Open,
+                HasReadings = false,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+
+            db.UtilityReadingPeriods.Add(created);
+            await db.SaveChangesAsync(cancellationToken);
+            return new MonthlyUtilityPeriodCreateResult(true, created.Id);
+        }
+        catch (DbUpdateException exception)
+        {
+            logger.LogWarning(exception,
+                "P5 create reading period failed for contract {ContractId} and period {PeriodStart}",
+                contractId,
+                periodStart);
+            return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "SaveFailed");
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception,
+                "P5 create reading period failed for contract {ContractId} and period {PeriodStart}",
+                contractId,
+                periodStart);
+            return new MonthlyUtilityPeriodCreateResult(false, ErrorCode: "SaveFailed");
+        }
+    }
+
     private static string FormatRoomPeriod(MonthlyUtilityRoomCostDto room) =>
         $"{room.PeriodStart:dd/MM/yyyy} - {room.PeriodEnd:dd/MM/yyyy}";
 
@@ -847,6 +1113,27 @@ public sealed class MonthlyUtilityCalculationPageService(
                     row.NewTotalAmount,
                     row.ChangedAt))
                 .ToList());
+
+    private async Task<Dictionary<(Guid ContractId, DateOnly PeriodStart), UtilityReadingPeriodRow>>
+        LoadReadingPeriodsAsync(
+            IReadOnlyList<Guid> contractIds,
+            DateOnly periodStart,
+            DateOnly periodEnd,
+            CancellationToken cancellationToken) =>
+        (await db.UtilityReadingPeriods
+            .AsNoTracking()
+            .Where(period => contractIds.Contains(period.ContractId)
+                && period.PeriodStart >= periodStart
+                && period.PeriodStart <= periodEnd)
+            .Select(period => new UtilityReadingPeriodRow(
+                period.ContractId,
+                period.PeriodStart,
+                period.Id,
+                period.HasReadings,
+                period.Status))
+            .ToListAsync(cancellationToken))
+        .GroupBy(row => (row.ContractId, row.PeriodStart))
+        .ToDictionary(group => group.Key, group => group.OrderByDescending(row => row.PeriodId).First());
 
     private async Task<Dictionary<Guid, IReadOnlyList<InvoicedPeriodRow>>> LoadInvoicedPeriodsAsync(
         IReadOnlyList<Guid> contractIds,
@@ -1118,6 +1405,13 @@ public sealed class MonthlyUtilityCalculationPageService(
 
     private sealed record InvoicedPeriodRow(Guid ContractId, DateOnly Start, DateOnly End);
 
+    private sealed record UtilityReadingPeriodRow(
+        Guid ContractId,
+        DateOnly PeriodStart,
+        int PeriodId,
+        bool HasReadings,
+        Web.Features.Utilities.Enums.UtilityReadingPeriodStatus Status);
+
     private sealed record InvoiceRow(Web.Features.Invoices.Entities.Invoice Invoice)
     {
         public int Id => Invoice.Id;
@@ -1143,6 +1437,18 @@ public enum MonthlyUtilityPeriodState
 }
 
 public sealed record MonthlyUtilityPropertyOptionDto(int Id, string Name);
+
+/// <summary>Phòng/hợp đồng dùng cho form lập phiếu ghi chỉ số.</summary>
+public sealed record MonthlyUtilityRoomOptionDto(
+    Guid ContractId,
+    int RoomId,
+    string ContractNumber,
+    string RoomCode,
+    int PropertyId,
+    string PropertyName,
+    string TenantNames,
+    DateOnly ContractStart,
+    DateOnly ContractEnd);
 
 public sealed record MonthlyUtilityTierDto(
     int TierNumber,
@@ -1224,7 +1530,9 @@ public sealed record MonthlyUtilityRoomCostDto(
     bool CanManage,
     MonthlyUtilityPreviousReadingDto? PreviousReading,
     IReadOnlyList<MonthlyUtilityCorrectionDto> Corrections,
-    IReadOnlyList<MonthlyUtilityInvoiceRevisionDto> InvoiceRevisions)
+    IReadOnlyList<MonthlyUtilityInvoiceRevisionDto> InvoiceRevisions,
+    int? PeriodId = null,
+    bool HasPeriod = false)
 {
     public bool IsInvoiced => State == MonthlyUtilityPeriodState.Invoiced;
 }
@@ -1259,4 +1567,9 @@ public sealed record MonthlyUtilitySaveResult(
 public sealed record MonthlyUtilityInvoiceResult(
     bool Success,
     int? InvoiceId = null,
+    string? ErrorCode = null);
+
+public sealed record MonthlyUtilityPeriodCreateResult(
+    bool Success,
+    int? PeriodId = null,
     string? ErrorCode = null);
