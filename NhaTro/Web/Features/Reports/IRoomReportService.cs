@@ -8,4 +8,8 @@ public interface IRoomReportService
 {
     Task<RoomReportResult> GetAsync(
         RoomReportFilter filter, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>VHT-141 — lấp đầy theo tháng, cùng phạm vi quyền với báo cáo phòng.</summary>
+    Task<OccupancyReportResult> GetOccupancyAsync(
+        OccupancyFilter filter, PropertyCaller caller, CancellationToken ct = default);
 }

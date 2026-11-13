@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="Title" xml:space="preserve"><value>Activity log</value></data>
+<data name="Description" xml:space="preserve"><value>Review activity history by time, actor and action type. Log contents are stripped of sensitive information such as passwords, tokens and identity documents.</value></data>
+<data name="ScopeAdmin" xml:space="preserve"><value>System and account ledger managed by the Admin. Landlord business activity is not shown here.</value></data>
+<data name="ScopeOwner" xml:space="preserve"><value>Business ledger for the properties you own.</value></data>
+<data name="RetentionNote" xml:space="preserve"><value>Logs are kept for the last 3 days only; older entries are removed automatically.</value></data>
+<data name="Filters" xml:space="preserve"><value>Activity log filters</value></data>
+<data name="FromDate" xml:space="preserve"><value>From date</value></data>
+<data name="ToDate" xml:space="preserve"><value>To date</value></data>
+<data name="Actor" xml:space="preserve"><value>Actor</value></data>
+<data name="AllActors" xml:space="preserve"><value>All actors</value></data>
+<data name="ActionType" xml:space="preserve"><value>Action type</value></data>
+<data name="AllActions" xml:space="preserve"><value>All actions</value></data>
+<data name="Property" xml:space="preserve"><value>Property</value></data>
+<data name="AllProperties" xml:space="preserve"><value>All properties</value></data>
+<data name="ResetFilters" xml:space="preserve"><value>Clear filters</value></data>
+<data name="ColumnTime" xml:space="preserve"><value>Time</value></data>
+<data name="ColumnActor" xml:space="preserve"><value>Actor</value></data>
+<data name="ColumnAction" xml:space="preserve"><value>Action</value></data>
+<data name="ColumnProperty" xml:space="preserve"><value>Property</value></data>
+<data name="ColumnMetadata" xml:space="preserve"><value>Details</value></data>
+<data name="Forbidden" xml:space="preserve"><value>You do not have permission to view the activity log.</value></data>
+<data name="OutsideScope" xml:space="preserve"><value>The selected property is outside your scope.</value></data>
+<data name="LoadError" xml:space="preserve"><value>Could not load the activity log. Please try again.</value></data>
+<data name="Action_OwnerLocked" xml:space="preserve"><value>Landlord account locked</value></data>
+<data name="Action_OwnerUnlocked" xml:space="preserve"><value>Landlord account unlocked</value></data>
+<data name="Action_ContractDepositUpdated" xml:space="preserve"><value>Contract deposit updated</value></data>
+<data name="Action_ContractRenewed" xml:space="preserve"><value>Contract renewed</value></data>
+<data name="Action_ContractLiquidated" xml:space="preserve"><value>Contract liquidated</value></data>
+<data name="Action_DemoSeed.Completed" xml:space="preserve"><value>Demo data seeded</value></data>
+</root>

@@ -9,6 +9,7 @@ using Web.Features.Invoices.Enums;
 using Web.Features.Properties;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Services;
+using Web.Infrastructure.Time;
 
 namespace NhaTro.IntegrationTests.Features.Reports;
 
@@ -80,6 +81,42 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
         Assert.Single(report.Periods!);
         Assert.Equal("2026-10", report.Periods![0].PeriodKey);
         Assert.Equal(seed.PropertyAId, Assert.Single(report.Properties!).PropertyId);
+    }
+
+    [SqlServerFact]
+    public async Task Co_cau_loai_phi_va_no_qua_han_khop_hoa_don_hop_le()
+    {
+        var seed = await PrepareAsync();
+        await using var db = fixture.CreateContext();
+        var report = await NewService(db, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
+            .GetAsync(new RevenueReportFilter(OctoberStart, OctoberEnd), Owner(seed));
+
+        // Cơ cấu loại phí lấy từ dòng hóa đơn, khớp tổng giá trị hóa đơn hợp lệ.
+        Assert.NotNull(report.FeeBreakdown);
+        Assert.Equal(report.TotalInvoiced, report.FeeBreakdown!.Sum(fee => fee.Amount));
+        Assert.Equal(
+            6_000_000m,
+            report.FeeBreakdown.Single(fee => fee.Type == nameof(InvoiceItemType.Rent)).Amount);
+        Assert.Equal(
+            500_000m,
+            report.FeeBreakdown.Single(fee => fee.Type == nameof(InvoiceItemType.Electric)).Amount);
+
+        // Hóa đơn chờ có hạn 20/10/2026: quá 24 ngày tính đến 13/11/2026.
+        var pending = report.Lines.Single(line => line.InvoiceId == seed.PendingOctoberInvoiceId);
+        Assert.Equal(new DateOnly(2026, 10, 20), pending.DueDate);
+        Assert.Equal(24, pending.OverdueDays);
+        Assert.Equal(3_000_000m, pending.Outstanding);
+
+        // Hóa đơn không áp hạn không bao giờ quá hạn, dù còn nợ.
+        var rejected = report.Lines.Single(line => line.InvoiceId == seed.RejectedOctoberInvoiceId);
+        Assert.Null(rejected.DueDate);
+        Assert.Equal(0, rejected.OverdueDays);
+
+        Assert.Equal(3_000_000m, report.OverdueOutstanding);
+        Assert.Equal(1, report.OverdueInvoiceCount);
+        Assert.Equal(
+            report.OverdueOutstanding,
+            report.Lines.Where(line => line.OverdueDays > 0).Sum(line => line.Outstanding));
     }
 
     [SqlServerFact]
@@ -166,7 +203,7 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
     private static PropertyCaller Owner(Seed seed) =>
         new(seed.OwnerAId, Roles.ChuTro);
 
-    private static RevenueReportService NewService(ApplicationDbContext db) => new(db);
+    private static RevenueReportService NewService(ApplicationDbContext db, TimeProvider? time = null) => new(db, time);
 
     private async Task<Seed> PrepareAsync()
     {
@@ -184,13 +221,24 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
         await db.SaveChangesAsync();
 
         var paidOctober = NewInvoice(contractA.ContractId, OctoberStart, OctoberEnd, 2_000_000m, InvoiceStatus.Paid);
-        var pendingOctober = NewInvoice(contractA2.ContractId, OctoberStart, OctoberEnd, Rent, InvoiceStatus.Issued);
+        var pendingOctober = NewInvoice(contractA2.ContractId, OctoberStart, OctoberEnd, Rent, InvoiceStatus.Issued,
+            dueDate: new DateOnly(2026, 10, 20));
         var rejectedOctober = NewInvoice(contractA3.ContractId, OctoberStart, OctoberEnd, 1_500_000m, InvoiceStatus.Issued);
         var paidSeptember = NewInvoice(contractASep.ContractId, SeptemberStart, SeptemberEnd, Rent, InvoiceStatus.Paid);
         var draftInvoice = NewInvoice(contractADraft.ContractId, OctoberStart, OctoberEnd, 9_000_000m, InvoiceStatus.Draft);
         var paidOctoberB = NewInvoice(contractB.ContractId, OctoberStart, OctoberEnd, 4_000_000m, InvoiceStatus.Paid);
         db.Invoices.AddRange(
             paidOctober, pendingOctober, rejectedOctober, paidSeptember, draftInvoice, paidOctoberB);
+        await db.SaveChangesAsync();
+
+        // VHT-141: chi tiết hóa đơn theo loại phí để đối chiếu cơ cấu.
+        db.InvoiceItems.AddRange(
+            NewItem(paidOctober.Id, InvoiceItemType.Rent, 1_500_000m),
+            NewItem(paidOctober.Id, InvoiceItemType.Electric, 500_000m),
+            NewItem(pendingOctober.Id, InvoiceItemType.Rent, Rent),
+            NewItem(rejectedOctober.Id, InvoiceItemType.Rent, 1_500_000m),
+            NewItem(paidSeptember.Id, InvoiceItemType.Rent, Rent),
+            NewItem(paidOctoberB.Id, InvoiceItemType.Rent, 4_000_000m));
         await db.SaveChangesAsync();
 
         // Tháng 10: một khoản đã xác nhận, một khoản chờ, một khoản bị từ chối.
@@ -242,14 +290,32 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
         DateOnly start,
         DateOnly end,
         decimal total,
-        InvoiceStatus status) => new()
+        InvoiceStatus status,
+        DateOnly? dueDate = null) => new()
     {
         ContractId = contractId,
         PeriodStart = start,
         PeriodEnd = end,
         TotalAmount = total,
         Status = status,
+        DueDate = dueDate,
     };
+
+    private static InvoiceItem NewItem(int invoiceId, InvoiceItemType type, decimal amount) => new()
+    {
+        InvoiceId = invoiceId,
+        ItemType = type,
+        Description = type.ToString(),
+        Quantity = 1m,
+        UnitPrice = amount,
+        Amount = amount,
+    };
+
+    private sealed class FixedTimeProvider(DateOnly today) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(
+            VietnamTime.ToUtc(today.ToDateTime(new TimeOnly(12, 0))), TimeSpan.Zero);
+    }
 
     private static Payment NewPayment(
         int invoiceId,

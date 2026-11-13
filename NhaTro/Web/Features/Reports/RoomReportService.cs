@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
+using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Reports.DTOs;
 using Web.Features.Rooms;
@@ -9,6 +10,7 @@ using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
 using Web.Features.Rooms.Mapping;
 using Web.Features.Settings.Services;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Reports;
 
@@ -19,7 +21,8 @@ namespace Web.Features.Reports;
 /// </summary>
 public sealed class RoomReportService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
-    IManagerTogglePolicy togglePolicy) : IRoomReportService
+    IManagerTogglePolicy togglePolicy,
+    TimeProvider? time = null) : IRoomReportService
 {
     private const string ViewReportsCode = "SW-15";
     private const string RoomSectionCode = "SW-15a";
@@ -80,6 +83,87 @@ public sealed class RoomReportService(
     // Phạm vi P2 (VHT-6/VHT-24): Chủ trọ theo OwnerId; Quản lý theo phân công nhà trọ đang hiệu lực.
     private static IQueryable<Room> ScopeRooms(ApplicationDbContext db, PropertyCaller caller) =>
         RoomScope.Apply(db.Rooms, db.Properties, db.PropertyManagers, caller);
+
+    /// <summary>VHT-141 — lấp đầy theo tháng, cùng phạm vi quyền với báo cáo phòng.</summary>
+    public async Task<OccupancyReportResult> GetOccupancyAsync(
+        OccupancyFilter filter, PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+        await EnsureSectionAllowedAsync(caller, ct);
+
+        var today = DateOnly.FromDateTime(
+            VietnamTime.ToVietnam((time ?? TimeProvider.System).GetUtcNow().UtcDateTime));
+        var currentMonth = new DateOnly(today.Year, today.Month, 1);
+        var firstMonth = filter.From is { } from
+            ? new DateOnly(from.Year, from.Month, 1)
+            : currentMonth.AddMonths(-5);
+        var lastMonth = filter.To is { } to
+            ? new DateOnly(to.Year, to.Month, 1)
+            : currentMonth;
+        if (firstMonth > lastMonth)
+        {
+            return new OccupancyReportResult([]);
+        }
+
+        var rangeStart = firstMonth.ToDateTime(TimeOnly.MinValue);
+        var rangeEndExclusive = lastMonth.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+
+        var roomsQuery = ScopeRooms(db, caller).Where(room => room.IsActive);
+        if (filter.PropertyId is { } propertyId)
+        {
+            roomsQuery = roomsQuery.Where(room => room.PropertyId == propertyId);
+        }
+
+        var rooms = await roomsQuery.AsNoTracking()
+            .Select(room => new { room.Id, room.CreatedAt })
+            .ToListAsync(ct);
+
+        // Hợp đồng Approved/Liquidated giao với khoảng tháng; đếm phòng khác nhau mỗi tháng.
+        var contracts = await (
+            from contract in db.Contracts.AsNoTracking()
+            join room in ScopeRooms(db, caller).AsNoTracking() on contract.RoomId equals room.Id
+            where (contract.Status == ContractStatus.Approved
+                    || contract.Status == ContractStatus.Liquidated)
+                && (filter.PropertyId == null || room.PropertyId == filter.PropertyId)
+                && contract.StartDate < rangeEndExclusive
+                && contract.EndDate >= rangeStart
+            select new { contract.RoomId, contract.StartDate, contract.EndDate })
+            .ToListAsync(ct);
+
+        var months = new List<OccupancyMonthDto>();
+        for (var monthStart = firstMonth; monthStart <= lastMonth; monthStart = monthStart.AddMonths(1))
+        {
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            // Phòng phải tồn tại trước cuối tháng; CreatedAt lưu UTC.
+            var createdBeforeUtc = VietnamTime.DayRangeUtc(monthEnd).EndUtc;
+            var eligibleRooms = rooms.Where(room => room.CreatedAt < createdBeforeUtc).ToList();
+            var eligibleIds = eligibleRooms.Select(room => room.Id).ToHashSet();
+            var monthStartDateTime = monthStart.ToDateTime(TimeOnly.MinValue);
+            var nextMonthDateTime = monthStart.AddMonths(1).ToDateTime(TimeOnly.MinValue);
+            var rented = contracts
+                .Where(contract => eligibleIds.Contains(contract.RoomId)
+                    && contract.StartDate < nextMonthDateTime
+                    && contract.EndDate >= monthStartDateTime)
+                .Select(contract => contract.RoomId)
+                .Distinct()
+                .Count();
+            var total = eligibleRooms.Count;
+            months.Add(new OccupancyMonthDto(
+                monthStart.ToString("yyyy-MM"),
+                monthStart,
+                monthEnd,
+                total,
+                rented,
+                Math.Max(0, total - rented),
+                total == 0
+                    ? null
+                    : Math.Round(100m * rented / total, 1, MidpointRounding.AwayFromZero)));
+        }
+
+        return new OccupancyReportResult(months);
+    }
 
     private static IQueryable<Room> ApplyFilter(IQueryable<Room> query, RoomReportFilter filter)
     {

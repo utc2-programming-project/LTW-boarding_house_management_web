@@ -145,6 +145,45 @@
                             }
                         </div>
                     </div>
+                    <section class="occupancy-history" aria-labelledby="occupancy-month-heading">
+                        <div class="section-heading">
+                            <h3 id="occupancy-month-heading">@L["OccupancyByMonth"]</h3>
+                            <p class="scope-note">@L["OccupancyMonthNote"]</p>
+                        </div>
+                        @if (OccupancyResult is null || OccupancyResult.Months.Count == 0)
+                        {
+                            <EmptyStateCard Title="@L["NoData"]" />
+                        }
+                        else
+                        {
+                            <div class="table-scroll">
+                                <table>
+                                    <caption>@L["OccupancyByMonth"]</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">@L["Month"]</th>
+                                            <th scope="col" class="numeric">@L["RoomTotal"]</th>
+                                            <th scope="col" class="numeric">@D["Rented"]</th>
+                                            <th scope="col" class="numeric">@L["VacantRooms"]</th>
+                                            <th scope="col" class="numeric">@L["OccupancyRate"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var month in OccupancyResult.Months)
+                                        {
+                                            <tr>
+                                                <td>@DateFormatter.Format(month.Start)</td>
+                                                <td class="numeric">@DashboardFormat.FormatNumber(month.TotalRooms)</td>
+                                                <td class="numeric">@DashboardFormat.FormatNumber(month.RentedRooms)</td>
+                                                <td class="numeric">@DashboardFormat.FormatNumber(month.VacantRooms)</td>
+                                                <td class="numeric">@DashboardFormat.FormatOccupancy(month.OccupancyRate)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </section>
                     @if (rooms.Rooms.TotalCount == 0)
                     {
                         <EmptyStateCard Title="@D["Empty"]" Description="@L["EmptyDescription"]">

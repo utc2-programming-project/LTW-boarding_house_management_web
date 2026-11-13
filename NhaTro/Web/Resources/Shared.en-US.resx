@@ -188,6 +188,9 @@
   <data name="ManagerSwitchesSubtitle" xml:space="preserve">
     <value>Each switch controls what managers may do with one workflow: act immediately, wait for the owner's approval, or be blocked.</value>
   </data>
+  <data name="AuditLog" xml:space="preserve">
+    <value>Activity log</value>
+  </data>
   <data name="Approvals" xml:space="preserve">
     <value>Approval queue</value>
   </data>

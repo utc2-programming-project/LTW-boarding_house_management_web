@@ -1,0 +1,286 @@
+@page "/admin/audit-log"
+@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject AuditLogPageService Pages
+@inject IStringLocalizer<AuditResource> L
+@inject IStringLocalizer<Shared> S
+
+<PageTitle>@L["Title"] · @S["AppName"]</PageTitle>
+
+<section class="audit-page" aria-labelledby="audit-title">
+    <PageHeading Title="@L["Title"]" TitleId="audit-title" HelpText="@L["Description"]">
+        <HeadingMeta>
+            <p class="scope-note">@(_isOwner ? L["ScopeOwner"] : L["ScopeAdmin"])</p>
+            <p class="scope-note">@L["RetentionNote"]</p>
+        </HeadingMeta>
+    </PageHeading>
+
+    @if (_errorCode is { } errorCode)
+    {
+        <div class="form-alert" role="alert">
+            <LucideIcon Name="alert" />
+            <span>@ErrorMessage(errorCode)</span>
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="RetryAsync">@S["Retry"]</button>
+        </div>
+    }
+    else
+    {
+        <section class="filter-bar filter-bar--panel" aria-label="@L["Filters"]">
+            <div class="filter-bar__row">
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="audit-actor">@L["Actor"]</label>
+                    <select id="audit-actor" class="input" value="@_actor" @onchange="OnActorChangedAsync">
+                        <option value="">@L["AllActors"]</option>
+                        @foreach (var actor in _actors)
+                        {
+                            <option value="@actor.UserId">@actor.DisplayName</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="audit-action">@L["ActionType"]</label>
+                    <select id="audit-action" class="input" value="@_action" @onchange="OnActionChangedAsync">
+                        <option value="">@L["AllActions"]</option>
+                        @foreach (var action in _actions)
+                        {
+                            <option value="@action">@ActionLabel(action)</option>
+                        }
+                    </select>
+                </div>
+                @if (_isOwner)
+                {
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="audit-property">@L["Property"]</label>
+                        <select id="audit-property" class="input" value="@_propertyId" @onchange="OnPropertyChangedAsync">
+                            <option value="">@L["AllProperties"]</option>
+                            @foreach (var property in _properties)
+                            {
+                                <option value="@property.Id">@property.Name</option>
+                            }
+                        </select>
+                    </div>
+                }
+                <div class="filter-bar__actions">
+                    <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount"
+                                          PanelId="audit-advanced-panel" />
+                    <button type="button" class="btn btn-secondary filter-bar__reset" @onclick="ClearFiltersAsync">
+                        <LucideIcon Name="refresh-cw" /> @L["ResetFilters"]
+                    </button>
+                </div>
+            </div>
+            <div class="filter-bar__advanced" id="audit-advanced-panel" hidden="@(!_showAdvanced)">
+                <div class="filter-bar__stack">
+                    <label for="audit-from">@L["FromDate"]</label>
+                    <input id="audit-from" type="date" class="input"
+                           value="@(_from?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))"
+                           @onchange="OnFromChangedAsync" />
+                </div>
+                <div class="filter-bar__stack">
+                    <label for="audit-to">@L["ToDate"]</label>
+                    <input id="audit-to" type="date" class="input"
+                           value="@(_to?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))"
+                           @onchange="OnToChangedAsync" />
+                </div>
+            </div>
+        </section>
+
+        <DataTable @key="_tableKey" TItem="AuditLogEntryDto" Columns="_columns"
+                   ItemsProvider="LoadPageAsync" PageSize="20" Caption="@L["Title"]"
+                   HasActiveFilters="HasFilters" OnClearFilters="ClearFiltersAsync"
+                   Labels="DataTableLabelLocalizer.Create(S)" />
+    }
+</section>
+
+@code {
+    private const int DefaultPageSize = 20;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthTask { get; set; }
+
+    private IReadOnlyList<DataTableColumn<AuditLogEntryDto>> _columns = [];
+    private IReadOnlyList<AuditFilterActorDto> _actors = [];
+    private IReadOnlyList<string> _actions = [];
+    private IReadOnlyList<AuditPropertyOption> _properties = [];
+    private bool _isOwner;
+    private string? _errorCode;
+    private string? _actor;
+    private string? _action;
+    private int? _propertyId;
+    private DateOnly? _from;
+    private DateOnly? _to;
+    private bool _showAdvanced;
+    private int _tableKey;
+
+    private bool HasFilters => _from is not null || _to is not null
+        || !string.IsNullOrEmpty(_actor) || !string.IsNullOrEmpty(_action) || _propertyId is not null;
+
+    private int AdvancedFilterCount => (_from is not null ? 1 : 0) + (_to is not null ? 1 : 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = AuthTask is null ? null : (await AuthTask).User;
+        _isOwner = user?.IsInRole(Roles.ChuTro) == true;
+        BuildColumns();
+    }
+
+    private async Task<PagedResult<AuditLogEntryDto>> LoadPageAsync(DataTableRequest request)
+    {
+        var result = await Pages.LoadAsync(new AuditLogPageRequest(
+            _from,
+            _to,
+            _actor,
+            _action,
+            _isOwner ? _propertyId : null,
+            request.Page,
+            request.PageSize <= 0 ? DefaultPageSize : request.PageSize));
+
+        if (result.Succeeded)
+        {
+            _errorCode = null;
+            _isOwner = result.IsOwner;
+            _actors = result.Options?.Actors ?? [];
+            _actions = result.Options?.Actions ?? [];
+            _properties = result.Properties;
+
+            if (_isOwner && _columns.Count == 4)
+            {
+                BuildColumns();
+            }
+        }
+        else
+        {
+            _errorCode = result.ErrorCode;
+        }
+
+        await InvokeAsync(StateHasChanged);
+
+        return result.Page is { } page
+            ? new PagedResult<AuditLogEntryDto>
+            {
+                Items = page.Items,
+                TotalCount = page.TotalCount,
+                Page = page.Page,
+                PageSize = page.PageSize,
+            }
+            : new PagedResult<AuditLogEntryDto>();
+    }
+
+    private void BuildColumns()
+    {
+        var columns = new List<DataTableColumn<AuditLogEntryDto>>
+        {
+            new()
+            {
+                Key = "occurredAt",
+                Title = L["ColumnTime"],
+                Value = entry => DateFormatter.FormatDateTime(entry.OccurredAt.UtcDateTime),
+            },
+            new()
+            {
+                Key = "actor",
+                Title = L["ColumnActor"],
+                Value = entry => entry.ActorDisplayName ?? "—",
+            },
+            new()
+            {
+                Key = "action",
+                Title = L["ColumnAction"],
+                Value = entry => ActionLabel(entry.Action),
+            },
+        };
+
+        if (_isOwner)
+        {
+            columns.Add(new DataTableColumn<AuditLogEntryDto>
+            {
+                Key = "property",
+                Title = L["ColumnProperty"],
+                Value = entry => entry.PropertyName ?? "—",
+            });
+        }
+
+        columns.Add(new DataTableColumn<AuditLogEntryDto>
+        {
+            Key = "metadata",
+            Title = L["ColumnMetadata"],
+            Value = entry => entry.Metadata ?? "—",
+        });
+
+        _columns = columns;
+    }
+
+    private string ActionLabel(string action)
+    {
+        var label = L[$"Action_{action}"];
+        return label.ResourceNotFound ? action : label.Value;
+    }
+
+    private string ErrorMessage(string errorCode) => errorCode switch
+    {
+        AuditLogErrorCodes.Forbidden => L["Forbidden"],
+        AuditLogErrorCodes.OutsideScope => L["OutsideScope"],
+        _ => L["LoadError"],
+    };
+
+    private Task OnFromChangedAsync(ChangeEventArgs args)
+    {
+        _from = ParseDate(args.Value?.ToString());
+        return ResetTableAsync();
+    }
+
+    private Task OnToChangedAsync(ChangeEventArgs args)
+    {
+        _to = ParseDate(args.Value?.ToString());
+        return ResetTableAsync();
+    }
+
+    private Task OnActorChangedAsync(ChangeEventArgs args)
+    {
+        _actor = NullIfBlank(args.Value?.ToString());
+        return ResetTableAsync();
+    }
+
+    private Task OnActionChangedAsync(ChangeEventArgs args)
+    {
+        _action = NullIfBlank(args.Value?.ToString());
+        return ResetTableAsync();
+    }
+
+    private Task OnPropertyChangedAsync(ChangeEventArgs args)
+    {
+        _propertyId = int.TryParse(args.Value?.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var id)
+            ? id
+            : null;
+        return ResetTableAsync();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        _from = null;
+        _to = null;
+        _actor = null;
+        _action = null;
+        _propertyId = null;
+        await ResetTableAsync();
+    }
+
+    private Task RetryAsync()
+    {
+        _propertyId = null;
+        _errorCode = null;
+        return ResetTableAsync();
+    }
+
+    private Task ResetTableAsync()
+    {
+        _tableKey++;
+        return Task.CompletedTask;
+    }
+
+    private static DateOnly? ParseDate(string? value) =>
+        DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+            ? date
+            : null;
+
+    private static string? NullIfBlank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
+}

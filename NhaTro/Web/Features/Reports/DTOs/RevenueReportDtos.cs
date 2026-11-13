@@ -26,6 +26,8 @@ public sealed record RevenueReportFilter(
 /// Một dòng đối chiếu theo hóa đơn. <see cref="Paid"/> là tổng tiền đã xác nhận
 /// (Confirmed) của hóa đơn; <see cref="RecognizedRevenue"/> là phần được ghi nhận
 /// vào kỳ theo <see cref="RevenueReportFilter.DateBasis"/>.
+/// VHT-141: <see cref="DueDate"/> null nghĩa là không áp hạn, <see cref="OverdueDays"/>
+/// chỉ lớn hơn 0 với hóa đơn <c>Issued</c> còn nợ và đã qua hạn.
 /// </summary>
 public sealed record RevenueReportLineDto(
     int InvoiceId,
@@ -39,7 +41,15 @@ public sealed record RevenueReportLineDto(
     string PropertyName = "",
     DateOnly PeriodStart = default,
     DateOnly PeriodEnd = default,
-    decimal RecognizedRevenue = 0m);
+    decimal RecognizedRevenue = 0m,
+    DateOnly? DueDate = null,
+    int OverdueDays = 0);
+
+/// <summary>
+/// VHT-141 — tiền hóa đơn theo loại phí. <see cref="Type"/> là tên
+/// <c>InvoiceItemType</c>; tổng các nhóm bằng <see cref="RevenueReportDto.TotalInvoiced"/>.
+/// </summary>
+public sealed record RevenueFeeTypeDto(string Type, decimal Amount);
 
 /// <summary>Nhóm đối chiếu theo kỳ (tháng bắt đầu của kỳ hóa đơn).</summary>
 public sealed record RevenuePeriodGroupDto(
@@ -68,7 +78,8 @@ public sealed record RevenuePropertyGroupDto(
 /// Bất biến đối chiếu: <see cref="TotalRevenue"/> = tổng <c>RecognizedRevenue</c>
 /// của các dòng = tổng các nhóm kỳ = tổng các nhóm nhà;
 /// <see cref="Outstanding"/> = tổng công nợ các hóa đơn <c>Issued</c>;
-/// <see cref="TotalInvoiced"/> = tổng tiền hóa đơn hợp lệ (Issued + Paid).
+/// <see cref="TotalInvoiced"/> = tổng tiền hóa đơn hợp lệ (Issued + Paid), đồng thời
+/// bằng tổng <see cref="FeeBreakdown"/>.
 /// <see cref="PendingAmount"/> và <see cref="RejectedAmount"/> chỉ để đối chiếu,
 /// không bao giờ cộng vào doanh thu.
 /// </summary>
@@ -83,4 +94,7 @@ public sealed record RevenueReportDto(
     decimal RejectedAmount = 0m,
     RevenueDateBasis DateBasis = RevenueDateBasis.InvoicePeriod,
     IReadOnlyList<RevenuePeriodGroupDto>? Periods = null,
-    IReadOnlyList<RevenuePropertyGroupDto>? Properties = null);
+    IReadOnlyList<RevenuePropertyGroupDto>? Properties = null,
+    IReadOnlyList<RevenueFeeTypeDto>? FeeBreakdown = null,
+    decimal OverdueOutstanding = 0m,
+    int OverdueInvoiceCount = 0);
