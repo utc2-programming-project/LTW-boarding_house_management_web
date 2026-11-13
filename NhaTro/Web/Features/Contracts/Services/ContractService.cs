@@ -845,6 +845,8 @@ public sealed class ContractService : IContractService
                         ContractErrorCodes.RoomNotVacant);
                 }
 
+                // Chốt giá thuê tại thời điểm duyệt; tiền cọc do người tạo nhập được giữ nguyên.
+                contract.SnapshotPrice = room.StandardPrice;
                 contract.Status = ContractStatus.Approved;
                 contract.RejectReason = null;
                 // HĐ do Quản lý tạo chỉ bắt đầu hạn cọc sau khi chủ trọ duyệt.
