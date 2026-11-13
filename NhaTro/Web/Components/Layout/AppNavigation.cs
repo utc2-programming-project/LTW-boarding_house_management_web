@@ -9,7 +9,7 @@ public static class AppNavigation
     [
         new(null, "Admin,ChuTro,QuanLy,KhachThue",
         [
-            new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/", Aliases: ["/dashboard"]),
+            new("Home", "home", "Admin,ChuTro,QuanLy,KhachThue", "/home", Aliases: ["/dashboard"]),
         ]),
         new("NavGroupProperty", "ChuTro,QuanLy,KhachThue",
         [

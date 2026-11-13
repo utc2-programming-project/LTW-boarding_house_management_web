@@ -4,23 +4,36 @@ using NhaTro.IntegrationTests.Infrastructure;
 namespace NhaTro.IntegrationTests.Features.Home;
 
 /// <summary>
-/// Trang chủ "/" thay trang Layout preview: kiểm khối dữ liệu đặc trưng theo vai trò
+/// Trang chủ "/home" (landing công khai ở "/"): kiểm khối dữ liệu đặc trưng theo vai trò
 /// trên HTML prerender thật (cookie đăng nhập, không gọi service trực tiếp).
 /// </summary>
 public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppFixture>
 {
     [WebAppFact]
-    public async Task Khach_chua_dang_nhap_bi_chuyen_ve_trang_dang_nhap()
+    public async Task Khach_chua_dang_nhap_thay_landing_page()
     {
         using var client = fixture.CreateClient(allowAutoRedirect: false);
 
         var response = await client.GetAsync("/");
 
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        Assert.Contains("Quản lý nhà trọ gọn trong một màn hình", html);
+        Assert.Contains("Đăng ký làm chủ trọ", html);
+        Assert.DoesNotContain("name=\"Input.Email\"", html);
+    }
+
+    [WebAppFact]
+    public async Task Da_dang_nhap_vao_goc_duoc_chuyen_ve_trang_chu()
+    {
+        using var client = fixture.CreateClient(allowAutoRedirect: false);
+        var login = await LoginFormClient.PostFreshAsync(client, TestDataSeeder.ChuTroAEmail, TestDataSeeder.Password);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var response = await client.GetAsync("/");
+
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains(
-            "/Account/Login",
-            response.Headers.Location?.OriginalString,
-            StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("/home", new Uri(client.BaseAddress!, response.Headers.Location!).AbsolutePath);
     }
 
     [WebAppFact]
@@ -63,7 +76,7 @@ public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppF
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
-        Assert.Equal("/", new Uri(client.BaseAddress!, response.Headers.Location!).AbsolutePath);
+        Assert.Equal("/home", new Uri(client.BaseAddress!, response.Headers.Location!).AbsolutePath);
     }
 
     [WebAppFact]
@@ -96,7 +109,7 @@ public sealed class HomePageTests(WebAppFixture fixture) : IClassFixture<WebAppF
         var login = await LoginFormClient.PostFreshAsync(client, email, TestDataSeeder.Password);
         Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
 
-        var home = await client.GetAsync("/");
+        var home = await client.GetAsync("/home");
         Assert.Equal(HttpStatusCode.OK, home.StatusCode);
 
         // Razor mã hóa ký tự ngoài ASCII thành tham chiếu số; giải mã để so khớp chuỗi VI/EN.

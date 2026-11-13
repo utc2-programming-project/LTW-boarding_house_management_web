@@ -1,0 +1,56 @@
+@inherits LayoutComponentBase
+@using Web.Features.Landing
+@inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<LandingResource> LandingL
+
+@* Khung công khai cho landing: không sidebar/topbar nghiệp vụ, chỉ brand,
+   điều hướng neo, đổi sáng/tối, VI/EN và hai lối vào đăng nhập/đăng ký. *@
+<a class="skip-link" href="#main-content">@L["SkipContent"]</a>
+<div class="public-shell">
+    <header class="public-header" data-permanent>
+        <a class="public-brand" href="/" aria-label="@L["AppName"]">
+            <span class="app-logo"><LucideIcon Name="building" /></span>
+            <span class="public-brand-name">@L["AppName"]</span>
+        </a>
+        <nav class="public-nav" aria-label="@L["Navigation"]">
+            <a href="#features">@LandingL["NavFeatures"]</a>
+            <a href="#roles">@LandingL["NavRoles"]</a>
+        </nav>
+        <div class="public-actions">
+            <button class="icon-button" type="button" data-theme-toggle aria-label="@L["ToggleTheme"]" aria-pressed="false"><span class="light-icon"><LucideIcon Name="moon" /></span><span class="dark-icon"><LucideIcon Name="sun" /></span></button>
+            <div class="culture-control">
+                <AntiforgeryToken />
+                <span class="sr-only" id="public-culture-label">@L["Language"]</span>
+                <div role="group" aria-labelledby="public-culture-label">
+                    <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
+                    <button type="button" class="culture-button" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
+                </div>
+                <span class="culture-error" role="alert" hidden data-culture-error>@L["CultureError"]</span>
+                <span class="sr-only" role="status" data-culture-status data-loading-label="@L["Loading"]"></span>
+            </div>
+            <a class="btn btn-secondary public-login" href="/login">@LandingL["Login"]</a>
+            <a class="btn btn-primary public-register" href="/Account/RegisterOwner">@LandingL["Register"]</a>
+        </div>
+    </header>
+    <main id="main-content" class="public-main" tabindex="-1">
+        @Body
+    </main>
+    <footer class="public-footer">
+        <div class="public-footer-brand">
+            <a class="public-brand" href="/" aria-label="@L["AppName"]">
+                <span class="app-logo"><LucideIcon Name="building" /></span>
+                <span class="public-brand-name">@L["AppName"]</span>
+            </a>
+        </div>
+        <nav class="public-footer-links" aria-label="@L["Navigation"]">
+            <a href="/login">@LandingL["Login"]</a>
+            <a href="/Account/RegisterOwner">@LandingL["Register"]</a>
+        </nav>
+        <p class="public-footer-note">© @DateTime.Today.Year @L["AppName"]. @LandingL["FooterRights"]</p>
+    </footer>
+</div>
+<div id="blazor-error-ui" data-nosnippet role="alert">
+    <span>@L["ConnectionError"]</span>
+    <a href="" class="reload">@L["Reload"]</a>
+    <button type="button" class="dismiss icon-button" aria-label="@L["Close"]"><LucideIcon Name="close" /></button>
+</div>

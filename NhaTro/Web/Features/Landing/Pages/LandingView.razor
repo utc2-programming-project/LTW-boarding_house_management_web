@@ -1,0 +1,173 @@
+@page "/"
+@layout PublicLayout
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+@inject IStringLocalizer<LandingResource> L
+@inject AuthenticationStateProvider Authentication
+@inject NavigationManager Navigation
+
+<PageTitle>@L["PageTitle"]</PageTitle>
+
+<section class="landing-hero" aria-labelledby="landing-hero-title">
+    <div class="hero-copy">
+        <p class="hero-badge"><LucideIcon Name="shield-check" />@L["HeroBadge"]</p>
+        <h1 id="landing-hero-title">@L["HeroTitle"]</h1>
+        <p class="hero-description">@L["HeroDescription"]</p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="/Account/RegisterOwner">@L["HeroRegisterCta"]<LucideIcon Name="arrow-right" /></a>
+            <a class="btn btn-secondary" href="/login">@L["HeroLoginCta"]</a>
+        </div>
+        <p class="hero-proof">@L["HeroProof"]</p>
+    </div>
+    <div class="hero-visual">
+        <figure class="dashboard-mockup" role="img" aria-label="@L["MockupTitle"]">
+            <div class="mockup-head">
+                <span class="mockup-title">@L["MockupTitle"]</span>
+                <span class="mockup-sample">@L["MockupSample"]</span>
+            </div>
+            <div class="mockup-kpis">
+                <div class="mockup-kpi">
+                    <span class="mockup-kpi-label">@L["MockupRoomsLabel"]</span>
+                    <strong class="mockup-kpi-value">@L["MockupRoomsValue"]</strong>
+                </div>
+                <div class="mockup-kpi">
+                    <span class="mockup-kpi-label">@L["MockupCollectedLabel"]</span>
+                    <strong class="mockup-kpi-value">@L["MockupCollectedValue"]</strong>
+                </div>
+                <div class="mockup-kpi mockup-kpi-warning">
+                    <span class="mockup-kpi-label">@L["MockupDebtLabel"]</span>
+                    <strong class="mockup-kpi-value">@L["MockupDebtValue"]</strong>
+                </div>
+            </div>
+            <div class="mockup-chart" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <table class="mockup-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@L["MockupTableRoom"]</th>
+                        <th scope="col">@L["MockupTableTenant"]</th>
+                        <th scope="col">@L["MockupTableStatus"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@L["MockupRoom1"]</td>
+                        <td>@L["MockupTenant1"]</td>
+                        <td><span class="mockup-status status-paid">@L["MockupStatusPaid"]</span></td>
+                    </tr>
+                    <tr>
+                        <td>@L["MockupRoom2"]</td>
+                        <td>@L["MockupTenant2"]</td>
+                        <td><span class="mockup-status status-unpaid">@L["MockupStatusUnpaid"]</span></td>
+                    </tr>
+                    <tr>
+                        <td>@L["MockupRoom3"]</td>
+                        <td>@L["MockupTenant3"]</td>
+                        <td><span class="mockup-status status-empty">@L["MockupStatusEmpty"]</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </figure>
+    </div>
+</section>
+
+<section id="features" class="landing-section" aria-labelledby="features-title">
+    <div class="section-head">
+        <h2 id="features-title">@L["FeaturesTitle"]</h2>
+        <p>@L["FeaturesDescription"]</p>
+    </div>
+    <ul class="feature-grid">
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="door" /></span>
+            <h3>@L["Feature1Title"]</h3>
+            <p>@L["Feature1Description"]</p>
+        </li>
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="users" /></span>
+            <h3>@L["Feature2Title"]</h3>
+            <p>@L["Feature2Description"]</p>
+        </li>
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="file" /></span>
+            <h3>@L["Feature3Title"]</h3>
+            <p>@L["Feature3Description"]</p>
+        </li>
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="receipt" /></span>
+            <h3>@L["Feature4Title"]</h3>
+            <p>@L["Feature4Description"]</p>
+        </li>
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="wrench" /></span>
+            <h3>@L["Feature5Title"]</h3>
+            <p>@L["Feature5Description"]</p>
+        </li>
+        <li class="feature-card">
+            <span class="feature-icon"><LucideIcon Name="chart" /></span>
+            <h3>@L["Feature6Title"]</h3>
+            <p>@L["Feature6Description"]</p>
+        </li>
+    </ul>
+</section>
+
+<section id="roles" class="landing-section" aria-labelledby="roles-title">
+    <div class="section-head">
+        <h2 id="roles-title">@L["RolesTitle"]</h2>
+        <p>@L["RolesDescription"]</p>
+    </div>
+    <ul class="role-grid">
+        <li class="role-card">
+            <span class="role-icon"><LucideIcon Name="building" /></span>
+            <h3>@L["Role1Title"]</h3>
+            <p class="role-description">@L["Role1Description"]</p>
+            <ul class="role-points">
+                <li><LucideIcon Name="check" />@L["Role1Point1"]</li>
+                <li><LucideIcon Name="check" />@L["Role1Point2"]</li>
+                <li><LucideIcon Name="check" />@L["Role1Point3"]</li>
+            </ul>
+        </li>
+        <li class="role-card">
+            <span class="role-icon"><LucideIcon Name="shield-check" /></span>
+            <h3>@L["Role2Title"]</h3>
+            <p class="role-description">@L["Role2Description"]</p>
+            <ul class="role-points">
+                <li><LucideIcon Name="check" />@L["Role2Point1"]</li>
+                <li><LucideIcon Name="check" />@L["Role2Point2"]</li>
+                <li><LucideIcon Name="check" />@L["Role2Point3"]</li>
+            </ul>
+        </li>
+        <li class="role-card">
+            <span class="role-icon"><LucideIcon Name="user" /></span>
+            <h3>@L["Role3Title"]</h3>
+            <p class="role-description">@L["Role3Description"]</p>
+            <ul class="role-points">
+                <li><LucideIcon Name="check" />@L["Role3Point1"]</li>
+                <li><LucideIcon Name="check" />@L["Role3Point2"]</li>
+                <li><LucideIcon Name="check" />@L["Role3Point3"]</li>
+            </ul>
+        </li>
+    </ul>
+</section>
+
+<section class="landing-cta" aria-labelledby="cta-title">
+    <div class="cta-copy">
+        <h2 id="cta-title">@L["CtaTitle"]</h2>
+        <p>@L["CtaDescription"]</p>
+    </div>
+    <div class="cta-actions">
+        <a class="btn btn-primary" href="/Account/RegisterOwner">@L["HeroRegisterCta"]</a>
+        <a class="btn btn-secondary" href="/login">@L["HeroLoginCta"]</a>
+    </div>
+</section>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await Authentication.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            Navigation.NavigateTo("/home", replace: true);
+        }
+    }
+}
