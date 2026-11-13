@@ -506,6 +506,33 @@
   <data name="P5CostApprovalPending" xml:space="preserve"><value>Yêu cầu đã được gửi duyệt.</value></data>
   <data name="P5CostDuplicatePeriod" xml:space="preserve"><value>Phòng đã có chỉ số cho kỳ này.</value></data>
   <data name="P5CostReadingNotFound" xml:space="preserve"><value>Không tìm thấy chỉ số của kỳ.</value></data>
+  <data name="P5CostCreatePeriod" xml:space="preserve"><value>Lập phiếu</value></data>
+  <data name="P5CostCreatePeriodTitle" xml:space="preserve"><value>Lập phiếu ghi chỉ số</value></data>
+  <data name="P5CostCreatePeriodSubtitle" xml:space="preserve"><value>Tạo phiếu cho tháng mới; chỉ số điện/nước sẽ được nhập sau.</value></data>
+  <data name="P5CostPeriodPropertyLabel" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="P5CostPeriodRoomLabel" xml:space="preserve"><value>Phòng</value></data>
+  <data name="P5CostPeriodSelectRoom" xml:space="preserve"><value>-- Chọn phòng --</value></data>
+  <data name="P5CostPeriodRoomHint" xml:space="preserve"><value>Chọn phòng đang thuê trong tháng cần lập phiếu.</value></data>
+  <data name="P5CostPeriodNoRooms" xml:space="preserve"><value>Không có phòng đang thuê trong tháng này.</value></data>
+  <data name="P5CostPeriodLoadingRooms" xml:space="preserve"><value>Đang tải danh sách phòng...</value></data>
+  <data name="P5CostPeriodMonthLabel" xml:space="preserve"><value>Tháng</value></data>
+  <data name="P5CostPeriodYearLabel" xml:space="preserve"><value>Năm</value></data>
+  <data name="P5CostPeriodMonthOption" xml:space="preserve"><value>Tháng {0}</value></data>
+  <data name="P5CostPeriodStartDateLabel" xml:space="preserve"><value>Ngày bắt đầu</value></data>
+  <data name="P5CostPeriodEndDateLabel" xml:space="preserve"><value>Ngày kết thúc</value></data>
+  <data name="P5CostPeriodAutoRangeHint" xml:space="preserve"><value>Kỳ được tính từ ngày đầu đến ngày cuối của tháng đã chọn.</value></data>
+  <data name="P5CostPeriodCreateButton" xml:space="preserve"><value>Lập phiếu</value></data>
+  <data name="P5CostPeriodCreatingButton" xml:space="preserve"><value>Đang lập...</value></data>
+  <data name="P5CostPeriodCreateSuccess" xml:space="preserve"><value>Đã lập phiếu ghi chỉ số cho phòng {0} tháng {1}/{2}.</value></data>
+  <data name="P5CostPeriodSelectRoomError" xml:space="preserve"><value>Vui lòng chọn phòng cần lập phiếu.</value></data>
+  <data name="P5CostPeriodDuplicate" xml:space="preserve"><value>Phòng đã có phiếu ghi chỉ số cho tháng này.</value></data>
+  <data name="P5CostPeriodOverlap" xml:space="preserve"><value>Khoảng thời gian bị trùng với phiếu khác của phòng.</value></data>
+  <data name="P5CostPeriodHasLater" xml:space="preserve"><value>Phòng đã có phiếu cho tháng sau nên không thể lập phiếu cho tháng này.</value></data>
+  <data name="P5CostPeriodContractNotFound" xml:space="preserve"><value>Không tìm thấy hợp đồng đang thuê của phòng trong tháng này.</value></data>
+  <data name="P5CostPeriodInvalidMonth" xml:space="preserve"><value>Tháng/năm không hợp lệ.</value></data>
+  <data name="P5CostPeriodLoadRoomsFailed" xml:space="preserve"><value>Không thể tải danh sách phòng. Vui lòng thử lại.</value></data>
+  <data name="P5CostPeriodCreateFailed" xml:space="preserve"><value>Không thể lập phiếu ghi chỉ số. Vui lòng thử lại.</value></data>
+  <data name="P5CostStatusNoSheet" xml:space="preserve"><value>Chưa lập phiếu</value></data>
   <data name="ErrorCopySameProperty" xml:space="preserve"><value>Không thể sao chép giá từ chính nhà trọ này.</value></data>
   <data name="ErrorCopySourceForbidden" xml:space="preserve"><value>Bạn không có quyền xem nhà trọ nguồn.</value></data>
   <data name="RegBankAccountMissing" xml:space="preserve"><value>Chủ trọ chưa cấu hình tài khoản nhận tiền.</value></data>

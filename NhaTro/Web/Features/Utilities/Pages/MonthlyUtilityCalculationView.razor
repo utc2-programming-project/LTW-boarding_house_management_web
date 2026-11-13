@@ -17,6 +17,14 @@
 <div class="monthly-cost-page">
     <PageHeading Title="@UL["P5CostHeading"]" HelpText="@UL["P5CostSubtitle"]">
         <Actions>
+            <AuthorizeView Policy="UtilityRecord">
+                <Authorized>
+                    <button type="button" class="btn btn-primary" disabled="@_loading" @onclick="OpenCreatePeriodAsync">
+                        <LucideIcon Name="file-plus" />
+                        <span>@UL["P5CostCreatePeriod"]</span>
+                    </button>
+                </Authorized>
+            </AuthorizeView>
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
                 <LucideIcon Name="refresh" />
                 <span>@UL["P5CostRefresh"]</span>
@@ -165,7 +173,7 @@
                                             {
                                                 <span class="room-tenant">@room.TenantNames</span>
                                             }
-                                            <span class="status-badge @StatusClass(room.State)">@StatusLabel(room.State)</span>
+                                            <span class="status-badge @StatusClass(room)">@StatusLabel(room)</span>
                                         </div>
                                     </td>
                                     <td class="text-right tabular-nums" data-label="@UL["P5CostThElectricUsage"]">
@@ -311,7 +319,7 @@
 
             <div class="modal-body detail-body">
                 <div class="detail-topline">
-                    <span class="status-badge @StatusClass(detail.State)">@StatusLabel(detail.State)</span>
+                    <span class="status-badge @StatusClass(detail)">@StatusLabel(detail)</span>
                     @if (detail.InvoiceId is { } detailInvoiceId)
                     {
                         <a class="invoice-link created" href="@InvoiceDetailHref(detailInvoiceId)">
@@ -666,6 +674,136 @@
     </div>
 }
 
+@if (_createPeriodOpen)
+{
+    var createPeriodStart = new DateOnly(_createPeriodYear, _createPeriodMonth, 1);
+    var createPeriodEnd = new DateOnly(_createPeriodYear, _createPeriodMonth, DateTime.DaysInMonth(_createPeriodYear, _createPeriodMonth));
+    var createPeriodRoom = CreatePeriodRooms.FirstOrDefault(room => room.ContractId == _createPeriodContractId);
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cost-create-period-title" @onclick="CloseCreatePeriod">
+        <div class="modal-dialog period-create-dialog" @onclick:stopPropagation="true">
+            <header class="modal-header">
+                <div class="modal-header-icon">
+                    <LucideIcon Name="file-plus" />
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="cost-create-period-title">@UL["P5CostCreatePeriodTitle"]</h2>
+                    <p>@UL["P5CostCreatePeriodSubtitle"]</p>
+                </div>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseCreatePeriod" disabled="@_creatingPeriod">
+                    <LucideIcon Name="close" />
+                </button>
+            </header>
+
+            <div class="modal-body">
+                <div class="edit-grid">
+                    <div class="form-field">
+                        <label for="period-property">@UL["P5CostPeriodPropertyLabel"]</label>
+                        <select id="period-property" class="input" @bind="_createPeriodPropertyId" @bind:after="OnCreatePeriodPropertyChanged">
+                            <option value="">@UL["P5CostAllProperties"]</option>
+                            @foreach (var property in _data?.Properties ?? [])
+                            {
+                                <option value="@property.Id">@property.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="period-room">@UL["P5CostPeriodRoomLabel"]</label>
+                        <select id="period-room"
+                                class="input @(_createPeriodRoomInvalid ? "is-invalid" : "")"
+                                disabled="@_createPeriodLoadingRooms"
+                                @bind="_createPeriodContractId"
+                                @bind:after="OnCreatePeriodRoomChanged">
+                            <option value="">@UL["P5CostPeriodSelectRoom"]</option>
+                            @foreach (var room in CreatePeriodRooms)
+                            {
+                                <option value="@room.ContractId">@room.RoomCode</option>
+                            }
+                        </select>
+                        @if (_createPeriodLoadingRooms)
+                        {
+                            <span class="field-hint">@UL["P5CostPeriodLoadingRooms"]</span>
+                        }
+                        else if (createPeriodRoom is not null)
+                        {
+                            <span class="field-hint">@createPeriodRoom.PropertyName@(string.IsNullOrWhiteSpace(createPeriodRoom.TenantNames) ? string.Empty : $" · {createPeriodRoom.TenantNames}")</span>
+                        }
+                        else if (CreatePeriodRooms.Count == 0)
+                        {
+                            <span class="field-hint">@UL["P5CostPeriodNoRooms"]</span>
+                        }
+                        else
+                        {
+                            <span class="field-hint">@UL["P5CostPeriodRoomHint"]</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="edit-grid">
+                    <div class="form-field">
+                        <label for="period-month">@UL["P5CostPeriodMonthLabel"]</label>
+                        <select id="period-month" class="input" @bind="_createPeriodMonth" @bind:after="ReloadCreatePeriodRoomsAsync">
+                            @for (var month = 1; month <= 12; month++)
+                            {
+                                <option value="@month">@string.Format(UL["P5CostPeriodMonthOption"], month)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="period-year">@UL["P5CostPeriodYearLabel"]</label>
+                        <select id="period-year" class="input" @bind="_createPeriodYear" @bind:after="ReloadCreatePeriodRoomsAsync">
+                            @foreach (var year in CreatePeriodYearOptions)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="period-range-block">
+                    <div class="period-range-item">
+                        <span class="period-range-label">@UL["P5CostPeriodStartDateLabel"]</span>
+                        <strong class="tabular-nums">@DateFormatter.Format(createPeriodStart)</strong>
+                    </div>
+                    <LucideIcon Name="arrow-right" />
+                    <div class="period-range-item">
+                        <span class="period-range-label">@UL["P5CostPeriodEndDateLabel"]</span>
+                        <strong class="tabular-nums">@DateFormatter.Format(createPeriodEnd)</strong>
+                    </div>
+                </div>
+                <p class="field-hint">@UL["P5CostPeriodAutoRangeHint"]</p>
+
+                @if (_createPeriodError is not null)
+                {
+                    <div class="inline-error compact" role="alert">
+                        <LucideIcon Name="alert" />
+                        <span>@_createPeriodError</span>
+                    </div>
+                }
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseCreatePeriod" disabled="@_creatingPeriod">
+                    @UL["P5CostCancelButton"]
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="SubmitCreatePeriodAsync" disabled="@(_creatingPeriod || _createPeriodLoadingRooms || CreatePeriodRooms.Count == 0)">
+                    @if (_creatingPeriod)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                        <span>@UL["P5CostPeriodCreatingButton"]</span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="file-plus" />
+                        <span>@UL["P5CostPeriodCreateButton"]</span>
+                    }
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
@@ -694,6 +832,17 @@
     private decimal _editElectricEnd;
     private decimal _editWaterEnd;
     private string _editReason = string.Empty;
+
+    private bool _createPeriodOpen;
+    private bool _creatingPeriod;
+    private bool _createPeriodLoadingRooms;
+    private bool _createPeriodRoomInvalid;
+    private int? _createPeriodPropertyId;
+    private Guid? _createPeriodContractId;
+    private int _createPeriodMonth;
+    private int _createPeriodYear;
+    private IReadOnlyList<MonthlyUtilityRoomOptionDto> _createPeriodRooms = [];
+    private string? _createPeriodError;
 
     private const int PageSize = 20;
     private int _page = 1;
@@ -824,6 +973,175 @@
         _periodEnd = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
         await LoadAsync();
     }
+
+    // --- Lập phiếu ghi chỉ số cho tháng mới ---
+    private IReadOnlyList<MonthlyUtilityRoomOptionDto> CreatePeriodRooms =>
+        _createPeriodPropertyId is { } propertyId
+            ? _createPeriodRooms.Where(room => room.PropertyId == propertyId).ToList()
+            : _createPeriodRooms;
+
+    private IEnumerable<int> CreatePeriodYearOptions
+    {
+        get
+        {
+            var current = Clock.TodayVietnam().Year;
+            for (var year = current - 1; year <= current + 3; year++)
+            {
+                yield return year;
+            }
+        }
+    }
+
+    private async Task OpenCreatePeriodAsync()
+    {
+        if (_loading) return;
+
+        var next = _periodStart.AddMonths(1);
+        _createPeriodMonth = next.Month;
+        _createPeriodYear = next.Year;
+        _createPeriodPropertyId = _propertyId;
+        _createPeriodContractId = null;
+        _createPeriodError = null;
+        _createPeriodRoomInvalid = false;
+        _createPeriodOpen = true;
+        await LoadCreatePeriodRoomsAsync();
+    }
+
+    private void CloseCreatePeriod()
+    {
+        if (_creatingPeriod) return;
+        _createPeriodOpen = false;
+        _createPeriodError = null;
+        _createPeriodRoomInvalid = false;
+    }
+
+    private void OnCreatePeriodPropertyChanged()
+    {
+        _createPeriodContractId = null;
+        _createPeriodRoomInvalid = false;
+        _createPeriodError = null;
+    }
+
+    private void OnCreatePeriodRoomChanged()
+    {
+        _createPeriodRoomInvalid = false;
+        _createPeriodError = null;
+    }
+
+    private async Task ReloadCreatePeriodRoomsAsync()
+    {
+        _createPeriodContractId = null;
+        await LoadCreatePeriodRoomsAsync();
+    }
+
+    private async Task LoadCreatePeriodRoomsAsync()
+    {
+        _createPeriodLoadingRooms = true;
+        _createPeriodError = null;
+        try
+        {
+            var start = new DateOnly(_createPeriodYear, _createPeriodMonth, 1);
+            var end = new DateOnly(
+                _createPeriodYear,
+                _createPeriodMonth,
+                DateTime.DaysInMonth(_createPeriodYear, _createPeriodMonth));
+            _createPeriodRooms = await PageService.LoadPeriodRoomOptionsAsync(start, end, CancellationToken.None);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _createPeriodRooms = [];
+            _createPeriodError = UL["ErrorAccessDenied"];
+        }
+        catch (Exception)
+        {
+            _createPeriodRooms = [];
+            _createPeriodError = UL["P5CostPeriodLoadRoomsFailed"];
+        }
+        finally
+        {
+            _createPeriodLoadingRooms = false;
+        }
+    }
+
+    private async Task SubmitCreatePeriodAsync()
+    {
+        if (_creatingPeriod || _createPeriodLoadingRooms) return;
+
+        _createPeriodError = null;
+        _createPeriodRoomInvalid = false;
+
+        if (_createPeriodContractId is not { } contractId)
+        {
+            _createPeriodRoomInvalid = true;
+            _createPeriodError = UL["P5CostPeriodSelectRoomError"];
+            return;
+        }
+
+        _creatingPeriod = true;
+        await Task.Yield();
+        try
+        {
+            var result = await PageService.CreatePeriodAsync(
+                contractId,
+                _createPeriodYear,
+                _createPeriodMonth,
+                CancellationToken.None);
+
+            if (result.Success)
+            {
+                var selected = _createPeriodRooms.FirstOrDefault(room => room.ContractId == contractId);
+                var createdStart = new DateOnly(_createPeriodYear, _createPeriodMonth, 1);
+                var createdEnd = new DateOnly(
+                    _createPeriodYear,
+                    _createPeriodMonth,
+                    DateTime.DaysInMonth(_createPeriodYear, _createPeriodMonth));
+
+                _createPeriodOpen = false;
+                _periodStart = createdStart;
+                _periodEnd = createdEnd;
+                _propertyId = selected?.PropertyId ?? _propertyId;
+                _search = string.Empty;
+                _onlyUnrecorded = false;
+                _page = 1;
+
+                Toast.Success(string.Format(
+                    UL["P5CostPeriodCreateSuccess"],
+                    selected?.RoomCode ?? string.Empty,
+                    _createPeriodMonth,
+                    _createPeriodYear));
+                await LoadAsync();
+                return;
+            }
+
+            _createPeriodError = CreatePeriodErrorMessage(result.ErrorCode);
+            Toast.Error(_createPeriodError);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _createPeriodError = UL["ErrorAccessDenied"];
+            Toast.Error(_createPeriodError);
+        }
+        catch (Exception)
+        {
+            _createPeriodError = UL["P5CostPeriodCreateFailed"];
+            Toast.Error(_createPeriodError);
+        }
+        finally
+        {
+            _creatingPeriod = false;
+        }
+    }
+
+    private string CreatePeriodErrorMessage(string? code) => code switch
+    {
+        "ContractNotFound" => UL["P5CostPeriodContractNotFound"],
+        "DuplicatePeriod" => UL["P5CostPeriodDuplicate"],
+        "OverlappingPeriod" => UL["P5CostPeriodOverlap"],
+        "PeriodHasLaterPeriod" => UL["P5CostPeriodHasLater"],
+        "InvalidPeriod" => UL["P5CostPeriodInvalidMonth"],
+        "Forbidden" or "AccessDenied" or "OutsideScope" => UL["ErrorAccessDenied"],
+        _ => UL["P5CostPeriodCreateFailed"],
+    };
 
     private void OpenDetails(MonthlyUtilityRoomCostDto room) => _detailRoom = room;
 
@@ -1080,6 +1398,16 @@
         "TariffMissing" => UL["P5CostTariffMissing"],
         _ => UL["P5CostSaveFailed"],
     };
+
+    private string StatusClass(MonthlyUtilityRoomCostDto room) =>
+        !room.HasPeriod && room.State == MonthlyUtilityPeriodState.Open
+            ? "status-none"
+            : StatusClass(room.State);
+
+    private string StatusLabel(MonthlyUtilityRoomCostDto room) =>
+        !room.HasPeriod && room.State == MonthlyUtilityPeriodState.Open
+            ? UL["P5CostStatusNoSheet"]
+            : StatusLabel(room.State);
 
     private string StatusClass(MonthlyUtilityPeriodState state) => state switch
     {
