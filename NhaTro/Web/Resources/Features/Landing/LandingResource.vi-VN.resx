@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="PageTitle" xml:space="preserve"><value>Web vận hành nhà trọ — Quản lý phòng, khách thuê và hoá đơn</value></data>
+<data name="NavFeatures" xml:space="preserve"><value>Tính năng</value></data>
+<data name="NavRoles" xml:space="preserve"><value>Vai trò</value></data>
+<data name="Login" xml:space="preserve"><value>Đăng nhập</value></data>
+<data name="Register" xml:space="preserve"><value>Đăng ký</value></data>
+<data name="HeroBadge" xml:space="preserve"><value>Quản lý nhà trọ trọn gói</value></data>
+<data name="HeroTitle" xml:space="preserve"><value>Quản lý nhà trọ gọn trong một màn hình</value></data>
+<data name="HeroDescription" xml:space="preserve"><value>Từ phòng trống, hồ sơ khách thuê đến hợp đồng, hoá đơn và sự cố — mọi việc vận hành nằm trong một hệ thống duy nhất, rõ ràng theo từng vai trò.</value></data>
+<data name="HeroLoginCta" xml:space="preserve"><value>Đăng nhập</value></data>
+<data name="HeroRegisterCta" xml:space="preserve"><value>Đăng ký làm chủ trọ</value></data>
+<data name="HeroProof" xml:space="preserve"><value>Dành cho chủ trọ, quản lý và khách thuê</value></data>
+<data name="MockupTitle" xml:space="preserve"><value>Tổng quan nhà trọ</value></data>
+<data name="MockupSample" xml:space="preserve"><value>Số liệu minh hoạ</value></data>
+<data name="MockupRoomsLabel" xml:space="preserve"><value>Phòng đang thuê</value></data>
+<data name="MockupRoomsValue" xml:space="preserve"><value>12/15</value></data>
+<data name="MockupCollectedLabel" xml:space="preserve"><value>Đã thu tháng này</value></data>
+<data name="MockupCollectedValue" xml:space="preserve"><value>24.500.000 ₫</value></data>
+<data name="MockupDebtLabel" xml:space="preserve"><value>Công nợ</value></data>
+<data name="MockupDebtValue" xml:space="preserve"><value>3.200.000 ₫</value></data>
+<data name="MockupTableRoom" xml:space="preserve"><value>Phòng</value></data>
+<data name="MockupTableTenant" xml:space="preserve"><value>Khách thuê</value></data>
+<data name="MockupTableStatus" xml:space="preserve"><value>Trạng thái</value></data>
+<data name="MockupRoom1" xml:space="preserve"><value>P.101</value></data>
+<data name="MockupRoom2" xml:space="preserve"><value>P.102</value></data>
+<data name="MockupRoom3" xml:space="preserve"><value>P.103</value></data>
+<data name="MockupTenant1" xml:space="preserve"><value>Nguyễn Văn A</value></data>
+<data name="MockupTenant2" xml:space="preserve"><value>Trần Thị B</value></data>
+<data name="MockupTenant3" xml:space="preserve"><value>—</value></data>
+<data name="MockupStatusPaid" xml:space="preserve"><value>Đã thu</value></data>
+<data name="MockupStatusUnpaid" xml:space="preserve"><value>Chưa thu</value></data>
+<data name="MockupStatusEmpty" xml:space="preserve"><value>Trống</value></data>
+<data name="FeaturesTitle" xml:space="preserve"><value>Một nơi cho mọi việc vận hành</value></data>
+<data name="FeaturesDescription" xml:space="preserve"><value>Nhập phòng, khách thuê, hợp đồng, hoá đơn, sự cố và báo cáo được nối liền trong cùng một hệ thống.</value></data>
+<data name="Feature1Title" xml:space="preserve"><value>Phòng &amp; tài sản</value></data>
+<data name="Feature1Description" xml:space="preserve"><value>Theo dõi trạng thái từng phòng, tài sản đi kèm và khôi phục dữ liệu đã xoá.</value></data>
+<data name="Feature2Title" xml:space="preserve"><value>Hồ sơ khách thuê</value></data>
+<data name="Feature2Description" xml:space="preserve"><value>Thông tin liên hệ, giấy tờ và phạm vi quản lý; số CCCD được che với quản lý.</value></data>
+<data name="Feature3Title" xml:space="preserve"><value>Hợp đồng &amp; gia hạn</value></data>
+<data name="Feature3Description" xml:space="preserve"><value>Tạo, duyệt hợp đồng và nhắc gia hạn trước khi hết hạn.</value></data>
+<data name="Feature4Title" xml:space="preserve"><value>Hoá đơn &amp; thanh toán</value></data>
+<data name="Feature4Description" xml:space="preserve"><value>Lập hoá đơn theo chỉ số điện nước, gửi VietQR và đối chiếu thanh toán.</value></data>
+<data name="Feature5Title" xml:space="preserve"><value>Sự cố &amp; bảo trì</value></data>
+<data name="Feature5Description" xml:space="preserve"><value>Khách thuê báo sự cố kèm ảnh; chủ trọ duyệt và theo dõi xử lý.</value></data>
+<data name="Feature6Title" xml:space="preserve"><value>Báo cáo &amp; KPI</value></data>
+<data name="Feature6Description" xml:space="preserve"><value>Doanh thu, công nợ, tỷ lệ lấp đầy và báo cáo vận hành theo kỳ.</value></data>
+<data name="RolesTitle" xml:space="preserve"><value>Đúng người, đúng phạm vi</value></data>
+<data name="RolesDescription" xml:space="preserve"><value>Mỗi vai trò có menu và quyền thao tác riêng, chỉ thấy dữ liệu trong phạm vi được giao.</value></data>
+<data name="Role1Title" xml:space="preserve"><value>Chủ trọ</value></data>
+<data name="Role1Description" xml:space="preserve"><value>Toàn quyền với cơ sở của mình.</value></data>
+<data name="Role1Point1" xml:space="preserve"><value>Quản lý nhiều cơ sở và nhân sự</value></data>
+<data name="Role1Point2" xml:space="preserve"><value>Duyệt tài khoản, hợp đồng và sự cố</value></data>
+<data name="Role1Point3" xml:space="preserve"><value>Xem doanh thu và công nợ toàn hệ thống</value></data>
+<data name="Role2Title" xml:space="preserve"><value>Quản lý</value></data>
+<data name="Role2Description" xml:space="preserve"><value>Vận hành theo cơ sở được phân công.</value></data>
+<data name="Role2Point1" xml:space="preserve"><value>Cập nhật phòng và khách thuê</value></data>
+<data name="Role2Point2" xml:space="preserve"><value>Ghi chỉ số, lập hoá đơn</value></data>
+<data name="Role2Point3" xml:space="preserve"><value>Xử lý sự cố trong phạm vi</value></data>
+<data name="Role3Title" xml:space="preserve"><value>Khách thuê</value></data>
+<data name="Role3Description" xml:space="preserve"><value>Theo dõi phòng và nghĩa vụ của mình.</value></data>
+<data name="Role3Point1" xml:space="preserve"><value>Xem hợp đồng và phòng đang thuê</value></data>
+<data name="Role3Point2" xml:space="preserve"><value>Xem hoá đơn, xác nhận thanh toán</value></data>
+<data name="Role3Point3" xml:space="preserve"><value>Báo sự cố kèm ảnh</value></data>
+<data name="CtaTitle" xml:space="preserve"><value>Bắt đầu quản lý nhà trọ ngay hôm nay</value></data>
+<data name="CtaDescription" xml:space="preserve"><value>Đăng nhập nếu bạn đã có tài khoản, hoặc đăng ký làm chủ trọ để tạo cơ sở đầu tiên.</value></data>
+<data name="FooterRights" xml:space="preserve"><value>Bảo lưu mọi quyền.</value></data>
+</root>

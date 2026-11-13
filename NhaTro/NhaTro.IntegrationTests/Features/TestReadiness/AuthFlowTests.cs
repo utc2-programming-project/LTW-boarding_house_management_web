@@ -34,9 +34,9 @@ public sealed class AuthFlowTests(WebAppFixture fixture) : IClassFixture<WebAppF
             client, token, handler, TestDataSeeder.AdminEmail, TestDataSeeder.Password);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Equal("/", response.Headers.Location?.AbsolutePath);
+        Assert.Equal("/home", response.Headers.Location?.AbsolutePath);
 
-        var home = await client.GetAsync("/");
+        var home = await client.GetAsync("/home");
         home.EnsureSuccessStatusCode();
         var html = await home.Content.ReadAsStringAsync();
 

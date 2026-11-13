@@ -251,13 +251,13 @@
             var signedInUser = await Users.FindByEmailAsync(Input.Email.Trim());
             if (signedInUser is null)
             {
-                RedirectManager.RedirectTo("/");
+                RedirectManager.RedirectTo("/home");
                 return;
             }
 
             if (signedInUser is { EmailConfirmed: false })
             {
-                var target = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
+                var target = string.IsNullOrEmpty(ReturnUrl) ? "/home" : ReturnUrl;
                 RedirectManager.RedirectTo(
                     $"Account/VerifyOtp?purpose=FirstLogin&email={Uri.EscapeDataString(Input.Email.Trim())}"
                     + $"&returnUrl={Uri.EscapeDataString(target)}");
@@ -267,7 +267,7 @@
             // PLAN-023: một ngữ cảnh vào thẳng; nhiều ngữ cảnh dừng ở /select-role.
             var redirect = await PostLogin.GetRedirectAsync(
                 signedInUser,
-                string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+                string.IsNullOrEmpty(ReturnUrl) ? "/home" : ReturnUrl);
             RedirectManager.RedirectTo(redirect);
             return;
         }
