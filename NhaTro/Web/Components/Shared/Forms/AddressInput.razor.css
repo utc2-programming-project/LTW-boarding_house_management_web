@@ -25,6 +25,16 @@
 
 .address-input-control {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Nhãn gợi ý trong select (vd. "Chọn tỉnh/thành phố trước") dài hơn cột:
+   cắt gọn bằng ellipsis thay vì tràn ra ngoài viền/đè lên mũi tên. */
+select.address-input-control {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* Ô nhập tay xuất hiện ngay dưới ô chọn để thấy rõ đang ở chế độ ngoài danh mục. */

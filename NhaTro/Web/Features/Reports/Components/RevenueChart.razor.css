@@ -1,9 +1,9 @@
-.revenue-chart { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.revenue-chart { display:flex; flex-direction:column; gap:24px; min-width:0; }
 .revenue-chart__toolbar { display:flex; gap:8px; flex-wrap:wrap; }
 .revenue-chart__toolbar .btn[aria-pressed="true"] { border-color:var(--focus-ring); color:var(--accent-text); font-weight:600; }
-.revenue-chart__visual { min-width:0; }
+.revenue-chart__visual { min-width:0; padding-bottom:16px; }
 .revenue-chart__visual ::deep .mud-chart { width:100%; min-height:0; }
-.revenue-chart ::deep .table-scroll { margin:0; }
+.revenue-chart ::deep .table-scroll { margin:8px 0 0; }
 .table-scroll { overflow-x:auto; max-width:100%; border:1px solid var(--border); border-radius:var(--radius-card); }
 table { width:100%; border-collapse:collapse; text-align:left; font-size:.875rem; line-height:1.375rem; }
 caption { text-align:left; font-size:1.125rem; line-height:1.625rem; font-weight:600; padding:16px; color:var(--text-primary); }

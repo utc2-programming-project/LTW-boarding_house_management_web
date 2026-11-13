@@ -185,8 +185,6 @@
                             <th class="text-right">@L["ThPriceRate"]</th>
                             <th class="text-center">@L["ThPriceStatus"]</th>
                             <th>@L["ThPriceScope"]</th>
-                            <th>@L["ThPriceCreator"]</th>
-                            <th>@L["ThPriceCreatedAt"]</th>
                             <th>@L["ThPriceNotes"]</th>
                         </tr>
                     </thead>
@@ -238,10 +236,6 @@
                                     </span>
                                 </td>
                                 <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
-                                <td class="text-slate-700 font-medium">@v.CreatedBy</td>
-                                <td class="tabular-nums text-slate-500 font-mono text-xs">
-                                    @(!v.CreatedAt.HasValue || v.CreatedAt.Value == default ? "—" : DateFormatter.FormatDateTime(v.CreatedAt.Value))
-                                </td>
                                     <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? L["NoData"].Value : v.Note)</td>
                             </tr>
                         }
