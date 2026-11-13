@@ -29,6 +29,7 @@ namespace NhaTro.UnitTests.Components;
 public sealed class BusinessReportsPageTests : BunitContext
 {
     private readonly List<RoomReportFilter> RoomRequests = [];
+    private readonly List<OccupancyFilter> OccupancyRequests = [];
     private readonly List<TenantReportFilter> TenantRequests = [];
     private readonly List<string> CallerRoles = [];
     private bool DenyRooms;
@@ -45,8 +46,18 @@ public sealed class BusinessReportsPageTests : BunitContext
             Items = [new() { Id = 7, Name = "House 7", IsActive = true }],
             Page = 1, PageSize = 100, TotalCount = 1,
         }));
-        var rooms = Proxy<IRoomReportService>((_, args) =>
+        var rooms = Proxy<IRoomReportService>((method, args) =>
         {
+            if (method?.Name == nameof(IRoomReportService.GetOccupancyAsync))
+            {
+                var occupancyFilter = (OccupancyFilter)args![0]!;
+                OccupancyRequests.Add(occupancyFilter);
+                return Task.FromResult(new OccupancyReportResult(
+                [
+                    new OccupancyMonthDto("2026-10", new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31), 3, 2, 1, 66.7m),
+                ]));
+            }
+
             var filter = (RoomReportFilter)args![0]!;
             RoomRequests.Add(filter);
             CallerRoles.Add(((PropertyCaller)args[1]!).Role);
@@ -163,6 +174,22 @@ public sealed class BusinessReportsPageTests : BunitContext
         Assert.Equal(6, page.FindAll(".tenant-table th").Count);
         Assert.Equal(3, page.FindAll(".kpis dd").Count);
         Assert.All(CallerRoles, value => Assert.Equal(Roles.QuanLy, value));
+    }
+
+    [Fact]
+    public void Room_tab_shows_monthly_occupancy_from_the_same_filters()
+    {
+        Configure(Roles.ChuTro);
+        var page = Render<BusinessReportsView>();
+        page.WaitForAssertion(() => Assert.Single(OccupancyRequests));
+        page.WaitForAssertion(() => Assert.Contains("66,7", page.Find(".occupancy-history").TextContent));
+        Assert.Null(OccupancyRequests[0].PropertyId);
+
+        page.Find("#report-property").Change("7");
+        page.WaitForAssertion(() => Assert.Equal(7, OccupancyRequests.Last().PropertyId));
+
+        page.Find("#report-from").Change("2026-10-01");
+        page.WaitForAssertion(() => Assert.Equal(new DateOnly(2026, 10, 1), OccupancyRequests.Last().From));
     }
 
     [Fact]

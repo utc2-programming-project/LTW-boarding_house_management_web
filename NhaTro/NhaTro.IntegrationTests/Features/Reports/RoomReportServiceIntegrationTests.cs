@@ -16,6 +16,7 @@ using Web.Features.Rooms.Enums;
 using Web.Features.Settings.Entities;
 using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
+using Web.Infrastructure.Time;
 
 namespace NhaTro.IntegrationTests.Features.Reports;
 
@@ -37,7 +38,13 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
     private static readonly PropertyCaller Admin = new(AdminId, Roles.Admin);
     private static readonly PropertyCaller KhachThue = new(TenantUserId, Roles.KhachThue);
 
-    private sealed record Seed(int PropertyAId, int PropertyBId, int PropertyCId, int RoomA101Id);
+    private sealed record Seed(
+        int PropertyAId,
+        int PropertyBId,
+        int PropertyCId,
+        int RoomA101Id,
+        int RoomA102Id,
+        int RoomB201Id);
 
     // ---------- Dựng dữ liệu ----------
 
@@ -61,17 +68,23 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
         db.Properties.AddRange(propertyA, propertyB, propertyC);
         await db.SaveChangesAsync();
 
+        // VHT-141: phòng phải được tạo trước tháng báo cáo để tính vào lấp đầy lịch sử.
         var a101 = NewRoom(propertyA.Id, "A101", RoomStatus.Available);
-        db.Rooms.AddRange(
-            a101,
-            NewRoom(propertyA.Id, "A102", RoomStatus.Rented),
-            NewRoom(propertyA.Id, "A103", RoomStatus.Maintenance),
-            NewRoom(propertyA.Id, "A104", RoomStatus.Available, isActive: false),
-            NewRoom(propertyA.Id, "A105", RoomStatus.Rented, isDeleted: true),
-            NewRoom(propertyB.Id, "B201", RoomStatus.Available));
+        var a102 = NewRoom(propertyA.Id, "A102", RoomStatus.Rented);
+        var a103 = NewRoom(propertyA.Id, "A103", RoomStatus.Maintenance);
+        var a104 = NewRoom(propertyA.Id, "A104", RoomStatus.Available, isActive: false);
+        var a105 = NewRoom(propertyA.Id, "A105", RoomStatus.Rented, isDeleted: true);
+        var b201 = NewRoom(propertyB.Id, "B201", RoomStatus.Available);
+        foreach (var room in new[] { a101, a102, a103, a104, a105, b201 })
+        {
+            room.CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        db.Rooms.AddRange(a101, a102, a103, a104, a105, b201);
         await db.SaveChangesAsync();
 
-        return new Seed(propertyA.Id, propertyB.Id, propertyC.Id, a101.Id);
+        return new Seed(
+            propertyA.Id, propertyB.Id, propertyC.Id, a101.Id, a102.Id, b201.Id);
     }
 
     private static Room NewRoom(
@@ -93,7 +106,8 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
             new ManagerToggleService(db, TimeProvider.System, NullLogger<ManagerToggleService>.Instance),
             NullLogger<ManagerTogglePolicy>.Instance);
 
-    private RoomReportService NewReportService(ApplicationDbContext db) => new(fixture, NewPolicy(db));
+    private RoomReportService NewReportService(ApplicationDbContext db, TimeProvider? time = null) =>
+        new(fixture, NewPolicy(db), time);
 
     private RoomService NewRoomService(ApplicationDbContext db) => new(
         fixture,
@@ -301,6 +315,120 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
             DepositAmount = 3_000_000m,
             Status = status,
         };
+
+    private static Contract NewContract(
+        string number,
+        int roomId,
+        ContractStatus status,
+        DateTime? start = null,
+        DateTime? end = null) =>
+        new()
+        {
+            ContractNumber = number,
+            RoomId = roomId,
+            StartDate = start ?? new DateTime(2026, 1, 1),
+            EndDate = end ?? new DateTime(2026, 12, 31),
+            SnapshotPrice = 3_000_000m,
+            DepositAmount = 3_000_000m,
+            Status = status,
+        };
+
+    // ---------- VHT-141: lấp đầy lịch sử theo tháng ----------
+
+    [SqlServerFact]
+    public async Task Lap_day_mac_dinh_tra_sau_thang_gan_nhat_va_khop_hop_dong()
+    {
+        var seed = await PrepareAsync();
+        await using (var db = fixture.CreateContext())
+        {
+            db.Contracts.AddRange(
+                NewContract("HD-A101-06-08", seed.RoomA101Id, ContractStatus.Approved,
+                    new DateTime(2026, 6, 1), new DateTime(2026, 8, 31)),
+                NewContract("HD-A102-10-12", seed.RoomA102Id, ContractStatus.Liquidated,
+                    new DateTime(2026, 10, 1), new DateTime(2026, 12, 31)));
+            await db.SaveChangesAsync();
+        }
+
+        await using var readDb = fixture.CreateContext();
+        var result = await NewReportService(readDb, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
+            .GetOccupancyAsync(new OccupancyFilter(), ChuTroA);
+
+        // Không chọn ngày: 6 tháng gần nhất tính đến tháng hiện tại (06/2026 - 11/2026).
+        Assert.Equal(
+            ["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"],
+            result.Months.Select(month => month.MonthKey));
+        Assert.All(result.Months, month => Assert.Equal(3, month.TotalRooms));
+        Assert.Equal(
+            [1, 1, 1, 0, 1, 1],
+            result.Months.Select(month => month.RentedRooms));
+        Assert.Equal(
+            [2, 2, 2, 3, 2, 2],
+            result.Months.Select(month => month.VacantRooms));
+        Assert.Equal(33.3m, result.Months[0].OccupancyRate!.Value);
+        Assert.Equal(0m, result.Months[3].OccupancyRate!.Value);
+        Assert.Equal(
+            result.Months.Sum(month => month.RentedRooms),
+            result.Months.Sum(month => month.TotalRooms - month.VacantRooms));
+    }
+
+    [SqlServerFact]
+    public async Task Lap_day_loc_khoang_thang_va_nha_khong_co_phong()
+    {
+        var seed = await PrepareAsync();
+        await using var db = fixture.CreateContext();
+
+        var byRange = await NewReportService(db, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
+            .GetOccupancyAsync(
+                new OccupancyFilter(new DateOnly(2026, 10, 15), new DateOnly(2026, 11, 20)),
+                ChuTroA);
+
+        Assert.Equal(["2026-10", "2026-11"], byRange.Months.Select(month => month.MonthKey));
+        Assert.All(byRange.Months, month => Assert.Equal(3, month.TotalRooms));
+
+        // Nhà C không có phòng: tỷ lệ null, không chia cho 0.
+        var emptyProperty = await NewReportService(db, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
+            .GetOccupancyAsync(
+                new OccupancyFilter(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31), seed.PropertyCId),
+                ChuTroA);
+
+        var emptyMonth = Assert.Single(emptyProperty.Months);
+        Assert.Equal(0, emptyMonth.TotalRooms);
+        Assert.Equal(0, emptyMonth.RentedRooms);
+        Assert.Null(emptyMonth.OccupancyRate);
+    }
+
+    [SqlServerFact]
+    public async Task Lap_day_theo_pham_vi_quyen_va_cong_tac()
+    {
+        var seed = await PrepareAsync();
+        await using var db = fixture.CreateContext();
+
+        var ownerB = new PropertyCaller(OwnerBId, Roles.ChuTro);
+        var propertyB = await NewReportService(db, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
+            .GetOccupancyAsync(
+                new OccupancyFilter(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 31), seed.PropertyBId),
+                ownerB);
+        var month = Assert.Single(propertyB.Months);
+        Assert.Equal(1, month.TotalRooms);
+        Assert.Equal(0, month.RentedRooms);
+        Assert.Equal(0m, month.OccupancyRate!.Value);
+
+        var service = NewReportService(db);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.GetOccupancyAsync(new OccupancyFilter(), Admin));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.GetOccupancyAsync(new OccupancyFilter(), KhachThue));
+
+        await DenyToggleAsync("SW-15a");
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => service.GetOccupancyAsync(new OccupancyFilter(), QuanLy));
+    }
+
+    private sealed class FixedTimeProvider(DateOnly today) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(
+            VietnamTime.ToUtc(today.ToDateTime(new TimeOnly(12, 0))), TimeSpan.Zero);
+    }
 
     // ---------- Case 8-11: công tắc và vai trò ----------
 
