@@ -11,24 +11,33 @@
         </Actions>
     </PageHeading>
     @HeaderContent
-    <div class="filters">
-        <label>@L["Property"]
-            <select value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
-                <option value="">@L["AllProperties"]</option>
-                @foreach (var property in Properties)
-                {
-                    <option value="@property.Id">@property.Name@(!property.IsActive ? " – " + L["Inactive"] : "")</option>
-                }
-            </select>
-        </label>
-        <label>@L["PendingPeriod"]
-            <select value="@Filter.Period" @onchange="ChangePeriodAsync" disabled="@Busy">
-                @foreach (var period in Enum.GetValues<DashboardPeriod>())
-                {
-                    <option value="@period">@L[period.ToString()]</option>
-                }
-            </select>
-        </label>
+    <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar__row">
+            <div class="filter-bar__stack filter-bar__select">
+                <label for="dashboard-property">@L["Property"]</label>
+                <select id="dashboard-property" class="input" value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
+                    <option value="">@L["AllProperties"]</option>
+                    @foreach (var property in Properties)
+                    {
+                        <option value="@property.Id">@property.Name@(!property.IsActive ? " – " + L["Inactive"] : "")</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-bar__stack filter-bar__select">
+                <label for="dashboard-period">@L["PendingPeriod"]</label>
+                <select id="dashboard-period" class="input" value="@Filter.Period" @onchange="ChangePeriodAsync" disabled="@Busy">
+                    @foreach (var period in Enum.GetValues<DashboardPeriod>())
+                    {
+                        <option value="@period">@L[period.ToString()]</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-bar__actions">
+                <FilterResetButton OnClick="ClearFiltersAsync" Disabled="Busy" />
+            </div>
+        </div>
+        <p class="scope-note">@L["RoomScopeNote"]</p>
+        <p class="scope-note">@L["CurrentPeriodNote"]</p>
     </div>
     @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
     {
@@ -39,8 +48,6 @@
                  RoomsHref="@RoomsHref" FilterDescription="@FilterDescription"
                  Revenue="@Revenue" RevenueState="@RevenueState" RevenueHref="@RevenueHref" RevenueRetry="LoadRevenueAsync"
                  Incidents="@Incidents" IncidentState="@IncidentState" IncidentsHref="@IncidentsHref" IncidentRetry="LoadIncidentsAsync" />
-    <p class="scope-note">@L["RoomScopeNote"]</p>
-    <p class="scope-note">@L["CurrentPeriodNote"]</p>
     <a class="reports-link" href="@ReportsHref">@L["ViewReports"]</a>
     <div class="panel-grid">
         <DashboardPanel Title="@L["RoomStructure"]" State="@RoomState" DeniedText="@L["RoomsDenied"]" Retry="LoadRoomsAsync">
@@ -140,6 +147,14 @@
         if (Busy || !Enum.TryParse<DashboardPeriod>(args.Value?.ToString(), out var period)) return;
         Filter.Period = period;
         await Task.WhenAll(LoadIncidentsAsync(), LoadRevenueAsync());
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        if (Busy) return;
+        Filter.PropertyId = null;
+        Filter.Period = DashboardPeriod.Month;
+        await Task.WhenAll(LoadRoomsAsync(), LoadTenantsAsync(), LoadIncidentsAsync(), LoadRevenueAsync());
     }
 
     private async Task LoadPropertiesAsync()

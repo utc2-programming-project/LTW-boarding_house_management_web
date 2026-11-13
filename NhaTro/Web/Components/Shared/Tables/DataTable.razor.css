@@ -11,6 +11,28 @@
     overflow-x: auto;
 }
 
+/* Trang thùng rác: menu 3 chấm cần tràn ra khỏi khung để không bị cắt. */
+.table-card--overflow,
+.table-card--overflow .table-scroll {
+    overflow: visible;
+}
+
+/* Cột thao tác: căn giữa dấu 3 chấm dưới tiêu đề. */
+th.cell-actions,
+td.cell-actions {
+    text-align: center;
+}
+
+th.cell-actions .p2-row-actions,
+td.cell-actions .p2-row-actions {
+    justify-content: center;
+}
+
+/* Cột có độ rộng cố định: giữ các cột dữ liệu còn lại chia đều. */
+table.fixed-layout {
+    table-layout: fixed;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;

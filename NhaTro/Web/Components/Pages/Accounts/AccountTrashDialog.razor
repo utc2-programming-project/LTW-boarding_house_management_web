@@ -1,5 +1,6 @@
 @using Web.Components.Shared.Dialogs
 @using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Tables
 @using Web.Features.Accounts
 @using Web.Features.Accounts.DTOs
 
@@ -23,8 +24,8 @@
                 @L["EmptyTrash"]
             </button>
         </div>
-        <div class="table-scroll">
-            <table class="account-table">
+        <div class="table-scroll account-trash-scroll">
+            <table class="account-table account-trash-table">
                 <thead>
                     <tr>
                         <th scope="col">@L["EmailLabel"]</th>
@@ -41,16 +42,8 @@
                             <td>@(string.IsNullOrWhiteSpace(item.FullName) ? L["NoData"].Value : item.FullName)</td>
                             <td>@(item.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
                             <td>
-                                <div class="p2-row-actions">
-                                    <button type="button" class="btn btn-secondary btn-sm"
-                                            @onclick="() => RestoreAsync(item)">
-                                        @L["AccountRestore"]
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            @onclick="() => RequestPurge(item)">
-                                        @L["Purge"]
-                                    </button>
-                                </div>
+                                <TrashRowMenu RestoreText="@L["AccountRestore"]" PurgeText="@L["Purge"]"
+                                              OnRestore="() => RestoreAsync(item)" OnPurge="() => RequestPurge(item)" />
                             </td>
                         </tr>
                     }

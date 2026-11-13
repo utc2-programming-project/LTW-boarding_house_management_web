@@ -46,7 +46,7 @@
     </div>
 
     <DataTable @ref="_table" @key="_tableKey" TItem="ServiceCatalogTrashItemDto" Columns="_columns"
-               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize" AllowOverflow="true"
                Caption="@L["ServiceTrashTitle"]" Labels="_tableLabels" />
 </div>
 
@@ -83,7 +83,6 @@
     private int _pageSize = 20;
     private int _tableKey;
     private string _keyword = string.Empty;
-    private int? _openMenuId;
 
     protected override void OnInitialized()
     {
@@ -93,25 +92,8 @@
 
     private IReadOnlyList<DataTableColumn<ServiceCatalogTrashItemDto>> BuildColumns()
     {
-        RenderFragment<ServiceCatalogTrashItemDto> actions = item => @<div class="p2-row-actions">
-            <button type="button" class="icon-button p2-menu-trigger @(_openMenuId == item.Id ? "is-open" : null)"
-                    aria-haspopup="menu" aria-expanded="@(_openMenuId == item.Id ? "true" : "false")"
-                    @onclick="() => ToggleMenu(item.Id)">
-                <LucideIcon Name="ellipsis" />
-            </button>
-            @if (_openMenuId == item.Id)
-            {
-                <div class="p2-row-menu" role="menu">
-                    <button type="button" class="p2-row-menu-item" @onclick="() => { CloseMenu(); RequestRestore(item); }">
-                        <LucideIcon Name="refresh-cw" /><span>@L["Restore"]</span>
-                    </button>
-                    <div class="p2-row-menu-sep" role="separator"></div>
-                    <button type="button" class="p2-row-menu-item danger" @onclick="() => { CloseMenu(); RequestPurge(item); }">
-                        <LucideIcon Name="trash" /><span>@L["Purge"]</span>
-                    </button>
-                </div>
-            }
-        </div>;
+        RenderFragment<ServiceCatalogTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
+            OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
 
         return
         [
@@ -153,9 +135,6 @@
 
         return Task.CompletedTask;
     }
-
-    private void ToggleMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
-    private void CloseMenu() => _openMenuId = null;
 
     private void RequestRestore(ServiceCatalogTrashItemDto item)
     {

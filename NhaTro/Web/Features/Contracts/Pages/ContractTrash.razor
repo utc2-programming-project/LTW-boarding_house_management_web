@@ -55,7 +55,7 @@
     </div>
 
     <DataTable @ref="_table" @key="_tableKey" TItem="ContractTrashItemDto" Columns="_columns"
-               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize" AllowOverflow="true"
                Caption="@L["ContractTrashTitle"]" Labels="_tableLabels" />
 </div>
 
@@ -101,14 +101,8 @@
 
     private IReadOnlyList<DataTableColumn<ContractTrashItemDto>> BuildColumns()
     {
-        RenderFragment<ContractTrashItemDto> actions = item => @<div class="p2-row-actions">
-            <button type="button" class="btn btn-secondary" @onclick="() => RequestRestore(item)">
-                <LucideIcon Name="refresh-cw" />@L["Restore"]
-            </button>
-            <button type="button" class="btn btn-danger" @onclick="() => RequestPurge(item)">
-                <LucideIcon Name="trash" />@L["Purge"]
-            </button>
-        </div>;
+        RenderFragment<ContractTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
+            OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
 
         return
         [

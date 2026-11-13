@@ -20,5 +20,11 @@ public sealed class DataTableColumn<TItem>
     /// <summary>Cột số/tiền: căn phải, dùng tabular-nums.</summary>
     public bool IsNumeric { get; init; }
 
+    /// <summary>Class CSS bổ sung cho ô tiêu đề và ô dữ liệu (vd. <c>cell-actions</c>).</summary>
+    public string? CellClass { get; init; }
+
+    /// <summary>Độ rộng cột (CSS, vd. <c>120px</c>). Khi có cột đặt width, bảng dùng table-layout fixed.</summary>
+    public string? Width { get; init; }
+
     public bool Sortable { get; init; }
 }
