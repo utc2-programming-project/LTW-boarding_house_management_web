@@ -40,6 +40,29 @@ public sealed class InvoiceQueryServiceIntegrationTests(SqlServerFixture fixture
     }
 
     [SqlServerFact]
+    public async Task GetInvoicesAsync_SummaryStaysStableWhenStatusFilterApplied()
+    {
+        var data = await SeedInvoicesAsync();
+
+        await using var db = fixture.CreateContext();
+        var service = new InvoiceQueryService(db);
+        var caller = new PropertyCaller(data.ChuTroAId, Roles.ChuTro);
+
+        var all = await service.GetInvoicesAsync(new InvoiceFilter(), caller);
+        var issuedOnly = await service.GetInvoicesAsync(
+            new InvoiceFilter { Status = InvoiceStatus.Issued },
+            caller);
+
+        // Thẻ KPI là nút lọc: bấm "Đã phát hành" chỉ lọc danh sách, số trên cả 4 thẻ giữ nguyên.
+        Assert.Equal(all.Summary.DraftCount, issuedOnly.Summary.DraftCount);
+        Assert.Equal(all.Summary.IssuedCount, issuedOnly.Summary.IssuedCount);
+        Assert.Equal(all.Summary.PaidCount, issuedOnly.Summary.PaidCount);
+        Assert.Equal(all.Summary.OutstandingAmount, issuedOnly.Summary.OutstandingAmount);
+        Assert.Equal([data.InvoiceAOctoberId], issuedOnly.Items.Select(item => item.Id));
+        Assert.Equal(1, issuedOnly.TotalCount);
+    }
+
+    [SqlServerFact]
     public async Task GetInvoicesAsync_QuanLyOnlySeesAssignedProperty()
     {
         var data = await SeedInvoicesAsync();

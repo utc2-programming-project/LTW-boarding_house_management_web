@@ -72,14 +72,20 @@
                             <tr>
                                 <td class="tabular-nums">#@row.Id</td>
                                 <td>
-                                    <span class="room-code">@string.Join(", ", row.TenantNames)</span>
+                                    <span class="room-code">
+                                        @for (var i = 0; i < row.TenantNames.Count; i++)
+                                        {
+                                            if (i > 0) { <span>, </span> }
+                                            <a class="cell-link" href="@AppLinks.TenantsByKeyword(row.TenantNames[i])">@row.TenantNames[i]</a>
+                                        }
+                                    </span>
                                     @if (row.TenantPhones.Count > 0)
                                     {
                                         <span class="room-property">@string.Join(", ", row.TenantPhones)</span>
                                     }
                                     <span class="room-property">
-                                        <a class="cell-link is-quiet" href="@AppLinks.Contract(row.ContractId)"
-                                           title="@SL["CellLinkOpenContract"]">@row.ContractNumber</a>
+                                        <a class="cell-link is-quiet is-code" href="@AppLinks.Contract(row.ContractId)"
+                                           title="@($"{SL["CellLinkOpenContract"]}: {row.ContractNumber}")">@row.ContractNumber</a>
                                     </span>
                                 </td>
                                 <td>
@@ -144,7 +150,13 @@
             <header class="modal-header">
                 <div class="modal-header-text">
                     <h2 id="registration-detail-title">@string.Format(UL["RegDetailTitle"], detail.ServiceName)</h2>
-                    <p>@detail.RoomCode · @detail.ContractNumber · @detail.PropertyName</p>
+                    <p>
+                        <a class="cell-link" href="@AppLinks.RoomsByCode(detail.RoomCode)">@detail.RoomCode</a>
+                        ·
+                        <a class="cell-link" href="@AppLinks.Contract(detail.ContractId)">@detail.ContractNumber</a>
+                        ·
+                        <a class="cell-link" href="@AppLinks.PropertiesByKeyword(detail.PropertyName)">@detail.PropertyName</a>
+                    </p>
                 </div>
                 <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="() => _detail = null">
                     <LucideIcon Name="close" />

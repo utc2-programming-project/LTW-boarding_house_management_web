@@ -24,8 +24,32 @@
             <h3 id="tenant-personal-heading">@L["TenantPersonalSection"]</h3>
             <dl class="tenant-detail-grid">
                 <div><dt>@L["TenantFullName"]</dt><dd>@Value(Tenant.FullName)</dd></div>
-                <div><dt>@L["TenantPhone"]</dt><dd class="tenant-mono">@Value(Tenant.PhoneNumber)</dd></div>
-                <div><dt>@L["TenantEmail"]</dt><dd>@Value(Tenant.Email)</dd></div>
+                <div>
+                    <dt>@L["TenantPhone"]</dt>
+                    <dd class="tenant-mono">
+                        @if (string.IsNullOrWhiteSpace(Tenant.PhoneNumber))
+                        {
+                            @L["NoData"]
+                        }
+                        else
+                        {
+                            <a class="cell-link" href="@($"tel:{Tenant.PhoneNumber}")">@Tenant.PhoneNumber</a>
+                        }
+                    </dd>
+                </div>
+                <div>
+                    <dt>@L["TenantEmail"]</dt>
+                    <dd>
+                        @if (string.IsNullOrWhiteSpace(Tenant.Email))
+                        {
+                            @L["NoData"]
+                        }
+                        else
+                        {
+                            <a class="cell-link" href="@($"mailto:{Tenant.Email}")">@Tenant.Email</a>
+                        }
+                    </dd>
+                </div>
                 <div><dt>@L["TenantDateOfBirth"]</dt><dd>@DateFormatter.Format(Tenant.DateOfBirth)</dd></div>
                 <div class="tenant-detail-wide"><dt>@L["TenantPermanentAddress"]</dt><dd>@Value(Tenant.PermanentAddress)</dd></div>
             </dl>

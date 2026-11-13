@@ -79,7 +79,8 @@
     </div>
 
     <div class="stat-grid" aria-label="@L["StatPriceSummary"]">
-        <div class="stat-card">
+        <article class='stat-card stat-card--link @PriceCardClass("all")' role="button" tabindex="0"
+                 @onclick='() => ApplyPriceStatusFilterAsync("all")'>
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatPriceVersions"]
@@ -88,28 +89,31 @@
                 <span class="stat-icon stat-icon--accent"><LucideIcon Name="history" /></span>
             </div>
             <div class="stat-value">@_allVersions.Count <small>@L["StatPriceUnit"]</small></div>
-        </div>
-        <div class="stat-card">
+        </article>
+        <article class='stat-card stat-card--link @PriceCardClass(nameof(PriceVersionStatus.Active))' role="button" tabindex="0"
+                 @onclick='() => ApplyPriceStatusFilterAsync(nameof(PriceVersionStatus.Active))'>
             <div class="stat-card__top">
                 <span class="stat-label">@L["StatusActive"]</span>
                 <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
             </div>
             <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Active) <small>@L["StatPriceUnit"]</small></div>
-        </div>
-        <div class="stat-card">
+        </article>
+        <article class='stat-card stat-card--link @PriceCardClass(nameof(PriceVersionStatus.Upcoming))' role="button" tabindex="0"
+                 @onclick='() => ApplyPriceStatusFilterAsync(nameof(PriceVersionStatus.Upcoming))'>
             <div class="stat-card__top">
                 <span class="stat-label">@L["StatusUpcoming"]</span>
                 <span class="stat-icon stat-icon--info"><LucideIcon Name="calendar" /></span>
             </div>
             <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Upcoming) <small>@L["StatPriceUnit"]</small></div>
-        </div>
-        <div class="stat-card">
+        </article>
+        <article class='stat-card stat-card--link @PriceCardClass(nameof(PriceVersionStatus.Expired))' role="button" tabindex="0"
+                 @onclick='() => ApplyPriceStatusFilterAsync(nameof(PriceVersionStatus.Expired))'>
             <div class="stat-card__top">
                 <span class="stat-label">@L["StatusExpired"]</span>
                 <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
             </div>
             <div class="stat-value">@_allVersions.Count(v => v.Status == PriceVersionStatus.Expired) <small>@L["StatPriceUnit"]</small></div>
-        </div>
+        </article>
     </div>
 
     <!-- Filter Toolbar -->
@@ -403,6 +407,16 @@
                 Value: group.Key,
                 Label: group.Key == "all" ? L["AllBuildingsDescription"].Value : group.First().BuildingName))
             .ToList();
+    }
+
+    private string PriceCardClass(string status) =>
+        string.Equals(_statusFilter, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private Task ApplyPriceStatusFilterAsync(string status)
+    {
+        _statusFilter = status;
+        ApplyFilters();
+        return Task.CompletedTask;
     }
 
     private void ApplyFilters()

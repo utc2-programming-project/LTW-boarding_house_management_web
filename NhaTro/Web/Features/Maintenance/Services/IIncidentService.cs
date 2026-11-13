@@ -13,6 +13,9 @@ public interface IIncidentService
     Task<IReadOnlyList<IncidentListItemDto>> ListAsync(
         PropertyCaller caller, CancellationToken cancellationToken = default);
 
+    /// <summary>Đếm sự cố chưa hoàn tất cho Home, không kéo toàn bộ danh sách.</summary>
+    Task<int> CountOpenAsync(PropertyCaller caller, CancellationToken cancellationToken = default);
+
     Task<IncidentResult> GetAsync(
         int incidentId, PropertyCaller caller, CancellationToken cancellationToken = default);
 

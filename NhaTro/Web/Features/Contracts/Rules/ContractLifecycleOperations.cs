@@ -136,21 +136,29 @@ public static class ContractLifecycleOperations
             RoomId = current.RoomId,
             StartDate = current.EndDate.AddDays(1),
             EndDate = newEndDate.Date,
-            SnapshotPrice = room.StandardPrice,
-            DepositAmount = MoneyFormatter.RoundVnd(room.StandardPrice * 0.20m),
+            SnapshotPrice = current.SnapshotPrice,
+            DepositAmount = current.DepositAmount,
             Status = ContractStatus.Approved,
+            PaymentCycleMonths = current.PaymentCycleMonths,
+            MeterReadingDay = current.MeterReadingDay,
+            Terms = current.Terms,
+            CreatedByUserId = current.CreatedByUserId,
+            CreatedByRole = current.CreatedByRole,
+            CreatedAt = createdAt,
         };
 
-        var tenantIds = await db.ContractMembers
+        var members = await db.ContractMembers
             .Where(member => member.ContractId == current.ContractId)
-            .Select(member => member.TenantId)
+            .Select(member => new { member.TenantId, member.IsRepresentative, member.Relationship })
             .ToListAsync(cancellationToken);
 
         db.Contracts.Add(renewal);
-        db.ContractMembers.AddRange(tenantIds.Select(tenantId => new ContractMember
+        db.ContractMembers.AddRange(members.Select(member => new ContractMember
         {
             ContractId = renewal.ContractId,
-            TenantId = tenantId,
+            TenantId = member.TenantId,
+            IsRepresentative = member.IsRepresentative,
+            Relationship = member.Relationship,
         }));
 
         await CopyFutureServiceRegistrationsAsync(db, current.ContractId, renewal.ContractId,

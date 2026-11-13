@@ -4,7 +4,8 @@
 
 <div class="incident-list page-stack" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
 <section class="stat-grid" aria-label="@L["StatSummary"]">
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass("")' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync("")'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatTotal"]
@@ -14,7 +15,8 @@
         </div>
         <div class="stat-value">@_totalCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.New))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.New))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusNew"]
@@ -24,7 +26,8 @@
         </div>
         <div class="stat-value">@_newCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.InProgress))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.InProgress))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusInProgress"]
@@ -34,7 +37,8 @@
         </div>
         <div class="stat-value">@_inProgressCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.Completed))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.Completed))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusCompleted"]
@@ -214,6 +218,15 @@
 
     private string RoomName(IncidentItem item) =>
         Rooms.FirstOrDefault(r => r.Id == item.RoomId)?.Name ?? item.RoomLabel;
+
+    private string IncidentCardClass(string status) =>
+        string.Equals(_fStatus, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyIncidentFilterAsync(string status)
+    {
+        _fStatus = status;
+        if (_table is not null) await _table.ReloadAsync();
+    }
 
     private Task ApplyFiltersAsync()
     {

@@ -1,0 +1,154 @@
+.contract-edit-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: 1240px;
+}
+
+.contract-edit-page ::deep .page-heading {
+    margin-bottom: 0;
+}
+
+.contract-edit-card {
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.contract-edit-card ::deep form {
+    display: grid;
+    gap: var(--space-6);
+}
+
+.contract-edit-section {
+    display: grid;
+    gap: var(--space-4);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+}
+
+.contract-edit-section:first-of-type {
+    padding-top: 0;
+    border-top: none;
+}
+
+.contract-edit-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.contract-edit-section-title ::deep .lucide-icon {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    color: var(--accent-text);
+}
+
+.contract-edit-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-5);
+    margin: 0;
+}
+
+.contract-edit-summary > div {
+    min-width: 0;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border);
+}
+
+.contract-edit-summary dt {
+    color: var(--text-secondary);
+    font-size: .85rem;
+}
+
+.contract-edit-summary dd {
+    margin: var(--space-2) 0 0;
+    font-weight: 600;
+}
+
+.contract-edit-wide {
+    grid-column: 1 / -1;
+}
+
+.contract-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.contract-edit-field {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.contract-edit-field label {
+    font-weight: 600;
+}
+
+.contract-edit-field .input {
+    min-height: 44px;
+    min-width: 0;
+}
+
+.contract-edit-hint {
+    color: var(--text-secondary);
+    font-size: .85rem;
+}
+
+.contract-edit-terms {
+    min-height: 140px;
+    padding: var(--space-3);
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.contract-edit-error {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--error-border);
+    border-radius: var(--radius-control);
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+.contract-edit-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.contract-edit-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+    .contract-edit-card {
+        padding: var(--space-4);
+    }
+
+    .contract-edit-grid,
+    .contract-edit-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .contract-edit-actions {
+        flex-direction: column-reverse;
+    }
+
+    .contract-edit-actions .btn {
+        justify-content: center;
+        min-height: 44px;
+    }
+}

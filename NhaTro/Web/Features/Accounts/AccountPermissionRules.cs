@@ -21,7 +21,9 @@ public static class AccountPermissionRules
     /// <summary>Vai tro ma nguoi goi duoc phep gan khi tao/doi vai tro.</summary>
     public static IReadOnlyList<string> AssignableRoles(string callerRole) => callerRole switch
     {
-        Roles.Admin => Roles.All,
+        // Chot 13/11/2026: Admin khong tao duoc Admin moi. Tai khoan quan tri chi co san tu seed,
+        // va cung khong the nang mot vai tro khac len Admin qua doi vai tro.
+        Roles.Admin => [Roles.ChuTro, Roles.QuanLy, Roles.KhachThue],
         // ChuTro tao QuanLy + KhachThue nhung khong doi vai tro (xem CanChangeRole).
         Roles.ChuTro => [Roles.QuanLy, Roles.KhachThue],
         // QuanLy chi tao tai khoan KhachThue, o trang thai Cho duyet.
@@ -52,15 +54,15 @@ public static class AccountPermissionRules
     public static bool CanChangeRole(string callerRole) => callerRole == Roles.Admin;
 
     /// <summary>
-    /// Luật xoá tài khoản: không tự xoá mình, không xoá Admin cuối cùng,
-    /// và chỉ xoá vai trò mà người gọi được quản lý (cùng tập với khoá tài khoản).
+    /// Luật xoá tài khoản: không tự xoá mình, không xoá Admin khác (Admin tự xoá qua trang
+    /// dữ liệu cá nhân, xem <see cref="CheckSelfDelete"/>), và chỉ xoá vai trò mà người gọi
+    /// được quản lý (cùng tập với khoá tài khoản).
     /// </summary>
     public static string? CheckDelete(
         string callerRole,
         string callerUserId,
         string targetUserId,
-        string targetRole,
-        bool targetIsLastAdmin)
+        string targetRole)
     {
         if (string.Equals(callerUserId, targetUserId, StringComparison.Ordinal))
         {
@@ -72,9 +74,10 @@ public static class AccountPermissionRules
             return AccountErrorCodes.Forbidden;
         }
 
-        if (targetRole == Roles.Admin && targetIsLastAdmin)
+        // Chot 13/11/2026: Admin khong xoa duoc tai khoan Admin khac.
+        if (targetRole == Roles.Admin)
         {
-            return AccountErrorCodes.CannotDeleteLastAdmin;
+            return AccountErrorCodes.CannotDeleteAdmin;
         }
 
         return null;
@@ -124,6 +127,12 @@ public static class AccountPermissionRules
         if (!Roles.All.Contains(newRole))
         {
             return AccountErrorCodes.InvalidRole;
+        }
+
+        // Chot 13/11/2026: khong nang bat ky tai khoan nao len Admin qua doi vai tro.
+        if (!AssignableRoles(callerRole).Contains(newRole))
+        {
+            return AccountErrorCodes.RoleNotAllowed;
         }
 
         // Tu doi vai tro minh la con duong tu nang quyen hoac tu khoa minh.

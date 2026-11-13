@@ -101,7 +101,7 @@ public static class TenantDocumentEndpoints
             return FileNotFound();
         }
 
-        http.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        http.Response.Headers.XContentTypeOptions = "nosniff";
 
         return Results.Stream(
             response.FileStream,

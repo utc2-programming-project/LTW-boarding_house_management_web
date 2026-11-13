@@ -37,12 +37,24 @@ public sealed class TenantRentalContractDto
 
     public required decimal DepositAmount { get; init; }
 
+    /// <summary>Số tháng mỗi kỳ thanh toán (1, 2, 3, 6, 12).</summary>
+    public int PaymentCycleMonths { get; init; } = 1;
+
+    /// <summary>Ngày chốt điện/nước trong tháng; null = ngày cuối tháng.</summary>
+    public int? MeterReadingDay { get; init; }
+
+    /// <summary>Điều khoản bổ sung do Chủ trọ nhập; null khi không có.</summary>
+    public string? Terms { get; init; }
+
     /// <summary>
     /// Tiền cọc đã đóng thực tế và ngày thanh toán (null khi chưa có biên lai/chứng từ ghi nhận).
     /// </summary>
     public decimal? PaidDepositAmount { get; init; }
 
     public DateOnly? DepositPaidDate { get; init; }
+
+    /// <summary>Hạn thanh toán cọc sau khi ký; null khi đã thu hoặc chưa ký.</summary>
+    public DateOnly? DepositDueDate { get; init; }
 
     public required ContractStatus Status { get; init; }
 

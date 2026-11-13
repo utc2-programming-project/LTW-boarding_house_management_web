@@ -166,12 +166,12 @@
                                     <td class="cell-room" data-label="@UL["P5CostThRoom"]">
                                         <div class="room-cell">
                                             <div>
-                                                <span class="room-code">@room.RoomCode</span>
-                                                <span class="room-property">@room.PropertyName</span>
+                                                <a class="cell-link room-code" href="@AppLinks.Room(room.RoomId)">@room.RoomCode</a>
+                                                <a class="cell-link is-quiet room-property" href="@AppLinks.Property(room.PropertyId)">@room.PropertyName</a>
                                             </div>
                                             @if (!string.IsNullOrWhiteSpace(room.TenantNames))
                                             {
-                                                <span class="room-tenant">@room.TenantNames</span>
+                                                <a class="cell-link room-tenant" href="@AppLinks.TenantsByKeyword(room.TenantNames)">@room.TenantNames</a>
                                             }
                                             <span class="status-badge @StatusClass(room)">@StatusLabel(room)</span>
                                         </div>

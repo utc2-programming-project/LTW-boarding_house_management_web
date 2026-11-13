@@ -1,13 +1,116 @@
 .contract-detail-page .page-heading { margin: 20px 0 24px; }
 .contract-detail-page .page-heading p { margin: 8px 0 0; color: var(--text-secondary); }
-.contract-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-.contract-detail-grid > div { min-width: 0; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-.contract-detail-grid dt { color: var(--text-secondary); font-size: 13px; }
-.contract-detail-grid dd { margin: 8px 0 0; font-weight: 600; }
-.contract-detail-grid ul { margin: 0; padding-left: 20px; }
-.contract-detail-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+.contract-detail-panel {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.contract-detail-panel-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.contract-detail-panel-title ::deep .lucide-icon { width: 20px; height: 20px; flex-basis: 20px; color: var(--accent-text); }
+
+.contract-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
+.contract-detail-grid > div { min-width: 0; padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.contract-detail-grid dt { color: var(--text-secondary); font-size: .85rem; }
+.contract-detail-grid dd { margin: var(--space-2) 0 0; font-weight: 600; }
+.contract-detail-grid dd .btn { margin-left: var(--space-2); }
+.contract-detail-wide { grid-column: 1 / -1; }
+
+.contract-hash {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    word-break: break-all;
+}
+
+.contract-detail-change-requests {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.contract-detail-change-requests li {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+}
+
+.contract-detail-change-requests p {
+    margin: var(--space-2) 0;
+}
+
+.contract-detail-error {
+    margin: 0;
+    color: var(--error-text);
+    font-size: .85rem;
+}
+.contract-detail-total { color: var(--accent-text); font-size: 1.05rem; }
+
+.contract-detail-members { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.contract-detail-member { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface-subtle); }
+.contract-detail-member-name { display: flex; align-items: center; gap: var(--space-2); }
+.contract-detail-member-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); color: var(--text-secondary); }
+.contract-detail-member-meta span + span::before { content: "·"; margin-right: var(--space-3); }
+
+.contract-detail-tag { display: inline-flex; align-items: center; padding: 2px var(--space-2); border: 1px solid var(--border); border-radius: 999px; font-size: .8rem; font-weight: 600; color: var(--text-secondary); }
+.contract-detail-tag.is-applied { border-color: var(--accent-border); background: var(--accent-soft); color: var(--accent-text); }
+.contract-detail-tag.is-muted { opacity: .7; }
+
+.contract-detail-table { width: 100%; border-collapse: collapse; }
+.contract-detail-table th, .contract-detail-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; }
+.contract-detail-table th { color: var(--text-secondary); font-size: .85rem; font-weight: 600; }
+.contract-detail-table th:nth-child(3), .contract-detail-table td:nth-child(3) { text-align: right; }
+.contract-detail-table th:last-child, .contract-detail-table td:last-child { text-align: right; }
+
+.contract-detail-empty { margin: 0; color: var(--text-secondary); }
+.contract-detail-note { margin: 0; color: var(--text-secondary); font-size: .85rem; line-height: 1.5; }
+.contract-detail-terms { margin: 0; white-space: pre-wrap; line-height: 1.6; }
+.contract-detail-subtitle { margin: 0; font-size: .95rem; font-weight: 600; }
+.contract-detail-clauses { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); color: var(--text-secondary); line-height: 1.55; }
+
+.contract-detail-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-5); }
+
+.contract-action-menu { position: relative; }
+.contract-action-menu > summary { list-style: none; cursor: pointer; }
+.contract-action-menu > summary::-webkit-details-marker { display: none; }
+.contract-action-menu > summary .lucide-icon { width: 16px; height: 16px; }
+.contract-action-menu-panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + var(--space-2));
+    z-index: 20;
+    display: grid;
+    min-width: 240px;
+    padding: var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+.contract-action-menu-panel .p2-row-menu-item { width: 100%; justify-content: flex-start; }
 .contract-pending-alert { margin: 20px 0 0; padding: 16px; border: 1px solid var(--warning-border); border-radius: 8px; background: var(--warning-bg); color: var(--warning-text); }
+
 @media (max-width: 767px) {
     .contract-detail-page .page-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
-    .contract-detail-grid { grid-template-columns: 1fr; padding: 16px; }
+    .contract-detail-panel { padding: var(--space-4); }
+    .contract-detail-grid, .contract-detail-members { grid-template-columns: 1fr; }
+    .contract-detail-actions { flex-direction: column-reverse; }
+    .contract-detail-actions .btn { min-height: 44px; justify-content: center; }
 }

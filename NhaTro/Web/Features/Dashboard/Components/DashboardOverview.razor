@@ -122,7 +122,11 @@
         try
         {
             // Nạp công việc trước thống kê để tránh chồng truy vấn dùng chung DbContext.
-            if (notify) await RefreshAdditionalContent.InvokeAsync();
+            if (notify)
+            {
+                PageService.InvalidateCache();
+                await RefreshAdditionalContent.InvokeAsync();
+            }
             await Task.WhenAll(LoadPropertiesAsync(), LoadRoomsAsync(), LoadTenantsAsync(),
                 LoadIncidentsAsync(), LoadRevenueAsync());
             LastRefreshed = PageService.GetLastRefreshedAtUtc();

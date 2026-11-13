@@ -682,7 +682,7 @@ public sealed class ServiceCatalogService : IServiceCatalogService
             .OrderByDescending(version => version.EffectiveDate)
             .FirstOrDefault()
             ?? history.Where(version => version.EffectiveDate > today).OrderBy(version => version.EffectiveDate).FirstOrDefault()
-            ?? history.First();
+            ?? history[0];
 
         return new ServiceCatalogDto(
             catalog.Id,

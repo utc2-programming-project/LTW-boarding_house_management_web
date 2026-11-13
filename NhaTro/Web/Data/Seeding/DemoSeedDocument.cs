@@ -28,6 +28,12 @@ public sealed class DemoSeedDocument
     /// <summary>Mốc thời gian gốc của bộ dữ liệu (giờ Việt Nam, không kèm offset).</summary>
     public DateTime SeedNow { get; set; }
 
+    /// <summary>
+    /// Nội dung nhị phân dùng chung theo khoá (base64). Mỗi tệp chỉ trỏ <see cref="DemoFile.TemplateKey"/>,
+    /// nhờ vậy 18.000 tệp demo không lặp lại cùng một ảnh minh chứng.
+    /// </summary>
+    public Dictionary<string, string> FileTemplates { get; set; } = new(StringComparer.Ordinal);
+
     public List<DemoAccount> Accounts { get; set; } = [];
     public List<DemoFile> Files { get; set; } = [];
     public List<Tenant> Tenants { get; set; } = [];
@@ -40,6 +46,9 @@ public sealed class DemoSeedDocument
     public List<Contract> Contracts { get; set; } = [];
     public List<ContractMember> ContractMembers { get; set; } = [];
     public List<ContractRenewalRequest> RenewalRequests { get; set; } = [];
+    public List<ContractVersion> ContractVersions { get; set; } = [];
+    public List<ContractAcceptance> ContractAcceptances { get; set; } = [];
+    public List<ContractChangeRequest> ContractChangeRequests { get; set; } = [];
     public List<ServiceCatalog> ServiceCatalogs { get; set; } = [];
     public List<ServicePriceHistory> ServicePriceHistories { get; set; } = [];
     public List<ContractServiceRegistration> ServiceRegistrations { get; set; } = [];
@@ -52,6 +61,7 @@ public sealed class DemoSeedDocument
     public List<UtilityServicePeriodSnapshot> UtilityServiceSnapshots { get; set; } = [];
     public List<Invoice> Invoices { get; set; } = [];
     public List<InvoiceItem> InvoiceItems { get; set; } = [];
+    public List<InvoiceRevision> InvoiceRevisions { get; set; } = [];
     public List<Payment> Payments { get; set; } = [];
     public List<PaymentProof> PaymentProofs { get; set; } = [];
     public List<PaymentAuditLog> PaymentAuditLogs { get; set; } = [];
@@ -73,6 +83,9 @@ public sealed class DemoAccount
     public string? FullName { get; set; }
     public List<string> Roles { get; set; } = [];
     public string? PhoneNumber { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? BankAccountName { get; set; }
     public bool EmailConfirmed { get; set; } = true;
     public DateTime? ApprovedAt { get; set; }
     public DateTimeOffset? LockoutEnd { get; set; }
@@ -82,9 +95,11 @@ public sealed class DemoAccount
     public string? DeletedByUserId { get; set; }
 }
 
-/// <summary>Metadata tệp + nội dung nhị phân base64; seeder ghi ra <c>storage/demo</c>.</summary>
+/// <summary>Metadata tệp + khoá nội dung dùng chung; seeder ghi ra <c>storage/demo</c>.</summary>
 public sealed class DemoFile
 {
     public StoredFile File { get; set; } = new();
-    public string ContentBase64 { get; set; } = string.Empty;
+
+    /// <summary>Khoá trong <see cref="DemoSeedDocument.FileTemplates"/>.</summary>
+    public string TemplateKey { get; set; } = string.Empty;
 }

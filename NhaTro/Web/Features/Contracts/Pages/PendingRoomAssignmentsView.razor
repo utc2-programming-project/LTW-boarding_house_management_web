@@ -1,0 +1,72 @@
+@page "/contracts/pending-assignments"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractManage")]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Components.Shared.Feedback
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Services
+@using Web.Common.Utils
+@inject ContractPageService Contracts
+@inject IStringLocalizer<ContractResources> L
+
+<PageTitle>@L["ContractPendingAssignmentsTitle"]</PageTitle>
+<section class="pending-assignments-page">
+    <PageHeading Title="@L["ContractPendingAssignmentsTitle"]" TitleId="pending-assignments-title" HelpText="@L["ContractPendingAssignmentsDescription"]" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_items.Count == 0)
+    {
+        <EmptyStateCard Title="@L["ContractPendingAssignmentsEmptyTitle"]" Description="@L["ContractPendingAssignmentsEmptyDescription"]">
+            <a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="pending-assignments-card pending-assignments-scroll">
+            <table class="pending-assignments-table">
+                <thead>
+                    <tr>
+                        <th scope="col">@L["ContractTenantsLabel"]</th>
+                        <th scope="col">@L["ContractPropertyLabel"]</th>
+                        <th scope="col">@L["ContractRoomLabel"]</th>
+                        <th scope="col">@L["ContractPendingAssignmentsCreatedAt"]</th>
+                        <th scope="col">@L["ContractActionsLabel"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in _items)
+                    {
+                        <tr>
+                            <td><a class="cell-link" href="@AppLinks.Tenant(item.TenantId)">@item.TenantName</a></td>
+                            <td><a class="cell-link" href="@AppLinks.Property(item.PropertyId)">@item.PropertyName</a></td>
+                            <td><a class="cell-link" href="@AppLinks.Room(item.RoomId)">@item.RoomCode</a></td>
+                            <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <a class="btn btn-primary btn-sm"
+                                   href="@($"/contracts/create?propertyId={item.PropertyId}&roomId={item.RoomId}&tenantId={item.TenantId}")">
+                                    @L["ContractPendingAssignmentsCreateAction"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<PendingRoomAssignmentDto> _items = [];
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try { _items = await Contracts.ListPendingAssignmentsAsync(); }
+        catch { _items = []; }
+        finally { _loading = false; }
+    }
+}

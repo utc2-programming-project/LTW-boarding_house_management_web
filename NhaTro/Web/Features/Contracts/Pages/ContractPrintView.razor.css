@@ -1,0 +1,246 @@
+.contract-print-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.contract-print-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    max-width: 210mm;
+}
+
+.contract-print-state {
+    padding: 48px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* Tờ A4 xem trước trên nền trang; khi in sẽ bỏ khung (xem @media print trong theme.css). */
+.contract-sheet {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 18mm 16mm;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+    color: #111;
+    box-shadow: var(--shadow-card);
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.contract-sheet-head {
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+.contract-sheet-motto-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.contract-sheet-motto {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.contract-sheet-motto-mark {
+    margin: 8px 0 12px;
+    color: #444;
+    font-size: 11px;
+    letter-spacing: .2em;
+}
+
+.contract-sheet h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.contract-sheet-number {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.contract-hash {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px;
+    color: #444;
+    word-break: break-all;
+}
+
+.contract-sheet-section {
+    margin-top: 14px;
+    break-inside: avoid;
+}
+
+.contract-sheet-section h2 {
+    margin: 0 0 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.contract-sheet-list {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+}
+
+.contract-sheet-list > div {
+    display: flex;
+    gap: 8px;
+}
+
+.contract-sheet-list dt {
+    flex: 0 0 132px;
+    color: #333;
+}
+
+.contract-sheet-list dt::after {
+    content: ":";
+}
+
+.contract-sheet-list dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.contract-sheet-members {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding-left: 18px;
+}
+
+.contract-sheet-members li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.contract-sheet-member-name {
+    font-weight: 600;
+}
+
+.contract-sheet-tag {
+    padding: 0 6px;
+    border: 1px solid #999;
+    border-radius: 3px;
+    font-size: 10.5px;
+}
+
+.contract-sheet-member-meta {
+    color: #444;
+    font-size: 11.5px;
+}
+
+.contract-sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+}
+
+.contract-sheet-table th,
+.contract-sheet-table td {
+    padding: 4px 8px;
+    border: 1px solid #bbb;
+    text-align: left;
+}
+
+.contract-sheet-table th {
+    background: #f2f2f2;
+    font-weight: 600;
+}
+
+.contract-sheet-table th:last-child,
+.contract-sheet-table td:last-child {
+    text-align: right;
+}
+
+.contract-sheet-clauses {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding-left: 18px;
+}
+
+.contract-sheet-terms {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.contract-sheet-empty {
+    margin: 0;
+    color: #555;
+    font-style: italic;
+}
+
+.contract-sheet-signature {
+    margin-top: 22px;
+    break-inside: avoid;
+}
+
+.contract-sheet-date {
+    margin: 0 0 14px;
+    text-align: right;
+    font-style: italic;
+}
+
+.contract-sheet-signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: center;
+}
+
+.contract-sheet-signature-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.contract-sheet-signature-hint {
+    margin: 2px 0 48px;
+    color: #555;
+    font-size: 11px;
+    font-style: italic;
+}
+
+.contract-sheet-signature-name {
+    margin: 0;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .contract-sheet {
+        padding: 16px;
+    }
+
+    .contract-sheet-list > div {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .contract-sheet-list dt {
+        flex: none;
+    }
+}

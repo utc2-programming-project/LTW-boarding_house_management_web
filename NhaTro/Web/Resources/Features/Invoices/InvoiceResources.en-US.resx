@@ -54,6 +54,19 @@
   <data name="ResetFilter" xml:space="preserve"><value>Reset filters</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="InvoicePeriodHint" xml:space="preserve"><value>Each row is one period (month) of rent and services. The refundable deposit is managed on the contract and is not part of an invoice.</value></data>
+  <data name="InvoiceMoreActions" xml:space="preserve"><value>More actions</value></data>
+  <data name="StatDraftHint" xml:space="preserve"><value>A working invoice not yet sent to the tenant and not counted as receivable.</value></data>
+  <data name="StatIssuedHint" xml:space="preserve"><value>An issued invoice visible to the tenant and awaiting payment.</value></data>
+  <data name="StatPaidHint" xml:space="preserve"><value>An invoice confirmed as fully paid.</value></data>
+  <data name="DetailStatusHint" xml:space="preserve"><value>Draft cannot be paid; Issued is receivable; Paid is the final state.</value></data>
+  <data name="DetailContractHint" xml:space="preserve"><value>The source contract of this invoice.</value></data>
+  <data name="DetailPropertyHint" xml:space="preserve"><value>The property containing the invoiced room.</value></data>
+  <data name="DetailRoomHint" xml:space="preserve"><value>The room charged for this invoice period.</value></data>
+  <data name="DetailTenantsHint" xml:space="preserve"><value>Tenants belonging to the source contract.</value></data>
+  <data name="SummaryTotalHint" xml:space="preserve"><value>Total rent and services for this period.</value></data>
+  <data name="SummaryPaidHint" xml:space="preserve"><value>Amount transferred by the tenant and confirmed by the owner.</value></data>
+  <data name="SummaryOutstandingHint" xml:space="preserve"><value>Remaining amount due; draft invoices always show zero.</value></data>
   <data name="StatusIssued" xml:space="preserve"><value>Issued</value></data>
   <data name="StatusPaid" xml:space="preserve"><value>Paid</value></data>
   <data name="StatusUnknown" xml:space="preserve"><value>Unknown</value></data>

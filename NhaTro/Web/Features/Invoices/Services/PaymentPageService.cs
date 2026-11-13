@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 using Web.Features.Accounts;
+using Web.Features.Contracts.DTOs;
+using Web.Features.Contracts.Services;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Properties;
 using Web.Features.Storage;
@@ -23,6 +25,7 @@ namespace Web.Features.Invoices.Services;
 public sealed class PaymentPageService(
     AuthenticationStateProvider authentication,
     IPaymentService payments,
+    IContractDepositPaymentService deposits,
     FileService files,
     IOptions<StorageOptions> storageOptions)
 {
@@ -114,6 +117,50 @@ public sealed class PaymentPageService(
             new StorageCaller(caller.UserId, caller.Role),
             cancellationToken);
     }
+
+    /// <summary>Tải minh chứng chuyển cọc lên, gắn với hợp đồng.</summary>
+    public async Task<UploadResult> UploadDepositProofAsync(
+        Guid contractId,
+        IBrowserFile browserFile,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(browserFile);
+        var policy = ProofPolicy;
+        if (browserFile.Size > policy.MaxBytes)
+        {
+            return UploadResult.Failure(
+                StorageErrorCodes.FileSizeExceeded,
+                $"Kích thước tệp vượt quá giới hạn {FileTypeRules.DescribeMegabytes(policy.MaxBytes)} MB.");
+        }
+
+        var extension = FileTypeRules.GetExtension(browserFile.Name);
+        if (!policy.AllowedExtensions.Contains(extension, StringComparer.Ordinal))
+        {
+            return UploadResult.Failure(
+                StorageErrorCodes.InvalidFileType,
+                $"Minh chứng thanh toán chỉ chấp nhận file {FileTypeRules.DescribeAllowedExtensions(FileCategory.PaymentProof)}");
+        }
+
+        var caller = await CallerAsync();
+        return await files.UploadAsync(
+            new UploadFileRequest
+            {
+                File = new BrowserFileFormFile(browserFile, policy.MaxBytes),
+                FileCategory = FileCategory.PaymentProof,
+                RelatedEntityType = RelatedEntityType.ContractDeposit,
+                RelatedEntityId = contractId.ToString("D"),
+            },
+            new StorageCaller(caller.UserId, caller.Role),
+            cancellationToken);
+    }
+
+    public async Task<ContractDepositPaymentDto> SubmitDepositAsync(
+        Guid contractId,
+        string? transactionCode,
+        IReadOnlyList<Guid> proofFileIds,
+        CancellationToken cancellationToken = default) =>
+        await deposits.SubmitAsync(
+            contractId, transactionCode, proofFileIds, await CallerAsync(), cancellationToken);
 
     /// <summary>Gửi yêu cầu thanh toán; service tự chặn lặp và kiểm số tiền/phạm vi.</summary>
     public async Task<PaymentDto> SubmitAsync(

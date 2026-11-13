@@ -150,6 +150,8 @@
         return ReloadAsync();
     }
 
+    // Khoá theo DÒNG (tài khoản + vai trò): một tài khoản nhiều vai trò hiện nhiều dòng,
+    // nếu chỉ khoá theo user id thì mọi dòng cùng mở menu một lúc.
     private string? _openMenuId;
     private string _callerUserId = string.Empty;
     private string _callerRole = string.Empty;
@@ -208,7 +210,8 @@
         _filterRoles = AccountPermissionRules.VisibleRoles(_callerRole);
         _lockableRoles = AccountPermissionRules.LockableRoles(_callerRole);
         _canChangeRole = AccountPermissionRules.CanChangeRole(_callerRole);
-        _roleChangeOptions = _canChangeRole ? Roles.All : [];
+        // Cùng danh sách với tạo tài khoản: Admin cũng không nâng được ai lên Admin.
+        _roleChangeOptions = _canChangeRole ? _assignableRoles : [];
 
         _columns =
         [
@@ -299,18 +302,18 @@
                     {
                         <div class="p2-row-actions">
                             <button type="button"
-                                    class="icon-button p2-menu-trigger @(IsMenuOpen(user.Id) ? "is-open" : null)"
+                                    class="icon-button p2-menu-trigger @(IsMenuOpen(user) ? "is-open" : null)"
                                     title="@L["ColumnActions"]"
                                     aria-label="@($"{L["ColumnActions"]}: {DisplayName(user)}")"
                                     aria-haspopup="menu"
-                                    aria-expanded="@(IsMenuOpen(user.Id) ? "true" : "false")"
-                                    aria-controls="@($"account-row-menu-{user.Id}")"
-                                    @onclick="() => ToggleRowMenu(user.Id)">
+                                    aria-expanded="@(IsMenuOpen(user) ? "true" : "false")"
+                                    aria-controls="@($"account-row-menu-{RowKey(user)}")"
+                                    @onclick="() => ToggleRowMenu(user)">
                                 <LucideIcon Name="ellipsis" />
                             </button>
-                            @if (IsMenuOpen(user.Id))
+                            @if (IsMenuOpen(user))
                             {
-                                <div id="@($"account-row-menu-{user.Id}")" class="p2-row-menu" role="menu" aria-label="@L["ColumnActions"]" data-row-menu>
+                                <div id="@($"account-row-menu-{RowKey(user)}")" class="p2-row-menu" role="menu" aria-label="@L["ColumnActions"]" data-row-menu>
                                     @if (user.Status == AccountStatus.Pending
                                          && AccountPermissionRules.CanApprove(_callerRole, user.Role))
                                     {
@@ -337,7 +340,7 @@
                                             <LucideIcon Name="building" /><span>@L["AssignProperties"]</span>
                                         </button>
                                     }
-                                    @if (_lockableRoles.Contains(user.Role))
+                                    @if (_lockableRoles.Contains(user.Role) && user.Role != Roles.Admin)
                                     {
                                         <div class="p2-row-menu-sep" role="separator"></div>
                                         <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuDelete(user)">
@@ -373,9 +376,12 @@
         || _lockableRoles.Contains(user.Role)
         || (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy);
 
-    private bool IsMenuOpen(string userId) => _openMenuId == userId;
+    private static string RowKey(AccountListItemDto user) => $"{user.Id}-{user.Role}";
 
-    private void ToggleRowMenu(string userId) => _openMenuId = _openMenuId == userId ? null : userId;
+    private bool IsMenuOpen(AccountListItemDto user) => _openMenuId == RowKey(user);
+
+    private void ToggleRowMenu(AccountListItemDto user) =>
+        _openMenuId = IsMenuOpen(user) ? null : RowKey(user);
 
     private void MenuApprove(AccountListItemDto user)
     {

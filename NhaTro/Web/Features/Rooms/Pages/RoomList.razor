@@ -42,7 +42,8 @@
     else if (_summary is not null)
     {
         <section class="stat-grid" aria-label="@L["P2RoomSummary"]">
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @RoomCardClass("")' role="button" tabindex="0"
+                     @onclick='() => ApplyRoomFilterAsync("")'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2TotalRooms"]
@@ -52,7 +53,8 @@
                 </div>
                 <div class="stat-value">@_summary.Total <small>@L["P2RoomUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @RoomCardClass(((int)RoomStatus.Available).ToString())' role="button" tabindex="0"
+                     @onclick='() => ApplyRoomFilterAsync(((int)RoomStatus.Available).ToString())'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Available"]
@@ -62,7 +64,8 @@
                 </div>
                 <div class="stat-value">@_summary.Available <small>@L["P2RoomUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @RoomCardClass(((int)RoomStatus.Rented).ToString())' role="button" tabindex="0"
+                     @onclick='() => ApplyRoomFilterAsync(((int)RoomStatus.Rented).ToString())'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Rented"]
@@ -72,7 +75,8 @@
                 </div>
                 <div class="stat-value">@_summary.Rented <small>@L["P2RoomUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @RoomCardClass(((int)RoomStatus.Maintenance).ToString())' role="button" tabindex="0"
+                     @onclick='() => ApplyRoomFilterAsync(((int)RoomStatus.Maintenance).ToString())'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["P2Maintenance"]
@@ -526,6 +530,15 @@
         catch (TaskCanceledException)
         {
         }
+    }
+
+    private string RoomCardClass(string status) =>
+        string.Equals(_statusFilter, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyRoomFilterAsync(string status)
+    {
+        _statusFilter = status;
+        if (_table is not null) await _table.ReloadAsync();
     }
 
     private async Task ApplyFiltersAsync()

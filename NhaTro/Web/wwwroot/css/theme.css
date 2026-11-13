@@ -389,3 +389,15 @@ html[data-sidebar-resizing],html[data-sidebar-resizing] * { cursor:col-resize!im
 @media (prefers-reduced-motion:reduce) {
  *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; }
 }
+
+/* In ấn: bỏ khung ứng dụng (sidebar/topbar/banner) để chỉ in nội dung trang. */
+@media print {
+ @page { size:A4; margin:15mm; }
+ html,body { background:#fff!important; }
+ .app-sidebar,.app-chrome-shadow,.drawer-overlay,.app-topbar,
+ .manager-owner-banner,.owner-bank-banner,.tenant-contact-banner,
+ .skip-link,#blazor-error-ui,.contract-print-toolbar { display:none!important; }
+ .app-workspace { margin-left:0;background:#fff; }
+ .app-content,.app-surface { padding:0;min-height:0;background:#fff; }
+ .contract-sheet { width:auto!important;max-width:none!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important; }
+}

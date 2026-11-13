@@ -6,6 +6,15 @@
     color: var(--text-primary);
 }
 
+.leased-room-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.leased-room-tabs ::deep .segmented-tabs {
+    min-width: max-content;
+}
+
 .leased-room-status-badge {
     display: inline-flex;
     align-items: center;
@@ -149,6 +158,22 @@
     color: var(--primary);
 }
 
+.leased-room-clickable {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.leased-room-clickable:hover,
+.leased-room-clickable:focus-visible {
+    text-decoration: underline;
+}
+
+.leased-room-bento-value.leased-room-clickable,
+.leased-room-term-value.leased-room-clickable {
+    display: block;
+    color: var(--primary);
+}
+
 .leased-room-bento-value {
     overflow-wrap: anywhere;
     color: var(--text-primary);
@@ -254,6 +279,82 @@
     color: var(--text-primary);
     font-size: 14px;
     line-height: 22px;
+}
+
+.leased-room-panel-header > div > h2 + p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.leased-room-term-wide {
+    grid-column: 1 / -1;
+}
+
+.leased-room-terms-text {
+    margin: 6px 0 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-subtle);
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 22px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.leased-room-clauses {
+    display: grid;
+    gap: 4px;
+    margin: 12px 0 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.leased-room-term-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.leased-room-table-scroll {
+    overflow-x: auto;
+}
+
+.leased-room-service-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.leased-room-service-table th,
+.leased-room-service-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.leased-room-service-table th {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.leased-room-service-table th:last-child,
+.leased-room-service-table td:last-child {
+    text-align: right;
+}
+
+.leased-room-service-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .leased-room-roommates-header {

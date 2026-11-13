@@ -145,6 +145,21 @@ public sealed class IncidentService(
         return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
     }
 
+    public async Task<int> CountOpenAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!CanView(caller))
+        {
+            return 0;
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await InScopeIncidents(db, caller, Today())
+            .CountAsync(incident => incident.Status != IncidentStatus.Completed, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<IncidentListItemDto>> ListAsync(
         PropertyCaller caller,
         CancellationToken cancellationToken = default)

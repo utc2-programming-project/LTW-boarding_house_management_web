@@ -1,6 +1,7 @@
 @page "/admin/audit-log"
 @attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro)]
 @rendermode InteractiveServer
+@using Web.Common.Utils
 @inject AuditLogPageService Pages
 @inject IStringLocalizer<AuditResource> L
 @inject IStringLocalizer<Shared> S
@@ -194,7 +195,16 @@
             {
                 Key = "property",
                 Title = L["ColumnProperty"],
-                Value = entry => entry.PropertyName ?? "—",
+                Template = entry => @<text>
+                    @if (entry.PropertyId is { } propertyId && !string.IsNullOrWhiteSpace(entry.PropertyName))
+                    {
+                        <a class="cell-link" href="@AppLinks.Property(propertyId)">@entry.PropertyName</a>
+                    }
+                    else
+                    {
+                        <span>—</span>
+                    }
+                </text>,
             });
         }
 

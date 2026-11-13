@@ -277,6 +277,7 @@ public sealed class OtpService(
             OtpPurpose.TenantFirstLogin => english ? "tenant verification" : "xác thực khách thuê",
             OtpPurpose.TenantRegistration => english ? "tenant registration" : "đăng ký khách thuê",
             OtpPurpose.PasswordReset => english ? "password reset" : "đặt lại mật khẩu",
+            OtpPurpose.ContractAcceptance => english ? "lease contract confirmation" : "xác nhận hợp đồng thuê",
             _ => english ? "account verification" : "xác thực tài khoản",
         };
     }

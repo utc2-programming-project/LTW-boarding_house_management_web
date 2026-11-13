@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
@@ -203,7 +204,8 @@ public sealed class RevenueReportServiceIntegrationTests(SqlServerFixture fixtur
     private static PropertyCaller Owner(Seed seed) =>
         new(seed.OwnerAId, Roles.ChuTro);
 
-    private static RevenueReportService NewService(ApplicationDbContext db, TimeProvider? time = null) => new(db, time);
+    private RevenueReportService NewService(ApplicationDbContext db, TimeProvider? time = null) =>
+        new(fixture, time);
 
     private async Task<Seed> PrepareAsync()
     {

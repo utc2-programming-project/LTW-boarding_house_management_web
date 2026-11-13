@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Web.Data;
 using Web.Features.Settings.DTOs;
 using Web.Features.Settings.Entities;
@@ -7,14 +8,17 @@ using Web.Features.Settings.Enums;
 namespace Web.Features.Settings.Services;
 
 /// <summary>
-/// VHT-94 — đọc/ghi công tắc Quản lý trên SQL. Không cache: bảng nhỏ và Chủ trọ cần thấy
-/// hiệu lực ngay sau khi đổi (cùng circuit hoặc circuit khác).
+/// VHT-94 — đọc/ghi công tắc Quản lý trên SQL. Cache đọc 60 giây, xoá ngay khi lưu
+/// để Chủ trọ thấy hiệu lực tức thì.
 /// </summary>
 public sealed class ManagerToggleService(
     ApplicationDbContext db,
     TimeProvider clock,
-    ILogger<ManagerToggleService> logger) : IManagerToggleService, IManagerToggleReader
+    ILogger<ManagerToggleService> logger,
+    IMemoryCache? cache = null) : IManagerToggleService, IManagerToggleReader
 {
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(60);
+
     public async Task<ManagerToggleListResult> GetAllAsync(
         ManagerToggleCaller caller, CancellationToken ct = default)
     {
@@ -97,6 +101,7 @@ public sealed class ManagerToggleService(
         logger.LogInformation(
             "Chủ trọ {UserId} đổi công tắc {Code} sang {Mode}",
             caller.UserId, definition.Code, mode);
+        cache?.Remove(ToggleCacheKey(definition.Code));
 
         return ManagerToggleResult.Success(ToItem(definition, entity));
     }
@@ -109,14 +114,23 @@ public sealed class ManagerToggleService(
             return ManagerToggleMode.Approve;
         }
 
+        var cacheKey = ToggleCacheKey(definition.Code);
+        if (cache?.TryGetValue<ManagerToggleMode>(cacheKey, out var cached) == true)
+        {
+            return cached;
+        }
+
         var mode = await db.ManagerToggles
             .AsNoTracking()
             .Where(t => t.Code == definition.Code)
             .Select(t => (ManagerToggleMode?)t.Mode)
             .FirstOrDefaultAsync(ct);
-
-        return mode ?? definition.DefaultMode;
+        var resolved = mode ?? definition.DefaultMode;
+        cache?.Set(cacheKey, resolved, CacheLifetime);
+        return resolved;
     }
+
+    private static string ToggleCacheKey(string code) => $"manager-toggle:{code}";
 
     private static ManagerToggleItem ToItem(ManagerToggleCatalog.Definition definition, ManagerToggle? row) =>
         new(

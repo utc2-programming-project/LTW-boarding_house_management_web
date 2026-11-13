@@ -39,6 +39,11 @@ namespace Web.Data
         public DbSet<PendingRoomAssignment> PendingRoomAssignments => Set<PendingRoomAssignment>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
+        // Luồng ký hợp đồng: phiên bản nội dung, bằng chứng khách xác nhận, yêu cầu chỉnh sửa.
+        public DbSet<ContractVersion> ContractVersions => Set<ContractVersion>();
+        public DbSet<ContractAcceptance> ContractAcceptances => Set<ContractAcceptance>();
+        public DbSet<ContractChangeRequest> ContractChangeRequests => Set<ContractChangeRequest>();
+        public DbSet<ContractDepositPayment> ContractDepositPayments => Set<ContractDepositPayment>();
         // VHT-125 (2D): yeu cau gia han hop dong do khach thue gui tu "Phong dang thue".
         public DbSet<ContractRenewalRequest> ContractRenewalRequests => Set<ContractRenewalRequest>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
