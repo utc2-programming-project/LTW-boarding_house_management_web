@@ -119,4 +119,23 @@
 <data name="ExportApprovalDenied" xml:space="preserve"><value>The export request was rejected.</value></data>
 <data name="ExportForbidden" xml:space="preserve"><value>You are not allowed to export reports.</value></data>
 <data name="ExportFailed" xml:space="preserve"><value>Export failed. Please try again.</value></data>
+<data name="OverdueOutstanding" xml:space="preserve"><value>Overdue amount</value></data>
+<data name="OverdueNote" xml:space="preserve"><value>Overdue invoices: {0}. Only issued invoices with an outstanding balance past the due date are counted.</value></data>
+<data name="RevenueByFeeType" xml:space="preserve"><value>Invoice value by fee type</value></data>
+<data name="FeeTypeNote" xml:space="preserve"><value>Splits the total value of valid invoices by line item; collected amounts are not allocated.</value></data>
+<data name="FeeType" xml:space="preserve"><value>Fee type</value></data>
+<data name="Amount" xml:space="preserve"><value>Amount</value></data>
+<data name="FeeRent" xml:space="preserve"><value>Rent</value></data>
+<data name="FeeElectric" xml:space="preserve"><value>Electricity</value></data>
+<data name="FeeWater" xml:space="preserve"><value>Water</value></data>
+<data name="FeeService" xml:space="preserve"><value>Service</value></data>
+<data name="FeeDiscount" xml:space="preserve"><value>Discount</value></data>
+<data name="DueDate" xml:space="preserve"><value>Due date</value></data>
+<data name="OverdueDays" xml:space="preserve"><value>Days overdue</value></data>
+<data name="NoDueDate" xml:space="preserve"><value>No due date</value></data>
+<data name="OccupancyByMonth" xml:space="preserve"><value>Occupancy by month</value></data>
+<data name="OccupancyMonthNote" xml:space="preserve"><value>Occupied = rooms with an approved or liquidated contract overlapping the month; total = active rooms created before the end of the month.</value></data>
+<data name="Month" xml:space="preserve"><value>Month</value></data>
+<data name="VacantRooms" xml:space="preserve"><value>Vacant rooms</value></data>
+<data name="OccupancyRate" xml:space="preserve"><value>Occupancy rate</value></data>
 </root>

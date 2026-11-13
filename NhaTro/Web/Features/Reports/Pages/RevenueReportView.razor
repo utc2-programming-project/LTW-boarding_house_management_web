@@ -47,8 +47,45 @@
                     <dt>@L["Outstanding"]</dt>
                     <dd>@MoneyFormatter.Format(report.Outstanding)</dd>
                 </div>
+                <div class="kpi-card">
+                    <dt>@L["OverdueOutstanding"]</dt>
+                    <dd>@MoneyFormatter.Format(report.OverdueOutstanding)</dd>
+                </div>
             </dl>
             <p class="scope-note">@L["PendingRejectedNote", MoneyFormatter.Format(report.PendingAmount), MoneyFormatter.Format(report.RejectedAmount)]</p>
+            <p class="scope-note">@L["OverdueNote", DashboardFormat.FormatNumber(report.OverdueInvoiceCount)]</p>
+
+            <section class="revenue-section" aria-labelledby="revenue-fee-heading">
+                <h3 id="revenue-fee-heading">@L["RevenueByFeeType"]</h3>
+                <p class="scope-note">@L["FeeTypeNote"]</p>
+                @if (report.FeeBreakdown is null || report.FeeBreakdown.Count == 0)
+                {
+                    <EmptyStateCard Title="@L["NoData"]" />
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table>
+                            <caption>@L["RevenueByFeeType"]</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">@L["FeeType"]</th>
+                                    <th scope="col" class="numeric">@L["Amount"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fee in report.FeeBreakdown)
+                                {
+                                    <tr>
+                                        <td>@FeeTypeText(fee.Type)</td>
+                                        <td class="numeric">@MoneyFormatter.Format(fee.Amount)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
 
             <section class="revenue-section" aria-labelledby="revenue-property-heading">
                 <h3 id="revenue-property-heading">@L["ByProperty"]</h3>
@@ -152,6 +189,8 @@
                                     <th scope="col">@L["RoomCode"]</th>
                                     <th scope="col">@D["Property"]</th>
                                     <th scope="col">@L["Period"]</th>
+                                    <th scope="col">@L["DueDate"]</th>
+                                    <th scope="col" class="numeric">@L["OverdueDays"]</th>
                                     <th scope="col" class="numeric">@L["InvoiceTotal"]</th>
                                     <th scope="col" class="numeric">@L["Paid"]</th>
                                     <th scope="col" class="numeric">@L["Outstanding"]</th>
@@ -164,6 +203,8 @@
                                         <td>@line.RoomCode</td>
                                         <td>@line.PropertyName</td>
                                         <td>@DateFormatter.Format(line.PeriodStart) – @DateFormatter.Format(line.PeriodEnd)</td>
+                                        <td>@(line.DueDate is { } dueDate ? DateFormatter.Format(dueDate) : L["NoDueDate"])</td>
+                                        <td class="numeric">@(line.OverdueDays > 0 ? DashboardFormat.FormatNumber(line.OverdueDays) : "—")</td>
                                         <td class="numeric">@MoneyFormatter.Format(line.Total)</td>
                                         <td class="numeric">@MoneyFormatter.Format(line.Paid)</td>
                                         <td class="numeric">@MoneyFormatter.Format(line.Outstanding)</td>
@@ -244,6 +285,16 @@
         nameof(InvoiceStatus.Issued) => L["StatusIssued"],
         nameof(InvoiceStatus.Paid) => L["StatusPaid"],
         _ => status,
+    };
+
+    private string FeeTypeText(string type) => type switch
+    {
+        "Rent" => L["FeeRent"],
+        "Electric" => L["FeeElectric"],
+        "Water" => L["FeeWater"],
+        "Service" => L["FeeService"],
+        "Discount" => L["FeeDiscount"],
+        _ => type,
     };
 
     private static int Clamp(int page, int totalCount)

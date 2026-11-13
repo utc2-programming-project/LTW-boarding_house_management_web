@@ -45,6 +45,7 @@ public partial class BusinessReportsView
     private RevenueDateBasis RevenueDateBasis = RevenueDateBasis.InvoicePeriod;
 
     private RoomReportResult? RoomResult;
+    private OccupancyReportResult? OccupancyResult;
     private TenantReportResult? TenantResult;
     private ContractReportResult? ContractResult;
     private CostReportResult? CostResult;
@@ -374,6 +375,7 @@ public partial class BusinessReportsView
     {
         RoomState = DashboardLoadState.Loading;
         RoomResult = null;
+        OccupancyResult = null;
         try
         {
             RoomReportResult result;
@@ -390,7 +392,12 @@ public partial class BusinessReportsView
                 RoomPage = lastPage;
             } while (true);
 
+            var occupancy = await PageService.GetOccupancyAsync(
+                new OccupancyFilter(From, To, SelectedPropertyId));
+            if (version != scopeVersion) return;
+
             RoomResult = result;
+            OccupancyResult = occupancy;
             RoomState = DashboardLoadState.Loaded;
         }
         catch (UnauthorizedAccessException) when (version == scopeVersion) { RoomState = DashboardLoadState.Denied; }

@@ -119,4 +119,23 @@
 <data name="ExportApprovalDenied" xml:space="preserve"><value>Yêu cầu xuất báo cáo đã bị từ chối.</value></data>
 <data name="ExportForbidden" xml:space="preserve"><value>Bạn không có quyền xuất báo cáo.</value></data>
 <data name="ExportFailed" xml:space="preserve"><value>Xuất báo cáo thất bại. Vui lòng thử lại.</value></data>
+<data name="OverdueOutstanding" xml:space="preserve"><value>Tổng nợ quá hạn</value></data>
+<data name="OverdueNote" xml:space="preserve"><value>Số hóa đơn quá hạn: {0}. Chỉ tính hóa đơn đã phát hành còn nợ và đã qua hạn.</value></data>
+<data name="RevenueByFeeType" xml:space="preserve"><value>Giá trị hóa đơn theo loại phí</value></data>
+<data name="FeeTypeNote" xml:space="preserve"><value>Chia tổng giá trị hóa đơn hợp lệ theo từng dòng chi tiết; không phân bổ số tiền đã thu.</value></data>
+<data name="FeeType" xml:space="preserve"><value>Loại phí</value></data>
+<data name="Amount" xml:space="preserve"><value>Số tiền</value></data>
+<data name="FeeRent" xml:space="preserve"><value>Tiền phòng</value></data>
+<data name="FeeElectric" xml:space="preserve"><value>Tiền điện</value></data>
+<data name="FeeWater" xml:space="preserve"><value>Tiền nước</value></data>
+<data name="FeeService" xml:space="preserve"><value>Dịch vụ</value></data>
+<data name="FeeDiscount" xml:space="preserve"><value>Giảm giá</value></data>
+<data name="DueDate" xml:space="preserve"><value>Hạn thanh toán</value></data>
+<data name="OverdueDays" xml:space="preserve"><value>Số ngày quá hạn</value></data>
+<data name="NoDueDate" xml:space="preserve"><value>Không áp hạn</value></data>
+<data name="OccupancyByMonth" xml:space="preserve"><value>Tỷ lệ lấp đầy theo tháng</value></data>
+<data name="OccupancyMonthNote" xml:space="preserve"><value>Đang thuê = phòng có hợp đồng đã duyệt hoặc đã thanh lý giao với tháng; tổng phòng = phòng đang hoạt động đã tạo trước cuối tháng.</value></data>
+<data name="Month" xml:space="preserve"><value>Tháng</value></data>
+<data name="VacantRooms" xml:space="preserve"><value>Phòng trống</value></data>
+<data name="OccupancyRate" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
 </root>

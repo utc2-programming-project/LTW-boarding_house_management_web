@@ -27,8 +27,11 @@ public sealed class RevenueReportAuthorizationException(string message)
 /// bao giờ được cộng vào doanh thu. Công nợ = hóa đơn hợp lệ (Issued/Paid) trừ tiền đã
 /// xác nhận, và chỉ hóa đơn <see cref="InvoiceStatus.Issued"/> mới còn công nợ.
 /// </summary>
-public sealed class RevenueReportService(ApplicationDbContext db)
+public sealed class RevenueReportService(ApplicationDbContext db, TimeProvider? time = null)
 {
+    private DateOnly Today => DateOnly.FromDateTime(
+        VietnamTime.ToVietnam((time ?? TimeProvider.System).GetUtcNow().UtcDateTime));
+
     public async Task<RevenueReportDto> GetAsync(
         RevenueReportFilter? filter,
         PropertyCaller caller,
@@ -75,6 +78,7 @@ public sealed class RevenueReportService(ApplicationDbContext db)
                 invoice.Status,
                 invoice.PeriodStart,
                 invoice.PeriodEnd,
+                invoice.DueDate,
                 RoomId = room.Id,
                 RoomCode = room.Code,
                 PropertyId = property.Id,
@@ -141,6 +145,14 @@ public sealed class RevenueReportService(ApplicationDbContext db)
             .Where(payment => payment.Status == PaymentStatus.Rejected)
             .Sum(payment => payment.Amount);
 
+        // VHT-141: cơ cấu giá trị hóa đơn theo loại phí, cùng tập hóa đơn hợp lệ.
+        var feeAmounts = await db.InvoiceItems.AsNoTracking()
+            .Where(item => invoiceIds.Contains(item.InvoiceId))
+            .GroupBy(item => item.ItemType)
+            .Select(group => new { Type = group.Key, Amount = group.Sum(item => item.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var today = Today;
         var lines = rows
             .Select(row =>
             {
@@ -149,6 +161,12 @@ public sealed class RevenueReportService(ApplicationDbContext db)
                 var outstanding = row.Status == InvoiceStatus.Issued
                     ? Math.Max(0m, row.TotalAmount - paid)
                     : 0m;
+                var overdueDays = row.DueDate is { } dueDate
+                    && row.Status == InvoiceStatus.Issued
+                    && outstanding > 0m
+                    && dueDate < today
+                    ? today.DayNumber - dueDate.DayNumber
+                    : 0;
                 return new RevenueReportLineDto(
                     row.InvoiceId,
                     row.RoomId,
@@ -161,8 +179,24 @@ public sealed class RevenueReportService(ApplicationDbContext db)
                     row.PropertyName,
                     row.PeriodStart,
                     row.PeriodEnd,
-                    recognized);
+                    recognized,
+                    row.DueDate,
+                    overdueDays);
             })
+            .ToList();
+
+        var feeBreakdown = new[]
+            {
+                InvoiceItemType.Rent,
+                InvoiceItemType.Electric,
+                InvoiceItemType.Water,
+                InvoiceItemType.Service,
+                InvoiceItemType.Discount,
+            }
+            .Select(type => new RevenueFeeTypeDto(
+                type.ToString(),
+                feeAmounts.FirstOrDefault(item => item.Type == type)?.Amount ?? 0m))
+            .Where(fee => fee.Amount != 0m)
             .ToList();
 
         var propertyGroups = lines
@@ -201,7 +235,10 @@ public sealed class RevenueReportService(ApplicationDbContext db)
             RejectedAmount: rejectedAmount,
             DateBasis: filter.DateBasis,
             Periods: periodGroupsAll,
-            Properties: propertyGroups);
+            Properties: propertyGroups,
+            FeeBreakdown: feeBreakdown,
+            OverdueOutstanding: lines.Sum(line => line.OverdueDays > 0 ? line.Outstanding : 0m),
+            OverdueInvoiceCount: lines.Count(line => line.OverdueDays > 0));
     }
 
     private static IReadOnlyList<RevenuePeriodGroupDto> BuildPeriodGroups(

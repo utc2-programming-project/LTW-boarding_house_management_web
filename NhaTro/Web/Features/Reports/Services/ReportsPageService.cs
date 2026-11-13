@@ -43,6 +43,9 @@ public sealed class ReportsPageService(
     public async Task<RoomReportResult> GetRoomReportAsync(RoomReportFilter filter, CancellationToken ct = default) =>
         await rooms.GetAsync(filter, await callers.GetCallerAsync(), ct);
 
+    public async Task<OccupancyReportResult> GetOccupancyAsync(OccupancyFilter filter, CancellationToken ct = default) =>
+        await rooms.GetOccupancyAsync(filter, await callers.GetCallerAsync(), ct);
+
     public async Task<TenantReportResult> GetTenantReportAsync(TenantReportFilter filter, CancellationToken ct = default)
     {
         var caller = await callers.GetCallerAsync();
