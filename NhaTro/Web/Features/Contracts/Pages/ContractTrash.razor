@@ -286,6 +286,11 @@
 
     private static string StatusKey(ContractStatus status) => status switch
     {
+        ContractStatus.Draft => "ContractStatusDraft",
+        ContractStatus.AwaitingTenant => "ContractStatusAwaitingTenant",
+        ContractStatus.ChangeRequested => "ContractStatusChangeRequested",
+        ContractStatus.TenantAccepted => "ContractStatusTenantAccepted",
+        ContractStatus.Cancelled => "ContractStatusCancelled",
         ContractStatus.Pending => "ContractStatusPending",
         ContractStatus.Approved => "ContractStatusActive",
         ContractStatus.Rejected => "ContractStatusRejected",

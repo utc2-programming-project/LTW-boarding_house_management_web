@@ -1,0 +1,76 @@
+.pending-assignments-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: 1240px;
+}
+
+.pending-assignments-page ::deep .page-heading {
+    margin-bottom: 0;
+}
+
+.pending-assignments-card {
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.pending-assignments-scroll {
+    overflow-x: auto;
+}
+
+.pending-assignments-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pending-assignments-table th,
+.pending-assignments-table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.pending-assignments-table th {
+    color: var(--text-secondary);
+    font-size: .85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pending-assignments-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.pending-assignments-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+.pending-assignments-table td:nth-child(1),
+.pending-assignments-table td:nth-child(2) {
+    min-width: 180px;
+}
+
+.pending-assignments-table td:nth-child(3),
+.pending-assignments-table td:nth-child(4) {
+    white-space: nowrap;
+}
+
+.pending-assignments-table th:last-child,
+.pending-assignments-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+    .pending-assignments-card {
+        padding: var(--space-4);
+    }
+
+    .pending-assignments-table th,
+    .pending-assignments-table td {
+        padding: var(--space-2) var(--space-3);
+    }
+}

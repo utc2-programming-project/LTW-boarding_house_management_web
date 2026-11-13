@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -57,9 +57,9 @@
   <data name="ContractCurrencyCycle" xml:space="preserve"><value>VND / chu kỳ</value></data>
   <data name="ContractRentLabel" xml:space="preserve"><value>Giá thuê phòng (VND/tháng)</value></data>
   <data name="ContractRentPlaceholder" xml:space="preserve"><value>Ví dụ: 4.500.000</value></data>
-  <data name="ContractDepositLabel" xml:space="preserve"><value>Tiền đặt cọc phòng</value></data>
+  <data name="ContractDepositLabel" xml:space="preserve"><value>Tiền cọc giữ căn (hoàn lại)</value></data>
   <data name="ContractDepositPlaceholder" xml:space="preserve"><value>Ví dụ: 4.500.000</value></data>
-  <data name="ContractDepositHint" xml:space="preserve"><value>Tiền cọc có thể bằng 0 ₫.</value></data>
+  <data name="ContractDepositHint" xml:space="preserve"><value>Chủ trọ giữ cọc để giữ căn. Khi kết thúc hợp đồng, trừ hư hại (nếu có) rồi hoàn phần còn lại; cọc không trừ vào tiền thuê.</value></data>
   <data name="ContractPaymentCycle" xml:space="preserve"><value>Chu kỳ thanh toán</value></data>
   <data name="ContractCycleOne" xml:space="preserve"><value>Hàng tháng (1 tháng)</value></data>
   <data name="ContractCycleThree" xml:space="preserve"><value>Mỗi 3 tháng</value></data>
@@ -78,10 +78,10 @@
   <data name="ContractNotesSection" xml:space="preserve"><value>Điều khoản bổ sung &amp; Ghi chú</value></data>
   <data name="ContractOptional" xml:space="preserve"><value>Không bắt buộc</value></data>
   <data name="ContractNotesPlaceholder" xml:space="preserve"><value>Nhập quy định riêng, đồ dùng bàn giao thêm, biển xe đăng ký gửi hoặc điều khoản thỏa thuận mẫu 4P…</value></data>
-  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Tổng thanh toán ban đầu</value></data>
-  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Tiền cọc + kỳ đầu:</value></data>
+  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Tổng cần thanh toán khi nhận phòng</value></data>
+  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Cọc giữ căn + tiền thuê kỳ đầu:</value></data>
   <data name="ContractInitialDeposit" xml:space="preserve"><value>Tiền cọc</value></data>
-  <data name="ContractFirstCycle" xml:space="preserve"><value>Kỳ đầu ({0} tháng)</value></data>
+  <data name="ContractFirstCycle" xml:space="preserve"><value>Tiền thuê kỳ đầu ({0} tháng)</value></data>
   <data name="ContractTemplateFooter" xml:space="preserve"><value>Biểu mẫu chuẩn 4P (Phòng - Phí - Pháp lý - Phạt vi phạm).</value></data>
   <data name="ContractCancel" xml:space="preserve"><value>Hủy bỏ</value></data>
   <data name="ContractSaveDraft" xml:space="preserve"><value>Lưu nháp</value></data>
@@ -98,7 +98,7 @@
   <data name="ContractErrorDepositRequired" xml:space="preserve"><value>Vui lòng nhập tiền đặt cọc (có thể nhập 0).</value></data>
   <data name="ContractErrorDepositNonnegative" xml:space="preserve"><value>Tiền đặt cọc không được âm.</value></data>
   <data name="ContractErrorPaymentCycleRequired" xml:space="preserve"><value>Vui lòng chọn chu kỳ thanh toán.</value></data>
-  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Chu kỳ thanh toán phải là 1, 3 hoặc 6 tháng.</value></data>
+  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Chu kỳ thanh toán chỉ nhận 1, 2, 3, 6 hoặc 12 tháng.</value></data>
   <data name="ContractDraftPreviewOnly" xml:space="preserve"><value>Bản nháp chỉ được giữ trong bộ nhớ của phiên xem trước này; chưa được lưu vào SQL.</value></data>
   <data name="ContractSubmitOwnerPreviewOnly" xml:space="preserve"><value>Dữ liệu hợp lệ. Chưa có dịch vụ hợp đồng nên yêu cầu chưa được gửi hoặc lưu.</value></data>
   <data name="ContractSubmitManagerPreviewOnly" xml:space="preserve"><value>Dữ liệu hợp lệ cho trạng thái Chờ duyệt. Chưa có dịch vụ hợp đồng nên yêu cầu chưa được tạo, gửi hoặc lưu.</value></data>
@@ -207,8 +207,10 @@
   <data name="RenewalErrorDuplicatePending" xml:space="preserve"><value>Hợp đồng này đã có yêu cầu gia hạn đang chờ xử lý.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>Chủ trọ tạo hợp đồng: có hiệu lực ngay. Quản lý tạo: hợp đồng ở trạng thái Chờ duyệt để Chủ trọ quyết định.</value></data>
   <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Giá chuẩn hiện tại</value></data>
-  <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc ước tính (20%)</value></data>
+  <data name="ContractDepositEstimate" xml:space="preserve"><value>Cọc giữ căn (1 tháng)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>Chưa có hồ sơ khách thuê đang hoạt động.</value></data>
+  <data name="ContractTenantEmptyTitle" xml:space="preserve"><value>Chưa có khách thuê</value></data>
+  <data name="ContractCreateTenantAction" xml:space="preserve"><value>Thêm khách thuê</value></data>
   <data name="ContractTenantSearchLabel" xml:space="preserve"><value>Tìm khách thuê</value></data>
   <data name="ContractTenantSearchPlaceholder" xml:space="preserve"><value>Tìm theo họ tên hoặc số điện thoại</value></data>
   <data name="ContractTenantSearchEmpty" xml:space="preserve"><value>Không có khách thuê phù hợp.</value></data>
@@ -292,7 +294,7 @@
   <data name="ContractSuccessorLabel" xml:space="preserve"><value>Hợp đồng kế nhiệm</value></data>
   <data name="ContractPreviousLabel" xml:space="preserve"><value>Hợp đồng tiền nhiệm</value></data>
   <data name="ContractHistoryEmpty" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
-  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Gợi ý 20% giá thuê</value></data>
+  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Gợi ý 1 tháng giá thuê</value></data>
   <data name="Restore" xml:space="preserve"><value>Khôi phục</value></data>
   <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / trang</value></data>
   <data name="Purge" xml:space="preserve"><value>Xóa vĩnh viễn</value></data>
@@ -325,4 +327,188 @@
   <data name="ContractErrorNotInTrash" xml:space="preserve"><value>Hợp đồng không còn trong thùng rác.</value></data>
   <data name="ContractErrorHasDependencies" xml:space="preserve"><value>Không thể xóa vì hợp đồng còn hóa đơn, yêu cầu gia hạn hoặc kỳ ghi chỉ số.</value></data>
   <data name="ContractErrorRoomDeleted" xml:space="preserve"><value>Phòng của hợp đồng đã bị xóa; hãy khôi phục phòng trước.</value></data>
+  <data name="ContractAddress" xml:space="preserve"><value>Địa chỉ</value></data>
+  <data name="ContractIdNumber" xml:space="preserve"><value>Số CCCD/CMND</value></data>
+  <data name="ContractDateOfBirth" xml:space="preserve"><value>Ngày sinh</value></data>
+  <data name="ContractEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="ContractPermanentAddress" xml:space="preserve"><value>Địa chỉ thường trú</value></data>
+  <data name="ContractCycleTwo" xml:space="preserve"><value>Mỗi 2 tháng</value></data>
+  <data name="ContractCycleTwelve" xml:space="preserve"><value>Mỗi 12 tháng</value></data>
+  <data name="ContractRentHint" xml:space="preserve"><value>Mặc định bằng giá chuẩn của phòng, có thể điều chỉnh.</value></data>
+  <data name="ContractNumberHint" xml:space="preserve"><value>Mã hợp đồng dùng để tra cứu, đối chiếu hóa đơn và in hợp đồng.</value></data>
+  <data name="ContractTermHint" xml:space="preserve"><value>Thời hạn thuê từ ngày bắt đầu đến ngày kết thúc; bấm để mở bản in.</value></data>
+  <data name="ContractDepositPaidHint" xml:space="preserve"><value>Số tiền chủ trọ đã thực nhận. Cọc được hoàn lại sau khi trừ hư hại (nếu có).</value></data>
+  <data name="ContractInitialPaymentHint" xml:space="preserve"><value>Tổng cần trả lúc nhận phòng = tiền cọc + tiền thuê của kỳ đầu. Phí dịch vụ tính theo hóa đơn.</value></data>
+  <data name="ContractSigningVersionHint" xml:space="preserve"><value>Phiên bản nội dung hợp đồng tại thời điểm khách xác nhận.</value></data>
+  <data name="ContractSigningHashHint" xml:space="preserve"><value>Mã băm SHA-256 của nội dung hợp đồng, dùng làm bằng chứng điện tử.</value></data>
+  <data name="ContractDepositRefundHint" xml:space="preserve"><value>Số cọc cần hoàn lại khi hợp đồng kết thúc hoặc bị hủy sau khi đã thu.</value></data>
+  <data name="ContractPaymentCycleHint" xml:space="preserve"><value>Mỗi kỳ thanh toán gồm số tháng đã chọn.</value></data>
+  <data name="ContractNoRoommates" xml:space="preserve"><value>Chưa chọn thành viên nào trong hộ.</value></data>
+  <data name="ContractServicesEmpty" xml:space="preserve"><value>Chưa có bảng giá dịch vụ cho nhà này.</value></data>
+  <data name="ContractSelectPropertyForServices" xml:space="preserve"><value>Chọn nhà để xem bảng giá dịch vụ.</value></data>
+  <data name="ContractServiceName" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="ContractServiceUnit" xml:space="preserve"><value>Đơn vị</value></data>
+  <data name="ContractServiceRate" xml:space="preserve"><value>Đơn giá</value></data>
+  <data name="ContractTermsCounter" xml:space="preserve"><value>{0}/4000 ký tự</value></data>
+  <data name="ContractErrorInvalidMonthlyRent" xml:space="preserve"><value>Giá thuê phải là số không âm và nằm trong giới hạn hợp lệ.</value></data>
+  <data name="ContractErrorInvalidPaymentCycle" xml:space="preserve"><value>Chu kỳ thanh toán chỉ nhận 1, 2, 3, 6 hoặc 12 tháng.</value></data>
+  <data name="ContractErrorInvalidMeterReadingDay" xml:space="preserve"><value>Ngày chốt điện nước phải nằm trong khoảng 1–28.</value></data>
+  <data name="ContractErrorTermsTooLong" xml:space="preserve"><value>Điều khoản bổ sung không được vượt quá 4000 ký tự.</value></data>
+  <data name="ContractErrorRelationshipTooLong" xml:space="preserve"><value>Quan hệ không được vượt quá 50 ký tự.</value></data>
+  <data name="ContractErrorRepresentativeInvalid" xml:space="preserve"><value>Người đại diện phải là một thành viên trong hợp đồng.</value></data>
+  <data name="ContractSectionBilling" xml:space="preserve"><value>Tài chính hợp đồng</value></data>
+  <data name="ContractDetailServicesTitle" xml:space="preserve"><value>Dịch vụ &amp; đơn giá</value></data>
+  <data name="ContractDetailServicesEmpty" xml:space="preserve"><value>Chưa có dịch vụ áp dụng cho hợp đồng này.</value></data>
+  <data name="ContractServiceApplied" xml:space="preserve"><value>Đang áp dụng</value></data>
+  <data name="ContractServiceUnregistered" xml:space="preserve"><value>Chưa đăng ký</value></data>
+  <data name="ContractNoTerms" xml:space="preserve"><value>Chưa có điều khoản bổ sung.</value></data>
+  <data name="ContractClausesTitle" xml:space="preserve"><value>Điều khoản chung</value></data>
+  <data name="ContractClauseDeposit" xml:space="preserve"><value>Bên B đặt cọc theo thoả thuận; tiền cọc được hoàn trả sau khi thanh lý hợp đồng và tất toán công nợ.</value></data>
+  <data name="ContractClauseUtilities" xml:space="preserve"><value>Tiền điện, nước và dịch vụ được tính theo bảng giá niêm yết của nhà trọ tại thời điểm ghi chỉ số.</value></data>
+  <data name="ContractClauseMaintenance" xml:space="preserve"><value>Bên B giữ gìn tài sản, không tự ý sửa chữa kết cấu; hư hỏng do lỗi Bên B thì Bên B chịu chi phí.</value></data>
+  <data name="ContractClauseTermination" xml:space="preserve"><value>Một bên muốn chấm dứt hợp đồng trước hạn phải báo trước 30 ngày và thanh toán đủ nghĩa vụ đến thời điểm chấm dứt.</value></data>
+  <data name="ContractClauseSublet" xml:space="preserve"><value>Bên B không được cho thuê lại hoặc chuyển nhượng phòng khi chưa có sự đồng ý của Bên A.</value></data>
+  <data name="ContractFloorLabel" xml:space="preserve"><value>Tầng</value></data>
+  <data name="ContractAreaLabel" xml:space="preserve"><value>Diện tích (m²)</value></data>
+  <data name="ContractPrintAction" xml:space="preserve"><value>In hợp đồng</value></data>
+  <data name="ContractRepresentativeTag" xml:space="preserve"><value>Đại diện</value></data>
+  <data name="ContractPaymentScheduleTitle" xml:space="preserve"><value>Lịch thanh toán</value></data>
+  <data name="ContractPaymentScheduleHint" xml:space="preserve"><value>Chu kỳ thanh toán, ngày chốt điện nước và số tiền cần trả trong kỳ đầu.</value></data>
+  <data name="ContractDetailServicesHint" xml:space="preserve"><value>Đơn giá áp dụng tại ngày bắt đầu hợp đồng.</value></data>
+  <data name="ContractPrintBackToDetail" xml:space="preserve"><value>Về chi tiết hợp đồng</value></data>
+  <data name="ContractPrintLoading" xml:space="preserve"><value>Đang tải hợp đồng…</value></data>
+  <data name="ContractPrintMottoTitle" xml:space="preserve"><value>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</value></data>
+  <data name="ContractPrintMotto" xml:space="preserve"><value>Độc lập – Tự do – Hạnh phúc</value></data>
+  <data name="ContractPrintHeading" xml:space="preserve"><value>HỢP ĐỒNG THUÊ PHÒNG</value></data>
+  <data name="ContractPrintNumber" xml:space="preserve"><value>Số: {0}</value></data>
+  <data name="ContractPrintPartyA" xml:space="preserve"><value>BÊN CHO THUÊ (BÊN A)</value></data>
+  <data name="ContractPrintPartyB" xml:space="preserve"><value>BÊN THUÊ (BÊN B)</value></data>
+  <data name="ContractPrintDurationMonths" xml:space="preserve"><value>Số tháng thuê</value></data>
+  <data name="ContractPrintDurationMonthsValue" xml:space="preserve"><value>{0} tháng</value></data>
+  <data name="ContractPrintSignedDate" xml:space="preserve"><value>…, ngày {0} tháng {1} năm {2}</value></data>
+  <data name="ContractPrintPartyASign" xml:space="preserve"><value>ĐẠI DIỆN BÊN A</value></data>
+  <data name="ContractPrintPartyBSign" xml:space="preserve"><value>ĐẠI DIỆN BÊN B</value></data>
+  <data name="ContractPrintSignatureHint" xml:space="preserve"><value>(Ký, ghi rõ họ tên)</value></data>
+  <data name="ContractErrorEndDateTooShort" xml:space="preserve"><value>Thời hạn hợp đồng phải tối thiểu một tháng.</value></data>
+  <data name="ContractErrorOutsideOwnerScope" xml:space="preserve"><value>Hợp đồng không thuộc nhà trọ của Chủ trọ đang thao tác.</value></data>
+  <data name="ContractErrorRenewalRejectedByLiquidation" xml:space="preserve"><value>Hợp đồng đã được thanh lý.</value></data>
+  <data name="ContractErrorTenantAcceptanceRequired" xml:space="preserve"><value>Khách thuê chưa xác nhận hợp đồng nên chưa thể duyệt.</value></data>
+  <data name="ContractErrorInvalidSigningStatus" xml:space="preserve"><value>Hợp đồng không ở trạng thái cho phép thao tác ký.</value></data>
+  <data name="ContractErrorContractVersionMissing" xml:space="preserve"><value>Hợp đồng chưa có phiên bản nội dung để khách xác nhận.</value></data>
+  <data name="ContractErrorContractAlreadyAccepted" xml:space="preserve"><value>Khách thuê đã xác nhận hợp đồng này.</value></data>
+  <data name="ContractErrorChangeRequestMessageRequired" xml:space="preserve"><value>Vui lòng nhập nội dung cần chỉnh sửa.</value></data>
+  <data name="ContractErrorChangeRequestMessageTooLong" xml:space="preserve"><value>Nội dung yêu cầu chỉnh sửa không được vượt quá 2000 ký tự.</value></data>
+  <data name="ContractErrorOtpRequired" xml:space="preserve"><value>Vui lòng nhập mã xác thực đã gửi tới email.</value></data>
+  <data name="ContractErrorOtpInvalid" xml:space="preserve"><value>Mã xác thực không đúng hoặc đã hết hạn.</value></data>
+  <data name="ContractErrorOtpExpired" xml:space="preserve"><value>Mã xác thực đã hết hạn. Vui lòng gửi lại mã.</value></data>
+  <data name="ContractErrorOtpTooManyRequests" xml:space="preserve"><value>Bạn đã gửi mã quá nhiều lần. Vui lòng thử lại sau.</value></data>
+  <data name="ContractStatusDraft" xml:space="preserve"><value>Bản nháp</value></data>
+  <data name="ContractStatusAwaitingTenant" xml:space="preserve"><value>Chờ khách xác nhận</value></data>
+  <data name="ContractStatusChangeRequested" xml:space="preserve"><value>Khách yêu cầu sửa</value></data>
+  <data name="ContractStatusTenantAccepted" xml:space="preserve"><value>Khách đã đồng ý</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Đã huỷ</value></data>
+  <data name="ContractStatusDepositPending" xml:space="preserve"><value>Chờ xác nhận cọc</value></data>
+  <data name="ContractDepositDueLabel" xml:space="preserve"><value>Hạn thanh toán cọc</value></data>
+  <data name="ContractTenantSearchLimitHint" xml:space="preserve"><value>Đang hiển thị tối đa {0} kết quả; nhập tên hoặc số điện thoại để tìm nhanh.</value></data>
+  <data name="ContractSendToTenantAction" xml:space="preserve"><value>Gửi khách xem</value></data>
+  <data name="ContractSentToTenantSuccess" xml:space="preserve"><value>Đã gửi hợp đồng cho khách xem và xác nhận.</value></data>
+  <data name="ContractDraftSavedSuccess" xml:space="preserve"><value>Đã lưu bản nháp hợp đồng.</value></data>
+  <data name="ContractEditAction" xml:space="preserve"><value>Sửa hợp đồng</value></data>
+  <data name="ContractWithdrawAction" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="ContractCopySigningLink" xml:space="preserve"><value>Sao chép link ký</value></data>
+  <data name="ContractCopySigningLinkHint" xml:space="preserve"><value>Sao chép link để gửi khách đăng nhập và ký hợp đồng.</value></data>
+  <data name="ContractCopySigningLinkSuccess" xml:space="preserve"><value>Đã sao chép link ký hợp đồng.</value></data>
+  <data name="ContractCopySigningLinkFailed" xml:space="preserve"><value>Không sao chép được link. Hãy sao chép thủ công từ thanh địa chỉ.</value></data>
+  <data name="ContractWithdrawnSuccess" xml:space="preserve"><value>Đã thu hồi hợp đồng về bản nháp.</value></data>
+  <data name="ContractSigningPanelTitle" xml:space="preserve"><value>Trạng thái ký hợp đồng</value></data>
+  <data name="ContractSigningVersion" xml:space="preserve"><value>Phiên bản</value></data>
+  <data name="ContractSigningSentAt" xml:space="preserve"><value>Gửi khách lúc</value></data>
+  <data name="ContractSigningAcceptedAt" xml:space="preserve"><value>Khách xác nhận lúc</value></data>
+  <data name="ContractSigningHash" xml:space="preserve"><value>Mã băm nội dung (SHA-256)</value></data>
+  <data name="ContractChangeRequestsTitle" xml:space="preserve"><value>Yêu cầu chỉnh sửa từ khách</value></data>
+  <data name="ContractChangeRequestPending" xml:space="preserve"><value>Chờ xử lý</value></data>
+  <data name="ContractChangeRequestResolved" xml:space="preserve"><value>Đã xử lý</value></data>
+  <data name="ContractChangeRequestDismissed" xml:space="preserve"><value>Đã bỏ qua</value></data>
+  <data name="ContractEditTitle" xml:space="preserve"><value>Sửa hợp đồng</value></data>
+  <data name="ContractEditDescription" xml:space="preserve"><value>Chỉ sửa được khi hợp đồng còn bản nháp hoặc đang chờ khách xem lại.</value></data>
+  <data name="ContractEditNotEditable" xml:space="preserve"><value>Hợp đồng không còn ở trạng thái cho phép sửa.</value></data>
+  <data name="ContractEditSaveAction" xml:space="preserve"><value>Lưu thay đổi</value></data>
+  <data name="ContractEditSavedSuccess" xml:space="preserve"><value>Đã lưu thay đổi hợp đồng.</value></data>
+  <data name="ContractTenantReviewTitle" xml:space="preserve"><value>Xem và xác nhận hợp đồng</value></data>
+  <data name="ContractTenantReviewDescription" xml:space="preserve"><value>Kiểm tra điều khoản, xác nhận bằng mã OTP hoặc gửi yêu cầu chỉnh sửa cho chủ trọ.</value></data>
+  <data name="ContractTenantAcceptedAt" xml:space="preserve"><value>Bạn đã xác nhận lúc {0}.</value></data>
+  <data name="ContractTenantAcceptAction" xml:space="preserve"><value>Đồng ý hợp đồng</value></data>
+  <data name="ContractTenantRequestChangesAction" xml:space="preserve"><value>Yêu cầu chỉnh sửa</value></data>
+  <data name="ContractChangeRequestMessageLabel" xml:space="preserve"><value>Nội dung cần chỉnh sửa</value></data>
+  <data name="ContractChangeRequestSubmitAction" xml:space="preserve"><value>Gửi yêu cầu</value></data>
+  <data name="ContractTenantAcceptTitle" xml:space="preserve"><value>Xác nhận hợp đồng bằng OTP</value></data>
+  <data name="ContractTenantAcceptDescription" xml:space="preserve"><value>Nhấn gửi mã để nhận OTP qua email, sau đó nhập mã để xác nhận.</value></data>
+  <data name="ContractTenantSendOtpAction" xml:space="preserve"><value>Gửi mã OTP</value></data>
+  <data name="ContractTenantOtpLabel" xml:space="preserve"><value>Mã OTP</value></data>
+  <data name="ContractTenantOtpPlaceholder" xml:space="preserve"><value>Nhập mã 6 số</value></data>
+  <data name="ContractTenantConfirmAcceptAction" xml:space="preserve"><value>Xác nhận</value></data>
+  <data name="ContractTenantOtpSent" xml:space="preserve"><value>Đã gửi mã xác nhận tới email của bạn.</value></data>
+  <data name="ContractTenantAcceptSuccess" xml:space="preserve"><value>Bạn đã xác nhận hợp đồng.</value></data>
+  <data name="ContractChangeRequestSuccess" xml:space="preserve"><value>Đã gửi yêu cầu chỉnh sửa cho chủ trọ.</value></data>
+  <data name="ContractPrintEvidenceTitle" xml:space="preserve"><value>Bằng chứng xác nhận điện tử</value></data>
+  <data name="ContractPrintEvidenceVersion" xml:space="preserve"><value>Phiên bản nội dung: v{0}</value></data>
+  <data name="ContractPrintEvidenceHash" xml:space="preserve"><value>Mã băm SHA-256</value></data>
+  <data name="ContractPrintEvidenceAcceptedAt" xml:space="preserve"><value>Khách thuê xác nhận lúc {0}</value></data>
+  <data name="ContractPendingAssignmentsTitle" xml:space="preserve"><value>Khách chờ lập hợp đồng</value></data>
+  <data name="ContractPendingAssignmentsDescription" xml:space="preserve"><value>Khách đã nhận lời mời/QR cho phòng và đang chờ Chủ trọ hoặc Quản lý lập hợp đồng.</value></data>
+  <data name="ContractPendingAssignmentsEmptyTitle" xml:space="preserve"><value>Không có khách chờ lập hợp đồng</value></data>
+  <data name="ContractPendingAssignmentsEmptyDescription" xml:space="preserve"><value>Hiện chưa có lời mời nhận phòng nào đang chờ xử lý.</value></data>
+  <data name="ContractPendingAssignmentsCreatedAt" xml:space="preserve"><value>Nhận lời mời lúc</value></data>
+  <data name="ContractPendingAssignmentsCreateAction" xml:space="preserve"><value>Lập hợp đồng</value></data>
+  <data name="ContractPendingAssignmentsNavLabel" xml:space="preserve"><value>Khách chờ lập HĐ</value></data>
+  <data name="ContractInitialPaymentNote" xml:space="preserve"><value>Cọc giữ căn sẽ được hoàn lại khi kết thúc hợp đồng sau khi trừ hư hại (nếu có); tiền thuê kỳ đầu không hoàn lại. Phí dịch vụ tính riêng.</value></data>
+  <data name="ContractDepositRule" xml:space="preserve"><value>Cọc giữ căn do chủ trọ giữ để bảo đảm hợp đồng, không phải doanh thu tiền thuê. Khi kết thúc hợp đồng sẽ trừ hư hại (nếu có) và hoàn phần còn lại.</value></data>
+  <data name="ContractTenantSigningNote" xml:space="preserve"><value>Bấm Đồng ý + OTP là bạn ký hợp đồng điện tử. Cọc giữ căn do chủ trọ giữ và hoàn lại sau khi trừ hư hại; tiền thuê kỳ đầu là chi phí sử dụng phòng.</value></data>
+  <data name="ContractDepositReceivedAction" xml:space="preserve"><value>Xác nhận đã thu cọc</value></data>
+  <data name="ContractDepositPaymentTitle" xml:space="preserve"><value>Thanh toán tiền cọc</value></data>
+  <data name="ContractDepositPayAction" xml:space="preserve"><value>Thanh toán cọc</value></data>
+  <data name="ContractDepositRentInvoicesAction" xml:space="preserve"><value>Hóa đơn tiền thuê</value></data>
+  <data name="ContractCreateFirstRentInvoiceAction" xml:space="preserve"><value>Tạo hóa đơn kỳ đầu</value></data>
+  <data name="ContractMoreActions" xml:space="preserve"><value>Thao tác khác</value></data>
+  <data name="ContractCreateFirstRentInvoiceSuccess" xml:space="preserve"><value>Đã tạo hóa đơn nháp kỳ thuê đầu.</value></data>
+  <data name="ContractCreateFirstRentInvoiceFailed" xml:space="preserve"><value>Không tạo được hóa đơn kỳ đầu. Vui lòng kiểm tra lại hợp đồng.</value></data>
+  <data name="ContractDepositRefundDueLabel" xml:space="preserve"><value>Cần hoàn cọc</value></data>
+  <data name="ContractDepositRefundedLabel" xml:space="preserve"><value>Đã hoàn cọc</value></data>
+  <data name="ContractDepositPaymentIntro" xml:space="preserve"><value>Chuyển khoản đúng số tiền cọc vào tài khoản chủ trọ, sau đó bấm xác nhận để chủ trọ kiểm tra.</value></data>
+  <data name="ContractDepositBankLabel" xml:space="preserve"><value>Tài khoản nhận tiền</value></data>
+  <data name="ContractDepositBankMissing" xml:space="preserve"><value>Chủ trọ chưa cấu hình tài khoản nhận tiền.</value></data>
+  <data name="ContractDepositQrHint" xml:space="preserve"><value>Quét VietQR để chuyển đúng số tiền cọc.</value></data>
+  <data name="ContractDepositProofLabel" xml:space="preserve"><value>Minh chứng chuyển cọc</value></data>
+  <data name="ContractDepositProofHint" xml:space="preserve"><value>Ảnh hoặc PDF xác nhận giao dịch, tối đa 5 tệp.</value></data>
+  <data name="ContractDepositProofRequired" xml:space="preserve"><value>Vui lòng tải lên ít nhất một minh chứng chuyển cọc.</value></data>
+  <data name="ContractDepositProofUploadFailed" xml:space="preserve"><value>Tải minh chứng thất bại. Vui lòng thử lại.</value></data>
+  <data name="ContractDepositProofOpen" xml:space="preserve"><value>Xem</value></data>
+  <data name="ContractErrorDepositProofRequired" xml:space="preserve"><value>Vui lòng tải lên ít nhất một minh chứng chuyển cọc.</value></data>
+  <data name="ContractDepositPending" xml:space="preserve"><value>Đã gửi báo chuyển cọc lúc {0}; chờ chủ trọ xác nhận.</value></data>
+  <data name="ContractDepositRejected" xml:space="preserve"><value>Phiếu cọc bị từ chối: {0}</value></data>
+  <data name="ContractDepositTransactionLabel" xml:space="preserve"><value>Mã giao dịch (nếu có)</value></data>
+  <data name="ContractDepositSubmitAction" xml:space="preserve"><value>Tôi đã chuyển cọc</value></data>
+  <data name="ContractDepositSubmitSuccess" xml:space="preserve"><value>Đã gửi báo chuyển cọc. Chủ trọ sẽ xác nhận.</value></data>
+  <data name="ContractDepositPendingTitle" xml:space="preserve"><value>Khách báo đã chuyển cọc</value></data>
+  <data name="ContractDepositPendingDetail" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ContractDepositConfirmAction" xml:space="preserve"><value>Xác nhận đã nhận cọc</value></data>
+  <data name="ContractDepositRejectAction" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="ContractDepositConfirmSuccess" xml:space="preserve"><value>Đã xác nhận nhận tiền cọc.</value></data>
+  <data name="ContractDepositRejectTitle" xml:space="preserve"><value>Từ chối phiếu chuyển cọc</value></data>
+  <data name="ContractDepositRejectDescription" xml:space="preserve"><value>Nhập lý do để khách kiểm tra và gửi lại.</value></data>
+  <data name="ContractDepositRejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="ContractDepositRejectConfirm" xml:space="preserve"><value>Từ chối phiếu cọc</value></data>
+  <data name="ContractDepositRejectSuccess" xml:space="preserve"><value>Đã từ chối phiếu chuyển cọc.</value></data>
+  <data name="ContractErrorDepositPaymentPending" xml:space="preserve"><value>Đã có phiếu báo chuyển cọc đang chờ chủ trọ xác nhận.</value></data>
+  <data name="ContractErrorDepositPaymentNotFound" xml:space="preserve"><value>Không tìm thấy phiếu báo chuyển cọc.</value></data>
+  <data name="ContractDepositReceivedTitle" xml:space="preserve"><value>Xác nhận đã thu cọc</value></data>
+  <data name="ContractDepositReceivedDescription" xml:space="preserve"><value>Xác nhận chủ trọ đã nhận đủ tiền cọc giữ căn. Khoản này không phải doanh thu tiền thuê và sẽ được hoàn lại sau khi trừ hư hại (nếu có).</value></data>
+  <data name="ContractDepositReceivedConfirm" xml:space="preserve"><value>Xác nhận đã thu</value></data>
+  <data name="ContractDepositReceivedSuccess" xml:space="preserve"><value>Đã ghi nhận thu tiền cọc giữ căn.</value></data>
+  <data name="ContractDepositPaidLabel" xml:space="preserve"><value>Đã thu cọc</value></data>
+  <data name="ContractDepositPaidAtLabel" xml:space="preserve"><value>Ngày thu</value></data>
+  <data name="ContractErrorDepositPaymentNotAllowed" xml:space="preserve"><value>Chỉ ghi nhận thu cọc khi hợp đồng đã gửi khách hoặc đã duyệt.</value></data>
+  <data name="ContractTenantSignedPaymentNote" xml:space="preserve"><value>Bạn đã ký hợp đồng. Việc ký không tự động trừ tiền; vui lòng thanh toán tiền thuê kỳ đầu và phí dịch vụ theo hóa đơn. Cọc giữ căn được ghi nhận riêng khi chủ trọ xác nhận đã thu.</value></data>
+  <data name="ContractTenantInvoicesAction" xml:space="preserve"><value>Hóa đơn của tôi</value></data>
+  <data name="ContractInvoicesAction" xml:space="preserve"><value>Hóa đơn hợp đồng</value></data>
 </root>

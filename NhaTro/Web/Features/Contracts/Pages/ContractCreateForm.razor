@@ -43,103 +43,325 @@
             {
                 <div class="contract-validation-summary" role="alert"><ul>@foreach (var error in ValidationErrors) { <li>@error</li> }</ul></div>
             }
-            <div class="contract-live-grid">
-                <div class="contract-field">
-                    <label for="property-select">@L["ContractPropertyLabel"]</label>
-                    <InputSelect id="property-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.PropertyId) ? "true" : "false")" aria-describedby="property-error" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
-                        <option value="">@L["ContractPropertyPlaceholder"]</option>
-                        @foreach (var property in _options.Properties) { <option value="@property.Id">@property.Name</option> }
-                    </InputSelect>
-                    <small id="property-error" class="contract-field-error">@ErrorFor(nameof(_form.PropertyId))</small>
+
+            <section class="contract-form-section" aria-labelledby="contract-section-property">
+                <h2 id="contract-section-property" class="contract-form-section-title"><LucideIcon Name="building" />@L["ContractSectionProperty"]</h2>
+                <div class="contract-live-grid">
+                    <div class="contract-field">
+                        <label for="property-select">@L["ContractPropertyLabel"]</label>
+                        <InputSelect id="property-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.PropertyId) ? "true" : "false")" aria-describedby="property-error" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
+                            <option value="">@L["ContractPropertyPlaceholder"]</option>
+                            @foreach (var property in _options.Properties) { <option value="@property.Id">@property.Name</option> }
+                        </InputSelect>
+                        <small id="property-error" class="contract-field-error">@ErrorFor(nameof(_form.PropertyId))</small>
+                    </div>
+                    <div class="contract-field">
+                        <label for="room-select">@L["ContractRoomLabel"]</label>
+                        <InputSelect id="room-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.RoomId) ? "true" : "false")" aria-describedby="room-error" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
+                            <option value="">@L["ContractRoomPlaceholder"]</option>
+                            @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
+                        </InputSelect>
+                        @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
+                        <small id="room-error" class="contract-field-error">@ErrorFor(nameof(_form.RoomId))</small>
+                    </div>
                 </div>
-                <div class="contract-field">
-                    <label for="room-select">@L["ContractRoomLabel"]</label>
-                    <InputSelect id="room-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.RoomId) ? "true" : "false")" aria-describedby="room-error" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
-                        <option value="">@L["ContractRoomPlaceholder"]</option>
-                        @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
-                    </InputSelect>
-                    @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
-                    <small id="room-error" class="contract-field-error">@ErrorFor(nameof(_form.RoomId))</small>
-                </div>
-                <div class="contract-field">
-                    <label for="start-date">@L["ContractStartDate"]</label>
-                    <InputDate id="start-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.StartDate) ? "true" : "false")" aria-describedby="start-date-error" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
-                    <small id="start-date-error" class="contract-field-error">@ErrorFor(nameof(_form.StartDate))</small>
-                </div>
-                <div class="contract-field">
-                    <label for="end-date">@L["ContractEndDate"]</label>
-                    <InputDate id="end-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.EndDate) ? "true" : "false")" aria-describedby="end-date-error" TValue="DateOnly?" @bind-Value="_form.EndDate" />
-                    <small id="end-date-error" class="contract-field-error">@ErrorFor(nameof(_form.EndDate))</small>
-                </div>
-                <div class="contract-field">
-                    <label for="deposit-amount">@L["ContractDepositLabel"]</label>
-                    <InputNumber id="deposit-amount" class="input tabular-nums" inputmode="numeric"
-                                 aria-invalid="@(_editContext.HasError(() => _form.DepositAmount) ? "true" : "false")" aria-describedby="deposit-hint"
-                                 TValue="decimal?" @bind-Value="_form.DepositAmount" />
-                    <small id="deposit-hint" class="contract-field-hint">@L["ContractDepositHint"]</small>
-                    <small class="contract-field-error">@ErrorFor(nameof(_form.DepositAmount))</small>
-                </div>
-            </div>
-            @if (SelectedRoom is { } selectedRoom)
-            {
-                <div class="contract-price-preview"><span>@L["ContractSnapshotAtApproval"]</span><strong class="tabular-nums">@MoneyFormatter.Format(selectedRoom.StandardPrice)</strong><span>@L["ContractDepositEstimate"]</span><strong class="tabular-nums">@MoneyFormatter.Format(_form.DepositAmount ?? MoneyFormatter.RoundVnd(selectedRoom.StandardPrice * .20m))</strong></div>
-            }
-            <fieldset class="contract-tenant-picker">
-                <legend><span class="contract-tenant-legend"><LucideIcon Name="users" />@L["ContractTenantsLabel"]</span></legend>
-                @if (_options.Tenants.Count == 0) { <p>@L["ContractNoActiveTenants"]</p> }
+                @if (SelectedRoom is { } room)
+                {
+                    <div class="contract-info-card">
+                        <strong class="contract-info-card-title">@room.Code</strong>
+                        <div class="contract-info-meta">
+                            @if (room.Floor is int floor) { <span>@L["ContractRoomFloor", floor]</span> }
+                            @if (room.AreaM2 is decimal area) { <span>@L["ContractArea", area]</span> }
+                            <span>@L["ContractStandardPrice"]: <b class="tabular-nums">@MoneyFormatter.Format(room.StandardPrice)</b></span>
+                        </div>
+                        @if (SelectedProperty?.Address is { Length: > 0 } address)
+                        {
+                            <small>@L["ContractAddress"]: @address</small>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="contract-form-section" aria-labelledby="contract-section-tenant">
+                <h2 id="contract-section-tenant" class="contract-form-section-title"><LucideIcon Name="users" />@L["ContractTenantSection"]</h2>
+                @if (_options.Tenants.Count == 0)
+                {
+                    <EmptyStateCard Title="@L["ContractTenantEmptyTitle"]" Description="@L["ContractNoActiveTenants"]">
+                        <Icon><LucideIcon Name="users" /></Icon>
+                        <ChildContent>
+                            <a class="btn btn-secondary" href="/tenants"><LucideIcon Name="user-plus" />@L["ContractCreateTenantAction"]</a>
+                        </ChildContent>
+                    </EmptyStateCard>
+                }
                 else
                 {
+                    <p class="contract-form-section-hint">@L["ContractTenantSectionHint"]</p>
                     <label class="contract-tenant-search">
                         <LucideIcon Name="search" />
                         <span class="sr-only">@L["ContractTenantSearchLabel"]</span>
                         <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]" @bind="_tenantKeyword" @bind:event="oninput" />
                     </label>
-                    @if (!FilteredTenants.Any())
+                    @if (_options.Tenants.Count > TenantPickerLimit)
+                    {
+                        <p class="contract-field-hint">@L["ContractTenantSearchLimitHint", TenantPickerLimit]</p>
+                    }
+                    @if (FilteredTenants.Count == 0)
                     {
                         <p class="contract-field-hint">@L["ContractTenantSearchEmpty"]</p>
                     }
-                    <div class="contract-tenant-options">
-                    @foreach (var tenant in FilteredTenants)
+                    <fieldset class="contract-tenant-picker">
+                        <legend>@L["ContractRepresentativeLabel"]</legend>
+                        <div class="contract-tenant-options">
+                            @foreach (var tenant in FilteredTenants)
+                            {
+                                <label>
+                                    <input type="radio" name="contract-representative" value="@tenant.Id" checked="@(_form.RepresentativeTenantId == tenant.Id)" @onchange="() => SetRepresentative(tenant.Id)" />
+                                    <span>@tenant.FullName</span>
+                                    <small>@tenant.Phone</small>
+                                </label>
+                            }
+                        </div>
+                    </fieldset>
+                    @if (_representativeError is not null) { <p class="contract-field-error" role="alert">@_representativeError</p> }
+                    @if (Representative is { } representative)
                     {
-                        <label><input type="checkbox" checked="@_form.TenantIds.Contains(tenant.Id)" @onchange="e => ToggleTenant(tenant.Id, e.Value is true)" /> <span>@tenant.FullName</span><small>@tenant.Phone</small></label>
+                        <div class="contract-info-card">
+                            <strong class="contract-info-card-title">@representative.FullName</strong>
+                            <div class="contract-info-grid">
+                                <div><span>@L["ContractMemberPhone"]</span><strong>@representative.Phone</strong></div>
+                                @if (!string.IsNullOrWhiteSpace(representative.CitizenId)) { <div><span>@L["ContractIdNumber"]</span><strong>@representative.CitizenId</strong></div> }
+                                @if (representative.DateOfBirth is DateOnly dateOfBirth) { <div><span>@L["ContractDateOfBirth"]</span><strong>@DateFormatter.Format(dateOfBirth)</strong></div> }
+                                @if (!string.IsNullOrWhiteSpace(representative.Email)) { <div><span>@L["ContractEmail"]</span><strong>@representative.Email</strong></div> }
+                                @if (!string.IsNullOrWhiteSpace(representative.PermanentAddress)) { <div class="contract-info-grid-wide"><span>@L["ContractPermanentAddress"]</span><strong>@representative.PermanentAddress</strong></div> }
+                            </div>
+                        </div>
                     }
-                    </div>
+                    <fieldset class="contract-tenant-picker">
+                        <legend>@L["ContractRoommatesLabel"] · @L["ContractMemberCount", RoommateCandidates.Count]</legend>
+                        @if (RoommateCandidates.Count == 0)
+                        {
+                            <p class="contract-field-hint">@L["ContractNoRoommates"]</p>
+                        }
+                        else
+                        {
+                            <div class="contract-roommate-list">
+                                @foreach (var tenant in RoommateCandidates)
+                                {
+                                    <div class="contract-roommate-row">
+                                        <label>
+                                            <input type="checkbox" checked="@(_form.TenantIds.Contains(tenant.Id))" @onchange="e => ToggleMember(tenant.Id, e.Value is true)" />
+                                            <span>@tenant.FullName</span>
+                                            <small>@tenant.Phone</small>
+                                        </label>
+                                        @if (_form.TenantIds.Contains(tenant.Id))
+                                        {
+                                            <select class="input" aria-label="@L["ContractRelationship"]" @onchange="e => SetRelation(tenant.Id, e.Value?.ToString())">
+                                                <option value="">@L["ContractRelationship"]</option>
+                                                @foreach (var option in RelationshipOptions) { <option value="@option.Code" selected="@(MemberRelation(tenant.Id) == option.Code)">@L[option.LabelKey]</option> }
+                                            </select>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </fieldset>
+                    @if (_tenantError is not null) { <p class="contract-field-error" role="alert">@_tenantError</p> }
                 }
-            </fieldset>
-            @if (_tenantError is not null) { <p class="contract-field-error" role="alert">@_tenantError</p> }
+            </section>
+
+            <section class="contract-form-section" aria-labelledby="contract-section-period">
+                <h2 id="contract-section-period" class="contract-form-section-title"><LucideIcon Name="calendar" />@L["ContractSectionPeriod"]</h2>
+                <div class="contract-live-grid">
+                    <div class="contract-field">
+                        <label for="start-date">@L["ContractStartDate"]</label>
+                        <InputDate id="start-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.StartDate) ? "true" : "false")" aria-describedby="start-date-error" TValue="DateOnly?" @bind-Value="_form.StartDate" max="@Clock.TodayVietnam().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" />
+                        <small id="start-date-error" class="contract-field-error">@ErrorFor(nameof(_form.StartDate))</small>
+                    </div>
+                    <div class="contract-field">
+                        <label for="end-date">@L["ContractEndDate"]</label>
+                        <InputDate id="end-date" class="input" aria-invalid="@(_editContext.HasError(() => _form.EndDate) ? "true" : "false")" aria-describedby="end-date-error" TValue="DateOnly?" @bind-Value="_form.EndDate" />
+                        <small id="end-date-error" class="contract-field-error">@ErrorFor(nameof(_form.EndDate))</small>
+                    </div>
+                </div>
+                <p class="contract-form-section-hint">@L["ContractApproxDuration", DurationMonths] · @L["ContractDateRule"]</p>
+            </section>
+
+            <section class="contract-form-section" aria-labelledby="contract-section-finance">
+                <h2 id="contract-section-finance" class="contract-form-section-title"><LucideIcon Name="wallet" />@L["ContractSectionFinance"]</h2>
+                <div class="contract-live-grid">
+                    <div class="contract-field">
+                        <label for="monthly-rent">@L["ContractRentLabel"]</label>
+                        <InputNumber id="monthly-rent" class="input tabular-nums" inputmode="numeric"
+                                     aria-invalid="@(_editContext.HasError(() => _form.MonthlyRent) ? "true" : "false")" aria-describedby="monthly-rent-hint"
+                                     TValue="decimal?" @bind-Value="_form.MonthlyRent" @bind-Value:after="RentChanged" />
+                        <small id="monthly-rent-hint" class="contract-field-hint">@L["ContractRentHint"]</small>
+                        <small class="contract-field-error">@ErrorFor(nameof(_form.MonthlyRent))</small>
+                    </div>
+                    <div class="contract-field">
+                        <label for="deposit-amount">@L["ContractDepositLabel"]</label>
+                        <InputNumber id="deposit-amount" class="input tabular-nums" inputmode="numeric"
+                                     aria-invalid="@(_editContext.HasError(() => _form.DepositAmount) ? "true" : "false")" aria-describedby="deposit-hint"
+                                     TValue="decimal?" @bind-Value="_form.DepositAmount" @bind-Value:after="DepositChanged" />
+                        <small id="deposit-hint" class="contract-field-hint">@L["ContractDepositHint"]</small>
+                        <small class="contract-field-error">@ErrorFor(nameof(_form.DepositAmount))</small>
+                    </div>
+                    <div class="contract-field">
+                        <label for="payment-cycle">@L["ContractPaymentCycle"]</label>
+                        <InputSelect id="payment-cycle" class="input" TValue="int" @bind-Value="_form.PaymentCycleMonths">
+                            @foreach (var months in CycleOptions) { <option value="@months">@CycleLabel(months)</option> }
+                        </InputSelect>
+                        <small class="contract-field-hint">@L["ContractPaymentCycleHint"]</small>
+                        <small class="contract-field-error">@ErrorFor(nameof(_form.PaymentCycleMonths))</small>
+                    </div>
+                    <div class="contract-field">
+                        <label for="meter-day">@L["ContractMeterDay"]</label>
+                        <InputSelect id="meter-day" class="input" TValue="int?" @bind-Value="_form.MeterReadingDay">
+                            <option value="">@L["ContractLastDayMonthly"]</option>
+                            @foreach (var day in MeterDayOptions) { <option value="@day">@L["ContractDayMonthly", day]</option> }
+                        </InputSelect>
+                        <small class="contract-field-error">@ErrorFor(nameof(_form.MeterReadingDay))</small>
+                    </div>
+                </div>
+                <div class="contract-price-preview">
+                    <span>@L["ContractStandardPrice"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(SelectedRoom?.StandardPrice)</strong>
+                    <span>@L["ContractMonthlyRentShort"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(EffectiveRent)</strong>
+                    <span>@L["ContractFirstCycle", _form.PaymentCycleMonths]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(FirstCycleRent)</strong>
+                    <span>@L["ContractDepositLabel"]</span>
+                    <strong class="tabular-nums">@MoneyFormatter.Format(EffectiveDeposit)</strong>
+                    <span class="contract-price-preview-total-label">@L["ContractInitialPaymentLine"]</span>
+                    <strong class="contract-price-preview-total tabular-nums">@MoneyFormatter.Format(InitialPaymentTotal)</strong>
+                    <span class="contract-price-preview-note">@L["ContractInitialPaymentNote"]</span>
+                </div>
+                <div class="contract-service-block">
+                    <h3>@L["ContractUtilitiesTitle"]</h3>
+                    @if (_form.PropertyId is null)
+                    {
+                        <p class="contract-field-hint">@L["ContractSelectPropertyForServices"]</p>
+                    }
+                    else if (ApplicableServices.Count == 0)
+                    {
+                        <p class="contract-field-hint">@L["ContractServicesEmpty"]</p>
+                    }
+                    else
+                    {
+                        <table class="contract-service-table">
+                            <thead><tr><th scope="col">@L["ContractServiceName"]</th><th scope="col">@L["ContractServiceUnit"]</th><th scope="col">@L["ContractServiceRate"]</th></tr></thead>
+                            <tbody>
+                            @foreach (var service in ApplicableServices)
+                            {
+                                <tr><td>@service.Name</td><td>@service.Unit</td><td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </section>
+
+            <section class="contract-form-section" aria-labelledby="contract-section-terms">
+                <h2 id="contract-section-terms" class="contract-form-section-title"><LucideIcon Name="file-text" />@L["ContractNotesSection"]</h2>
+                <div class="contract-field">
+                    <label for="contract-terms" class="sr-only">@L["ContractNotesSection"]</label>
+                    <textarea id="contract-terms" class="input contract-terms-input" maxlength="4000" rows="6"
+                              aria-invalid="@(_editContext.HasError(() => _form.Terms) ? "true" : "false")" aria-describedby="contract-terms-counter"
+                              placeholder="@L["ContractNotesPlaceholder"]" @bind="_form.Terms" @bind:event="oninput"></textarea>
+                    <small id="contract-terms-counter" class="contract-field-hint">@L["ContractTermsCounter", TermsLength]</small>
+                    <small class="contract-field-error">@ErrorFor(nameof(_form.Terms))</small>
+                </div>
+            </section>
+
             <footer class="contract-action-bar">
                 <a class="btn btn-secondary" href="/contracts">@L["ContractCancel"]</a>
-                <button type="submit" class="btn btn-primary" disabled="@_submitting"><LucideIcon Name="send" />@L[_submitting ? "ContractProcessing" : "ContractSubmitApproval"]</button>
+                <button type="button" class="btn btn-secondary" disabled="@_submitting" @onclick="SaveDraftAsync"><LucideIcon Name="file" />@L["ContractSaveDraft"]</button>
+                <button type="submit" class="btn btn-primary" disabled="@_submitting"><LucideIcon Name="send" />@L[_submitting ? "ContractProcessing" : "ContractSendToTenantAction"]</button>
             </footer>
         </EditForm>
     }
 </section>
 
 @code {
+    [SupplyParameterFromQuery] public int? PropertyId { get; set; }
+    [SupplyParameterFromQuery] public int? RoomId { get; set; }
+    [SupplyParameterFromQuery] public int? TenantId { get; set; }
+
     private readonly CreateFormModel _form = new();
-    private ContractCreateOptionsDto _options = new([], [], []);
+    private ContractCreateOptionsDto _options = new([], [], [], []);
     private string _tenantKeyword = string.Empty;
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private string? _tenantError;
+    private string? _representativeError;
+    private bool _loading = true, _failed, _submitting;
+    private bool _autoDeposit = true;
+    private bool _queryApplied;
+
+    private static readonly int[] CycleOptions = [1, 2, 3, 6, 12];
+    private static readonly int[] MeterDayOptions = [1, 15, 25, 28];
+    private static readonly (string Code, string LabelKey)[] RelationshipOptions =
+    [
+        ("Partner", "ContractRelationshipPartner"),
+        ("Child", "ContractRelationshipChild"),
+        ("Relative", "ContractRelationshipRelative"),
+        ("Colleague", "ContractRelationshipColleague"),
+        ("Other", "ContractRelationshipOther"),
+    ];
+
     private IReadOnlyList<ContractRoomOptionDto> RoomsForProperty => _form.PropertyId is int id ? _options.Rooms.Where(room => room.PropertyId == id).ToList() : [];
+    // Dataset demo có thể có hàng nghìn hồ sơ; chỉ render tối đa 25 lựa chọn
+    // và luôn giữ các hồ sơ đã chọn để không làm mất trạng thái.
+    private const int TenantPickerLimit = 25;
+
     private IReadOnlyList<ContractTenantOptionDto> FilteredTenants
     {
         get
         {
             var keyword = _tenantKeyword.Trim();
-            return keyword.Length == 0
+            var matches = keyword.Length == 0
                 ? _options.Tenants
                 : _options.Tenants
                     .Where(tenant => tenant.FullName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
                         || tenant.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                     .ToList();
+            var selectedIds = _form.TenantIds
+                .Append(_form.RepresentativeTenantId ?? 0)
+                .ToHashSet();
+            return matches
+                .Take(TenantPickerLimit)
+                .Concat(_options.Tenants.Where(tenant => selectedIds.Contains(tenant.Id)))
+                .GroupBy(tenant => tenant.Id)
+                .Select(group => group.First())
+                .ToList();
         }
     }
+    private ContractPropertyOptionDto? SelectedProperty => _form.PropertyId is int id ? _options.Properties.FirstOrDefault(property => property.Id == id) : null;
     private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? RoomsForProperty.FirstOrDefault(room => room.Id == id) : null;
-    private EditContext _editContext = default!;
-    private ValidationMessageStore _messages = default!;
-    private string? _tenantError;
-    private bool _loading = true, _failed, _submitting;
+    private ContractTenantOptionDto? Representative => _form.RepresentativeTenantId is int id ? _options.Tenants.FirstOrDefault(tenant => tenant.Id == id) : null;
+    private IReadOnlyList<ContractTenantOptionDto> RoommateCandidates =>
+        FilteredTenants.Where(tenant => tenant.Id != _form.RepresentativeTenantId).ToList();
+    private IReadOnlyList<ContractServiceOptionDto> ApplicableServices => _form.PropertyId is int propertyId
+        ? _options.Services.Where(service => service.PropertyId is null || service.PropertyId == propertyId).OrderBy(service => service.Name).ToList()
+        : [];
+    private decimal? EffectiveRent => _form.MonthlyRent ?? SelectedRoom?.StandardPrice;
+    private decimal EffectiveDeposit => _form.DepositAmount ?? MoneyFormatter.RoundVnd(EffectiveRent ?? 0m);
+    private decimal FirstCycleRent => (EffectiveRent ?? 0m) * _form.PaymentCycleMonths;
+    private decimal InitialPaymentTotal => EffectiveDeposit + FirstCycleRent;
+    private int TermsLength => _form.Terms?.Length ?? 0;
+    private int DurationMonths
+    {
+        get
+        {
+            if (_form.StartDate is not DateOnly start || _form.EndDate is not DateOnly end) return 0;
+            var months = ((end.Year - start.Year) * 12) + end.Month - start.Month;
+            if (end.Day < start.Day) months--;
+            return Math.Max(months, 0);
+        }
+    }
     private IReadOnlyList<string> ValidationErrors => _editContext.GetValidationMessages()
-        .Concat(_tenantError is null ? Enumerable.Empty<string>() : new[] { _tenantError }).ToArray();
+        .Concat(_tenantError is null ? Enumerable.Empty<string>() : new[] { _tenantError })
+        .Concat(_representativeError is null ? Enumerable.Empty<string>() : new[] { _representativeError })
+        .ToArray();
 
     protected override async Task OnInitializedAsync()
     {
@@ -156,25 +378,158 @@
         await LoadOptionsAsync();
     }
 
+    private static int? ParseInt(
+        IReadOnlyDictionary<string, Microsoft.Extensions.Primitives.StringValues> query,
+        string key) =>
+        query.TryGetValue(key, out var values)
+        && int.TryParse(values.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : null;
+
     private async Task LoadOptionsAsync()
     {
         _loading = true; _failed = false;
-        try { _options = await Contracts.GetCreateOptionsAsync(); }
+        try
+        {
+            _options = await Contracts.GetCreateOptionsAsync();
+            ApplyQueryPrefill();
+        }
         catch { _failed = true; }
         finally { _loading = false; }
     }
 
-    private void PropertyChanged() { _form.RoomId = null; _form.DepositAmount = null; }
+    private void ApplyQueryPrefill()
+    {
+        if (_queryApplied)
+        {
+            return;
+        }
+
+        _queryApplied = true;
+
+        // [SupplyParameterFromQuery] không phải lúc nào cũng có giá trị ở interactive circuit;
+        // đọc thêm query string thực tế để nút "Lập hợp đồng" luôn prefill đúng.
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
+            Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        var propertyIdQuery = ParseInt(query, "propertyId") ?? PropertyId;
+        var roomIdQuery = ParseInt(query, "roomId") ?? RoomId;
+        var tenantIdQuery = ParseInt(query, "tenantId") ?? TenantId;
+
+        if (propertyIdQuery is int propertyId)
+        {
+            foreach (var property in _options.Properties)
+            {
+                if (property.Id == propertyId)
+                {
+                    _form.PropertyId = propertyId;
+                    break;
+                }
+            }
+        }
+
+        if (roomIdQuery is int roomId)
+        {
+            foreach (var room in RoomsForProperty)
+            {
+                if (room.Id == roomId)
+                {
+                    _form.RoomId = roomId;
+                    RoomChanged();
+                    break;
+                }
+            }
+        }
+
+        if (tenantIdQuery is int tenantId)
+        {
+            foreach (var tenant in _options.Tenants)
+            {
+                if (tenant.Id != tenantId)
+                {
+                    continue;
+                }
+
+                if (!_form.TenantIds.Contains(tenantId))
+                {
+                    _form.TenantIds.Add(tenantId);
+                }
+
+                _form.RepresentativeTenantId = tenantId;
+                break;
+            }
+        }
+    }
+
+    private void PropertyChanged()
+    {
+        _form.RoomId = null;
+        _form.MonthlyRent = null;
+        _form.DepositAmount = null;
+        _autoDeposit = true;
+    }
+
     private void RoomChanged()
     {
-        _form.DepositAmount = SelectedRoom is { } room ? MoneyFormatter.RoundVnd(room.StandardPrice * .20m) : null;
+        var price = SelectedRoom?.StandardPrice;
+        _form.MonthlyRent = price;
+        _form.DepositAmount = price is decimal value ? MoneyFormatter.RoundVnd(value) : null;
+        _autoDeposit = true;
     }
-    private void ToggleTenant(int tenantId, bool selected)
+
+    private void RentChanged()
     {
-        if (selected && !_form.TenantIds.Contains(tenantId)) _form.TenantIds.Add(tenantId);
-        else if (!selected) _form.TenantIds.Remove(tenantId);
+        if (_autoDeposit && EffectiveRent is decimal rent) _form.DepositAmount = MoneyFormatter.RoundVnd(rent);
+    }
+
+    private void DepositChanged() => _autoDeposit = false;
+
+    private void SetRepresentative(int tenantId)
+    {
+        if (_form.RepresentativeTenantId is int previous && previous != tenantId)
+        {
+            _form.MemberRelations.Remove(previous);
+            _form.TenantIds.Remove(previous);
+        }
+        if (!_form.TenantIds.Contains(tenantId)) _form.TenantIds.Add(tenantId);
+        _form.MemberRelations.Remove(tenantId);
+        _form.RepresentativeTenantId = tenantId;
+        _representativeError = null;
         _editContext.NotifyFieldChanged(new FieldIdentifier(_form, nameof(_form.TenantIds)));
     }
+
+    private void ToggleMember(int tenantId, bool selected)
+    {
+        if (selected)
+        {
+            if (!_form.TenantIds.Contains(tenantId)) _form.TenantIds.Add(tenantId);
+            _form.MemberRelations.TryAdd(tenantId, string.Empty);
+            _tenantError = null;
+        }
+        else
+        {
+            _form.TenantIds.Remove(tenantId);
+            _form.MemberRelations.Remove(tenantId);
+            if (_form.RepresentativeTenantId == tenantId) _form.RepresentativeTenantId = null;
+        }
+        _editContext.NotifyFieldChanged(new FieldIdentifier(_form, nameof(_form.TenantIds)));
+    }
+
+    private void SetRelation(int tenantId, string? relation)
+    {
+        if (string.IsNullOrEmpty(relation)) _form.MemberRelations.Remove(tenantId);
+        else _form.MemberRelations[tenantId] = relation;
+    }
+
+    private string? MemberRelation(int tenantId) => _form.MemberRelations.TryGetValue(tenantId, out var relation) ? relation : null;
+
+    private string CycleLabel(int months) => L[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
 
     private async Task ConfirmLeaveAsync(LocationChangingContext context)
     {
@@ -185,15 +540,17 @@
         }
     }
 
-    private Task HandleSubmitAsync(EditContext _) => SubmitAsync();
+    private Task HandleSubmitAsync(EditContext _) => SubmitAsync(sendToTenant: true);
+    private Task SaveDraftAsync() => SubmitAsync(sendToTenant: false);
     private string? ErrorFor(string field) => _messages[new FieldIdentifier(_form, field)].FirstOrDefault();
     private void AddError(string field, string message) => _messages.Add(new FieldIdentifier(_form, field), message);
 
-    private async Task SubmitAsync()
+    private async Task SubmitAsync(bool sendToTenant)
     {
         if (_submitting) return;
         _messages.Clear();
         _tenantError = null;
+        _representativeError = null;
         _editContext.NotifyValidationStateChanged();
         var today = Clock.TodayVietnam();
         if (_form.PropertyId is null) AddError(nameof(_form.PropertyId), L["ContractErrorPropertyRequired"]);
@@ -201,32 +558,91 @@
         if (_form.StartDate is null) AddError(nameof(_form.StartDate), L["ContractErrorStartDateRequired"]);
         else if (_form.StartDate > today) AddError(nameof(_form.StartDate), L["ContractErrorFutureStartNotAllowed"]);
         if (_form.EndDate is null) AddError(nameof(_form.EndDate), L["ContractErrorEndDateRequired"]);
-        else if (_form.StartDate is DateOnly start && _form.EndDate <= start) AddError(nameof(_form.EndDate), L["ContractErrorInvalidDateRange"]);
+        else if (_form.StartDate is DateOnly rangeStart && _form.EndDate <= rangeStart) AddError(nameof(_form.EndDate), L["ContractErrorInvalidDateRange"]);
+        else if (_form.StartDate is DateOnly minimumStart && _form.EndDate < minimumStart.AddMonths(1)) AddError(nameof(_form.EndDate), L["ContractErrorEndDateMinimum"]);
+        if (_form.MonthlyRent is null) AddError(nameof(_form.MonthlyRent), L["ContractErrorRentRequired"]);
+        else if (_form.MonthlyRent is < 0m) AddError(nameof(_form.MonthlyRent), L["ContractErrorInvalidMonthlyRent"]);
         if (_form.DepositAmount is < 0m) AddError(nameof(_form.DepositAmount), L["ContractErrorInvalidDepositAmount"]);
+        if (!CycleOptions.Contains(_form.PaymentCycleMonths)) AddError(nameof(_form.PaymentCycleMonths), L["ContractErrorInvalidPaymentCycle"]);
+        if (_form.MeterReadingDay is int meterDay && !MeterDayOptions.Contains(meterDay)) AddError(nameof(_form.MeterReadingDay), L["ContractErrorInvalidMeterReadingDay"]);
+        if (TermsLength > 4000) AddError(nameof(_form.Terms), L["ContractErrorTermsTooLong"]);
         if (_form.TenantIds.Count == 0) _tenantError = L["ContractErrorTenantRequired"];
+        else if (Representative is null) _representativeError = L["ContractErrorRepresentativeRequired"];
         _editContext.NotifyValidationStateChanged();
         if (ValidationErrors.Count > 0) return;
 
+        var relations = _form.MemberRelations
+            .Where(pair => !string.IsNullOrEmpty(pair.Value))
+            .ToDictionary(pair => pair.Key, pair => pair.Value);
         _submitting = true;
+        ContractResponseDto? created = null;
         try
         {
-            var result = await Contracts.CreateAsync(new CreateContractRequest(
+            created = await Contracts.CreateAsync(new CreateContractRequest(
                 _form.RoomId!.Value,
                 _form.StartDate!.Value.ToDateTime(TimeOnly.MinValue),
                 _form.EndDate!.Value.ToDateTime(TimeOnly.MinValue),
-                _form.TenantIds,
-                _form.DepositAmount),
+                [.. _form.TenantIds],
+                _form.DepositAmount,
+                _form.MonthlyRent,
+                _form.PaymentCycleMonths,
+                _form.MeterReadingDay,
+                string.IsNullOrWhiteSpace(_form.Terms) ? null : _form.Terms.Trim(),
+                _form.RepresentativeTenantId,
+                relations.Count == 0 ? null : relations,
+                AsDraft: true),
                 CancellationToken.None);
+
+            if (sendToTenant)
+            {
+                await Contracts.SendToTenantAsync(created.ContractId);
+            }
+
             _editContext.MarkAsUnmodified();
-            Toasts.Success(L["ContractCreatedSuccess"]);
-            Navigation.NavigateTo($"/contracts/{result.ContractId}");
+            Toasts.Success(L[sendToTenant ? "ContractSentToTenantSuccess" : "ContractDraftSavedSuccess"]);
+            Navigation.NavigateTo($"/contracts/{created.ContractId}");
         }
         catch (Exception ex)
         {
-            var message = ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
-            var field = ex is IContractServiceError { ErrorCode: "ContractOverlap" or "PendingContractExists" or "RoomUnavailable" or "RoomNotAvailable" }
-                ? nameof(_form.RoomId) : string.Empty;
-            AddError(field, message);
+            if (created is not null)
+            {
+                _editContext.MarkAsUnmodified();
+                Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]);
+                Navigation.NavigateTo($"/contracts/{created.ContractId}");
+                return;
+            }
+
+            if (ex is IContractServiceError error)
+            {
+                var message = L[$"ContractError{error.ErrorCode}"].Value;
+                switch (error.ErrorCode)
+                {
+                    case "TenantRequired" or "TenantUnavailable":
+                        _tenantError = message;
+                        break;
+                    case "RepresentativeInvalid" or "RelationshipTooLong":
+                        _representativeError = message;
+                        break;
+                    default:
+                        AddError(error.ErrorCode switch
+                        {
+                            "PropertyUnavailable" or "PropertyNotFound" => nameof(_form.PropertyId),
+                            "RoomUnavailable" or "RoomNotAvailable" or "RoomNotVacant" or "RoomUnderMaintenance" or "ContractOverlap" or "PendingContractExists" or "RoomNotFound" => nameof(_form.RoomId),
+                            "InvalidDateRange" or "EndDateTooShort" or "FutureStartNotAllowed" => nameof(_form.EndDate),
+                            "InvalidMonthlyRent" => nameof(_form.MonthlyRent),
+                            "InvalidDepositAmount" => nameof(_form.DepositAmount),
+                            "InvalidPaymentCycle" or "PaymentCycleInvalid" => nameof(_form.PaymentCycleMonths),
+                            "InvalidMeterReadingDay" => nameof(_form.MeterReadingDay),
+                            "TermsTooLong" => nameof(_form.Terms),
+                            _ => string.Empty,
+                        }, message);
+                        break;
+                }
+            }
+            else
+            {
+                AddError(string.Empty, L["ContractGenericError"]);
+            }
             _editContext.NotifyValidationStateChanged();
         }
         finally { _submitting = false; }
@@ -238,7 +654,13 @@
         public int? RoomId { get; set; }
         public DateOnly? StartDate { get; set; }
         public DateOnly? EndDate { get; set; }
+        public decimal? MonthlyRent { get; set; }
         public decimal? DepositAmount { get; set; }
+        public int PaymentCycleMonths { get; set; } = 1;
+        public int? MeterReadingDay { get; set; }
+        public string? Terms { get; set; }
+        public int? RepresentativeTenantId { get; set; }
         public List<int> TenantIds { get; } = [];
+        public Dictionary<int, string> MemberRelations { get; } = [];
     }
 }

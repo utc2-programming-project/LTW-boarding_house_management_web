@@ -253,6 +253,7 @@ FROM AspNetUsers ORDER BY Email;
 | Duyệt tài khoản | dialog xác nhận | `AccountManagement.razor` | `ConfirmApproveAsync` (329) |
 | Đổi vai trò | dialog | `AccountManagement.razor` | `ConfirmRoleAsync` (358) |
 | Khóa/mở khóa | dialog | `AccountManagement.razor` | `ConfirmLockAsync` (405) |
+| Xóa tài khoản | dialog xác nhận | `AccountManagement.razor` | `ConfirmDeleteAsync` (511) |
 | Phân công tòa nhà | dialog | `Features/Properties/Components/ManagerAssignmentDialog.razor` | `AssignAsync` (145), `RevokeAsync` (177) |
 | Hồ sơ của tôi | `/profile` | `Components/Pages/Accounts/UserProfile.razor` | — |
 
@@ -269,11 +270,12 @@ AccountManagement.razor
 
 Quy tắc chính (`AccountPermissionRules.cs`):
 
-- `AssignableRoles` (16): AD tạo mọi vai trò; CT tạo QL + KT; QL chỉ tạo KT.
+- `AssignableRoles` (16): AD tạo CT/QL/KT (**không tạo Admin**); CT tạo QL + KT; QL chỉ tạo KT.
 - `CanChangeRole` (35): **chỉ Admin**.
 - `LockableRoles` (38): AD mọi vai trò; CT chỉ QL + KT.
 - `VisibleRoles` (51): CT thấy QL + KT; QL thấy KT.
-- `CheckChangeRole` (63): chặn tự đổi vai trò mình, chặn bỏ Admin cuối, chặn đổi vai trò tài khoản đang gắn hồ sơ khách.
+- `CheckChangeRole` (63): chặn tự đổi vai trò mình, chặn nâng lên Admin, chặn bỏ Admin cuối, chặn đổi vai trò tài khoản đang gắn hồ sơ khách.
+- `CheckDelete` (61): chặn tự xóa mình, chặn xóa tài khoản Admin khác (Admin tự xóa qua trang dữ liệu cá nhân); chỉ Admin được xóa.
 - `CheckLock` (106): chặn tự khóa mình, chặn khóa Admin cuối.
 - Phạm vi danh sách: `AccountService.ScopedUserIds` (646)
   - CT: chính mình + QL đang được gán vào nhà mình + KT có hợp đồng tại nhà mình.
@@ -301,6 +303,10 @@ Quy tắc chính (`AccountPermissionRules.cs`):
 | P1-15 | QL | `/admin/users` | Chỉ thấy mình + KT thuộc nhà được gán (hiện chưa có KT) |
 | P1-16 | QL | Sửa hồ sơ `/profile` | Lưu được họ tên/SĐT; không đổi được email/vai trò |
 | P1-17 | KT | Mở trực tiếp `/admin/users` | Trang mở được nhưng danh sách **rỗng** (route chỉ `[Authorize]`, service lọc theo vai trò) |
+| P1-18 | AD | Tạo tài khoản vai trò Admin | Không có lựa chọn Admin trong dialog; gọi thẳng service → `RoleNotAllowed` |
+| P1-19 | AD | Đổi vai trò người khác lên Admin | Không có lựa chọn Admin; gọi thẳng service → `RoleNotAllowed` |
+| P1-20 | AD | Xóa tài khoản Admin khác | Không có nút Xóa trên dòng Admin; gọi thẳng service → `CannotDeleteAdmin` |
+| P1-21 | AD | Mở menu thao tác của tài khoản có 2 dòng (nhiều vai trò) | Chỉ menu của đúng dòng vừa bấm mở ra, dòng còn lại vẫn đóng |
 
 #### SQL kiểm chứng
 
@@ -1218,6 +1224,8 @@ SELECT Id, StoredFileId, UserId, Action, OccurredAt FROM FileAccessAuditLogs ORD
 | Mã | Việc | Cách kiểm | Kết quả |
 |---|---|---|---|
 | S-01 | Rate limit đăng nhập | Sai mật khẩu liên tục | 429 sau ngưỡng cấu hình |
+| S-01a | Rate limit quên mật khẩu | POST `/Account/ForgotPassword` 6 lần trong 15 phút từ cùng IP | Chuyển về `/Account/ForgotPassword?tooManyRequests=1`, hiện banner thay vì trang trắng |
+| S-01b | Rate limit gửi lại xác nhận email | POST `/Account/ResendEmailConfirmation` 6 lần trong 15 phút từ cùng IP | Chuyển về `/Account/ResendEmailConfirmation?tooManyRequests=1`, hiện banner |
 | S-02 | Captcha sau nhiều lần sai | Nhập sai 3-5 lần | Hiện captcha |
 | S-03 | Cookie an toàn | DevTools → cookie auth | `HttpOnly`, `SameSite=Lax` |
 | S-04 | Data Protection | Cấu hình `Security:ProtectKeysWithDpapi=true` thiếu path | App **không khởi động**, báo lỗi rõ |
@@ -1241,10 +1249,11 @@ Ký hiệu: ✅ được phép · ❌ bị chặn · 👁 chỉ xem · ⚠ qua c
 |---|---|---|---|---|
 | Xem tổng quan tài khoản ở `/` | ✅ | ✅ | ✅ | ✅ (dữ liệu mình) |
 | `/admin/users` | ✅ toàn bộ | ✅ QL+KT thuộc mình | ✅ mình + KT nhà gán | ❌ |
-| Tạo tài khoản | ✅ mọi vai trò | ✅ QL, KT | ✅ KT (Chờ duyệt) | ❌ |
+| Tạo tài khoản | ✅ CT, QL, KT (không tạo Admin) | ✅ QL, KT | ✅ KT (Chờ duyệt) | ❌ |
 | Duyệt tài khoản | ✅ | ✅ QL, KT | ❌ | ❌ |
-| Đổi vai trò | ✅ | ❌ | ❌ | ❌ |
+| Đổi vai trò | ✅ (không nâng ai lên Admin) | ❌ | ❌ | ❌ |
 | Khóa/mở tài khoản | ✅ (trừ Admin cuối) | ✅ QL, KT | ❌ | ❌ |
+| Xóa tài khoản | ✅ CT, QL, KT (không xóa Admin khác) | ❌ | ❌ | ❌ |
 | Gán tòa nhà cho QL | 👁 | ✅ | ❌ | ❌ |
 | Nhà trọ: xem | ❌ | ✅ nhà mình | ✅ nhà gán | ❌ |
 | Nhà trọ: tạo/sửa | ❌ | ✅ | ❌ (service chặn tạo) | ❌ |
@@ -1336,6 +1345,9 @@ Ký hiệu: ✅ được phép · ❌ bị chặn · 👁 chỉ xem · ⚠ qua c
 | N-16 | Sửa form ở 2 tab | Báo xung đột RowVersion, không ghi đè |
 | N-17 | Mở URL không tồn tại | Trang `NotFound` |
 | N-18 | DB mất kết nối | Trang lỗi thân thiện, log đầy đủ |
+| N-19 | Admin tạo tài khoản Admin | `RoleNotAllowed` (không có Admin trong danh sách gán) |
+| N-20 | Admin nâng vai trò người khác lên Admin | `RoleNotAllowed` |
+| N-21 | Admin xóa tài khoản Admin khác | `CannotDeleteAdmin` |
 
 ---
 

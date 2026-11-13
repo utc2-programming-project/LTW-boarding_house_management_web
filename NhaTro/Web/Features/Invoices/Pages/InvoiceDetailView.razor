@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 @attribute [Authorize(Policy = "InvoiceView")]
+@using Web.Common.Utils
 @inject IInvoiceQueryService InvoiceQuery
 @inject Web.Features.Invoices.Services.IInvoiceService InvoiceService
 @inject Web.Features.Notifications.INotificationService Notifications
@@ -57,20 +58,6 @@
                     }
                     else if (_caller is not null && !_caller.IsKhachThue && Invoice.Status == InvoiceStatus.Issued)
                     {
-                        @if (CanRevise)
-                        {
-                            <button type="button" class="btn btn-secondary" disabled="@_revising" @onclick="OpenRevise">
-                                <LucideIcon Name="edit" />
-                                <span>@L["ReviseButton"]</span>
-                            </button>
-                        }
-                        @if (CanDelete)
-                        {
-                            <button type="button" class="btn btn-secondary invoice-delete-action" disabled="@_deleting" @onclick="OpenDelete">
-                                <LucideIcon Name="trash" />
-                                <span>@L["DeleteIssuedButton"]</span>
-                            </button>
-                        }
                         @* Có bản chỉnh sửa chưa gửi thì nút gửi bill nổi bật để chủ trọ gửi bản mới. *@
                         <button type="button" class="@(Invoice.HasUnsentChanges ? "btn btn-primary" : "btn btn-secondary")"
                                 disabled="@_sending" @onclick="SendBillAsync">
@@ -85,6 +72,27 @@
                                 <span>@L["SendBillButton"]</span>
                             }
                         </button>
+
+                        @if (CanRevise || CanDelete)
+                        {
+                            <details class="invoice-action-menu">
+                                <summary class="btn btn-secondary"><LucideIcon Name="more-horizontal" /><span>@L["InvoiceMoreActions"]</span></summary>
+                                <div class="invoice-action-menu-panel">
+                                    @if (CanRevise)
+                                    {
+                                        <button type="button" class="p2-row-menu-item" disabled="@_revising" @onclick="OpenRevise">
+                                            <LucideIcon Name="edit" /><span>@L["ReviseButton"]</span>
+                                        </button>
+                                    }
+                                    @if (CanDelete)
+                                    {
+                                        <button type="button" class="p2-row-menu-item danger" disabled="@_deleting" @onclick="OpenDelete">
+                                            <LucideIcon Name="trash" /><span>@L["DeleteIssuedButton"]</span>
+                                        </button>
+                                    }
+                                </div>
+                            </details>
+                        }
                     }
                     <button type="button" class="btn btn-secondary" @onclick="BackToList">
                         <LucideIcon Name="arrow-left" />
@@ -97,35 +105,63 @@
         <section class="detail-card">
             <div class="detail-grid">
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailStatus"]</span>
+                    <span class="detail-label">@L["DetailStatus"] <HelpTip Text="@L["DetailStatusHint"]" /></span>
                     <StatusBadge Text="@StatusText(Invoice.Status)" Tone="@StatusTone(Invoice.Status)" />
                 </div>
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailPeriod"]</span>
+                    <span class="detail-label">@L["DetailPeriod"] <HelpTip Text="@L["InvoicePeriodHint"]" /></span>
                     <span class="detail-value tabular-nums">@DateFormatter.Format(Invoice.PeriodStart) – @DateFormatter.Format(Invoice.PeriodEnd)</span>
                 </div>
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailContract"]</span>
-                    <span class="detail-value">@Invoice.ContractNumber</span>
+                    <span class="detail-label">@L["DetailContract"] <HelpTip Text="@L["DetailContractHint"]" /></span>
+                    <span class="detail-value">
+                        <a class="cell-link" href="@ContractLink">@Invoice.ContractNumber</a>
+                    </span>
                 </div>
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailProperty"]</span>
-                    <span class="detail-value">@Invoice.PropertyName</span>
+                    <span class="detail-label">@L["DetailProperty"] <HelpTip Text="@L["DetailPropertyHint"]" /></span>
+                    <span class="detail-value">
+                        @if (IsMyInvoices)
+                        {
+                            @Invoice.PropertyName
+                        }
+                        else
+                        {
+                            <a class="cell-link" href="@AppLinks.PropertiesByKeyword(Invoice.PropertyName)">@Invoice.PropertyName</a>
+                        }
+                    </span>
                 </div>
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailRoom"]</span>
-                    <span class="detail-value">@Invoice.RoomCode</span>
+                    <span class="detail-label">@L["DetailRoom"] <HelpTip Text="@L["DetailRoomHint"]" /></span>
+                    <span class="detail-value">
+                        @if (IsMyInvoices)
+                        {
+                            @Invoice.RoomCode
+                        }
+                        else
+                        {
+                            <a class="cell-link" href="@AppLinks.RoomsByCode(Invoice.RoomCode)">@Invoice.RoomCode</a>
+                        }
+                    </span>
                 </div>
                 <div class="detail-field">
-                    <span class="detail-label">@L["DetailTenants"]</span>
+                    <span class="detail-label">@L["DetailTenants"] <HelpTip Text="@L["DetailTenantsHint"]" /></span>
                     <span class="detail-value">
                         @if (Invoice.TenantNames.Count == 0)
                         {
                             <span class="muted">@L["NoTenants"]</span>
                         }
-                        else
+                        else if (IsMyInvoices)
                         {
                             @string.Join(", ", Invoice.TenantNames)
+                        }
+                        else
+                        {
+                            @for (var i = 0; i < Invoice.TenantNames.Count; i++)
+                            {
+                                if (i > 0) { <span>, </span> }
+                                <a class="cell-link" href="@AppLinks.TenantsByKeyword(Invoice.TenantNames[i])">@Invoice.TenantNames[i]</a>
+                            }
                         }
                     </span>
                 </div>
@@ -196,15 +232,15 @@
 
             <div class="summary-panel">
                 <div class="summary-row">
-                    <span>@L["SummaryTotal"]</span>
+                    <span>@L["SummaryTotal"] <HelpTip Text="@L["SummaryTotalHint"]" /></span>
                     <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.TotalAmount)</strong>
                 </div>
                 <div class="summary-row">
-                    <span>@L["SummaryPaid"]</span>
+                    <span>@L["SummaryPaid"] <HelpTip Text="@L["SummaryPaidHint"]" /></span>
                     <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.PaidAmount)</strong>
                 </div>
                 <div class="summary-row outstanding">
-                    <span>@L["SummaryOutstanding"]</span>
+                    <span>@L["SummaryOutstanding"] <HelpTip Text="@L["SummaryOutstandingHint"]" /></span>
                     <strong class="tabular-nums">@MoneyFormatter.Format(Invoice.OutstandingAmount)</strong>
                 </div>
             </div>
@@ -837,6 +873,9 @@
         Navigation.Uri.Contains("/my-invoices", StringComparison.OrdinalIgnoreCase);
 
     private string ListPath => IsMyInvoices ? "/my/invoices" : "/invoices";
+    private string ContractLink => IsMyInvoices
+        ? $"/my/contracts/{Invoice.ContractId}"
+        : AppLinks.Contract(Invoice.ContractId);
 
     private static readonly IReadOnlyDictionary<string, string> PaymentErrorKeys =
         new Dictionary<string, string>(StringComparer.Ordinal)

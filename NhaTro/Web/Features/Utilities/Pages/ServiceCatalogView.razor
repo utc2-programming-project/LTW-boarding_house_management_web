@@ -74,7 +74,8 @@
 
     <!-- 4 Stat KPI Cards -->
     <div class="stat-grid">
-        <div class="stat-card">
+        <article class='stat-card stat-card--link @ServiceCardClass("all")' role="button" tabindex="0"
+                 @onclick='() => ApplyServiceStatusFilter("all")'>
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatTotalServices"]
@@ -83,9 +84,10 @@
                 <span class="stat-icon stat-icon--accent"><LucideIcon Name="package" /></span>
             </div>
             <div class="stat-value">@_totalCount <small>@L["StatUnitTypes"]</small></div>
-        </div>
+        </article>
 
-        <div class="stat-card">
+        <article class='stat-card stat-card--link @ServiceCardClass("active")' role="button" tabindex="0"
+                 @onclick='() => ApplyServiceStatusFilter("active")'>
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatActiveServices"]
@@ -94,9 +96,10 @@
                 <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
             </div>
             <div class="stat-value">@_activeCount <small>@L["StatUnitServices"]</small></div>
-        </div>
+        </article>
 
-        <div class="stat-card">
+        <article class='stat-card stat-card--link @ServiceCardClass("inactive")' role="button" tabindex="0"
+                 @onclick='() => ApplyServiceStatusFilter("inactive")'>
             <div class="stat-card__top">
                 <span class="stat-label">
                     @L["StatPausedServices"]
@@ -105,7 +108,7 @@
                 <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
             </div>
             <div class="stat-value">@_pausedCount <small>@L["StatUnitServices"]</small></div>
-        </div>
+        </article>
 
         <div class="stat-card">
             <div class="stat-card__top">
@@ -707,6 +710,15 @@
     {
         _openMenuId = null;
         RequestDelete(service);
+    }
+
+    private string ServiceCardClass(string status) =>
+        string.Equals(_selectedStatus, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private void ApplyServiceStatusFilter(string status)
+    {
+        _selectedStatus = status;
+        ApplyFiltersCore(resetPage: false);
     }
 
     private void ApplyFilters() => ApplyFiltersCore(resetPage: true);

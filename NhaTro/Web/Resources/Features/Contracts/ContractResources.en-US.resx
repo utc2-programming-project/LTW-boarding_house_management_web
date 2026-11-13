@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -57,9 +57,9 @@
   <data name="ContractCurrencyCycle" xml:space="preserve"><value>VND / billing cycle</value></data>
   <data name="ContractRentLabel" xml:space="preserve"><value>Monthly room rent (VND/month)</value></data>
   <data name="ContractRentPlaceholder" xml:space="preserve"><value>Example: 4,500,000</value></data>
-  <data name="ContractDepositLabel" xml:space="preserve"><value>Room deposit</value></data>
+  <data name="ContractDepositLabel" xml:space="preserve"><value>Refundable holding deposit</value></data>
   <data name="ContractDepositPlaceholder" xml:space="preserve"><value>Example: 4,500,000</value></data>
-  <data name="ContractDepositHint" xml:space="preserve"><value>The deposit can be 0 ₫.</value></data>
+  <data name="ContractDepositHint" xml:space="preserve"><value>The landlord holds this deposit to reserve the room. It is refunded after deducting any damage at the end of the lease and is not offset against rent.</value></data>
   <data name="ContractPaymentCycle" xml:space="preserve"><value>Payment cycle</value></data>
   <data name="ContractCycleOne" xml:space="preserve"><value>Monthly (1 month)</value></data>
   <data name="ContractCycleThree" xml:space="preserve"><value>Every 3 months</value></data>
@@ -78,10 +78,10 @@
   <data name="ContractNotesSection" xml:space="preserve"><value>Additional terms &amp; notes</value></data>
   <data name="ContractOptional" xml:space="preserve"><value>Optional</value></data>
   <data name="ContractNotesPlaceholder" xml:space="preserve"><value>Add special rules, supplied items, registered parking or other 4P contract terms…</value></data>
-  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Initial payment total</value></data>
-  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Deposit + first cycle:</value></data>
+  <data name="ContractInitialPaymentTitle" xml:space="preserve"><value>Total due at move-in</value></data>
+  <data name="ContractInitialPaymentLine" xml:space="preserve"><value>Holding deposit + first-cycle rent:</value></data>
   <data name="ContractInitialDeposit" xml:space="preserve"><value>Deposit</value></data>
-  <data name="ContractFirstCycle" xml:space="preserve"><value>First cycle ({0} months)</value></data>
+  <data name="ContractFirstCycle" xml:space="preserve"><value>First-cycle rent ({0} months)</value></data>
   <data name="ContractTemplateFooter" xml:space="preserve"><value>Standard 4P form (Room - Fees - Legal - Penalties).</value></data>
   <data name="ContractCancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="ContractSaveDraft" xml:space="preserve"><value>Save draft</value></data>
@@ -98,7 +98,7 @@
   <data name="ContractErrorDepositRequired" xml:space="preserve"><value>Enter the deposit (0 is allowed).</value></data>
   <data name="ContractErrorDepositNonnegative" xml:space="preserve"><value>The deposit cannot be negative.</value></data>
   <data name="ContractErrorPaymentCycleRequired" xml:space="preserve"><value>Select a payment cycle.</value></data>
-  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Payment cycle must be 1, 3, or 6 months.</value></data>
+  <data name="ContractErrorPaymentCycleInvalid" xml:space="preserve"><value>Payment cycle must be 1, 2, 3, 6 or 12 months.</value></data>
   <data name="ContractDraftPreviewOnly" xml:space="preserve"><value>This draft is held only in the current preview session; it has not been saved to SQL.</value></data>
   <data name="ContractSubmitOwnerPreviewOnly" xml:space="preserve"><value>The form is valid. There is no contract service yet, so the request was not sent or saved.</value></data>
   <data name="ContractSubmitManagerPreviewOnly" xml:space="preserve"><value>The form is valid for a Pending Approval request. There is no contract service yet, so no request was created, sent, or saved.</value></data>
@@ -207,8 +207,10 @@
   <data name="RenewalErrorDuplicatePending" xml:space="preserve"><value>This contract already has a renewal request awaiting a decision.</value></data>
   <data name="ContractCreateDescription" xml:space="preserve"><value>Owner-created contracts take effect immediately. Manager-created contracts stay pending until the owner approves them.</value></data>
   <data name="ContractSnapshotAtApproval" xml:space="preserve"><value>Current standard rent</value></data>
-  <data name="ContractDepositEstimate" xml:space="preserve"><value>Estimated deposit (20%)</value></data>
+  <data name="ContractDepositEstimate" xml:space="preserve"><value>Holding deposit (1 month)</value></data>
   <data name="ContractNoActiveTenants" xml:space="preserve"><value>There are no active tenant profiles.</value></data>
+  <data name="ContractTenantEmptyTitle" xml:space="preserve"><value>No tenants yet</value></data>
+  <data name="ContractCreateTenantAction" xml:space="preserve"><value>Add tenant</value></data>
   <data name="ContractTenantSearchLabel" xml:space="preserve"><value>Search tenants</value></data>
   <data name="ContractTenantSearchPlaceholder" xml:space="preserve"><value>Search by full name or phone number</value></data>
   <data name="ContractTenantSearchEmpty" xml:space="preserve"><value>No matching tenants.</value></data>
@@ -292,7 +294,7 @@
   <data name="ContractSuccessorLabel" xml:space="preserve"><value>Successor contract</value></data>
   <data name="ContractPreviousLabel" xml:space="preserve"><value>Previous contract</value></data>
   <data name="ContractHistoryEmpty" xml:space="preserve"><value>No data available</value></data>
-  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Suggested 20% of rent</value></data>
+  <data name="ContractDepositUpdateSuggestedLabel" xml:space="preserve"><value>Suggested one month's rent</value></data>
   <data name="Restore" xml:space="preserve"><value>Restore</value></data>
   <data name="RowsPerPageOption" xml:space="preserve"><value>{0} / page</value></data>
   <data name="Purge" xml:space="preserve"><value>Delete permanently</value></data>
@@ -325,4 +327,188 @@
   <data name="ContractErrorNotInTrash" xml:space="preserve"><value>The contract is no longer in the trash.</value></data>
   <data name="ContractErrorHasDependencies" xml:space="preserve"><value>Cannot delete because the contract still has invoices, renewal requests or reading periods.</value></data>
   <data name="ContractErrorRoomDeleted" xml:space="preserve"><value>The contract's room was deleted; restore the room first.</value></data>
+  <data name="ContractAddress" xml:space="preserve"><value>Address</value></data>
+  <data name="ContractIdNumber" xml:space="preserve"><value>ID number</value></data>
+  <data name="ContractDateOfBirth" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="ContractEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="ContractPermanentAddress" xml:space="preserve"><value>Permanent address</value></data>
+  <data name="ContractCycleTwo" xml:space="preserve"><value>Every 2 months</value></data>
+  <data name="ContractCycleTwelve" xml:space="preserve"><value>Every 12 months</value></data>
+  <data name="ContractRentHint" xml:space="preserve"><value>Defaults to the room's listed rent; you can adjust it.</value></data>
+  <data name="ContractNumberHint" xml:space="preserve"><value>Contract code used for lookup, invoice matching and printing.</value></data>
+  <data name="ContractTermHint" xml:space="preserve"><value>Lease term from start to end date; click to open the print view.</value></data>
+  <data name="ContractDepositPaidHint" xml:space="preserve"><value>Amount actually received by the owner. The deposit is refunded after any damage deduction.</value></data>
+  <data name="ContractInitialPaymentHint" xml:space="preserve"><value>Total due at move-in = deposit + first-cycle rent. Service fees are billed separately.</value></data>
+  <data name="ContractSigningVersionHint" xml:space="preserve"><value>Contract content version at the moment the tenant confirmed.</value></data>
+  <data name="ContractSigningHashHint" xml:space="preserve"><value>SHA-256 hash of the contract content, used as electronic evidence.</value></data>
+  <data name="ContractDepositRefundHint" xml:space="preserve"><value>Deposit amount to refund when the contract ends or is cancelled after receipt.</value></data>
+  <data name="ContractPaymentCycleHint" xml:space="preserve"><value>Each payment covers the selected number of months.</value></data>
+  <data name="ContractNoRoommates" xml:space="preserve"><value>No household members selected.</value></data>
+  <data name="ContractServicesEmpty" xml:space="preserve"><value>No service rates are available for this property.</value></data>
+  <data name="ContractSelectPropertyForServices" xml:space="preserve"><value>Select a property to view service rates.</value></data>
+  <data name="ContractServiceName" xml:space="preserve"><value>Service</value></data>
+  <data name="ContractServiceUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="ContractServiceRate" xml:space="preserve"><value>Rate</value></data>
+  <data name="ContractTermsCounter" xml:space="preserve"><value>{0}/4000 characters</value></data>
+  <data name="ContractErrorInvalidMonthlyRent" xml:space="preserve"><value>The rent must be non-negative and within the valid range.</value></data>
+  <data name="ContractErrorInvalidPaymentCycle" xml:space="preserve"><value>Payment cycle must be 1, 2, 3, 6 or 12 months.</value></data>
+  <data name="ContractErrorInvalidMeterReadingDay" xml:space="preserve"><value>The utilities reading day must be between 1 and 28.</value></data>
+  <data name="ContractErrorTermsTooLong" xml:space="preserve"><value>Additional terms must not exceed 4000 characters.</value></data>
+  <data name="ContractErrorRelationshipTooLong" xml:space="preserve"><value>The relationship must not exceed 50 characters.</value></data>
+  <data name="ContractErrorRepresentativeInvalid" xml:space="preserve"><value>The representative must be one of the contract tenants.</value></data>
+  <data name="ContractSectionBilling" xml:space="preserve"><value>Contract finances</value></data>
+  <data name="ContractDetailServicesTitle" xml:space="preserve"><value>Services &amp; rates</value></data>
+  <data name="ContractDetailServicesEmpty" xml:space="preserve"><value>No services apply to this contract.</value></data>
+  <data name="ContractServiceApplied" xml:space="preserve"><value>Applied</value></data>
+  <data name="ContractServiceUnregistered" xml:space="preserve"><value>Not registered</value></data>
+  <data name="ContractNoTerms" xml:space="preserve"><value>No additional terms.</value></data>
+  <data name="ContractClausesTitle" xml:space="preserve"><value>Standard terms</value></data>
+  <data name="ContractClauseDeposit" xml:space="preserve"><value>Party B pays a deposit as agreed; it is refunded after the contract is liquidated and all debts are settled.</value></data>
+  <data name="ContractClauseUtilities" xml:space="preserve"><value>Electricity, water and services are billed at the property's listed rates on the reading date.</value></data>
+  <data name="ContractClauseMaintenance" xml:space="preserve"><value>Party B must care for the property and not alter its structure; Party B covers damage caused by its own fault.</value></data>
+  <data name="ContractClauseTermination" xml:space="preserve"><value>Either party ending the contract early must give 30 days' notice and settle all obligations up to the termination date.</value></data>
+  <data name="ContractClauseSublet" xml:space="preserve"><value>Party B may not sublet or transfer the room without Party A's consent.</value></data>
+  <data name="ContractFloorLabel" xml:space="preserve"><value>Floor</value></data>
+  <data name="ContractAreaLabel" xml:space="preserve"><value>Area (m²)</value></data>
+  <data name="ContractPrintAction" xml:space="preserve"><value>Print contract</value></data>
+  <data name="ContractRepresentativeTag" xml:space="preserve"><value>Representative</value></data>
+  <data name="ContractPaymentScheduleTitle" xml:space="preserve"><value>Payment schedule</value></data>
+  <data name="ContractPaymentScheduleHint" xml:space="preserve"><value>Billing cycle, utility reading day and the amount due for the first cycle.</value></data>
+  <data name="ContractDetailServicesHint" xml:space="preserve"><value>Rates applied on the contract start date.</value></data>
+  <data name="ContractPrintBackToDetail" xml:space="preserve"><value>Back to contract</value></data>
+  <data name="ContractPrintLoading" xml:space="preserve"><value>Loading contract…</value></data>
+  <data name="ContractPrintMottoTitle" xml:space="preserve"><value>SOCIALIST REPUBLIC OF VIETNAM</value></data>
+  <data name="ContractPrintMotto" xml:space="preserve"><value>Independence – Freedom – Happiness</value></data>
+  <data name="ContractPrintHeading" xml:space="preserve"><value>ROOM LEASE AGREEMENT</value></data>
+  <data name="ContractPrintNumber" xml:space="preserve"><value>No.: {0}</value></data>
+  <data name="ContractPrintPartyA" xml:space="preserve"><value>LESSOR (PARTY A)</value></data>
+  <data name="ContractPrintPartyB" xml:space="preserve"><value>LESSEE (PARTY B)</value></data>
+  <data name="ContractPrintDurationMonths" xml:space="preserve"><value>Lease length</value></data>
+  <data name="ContractPrintDurationMonthsValue" xml:space="preserve"><value>{0} months</value></data>
+  <data name="ContractPrintSignedDate" xml:space="preserve"><value>…, {0}/{1}/{2}</value></data>
+  <data name="ContractPrintPartyASign" xml:space="preserve"><value>PARTY A REPRESENTATIVE</value></data>
+  <data name="ContractPrintPartyBSign" xml:space="preserve"><value>PARTY B REPRESENTATIVE</value></data>
+  <data name="ContractPrintSignatureHint" xml:space="preserve"><value>(Sign and print full name)</value></data>
+  <data name="ContractErrorEndDateTooShort" xml:space="preserve"><value>The lease term must be at least one month.</value></data>
+  <data name="ContractErrorOutsideOwnerScope" xml:space="preserve"><value>The contract does not belong to the current owner's property.</value></data>
+  <data name="ContractErrorRenewalRejectedByLiquidation" xml:space="preserve"><value>The contract has been liquidated.</value></data>
+  <data name="ContractErrorTenantAcceptanceRequired" xml:space="preserve"><value>The tenant has not confirmed the contract yet.</value></data>
+  <data name="ContractErrorInvalidSigningStatus" xml:space="preserve"><value>The contract is not in a state that allows this signing action.</value></data>
+  <data name="ContractErrorContractVersionMissing" xml:space="preserve"><value>The contract has no content version for the tenant to confirm.</value></data>
+  <data name="ContractErrorContractAlreadyAccepted" xml:space="preserve"><value>The tenant has already confirmed this contract.</value></data>
+  <data name="ContractErrorChangeRequestMessageRequired" xml:space="preserve"><value>Please enter the changes you need.</value></data>
+  <data name="ContractErrorChangeRequestMessageTooLong" xml:space="preserve"><value>The change request must not exceed 2000 characters.</value></data>
+  <data name="ContractErrorOtpRequired" xml:space="preserve"><value>Please enter the verification code sent to your email.</value></data>
+  <data name="ContractErrorOtpInvalid" xml:space="preserve"><value>The verification code is incorrect or expired.</value></data>
+  <data name="ContractErrorOtpExpired" xml:space="preserve"><value>The verification code has expired. Please request a new one.</value></data>
+  <data name="ContractErrorOtpTooManyRequests" xml:space="preserve"><value>Too many code requests. Please try again later.</value></data>
+  <data name="ContractStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="ContractStatusAwaitingTenant" xml:space="preserve"><value>Awaiting tenant</value></data>
+  <data name="ContractStatusChangeRequested" xml:space="preserve"><value>Changes requested</value></data>
+  <data name="ContractStatusTenantAccepted" xml:space="preserve"><value>Tenant accepted</value></data>
+  <data name="ContractStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ContractStatusDepositPending" xml:space="preserve"><value>Deposit awaiting confirmation</value></data>
+  <data name="ContractDepositDueLabel" xml:space="preserve"><value>Deposit payment due</value></data>
+  <data name="ContractTenantSearchLimitHint" xml:space="preserve"><value>Showing up to {0} results; type a name or phone number to search faster.</value></data>
+  <data name="ContractSendToTenantAction" xml:space="preserve"><value>Send to tenant</value></data>
+  <data name="ContractSentToTenantSuccess" xml:space="preserve"><value>The contract was sent to the tenant for review.</value></data>
+  <data name="ContractDraftSavedSuccess" xml:space="preserve"><value>Contract draft saved.</value></data>
+  <data name="ContractEditAction" xml:space="preserve"><value>Edit contract</value></data>
+  <data name="ContractWithdrawAction" xml:space="preserve"><value>Withdraw</value></data>
+  <data name="ContractCopySigningLink" xml:space="preserve"><value>Copy signing link</value></data>
+  <data name="ContractCopySigningLinkHint" xml:space="preserve"><value>Copy a link for the tenant to sign in and sign the contract.</value></data>
+  <data name="ContractCopySigningLinkSuccess" xml:space="preserve"><value>Signing link copied.</value></data>
+  <data name="ContractCopySigningLinkFailed" xml:space="preserve"><value>Could not copy the link. Copy it manually from the address bar.</value></data>
+  <data name="ContractWithdrawnSuccess" xml:space="preserve"><value>The contract was returned to draft.</value></data>
+  <data name="ContractSigningPanelTitle" xml:space="preserve"><value>Signing status</value></data>
+  <data name="ContractSigningVersion" xml:space="preserve"><value>Version</value></data>
+  <data name="ContractSigningSentAt" xml:space="preserve"><value>Sent at</value></data>
+  <data name="ContractSigningAcceptedAt" xml:space="preserve"><value>Tenant accepted at</value></data>
+  <data name="ContractSigningHash" xml:space="preserve"><value>Content hash (SHA-256)</value></data>
+  <data name="ContractChangeRequestsTitle" xml:space="preserve"><value>Tenant change requests</value></data>
+  <data name="ContractChangeRequestPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="ContractChangeRequestResolved" xml:space="preserve"><value>Resolved</value></data>
+  <data name="ContractChangeRequestDismissed" xml:space="preserve"><value>Dismissed</value></data>
+  <data name="ContractEditTitle" xml:space="preserve"><value>Edit contract</value></data>
+  <data name="ContractEditDescription" xml:space="preserve"><value>Editable only while the contract is a draft or awaiting tenant review.</value></data>
+  <data name="ContractEditNotEditable" xml:space="preserve"><value>This contract can no longer be edited.</value></data>
+  <data name="ContractEditSaveAction" xml:space="preserve"><value>Save changes</value></data>
+  <data name="ContractEditSavedSuccess" xml:space="preserve"><value>Contract changes saved.</value></data>
+  <data name="ContractTenantReviewTitle" xml:space="preserve"><value>Review and confirm contract</value></data>
+  <data name="ContractTenantReviewDescription" xml:space="preserve"><value>Review the terms, confirm with an OTP code, or ask the landlord for changes.</value></data>
+  <data name="ContractTenantAcceptedAt" xml:space="preserve"><value>You confirmed at {0}.</value></data>
+  <data name="ContractTenantAcceptAction" xml:space="preserve"><value>Accept contract</value></data>
+  <data name="ContractTenantRequestChangesAction" xml:space="preserve"><value>Request changes</value></data>
+  <data name="ContractChangeRequestMessageLabel" xml:space="preserve"><value>Requested changes</value></data>
+  <data name="ContractChangeRequestSubmitAction" xml:space="preserve"><value>Send request</value></data>
+  <data name="ContractTenantAcceptTitle" xml:space="preserve"><value>Confirm contract with OTP</value></data>
+  <data name="ContractTenantAcceptDescription" xml:space="preserve"><value>Send the code to your email, then enter it to confirm.</value></data>
+  <data name="ContractTenantSendOtpAction" xml:space="preserve"><value>Send OTP</value></data>
+  <data name="ContractTenantOtpLabel" xml:space="preserve"><value>OTP code</value></data>
+  <data name="ContractTenantOtpPlaceholder" xml:space="preserve"><value>Enter the 6-digit code</value></data>
+  <data name="ContractTenantConfirmAcceptAction" xml:space="preserve"><value>Confirm</value></data>
+  <data name="ContractTenantOtpSent" xml:space="preserve"><value>A confirmation code was sent to your email.</value></data>
+  <data name="ContractTenantAcceptSuccess" xml:space="preserve"><value>You have confirmed the contract.</value></data>
+  <data name="ContractChangeRequestSuccess" xml:space="preserve"><value>Your change request was sent to the landlord.</value></data>
+  <data name="ContractPrintEvidenceTitle" xml:space="preserve"><value>Electronic confirmation evidence</value></data>
+  <data name="ContractPrintEvidenceVersion" xml:space="preserve"><value>Content version: v{0}</value></data>
+  <data name="ContractPrintEvidenceHash" xml:space="preserve"><value>SHA-256 hash</value></data>
+  <data name="ContractPrintEvidenceAcceptedAt" xml:space="preserve"><value>Confirmed by tenant at {0}</value></data>
+  <data name="ContractPendingAssignmentsTitle" xml:space="preserve"><value>Tenants awaiting a contract</value></data>
+  <data name="ContractPendingAssignmentsDescription" xml:space="preserve"><value>Tenants who accepted a room invitation/QR and are waiting for a contract.</value></data>
+  <data name="ContractPendingAssignmentsEmptyTitle" xml:space="preserve"><value>No tenants awaiting a contract</value></data>
+  <data name="ContractPendingAssignmentsEmptyDescription" xml:space="preserve"><value>There are no pending room invitations to process.</value></data>
+  <data name="ContractPendingAssignmentsCreatedAt" xml:space="preserve"><value>Invitation accepted at</value></data>
+  <data name="ContractPendingAssignmentsCreateAction" xml:space="preserve"><value>Create contract</value></data>
+  <data name="ContractPendingAssignmentsNavLabel" xml:space="preserve"><value>Pending contracts</value></data>
+  <data name="ContractInitialPaymentNote" xml:space="preserve"><value>The holding deposit is refunded at the end of the lease after deducting any damage; the first-cycle rent is not refundable. Service fees are charged separately.</value></data>
+  <data name="ContractDepositRule" xml:space="preserve"><value>The holding deposit is kept by the landlord as security, not as rental revenue. At the end of the lease it is used to cover any damage (if applicable) and the remainder is refunded.</value></data>
+  <data name="ContractTenantSigningNote" xml:space="preserve"><value>Confirming with OTP signs the electronic contract. The holding deposit is kept by the landlord and refunded after any damage deduction; the first-cycle rent is the charge for using the room.</value></data>
+  <data name="ContractDepositReceivedAction" xml:space="preserve"><value>Confirm deposit received</value></data>
+  <data name="ContractDepositPaymentTitle" xml:space="preserve"><value>Deposit payment</value></data>
+  <data name="ContractDepositPayAction" xml:space="preserve"><value>Pay deposit</value></data>
+  <data name="ContractDepositRentInvoicesAction" xml:space="preserve"><value>Rent invoices</value></data>
+  <data name="ContractCreateFirstRentInvoiceAction" xml:space="preserve"><value>Create first rent invoice</value></data>
+  <data name="ContractMoreActions" xml:space="preserve"><value>More actions</value></data>
+  <data name="ContractCreateFirstRentInvoiceSuccess" xml:space="preserve"><value>First rent invoice draft created.</value></data>
+  <data name="ContractCreateFirstRentInvoiceFailed" xml:space="preserve"><value>Could not create the first rent invoice. Please check the contract.</value></data>
+  <data name="ContractDepositRefundDueLabel" xml:space="preserve"><value>Deposit to refund</value></data>
+  <data name="ContractDepositRefundedLabel" xml:space="preserve"><value>Deposit refunded</value></data>
+  <data name="ContractDepositPaymentIntro" xml:space="preserve"><value>Transfer the exact deposit amount to the owner's account, then confirm so the owner can verify it.</value></data>
+  <data name="ContractDepositBankLabel" xml:space="preserve"><value>Receiving account</value></data>
+  <data name="ContractDepositBankMissing" xml:space="preserve"><value>The owner has not configured a receiving account.</value></data>
+  <data name="ContractDepositQrHint" xml:space="preserve"><value>Scan VietQR to transfer the exact deposit amount.</value></data>
+  <data name="ContractDepositProofLabel" xml:space="preserve"><value>Deposit transfer proof</value></data>
+  <data name="ContractDepositProofHint" xml:space="preserve"><value>Image or PDF confirming the transaction, up to 5 files.</value></data>
+  <data name="ContractDepositProofRequired" xml:space="preserve"><value>Please upload at least one deposit transfer proof.</value></data>
+  <data name="ContractDepositProofUploadFailed" xml:space="preserve"><value>Could not upload the proof. Please try again.</value></data>
+  <data name="ContractDepositProofOpen" xml:space="preserve"><value>View</value></data>
+  <data name="ContractErrorDepositProofRequired" xml:space="preserve"><value>Please upload at least one deposit transfer proof.</value></data>
+  <data name="ContractDepositPending" xml:space="preserve"><value>Deposit transfer reported at {0}; waiting for owner confirmation.</value></data>
+  <data name="ContractDepositRejected" xml:space="preserve"><value>Deposit request rejected: {0}</value></data>
+  <data name="ContractDepositTransactionLabel" xml:space="preserve"><value>Transaction code (optional)</value></data>
+  <data name="ContractDepositSubmitAction" xml:space="preserve"><value>I have transferred the deposit</value></data>
+  <data name="ContractDepositSubmitSuccess" xml:space="preserve"><value>Deposit transfer reported. The owner will confirm it.</value></data>
+  <data name="ContractDepositPendingTitle" xml:space="preserve"><value>Tenant reported a deposit transfer</value></data>
+  <data name="ContractDepositPendingDetail" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="ContractDepositConfirmAction" xml:space="preserve"><value>Confirm deposit received</value></data>
+  <data name="ContractDepositRejectAction" xml:space="preserve"><value>Reject</value></data>
+  <data name="ContractDepositConfirmSuccess" xml:space="preserve"><value>Deposit receipt confirmed.</value></data>
+  <data name="ContractDepositRejectTitle" xml:space="preserve"><value>Reject deposit transfer</value></data>
+  <data name="ContractDepositRejectDescription" xml:space="preserve"><value>Enter a reason so the tenant can check and resubmit.</value></data>
+  <data name="ContractDepositRejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="ContractDepositRejectConfirm" xml:space="preserve"><value>Reject deposit request</value></data>
+  <data name="ContractDepositRejectSuccess" xml:space="preserve"><value>Deposit transfer rejected.</value></data>
+  <data name="ContractErrorDepositPaymentPending" xml:space="preserve"><value>A deposit transfer is already waiting for owner confirmation.</value></data>
+  <data name="ContractErrorDepositPaymentNotFound" xml:space="preserve"><value>Deposit transfer not found.</value></data>
+  <data name="ContractDepositReceivedTitle" xml:space="preserve"><value>Confirm deposit received</value></data>
+  <data name="ContractDepositReceivedDescription" xml:space="preserve"><value>Confirm the landlord received the full holding deposit. This is not rental revenue and will be refunded after any damage deduction.</value></data>
+  <data name="ContractDepositReceivedConfirm" xml:space="preserve"><value>Confirm received</value></data>
+  <data name="ContractDepositReceivedSuccess" xml:space="preserve"><value>Holding deposit receipt recorded.</value></data>
+  <data name="ContractDepositPaidLabel" xml:space="preserve"><value>Deposit received</value></data>
+  <data name="ContractDepositPaidAtLabel" xml:space="preserve"><value>Received at</value></data>
+  <data name="ContractErrorDepositPaymentNotAllowed" xml:space="preserve"><value>Deposit receipt can only be recorded after the contract is sent or approved.</value></data>
+  <data name="ContractTenantSignedPaymentNote" xml:space="preserve"><value>Your contract is signed. Signing does not charge you automatically; please pay the first-cycle rent and service fees via invoices. The holding deposit is recorded separately once the landlord confirms receipt.</value></data>
+  <data name="ContractTenantInvoicesAction" xml:space="preserve"><value>My invoices</value></data>
+  <data name="ContractInvoicesAction" xml:space="preserve"><value>Contract invoices</value></data>
 </root>

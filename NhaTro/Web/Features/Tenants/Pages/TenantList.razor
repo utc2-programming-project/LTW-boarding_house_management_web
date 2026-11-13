@@ -52,7 +52,8 @@
     else if (!_summaryError)
     {
         <section class="stat-grid @(_canRevealIdNumber ? null : "stat-grid--three")" aria-label="@L["TenantSummary"]">
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @TenantCardClass("", "", "")' role="button" tabindex="0"
+                     @onclick='() => ApplyTenantFilterAsync("", "", "")'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["TenantStatTotal"]
@@ -62,7 +63,8 @@
                 </div>
                 <div class="stat-value">@SummaryValue(_summary!.TotalCount) <small>@L["TenantPeople"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @TenantCardClass("active", "", "")' role="button" tabindex="0"
+                     @onclick='() => ApplyTenantFilterAsync("active", "", "")'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["TenantStatActive"]
@@ -74,7 +76,8 @@
             </article>
             @if (_canRevealIdNumber)
             {
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @TenantCardClass("", "linked", "")' role="button" tabindex="0"
+                         @onclick='() => ApplyTenantFilterAsync("", "linked", "")'>
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["TenantStatAccounts"]
@@ -125,6 +128,7 @@
                 <label class="sr-only" for="tenant-sort-filter">@L["TenantSort"]</label>
                 <select id="tenant-sort-filter" class="input" @bind="_sortFilter" @bind:after="ResetTableAsync">
                     <option value="created">@L["TenantSortCreatedDesc"]</option>
+                    <option value="created-asc">@L["TenantSortCreatedAsc"]</option>
                     <option value="name-asc">@L["TenantSortNameAsc"]</option>
                     <option value="name-desc">@L["TenantSortNameDesc"]</option>
                 </select>
@@ -251,7 +255,8 @@
         _lastAppliedKeywordQuery = KeywordQuery;
         _lastAppliedTenantId = TenantIdQuery;
         _keyword = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
-        await LoadSummaryAsync();
+        // Không chặn bảng khách thuê bởi 4 query KPI; bảng tải trước, KPI cập nhật sau.
+        _ = LoadSummaryAsync();
         await OpenTenantFromQueryAsync();
     }
 
@@ -401,8 +406,10 @@
             HasActiveContract = _rentalFilter switch { "renting" => true, "not-renting" => false, _ => null },
             Page = request.Page,
             PageSize = request.PageSize,
-            SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
-            SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
+            SortBy = _sortFilter.StartsWith("created", StringComparison.Ordinal)
+                ? TenantSortBy.CreatedAt
+                : TenantSortBy.FullName,
+            SortDirection = _sortFilter is "name-desc" or "created" ? SortDirection.Desc : SortDirection.Asc,
         };
         return await TenantPages.ListAsync(filter);
     }
@@ -413,6 +420,7 @@
         try
         {
             _summary = await TenantPages.GetSummaryAsync();
+            await InvokeAsync(StateHasChanged);
         }
         catch
         {
@@ -446,6 +454,27 @@
     {
         _tableKey++;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private string TenantCardClass(string status, string account, string rental) =>
+        _statusFilter == status && _accountFilter == account && _rentalFilter == rental
+            ? "is-active"
+            : string.Empty;
+
+    private async Task ApplyTenantFilterAsync(string status, string account, string rental)
+    {
+        _statusFilter = status;
+        _accountFilter = account;
+        _rentalFilter = rental;
+        // Reload tại chỗ, không @key lại bảng để không mất vị trí cuộn/trang.
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task ResetFiltersAsync()
@@ -812,8 +841,10 @@
         HasActiveContract = _rentalFilter switch { "renting" => true, "not-renting" => false, _ => null },
         Page = page,
         PageSize = ExportPageSize,
-        SortBy = _sortFilter == "created" ? TenantSortBy.CreatedAt : TenantSortBy.FullName,
-        SortDirection = _sortFilter == "name-desc" || _sortFilter == "created" ? SortDirection.Desc : SortDirection.Asc,
+        SortBy = _sortFilter.StartsWith("created", StringComparison.Ordinal)
+            ? TenantSortBy.CreatedAt
+            : TenantSortBy.FullName,
+        SortDirection = _sortFilter is "name-desc" or "created" ? SortDirection.Desc : SortDirection.Asc,
     };
 
     private string SummaryValue(int? value) => value?.ToString("N0", NumberFormatter.Display) ?? L["NoData"].Value;

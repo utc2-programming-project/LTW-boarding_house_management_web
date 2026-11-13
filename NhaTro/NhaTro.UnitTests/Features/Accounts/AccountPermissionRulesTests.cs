@@ -18,7 +18,7 @@ public class AccountPermissionRulesTests
     }
 
     [Theory]
-    [InlineData(Roles.Admin, 4)]
+    [InlineData(Roles.Admin, 3)]
     [InlineData(Roles.ChuTro, 2)]
     [InlineData(Roles.QuanLy, 1)]
     [InlineData(Roles.KhachThue, 0)]
@@ -34,6 +34,17 @@ public class AccountPermissionRulesTests
         Assert.Contains(Roles.QuanLy, roles);
         Assert.Contains(Roles.KhachThue, roles);
         Assert.DoesNotContain(Roles.Admin, roles);
+    }
+
+    [Fact]
+    public void Admin_khong_tao_duoc_Admin_moi()
+    {
+        // Chot 13/11/2026: tai khoan quan tri chi co san tu seed.
+        Assert.False(AccountPermissionRules.CanCreateRole(Roles.Admin, Roles.Admin));
+        Assert.DoesNotContain(Roles.Admin, AccountPermissionRules.AssignableRoles(Roles.Admin));
+        Assert.True(AccountPermissionRules.CanCreateRole(Roles.Admin, Roles.ChuTro));
+        Assert.True(AccountPermissionRules.CanCreateRole(Roles.Admin, Roles.QuanLy));
+        Assert.True(AccountPermissionRules.CanCreateRole(Roles.Admin, Roles.KhachThue));
     }
 
     [Fact]
@@ -96,6 +107,15 @@ public class AccountPermissionRulesTests
             Roles.Admin, "admin-1", "user-9", Roles.QuanLy, targetIsLastAdmin: false, Roles.KhachThue);
 
         Assert.Null(reason);
+    }
+
+    [Fact]
+    public void Admin_khong_nang_duoc_ai_len_Admin()
+    {
+        var reason = AccountPermissionRules.CheckChangeRole(
+            Roles.Admin, "admin-1", "user-9", Roles.QuanLy, targetIsLastAdmin: false, Roles.Admin);
+
+        Assert.Equal(AccountErrorCodes.RoleNotAllowed, reason);
     }
 
     [Fact]
@@ -202,6 +222,37 @@ public class AccountPermissionRulesTests
             targetIsAdmin: true, targetIsLastAdmin: true);
 
         Assert.Equal(AccountErrorCodes.CannotRemoveLastAdmin, reason);
+    }
+
+    [Fact]
+    public void Khong_duoc_tu_xoa_tai_khoan_cua_minh()
+    {
+        Assert.Equal(AccountErrorCodes.CannotDeleteSelf, AccountPermissionRules.CheckDelete(
+            Roles.Admin, "admin-1", "admin-1", Roles.Admin));
+    }
+
+    [Fact]
+    public void Admin_khong_xoa_duoc_Admin_khac()
+    {
+        // Chot 13/11/2026: Admin khong xoa nhau; tu xoa qua trang du lieu ca nhan.
+        Assert.Equal(AccountErrorCodes.CannotDeleteAdmin, AccountPermissionRules.CheckDelete(
+            Roles.Admin, "admin-1", "admin-2", Roles.Admin));
+    }
+
+    [Fact]
+    public void Admin_xoa_duoc_tai_khoan_khong_phai_Admin()
+    {
+        Assert.Null(AccountPermissionRules.CheckDelete(
+            Roles.Admin, "admin-1", "quanly-9", Roles.QuanLy));
+        Assert.Null(AccountPermissionRules.CheckDelete(
+            Roles.Admin, "admin-1", "khach-9", Roles.KhachThue));
+    }
+
+    [Fact]
+    public void ChuTro_khong_xoa_duoc_tai_khoan_nao()
+    {
+        Assert.Equal(AccountErrorCodes.Forbidden, AccountPermissionRules.CheckDelete(
+            Roles.ChuTro, "chutro-1", "khach-9", Roles.KhachThue));
     }
 
     [Fact]

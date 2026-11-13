@@ -48,6 +48,10 @@ public sealed class ContractDepositApprovalApplier(TimeProvider clock) : IApprov
 
         var oldDeposit = contract.DepositAmount;
         contract.DepositAmount = Web.Common.Utils.MoneyFormatter.RoundVnd(payload.DepositAmount.Value);
+        // Đổi mức cọc thì phải thu lại theo mức mới; xoá xác nhận đã thu cũ.
+        contract.DepositPaidAmount = null;
+        contract.DepositPaidAt = null;
+        contract.DepositPaidByUserId = null;
         ContractLifecycleOperations.AddAudit(db, ContractLifecycleOperations.ContractAuditActions.DepositUpdated,
             request.DecidedByUserId ?? string.Empty, request.PropertyId.Value,
             JsonSerializer.Serialize(new { contractId, oldDeposit, newDeposit = contract.DepositAmount }), clock.GetUtcNow());

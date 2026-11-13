@@ -15,7 +15,7 @@ CLAUDE.md
 .freebuff/
 .opencode/
 docs/huong_dan/
-
+tools/
 # Visual Studio / .NET
 .vs/
 bin/
@@ -26,7 +26,7 @@ TestResults/
 *.user
 *.suo
 *.userprefs
-
+debug/
 # Demo seed dataset (local only; deleting the file disables --seed-demo)
 NhaTro/Web/Data/Seeding/demo-data.json
 

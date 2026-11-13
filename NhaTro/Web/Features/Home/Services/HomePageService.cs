@@ -105,10 +105,10 @@ public sealed class HomePageService(
         var inbox = await TryAsync("approvals",
             () => approvals.ListInboxAsync(new ApprovalCaller(caller.UserId, caller.Role), ct),
             (ApprovalListResult?)null);
-        var incidentRows = await TryAsync("incidents", () => incidents.ListAsync(),
-            (IReadOnlyList<IncidentItem>)[]);
-        var contractRows = await TryAsync("contracts", () => contracts.ListAsync(cancellationToken: ct),
-            (IReadOnlyList<ContractListItemDto>)[]);
+        var openIncidents = await TryCountAsync("incidents", () => incidents.CountOpenAsync());
+        var contractSnapshot = await TryAsync("contracts", () => contracts.GetHomeSnapshotAsync(today, ct),
+            (ContractHomeSnapshotDto?)null);
+        var contractRows = (State: contractSnapshot.State, Value: contractSnapshot.Value?.Expiring ?? []);
 
         var kpis = new List<HomeKpi>();
         if (includeKpis)
@@ -146,12 +146,12 @@ public sealed class HomePageService(
             }
         }
 
-        var actions = BuildManagerActions(invoiceList.Value, inbox.Value, contractRows.Value, incidentRows.Value, today);
+        var actions = BuildManagerActions(invoiceList.Value, inbox.Value, contractRows.Value, openIncidents.Value, today);
 
         return new HomeSnapshot(
             Roles.ChuTro,
             KpiSection(kpis, rooms.State, tenants.State, revenueReport.State),
-            ActionSection(actions, invoiceList.State, inbox.State, contractRows.State, incidentRows.State),
+            ActionSection(actions, invoiceList.State, inbox.State, contractRows.State, openIncidents.State),
             ExpiringSection(contractRows, today),
             OpenInvoicesSection(invoiceList.Value, invoiceList.State),
             new([], HomeLoadState.Loaded));
@@ -173,10 +173,10 @@ public sealed class HomePageService(
         var mine = await TryAsync("approvals",
             () => approvals.ListMineAsync(new ApprovalCaller(caller.UserId, caller.Role), ct),
             (ApprovalListResult?)null);
-        var incidentRows = await TryAsync("incidents", () => incidents.ListAsync(),
-            (IReadOnlyList<IncidentItem>)[]);
-        var contractRows = await TryAsync("contracts", () => contracts.ListAsync(cancellationToken: ct),
-            (IReadOnlyList<ContractListItemDto>)[]);
+        var openIncidents = await TryCountAsync("incidents", () => incidents.CountOpenAsync());
+        var contractSnapshot = await TryAsync("contracts", () => contracts.GetHomeSnapshotAsync(today, ct),
+            (ContractHomeSnapshotDto?)null);
+        var contractRows = (State: contractSnapshot.State, Value: contractSnapshot.Value?.Expiring ?? []);
 
         // Quản lý không xem doanh thu/công nợ tổng hợp (VHT-40 D15).
         var kpis = new List<HomeKpi>();
@@ -204,9 +204,9 @@ public sealed class HomePageService(
                 AddUnavailable(kpis, "HomeKpiTenants");
             }
 
-            if (contractRows.State == HomeLoadState.Loaded)
+            if (contractSnapshot.State == HomeLoadState.Loaded)
             {
-                kpis.Add(new("HomeKpiExpiring", Count(Expiring(contractRows.Value ?? [], today).Count),
+                kpis.Add(new("HomeKpiExpiring", Count(contractSnapshot.Value?.ExpiringCount ?? 0),
                     "HomeKpiExpiringHint", null, "/contracts"));
             }
             else
@@ -215,12 +215,12 @@ public sealed class HomePageService(
             }
         }
 
-        var actions = BuildManagerActions(invoiceList.Value, mine.Value, contractRows.Value, incidentRows.Value, today);
+        var actions = BuildManagerActions(invoiceList.Value, mine.Value, contractRows.Value, openIncidents.Value, today);
 
         return new HomeSnapshot(
             Roles.QuanLy,
             KpiSection(kpis, rooms.State, tenants.State, contractRows.State),
-            ActionSection(actions, invoiceList.State, mine.State, contractRows.State, incidentRows.State),
+            ActionSection(actions, invoiceList.State, mine.State, contractRows.State, openIncidents.State),
             ExpiringSection(contractRows, today),
             OpenInvoicesSection(invoiceList.Value, invoiceList.State),
             new([], HomeLoadState.Loaded));
@@ -265,20 +265,16 @@ public sealed class HomePageService(
         var invoiceList = await TryAsync("invoices",
             () => invoices.GetInvoicesAsync(new InvoiceFilter { Page = 1, PageSize = 20 }, caller, ct),
             (InvoiceListResult?)null);
-        var incidentRows = await TryAsync("incidents", () => incidents.ListAsync(),
-            (IReadOnlyList<IncidentItem>)[]);
-        var contractRows = await TryAsync("contracts", () => contracts.ListAsync(cancellationToken: ct),
-            (IReadOnlyList<ContractListItemDto>)[]);
+        var openIncidents = await TryCountAsync("incidents", () => incidents.CountOpenAsync());
+        var contractSnapshot = await TryAsync("contracts", () => contracts.GetHomeSnapshotAsync(today, ct),
+            (ContractHomeSnapshotDto?)null);
+        var contractRows = (State: contractSnapshot.State, Value: contractSnapshot.Value?.Expiring ?? []);
 
-        List<ContractListItemDto> activeContracts = contractRows.Value is null
-            ? []
-            : contractRows.Value
-                .Where(contract => contract.Status == ContractStatus.Approved
-                    && DateOnly.FromDateTime(contract.EndDate) >= today)
-                .OrderBy(contract => contract.EndDate)
-                .ToList();
+        List<ContractListItemDto> activeContracts = contractSnapshot.Value?.ActiveForTenant
+            .OrderBy(contract => contract.EndDate)
+            .ToList() ?? [];
         var earliestEnd = activeContracts.Count == 0 ? (DateOnly?)null : DateOnly.FromDateTime(activeContracts[0].EndDate);
-        var openIncidents = incidentRows.Value?.Count(incident => incident.Status != IncidentStatus.Completed) ?? 0;
+        var openIncidentCount = openIncidents.Value ?? 0;
 
         var kpis = new List<HomeKpi>();
         if (invoiceList.Value is { } invoiceResult)
@@ -292,9 +288,9 @@ public sealed class HomePageService(
             AddUnavailable(kpis, "HomeKpiUnpaidInvoices", "HomeKpiOutstandingAmount");
         }
 
-        if (incidentRows.State == HomeLoadState.Loaded)
+        if (openIncidents.State == HomeLoadState.Loaded)
         {
-            kpis.Add(new("HomeKpiOpenIncidents", Count(openIncidents), Href: "/incidents"));
+            kpis.Add(new("HomeKpiOpenIncidents", Count(openIncidentCount), Href: "/incidents"));
         }
         else
         {
@@ -319,9 +315,9 @@ public sealed class HomePageService(
             actions.Add(new("HomeActionUnpaidInvoices", invoiceResultForActions.Summary.IssuedCount, UnpaidInvoicesHref));
         }
 
-        if (incidentRows.State == HomeLoadState.Loaded)
+        if (openIncidents.State == HomeLoadState.Loaded)
         {
-            actions.Add(new("HomeActionOpenIncidents", openIncidents, "/incidents"));
+            actions.Add(new("HomeActionOpenIncidents", openIncidentCount, "/incidents"));
         }
 
         if (contractRows.State == HomeLoadState.Loaded)
@@ -337,8 +333,8 @@ public sealed class HomePageService(
 
         return new HomeSnapshot(
             Roles.KhachThue,
-            KpiSection(kpis, invoiceList.State, incidentRows.State, contractRows.State),
-            ActionSection(actions, invoiceList.State, incidentRows.State, contractRows.State),
+            KpiSection(kpis, invoiceList.State, openIncidents.State, contractRows.State),
+            ActionSection(actions, invoiceList.State, openIncidents.State, contractRows.State),
             new(expiringItems, contractRows.State),
             OpenInvoicesSection(invoiceList.Value, invoiceList.State),
             new([], HomeLoadState.Loaded));
@@ -348,7 +344,7 @@ public sealed class HomePageService(
         InvoiceListResult? invoiceList,
         ApprovalListResult? approvalList,
         IReadOnlyList<ContractListItemDto>? contractRows,
-        IReadOnlyList<IncidentItem>? incidentRows,
+        int? openIncidentCount,
         DateOnly today)
     {
         var actions = new List<HomeAction>();
@@ -368,10 +364,9 @@ public sealed class HomePageService(
             actions.Add(new("HomeActionExpiringContracts", Expiring(contractRows, today).Count, "/contracts"));
         }
 
-        if (incidentRows is not null)
+        if (openIncidentCount is { } incidentCount)
         {
-            actions.Add(new("HomeActionOpenIncidents",
-                incidentRows.Count(item => item.Status != IncidentStatus.Completed), "/incidents"));
+            actions.Add(new("HomeActionOpenIncidents", incidentCount, "/incidents"));
         }
 
         return actions;
@@ -431,6 +426,24 @@ public sealed class HomePageService(
         states.Contains(HomeLoadState.Error) ? HomeLoadState.Error
         : states.Contains(HomeLoadState.Denied) ? HomeLoadState.Denied
         : HomeLoadState.Loaded;
+
+    private async Task<(HomeLoadState State, int? Value)> TryCountAsync(string scope, Func<Task<int>> load)
+    {
+        try
+        {
+            return (HomeLoadState.Loaded, await load());
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning(ex, "Home section {Scope} denied", scope);
+            return (HomeLoadState.Denied, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Home section {Scope} failed", scope);
+            return (HomeLoadState.Error, null);
+        }
+    }
 
     private async Task<(HomeLoadState State, T Value)> TryAsync<T>(
         string scope, Func<Task<T>> load, T? fallback) where T : class

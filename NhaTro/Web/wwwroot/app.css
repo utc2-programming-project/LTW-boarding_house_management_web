@@ -1061,3 +1061,13 @@ html:has(.auth-shell) {
 /* Link nằm trong ô có sẵn nội dung phụ: không ép đậm để giữ thứ bậc. */
 .cell-link.is-quiet { font-weight: 500; }
 
+/* Mã dài sinh từ GUID: giữ một dòng, cắt ba chấm; rê chuột xem đầy đủ qua title.
+   Chỉ dùng trong bảng table-layout:fixed để ô không bị nong ra. */
+.cell-link.is-code {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+

@@ -91,6 +91,7 @@ builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumL
         outputTemplate: LogTemplates.File));
 
 // ── 2. Blazor Server + Identity: xác thực và cookie ────────────────────────
+builder.Services.AddMemoryCache();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 // Cần cho claims factory/OTP đọc IP và cookie ngữ cảnh trong mọi luồng.
 builder.Services.AddHttpContextAccessor();
@@ -276,6 +277,9 @@ builder.Services.AddScoped<IIncidentReportService, IncidentReportService>();
 builder.Services.AddScoped<Web.Features.Dashboard.Services.DashboardPageService>();
 builder.Services.AddScoped<Web.Features.Home.Services.HomePageService>();
 builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IContractSigningService, ContractSigningService>();
+builder.Services.AddScoped<IContractDepositPaymentService, ContractDepositPaymentService>();
+builder.Services.AddHostedService<ContractPaymentDeadlineService>();
 // VHT-125: khách thuê gửi yêu cầu gia hạn.
 builder.Services.AddScoped<IContractRenewalService, ContractRenewalService>();
 builder.Services.AddScoped<IIncidentService, IncidentService>();
@@ -390,61 +394,69 @@ builder.Services.AddSingleton<ILoginAttemptGuard, LoginAttemptGuard>();
 // Health live/ready; ready kiểm kết nối DB qua EF HealthChecks.
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database", tags: [HealthEndpoints.ReadyTag]);
 
-// Rate limit: limiter toàn cục chỉ áp POST đăng nhập; /api/files và /culture/set có policy riêng.
+// Rate limit: limiter toàn cục áp các POST nhạy cảm (đăng nhập, đăng ký, OTP, quên mật khẩu,
+// gửi lại xác nhận email); /api/files và /culture/set có policy riêng.
 builder.Services.AddRateLimiter(rateLimiter =>
 {
     rateLimiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    rateLimiter.AddPolicy(RateLimitPolicies.FileUpload, http =>
+    static RateLimitPartition<string> Partition(
+        HttpContext http, string prefix, int permitLimit, int windowSeconds) =>
         RateLimitPartition.GetFixedWindowLimiter(
-            RateLimitPolicies.ClientKey(http),
+            prefix + RateLimitPolicies.ClientKey(http),
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = securityOptions.RateLimit.FileUploadPermitLimit,
-                Window = TimeSpan.FromSeconds(securityOptions.RateLimit.FileUploadWindowSeconds),
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromSeconds(windowSeconds),
                 QueueLimit = 0,
-            }));
+            });
 
-    rateLimiter.AddPolicy(RateLimitPolicies.CultureSet, http =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            RateLimitPolicies.ClientKey(http),
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = securityOptions.RateLimit.CultureSetPermitLimit,
-                Window = TimeSpan.FromSeconds(securityOptions.RateLimit.CultureSetWindowSeconds),
-                QueueLimit = 0,
-            }));
+    rateLimiter.AddPolicy(RateLimitPolicies.FileUpload, http => Partition(
+        http,
+        "file-upload:",
+        securityOptions.RateLimit.FileUploadPermitLimit,
+        securityOptions.RateLimit.FileUploadWindowSeconds));
+
+    rateLimiter.AddPolicy(RateLimitPolicies.CultureSet, http => Partition(
+        http,
+        "culture-set:",
+        securityOptions.RateLimit.CultureSetPermitLimit,
+        securityOptions.RateLimit.CultureSetWindowSeconds));
 
     rateLimiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
-        RateLimitPolicies.IsLoginRequest(http)
-            ? RateLimitPartition.GetFixedWindowLimiter(
-                RateLimitPolicies.ClientKey(http),
-                _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = securityOptions.RateLimit.LoginPermitLimit,
-                    Window = TimeSpan.FromSeconds(securityOptions.RateLimit.LoginWindowSeconds),
-                    QueueLimit = 0,
-                })
-            // PLAN-008: chặn spam đăng ký chủ trọ (5 lần/giờ/IP).
-            : RateLimitPolicies.IsRegisterRequest(http)
-                ? RateLimitPartition.GetFixedWindowLimiter(
-                    "register:" + RateLimitPolicies.ClientKey(http),
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = 5,
-                        Window = TimeSpan.FromHours(1),
-                        QueueLimit = 0,
-                    })
-                : RateLimitPolicies.IsOtpRequest(http)
-                    ? RateLimitPartition.GetFixedWindowLimiter(
-                        "otp:" + RateLimitPolicies.ClientKey(http),
-                        _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 20,
-                            Window = TimeSpan.FromMinutes(15),
-                            QueueLimit = 0,
-                        })
-                    : RateLimitPartition.GetNoLimiter("no-limit"));
+    {
+        var limits = securityOptions.RateLimit;
+
+        if (RateLimitPolicies.IsLoginRequest(http))
+        {
+            return Partition(http, "login:", limits.LoginPermitLimit, limits.LoginWindowSeconds);
+        }
+
+        // PLAN-008: chặn spam đăng ký chủ trọ.
+        if (RateLimitPolicies.IsRegisterRequest(http))
+        {
+            return Partition(http, "register:", limits.RegisterPermitLimit, limits.RegisterWindowSeconds);
+        }
+
+        // PLAN-022: giới hạn POST xác thực/gửi lại OTP.
+        if (RateLimitPolicies.IsOtpRequest(http))
+        {
+            return Partition(http, "otp:", limits.OtpVerifyPermitLimit, limits.OtpVerifyWindowSeconds);
+        }
+
+        // PLAN-038: chặn spam form quên mật khẩu và gửi lại xác nhận email.
+        if (RateLimitPolicies.IsForgotPasswordRequest(http))
+        {
+            return Partition(http, "forgot:", limits.ForgotPasswordPermitLimit, limits.ForgotPasswordWindowSeconds);
+        }
+
+        if (RateLimitPolicies.IsResendEmailRequest(http))
+        {
+            return Partition(http, "resend:", limits.ResendEmailPermitLimit, limits.ResendEmailWindowSeconds);
+        }
+
+        return RateLimitPartition.GetNoLimiter("no-limit");
+    });
 
     rateLimiter.OnRejected = RateLimitPolicies.WriteRejectionAsync;
 });

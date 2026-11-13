@@ -828,6 +828,8 @@ public sealed class FileService(
         // VHT-54: minh chứng thanh toán gắn với hóa đơn (RelatedEntityId = invoiceId) trước khi có Payment.
         RelatedEntityType.Payment => int.TryParse(entityId, out var invoiceId)
             && await db.Invoices.AnyAsync(i => i.Id == invoiceId, cancellationToken),
+        RelatedEntityType.ContractDeposit => Guid.TryParse(entityId, out var contractId)
+            && await db.Contracts.AnyAsync(c => c.ContractId == contractId, cancellationToken),
         _ => true,
     };
 
@@ -867,6 +869,11 @@ public sealed class FileService(
                    join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
                    where invoice.Id == invoiceId && tenant.UserId == userId
                    select invoice.Id).AnyAsync(cancellationToken),
+        RelatedEntityType.ContractDeposit when userId.Length > 0 && Guid.TryParse(entityId, out var contractId) =>
+            await (from member in db.ContractMembers
+                   join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+                   where member.ContractId == contractId && tenant.UserId == userId
+                   select member.ContractId).AnyAsync(cancellationToken),
         _ => false,
     };
 

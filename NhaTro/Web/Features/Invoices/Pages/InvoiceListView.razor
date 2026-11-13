@@ -51,6 +51,8 @@
         </Actions>
     </PageHeading>
 
+    <p class="invoice-period-hint">@L["InvoicePeriodHint"]</p>
+
     @if (_loading)
     {
         <LoadingOverlay Visible="true" Text="@L["Loading"]" />
@@ -65,40 +67,43 @@
     else
     {
         <div class="stat-grid">
-            <div class="stat-card">
+            <article class="stat-card stat-card--link @InvoiceCardClass(InvoiceStatus.Draft)" role="button" tabindex="0"
+                     @onclick="() => ApplyInvoiceStatusFilterAsync(InvoiceStatus.Draft)">
                 <div class="stat-card__top">
-                    <span class="stat-label">@L["StatDraft"]</span>
+                    <span class="stat-label">@L["StatDraft"] <HelpTip Text="@L["StatDraftHint"]" /></span>
                     <span class="stat-icon stat-icon--neutral"><LucideIcon Name="file-text" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.DraftCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class="stat-card stat-card--link @InvoiceCardClass(InvoiceStatus.Issued)" role="button" tabindex="0"
+                     @onclick="() => ApplyInvoiceStatusFilterAsync(InvoiceStatus.Issued)">
                 <div class="stat-card__top">
-                    <span class="stat-label">@L["StatIssued"]</span>
+                    <span class="stat-label">@L["StatIssued"] <HelpTip Text="@L["StatIssuedHint"]" /></span>
                     <span class="stat-icon stat-icon--info"><LucideIcon Name="send" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.IssuedCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class="stat-card stat-card--link @InvoiceCardClass(InvoiceStatus.Paid)" role="button" tabindex="0"
+                     @onclick="() => ApplyInvoiceStatusFilterAsync(InvoiceStatus.Paid)">
                 <div class="stat-card__top">
-                    <span class="stat-label">@L["StatPaid"]</span>
+                    <span class="stat-label">@L["StatPaid"] <HelpTip Text="@L["StatPaidHint"]" /></span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.PaidCount</div>
-            </div>
-            @* Số tiền còn phải thu: nổi bật + bấm để lọc ra đúng các hoá đơn chưa thu. *@
-            <a class="stat-card stat-card--warning stat-card--link"
-               href="@($"{DetailBase}?paymentState=unpaid")"
-               title="@L["StatOutstandingTitle"]">
+            </article>
+            @* Số tiền còn phải thu: bấm để lọc tại chỗ, không điều hướng lại trang. *@
+            <article class='stat-card stat-card--warning stat-card--link @PaymentStateCardClass("unpaid")'
+                     role="button" tabindex="0" title="@L["StatOutstandingTitle"]"
+                     @onclick='() => ApplyPaymentStateFilterAsync("unpaid")'>
                 <div class="stat-card__top">
-                    <span class="stat-label">@L["StatOutstanding"]</span>
+                    <span class="stat-label">@L["StatOutstanding"] <HelpTip Text="@L["SummaryOutstandingHint"]" /></span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="wallet" /></span>
                 </div>
                 <div class="stat-value">
                     @MoneyFormatter.Format(_result.Summary.OutstandingAmount)
                     <LucideIcon Name="arrow-right" Class="stat-value__arrow" />
                 </div>
-            </a>
+            </article>
         </div>
 
         <div class="filter-bar filter-bar--panel">
@@ -209,7 +214,7 @@
                                         <a class="cell-link" href="@AppLinks.Invoice(invoice.Id, DetailBase)" title="@SL["CellLinkOpenInvoice"]">HD-@invoice.Id</a>
                                     </td>
                                     <td class="tabular-nums">@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
-                                    <td class="tabular-nums">@(invoice.DueDate is null ? "—" : DateFormatter.Format(invoice.DueDate.Value))</td>
+                                    <td class="tabular-nums">@(invoice.Status == InvoiceStatus.Draft || invoice.DueDate is null ? "—" : DateFormatter.Format(invoice.DueDate.Value))</td>
                                     <td>
                                         @if (CanFollowLinks)
                                         {
@@ -267,8 +272,12 @@
                                     </td>
                                     <td class="text-right tabular-nums">@MoneyFormatter.Format(invoice.TotalAmount)</td>
                                     <td class="text-right tabular-nums">
-                                        @* Hoá đơn còn nợ: làm nổi bật + bấm để mở hoá đơn thanh toán. *@
-                                        @if (invoice.OutstandingAmount > 0)
+                                        @* Hoá đơn nháp chưa phát hành nên chưa có gì phải thu. *@
+                                        @if (invoice.Status == InvoiceStatus.Draft)
+                                        {
+                                            <span class="muted">—</span>
+                                        }
+                                        else if (invoice.OutstandingAmount > 0)
                                         {
                                             <a class="outstanding-link"
                                                href="@AppLinks.Invoice(invoice.Id, DetailBase)"
@@ -449,6 +458,10 @@
     private int _page = 1;
     private bool _showAdvanced;
 
+    // Các lượt đọc dùng chung một DbContext scoped của circuit: xếp hàng để bấm liên tiếp
+    // vào thẻ KPI/ô lọc không chạy hai truy vấn song song trên cùng context.
+    private readonly SemaphoreSlim _loadGate = new(1, 1);
+
     private int AdvancedFilterCount =>
         (_contractId is null ? 0 : 1)
         + (string.IsNullOrWhiteSpace(_paymentState) ? 0 : 1)
@@ -513,6 +526,9 @@
         }
 
         _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedContractId = QueryContractId;
+        _lastAppliedPeriodStart = QueryPeriodStart;
+        _lastAppliedPaymentState = QueryPaymentState;
         if (KeywordQuery is { Length: > 0 })
         {
             _keyword = KeywordQuery.Trim();
@@ -530,14 +546,47 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Link từ bảng khác (?q=A107): Blazor dùng lại trang nên phải lọc lại theo query mới.
-        if (string.Equals(KeywordQuery, _lastAppliedKeywordQuery, StringComparison.Ordinal))
+        // Blazor dùng lại cùng component khi chỉ đổi query; phải áp lại cả contractId/kỳ/trạng thái.
+        var keywordChanged = !string.Equals(KeywordQuery, _lastAppliedKeywordQuery, StringComparison.Ordinal);
+        var contractChanged = !string.Equals(QueryContractId, _lastAppliedContractId, StringComparison.Ordinal);
+        var periodChanged = QueryPeriodStart != _lastAppliedPeriodStart;
+        var paymentChanged = !string.Equals(QueryPaymentState, _lastAppliedPaymentState, StringComparison.Ordinal);
+        if (!keywordChanged && !contractChanged && !periodChanged && !paymentChanged)
         {
             return;
         }
 
         _lastAppliedKeywordQuery = KeywordQuery;
-        _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        _lastAppliedContractId = QueryContractId;
+        _lastAppliedPeriodStart = QueryPeriodStart;
+        _lastAppliedPaymentState = QueryPaymentState;
+
+        if (keywordChanged)
+        {
+            _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        }
+
+        if (contractChanged)
+        {
+            _contractId = Guid.TryParse(QueryContractId, out var contractId) && contractId != Guid.Empty
+                ? contractId
+                : null;
+        }
+
+        if (periodChanged)
+        {
+            _year = QueryPeriodStart?.Year;
+            _month = QueryPeriodStart?.Month;
+        }
+
+        if (paymentChanged)
+        {
+            _paymentState = !string.IsNullOrWhiteSpace(QueryPaymentState)
+                && PaymentStateOptions.Contains(QueryPaymentState)
+                    ? QueryPaymentState
+                    : string.Empty;
+        }
+
         _page = 1;
         await ReloadAsync();
     }
@@ -628,31 +677,60 @@
     public string? QueryPaymentState { get; set; }
 
     private string? _lastAppliedKeywordQuery;
+    private string? _lastAppliedContractId;
+    private DateOnly? _lastAppliedPeriodStart;
+    private string? _lastAppliedPaymentState;
 
     private async Task ReloadAsync()
     {
-        _loading = true;
-        _error = null;
-        _openMenuId = null;
-
+        await _loadGate.WaitAsync();
         try
         {
-            var caller = await CallerProvider.GetCallerAsync();
-            _contractOptions = await InvoiceQuery.GetContractOptionsAsync(caller);
-            _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            _error = L["ErrorLoad"];
-        }
-        catch (Exception)
-        {
-            _error = L["ErrorLoad"];
+            _loading = true;
+            _error = null;
+            _openMenuId = null;
+
+            try
+            {
+                var caller = await CallerProvider.GetCallerAsync();
+                _contractOptions = await InvoiceQuery.GetContractOptionsAsync(caller);
+                _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
+            }
+            catch (Exception)
+            {
+                _error = L["ErrorLoad"];
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
         finally
         {
-            _loading = false;
+            _loadGate.Release();
         }
+    }
+
+    private string InvoiceCardClass(InvoiceStatus status) =>
+        _status == status && string.IsNullOrEmpty(_paymentState) ? "is-active" : string.Empty;
+
+    private async Task ApplyInvoiceStatusFilterAsync(InvoiceStatus status)
+    {
+        _status = status;
+        _paymentState = string.Empty;
+        _page = 1;
+        await LoadResultAsync(showLoading: false);
+    }
+
+    private string PaymentStateCardClass(string state) =>
+        string.Equals(_paymentState, state, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyPaymentStateFilterAsync(string state)
+    {
+        _paymentState = state;
+        _status = null;
+        _page = 1;
+        await LoadResultAsync(showLoading: false);
     }
 
     private async Task OnFilterChanged()
@@ -667,26 +745,34 @@
         await LoadResultAsync();
     }
 
-    private async Task LoadResultAsync()
+    private async Task LoadResultAsync(bool showLoading = true)
     {
-        _loading = true;
-        _error = null;
-        _openMenuId = null;
-
+        await _loadGate.WaitAsync();
         try
         {
-            var caller = await CallerProvider.GetCallerAsync();
-            // Khách thuê không vào được /rooms, /tenants: chỉ hiện link cho vai trò nghiệp vụ.
-            _isTenant = caller.Role == Roles.KhachThue;
-            _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
-        }
-        catch (Exception)
-        {
-            _error = L["ErrorLoad"];
+            if (showLoading) _loading = true;
+            _error = null;
+            _openMenuId = null;
+
+            try
+            {
+                var caller = await CallerProvider.GetCallerAsync();
+                // Khách thuê không vào được /rooms, /tenants: chỉ hiện link cho vai trò nghiệp vụ.
+                _isTenant = caller.Role == Roles.KhachThue;
+                _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
+            }
+            catch (Exception)
+            {
+                _error = L["ErrorLoad"];
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
         finally
         {
-            _loading = false;
+            _loadGate.Release();
         }
     }
 

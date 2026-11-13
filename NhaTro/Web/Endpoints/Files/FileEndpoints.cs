@@ -112,9 +112,9 @@ public static class FileEndpoints
         }
 
         // Không để trình duyệt tự đoán MIME (dữ liệu người dùng tải lên).
-        http.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        http.Response.Headers.XContentTypeOptions = "nosniff";
 
-        http.Response.Headers["Cache-Control"] = "private, no-store";
+        http.Response.Headers.CacheControl = "private, no-store";
 
         // Results.Stream tự dọn luồng sau khi trả xong.
         return Results.Stream(

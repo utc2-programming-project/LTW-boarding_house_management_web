@@ -332,17 +332,17 @@
     }
 
     private IReadOnlyList<string> RoomCodes => _rooms.Select(room => room.Code).ToList();
-    private IEnumerable<RoomListItem> VisibleRooms => _view.Take(_visibleCount);
+    private IReadOnlyList<RoomListItem> VisibleRooms => _view.Take(_visibleCount).ToList();
     private bool HasMore => _view.Count > _visibleCount;
     private int SelectedCount => _selected.Count;
     private bool IsFiltered => !string.IsNullOrWhiteSpace(_keyword) || _statusFilter is not null;
 
     private bool AllVisibleSelected =>
-        VisibleRooms.Any() && VisibleRooms.All(room => _selected.Contains(room.Id));
+        VisibleRooms.Count > 0 && VisibleRooms.All(room => _selected.Contains(room.Id));
 
     private string SelectAllState => AllVisibleSelected
         ? "true"
-        : VisibleRooms.Any(room => _selected.Contains(room.Id)) ? "mixed" : "false";
+        : VisibleRooms.Where(room => _selected.Contains(room.Id)).Any() ? "mixed" : "false";
 
     private int BulkPercent => _bulkTotal == 0 ? 0 : (int)Math.Round(_bulkDone * 100d / _bulkTotal);
 

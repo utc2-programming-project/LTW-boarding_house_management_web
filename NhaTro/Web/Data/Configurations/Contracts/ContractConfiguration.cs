@@ -18,8 +18,19 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.Property(contract => contract.DepositAmount).HasPrecision(18, 2);
         builder.Property(contract => contract.Status).HasConversion<int>();
         builder.Property(contract => contract.RejectReason).HasMaxLength(500);
+        builder.Property(contract => contract.PaymentCycleMonths).HasDefaultValue(1);
+        builder.Property(contract => contract.Terms).HasMaxLength(4000);
+        builder.Property(contract => contract.CreatedByUserId).HasMaxLength(450);
+        builder.Property(contract => contract.CreatedByRole).HasMaxLength(40);
+        builder.Property(contract => contract.DepositPaidAmount).HasPrecision(18, 2);
+        builder.Property(contract => contract.DepositPaidByUserId).HasMaxLength(450);
+        builder.Property(contract => contract.DepositRefundAmount).HasPrecision(18, 2);
 
         builder.HasIndex(contract => contract.ContractNumber).IsUnique();
+        // Các truy vấn báo cáo/danh sách lọc theo phòng + trạng thái + khoảng ngày.
+        builder.HasIndex(contract => new { contract.RoomId, contract.Status, contract.StartDate, contract.EndDate });
+        // Background quét hạn thanh toán cọc.
+        builder.HasIndex(contract => new { contract.Status, contract.DepositDueAt });
         builder.Property(contract => contract.DeletedBy).HasMaxLength(450);
         builder.HasQueryFilter(contract => !contract.IsDeleted);
         builder.HasIndex(contract => contract.IsDeleted);

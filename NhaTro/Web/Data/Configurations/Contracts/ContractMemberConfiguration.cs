@@ -11,6 +11,11 @@ public sealed class ContractMemberConfiguration : IEntityTypeConfiguration<Contr
     {
         builder.HasKey(member => new { member.ContractId, member.TenantId });
 
+        builder.Property(member => member.Relationship).HasMaxLength(50);
+
+        // Khóa chính là (ContractId, TenantId); tra theo khách cần index đảo lại.
+        builder.HasIndex(member => new { member.TenantId, member.ContractId });
+
         builder.HasOne<Contract>()
             .WithMany(contract => contract.Members)
             .HasForeignKey(member => member.ContractId)

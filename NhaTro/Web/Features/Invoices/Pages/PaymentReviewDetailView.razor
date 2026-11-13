@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @implements IAsyncDisposable
 @attribute [Authorize(Policy = "PaymentReview")]
+@using Web.Common.Utils
 @inject PaymentReviewPageService ReviewPage
 @inject PaymentRecoveryService PaymentRecovery
 @inject NavigationManager Navigation
@@ -112,7 +113,7 @@
             <div class="detail-grid">
                 <div class="detail-field">
                     <span class="detail-label">@L["ReviewThInvoice"]</span>
-                    <span class="detail-value tabular-nums">HD-@Item.InvoiceId</span>
+                    <span class="detail-value tabular-nums"><a class="cell-link" href="@AppLinks.Invoice(Item.InvoiceId)">HD-@Item.InvoiceId</a></span>
                 </div>
                 <div class="detail-field">
                     <span class="detail-label">@L["ReviewThPeriod"]</span>
@@ -120,11 +121,15 @@
                 </div>
                 <div class="detail-field">
                     <span class="detail-label">@L["DetailContract"]</span>
-                    <span class="detail-value">@Item.ContractNumber</span>
+                    <span class="detail-value"><a class="cell-link" href="@AppLinks.ContractsByKeyword(Item.ContractNumber)">@Item.ContractNumber</a></span>
                 </div>
                 <div class="detail-field">
                     <span class="detail-label">@L["ReviewThRoomProperty"]</span>
-                    <span class="detail-value">@Item.RoomCode · @Item.PropertyName</span>
+                    <span class="detail-value">
+                        <a class="cell-link" href="@AppLinks.RoomsByCode(Item.RoomCode)">@Item.RoomCode</a>
+                        ·
+                        <a class="cell-link" href="@AppLinks.PropertiesByKeyword(Item.PropertyName)">@Item.PropertyName</a>
+                    </span>
                 </div>
                 <div class="detail-field">
                     <span class="detail-label">@L["ReviewThTenants"]</span>
@@ -135,7 +140,11 @@
                         }
                         else
                         {
-                            @string.Join(", ", Item.TenantNames)
+                            @for (var i = 0; i < Item.TenantNames.Count; i++)
+                            {
+                                if (i > 0) { <span>, </span> }
+                                <a class="cell-link" href="@AppLinks.TenantsByKeyword(Item.TenantNames[i])">@Item.TenantNames[i]</a>
+                            }
                         }
                     </span>
                 </div>

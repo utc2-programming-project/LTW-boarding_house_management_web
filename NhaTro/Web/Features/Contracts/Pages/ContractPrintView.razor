@@ -1,0 +1,338 @@
+@page "/contracts/{ContractId:guid}/print"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractBusiness")]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Utils
+@using Web.Components.Shared.Feedback
+@using Web.Features.Contracts
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Rules
+@using Web.Features.Contracts.Services
+@using Web.Features.Tenants.DTOs
+@using Web.Features.Tenants.Services
+@using Web.Infrastructure.Time
+@inject ContractPageService Contracts
+@inject TenantContactPageService Contacts
+@inject IStringLocalizer<ContractResources> L
+@inject IJSRuntime JS
+@inject TimeProvider Clock
+@inject ILogger<ContractPrintView> Logger
+
+<PageTitle>@L["ContractPrintAction"]</PageTitle>
+
+<div class="contract-print-page">
+    <div class="contract-print-toolbar">
+        <a class="btn btn-secondary" href="@($"/contracts/{ContractId}")">
+            <LucideIcon Name="arrow-left" />
+            <span>@L["ContractPrintBackToDetail"]</span>
+        </a>
+        @if (_contract is not null)
+        {
+            <button type="button" class="btn btn-primary" @onclick="PrintAsync">
+                <LucideIcon Name="file-signature" />
+                <span>@L["ContractPrintAction"]</span>
+            </button>
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <p class="contract-print-state" role="status">@L["ContractPrintLoading"]</p>
+    }
+    else if (_contract is null)
+    {
+        <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractLoadErrorDescription"]">
+            <a class="btn btn-secondary" href="@($"/contracts/{ContractId}")">@L["ContractBackToList"]</a>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <article class="contract-sheet" aria-labelledby="contract-print-heading">
+            <header class="contract-sheet-head">
+                <p class="contract-sheet-motto-title">@L["ContractPrintMottoTitle"]</p>
+                <p class="contract-sheet-motto">@L["ContractPrintMotto"]</p>
+                <p class="contract-sheet-motto-mark" aria-hidden="true">— ✦ —</p>
+                <h1 id="contract-print-heading">@L["ContractPrintHeading"]</h1>
+                <p class="contract-sheet-number">@L["ContractPrintNumber", _contract.ContractNumber]</p>
+            </header>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractPrintPartyA"]</h2>
+                <dl class="contract-sheet-list">
+                    <div>
+                        <dt>@L["ContractMemberName"]</dt>
+                        <dd>@Dash(_owner?.Name)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractMemberPhone"]</dt>
+                        <dd class="tabular-nums">@Dash(_owner?.PhoneNumber)</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractPrintPartyB"]</h2>
+                <ul class="contract-sheet-members">
+                    @foreach (var member in _contract.Members)
+                    {
+                        <li>
+                            <span class="contract-sheet-member-name">@member.FullName</span>
+                            @if (member.IsRepresentative)
+                            {
+                                <span class="contract-sheet-tag">@L["ContractRepresentativeTag"]</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(member.Relationship))
+                            {
+                                <span class="contract-sheet-member-meta">@ContractRelationshipPresentation.Format(L, member.Relationship)</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(member.Phone))
+                            {
+                                <span class="contract-sheet-member-meta tabular-nums">@member.Phone</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractSectionProperty"]</h2>
+                <dl class="contract-sheet-list">
+                    <div>
+                        <dt>@L["ContractPropertyLabel"]</dt>
+                        <dd>@Dash(_contract.PropertyName)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractAddress"]</dt>
+                        <dd>@Dash(_contract.PropertyAddress)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractRoomLabel"]</dt>
+                        <dd>@Dash(_contract.RoomCode)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractFloorLabel"]</dt>
+                        <dd class="tabular-nums">@Dash(_contract.RoomFloor?.ToString())</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractAreaLabel"]</dt>
+                        <dd class="tabular-nums">@Dash(_contract.RoomAreaM2 is { } area ? NumberFormatter.Trimmed(area) : null)</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractSectionPeriod"]</h2>
+                <dl class="contract-sheet-list">
+                    <div>
+                        <dt>@L["ContractTermLabel"]</dt>
+                        <dd class="tabular-nums">
+                            @DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate))
+                            –
+                            @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractPrintDurationMonths"]</dt>
+                        <dd class="tabular-nums">@DurationMonthsText</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractSectionBilling"]</h2>
+                <dl class="contract-sheet-list">
+                    <div>
+                        <dt>@L["ContractRentLabel"]</dt>
+                        <dd class="tabular-nums">@MoneyFormatter.Format(_contract.SnapshotPrice)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractDepositLabel"]</dt>
+                        <dd class="tabular-nums">@MoneyFormatter.Format(_contract.DepositAmount)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractPaymentCycle"]</dt>
+                        <dd>@CycleLabel(_contract.PaymentCycleMonths)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractMeterDay"]</dt>
+                        <dd>@MeterDayLabel(_contract.MeterReadingDay)</dd>
+                    </div>
+                    <div>
+                        <dt>@L["ContractInitialPaymentTitle"]</dt>
+                        <dd class="tabular-nums">@MoneyFormatter.Format(InitialPaymentTotal)</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractDetailServicesTitle"]</h2>
+                @if (AppliedServices.Count == 0)
+                {
+                    <p class="contract-sheet-empty">@L["ContractDetailServicesEmpty"]</p>
+                }
+                else
+                {
+                    <table class="contract-sheet-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">@L["ContractServiceName"]</th>
+                                <th scope="col">@L["ContractServiceUnit"]</th>
+                                <th scope="col">@L["ContractServiceRate"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var service in AppliedServices)
+                            {
+                                <tr>
+                                    <td>@service.Name</td>
+                                    <td>@service.Unit</td>
+                                    <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractClausesTitle"]</h2>
+                <ol class="contract-sheet-clauses">
+                    @foreach (var clauseKey in ClauseKeys)
+                    {
+                        <li>@L[clauseKey]</li>
+                    }
+                </ol>
+            </section>
+
+            <section class="contract-sheet-section">
+                <h2>@L["ContractNotesSection"]</h2>
+                @if (string.IsNullOrWhiteSpace(_contract.Terms))
+                {
+                    <p class="contract-sheet-empty">@L["ContractNoTerms"]</p>
+                }
+                else
+                {
+                    <p class="contract-sheet-terms">@_contract.Terms</p>
+                }
+            </section>
+
+            @if (_contract.VersionNo is int versionNo)
+            {
+                <section class="contract-sheet-section">
+                    <h2>@L["ContractPrintEvidenceTitle"]</h2>
+                    <p>@L["ContractPrintEvidenceVersion", versionNo]</p>
+                    <p class="contract-hash">@L["ContractPrintEvidenceHash"]: @_contract.ContentHash</p>
+                    @if (_contract.AcceptedAt is { } acceptedAt)
+                    {
+                        <p>@L["ContractPrintEvidenceAcceptedAt", acceptedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]</p>
+                    }
+                </section>
+            }
+
+            <footer class="contract-sheet-signature">
+                <p class="contract-sheet-date">@SignedDateText</p>
+                <div class="contract-sheet-signature-grid">
+                    <div>
+                        <p class="contract-sheet-signature-title">@L["ContractPrintPartyASign"]</p>
+                        <p class="contract-sheet-signature-hint">@L["ContractPrintSignatureHint"]</p>
+                        <p class="contract-sheet-signature-name">@Dash(_owner?.Name)</p>
+                    </div>
+                    <div>
+                        <p class="contract-sheet-signature-title">@L["ContractPrintPartyBSign"]</p>
+                        <p class="contract-sheet-signature-hint">@L["ContractPrintSignatureHint"]</p>
+                        <p class="contract-sheet-signature-name">@Dash(RepresentativeName)</p>
+                    </div>
+                </div>
+            </footer>
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid ContractId { get; set; }
+
+    private static readonly string[] ClauseKeys =
+    [
+        "ContractClauseDeposit",
+        "ContractClauseUtilities",
+        "ContractClauseMaintenance",
+        "ContractClauseTermination",
+        "ContractClauseSublet",
+    ];
+
+    private ContractDetailDto? _contract;
+    private PropertyContactPersonDto? _owner;
+    private bool _loading = true;
+
+    private string RepresentativeName =>
+        _contract?.Members.FirstOrDefault(member => member.IsRepresentative)?.FullName ?? string.Empty;
+
+    private decimal InitialPaymentTotal =>
+        _contract is null ? 0m : _contract.DepositAmount + _contract.SnapshotPrice * _contract.PaymentCycleMonths;
+
+    private IReadOnlyList<ContractServiceLineDto> AppliedServices =>
+        _contract is null ? [] : [.. _contract.Services.Where(service => service.IsRegistered)];
+
+    private string DurationMonthsText =>
+        LeaseDurationRules.FullMonths(_contract!.StartDate, _contract.EndDate) is { } months
+            ? L["ContractPrintDurationMonthsValue", months].Value
+            : "—";
+
+    private string SignedDateText
+    {
+        get
+        {
+            var today = Clock.TodayVietnam();
+            return L["ContractPrintSignedDate", today.Day, today.Month, today.Year];
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _contract = null;
+        _owner = null;
+        try
+        {
+            var contract = await Contracts.GetAsync(ContractId);
+            _contract = contract;
+            try
+            {
+                _owner = (await Contacts.GetForPropertyAsync(contract.PropertyId))?.Owner;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Thiếu liên hệ chủ trọ không được làm hỏng bản in.
+                Logger.LogWarning(ex, "Failed to load property contact for contract {ContractId}.", ContractId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load contract {ContractId} for printing.", ContractId);
+            _contract = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task PrintAsync() => await JS.InvokeVoidAsync("print");
+
+    private string CycleLabel(int months) => L[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
+
+    private string MeterDayLabel(int? day) => day is int value ? L["ContractDayMonthly", value] : L["ContractLastDayMonthly"];
+
+    private static string Dash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
+}

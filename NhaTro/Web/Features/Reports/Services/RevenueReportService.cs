@@ -27,10 +27,129 @@ public sealed class RevenueReportAuthorizationException(string message)
 /// bao giờ được cộng vào doanh thu. Công nợ = hóa đơn hợp lệ (Issued/Paid) trừ tiền đã
 /// xác nhận, và chỉ hóa đơn <see cref="InvoiceStatus.Issued"/> mới còn công nợ.
 /// </summary>
-public sealed class RevenueReportService(ApplicationDbContext db, TimeProvider? time = null)
+public sealed class RevenueReportService(
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
+    TimeProvider? time = null)
 {
     private DateOnly Today => DateOnly.FromDateTime(
         VietnamTime.ToVietnam((time ?? TimeProvider.System).GetUtcNow().UtcDateTime));
+
+    /// <summary>
+    /// Bản gọn cho dashboard/Home: chỉ aggregate KPI + nhóm kỳ, không dựng toàn bộ
+    /// danh sách dòng và dòng phí. Bản đầy đủ vẫn dùng <see cref="GetAsync"/>.
+    /// </summary>
+    public async Task<RevenueReportDto> GetSummaryAsync(
+        RevenueReportFilter? filter,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default)
+    {
+        filter ??= new RevenueReportFilter();
+        if (filter.DateBasis != RevenueDateBasis.InvoicePeriod)
+        {
+            return await GetAsync(filter, caller, cancellationToken);
+        }
+
+        ArgumentNullException.ThrowIfNull(caller);
+        if (!caller.IsChuTro)
+        {
+            throw new RevenueReportAuthorizationException(
+                "Báo cáo doanh thu/công nợ tổng hợp chỉ dành cho Chủ trọ.");
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var ownedPropertyIds = db.Properties.AsNoTracking()
+            .Where(property => property.OwnerId == caller.UserId)
+            .Select(property => property.Id);
+
+        var invoiceQuery =
+            from invoice in db.Invoices.AsNoTracking()
+            join contract in db.Contracts.AsNoTracking() on invoice.ContractId equals contract.ContractId
+            join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
+            join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+            where ownedPropertyIds.Contains(room.PropertyId)
+                && (filter.PropertyId == null || room.PropertyId == filter.PropertyId)
+                && invoice.Status != InvoiceStatus.Draft
+                && (filter.From == null || invoice.PeriodEnd >= filter.From)
+                && (filter.To == null || invoice.PeriodStart <= filter.To)
+            select new
+            {
+                invoice.Id,
+                invoice.TotalAmount,
+                invoice.Status,
+                invoice.PeriodStart,
+                invoice.PeriodEnd,
+                invoice.DueDate,
+            };
+
+        var invoiced = await invoiceQuery
+            .GroupBy(row => new { row.PeriodStart.Year, row.PeriodStart.Month })
+            .Select(group => new
+            {
+                group.Key.Year,
+                group.Key.Month,
+                TotalInvoiced = group.Sum(row => row.TotalAmount),
+                InvoiceCount = group.Count(),
+                PaidCount = group.Count(row => row.Status == InvoiceStatus.Paid),
+                IssuedTotal = group.Sum(row => row.Status == InvoiceStatus.Issued ? row.TotalAmount : 0m),
+            })
+            .ToListAsync(cancellationToken);
+
+        var paid = await (
+                from payment in db.Set<Payment>().AsNoTracking()
+                join row in invoiceQuery on payment.InvoiceId equals row.Id
+                where payment.Status == PaymentStatus.Confirmed
+                group payment by new { row.PeriodStart.Year, row.PeriodStart.Month }
+                into grouped
+                select new { grouped.Key.Year, grouped.Key.Month, Amount = grouped.Sum(item => item.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var paidIssued = await (
+                from payment in db.Set<Payment>().AsNoTracking()
+                join row in invoiceQuery on payment.InvoiceId equals row.Id
+                where payment.Status == PaymentStatus.Confirmed && row.Status == InvoiceStatus.Issued
+                group payment by new { row.PeriodStart.Year, row.PeriodStart.Month }
+                into grouped
+                select new { grouped.Key.Year, grouped.Key.Month, Amount = grouped.Sum(item => item.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var paidByMonth = paid.ToDictionary(row => (row.Year, row.Month), row => row.Amount);
+        var paidIssuedByMonth = paidIssued.ToDictionary(row => (row.Year, row.Month), row => row.Amount);
+        var months = invoiced.Select(row => (row.Year, row.Month))
+            .Union(paidByMonth.Keys)
+            .OrderBy(key => key.Year).ThenBy(key => key.Month)
+            .ToList();
+
+        var periods = months.Select(key =>
+        {
+            var periodStart = new DateOnly(key.Year, key.Month, 1);
+            var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+            var invoicedRow = invoiced.FirstOrDefault(row => row.Year == key.Year && row.Month == key.Month);
+            var recognized = paidByMonth.GetValueOrDefault(key);
+            var outstanding = Math.Max(0m,
+                (invoicedRow?.IssuedTotal ?? 0m) - paidIssuedByMonth.GetValueOrDefault(key));
+            return new RevenuePeriodGroupDto(
+                periodStart.ToString("yyyy-MM"),
+                periodStart,
+                periodEnd,
+                invoicedRow?.TotalInvoiced ?? 0m,
+                recognized,
+                outstanding,
+                invoicedRow?.InvoiceCount ?? 0,
+                invoicedRow?.PaidCount ?? 0);
+        }).ToList();
+
+        return new RevenueReportDto(
+            TotalRevenue: periods.Sum(period => period.RecognizedRevenue),
+            Outstanding: periods.Sum(period => period.Outstanding),
+            InvoiceCount: periods.Sum(period => period.InvoiceCount),
+            PaidInvoiceCount: periods.Sum(period => period.PaidInvoiceCount),
+            Lines: [],
+            TotalInvoiced: periods.Sum(period => period.TotalInvoiced),
+            DateBasis: RevenueDateBasis.InvoicePeriod,
+            Periods: periods,
+            Properties: [],
+            FeeBreakdown: []);
+    }
 
     public async Task<RevenueReportDto> GetAsync(
         RevenueReportFilter? filter,
@@ -46,6 +165,10 @@ public sealed class RevenueReportService(ApplicationDbContext db, TimeProvider? 
         }
 
         filter ??= new RevenueReportFilter();
+
+        // Mỗi lần đọc dùng context riêng: Dashboard/Home có thể chạy nền trong khi
+        // người dùng mở modal hợp đồng trên cùng circuit Blazor.
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         // Biên ngày thu theo giờ Việt Nam nhưng so sánh trên ReviewedAt lưu UTC.
         var fromUtc = filter.From is { } fromDate

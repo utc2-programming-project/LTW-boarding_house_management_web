@@ -52,7 +52,8 @@
         @if (_summary is not null)
         {
             <section class="stat-grid" aria-label="@L["P2PropertyStatSummary"]">
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("")'>
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["P2PropertyStatTotal"]
@@ -62,14 +63,16 @@
                     </div>
                     <div class="stat-value">@_summary.Total <small>@L["P2PropertyStatUnit"]</small></div>
                 </article>
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("true")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("true")'>
                     <div class="stat-card__top">
                         <span class="stat-label">@L["P2Active"]</span>
                         <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                     </div>
                     <div class="stat-value">@_summary.Active <small>@L["P2PropertyStatUnit"]</small></div>
                 </article>
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("false")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("false")'>
                     <div class="stat-card__top">
                         <span class="stat-label">@L["P2Inactive"]</span>
                         <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
@@ -377,6 +380,15 @@
             Page = request.Page,
             PageSize = request.PageSize
         });
+    }
+
+    private string PropertyCardClass(string active) =>
+        string.Equals(_activeFilter, active, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyPropertyFilterAsync(string active)
+    {
+        _activeFilter = active;
+        if (_table is not null) await _table.ReloadAsync();
     }
 
     private Task ApplyFiltersAsync()
