@@ -203,6 +203,42 @@ public static class EmailTemplates
                         """));
     }
 
+    /// <summary>Thư báo khách thuê có hợp đồng mới cần xem và xác nhận.</summary>
+    public static EmailContent ContractAwaitingTenant(
+        string? displayName,
+        string accountEmail,
+        string contractNumber,
+        string reviewLink)
+    {
+        var name = string.IsNullOrWhiteSpace(displayName) ? accountEmail : displayName.Trim();
+        var number = WebUtility.HtmlEncode(contractNumber);
+        var recipient = new EmailRecipient(accountEmail, accountEmail);
+
+        return IsEnglish
+            ? new EmailContent(
+                Prefix(recipient) + $"Lease contract {contractNumber} awaits your confirmation",
+                Layout(
+                    heading: "Confirm your lease contract",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Hi <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px">Your lease contract <strong>{number}</strong> has been sent for review.
+                        Please check the terms and confirm or request changes.</p>
+                        {Button("Review contract", reviewLink)}
+                        """))
+            : new EmailContent(
+                Prefix(recipient) + $"Hợp đồng thuê {contractNumber} chờ bạn xác nhận",
+                Layout(
+                    heading: "Xác nhận hợp đồng thuê",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Xin chào <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px">Hợp đồng thuê <strong>{number}</strong> đã được gửi để bạn xem.
+                        Vui lòng kiểm tra điều khoản rồi xác nhận hoặc yêu cầu chỉnh sửa.</p>
+                        {Button("Xem hợp đồng", reviewLink)}
+                        """));
+    }
+
     private static bool IsEnglish =>
         string.Equals(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, "en", StringComparison.OrdinalIgnoreCase);
 

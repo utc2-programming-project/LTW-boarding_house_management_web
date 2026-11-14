@@ -630,3 +630,21 @@ html[data-connection-lost] [data-payment-write] {
     pointer-events: none;
     opacity: .6;
 }
+
+.invoice-action-menu { position: relative; }
+.invoice-action-menu > summary { list-style: none; cursor: pointer; }
+.invoice-action-menu > summary::-webkit-details-marker { display: none; }
+.invoice-action-menu-panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 20;
+    display: grid;
+    min-width: 220px;
+    padding: var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+.invoice-action-menu-panel .p2-row-menu-item { width: 100%; justify-content: flex-start; }

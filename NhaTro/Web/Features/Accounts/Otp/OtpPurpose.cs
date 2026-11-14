@@ -8,4 +8,5 @@ public enum OtpPurpose
     TenantRegistration = 4,
     FirstLogin = 5,
     PasswordReset = 6,
+    ContractAcceptance = 7,
 }

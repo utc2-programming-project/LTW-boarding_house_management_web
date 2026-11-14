@@ -1,5 +1,6 @@
 @using Web.Features.Approvals.DTOs
 @using Web.Features.Approvals.Enums
+@using Web.Components.Shared.Feedback
 @using System.Text.Json
 @inject IStringLocalizer<IncidentResource> L
 @inject ToastService Toasts
@@ -19,41 +20,99 @@
     @if (_requests.Count == 0) { <EmptyStateCard Title="@L["NoData"]" /> }
     @foreach (var request in _requests)
     {
-        <article @key="request.Id">
-            <h3>@L[request.OperationCode switch { "SW-12" => "ActionCreate", "SW-13" => "ActionUpdate", _ => "ActionResultPhoto" }]</h3>
-            <p class="tabular-nums">@DateFormatter.FormatDateTime(request.RequestedAt)</p>
-            <p>@L[$"Approval{request.Status}"] · @L["PropertyRoom"]: @_roomLabels.GetValueOrDefault(request.Id, L["NoData"].Value)</p>
-            @if (request.OperationCode == "SW-12" && CreatePayload(request) is { } creation)
-            {
-                <h4>@creation.Title</h4><p class="preserve-text">@creation.Description</p>
-                <p>@L[$"Category{creation.Category}"] · @L[$"Urgency{creation.Urgency}"]</p>
-            }
-            @if (request.OperationCode == "SW-13" && UpdatePayload(request) is { } update)
-            {
-                <p>@L["ProposedStatus"]: @L[$"Status{update.Status}"]</p>
-                <p>@L["Assignee"]: @update.AssigneeName</p><p class="preserve-text">@update.TechnicalNotes</p>
-                <p class="tabular-nums">@L["RepairCost"]: @MoneyFormatter.Format(update.RepairCost)</p>
-            }
+        <article @key="request.Id" class="approval-card">
+            <header class="approval-card-head">
+                <div class="approval-card-heading">
+                    <span class="approval-code">@request.OperationCode</span>
+                    <div class="approval-heading-text">
+                        <h3>@L[request.OperationCode switch { "SW-12" => "ActionCreate", "SW-13" => "ActionUpdate", _ => "ActionResultPhoto" }]</h3>
+                        <p class="approval-subtitle">@L["PropertyRoom"]: <span class="approval-target-key">@_roomLabels.GetValueOrDefault(request.Id, L["NoData"].Value)</span></p>
+                    </div>
+                </div>
+                <StatusBadge Text="@L[$"Approval{request.Status}"]"
+                             Tone="@(request.Status switch { ApprovalRequestStatus.Pending => BadgeTone.Warning, ApprovalRequestStatus.Approved => BadgeTone.Success, ApprovalRequestStatus.Rejected => BadgeTone.Error, _ => BadgeTone.Neutral })" />
+            </header>
+
+            <dl class="approval-meta">
+                <div class="approval-meta-item">
+                    <dt>@L["CreatedAt"]</dt>
+                    <dd class="tabular-nums">@DateFormatter.FormatDateTime(request.RequestedAt)</dd>
+                </div>
+                @if (request.OperationCode == "SW-12" && CreatePayload(request) is { } creation)
+                {
+                    <div class="approval-meta-item">
+                        <dt>@L["Category"]</dt>
+                        <dd>@L[$"Category{creation.Category}"]</dd>
+                    </div>
+                    <div class="approval-meta-item">
+                        <dt>@L["Urgency"]</dt>
+                        <dd>@L[$"Urgency{creation.Urgency}"]</dd>
+                    </div>
+                    <div class="approval-meta-item approval-meta-item--wide">
+                        <dt>@L["Title"]</dt>
+                        <dd>@creation.Title</dd>
+                    </div>
+                    <div class="approval-meta-item approval-meta-item--wide">
+                        <dt>@L["Description"]</dt>
+                        <dd class="preserve-text">@creation.Description</dd>
+                    </div>
+                }
+                @if (request.OperationCode == "SW-13" && UpdatePayload(request) is { } update)
+                {
+                    <div class="approval-meta-item">
+                        <dt>@L["ProposedStatus"]</dt>
+                        <dd>@L[$"Status{update.Status}"]</dd>
+                    </div>
+                    <div class="approval-meta-item">
+                        <dt>@L["Assignee"]</dt>
+                        <dd>@update.AssigneeName</dd>
+                    </div>
+                    <div class="approval-meta-item">
+                        <dt>@L["RepairCost"]</dt>
+                        <dd class="tabular-nums">@MoneyFormatter.Format(update.RepairCost)</dd>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(update.TechnicalNotes))
+                    {
+                        <div class="approval-meta-item approval-meta-item--wide">
+                            <dt>@L["TechnicalNotes"]</dt>
+                            <dd class="preserve-text">@update.TechnicalNotes</dd>
+                        </div>
+                    }
+                }
+            </dl>
+
             @if (_images.TryGetValue(request.Id, out var images))
             {
-                <div class="photo-grid">
-                    @foreach (var photo in images)
-                    {
-                        <figure><a href="@photo.Url" target="_blank" rel="noopener"><img src="@photo.Url" alt="@photo.Name" /></a><figcaption>@photo.Name</figcaption></figure>
-                    }
+                <div class="approval-photos">
+                    <div class="photo-grid">
+                        @foreach (var photo in images)
+                        {
+                            <figure><a href="@photo.Url" target="_blank" rel="noopener"><img src="@photo.Url" alt="@photo.Name" /></a><figcaption>@photo.Name</figcaption></figure>
+                        }
+                    </div>
                 </div>
             }
-            @if (!string.IsNullOrWhiteSpace(request.DecisionReason)) { <p>@request.DecisionReason</p> }
+            @if (!string.IsNullOrWhiteSpace(request.DecisionReason))
+            {
+                <div class="approval-reason @(request.Status == ApprovalRequestStatus.Rejected ? "approval-reason--danger" : null)">
+                    <span class="approval-reason-label">@L["RejectReason"]</span>
+                    <p>@request.DecisionReason</p>
+                </div>
+            }
             @if (request.Status == ApprovalRequestStatus.Pending)
             {
                 @if (_owner)
                 {
-                    <label for="@($"reason-{request.Id}")">@L["RejectReason"]</label>
-                    <input id="@($"reason-{request.Id}")" maxlength="500" @bind="_reasons[request.Id]" disabled="@_busy" />
-                    <div class="approval-actions">
-                        <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, true)">@L["ApproveAction"]</button>
-                        <button class="btn btn-secondary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, false)">@L["RejectAction"]</button>
-                    </div>
+                    <footer class="approval-actions">
+                        <div class="approval-reject">
+                            <label for="@($"reason-{request.Id}")">@L["RejectReason"]</label>
+                            <input id="@($"reason-{request.Id}")" maxlength="500" @bind="_reasons[request.Id]" disabled="@_busy" />
+                        </div>
+                        <div class="approval-action-buttons">
+                            <button class="btn btn-secondary" disabled="@(_busy || string.IsNullOrWhiteSpace(_reasons.GetValueOrDefault(request.Id)))" @onclick="() => DecideAsync(request.Id, false)">@L["RejectAction"]</button>
+                            <button class="btn btn-primary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, true)">@L["ApproveAction"]</button>
+                        </div>
+                    </footer>
                 }
                 else
                 {
@@ -63,7 +122,11 @@
                             IncidentId="@(request.OperationCode == "SW-14" && int.TryParse(request.TargetKey, out var incidentId) ? (int?)incidentId : null)"
                             Capacity="MissingPhotos(request)" OnChanged="RefreshAsync" />
                     }
-                    <button class="btn btn-secondary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, null)">@L["CancelRequest"]</button>
+                    <footer class="approval-actions">
+                        <div class="approval-action-buttons">
+                            <button class="btn btn-secondary" disabled="@_busy" @onclick="() => DecideAsync(request.Id, null)">@L["CancelRequest"]</button>
+                        </div>
+                    </footer>
                 }
             }
         </article>

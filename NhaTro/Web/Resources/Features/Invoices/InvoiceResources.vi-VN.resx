@@ -54,6 +54,19 @@
   <data name="ResetFilter" xml:space="preserve"><value>Xóa lọc</value></data>
 
   <data name="StatusDraft" xml:space="preserve"><value>Nháp</value></data>
+  <data name="InvoicePeriodHint" xml:space="preserve"><value>Mỗi dòng là tiền thuê và dịch vụ của một kỳ (tháng). Tiền cọc giữ căn được quản lý riêng ở hợp đồng, không nằm trong hóa đơn.</value></data>
+  <data name="InvoiceMoreActions" xml:space="preserve"><value>Thao tác khác</value></data>
+  <data name="StatDraftHint" xml:space="preserve"><value>Hóa đơn đang lập, chưa gửi khách và chưa tính công nợ.</value></data>
+  <data name="StatIssuedHint" xml:space="preserve"><value>Hóa đơn đã phát hành, khách đã thấy và đang chờ thanh toán.</value></data>
+  <data name="StatPaidHint" xml:space="preserve"><value>Hóa đơn đã được xác nhận thu đủ tiền.</value></data>
+  <data name="DetailStatusHint" xml:space="preserve"><value>Nháp chưa thu được; Đã phát hành mới có công nợ; Đã thanh toán là trạng thái cuối.</value></data>
+  <data name="DetailContractHint" xml:space="preserve"><value>Hợp đồng nguồn phát sinh hóa đơn này.</value></data>
+  <data name="DetailPropertyHint" xml:space="preserve"><value>Nhà trọ chứa phòng của hóa đơn.</value></data>
+  <data name="DetailRoomHint" xml:space="preserve"><value>Phòng được tính tiền trong kỳ hóa đơn.</value></data>
+  <data name="DetailTenantsHint" xml:space="preserve"><value>Các khách thuê thuộc hợp đồng nguồn.</value></data>
+  <data name="SummaryTotalHint" xml:space="preserve"><value>Tổng tiền thuê và dịch vụ của kỳ này.</value></data>
+  <data name="SummaryPaidHint" xml:space="preserve"><value>Tiền khách đã chuyển và được chủ trọ xác nhận.</value></data>
+  <data name="SummaryOutstandingHint" xml:space="preserve"><value>Còn lại phải thu; hóa đơn nháp luôn bằng 0.</value></data>
   <data name="StatusIssued" xml:space="preserve"><value>Đã phát hành</value></data>
   <data name="StatusPaid" xml:space="preserve"><value>Đã thanh toán</value></data>
   <data name="StatusUnknown" xml:space="preserve"><value>Không xác định</value></data>

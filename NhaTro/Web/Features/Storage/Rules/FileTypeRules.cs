@@ -42,7 +42,9 @@ public static class FileTypeRules
     /// <summary>Cặp loại tệp – đối tượng liên quan phải khớp bảng VHT-12 mục 1, không cho trộn.</summary>
     public static bool IsPairValid(FileCategory category, RelatedEntityType relatedEntityType) =>
         AllowedRelatedEntity(category) == relatedEntityType
-        || (category == FileCategory.IncidentPhoto && relatedEntityType == RelatedEntityType.IncidentApproval);
+        || (category == FileCategory.IncidentPhoto && relatedEntityType == RelatedEntityType.IncidentApproval)
+        || (category == FileCategory.PaymentProof && relatedEntityType == RelatedEntityType.Payment)
+        || (category == FileCategory.PaymentProof && relatedEntityType == RelatedEntityType.ContractDeposit);
 
     /// <summary>Lấy đuôi tệp (kèm dấu chấm, chữ thường) từ tên gốc; trả chuỗi rỗng khi không có đuôi.</summary>
     public static string GetExtension(string? originalFileName)

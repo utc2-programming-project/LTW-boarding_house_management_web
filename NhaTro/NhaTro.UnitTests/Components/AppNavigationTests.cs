@@ -10,7 +10,7 @@ public sealed class AppNavigationTests
         var section = AppNavigation.Sections.First();
         var home = Assert.Single(section.Items);
         Assert.Equal("Home", home.Key);
-        Assert.Equal("/", home.Href);
+        Assert.Equal("/home", home.Href);
         Assert.Equal("Home", NavigationResolver.Resolve("/dashboard")!.SidebarItem!.Key);
         Assert.DoesNotContain(AppNavigation.Items, item => item.Key == "Dashboard");
     }
@@ -29,7 +29,8 @@ public sealed class AppNavigationTests
         Assert.All(AppNavigation.Items, item => Assert.False(string.IsNullOrWhiteSpace(item.Href)));
 
     [Theory]
-    [InlineData("/", "/", true)]
+    [InlineData("/home", "/home", true)]
+    [InlineData("/", "/home", false)]
     [InlineData("/services", "/services", true)]
     [InlineData("/services/", "/services", true)]
     [InlineData("/services/prices", "/services", true)]

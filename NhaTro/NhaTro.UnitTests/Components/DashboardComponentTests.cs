@@ -65,4 +65,33 @@ public sealed class DashboardComponentTests : BunitContext
         Assert.Single(component.FindAll(".empty-state"));
         Assert.Empty(component.FindAll(".room-chart"));
     }
+
+    [Fact]
+    public void Room_structure_draws_one_slice_per_non_empty_status_with_legend_values()
+    {
+        var component = Render<RoomStructureChart>(p => p.Add(c => c.Kpis,
+            new RoomReportKpis { Total = 8, Available = 5, Rented = 2, Maintenance = 1 }));
+        Assert.Equal(3, component.FindAll("path.pie-slice").Count);
+        Assert.Equal(3, component.FindAll("path.pie-glow").Count);
+        Assert.Single(component.FindAll(".donut-track"));
+        Assert.Single(component.FindAll("svg[role='img']"));
+        Assert.Single(component.FindAll(".chart-values"));
+        Assert.Equal("8", component.Find("text.donut-center-value").TextContent);
+        Assert.Equal(3, component.FindAll("text.donut-pct").Count);
+        Assert.Equal(3, component.FindAll(".chart-values li").Count);
+        Assert.Contains("8", component.Find("p").TextContent);
+        Assert.Contains("62,5 %", component.Markup);
+
+        var values = component.FindAll(".chart-values .value").Select(e => e.TextContent).ToArray();
+        Assert.Equal(new[] { "5", "2", "1" }, values);
+    }
+
+    [Fact]
+    public void Room_structure_skips_zero_statuses()
+    {
+        var component = Render<RoomStructureChart>(p => p.Add(c => c.Kpis,
+            new RoomReportKpis { Total = 4, Available = 4, Rented = 0, Maintenance = 0 }));
+        Assert.Single(component.FindAll("path.pie-slice"));
+        Assert.Single(component.FindAll(".chart-values li"));
+    }
 }

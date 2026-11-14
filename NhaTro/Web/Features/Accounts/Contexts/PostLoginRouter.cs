@@ -28,15 +28,15 @@ public sealed class PostLoginRouter(
 
     public static string SafeReturnUrl(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(value) || value == "/")
         {
-            return "/";
+            return "/home";
         }
 
         if (value.StartsWith("//", StringComparison.Ordinal)
             || Uri.TryCreate(value, UriKind.Absolute, out _))
         {
-            return "/";
+            return "/home";
         }
 
         return value.StartsWith('/') ? value : "/" + value;

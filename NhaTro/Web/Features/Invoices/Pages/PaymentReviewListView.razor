@@ -11,7 +11,7 @@
 <div class="payment-review-page page-stack">
     <PageHeading Title="@L["ReviewHeading"]" HelpText="@L["ReviewSubtitle"]">
         <Actions>
-            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="() => ReloadAsync()">
                 <LucideIcon Name="refresh" />
                 <span>@L["ReviewRefresh"]</span>
             </button>
@@ -26,40 +26,44 @@
     {
         <div class="page-error" role="alert">
             <p>@_error</p>
-            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["ReviewRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="() => ReloadAsync()">@L["ReviewRetry"]</button>
         </div>
     }
     else
     {
         <div class="stat-grid">
-            <div class="stat-card stat-card--warning">
+            <article class='stat-card stat-card--link stat-card--warning @ReviewCardClass(PaymentStatus.Pending)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Pending)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatPending"]</span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="history" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.PendingCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Confirmed)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Confirmed)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatConfirmed"]</span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.ConfirmedCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Rejected)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Rejected)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatRejected"]</span>
                     <span class="stat-icon stat-icon--danger"><LucideIcon Name="circle-x" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.RejectedCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Pending)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Pending)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatPendingAmount"]</span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="wallet" /></span>
                 </div>
                 <div class="stat-value">@MoneyFormatter.Format(_result.Summary.PendingAmount)</div>
-            </div>
+            </article>
         </div>
 
         <div class="filter-bar filter-bar--panel">
@@ -244,6 +248,9 @@
     private string? _error;
     private int _page = 1;
     private bool _showAdvanced;
+    // Các lượt đọc dùng chung DbContext scoped của circuit: xếp hàng để bấm thẻ KPI/gõ tìm
+    // liên tiếp không chạy hai truy vấn song song trên cùng context.
+    private readonly SemaphoreSlim _reloadGate = new(1, 1);
 
     private int AdvancedFilterCount =>
         (string.IsNullOrWhiteSpace(_minAmount) ? 0 : 1)
@@ -297,38 +304,53 @@
 
     private string? _lastAppliedKeywordQuery;
 
-    private async Task ReloadAsync()
-    {
-        _loading = true;
-        _error = null;
-        _openMenuId = null;
+    private string ReviewCardClass(PaymentStatus status) =>
+        _status == status ? "is-active" : string.Empty;
 
+    private async Task ApplyReviewFilterAsync(PaymentStatus status)
+    {
+        _status = status;
+        _page = 1;
+        await ReloadAsync(showLoading: false);
+    }
+
+    private async Task ReloadAsync(bool showLoading = true)
+    {
+        await _reloadGate.WaitAsync();
         try
         {
-            _result = await ReviewPage.ListAsync(new PaymentReviewFilter
+            if (showLoading) _loading = true;
+            _error = null;
+            _openMenuId = null;
+
+            try
             {
-                Status = _status,
-                Keyword = _keyword,
-                Year = _year,
-                Month = _month,
-                MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
-                MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
-                Page = _page,
-                PageSize = PageSize,
-            });
+                _result = await ReviewPage.ListAsync(new PaymentReviewFilter
+                {
+                    Status = _status,
+                    Keyword = _keyword,
+                    Year = _year,
+                    Month = _month,
+                    MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
+                    MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
+                    Page = _page,
+                    PageSize = PageSize,
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _error = L["ReviewErrorForbidden"];
+            }
+            catch (Exception)
+            {
+                _error = L["ReviewLoadError"];
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
-        catch (UnauthorizedAccessException)
-        {
-            _error = L["ReviewErrorForbidden"];
-        }
-        catch (Exception)
-        {
-            _error = L["ReviewLoadError"];
-        }
-        finally
-        {
-            _loading = false;
-        }
+        finally { _reloadGate.Release(); }
     }
 
     private async Task OnFilterChangedAsync()

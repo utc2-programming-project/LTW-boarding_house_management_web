@@ -925,6 +925,7 @@
   <data name="TenantRentalNone" xml:space="preserve"><value>Not renting</value></data>
   <data name="TenantSort" xml:space="preserve"><value>Sort</value></data>
   <data name="TenantSortCreatedDesc" xml:space="preserve"><value>Newest first</value></data>
+  <data name="TenantSortCreatedAsc" xml:space="preserve"><value>Oldest first</value></data>
   <data name="TenantSortNameAsc" xml:space="preserve"><value>Name A–Z</value></data>
   <data name="TenantSortNameDesc" xml:space="preserve"><value>Name Z–A</value></data>
   <data name="TenantReset" xml:space="preserve"><value>Reset</value></data>
@@ -1177,6 +1178,8 @@
   <data name="MyRoomTitle" xml:space="preserve"><value>My Leased Room</value></data>
   <data name="MyRoomSubtitle" xml:space="preserve"><value>Review leased unit details, tenancy agreement, and co-residents.</value></data>
   <data name="MyRoomLoadFailed" xml:space="preserve"><value>Could not load leased room details. Please retry.</value></data>
+  <data name="MyRoomsTabsLabel" xml:space="preserve"><value>Switch leased room</value></data>
+  <data name="MyRoomConfirmContractAction" xml:space="preserve"><value>Confirm contract</value></data>
   <data name="EmptyMyRoomTitle" xml:space="preserve"><value>No Leased Room</value></data>
   <data name="EmptyMyRoomDesc" xml:space="preserve"><value>Your profile is not currently associated with an active lease. Please contact management for room assignment.</value></data>
   <data name="LeasedRoomInfo" xml:space="preserve"><value>Unit Information</value></data>
@@ -1302,7 +1305,7 @@
   <data name="RenewErrorNoteTooLong" xml:space="preserve"><value>The message to management is too long.</value></data>
   <data name="RenewErrorDuplicatePending" xml:space="preserve"><value>This contract already has a pending renewal request.</value></data>
   <data name="MonthlyPaymentDue" xml:space="preserve"><value>Payment due: the 5th of each month.</value></data>
-  <data name="RoomDeposit" xml:space="preserve"><value>Contract deposit</value></data>
+  <data name="RoomDeposit" xml:space="preserve"><value>Refundable holding deposit</value></data>
   <data name="SecurityAndFireSafety" xml:space="preserve"><value>Security and fire safety</value></data>
   <data name="SecurityAndFireSafetyDescription" xml:space="preserve"><value>The tenant must keep emergency exits clear and must not charge electric vehicles in sleeping areas.</value></data>
   <data name="EarlyTerminationPolicy" xml:space="preserve"><value>Early termination policy</value></data>
@@ -1604,6 +1607,7 @@
   <data name="AccountDeleted" xml:space="preserve"><value>Account deleted.</value></data>
   <data name="ErrorCannotDeleteSelf" xml:space="preserve"><value>You cannot delete the account you are signed in with.</value></data>
   <data name="ErrorCannotDeleteLastAdmin" xml:space="preserve"><value>The last administrator cannot be deleted.</value></data>
+  <data name="ErrorCannotDeleteAdmin" xml:space="preserve"><value>Other administrator accounts cannot be deleted. Only the account owner can delete their own personal data.</value></data>
   <data name="ErrorAccountInUse" xml:space="preserve"><value>The account is linked to a tenant profile. Unlink it first.</value></data>
   <data name="AccountTrash" xml:space="preserve"><value>Trash</value></data>
   <data name="AccountTrashTitle" xml:space="preserve"><value>Deleted accounts</value></data>

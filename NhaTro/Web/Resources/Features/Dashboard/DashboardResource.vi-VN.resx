@@ -20,6 +20,7 @@
 <data name="Unwired" xml:space="preserve"><value>Chưa ghép nguồn dữ liệu</value></data>
 <data name="CurrentData" xml:space="preserve"><value>Số liệu hiện tại</value></data>
 <data name="TotalRooms" xml:space="preserve"><value>Tổng phòng đang hoạt động</value></data>
+<data name="TotalRoomsShort" xml:space="preserve"><value>Tổng phòng</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
 <data name="Revenue" xml:space="preserve"><value>Doanh thu ghi nhận</value></data>
 <data name="Debt" xml:space="preserve"><value>Công nợ còn phải thu</value></data>

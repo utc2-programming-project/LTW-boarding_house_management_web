@@ -1,4 +1,5 @@
 @page "/my/room"
+@page "/my/room/{ContractId:guid}"
 @page "/tenant/my-room"
 @attribute [Authorize(Roles = Roles.KhachThue)]
 @rendermode InteractiveServer
@@ -13,10 +14,24 @@
 @inject ToastService Toasts
 @inject ILogger<MyLeasedRoomView> Logger
 @inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<ContractResources> CL
+@inject NavigationManager Navigation
 
 <PageTitle>@L["MyRoomTitle"] · @L["AppName"]</PageTitle>
 
 <div class="leased-room-page">
+    @if (_tabs.Count > 1)
+    {
+        <div class="leased-room-tabs">
+            <SegmentedTabs TItem="LeasedRoomSummaryDto"
+                           Items="_tabs"
+                           KeySelector="room => room.ContractId.ToString()"
+                           LabelSelector="TabLabel"
+                           Value="@_selectedContractId?.ToString()"
+                           ValueChanged="OnTabChanged"
+                           AriaLabel="@L["MyRoomsTabsLabel"]" />
+        </div>
+    }
     @if (_loading)
     {
         <PageHeading Title="@L["LeasedRoomContractHeading"]" TitleId="leased-room-title" HelpText="@L["LeasedRoomHelp"]" />
@@ -58,16 +73,36 @@
             </HeadingSuffix>
             <HeadingMeta>
                 <p class="leased-room-subtitle">
-                    @L["P2RoomsTitle"]: @(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value)
-                    · @L["Properties"]: @(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)
+                    @L["P2RoomsTitle"]:
+                    <a class="leased-room-clickable" href="@ContractHref">@(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value)</a>
+                    · @L["Properties"]:
+                    <a class="leased-room-clickable" href="@ContractHref">@(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)</a>
                 </p>
             </HeadingMeta>
             <Actions>
                 <div class="leased-room-actions">
-                    <a href="@($"/contracts/{_leasedRoom.ContractId}")"
-                       class="btn btn-secondary">
+                    @if (_leasedRoom.StatusLabel == nameof(ContractStatus.AwaitingTenant))
+                    {
+                        <a href="@($"/my/contracts/{_leasedRoom.ContractId}")" class="btn btn-primary">
+                            <LucideIcon Name="file-signature" />
+                            <span>@L["MyRoomConfirmContractAction"]</span>
+                        </a>
+                    }
+                    <a href="@ContractHref" class="btn btn-secondary">
                         <LucideIcon Name="file-text" />
                         <span>@L["P2ViewDetails"]</span>
+                    </a>
+                    <a href="@InvoicesHref" class="btn btn-secondary">
+                        <LucideIcon Name="receipt" />
+                        <span>@L["MyInvoices"]</span>
+                    </a>
+                    <a href="/my/service-registrations" class="btn btn-secondary">
+                        <LucideIcon Name="wrench" />
+                        <span>@L["ServiceRegistrationsNav"]</span>
+                    </a>
+                    <a href="/incidents" class="btn btn-secondary">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@L["Incidents"]</span>
                     </a>
 
                     <button type="button"
@@ -103,7 +138,7 @@
                     <span class="leased-room-bento-label">@L["LeasedRoomInfo"]</span>
                     <span class="leased-room-bento-icon leased-room-icon-indigo"><LucideIcon Name="home" /></span>
                 </div>
-                <div class="leased-room-bento-value">@(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value) · @(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)</div>
+                <a class="leased-room-bento-value leased-room-clickable" href="@ContractHref">@(!string.IsNullOrWhiteSpace(_leasedRoom.RoomCode) ? _leasedRoom.RoomCode : L["NoData"].Value) · @(!string.IsNullOrWhiteSpace(_leasedRoom.PropertyName) ? _leasedRoom.PropertyName : L["NoData"].Value)</a>
                 <div class="leased-room-bento-footer">
                     @if (_leasedRoom.Floor.HasValue)
                     {
@@ -137,9 +172,9 @@
                     <span class="leased-room-bento-label">@L["ContractSigningStatus"]</span>
                     <span class="leased-room-bento-icon leased-room-icon-green"><LucideIcon Name="check-circle-2" /></span>
                 </div>
-                <div class="leased-room-bento-value leased-room-status-value">@GetContractStatusLabel()</div>
+                <a class="leased-room-bento-value leased-room-status-value leased-room-clickable" href="@ContractHref">@GetContractStatusLabel()</a>
                 <div class="leased-room-bento-footer">
-                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="leased-room-contract-link">
+                    <a href="@ContractHref" class="leased-room-contract-link">
                         @L["ContractNumberLabel", _leasedRoom.ContractNumber]
                     </a>
                 </div>
@@ -150,7 +185,7 @@
                     <span class="leased-room-bento-label">@L["RentalDuration"]</span>
                     <span class="leased-room-bento-icon leased-room-icon-blue"><LucideIcon Name="calendar" /></span>
                 </div>
-                <div class="leased-room-bento-value">
+                <a class="leased-room-bento-value leased-room-clickable" href="@ContractHref">
                     @if (GetDurationMonths(_leasedRoom.StartDate, _leasedRoom.EndDate) is { } durationMonths)
                     {
                         <span class="tabular-nums">@L["DurationInMonths", durationMonths]</span>
@@ -159,15 +194,15 @@
                     {
                         @L["NoData"]
                     }
-                </div>
+                </a>
                 <div class="leased-room-bento-footer leased-room-date-range">
                     <span>
                         <span class="leased-room-date-label">@L["LeaseStartDateLabel"]:</span>
-                        <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate))</span>
+                        <a class="tabular-nums leased-room-clickable" href="@ContractHref">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.StartDate))</a>
                     </span>
                     <span>
                         <span class="leased-room-date-label">@L["LeaseEndDateLabel"]:</span>
-                        <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.EndDate))</span>
+                        <a class="tabular-nums leased-room-clickable" href="@ContractHref">@DateFormatter.Format(DateOnly.FromDateTime(_leasedRoom.EndDate))</a>
                     </span>
                 </div>
             </article>
@@ -176,7 +211,7 @@
         <section class="leased-room-panel" aria-labelledby="leased-room-terms-title">
             <div class="leased-room-panel-header">
                 <h2 id="leased-room-terms-title">@L["CoreAgreementTerms"]</h2>
-                <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="leased-room-contract-link">
+                <a href="@ContractHref" class="leased-room-contract-link">
                     @L["ContractNumberLabel", _leasedRoom.ContractNumber]
                 </a>
             </div>
@@ -184,15 +219,15 @@
             <div class="leased-room-terms-grid">
                 <div class="leased-room-term">
                     <span class="leased-room-term-label">@L["MonthlyRentLabel"]</span>
-                    <p class="leased-room-term-value leased-room-term-numeric">
+                    <a class="leased-room-term-value leased-room-term-numeric leased-room-clickable" href="@InvoicesHref">
                         @MoneyFormatter.Format(_leasedRoom.MonthlyRent) / @L["MonthUnit"]
-                    </p>
+                    </a>
                     <p class="leased-room-term-note">@L["MonthlyRentNote"]</p>
                 </div>
 
                 <div class="leased-room-term">
                     <span class="leased-room-term-label">@L["RoomDeposit"]</span>
-                    <p class="leased-room-term-value leased-room-term-numeric">@MoneyFormatter.Format(_leasedRoom.DepositAmount)</p>
+                    <a class="leased-room-term-value leased-room-term-numeric leased-room-clickable" href="@ContractHref">@MoneyFormatter.Format(_leasedRoom.DepositAmount)</a>
                     <p class="leased-room-term-note">
                         @L["DepositAmount"]:
                         @if (_leasedRoom.PaidDepositAmount is { } paidDeposit)
@@ -215,17 +250,117 @@
                             @L["NoData"].Value
                         }
                     </p>
+                    @if (_leasedRoom.PaidDepositAmount is null && _leasedRoom.DepositDueDate is { } depositDueDate)
+                    {
+                        <p class="leased-room-term-note">@CL["ContractDepositDueLabel"]: <span class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(depositDueDate))</span></p>
+                    }
+                    @if (_leasedRoom.PaidDepositAmount is null)
+                    {
+                        <a class="leased-room-contract-link" href="@($"/my/contracts/{_leasedRoom.ContractId}")">
+                            <LucideIcon Name="wallet" />@CL["ContractDepositPayAction"]
+                        </a>
+                    }
+                    <p class="leased-room-term-note">@CL["ContractDepositRule"]</p>
                 </div>
 
-                <div class="leased-room-term" style="grid-column: 1 / -1;">
+                <div class="leased-room-term leased-room-term-wide">
                     <span class="leased-room-term-label">@L["ContractTermsAndRulesLabel"]</span>
-                    <p class="leased-room-description">@L["ContractTermsAndRulesDesc", _leasedRoom.ContractNumber]</p>
-                    <a href="@($"/contracts/{_leasedRoom.ContractId}")" class="btn btn-secondary btn-sm" style="margin-top: 8px; width: fit-content;">
-                        <LucideIcon Name="file-text" />
-                        <span>@L["P2ViewDetails"]</span>
-                    </a>
+                    @if (!string.IsNullOrWhiteSpace(_leasedRoom.Terms))
+                    {
+                        <p class="leased-room-terms-text">@_leasedRoom.Terms</p>
+                    }
+                    else
+                    {
+                        <p class="leased-room-term-note">@CL["ContractNoTerms"]</p>
+                    }
+                    <ul class="leased-room-clauses">
+                        @foreach (var clauseKey in ClauseKeys)
+                        {
+                            <li>@CL[clauseKey]</li>
+                        }
+                    </ul>
+                    <div class="leased-room-term-actions">
+                        <a href="@ContractHref" class="btn btn-secondary btn-sm">
+                            <LucideIcon Name="file-text" />
+                            <span>@L["P2ViewDetails"]</span>
+                        </a>
+                        <a href="@($"/contracts/{_leasedRoom.ContractId}/print")" class="btn btn-secondary btn-sm"
+                           target="_blank" rel="noopener">
+                            <LucideIcon Name="file-signature" />
+                            <span>@CL["ContractPrintAction"]</span>
+                        </a>
+                    </div>
                 </div>
             </div>
+        </section>
+
+        <section class="leased-room-panel" aria-labelledby="leased-room-billing-title">
+            <div class="leased-room-panel-header">
+                <div>
+                    <h2 id="leased-room-billing-title">@CL["ContractPaymentScheduleTitle"]</h2>
+                    <p>@CL["ContractPaymentScheduleHint"]</p>
+                </div>
+            </div>
+
+            <div class="leased-room-terms-grid">
+                <div class="leased-room-term">
+                    <span class="leased-room-term-label">@CL["ContractPaymentCycle"]</span>
+                    <a class="leased-room-term-value leased-room-clickable" href="@ContractHref">@CycleLabel(_leasedRoom.PaymentCycleMonths)</a>
+                </div>
+
+                <div class="leased-room-term">
+                    <span class="leased-room-term-label">@CL["ContractMeterDay"]</span>
+                    <a class="leased-room-term-value leased-room-clickable" href="@ContractHref">@MeterDayLabel(_leasedRoom.MeterReadingDay)</a>
+                </div>
+
+                <div class="leased-room-term">
+                    <span class="leased-room-term-label">@CL["ContractInitialPaymentTitle"]</span>
+                    <a class="leased-room-term-value leased-room-term-numeric leased-room-clickable" href="@InvoicesHref">@MoneyFormatter.Format(InitialPaymentTotal)</a>
+                    <p class="leased-room-term-note">
+                        @CL["ContractInitialPaymentLine"]
+                        <span class="tabular-nums">@MoneyFormatter.Format(_leasedRoom.DepositAmount)</span> +
+                        <span class="tabular-nums">@MoneyFormatter.Format(FirstCycleRent)</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="leased-room-panel" aria-labelledby="leased-room-services-title">
+            <div class="leased-room-panel-header">
+                <div>
+                    <h2 id="leased-room-services-title">@CL["ContractDetailServicesTitle"]</h2>
+                    <p>@CL["ContractDetailServicesHint"]</p>
+                </div>
+            </div>
+
+            @if (AppliedServices.Count == 0)
+            {
+                <p class="leased-room-empty">@CL["ContractDetailServicesEmpty"]</p>
+            }
+            else
+            {
+                <div class="leased-room-table-scroll">
+                    <table class="leased-room-service-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">@CL["ContractServiceName"]</th>
+                                <th scope="col">@CL["ContractServiceUnit"]</th>
+                                <th scope="col">@CL["ContractServiceRate"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var service in AppliedServices)
+                            {
+                                <tr>
+                                    <td><a class="leased-room-clickable" href="/my/service-registrations">@service.Name</a></td>
+                                    <td>@service.Unit</td>
+                                    <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </section>
 
         <section class="leased-room-panel" aria-labelledby="leased-room-contact-title">
@@ -322,7 +457,7 @@
                             <div class="leased-room-avatar" aria-hidden="true">@Initial(mate.FullName)</div>
                             <div class="leased-room-roommate-details">
                                 <div class="leased-room-roommate-name">
-                                    <span>@(!string.IsNullOrWhiteSpace(mate.FullName) ? mate.FullName : L["NoData"].Value)</span>
+                                    <a class="leased-room-clickable" href="@ContractHref">@(!string.IsNullOrWhiteSpace(mate.FullName) ? mate.FullName : L["NoData"].Value)</a>
                                     @if (mate.IsCurrentUser)
                                     {
                                         <span class="leased-room-self">@L["ThisIsYou"]</span>
@@ -515,9 +650,20 @@
 @code {
     private const int MaxRenewMonths = ContractRenewalRules.MaxRequestedMonths;
 
+    [Parameter] public Guid? ContractId { get; set; }
+
     private bool _loading = true;
     private bool _loadFailed;
     private LeasedRoomDetailDto? _leasedRoom;
+
+    private string ContractHref => _leasedRoom is null ? "/my/room" : $"/my/contracts/{_leasedRoom.ContractId}";
+    private string InvoicesHref => _leasedRoom is null
+        ? "/my/invoices"
+        : $"/my/invoices?contractId={_leasedRoom.ContractId}";
+    private IReadOnlyList<LeasedRoomSummaryDto> _tabs = [];
+    private Guid? _selectedContractId;
+    private Guid? _loadedContractId;
+    private bool _loaded;
 
     private bool _renewModalOpen;
     private string _renewMonthsText = string.Empty;
@@ -530,8 +676,16 @@
 
     private bool HasPendingRenewal => _renewalHistory.Any(request => request.IsPending);
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if (_loaded && _loadedContractId == ContractId)
+        {
+            return;
+        }
+
+        _loaded = true;
+        _loadedContractId = ContractId;
+        _selectedContractId = ContractId;
         await LoadRoomAsync();
     }
 
@@ -541,7 +695,20 @@
         _loadFailed = false;
         try
         {
-            _leasedRoom = await DocumentService.GetMyLeasedRoomAsync();
+            _tabs = await DocumentService.GetMyRentalsAsync();
+            if (_tabs.Count == 0)
+            {
+                _leasedRoom = null;
+                _selectedContractId = null;
+                return;
+            }
+
+            var selected = _selectedContractId is Guid requested
+                && _tabs.Any(room => room.ContractId == requested)
+                ? requested
+                : (_tabs.FirstOrDefault(room => room.IsCurrent) ?? _tabs[0]).ContractId;
+            _selectedContractId = selected;
+            _leasedRoom = await DocumentService.GetMyLeasedRoomAsync(selected);
         }
         catch (Exception ex)
         {
@@ -552,6 +719,18 @@
         {
             _loading = false;
         }
+    }
+
+    private string TabLabel(LeasedRoomSummaryDto room) => $"{room.RoomCode} · {room.PropertyName}";
+
+    private void OnTabChanged(string value)
+    {
+        if (!Guid.TryParse(value, out var contractId) || contractId == _selectedContractId)
+        {
+            return;
+        }
+
+        Navigation.NavigateTo($"/my/room/{contractId}", replace: true);
     }
 
     private async Task LoadRenewalHistoryAsync()
@@ -676,13 +855,44 @@
     private static int? GetDurationMonths(DateTime start, DateTime end) =>
         LeaseDurationRules.FullMonths(start, end);
 
+    private static readonly string[] ClauseKeys =
+    [
+        "ContractClauseDeposit",
+        "ContractClauseUtilities",
+        "ContractClauseMaintenance",
+        "ContractClauseTermination",
+        "ContractClauseSublet",
+    ];
+
+    private decimal FirstCycleRent => _leasedRoom is null ? 0m : _leasedRoom.MonthlyRent * _leasedRoom.PaymentCycleMonths;
+
+    private IReadOnlyList<ContractServiceLineDto> AppliedServices =>
+        _leasedRoom is null ? [] : [.. _leasedRoom.Services.Where(service => service.IsRegistered)];
+
+    private decimal InitialPaymentTotal => _leasedRoom is null ? 0m : _leasedRoom.DepositAmount + FirstCycleRent;
+
+    private string CycleLabel(int months) => CL[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
+
+    private string MeterDayLabel(int? day) => day is int value ? CL["ContractDayMonthly", value] : CL["ContractLastDayMonthly"];
+
     private string GetContractStatusLabel() => _leasedRoom?.StatusLabel switch
     {
+        "Draft" => CL["ContractStatusDraft"].Value,
+        "AwaitingTenant" => CL["ContractStatusAwaitingTenant"].Value,
+        "ChangeRequested" => CL["ContractStatusChangeRequested"].Value,
+        "TenantAccepted" => CL["ContractStatusTenantAccepted"].Value,
+        "Cancelled" => CL["ContractStatusCancelled"].Value,
         "Approved" or "Active" => L["ContractStatusApproved"],
         "Pending" or "PendingApproval" => L["ContractStatusPending"],
         "Rejected" => L["ContractStatusRejected"],
         "Expired" or "Liquidated" => L["ContractStatusExpired"],
-        "Cancelled" => L["ContractStatusCancelled"],
         _ => L["NoData"]
     };
 

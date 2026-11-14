@@ -53,7 +53,7 @@ public sealed class PropertyTrashComponentTests : BunitContext
 
         var cut = Render<PropertyTrash>();
 
-        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("tbody .p2-row-actions button.btn-secondary")));
+        cut.WaitForAssertion(() => Assert.Single(cut.FindAll("tbody .p2-row-actions button.p2-menu-trigger")));
         Assert.Contains("Trọ bị xóa", cut.Find("tbody").TextContent);
         Assert.Contains("P2PropertyTrashTitle", cut.Find("h1").TextContent);
     }
@@ -104,12 +104,15 @@ public sealed class PropertyTrashComponentTests : BunitContext
             Assert.NotNull(cut.Find("a[href='/properties/trash']")));
     }
 
-    // Mỗi dòng có 2 nút: Khôi phục (btn-secondary) và Xóa vĩnh viễn (btn-danger).
+    // Mỗi dòng có menu 3 chấm (TrashRowMenu) chứa: Khôi phục và Xóa vĩnh viễn.
     private static int RestoreButtonCount(IRenderedComponent<PropertyTrash> cut) =>
-        cut.FindAll("tbody .p2-row-actions button.btn-secondary").Count;
+        cut.FindAll("tbody .p2-row-actions button.p2-menu-trigger").Count;
 
-    private static void ClickFirstRestoreButton(IRenderedComponent<PropertyTrash> cut) =>
-        cut.FindAll("tbody .p2-row-actions button.btn-secondary")[0].Click();
+    private static void ClickFirstRestoreButton(IRenderedComponent<PropertyTrash> cut)
+    {
+        cut.FindAll("tbody .p2-row-actions button.p2-menu-trigger")[0].Click();
+        cut.Find("tbody .p2-row-actions .p2-row-menu button.p2-row-menu-item:not(.danger)").Click();
+    }
 
     private sealed class FakePropertyService : IPropertyService
     {

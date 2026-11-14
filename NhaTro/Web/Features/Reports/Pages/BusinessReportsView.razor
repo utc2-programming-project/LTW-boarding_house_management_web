@@ -24,8 +24,8 @@
 
     <div class="filter-bar filter-bar--panel">
         <div class="filter-bar__row">
-            <div class="filter-bar__state filter-bar__field">
-                <label class="filter-bar__label" for="report-property">@D["Property"]</label>
+            <div class="filter-bar__stack filter-bar__select">
+                <label for="report-property">@D["Property"]</label>
                 <select id="report-property" class="input" value="@SelectedPropertyId" @onchange="ChangePropertyAsync" disabled="@Busy">
                     <option value="">@D["AllProperties"]</option>
                     @if (SelectedPropertyId.HasValue && !Properties.Any(p => p.Id == SelectedPropertyId))
@@ -38,12 +38,12 @@
                     }
                 </select>
             </div>
-            <div class="filter-bar__state filter-bar__field">
-                <label class="filter-bar__label" for="report-from">@L["FromDate"]</label>
+            <div class="filter-bar__stack filter-bar__select">
+                <label for="report-from">@L["FromDate"]</label>
                 <input id="report-from" type="date" class="input" value="@DateValue(From)" @onchange="ChangeFromAsync" disabled="@Busy" />
             </div>
-            <div class="filter-bar__state filter-bar__field">
-                <label class="filter-bar__label" for="report-to">@L["ToDate"]</label>
+            <div class="filter-bar__stack filter-bar__select">
+                <label for="report-to">@L["ToDate"]</label>
                 <input id="report-to" type="date" class="input" value="@DateValue(To)" @onchange="ChangeToAsync" disabled="@Busy" />
             </div>
             <div class="filter-bar__actions">
@@ -85,17 +85,17 @@
             <div class="section-heading">
                 <h2 id="room-report-heading">@L["RoomReport"]</h2>
                 <ReportExportButton Section="ReportExportSection.Rooms" PropertyId="SelectedPropertyId" />
-                <div class="filter-bar">
+                <div class="filter-bar filter-bar--panel">
                     <div class="filter-bar__row">
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-room-activity">@L["RoomActivity"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-room-activity">@L["RoomActivity"]</label>
                             <select id="report-room-activity" class="input" value="@(RoomActive ? "true" : "false")" @onchange="ChangeRoomActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
                                 <option value="true">@L["ActiveRooms"]</option>
                                 <option value="false">@L["InactiveRooms"]</option>
                             </select>
                         </div>
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-room-status">@L["RoomStatus"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-room-status">@L["RoomStatus"]</label>
                             <select id="report-room-status" class="input" @bind="RoomStatusFilter" @bind:after="ChangeRoomFiltersAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
                                 <option value="">@L["AllStatuses"]</option>
                                 @foreach (var status in Enum.GetValues<RoomStatus>())
@@ -103,6 +103,9 @@
                                     <option value="@status">@D[status.ToString()]</option>
                                 }
                             </select>
+                        </div>
+                        <div class="filter-bar__actions">
+                            <FilterResetButton OnClick="ClearRoomFiltersAsync" Disabled="Busy" />
                         </div>
                     </div>
                 </div>
@@ -230,23 +233,26 @@
             <div class="section-heading">
                 <h2 id="tenant-report-heading">@L["TenantReport"]</h2>
                 <ReportExportButton Section="ReportExportSection.Tenants" PropertyId="SelectedPropertyId" />
-                <div class="filter-bar">
+                <div class="filter-bar filter-bar--panel">
                     <div class="filter-bar__row">
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-tenant-activity">@L["TenantActivity"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-tenant-activity">@L["TenantActivity"]</label>
                             <select id="report-tenant-activity" class="input" value="@(TenantActive?.ToString().ToLowerInvariant())" @onchange="ChangeTenantActivityAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
                                 <option value="">@L["AllStatuses"]</option>
                                 <option value="true">@D["TenantActive"]</option>
                                 <option value="false">@D["Inactive"]</option>
                             </select>
                         </div>
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-tenant-rental">@L["RentalStatus"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-tenant-rental">@L["RentalStatus"]</label>
                             <select id="report-tenant-rental" class="input" value="@(TenantRenting?.ToString().ToLowerInvariant())" @onchange="ChangeTenantRentalAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
                                 <option value="">@L["AllStatuses"]</option>
                                 <option value="true">@L["Renting"]</option>
                                 <option value="false">@L["NotRenting"]</option>
                             </select>
+                        </div>
+                        <div class="filter-bar__actions">
+                            <FilterResetButton OnClick="ClearTenantFiltersAsync" Disabled="Busy" />
                         </div>
                     </div>
                 </div>
@@ -332,14 +338,14 @@
         <section class="report-section" aria-labelledby="contract-report-heading">
             <div class="section-heading">
                 <h2 id="contract-report-heading">@L["ContractReport"]</h2>
-                <div class="filter-bar">
+                <div class="filter-bar filter-bar--panel">
                     <div class="filter-bar__row">
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-contract-keyword">@L["Keyword"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-contract-keyword">@L["Keyword"]</label>
                             <input id="report-contract-keyword" class="input" @bind="ContractKeyword" @bind:after="ChangeContractFiltersAsync" disabled="@Busy" />
                         </div>
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-contract-status">@L["ContractStatus"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-contract-status">@L["ContractStatus"]</label>
                             <select id="report-contract-status" class="input" @bind="ContractStatusFilter" @bind:after="ChangeContractFiltersAsync" disabled="@Busy">
                                 <option value="">@L["AllStatuses"]</option>
                                 @foreach (var status in Enum.GetValues<ContractStatus>())
@@ -347,6 +353,9 @@
                                     <option value="@status">@L[status.ToString()]</option>
                                 }
                             </select>
+                        </div>
+                        <div class="filter-bar__actions">
+                            <FilterResetButton OnClick="ClearContractFiltersAsync" Disabled="Busy" />
                         </div>
                     </div>
                 </div>
@@ -482,10 +491,10 @@
         <section class="report-section" aria-labelledby="incident-report-heading">
             <div class="section-heading">
                 <h2 id="incident-report-heading">@L["IncidentReport"]</h2>
-                <div class="filter-bar">
+                <div class="filter-bar filter-bar--panel">
                     <div class="filter-bar__row">
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-incident-status">@L["Status"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-incident-status">@L["Status"]</label>
                             <select id="report-incident-status" class="input" @bind="IncidentStatusFilter" @bind:after="ChangeIncidentFiltersAsync" disabled="@Busy">
                                 <option value="">@L["AllStatuses"]</option>
                                 @foreach (var status in Enum.GetValues<IncidentStatus>())
@@ -494,8 +503,8 @@
                                 }
                             </select>
                         </div>
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-incident-urgency">@L["Urgency"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-incident-urgency">@L["Urgency"]</label>
                             <select id="report-incident-urgency" class="input" @bind="IncidentUrgencyFilter" @bind:after="ChangeIncidentFiltersAsync" disabled="@Busy">
                                 <option value="">@L["AllStatuses"]</option>
                                 @foreach (var urgency in Enum.GetValues<IncidentUrgency>())
@@ -504,8 +513,8 @@
                                 }
                             </select>
                         </div>
-                        <div class="filter-bar__state filter-bar__field">
-                            <label class="filter-bar__label" for="report-incident-category">@L["Category"]</label>
+                        <div class="filter-bar__stack filter-bar__select">
+                            <label for="report-incident-category">@L["Category"]</label>
                             <select id="report-incident-category" class="input" @bind="IncidentCategoryFilter" @bind:after="ChangeIncidentFiltersAsync" disabled="@Busy">
                                 <option value="">@L["AllStatuses"]</option>
                                 @foreach (var category in Enum.GetValues<IncidentCategory>())
@@ -513,6 +522,9 @@
                                     <option value="@category">@L[category.ToString()]</option>
                                 }
                             </select>
+                        </div>
+                        <div class="filter-bar__actions">
+                            <FilterResetButton OnClick="ClearIncidentFiltersAsync" Disabled="Busy" />
                         </div>
                     </div>
                 </div>

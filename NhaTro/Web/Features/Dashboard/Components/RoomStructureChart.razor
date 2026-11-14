@@ -1,3 +1,4 @@
+@using System.Globalization
 @inject IStringLocalizer<DashboardResource> L
 @if (Kpis.Total == 0)
 {
@@ -6,19 +7,174 @@
 else
 {
     <div class="room-chart">
-        <MudChart T="int" ChartType="ChartType.Pie" ChartSeries="@Series" ChartLabels="@Labels" ChartOptions="@Options" LegendPosition="Position.Bottom" Height="100%" Width="100%" />
+        <svg class="chart-svg" viewBox="0 0 260 260" role="img" aria-label="@L["RoomStructure"]">
+            <title>@L["RoomStructure"]</title>
+            <defs>
+                @foreach (var slice in _slices)
+                {
+                    <linearGradient id="@SliceGradientId(slice.Index)" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" style="@($"stop-color:{slice.Color}")" />
+                        <stop offset="100%" style="@($"stop-color:{slice.SoftColor}")" />
+                    </linearGradient>
+                    <filter id="@SliceGlowId(slice.Index)" x="-40%" y="-40%" width="180%" height="180%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="blur" />
+                        <feFlood style="@($"flood-color:{slice.Color};flood-opacity:.45")" />
+                        <feComposite in2="blur" operator="in" />
+                        <feMerge>
+                            <feMergeNode />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                }
+            </defs>
+
+            <circle class="donut-track" cx="@F(Center)" cy="@F(Center)" r="@F(Radius)" fill="none" stroke="var(--surface-subtle)" stroke-width="@F(Thickness)" />
+
+            @foreach (var slice in _slices)
+            {
+                <g class="pie-slice-group" @onmouseenter="() => HoverIndex = slice.Index" @onmouseleave="() => HoverIndex = null">
+                    <path class="pie-glow" d="@slice.Path" style="@($"stroke:{slice.Color}")" stroke-width="@F(Thickness + 6)" stroke-linecap="round" filter="@($"url(#{SliceGlowId(slice.Index)})")" />
+                    <path class="pie-slice" d="@slice.Path" style="@($"stroke:url(#{SliceGradientId(slice.Index)})")" stroke-width="@F(Thickness)" stroke-linecap="round" />
+                    <path class="pie-highlight" d="@slice.HighlightPath" stroke-width="4" stroke-linecap="round" />
+                </g>
+                if (slice.Sweep >= 10)
+                {
+                    @SvgText("donut-pct", slice.LabelX, slice.LabelY, PercentText(slice.Percent))
+                }
+            }
+
+            @SvgText("donut-center-value", Center, Center - 6, DashboardFormat.FormatNumber(Kpis.Total), baseline: "auto")
+            @SvgText("donut-center-label", Center, Center + 20, L["TotalRoomsShort"].Value, baseline: "auto")
+        </svg>
+
+        @if (HoverSlice is { } hover)
+        {
+            <div class="pie-tooltip" style="@($"left:{F(hover.TipLeft)}%;top:{F(hover.TipTop)}%")" role="status">
+                <span class="pie-tooltip__label"><span class="legend-dot" style="@DotStyle(hover.Color)"></span>@hover.Label</span>
+                <span class="pie-tooltip__value">@DashboardFormat.FormatNumber(hover.Count) · @PercentText(hover.Percent)</span>
+            </div>
+        }
     </div>
     <p>@(TotalLabel ?? L["TotalRooms"].Value): @DashboardFormat.FormatNumber(Kpis.Total)</p>
     <ul class="chart-values">
-        <li>@L["Available"]: @DashboardFormat.FormatNumber(Kpis.Available)</li>
-        <li>@L["Rented"]: @DashboardFormat.FormatNumber(Kpis.Rented)</li>
-        <li>@L["Maintenance"]: @DashboardFormat.FormatNumber(Kpis.Maintenance)</li>
+        @foreach (var slice in _slices)
+        {
+            <li>
+                <span class="legend-dot" style="@DotStyle(slice.Color)"></span>
+                <span>@slice.Label</span>
+                <span class="value">@DashboardFormat.FormatNumber(slice.Count)</span>
+                <span class="pct">@PercentText(slice.Percent)</span>
+            </li>
+        }
     </ul>
 }
 @code {
+    private const double Center = 130;
+    private const double Radius = 88;
+    private const double Thickness = 26;
+    private const double GapDegrees = 3.2;
+    private static readonly string[] Colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"];
+    private static readonly string[] SoftColors = ["var(--chart-1-soft)", "var(--chart-2-soft)", "var(--chart-3-soft)"];
+
+    private List<Slice> _slices = [];
+
     [Parameter, EditorRequired] public RoomReportKpis Kpis { get; set; } = new();
     [Parameter] public string? TotalLabel { get; set; }
-    private string[] Labels => [L["Available"], L["Rented"], L["Maintenance"]];
-    private List<ChartSeries<int>> Series => [new() { Name = L["RoomStructure"], Data = new ChartData<int>(new int[] { Kpis.Available, Kpis.Rented, Kpis.Maintenance }) }];
-    private readonly ChartOptions Options = new() { ChartPalette = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"] };
+
+    private int? HoverIndex;
+    private Slice? HoverSlice => HoverIndex is { } index && index < _slices.Count ? _slices[index] : null;
+
+    protected override void OnParametersSet()
+    {
+        HoverIndex = null;
+        _slices = BuildSlices();
+    }
+
+    private List<Slice> BuildSlices()
+    {
+        var values = new[]
+        {
+            (Label: L["Available"].Value, Count: Kpis.Available, Color: Colors[0], SoftColor: SoftColors[0]),
+            (Label: L["Rented"].Value, Count: Kpis.Rented, Color: Colors[1], SoftColor: SoftColors[1]),
+            (Label: L["Maintenance"].Value, Count: Kpis.Maintenance, Color: Colors[2], SoftColor: SoftColors[2]),
+        };
+        var total = values.Sum(value => value.Count);
+        if (total <= 0) return [];
+
+        var slices = new List<Slice>(values.Length);
+        var startAngle = -90d;
+        foreach (var value in values)
+        {
+            if (value.Count <= 0) continue;
+            var sweep = 360d * value.Count / total;
+            var visibleSweep = Math.Max(0.6, sweep - GapDegrees);
+            var start = startAngle + GapDegrees / 2;
+            var middle = (start + visibleSweep / 2) * Math.PI / 180;
+            slices.Add(new Slice(
+                slices.Count,
+                value.Label,
+                value.Count,
+                value.Color,
+                value.SoftColor,
+                ArcPath(Center, Center, Radius, start, visibleSweep),
+                ArcPath(Center, Center, Radius + 8, start, visibleSweep),
+                sweep / 3.6,
+                visibleSweep,
+                Center + Math.Cos(middle) * (Radius + 26),
+                Center + Math.Sin(middle) * (Radius + 26),
+                Math.Clamp(50 + Math.Cos(middle) * 24, 14, 86),
+                Math.Clamp(50 + Math.Sin(middle) * 24, 14, 86)));
+            startAngle += sweep;
+        }
+        return slices;
+    }
+
+    private static string ArcPath(double cx, double cy, double radius, double startAngle, double sweepAngle)
+    {
+        if (sweepAngle >= 359.99)
+        {
+            return $"M {F(cx)} {F(cy - radius)} A {F(radius)} {F(radius)} 0 1 1 {F(cx)} {F(cy + radius)} A {F(radius)} {F(radius)} 0 1 1 {F(cx)} {F(cy - radius)}";
+        }
+
+        var start = Polar(cx, cy, radius, startAngle);
+        var end = Polar(cx, cy, radius, startAngle + sweepAngle);
+        var largeArc = sweepAngle > 180 ? 1 : 0;
+        return $"M {F(start.X)} {F(start.Y)} A {F(radius)} {F(radius)} 0 {largeArc} 1 {F(end.X)} {F(end.Y)}";
+    }
+
+    private static (double X, double Y) Polar(double cx, double cy, double radius, double angle)
+    {
+        var radians = angle * Math.PI / 180;
+        return (cx + radius * Math.Cos(radians), cy + radius * Math.Sin(radians));
+    }
+
+    private string SliceGradientId(int index) => $"{_chartId}-slice-{index}";
+
+    private string SliceGlowId(int index) => $"{_chartId}-glow-{index}";
+
+    private readonly string _chartId = "room-" + Guid.NewGuid().ToString("N")[..8];
+
+    private static string DotStyle(string color) => $"background:{color};box-shadow:0 0 0 3px color-mix(in srgb,{color} 18%,transparent)";
+
+    private static string PercentText(double percent) => $"{NumberFormatter.Trimmed(Math.Round(percent, 1, MidpointRounding.AwayFromZero))} %";
+
+    private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
+    private static MarkupString SvgText(string cls, double x, double y, string text, string anchor = "middle", string baseline = "middle") =>
+        new($"<text class=\"{cls}\" x=\"{F(x)}\" y=\"{F(y)}\" text-anchor=\"{anchor}\" dominant-baseline=\"{baseline}\">{System.Net.WebUtility.HtmlEncode(text)}</text>");
+
+    private sealed record Slice(
+        int Index,
+        string Label,
+        int Count,
+        string Color,
+        string SoftColor,
+        string Path,
+        string HighlightPath,
+        double Percent,
+        double Sweep,
+        double LabelX,
+        double LabelY,
+        double TipLeft,
+        double TipTop);
 }

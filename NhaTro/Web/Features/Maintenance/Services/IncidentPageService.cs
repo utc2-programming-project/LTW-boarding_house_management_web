@@ -69,6 +69,8 @@ public sealed class IncidentPageService(AuthenticationStateProvider authenticati
         return (await incidents.ListAsync(caller)).Select(i => new IncidentItem(i.Id, i.RoomId, i.Title, "", i.Category, i.Urgency,
             i.Status, i.CreatedAt, "", [], [], [], RoomLabel: $"{i.PropertyName} / {i.RoomCode}")).ToArray();
     }
+
+    public async Task<int> CountOpenAsync() => await incidents.CountOpenAsync(await CallerAsync());
     public async Task<IncidentItem> DetailAsync(int id)
     {
         var caller = await CallerAsync();

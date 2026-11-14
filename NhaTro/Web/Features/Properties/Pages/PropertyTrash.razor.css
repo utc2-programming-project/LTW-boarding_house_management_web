@@ -1,5 +1,5 @@
 .p2-row-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+    justify-content: center;
+    gap: 4px;
 }

@@ -44,7 +44,7 @@
     </div>
 
     <DataTable @ref="_table" @key="_tableKey" TItem="PropertyTrashItem" Columns="_columns"
-               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize"
+               ItemsProvider="LoadDeletedAsync" PageSize="_pageSize" AllowOverflow="true"
                Caption="@L["P2PropertyTrashTable"]" Labels="_tableLabels">
         <EmptyActions>
             <button class="btn btn-secondary" type="button" @onclick="GoToProperties">@L["P2PropertiesTitle"]</button>
@@ -95,14 +95,8 @@
 
     private IReadOnlyList<DataTableColumn<PropertyTrashItem>> BuildColumns()
     {
-        RenderFragment<PropertyTrashItem> actions = item => @<div class="p2-row-actions">
-            <button class="btn btn-secondary" type="button" @onclick="() => RequestRestore(item)">
-                <LucideIcon Name="refresh-cw" />@L["Restore"]
-            </button>
-            <button class="btn btn-danger" type="button" @onclick="() => RequestPurge(item)">
-                <LucideIcon Name="trash" />@L["Purge"]
-            </button>
-        </div>;
+        RenderFragment<PropertyTrashItem> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
+            OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
 
         return
         [

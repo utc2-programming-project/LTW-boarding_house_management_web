@@ -26,47 +26,48 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
 
         var query = ApplyFilter(ScopeInvoices(caller), filter);
 
-        var summaryRow = await query
+        // Thẻ KPI trên trang vừa là nút lọc: số trên thẻ phải giữ nguyên khi bấm sang trạng thái
+        // khác, nên phần tổng hợp bỏ qua đúng hai bộ lọc trạng thái/thanh toán do các thẻ điều khiển.
+        var summaryRow = await ApplyFilter(ScopeInvoices(caller), new InvoiceFilter
+            {
+                Keyword = filter.Keyword,
+                Year = filter.Year,
+                Month = filter.Month,
+                ContractId = filter.ContractId,
+                MinAmount = filter.MinAmount,
+                MaxAmount = filter.MaxAmount,
+            })
             .AsNoTracking()
             .GroupBy(_ => 1)
             .Select(group => new
             {
-                TotalCount = group.Count(),
                 DraftCount = group.Count(invoice => invoice.Status == InvoiceStatus.Draft),
                 IssuedCount = group.Count(invoice => invoice.Status == InvoiceStatus.Issued),
                 PaidCount = group.Count(invoice => invoice.Status == InvoiceStatus.Paid),
                 OutstandingAmount = group.Sum(invoice =>
-                    invoice.Status == InvoiceStatus.Paid ? 0m : invoice.TotalAmount),
+                    invoice.Status == InvoiceStatus.Issued ? invoice.TotalAmount : 0m),
             })
             .SingleOrDefaultAsync(cancellationToken);
 
-        var totalCount = summaryRow?.TotalCount ?? 0;
+        // Tổng số dòng phải theo đúng bộ lọc của danh sách, tách khỏi summary vì summary bỏ lọc trạng thái.
+        var totalCount = await query.AsNoTracking().CountAsync(cancellationToken);
         var skip = (long)(filter.Page - 1) * filter.PageSize;
 
-        var rows = await query
-            .AsNoTracking()
-            .OrderByDescending(invoice => invoice.PeriodStart)
-            .ThenByDescending(invoice => invoice.Id)
+        var rows = await (
+                from invoice in query
+                join contract in context.Contracts.AsNoTracking() on invoice.ContractId equals contract.ContractId
+                join room in context.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
+                join property in context.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+                orderby invoice.PeriodStart descending, invoice.Id descending
+                select new InvoiceRow
+                {
+                    Invoice = invoice,
+                    ContractNumber = contract.ContractNumber,
+                    RoomCode = room.Code,
+                    PropertyName = property.Name,
+                })
             .Skip((int)Math.Min(skip, int.MaxValue))
             .Take(filter.PageSize)
-            .Select(invoice => new InvoiceRow
-            {
-                Invoice = invoice,
-                ContractNumber = context.Contracts
-                    .Where(contract => contract.ContractId == invoice.ContractId)
-                    .Select(contract => contract.ContractNumber)
-                    .First(),
-                RoomCode = (from contract in context.Contracts
-                            join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                            where contract.ContractId == invoice.ContractId
-                            select room.Code).First(),
-                PropertyName = (from contract in context.Contracts
-                                join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                                join property in context.Properties.IgnoreQueryFilters()
-                                    on room.PropertyId equals property.Id
-                                where contract.ContractId == invoice.ContractId
-                                select property.Name).First(),
-            })
             .ToListAsync(cancellationToken);
 
         var tenantNames = await LoadTenantNamesAsync(
@@ -101,7 +102,9 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
                 Status = invoice.Status,
                 TotalAmount = invoice.TotalAmount,
                 PaidAmount = paidAmount,
-                OutstandingAmount = Math.Max(0m, invoice.TotalAmount - paidAmount),
+                OutstandingAmount = invoice.Status == InvoiceStatus.Issued
+                    ? Math.Max(0m, invoice.TotalAmount - paidAmount)
+                    : 0m,
             };
         }).ToArray();
 
@@ -228,7 +231,9 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
                 .ToArray(),
             TotalAmount = invoice.TotalAmount,
             PaidAmount = paidAmount,
-            OutstandingAmount = Math.Max(0m, invoice.TotalAmount - paidAmount),
+            OutstandingAmount = invoice.Status == InvoiceStatus.Issued
+                ? Math.Max(0m, invoice.TotalAmount - paidAmount)
+                : 0m,
             LatestPayment = latestPayment is null ? null : PaymentMapping.ToDto(latestPayment),
             Revisions = revisions,
             HasPaymentRequest = hasPaymentRequest,
@@ -281,8 +286,13 @@ public sealed class InvoiceQueryService(ApplicationDbContext context) : IInvoice
         var contractIds = ScopeContracts(caller).Select(contract => contract.ContractId);
         // Lọc tường minh hoá đơn đã xoá mềm: không phụ thuộc query filter của EF
         // (bộ lọc có thể bị bỏ qua khi entity tham gia quan hệ bắt buộc).
-        return context.Invoices
+        var query = context.Invoices
             .Where(invoice => !invoice.IsDeleted && contractIds.Contains(invoice.ContractId));
+        // Hóa đơn Nháp là bản làm việc nội bộ: khách thuê không được thấy,
+        // kể cả khi mở trực tiếp /my/invoices/{id}.
+        return caller.IsKhachThue
+            ? query.Where(invoice => invoice.Status != InvoiceStatus.Draft)
+            : query;
     }
 
     /// <summary>

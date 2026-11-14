@@ -4,17 +4,29 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Web.Common.Utils
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Entities
 @using Web.Features.Contracts.Enums
 @using Web.Features.Contracts.Components
 @using Web.Features.Contracts.Services
 @using Web.Features.Contracts.Rules
+@using Web.Features.Properties.Services
+@using Web.Features.Invoices
+@using Web.Features.Invoices.DTOs
+@using Web.Features.Invoices.Enums
+@using Web.Features.Invoices.Services
 @using Web.Infrastructure.Time
 @using Web.Components.Shared.Feedback
 @using Web.Components.Shared.Dialogs
 @inject ContractPageService Contracts
+@inject IContractDepositPaymentService DepositPayments
+@inject IInvoiceService InvoiceService
+@inject P2CallerProvider Callers
 @inject IStringLocalizer<ContractResources> L
 @inject ToastService Toasts
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 @inject TimeProvider Clock
 
 <PageTitle>@L["ContractDetailTitle"]</PageTitle>
@@ -35,13 +47,179 @@
                 <StatusBadge Tone="@StatusTone(_contract)" Text="@StatusLabel(_contract)" />
             </Actions>
         </PageHeading>
-        <dl class="contract-detail-grid">
-            <div><dt>@L["ContractTenantsLabel"]</dt><dd><ul>@foreach (var member in _contract.Members) { <li>@member.FullName @if (!string.IsNullOrWhiteSpace(member.Phone)) { <span>· @member.Phone</span> }</li> }</ul></dd></div>
-            <div><dt>@L["ContractTermLabel"]</dt><dd>@DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))</dd></div>
-            <div><dt>@L["ContractRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.SnapshotPrice)</dd></div>
-            <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(_contract.DepositAmount) @if (_contract.CanEditDeposit) { <button type="button" class="btn btn-secondary" @onclick="OpenDeposit">@L["ContractDepositUpdateAction"]</button> }</dd></div>
-            @if (!string.IsNullOrWhiteSpace(_contract.RejectReason)) { <div><dt>@L["ContractRejectReasonLabel"]</dt><dd>@_contract.RejectReason</dd></div> }
-        </dl>
+        <section class="contract-detail-panel" aria-labelledby="detail-section-property">
+            <h2 id="detail-section-property" class="contract-detail-panel-title"><LucideIcon Name="building" />@L["ContractSectionProperty"]</h2>
+            <dl class="contract-detail-grid">
+                <div><dt>@L["ContractNumberLabel"] <HelpTip Text="@L["ContractNumberHint"]" /></dt><dd><a class="cell-link" href="@PrintHref">@_contract.ContractNumber</a></dd></div>
+                <div><dt>@L["ContractPropertyLabel"]</dt><dd><a class="cell-link" href="@PropertyHref">@_contract.PropertyName</a></dd></div>
+                <div class="contract-detail-wide"><dt>@L["ContractAddress"]</dt><dd><a class="cell-link" href="@PropertyHref">@(_contract.PropertyAddress ?? "—")</a></dd></div>
+                <div><dt>@L["ContractRoomLabel"]</dt><dd><a class="cell-link" href="@RoomHref">@_contract.RoomCode</a></dd></div>
+                <div><dt>@L["ContractFloorLabel"]</dt><dd>@(_contract.RoomFloor?.ToString() ?? "—")</dd></div>
+                <div><dt>@L["ContractAreaLabel"]</dt><dd>@(_contract.RoomAreaM2 is decimal area ? area.ToString("0.##") : "—")</dd></div>
+                <div><dt>@L["ContractTermLabel"] <HelpTip Text="@L["ContractTermHint"]" /></dt><dd><a class="cell-link" href="@PrintHref">@DateFormatter.Format(DateOnly.FromDateTime(_contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(_contract.EndDate))</a></dd></div>
+                @if (_canManage && !string.IsNullOrWhiteSpace(_contract.RejectReason)) { <div class="contract-detail-wide"><dt>@L["ContractRejectReasonLabel"]</dt><dd>@_contract.RejectReason</dd></div> }
+            </dl>
+        </section>
+        <section class="contract-detail-panel" aria-labelledby="detail-section-tenants">
+            <h2 id="detail-section-tenants" class="contract-detail-panel-title"><LucideIcon Name="users" />@L["ContractTenantSection"]</h2>
+            <div class="contract-detail-members">
+                @foreach (var member in _contract.Members)
+                {
+                    <div class="contract-detail-member">
+                        <div class="contract-detail-member-name">
+                            <a class="cell-link" href="@($"/tenants?tenantId={member.TenantId}")"><strong>@member.FullName</strong></a>
+                            @if (member.IsRepresentative) { <span class="contract-detail-tag">@L["ContractRepresentativeTag"]</span> }
+                        </div>
+                        <div class="contract-detail-member-meta">
+                            @if (!string.IsNullOrWhiteSpace(member.Phone)) { <a class="cell-link" href="@($"tel:{member.Phone}")">@member.Phone</a> }
+                            @if (ContractRelationshipPresentation.Format(L, member.Relationship) is { Length: > 0 } relation) { <span>@relation</span> }
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+        <section class="contract-detail-panel" aria-labelledby="detail-section-billing">
+            <h2 id="detail-section-billing" class="contract-detail-panel-title"><LucideIcon Name="wallet" />@L["ContractSectionBilling"]</h2>
+            <dl class="contract-detail-grid">
+                <div><dt>@L["ContractRentLabel"] <HelpTip Text="@L["ContractRentHint"]" /></dt><dd class="tabular-nums"><a class="cell-link" href="@InvoicesHref">@MoneyFormatter.Format(_contract.SnapshotPrice)</a></dd></div>
+                <div>
+                    <dt>@L["ContractDepositLabel"] <HelpTip Text="@L["ContractDepositHint"]" /></dt>
+                    <dd class="tabular-nums">
+                        @MoneyFormatter.Format(_contract.DepositAmount)
+                        @if (_contract.CanEditDeposit) { <button type="button" class="btn btn-secondary" @onclick="OpenDeposit">@L["ContractDepositUpdateAction"]</button> }
+                    </dd>
+                    @if (_contract.DepositPaidAmount is decimal paidDeposit)
+                    {
+                        <small class="contract-detail-note">@L["ContractDepositPaidLabel"]: @MoneyFormatter.Format(paidDeposit) · @L["ContractDepositPaidAtLabel"]: @(_contract.DepositPaidAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</small>
+                        @if (_contract.DepositRefundAmount is decimal refundAmount)
+                        {
+                            <small class="contract-detail-note">
+                                @L["ContractDepositRefundDueLabel"] <HelpTip Text="@L["ContractDepositRefundHint"]" />: @MoneyFormatter.Format(refundAmount)
+                                @if (_contract.DepositRefundedAt is { } refundedAt)
+                                {
+                                    <span> · @L["ContractDepositRefundedLabel"]: @refundedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                }
+                            </small>
+                        }
+                        <a class="btn btn-secondary" href="@($"/invoices?contractId={_contract.ContractId}")"><LucideIcon Name="receipt" />@L["ContractDepositRentInvoicesAction"]</a>
+                    }
+                    else
+                    {
+                        @if (_contract.DepositDueAt is { } dueAt)
+                        {
+                            <small class="contract-detail-note">@L["ContractDepositDueLabel"]: @dueAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                        }
+                        @if (_depositPayment is { Status: DepositPaymentStatus.Pending })
+                        {
+                            <div class="contract-detail-note">
+                                <strong>@L["ContractDepositPendingTitle"]</strong>
+                                <span>@L["ContractDepositPendingDetail", MoneyFormatter.Format(_depositPayment.Amount), _depositPayment.TransferredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]</span>
+                                @if (!string.IsNullOrWhiteSpace(_depositPayment.TransactionCode))
+                                {
+                                    <span>@L["ContractDepositTransactionLabel"]: @_depositPayment.TransactionCode</span>
+                                }
+                                @if (_depositPayment.ProofFileIds is { Count: > 0 })
+                                {
+                                    <span>
+                                        @L["ContractDepositProofLabel"]:
+                                        @foreach (var proofId in _depositPayment.ProofFileIds)
+                                        {
+                                            <a class="cell-link" href="@($"/api/files/{proofId:D}")" target="_blank" rel="noopener">@L["ContractDepositProofOpen"]</a>
+                                        }
+                                    </span>
+                                }
+                                @if (_canManage)
+                                {
+                                    <div class="contract-detail-actions">
+                                        <button type="button" class="btn btn-primary" disabled="@_depositActionBusy" @onclick="ConfirmDepositRequestAsync"><LucideIcon Name="check" />@L["ContractDepositConfirmAction"]</button>
+                                        <button type="button" class="btn btn-secondary" disabled="@_depositActionBusy" @onclick="OpenRejectDeposit"><LucideIcon Name="x" />@L["ContractDepositRejectAction"]</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else if (_canManage && _contract.DepositAmount > 0m
+                            && _contract.Status is not (ContractStatus.Draft or ContractStatus.Rejected or ContractStatus.Liquidated or ContractStatus.Cancelled))
+                        {
+                            <button type="button" class="btn btn-secondary" @onclick="OpenReceiveDeposit"><LucideIcon Name="check" />@L["ContractDepositReceivedAction"]</button>
+                        }
+                    }
+                </div>
+                <div><dt>@L["ContractPaymentCycle"] <HelpTip Text="@L["ContractPaymentCycleHint"]" /></dt><dd>@CycleLabel(_contract.PaymentCycleMonths)</dd></div>
+                <div><dt>@L["ContractMeterDay"] <HelpTip Text="@L["ContractPaymentScheduleHint"]" /></dt><dd>@MeterDayLabel(_contract.MeterReadingDay)</dd></div>
+                <div><dt>@L["ContractInitialPaymentTitle"] <HelpTip Text="@L["ContractInitialPaymentHint"]" /></dt><dd class="contract-detail-total tabular-nums"><a class="cell-link" href="@InvoicesHref">@MoneyFormatter.Format(InitialPaymentTotal)</a></dd></div>
+            </dl>
+            <p class="contract-detail-note">@L["ContractDepositRule"]</p>
+        </section>
+        <section class="contract-detail-panel" aria-labelledby="detail-section-services">
+            <h2 id="detail-section-services" class="contract-detail-panel-title"><LucideIcon Name="zap" />@L["ContractDetailServicesTitle"]</h2>
+            @if (_contract.Services.Count == 0)
+            {
+                <p class="contract-detail-empty">@L["ContractDetailServicesEmpty"]</p>
+            }
+            else
+            {
+                <table class="contract-detail-table">
+                    <thead><tr><th scope="col">@L["ContractServiceName"]</th><th scope="col">@L["ContractServiceUnit"]</th><th scope="col">@L["ContractServiceRate"]</th><th scope="col">@L["ContractStatusLabel"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var service in _contract.Services)
+                    {
+                        <tr>
+                            <td><a class="cell-link" href="/services">@service.Name</a></td>
+                            <td>@service.Unit</td>
+                            <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
+                            <td><span class="contract-detail-tag @(service.IsRegistered ? "is-applied" : "is-muted")">@L[service.IsRegistered ? "ContractServiceApplied" : "ContractServiceUnregistered"]</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </section>
+        <section class="contract-detail-panel" aria-labelledby="detail-section-terms">
+            <h2 id="detail-section-terms" class="contract-detail-panel-title"><LucideIcon Name="file-text" />@L["ContractNotesSection"]</h2>
+            @if (string.IsNullOrWhiteSpace(_contract.Terms))
+            {
+                <p class="contract-detail-empty">@L["ContractNoTerms"]</p>
+            }
+            else
+            {
+                <p class="contract-detail-terms">@_contract.Terms</p>
+            }
+            <h3 class="contract-detail-subtitle">@L["ContractClausesTitle"]</h3>
+            <ul class="contract-detail-clauses">
+                @foreach (var clauseKey in ClauseKeys) { <li>@L[clauseKey]</li> }
+            </ul>
+        </section>
+        @if (_canManage)
+        {
+            <section class="contract-detail-panel" aria-labelledby="detail-section-signing">
+                <h2 id="detail-section-signing" class="contract-detail-panel-title"><LucideIcon Name="file-signature" />@L["ContractSigningPanelTitle"]</h2>
+                <dl class="contract-detail-grid">
+                    <div><dt>@L["ContractSigningVersion"] <HelpTip Text="@L["ContractSigningVersionHint"]" /></dt><dd><a class="cell-link" href="@PrintHref">@(_contract.VersionNo is int versionNo ? $"v{versionNo}" : "—")</a></dd></div>
+                    <div><dt>@L["ContractSigningSentAt"]</dt><dd><a class="cell-link" href="@PrintHref">@(_contract.SentAt is { } sentAt ? sentAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</a></dd></div>
+                    <div><dt>@L["ContractSigningAcceptedAt"]</dt><dd><a class="cell-link" href="@PrintHref">@(_contract.AcceptedAt is { } acceptedAt ? acceptedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</a></dd></div>
+                    <div class="contract-detail-wide"><dt>@L["ContractSigningHash"] <HelpTip Text="@L["ContractSigningHashHint"]" /></dt><dd class="contract-hash"><a class="cell-link" href="@PrintHref">@(_contract.ContentHash ?? "—")</a></dd></div>
+                </dl>
+                @if (_changeRequests.Count > 0)
+                {
+                    <h3 class="contract-detail-subtitle">@L["ContractChangeRequestsTitle"]</h3>
+                    <ul class="contract-detail-change-requests">
+                        @foreach (var request in _changeRequests)
+                        {
+                            <li>
+                                <div class="contract-detail-member-name">
+                                    <a class="cell-link" href="@($"/tenants?tenantId={request.TenantId}")"><strong>@request.TenantName</strong></a>
+                                    <span class="contract-detail-tag">v@(request.VersionNo)</span>
+                                    <span class="contract-detail-tag">@ChangeRequestStatusLabel(request.Status)</span>
+                                </div>
+                                <p>@request.Message</p>
+                                <small>@request.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                            </li>
+                        }
+                    </ul>
+                }
+                @if (_actionError is not null) { <p class="contract-detail-error" role="alert">@_actionError</p> }
+            </section>
+        }
         @if (_canManage)
         {
             <section aria-label="@L["ContractHistoryTitle"]">
@@ -52,10 +230,49 @@
             </section>
         }
         @if (_contract.PendingApproval != ContractPendingApproval.None) { <p class="contract-pending-alert" role="status">@string.Format(L["ContractPendingApprovalBanner"], PendingLabel())</p> }
-        <footer class="contract-detail-actions"><a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
-            @if (_contract.CanRenew) { <button type="button" class="btn btn-secondary" @onclick="() => OpenLifecycle(true)">@L["ContractRenewAction"]</button> }
-            @if (_contract.CanLiquidate) { <button type="button" class="btn btn-danger" @onclick="() => OpenLifecycle(false)">@L["ContractLiquidateAction"]</button> }
-            @if (_canApprove && _contract.Status == ContractStatus.Pending) { <button class="btn btn-primary" @onclick="() => _decisionOpen = true">@L["ContractApproveAction"]</button> }
+        <footer class="contract-detail-actions">
+            <a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
+            <a class="btn btn-secondary" href="@PrintHref"><LucideIcon Name="file-text" />@L["ContractPrintAction"]</a>
+            <a class="btn btn-secondary" href="@InvoicesHref"><LucideIcon Name="receipt" />@L["ContractInvoicesAction"]</a>
+
+            @if (_canManage && _contract.Status is ContractStatus.Draft or ContractStatus.ChangeRequested)
+            {
+                <button type="button" class="btn btn-primary" disabled="@_signingBusy" @onclick="SendToTenantAsync"><LucideIcon Name="send" />@L["ContractSendToTenantAction"]</button>
+            }
+            @if (_canApprove && _contract.Status == ContractStatus.Pending)
+            {
+                <button class="btn btn-primary" @onclick="() => _decisionOpen = true">@L["ContractApproveAction"]</button>
+            }
+
+            @if (_canManage)
+            {
+                <details class="contract-action-menu">
+                    <summary class="btn btn-secondary"><LucideIcon Name="more-horizontal" />@L["ContractMoreActions"]</summary>
+                    <div class="contract-action-menu-panel">
+                        @if (_contract.Status is ContractStatus.Draft or ContractStatus.ChangeRequested)
+                        {
+                            <a class="p2-row-menu-item" href="@($"/contracts/{_contract.ContractId}/edit")"><LucideIcon Name="edit" /><span>@L["ContractEditAction"]</span></a>
+                        }
+                        @if (_contract.Status is ContractStatus.AwaitingTenant or ContractStatus.ChangeRequested)
+                        {
+                            <button type="button" class="p2-row-menu-item" title="@L["ContractCopySigningLinkHint"]" @onclick="CopySigningLinkAsync"><LucideIcon Name="copy" /><span>@L["ContractCopySigningLink"]</span></button>
+                            <button type="button" class="p2-row-menu-item" disabled="@_signingBusy" @onclick="WithdrawAsync"><LucideIcon Name="x" /><span>@L["ContractWithdrawAction"]</span></button>
+                        }
+                        @if (_contract.CanRenew)
+                        {
+                            <button type="button" class="p2-row-menu-item" @onclick="() => OpenLifecycle(true)"><LucideIcon Name="refresh-cw" /><span>@L["ContractRenewAction"]</span></button>
+                        }
+                        @if (_contract.CanLiquidate)
+                        {
+                            <button type="button" class="p2-row-menu-item danger" @onclick="() => OpenLifecycle(false)"><LucideIcon Name="x-circle" /><span>@L["ContractLiquidateAction"]</span></button>
+                        }
+                        @if (_contract.DepositPaidAmount is not null)
+                        {
+                            <button type="button" class="p2-row-menu-item" disabled="@_rentInvoiceBusy" @onclick="CreateFirstRentInvoiceAsync"><LucideIcon Name="plus" /><span>@L["ContractCreateFirstRentInvoiceAction"]</span></button>
+                        }
+                    </div>
+                </details>
+            }
         </footer>
     }
 </section>
@@ -70,23 +287,81 @@
     @if (_contract is not null)
     {
         <p class="tabular-nums">@L["ContractDepositUpdateCurrentLabel"]: @MoneyFormatter.Format(_contract.DepositAmount)</p>
-        <p class="tabular-nums">@L["ContractDepositUpdateSuggestedLabel"]: @MoneyFormatter.Format(MoneyFormatter.RoundVnd(_contract.SnapshotPrice * 0.20m))</p>
+        <p class="tabular-nums">@L["ContractDepositUpdateSuggestedLabel"]: @MoneyFormatter.Format(MoneyFormatter.RoundVnd(_contract.SnapshotPrice))</p>
         <label for="deposit-amount">@L["ContractDepositUpdateAmountLabel"]</label>
         <input id="deposit-amount" class="input tabular-nums" inputmode="numeric" @bind="_depositInput" disabled="@_depositBusy" />
-        @if (_depositError is not null) { <p class="contract-field-error" role="alert">@_depositError</p> }
+        @if (_depositError is not null) { <p class="contract-detail-error" role="alert">@_depositError</p> }
         <footer><button type="button" class="btn btn-secondary" disabled="@_depositBusy" @onclick="CloseDeposit">@L["ContractCancelAction"]</button><button type="button" class="btn btn-primary" disabled="@_depositBusy" @onclick="SaveDepositAsync">@L["ContractDepositUpdateAction"]</button></footer>
     }
+</FeatureDialog>
+<FeatureDialog Visible="_receiveDepositOpen" Title="@L["ContractDepositReceivedTitle"]" CloseLabel="@L["ContractCloseAction"]" Busy="_receiveDepositBusy" OnClose="CloseReceiveDeposit">
+    <p>@L["ContractDepositReceivedDescription"]</p>
+    @if (_contract is not null)
+    {
+        <p class="tabular-nums">@L["ContractDepositLabel"]: @MoneyFormatter.Format(_contract.DepositAmount)</p>
+        @if (_receiveDepositError is not null) { <p class="contract-detail-error" role="alert">@_receiveDepositError</p> }
+        <footer>
+            <button type="button" class="btn btn-secondary" disabled="@_receiveDepositBusy" @onclick="CloseReceiveDeposit">@L["ContractCancelAction"]</button>
+            <button type="button" class="btn btn-primary" disabled="@_receiveDepositBusy" @onclick="ReceiveDepositAsync"><LucideIcon Name="check" />@L["ContractDepositReceivedConfirm"]</button>
+        </footer>
+    }
+</FeatureDialog>
+<FeatureDialog Visible="_depositRejectOpen" Title="@L["ContractDepositRejectTitle"]" CloseLabel="@L["ContractCloseAction"]" Busy="_depositActionBusy" OnClose="CloseRejectDeposit">
+    <p>@L["ContractDepositRejectDescription"]</p>
+    <label for="deposit-reject-reason">@L["ContractDepositRejectReasonLabel"]</label>
+    <textarea id="deposit-reject-reason" class="input" rows="3" maxlength="500" @bind="_depositRejectReason" disabled="@_depositActionBusy"></textarea>
+    @if (_depositActionError is not null) { <p class="contract-detail-error" role="alert">@_depositActionError</p> }
+    <footer>
+        <button type="button" class="btn btn-secondary" disabled="@_depositActionBusy" @onclick="CloseRejectDeposit">@L["ContractCancelAction"]</button>
+        <button type="button" class="btn btn-danger" disabled="@_depositActionBusy" @onclick="RejectDepositRequestAsync">@L["ContractDepositRejectConfirm"]</button>
+    </footer>
 </FeatureDialog>
 
 @code {
     [Parameter] public Guid ContractId { get; set; }
     private ContractDetailDto? _contract;
+    private string PrintHref => _contract is null ? "/contracts" : $"/contracts/{_contract.ContractId}/print";
+    private string PropertyHref => _contract is null ? "/properties" : $"/rooms?propertyId={_contract.PropertyId}";
+    private string RoomHref => _contract is null
+        ? "/rooms"
+        : $"/rooms?propertyId={_contract.PropertyId}&q={Uri.EscapeDataString(_contract.RoomCode)}";
+    private string InvoicesHref => _contract is null
+        ? "/invoices"
+        : $"/invoices?contractId={_contract.ContractId}";
     private bool _loading = true, _canApprove, _canManage, _decisionOpen, _decisionBusy;
     private bool _lifecycleOpen, _lifecycleBusy, _lifecycleIsRenewal;
     private bool _depositOpen, _depositBusy;
+    private bool _receiveDepositOpen, _receiveDepositBusy;
+    private string? _receiveDepositError;
+    private ContractDepositPaymentDto? _depositPayment;
+    private bool _depositActionBusy, _depositRejectOpen;
+    private string _depositRejectReason = string.Empty;
+    private string? _depositActionError;
+    private bool _rentInvoiceBusy;
     private decimal _depositAmount;
     private string _depositInput = "";
     private string? _depositError;
+    private bool _signingBusy;
+    private string? _actionError;
+    private IReadOnlyList<ContractChangeRequestDto> _changeRequests = [];
+    private static readonly string[] ClauseKeys =
+    [
+        "ContractClauseDeposit",
+        "ContractClauseUtilities",
+        "ContractClauseMaintenance",
+        "ContractClauseTermination",
+        "ContractClauseSublet",
+    ];
+    private decimal InitialPaymentTotal => _contract is null ? 0m : _contract.DepositAmount + (_contract.SnapshotPrice * _contract.PaymentCycleMonths);
+    private string CycleLabel(int months) => L[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
+    private string MeterDayLabel(int? day) => day is int value ? L["ContractDayMonthly", value] : L["ContractLastDayMonthly"];
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
@@ -96,7 +371,194 @@
         try { _contract = await Contracts.GetAsync(ContractId); }
         catch (Exception ex) { _contract = null; Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
         finally { _loading = false; }
+
+        _changeRequests = [];
+        _depositPayment = null;
+        if (_contract is not null && _canManage)
+        {
+            try { _changeRequests = await Contracts.ListChangeRequestsAsync(ContractId); }
+            catch { _changeRequests = []; }
+
+            try
+            {
+                _depositPayment = await DepositPayments.GetLatestAsync(ContractId, await Callers.GetCallerAsync());
+            }
+            catch
+            {
+                _depositPayment = null;
+            }
+        }
     }
+
+    private void OpenRejectDeposit()
+    {
+        _depositRejectReason = string.Empty;
+        _depositActionError = null;
+        _depositRejectOpen = true;
+    }
+
+    private Task CloseRejectDeposit()
+    {
+        if (!_depositActionBusy) _depositRejectOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmDepositRequestAsync()
+    {
+        if (_depositPayment is null || _depositActionBusy) return;
+        _depositActionBusy = true;
+        _depositActionError = null;
+        try
+        {
+            await DepositPayments.ConfirmAsync(_depositPayment.Id, await Callers.GetCallerAsync());
+            Toasts.Success(L["ContractDepositConfirmSuccess"]);
+            _depositRejectOpen = false;
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _depositActionError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+            Toasts.Error(_depositActionError);
+        }
+        finally { _depositActionBusy = false; }
+    }
+
+    private async Task RejectDepositRequestAsync()
+    {
+        if (_depositPayment is null || _depositActionBusy) return;
+        if (string.IsNullOrWhiteSpace(_depositRejectReason))
+        {
+            _depositActionError = L["ContractErrorRejectReasonRequired"];
+            return;
+        }
+
+        _depositActionBusy = true;
+        _depositActionError = null;
+        try
+        {
+            await DepositPayments.RejectAsync(
+                _depositPayment.Id, _depositRejectReason, await Callers.GetCallerAsync());
+            Toasts.Success(L["ContractDepositRejectSuccess"]);
+            _depositRejectOpen = false;
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _depositActionError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _depositActionBusy = false; }
+    }
+
+    private async Task CreateFirstRentInvoiceAsync()
+    {
+        if (_contract is null || _rentInvoiceBusy) return;
+        _rentInvoiceBusy = true;
+        try
+        {
+            var start = DateOnly.FromDateTime(_contract.StartDate);
+            var end = start.AddMonths(Math.Max(1, _contract.PaymentCycleMonths)).AddDays(-1);
+            var items = new List<InvoiceItemInputDto>
+            {
+                new()
+                {
+                    ItemType = InvoiceItemType.Rent,
+                    Description = "Tiền thuê phòng",
+                    Unit = "tháng",
+                    Quantity = 1m,
+                    UnitPrice = _contract.SnapshotPrice,
+                    Amount = _contract.SnapshotPrice,
+                },
+            };
+            items.AddRange(_contract.Services
+                .Where(service => service.IsRegistered)
+                .Select(service => new InvoiceItemInputDto
+                {
+                    ItemType = InvoiceItemType.Service,
+                    Description = service.Name,
+                    Unit = service.Unit,
+                    Quantity = 1m,
+                    UnitPrice = service.UnitPrice,
+                    Amount = service.UnitPrice,
+                }));
+
+            var caller = await Callers.GetCallerAsync();
+            var invoice = await InvoiceService.CreateDraftAsync(new CreateInvoiceRequest
+            {
+                ContractId = _contract.ContractId,
+                PeriodStart = start,
+                PeriodEnd = end,
+                DueDate = start.AddDays(5),
+                Items = items,
+            }, caller);
+
+            Toasts.Success(L["ContractCreateFirstRentInvoiceSuccess"]);
+            Navigation.NavigateTo($"/invoices/{invoice.Id}");
+        }
+        catch (Exception ex)
+        {
+            Toasts.Error(ex is IInvoiceServiceError err
+                ? L[$"ContractError{err.ErrorCode}"]
+                : L["ContractCreateFirstRentInvoiceFailed"]);
+        }
+        finally { _rentInvoiceBusy = false; }
+    }
+
+    private async Task CopySigningLinkAsync()
+    {
+        try
+        {
+            var link = $"{Navigation.BaseUri.TrimEnd('/')}/my/contracts/{ContractId}";
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", link);
+            Toasts.Success(L["ContractCopySigningLinkSuccess"]);
+        }
+        catch
+        {
+            Toasts.Error(L["ContractCopySigningLinkFailed"]);
+        }
+    }
+
+    private async Task SendToTenantAsync()
+    {
+        if (_signingBusy) return;
+        _signingBusy = true;
+        _actionError = null;
+        try
+        {
+            await Contracts.SendToTenantAsync(ContractId);
+            Toasts.Success(L["ContractSentToTenantSuccess"]);
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _signingBusy = false; }
+    }
+
+    private async Task WithdrawAsync()
+    {
+        if (_signingBusy) return;
+        _signingBusy = true;
+        _actionError = null;
+        try
+        {
+            await Contracts.WithdrawContractAsync(ContractId);
+            Toasts.Success(L["ContractWithdrawnSuccess"]);
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _actionError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _signingBusy = false; }
+    }
+
+    private string ChangeRequestStatusLabel(ContractChangeRequestStatus status) => status switch
+    {
+        ContractChangeRequestStatus.Resolved => L["ContractChangeRequestResolved"],
+        ContractChangeRequestStatus.Dismissed => L["ContractChangeRequestDismissed"],
+        _ => L["ContractChangeRequestPending"],
+    };
     private Task CloseDecision() { if (!_decisionBusy) _decisionOpen = false; return Task.CompletedTask; }
     private async Task DecideAsync(ApproveContractRequestDto request)
     {
@@ -124,6 +586,27 @@
         catch (Exception ex) { _depositError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]; }
         finally { _depositBusy = false; }
     }
+    private void OpenReceiveDeposit() { _receiveDepositError = null; _receiveDepositOpen = true; }
+    private Task CloseReceiveDeposit() { if (!_receiveDepositBusy) _receiveDepositOpen = false; return Task.CompletedTask; }
+    private async Task ReceiveDepositAsync()
+    {
+        if (_receiveDepositBusy) return;
+        _receiveDepositBusy = true;
+        _receiveDepositError = null;
+        try
+        {
+            await Contracts.RecordDepositPaymentAsync(ContractId);
+            _receiveDepositOpen = false;
+            Toasts.Success(L["ContractDepositReceivedSuccess"]);
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _receiveDepositError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _receiveDepositBusy = false; }
+    }
+
     private string PendingLabel() => _contract?.PendingApproval switch { ContractPendingApproval.Renewal => L["ContractPendingRenewal"], ContractPendingApproval.Liquidation => L["ContractPendingLiquidation"], ContractPendingApproval.DepositUpdate => L["ContractPendingDepositUpdate"], _ => string.Empty };
     private Task CloseLifecycle() { if (!_lifecycleBusy) _lifecycleOpen = false; return Task.CompletedTask; }
     private async Task ConfirmLifecycleAsync(DateTime? endDate)
@@ -146,6 +629,11 @@
     }
     private string StatusLabel(ContractDetailDto item) => L[ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
     {
+        ContractDisplayStatus.Draft => "ContractStatusDraft",
+        ContractDisplayStatus.AwaitingTenant => "ContractStatusAwaitingTenant",
+        ContractDisplayStatus.ChangeRequested => "ContractStatusChangeRequested",
+        ContractDisplayStatus.TenantAccepted => "ContractStatusTenantAccepted",
+        ContractDisplayStatus.Cancelled => "ContractStatusCancelled",
         ContractDisplayStatus.Pending => "ContractStatusPending",
         ContractDisplayStatus.Upcoming => "ContractStatusUpcoming",
         ContractDisplayStatus.Active => "ContractStatusActive",
@@ -157,10 +645,11 @@
     }];
     private BadgeTone StatusTone(ContractDetailDto item) => ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam()) switch
     {
-        ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
-        ContractDisplayStatus.Upcoming => BadgeTone.Info,
+        ContractDisplayStatus.Draft or ContractDisplayStatus.Expired
+            or ContractDisplayStatus.Liquidated or ContractDisplayStatus.Cancelled => BadgeTone.Neutral,
+        ContractDisplayStatus.AwaitingTenant or ContractDisplayStatus.ChangeRequested or ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
+        ContractDisplayStatus.TenantAccepted or ContractDisplayStatus.Upcoming => BadgeTone.Info,
         ContractDisplayStatus.Active => BadgeTone.Success,
-        ContractDisplayStatus.Expired or ContractDisplayStatus.Liquidated => BadgeTone.Neutral,
         ContractDisplayStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };

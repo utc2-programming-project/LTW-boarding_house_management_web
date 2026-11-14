@@ -271,6 +271,42 @@ public partial class BusinessReportsView
         await ReloadAsync(false, refreshProperties: false);
     }
 
+    private async Task ClearRoomFiltersAsync()
+    {
+        if (Busy) return;
+        RoomActive = true;
+        RoomStatusFilter = null;
+        RoomPage = 1;
+        await LoadRoomsAsync();
+    }
+
+    private async Task ClearTenantFiltersAsync()
+    {
+        if (Busy) return;
+        TenantActive = TenantRenting = null;
+        TenantPage = 1;
+        await LoadTenantsAsync();
+    }
+
+    private async Task ClearContractFiltersAsync()
+    {
+        if (Busy) return;
+        ContractKeyword = null;
+        ContractStatusFilter = null;
+        ContractPage = 1;
+        await LoadContractsAsync();
+    }
+
+    private async Task ClearIncidentFiltersAsync()
+    {
+        if (Busy) return;
+        IncidentStatusFilter = null;
+        IncidentCategoryFilter = null;
+        IncidentUrgencyFilter = null;
+        IncidentPage = 1;
+        await LoadIncidentsAsync();
+    }
+
     private async Task ChangeRoomFiltersAsync()
     {
         if (Busy || DateRangeInvalid) return;

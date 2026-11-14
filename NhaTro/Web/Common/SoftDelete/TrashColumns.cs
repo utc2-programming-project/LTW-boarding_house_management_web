@@ -13,6 +13,7 @@ public static class TrashColumns
             Key = "deletedAt",
             Title = title,
             Value = item => DateFormatter.FormatDateTime(selector(item)),
+            Width = "170px",
         };
 
     public static DataTableColumn<T> Actions<T>(string title, RenderFragment<T> actions) =>
@@ -21,5 +22,7 @@ public static class TrashColumns
             Key = "actions",
             Title = title,
             Template = actions,
+            CellClass = "cell-actions",
+            Width = "120px",
         };
 }

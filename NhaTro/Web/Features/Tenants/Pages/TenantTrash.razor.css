@@ -26,8 +26,13 @@
 
 .tenant-trash-loading { position: relative; min-height: 180px; }
 
-.tenant-trash-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
-.tenant-trash-table { width: 100%; border-collapse: collapse; min-width: 820px; }
+.tenant-trash-table-wrap { overflow: visible; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); box-shadow: var(--shadow-card); }
+.tenant-trash-table { width: 100%; border-collapse: collapse; min-width: 820px; table-layout: fixed; }
+.tenant-trash-table th:nth-child(3),
+.tenant-trash-table td:nth-child(3) { width: 170px; }
+.tenant-trash-table th:last-child,
+.tenant-trash-table td:last-child { width: 120px; text-align: center; }
+.tenant-trash-table td:last-child .p2-row-actions { justify-content: center; }
 .tenant-trash-table th,
 .tenant-trash-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
 .tenant-trash-table th { color: var(--text-secondary); background: var(--surface-subtle); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }

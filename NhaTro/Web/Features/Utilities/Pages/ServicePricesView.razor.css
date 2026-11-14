@@ -106,6 +106,31 @@
     border-collapse: collapse;
     font-size: 13px;
     text-align: left;
+    table-layout: fixed;
+}
+
+/* Sáu cột chia đều, cân xứng hai bên; cột ghi chú nhận phần còn lại. */
+.prices-table th:nth-child(1),
+.prices-table td:nth-child(1) { width: 16%; }
+
+.prices-table th:nth-child(2),
+.prices-table td:nth-child(2) { width: 16%; }
+
+.prices-table th:nth-child(3),
+.prices-table td:nth-child(3) { width: 20%; }
+
+.prices-table th:nth-child(4),
+.prices-table td:nth-child(4) { width: 14%; }
+
+.prices-table th:nth-child(5),
+.prices-table td:nth-child(5) { width: 18%; }
+
+.prices-table th:nth-child(6),
+.prices-table td:nth-child(6) { width: 16%; }
+
+.prices-table th,
+.prices-table td {
+    overflow-wrap: anywhere;
 }
 
 .prices-table th {

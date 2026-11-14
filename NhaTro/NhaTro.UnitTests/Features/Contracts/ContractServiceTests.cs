@@ -252,6 +252,105 @@ public sealed class ContractServiceTests
         Assert.Equal(ContractErrorCodes.Forbidden, exception.ErrorCode);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(4)]
+    [InlineData(11)]
+    public async Task CreateContractAsync_RejectsUnsupportedPaymentCycle(int paymentCycleMonths)
+    {
+        var service = CreateService();
+        var request = new CreateContractRequest(
+            1,
+            new DateTime(2026, 10, 22),
+            new DateTime(2026, 11, 22),
+            [1],
+            PaymentCycleMonths: paymentCycleMonths);
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.InvalidPaymentCycle, exception.ErrorCode);
+        Assert.Equal("PaymentCycleMonths", exception.ParamName);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-3)]
+    [InlineData(29)]
+    [InlineData(31)]
+    public async Task CreateContractAsync_RejectsMeterReadingDayOutsideOneToTwentyEight(int meterReadingDay)
+    {
+        var service = CreateService();
+        var request = new CreateContractRequest(
+            1,
+            new DateTime(2026, 10, 22),
+            new DateTime(2026, 11, 22),
+            [1],
+            MeterReadingDay: meterReadingDay);
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.InvalidMeterReadingDay, exception.ErrorCode);
+        Assert.Equal("MeterReadingDay", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task CreateContractAsync_RejectsTermsLongerThan4000Characters()
+    {
+        var service = CreateService();
+        var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), [1])
+            with { Terms = new string('x', 4001) };
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.TermsTooLong, exception.ErrorCode);
+        Assert.Equal("Terms", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task CreateContractAsync_RejectsNegativeMonthlyRent()
+    {
+        var service = CreateService();
+        var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), [1])
+            with { MonthlyRent = -1m };
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.InvalidMonthlyRent, exception.ErrorCode);
+        Assert.Equal("MonthlyRent", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task CreateContractAsync_RejectsRepresentativeOutsideTenantList()
+    {
+        var service = CreateService();
+        var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), [1])
+            with { RepresentativeTenantId = 99 };
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.RepresentativeInvalid, exception.ErrorCode);
+        Assert.Equal("RepresentativeTenantId", exception.ParamName);
+    }
+
+    [Fact]
+    public async Task CreateContractAsync_RejectsRelationshipLongerThan50Characters()
+    {
+        var service = CreateService();
+        var request = CreateRequest(new DateTime(2026, 10, 22), new DateTime(2026, 11, 22), [1])
+            with { MemberRelations = new Dictionary<int, string> { [1] = new string('x', 51) } };
+
+        var exception = await Assert.ThrowsAsync<ContractValidationException>(() =>
+            service.CreateContractAsync(request, OwnerCaller));
+
+        Assert.Equal(ContractErrorCodes.RelationshipTooLong, exception.ErrorCode);
+    }
+
     private static PropertyCaller OwnerCaller => new("owner-id", Roles.ChuTro);
 
     private static ContractService CreateService(TimeProvider? clock = null) => new(null!, clock);

@@ -20,6 +20,7 @@
 <data name="Unwired" xml:space="preserve"><value>Data source not connected</value></data>
 <data name="CurrentData" xml:space="preserve"><value>Current data</value></data>
 <data name="TotalRooms" xml:space="preserve"><value>Total active rooms</value></data>
+<data name="TotalRoomsShort" xml:space="preserve"><value>Total rooms</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Occupancy rate</value></data>
 <data name="Revenue" xml:space="preserve"><value>Recognized revenue</value></data>
 <data name="Debt" xml:space="preserve"><value>Outstanding receivables</value></data>

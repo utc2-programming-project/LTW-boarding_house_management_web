@@ -1,11 +1,20 @@
 @typeparam TItem
 @inject ILogger<DataTable<TItem>> Logger
 
-<div class="table-card">
+<div class="table-card @(AllowOverflow ? "table-card--overflow" : null)">
     <div role="status" class="visually-hidden">@(_loading ? Labels.Loading : null)</div>
 
     <div class="table-scroll" aria-busy="@(_loading ? "true" : null)">
-        <table>
+        <table class="@(HasFixedColumns ? "fixed-layout" : null)">
+            @if (HasFixedColumns)
+            {
+                <colgroup>
+                    @foreach (var col in Columns)
+                    {
+                        <col style="@(col.Width is null ? null : $"width:{col.Width}")" />
+                    }
+                </colgroup>
+            }
             @if (!string.IsNullOrWhiteSpace(Caption))
             {
                 <caption class="visually-hidden">@Caption</caption>
@@ -150,6 +159,13 @@
     [Parameter]
     public int PageSize { get; set; } = 10;
 
+    /// <summary>
+    /// Cho phép nội dung (menu 3 chấm ở cột thao tác) tràn ra ngoài khung bảng.
+    /// Dùng cho các bảng thùng rác có menu popover để không bị cắt.
+    /// </summary>
+    [Parameter]
+    public bool AllowOverflow { get; set; }
+
     /// <summary>Mô tả bảng cho trình đọc màn hình (không hiển thị).</summary>
     [Parameter]
     public string? Caption { get; set; }
@@ -254,5 +270,13 @@
         return "none";
     }
 
-    private static string? CellClass(DataTableColumn<TItem> col) => col.IsNumeric ? "numeric" : null;
+    private static string? CellClass(DataTableColumn<TItem> col)
+    {
+        var classes = new List<string>();
+        if (col.IsNumeric) classes.Add("numeric");
+        if (!string.IsNullOrWhiteSpace(col.CellClass)) classes.Add(col.CellClass);
+        return classes.Count == 0 ? null : string.Join(' ', classes);
+    }
+
+    private bool HasFixedColumns => Columns.Any(col => !string.IsNullOrWhiteSpace(col.Width));
 }

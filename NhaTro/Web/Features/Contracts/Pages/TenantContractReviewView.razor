@@ -1,0 +1,428 @@
+@page "/my/contracts/{ContractId:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractBusiness")]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Utils
+@using Web.Components.Shared.Feedback
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Rules
+@using Web.Features.Contracts.Services
+@using Web.Features.Properties.Services
+@using Web.Features.Invoices
+@using Web.Features.Invoices.Services
+@inject ContractPageService Contracts
+@inject PaymentPageService PaymentPage
+@inject IContractDepositPaymentService DepositPayments
+@inject IOwnerBankAccountService OwnerBank
+@inject P2CallerProvider Callers
+@inject IStringLocalizer<ContractResources> L
+@inject IStringLocalizer<Shared> SL
+@inject ToastService Toasts
+
+<PageTitle>@L["ContractTenantReviewTitle"]</PageTitle>
+<section class="contract-review-page">
+    <PageHeading Title="@L["ContractTenantReviewTitle"]" TitleId="tenant-contract-review-title" HelpText="@L["ContractTenantReviewDescription"]" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_review is null)
+    {
+        <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractLoadErrorDescription"]">
+            <a class="btn btn-secondary" href="/my/room">@SL["MyRoomTitle"]</a>
+        </EmptyStateCard>
+    }
+    else
+    {
+        var contract = _review.Contract;
+        <div class="contract-review-status">
+            <StatusBadge Tone="@StatusTone(contract.Status)" Text="@StatusLabel(contract.Status)" />
+            @if (_review.IsAccepted && _review.AcceptedAt is { } acceptedAt)
+            {
+                <span>@L["ContractTenantAcceptedAt", acceptedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]</span>
+            }
+        </div>
+
+        <section class="contract-review-panel">
+            <dl class="contract-review-grid">
+                <div><dt>@L["ContractNumberLabel"]</dt><dd>@contract.ContractNumber</dd></div>
+                <div><dt>@L["ContractPropertyLabel"]</dt><dd>@contract.PropertyName</dd></div>
+                <div><dt>@L["ContractRoomLabel"]</dt><dd>@contract.RoomCode</dd></div>
+                <div><dt>@L["ContractTermLabel"]</dt><dd>@DateFormatter.Format(DateOnly.FromDateTime(contract.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(contract.EndDate))</dd></div>
+                <div><dt>@L["ContractRentLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(contract.SnapshotPrice)</dd></div>
+                <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(contract.DepositAmount)</dd></div>
+                <div><dt>@L["ContractPaymentCycle"]</dt><dd>@CycleLabel(contract.PaymentCycleMonths)</dd></div>
+                <div><dt>@L["ContractMeterDay"]</dt><dd>@MeterDayLabel(contract.MeterReadingDay)</dd></div>
+                <div class="contract-review-wide"><dt>@L["ContractSigningVersion"]</dt><dd>@(_review.VersionNo > 0 ? $"v{_review.VersionNo}" : "—")</dd></div>
+                <div class="contract-review-wide"><dt>@L["ContractSigningHash"]</dt><dd class="contract-review-hash">@(_review.ContentHash.Length == 0 ? "—" : _review.ContentHash)</dd></div>
+            </dl>
+        </section>
+
+        <section class="contract-review-panel">
+            <h2 class="contract-review-panel-title"><LucideIcon Name="users" />@L["ContractTenantSection"]</h2>
+            <ul class="contract-review-members">
+                @foreach (var member in contract.Members)
+                {
+                    <li class="contract-review-member">
+                        <div class="contract-review-member-head">
+                            <strong>@member.FullName</strong>
+                            @if (member.IsRepresentative) { <span class="contract-review-tag">@L["ContractRepresentativeTag"]</span> }
+                        </div>
+                        @if (ContractRelationshipPresentation.Format(L, member.Relationship) is { Length: > 0 } relation)
+                        {
+                            <span class="contract-review-member-meta">@relation</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section class="contract-review-panel">
+            <h2 class="contract-review-panel-title"><LucideIcon Name="file-text" />@L["ContractNotesSection"]</h2>
+            @if (string.IsNullOrWhiteSpace(contract.Terms))
+            {
+                <p class="contract-review-empty">@L["ContractNoTerms"]</p>
+            }
+            else
+            {
+                <p class="contract-review-terms">@contract.Terms</p>
+            }
+        </section>
+
+        @if (_review.ChangeRequests.Count > 0)
+        {
+            <section class="contract-review-panel">
+                <h2 class="contract-review-panel-title"><LucideIcon Name="file-text" />@L["ContractChangeRequestsTitle"]</h2>
+                <ul class="contract-review-change-list">
+                    @foreach (var request in _review.ChangeRequests)
+                    {
+                        <li>
+                            <div class="contract-review-change-head"><strong>v@(request.VersionNo)</strong> · @request.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            <p>@request.Message</p>
+                            @if (!string.IsNullOrWhiteSpace(request.ResolutionNote)) { <small>@request.ResolutionNote</small> }
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (_review.IsAccepted)
+        {
+            <section class="contract-review-panel">
+                <h2 class="contract-review-panel-title"><LucideIcon Name="wallet" />@L["ContractDepositPaymentTitle"]</h2>
+                <p class="contract-review-hint">@L["ContractDepositPaymentIntro"]</p>
+                <dl class="contract-review-grid">
+                    <div><dt>@L["ContractDepositLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(contract.DepositAmount)</dd></div>
+                    @if (_review.Contract.DepositPaidAmount is decimal paid)
+                    {
+                        <div><dt>@L["ContractDepositPaidLabel"]</dt><dd class="tabular-nums">@MoneyFormatter.Format(paid)</dd></div>
+                    }
+                    else if (_review.Contract.DepositDueAt is { } dueAt)
+                    {
+                        <div><dt>@L["ContractDepositDueLabel"]</dt><dd>@dueAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd></div>
+                    }
+                    @if (_bankAccount is { IsConfigured: true })
+                    {
+                        <div class="contract-review-wide"><dt>@L["ContractDepositBankLabel"]</dt><dd>@_bankAccount.DisplayAccount</dd></div>
+                    }
+                    else
+                    {
+                        <div class="contract-review-wide"><dt>@L["ContractDepositBankLabel"]</dt><dd>@L["ContractDepositBankMissing"]</dd></div>
+                    }
+                </dl>
+
+                @if (_bankAccount is { IsConfigured: true } && _depositQrUri is not null)
+                {
+                    <div class="contract-review-qr">
+                        <img src="@_depositQrUri" alt="VietQR" width="220" height="220" />
+                        <p>@L["ContractDepositQrHint"]</p>
+                    </div>
+                }
+
+                @if (_review.Contract.DepositPaidAmount is null)
+                {
+                    @if (_depositPayment is { Status: DepositPaymentStatus.Pending })
+                    {
+                        <p class="contract-review-hint">@L["ContractDepositPending", _depositPayment.RequestedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")]</p>
+                    }
+                    else
+                    {
+                        @if (_depositPayment is { Status: DepositPaymentStatus.Rejected })
+                        {
+                            <p class="contract-review-error" role="alert">@L["ContractDepositRejected", _depositPayment.RejectionReason ?? ""]</p>
+                        }
+                        <div class="contract-review-field">
+                            <label for="deposit-transaction-code">@L["ContractDepositTransactionLabel"]</label>
+                            <input id="deposit-transaction-code" class="input" maxlength="100" @bind="_depositTransactionCode" />
+                        </div>
+                        <div class="contract-review-field">
+                            <label for="deposit-proof">@L["ContractDepositProofLabel"]</label>
+                            <InputFile id="deposit-proof" multiple accept="@DepositProofAccept" OnChange="OnDepositProofSelected" />
+                            <small>@L["ContractDepositProofHint"]</small>
+                            @if (_depositProofFiles.Count > 0)
+                            {
+                                <ul class="contract-review-proof-list">
+                                    @foreach (var file in _depositProofFiles)
+                                    {
+                                        <li>@file.Name</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                        <div class="contract-review-actions">
+                            <button type="button" class="btn btn-primary" disabled="@_depositBusy" @onclick="SubmitDepositAsync">
+                                <LucideIcon Name="send" />@L["ContractDepositSubmitAction"]
+                            </button>
+                        </div>
+                    }
+                    @if (_depositError is not null) { <p class="contract-review-error" role="alert">@_depositError</p> }
+                }
+
+                <div class="contract-review-actions">
+                    <a class="btn btn-secondary" href="/my/invoices"><LucideIcon Name="file-text" />@L["ContractTenantInvoicesAction"]</a>
+                </div>
+            </section>
+        }
+
+        @if (_error is not null) { <p class="contract-review-error" role="alert">@_error</p> }
+
+        @if (_review.CanAccept)
+        {
+            <p class="contract-review-hint">@L["ContractTenantSigningNote"]</p>
+            <div class="contract-review-actions">
+                <button type="button" class="btn btn-primary" @onclick="OpenAcceptModal"><LucideIcon Name="check" />@L["ContractTenantAcceptAction"]</button>
+                <button type="button" class="btn btn-secondary" @onclick="ToggleChangeForm"><LucideIcon Name="edit" />@L["ContractTenantRequestChangesAction"]</button>
+            </div>
+        }
+
+        @if (_showChangeForm)
+        {
+            <section class="contract-review-panel">
+                <h2 class="contract-review-panel-title"><LucideIcon Name="file-text" />@L["ContractTenantRequestChangesAction"]</h2>
+                <div class="contract-review-field">
+                    <label for="change-message">@L["ContractChangeRequestMessageLabel"]</label>
+                    <textarea id="change-message" class="input" rows="4" maxlength="2000" @bind="_changeMessage" @bind:event="oninput"></textarea>
+                </div>
+                <div class="contract-review-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleChangeForm">@L["ContractCancelAction"]</button>
+                    <button type="button" class="btn btn-primary" disabled="@_submitting" @onclick="SubmitChangeRequestAsync"><LucideIcon Name="send" />@L["ContractChangeRequestSubmitAction"]</button>
+                </div>
+            </section>
+        }
+
+        @if (_acceptOpen)
+        {
+            <section class="contract-review-panel">
+                <h2 class="contract-review-panel-title"><LucideIcon Name="shield-check" />@L["ContractTenantAcceptTitle"]</h2>
+                <p class="contract-review-hint">@L["ContractTenantAcceptDescription"]</p>
+                <div class="contract-review-otp-row">
+                    <div class="contract-review-field">
+                        <label for="otp-code">@L["ContractTenantOtpLabel"]</label>
+                        <input id="otp-code" class="input tabular-nums" inputmode="numeric" maxlength="8"
+                               placeholder="@L["ContractTenantOtpPlaceholder"]" @bind="_otpCode" />
+                    </div>
+                    <div class="contract-review-actions">
+                        <button type="button" class="btn btn-secondary" disabled="@_submitting" @onclick="SendOtpAsync"><LucideIcon Name="mail" />@L["ContractTenantSendOtpAction"]</button>
+                        <button type="button" class="btn btn-primary" disabled="@_submitting" @onclick="ConfirmAcceptAsync"><LucideIcon Name="check" />@L["ContractTenantConfirmAcceptAction"]</button>
+                    </div>
+                </div>
+            </section>
+        }
+    }
+</section>
+
+@code {
+    [Parameter] public Guid ContractId { get; set; }
+
+    private TenantContractReviewDto? _review;
+    private bool _loading = true, _submitting, _acceptOpen, _showChangeForm;
+    private string? _error;
+    private string _otpCode = string.Empty;
+    private string _changeMessage = string.Empty;
+    private Web.Features.Invoices.Services.OwnerBankAccount? _bankAccount;
+    private ContractDepositPaymentDto? _depositPayment;
+    private string _depositTransactionCode = string.Empty;
+    private IReadOnlyList<IBrowserFile> _depositProofFiles = [];
+    private string? _depositQrUri;
+    private bool _depositBusy;
+    private string? _depositError;
+    private string DepositProofAccept => string.Join(",", PaymentPage.ProofPolicy.AllowedExtensions);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try
+        {
+            _review = await Contracts.GetTenantReviewAsync(ContractId);
+            await LoadDepositAsync();
+        }
+        catch (Exception ex)
+        {
+            _review = null;
+            _error = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task LoadDepositAsync()
+    {
+        _depositPayment = null;
+        _bankAccount = null;
+        if (_review is not { IsAccepted: true })
+        {
+            return;
+        }
+
+        try
+        {
+            var caller = await Callers.GetCallerAsync();
+            _depositPayment = await DepositPayments.GetLatestAsync(ContractId, caller);
+            _bankAccount = await OwnerBank.GetForContractAsync(ContractId);
+            if (_bankAccount is { IsConfigured: true })
+            {
+                _depositQrUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
+                    _bankAccount.BankCode,
+                    _bankAccount.AccountNumber,
+                    _review.Contract.DepositAmount,
+                    $"COC-{ContractId:N}"));
+            }
+        }
+        catch
+        {
+            // Khối thanh toán cọc không được làm hỏng trang xem hợp đồng.
+        }
+    }
+
+    private void OnDepositProofSelected(InputFileChangeEventArgs args) =>
+        _depositProofFiles = args.GetMultipleFiles(5);
+
+    private async Task SubmitDepositAsync()
+    {
+        if (_depositBusy) return;
+        _depositBusy = true;
+        _depositError = null;
+        try
+        {
+            if (_depositProofFiles.Count == 0)
+            {
+                _depositError = L["ContractDepositProofRequired"];
+                return;
+            }
+
+            var proofIds = new List<Guid>();
+            foreach (var file in _depositProofFiles)
+            {
+                var upload = await PaymentPage.UploadDepositProofAsync(ContractId, file);
+                if (!upload.Succeeded || upload.File is null)
+                {
+                    _depositError = upload.ErrorMessage ?? L["ContractDepositProofUploadFailed"];
+                    return;
+                }
+                proofIds.Add(upload.File.Id);
+            }
+
+            _depositPayment = await DepositPayments.SubmitAsync(
+                ContractId, _depositTransactionCode, proofIds, await Callers.GetCallerAsync());
+            _depositTransactionCode = string.Empty;
+            _depositProofFiles = [];
+            Toasts.Success(L["ContractDepositSubmitSuccess"]);
+        }
+        catch (Exception ex)
+        {
+            _depositError = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _depositBusy = false; }
+    }
+
+    private void OpenAcceptModal() { _acceptOpen = true; _showChangeForm = false; _error = null; }
+    private void ToggleChangeForm() { _showChangeForm = !_showChangeForm; _acceptOpen = false; _error = null; }
+
+    private async Task SendOtpAsync()
+    {
+        _submitting = true;
+        _error = null;
+        try
+        {
+            await Contracts.IssueAcceptanceOtpAsync(ContractId);
+            Toasts.Success(L["ContractTenantOtpSent"]);
+        }
+        catch (Exception ex)
+        {
+            _error = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _submitting = false; }
+    }
+
+    private async Task ConfirmAcceptAsync()
+    {
+        _submitting = true;
+        _error = null;
+        try
+        {
+            await Contracts.AcceptContractAsync(ContractId, _otpCode);
+            Toasts.Success(L["ContractTenantAcceptSuccess"]);
+            _acceptOpen = false;
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _submitting = false; }
+    }
+
+    private async Task SubmitChangeRequestAsync()
+    {
+        _submitting = true;
+        _error = null;
+        try
+        {
+            await Contracts.RequestContractChangesAsync(ContractId, _changeMessage);
+            Toasts.Success(L["ContractChangeRequestSuccess"]);
+            _showChangeForm = false;
+            _changeMessage = string.Empty;
+            await OnParametersSetAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _submitting = false; }
+    }
+
+    private static BadgeTone StatusTone(ContractStatus status) => status switch
+    {
+        ContractStatus.AwaitingTenant or ContractStatus.ChangeRequested or ContractStatus.Pending => BadgeTone.Warning,
+        ContractStatus.TenantAccepted => BadgeTone.Info,
+        ContractStatus.Approved => BadgeTone.Success,
+        ContractStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string StatusLabel(ContractStatus status) => L[status switch
+    {
+        ContractStatus.Draft => "ContractStatusDraft",
+        ContractStatus.AwaitingTenant => "ContractStatusAwaitingTenant",
+        ContractStatus.ChangeRequested => "ContractStatusChangeRequested",
+        ContractStatus.TenantAccepted => "ContractStatusTenantAccepted",
+        ContractStatus.Cancelled => "ContractStatusCancelled",
+        ContractStatus.Pending => "ContractStatusPending",
+        ContractStatus.Approved => "ContractStatusActive",
+        ContractStatus.Rejected => "ContractStatusRejected",
+        ContractStatus.Liquidated => "ContractStatusLiquidated",
+        _ => "ContractStatusPending",
+    }];
+
+    private string CycleLabel(int months) => L[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
+
+    private string MeterDayLabel(int? day) => day is int value ? L["ContractDayMonthly", value] : L["ContractLastDayMonthly"];
+}

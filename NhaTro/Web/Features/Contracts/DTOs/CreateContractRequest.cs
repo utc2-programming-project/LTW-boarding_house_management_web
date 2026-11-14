@@ -6,4 +6,11 @@ public sealed record CreateContractRequest(
     DateTime StartDate,
     DateTime EndDate,
     List<int> TenantIds,
-    decimal? DepositAmount = null);
+    decimal? DepositAmount = null,
+    decimal? MonthlyRent = null,
+    int PaymentCycleMonths = 1,
+    int? MeterReadingDay = null,
+    string? Terms = null,
+    int? RepresentativeTenantId = null,
+    IReadOnlyDictionary<int, string>? MemberRelations = null,
+    bool AsDraft = false);

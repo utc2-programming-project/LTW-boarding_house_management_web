@@ -1,0 +1,52 @@
+@* Menu 3 chấm dùng chung cho mọi trang thùng rác: Khôi phục / Xóa vĩnh viễn. *@
+<div class="p2-row-actions trash-row-actions">
+    <button type="button"
+            class="icon-button p2-menu-trigger @(_open ? "is-open" : null)"
+            aria-haspopup="menu"
+            aria-expanded="@(_open ? "true" : "false")"
+            @onclick="Toggle">
+        <LucideIcon Name="ellipsis" />
+    </button>
+    @if (_open)
+    {
+        <div class="p2-row-menu" role="menu">
+            <button type="button" class="p2-row-menu-item" @onclick="RestoreAsync">
+                <LucideIcon Name="refresh-cw" /><span>@RestoreText</span>
+            </button>
+            <div class="p2-row-menu-sep" role="separator"></div>
+            <button type="button" class="p2-row-menu-item danger" @onclick="PurgeAsync">
+                <LucideIcon Name="trash" /><span>@PurgeText</span>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string RestoreText { get; set; } = string.Empty;
+    [Parameter] public string PurgeText { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnRestore { get; set; }
+    [Parameter] public EventCallback OnPurge { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private bool _open;
+
+    private void Toggle()
+    {
+        if (!Disabled)
+        {
+            _open = !_open;
+        }
+    }
+
+    private async Task RestoreAsync()
+    {
+        _open = false;
+        await OnRestore.InvokeAsync();
+    }
+
+    private async Task PurgeAsync()
+    {
+        _open = false;
+        await OnPurge.InvokeAsync();
+    }
+}

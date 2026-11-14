@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+<resheader name="version"><value>2.0</value></resheader>
+<data name="PageTitle" xml:space="preserve"><value>Boarding House Operations Web — Manage rooms, tenants and invoices</value></data>
+<data name="NavFeatures" xml:space="preserve"><value>Features</value></data>
+<data name="NavRoles" xml:space="preserve"><value>Roles</value></data>
+<data name="Login" xml:space="preserve"><value>Sign in</value></data>
+<data name="Register" xml:space="preserve"><value>Sign up</value></data>
+<data name="HeroBadge" xml:space="preserve"><value>All-in-one boarding house management</value></data>
+<data name="HeroTitle" xml:space="preserve"><value>Run your boarding house from one screen</value></data>
+<data name="HeroDescription" xml:space="preserve"><value>From vacant rooms and tenant profiles to contracts, invoices and incidents — daily operations in one system, scoped by role.</value></data>
+<data name="HeroLoginCta" xml:space="preserve"><value>Sign in</value></data>
+<data name="HeroRegisterCta" xml:space="preserve"><value>Register as an owner</value></data>
+<data name="HeroProof" xml:space="preserve"><value>Built for owners, managers and tenants</value></data>
+<data name="MockupTitle" xml:space="preserve"><value>Boarding house overview</value></data>
+<data name="MockupSample" xml:space="preserve"><value>Sample data</value></data>
+<data name="MockupRoomsLabel" xml:space="preserve"><value>Occupied rooms</value></data>
+<data name="MockupRoomsValue" xml:space="preserve"><value>12/15</value></data>
+<data name="MockupCollectedLabel" xml:space="preserve"><value>Collected this month</value></data>
+<data name="MockupCollectedValue" xml:space="preserve"><value>₫24,500,000</value></data>
+<data name="MockupDebtLabel" xml:space="preserve"><value>Outstanding</value></data>
+<data name="MockupDebtValue" xml:space="preserve"><value>₫3,200,000</value></data>
+<data name="MockupTableRoom" xml:space="preserve"><value>Room</value></data>
+<data name="MockupTableTenant" xml:space="preserve"><value>Tenant</value></data>
+<data name="MockupTableStatus" xml:space="preserve"><value>Status</value></data>
+<data name="MockupRoom1" xml:space="preserve"><value>R.101</value></data>
+<data name="MockupRoom2" xml:space="preserve"><value>R.102</value></data>
+<data name="MockupRoom3" xml:space="preserve"><value>R.103</value></data>
+<data name="MockupTenant1" xml:space="preserve"><value>Nguyen Van A</value></data>
+<data name="MockupTenant2" xml:space="preserve"><value>Tran Thi B</value></data>
+<data name="MockupTenant3" xml:space="preserve"><value>—</value></data>
+<data name="MockupStatusPaid" xml:space="preserve"><value>Paid</value></data>
+<data name="MockupStatusUnpaid" xml:space="preserve"><value>Unpaid</value></data>
+<data name="MockupStatusEmpty" xml:space="preserve"><value>Vacant</value></data>
+<data name="FeaturesTitle" xml:space="preserve"><value>One place for daily operations</value></data>
+<data name="FeaturesDescription" xml:space="preserve"><value>Rooms, tenants, contracts, invoices, incidents and reports stay connected in one system.</value></data>
+<data name="Feature1Title" xml:space="preserve"><value>Rooms &amp; assets</value></data>
+<data name="Feature1Description" xml:space="preserve"><value>Track each room's status, included assets and restore deleted records.</value></data>
+<data name="Feature2Title" xml:space="preserve"><value>Tenant profiles</value></data>
+<data name="Feature2Description" xml:space="preserve"><value>Contact details, documents and scope; national IDs are masked for managers.</value></data>
+<data name="Feature3Title" xml:space="preserve"><value>Contracts &amp; renewals</value></data>
+<data name="Feature3Description" xml:space="preserve"><value>Create and approve contracts with renewal reminders before expiry.</value></data>
+<data name="Feature4Title" xml:space="preserve"><value>Invoices &amp; payments</value></data>
+<data name="Feature4Description" xml:space="preserve"><value>Bill from meter readings, share VietQR and reconcile payments.</value></data>
+<data name="Feature5Title" xml:space="preserve"><value>Incidents &amp; maintenance</value></data>
+<data name="Feature5Description" xml:space="preserve"><value>Tenants report issues with photos; owners approve and track fixes.</value></data>
+<data name="Feature6Title" xml:space="preserve"><value>Reports &amp; KPIs</value></data>
+<data name="Feature6Description" xml:space="preserve"><value>Revenue, outstanding balances, occupancy and periodic reports.</value></data>
+<data name="RolesTitle" xml:space="preserve"><value>Right person, right scope</value></data>
+<data name="RolesDescription" xml:space="preserve"><value>Each role has its own menu and permissions, and only sees data within its scope.</value></data>
+<data name="Role1Title" xml:space="preserve"><value>Owner</value></data>
+<data name="Role1Description" xml:space="preserve"><value>Full control of their properties.</value></data>
+<data name="Role1Point1" xml:space="preserve"><value>Manage multiple properties and staff</value></data>
+<data name="Role1Point2" xml:space="preserve"><value>Approve accounts, contracts and incidents</value></data>
+<data name="Role1Point3" xml:space="preserve"><value>View revenue and outstanding balances</value></data>
+<data name="Role2Title" xml:space="preserve"><value>Manager</value></data>
+<data name="Role2Description" xml:space="preserve"><value>Runs assigned properties.</value></data>
+<data name="Role2Point1" xml:space="preserve"><value>Update rooms and tenants</value></data>
+<data name="Role2Point2" xml:space="preserve"><value>Record meter readings and invoices</value></data>
+<data name="Role2Point3" xml:space="preserve"><value>Handle incidents within scope</value></data>
+<data name="Role3Title" xml:space="preserve"><value>Tenant</value></data>
+<data name="Role3Description" xml:space="preserve"><value>Follows their room and obligations.</value></data>
+<data name="Role3Point1" xml:space="preserve"><value>View contract and current room</value></data>
+<data name="Role3Point2" xml:space="preserve"><value>View invoices and confirm payments</value></data>
+<data name="Role3Point3" xml:space="preserve"><value>Report incidents with photos</value></data>
+<data name="CtaTitle" xml:space="preserve"><value>Start managing your boarding house today</value></data>
+<data name="CtaDescription" xml:space="preserve"><value>Sign in if you already have an account, or register as an owner to create your first property.</value></data>
+<data name="FooterRights" xml:space="preserve"><value>All rights reserved.</value></data>
+</root>

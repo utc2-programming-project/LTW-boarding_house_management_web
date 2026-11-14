@@ -107,14 +107,8 @@
                             </td>
                             <td>@item.DocumentCount</td>
                             <td>
-                                <div class="p2-row-actions">
-                                    <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RequestRestore(item)">
-                                        <LucideIcon Name="refresh" /> @L["TenantTrashRestore"]
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RequestPurge(item)">
-                                        <LucideIcon Name="trash" /> @L["Purge"]
-                                    </button>
-                                </div>
+                                <TrashRowMenu RestoreText="@L["TenantTrashRestore"]" PurgeText="@L["Purge"]"
+                                              OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />
                             </td>
                         </tr>
                     }

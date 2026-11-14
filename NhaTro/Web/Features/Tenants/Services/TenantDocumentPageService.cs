@@ -125,10 +125,52 @@ public sealed class TenantDocumentPageService(
         return await documentService.DownloadAsync(tenantId, fileId, caller, ct);
     }
 
+    /// <summary>Danh sách hợp đồng/phòng của khách hiện tại để dựng tabs chuyển phòng.</summary>
+    public async Task<IReadOnlyList<LeasedRoomSummaryDto>> GetMyRentalsAsync(CancellationToken ct = default)
+    {
+        var overview = await LoadMyOverviewAsync(ct);
+        if (overview is null)
+        {
+            return [];
+        }
+
+        return overview.Rentals
+            .Select(rental => new LeasedRoomSummaryDto(
+                rental.ContractId,
+                rental.ContractNumber,
+                rental.RoomCode,
+                rental.PropertyName,
+                rental.StartDate,
+                rental.EndDate,
+                rental.IsCurrent,
+                rental.Status))
+            .ToList();
+    }
+
     /// <summary>
     /// Lấy phòng đang thuê qua liên kết hợp đồng thật của khách thuê hiện tại (không suy từ Room.Status).
+    /// Khi truyền contractId, chỉ trả hợp đồng đó nếu thuộc chính khách.
     /// </summary>
-    public async Task<LeasedRoomDetailDto?> GetMyLeasedRoomAsync(CancellationToken ct = default)
+    public async Task<LeasedRoomDetailDto?> GetMyLeasedRoomAsync(Guid? contractId = null, CancellationToken ct = default)
+    {
+        var overview = await LoadMyOverviewAsync(ct);
+        if (overview is null)
+        {
+            return null;
+        }
+
+        var rental = contractId is Guid selectedId
+            ? overview.Rentals.FirstOrDefault(item => item.ContractId == selectedId)
+            : overview.CurrentRental ?? overview.Rentals.FirstOrDefault();
+        if (rental is null)
+        {
+            return null;
+        }
+
+        return await MapRentalAsync(overview, rental, ct);
+    }
+
+    private async Task<TenantRentalOverviewDto?> LoadMyOverviewAsync(CancellationToken ct)
     {
         if (tenantPageService is null)
         {
@@ -153,13 +195,14 @@ public sealed class TenantDocumentPageService(
                     : result.ErrorMessage);
         }
 
-        var overview = result.Rental;
-        var rental = overview?.CurrentRental;
-        if (rental is null)
-        {
-            return null;
-        }
+        return result.Rental;
+    }
 
+    private async Task<LeasedRoomDetailDto> MapRentalAsync(
+        TenantRentalOverviewDto overview,
+        TenantRentalContractDto rental,
+        CancellationToken ct)
+    {
         var floor = await db.Rooms.AsNoTracking()
             .Where(r => r.Id == rental.RoomId)
             .Select(r => r.Floor)
@@ -185,6 +228,9 @@ public sealed class TenantDocumentPageService(
             }
         }
 
+        var services = await Web.Features.Contracts.Services.ContractServiceLineLoader.LoadAsync(
+            db, rental.PropertyId, rental.ContractId, rental.StartDate, ct);
+
         return new LeasedRoomDetailDto
         {
             ContractId = rental.ContractId,
@@ -199,9 +245,14 @@ public sealed class TenantDocumentPageService(
             EndDate = rental.EndDate.ToDateTime(TimeOnly.MinValue),
             MonthlyRent = rental.SnapshotPrice,
             DepositAmount = rental.DepositAmount,
+            PaymentCycleMonths = rental.PaymentCycleMonths,
+            MeterReadingDay = rental.MeterReadingDay,
+            Terms = rental.Terms,
+            Services = services,
             // Dữ liệu tiền cọc đã đóng thực tế từ hợp đồng/phiếu thu; null khi chưa có chứng từ ghi nhận.
             PaidDepositAmount = rental.PaidDepositAmount,
             DepositPaidDate = rental.DepositPaidDate?.ToDateTime(TimeOnly.MinValue),
+            DepositDueDate = rental.DepositDueDate?.ToDateTime(TimeOnly.MinValue),
             StatusLabel = rental.Status.ToString(),
             IsActive = rental.IsCurrent,
             Roommates = rental.Roommates.Select(roommate => new RoommateDto

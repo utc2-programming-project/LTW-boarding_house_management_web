@@ -555,14 +555,17 @@ public sealed class AccountService(
             return AccountResult.Failure(AccountErrorCodes.UserNotFound);
         }
 
-        var targetRole = (await users.GetRolesAsync(target)).FirstOrDefault() ?? string.Empty;
+        var targetRoles = await users.GetRolesAsync(target);
+        // Tài khoản nhiều vai trò (vd Chủ trọ + Khách thuê) trả về thứ tự tùy ý; nếu có Admin
+        // thì Admin phải quyết định quyền xóa, tránh lọt qua kiểm tra bằng vai trò khác.
+        var targetRole = targetRoles.Contains(Roles.Admin)
+            ? Roles.Admin
+            : targetRoles.FirstOrDefault() ?? string.Empty;
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-        var targetIsLastAdmin = targetRole == Roles.Admin
-            && await CountActiveAdminsAsync(db, ct) <= 1;
 
         var reason = AccountPermissionRules.CheckDelete(
-            callerRole, callerUserId, targetUserId, targetRole, targetIsLastAdmin);
+            callerRole, callerUserId, targetUserId, targetRole);
         if (reason is not null)
         {
             return AccountResult.Failure(reason);

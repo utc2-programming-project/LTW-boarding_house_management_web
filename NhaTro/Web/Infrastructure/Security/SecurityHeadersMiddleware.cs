@@ -9,7 +9,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, ILogger<Secu
     public async Task InvokeAsync(HttpContext context)
     {
         var headers = context.Response.Headers;
-        headers["X-Content-Type-Options"] = "nosniff";
+        headers.XContentTypeOptions = "nosniff";
         headers["X-Frame-Options"] = "DENY";
         headers["Referrer-Policy"] = context.Request.Path.StartsWithSegments("/invite")
             || context.Request.Path.StartsWithSegments("/Account/ResetPassword")
@@ -23,7 +23,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, ILogger<Secu
 
         if (IsNoStorePath(context.Request.Path))
         {
-            headers["Cache-Control"] = "no-store";
+            headers.CacheControl = "no-store";
         }
 
         if (!IsSafeMethod(context.Request.Method) && !IsTrustedSource(context))

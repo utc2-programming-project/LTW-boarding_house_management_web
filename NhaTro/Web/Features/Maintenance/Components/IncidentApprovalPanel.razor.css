@@ -33,17 +33,192 @@
 .refresh-requests { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); flex-shrink: 0; min-height: 40px; white-space: nowrap; }
 .refresh-requests ::deep svg { width: 20px; height: 20px; flex-shrink: 0; }
 .approval-error { margin: 0; color: var(--error-text); }
-article { border: 1px solid var(--border); background: var(--surface-subtle); border-radius: var(--radius-card); padding: var(--space-5); overflow-wrap: anywhere; }
+
+/* Thẻ yêu cầu: tách rõ phần đầu, lưới thông tin, ảnh và chân thao tác. */
+.approval-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow-wrap: anywhere;
+}
+.approval-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+.approval-card-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex: 1 1 320px;
+    min-width: 0;
+}
+.approval-code {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: .75rem;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: .03em;
+    font-variant-numeric: tabular-nums;
+}
+.approval-heading-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.approval-heading-text h3 {
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.approval-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: .875rem;
+    line-height: 1.375rem;
+    overflow-wrap: anywhere;
+}
+.approval-target-key {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Lưới thông tin: các ô chia đều theo số lượng, ô dài chiếm trọn hàng. */
+.approval-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+}
+.approval-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+}
+.approval-meta-item--wide { grid-column: 1 / -1; }
+.approval-meta dt {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: .75rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.approval-meta dd {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: .9375rem;
+    line-height: 1.5rem;
+    overflow-wrap: anywhere;
+}
+
+/* Lý do từ chối / ghi chú quyết định. */
+.approval-reason {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--text-muted);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+}
+.approval-reason--danger {
+    border-color: var(--error-border);
+    border-left-color: var(--error-text);
+    background: var(--error-bg);
+}
+.approval-reason-label {
+    color: var(--text-muted);
+    font-size: .75rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.approval-reason--danger .approval-reason-label { color: var(--error-text); }
+.approval-reason p {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: .875rem;
+    line-height: 1.375rem;
+    overflow-wrap: anywhere;
+}
+
+.approval-photos { padding-top: var(--space-3); border-top: 1px solid var(--border); }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
 figure { margin: 0; }
 img { width: 100%; max-height: 200px; object-fit: contain; }
 .preserve-text { white-space: pre-wrap; }
-label { display: block; margin-bottom: var(--space-2); }
-input { box-sizing: border-box; width: 100%; min-height: 40px; padding: var(--space-2) var(--space-3); color: var(--text-primary); background: var(--surface); border: 1px solid var(--control-border); border-radius: var(--radius-control); }
-.approval-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+
+/* Chân thẻ: nút hành động dồn về bên phải, ô lý do chiếm trọn hàng. */
+.approval-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+.approval-reject {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 100%;
+    min-width: 0;
+}
+.approval-reject label {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: .875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+}
+.approval-reject input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+}
+.approval-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-left: auto;
+}
+
 @media (max-width: 767px) {
     .incident-approvals { padding: var(--space-4); }
     .approval-heading { flex-direction: column; align-items: flex-start; }
     input, button { min-height: 44px; }
-    article { padding: var(--space-4); }
+    .approval-card { padding: var(--space-4); }
+    .approval-action-buttons { width: 100%; margin-left: 0; }
+    .approval-action-buttons .btn { flex: 1 1 auto; }
 }

@@ -43,6 +43,9 @@ public static class AccountErrorCodes
     /// <summary>Không cho xoá Admin cuối cùng của hệ thống.</summary>
     public const string CannotDeleteLastAdmin = nameof(CannotDeleteLastAdmin);
 
+    /// <summary>Chot 13/11/2026: Admin khong duoc xoa tai khoan Admin khac.</summary>
+    public const string CannotDeleteAdmin = nameof(CannotDeleteAdmin);
+
     /// <summary>Tài khoản còn dữ liệu nghiệp vụ tham chiếu (hồ sơ khách) nên không xoá được.</summary>
     public const string AccountInUse = nameof(AccountInUse);
 
@@ -71,6 +74,7 @@ public static class AccountErrorCodes
         NotPendingApproval => "ErrorNotPendingApproval",
         CannotDeleteSelf => "ErrorCannotDeleteSelf",
         CannotDeleteLastAdmin => "ErrorCannotDeleteLastAdmin",
+        CannotDeleteAdmin => "ErrorCannotDeleteAdmin",
         AccountInUse => "ErrorAccountInUse",
         _ => "ErrorGeneric",
     };

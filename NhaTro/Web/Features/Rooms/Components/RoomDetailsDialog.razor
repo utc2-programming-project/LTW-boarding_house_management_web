@@ -1,3 +1,4 @@
+@using Web.Common.Utils
 @inject RoomPageService PageService
 @inject IStringLocalizer<Shared> L
 @inject ILogger<RoomDetailsDialog> Logger
@@ -22,7 +23,7 @@
                 <StatusBadge Text="@(_detail.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(_detail.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />
             </div>
             <dl class="p2-detail-grid">
-                <div><dt>@L["P2Property"]</dt><dd>@_detail.PropertyName</dd></div>
+                <div><dt>@L["P2Property"]</dt><dd><a class="cell-link" href="@AppLinks.Property(_detail.PropertyId)">@_detail.PropertyName</a></dd></div>
                 <div><dt>@L["P2RoomCode"]</dt><dd>@_detail.Code</dd></div>
                 <div><dt>@L["P2Floor"]</dt><dd>@(_detail.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"])</dd></div>
                 <div><dt>@L["P2Area"]</dt><dd>@(_detail.AreaM2?.ToString("N2", CultureInfo.CurrentCulture) ?? L["P2NotProvided"]) @L["P2SquareMeter"]</dd></div>

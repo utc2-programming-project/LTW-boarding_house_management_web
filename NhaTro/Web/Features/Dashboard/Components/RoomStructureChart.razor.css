@@ -1,3 +1,25 @@
-.room-chart { width:100%; max-width:320px; margin-inline:auto; }
+.room-chart { position:relative; width:100%; max-width:320px; margin-inline:auto; }
+.chart-svg { display:block; width:100%; height:auto; overflow:visible; }
+.donut-track { opacity:.7; }
+.pie-glow { fill:none; opacity:.35; pointer-events:none; }
+.pie-slice { fill:none; transition:stroke-width 150ms var(--ease); }
+.pie-slice-group:hover .pie-slice { stroke-width:30; }
+.pie-highlight { fill:none; stroke:var(--chart-highlight); opacity:.22; pointer-events:none; }
+/* Chữ trong SVG phát ra bằng MarkupString nên dùng ::deep để CSS isolation áp được. */
+.chart-svg ::deep .donut-pct { fill:var(--text-secondary); font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; }
+.chart-svg ::deep .donut-center-value { fill:var(--text-primary); font-size:26px; font-weight:700; font-variant-numeric:tabular-nums; }
+.chart-svg ::deep .donut-center-label { fill:var(--text-muted); font-size:11px; }
+.pie-tooltip { position:absolute; z-index:2; display:flex; flex-direction:column; gap:2px; min-width:132px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-primary); box-shadow:var(--shadow-popover); font-size:.75rem; line-height:1.5; transform:translate(-50%,-50%); pointer-events:none; }
+.pie-tooltip__label { display:inline-flex; align-items:center; gap:8px; font-weight:600; }
+.pie-tooltip__value { color:var(--text-secondary); font-variant-numeric:tabular-nums; }
+.legend-dot { width:10px; height:10px; flex:0 0 10px; border-radius:var(--radius-pill); }
 p,.chart-values { font-size:.75rem; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
-.chart-values { display:flex; gap:16px; flex-wrap:wrap; padding:0; list-style:none; }
+.chart-values { display:flex; flex-direction:column; gap:4px; padding:0; list-style:none; }
+.chart-values li { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
+.chart-values li:last-child { border-bottom:0; }
+.chart-values .value { margin-left:auto; font-weight:600; color:var(--text-primary); }
+.chart-values .pct { min-width:52px; text-align:right; color:var(--text-muted); }
+@media (prefers-reduced-motion:no-preference) {
+    .pie-slice-group { animation:pie-fade-in 360ms var(--ease) both; }
+}
+@keyframes pie-fade-in { from { opacity:0; } to { opacity:1; } }

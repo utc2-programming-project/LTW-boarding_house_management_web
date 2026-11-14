@@ -31,16 +31,18 @@
             <AuthorizeView Roles="ChuTro,QuanLy">
                 <Authorized>
                     <a class="btn btn-secondary" href="/contracts/renewals"><LucideIcon Name="refresh-cw" />@L["RenewalQueueNavLabel"]</a>
+                    <a class="btn btn-secondary" href="/contracts/pending-assignments"><LucideIcon Name="user-check" />@L["ContractPendingAssignmentsNavLabel"]</a>
                     <a class="btn btn-primary" href="/contracts/create"><LucideIcon Name="plus" />@L["ContractCreateAction"]</a>
                 </Authorized>
             </AuthorizeView>
         </Actions>
     </PageHeading>
 
-    @if (!_loading && !_failed && _allItems.Count > 0)
+    @if (!_loading && !_failed && _pageResult.Stats.Total > 0)
     {
-        <section class="stat-grid" aria-label="@L["ContractStatSummary"]">
-            <article class="stat-card">
+        <section class="stat-grid stat-grid--five" aria-label="@L["ContractStatSummary"]">
+            <article class='stat-card stat-card--link @FilterCardClass("all")' role="button" tabindex="0"
+                     @onclick="() => ApplyAllStatusFilterAsync()">
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatTotal"]
@@ -48,16 +50,18 @@
                     </span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="file-signature" /></span>
                 </div>
-                <div class="stat-value">@_allItems.Count <small>@L["ContractStatUnit"]</small></div>
+                <div class="stat-value">@_pageResult.Stats.Total <small>@L["ContractStatUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @FilterCardClass("active")' role="button" tabindex="0"
+                     @onclick='() => ApplyStatusFilterAsync("active")'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ContractStatusActive"]</span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                 </div>
                 <div class="stat-value">@CountOf(ContractDisplayStatus.Active) <small>@L["ContractStatUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @FilterCardClass("expiring")' role="button" tabindex="0"
+                     @onclick='() => ApplyStatusFilterAsync("expiring")'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatusExpiringSoon"]
@@ -67,7 +71,8 @@
                 </div>
                 <div class="stat-value">@CountOf(ContractDisplayStatus.ExpiringSoon) <small>@L["ContractStatUnit"]</small></div>
             </article>
-            <article class="stat-card">
+            <article class='stat-card stat-card--link @FilterCardClass("pending")' role="button" tabindex="0"
+                     @onclick='() => ApplyStatusFilterAsync("pending")'>
                 <div class="stat-card__top">
                     <span class="stat-label">
                         @L["ContractStatusPending"]
@@ -76,6 +81,14 @@
                     <span class="stat-icon stat-icon--info"><LucideIcon Name="inbox" /></span>
                 </div>
                 <div class="stat-value">@CountOf(ContractDisplayStatus.Pending) <small>@L["ContractStatUnit"]</small></div>
+            </article>
+            <article class='stat-card stat-card--link @FilterCardClass("deposit-pending")' role="button" tabindex="0"
+                     @onclick='() => ApplyStatusFilterAsync("deposit-pending")'>
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ContractStatusDepositPending"]</span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="wallet" /></span>
+                </div>
+                <div class="stat-value">@_pageResult.Stats.PendingDeposit <small>@L["ContractStatUnit"]</small></div>
             </article>
         </section>
     }
@@ -93,7 +106,13 @@
                 <select id="contract-status-filter" class="input"
                         value="@_statusFilter" @onchange="HandleStatusFilterChanged">
                     <option value="all">@L["ContractFilterStatusAll"]</option>
+                    <option value="draft">@L["ContractStatusDraft"]</option>
+                    <option value="awaiting-tenant">@L["ContractStatusAwaitingTenant"]</option>
+                    <option value="change-requested">@L["ContractStatusChangeRequested"]</option>
+                    <option value="tenant-accepted">@L["ContractStatusTenantAccepted"]</option>
+                    <option value="cancelled">@L["ContractStatusCancelled"]</option>
                     <option value="pending">@L["ContractStatusPending"]</option>
+                    <option value="deposit-pending">@L["ContractStatusDepositPending"]</option>
                     <option value="upcoming">@L["ContractStatusUpcoming"]</option>
                     <option value="active">@L["ContractStatusActive"]</option>
                     <option value="expiring">@L["ContractStatusExpiringSoon"]</option>
@@ -172,16 +191,16 @@
     else if (_failed)
     {
         <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractLoadErrorDescription"]">
-            <button class="btn btn-secondary" @onclick="LoadAsync">@L["ContractRetry"]</button>
+            <button class="btn btn-secondary" @onclick="() => LoadAsync()">@L["ContractRetry"]</button>
         </EmptyStateCard>
     }
-    else if (_items.Count == 0)
+    else if (_pageResult.Stats.Total == 0)
     {
         <EmptyStateCard Title="@L["ContractEmptyTitle"]" Description="@L["ContractEmptyDescription"]">
             <AuthorizeView Roles="ChuTro,QuanLy"><Authorized><a class="btn btn-primary" href="/contracts/create">@L["ContractCreateAction"]</a></Authorized></AuthorizeView>
         </EmptyStateCard>
     }
-    else if (VisibleItems.Count == 0)
+    else if (_pageResult.TotalCount == 0)
     {
         <EmptyStateCard Title="@L["ContractFilterEmptyTitle"]" Description="@L["ContractFilterEmptyDesc"]">
             <button class="btn btn-secondary" @onclick="ResetFiltersAsync">
@@ -200,10 +219,10 @@
                         <th scope="col" class="contract-actions-col">@L["ContractActionsLabel"]</th>
                     </tr></thead>
                     <tbody>
-                    @foreach (var item in PagedItems)
+                    @foreach (var item in _pageResult.Items)
                     {
                         <tr role="row">
-                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a class="cell-link" href="@AppLinks.Contract(item.ContractId)" title="@SL["CellLinkOpenContract"]">@item.ContractNumber</a></td>
+                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a class="cell-link is-code" href="@AppLinks.Contract(item.ContractId)" title="@($"{SL["CellLinkOpenContract"]}: {item.ContractNumber}")">@item.ContractNumber</a></td>
                             <td role="cell" data-label="@L["ContractTenantsLabel"]">
                                 @if (item.TenantNames.Count == 0)
                                 {
@@ -294,7 +313,7 @@
                 </table>
             </div>
 
-            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="VisibleItems.Count"
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_pageResult.TotalCount"
                         PageChanged="GoToPage" />
         </div>
     }
@@ -308,8 +327,7 @@
                OnConfirm="DeleteContractAsync" OnCancel="CancelDeleteContract" />
 
 @code {
-    private IReadOnlyList<ContractListItemDto> _items = [];
-    private IReadOnlyList<ContractListItemDto> _allItems = [];
+    private ContractListPageDto _pageResult = new([], 0, new(0, 0, 0, 0, 0));
     private string? _keyword;
 
     /// <summary>Từ khóa từ link chéo (?q=HD-001 hoặc ?q=A107): điền sẵn ô tìm kiếm.</summary>
@@ -338,6 +356,9 @@
     private IReadOnlyList<string> _propertyOptions = [];
     private int _page = 1;
     private int _pageSize = 20;
+    // Các lượt đọc dùng chung DbContext scoped của circuit: xếp hàng để bấm thẻ KPI/gõ tìm
+    // liên tiếp không chạy hai truy vấn song song trên cùng context.
+    private readonly SemaphoreSlim _reloadGate = new(1, 1);
     private Guid? _openMenuId;
     private bool _deleteVisible;
     private Guid? _deleteContractId;
@@ -351,16 +372,11 @@
 
     private IEnumerable<string> PropertyOptions => _propertyOptions;
 
-    private IReadOnlyList<ContractListItemDto> PagedItems => VisibleItems
-        .Skip((_page - 1) * _pageSize)
-        .Take(_pageSize)
-        .ToList();
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_pageResult.TotalCount / (double)_pageSize));
 
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(VisibleItems.Count / (double)_pageSize));
+    private int FirstItem => _pageResult.TotalCount == 0 ? 0 : (_page - 1) * _pageSize + 1;
 
-    private int FirstItem => VisibleItems.Count == 0 ? 0 : (_page - 1) * _pageSize + 1;
-
-    private int LastItem => Math.Min(_page * _pageSize, VisibleItems.Count);
+    private int LastItem => Math.Min(_page * _pageSize, _pageResult.TotalCount);
 
     private string? FilterError
     {
@@ -374,56 +390,6 @@
         }
     }
 
-    private IReadOnlyList<ContractListItemDto> VisibleItems
-    {
-        get
-        {
-            if (FilterError is not null)
-                return [];
-
-            IEnumerable<ContractListItemDto> query = _items;
-
-            if (_statusFilter != "all")
-            {
-                query = query.Where(item => StatusKey(DisplayStatusOf(item)) == _statusFilter);
-            }
-
-            if (_propertyFilter != "all")
-            {
-                query = query.Where(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase));
-            }
-
-            // Khoảng ngày xét theo giao nhau của thời hạn hợp đồng.
-            if (_termFrom is { } termFrom)
-            {
-                query = query.Where(item => item.EndDate.Date >= termFrom.Date);
-            }
-
-            if (_termTo is { } termTo)
-            {
-                query = query.Where(item => item.StartDate.Date <= termTo.Date);
-            }
-
-            if (_minRent is { } minRent)
-            {
-                query = query.Where(item => item.SnapshotPrice >= minRent);
-            }
-
-            if (_maxRent is { } maxRent)
-            {
-                query = query.Where(item => item.SnapshotPrice <= maxRent);
-            }
-
-            query = _sortFilter switch
-            {
-                "expiring" => query.OrderBy(item => item.EndDate).ThenBy(item => item.RoomCode),
-                "room" => query.OrderBy(item => item.RoomCode, StringComparer.OrdinalIgnoreCase),
-                _ => query.OrderByDescending(item => item.StartDate).ThenBy(item => item.RoomCode),
-            };
-
-            return query.ToList();
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -456,14 +422,10 @@
     {
         try
         {
-            // Danh sách nhà trọ phải lấy từ toàn bộ hợp đồng, không phải từ kết quả
-            // đang lọc từ khoá, để bộ lọc không mất lựa chọn sau khi tìm kiếm.
-            _propertyOptions = (await Contracts.ListAsync(null))
-                .Select(item => item.PropertyName)
+            _propertyOptions = (await Contracts.GetPropertyNamesAsync())
                 .Where(name => !string.IsNullOrWhiteSpace(name))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
+            await InvokeAsync(StateHasChanged);
         }
         catch
         {
@@ -477,30 +439,46 @@
         await LoadAsync();
     }
 
-    private void HandleStatusFilterChanged(ChangeEventArgs e)
+    private Task ApplyAllStatusFilterAsync() => ApplyStatusFilterAsync("all");
+
+    private string FilterCardClass(string status) =>
+        string.Equals(_statusFilter, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyStatusFilterAsync(string status)
+    {
+        _statusFilter = status;
+        // Giữ trang hiện tại và bảng đang hiển thị; chỉ thay dữ liệu sau khi query xong.
+        await LoadAsync(showLoading: false);
+    }
+
+    private async Task HandleStatusFilterChanged(ChangeEventArgs e)
     {
         _statusFilter = e.Value?.ToString() ?? "all";
         ResetPage();
+        await LoadAsync();
     }
 
-    private void HandlePropertyFilterChanged(ChangeEventArgs e)
+    private async Task HandlePropertyFilterChanged(ChangeEventArgs e)
     {
         _propertyFilter = e.Value?.ToString() ?? "all";
         ResetPage();
+        await LoadAsync();
     }
 
-    private void HandleSortChanged(ChangeEventArgs e)
+    private async Task HandleSortChanged(ChangeEventArgs e)
     {
         _sortFilter = e.Value?.ToString() ?? "newest";
         ResetPage();
+        await LoadAsync();
     }
 
-    private void ChangePageSize(ChangeEventArgs e)
+    private async Task ChangePageSize(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out var size) && size is 10 or 20 or 50)
         {
             _pageSize = size;
             ResetPage();
+            await LoadAsync();
         }
     }
 
@@ -510,10 +488,11 @@
         _page = 1;
     }
 
-    private void GoToPage(int page)
+    private async Task GoToPage(int page)
     {
         _openMenuId = null;
         _page = PaginationHelper.ClampPage(page, TotalPages);
+        await LoadAsync();
     }
 
     private bool IsMenuOpen(Guid id) => _openMenuId == id;
@@ -588,29 +567,44 @@
         await LoadAsync();
     }
 
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool showLoading = true)
     {
-        _openMenuId = null;
-        _loading = true; _failed = false;
+        await _reloadGate.WaitAsync();
+        var retry = false;
         try
         {
-            _items = await Contracts.ListAsync(_keyword);
-            // Dải KPI luôn tính trên toàn bộ hợp đồng, không phụ thuộc từ khoá tìm kiếm.
-            _allItems = string.IsNullOrWhiteSpace(_keyword) ? _items : await Contracts.ListAsync(null);
-
-            if (_propertyFilter != "all" &&
-                !_items.Any(item => string.Equals(item.PropertyName, _propertyFilter, StringComparison.OrdinalIgnoreCase)))
+            _openMenuId = null;
+            if (showLoading) _loading = true;
+            _failed = false;
+            try
             {
-                _propertyFilter = "all";
-            }
-        }
-        catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
-        finally { _loading = false; }
+                _pageResult = await Contracts.GetListPageAsync(new ContractListFilter
+                {
+                    Keyword = _keyword,
+                    StatusKey = _statusFilter,
+                    PropertyName = _propertyFilter == "all" ? null : _propertyFilter,
+                    TermFrom = _termFrom,
+                    TermTo = _termTo,
+                    MinRent = _minRent,
+                    MaxRent = _maxRent,
+                    Sort = _sortFilter,
+                    Page = _page,
+                    PageSize = _pageSize,
+                });
 
-        if (_page > TotalPages)
-        {
-            _page = TotalPages;
+                if (_page > TotalPages && TotalPages > 0)
+                {
+                    _page = TotalPages;
+                    retry = true;
+                }
+            }
+            catch { _failed = true; Toasts.Error(L["ContractLoadErrorDescription"]); }
+            finally { _loading = false; }
         }
+        finally { _reloadGate.Release(); }
+
+        // Lùi trang phải chạy lại sau khi nhả cổng, nếu không lần đọc thứ hai sẽ chờ chính nó.
+        if (retry) await LoadAsync();
     }
     private void OpenDecision(Guid id) { _decisionContractId = id; _decisionOpen = true; }
     private Task CloseDecision() { if (!_decisionBusy) _decisionOpen = false; return Task.CompletedTask; }
@@ -630,10 +624,20 @@
     private string ErrorText(Exception ex) => ex is IContractServiceError error ? L[$"ContractError{error.ErrorCode}"] : L["ContractGenericError"];
     private ContractDisplayStatus DisplayStatusOf(ContractListItemDto item) =>
         ContractStatusPresentation.GetDisplayStatus(item.Status, item.StartDate, item.EndDate, Clock.TodayVietnam());
-    private int CountOf(ContractDisplayStatus status) =>
-        _allItems.Count(item => DisplayStatusOf(item) == status);
+    private int CountOf(ContractDisplayStatus status) => status switch
+    {
+        ContractDisplayStatus.Active => _pageResult.Stats.Active,
+        ContractDisplayStatus.ExpiringSoon => _pageResult.Stats.ExpiringSoon,
+        ContractDisplayStatus.Pending => _pageResult.Stats.Pending,
+        _ => 0,
+    };
     private static string StatusKey(ContractDisplayStatus status) => status switch
     {
+        ContractDisplayStatus.Draft => "draft",
+        ContractDisplayStatus.AwaitingTenant => "awaiting-tenant",
+        ContractDisplayStatus.ChangeRequested => "change-requested",
+        ContractDisplayStatus.TenantAccepted => "tenant-accepted",
+        ContractDisplayStatus.Cancelled => "cancelled",
         ContractDisplayStatus.Pending => "pending",
         ContractDisplayStatus.Upcoming => "upcoming",
         ContractDisplayStatus.Active => "active",
@@ -644,6 +648,11 @@
     };
     private string StatusLabel(ContractListItemDto item) => L[StatusKey(DisplayStatusOf(item)) switch
     {
+        "draft" => "ContractStatusDraft",
+        "awaiting-tenant" => "ContractStatusAwaitingTenant",
+        "change-requested" => "ContractStatusChangeRequested",
+        "tenant-accepted" => "ContractStatusTenantAccepted",
+        "cancelled" => "ContractStatusCancelled",
         "pending" => "ContractStatusPending",
         "upcoming" => "ContractStatusUpcoming",
         "active" => "ContractStatusActive",
@@ -654,10 +663,12 @@
     }];
     private BadgeTone StatusTone(ContractListItemDto item) => DisplayStatusOf(item) switch
     {
-        ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon => BadgeTone.Warning,
-        ContractDisplayStatus.Upcoming => BadgeTone.Info,
+        ContractDisplayStatus.Pending or ContractDisplayStatus.ExpiringSoon
+            or ContractDisplayStatus.AwaitingTenant or ContractDisplayStatus.ChangeRequested => BadgeTone.Warning,
+        ContractDisplayStatus.TenantAccepted or ContractDisplayStatus.Upcoming => BadgeTone.Info,
         ContractDisplayStatus.Active => BadgeTone.Success,
-        ContractDisplayStatus.Expired or ContractDisplayStatus.Liquidated => BadgeTone.Neutral,
+        ContractDisplayStatus.Draft or ContractDisplayStatus.Expired
+            or ContractDisplayStatus.Liquidated or ContractDisplayStatus.Cancelled => BadgeTone.Neutral,
         ContractDisplayStatus.Rejected => BadgeTone.Error,
         _ => BadgeTone.Neutral,
     };

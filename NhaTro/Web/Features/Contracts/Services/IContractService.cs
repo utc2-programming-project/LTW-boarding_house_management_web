@@ -15,6 +15,22 @@ public interface IContractService
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
 
+    Task<ContractListPageDto> GetListPageAsync(
+        ContractListFilter filter,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetPropertyNamesAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<ContractHomeSnapshotDto> GetHomeSnapshotAsync(
+        PropertyCaller caller,
+        DateOnly today,
+        int expiringDays = 30,
+        int take = 5,
+        CancellationToken cancellationToken = default);
+
     Task<ContractDetailDto> GetAsync(
         Guid contractId,
         PropertyCaller caller,
@@ -46,6 +62,12 @@ public interface IContractService
     Task<ContractActionResultDto> UpdateDepositAsync(
         Guid contractId,
         decimal depositAmount,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Xác nhận chủ trọ đã thực nhận đủ tiền cọc giữ căn theo hợp đồng.</summary>
+    Task<ContractActionResultDto> RecordDepositPaymentAsync(
+        Guid contractId,
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
 
