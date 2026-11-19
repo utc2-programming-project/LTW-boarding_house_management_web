@@ -44,7 +44,7 @@ public static class VietQrBankCatalog
         new("GPBANK", "GPBank", "970408"),
     ];
 
-    /// <summary>Tra cứu theo mã (không phân biệt hoa thường, chấp nhận mã cũ như ICB/VCB).</summary></summary>
+    /// <summary>Tra cứu theo mã hoặc BIN (không phân biệt hoa thường, chấp nhận mã cũ như ICB/VCB).</summary>
     public static Bank? Find(string? code)
     {
         var normalized = code?.Trim().ToUpperInvariant();
@@ -65,7 +65,7 @@ public static class VietQrBankCatalog
             "STB" => FindExact("SACOMBANK"),
             "HDB" => FindExact("HDBANK"),
             "EIB" => FindExact("EXIMBANK"),
-            _ => FindExact(normalized),
+            _ => FindExact(normalized) ?? FindByBin(normalized),
         };
     }
 
@@ -77,4 +77,8 @@ public static class VietQrBankCatalog
 
     private static Bank? FindExact(string code) =>
         All.FirstOrDefault(bank => string.Equals(bank.Code, code, StringComparison.OrdinalIgnoreCase));
+
+    // Dữ liệu cũ (seed demo) từng lưu BIN vào cột BankCode thay vì mã ngân hàng.
+    private static Bank? FindByBin(string bin) =>
+        All.FirstOrDefault(bank => string.Equals(bank.Bin, bin, StringComparison.Ordinal));
 }

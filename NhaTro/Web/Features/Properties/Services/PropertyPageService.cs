@@ -18,23 +18,8 @@ public sealed class PropertyPageService(
         PropertyFilter filter, CancellationToken ct = default) =>
         await properties.ListAsync(filter, await callerProvider.GetCallerAsync(), ct);
 
-    // Tổng hợp toàn bộ nhà trọ trong phạm vi người xem (list phân trang nên đọc lần lượt từng lô).
-    public async Task<PropertyListSummary> GetSummaryAsync(CancellationToken ct = default)
-    {
-        var caller = await callerProvider.GetCallerAsync();
-        var total = 0;
-        var active = 0;
-        var rooms = 0;
-        for (var page = 1; ; page++)
-        {
-            var batch = await properties.ListAsync(new PropertyFilter { Page = page, PageSize = 100 }, caller, ct);
-            total += batch.Items.Count;
-            active += batch.Items.Count(item => item.IsActive);
-            rooms += batch.Items.Sum(item => item.RoomCount);
-            if (page * 100L >= batch.TotalCount) break;
-        }
-        return new PropertyListSummary(total, active, total - active, rooms);
-    }
+    public async Task<PropertyListSummary> GetSummaryAsync(CancellationToken ct = default) =>
+        await properties.GetSummaryAsync(await callerProvider.GetCallerAsync(), ct);
 
     public async Task<PropertyResult> GetAsync(int id, CancellationToken ct = default) =>
         await properties.GetAsync(id, await callerProvider.GetCallerAsync(), ct);

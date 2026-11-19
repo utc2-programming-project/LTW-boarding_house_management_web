@@ -834,6 +834,10 @@
   <data name="P2RoomDetails" xml:space="preserve"><value>Room details</value></data>
   <data name="P2CreatedAt" xml:space="preserve"><value>Created</value></data>
   <data name="P2UpdatedAt" xml:space="preserve"><value>Last updated</value></data>
+  <data name="P2CurrentTenants" xml:space="preserve"><value>Current tenants</value></data>
+  <data name="P2ContractTerm" xml:space="preserve"><value>Contract term</value></data>
+  <data name="P2RentalWithoutTenant" xml:space="preserve"><value>The active contract has no tenant profiles attached.</value></data>
+  <data name="P2NoActiveContract" xml:space="preserve"><value>The room is marked as rented but has no active contract.</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Pending approval</value></data>
   <data name="P2ApprovalPendingHint" xml:space="preserve"><value>The change needs landlord approval, so it has not been saved.</value></data>
   <data name="P2ApprovalPendingTipTitle" xml:space="preserve"><value>Awaiting landlord approval</value></data>

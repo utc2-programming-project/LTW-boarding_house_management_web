@@ -478,6 +478,8 @@
   <data name="ContractDepositBankLabel" xml:space="preserve"><value>Tài khoản nhận tiền</value></data>
   <data name="ContractDepositBankMissing" xml:space="preserve"><value>Chủ trọ chưa cấu hình tài khoản nhận tiền.</value></data>
   <data name="ContractDepositQrHint" xml:space="preserve"><value>Quét VietQR để chuyển đúng số tiền cọc.</value></data>
+  <data name="ContractDepositCreateQrAction" xml:space="preserve"><value>Tạo mã QR</value></data>
+  <data name="ContractDepositQrError" xml:space="preserve"><value>Không tạo được mã QR vì tài khoản nhận tiền chưa hợp lệ. Vui lòng liên hệ chủ trọ.</value></data>
   <data name="ContractDepositProofLabel" xml:space="preserve"><value>Minh chứng chuyển cọc</value></data>
   <data name="ContractDepositProofHint" xml:space="preserve"><value>Ảnh hoặc PDF xác nhận giao dịch, tối đa 5 tệp.</value></data>
   <data name="ContractDepositProofRequired" xml:space="preserve"><value>Vui lòng tải lên ít nhất một minh chứng chuyển cọc.</value></data>

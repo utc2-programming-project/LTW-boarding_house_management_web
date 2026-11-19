@@ -1,5 +1,5 @@
 @inject IStringLocalizer<DashboardResource> L
-<section class="dashboard-panel" aria-busy="@(State == DashboardLoadState.Loading)">
+<section class="dashboard-panel @CssClass" aria-busy="@(State == DashboardLoadState.Loading)">
 <header><LucideIcon Name="@Icon" /><h2>@Title</h2></header>
 @if (State == DashboardLoadState.Loading)
 {
@@ -17,6 +17,7 @@ else
 </section>
 @code {
     [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? CssClass { get; set; }
     [Parameter] public string Icon { get; set; } = "chart";
     [Parameter] public DashboardLoadState State { get; set; } = DashboardLoadState.Loaded;
     [Parameter] public string DeniedText { get; set; } = "";

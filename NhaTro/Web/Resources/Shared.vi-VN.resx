@@ -834,6 +834,10 @@
   <data name="P2RoomDetails" xml:space="preserve"><value>Chi tiết phòng</value></data>
   <data name="P2CreatedAt" xml:space="preserve"><value>Ngày tạo</value></data>
   <data name="P2UpdatedAt" xml:space="preserve"><value>Cập nhật lần cuối</value></data>
+  <data name="P2CurrentTenants" xml:space="preserve"><value>Khách đang thuê</value></data>
+  <data name="P2ContractTerm" xml:space="preserve"><value>Thời hạn hợp đồng</value></data>
+  <data name="P2RentalWithoutTenant" xml:space="preserve"><value>Hợp đồng hiệu lực chưa gắn hồ sơ khách thuê.</value></data>
+  <data name="P2NoActiveContract" xml:space="preserve"><value>Phòng đang ở trạng thái cho thuê nhưng chưa có hợp đồng hiệu lực.</value></data>
   <data name="P2ApprovalPending" xml:space="preserve"><value>Chờ duyệt</value></data>
   <data name="P2ApprovalPendingHint" xml:space="preserve"><value>Thay đổi cần Chủ trọ duyệt nên chưa được lưu.</value></data>
   <data name="P2ApprovalPendingTipTitle" xml:space="preserve"><value>Chờ Chủ trọ duyệt</value></data>

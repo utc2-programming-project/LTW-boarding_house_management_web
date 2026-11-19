@@ -142,6 +142,12 @@ public sealed class PropertyTrashComponentTests : BunitContext
                 TotalCount = Trash.Count,
             });
 
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
+
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(PropertyResult.Success(new PropertyDetail { Id = id, OwnerId = caller.UserId }));
 

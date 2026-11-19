@@ -3,8 +3,6 @@
     grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
     align-items: center;
     gap: var(--space-12);
-    max-width: 1200px;
-    margin: 0 auto;
     padding: var(--space-16) var(--space-8) var(--space-12);
 }
 
@@ -235,8 +233,6 @@
 }
 
 .landing-section {
-    max-width: 1200px;
-    margin: 0 auto;
     padding: var(--space-12) var(--space-8);
     scroll-margin-top: 88px;
 }
@@ -271,11 +267,11 @@
 }
 
 .feature-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
 }
 
 .role-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
 .feature-card,
@@ -353,8 +349,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-6);
-    max-width: 1200px;
-    margin: 0 auto var(--space-12);
+    margin: 0 0 var(--space-12);
     padding: var(--space-8);
     border: 1px solid var(--accent-border);
     border-radius: var(--radius-card);

@@ -5,6 +5,7 @@ using Web.Features.Audit.Entities;
 using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Entities;
 using Web.Features.Properties.Mapping;
+using Web.Features.Properties.Services;
 
 namespace Web.Features.Properties;
 
@@ -72,6 +73,53 @@ public sealed class PropertyService(
             PageSize = filter.PageSize,
             TotalCount = total,
         };
+    }
+
+    public async Task<PropertyListSummary> GetSummaryAsync(
+        PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var query = ScopeQuery(db, caller).AsNoTracking();
+
+        var counts = await query
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                Total = group.Count(),
+                Active = group.Count(property => property.IsActive),
+            })
+            .SingleOrDefaultAsync(ct);
+
+        var rooms = await (
+                from room in db.Rooms.AsNoTracking()
+                join property in query on room.PropertyId equals property.Id
+                select room.Id)
+            .CountAsync(ct);
+
+        var total = counts?.Total ?? 0;
+        var active = counts?.Active ?? 0;
+        return new PropertyListSummary(total, active, total - active, rooms);
+    }
+
+    public async Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(
+        PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        return await ScopeQuery(db, caller).AsNoTracking()
+            .OrderBy(property => property.Name)
+            .ThenBy(property => property.Id)
+            .Select(property => new PropertyListItem
+            {
+                Id = property.Id,
+                Name = property.Name,
+                Address = property.Address,
+                IsActive = property.IsActive,
+            })
+            .ToListAsync(ct);
     }
 
     public async Task<PropertyResult> GetAsync(
