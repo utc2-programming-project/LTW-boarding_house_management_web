@@ -4,7 +4,7 @@
 >
 > **Phối hợp:** Tính (kiểm quyền / cấu hình giới hạn), Phúc/Phú (nhu cầu tệp, dữ liệu gửi lên).
 > **Bàn giao cho:** VHT-13 (Tạo storage backend dùng chung).
-> **Nguồn đối chiếu:** `docs/task/cong_viec_theo_tuan.md` (VHT-33/39/60 ảnh sự cố; VHT-54/55 minh chứng thanh toán), `docs/architecture/cau_truc_thu_muc.md` dòng 238, `docs/task/thao_tac_va_quyen.xlsx`, `docs/design/phong_cach_giao_dien.md` §9 (Admin không có nghiệp vụ).
+> **Nguồn đối chiếu:** `docs/architecture/cau_truc_thu_muc.md` dòng 238, `docs/task/thao_tac_va_quyen.xlsx`, `docs/design/phong_cach_giao_dien.md` §9 (Admin không có nghiệp vụ).
 
 ---
 

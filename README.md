@@ -288,8 +288,7 @@ LTW-boarding_house_management_web/             Thư mục gốc repository
 | Cấu trúc thư mục và quy tắc phụ thuộc | [docs/architecture/cau_truc_thu_muc.md](docs/architecture/cau_truc_thu_muc.md) |
 | Công nghệ và quy ước | [docs/tech-stack/cong_nghe_su_dung.md](docs/tech-stack/cong_nghe_su_dung.md) |
 | Quy chuẩn giao diện | [docs/design/phong_cach_giao_dien.md](docs/design/phong_cach_giao_dien.md) |
-| Phân công và lịch theo tuần | [docs/task/phan_cong_cong_viec.md](docs/task/phan_cong_cong_viec.md), [docs/task/cong_viec_theo_tuan.md](docs/task/cong_viec_theo_tuan.md) |
-| Dàn ý báo cáo Word | [docs/report/dan_y_bao_cao_word.docx](docs/report/dan_y_bao_cao_word.docx) |
+| Dàn ý báo cáo Word | [docs/report/Dan_Y_Word.docx](docs/report/Dan_Y_Word.docx) |
 
 **Quy tắc ngắn cho cả nhóm**
 

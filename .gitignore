@@ -45,7 +45,6 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 docs/Imp/*
-docs/spec/
 
 scripts/*
 !scripts/database/

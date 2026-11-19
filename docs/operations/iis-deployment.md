@@ -1,6 +1,6 @@
 # VHT-44 — Publish IIS thử (2B và 2E)
 
-Áp dụng cho một site ở root `/`, một máy Windows/IIS và SQL Server thử. Phú ghép/publish; Tính bàn giao migration, cấu hình và keys; Phát phối hợp smoke. Theo dõi từng đợt trong [release record](vht-44-release-record.md). Hướng dẫn này không chứng minh đã có bản IIS chạy đạt.
+Áp dụng cho một site ở root `/`, một máy Windows/IIS và SQL Server thử. Phú ghép/publish; Tính bàn giao migration, cấu hình và keys; Phát phối hợp smoke. Hướng dẫn này không chứng minh đã có bản IIS chạy đạt.
 
 ## 1. Điền thông tin trước khi thao tác server
 

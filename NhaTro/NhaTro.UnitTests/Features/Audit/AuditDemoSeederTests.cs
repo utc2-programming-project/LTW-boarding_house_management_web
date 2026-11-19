@@ -19,7 +19,8 @@ public sealed class AuditDemoSeederTests : IDisposable
     private readonly string _root = Path.Combine(
         Path.GetTempPath(), "NhaTro_AuditDemoTests", Guid.NewGuid().ToString("N"));
 
-    private static readonly DateTimeOffset Now = new(2026, 11, 13, 3, 0, 0, TimeSpan.Zero);
+    // ReadAsync lọc theo hạn lưu tính từ UtcNow, nên mốc seed phải bám đồng hồ thật.
+    private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
 
     private ApplicationDbContext NewDb()
     {
