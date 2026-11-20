@@ -23,6 +23,8 @@
 <data name="TotalRoomsShort" xml:space="preserve"><value>Tổng phòng</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
 <data name="Revenue" xml:space="preserve"><value>Doanh thu ghi nhận</value></data>
+<data name="TotalRevenue" xml:space="preserve"><value>Tổng doanh thu</value></data>
+<data name="AllTimeData" xml:space="preserve"><value>Số liệu luỹ kế toàn bộ</value></data>
 <data name="Debt" xml:space="preserve"><value>Công nợ còn phải thu</value></data>
 <data name="Incidents" xml:space="preserve"><value>Sự cố trong kỳ</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Phòng</value></data>

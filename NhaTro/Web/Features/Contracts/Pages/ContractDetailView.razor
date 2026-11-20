@@ -247,7 +247,7 @@
             @if (_canManage)
             {
                 <details class="contract-action-menu">
-                    <summary class="btn btn-secondary"><LucideIcon Name="more-horizontal" />@L["ContractMoreActions"]</summary>
+                    <summary class="btn btn-secondary"><LucideIcon Name="ellipsis" />@L["ContractMoreActions"]</summary>
                     <div class="contract-action-menu-panel">
                         @if (_contract.Status is ContractStatus.Draft or ContractStatus.ChangeRequested)
                         {
@@ -264,7 +264,7 @@
                         }
                         @if (_contract.CanLiquidate)
                         {
-                            <button type="button" class="p2-row-menu-item danger" @onclick="() => OpenLifecycle(false)"><LucideIcon Name="x-circle" /><span>@L["ContractLiquidateAction"]</span></button>
+                            <button type="button" class="p2-row-menu-item danger" @onclick="() => OpenLifecycle(false)"><LucideIcon Name="circle-x" /><span>@L["ContractLiquidateAction"]</span></button>
                         }
                         @if (_contract.DepositPaidAmount is not null)
                         {

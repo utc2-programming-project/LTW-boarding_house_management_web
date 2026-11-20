@@ -194,6 +194,12 @@ public sealed class PropertyManagerAssignmentComponentTests : BunitContext
             PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<PropertyListItem>());
 
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
+
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(PropertyResult.Success(new PropertyDetail
             {

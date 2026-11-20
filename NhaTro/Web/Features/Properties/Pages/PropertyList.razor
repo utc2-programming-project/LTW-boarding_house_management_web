@@ -301,21 +301,28 @@
             _isOwner = role == Roles.ChuTro;
             _ready = true;
 
-            try
-            {
-                _summary = await PageService.GetSummaryAsync();
-            }
-            catch (Exception ex)
-            {
-                // Dải KPI chỉ là phụ trợ: lỗi tải số liệu không chặn bảng danh sách.
-                Logger.LogError(ex, "P2 property summary failed");
-            }
+            // Bảng tải trước; KPI là phần phụ trợ nên cập nhật sau, không chặn render.
+            _ = LoadSummaryAsync();
         }
         catch (Exception ex)
         {
             _ready = false;
             _pageError = L["P2LoadFailed"];
             Logger.LogError(ex, "P2 property page initialization failed");
+        }
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        try
+        {
+            _summary = await PageService.GetSummaryAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            // Dải KPI chỉ là phụ trợ: lỗi tải số liệu không chặn bảng danh sách.
+            Logger.LogError(ex, "P2 property summary failed");
         }
     }
 

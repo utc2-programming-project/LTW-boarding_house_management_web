@@ -12,6 +12,7 @@ using Web.Infrastructure.Storage;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
+using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Rooms.Entities;
@@ -20,6 +21,7 @@ using Web.Features.Rooms.Mapping;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings;
 using Web.Features.Settings.Enums;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Rooms;
 
@@ -112,9 +114,67 @@ public sealed class RoomService(
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
             .FirstOrDefaultAsync(ct);
 
-        return row is null
-            ? NotFound()
-            : RoomResult.Success(RoomMapping.ToDetail(row.Room, row.PropertyName));
+        if (row is null)
+        {
+            return NotFound();
+        }
+
+        var detail = RoomMapping.ToDetail(row.Room, row.PropertyName);
+        detail.CurrentRental = await LoadCurrentRentalAsync(db, row.Room.Id, ct);
+        return RoomResult.Success(detail);
+    }
+
+    // "Đang thuê" lấy từ hợp đồng đã duyệt, hôm nay nằm trong [StartDate, EndDate] —
+    // cùng định nghĩa hiệu lực với ActiveContractRoomUsageChecker/ContractService.
+    private async Task<RoomRentalDetail?> LoadCurrentRentalAsync(
+        ApplicationDbContext db, int roomId, CancellationToken ct)
+    {
+        var todayStart = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+
+        var contract = await db.Contracts
+            .AsNoTracking()
+            .Where(contract => contract.RoomId == roomId
+                && contract.Status == ContractStatus.Approved
+                && contract.StartDate <= todayStart
+                && contract.EndDate >= todayStart)
+            .OrderByDescending(contract => contract.StartDate)
+            .Select(contract => new
+            {
+                contract.ContractId,
+                contract.ContractNumber,
+                contract.StartDate,
+                contract.EndDate,
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (contract is null)
+        {
+            return null;
+        }
+
+        var tenants = await (
+            from member in db.ContractMembers.AsNoTracking()
+            join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+            where member.ContractId == contract.ContractId
+            orderby member.IsRepresentative descending, tenant.FullName
+            select new RoomTenantDetail
+            {
+                TenantId = tenant.Id,
+                FullName = tenant.FullName,
+                Phone = tenant.Phone,
+                Relationship = member.Relationship,
+                IsRepresentative = member.IsRepresentative,
+            })
+            .ToListAsync(ct);
+
+        return new RoomRentalDetail
+        {
+            ContractId = contract.ContractId,
+            ContractNumber = contract.ContractNumber,
+            StartDate = contract.StartDate,
+            EndDate = contract.EndDate,
+            Tenants = tenants,
+        };
     }
 
     public async Task<RoomResult> CreateAsync(

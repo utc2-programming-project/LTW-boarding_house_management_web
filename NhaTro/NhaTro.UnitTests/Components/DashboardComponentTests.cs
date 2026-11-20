@@ -12,7 +12,7 @@ public sealed class DashboardComponentTests : BunitContext
     public DashboardComponentTests() { Services.AddLogging(); Services.AddLocalization(options => options.ResourcesPath = "Resources"); }
 
     [Theory]
-    [InlineData(true, 5)]
+    [InlineData(true, 6)]
     [InlineData(false, 3)]
     public void Financial_cards_only_render_for_owner(bool owner, int count)
     {
@@ -20,15 +20,19 @@ public sealed class DashboardComponentTests : BunitContext
             .Add(c => c.State, DashboardLoadState.Loaded).Add(c => c.Kpis, new RoomReportKpis { Total = 8, Rented = 5, Maintenance = 2 })
             .Add(c => c.RoomsHref, "/rooms?propertyId=7")
             .Add(c => c.Revenue, new RevenueReportDto(1000m, 250m, 2, 1, []))
+            .Add(c => c.TotalRevenue, new RevenueReportDto(9000m, 1200m, 12, 4, []))
             .Add(c => c.Incidents, new IncidentReportKpis { Total = 2 })
             .Add(c => c.RevenueHref, "/reports?propertyId=7")
-            .Add(c => c.IncidentsHref, "/reports?propertyId=7"));
+            .Add(c => c.IncidentsHref, "/reports?propertyId=7")
+            .Add(c => c.DebtHref, "/invoices?paymentState=unpaid"));
         Assert.Equal(count, component.FindAll("article").Count);
         Assert.DoesNotContain("unwired", component.Markup);
         var hrefs = component.FindAll("a").Select(a => a.GetAttribute("href")).Distinct().ToList();
         Assert.Contains("/rooms?propertyId=7", hrefs);
         Assert.Contains("/reports?propertyId=7", hrefs);
         Assert.Contains("83,3 %", component.Markup);
+        if (owner)
+            Assert.Contains("/invoices?paymentState=unpaid", hrefs);
     }
 
     [Fact]

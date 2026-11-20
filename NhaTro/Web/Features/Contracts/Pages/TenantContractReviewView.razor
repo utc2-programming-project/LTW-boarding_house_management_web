@@ -133,12 +133,28 @@
                     }
                 </dl>
 
-                @if (_bankAccount is { IsConfigured: true } && _depositQrUri is not null)
+                @if (_bankAccount is { IsConfigured: true })
                 {
-                    <div class="contract-review-qr">
-                        <img src="@_depositQrUri" alt="VietQR" width="220" height="220" />
-                        <p>@L["ContractDepositQrHint"]</p>
-                    </div>
+                    @if (_depositQrUri is not null)
+                    {
+                        <div class="contract-review-qr">
+                            <img src="@_depositQrUri" alt="VietQR" width="220" height="220" />
+                            <p>@L["ContractDepositQrHint"]</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="contract-review-qr">
+                            <button type="button" class="btn btn-primary" @onclick="GenerateDepositQr">
+                                <LucideIcon Name="qr-code" />
+                                <span>@L["ContractDepositCreateQrAction"]</span>
+                            </button>
+                        </div>
+                        @if (_depositQrError is not null)
+                        {
+                            <p class="contract-review-error" role="alert">@_depositQrError</p>
+                        }
+                    }
                 }
 
                 @if (_review.Contract.DepositPaidAmount is null)
@@ -246,6 +262,7 @@
     private string _depositTransactionCode = string.Empty;
     private IReadOnlyList<IBrowserFile> _depositProofFiles = [];
     private string? _depositQrUri;
+    private string? _depositQrError;
     private bool _depositBusy;
     private string? _depositError;
     private string DepositProofAccept => string.Join(",", PaymentPage.ProofPolicy.AllowedExtensions);
@@ -270,6 +287,8 @@
     {
         _depositPayment = null;
         _bankAccount = null;
+        _depositQrUri = null;
+        _depositQrError = null;
         if (_review is not { IsAccepted: true })
         {
             return;
@@ -280,18 +299,35 @@
             var caller = await Callers.GetCallerAsync();
             _depositPayment = await DepositPayments.GetLatestAsync(ContractId, caller);
             _bankAccount = await OwnerBank.GetForContractAsync(ContractId);
-            if (_bankAccount is { IsConfigured: true })
-            {
-                _depositQrUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
-                    _bankAccount.BankCode,
-                    _bankAccount.AccountNumber,
-                    _review.Contract.DepositAmount,
-                    $"COC-{ContractId:N}"));
-            }
         }
         catch
         {
             // Khối thanh toán cọc không được làm hỏng trang xem hợp đồng.
+        }
+
+        GenerateDepositQr();
+    }
+
+    private void GenerateDepositQr()
+    {
+        _depositQrUri = null;
+        _depositQrError = null;
+        if (_review is null || _bankAccount is not { IsConfigured: true })
+        {
+            return;
+        }
+
+        try
+        {
+            _depositQrUri = VietQr.ImageDataUri(VietQr.GeneratePayload(
+                _bankAccount.BankCode,
+                _bankAccount.AccountNumber,
+                _review.Contract.DepositAmount,
+                $"COC-{ContractId:N}"));
+        }
+        catch (Exception)
+        {
+            _depositQrError = L["ContractDepositQrError"];
         }
     }
 

@@ -6,6 +6,20 @@
     color: var(--text-primary);
 }
 
+/* Bảy nút hành động không được ép tiêu đề/breadcrumb còn một ký tự. */
+.leased-room-page ::deep .page-heading {
+    flex-wrap: wrap;
+}
+
+.leased-room-page ::deep .page-heading-main {
+    flex: 1 1 20rem;
+}
+
+.leased-room-page ::deep .page-heading-actions {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .leased-room-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
