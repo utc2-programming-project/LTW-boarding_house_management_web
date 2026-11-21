@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Data.SqlClient;
 using System.Text.Json;
 using Web.Common.Models;
@@ -1272,7 +1273,11 @@ public sealed class ContractService : IContractService
             CreatedAt = _timeProvider.GetUtcNow(),
         };
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Có thể được gọi từ luồng đã mở transaction sẵn (vd. duyệt đề xuất AI); khi đó
+        // tham gia transaction ngoài thay vì mở transaction lồng không được hỗ trợ.
+        IDbContextTransaction? transaction = _context.Database.CurrentTransaction is null
+            ? await _context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
         try
         {
             // Khóa phòng để hai yêu cầu tạo đồng thời không cùng lọt qua bước kiểm trùng.
@@ -1360,19 +1365,33 @@ public sealed class ContractService : IContractService
             }
 
             await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
         }
         catch
         {
-            try
+            if (transaction is not null)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                try
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+                catch
+                {
+                    // Preserve the original write exception if rollback also fails.
+                }
             }
-            catch
-            {
-                // Preserve the original write exception if rollback also fails.
-            }
+
             throw;
+        }
+        finally
+        {
+            if (transaction is not null)
+            {
+                await transaction.DisposeAsync();
+            }
         }
 
         return new ContractResponseDto(

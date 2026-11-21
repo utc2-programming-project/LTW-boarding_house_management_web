@@ -13,6 +13,7 @@ using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
 using Web.Features.Accounts.Otp;
+using Web.Features.Assistant.Entities;
 using Web.Data.Tariffs;
 
 namespace Web.Data
@@ -65,6 +66,11 @@ namespace Web.Data
 
         // VHT-96: hang doi duyet thao tac Quan ly (NEW-03).
         public DbSet<ManagerApprovalRequest> ManagerApprovalRequests => Set<ManagerApprovalRequest>();
+
+        // Trợ lý AI: đề xuất chờ Chủ trọ duyệt, nhật ký gọi model và cài đặt theo Chủ trọ.
+        public DbSet<AiSuggestion> AiSuggestions => Set<AiSuggestion>();
+        public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
+        public DbSet<AiAssistantSettings> AiAssistantSettings => Set<AiAssistantSettings>();
         public DbSet<UtilityTariff> UtilityTariffs => Set<UtilityTariff>();
         public DbSet<UtilityTariffTier> UtilityTariffTiers => Set<UtilityTariffTier>();
         public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();

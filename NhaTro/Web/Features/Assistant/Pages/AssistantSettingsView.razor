@@ -1,0 +1,172 @@
+@page "/assistant/settings"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject AiAssistantPageService PageService
+@inject P2CallerProvider Callers
+@inject ToastService Toasts
+@inject IStringLocalizer<AssistantResources> L
+@inject IStringLocalizer<Shared> SL
+@inject ILogger<AssistantSettingsView> Logger
+
+<PageTitle>@L["SettingsPageTitle"] · @SL["AppName"]</PageTitle>
+<HeadContent><link rel="stylesheet" href="/css/assistant.css" /></HeadContent>
+
+<div class="assistant-page page-stack">
+    <PageHeading Title="@L["SettingsPageTitle"]" HelpText="@L["SettingsHelp"]">
+        <Actions>
+            <a class="btn btn-secondary" href="/assistant">
+                <LucideIcon Name="arrow-left" />@L["BackToAssistant"]
+            </a>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["LoadFailedTitle"]" Description="@L["LoadFailedDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_settings is not null)
+    {
+        <div class="stat-grid stat-grid--three">
+            <div class="stat-card @(_settings.Enabled ? null : "stat-card--warning")">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatusLabel"]</span>
+                    <span class="stat-icon @(_settings.Enabled ? "stat-icon--success" : "stat-icon--warning")">
+                        <LucideIcon Name="@(_settings.Enabled ? "unlock" : "lock")" />
+                    </span>
+                </div>
+                <div class="stat-value stat-value--text">
+                    @(_settings.Enabled ? L["EnabledOn"] : L["EnabledOff"])
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["UsedToday"]</span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="zap" /></span>
+                </div>
+                <div class="stat-value">@_settings.UsedToday <small>/ @_settings.DailyRequestLimit</small></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["ProviderLabel"]</span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="sparkles" /></span>
+                </div>
+                <div class="stat-value stat-value--text">@_settings.Provider</div>
+            </div>
+        </div>
+
+        <section class="assistant-settings-card" aria-labelledby="assistant-settings-form-title">
+            <h2 id="assistant-settings-form-title">@L["SettingsFormTitle"]</h2>
+
+            <label class="assistant-toggle">
+                <input type="checkbox" @bind="_enabled" disabled="@_busy" />
+                <span>
+                    <strong>@L["EnabledLabel"]</strong>
+                    <small>@L["EnabledHint"]</small>
+                </span>
+            </label>
+
+            <div class="assistant-form__field">
+                <label for="assistant-daily-limit">@L["DailyLimitLabel"]</label>
+                <input id="assistant-daily-limit" class="input assistant-limit" type="number"
+                       min="1" max="1000" @bind="_dailyLimit" disabled="@_busy" />
+                <p class="assistant-form__hint">@L["DailyLimitHint"]</p>
+            </div>
+            <p class="assistant-form__hint">@L["DailyLimitDefault"]: @_settings.DefaultDailyLimit</p>
+
+            <div class="assistant-notice @(_settings.IsDemo ? null : "assistant-notice--info")" role="note">
+                <LucideIcon Name="@(_settings.IsDemo ? "circle-help" : "shield-check")" />
+                <span>@(_settings.IsDemo ? L["DemoNotice"] : L["LiveNotice"])</span>
+            </div>
+            <p class="assistant-form__hint">@L["ModelLabel"]: @_settings.Model</p>
+
+            @if (_error is not null)
+            {
+                <p class="field-error" role="alert">@_error</p>
+            }
+
+            <div class="assistant-form__actions">
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="SaveAsync">
+                    <LucideIcon Name="check" />
+                    <span>@(_busy ? L["Saving"] : L["Save"])</span>
+                </button>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private AiSettingsDto? _settings;
+    private PropertyCaller? _caller;
+    private bool _loading = true;
+    private bool _failed;
+    private bool _busy;
+    private bool _enabled = true;
+    private int _dailyLimit = 50;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _failed = false;
+        try
+        {
+            _caller = await Callers.GetCallerAsync();
+            var result = await PageService.GetSettingsAsync(_caller);
+            if (!result.Succeeded || result.Settings is null)
+            {
+                _failed = true;
+                return;
+            }
+
+            _settings = result.Settings;
+            _enabled = _settings.Enabled;
+            _dailyLimit = _settings.DailyRequestLimit;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Không tải được cài đặt Trợ lý AI");
+            _failed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_caller is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await PageService.SaveSettingsAsync(_caller, _enabled, _dailyLimit);
+            if (!result.Succeeded || result.Settings is null)
+            {
+                _error = result.ErrorMessage ?? L["SaveFailed"];
+                return;
+            }
+
+            _settings = result.Settings;
+            _enabled = _settings.Enabled;
+            _dailyLimit = _settings.DailyRequestLimit;
+            Toasts.Success(L["SaveSuccess"]);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

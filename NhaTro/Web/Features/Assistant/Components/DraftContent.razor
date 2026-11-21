@@ -1,0 +1,273 @@
+@inject IStringLocalizer<AssistantResources> L
+
+@switch (UseCase)
+{
+    case AiUseCase.ReportSummary when Draft.ReportSummary is { } report:
+        <div class="draft-block">
+            <h3 class="draft-headline">@report.Headline</h3>
+            <p class="draft-summary">@report.Summary</p>
+
+            @if (report.Metrics.Count > 0)
+            {
+                <dl class="draft-metrics">
+                    @foreach (var metric in report.Metrics)
+                    {
+                        <div>
+                            <dt>@metric.Label</dt>
+                            <dd>@metric.Value</dd>
+                        </div>
+                    }
+                </dl>
+            }
+
+            @if (report.Insights.Count > 0)
+            {
+                <h4 class="draft-subtitle">@L["Insights"]</h4>
+                <ul class="draft-insights">
+                    @foreach (var insight in report.Insights)
+                    {
+                        <li class="draft-insight draft-insight--@insight.Severity">
+                            <strong>@insight.Title</strong>
+                            <span>@insight.Detail</span>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (report.Actions.Count > 0)
+            {
+                <h4 class="draft-subtitle">@L["Actions"]</h4>
+                <ul class="draft-actions">
+                    @foreach (var action in report.Actions)
+                    {
+                        <li>
+                            <div>
+                                <strong>@action.Title</strong>
+                                <span>@action.Detail</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(action.Link))
+                            {
+                                <a class="btn btn-secondary btn-sm" href="@action.Link">@L["OpenLink"]</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        break;
+
+    case AiUseCase.ReminderMessage when Draft.Notification is { } message:
+        <div class="draft-block">
+            <h3 class="draft-headline">@message.Title</h3>
+            <p class="draft-body">@message.Body</p>
+            @if (!string.IsNullOrWhiteSpace(message.Notes))
+            {
+                <p class="draft-note"><LucideIcon Name="info" /><span>@message.Notes</span></p>
+            }
+        </div>
+        break;
+
+    case AiUseCase.RoomDraft when Draft.RoomDraft is { } roomDraft:
+        <div class="draft-block">
+            @if (roomDraft.Property is { } property)
+            {
+                <div class="draft-property">
+                    <strong>@property.Name</strong>
+                    <span>@property.Address</span>
+                </div>
+            }
+
+            <h4 class="draft-subtitle">@string.Format(L["RoomCount"], roomDraft.Rooms.Count)</h4>
+            <div class="draft-table-wrap">
+                <table class="data-table draft-table">
+                    <thead>
+                        <tr>
+                            <th>@L["RoomCode"]</th>
+                            <th class="num">@L["Floor"]</th>
+                            <th class="num">@L["Area"]</th>
+                            <th class="num">@L["Price"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var room in roomDraft.Rooms)
+                        {
+                            <tr>
+                                <td><strong>@room.Code</strong></td>
+                                <td class="num">@(room.Floor?.ToString() ?? "—")</td>
+                                <td class="num">@(room.AreaM2 is { } area ? $"{area:N0} m²" : "—")</td>
+                                <td class="num">@room.StandardPrice.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(roomDraft.Notes))
+            {
+                <p class="draft-note"><LucideIcon Name="info" /><span>@roomDraft.Notes</span></p>
+            }
+        </div>
+        break;
+
+    case AiUseCase.IncidentTriage when Draft.Incident is { } incident:
+        <div class="draft-block">
+            <dl class="draft-fields">
+                <div><dt>@L["IncidentCategory"]</dt><dd>@CategoryText(incident.Category)</dd></div>
+                <div><dt>@L["IncidentUrgency"]</dt><dd>@UrgencyText(incident.Urgency)</dd></div>
+                <div><dt>@L["IncidentAssignee"]</dt><dd>@(string.IsNullOrWhiteSpace(incident.Assignee) ? "—" : incident.Assignee)</dd></div>
+            </dl>
+            <p class="draft-summary">@incident.Reason</p>
+            @if (!string.IsNullOrWhiteSpace(incident.SuggestedTitle))
+            {
+                <div class="draft-suggestion">
+                    <span>@L["SuggestedTitle"]</span>
+                    <strong>@incident.SuggestedTitle</strong>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(incident.SuggestedDescription))
+            {
+                <p class="draft-body">@incident.SuggestedDescription</p>
+            }
+        </div>
+        break;
+
+    case AiUseCase.DailySummary when Draft.WorkSummary is { } work:
+        <div class="draft-block">
+            <h3 class="draft-headline">@work.Headline</h3>
+            <p class="draft-summary">@work.Summary</p>
+            @if (work.Items.Count > 0)
+            {
+                <ul class="draft-work">
+                    @foreach (var item in work.Items)
+                    {
+                        <li class="draft-work__item draft-work__item--@item.Severity">
+                            <span class="draft-work__count">@item.Count</span>
+                            <div class="draft-work__body">
+                                <strong>@item.Label</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Detail))
+                                {
+                                    <span>@item.Detail</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(item.Link))
+                            {
+                                <a class="btn btn-secondary btn-sm" href="@item.Link">@L["OpenLink"]</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        break;
+
+    case AiUseCase.TenantDraft when Draft.TenantDraft is { } tenant:
+        <div class="draft-block">
+            <h3 class="draft-headline">@tenant.FullName</h3>
+            <dl class="draft-fields">
+                <div><dt>@L["TenantPhone"]</dt><dd>@tenant.PhoneNumber</dd></div>
+                <div><dt>@L["TenantEmail"]</dt><dd>@(string.IsNullOrWhiteSpace(tenant.Email) ? "—" : tenant.Email)</dd></div>
+                <div><dt>@L["TenantBirthDate"]</dt><dd>@(string.IsNullOrWhiteSpace(tenant.DateOfBirth) ? "—" : tenant.DateOfBirth)</dd></div>
+                <div><dt>@L["TenantGender"]</dt><dd>@GenderText(tenant.Gender)</dd></div>
+                <div><dt>@L["TenantAddress"]</dt><dd>@(string.IsNullOrWhiteSpace(tenant.PermanentAddress) ? "—" : tenant.PermanentAddress)</dd></div>
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(tenant.Note))
+            {
+                <p class="draft-note"><LucideIcon Name="info" /><span>@tenant.Note</span></p>
+            }
+            <p class="draft-note"><LucideIcon Name="shield-check" /><span>@L["TenantNoIdHint"]</span></p>
+        </div>
+        break;
+
+    case AiUseCase.ServiceDraft when Draft.ServiceDraft is { } service:
+        <div class="draft-block">
+            <h3 class="draft-headline">@service.Name</h3>
+            <dl class="draft-fields">
+                <div><dt>@L["ServiceUnit"]</dt><dd>@service.Unit</dd></div>
+                <div><dt>@L["ServiceMethod"]</dt><dd>@MethodText(service.CalculationMethod)</dd></div>
+                <div><dt>@L["Price"]</dt><dd>@service.UnitPrice.ToString("N0") đ</dd></div>
+                <div><dt>@L["ServiceEffective"]</dt><dd>@service.EffectiveDate</dd></div>
+                @if (!string.IsNullOrWhiteSpace(service.EffectiveTo))
+                {
+                    <div><dt>@L["ServiceEffectiveTo"]</dt><dd>@service.EffectiveTo</dd></div>
+                }
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(service.Description))
+            {
+                <p class="draft-summary">@service.Description</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(service.Note))
+            {
+                <p class="draft-note"><LucideIcon Name="info" /><span>@service.Note</span></p>
+            }
+        </div>
+        break;
+
+    case AiUseCase.ContractDraft when Draft.ContractDraft is { } contract:
+        <div class="draft-block">
+            <h3 class="draft-headline">
+                @L["ContractRoom"]: @(contract.RoomCode ?? contract.RoomId?.ToString() ?? "—")
+            </h3>
+            <dl class="draft-fields">
+                <div><dt>@L["ContractTenants"]</dt><dd>@TenantText(contract)</dd></div>
+                <div><dt>@L["FromLabel"]</dt><dd>@contract.StartDate</dd></div>
+                <div><dt>@L["ToLabel"]</dt><dd>@contract.EndDate</dd></div>
+                <div><dt>@L["ContractRent"]</dt><dd>@(contract.MonthlyRent is { } rent ? $"{rent:N0} đ" : "—")</dd></div>
+                <div><dt>@L["ContractDeposit"]</dt><dd>@(contract.DepositAmount is { } deposit ? $"{deposit:N0} đ" : "—")</dd></div>
+                <div><dt>@L["ContractCycle"]</dt><dd>@string.Format(L["ContractCycleValue"], contract.PaymentCycleMonths)</dd></div>
+                <div><dt>@L["ContractMeterDay"]</dt><dd>@(contract.MeterReadingDay?.ToString() ?? "—")</dd></div>
+            </dl>
+            @if (!string.IsNullOrWhiteSpace(contract.Terms))
+            {
+                <p class="draft-body">@contract.Terms</p>
+            }
+            <p class="draft-note"><LucideIcon Name="info" /><span>@L["ContractDraftNote"]</span></p>
+        </div>
+        break;
+
+    default:
+        <p class="assistant-empty">@L["EmptyDraft"]</p>
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public AiDraftView Draft { get; set; } = new();
+
+    [Parameter, EditorRequired] public AiUseCase UseCase { get; set; }
+
+    private string CategoryText(string value) => value switch
+    {
+        "Electrical" => L["CategoryElectrical"],
+        "Water" => L["CategoryWater"],
+        "Furniture" => L["CategoryFurniture"],
+        "Equipment" => L["CategoryEquipment"],
+        _ => L["CategoryOther"],
+    };
+
+    private string UrgencyText(string value) => value switch
+    {
+        "Urgent" => L["UrgencyUrgent"],
+        "Emergency" => L["UrgencyEmergency"],
+        _ => L["UrgencyNormal"],
+    };
+
+    private static string TenantText(AiContractDraftOutput contract) =>
+        contract.TenantNames is { Count: > 0 } names
+            ? string.Join(", ", names)
+            : contract.TenantIds.Count.ToString();
+
+    private string GenderText(string? value) => value switch
+    {
+        "Male" => L["GenderMale"],
+        "Female" => L["GenderFemale"],
+        "Other" => L["GenderOther"],
+        _ => "—",
+    };
+
+    private string MethodText(string value) => value switch
+    {
+        "fixed-monthly" => L["ServiceMethodFixed"],
+        "meter" => L["ServiceMethodMeter"],
+        "tiered" => L["ServiceMethodTiered"],
+        _ => L["ServiceMethodCustom"],
+    };
+}

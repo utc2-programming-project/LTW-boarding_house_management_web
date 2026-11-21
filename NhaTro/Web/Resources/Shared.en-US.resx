@@ -194,6 +194,18 @@
   <data name="Approvals" xml:space="preserve">
     <value>Approval queue</value>
   </data>
+  <data name="Assistant" xml:space="preserve">
+    <value>AI assistant</value>
+  </data>
+  <data name="AssistantSettings" xml:space="preserve">
+    <value>AI assistant settings</value>
+  </data>
+  <data name="AiSuggestions" xml:space="preserve">
+    <value>AI suggestions</value>
+  </data>
+  <data name="AiRoomDraftButton" xml:space="preserve">
+    <value>Draft with AI</value>
+  </data>
   <data name="Trash" xml:space="preserve">
     <value>Trash</value>
   </data>

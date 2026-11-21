@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Web.Data;
@@ -14,7 +15,9 @@ public sealed class AuditLogSaveInterceptor(
     AuditLogFileStore store,
     ILogger<AuditLogSaveInterceptor> logger) : SaveChangesInterceptor
 {
-    private static readonly AsyncLocal<Stack<List<AuditLogFileEntry>>> Pending = new();
+    // Giữ theo DbContext thay vì AsyncLocal: EF 10 chạy SavingChanges/SavedChanges trong
+    // các execution context khác nhau với SqlServer nên giá trị AsyncLocal bị mất.
+    private static readonly ConditionalWeakTable<DbContext, List<AuditLogFileEntry>> Pending = new();
 
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
@@ -35,7 +38,7 @@ public sealed class AuditLogSaveInterceptor(
 
     public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
     {
-        FlushSync();
+        FlushSync(eventData.Context);
         return base.SavedChanges(eventData, result);
     }
 
@@ -44,20 +47,28 @@ public sealed class AuditLogSaveInterceptor(
         int result,
         CancellationToken cancellationToken = default)
     {
-        return FlushAsync(cancellationToken, result);
+        return FlushAsync(eventData.Context, cancellationToken, result);
     }
 
-    public override void SaveChangesFailed(DbContextErrorEventData eventData) => Pending.Value?.Clear();
+    public override void SaveChangesFailed(DbContextErrorEventData eventData) => Discard(eventData.Context);
 
     public override Task SaveChangesFailedAsync(
         DbContextErrorEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        Pending.Value?.Clear();
+        Discard(eventData.Context);
         return base.SaveChangesFailedAsync(eventData, cancellationToken);
     }
 
-    private static void Capture(DbContext? context)
+    private static void Discard(DbContext? context)
+    {
+        if (context is not null)
+        {
+            Pending.Remove(context);
+        }
+    }
+
+    private void Capture(DbContext? context)
     {
         if (context is null)
         {
@@ -106,13 +117,24 @@ public sealed class AuditLogSaveInterceptor(
             tracked.State = EntityState.Detached;
         }
 
-        var stack = Pending.Value ??= new Stack<List<AuditLogFileEntry>>();
-        stack.Push(captured);
+        Pending.Remove(context);
+        Pending.Add(context, captured);
     }
 
-    private void FlushSync()
+    private static List<AuditLogFileEntry>? TryTake(DbContext? context)
     {
-        if (TryPop() is not { } entries)
+        if (context is null || !Pending.TryGetValue(context, out var entries))
+        {
+            return null;
+        }
+
+        Pending.Remove(context);
+        return entries;
+    }
+
+    private void FlushSync(DbContext? context)
+    {
+        if (TryTake(context) is not { } entries)
         {
             return;
         }
@@ -127,9 +149,10 @@ public sealed class AuditLogSaveInterceptor(
         }
     }
 
-    private async ValueTask<int> FlushAsync(CancellationToken cancellationToken, int result)
+    private async ValueTask<int> FlushAsync(
+        DbContext? context, CancellationToken cancellationToken, int result)
     {
-        if (TryPop() is not { } entries)
+        if (TryTake(context) is not { } entries)
         {
             return result;
         }
@@ -146,7 +169,4 @@ public sealed class AuditLogSaveInterceptor(
 
         return result;
     }
-
-    private static List<AuditLogFileEntry>? TryPop() =>
-        Pending.Value is { Count: > 0 } stack ? stack.Pop() : null;
 }

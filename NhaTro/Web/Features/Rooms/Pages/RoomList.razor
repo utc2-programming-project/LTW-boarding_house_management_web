@@ -13,6 +13,9 @@
 <div class="p2-page page-stack">
     <PageHeading Title="@L["P2RoomsTitle"]" HelpText="@L["P2RoomsSubtitle"]">
         <Actions>
+            <a class="btn btn-secondary" href="/assistant?usecase=RoomDraft">
+                <LucideIcon Name="sparkles" />@L["AiRoomDraftButton"]
+            </a>
             @if (_isOwner)
             {
                 <a class="btn btn-secondary" href="/rooms/trash">

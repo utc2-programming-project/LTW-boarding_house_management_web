@@ -58,6 +58,12 @@ public static class AppNavigation
                 Children: [new("TrashTitle", "", "ChuTro", "/incidents/trash", ShowInSidebar: false)]),
             new("ReportIncident", "wrench", "KhachThue", "/incidents"),
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
+            new("Assistant", "sparkles", "ChuTro,QuanLy", "/assistant",
+                Children:
+                [
+                    new("AssistantSettings", "", "ChuTro", "/assistant/settings", ShowInSidebar: false),
+                    new("AiSuggestions", "", "ChuTro", "/assistant/inbox", ShowInSidebar: false),
+                ]),
             new("Approvals", "check", "ChuTro", "/approvals"),
             new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
         ]),

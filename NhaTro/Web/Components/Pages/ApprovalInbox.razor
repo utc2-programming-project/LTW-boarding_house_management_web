@@ -1,14 +1,43 @@
 @page "/approvals"
 @using Web.Features.Approvals.Pages
+@using Web.Features.Assistant.Pages
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
+@inject IStringLocalizer<Web.Features.Approvals.ApprovalResources> L
 
-@* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ,
-   còn giao diện hàng đợi nằm trong Features/Approvals để tách khỏi trang
-   "Yêu cầu của tôi" của Quản lý. *@
-<ApprovalQueueView InitialQuery="@Query" />
+@* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ.
+   Hai tab: thao tác Quản lý gửi duyệt và đề xuất do Trợ lý AI tạo. *@
+
+<nav class="approval-tabs" role="tablist" aria-label="@L["PageTitle"]">
+    <a href="/approvals" role="tab"
+       class="approval-tab @(IsAiTab ? null : "is-active")"
+       aria-selected="@((!IsAiTab).ToString().ToLowerInvariant())">
+        <LucideIcon Name="check" />
+        <span>@L["TabManager"]</span>
+    </a>
+    <a href="/approvals?tab=ai" role="tab"
+       class="approval-tab @(IsAiTab ? "is-active" : null)"
+       aria-selected="@(IsAiTab.ToString().ToLowerInvariant())">
+        <LucideIcon Name="sparkles" />
+        <span>@L["TabAi"]</span>
+    </a>
+</nav>
+
+@if (IsAiTab)
+{
+    <AiSuggestionInboxView />
+}
+else
+{
+    <ApprovalQueueView InitialQuery="@Query" />
+}
 
 @code {
     /// <summary>Mã phòng từ badge "Chờ duyệt" ở danh sách phòng: /approvals?q=A107.</summary>
     [SupplyParameterFromQuery(Name = "q")]
     public string? Query { get; set; }
+
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
+    private bool IsAiTab => string.Equals(Tab, "ai", StringComparison.OrdinalIgnoreCase);
 }

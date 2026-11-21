@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="PageTitle" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="PageHelp" xml:space="preserve"><value>The assistant only drafts from data in your scope. The system acts after the owner approves; nothing changes before that.</value></data>
+  <data name="SettingsLink" xml:space="preserve"><value>AI settings</value></data>
+  <data name="InboxLink" xml:space="preserve"><value>Suggestions to approve</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="DeniedTitle" xml:space="preserve"><value>No access to the AI assistant</value></data>
+  <data name="DeniedDescription" xml:space="preserve"><value>The assistant is available to owners and managers assigned to a property.</value></data>
+  <data name="LoadFailedTitle" xml:space="preserve"><value>Could not load data</value></data>
+  <data name="LoadFailedDescription" xml:space="preserve"><value>Connection or permissions may have changed. Please try again.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>The owner turned off the AI assistant for this property. You cannot create new suggestions.</value></data>
+  <data name="QuotaText" xml:space="preserve"><value>{0}/{1} requests used today</value></data>
+  <data name="DemoBadge" xml:space="preserve"><value>Demo mode</value></data>
+
+  <data name="UseCaseSectionTitle" xml:space="preserve"><value>Choose what you need</value></data>
+  <data name="UseCaseReportSummary" xml:space="preserve"><value>Report summary</value></data>
+  <data name="UseCaseReportSummaryDesc" xml:space="preserve"><value>Revenue, debts, incidents and next actions.</value></data>
+  <data name="UseCaseReminderMessage" xml:space="preserve"><value>Payment reminder</value></data>
+  <data name="UseCaseReminderMessageDesc" xml:space="preserve"><value>Draft a reminder for tenants in debt; send after approval.</value></data>
+  <data name="UseCaseRoomDraft" xml:space="preserve"><value>Property/room draft</value></data>
+  <data name="UseCaseRoomDraftDesc" xml:space="preserve"><value>Describe in words; AI fills the room form.</value></data>
+  <data name="UseCaseIncidentTriage" xml:space="preserve"><value>Incident triage</value></data>
+  <data name="UseCaseIncidentTriageDesc" xml:space="preserve"><value>Suggest category, priority and assignee.</value></data>
+  <data name="UseCaseDailySummary" xml:space="preserve"><value>Today's work</value></data>
+  <data name="UseCaseDailySummaryDesc" xml:space="preserve"><value>Compact list of today's work with links.</value></data>
+  <data name="UseCaseUnknown" xml:space="preserve"><value>Unknown</value></data>
+
+  <data name="PropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="AllProperties" xml:space="preserve"><value>All properties in scope</value></data>
+  <data name="FromLabel" xml:space="preserve"><value>From date</value></data>
+  <data name="ToLabel" xml:space="preserve"><value>To date</value></data>
+  <data name="InvoiceLabel" xml:space="preserve"><value>Invoice to remind</value></data>
+  <data name="SelectInvoice" xml:space="preserve"><value>Auto-pick unpaid invoices due soon</value></data>
+  <data name="IncidentLabel" xml:space="preserve"><value>Incident to triage</value></data>
+  <data name="SelectIncident" xml:space="preserve"><value>Pick from open incidents</value></data>
+  <data name="InstructionLabel" xml:space="preserve"><value>Extra instruction (optional)</value></data>
+  <data name="InstructionReport" xml:space="preserve"><value>For example: focus on vacant rooms and overdue debt.</value></data>
+  <data name="InstructionReminder" xml:space="preserve"><value>For example: friendly tone, mention the due date this week.</value></data>
+  <data name="InstructionRoomDraft" xml:space="preserve"><value>For example: 3-storey house with 9 rooms, shop on the ground floor, from 2.5 million.</value></data>
+  <data name="InstructionIncident" xml:space="preserve"><value>Describe the incident, e.g. power outage on floor 2 since morning with a burning smell.</value></data>
+  <data name="InstructionDaily" xml:space="preserve"><value>For example: prioritize urgent work this week.</value></data>
+  <data name="Generate" xml:space="preserve"><value>Create draft</value></data>
+  <data name="Generating" xml:space="preserve"><value>Generating…</value></data>
+  <data name="GenerateHint" xml:space="preserve"><value>AI drafts are applied only after the owner approves.</value></data>
+  <data name="GenerateSuccess" xml:space="preserve"><value>Draft created. It is applied once the owner approves.</value></data>
+  <data name="GenerateFailed" xml:space="preserve"><value>Could not create the draft. Please try again.</value></data>
+
+  <data name="DraftBadge" xml:space="preserve"><value>AI-generated draft</value></data>
+  <data name="ModelLabel" xml:space="preserve"><value>Model</value></data>
+  <data name="CreatedLabel" xml:space="preserve"><value>Created</value></data>
+  <data name="AwaitingApproval" xml:space="preserve"><value>This draft does not change data. The owner must approve it before it is applied.</value></data>
+  <data name="MySuggestionsTitle" xml:space="preserve"><value>My suggestions</value></data>
+  <data name="EmptyMineHint" xml:space="preserve"><value>No suggestions yet. Pick a task above and create a draft.</value></data>
+
+  <data name="StatusPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="StatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="StatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="StatusApplied" xml:space="preserve"><value>Applied</value></data>
+
+  <data name="Insights" xml:space="preserve"><value>Insights</value></data>
+  <data name="Actions" xml:space="preserve"><value>Next actions</value></data>
+  <data name="OpenLink" xml:space="preserve"><value>Open</value></data>
+  <data name="RoomCount" xml:space="preserve"><value>{0} rooms</value></data>
+  <data name="RoomCode" xml:space="preserve"><value>Room code</value></data>
+  <data name="Floor" xml:space="preserve"><value>Floor</value></data>
+  <data name="Area" xml:space="preserve"><value>Area</value></data>
+  <data name="Price" xml:space="preserve"><value>Rent</value></data>
+  <data name="IncidentCategory" xml:space="preserve"><value>Category</value></data>
+  <data name="IncidentUrgency" xml:space="preserve"><value>Priority</value></data>
+  <data name="IncidentAssignee" xml:space="preserve"><value>Assignee</value></data>
+  <data name="SuggestedTitle" xml:space="preserve"><value>Suggested title</value></data>
+  <data name="EmptyDraft" xml:space="preserve"><value>The draft content could not be read.</value></data>
+  <data name="CategoryElectrical" xml:space="preserve"><value>Electrical</value></data>
+  <data name="CategoryWater" xml:space="preserve"><value>Water</value></data>
+  <data name="CategoryFurniture" xml:space="preserve"><value>Furniture</value></data>
+  <data name="CategoryEquipment" xml:space="preserve"><value>Equipment</value></data>
+  <data name="CategoryOther" xml:space="preserve"><value>Other</value></data>
+  <data name="UrgencyNormal" xml:space="preserve"><value>Normal</value></data>
+  <data name="UrgencyUrgent" xml:space="preserve"><value>Urgent</value></data>
+  <data name="UrgencyEmergency" xml:space="preserve"><value>Emergency</value></data>
+
+  <data name="SettingsPageTitle" xml:space="preserve"><value>AI assistant settings</value></data>
+  <data name="SettingsHelp" xml:space="preserve"><value>Turn the assistant on or off and cap daily model requests. Changes apply to every property you own.</value></data>
+  <data name="BackToAssistant" xml:space="preserve"><value>Back to AI assistant</value></data>
+  <data name="StatusLabel" xml:space="preserve"><value>Status</value></data>
+  <data name="EnabledOn" xml:space="preserve"><value>Enabled</value></data>
+  <data name="EnabledOff" xml:space="preserve"><value>Disabled</value></data>
+  <data name="UsedToday" xml:space="preserve"><value>Requests today</value></data>
+  <data name="ProviderLabel" xml:space="preserve"><value>Provider</value></data>
+  <data name="SettingsFormTitle" xml:space="preserve"><value>Assistant configuration</value></data>
+  <data name="EnabledLabel" xml:space="preserve"><value>Allow the AI assistant</value></data>
+  <data name="EnabledHint" xml:space="preserve"><value>Disabling blocks new suggestions from you and your managers.</value></data>
+  <data name="DailyLimitLabel" xml:space="preserve"><value>Daily request limit</value></data>
+  <data name="DailyLimitHint" xml:space="preserve"><value>1 to 1000 requests per account. Managers get the smallest limit across their assigned properties.</value></data>
+  <data name="DailyLimitDefault" xml:space="preserve"><value>Default limit</value></data>
+  <data name="DemoNotice" xml:space="preserve"><value>Demo mode is on: drafts come from local templates and no data leaves the server.</value></data>
+  <data name="LiveNotice" xml:space="preserve"><value>The model is called through an OpenAI-compatible endpoint. Only PII-masked context is sent.</value></data>
+  <data name="Save" xml:space="preserve"><value>Save settings</value></data>
+  <data name="Saving" xml:space="preserve"><value>Saving…</value></data>
+  <data name="SaveSuccess" xml:space="preserve"><value>AI assistant settings saved.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Could not save settings. Please try again.</value></data>
+
+  <data name="InboxPageTitle" xml:space="preserve"><value>AI suggestions to approve</value></data>
+  <data name="InboxHelp" xml:space="preserve"><value>Approve to run the existing workflow; give a reason when rejecting. Drafts never change data on their own.</value></data>
+  <data name="StatPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="StatApplied" xml:space="preserve"><value>Applied</value></data>
+  <data name="StatRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="InboxEmpty" xml:space="preserve"><value>No AI suggestions</value></data>
+  <data name="InboxEmptyHint" xml:space="preserve"><value>Drafts created by you or your managers on the AI assistant page appear here.</value></data>
+  <data name="RequesterLabel" xml:space="preserve"><value>Created by</value></data>
+  <data name="Approve" xml:space="preserve"><value>Approve</value></data>
+  <data name="Reject" xml:space="preserve"><value>Reject</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Busy" xml:space="preserve"><value>Working…</value></data>
+  <data name="CloseDialog" xml:space="preserve"><value>Close</value></data>
+  <data name="ApproveDialogTitle" xml:space="preserve"><value>Approve AI suggestion</value></data>
+  <data name="ApproveDialogBody" xml:space="preserve"><value>The system applies the suggestion through the matching workflow and records who approved it.</value></data>
+  <data name="RejectDialogTitle" xml:space="preserve"><value>Reject AI suggestion</value></data>
+  <data name="RejectReasonLabel" xml:space="preserve"><value>Rejection reason</value></data>
+  <data name="RejectReasonPlaceholder" xml:space="preserve"><value>For example: the rent does not match the actual price.</value></data>
+  <data name="RejectReasonHint" xml:space="preserve"><value>Required, up to 500 characters. The requester is notified with this reason.</value></data>
+  <data name="ApproveSuccess" xml:space="preserve"><value>Suggestion approved and applied.</value></data>
+  <data name="ApproveFailed" xml:space="preserve"><value>Could not approve the suggestion. Please review the content.</value></data>
+  <data name="RejectSuccess" xml:space="preserve"><value>Suggestion rejected.</value></data>
+  <data name="RejectFailed" xml:space="preserve"><value>Could not reject the suggestion. Please try again.</value></data>
+  <data name="AppliedRef" xml:space="preserve"><value>Applied result</value></data>
+  <data name="EditTitleLabel" xml:space="preserve"><value>Title sent to tenant</value></data>
+  <data name="EditBodyLabel" xml:space="preserve"><value>Body sent to tenant</value></data>
+  <data name="EditRoomDraftHint" xml:space="preserve"><value>Edit before approving. Duplicate room codes and invalid data are still rejected.</value></data>
+  <data name="EditPropertyName" xml:space="preserve"><value>Property name</value></data>
+  <data name="EditPropertyAddress" xml:space="preserve"><value>Address</value></data>
+  <data name="AddRoomRow" xml:space="preserve"><value>Add room</value></data>
+  <data name="UseCaseTenantDraft" xml:space="preserve"><value>Tenant draft</value></data>
+  <data name="UseCaseTenantDraftDesc" xml:space="preserve"><value>Describe in words; AI fills the tenant profile.</value></data>
+  <data name="UseCaseServiceDraft" xml:space="preserve"><value>Service draft</value></data>
+  <data name="UseCaseServiceDraftDesc" xml:space="preserve"><value>Pre-fill a service catalog entry and initial price.</value></data>
+  <data name="UseCaseContractDraft" xml:space="preserve"><value>Contract draft</value></data>
+  <data name="UseCaseContractDraftDesc" xml:space="preserve"><value>Pick a room, tenants and terms from existing data.</value></data>
+  <data name="InstructionTenantDraft" xml:space="preserve"><value>Example: Add tenant Nguyen Van A, phone 0901234567, email a@example.com, born 01/02/1998.</value></data>
+  <data name="InstructionServiceDraft" xml:space="preserve"><value>Example: Parking service 100,000 VND/vehicle/month, or Internet 50,000 VND/room/month.</value></data>
+  <data name="InstructionContractDraft" xml:space="preserve"><value>Example: Contract for Nguyen Van A renting room P101 from 01/11/2026 to 31/10/2027, rent 3 million, one month deposit.</value></data>
+  <data name="TenantPhone" xml:space="preserve"><value>Phone</value></data>
+  <data name="TenantEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="TenantBirthDate" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="TenantGender" xml:space="preserve"><value>Gender</value></data>
+  <data name="TenantAddress" xml:space="preserve"><value>Permanent address</value></data>
+  <data name="TenantNoIdHint" xml:space="preserve"><value>AI does not fill ID or bank account numbers. Add them to the profile if needed.</value></data>
+  <data name="GenderMale" xml:space="preserve"><value>Male</value></data>
+  <data name="GenderFemale" xml:space="preserve"><value>Female</value></data>
+  <data name="GenderOther" xml:space="preserve"><value>Other</value></data>
+  <data name="ServiceUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="ServiceMethod" xml:space="preserve"><value>Calculation</value></data>
+  <data name="ServiceEffective" xml:space="preserve"><value>Effective from</value></data>
+  <data name="ServiceEffectiveTo" xml:space="preserve"><value>Effective to</value></data>
+  <data name="ServiceMethodFixed" xml:space="preserve"><value>Fixed monthly</value></data>
+  <data name="ServiceMethodMeter" xml:space="preserve"><value>Metered</value></data>
+  <data name="ServiceMethodTiered" xml:space="preserve"><value>Tiered</value></data>
+  <data name="ServiceMethodCustom" xml:space="preserve"><value>Custom</value></data>
+  <data name="ContractRoom" xml:space="preserve"><value>Room</value></data>
+  <data name="ContractTenants" xml:space="preserve"><value>Tenants</value></data>
+  <data name="ContractRent" xml:space="preserve"><value>Monthly rent</value></data>
+  <data name="ContractDeposit" xml:space="preserve"><value>Deposit</value></data>
+  <data name="ContractCycle" xml:space="preserve"><value>Payment cycle</value></data>
+  <data name="ContractCycleValue" xml:space="preserve"><value>every {0} month(s)</value></data>
+  <data name="ContractMeterDay" xml:space="preserve"><value>Meter reading day</value></data>
+  <data name="ContractDraftNote" xml:space="preserve"><value>The contract is created as a draft; continue the existing send/approve flow.</value></data>
+</root>

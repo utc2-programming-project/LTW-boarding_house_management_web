@@ -1,0 +1,425 @@
+@page "/assistant"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
+@rendermode InteractiveServer
+@inject AiAssistantPageService PageService
+@inject AiSuggestionService Suggest
+@inject P2CallerProvider Callers
+@inject ToastService Toasts
+@inject IStringLocalizer<AssistantResources> L
+@inject IStringLocalizer<Shared> SL
+@inject NavigationManager Navigation
+@inject ILogger<AssistantView> Logger
+
+<PageTitle>@L["PageTitle"] · @SL["AppName"]</PageTitle>
+<HeadContent><link rel="stylesheet" href="/css/assistant.css" /></HeadContent>
+
+<div class="assistant-page page-stack">
+    <PageHeading Title="@L["PageTitle"]" TitleId="assistant-title" HelpText="@L["PageHelp"]">
+        <Actions>
+            @if (_isOwner)
+            {
+                <a class="btn btn-secondary" href="/assistant/settings">
+                    <LucideIcon Name="settings" />@L["SettingsLink"]
+                </a>
+                <a class="btn btn-secondary" href="/approvals?tab=ai">
+                    <LucideIcon Name="inbox" />@L["InboxLink"]
+                </a>
+            }
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
+                <LucideIcon Name="refresh" />@L["Refresh"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_denied)
+    {
+        <EmptyStateCard Title="@L["DeniedTitle"]" Description="@L["DeniedDescription"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["LoadFailedTitle"]" Description="@L["LoadFailedDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else if (_snapshot is not null)
+    {
+        var settings = _snapshot.Settings;
+        var quotaLeft = Math.Max(0, settings.DailyRequestLimit - settings.UsedToday);
+
+        @if (!settings.Enabled)
+        {
+            <div class="assistant-notice" role="status">
+                <LucideIcon Name="pause-circle" />
+                <span>@L["DisabledNotice"]</span>
+            </div>
+        }
+        else
+        {
+            <p class="assistant-quota">
+                <LucideIcon Name="zap" />
+                <span>@string.Format(L["QuotaText"], settings.UsedToday, settings.DailyRequestLimit)</span>
+                @if (settings.IsDemo)
+                {
+                    <span class="assistant-quota__demo">@L["DemoBadge"]</span>
+                }
+            </p>
+        }
+
+        <section class="assistant-usecases" aria-label="@L["UseCaseSectionTitle"]">
+            @foreach (var useCase in AiUseCaseCatalog.All)
+            {
+                <button type="button"
+                        class="assistant-usecase @(useCase == _useCase ? "is-active" : null)"
+                        aria-pressed="@((useCase == _useCase).ToString().ToLowerInvariant())"
+                        @onclick="() => SelectUseCase(useCase)">
+                    <span class="assistant-usecase__icon"><LucideIcon Name="@AiUseCaseCatalog.Icon(useCase)" /></span>
+                    <span class="assistant-usecase__name">@L[AiUseCaseCatalog.NameKey(useCase)]</span>
+                    <span class="assistant-usecase__desc">@L[AiUseCaseCatalog.DescriptionKey(useCase)]</span>
+                </button>
+            }
+        </section>
+
+        <form class="assistant-form" @onsubmit="GenerateAsync" @onsubmit:preventDefault>
+            <div class="assistant-form__grid">
+                <div class="filter-bar__stack">
+                    <label for="assistant-property">@L["PropertyLabel"]</label>
+                    <select id="assistant-property" class="input" @bind="_propertyId" disabled="@_busy">
+                        <option value="">@L["AllProperties"]</option>
+                        @foreach (var property in _snapshot.Properties)
+                        {
+                            <option value="@property.Id">@property.Name</option>
+                        }
+                    </select>
+                </div>
+
+                @if (_useCase is AiUseCase.ReportSummary or AiUseCase.DailySummary)
+                {
+                    <div class="filter-bar__stack">
+                        <label for="assistant-from">@L["FromLabel"]</label>
+                        <input id="assistant-from" type="date" class="input" @bind="_from" disabled="@_busy" />
+                    </div>
+                    <div class="filter-bar__stack">
+                        <label for="assistant-to">@L["ToLabel"]</label>
+                        <input id="assistant-to" type="date" class="input" @bind="_to" disabled="@_busy" />
+                    </div>
+                }
+
+                @if (_useCase == AiUseCase.ReminderMessage)
+                {
+                    <div class="filter-bar__stack">
+                        <label for="assistant-invoice">@L["InvoiceLabel"]</label>
+                        <select id="assistant-invoice" class="input" @bind="_invoiceId" disabled="@_busy">
+                            <option value="">@L["SelectInvoice"]</option>
+                            @foreach (var invoice in _snapshot.Invoices)
+                            {
+                                <option value="@invoice.Id">@invoice.Label</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (_useCase == AiUseCase.IncidentTriage)
+                {
+                    <div class="filter-bar__stack">
+                        <label for="assistant-incident">@L["IncidentLabel"]</label>
+                        <select id="assistant-incident" class="input" @bind="_incidentId" disabled="@_busy">
+                            <option value="">@L["SelectIncident"]</option>
+                            @foreach (var incident in _snapshot.Incidents)
+                            {
+                                <option value="@incident.Id">@incident.Label</option>
+                            }
+                        </select>
+                    </div>
+                }
+            </div>
+
+            <div class="assistant-form__field">
+                <label for="assistant-instruction">@L["InstructionLabel"]</label>
+                <textarea id="assistant-instruction" class="input assistant-form__textarea" rows="3"
+                          maxlength="1000" placeholder="@L[InstructionKey]" disabled="@_busy"
+                          @bind="_instruction"></textarea>
+            </div>
+
+            @if (_formError is not null)
+            {
+                <p class="field-error" role="alert">@_formError</p>
+            }
+
+            <div class="assistant-form__actions">
+                <p class="assistant-form__hint">@L["GenerateHint"]</p>
+                <button type="submit" class="btn btn-primary"
+                        disabled="@(_busy || !settings.Enabled || quotaLeft == 0)">
+                    <LucideIcon Name="sparkles" />
+                    <span>@(_busy ? L["Generating"] : L["Generate"])</span>
+                </button>
+            </div>
+        </form>
+
+        @if (_result is not null)
+        {
+            <section class="assistant-result" aria-live="polite">
+                <header class="assistant-result__head">
+                    <div>
+                        <span class="assistant-draft-badge"><LucideIcon Name="sparkles" />@L["DraftBadge"]</span>
+                        <h2>@L[AiUseCaseCatalog.NameKey(_result.UseCase)]</h2>
+                    </div>
+                    <StatusBadge Text="@StatusText(_result.Status)" Tone="@StatusTone(_result.Status)" />
+                </header>
+                <p class="assistant-result__meta">
+                    <span>@L["ModelLabel"]: @_result.Model</span>
+                    <span>@L["CreatedLabel"]: @DateFormatter.FormatDateTime(_result.CreatedAt.UtcDateTime)</span>
+                </p>
+                <DraftContent Draft="@_result.Draft" UseCase="@_result.UseCase" />
+                <p class="assistant-result__note">
+                    <LucideIcon Name="shield-check" />
+                    <span>@L["AwaitingApproval"]</span>
+                </p>
+            </section>
+        }
+
+        <section class="assistant-mine" aria-labelledby="assistant-mine-title">
+            <header class="assistant-section-head">
+                <h2 id="assistant-mine-title">@L["MySuggestionsTitle"]</h2>
+                <span class="assistant-section-count">@_mine.Count</span>
+            </header>
+
+            @if (_mine.Count == 0)
+            {
+                <p class="assistant-empty">@L["EmptyMineHint"]</p>
+            }
+            else
+            {
+                <ul class="assistant-list">
+                    @foreach (var item in _mine)
+                    {
+                        <li class="assistant-card">
+                            <div class="assistant-card__head">
+                                <div class="assistant-card__title">
+                                    <LucideIcon Name="@AiUseCaseCatalog.Icon(item.UseCase)" />
+                                    <strong>@L[AiUseCaseCatalog.NameKey(item.UseCase)]</strong>
+                                </div>
+                                <StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />
+                            </div>
+                            <p class="assistant-card__meta">
+                                <span>@DateFormatter.FormatDateTime(item.CreatedAt.UtcDateTime)</span>
+                                <span>@L["ModelLabel"]: @item.Model</span>
+                            </p>
+                            <p class="assistant-card__snippet">@DraftHeadline(item)</p>
+                            @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+                            {
+                                <p class="assistant-card__reason">
+                                    <LucideIcon Name="info" />
+                                    <span>@item.DecisionReason</span>
+                                </p>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "usecase")]
+    public string? UseCaseParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private AiUseCase _useCase = AiUseCase.DailySummary;
+    private AiAssistantSnapshot? _snapshot;
+    private AiSuggestionDto? _result;
+    private IReadOnlyList<AiSuggestionDto> _mine = [];
+    private PropertyCaller? _caller;
+
+    private string _propertyId = string.Empty;
+    private string _invoiceId = string.Empty;
+    private string _incidentId = string.Empty;
+    private DateTime? _from;
+    private DateTime? _to;
+    private string _instruction = string.Empty;
+
+    private bool _loading = true;
+    private bool _busy;
+    private bool _denied;
+    private bool _failed;
+    private string? _formError;
+    private bool _isOwner;
+
+    private string InstructionKey => _useCase switch
+    {
+        AiUseCase.ReminderMessage => "InstructionReminder",
+        AiUseCase.RoomDraft => "InstructionRoomDraft",
+        AiUseCase.IncidentTriage => "InstructionIncident",
+        AiUseCase.ReportSummary => "InstructionReport",
+        AiUseCase.TenantDraft => "InstructionTenantDraft",
+        AiUseCase.ServiceDraft => "InstructionServiceDraft",
+        AiUseCase.ContractDraft => "InstructionContractDraft",
+        _ => "InstructionDaily",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Enum.TryParse<AiUseCase>(UseCaseParam, true, out var parsed)
+            && AiUseCaseCatalog.IsKnown(parsed))
+        {
+            _useCase = parsed;
+        }
+
+        if (PropertyIdParam is { } propertyId)
+        {
+            _propertyId = propertyId.ToString();
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _failed = false;
+        _denied = false;
+        try
+        {
+            _caller = await Callers.GetCallerAsync();
+            _isOwner = _caller.IsChuTro;
+
+            var snapshot = await PageService.GetSnapshotAsync(_caller);
+            if (!snapshot.Succeeded || snapshot.Snapshot is null)
+            {
+                _failed = true;
+                return;
+            }
+
+            _snapshot = snapshot.Snapshot;
+
+            var mine = await Suggest.ListMineAsync(_caller);
+            _mine = mine.Succeeded ? mine.Items.Take(10).ToList() : [];
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _denied = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Không tải được trang Trợ lý AI");
+            _failed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectUseCase(AiUseCase useCase)
+    {
+        _useCase = useCase;
+        _formError = null;
+    }
+
+    private async Task GenerateAsync()
+    {
+        if (_caller is null || _snapshot is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _formError = null;
+        try
+        {
+            var request = new AiGenerateRequest
+            {
+                UseCase = _useCase,
+                PropertyId = int.TryParse(_propertyId, out var propertyId) ? propertyId : null,
+                InvoiceId = int.TryParse(_invoiceId, out var invoiceId) ? invoiceId : null,
+                IncidentId = int.TryParse(_incidentId, out var incidentId) ? incidentId : null,
+                From = _from is { } from ? DateOnly.FromDateTime(from) : null,
+                To = _to is { } to ? DateOnly.FromDateTime(to) : null,
+                Instruction = string.IsNullOrWhiteSpace(_instruction) ? null : _instruction,
+            };
+
+            var result = await Suggest.GenerateAsync(request, _caller);
+            if (!result.Succeeded || result.Suggestion is null)
+            {
+                _formError = result.ErrorMessage ?? L["GenerateFailed"];
+                return;
+            }
+
+            _result = result.Suggestion;
+            Toasts.Success(L["GenerateSuccess"]);
+            await LoadSnapshotAndMineAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Tạo đề xuất AI thất bại");
+            _formError = L["GenerateFailed"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task LoadSnapshotAndMineAsync()
+    {
+        if (_caller is null)
+        {
+            return;
+        }
+
+        var snapshot = await PageService.GetSnapshotAsync(_caller);
+        if (snapshot.Succeeded && snapshot.Snapshot is not null)
+        {
+            _snapshot = snapshot.Snapshot;
+        }
+
+        var mine = await Suggest.ListMineAsync(_caller);
+        if (mine.Succeeded)
+        {
+            _mine = mine.Items.Take(10).ToList();
+        }
+    }
+
+    private string StatusText(AiSuggestionStatus status) => status switch
+    {
+        AiSuggestionStatus.Pending => L["StatusPending"],
+        AiSuggestionStatus.Approved => L["StatusApproved"],
+        AiSuggestionStatus.Rejected => L["StatusRejected"],
+        AiSuggestionStatus.Applied => L["StatusApplied"],
+        _ => status.ToString(),
+    };
+
+    private static BadgeTone StatusTone(AiSuggestionStatus status) => status switch
+    {
+        AiSuggestionStatus.Pending => BadgeTone.Warning,
+        AiSuggestionStatus.Applied => BadgeTone.Success,
+        AiSuggestionStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Info,
+    };
+
+    private static string DraftHeadline(AiSuggestionDto item) => item.UseCase switch
+    {
+        AiUseCase.ReportSummary => item.Draft.ReportSummary?.Headline ?? string.Empty,
+        AiUseCase.ReminderMessage => item.Draft.Notification?.Title ?? string.Empty,
+        AiUseCase.RoomDraft => item.Draft.RoomDraft?.Property?.Name
+            ?? $"{item.Draft.RoomDraft?.Rooms.Count ?? 0} phòng",
+        AiUseCase.IncidentTriage => item.Draft.Incident?.SuggestedTitle
+            ?? item.Draft.Incident?.Category ?? string.Empty,
+        AiUseCase.DailySummary => item.Draft.WorkSummary?.Headline ?? string.Empty,
+        AiUseCase.TenantDraft => item.Draft.TenantDraft is { } tenant
+            ? $"{tenant.FullName} · {tenant.PhoneNumber}"
+            : string.Empty,
+        AiUseCase.ServiceDraft => item.Draft.ServiceDraft?.Name ?? string.Empty,
+        AiUseCase.ContractDraft => item.Draft.ContractDraft is { } contract
+            ? $"Phòng {contract.RoomCode ?? contract.RoomId?.ToString() ?? "?"} · "
+                + $"{contract.TenantIds.Count} khách"
+            : string.Empty,
+        _ => string.Empty,
+    };
+}

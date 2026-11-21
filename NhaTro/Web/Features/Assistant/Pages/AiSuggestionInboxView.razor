@@ -1,0 +1,454 @@
+@page "/assistant/inbox"
+@attribute [Authorize(Roles = Roles.ChuTro)]
+@rendermode InteractiveServer
+@inject AiSuggestionService Suggest
+@inject P2CallerProvider Callers
+@inject ToastService Toasts
+@inject IStringLocalizer<AssistantResources> L
+@inject IStringLocalizer<Shared> SL
+@inject ILogger<AiSuggestionInboxView> Logger
+
+@using System.Text.Json
+
+<PageTitle>@L["InboxPageTitle"] · @SL["AppName"]</PageTitle>
+<HeadContent><link rel="stylesheet" href="/css/assistant.css" /></HeadContent>
+
+<div class="assistant-page page-stack">
+    <PageHeading Title="@L["InboxPageTitle"]" HelpText="@L["InboxHelp"]">
+        <Actions>
+            <a class="btn btn-secondary" href="/assistant">
+                <LucideIcon Name="sparkles" />@L["BackToAssistant"]
+            </a>
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
+                <LucideIcon Name="refresh" />@L["Refresh"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_failed)
+    {
+        <EmptyStateCard Title="@L["LoadFailedTitle"]" Description="@L["LoadFailedDescription"]">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="stat-grid stat-grid--three">
+            <div class="stat-card @(PendingCount > 0 ? "stat-card--warning" : null)">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatPending"]</span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="inbox" /></span>
+                </div>
+                <div class="stat-value">@PendingCount</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatApplied"]</span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="check" /></span>
+                </div>
+                <div class="stat-value">@AppliedCount</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">@L["StatRejected"]</span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="circle-x" /></span>
+                </div>
+                <div class="stat-value">@RejectedCount</div>
+            </div>
+        </div>
+
+        @if (_items.Count == 0)
+        {
+            <EmptyStateCard Title="@L["InboxEmpty"]" Description="@L["InboxEmptyHint"]" />
+        }
+        else
+        {
+            <ul class="assistant-list">
+                @foreach (var item in _items)
+                {
+                    var pending = item.Status == AiSuggestionStatus.Pending;
+                    <li class="assistant-card @(pending ? "assistant-card--pending" : null)">
+                        <div class="assistant-card__head">
+                            <div class="assistant-card__title">
+                                <LucideIcon Name="@AiUseCaseCatalog.Icon(item.UseCase)" />
+                                <strong>@L[AiUseCaseCatalog.NameKey(item.UseCase)]</strong>
+                                <span class="assistant-draft-badge"><LucideIcon Name="sparkles" />@L["DraftBadge"]</span>
+                            </div>
+                            <StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />
+                        </div>
+
+                        <p class="assistant-card__meta">
+                            <span>@L["RequesterLabel"]: @item.RequesterName</span>
+                            <span>@L["CreatedLabel"]: @DateFormatter.FormatDateTime(item.CreatedAt.UtcDateTime)</span>
+                            <span>@L["ModelLabel"]: @item.Model</span>
+                        </p>
+
+                        <DraftContent Draft="@item.Draft" UseCase="@item.UseCase" />
+
+                        @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
+                        {
+                            <p class="assistant-card__reason">
+                                <LucideIcon Name="info" />
+                                <span>@L["RejectReasonLabel"]: @item.DecisionReason</span>
+                            </p>
+                        }
+
+                        @if (pending)
+                        {
+                            <div class="assistant-card__actions">
+                                <button type="button" class="btn btn-secondary" @onclick="() => OpenReject(item)">
+                                    <LucideIcon Name="close" />@L["Reject"]
+                                </button>
+                                <button type="button" class="btn btn-primary" @onclick="() => OpenApprove(item)">
+                                    <LucideIcon Name="check" />@L["Approve"]
+                                </button>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.AppliedRefId))
+                        {
+                            <p class="assistant-card__reason">
+                                <LucideIcon Name="circle-check" />
+                                <span>@L["AppliedRef"]: @item.AppliedRefId</span>
+                            </p>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+</div>
+
+<ConfirmDialog Visible="@(_approveId is not null)"
+               Title="@L["ApproveDialogTitle"]"
+               ConfirmText="@L["Approve"]"
+               CancelText="@L["Cancel"]"
+               BusyText="@L["Busy"]"
+               OnConfirm="ConfirmApproveAsync"
+               OnCancel="CloseApprove">
+    <p>@L["ApproveDialogBody"]</p>
+
+    @if (_editing is { } edit)
+    {
+        @if (edit.UseCase == AiUseCase.ReminderMessage)
+        {
+            <div class="assistant-edit">
+                <label for="ai-edit-title">@L["EditTitleLabel"]</label>
+                <input id="ai-edit-title" class="input" maxlength="200" @bind="_editTitle" disabled="@_busy" />
+
+                <label for="ai-edit-body">@L["EditBodyLabel"]</label>
+                <textarea id="ai-edit-body" class="input assistant-form__textarea" rows="6"
+                          maxlength="2000" @bind="_editBody" disabled="@_busy"></textarea>
+            </div>
+        }
+        else if (edit.UseCase == AiUseCase.RoomDraft && _editRooms is not null)
+        {
+            <div class="assistant-edit">
+                <p class="assistant-form__hint">@L["EditRoomDraftHint"]</p>
+
+                @if (edit.PropertyId is null)
+                {
+                    <label for="ai-edit-property">@L["EditPropertyName"]</label>
+                    <input id="ai-edit-property" class="input" maxlength="200"
+                           @bind="_editPropertyName" disabled="@_busy" />
+
+                    <label for="ai-edit-address">@L["EditPropertyAddress"]</label>
+                    <input id="ai-edit-address" class="input" maxlength="500"
+                           @bind="_editPropertyAddress" disabled="@_busy" />
+                }
+
+                <table class="draft-table assistant-edit__table">
+                    <thead>
+                        <tr>
+                            <th>@L["RoomCode"]</th>
+                            <th class="num">@L["Floor"]</th>
+                            <th class="num">@L["Area"]</th>
+                            <th class="num">@L["Price"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _editRooms)
+                        {
+                            <tr>
+                                <td><input class="input" maxlength="50" @bind="row.Code" disabled="@_busy" /></td>
+                                <td class="num"><input class="input" type="number" min="0" max="1000" @bind="row.Floor" disabled="@_busy" /></td>
+                                <td class="num"><input class="input" type="number" min="0" step="0.1" @bind="row.AreaM2" disabled="@_busy" /></td>
+                                <td class="num"><input class="input" type="number" min="0" step="1000" @bind="row.StandardPrice" disabled="@_busy" /></td>
+                                <td>
+                                    <button type="button" class="btn btn-secondary btn-sm" disabled="@_busy"
+                                            @onclick="() => RemoveRoom(row)">
+                                        <LucideIcon Name="trash" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary btn-sm" disabled="@_busy" @onclick="AddRoom">
+                    <LucideIcon Name="plus" />@L["AddRoomRow"]
+                </button>
+            </div>
+        }
+    }
+
+    @if (_error is not null)
+    {
+        <p class="field-error" role="alert">@_error</p>
+    }
+</ConfirmDialog>
+
+<FeatureDialog Visible="@(_rejectId is not null)"
+               Title="@L["RejectDialogTitle"]"
+               CloseLabel="@L["CloseDialog"]"
+               Busy="@_busy"
+               OnClose="CloseReject">
+    <div class="assistant-edit">
+        <label for="ai-reject-reason">@L["RejectReasonLabel"]</label>
+        <textarea id="ai-reject-reason" class="input assistant-form__textarea" rows="4" maxlength="500"
+                  placeholder="@L["RejectReasonPlaceholder"]" @bind="_rejectReason" disabled="@_busy"></textarea>
+        <p class="assistant-form__hint">@L["RejectReasonHint"]</p>
+        @if (_error is not null)
+        {
+            <p class="field-error" role="alert">@_error</p>
+        }
+    </div>
+    <div class="assistant-card__actions">
+        <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="CloseReject">@L["Cancel"]</button>
+        <button type="button" class="btn btn-danger" disabled="@_busy" @onclick="ConfirmRejectAsync">
+            @(_busy ? L["Busy"] : L["Reject"])
+        </button>
+    </div>
+</FeatureDialog>
+
+@code {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private sealed class RoomEditRow
+    {
+        public string Code { get; set; } = string.Empty;
+        public int? Floor { get; set; }
+        public decimal? AreaM2 { get; set; }
+        public decimal StandardPrice { get; set; }
+    }
+
+    private IReadOnlyList<AiSuggestionDto> _items = [];
+    private PropertyCaller? _caller;
+    private bool _loading = true;
+    private bool _failed;
+    private bool _busy;
+    private string? _error;
+
+    private Guid? _approveId;
+    private AiSuggestionDto? _editing;
+    private string _editTitle = string.Empty;
+    private string _editBody = string.Empty;
+    private string _editPropertyName = string.Empty;
+    private string _editPropertyAddress = string.Empty;
+    private List<RoomEditRow>? _editRooms;
+
+    private Guid? _rejectId;
+    private string _rejectReason = string.Empty;
+
+    private int PendingCount => _items.Count(item => item.Status == AiSuggestionStatus.Pending);
+    private int AppliedCount => _items.Count(item => item.Status == AiSuggestionStatus.Applied);
+    private int RejectedCount => _items.Count(item => item.Status == AiSuggestionStatus.Rejected);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _failed = false;
+        try
+        {
+            _caller = await Callers.GetCallerAsync();
+            var result = await Suggest.ListInboxAsync(_caller);
+            if (!result.Succeeded)
+            {
+                _failed = true;
+                return;
+            }
+
+            _items = result.Items
+                .OrderBy(item => item.Status == AiSuggestionStatus.Pending ? 0 : 1)
+                .ThenByDescending(item => item.CreatedAt)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Không tải được hộp đề xuất AI");
+            _failed = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenApprove(AiSuggestionDto item)
+    {
+        _error = null;
+        _approveId = item.Id;
+        _editing = item;
+        _editTitle = item.Draft.Notification?.Title ?? string.Empty;
+        _editBody = item.Draft.Notification?.Body ?? string.Empty;
+
+        var draft = item.Draft.RoomDraft;
+        _editPropertyName = draft?.Property?.Name ?? string.Empty;
+        _editPropertyAddress = draft?.Property?.Address ?? string.Empty;
+        _editRooms = draft?.Rooms.Select(room => new RoomEditRow
+        {
+            Code = room.Code,
+            Floor = room.Floor,
+            AreaM2 = room.AreaM2,
+            StandardPrice = room.StandardPrice,
+        }).ToList();
+    }
+
+    private void CloseApprove()
+    {
+        _approveId = null;
+        _editing = null;
+        _editRooms = null;
+        _error = null;
+    }
+
+    private void AddRoom()
+    {
+        _editRooms ??= [];
+        _editRooms.Add(new RoomEditRow
+        {
+            Code = $"P{_editRooms.Count + 1:00}",
+            StandardPrice = 0,
+        });
+    }
+
+    private void RemoveRoom(RoomEditRow row) => _editRooms?.Remove(row);
+
+    private async Task ConfirmApproveAsync()
+    {
+        if (_caller is null || _approveId is not { } id || _editing is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var editedJson = BuildEditedJson(_editing);
+            var result = await Suggest.ApproveAsync(id, editedJson, _caller);
+            if (!result.Succeeded)
+            {
+                _error = result.ErrorMessage ?? L["ApproveFailed"];
+                return;
+            }
+
+            Toasts.Success(L["ApproveSuccess"]);
+            CloseApprove();
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string? BuildEditedJson(AiSuggestionDto item)
+    {
+        if (item.UseCase == AiUseCase.ReminderMessage)
+        {
+            return JsonSerializer.Serialize(new
+            {
+                title = _editTitle.Trim(),
+                body = _editBody.Trim(),
+                notes = item.Draft.Notification?.Notes,
+            }, JsonOptions);
+        }
+
+        if (item.UseCase == AiUseCase.RoomDraft && _editRooms is not null)
+        {
+            var property = item.PropertyId is null
+                ? new { name = _editPropertyName.Trim(), address = _editPropertyAddress.Trim() }
+                : null;
+
+            return JsonSerializer.Serialize(new
+            {
+                property,
+                rooms = _editRooms.Select(room => new
+                {
+                    code = room.Code.Trim(),
+                    floor = room.Floor,
+                    areaM2 = room.AreaM2,
+                    standardPrice = room.StandardPrice,
+                }),
+                notes = item.Draft.RoomDraft?.Notes,
+            }, JsonOptions);
+        }
+
+        return null;
+    }
+
+    private void OpenReject(AiSuggestionDto item)
+    {
+        _error = null;
+        _rejectId = item.Id;
+        _rejectReason = string.Empty;
+    }
+
+    private void CloseReject()
+    {
+        _rejectId = null;
+        _rejectReason = string.Empty;
+        _error = null;
+    }
+
+    private async Task ConfirmRejectAsync()
+    {
+        if (_caller is null || _rejectId is not { } id)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Suggest.RejectAsync(id, _rejectReason, _caller);
+            if (!result.Succeeded)
+            {
+                _error = result.ErrorMessage ?? L["RejectFailed"];
+                return;
+            }
+
+            Toasts.Success(L["RejectSuccess"]);
+            CloseReject();
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private string StatusText(AiSuggestionStatus status) => status switch
+    {
+        AiSuggestionStatus.Pending => L["StatusPending"],
+        AiSuggestionStatus.Approved => L["StatusApproved"],
+        AiSuggestionStatus.Rejected => L["StatusRejected"],
+        AiSuggestionStatus.Applied => L["StatusApplied"],
+        _ => status.ToString(),
+    };
+
+    private static BadgeTone StatusTone(AiSuggestionStatus status) => status switch
+    {
+        AiSuggestionStatus.Pending => BadgeTone.Warning,
+        AiSuggestionStatus.Applied => BadgeTone.Success,
+        AiSuggestionStatus.Rejected => BadgeTone.Error,
+        _ => BadgeTone.Info,
+    };
+}
