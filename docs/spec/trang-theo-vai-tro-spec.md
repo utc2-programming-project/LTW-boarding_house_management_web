@@ -1,0 +1,169 @@
+# SPEC — Trang theo vai trò (hiện trạng)
+
+## Admin
+
+- Trang chủ — `/home`
+- Tài khoản — `/account`
+- Hồ sơ (chuyển hướng) — `/profile`
+- Quản trị tài khoản — `/admin/users`
+- Quản lý chủ trọ — `/admin/owners`
+- Nhật ký thao tác — `/admin/audit-log`
+- Thiết lập tài khoản — `/Account/Manage`
+- Đổi mật khẩu — `/Account/Manage/ChangePassword`
+- Đổi email — `/Account/Manage/Email`
+- Xác thực 2 lớp — `/Account/Manage/TwoFactorAuthentication`
+- Bật authenticator — `/Account/Manage/EnableAuthenticator`
+- Tắt 2 lớp — `/Account/Manage/Disable2fa`
+- Mã dự phòng — `/Account/Manage/GenerateRecoveryCodes`
+- Đặt lại authenticator — `/Account/Manage/ResetAuthenticator`
+- Passkey — `/Account/Manage/Passkeys`
+- Đổi tên passkey — `/Account/Manage/RenamePasskey/{Id}`
+- Liên kết đăng nhập ngoài — `/Account/Manage/ExternalLogins`
+- Đặt mật khẩu — `/Account/Manage/SetPassword`
+- Phiên đăng nhập — `/Account/Manage/Sessions`
+- Dữ liệu cá nhân — `/Account/Manage/PersonalData`
+- Xoá dữ liệu cá nhân — `/Account/Manage/DeletePersonalData`
+
+## Chủ trọ
+
+- Trang chủ — `/home`
+- Tài khoản — `/account`
+- Hồ sơ (chuyển hướng) — `/profile`
+- Bảng điều khiển — `/dashboard`
+- Quản trị tài khoản — `/admin/users`
+- Nhật ký thao tác — `/admin/audit-log`
+- Công tắc Quản lý — `/admin/manager-switches`
+- Danh sách nhà trọ — `/properties`
+- Tạo nhà trọ — `/properties/new`
+- Thiết lập nhà trọ — `/properties/{PropertyId:int}/setup`
+- Thùng rác nhà trọ — `/properties/trash`
+- Danh sách phòng — `/rooms`
+- Thùng rác phòng — `/rooms/trash`
+- Danh sách khách thuê — `/tenants`
+- Thùng rác khách thuê — `/tenants/trash`
+- Danh sách hợp đồng — `/contracts`
+- Chi tiết hợp đồng — `/contracts/{ContractId:guid}`
+- In hợp đồng — `/contracts/{ContractId:guid}/print`
+- Sửa hợp đồng — `/contracts/{ContractId:guid}/edit`
+- Tạo hợp đồng — `/contracts/create`
+- Phân công phòng chờ — `/contracts/pending-assignments`
+- Hàng đợi gia hạn — `/contracts/renewals`
+- Thùng rác hợp đồng — `/contracts/trash`
+- Xem hợp đồng của tôi — `/my/contracts/{ContractId:guid}`
+- Danh sách hoá đơn — `/invoices`
+- Chi tiết hoá đơn — `/invoices/{Id:int}`
+- Thùng rác hoá đơn — `/invoices/trash`
+- Xác nhận thanh toán — `/payment-requests`
+- Chi tiết xác nhận thanh toán — `/payment-requests/{PaymentId:int}`
+- Dịch vụ — `/services`
+- Bảng giá dịch vụ — `/services/prices`
+- Tính chi phí điện nước — `/services/readings/costs`
+- Đăng ký dịch vụ — `/service-registrations`
+- Đăng ký dịch vụ của tôi — `/my/service-registrations`
+- Thùng rác dịch vụ — `/services/trash`
+- Thùng rác đăng ký dịch vụ — `/services/registrations/trash`
+- Sự cố — `/incidents`
+- Thùng rác sự cố — `/incidents/trash`
+- Báo cáo — `/reports`
+- Hàng đợi duyệt — `/approvals`
+- Thùng rác tài liệu — `/documents/trash`
+- Thiết lập tài khoản — `/Account/Manage`
+- Đổi mật khẩu — `/Account/Manage/ChangePassword`
+- Đổi email — `/Account/Manage/Email`
+- Xác thực 2 lớp — `/Account/Manage/TwoFactorAuthentication`
+- Bật authenticator — `/Account/Manage/EnableAuthenticator`
+- Tắt 2 lớp — `/Account/Manage/Disable2fa`
+- Mã dự phòng — `/Account/Manage/GenerateRecoveryCodes`
+- Đặt lại authenticator — `/Account/Manage/ResetAuthenticator`
+- Passkey — `/Account/Manage/Passkeys`
+- Đổi tên passkey — `/Account/Manage/RenamePasskey/{Id}`
+- Liên kết đăng nhập ngoài — `/Account/Manage/ExternalLogins`
+- Đặt mật khẩu — `/Account/Manage/SetPassword`
+- Phiên đăng nhập — `/Account/Manage/Sessions`
+- Dữ liệu cá nhân — `/Account/Manage/PersonalData`
+- Xoá dữ liệu cá nhân — `/Account/Manage/DeletePersonalData`
+
+## Quản lý
+
+- Trang chủ — `/home`
+- Tài khoản — `/account`
+- Hồ sơ (chuyển hướng) — `/profile`
+- Bảng điều khiển — `/dashboard`
+- Quản trị tài khoản — `/admin/users`
+- Danh sách nhà trọ — `/properties`
+- Danh sách phòng — `/rooms`
+- Danh sách khách thuê — `/tenants`
+- Danh sách hợp đồng — `/contracts`
+- Chi tiết hợp đồng — `/contracts/{ContractId:guid}`
+- In hợp đồng — `/contracts/{ContractId:guid}/print`
+- Sửa hợp đồng — `/contracts/{ContractId:guid}/edit`
+- Tạo hợp đồng — `/contracts/create`
+- Phân công phòng chờ — `/contracts/pending-assignments`
+- Hàng đợi gia hạn — `/contracts/renewals`
+- Xem hợp đồng của tôi — `/my/contracts/{ContractId:guid}`
+- Danh sách hoá đơn — `/invoices`
+- Chi tiết hoá đơn — `/invoices/{Id:int}`
+- Xác nhận thanh toán — `/payment-requests`
+- Chi tiết xác nhận thanh toán — `/payment-requests/{PaymentId:int}`
+- Dịch vụ — `/services`
+- Bảng giá dịch vụ — `/services/prices`
+- Tính chi phí điện nước — `/services/readings/costs`
+- Đăng ký dịch vụ — `/service-registrations`
+- Đăng ký dịch vụ của tôi — `/my/service-registrations`
+- Sự cố — `/incidents`
+- Báo cáo — `/reports`
+- Yêu cầu của tôi — `/my/requests`
+- Thùng rác tài liệu — `/documents/trash`
+- Thiết lập tài khoản — `/Account/Manage`
+- Đổi mật khẩu — `/Account/Manage/ChangePassword`
+- Đổi email — `/Account/Manage/Email`
+- Xác thực 2 lớp — `/Account/Manage/TwoFactorAuthentication`
+- Bật authenticator — `/Account/Manage/EnableAuthenticator`
+- Tắt 2 lớp — `/Account/Manage/Disable2fa`
+- Mã dự phòng — `/Account/Manage/GenerateRecoveryCodes`
+- Đặt lại authenticator — `/Account/Manage/ResetAuthenticator`
+- Passkey — `/Account/Manage/Passkeys`
+- Đổi tên passkey — `/Account/Manage/RenamePasskey/{Id}`
+- Liên kết đăng nhập ngoài — `/Account/Manage/ExternalLogins`
+- Đặt mật khẩu — `/Account/Manage/SetPassword`
+- Phiên đăng nhập — `/Account/Manage/Sessions`
+- Dữ liệu cá nhân — `/Account/Manage/PersonalData`
+- Xoá dữ liệu cá nhân — `/Account/Manage/DeletePersonalData`
+
+## Khách thuê
+
+- Trang chủ — `/home`
+- Tài khoản — `/account`
+- Hồ sơ (chuyển hướng) — `/profile`
+- Quản trị tài khoản — `/admin/users`
+- Danh sách hợp đồng — `/contracts`
+- Chi tiết hợp đồng — `/contracts/{ContractId:guid}`
+- In hợp đồng — `/contracts/{ContractId:guid}/print`
+- Xem hợp đồng của tôi — `/my/contracts/{ContractId:guid}`
+- Danh sách hoá đơn — `/invoices`
+- Chi tiết hoá đơn — `/invoices/{Id:int}`
+- Dịch vụ — `/services`
+- Bảng giá dịch vụ — `/services/prices`
+- Tính chi phí điện nước — `/services/readings/costs`
+- Đăng ký dịch vụ của tôi — `/my/service-registrations`
+- Sự cố — `/incidents`
+- Phòng đang thuê — `/my/room`
+- Phòng đang thuê theo hợp đồng — `/my/room/{ContractId:guid}`
+- Hồ sơ khách thuê — `/my/tenant-profile`
+- Tài liệu của tôi — `/my/documents`
+- Thùng rác tài liệu — `/documents/trash`
+- Thiết lập tài khoản — `/Account/Manage`
+- Đổi mật khẩu — `/Account/Manage/ChangePassword`
+- Đổi email — `/Account/Manage/Email`
+- Xác thực 2 lớp — `/Account/Manage/TwoFactorAuthentication`
+- Bật authenticator — `/Account/Manage/EnableAuthenticator`
+- Tắt 2 lớp — `/Account/Manage/Disable2fa`
+- Mã dự phòng — `/Account/Manage/GenerateRecoveryCodes`
+- Đặt lại authenticator — `/Account/Manage/ResetAuthenticator`
+- Passkey — `/Account/Manage/Passkeys`
+- Đổi tên passkey — `/Account/Manage/RenamePasskey/{Id}`
+- Liên kết đăng nhập ngoài — `/Account/Manage/ExternalLogins`
+- Đặt mật khẩu — `/Account/Manage/SetPassword`
+- Phiên đăng nhập — `/Account/Manage/Sessions`
+- Dữ liệu cá nhân — `/Account/Manage/PersonalData`
+- Xoá dữ liệu cá nhân — `/Account/Manage/DeletePersonalData`
