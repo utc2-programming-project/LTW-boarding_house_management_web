@@ -426,7 +426,7 @@ namespace Web.Migrations
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450"));
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("UserId");
 
