@@ -1,7 +1,8 @@
 @page "/my/contracts/{ContractId:guid}"
 @rendermode InteractiveServer
-@attribute [Authorize(Policy = "ContractBusiness")]
+@attribute [Authorize(Roles = Roles.KhachThue)]
 @using Microsoft.AspNetCore.Authorization
+@using Web.Features.Accounts
 @using Web.Common.Utils
 @using Web.Components.Shared.Feedback
 @using Web.Features.Contracts.DTOs

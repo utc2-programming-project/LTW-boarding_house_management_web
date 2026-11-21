@@ -1,6 +1,8 @@
 @page "/my/service-registrations"
 @rendermode InteractiveServer
-@attribute [Authorize(Policy = "UtilityBusiness")]
+@attribute [Authorize(Roles = Roles.KhachThue)]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Features.Accounts
 @using Web.Common.Utils
 @using Web.Features.Utilities.Entities
 @using Web.Features.Utilities.Services

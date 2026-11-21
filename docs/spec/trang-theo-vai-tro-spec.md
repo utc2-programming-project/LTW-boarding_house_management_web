@@ -49,7 +49,6 @@
 - Phân công phòng chờ — `/contracts/pending-assignments`
 - Hàng đợi gia hạn — `/contracts/renewals`
 - Thùng rác hợp đồng — `/contracts/trash`
-- Xem hợp đồng của tôi — `/my/contracts/{ContractId:guid}`
 - Danh sách hoá đơn — `/invoices`
 - Chi tiết hoá đơn — `/invoices/{Id:int}`
 - Thùng rác hoá đơn — `/invoices/trash`
@@ -59,7 +58,6 @@
 - Bảng giá dịch vụ — `/services/prices`
 - Tính chi phí điện nước — `/services/readings/costs`
 - Đăng ký dịch vụ — `/service-registrations`
-- Đăng ký dịch vụ của tôi — `/my/service-registrations`
 - Thùng rác dịch vụ — `/services/trash`
 - Thùng rác đăng ký dịch vụ — `/services/registrations/trash`
 - Sự cố — `/incidents`
@@ -100,7 +98,6 @@
 - Tạo hợp đồng — `/contracts/create`
 - Phân công phòng chờ — `/contracts/pending-assignments`
 - Hàng đợi gia hạn — `/contracts/renewals`
-- Xem hợp đồng của tôi — `/my/contracts/{ContractId:guid}`
 - Danh sách hoá đơn — `/invoices`
 - Chi tiết hoá đơn — `/invoices/{Id:int}`
 - Xác nhận thanh toán — `/payment-requests`
@@ -109,7 +106,6 @@
 - Bảng giá dịch vụ — `/services/prices`
 - Tính chi phí điện nước — `/services/readings/costs`
 - Đăng ký dịch vụ — `/service-registrations`
-- Đăng ký dịch vụ của tôi — `/my/service-registrations`
 - Sự cố — `/incidents`
 - Báo cáo — `/reports`
 - Yêu cầu của tôi — `/my/requests`
@@ -135,7 +131,6 @@
 - Trang chủ — `/home`
 - Tài khoản — `/account`
 - Hồ sơ (chuyển hướng) — `/profile`
-- Quản trị tài khoản — `/admin/users`
 - Danh sách hợp đồng — `/contracts`
 - Chi tiết hợp đồng — `/contracts/{ContractId:guid}`
 - In hợp đồng — `/contracts/{ContractId:guid}/print`
