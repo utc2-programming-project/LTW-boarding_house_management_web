@@ -320,18 +320,39 @@
                     }
                     else if (user.Role == Roles.QuanLy)
                     {
-                        <span class="account-name">@(string.IsNullOrWhiteSpace(user.OwnerName) ? user.OwnerEmail : user.OwnerName)</span>
+                        <span class="account-name cell-truncate">@(string.IsNullOrWhiteSpace(user.OwnerName) ? user.OwnerEmail : user.OwnerName)</span>
                         @if (user.AssignedProperties.Count > 0)
                         {
-                            <small class="account-sub">@string.Join(", ", user.AssignedProperties.Select(property => property.Name))</small>
+                            <small class="account-sub cell-truncate" data-hover-tip aria-describedby="@($"account-owner-tip-{RowKey(user)}")">
+                                @string.Join(", ", user.AssignedProperties.Select(property => property.Name))
+                                <span class="hover-tip" id="@($"account-owner-tip-{RowKey(user)}")" role="tooltip">
+                                    @foreach (var property in user.AssignedProperties)
+                                    {
+                                        <span class="hover-tip__line">@property.Name</span>
+                                    }
+                                </span>
+                            </small>
                         }
                     }
                     else if (user.Role == Roles.ChuTro)
                     {
-                        <span class="account-name">@L["OwnerSelf"]</span>
-                        <small class="account-sub">@(user.OwnedProperties.Count > 0
-                            ? string.Join(", ", user.OwnedProperties.Select(property => property.Name))
-                            : L["OwnerNoProperty"].Value)</small>
+                        <span class="account-name cell-truncate">@L["OwnerSelf"]</span>
+                        @if (user.OwnedProperties.Count > 0)
+                        {
+                            <small class="account-sub cell-truncate" data-hover-tip aria-describedby="@($"account-owner-tip-{RowKey(user)}")">
+                                @string.Join(", ", user.OwnedProperties.Select(property => property.Name))
+                                <span class="hover-tip" id="@($"account-owner-tip-{RowKey(user)}")" role="tooltip">
+                                    @foreach (var property in user.OwnedProperties)
+                                    {
+                                        <span class="hover-tip__line">@property.Name</span>
+                                    }
+                                </span>
+                            </small>
+                        }
+                        else
+                        {
+                            <small class="account-sub">@L["OwnerNoProperty"]</small>
+                        }
                     }
                     else
                     {
@@ -409,7 +430,7 @@
                                             <LucideIcon Name="key" /><span>@L["ResetPasswordAction"]</span>
                                         </button>
                                         <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuForceLogout(user)">
-                                            <LucideIcon Name="log-out" /><span>@L["ForceLogoutAction"]</span>
+                                            <LucideIcon Name="logout" /><span>@L["ForceLogoutAction"]</span>
                                         </button>
                                     }
                                     @if (_lockableRoles.Contains(user.Role) && user.Role != Roles.Admin)

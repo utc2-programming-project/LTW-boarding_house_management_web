@@ -2159,6 +2159,8 @@
   <data name="SelectRoleTenantHint" xml:space="preserve"><value>Xem phòng, hợp đồng, hoá đơn và gửi yêu cầu của khách thuê.</value></data>
   <data name="SelectRoleInvalid" xml:space="preserve"><value>Vai trò không hợp lệ. Vui lòng chọn lại.</value></data>
   <data name="SelectRoleNone" xml:space="preserve"><value>Tài khoản chưa được gán vai trò nào. Vui lòng liên hệ quản trị.</value></data>
+  <data name="SelectRoleLoadingTitle" xml:space="preserve"><value>Đang tải dữ liệu…</value></data>
+  <data name="SelectRoleLoadingHint" xml:space="preserve"><value>Hệ thống đang chuẩn bị không gian làm việc cho vai trò bạn chọn. Lần đầu có thể mất vài giây, vui lòng chờ.</value></data>
   <data name="SwitchRole" xml:space="preserve"><value>Đổi vai trò</value></data>
   <!-- PLAN-024: nhận lời mời/QR -->
   <data name="InviteOwnerLabel" xml:space="preserve"><value>Chủ trọ</value></data>

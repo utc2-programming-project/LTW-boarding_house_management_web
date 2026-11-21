@@ -2159,6 +2159,8 @@
   <data name="SelectRoleTenantHint" xml:space="preserve"><value>View your room, contract, invoices and tenant requests.</value></data>
   <data name="SelectRoleInvalid" xml:space="preserve"><value>Invalid role. Please choose again.</value></data>
   <data name="SelectRoleNone" xml:space="preserve"><value>This account has no role. Please contact an administrator.</value></data>
+  <data name="SelectRoleLoadingTitle" xml:space="preserve"><value>Loading data…</value></data>
+  <data name="SelectRoleLoadingHint" xml:space="preserve"><value>We are preparing the workspace for the role you picked. The first load can take a few seconds.</value></data>
   <data name="SwitchRole" xml:space="preserve"><value>Switch role</value></data>
   <!-- PLAN-024: invitation/QR -->
   <data name="InviteOwnerLabel" xml:space="preserve"><value>Owner</value></data>

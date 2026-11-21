@@ -980,6 +980,7 @@ html:has(.auth-shell) {
 .account-owner {
     display: flex;
     flex-direction: column;
+    min-inline-size: 0;
 }
 
 .owner-badge.unassigned {
