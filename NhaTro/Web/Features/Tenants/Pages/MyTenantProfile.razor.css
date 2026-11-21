@@ -6,7 +6,7 @@
 .tenant-profile-hero p { margin: var(--space-1) 0 0; color: var(--text-secondary); font-size: .8125rem; }
 /* Badge do component StatusBadge render nên scoped CSS phải đi qua ::deep mới đẩy được sang cuối hàng. */
 .tenant-profile-hero ::deep .badge { margin-left: auto; }
-.tenant-profile-avatar { display: grid; width: 56px; height: 56px; flex: 0 0 56px; place-items: center; border-radius: var(--radius-dialog); background: var(--accent-soft); color: var(--accent-text); font-size: 1.25rem; font-weight: 700; }
+.tenant-profile-avatar { display: grid; width: 56px; height: 56px; flex: 0 0 56px; place-items: center; border-radius: var(--radius-dialog); background: var(--accent-soft); color: var(--accent-text); font-size: 1.25rem; font-weight:600; }
 .tenant-profile-section-heading { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-4); }
 .tenant-profile-section-icon { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; border: 1px solid var(--accent-border); border-radius: 10px; background: var(--accent-soft); color: var(--accent-text); }
 .tenant-profile-section-icon ::deep .lucide-icon { width: 18px; height: 18px; }

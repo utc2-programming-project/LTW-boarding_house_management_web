@@ -1,29 +1,29 @@
-.contract-list-page .page-heading p{margin:8px 0 0;color:var(--text-secondary)}.contract-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.contract-table{width:100%;table-layout:fixed;border-collapse:collapse}.contract-table th{height:44px;padding:8px 12px;background:var(--surface-subtle);color:var(--text-secondary);font-size:13px;text-align:left;overflow-wrap:normal}.contract-table td{height:52px;padding:8px 12px;border-top:1px solid var(--border);font-size:14px;vertical-align:middle;overflow-wrap:break-word}.contract-table tr:hover td{background:var(--hover-bg)}.contract-table td a:not(.btn){color:var(--accent-text);font-weight:600}.contract-table .numeric{text-align:right;white-space:nowrap}.contract-row-actions{display:flex;gap:8px;align-items:center}.contract-row-actions .btn{min-height:40px;padding:6px 10px;white-space:nowrap}@media(max-width:767px){.contract-list-page .page-heading{align-items:flex-start;flex-direction:column;gap:16px}.contract-row-actions .btn{min-height:44px}}
+.contract-list-page .page-heading p{margin:8px 0 0;color:var(--text-secondary)}.contract-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}.contract-table{width:100%;table-layout:fixed;min-width:1180px;border-collapse:collapse}.contract-table th{height:44px;padding:8px 12px;background:var(--surface-subtle);color:var(--text-secondary);font-size:13px;text-align:left;overflow-wrap:normal}.contract-table td{height:52px;padding:8px 12px;border-top:1px solid var(--border);font-size:14px;vertical-align:middle;overflow-wrap:break-word}.contract-table tr:hover td{background:var(--hover-bg)}.contract-table td a:not(.btn){color:var(--accent-text);font-weight:600}.contract-table .numeric{text-align:right;white-space:nowrap}.contract-row-actions{display:flex;gap:8px;align-items:center}.contract-row-actions .btn{min-height:40px;padding:6px 10px;white-space:nowrap}@media(max-width:767px){.contract-list-page .page-heading{align-items:flex-start;flex-direction:column;gap:16px}.contract-row-actions .btn{min-height:44px}}
 
-.contract-table th:nth-child(1) { width:13%; }
-.contract-table th:nth-child(2) { width:17%; }
-.contract-table th:nth-child(3) { width:21%; }
-.contract-table th:nth-child(4) { width:15%; }
-.contract-table th:nth-child(5) { width:19%; }
+.contract-table th:nth-child(1) { width:12%; }
+.contract-table th:nth-child(2) { width:13%; }
+.contract-table th:nth-child(3) { width:18%; }
+.contract-table th:nth-child(4) { width:17%; }
+.contract-table th:nth-child(5) { width:25%; }
 .contract-table th:nth-child(6) { width:15%; text-align:center; }
 .contract-table td:nth-child(6) { text-align:center; }
 .contract-actions-col { text-align: center; }
 .contract-actions-cell .p2-row-actions { justify-content:center; }
 .contract-room-cell { display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
 .contract-room-line { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
-.contract-cell-stack { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:0; }
+.contract-room-line > * { min-width:0; }
 .contract-cell-secondary { color:var(--text-secondary); font-size:.75rem; }
 .contract-term { white-space:nowrap; font-variant-numeric:tabular-nums; }
-/* Hai khoản tiền chia đôi cột đều nhau, nhãn nhỏ phía trên - số tiền đậm phía dưới. */
-.contract-finance { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 12px; margin:0; }
-.contract-finance > div { display:flex; flex-direction:column; gap:3px; min-width:0; padding-left:12px; border-left:1px solid var(--border); }
-.contract-finance > div:first-child { padding-left:0; border-left:0; }
-.contract-finance dt { color:var(--text-secondary); font-size:.75rem; line-height:1.25; font-weight:500; white-space:nowrap; }
-.contract-finance dd { margin:0; color:var(--text-primary); font-size:.8125rem; line-height:1.3; font-weight:600; white-space:nowrap; }
+/* Tài chính 1 dòng: "Thuê 3.720.000 ₫ │ Cọc 3.720.000 ₫" — nhãn nhỏ, số đậm, không xuống hàng.
+   flex-wrap để số tiền cực dài rơi xuống dòng thay vì tràn ô. */
+.contract-finance { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:10px; row-gap:2px; margin:0; font-variant-numeric:tabular-nums; }
+.contract-finance-item { display:inline-flex; align-items:baseline; gap:5px; }
+.contract-finance-item + .contract-finance-item { padding-left:10px; border-left:1px solid var(--border); }
+.contract-finance-label { color:var(--text-secondary); font-size:.75rem; font-weight:500; white-space:nowrap; }
+.contract-finance strong { color:var(--text-primary); font-size:.8125rem; line-height:1.3; font-weight:600; white-space:nowrap; }
 
-@media (max-width:400px) {
-    .contract-finance { grid-template-columns:minmax(0,1fr); gap:6px; }
-    .contract-finance > div { padding-left:0; border-left:0; }
+@media (max-width:767px) {
+    .contract-finance-item + .contract-finance-item { padding-left:0; border-left:0; }
 }
 
 @media(max-width:1199px) {

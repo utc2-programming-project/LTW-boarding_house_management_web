@@ -28,6 +28,9 @@
   <data name="MonthValue" xml:space="preserve"><value>Tháng {0}</value></data>
   <data name="FilterContract" xml:space="preserve"><value>Hợp đồng</value></data>
   <data name="AllContracts" xml:space="preserve"><value>Tất cả hợp đồng</value></data>
+  <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Tìm mã hợp đồng, phòng, tòa…</value></data>
+  <data name="ContractSearchLoading" xml:space="preserve"><value>Đang tìm hợp đồng…</value></data>
+  <data name="ContractSearchLimitHint" xml:space="preserve"><value>Hiện tối đa {0} hợp đồng khớp — gõ thêm để thu hẹp.</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Trạng thái</value></data>
   <data name="RegisterServiceButton" xml:space="preserve"><value>Đăng ký dịch vụ</value></data>
   <data name="CancelBtn" xml:space="preserve"><value>Hủy</value></data>

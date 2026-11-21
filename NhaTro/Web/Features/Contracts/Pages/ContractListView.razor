@@ -1,6 +1,7 @@
 @page "/contracts"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "ContractBusiness")]
+@implements IDisposable
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Web.Common.Utils
@@ -11,6 +12,7 @@
 @using Web.Infrastructure.Time
 @using Web.Components.Shared.Feedback
 @inject ContractPageService Contracts
+@inject Web.Common.Utils.FilterUrlState Url
 @inject IStringLocalizer<ContractResources> L
 @inject IStringLocalizer<Shared> SL
 @inject ToastService Toasts
@@ -99,7 +101,7 @@
                 <label class="sr-only" for="contract-keyword">@L["ContractSearchLabel"]</label>
                 <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                 <input id="contract-keyword" class="input" placeholder="@L["ContractSearchPlaceholder"]"
-                       @bind="_keyword" @bind:event="oninput" @bind:after="SearchAsync" />
+                       @bind="_keyword" @bind:event="oninput" @bind:after="OnKeywordChangedAsync" />
             </div>
             <div class="filter-bar__field filter-bar__select">
                 <label class="sr-only" for="contract-status-filter">@L["ContractStatusLabel"]</label>
@@ -222,7 +224,14 @@
                     @foreach (var item in _pageResult.Items)
                     {
                         <tr role="row">
-                            <td role="cell" data-label="@L["ContractNumberLabel"]"><a class="cell-link is-code" href="@AppLinks.Contract(item.ContractId)" title="@($"{SL["CellLinkOpenContract"]}: {item.ContractNumber}")">@item.ContractNumber</a></td>
+                            <td role="cell" data-label="@L["ContractNumberLabel"]">
+                                <a class="cell-link is-code" href="@AppLinks.Contract(item.ContractId)" data-hover-tip>
+                                    @item.ContractNumber
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@item.ContractNumber</span>
+                                    </span>
+                                </a>
+                            </td>
                             <td role="cell" data-label="@L["ContractTenantsLabel"]">
                                 @if (item.TenantNames.Count == 0)
                                 {
@@ -230,19 +239,35 @@
                                 }
                                 else if (!CanFollowLinks)
                                 {
-                                    <span>@string.Join(", ", item.TenantNames)</span>
+                                    <span class="cell-truncate" data-hover-tip>
+                                        @string.Join(", ", item.TenantNames)
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            @foreach (var name in item.TenantNames)
+                                            {
+                                                <span class="hover-tip__line">@name</span>
+                                            }
+                                        </span>
+                                    </span>
                                 }
                                 else
                                 {
-                                    @for (var i = 0; i < item.TenantNames.Count; i++)
-                                    {
-                                        var tenantName = item.TenantNames[i];
-                                        if (i > 0)
+                                    <span class="cell-truncate" data-hover-tip>
+                                        @for (var i = 0; i < item.TenantNames.Count; i++)
                                         {
-                                            <span>, </span>
+                                            var tenantName = item.TenantNames[i];
+                                            if (i > 0)
+                                            {
+                                                <span>, </span>
+                                            }
+                                            <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)">@tenantName</a>
                                         }
-                                        <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
-                                    }
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            @foreach (var name in item.TenantNames)
+                                            {
+                                                <span class="hover-tip__line">@name</span>
+                                            }
+                                        </span>
+                                    </span>
                                 }
                             </td>
                             <td role="cell" data-label="@L["ContractRoomPropertyLabel"]">
@@ -250,7 +275,7 @@
                                     <div class="contract-room-line">
                                         @if (CanFollowLinks)
                                         {
-                                            <a class="cell-link" href="@AppLinks.RoomsByCode(item.RoomCode)" title="@SL["CellLinkOpenRoom"]">@item.RoomCode</a>
+                                            <a class="cell-link" href="@AppLinks.RoomsByCode(item.RoomCode)">@item.RoomCode</a>
                                         }
                                         else
                                         {
@@ -260,20 +285,38 @@
                                     </div>
                                     @if (CanFollowLinks)
                                     {
-                                        <a class="cell-link is-quiet contract-cell-secondary" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" title="@SL["CellLinkOpenProperty"]">@item.PropertyName</a>
+                                        <a class="cell-link is-quiet contract-cell-secondary cell-truncate" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" data-hover-tip>
+                                            @item.PropertyName
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.PropertyName</span>
+                                            </span>
+                                        </a>
                                     }
                                     else
                                     {
-                                        <span class="contract-cell-secondary">@item.PropertyName</span>
+                                        <span class="contract-cell-secondary cell-truncate" data-hover-tip>
+                                            @item.PropertyName
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.PropertyName</span>
+                                            </span>
+                                        </span>
                                     }
                                 </div>
                             </td>
-                            <td role="cell" data-label="@L["ContractTermLabel"]"><div class="contract-cell-stack contract-term"><span>@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))</span><span>– @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</span></div></td>
+                            <td role="cell" data-label="@L["ContractTermLabel"]">
+                                <div class="contract-term tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))</div>
+                            </td>
                             <td role="cell" data-label="@L["ContractFinanceLabel"]">
-                                <dl class="contract-finance tabular-nums">
-                                    <div><dt>@L["ContractMonthlyRentShort"]</dt><dd>@MoneyFormatter.Format(item.SnapshotPrice)</dd></div>
-                                    <div><dt>@L["ContractDepositShort"]</dt><dd>@MoneyFormatter.Format(item.DepositAmount)</dd></div>
-                                </dl>
+                                <div class="contract-finance tabular-nums">
+                                    <span class="contract-finance-item">
+                                        <span class="contract-finance-label">@L["ContractRentAmountLabel"]</span>
+                                        <strong>@MoneyFormatter.Format(item.SnapshotPrice)</strong>
+                                    </span>
+                                    <span class="contract-finance-item">
+                                        <span class="contract-finance-label">@L["ContractDepositAmountLabel"]</span>
+                                        <strong>@MoneyFormatter.Format(item.DepositAmount)</strong>
+                                    </span>
+                                </div>
                             </td>
                             <td role="cell" data-label="@L["ContractActionsLabel"]" class="contract-actions-cell">
                                 <div class="p2-row-actions">
@@ -329,10 +372,21 @@
 @code {
     private ContractListPageDto _pageResult = new([], 0, new(0, 0, 0, 0, 0));
     private string? _keyword;
+    private CancellationTokenSource? _keywordDebounce;
 
     /// <summary>Từ khóa từ link chéo (?q=HD-001 hoặc ?q=A107): điền sẵn ô tìm kiếm.</summary>
     [SupplyParameterFromQuery(Name = "q")]
     public string? KeywordQuery { get; set; }
+
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ trang/bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string? SortQuery { get; set; }
 
     private string? _lastAppliedKeywordQuery;
     private string _statusFilter = "all";
@@ -399,6 +453,7 @@
         _isTenant = auth.User.IsInRole("KhachThue");
         _lastAppliedKeywordQuery = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
         _keyword = _lastAppliedKeywordQuery;
+        ApplyUrlState();
         await LoadPropertyOptionsAsync();
         await LoadAsync();
     }
@@ -439,6 +494,31 @@
         await LoadAsync();
     }
 
+    // Gõ từ khóa: gộp 300ms và giữ bảng cũ trong lúc chờ (như bộ lọc thẻ trạng thái),
+    // tránh nháy overlay toàn trang cho mỗi lần dừng gõ.
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
+            ResetPage();
+            await LoadAsync(showLoading: false);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+    }
+
     private Task ApplyAllStatusFilterAsync() => ApplyStatusFilterAsync("all");
 
     private string FilterCardClass(string status) =>
@@ -455,21 +535,21 @@
     {
         _statusFilter = e.Value?.ToString() ?? "all";
         ResetPage();
-        await LoadAsync();
+        await LoadAsync(showLoading: false);
     }
 
     private async Task HandlePropertyFilterChanged(ChangeEventArgs e)
     {
         _propertyFilter = e.Value?.ToString() ?? "all";
         ResetPage();
-        await LoadAsync();
+        await LoadAsync(showLoading: false);
     }
 
     private async Task HandleSortChanged(ChangeEventArgs e)
     {
         _sortFilter = e.Value?.ToString() ?? "newest";
         ResetPage();
-        await LoadAsync();
+        await LoadAsync(showLoading: false);
     }
 
     private async Task ChangePageSize(ChangeEventArgs e)
@@ -478,7 +558,7 @@
         {
             _pageSize = size;
             ResetPage();
-            await LoadAsync();
+            await LoadAsync(showLoading: false);
         }
     }
 
@@ -492,7 +572,7 @@
     {
         _openMenuId = null;
         _page = PaginationHelper.ClampPage(page, TotalPages);
-        await LoadAsync();
+        await LoadAsync(showLoading: false);
     }
 
     private bool IsMenuOpen(Guid id) => _openMenuId == id;
@@ -567,6 +647,41 @@
         await LoadAsync();
     }
 
+    private void ApplyUrlState()
+    {
+        if (PageQuery is > 1)
+        {
+            _page = PageQuery.Value;
+        }
+
+        if (StatusQuery is { Length: > 0 } status
+            && ContractFilterKeys.Contains(status, StringComparer.Ordinal))
+        {
+            _statusFilter = status;
+        }
+
+        if (SortQuery is { Length: > 0 } sort && ContractSortKeys.Contains(sort, StringComparer.Ordinal))
+        {
+            _sortFilter = sort;
+        }
+    }
+
+    private static readonly string[] ContractFilterKeys =
+    [
+        "all", "draft", "awaiting-tenant", "change-requested", "tenant-accepted", "cancelled",
+        "pending", "deposit-pending", "upcoming", "active", "expiring", "expired", "liquidated", "rejected",
+    ];
+
+    private static readonly string[] ContractSortKeys = ["newest", "expiring", "room"];
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["status"] = _statusFilter == "all" ? null : _statusFilter,
+        ["sort"] = _sortFilter == "newest" ? null : _sortFilter,
+        ["page"] = _page > 1 ? _page.ToString(System.Globalization.CultureInfo.InvariantCulture) : null,
+    });
+
     private async Task LoadAsync(bool showLoading = true)
     {
         await _reloadGate.WaitAsync();
@@ -602,6 +717,11 @@
             finally { _loading = false; }
         }
         finally { _reloadGate.Release(); }
+
+        if (!_failed)
+        {
+            await WriteUrlStateAsync();
+        }
 
         // Lùi trang phải chạy lại sau khi nhả cổng, nếu không lần đọc thứ hai sẽ chờ chính nó.
         if (retry) await LoadAsync();

@@ -150,20 +150,53 @@ public sealed class ContractServiceRegistrationService(
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
 
-        var rows = await (
-                from registration in db.ContractServiceRegistrations.IgnoreQueryFilters().AsNoTracking()
-                join contract in db.Contracts.AsNoTracking() on registration.ContractId equals contract.ContractId
-                join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
-                join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
-                where registration.IsDeleted && property.OwnerId == caller.UserId
-                select new { registration, contract, room, property })
+        var query =
+            from registration in db.ContractServiceRegistrations.IgnoreQueryFilters().AsNoTracking()
+            join contract in db.Contracts.AsNoTracking() on registration.ContractId equals contract.ContractId
+            join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
+            join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+            where registration.IsDeleted && property.OwnerId == caller.UserId
+            select new
+            {
+                registration.Id,
+                registration.ContractId,
+                contract.ContractNumber,
+                RoomCode = room.Code,
+                PropertyName = property.Name,
+                registration.ServiceCatalogId,
+                registration.MonthStart,
+                registration.DeletedAt,
+                registration.DeletedBy,
+            };
+
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        if (term is { } search)
+        {
+            query = query.Where(row =>
+                row.ContractNumber.Contains(search)
+                || row.RoomCode.Contains(search)
+                || row.PropertyName.Contains(search)
+                || db.ServicePriceHistories.IgnoreQueryFilters()
+                    .Any(version => version.ServiceCatalogId == row.ServiceCatalogId
+                        && version.Name.Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var rows = await query
+            .OrderByDescending(row => row.DeletedAt)
+            .ThenByDescending(row => row.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var serviceIds = rows.Select(row => row.registration.ServiceCatalogId).Distinct().ToList();
+        // Chỉ nạp lịch sử giá của trang hiện tại để chọn tên phiên bản mới nhất.
+        var serviceIds = rows.Select(row => row.ServiceCatalogId).Distinct().ToList();
         var histories = await db.ServicePriceHistories
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(version => serviceIds.Contains(version.ServiceCatalogId))
+            .Select(version => new { version.ServiceCatalogId, version.Name, version.EffectiveDate, version.Id })
             .ToListAsync(cancellationToken);
         var serviceNames = histories
             .GroupBy(version => version.ServiceCatalogId)
@@ -173,32 +206,24 @@ public sealed class ContractServiceRegistrationService(
                     .ThenByDescending(version => version.Id)
                     .First().Name);
 
-        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
         var items = rows
             .Select(row => new ServiceRegistrationTrashItemDto(
-                row.registration.Id,
-                row.registration.ContractId,
-                row.contract.ContractNumber,
-                row.room.Code,
-                row.property.Name,
-                row.registration.ServiceCatalogId,
-                serviceNames.GetValueOrDefault(row.registration.ServiceCatalogId, $"#{row.registration.ServiceCatalogId}"),
-                row.registration.MonthStart,
-                row.registration.DeletedAt,
-                row.registration.DeletedBy))
-            .Where(item => term is null
-                || item.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.ServiceName.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.DeletedAt)
-            .ThenByDescending(item => item.Id)
+                row.Id,
+                row.ContractId,
+                row.ContractNumber,
+                row.RoomCode,
+                row.PropertyName,
+                row.ServiceCatalogId,
+                serviceNames.GetValueOrDefault(row.ServiceCatalogId, $"#{row.ServiceCatalogId}"),
+                row.MonthStart,
+                row.DeletedAt,
+                row.DeletedBy))
             .ToList();
 
         return new PagedResult<ServiceRegistrationTrashItemDto>
         {
-            Items = items.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
-            TotalCount = items.Count,
+            Items = items,
+            TotalCount = totalCount,
             Page = page,
             PageSize = pageSize,
         };

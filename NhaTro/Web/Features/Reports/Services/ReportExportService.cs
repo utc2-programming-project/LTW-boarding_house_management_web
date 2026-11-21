@@ -2,6 +2,7 @@ using System.Text.Json;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Services;
@@ -62,7 +63,8 @@ public sealed class ReportExportService(
     public async Task<byte[]> ExportRevenueExcelAsync(
         PropertyCaller caller,
         RevenueReportFilter? filter = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new RevenueReportFilter();
@@ -77,7 +79,31 @@ public sealed class ReportExportService(
         RevenueReportDto report;
         try
         {
-            report = await revenue.GetAsync(filter, caller, cancellationToken);
+            // File Excel chứa toàn bộ dòng nhưng nạp theo trang 100 để RAM bị chặn bởi MaxRowsPerSection.
+            var limits = options ?? new ReportExportOptions();
+            limits.Validate();
+            var firstPage = await revenue.GetAsync(
+                filter with { Page = 1, PageSize = 100, OutstandingOnly = false }, caller, cancellationToken);
+            if (firstPage.TotalCount > limits.MaxRowsPerSection)
+            {
+                throw new ReportExportException("Vuot gioi han so dong xuat.", ReportExportErrorCodes.VolumeExceeded);
+            }
+
+            var lines = firstPage.Lines.ToList();
+            for (var page = 2; lines.Count < firstPage.TotalCount; page++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var next = await revenue.GetAsync(
+                    filter with { Page = page, PageSize = 100, OutstandingOnly = false }, caller, cancellationToken);
+                if (next.Lines.Count == 0)
+                {
+                    break;
+                }
+
+                lines.AddRange(next.Lines);
+            }
+
+            report = firstPage with { Lines = lines };
         }
         catch (UnauthorizedAccessException exception)
         {
@@ -108,13 +134,14 @@ public sealed class ReportExportService(
         }
 
         // RevenueReportService la nguon duy nhat cho bo loc, DateBasis va pham vi doanh thu.
-        return CreateRevenueWorkbook(report);
+        return await CreateRevenueWorkbookAsync(report, output, cancellationToken);
     }
 
     public async Task<byte[]> ExportRoomsExcelAsync(
         PropertyCaller caller,
         RoomReportFilter? filter = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new RoomReportFilter();
@@ -182,15 +209,14 @@ public sealed class ReportExportService(
             rowIndex++;
         }
         sheet.Columns().AdjustToContents(1, Math.Min(rowIndex - 1, 200));
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
+        return await SaveAsync(output, workbook, sheet, rowIndex, cancellationToken);
     }
 
     public async Task<byte[]> ExportTenantsExcelAsync(
         PropertyCaller caller,
         TenantReportFilter? filter = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new TenantReportFilter();
@@ -256,16 +282,14 @@ public sealed class ReportExportService(
             ExcelCellWriter.WriteText(sheet.Cell(rowIndex, 7), tenant.PropertyName);
             rowIndex++;
         }
-        sheet.Columns().AdjustToContents(1, Math.Min(rowIndex - 1, 200));
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
+        return await SaveAsync(output, workbook, sheet, rowIndex, cancellationToken);
     }
 
     public async Task<byte[]> ExportContractsExcelAsync(
         PropertyCaller caller,
         ContractReportFilter? filter = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new ContractReportFilter { Page = 1, PageSize = 100 };
@@ -307,11 +331,12 @@ public sealed class ReportExportService(
             ExcelCellWriter.WriteText(sheet.Cell(rowIndex, 10), contract.IsActiveInPeriod ? "Co" : "Khong");
             rowIndex++;
         }
-        return SaveWorkbook(workbook, sheet, rowIndex);
+        return await SaveAsync(output, workbook, sheet, rowIndex, cancellationToken);
     }
 
     public async Task<byte[]> ExportCostsExcelAsync(
-        PropertyCaller caller, CostReportFilter? filter = null, CancellationToken cancellationToken = default)
+        PropertyCaller caller, CostReportFilter? filter = null, CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new CostReportFilter();
@@ -354,11 +379,12 @@ public sealed class ReportExportService(
             ExcelCellWriter.WriteText(sheet.Cell(rowIndex, 11), item.HasSnapshot ? "Co" : "Khong");
             rowIndex++;
         }
-        return SaveWorkbook(workbook, sheet, rowIndex);
+        return await SaveAsync(output, workbook, sheet, rowIndex, cancellationToken);
     }
 
     public async Task<byte[]> ExportIncidentsExcelAsync(
-        PropertyCaller caller, IncidentReportFilter? filter = null, CancellationToken cancellationToken = default)
+        PropertyCaller caller, IncidentReportFilter? filter = null, CancellationToken cancellationToken = default,
+        Stream? output = null)
     {
         ArgumentNullException.ThrowIfNull(caller);
         filter ??= new IncidentReportFilter();
@@ -399,8 +425,32 @@ public sealed class ReportExportService(
             if (item.RepairCost is { } cost) ExcelCellWriter.WriteNumber(sheet.Cell(rowIndex, 9), cost);
             rowIndex++;
         }
-        return SaveWorkbook(workbook, sheet, rowIndex);
+        return await SaveAsync(output, workbook, sheet, rowIndex, cancellationToken);
     }
+
+    public async Task WriteRevenueExcelAsync(
+        Stream output, PropertyCaller caller, RevenueReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportRevenueExcelAsync(caller, filter, cancellationToken, output);
+
+    public async Task WriteRoomsExcelAsync(
+        Stream output, PropertyCaller caller, RoomReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportRoomsExcelAsync(caller, filter, cancellationToken, output);
+
+    public async Task WriteTenantsExcelAsync(
+        Stream output, PropertyCaller caller, TenantReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportTenantsExcelAsync(caller, filter, cancellationToken, output);
+
+    public async Task WriteContractsExcelAsync(
+        Stream output, PropertyCaller caller, ContractReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportContractsExcelAsync(caller, filter, cancellationToken, output);
+
+    public async Task WriteCostsExcelAsync(
+        Stream output, PropertyCaller caller, CostReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportCostsExcelAsync(caller, filter, cancellationToken, output);
+
+    public async Task WriteIncidentsExcelAsync(
+        Stream output, PropertyCaller caller, IncidentReportFilter? filter = null, CancellationToken cancellationToken = default)
+        => await ExportIncidentsExcelAsync(caller, filter, cancellationToken, output);
 
     private void EnsureVolume(int total)
     {
@@ -422,12 +472,24 @@ public sealed class ReportExportService(
         sheet.SheetView.FreezeRows(1);
     }
 
-    private static byte[] SaveWorkbook(XLWorkbook workbook, IXLWorksheet sheet, int rowIndex)
+    /// <summary>Ghi thẳng file Excel ra stream phản hồi; chỉ dựng byte[] khi không có stream.</summary>
+    private static async Task<byte[]> SaveAsync(
+        Stream? output,
+        XLWorkbook workbook,
+        IXLWorksheet sheet,
+        int rowIndex,
+        CancellationToken cancellationToken)
     {
         sheet.Columns().AdjustToContents(1, Math.Min(rowIndex - 1, 200));
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        return stream.ToArray();
+        if (output is null)
+        {
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
+        await Task.Run(() => workbook.SaveAs(output), cancellationToken);
+        return [];
     }
 
     private async Task EnsureManagerExportAllowedAsync(
@@ -484,10 +546,13 @@ public sealed class ReportExportService(
                 .Select(property => property.Id);
         }
 
-        return db.PropertyManagers.AsNoTracking()
-            .Where(assignment => assignment.ManagerUserId == caller.UserId
-                && assignment.RevokedAt == null)
-            .Select(assignment => assignment.PropertyId);
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+        return from assignment in db.PropertyManagers.AsNoTracking()
+               join property in db.Properties.AsNoTracking() on assignment.PropertyId equals property.Id
+               where assignment.ManagerUserId == caller.UserId
+                   && assignment.RevokedAt == null
+                   && !blockedOwners.Contains(property.OwnerId)
+               select assignment.PropertyId;
     }
 
     private async Task CreateApprovalRequestAsync(
@@ -541,7 +606,10 @@ public sealed class ReportExportService(
     private static string CreateTargetKey(RevenueReportFilter filter, PropertyCaller caller) =>
         $"export:{ReportExportSection.Revenue}:{filter.From:yyyy-MM-dd}:{filter.To:yyyy-MM-dd}:{filter.PropertyId?.ToString() ?? "all"}:{caller.UserId}";
 
-    private static byte[] CreateRevenueWorkbook(RevenueReportDto report)
+    private static async Task<byte[]> CreateRevenueWorkbookAsync(
+        RevenueReportDto report,
+        Stream? output,
+        CancellationToken cancellationToken)
     {
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add(ReportExportSection.Revenue.ToSheetName());
@@ -562,6 +630,6 @@ public sealed class ReportExportService(
             ExcelCellWriter.WriteText(sheet.Cell(row, 10), item.Status);
             row++;
         }
-        return SaveWorkbook(workbook, sheet, row);
+        return await SaveAsync(output, workbook, sheet, row, cancellationToken);
     }
 }

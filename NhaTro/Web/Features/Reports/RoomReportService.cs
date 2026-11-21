@@ -96,7 +96,7 @@ public sealed class RoomReportService(
         var currentMonth = new DateOnly(today.Year, today.Month, 1);
         var firstMonth = filter.From is { } from
             ? new DateOnly(from.Year, from.Month, 1)
-            : currentMonth.AddMonths(-5);
+            : currentMonth.AddMonths(-(Web.Common.Queries.VietnamDateRange.DefaultReportMonths - 1));
         var lastMonth = filter.To is { } to
             ? new DateOnly(to.Year, to.Month, 1)
             : currentMonth;
@@ -105,32 +105,21 @@ public sealed class RoomReportService(
             return new OccupancyReportResult([]);
         }
 
-        var rangeStart = firstMonth.ToDateTime(TimeOnly.MinValue);
-        var rangeEndExclusive = lastMonth.AddMonths(1).ToDateTime(TimeOnly.MinValue);
-
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
-        var roomsQuery = ScopeRooms(db, caller).Where(room => room.IsActive);
+        var roomsQuery = ScopeRooms(db, caller).AsNoTracking().Where(room => room.IsActive);
         if (filter.PropertyId is { } propertyId)
         {
             roomsQuery = roomsQuery.Where(room => room.PropertyId == propertyId);
         }
 
-        var rooms = await roomsQuery.AsNoTracking()
-            .Select(room => new { room.Id, room.CreatedAt })
-            .ToListAsync(ct);
-
-        // Hợp đồng Approved/Liquidated giao với khoảng tháng; đếm phòng khác nhau mỗi tháng.
-        var contracts = await (
+        // Hợp đồng Approved/Liquidated giao với từng tháng; đếm phòng khác nhau ở SQL.
+        var contractsQuery =
             from contract in db.Contracts.AsNoTracking()
-            join room in ScopeRooms(db, caller).AsNoTracking() on contract.RoomId equals room.Id
-            where (contract.Status == ContractStatus.Approved
-                    || contract.Status == ContractStatus.Liquidated)
-                && (filter.PropertyId == null || room.PropertyId == filter.PropertyId)
-                && contract.StartDate < rangeEndExclusive
-                && contract.EndDate >= rangeStart
-            select new { contract.RoomId, contract.StartDate, contract.EndDate })
-            .ToListAsync(ct);
+            join room in roomsQuery on contract.RoomId equals room.Id
+            where contract.Status == ContractStatus.Approved
+                || contract.Status == ContractStatus.Liquidated
+            select new { contract.RoomId, contract.StartDate, contract.EndDate, room.CreatedAt };
 
         var months = new List<OccupancyMonthDto>();
         for (var monthStart = firstMonth; monthStart <= lastMonth; monthStart = monthStart.AddMonths(1))
@@ -138,18 +127,18 @@ public sealed class RoomReportService(
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
             // Phòng phải tồn tại trước cuối tháng; CreatedAt lưu UTC.
             var createdBeforeUtc = VietnamTime.DayRangeUtc(monthEnd).EndUtc;
-            var eligibleRooms = rooms.Where(room => room.CreatedAt < createdBeforeUtc).ToList();
-            var eligibleIds = eligibleRooms.Select(room => room.Id).ToHashSet();
             var monthStartDateTime = monthStart.ToDateTime(TimeOnly.MinValue);
             var nextMonthDateTime = monthStart.AddMonths(1).ToDateTime(TimeOnly.MinValue);
-            var rented = contracts
-                .Where(contract => eligibleIds.Contains(contract.RoomId)
-                    && contract.StartDate < nextMonthDateTime
-                    && contract.EndDate >= monthStartDateTime)
-                .Select(contract => contract.RoomId)
+
+            var total = await roomsQuery.CountAsync(room => room.CreatedAt < createdBeforeUtc, ct);
+            var rented = await contractsQuery
+                .Where(row => row.CreatedAt < createdBeforeUtc
+                    && row.StartDate < nextMonthDateTime
+                    && row.EndDate >= monthStartDateTime)
+                .Select(row => row.RoomId)
                 .Distinct()
-                .Count();
-            var total = eligibleRooms.Count;
+                .CountAsync(ct);
+
             months.Add(new OccupancyMonthDto(
                 monthStart.ToString("yyyy-MM"),
                 monthStart,

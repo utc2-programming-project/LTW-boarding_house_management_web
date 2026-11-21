@@ -96,8 +96,31 @@
                 @foreach (var item in PagedItems)
                 {
                     <tr>
-                        <td><a href="@($"/contracts/{item.ContractId}")">@item.ContractNumber</a></td>
-                        <td>@item.RequesterName</td><td>@item.RoomCode</td><td>@item.PropertyName</td>
+                        <td>
+                            <a class="cell-truncate" href="@($"/contracts/{item.ContractId}")" data-hover-tip>
+                                @item.ContractNumber
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@item.ContractNumber</span>
+                                </span>
+                            </a>
+                        </td>
+                        <td>
+                            <span class="cell-truncate" data-hover-tip>
+                                @item.RequesterName
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@item.RequesterName</span>
+                                </span>
+                            </span>
+                        </td>
+                        <td>@item.RoomCode</td>
+                        <td>
+                            <span class="cell-truncate" data-hover-tip>
+                                @item.PropertyName
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@item.PropertyName</span>
+                                </span>
+                            </span>
+                        </td>
                         <td class="numeric tabular-nums">@L["RenewalMonthsValue", item.RequestedMonths]</td>
                         <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.CurrentEndDate))</td>
                         <td class="tabular-nums">@DateFormatter.Format(DateOnly.FromDateTime(item.ProposedEndDate))</td>

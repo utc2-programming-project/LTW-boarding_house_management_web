@@ -17,8 +17,11 @@ public sealed class AuditLogFileStore
 
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly Dictionary<string, CachedSnapshot> _snapshots = new(StringComparer.OrdinalIgnoreCase);
     private readonly int _retentionDays;
     private readonly string _ownersDirectory;
+
+    private sealed record CachedSnapshot(long Length, DateTime LastWriteTimeUtc, IReadOnlyList<AuditLogFileEntry> Entries);
 
     public AuditLogFileStore(string rootDirectory, int retentionDays = 3)
     {
@@ -133,17 +136,26 @@ public sealed class AuditLogFileStore
         CancellationToken cancellationToken = default)
     {
         var path = TargetPath(category, ownerId);
-        if (!File.Exists(path))
-        {
-            return [];
-        }
-
         var cutoff = DateTimeOffset.UtcNow.AddDays(-_retentionDays);
-        var entries = new List<AuditLogFileEntry>();
 
         await _gate.WaitAsync(cancellationToken);
         try
         {
+            var info = new FileInfo(path);
+            if (!info.Exists)
+            {
+                _snapshots.Remove(path);
+                return [];
+            }
+
+            if (_snapshots.TryGetValue(path, out var cached)
+                && cached.Length == info.Length
+                && cached.LastWriteTimeUtc == info.LastWriteTimeUtc)
+            {
+                return cached.Entries.Where(entry => entry.OccurredAt >= cutoff).ToList();
+            }
+
+            var entries = new List<AuditLogFileEntry>();
             await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(stream, Encoding.UTF8);
             while (await reader.ReadLineAsync(cancellationToken) is { } line)
@@ -153,13 +165,14 @@ public sealed class AuditLogFileStore
                     entries.Add(entry);
                 }
             }
+
+            _snapshots[path] = new CachedSnapshot(info.Length, info.LastWriteTimeUtc, entries);
+            return entries;
         }
         finally
         {
             _gate.Release();
         }
-
-        return entries;
     }
 
     /// <summary>Xóa dòng cũ hơn hạn lưu và file rỗng. Trả số dòng đã bỏ.</summary>
@@ -202,12 +215,14 @@ public sealed class AuditLogFileStore
                 if (kept.Count == 0)
                 {
                     File.Delete(path);
+                    _snapshots.Remove(path);
                     continue;
                 }
 
                 var tempPath = path + ".tmp";
                 await File.WriteAllLinesAsync(tempPath, kept, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), cancellationToken);
                 File.Move(tempPath, path, overwrite: true);
+                _snapshots.Remove(path);
             }
         }
         finally

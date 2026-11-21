@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using Web.Common.Queries;
 using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Services;
@@ -29,14 +30,10 @@ public sealed class DashboardPageService(
         var caller = await callers.GetCallerAsync();
         return await CacheAsync($"properties:{caller.UserId}:{caller.Role}", async () =>
         {
-            var result = new List<DashboardPropertyOption>();
-            for (var page = 1; ; page++)
-            {
-                var batch = await properties.ListAsync(new PropertyFilter { Page = page, PageSize = 100 }, caller, ct);
-                result.AddRange(batch.Items.Select(p => new DashboardPropertyOption(p.Id, p.Name, p.IsActive)));
-                if (page * 100L >= batch.TotalCount) break;
-            }
-            return (IReadOnlyList<DashboardPropertyOption>)result;
+            var options = await properties.ListOptionsAsync(caller, ct);
+            return (IReadOnlyList<DashboardPropertyOption>)options
+                .Select(p => new DashboardPropertyOption(p.Id, p.Name, p.IsActive))
+                .ToList();
         }, ct);
     }
 
@@ -90,21 +87,17 @@ public sealed class DashboardPageService(
         => await incidents.GetAsync(filter, await callers.GetCallerAsync(), ct);
 
     private async Task<T> CacheAsync<T>(string key, Func<Task<T>> load, CancellationToken ct)
+        where T : class
     {
         ct.ThrowIfCancellationRequested();
         key = $"{key}:v{Volatile.Read(ref _cacheVersion)}";
-        if (cache is not null
-            && cache.TryGetValue(key, out T? cached)
-            && cached is not null)
+        if (cache is null)
         {
-            return cached;
+            return await load();
         }
 
-        var value = await load();
-        cache?.Set(key, value, new MemoryCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = CacheLifetime,
-        });
-        return value;
+        // ListCache chống stampede theo key: nhiều card mở cùng lúc chỉ chạy factory một lần.
+        return await ListCache.GetOrCreateAsync<T>(cache, key, CacheLifetime,
+            async _ => (T?)await load(), ct) ?? await load();
     }
 }

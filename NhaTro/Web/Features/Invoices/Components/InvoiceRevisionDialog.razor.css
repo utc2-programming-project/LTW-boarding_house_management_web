@@ -125,7 +125,7 @@
 }
 
 .revise-table tfoot td {
-    font-weight: 700;
+    font-weight:600;
     color: var(--text-primary);
     border-bottom: none;
 }

@@ -410,6 +410,29 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Accounts.Avatar.UserAvatar", b =>
+                {
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450"));
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserAvatars");
+                });
+
             modelBuilder.Entity("Web.Features.Accounts.Otp.OtpChallenge", b =>
                 {
                     b.Property<int>("Id")
@@ -699,11 +722,15 @@ namespace Web.Migrations
                     b.HasIndex("ContractNumber")
                         .IsUnique();
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("IsDeleted");
 
-                    b.HasIndex("RoomId", "Status", "StartDate", "EndDate");
-
                     b.HasIndex("Status", "DepositDueAt");
+
+                    b.HasIndex("Status", "StartDate", "EndDate");
+
+                    b.HasIndex("RoomId", "Status", "StartDate", "EndDate");
 
                     b.ToTable("Contracts", t =>
                         {
@@ -713,81 +740,13 @@ namespace Web.Migrations
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
-            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
-                {
-                    b.Property<Guid>("ContractId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsRepresentative")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Relationship")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ContractId", "TenantId");
-
-                    b.HasIndex("TenantId", "ContractId");
-
-                    b.ToTable("ContractMembers");
-                });
-
-            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractVersion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:Identity", "1, 1");
-
-                    b.Property<string>("ContentHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<Guid>("ContractId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset?>("SentAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("SnapshotJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("VersionNo")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContractId", "VersionNo")
-                        .IsUnique();
-
-                    b.ToTable("ContractVersions");
-
-                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
-                        .WithMany()
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractAcceptance", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:Identity", "1, 1");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("AcceptedAt")
                         .HasColumnType("datetimeoffset");
@@ -829,32 +788,21 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContractVersionId");
+
                     b.HasIndex("ContractId", "ContractVersionId")
                         .IsUnique();
 
-                    b.HasIndex("ContractVersionId");
-
-                    b.ToTable("ContractAcceptances");
-
-                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
-                        .WithMany()
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
-                        .WithMany()
-                        .HasForeignKey("ContractVersionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.ToTable("ContractAcceptances", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractChangeRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:Identity", "1, 1");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<Guid>("ContractId")
                         .HasColumnType("uniqueidentifier");
@@ -889,31 +837,20 @@ namespace Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId", "Status");
-
                     b.HasIndex("ContractVersionId");
 
-                    b.ToTable("ContractChangeRequests");
+                    b.HasIndex("ContractId", "Status");
 
-                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
-                        .WithMany()
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
-                        .WithMany()
-                        .HasForeignKey("ContractVersionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.ToTable("ContractChangeRequests", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractDepositPayment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:Identity", "1, 1");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
@@ -970,13 +907,29 @@ namespace Web.Migrations
                         .HasDatabaseName("UX_ContractDepositPayments_Pending")
                         .HasFilter("[Status] = 0");
 
-                    b.ToTable("ContractDepositPayments");
+                    b.ToTable("ContractDepositPayments", (string)null);
+                });
 
-                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
-                        .WithMany()
-                        .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
+                {
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsRepresentative")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Relationship")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("ContractId", "TenantId");
+
+                    b.HasIndex("TenantId", "ContractId");
+
+                    b.ToTable("ContractMembers");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractRenewalRequest", b =>
@@ -1040,6 +993,48 @@ namespace Web.Migrations
 
                             t.HasCheckConstraint("CK_ContractRenewalRequests_Status", "[Status] IN (0, 1, 2)");
                         });
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VersionNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId", "VersionNo")
+                        .IsUnique();
+
+                    b.ToTable("ContractVersions", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Invoices.Entities.Invoice", b =>
@@ -1111,6 +1106,8 @@ namespace Web.Migrations
                         .HasFilter("[RegistrationId] IS NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("PeriodStart", "Status");
+
+                    b.HasIndex("Status", "DueDate");
 
                     b.ToTable("Invoices", null, t =>
                         {
@@ -1270,9 +1267,11 @@ namespace Web.Migrations
                         .HasDatabaseName("UX_Payments_InvoiceStatus")
                         .HasFilter("[Status] IN (0, 1)");
 
-                    b.HasIndex("InvoiceId", "Status", "RequestedAt");
+                    b.HasIndex("Status", "RequestedAt");
 
                     b.HasIndex("Status", "ReviewedAt");
+
+                    b.HasIndex("InvoiceId", "Status", "RequestedAt");
 
                     b.ToTable("Payments", null, t =>
                         {
@@ -1460,6 +1459,8 @@ namespace Web.Migrations
 
                     b.HasIndex("RoomId");
 
+                    b.HasIndex("Status", "CreatedAt");
+
                     b.ToTable("MaintenanceIncidents", null, t =>
                         {
                             t.HasCheckConstraint("CK_MaintenanceIncidents_Category", "[Category] BETWEEN 0 AND 4");
@@ -1537,20 +1538,25 @@ namespace Web.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Link")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("RecipientUserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RecipientUserId", "IsRead", "CreatedAt");
 
                     b.ToTable("AppNotifications");
                 });
@@ -2118,6 +2124,8 @@ namespace Web.Migrations
                     b.HasIndex("CitizenId")
                         .IsUnique()
                         .HasFilter("[CitizenId] IS NOT NULL AND [IsDeleted] = 0 AND [IsActive] = 1");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("FullName");
 
@@ -3253,6 +3261,15 @@ namespace Web.Migrations
                     b.Navigation("TariffVersion");
                 });
 
+            modelBuilder.Entity("Web.Features.Accounts.Avatar.UserAvatar", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Web.Features.Accounts.Avatar.UserAvatar", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
                 {
                     b.HasOne("Web.Data.ApplicationUser", null)
@@ -3279,6 +3296,47 @@ namespace Web.Migrations
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractAcceptance", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ContractVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractChangeRequest", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ContractVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractDepositPayment", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
@@ -3312,6 +3370,15 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("RequestedByTenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractVersion", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

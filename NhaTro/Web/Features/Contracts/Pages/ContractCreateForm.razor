@@ -49,7 +49,7 @@
                 <div class="contract-live-grid">
                     <div class="contract-field">
                         <label for="property-select">@L["ContractPropertyLabel"]</label>
-                        <InputSelect id="property-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.PropertyId) ? "true" : "false")" aria-describedby="property-error" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChanged">
+                        <InputSelect id="property-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.PropertyId) ? "true" : "false")" aria-describedby="property-error" TValue="int?" @bind-Value="_form.PropertyId" @bind-Value:after="PropertyChangedAsync">
                             <option value="">@L["ContractPropertyPlaceholder"]</option>
                             @foreach (var property in _options.Properties) { <option value="@property.Id">@property.Name</option> }
                         </InputSelect>
@@ -59,9 +59,9 @@
                         <label for="room-select">@L["ContractRoomLabel"]</label>
                         <InputSelect id="room-select" class="input" aria-invalid="@(_editContext.HasError(() => _form.RoomId) ? "true" : "false")" aria-describedby="room-error" TValue="int?" @bind-Value="_form.RoomId" @bind-Value:after="RoomChanged" disabled="@(_form.PropertyId is null)">
                             <option value="">@L["ContractRoomPlaceholder"]</option>
-                            @foreach (var room in RoomsForProperty) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
+                            @foreach (var room in _rooms) { <option value="@room.Id">@room.Code · @MoneyFormatter.Format(room.StandardPrice)</option> }
                         </InputSelect>
-                        @if (_form.PropertyId is not null && RoomsForProperty.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
+                        @if (_form.PropertyId is not null && _rooms.Count == 0) { <small class="contract-field-hint">@L["ContractNoAvailableRooms"]</small> }
                         <small id="room-error" class="contract-field-error">@ErrorFor(nameof(_form.RoomId))</small>
                     </div>
                 </div>
@@ -99,9 +99,14 @@
                     <label class="contract-tenant-search">
                         <LucideIcon Name="search" />
                         <span class="sr-only">@L["ContractTenantSearchLabel"]</span>
-                        <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]" @bind="_tenantKeyword" @bind:event="oninput" />
+                        <input type="search" autocomplete="off" placeholder="@L["ContractTenantSearchPlaceholder"]"
+                               @bind="_tenantKeyword" @bind:event="oninput" @bind:after="OnTenantKeywordChangedAsync" />
                     </label>
-                    @if (_options.Tenants.Count > TenantPickerLimit)
+                    @if (_tenantSearching)
+                    {
+                        <p class="contract-field-hint" role="status">@L["TableLoading"]</p>
+                    }
+                    @if (_tenantResults.Count >= TenantPickerLimit && !_tenantSearching)
                     {
                         <p class="contract-field-hint">@L["ContractTenantSearchLimitHint", TenantPickerLimit]</p>
                     }
@@ -252,7 +257,7 @@
                             <tbody>
                             @foreach (var service in ApplicableServices)
                             {
-                                <tr><td>@service.Name</td><td>@service.Unit</td><td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td></tr>
+                                <tr><td><span class="cell-truncate" title="@service.Name">@service.Name</span></td><td>@service.Unit</td><td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td></tr>
                             }
                             </tbody>
                         </table>
@@ -308,36 +313,36 @@
         ("Other", "ContractRelationshipOther"),
     ];
 
-    private IReadOnlyList<ContractRoomOptionDto> RoomsForProperty => _form.PropertyId is int id ? _options.Rooms.Where(room => room.PropertyId == id).ToList() : [];
-    // Dataset demo có thể có hàng nghìn hồ sơ; chỉ render tối đa 25 lựa chọn
-    // và luôn giữ các hồ sơ đã chọn để không làm mất trạng thái.
+    // Phòng của tòa đang chọn, nạp theo yêu cầu (trần 200 phía service) thay vì cả danh sách.
+    private IReadOnlyList<ContractRoomOptionDto> _rooms = [];
+    // Dataset demo có thể có hàng nghìn hồ sơ; form chỉ nạp 25 gợi ý đầu và tìm tiếp phía server.
     private const int TenantPickerLimit = 25;
+
+    private IReadOnlyList<ContractTenantOptionDto> _tenantResults = [];
+    // Đã chọn (đại diện/thành viên) phải luôn hiện lại dù từ khóa đổi.
+    private readonly Dictionary<int, ContractTenantOptionDto> _tenantCache = new();
+    private int _tenantSearchVersion;
+    private bool _tenantSearching;
 
     private IReadOnlyList<ContractTenantOptionDto> FilteredTenants
     {
         get
         {
-            var keyword = _tenantKeyword.Trim();
-            var matches = keyword.Length == 0
-                ? _options.Tenants
-                : _options.Tenants
-                    .Where(tenant => tenant.FullName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-                        || tenant.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            var selectedIds = _form.TenantIds
+            var selected = _form.TenantIds
                 .Append(_form.RepresentativeTenantId ?? 0)
-                .ToHashSet();
-            return matches
-                .Take(TenantPickerLimit)
-                .Concat(_options.Tenants.Where(tenant => selectedIds.Contains(tenant.Id)))
+                .Distinct()
+                .Select(id => _tenantCache.TryGetValue(id, out var tenant) ? tenant : null)
+                .OfType<ContractTenantOptionDto>();
+            return _tenantResults
+                .Concat(selected)
                 .GroupBy(tenant => tenant.Id)
                 .Select(group => group.First())
                 .ToList();
         }
     }
     private ContractPropertyOptionDto? SelectedProperty => _form.PropertyId is int id ? _options.Properties.FirstOrDefault(property => property.Id == id) : null;
-    private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? RoomsForProperty.FirstOrDefault(room => room.Id == id) : null;
-    private ContractTenantOptionDto? Representative => _form.RepresentativeTenantId is int id ? _options.Tenants.FirstOrDefault(tenant => tenant.Id == id) : null;
+    private ContractRoomOptionDto? SelectedRoom => _form.RoomId is int id ? _rooms.FirstOrDefault(room => room.Id == id) : null;
+    private ContractTenantOptionDto? Representative => _form.RepresentativeTenantId is int id && _tenantCache.TryGetValue(id, out var tenant) ? tenant : null;
     private IReadOnlyList<ContractTenantOptionDto> RoommateCandidates =>
         FilteredTenants.Where(tenant => tenant.Id != _form.RepresentativeTenantId).ToList();
     private IReadOnlyList<ContractServiceOptionDto> ApplicableServices => _form.PropertyId is int propertyId
@@ -392,13 +397,15 @@
         try
         {
             _options = await Contracts.GetCreateOptionsAsync();
-            ApplyQueryPrefill();
+            _tenantResults = _options.Tenants;
+            PinTenants(_options.Tenants);
+            await ApplyQueryPrefillAsync();
         }
         catch { _failed = true; }
         finally { _loading = false; }
     }
 
-    private void ApplyQueryPrefill()
+    private async Task ApplyQueryPrefillAsync()
     {
         if (_queryApplied)
         {
@@ -422,6 +429,15 @@
                 if (property.Id == propertyId)
                 {
                     _form.PropertyId = propertyId;
+                    try
+                    {
+                        _rooms = await Contracts.GetAvailableRoomsAsync(propertyId);
+                    }
+                    catch
+                    {
+                        _rooms = [];
+                    }
+
                     break;
                 }
             }
@@ -429,7 +445,7 @@
 
         if (roomIdQuery is int roomId)
         {
-            foreach (var room in RoomsForProperty)
+            foreach (var room in _rooms)
             {
                 if (room.Id == roomId)
                 {
@@ -442,30 +458,97 @@
 
         if (tenantIdQuery is int tenantId)
         {
-            foreach (var tenant in _options.Tenants)
+            await PinTenantByIdAsync(tenantId);
+            if (_tenantCache.ContainsKey(tenantId))
             {
-                if (tenant.Id != tenantId)
-                {
-                    continue;
-                }
-
                 if (!_form.TenantIds.Contains(tenantId))
                 {
                     _form.TenantIds.Add(tenantId);
                 }
 
                 _form.RepresentativeTenantId = tenantId;
-                break;
             }
         }
     }
 
-    private void PropertyChanged()
+    private async Task OnTenantKeywordChangedAsync()
+    {
+        var version = ++_tenantSearchVersion;
+        // Gõ nhanh: chờ nhịp gõ rồi mới gọi server, chỉ lần mới nhất được ghi kết quả.
+        await Task.Delay(UiTiming.SearchDebounceMs);
+        if (version != _tenantSearchVersion)
+        {
+            return;
+        }
+
+        _tenantSearching = true;
+        try
+        {
+            var results = await Contracts.SearchTenantOptionsAsync(_tenantKeyword, TenantPickerLimit);
+            if (version != _tenantSearchVersion)
+            {
+                return;
+            }
+
+            _tenantResults = results;
+            PinTenants(results);
+        }
+        catch
+        {
+            // Giữ kết quả cũ để form không trắng khi mạng chập.
+        }
+        finally
+        {
+            if (version == _tenantSearchVersion)
+            {
+                _tenantSearching = false;
+            }
+        }
+    }
+
+    private void PinTenants(IEnumerable<ContractTenantOptionDto> tenants)
+    {
+        foreach (var tenant in tenants)
+        {
+            _tenantCache[tenant.Id] = tenant;
+        }
+    }
+
+    private async Task PinTenantByIdAsync(int tenantId)
+    {
+        if (_tenantCache.ContainsKey(tenantId))
+        {
+            return;
+        }
+
+        try
+        {
+            PinTenants(await Contracts.GetTenantOptionsAsync([tenantId]));
+        }
+        catch
+        {
+            // Không chặn form: người dùng vẫn chọn được khách khác.
+        }
+    }
+
+    private async Task PropertyChangedAsync()
     {
         _form.RoomId = null;
         _form.MonthlyRent = null;
         _form.DepositAmount = null;
         _autoDeposit = true;
+        _rooms = [];
+        if (_form.PropertyId is int propertyId)
+        {
+            try
+            {
+                _rooms = await Contracts.GetAvailableRoomsAsync(propertyId);
+            }
+            catch
+            {
+                _rooms = [];
+            }
+        }
     }
 
     private void RoomChanged()

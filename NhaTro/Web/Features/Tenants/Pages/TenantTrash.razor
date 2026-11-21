@@ -94,12 +94,24 @@
                                 <div class="tenant-trash-name">
                                     <span class="tenant-trash-avatar" aria-hidden="true">@Initial(item.FullName)</span>
                                     <span>
-                                        <strong>@item.FullName</strong>
+                                        <strong class="cell-truncate" data-hover-tip>
+                                            @item.FullName
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.FullName</span>
+                                            </span>
+                                        </strong>
                                         <small>@string.Format(L["TenantRecordNumber"], item.Id)</small>
                                     </span>
                                 </div>
                             </td>
-                            <td class="tenant-trash-mono">@item.PhoneNumber</td>
+                            <td class="tenant-trash-mono">
+                                <span class="cell-truncate" data-hover-tip>
+                                    @item.PhoneNumber
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@item.PhoneNumber</span>
+                                    </span>
+                                </span>
+                            </td>
                             <td>@DateFormatter.FormatDateTime(item.DeletedAt?.UtcDateTime)</td>
                             <td>
                                 <StatusBadge Tone="@(item.HasAccount ? BadgeTone.Info : BadgeTone.Neutral)"
@@ -206,7 +218,7 @@
         var cts = _searchCts = new CancellationTokenSource();
         try
         {
-            await Task.Delay(300, cts.Token);
+            await Task.Delay(UiTiming.SearchDebounceMs, cts.Token);
         }
         catch (TaskCanceledException)
         {

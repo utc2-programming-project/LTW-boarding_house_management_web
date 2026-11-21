@@ -106,6 +106,21 @@
                     @L["InviteAcceptSubmit"]
                 </button>
             </EditForm>
+
+            @* PLAN-012: tạo tài khoản bằng Google — chỉ áp dụng khi lời mời còn hiệu lực và
+               email Google trùng email trên lời mời (kiểm ở TenantQrInvitationService). *@
+            @if (_hasGoogleProvider)
+            {
+                <div class="auth-divider"><span>@L["OrDivider"]</span></div>
+                <form method="post" action="Account/PerformExternalLogin">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="returnUrl" value="@($"/invite/{Token}")" />
+                    <button type="submit" name="provider" value="Google" class="btn btn-secondary btn-block auth-oauth-btn">
+                        <img src="images/google-g.svg" alt="" aria-hidden="true" width="18" height="18" />
+                        @L["GoogleContinueAction"]
+                    </button>
+                </form>
+            }
         }
         else
         {
@@ -164,6 +179,7 @@
     private bool _busy;
     private bool _authenticated;
     private bool _isTargetUser;
+    private bool _hasGoogleProvider;
     private string? _currentUserId;
 
     private string LoginUrl =>
@@ -173,6 +189,8 @@
     {
         Input ??= new();
         Existing ??= new();
+        _hasGoogleProvider = (await SignInManager.GetExternalAuthenticationSchemesAsync())
+            .Any(scheme => scheme.Name == "Google");
 
         _details = await Qr.PeekDetailsAsync(Token);
         if (_details is not null && _details.Kind == TenantInvitationKind.NewAccount)

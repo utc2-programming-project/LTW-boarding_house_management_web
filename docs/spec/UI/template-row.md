@@ -3,6 +3,15 @@
 > Dùng kèm [`spec-toan-bo-row.md`](spec-toan-bo-row.md). `= Mxx` nghĩa là lấy mẫu gốc rồi thay/thêm phần dưới.
 > `L[...]` = `IStringLocalizer` của trang; thêm key vào **cả vi-VN và en-US**.
 
+## Chỉ có 2 loại tooltip — không trộn
+
+| Loại | Trả lời câu hỏi | Cơ chế | Không dùng cho |
+|---|---|---|---|
+| **Giải thích** | "Cái này nghĩa là gì / tính thế nào?" | `<HelpTip Text=…>` (nút `?` + bubble) | nội dung đang hiện sẵn trong ô |
+| **Đọc đầy đủ** | "Ô bị cắt thì đầy đủ là gì?" | `.hover-tip` + `data-hover-tip` (M03/M04/M05/M06/M14) | giải thích nghiệp vụ, CTA |
+
+`title=""` **không phải** tooltip của dự án: **cấm trên ô dữ liệu** (kể cả mã code — sinh hộp đen của trình duyệt, không theo theme, chồng lên popup). Chỉ còn cho nút/icon hành động và chip có chú thích cực ngắn.
+
 ---
 
 ## M00 · Hạ tầng — dán 1 lần vào `wwwroot/app.css`
@@ -67,11 +76,18 @@ new()
 {
     Key = "code",
     Title = L["ContractNumberLabel"],
-    Template = item => @<a class="cell-link is-code" href="@AppLinks.Contract(item.Id)"
-                           title="@L["CellLinkOpenContract"]">@item.ContractNumber</a>,
+    Template = item => @<a class="cell-link is-code" href="@AppLinks.Contract(item.Id)" data-hover-tip>
+        @item.ContractNumber
+        <span class="hover-tip" role="tooltip" aria-hidden="true">
+            <span class="hover-tip__line">@item.ContractNumber</span>
+        </span>
+    </a>,
     Width = "180px",   // bắt buộc: thiếu Width thì table-layout không fixed, ellipsis vô hiệu
 },
 ```
+
+> Mã dài: `is-code` giữ 1 dòng, popup đọc đầy đủ. **Không** đặt `title` — `title` sinh hộp đen của
+> trình duyệt, chồng lên popup dự án và không theo dark mode.
 
 ---
 
@@ -250,6 +266,18 @@ new()
 },
 ```
 
+> **Căn cột thao tác phải đều với tiêu đề**: `th.cell-actions` và `td.cell-actions` cùng căn giữa.
+> `DataTable.razor.css` chỉ căn được `.p2-row-actions` do chính nó render — phần này nằm trong
+> `RenderFragment` của trang nên không mang scope của `DataTable`. Thêm vào CSS trang:
+>
+> ```css
+> .trang ::deep .table-card th.cell-actions,
+> .trang ::deep .table-card td.cell-actions { text-align: center; }
+> .trang ::deep .table-card td.cell-actions .p2-row-actions { justify-content: center; }
+> ```
+>
+> Không có 2 rule này, nút `⋯` dạt phải còn chữ "Thao tác" căn giữa → lệch trục.
+
 ---
 
 ## M11 · Thùng rác — `= M10 + TrashColumns`
@@ -320,11 +348,13 @@ TrashColumns.Actions<T>(L["P2Actions"], actions),                  // Template +
 ## M13 · Link chéo / prefill
 
 ```razor
-<a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(item.RoomName)" title="@L["CellLinkOpenRoom"]">@item.RoomName</a>
-<a class="cell-link is-quiet" href="@AppLinks.Property(item.PropertyId)" title="@L["CellLinkOpenProperty"]">@item.PropertyName</a>
-<a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(name)" title="@L["CellLinkOpenTenant"]">@name</a>
+<a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(item.RoomName)">@item.RoomName</a>
+<a class="cell-link is-quiet" href="@AppLinks.Property(item.PropertyId)">@item.PropertyName</a>
+<a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(name)">@name</a>
 <a class="cell-link" href="@AppLinks.RoomsOfProperty(item.PropertyId)">@item.RoomCount</a>
 ```
+
+> Link chéo trong ô mang chữ sẵn nên **không** cần `title`; ô dài thì bọc `cell-truncate` + popup (M03).
 
 ```csharp
 [SupplyParameterFromQuery(Name = "q")] public string? Q { get; set; }

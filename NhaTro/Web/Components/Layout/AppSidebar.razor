@@ -6,6 +6,7 @@
 @using Web.Features.Accounts
 @inject IStringLocalizer<Shared> L
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <aside id="app-sidebar" class="app-sidebar" aria-label="@L["Navigation"]" tabindex="-1" data-permanent>
     <span class="sidebar-resizer" data-sidebar-resizer aria-hidden="true"></span>
@@ -46,22 +47,35 @@
             <Authorized>
                 <div class="sidebar-account-wrap">
                     <button class="sidebar-account" type="button" data-account-menu-toggle aria-haspopup="menu" aria-expanded="false"
-                            aria-controls="account-menu" aria-label="@L["MyAccount"]">
-                        <span class="avatar" aria-hidden="true">@Initials(account.User.Identity?.Name)</span>
+                            aria-controls="account-menu" aria-label="@L["AccountTitle"]">
+                        <span class="avatar" data-avatar-user="@UserId(account.User)" data-initials="@Initials(DisplayName(account.User))" aria-hidden="true">@Initials(DisplayName(account.User))</span>
                         <span class="sidebar-account-text">
-                            <span class="sidebar-account-name">@account.User.Identity?.Name</span>
+                            <span class="sidebar-account-name">@DisplayName(account.User)</span>
                             <span class="sidebar-account-role">@RoleLabel(account.User)</span>
                         </span>
                         <span class="rail-tip" aria-hidden="true">@AccountTip(account.User)</span>
                         <span class="sidebar-account-caret" aria-hidden="true"><LucideIcon Name="chevrons-up-down" /></span>
                     </button>
-                    <div class="account-menu" id="account-menu" role="menu" aria-label="@L["MyAccount"]" hidden>
-                        <a class="account-menu-item" role="menuitem" href="@AccountHref(account.User)"><LucideIcon Name="user" /><span>@L["MyAccount"]</span></a>
+                    <div class="account-menu" id="account-menu" role="menu" aria-label="@L["AccountTitle"]" hidden>
+                        <div class="account-menu-identity">
+                            <span class="avatar account-menu-avatar" data-avatar-user="@UserId(account.User)" data-initials="@Initials(DisplayName(account.User))" aria-hidden="true">@Initials(DisplayName(account.User))</span>
+                            <span class="account-menu-identity-text">
+                                <span class="account-menu-identity-name">@DisplayName(account.User)</span>
+                                <span class="account-menu-identity-meta">@RoleLabel(account.User)</span>
+                            </span>
+                        </div>
+                        <div class="account-menu-sep" role="separator"></div>
+                        <a class="account-menu-item" role="menuitem" href="account">
+                            <LucideIcon Name="user" />
+                            <span class="account-menu-item-text">
+                                <span>@L["AccountTitle"]</span>
+                                <span class="account-menu-item-sub">@L["AccountMenuSub"]</span>
+                            </span>
+                        </a>
                         @if (AvailableRoles(account.User).Count > 1)
                         {
-                            <a class="account-menu-item" role="menuitem" href="select-role"><LucideIcon Name="repeat" /><span>@L["SwitchRole"]</span></a>
+                            <a class="account-menu-item" role="menuitem" href="select-role"><LucideIcon Name="repeat" /><span class="account-menu-item-text"><span>@L["SwitchRole"]</span></span></a>
                         }
-                        <a class="account-menu-item" role="menuitem" href="Account/Manage"><LucideIcon Name="settings" /><span>@L["Settings"]</span></a>
                         <div class="account-menu-sep" role="separator"></div>
                         <div class="account-menu-row" role="group" aria-labelledby="account-menu-appearance-label">
                             <span class="account-menu-row-label" id="account-menu-appearance-label">@L["AppearanceLabel"]</span>
@@ -74,9 +88,9 @@
                             <span class="account-menu-row-label" id="account-menu-language-label">@L["Language"]</span>
                             <div class="culture-control account-menu-culture">
                                 <AntiforgeryToken />
-                                <div class="culture-segmented" role="group" aria-labelledby="account-menu-language-label">
-                                    <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
-                                    <button type="button" class="culture-button" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
+                                <div class="tabbar tabbar--sm" role="group" aria-labelledby="account-menu-language-label">
+                                    <button type="button" class="tabbar-item" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
+                                    <button type="button" class="tabbar-item" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
                                 </div>
                                 <span class="culture-error" role="alert" hidden data-culture-error>@L["CultureError"]</span>
                                 <span class="sr-only" role="status" data-culture-status data-loading-label="@L["Loading"]"></span>
@@ -86,7 +100,7 @@
                         <form action="Account/Logout" method="post" data-enhance="false">
                             <AntiforgeryToken />
                             <input type="hidden" name="returnUrl" value="" />
-                            <button type="submit" class="account-menu-item" role="menuitem"><LucideIcon Name="logout" /><span>@L["SignOut"]</span></button>
+                            <button type="submit" class="account-menu-item account-menu-item-danger" role="menuitem"><LucideIcon Name="logout" /><span class="account-menu-item-text"><span>@L["SignOut"]</span></span></button>
                         </form>
                     </div>
                 </div>
@@ -101,18 +115,40 @@
 @code {
     private string? _activeHref;
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
+    {
+        UpdateActive();
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdateActive();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateActive()
     {
         var path = SidebarActive.Normalize(Navigation.ToBaseRelativePath(Navigation.Uri));
         _activeHref = NavigationResolver.Resolve(path)?.SidebarItem?.Href;
     }
 
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+
     private static string NavClass(bool active) => active ? "nav-item active" : "nav-item";
 
     private static string? NavAriaCurrent(bool active) => active ? "page" : null;
 
-    private static string AccountHref(ClaimsPrincipal user) => user.IsInRole(Roles.KhachThue) ? "/my/tenant-profile" : "/profile";
-    private static string Initials(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : name[..1].ToUpperInvariant();
+    // Họ tên thật (claim GivenName) thay cho email đăng nhập; cookie cũ chưa có claim thì rơi về Name.
+    private static string DisplayName(ClaimsPrincipal user) =>
+        user.FindFirst(ClaimTypes.GivenName)?.Value is { Length: > 0 } fullName
+            ? fullName
+            : user.Identity?.Name ?? string.Empty;
+
+    private static string UserId(ClaimsPrincipal user) =>
+        user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+    private static string Initials(string? name) => string.IsNullOrWhiteSpace(name) ? "?" : name.Trim()[..1].ToUpperInvariant();
 
     private static IReadOnlyList<string> AvailableRoles(ClaimsPrincipal user)
     {

@@ -23,13 +23,8 @@
     @if (_tabs.Count > 1)
     {
         <div class="leased-room-tabs">
-            <SegmentedTabs TItem="LeasedRoomSummaryDto"
-                           Items="_tabs"
-                           KeySelector="room => room.ContractId.ToString()"
-                           LabelSelector="TabLabel"
-                           Value="@_selectedContractId?.ToString()"
-                           ValueChanged="OnTabChanged"
-                           AriaLabel="@L["MyRoomsTabsLabel"]" />
+            <TabBar Role="tablist" Fill="true" Items="RoomTabs" ActiveKey="@_selectedContractId?.ToString()"
+                    AriaLabel="@L["MyRoomsTabsLabel"]" OnSelect="OnTabChanged" />
         </div>
     }
     @if (_loading)
@@ -352,7 +347,14 @@
                             @foreach (var service in AppliedServices)
                             {
                                 <tr>
-                                    <td><a class="leased-room-clickable" href="/my/service-registrations">@service.Name</a></td>
+                                    <td>
+                                        <a class="leased-room-clickable cell-truncate" href="/my/service-registrations" data-hover-tip>
+                                            @service.Name
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@service.Name</span>
+                                            </span>
+                                        </a>
+                                    </td>
                                     <td>@service.Unit</td>
                                     <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
                                 </tr>
@@ -492,17 +494,10 @@
                 </button>
             </div>
 
-            <div class="renew-tabs" role="tablist" aria-label="@L["RenewTabsLabel"]">
-                <button type="button" role="tab" id="renew-tab-request" aria-controls="renew-panel-request"
-                        class="renew-tab @(_onHistoryTab ? string.Empty : "renew-tab-active")"
-                        aria-selected="@(!_onHistoryTab)" @onclick="ShowRequestTab">
-                    @L["RenewTabRequest"]
-                </button>
-                <button type="button" role="tab" id="renew-tab-history" aria-controls="renew-panel-history"
-                        class="renew-tab @(_onHistoryTab ? "renew-tab-active" : string.Empty)"
-                        aria-selected="@_onHistoryTab" @onclick="ShowHistoryTab">
-                    @L["RenewTabHistory"]
-                </button>
+            <div class="renew-tabs">
+                <TabBar Role="tablist" Fill="true" Items="RenewTabs"
+                        ActiveKey="@(_onHistoryTab ? "history" : "request")"
+                        AriaLabel="@L["RenewTabsLabel"]" OnSelect="SelectRenewTab" />
             </div>
 
             <div class="leased-room-dialog-body">
@@ -719,6 +714,21 @@
         {
             _loading = false;
         }
+    }
+
+    private IReadOnlyList<TabItem> RoomTabs =>
+        _tabs.Select(room => new TabItem(room.ContractId.ToString(), TabLabel(room))).ToArray();
+
+    private IReadOnlyList<TabItem> RenewTabs =>
+    [
+        new("request", L["RenewTabRequest"].Value, Id: "renew-tab-request", Controls: "renew-panel-request"),
+        new("history", L["RenewTabHistory"].Value, Id: "renew-tab-history", Controls: "renew-panel-history"),
+    ];
+
+    private void SelectRenewTab(string key)
+    {
+        if (key == "history") ShowHistoryTab();
+        else ShowRequestTab();
     }
 
     private string TabLabel(LeasedRoomSummaryDto room) => $"{room.RoomCode} · {room.PropertyName}";

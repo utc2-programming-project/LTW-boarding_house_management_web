@@ -5,7 +5,6 @@ using Web.Features.Accounts;
 using Web.Features.Audit.DTOs;
 using Web.Features.Audit.Services;
 using Web.Features.Properties;
-using Web.Features.Properties.DTOs;
 
 namespace Web.Features.Audit.Services;
 
@@ -65,8 +64,7 @@ public sealed class AuditLogPageService(
 
         try
         {
-            var page = await audit.QueryAsync(caller, query, cancellationToken);
-            var options = await audit.GetFilterOptionsAsync(caller, cancellationToken);
+            var (page, options) = await audit.QueryWithOptionsAsync(caller, query, cancellationToken);
             var properties = isOwner ? await LoadPropertiesAsync(scope.ServiceProvider, caller, cancellationToken) : [];
 
             return new AuditLogPageResult(isOwner, page, options, properties, ErrorCode: null);
@@ -95,12 +93,9 @@ public sealed class AuditLogPageService(
         CancellationToken cancellationToken)
     {
         var properties = provider.GetRequiredService<IPropertyService>();
-        var page = await properties.ListAsync(
-            new PropertyFilter { PageSize = 200, SortBy = "name" },
-            caller,
-            cancellationToken);
+        var options = await properties.ListOptionsAsync(caller, cancellationToken);
 
-        return page.Items
+        return options
             .Select(item => new AuditPropertyOption(item.Id, item.Name))
             .ToList();
     }

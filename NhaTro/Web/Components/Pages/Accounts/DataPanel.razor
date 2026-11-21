@@ -1,0 +1,39 @@
+@inject IStringLocalizer<Shared> L
+
+@* Tab Dữ liệu: tải bản sao dữ liệu cá nhân và vùng nguy hiểm xóa tài khoản. *@
+
+<div class="acct-stack">
+    <section class="acct-card" aria-labelledby="account-data-title">
+        <div class="acct-card-head">
+            <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="file-text" /></span>
+            <div>
+                <h2 id="account-data-title">@L["PersonalDataTitle"]</h2>
+                <p class="acct-card-desc">@L["DataDownloadDesc"]</p>
+            </div>
+        </div>
+
+        <form action="/Account/Manage/DownloadPersonalData" method="post">
+            <AntiforgeryToken />
+            <div class="acct-form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <LucideIcon Name="download" />
+                    @L["DownloadAction"]
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="acct-card acct-danger" aria-labelledby="account-danger-title">
+        <div class="acct-card-head">
+            <span class="acct-card-icon acct-card-icon-danger" aria-hidden="true"><LucideIcon Name="alert-triangle" /></span>
+            <div>
+                <h2 id="account-danger-title">@L["DangerZoneTitle"]</h2>
+                <p class="acct-card-desc">@L["DangerZoneDesc"]</p>
+            </div>
+        </div>
+
+        <div class="acct-form-actions">
+            <a class="btn btn-danger" href="/Account/Manage/DeletePersonalData">@L["DeleteAccountAction"]</a>
+        </div>
+    </section>
+</div>

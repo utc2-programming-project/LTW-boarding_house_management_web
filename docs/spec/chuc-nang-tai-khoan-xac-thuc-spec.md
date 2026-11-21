@@ -10,8 +10,8 @@
 | Tài khoản | `ApplicationUser : IdentityUser`; `UserName` = email, email duy nhất |
 | Một vai trò hoạt động | Claim chỉ phát role đang chọn; danh sách ngữ cảnh nằm ở claim riêng (mục 1.2) |
 | Kiểm quyền | Policy/attribute ở trang hoặc endpoint + service nhận `callerUserId`/`callerRole` và tự kiểm quyền, phạm vi |
-| Ghi vết | Service ghi `ILogger`; sổ tài khoản (file JSONL) chỉ nhận `account.purge`, `OwnerLocked`, `OwnerUnlocked` |
-| Thông báo | Thao tác tài khoản **không** tạo `AppNotification`; chỉ email/OTP |
+| Ghi vết | `ILogger` cho mọi thao tác; sổ tài khoản (`AuditLogCategory.Account`) nhận create/approve/reject/lock/unlock/role_change/delete/restore/reset_password/force_logout, `OwnerLocked`/`OwnerUnlocked` và `account.purge` |
+| Thông báo | Thao tác nghiệp vụ **không** tạo `AppNotification`; riêng cảnh báo bảo mật (mục 2.4) có cả `AppNotification` lẫn email |
 
 ## 1. Vai trò, ngữ cảnh, trạng thái
 
@@ -29,7 +29,7 @@
 - Ngữ cảnh khả dụng = role thật trong `AspNetUserRoles`, cộng thêm `KhachThue` nếu có hồ sơ `Tenant.UserId` (không cần cấp role).
 - Claim chỉ giữ **một** role đang chọn (`ActiveRoleCookie`), kèm `nhatro.available_roles`.
 - Một ngữ cảnh → vào thẳng sau đăng nhập; nhiều ngữ cảnh → `/select-role` (chọn xong `RefreshSignInAsync`).
-- Nếu tài khoản thuộc **bất kỳ** chủ trọ đang bị khoá, ngữ cảnh Quản lý/Khách thuê bị loại khỏi danh sách (kể cả khi còn chủ trọ khác); hết ngữ cảnh dùng được thì `CanSignInAsync` trả `false`.
+- Chủ trọ bị khoá: chỉ khi **mọi** chủ trọ liên quan đều bị khoá thì ngữ cảnh Quản lý/Khách thuê mới bị loại; dữ liệu của chủ trọ bị khoá luôn bị lọc khỏi truy vấn. Quy tắc đầy đủ ở 5.2.
 
 ### 1.3 Trạng thái tài khoản
 
@@ -41,7 +41,9 @@
 | `Locked` | `LockoutEnd = DateTimeOffset.MaxValue` | Bị chặn |
 | Thùng rác | `IsDeleted = true` | Bị chặn |
 
-Ưu tiên suy trạng thái: **Locked > Unverified > Pending > Active** (`AccountStatusRules.Derive`). Khoá tạm do sai mật khẩu không phải `Locked`.
+Ưu tiên suy trạng thái: **Locked > Unverified > Pending > Active**. Khoá tạm do sai mật khẩu không phải `Locked`.
+
+`Pending` bị chặn đăng nhập (`NotAllowed`). Tài khoản `Pending` vừa hoàn tất OTP bị huỷ phiên và chuyển `/login?pendingApproval=1` — cùng cơ chế, chỉ khác là phiên OTP không được giữ.
 
 ### 1.4 Ma trận thao tác
 
@@ -52,7 +54,7 @@
 | Khoá / mở khoá | Mọi vai trò, trừ tự khoá và Admin cuối | Không | Không |
 | Đổi vai trò | Có; không nâng lên Admin, không tự đổi, không gỡ Admin cuối, không đổi tài khoản đang gắn hồ sơ khách | Không | Không |
 | Xoá mềm | Có; trừ tự xoá, Admin khác, tài khoản còn hồ sơ khách | Không | Không |
-| Khôi phục | Có | Service cho phép trong phạm vi, nhưng danh sách thùng rác chỉ trả cho Admin | Không |
+| Khôi phục | Có | Không (chỉ Admin) | Không |
 | Xoá vĩnh viễn / dọn thùng rác | Có; chặn khi còn dữ liệu tham chiếu | Không | Không |
 
 Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý gồm chính mình + khách có hợp đồng (kể cả lịch sử) tại tòa được giao.
@@ -63,7 +65,7 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 
 1. `/login` hoặc `/Account/Login`: email + mật khẩu + "ghi nhớ đăng nhập"; có hiện/ẩn mật khẩu.
 2. Sai email/mật khẩu → thông báo chung, không phân biệt lỗi.
-3. Đúng → xét theo thứ tự:
+3. Đúng (mật khẩu, hoặc **passkey** không mật khẩu) → xét theo thứ tự:
    - `EmailConfirmed = false` → `/Account/VerifyOtp?purpose=FirstLogin` (kèm `returnUrl`).
    - Cần 2FA → `/Account/LoginWith2fa`.
    - Bị khoá → `/Account/Lockout`.
@@ -78,16 +80,23 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 |---|---|
 | Đếm sai theo IP | Sai 10 lần/15 phút từ một IP → chặn IP 15 phút; không khoá tài khoản |
 | CAPTCHA | Sau 3 lần sai của tài khoản phải giải thử thách; sai CAPTCHA cũng tính một lần sai |
-| Rate limit | POST đăng nhập/2FA 10 request/phút/IP; vượt → 303 về `/login?tooManyRequests=1` để form báo lỗi |
-| Lockout Identity | Cấu hình 5 lần/15 phút nhưng luồng đăng nhập dùng `lockoutOnFailure: false`; khoá chỉ do Admin |
+| Rate limit | Xem bảng 8.1 |
+| Lockout Identity | 10 lần sai/5 phút, chỉ bật sau khi đã giải đúng CAPTCHA (`lockoutOnFailure: true`); hết hạn tự mở |
 | Anti-forgery | POST `/login`/`/Account/Login` trả 400 → chuyển `/login?stale=1` để tải lại form |
 
 ### 2.3 Phiên
 
-- Cookie `Identity.Application`: HttpOnly, SameSite=Lax; Secure `Always` (production), `SameAsRequest` (Development/Testing).
-- Hết hạn 8 giờ, sliding; security stamp kiểm lại mỗi 2 phút.
-- Đăng xuất: POST `/Account/Logout`, kiểm antiforgery thủ công (thiếu token vẫn kết thúc phiên), trả `Clear-Site-Data: "cache", "cookies", "storage"`.
+- Cookie xác thực `Identity.Application`: HttpOnly, SameSite=Lax; Secure `Always` (production), `SameAsRequest` (Development/Testing); hết hạn 8 giờ, sliding; security stamp kiểm lại mỗi 2 phút.
+- Mỗi thiết bị đăng nhập một phiên riêng (cookie phiên + bản ghi phía server, chi tiết Phụ lục A); phiên bị thu hồi → request kế tiếp bị đăng xuất ngay, không đợi security stamp.
+- Trang `Account/Manage/Sessions`: liệt kê thiết bị/IP/lần hoạt động cuối; thu hồi một thiết bị hoặc mọi thiết bị khác (giữ thiết bị hiện tại); "hoạt động gần nhất" cập nhật tối đa 5 phút một lần.
+- Đổi mật khẩu → thu hồi mọi phiên khác. Khoá tài khoản/force logout/xoá mềm → thu hồi mọi phiên.
+- Đăng xuất: POST `/Account/Logout`, kiểm antiforgery (thiếu token vẫn kết thúc phiên); xoá phiên server + cookie, trả `Clear-Site-Data`.
 - `/api/*`: thiếu đăng nhập 401, thiếu quyền 403 (không redirect).
+
+### 2.4 Thông báo bảo mật
+
+- Gửi email + thông báo trong ứng dụng (best-effort, lỗi gửi không rollback hành động) khi: đổi mật khẩu, yêu cầu đổi email (gửi tới hộp thư **cũ**), khoá/mở khoá tài khoản, force logout.
+- Đăng nhập từ IP/UA chưa từng thấy: tạo thông báo trong ứng dụng ngay và gửi email nền.
 
 ## 3. Đăng ký & tạo tài khoản
 
@@ -96,32 +105,34 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 1. `/Account/RegisterOwner`: họ tên, email, SĐT (tuỳ chọn, 10 số bắt đầu bằng 0), mật khẩu + xác nhận.
 2. Service tạo user `EmailConfirmed = false`, `ApprovedAt = null`, gán role `ChuTro`; trùng email báo lỗi.
 3. Service phát OTP `OwnerRegistration`; trang chuyển `/Account/VerifyOtp`.
-4. OTP đúng → `EmailConfirmed = true`, `ApprovedAt ??= now`, cập nhật security stamp → tài khoản `Active`.
-5. Rate limit đăng ký: 5 request/giờ/IP.
+4. OTP đúng → `EmailConfirmed = true`; **chỉ luồng `OwnerRegistration`** mới đặt `ApprovedAt ??= now` → tài khoản `Active`.
+5. Rate limit đăng ký: xem 8.1.
 
 ### 3.2 Khách thuê qua lời mời
 
-| Kênh | Hiện trạng |
-|---|---|
-| Email | Chỉ mời khách **mới**; hạn 15 phút; email đã có tài khoản bị từ chối; lời mời cũ cùng email/chủ trọ bị thu hồi |
-| QR | Chọn hạn 15 phút / 1 giờ / 6 giờ / 24 giờ; mời khách mới hoặc khách đã có tài khoản; gắn chủ trọ + tòa/phòng |
+| Tiêu chí | Khách mới | Đã có tài khoản |
+|---|---|---|
+| Kênh | Email (1/6/24 giờ, mặc định 24 giờ — `Invitations:EmailLifetimeMinutes`) hoặc QR (15 phút/1 giờ/6 giờ/24 giờ) | Email hoặc QR, cùng bộ hạn |
+| Điều kiện | Email chưa có tài khoản; chọn "khách mới" mà email đã tồn tại → từ chối | Phải đăng nhập đúng tài khoản được mời |
+| Khi nhận | `/invite/{Token}` tạo tài khoản (`EmailConfirmed = false`, `ApprovedAt = now`), role `KhachThue`; gửi OTP `TenantRegistration` | Thêm liên kết chủ trọ, tạo hồ sơ khách nếu chưa có, `RefreshSignInAsync` để nhận ngữ cảnh mới |
+| Hồ sơ & phòng | Tạo hồ sơ khách + xếp phòng chờ (nếu có phòng) | Xếp phòng chờ (nếu có phòng) |
 
-- Token 32 byte ngẫu nhiên; server chỉ lưu **SHA-256**; dùng một lần; hết hạn hoặc đã thu hồi → trang lỗi.
-- **Khách mới**: `/invite/{Token}` tạo tài khoản (`EmailConfirmed = false`, `ApprovedAt = now`), role `KhachThue`, hồ sơ khách, liên kết chủ trọ và xếp phòng ở trạng thái chờ (nếu có phòng); sau đó OTP `TenantRegistration` để xác thực email.
-- **Khách đã có tài khoản**: phải đăng nhập đúng người được mời; hệ thống tạo hồ sơ khách nếu chưa có, thêm liên kết chủ trọ và xếp phòng chờ; `RefreshSignInAsync` để nhận ngữ cảnh mới.
-- Khoá chủ trọ → thu hồi mọi lời mời đang mở của chủ trọ đó.
+- Token 32 byte, dùng một lần; hết hạn/đã thu hồi → trang lỗi. Mời lại cùng email + chủ trọ sẽ thu hồi lời mời cũ.
+- Khoá chủ trọ → thu hồi lời mời đang mở (5.2).
 
 ### 3.3 Tạo tài khoản bởi người quản lý
 
 - Admin/Chủ trọ tạo `QuanLy`/`KhachThue`: `ApprovedAt = now`, `EmailConfirmed = false` → lần đầu đăng nhập vẫn qua OTP.
 - Quản lý tạo `KhachThue`: `ApprovedAt = null` (Pending), chỉ trong phạm vi tòa được giao.
 - Mọi thao tác tạo `KhachThue` phải chọn hồ sơ khách **chưa gắn tài khoản** (`Tenant.UserId = null`) trong phạm vi; Chủ trọ/Quản lý chỉ chọn được hồ sơ đã có hợp đồng tại tòa trong phạm vi. Gắn hồ sơ bằng cập nhật có điều kiện, thua đua thì xoá tài khoản vừa tạo.
-- Hiện trạng cần biết: tài khoản Quản lý tạo có `EmailConfirmed = false`; luồng đăng nhập kiểm email trước khi kiểm `ApprovedAt`, và OTP thành công đặt `ApprovedAt ??= now` — nên sau khi xác thực email, tài khoản chuyển `Active` dù chưa bấm duyệt.
+- OTP xác thực email không tự duyệt: tài khoản Quản lý tạo vẫn `Pending` sau OTP (xem 1.3) cho tới khi Chủ trọ bấm duyệt.
+- Chủ trọ/Quản lý có nút **Từ chối** cho tài khoản đang chờ duyệt (bắt buộc lý do): gỡ liên kết hồ sơ khách, thu hồi lời mời đang mở, xoá mềm tài khoản và giữ `OriginalEmail` để mời lại cùng email.
 
 ### 3.4 Xác nhận email
 
 - Trang `Account/ConfirmEmail`, `Account/ResendEmailConfirmation`; token sống 15 phút.
 - Có cấu hình SMTP Gmail → gửi thư thật; chưa cấu hình → `IdentityNoOpEmailSender` ghi log, trang `RegisterConfirmation` hiện link xác nhận.
+- Gửi thư: thử 3 lần mỗi máy chủ, lỗi máy chính chuyển sang `Email:FallbackSmtp`; thư OTP/lời mời ném lỗi khi cả hai đều hỏng để trả trạng thái thất bại, thư Identity vẫn nuốt lỗi. Production thiếu SMTP và không đặt `Email:AllowLogOnly=true` → ứng dụng không khởi động.
 - Đổi email tại `Account/Manage/Email`, xác nhận email mới tại `ConfirmEmailChange`.
 
 ## 4. Mật khẩu
@@ -132,16 +143,17 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 2. Chỉ phát OTP `PasswordReset` khi tài khoản tồn tại và đã xác thực email; điều hướng/phản hồi luôn giống nhau.
 3. `/Account/VerifyOtp?purpose=PasswordReset`: OTP đúng → sinh reset token (15 phút) → `/Account/ResetPassword`.
 4. Token sai/hết hạn → `/Account/InvalidPasswordReset`.
-5. Quy tắc OTP: 6 số (cấu hình được 8), sống 10 phút, tối đa 5 lần thử, sai quá khoá 15 phút, gửi lại chờ 60 giây, tối đa 5 lần/giờ; mã lưu dạng HMAC-SHA256(salt:mã).
-6. Rate limit form quên mật khẩu: 5 request/15 phút/IP.
+5. Quy tắc OTP: 6 số (cấu hình được 8), sống 10 phút, tối đa 5 lần thử, sai quá khoá 15 phút, gửi lại chờ 60 giây, tối đa 5 lần/giờ.
+6. Rate limit form quên mật khẩu: xem 8.1.
 7. Nút gửi lại mã trên trang OTP báo "không tìm thấy" nếu email không tồn tại hoặc chưa xác thực.
 
 ### 4.2 Đổi mật khẩu / bảo vệ tài khoản
 
-- `/Account/Manage/ChangePassword`: cần mật khẩu hiện tại.
-- `/Account/Manage/SetPassword`: dành cho tài khoản chưa có mật khẩu (dùng đăng nhập ngoài; hiện chưa bật provider).
+- `/Account/Manage/ChangePassword`: cần mật khẩu hiện tại; đổi xong thu hồi mọi phiên khác và gửi cảnh báo bảo mật.
+- `/Account/Manage/SetPassword`: dành cho tài khoản chưa có mật khẩu (chỉ xảy ra khi đăng nhập bằng provider đã đăng ký — xem mục 6).
 - `/Account/Manage/ResetAuthenticator` hoặc mã dự phòng khi mất thiết bị 2FA.
-- `/Account/Manage/DeletePersonalData`: người dùng tự xoá dữ liệu cá nhân; chặn nếu là Admin cuối.
+- Production: Admin/Chủ trọ chưa bật 2FA bị chuyển sang `EnableAuthenticator` trước khi vào nghiệp vụ (`Security:RequireTwoFactorForPrivileged`, tắt ở Development/Testing).
+- `/Account/Manage/DeletePersonalData`: người dùng tự xoá dữ liệu cá nhân; chặn nếu là Admin cuối, còn nhà đứng tên, phân công quản lý hiệu lực hoặc hợp đồng đang hiệu lực.
 
 ## 5. Quản lý tài khoản
 
@@ -150,24 +162,26 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 | Mục | Hiện trạng |
 |---|---|
 | Truy cập | `[Authorize]`; dữ liệu chỉ trả cho Admin/Chủ trọ/Quản lý (`CanManageAccounts`) |
-| Danh sách | Lọc theo từ khóa (email/tên/SĐT), lọc vai trò, phân trang; phạm vi theo `VisibleRoles` + scope hợp đồng |
-| Bộ lọc trạng thái | Service hỗ trợ `statusFilter` (locked/unverified/pending/active) nhưng UI chưa có ô lọc này |
+| Danh sách | Từ khóa (email/tên/SĐT), lọc vai trò, lọc trạng thái (locked/unverified/pending/active), phân trang; phạm vi theo `VisibleRoles` + scope hợp đồng |
 | Số liệu | `GetSummaryAsync` chỉ Admin: đếm Active/Pending/Locked + 5 tài khoản Pending (theo tên); dùng ở dashboard Admin |
 | Tạo | Theo ma trận 1.4; chọn hồ sơ khách khi tạo Khách thuê |
 | Duyệt | `ApproveAsync`: chỉ tài khoản `ApprovedAt = null`; không đặt `EmailConfirmed` |
-| Khoá | `LockoutEnabled = true`, `LockoutEnd = MaxValue`, đổi security stamp; khoá Chủ trọ → khoá lan + thu hồi lời mời |
+| Từ chối | Chủ trọ/Quản lý trong phạm vi, tài khoản Pending, bắt buộc lý do: gỡ hồ sơ khách, thu hồi lời mời, xoá mềm, giữ `OriginalEmail` |
+| Khoá | `LockoutEnabled = true`, `LockoutEnd = MaxValue`, đổi security stamp, thu hồi mọi phiên; khoá Chủ trọ → khoá lan (5.2) |
 | Mở khoá | `LockoutEnd = null`, `AccessFailedCount = 0`; không tự duyệt (`ApprovedAt` giữ nguyên) |
-| Đổi vai trò | Gỡ role cũ, gán role mới; không đổi security stamp (claim đổi ở lần làm mới principal, tối đa 2 phút) |
-| Xoá mềm | Email đổi sang `deleted-{guid}@deleted.local`, lưu `OriginalEmail`; chặn khi còn hồ sơ khách gắn tài khoản |
+| Đặt lại mật khẩu / đăng xuất mọi thiết bị | Quyền như Duyệt; reset gửi OTP `PasswordReset` tới email đã xác thực (không đặt mật khẩu hộ); logout đổi security stamp + thu hồi mọi phiên + cảnh báo bảo mật |
+| Đổi vai trò | Gỡ role cũ, gán role mới, đổi security stamp; phiên cũ bị đá trong ≤ 2 phút |
+| Xoá mềm | Email đổi sang `deleted-{guid}@deleted.local`, lưu `OriginalEmail`, thu hồi mọi phiên; chặn khi còn hồ sơ khách gắn tài khoản |
 | Thùng rác | Chỉ Admin thấy; tối đa 200 tài khoản mới xoá nhất; khôi phục báo lỗi nếu email gốc đã bị dùng lại |
 | Xoá vĩnh viễn | Chặn khi còn tham chiếu (hồ sơ khách, tòa sở hữu, phân công quản lý, yêu cầu duyệt, sự cố, lịch sử giá dịch vụ, công tắc quản lý); ghi audit `account.purge` |
 | Dọn thùng rác | Duyệt từng tài khoản đã xoá, trả về số xoá được / số bỏ qua |
 
 ### 5.2 Khoá chủ trọ lan tỏa
 
-- Khoá Chủ trọ → cập nhật security stamp cho Quản lý/Khách thuê có ngữ cảnh thuộc chủ trọ; phiên cũ bị loại ở lần kiểm kế tiếp (tối đa 2 phút).
+- Khoá Chủ trọ → thu hồi mọi phiên của Quản lý/Khách thuê có ngữ cảnh thuộc chủ trọ đó (đăng xuất ở request kế tiếp).
 - Thu hồi toàn bộ lời mời chưa chấp nhận/chưa thu hồi của chủ trọ.
-- Đăng nhập sau đó: vai trò Quản lý/Khách thuê bị loại khỏi `/select-role` nếu thuộc bất kỳ chủ trọ bị khoá; hết ngữ cảnh thì không đăng nhập được.
+- Ngữ cảnh Quản lý/Khách thuê chỉ bị loại khi **mọi** chủ trọ liên quan đều bị khoá; hết ngữ cảnh thì không đăng nhập được.
+- Dữ liệu của chủ trọ bị khoá (nhà/phòng/hợp đồng/hóa đơn/khách/chi phí/báo cáo/tệp) bị lọc khỏi mọi truy vấn theo phạm vi.
 
 ### 5.3 `/admin/owners`
 
@@ -181,6 +195,14 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 - Mục tài khoản nhận tiền (ngân hàng/số TK/tên) chỉ hiện với Chủ trọ; nhập đủ 3 trường hoặc xoá cả 3; số TK 6–20 ký tự, tên 5–50 ký tự, mã ngân hàng phải có trong catalogue VietQR.
 - Khách thuê dùng `/my/tenant-profile` cho hồ sơ khách.
 
+### 5.5 Trang tự phục vụ `/account`
+
+- Năm tab, chọn bằng query `?tab=`: `profile` (hồ sơ), `security` (bảo mật), `devices` (thiết bị), `activity` (hoạt động gần đây), `data` (dữ liệu). Trang render tĩnh; riêng form hồ sơ là island `InteractiveServer`.
+- Ảnh đại diện lưu ở server, một dòng mỗi tài khoản trong `UserAvatars`; phục vụ qua `GET /api/avatar/{userId}`, nạp qua `POST`, gỡ qua `DELETE`. Chỉ chính chủ đọc/ghi (đọc tài khoản khác trả 404 như "chưa có ảnh" để không dò được id; ghi trả 403).
+- Ảnh thật được nhận diện bằng magic byte (jpeg/png/webp), trần 256 KB; trình duyệt nén về tối đa 256px trước khi nộp. Nội dung trả về kèm `X-Content-Type-Options: nosniff` và `Cache-Control: private, no-store`; payload quá cỡ bị chặn trước khi giải mã base64 (413), sai định dạng trả 400.
+- Tab Bảo mật liệt kê mỗi thiết lập một dòng; dòng liên kết đăng nhập ngoài chỉ hiện khi có lý do thấy nó (mục 6).
+- Tab Hoạt động liệt 10 sự kiện gần nhất của chính tài khoản, lấy từ hộp thư `AppNotification` (không thêm bảng mới); đánh dấu tất cả đã đọc trong một request.
+
 ## 6. Xác thực đang bật
 
 | Phương thức | Hiện trạng |
@@ -189,7 +211,7 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 | OTP email | Mục đích: `OwnerRegistration`, `ManagerFirstLogin`, `TenantFirstLogin`, `TenantRegistration`, `FirstLogin`, `PasswordReset`, `ContractAcceptance`; thực tế đang phát: OwnerRegistration, TenantRegistration, FirstLogin, PasswordReset, ContractAcceptance |
 | TOTP + mã dự phòng | Khung Identity có sẵn; người dùng bật ở `/Account/Manage/TwoFactorAuthentication`, đăng nhập tại `/Account/LoginWith2fa` |
 | Passkey/WebAuthn | Có trang `/Account/Manage/Passkeys` (thêm/đổi tên/xoá) và endpoint lấy creation/request options |
-| Đăng nhập ngoài | Trang/endpoint có nhưng **chưa đăng ký provider** nào |
+| Đăng nhập ngoài | Provider Google đăng ký khi `Authentication:Google:ClientId` + `ClientSecret` có đủ; thiếu cấu hình thì scheme không tồn tại và mọi nút Google tự ẩn. Trang `/Account/Manage/ExternalLogins` liên kết/gỡ; chính sách liên kết chỉ nhận liên kết/tự liên kết khi email provider đã xác thực trùng tài khoản, không tạo tài khoản mới (xem 5.5) |
 
 ## 7. Phân quyền
 
@@ -215,17 +237,37 @@ Quản lý không có quyền duyệt; danh sách tài khoản của Quản lý 
 
 - Anti-forgery toàn cục; security headers; HSTS ở production; `/api` lỗi trả JSON an toàn.
 - DataProtection dùng chung keys; tuỳ chọn `Security:ProtectKeysWithDpapi` chỉ chạy trên Windows.
-- Rate limit theo IP: đăng nhập 10/phút, đăng ký 5/giờ, OTP 20/15 phút, quên mật khẩu 5/15 phút, gửi lại email xác nhận 5/15 phút.
-- Log: service không ghi mật khẩu; Development chưa cấu hình SMTP dùng sender NoOp nên nội dung thư (OTP/link) có thể xuất hiện trong log.
-- Bảng/trường liên quan: `ApplicationUser` (`FullName`, `PhoneNumber`, `ApprovedAt`, `IsDeleted`/`DeletedAt`/`DeletedByUserId`, `OriginalEmail`, `BankCode`/`BankAccountNumber`/`BankAccountName`), `AspNet*`, `OtpChallenge` (hash + salt + mục đích + số lần thử + hạn/khoá), `TenantInvitation`, `TenantOwnerLink`, `PendingRoomAssignment`.
+- Log: service không ghi mật khẩu; sender ghi log mặc định chỉ ghi người nhận/tiêu đề. Nội dung thư (OTP/link) chỉ ra log khi Development **và** đặt `Email:LogBodyInDevelopment=true`.
+- Bảng/trường liên quan: `ApplicationUser` (`FullName`, `PhoneNumber`, `ApprovedAt`, `IsDeleted`/`DeletedAt`/`DeletedByUserId`, `OriginalEmail`, `BankCode`/`BankAccountNumber`/`BankAccountName`), `UserAvatars` (`UserId` vừa là khoá chính vừa là khoá ngoại), `AspNet*`, `OtpChallenge`, `TenantInvitation`, `TenantOwnerLink`, `PendingRoomAssignment`.
 
-## 9. Liên kết module đang có
+### 8.1 Rate limit (theo IP)
 
-| Module | Liên kết |
+| Luồng | Giới hạn | Khi vượt |
+|---|---|---|
+| Đăng nhập, 2FA | 10/phút | 303 `/login?tooManyRequests=1` |
+| Đăng ký chủ trọ | 5/giờ | 429 |
+| Xác thực OTP (POST `/Account/VerifyOtp`) | 20/15 phút | 429 |
+| Quên mật khẩu | 5/15 phút | 303 về form kèm cờ lỗi |
+| Gửi lại email xác nhận | 5/15 phút | 303 về form kèm cờ lỗi |
+| Tải tệp | 20/phút | 429 |
+| Đổi ngôn ngữ | 20/phút | 429 |
+
+Cấu hình ở `Security:RateLimit`; `/api/*` khi vượt luôn trả 429 JSON.
+
+## 9. Liên kết module
+
+- Hợp đồng & khách thuê: `Tenant.UserId` nối tài khoản với hồ sơ; OTP `ContractAcceptance` khi khách xác nhận hợp đồng; khách xem hồ sơ ở `/my/tenant-profile`.
+- Duyệt nghiệp vụ: `ManagerApprovalRequest` (thao tác Quản lý cần Chủ trọ duyệt) tách khỏi duyệt tài khoản.
+- Dashboard/Nhật ký/Thông báo: `GetSummaryAsync` cấp số liệu tài khoản cho Admin; `/admin/audit-log`; cảnh báo bảo mật ở 2.4.
+
+## Phụ lục A. Chi tiết triển khai (không thuộc hành vi)
+
+| Chủ đề | Chi tiết |
 |---|---|
-| Hợp đồng | Tài khoản khách gắn `Tenant.UserId`; OTP `ContractAcceptance` khi khách xác nhận hợp đồng |
-| Khách thuê | Tạo hồ sơ + liên kết chủ trọ + xếp phòng chờ từ lời mời; `/my/tenant-profile` |
-| Duyệt | `ManagerApprovalRequest` cho thao tác Quản lý cần Chủ trọ duyệt (khác luồng duyệt tài khoản) |
-| Dashboard | `GetSummaryAsync` cấp số liệu tài khoản cho trang chủ Admin |
-| Nhật ký | `/admin/audit-log` (Admin đọc sổ tài khoản; Chủ trọ đọc sổ nghiệp vụ) |
-| Thông báo | Thao tác tài khoản không tạo `AppNotification` |
+| Phiên | Cookie `nhatro.sid` (HttpOnly) + `UserSessionInfo` trong `Security:SessionsPath` (mặc định `%LOCALAPPDATA%\NhaTro\sessions`), mỗi tài khoản một file JSON, tối đa 20 phiên, tự xoá sau 90 ngày; `UserSessionMiddleware` |
+| OTP / lời mời | OTP lưu HMAC-SHA256(salt:mã) trong `OtpChallenge`; token lời mời 32 byte, server chỉ lưu SHA-256 trong `TenantInvitation` |
+| Đăng xuất | `Clear-Site-Data: "cache", "cookies", "storage"` |
+| Ảnh đại diện | `UserAvatars` (PK = FK → `AspNetUsers`, xoá cascade); `AvatarService` sniff nội dung, trần 256 KB; `AvatarEndpoints` kiểm tra antiforgery tay cho body JSON, rate limit `file-upload` |
+| Provider ngoài | `AddGoogle` chỉ chạy khi `Authentication:Google:ClientId`/`ClientSecret` có đủ; UI đọc `GetExternalAuthenticationSchemesAsync` nên không cần flag riêng |
+| Trạng thái & điều hướng | `AccountStatusRules.Derive`; `PostLoginRouter`, `RefreshSignInAsync` |
+| Cấu hình | `Security:RateLimit`, `Security:SessionsPath`, `Security:RequireTwoFactorForPrivileged`, `Email:*`, `Invitations:EmailLifetimeMinutes` |

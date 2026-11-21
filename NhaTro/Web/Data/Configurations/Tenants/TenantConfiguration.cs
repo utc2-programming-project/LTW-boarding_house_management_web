@@ -44,6 +44,8 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         // Tim kiem theo Keyword (muc 8): ERD chua co, them index tren FullName va Phone.
         builder.HasIndex(t => t.FullName);
         builder.HasIndex(t => t.Phone);
+        // Danh sach khach thue sap theo "Moi tao" la lua chon sap xep thu hai.
+        builder.HasIndex(t => t.CreatedAt);
 
         // Thung rac (VHT-99): ho so da xoa mem khong hien ra truy van thuong.
         builder.HasQueryFilter(t => !t.IsDeleted);

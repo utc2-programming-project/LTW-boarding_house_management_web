@@ -16,6 +16,17 @@ CLAUDE.md
 .opencode/
 docs/huong_dan/
 tools/
+
+# unslop skill (project-local under .agents/) and files it generates
+.agents/skills/unslop/
+node_modules/
+package.json
+package-lock.json
+*.live.png
+.story-frames/
+*.mp4
+unslop-*.html
+
 # Visual Studio / .NET
 .vs/
 bin/
@@ -52,5 +63,5 @@ scripts/*
 !scripts/data/
 !scripts/data/*.ps1   
 docs/imp/
-
-
+docs/test-results/
+docs/spec/UI/spec-giao-dien-cho-ai.md

@@ -23,6 +23,10 @@ Khối copy/paste: [`template-row.md`](template-row.md) — 15 mẫu `M00`–`M1
 
 Ràng buộc: full text luôn trong DOM (không cắt bằng JS) · `.hover-tip` phải là CSS global · popup có `role="tooltip"` + `aria-describedby` (hoặc `aria-hidden` nếu lặp nhãn).
 
+**Hai loại tooltip, không trộn**: (1) **giải thích** — `<HelpTip>` nút `?`, nội dung không lặp lại chữ trên màn hình; (2) **đọc đầy đủ** — `.hover-tip` + `data-hover-tip`, nội dung là chính ô bị cắt. `title` native **không dùng trên ô dữ liệu** (sinh hộp đen, không theo theme, chồng popup) — chỉ còn cho nút/icon và chip có chú thích ngắn.
+
+**Căn cột phải đều**: mọi ô trong một cột phải cùng trục với tiêu đề cột. Cột thao tác (`cell-actions`) căn giữa cho cả `th` lẫn `td`; `.p2-row-actions` nằm trong `RenderFragment` của trang nên **không nhận CSS scoped của `DataTable`** — phải căn bằng `::deep .table-card td.cell-actions .p2-row-actions { justify-content: center; }` trong CSS của trang.
+
 ---
 ## 2. Index toàn bộ row
 

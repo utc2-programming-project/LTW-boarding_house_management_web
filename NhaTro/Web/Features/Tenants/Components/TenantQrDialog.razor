@@ -37,13 +37,8 @@
         }
         else
         {
-            <SegmentedTabs TItem="SegmentedItem" Items="KindItems"
-                           KeySelector="@(item => item.Key)"
-                           LabelSelector="@(item => item.Label)"
-                           IconSelector="@(item => item.Icon)"
-                           Value="_kindValue"
-                           ValueChanged="OnKindChanged"
-                           AriaLabel="@L["QrKindLabel"]" />
+            <TabBar Role="tablist" Items="KindItems" ActiveKey="@_kindValue"
+                    AriaLabel="@L["QrKindLabel"]" OnSelect="OnKindChanged" />
 
             <FormField TValue="string" Id="qr-property" Label="@L["QrPropertyLabel"]" For="() => _propertyValue">
                 <select id="qr-property" class="input" @bind="_propertyValue" @bind:after="LoadRoomsAsync"
@@ -168,10 +163,10 @@
         _properties = await Rooms.GetPropertyOptionsAsync();
     }
 
-    private IReadOnlyList<SegmentedItem> KindItems =>
+    private IReadOnlyList<TabItem> KindItems =>
     [
-        new("0", L["QrKindNew"], "user-plus"),
-        new("1", L["QrKindExisting"], "users"),
+        new("0", L["QrKindNew"].Value, Icon: "user-plus"),
+        new("1", L["QrKindExisting"].Value, Icon: "users"),
     ];
 
     private TenantInvitationKind Kind =>

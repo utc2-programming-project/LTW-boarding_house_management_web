@@ -525,7 +525,7 @@ public class TenantDocumentPageServiceTests
         public Task<TenantListSummaryDto> GetSummaryAsync(TenantCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
-        public Task<Web.Features.Tenants.DTOs.PagedResult<TenantListItemDto>> ListAsync(
+        public Task<Web.Common.Models.PagedResult<TenantListItemDto>> ListAsync(
             TenantFilterRequest filter, TenantCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
@@ -557,7 +557,7 @@ public class TenantDocumentPageServiceTests
         public Task<TenantResult> RestoreAsync(int id, string rowVersion, TenantCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
-        public Task<Web.Features.Tenants.DTOs.PagedResult<TenantTrashItemDto>> ListTrashAsync(
+        public Task<Web.Common.Models.PagedResult<TenantTrashItemDto>> ListTrashAsync(
             TenantTrashFilterRequest filter, TenantCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();
 

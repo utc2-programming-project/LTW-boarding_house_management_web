@@ -173,6 +173,8 @@ public sealed class ContractPaymentDeadlineService(
                 && !db.ContractDepositPayments.Any(payment =>
                     payment.ContractId == contract.ContractId
                     && payment.Status == DepositPaymentStatus.Pending))
+            .OrderBy(contract => contract.DepositDueAt)
+            .ThenBy(contract => contract.ContractId)
             .Take(100)
             .ToListAsync(cancellationToken);
 
@@ -196,6 +198,8 @@ public sealed class ContractPaymentDeadlineService(
                 && !db.ContractDepositPayments.Any(payment =>
                     payment.ContractId == contract.ContractId
                     && payment.Status == DepositPaymentStatus.Pending))
+            .OrderBy(contract => contract.DepositDueAt)
+            .ThenBy(contract => contract.ContractId)
             .Take(100)
             .ToListAsync(cancellationToken);
 

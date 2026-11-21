@@ -93,38 +93,34 @@
     {
         RenderFragment<IncidentTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<IncidentTrashItemDto> title = item => @<span class="cell-truncate" data-hover-tip>
+            @item.Title
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.Title</span>
+            </span>
+        </span>;
+        RenderFragment<IncidentTrashItemDto> room = item => @<span class="cell-truncate" data-hover-tip>
+            @($"{item.PropertyName} / {item.RoomCode}")
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+                <span class="hover-tip__line">@item.RoomCode</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "title", Title = L["Title"], Value = item => item.Title },
-            new() { Key = "room", Title = L["PropertyRoom"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
-            new() { Key = "category", Title = L["Category"], Value = item => L[$"Category{item.Category}"].Value },
-            new() { Key = "status", Title = L["Status"], Value = item => L[$"Status{item.Status}"].Value },
-            new() { Key = "created", Title = L["CreatedAt"], Value = item => DateFormatter.FormatDateTime(item.CreatedAt) },
+            new() { Key = "title", Title = L["Title"], Template = title, Width = "260px" },
+            new() { Key = "room", Title = L["PropertyRoom"], Template = room, Width = "220px" },
+            new() { Key = "category", Title = L["Category"], Value = item => L[$"Category{item.Category}"].Value, Width = "130px" },
+            new() { Key = "status", Title = L["Status"], Value = item => L[$"Status{item.Status}"].Value, Width = "130px" },
+            new() { Key = "created", Title = L["CreatedAt"], Value = item => DateFormatter.FormatDateTime(item.CreatedAt), Width = "150px" },
             TrashColumns.DeletedAt<IncidentTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["Actions"], actions),
         ];
     }
 
-    private async Task<PagedResult<IncidentTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
-    {
-        var items = await Session.ListDeletedAsync();
-        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
-        var filtered = items
-            .Where(item => term is null
-                || item.Title.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        return new PagedResult<IncidentTrashItemDto>
-        {
-            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
-            TotalCount = filtered.Count,
-            Page = request.Page,
-            PageSize = request.PageSize,
-        };
-    }
+    private async Task<PagedResult<IncidentTrashItemDto>> LoadDeletedAsync(DataTableRequest request) =>
+        await Session.ListDeletedAsync(_keyword, request.Page, request.PageSize);
 
     private Task ClearSearchAsync()
     {

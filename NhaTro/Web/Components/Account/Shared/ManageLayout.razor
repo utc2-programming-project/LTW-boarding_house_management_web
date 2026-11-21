@@ -2,12 +2,24 @@
 @layout Web.Components.Layout.MainLayout
 @inject IStringLocalizer<Shared> L
 
-<section class="account-shell">
-    <PageHeading Title="@L["ManageAccountTitle"]" TitleId="account-title" HelpText="@L["ManageAccountSubtitle"]"
-                 InteractiveHelp="true" />
+@* Khung cho các trang con thao tác một việc (đổi mật khẩu, 2FA, passkey...).
+   Không còn menu con trái: lối vào duy nhất là các tab của /account. *@
 
-    <div class="account-body">
-        <ManageNavMenu />
-        <div class="account-panel">@Body</div>
-    </div>
+<section class="account-shell">
+    <PageHeading Title="@L["AccountTitle"]" TitleId="account-title" BreadcrumbItems="_crumbs" />
+
+    <a class="account-back" href="/account?tab=security">
+        <LucideIcon Name="arrow-left" />
+        @L["AccountBackAction"]
+    </a>
+
+    <div class="account-panel">@Body</div>
 </section>
+
+@code {
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> _crumbs =>
+    [
+        new(L["Home"].Value, "/home"),
+        new(L["AccountTitle"].Value),
+    ];
+}
