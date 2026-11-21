@@ -122,7 +122,8 @@
         recoveryCodesLeft = twoFactorEnabled ? await UserManager.CountRecoveryCodesAsync(user) : 0;
 
         var schemes = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-        _externalRow = ExternalLoginRow.Resolve(schemes, await UserManager.GetLoginsAsync(user));
+        var logins = (await UserManager.GetLoginsAsync(user)).ToList();
+        _externalRow = ExternalLoginRow.Resolve(schemes, logins);
 
         var checks = new (bool Met, string HintKey)[]
         {
