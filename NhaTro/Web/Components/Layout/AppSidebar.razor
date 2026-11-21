@@ -19,24 +19,27 @@
             {
                 <AuthorizeView Roles="@section.Roles" Context="groupAuth">
                     <Authorized>
-                        <div class="sidebar-group">
-                            @if (section.TitleKey is not null)
-                            {
-                                <p class="sidebar-group-title sidebar-label">@L[section.TitleKey]</p>
-                            }
-                            <div class="sidebar-group-items">
-                                @foreach (var item in section.Items.Where(entry => entry.ShowInSidebar))
+                        @if (AnyVisibleItem(groupAuth.User, section))
+                        {
+                            <div class="sidebar-group">
+                                @if (section.TitleKey is not null)
                                 {
-                                    <AuthorizeView Roles="@item.Roles" Context="menuAuth"
-                                                   Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
-                                        @{
-                                            var active = string.Equals(item.Href, _activeHref, StringComparison.OrdinalIgnoreCase);
-                                        }
-                                        <a href="@item.Href" class="@NavClass(active)" aria-current="@NavAriaCurrent(active)" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></a>
-                                    </AuthorizeView>
+                                    <p class="sidebar-group-title sidebar-label">@L[section.TitleKey]</p>
                                 }
+                                <div class="sidebar-group-items">
+                                    @foreach (var item in section.Items.Where(entry => entry.ShowInSidebar))
+                                    {
+                                        <AuthorizeView Roles="@item.Roles" Context="menuAuth"
+                                                       Policy="@(item.Href == "/incidents" ? Web.Features.Maintenance.IncidentAccess.Policy : null)">
+                                            @{
+                                                var active = string.Equals(item.Href, _activeHref, StringComparison.OrdinalIgnoreCase);
+                                            }
+                                            <a href="@item.Href" class="@NavClass(active)" aria-current="@NavAriaCurrent(active)" aria-label="@L[item.Key]" title="@L[item.Key]"><LucideIcon Name="@item.Icon" /><span class="sidebar-label">@L[item.Key]</span></a>
+                                        </AuthorizeView>
+                                    }
+                                </div>
                             </div>
-                        </div>
+                        }
                     </Authorized>
                 </AuthorizeView>
             }
@@ -157,6 +160,14 @@
             ? []
             : value.Split(',', StringSplitOptions.RemoveEmptyEntries);
     }
+
+    // Nhóm không còn mục nào người dùng mở được thì ẩn cả tiêu đề nhóm.
+    private static bool AnyVisibleItem(ClaimsPrincipal user, NavigationSection section) =>
+        section.Items.Any(entry => entry.ShowInSidebar && HasAnyRole(user, entry.Roles));
+
+    private static bool HasAnyRole(ClaimsPrincipal user, string roles) =>
+        roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Any(user.IsInRole);
 
     private string AccountTip(ClaimsPrincipal user)
     {

@@ -30,9 +30,7 @@
 - Tài khoản — `/account`
 - Hồ sơ (chuyển hướng) — `/profile`
 - Bảng điều khiển — `/dashboard`
-- Quản trị tài khoản — `/admin/users`
-- Nhật ký thao tác — `/admin/audit-log`
-- Công tắc Quản lý — `/admin/manager-switches`
+- Công tắc Quản lý — `/manager-switches`
 - Danh sách nhà trọ — `/properties`
 - Tạo nhà trọ — `/properties/new`
 - Thiết lập nhà trọ — `/properties/{PropertyId:int}/setup`
@@ -87,7 +85,6 @@
 - Tài khoản — `/account`
 - Hồ sơ (chuyển hướng) — `/profile`
 - Bảng điều khiển — `/dashboard`
-- Quản trị tài khoản — `/admin/users`
 - Danh sách nhà trọ — `/properties`
 - Danh sách phòng — `/rooms`
 - Danh sách khách thuê — `/tenants`

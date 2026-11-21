@@ -78,7 +78,7 @@ Ràng buộc: full text luôn trong DOM (không cắt bằng JS) · `.hover-tip`
 | `/admin/owners` | Chủ trọ | `Components/Pages/Admin/OwnerManagement.razor` | 7 | — |
 | `/admin/users` | Tài khoản | `Components/Pages/Accounts/AccountManagement.razor` | 7 | menu theo `Id-Role` |
 | dialog | Rác tài khoản | `.../AccountTrashDialog.razor` | 4 | giờ local |
-| `/admin/manager-switches` | Quyền quản lý | `Components/Pages/ManagerSwitches.razor` | — | lưới thẻ |
+| `/manager-switches` | Quyền quản lý | `Components/Pages/ManagerSwitches.razor` | — | lưới thẻ |
 | `/approvals` | Hàng đợi duyệt | `Components/Pages/ApprovalInbox.razor` → `Features/Approvals/Pages/ApprovalQueueView.razor` | — | `<ul>/<dl>` |
 | `/my/requests` | Yêu cầu của tôi | `Components/Pages/MyApprovalRequests.razor` → `ApprovalRequests.razor` | — | thẻ |
 | `/dev/components` | Demo DataTable | `Components/Pages/ComponentsDemo.razor` | 4 | **DEV-ONLY**, không sửa |
@@ -721,7 +721,7 @@ Ràng buộc: full text luôn trong DOM (không cắt bằng JS) · `.hover-tip`
 | Route | Giao diện thật |
 |---|---|
 | `/incidents` (`Incidents.razor`) | host: heading + KPI + modal; bảng nằm ở `IncidentListView` |
-| `/admin/manager-switches` | lưới thẻ `sw-grid` radio + nút "Giải thích" (`aria-expanded`), không `<table>` |
+| `/manager-switches` | lưới thẻ `sw-grid` radio + nút "Giải thích" (`aria-expanded`), không `<table>` |
 | `/approvals` | `<ul class="approval-list">` + thẻ `<li>`, `<dl>` metadata (`ApprovalQueueView.razor:108-200`) |
 | `/my/requests` | `<article class="approval-card">` (`ApprovalRequests.razor:45-111`) |
 

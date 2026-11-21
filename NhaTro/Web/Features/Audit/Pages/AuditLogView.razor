@@ -1,5 +1,5 @@
 @page "/admin/audit-log"
-@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro)]
+@attribute [Authorize(Roles = Roles.Admin)]
 @rendermode InteractiveServer
 @using Web.Common.Utils
 @inject AuditLogPageService Pages
