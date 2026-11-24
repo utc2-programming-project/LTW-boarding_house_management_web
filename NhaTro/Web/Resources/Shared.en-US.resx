@@ -179,6 +179,21 @@
   <data name="Incidents" xml:space="preserve">
     <value>Incidents</value>
   </data>
+  <data name="GatePasses" xml:space="preserve">
+    <value>Gate access</value>
+  </data>
+  <data name="GateLogs" xml:space="preserve">
+    <value>Gate log</value>
+  </data>
+  <data name="GateSettings" xml:space="preserve">
+    <value>Gate settings</value>
+  </data>
+  <data name="GateKiosk" xml:space="preserve">
+    <value>Gate kiosk</value>
+  </data>
+  <data name="MyGate" xml:space="preserve">
+    <value>My access</value>
+  </data>
   <data name="Reports" xml:space="preserve">
     <value>Reports</value>
   </data>
