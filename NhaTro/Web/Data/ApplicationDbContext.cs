@@ -14,6 +14,7 @@ using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
 using Web.Features.Accounts.Otp;
 using Web.Data.Tariffs;
+using Web.Features.AccessControl.Entities;
 
 namespace Web.Data
 {
@@ -85,6 +86,14 @@ namespace Web.Data
 
         // Thông báo giữa các vai trò (đăng ký, hóa đơn, thanh toán).
         public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
+
+        // P9 (bổ sung): kiểm soát ra vào cổng — chính sách, thiết bị, phiếu, lưu trú, sinh trắc, nhật ký.
+        public DbSet<GatePolicy> GatePolicies => Set<GatePolicy>();
+        public DbSet<GateDevice> GateDevices => Set<GateDevice>();
+        public DbSet<GatePass> GatePasses => Set<GatePass>();
+        public DbSet<StayReport> StayReports => Set<StayReport>();
+        public DbSet<BiometricEnrollment> BiometricEnrollments => Set<BiometricEnrollment>();
+        public DbSet<GateLog> GateLogs => Set<GateLog>();
 
         // D16: nhật ký thao tác tách sổ hệ thống (Admin) và sổ nghiệp vụ theo tòa nhà (Chủ trọ).
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();

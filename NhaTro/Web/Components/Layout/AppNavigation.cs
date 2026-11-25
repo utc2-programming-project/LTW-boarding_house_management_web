@@ -57,6 +57,12 @@ public static class AppNavigation
             new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents",
                 Children: [new("TrashTitle", "", "ChuTro", "/incidents/trash", ShowInSidebar: false)]),
             new("ReportIncident", "wrench", "KhachThue", "/incidents"),
+            // P9 (bổ sung): ra vào cổng — phiếu khách, kiosk, nhật ký, cấu hình.
+            new("GatePasses", "qr-code", "ChuTro,QuanLy", "/gate/passes"),
+            new("GateKiosk", "shield-check", "ChuTro,QuanLy", "/gate/kiosk"),
+            new("GateLogs", "history", "ChuTro,QuanLy", "/gate/logs"),
+            new("GateSettings", "settings", "ChuTro,QuanLy", "/gate/settings"),
+            new("MyGate", "qr-code", "KhachThue", "/my/gate"),
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
             new("Approvals", "check", "ChuTro", "/approvals"),
             new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
