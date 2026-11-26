@@ -22,42 +22,12 @@
     else if (_error is not null)
     {
         <p class="gate-error" role="alert">@_error</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        <div class="gate-error-actions">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
     }
     else
     {
-        <div class="filter-bar filter-bar--panel">
-            <div class="filter-bar__row">
-                <div class="filter-bar__stack filter-bar__text">
-                    <label for="gate-from">@L["From"]</label>
-                    <input id="gate-from" type="date" class="input" @bind="_from" />
-                </div>
-                <div class="filter-bar__stack filter-bar__text">
-                    <label for="gate-to">@L["To"]</label>
-                    <input id="gate-to" type="date" class="input" @bind="_to" />
-                </div>
-                <div class="filter-bar__stack filter-bar__select">
-                    <label for="gate-result">@L["Result"]</label>
-                    <select id="gate-result" class="input" @bind="_result">
-                        <option value="">@L["All"]</option>
-                        <option value="1">@L["Success"]</option>
-                        <option value="0">@L["Failed"]</option>
-                    </select>
-                </div>
-                <div class="filter-bar__stack filter-bar__select">
-                    <label for="gate-direction">@L["Direction"]</label>
-                    <select id="gate-direction" class="input" @bind="_direction">
-                        <option value="">@L["All"]</option>
-                        <option value="@GateDirection.In">@L["In"]</option>
-                        <option value="@GateDirection.Out">@L["Out"]</option>
-                    </select>
-                </div>
-                <div class="filter-bar__actions">
-                    <button type="button" class="btn btn-primary" @onclick="LoadLogsAsync">@L["Filters"]</button>
-                </div>
-            </div>
-        </div>
-
         <h2>@L["Stays"]</h2>
         @if (_stays.Count == 0)
         {
@@ -86,12 +56,14 @@
                                 <td>@(stay.RoomCode ?? "—")</td>
                                 <td>@stay.DueAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm")</td>
                                 <td><span class="gate-badge gate-badge--@stay.Status.ToString().ToLowerInvariant()">@L[stay.Status.ToString()]</span></td>
-                                <td class="gate-actions">
-                                    @if (stay.Status is StayReportStatus.Pending or StayReportStatus.Overdue)
-                                    {
-                                        <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenReport(stay)">@L["MarkReported"]</button>
-                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => CancelStayAsync(stay.Id)">@L["Cancel"]</button>
-                                    }
+                                <td>
+                                    <div class="gate-actions">
+                                        @if (stay.Status is StayReportStatus.Pending or StayReportStatus.Overdue)
+                                        {
+                                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenReport(stay)">@L["MarkReported"]</button>
+                                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => CancelStayAsync(stay.Id)">@L["Cancel"]</button>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -131,6 +103,37 @@
         }
 
         <h2>@L["GateLog"]</h2>
+        <div class="filter-bar filter-bar--panel" role="search">
+            <div class="filter-bar__row">
+                <div class="filter-bar__field filter-bar__text">
+                    <label class="sr-only" for="gate-from">@L["From"]</label>
+                    <input id="gate-from" type="date" class="input" @bind="_from" @bind:after="LoadLogsAsync" />
+                </div>
+                <div class="filter-bar__field filter-bar__text">
+                    <label class="sr-only" for="gate-to">@L["To"]</label>
+                    <input id="gate-to" type="date" class="input" @bind="_to" @bind:after="LoadLogsAsync" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="gate-result">@L["Result"]</label>
+                    <select id="gate-result" class="input" @bind="_result" @bind:after="LoadLogsAsync">
+                        <option value="">@L["All"]</option>
+                        <option value="1">@L["Success"]</option>
+                        <option value="0">@L["Failed"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="gate-direction">@L["Direction"]</label>
+                    <select id="gate-direction" class="input" @bind="_direction" @bind:after="LoadLogsAsync">
+                        <option value="">@L["All"]</option>
+                        <option value="@GateDirection.In">@L["In"]</option>
+                        <option value="@GateDirection.Out">@L["Out"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
+                </div>
+            </div>
+        </div>
         @if (_logs.Count == 0)
         {
             <p class="gate-muted">@L["NoLogs"]</p>
@@ -219,7 +222,27 @@
         _stays = await Session.StaysAsync();
     }
 
-    private async Task LoadLogsAsync() => await LoadLogsCoreAsync();
+    private async Task LoadLogsAsync()
+    {
+        try
+        {
+            await LoadLogsCoreAsync();
+            _error = null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _from = null;
+        _to = null;
+        _result = null;
+        _direction = null;
+        await LoadLogsAsync();
+    }
 
     private async Task LoadLogsCoreAsync()
     {

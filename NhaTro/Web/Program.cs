@@ -541,6 +541,9 @@ builder.Services.AddScoped<Web.Features.AccessControl.Services.IGateTokenService
     Web.Features.AccessControl.Services.GateTokenService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePassService,
     Web.Features.AccessControl.Services.GatePassService>();
+// Link mời khách vãng lai tự điền phiếu (gắn một phòng, dùng một lần).
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePassInviteService,
+    Web.Features.AccessControl.Services.GatePassInviteService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IStayReportService,
     Web.Features.AccessControl.Services.StayReportService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IBiometricEnrollmentService,

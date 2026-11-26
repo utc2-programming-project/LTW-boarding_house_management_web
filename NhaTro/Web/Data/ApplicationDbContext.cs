@@ -91,6 +91,7 @@ namespace Web.Data
         public DbSet<GatePolicy> GatePolicies => Set<GatePolicy>();
         public DbSet<GateDevice> GateDevices => Set<GateDevice>();
         public DbSet<GatePass> GatePasses => Set<GatePass>();
+        public DbSet<GatePassInvite> GatePassInvites => Set<GatePassInvite>();
         public DbSet<StayReport> StayReports => Set<StayReport>();
         public DbSet<BiometricEnrollment> BiometricEnrollments => Set<BiometricEnrollment>();
         public DbSet<GateLog> GateLogs => Set<GateLog>();

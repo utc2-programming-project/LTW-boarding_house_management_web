@@ -24,6 +24,10 @@ public static class GatePassRules
     public static bool TenantQuotaExceeded(int issuedToday, int maxPerDay) =>
         maxPerDay <= 0 || issuedToday >= maxPerDay;
 
+    /// <summary>Giới hạn số phiếu tự điền/ngày theo số điện thoại; 0 nghĩa là tắt.</summary>
+    public static bool SelfFillQuotaExceeded(int submittedToday, int maxPerDay) =>
+        maxPerDay <= 0 || submittedToday >= maxPerDay;
+
     public static DateTimeOffset ComputeExpiry(DateTimeOffset now, int ttlMinutes) =>
         now.AddMinutes(Math.Clamp(ttlMinutes, MinTtlMinutes, MaxTtlMinutes));
 

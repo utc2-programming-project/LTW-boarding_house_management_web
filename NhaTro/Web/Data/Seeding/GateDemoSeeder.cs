@@ -19,6 +19,9 @@ public static class GateDemoSeeder
     /// <summary>Tiền tố token thô của phiếu mẫu, dùng để quẹt thử ở kiosk.</summary>
     public const string TokenPrefix = "DEMO-GATE";
 
+    /// <summary>Token thô của link khách tự điền mẫu (chỉ dùng cho DB demo).</summary>
+    public static string InviteToken(int propertyId) => $"{TokenPrefix}-INVITE-{propertyId}";
+
     private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
 
     public static async Task EnsureAsync(
@@ -111,6 +114,8 @@ public static class GateDemoSeeder
                 AutoApproveDayVisit = true,
                 AutoApproveOvernight = false,
                 AllowTenantIssuePass = true,
+                AllowGuestSelfFill = true,
+                GuestSelfMaxPassesPerDay = 3,
                 TenantMayIssueOvernight = false,
                 TenantMaxPassesPerDay = 3,
                 TenantMaxTtlMinutes = 60,
@@ -343,10 +348,30 @@ public static class GateDemoSeeder
             }));
         }
 
+        // Link mẫu để thử luồng khách tự điền: token thô cố định, DB chỉ lưu hash.
+        var invites = new List<GatePassInvite>();
+        foreach (var propertyId in targets.Where(leaseByProperty.ContainsKey))
+        {
+            var lease = leaseByProperty[propertyId];
+            invites.Add(new GatePassInvite
+            {
+                PropertyId = propertyId,
+                RoomId = lease.Id,
+                TenantId = lease.TenantId,
+                ContractId = lease.ContractId,
+                CreatedByUserId = lease.UserId!,
+                IssuerRole = GateIssuerRole.KhachThue,
+                TokenHash = tokens.Hash(InviteToken(propertyId)),
+                ExpiresAt = now.AddHours(24),
+                CreatedAt = now.AddMinutes(-5),
+            });
+        }
+
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         db.GatePolicies.AddRange(policies);
         db.GateDevices.AddRange(devices);
         db.GatePasses.AddRange(passes.Select(item => item.Pass));
+        db.GatePassInvites.AddRange(invites);
         await db.SaveChangesAsync(cancellationToken);
 
         var reports = new List<StayReport>();
@@ -571,5 +596,13 @@ public static class GateDemoSeeder
             passes.Count,
             logs.Count,
             reports.Count);
+
+        foreach (var propertyId in targets.Where(leaseByProperty.ContainsKey))
+        {
+            logger.LogInformation(
+                "GateDemo: link khách tự điền mẫu cho nhà {PropertyId}: /guest/{Token}",
+                propertyId,
+                InviteToken(propertyId));
+        }
     }
 }

@@ -7,7 +7,19 @@
 <PageTitle>@L["PageTitleSettings"]</PageTitle>
 
 <div class="page-stack gate-page">
-    <PageHeading Title="@L["PageTitleSettings"]" HelpText="@L["SubtitleSettings"]" />
+    <PageHeading Title="@L["PageTitleSettings"]" HelpText="@L["SubtitleSettings"]">
+        <Actions>
+            <div class="gate-heading-filter">
+                <label for="gate-property">@L["Property"]</label>
+                <select id="gate-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
+                    @foreach (var property in _properties)
+                    {
+                        <option value="@property.PropertyId">@property.Name</option>
+                    }
+                </select>
+            </div>
+        </Actions>
+    </PageHeading>
 
     @if (_loading)
     {
@@ -24,84 +36,98 @@
     }
     else
     {
-        <div class="filter-bar filter-bar--panel">
-            <div class="filter-bar__row">
-                <div class="filter-bar__stack filter-bar__select">
-                    <label for="gate-property">@L["Property"]</label>
-                    <select id="gate-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
-                        @foreach (var property in _properties)
-                        {
-                            <option value="@property.PropertyId">@property.Name</option>
-                        }
-                    </select>
-                </div>
-            </div>
-        </div>
-
         <div class="gate-form-card">
             <h2>@L["Policy"]</h2>
             <fieldset class="gate-fieldset" disabled="@(!_isOwner)">
-            <div class="gate-form-grid">
-                <label>
-                    @L["AuthMode"]
-                    <select class="input" @bind="_request.AuthMode">
-                        <option value="@GateAuthMode.SingleFactor">@L["SingleFactor"]</option>
-                        <option value="@GateAuthMode.QrPlusBiometric">@L["QrPlusBiometric"]</option>
-                        <option value="@GateAuthMode.FaceOnly">@L["FaceOnly"]</option>
-                    </select>
-                </label>
-                <label>
-                    @L["PreferredChannel"]
-                    <select class="input" @bind="_request.PreferredStayChannel">
-                        @foreach (var channel in Enum.GetValues<StayReportChannel>())
-                        {
-                            <option value="@channel">@channel</option>
-                        }
-                    </select>
-                </label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.AntiPassbackEnabled" /> @L["AntiPassback"]</label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.AllowManualOpen" /> @L["AllowManualOpen"]</label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.AllowManagerApprove" /> @L["AllowManagerApprove"]</label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.AutoApproveDayVisit" /> @L["AutoApproveDayVisit"]</label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.AllowTenantIssuePass" /> @L["AllowTenantIssuePass"]</label>
-                <label class="gate-check"><input type="checkbox" @bind="_request.TenantMayIssueOvernight" /> @L["TenantMayIssueOvernight"]</label>
-                <label>
-                    @L["TenantMaxPassesPerDay"]
-                    <input type="number" class="input" min="0" max="50" @bind="_request.TenantMaxPassesPerDay" />
-                </label>
-                <label>
-                    @L["TenantMaxTtlMinutes"]
-                    <input type="number" class="input" min="5" max="1440" @bind="_request.TenantMaxTtlMinutes" />
-                </label>
-                <label>
-                    @L["TenantMaxUses"]
-                    <input type="number" class="input" min="1" max="10" @bind="_request.TenantMaxUses" />
-                </label>
-                <label>
-                    @L["PassTtlMinutes"]
-                    <input type="number" class="input" min="5" max="1440" @bind="_request.PassTtlMinutes" />
-                </label>
-                <label>
-                    @L["DayWindow"]
-                    <span class="gate-hour-range">
-                        <input type="number" class="input" min="0" max="23" @bind="_request.DayVisitStartHour" />
-                        <span>→</span>
-                        <input type="number" class="input" min="1" max="24" @bind="_request.DayVisitEndHour" />
-                    </span>
-                </label>
-                <label>
-                    @L["RetentionDays"]
-                    <input type="number" class="input" min="1" max="3650" @bind="_request.RetentionDays" />
-                </label>
-                <label>
-                    @L["OfflineGrace"]
-                    <input type="number" class="input" min="0" max="1440" @bind="_request.OfflineGraceMinutes" />
-                </label>
-                <label class="gate-form-wide">
-                    @L["RequiredFields"]
-                    <input class="input" @bind="_request.RequiredGuestFields" maxlength="500" />
-                </label>
-            </div>
+            <section class="gate-form-section">
+                <h3>@L["PolicySectionAuth"]</h3>
+                <div class="gate-form-grid">
+                    <label>
+                        @L["AuthMode"]
+                        <select class="input" @bind="_request.AuthMode">
+                            <option value="@GateAuthMode.SingleFactor">@L["SingleFactor"]</option>
+                            <option value="@GateAuthMode.QrPlusBiometric">@L["QrPlusBiometric"]</option>
+                            <option value="@GateAuthMode.FaceOnly">@L["FaceOnly"]</option>
+                        </select>
+                    </label>
+                    <label>
+                        @L["PreferredChannel"]
+                        <select class="input" @bind="_request.PreferredStayChannel">
+                            @foreach (var channel in Enum.GetValues<StayReportChannel>())
+                            {
+                                <option value="@channel">@channel</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="gate-form-section">
+                <h3>@L["PolicySectionAccess"]</h3>
+                <div class="gate-check-grid">
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AntiPassbackEnabled" /> @L["AntiPassback"]</label>
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AllowManualOpen" /> @L["AllowManualOpen"]</label>
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AllowManagerApprove" /> @L["AllowManagerApprove"]</label>
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AutoApproveDayVisit" /> @L["AutoApproveDayVisit"]</label>
+                </div>
+            </section>
+
+            <section class="gate-form-section">
+                <h3>@L["PolicySectionTenant"]</h3>
+                <div class="gate-check-grid">
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AllowTenantIssuePass" /> @L["AllowTenantIssuePass"]</label>
+                    <label class="gate-check"><input type="checkbox" @bind="_request.TenantMayIssueOvernight" /> @L["TenantMayIssueOvernight"]</label>
+                    <label class="gate-check"><input type="checkbox" @bind="_request.AllowGuestSelfFill" /> @L["AllowGuestSelfFill"]</label>
+                </div>
+                <div class="gate-form-grid">
+                    <label>
+                        @L["GuestSelfMaxPassesPerDay"]
+                        <input type="number" class="input" min="0" max="50" @bind="_request.GuestSelfMaxPassesPerDay" />
+                    </label>
+                    <label>
+                        @L["TenantMaxPassesPerDay"]
+                        <input type="number" class="input" min="0" max="50" @bind="_request.TenantMaxPassesPerDay" />
+                    </label>
+                    <label>
+                        @L["TenantMaxTtlMinutes"]
+                        <input type="number" class="input" min="5" max="1440" @bind="_request.TenantMaxTtlMinutes" />
+                    </label>
+                    <label>
+                        @L["TenantMaxUses"]
+                        <input type="number" class="input" min="1" max="10" @bind="_request.TenantMaxUses" />
+                    </label>
+                </div>
+            </section>
+
+            <section class="gate-form-section">
+                <h3>@L["PolicySectionValidity"]</h3>
+                <div class="gate-form-grid">
+                    <label>
+                        @L["PassTtlMinutes"]
+                        <input type="number" class="input" min="5" max="1440" @bind="_request.PassTtlMinutes" />
+                    </label>
+                    <label>
+                        @L["DayWindow"]
+                        <span class="gate-hour-range">
+                            <input type="number" class="input" min="0" max="23" @bind="_request.DayVisitStartHour" />
+                            <span>→</span>
+                            <input type="number" class="input" min="1" max="24" @bind="_request.DayVisitEndHour" />
+                        </span>
+                    </label>
+                    <label>
+                        @L["RetentionDays"]
+                        <input type="number" class="input" min="1" max="3650" @bind="_request.RetentionDays" />
+                    </label>
+                    <label>
+                        @L["OfflineGrace"]
+                        <input type="number" class="input" min="0" max="1440" @bind="_request.OfflineGraceMinutes" />
+                    </label>
+                    <label class="gate-form-wide">
+                        @L["RequiredFields"]
+                        <input class="input" @bind="_request.RequiredGuestFields" maxlength="500" />
+                    </label>
+                </div>
+            </section>
             @if (_notice is not null)
             {
                 <p class="gate-notice" role="status">@_notice</p>
@@ -137,8 +163,10 @@
                                     <td>@device.Name</td>
                                     <td>@device.Kind</td>
                                     <td>@device.Level</td>
-                                    <td class="gate-actions">
-                                        <button type="button" class="btn btn-danger btn-sm" disabled="@(!_isOwner)" @onclick="() => DeleteDeviceAsync(device.Id)">@L["Delete"]</button>
+                                    <td>
+                                        <div class="gate-actions">
+                                            <button type="button" class="btn btn-danger btn-sm" disabled="@(!_isOwner)" @onclick="() => DeleteDeviceAsync(device.Id)">@L["Delete"]</button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -203,16 +231,18 @@
                                     <td>@enrollment.Method</td>
                                     <td>@enrollment.Status</td>
                                     <td>@enrollment.PropertyName</td>
-                                    <td class="gate-actions">
-                                        @if (enrollment.Status == EnrollmentStatus.Pending)
-                                        {
-                                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => ApproveEnrollmentAsync(enrollment.Id)">@L["Approve"]</button>
-                                            <button type="button" class="btn btn-danger btn-sm" @onclick="() => RejectEnrollmentAsync(enrollment.Id)">@L["Reject"]</button>
-                                        }
-                                        else if (enrollment.Status == EnrollmentStatus.Active)
-                                        {
-                                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RevokeEnrollmentAsync(enrollment.Id)">@L["Revoke"]</button>
-                                        }
+                                    <td>
+                                        <div class="gate-actions">
+                                            @if (enrollment.Status == EnrollmentStatus.Pending)
+                                            {
+                                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => ApproveEnrollmentAsync(enrollment.Id)">@L["Approve"]</button>
+                                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => RejectEnrollmentAsync(enrollment.Id)">@L["Reject"]</button>
+                                            }
+                                            else if (enrollment.Status == EnrollmentStatus.Active)
+                                            {
+                                                <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RevokeEnrollmentAsync(enrollment.Id)">@L["Revoke"]</button>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -280,6 +310,8 @@
             AutoApproveDayVisit = policy.AutoApproveDayVisit,
             AutoApproveOvernight = false,
             AllowTenantIssuePass = policy.AllowTenantIssuePass,
+            AllowGuestSelfFill = policy.AllowGuestSelfFill,
+            GuestSelfMaxPassesPerDay = policy.GuestSelfMaxPassesPerDay,
             TenantMayIssueOvernight = policy.TenantMayIssueOvernight,
             TenantMaxPassesPerDay = policy.TenantMaxPassesPerDay,
             TenantMaxTtlMinutes = policy.TenantMaxTtlMinutes,

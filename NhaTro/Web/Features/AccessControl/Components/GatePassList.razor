@@ -14,7 +14,7 @@
                 <th scope="col">@L["Status"]</th>
                 <th scope="col">@L["ExpiresAt"]</th>
                 <th scope="col">@L["Uses"]</th>
-                <th scope="col"><span class="sr-only">@L["Action"]</span></th>
+                <th scope="col">@L["Action"]</th>
             </tr>
         </thead>
         <tbody>
@@ -44,19 +44,25 @@
                         {
                             <span class="gate-muted">@L["AutoApproved"]</span>
                         }
+                        @if (pass.IsSelfFilled)
+                        {
+                            <span class="gate-badge gate-badge--info">@L["SelfFilled"]</span>
+                        }
                     </td>
                     <td>@pass.ExpiresAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm")</td>
                     <td>@pass.UsedCount/@pass.MaxUses</td>
-                    <td class="gate-actions">
-                        @if (pass.CanApprove)
-                        {
-                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => OnApprove.InvokeAsync(pass)">@L["Approve"]</button>
-                            <button type="button" class="btn btn-danger btn-sm" @onclick="() => OnReject.InvokeAsync(pass)">@L["Reject"]</button>
-                        }
-                        else if (pass.CanRevoke)
-                        {
-                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OnRevoke.InvokeAsync(pass)">@L["Revoke"]</button>
-                        }
+                    <td>
+                        <div class="gate-actions">
+                            @if (pass.CanApprove)
+                            {
+                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => OnApprove.InvokeAsync(pass)">@L["Approve"]</button>
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => OnReject.InvokeAsync(pass)">@L["Reject"]</button>
+                            }
+                            else if (pass.CanRevoke)
+                            {
+                                <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OnRevoke.InvokeAsync(pass)">@L["Revoke"]</button>
+                            }
+                        </div>
                     </td>
                 </tr>
             }

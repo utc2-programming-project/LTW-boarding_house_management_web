@@ -64,17 +64,21 @@ public sealed class GatePassService(
         var today = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
         if (caller.IsKhachThue)
         {
-            return await (from member in db.ContractMembers.AsNoTracking()
-                          join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
-                          join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
-                          join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
-                          join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
-                          where tenant.UserId == caller.UserId && contract.Status == ContractStatus.Approved
-                              && contract.StartDate <= today && contract.EndDate >= today
-                          select new GateRoomOption(room.Id, property.Id, property.Name, room.Code))
+            // Distinct/OrderBy phải chạy trên kiểu ẩn danh: EF Core không dịch được
+            // Distinct trên projection record (GateRoomOption), nên map sang DTO sau khi tải.
+            var rows = await (from member in db.ContractMembers.AsNoTracking()
+                              join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
+                              join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                              join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                              join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+                              where tenant.UserId == caller.UserId && contract.Status == ContractStatus.Approved
+                                  && contract.StartDate <= today && contract.EndDate >= today
+                              select new { RoomId = room.Id, PropertyId = property.Id, PropertyName = property.Name, RoomCode = room.Code })
                 .Distinct()
                 .OrderBy(option => option.PropertyName).ThenBy(option => option.RoomCode)
                 .ToListAsync(ct);
+
+            return rows.Select(option => new GateRoomOption(option.RoomId, option.PropertyId, option.PropertyName, option.RoomCode)).ToArray();
         }
 
         if (!caller.IsManager) return [];
@@ -414,7 +418,7 @@ public sealed class GatePassService(
             pass.Id, pass.PropertyId, property.Name, pass.RoomId, room == null ? null : room.Code,
             pass.VisitorName, pass.VisitorPhone, pass.PassType, pass.StayType, pass.Status, pass.ExpiresAt,
             pass.MaxUses, pass.UsedCount, pass.IssuerRole, pass.IssuedByUserId, pass.AutoApproved,
-            pass.RejectedReason, pass.RevokedReason, pass.CreatedAt);
+            pass.RejectedReason, pass.RevokedReason, pass.CreatedAt, pass.GatePassInviteId);
 
     private static async Task<GatePassDto> LoadDtoAsync(ApplicationDbContext db, int id, CancellationToken ct) =>
         await Project(db, db.GatePasses.AsNoTracking().Where(pass => pass.Id == id)).FirstAsync(ct);
