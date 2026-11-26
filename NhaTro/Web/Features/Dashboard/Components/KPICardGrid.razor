@@ -68,7 +68,7 @@
                     DashboardFormat.FormatOccupancy(Kpis is null
                         ? null
                         : DashboardFormat.OccupancyPercent(Kpis.Rented, Kpis.Total, Kpis.Maintenance)),
-                    State, "RoomsDenied", L["CurrentData"], RoomsHref, Retry),
+                    State, "RoomsDenied", $"{L["CurrentData"]} · {L["OccupancyBasis"]}", RoomsHref, Retry),
             };
 
             if (IsOwner)

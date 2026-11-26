@@ -20,6 +20,7 @@
 <data name="ActionsTitle" xml:space="preserve"><value>Needs attention</value></data>
 <data name="ActionsEmpty" xml:space="preserve"><value>Nothing needs attention.</value></data>
 <data name="QuickActionsTitle" xml:space="preserve"><value>Shortcuts</value></data>
+<data name="CreateQuick" xml:space="preserve"><value>Quick create</value></data>
 <data name="OpenInvoicesTitle" xml:space="preserve"><value>Unpaid invoices</value></data>
 <data name="OpenInvoicesEmpty" xml:space="preserve"><value>No unpaid invoices.</value></data>
 <data name="OpenInvoiceTitle" xml:space="preserve"><value>Open invoice to pay</value></data>

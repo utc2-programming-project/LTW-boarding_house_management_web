@@ -1,0 +1,45 @@
+WEB VẬN HÀNH NHÀ TRỌ — GIAO DIỆN HIỆN TRẠNG: TRANG CHỦ /home — QUẢN TRỊ VIÊN
+====================================================================================================
+> Mô tả theo code đang chạy: HomeView.razor (nhánh không quản lý) + LoadAdminAsync của HomePageService.
+> Đây KHÔNG phải bản v2 trong file txt đính kèm; [{...}] là số liệu thực từ DB, không chèn số mẫu.
+> Nguồn nhãn: HomeResource / Shared (vi-VN).
+
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Web vận hành nhà trọ      [☰]  [ Tìm kiếm nhanh... ]              [🔔 {số chưa đọc}]  [{avatar}]  │
+├──────────────────────────┬────────────────────────────────────────────────────────────────────────┤
+│ MENU (sidebar)           │ Trang chủ                                              [Làm mới]       │
+│                          │ Tổng quan nhanh tình hình nhà trọ, phòng, hợp đồng và hóa đơn trong    │
+│ ▣ Trang chủ              │ phạm vi tài khoản của bạn.                                              │
+│                          │ [Quản trị viên]  [dd/MM/yyyy]  · Cập nhật lúc [HH:mm]                  │
+│ QUẢN TRỊ                 │                                                                        │
+│ ▣ Tài khoản              │ TỔNG QUAN HÔM NAY                                                      │
+│ ▣ Chủ trọ                │ ┌───────────────────┐┌───────────────────┐                             │
+│ ▤ Nhật ký thao tác       │ │ Tài khoản hoạt    ││ Chờ duyệt         │                             │
+│                          │ │ động              ││                   │                             │
+│ [{Họ tên}] / Quản trị    │ │      [{số}] ›     ││      [{số}] ›     │                             │
+│ viên [avatar]            │ └───────────────────┘└───────────────────┘                             │
+│ [VI|EN] [☾] [Đăng xuất]  │ ┌───────────────────┐┌───────────────────┐                             │
+│                          │ │ Bị khoá           ││ Tổng tài khoản    │                             │
+│                          │ │      [{số}] ›     ││      [{số}] ›     │                             │
+│                          │ └───────────────────┘└───────────────────┘                             │
+│                          │   (4 thẻ đều link /admin/users, không có gợi ý phụ)                    │
+│                          │                                                                        │
+│                          │ LỐI TẮT                                                                │
+│                          │ [▣ Quản lý tài khoản]  [🛡 Phân quyền (Đang hoàn thiện, disabled)]     │
+│                          │                                                                        │
+│                          │ ┌───────────────────────────────────┐┌────────────────────────────────┐ │
+│                          │ │ VIỆC CẦN LÀM                      ││ TÀI KHOẢN CHỜ DUYỆT Xem tất cả →│ │
+│                          │ │ • Tài khoản chờ duyệt    [{số}] › ││ Tài khoản            Vai trò    │ │
+│                          │ │ • Tài khoản bị khoá      [{số}] › ││ [{Họ tên/email}]     [{vai trò}]│ │
+│                          │ │ (đều link /admin/users)           ││ … theo summary                 │ │
+│                          │ └───────────────────────────────────┘└────────────────────────────────┘ │
+│                          │                                                                        │
+│                          │   Không có panel hoá đơn / hợp đồng; không có dashboard/biểu đồ.       │
+└──────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+GHI CHÚ HIỆN TRẠNG:
+- PageHeading giống Khách thuê: huy hiệu "Quản trị viên", ngày VN, "Cập nhật lúc HH:mm", Làm mới.
+- Dữ liệu chỉ từ IAccountService.GetSummaryAsync (+ hồ sơ tên, lỗi profile chỉ log warning).
+- Khi summary lỗi/denied: KPI rỗng, việc rỗng, bảng rỗng và khối hiện thông báo + [Thử lại].
+- "Phân quyền" là quick action có Href=null → ô disabled, nhãn "Đang hoàn thiện" (test prerender kiểm chữ này).
+- Topbar KHÔNG có nút [+ Tạo nhanh] (chỉ có trong bản v2).

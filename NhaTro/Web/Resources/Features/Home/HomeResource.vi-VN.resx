@@ -20,6 +20,7 @@
 <data name="ActionsTitle" xml:space="preserve"><value>Việc cần làm</value></data>
 <data name="ActionsEmpty" xml:space="preserve"><value>Không có việc nào cần xử lý.</value></data>
 <data name="QuickActionsTitle" xml:space="preserve"><value>Lối tắt</value></data>
+<data name="CreateQuick" xml:space="preserve"><value>Tạo nhanh</value></data>
 <data name="OpenInvoicesTitle" xml:space="preserve"><value>Hoá đơn chưa thu</value></data>
 <data name="OpenInvoicesEmpty" xml:space="preserve"><value>Không có hoá đơn chưa thu.</value></data>
 <data name="OpenInvoiceTitle" xml:space="preserve"><value>Mở hoá đơn để thanh toán</value></data>

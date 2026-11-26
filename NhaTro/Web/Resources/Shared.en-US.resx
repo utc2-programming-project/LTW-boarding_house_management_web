@@ -278,6 +278,12 @@
   <data name="NavGroupOperations" xml:space="preserve">
     <value>Operations</value>
   </data>
+  <data name="NavGroupData" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="NavGroupReview" xml:space="preserve">
+    <value>Review &amp; access</value>
+  </data>
   <data name="NavGroupAdmin" xml:space="preserve">
     <value>Administration</value>
   </data>

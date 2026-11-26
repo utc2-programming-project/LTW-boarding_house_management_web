@@ -1,0 +1,21 @@
+.aging-chart { display:flex; flex-direction:column; gap:var(--space-3); min-width:0; }
+.chart-head { display:flex; align-items:center; min-height:28px; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:16px; margin:0; padding:0; list-style:none; font-size:.75rem; color:var(--text-secondary); }
+.chart-legend li { display:inline-flex; align-items:center; gap:var(--space-2); }
+.legend-dot { width:8px; height:8px; border-radius:var(--radius-pill); }
+.legend-dot.c1 { background:var(--chart-1); }
+.legend-dot.c2 { background:color-mix(in srgb, var(--chart-1) 40%, var(--surface-subtle)); }
+.legend-dot.c3 { background:var(--danger); }
+.aging-row { display:grid; grid-template-columns:112px minmax(0,1fr) 120px; align-items:center; gap:var(--space-3); font-size:.8125rem; }
+.aging-label { color:var(--text-secondary); }
+.aging-track { height:12px; border-radius:var(--radius-pill); background:var(--surface-subtle); overflow:hidden; }
+.aging-fill { display:block; height:100%; border-radius:var(--radius-pill); }
+.aging-fill.c1 { background:var(--chart-1); }
+.aging-fill.c2 { background:color-mix(in srgb, var(--chart-1) 40%, var(--surface-subtle)); }
+.aging-fill.c3 { background:var(--danger); }
+.aging-value { text-align:right; font-variant-numeric:tabular-nums; font-weight:500; }
+.chart-note { margin:0; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
+@media(max-width:767px) {
+    .aging-row { grid-template-columns:1fr; gap:var(--space-1); }
+    .aging-value { text-align:left; }
+}
