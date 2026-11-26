@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Entities;
@@ -28,7 +30,8 @@ public sealed class GatePassService(
     TimeProvider clock,
     IGateTokenService tokens,
     INotificationService notifications,
-    AuditLogService audit) : IGatePassService
+    AuditLogService audit,
+    IOptions<GateRetentionOptions> retention) : IGatePassService
 {
     private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
 
@@ -37,6 +40,15 @@ public sealed class GatePassService(
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var query = ScopePasses(db, caller);
+
+        // Hạn lưu 30 ngày: phiếu hết hạn quá lâu không còn hiển thị (job dọn sẽ xoá hẳn).
+        var retentionDays = retention.Value.RetentionDays;
+        if (retentionDays > 0)
+        {
+            var cutoff = clock.GetUtcNow().AddDays(-retentionDays);
+            query = query.Where(pass => pass.ExpiresAt >= cutoff);
+        }
+
         if (status is { } filter)
         {
             query = query.Where(pass => pass.Status == filter);

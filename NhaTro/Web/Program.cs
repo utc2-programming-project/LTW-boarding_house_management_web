@@ -157,6 +157,8 @@ var auditRoot = AuditLogFileStore.ResolveRoot(
     builder.Environment.ContentRootPath);
 builder.Services.AddSingleton(new AuditLogFileStore(auditRoot, auditOptions.RetentionDays));
 builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection(AuditOptions.SectionName));
+// Hạn lưu dữ liệu cổng (nhật ký, phiếu, liên kết tự điền): mặc định 30 ngày, dọn hằng ngày.
+builder.Services.Configure<GateRetentionOptions>(builder.Configuration.GetSection(GateRetentionOptions.SectionName));
 builder.Services.AddSingleton<AuditLogSaveInterceptor>();
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
@@ -565,6 +567,8 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageSer
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogPageService>();
 builder.Services.AddHostedService<AuditLogCleanupService>();
+// Dữ liệu cổng chỉ giữ 30 ngày; thông báo lưu trú không bị dọn.
+builder.Services.AddHostedService<Web.Features.AccessControl.Services.GateRetentionCleanupService>();
 // P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
