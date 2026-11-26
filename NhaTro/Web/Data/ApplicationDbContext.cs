@@ -17,6 +17,7 @@ using Web.Features.Accounts.Otp;
 using Web.Features.Assistant.Entities;
 using Web.Data.Tariffs;
 using Web.Features.AccessControl.Entities;
+using Web.Features.Vehicles.Entities;
 
 namespace Web.Data
 {
@@ -111,6 +112,15 @@ namespace Web.Data
         // P5: chỉ số điện/nước bền vững + lịch sử sửa (D10).
         public DbSet<UtilityReading> UtilityReadings => Set<UtilityReading>();
         public DbSet<UtilityReadingAudit> UtilityReadingAudits => Set<UtilityReadingAudit>();
+
+        // Quản lý xe 2 bánh & Phân khu đỗ xe (V1–V7).
+        public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+        public DbSet<VehiclePropertySetting> VehiclePropertySettings => Set<VehiclePropertySetting>();
+        public DbSet<ParkingZone> ParkingZones => Set<ParkingZone>();
+        public DbSet<ParkingSlot> ParkingSlots => Set<ParkingSlot>();
+        public DbSet<GuestVehicleNotice> GuestVehicleNotices => Set<GuestVehicleNotice>();
+        public DbSet<VehicleAuditSession> VehicleAuditSessions => Set<VehicleAuditSession>();
+        public DbSet<VehicleAuditItem> VehicleAuditItems => Set<VehicleAuditItem>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -64,17 +64,23 @@ public sealed class GatePassService(
         var today = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
         if (caller.IsKhachThue)
         {
-            return await (from member in db.ContractMembers.AsNoTracking()
-                          join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
-                          join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
-                          join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
-                          join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
-                          where tenant.UserId == caller.UserId && contract.Status == ContractStatus.Approved
-                              && contract.StartDate <= today && contract.EndDate >= today
-                          select new GateRoomOption(room.Id, property.Id, property.Name, room.Code))
+            // Distinct/OrderBy trên projection record không dịch được sang SQL (EF Core 10),
+            // nên distinct ở SQL bằng kiểu ẩn danh rồi sắp xếp + map ở client.
+            var rows = await (from member in db.ContractMembers.AsNoTracking()
+                              join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
+                              join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                              join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                              join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+                              where tenant.UserId == caller.UserId && contract.Status == ContractStatus.Approved
+                                  && contract.StartDate <= today && contract.EndDate >= today
+                              select new { RoomId = room.Id, PropertyId = property.Id, PropertyName = property.Name, RoomCode = room.Code })
                 .Distinct()
-                .OrderBy(option => option.PropertyName).ThenBy(option => option.RoomCode)
                 .ToListAsync(ct);
+
+            return rows
+                .OrderBy(row => row.PropertyName).ThenBy(row => row.RoomCode)
+                .Select(row => new GateRoomOption(row.RoomId, row.PropertyId, row.PropertyName, row.RoomCode))
+                .ToArray();
         }
 
         if (!caller.IsManager) return [];

@@ -21,6 +21,7 @@ using Web.Endpoints.Avatars;
 using Web.Endpoints.Files;
 using Web.Endpoints.Reports;
 using Web.Endpoints.Tenants;
+using Web.Endpoints.Vehicles;
 using Web.Features.Accounts;
 using Web.Features.Accounts.Contexts;
 using Web.Features.Accounts.Otp;
@@ -596,6 +597,24 @@ builder.Services.AddScoped<Web.Features.AccessControl.Gates.IGateController,
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IGateAccessService,
     Web.Features.AccessControl.Services.GateAccessService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.GatePageService>();
+// Quản lý xe 2 bánh & Phân khu đỗ xe (V1–V7): cấu hình giá, danh sách xe, khu/ô đỗ, tính phí, báo chắn lối, xe gửi nhờ, kiểm kê.
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IVehicleSettingService,
+    Web.Features.Vehicles.Services.VehicleSettingService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IParkingZoneService,
+    Web.Features.Vehicles.Services.ParkingZoneService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IVehicleBillingService,
+    Web.Features.Vehicles.Services.VehicleBillingService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IVehicleService,
+    Web.Features.Vehicles.Services.VehicleService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IBlockingAlertService,
+    Web.Features.Vehicles.Services.BlockingAlertService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IGuestVehicleNoticeService,
+    Web.Features.Vehicles.Services.GuestVehicleNoticeService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IVehicleAuditService,
+    Web.Features.Vehicles.Services.VehicleAuditService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.IVehicleDashboardService,
+    Web.Features.Vehicles.Services.VehicleDashboardService>();
+builder.Services.AddScoped<Web.Features.Vehicles.Services.VehiclePageService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityPeriodCostSnapshotService>();
 // VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.
@@ -814,6 +833,7 @@ app.MapReportExportEndpoints();
 app.MapHealthEndpoints();
 // VHT-26: giấy tờ P3 (metadata, upload, tải, thay, xóa mềm) có kiểm phạm vi hồ sơ.
 app.MapTenantDocumentEndpoints();
+app.MapVehicleEndpoints();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
