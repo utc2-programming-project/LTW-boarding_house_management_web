@@ -98,15 +98,22 @@
     {
         RenderFragment<InvoiceTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<InvoiceTrashItemDto> room = item => @<span class="cell-truncate" data-hover-tip>
+            @($"{item.PropertyName} / {item.RoomCode}")
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+                <span class="hover-tip__line">@item.RoomCode</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "invoice", Title = L["ThInvoice"], Value = item => $"HD-{item.Id}" },
-            new() { Key = "contract", Title = L["ThContract"], Value = item => item.ContractNumber },
-            new() { Key = "room", Title = L["ThRoomProperty"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
-            new() { Key = "period", Title = L["ThPeriod"], Value = item => $"{DateFormatter.Format(item.PeriodStart)} – {DateFormatter.Format(item.PeriodEnd)}" },
-            new() { Key = "total", Title = L["ThTotal"], Value = item => MoneyFormatter.Format(item.TotalAmount), IsNumeric = true },
-            new() { Key = "status", Title = L["ThStatus"], Value = item => L[$"Status{item.Status}"].Value },
+            new() { Key = "invoice", Title = L["ThInvoice"], Value = item => $"HD-{item.Id}", Width = "100px" },
+            new() { Key = "contract", Title = L["ThContract"], Value = item => item.ContractNumber, Width = "160px" },
+            new() { Key = "room", Title = L["ThRoomProperty"], Template = room, Width = "230px" },
+            new() { Key = "period", Title = L["ThPeriod"], Value = item => $"{DateFormatter.Format(item.PeriodStart)} – {DateFormatter.Format(item.PeriodEnd)}", Width = "190px" },
+            new() { Key = "total", Title = L["ThTotal"], Value = item => MoneyFormatter.Format(item.TotalAmount), IsNumeric = true, Width = "130px" },
+            new() { Key = "status", Title = L["ThStatus"], Value = item => L[$"Status{item.Status}"].Value, Width = "120px" },
             TrashColumns.DeletedAt<InvoiceTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["ThActions"], actions),
         ];
@@ -115,23 +122,7 @@
     private async Task<PagedResult<InvoiceTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
     {
         var caller = await CallerProvider.GetCallerAsync();
-        var items = await InvoiceService.ListDeletedAsync(caller);
-        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
-        var filtered = items
-            .Where(item => term is null
-                || $"HD-{item.Id}".Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        return new PagedResult<InvoiceTrashItemDto>
-        {
-            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
-            TotalCount = filtered.Count,
-            Page = request.Page,
-            PageSize = request.PageSize,
-        };
+        return await InvoiceService.ListDeletedAsync(caller, _keyword, request.Page, request.PageSize);
     }
 
     private Task ClearSearchAsync()

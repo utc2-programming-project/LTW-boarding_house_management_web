@@ -26,7 +26,7 @@
             </div>
             <p class="scope-note">@L[Filter.DateBasis == RevenueDateBasis.InvoicePeriod ? "InvoicePeriodNote" : "PaymentDateNote"]</p>
 
-            <dl class="kpis kpis-five">
+            <dl class="kpis">
                 <div class="kpi-card">
                     <dt>@L["RecognizedRevenue"]</dt>
                     <dd>@MoneyFormatter.Format(report.TotalRevenue)</dd>
@@ -131,7 +131,7 @@
 
             <section class="revenue-section" aria-labelledby="revenue-lines-heading">
                 <h3 id="revenue-lines-heading">@L["InvoiceLines"]</h3>
-                @if (report.Lines.Count == 0)
+                @if (LinesTotal == 0)
                 {
                     <EmptyStateCard Title="@L["NoData"]" Description="@L["EmptyDescription"]" />
                 }
@@ -152,7 +152,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var line in PagedLines)
+                                @foreach (var line in CurrentLines)
                                 {
                                     <tr>
                                         <td>@line.RoomCode</td>
@@ -167,15 +167,15 @@
                             </tbody>
                         </table>
                     </div>
-                    <TablePager Page="LinePage" TotalPages="@PaginationHelper.TotalPages(report.Lines.Count, PageSize)"
-                                From="@LineItemRange.From" To="@LineItemRange.To" Total="report.Lines.Count"
-                                Disabled="Busy" PageChanged="ChangeLinePageAsync" />
+                    <TablePager Page="LinePage" TotalPages="@PaginationHelper.TotalPages(LinesTotal, PageSize)"
+                                From="@LineItemRange.From" To="@LineItemRange.To" Total="LinesTotal"
+                                Disabled="@(Busy || LineLoading)" PageChanged="ChangeLinePageAsync" />
                 }
             </section>
 
             <section class="revenue-section" aria-labelledby="revenue-debt-heading">
                 <h3 id="revenue-debt-heading">@L["DebtInvoices"]</h3>
-                @if (DebtLines.Count == 0)
+                @if (DebtTotal == 0)
                 {
                     <EmptyStateCard Title="@L["NoDebt"]" Description="@L["NoDebtDescription"]" />
                 }
@@ -197,7 +197,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var line in PagedDebtLines)
+                                @foreach (var line in CurrentDebtLines)
                                 {
                                     <tr>
                                         <td>@line.RoomCode</td>
@@ -213,9 +213,9 @@
                             </tbody>
                         </table>
                     </div>
-                    <TablePager Page="DebtPage" TotalPages="@PaginationHelper.TotalPages(DebtLines.Count, PageSize)"
-                                From="@DebtItemRange.From" To="@DebtItemRange.To" Total="DebtLines.Count"
-                                Disabled="Busy" PageChanged="ChangeDebtPageAsync" />
+                    <TablePager Page="DebtPage" TotalPages="@PaginationHelper.TotalPages(DebtTotal, PageSize)"
+                                From="@DebtItemRange.From" To="@DebtItemRange.To" Total="DebtTotal"
+                                Disabled="@(Busy || DebtLoading)" PageChanged="ChangeDebtPageAsync" />
                 }
             </section>
         </div>
@@ -226,8 +226,12 @@
     private const int PageSize = 20;
     private int LinePage = 1;
     private int DebtPage = 1;
+    private bool LineLoading;
+    private bool DebtLoading;
     private bool Exporting;
     private RevenueReportDto? lastResult;
+    private RevenueReportDto? linesPageResult;
+    private RevenueReportDto? debtPageResult;
 
     [Parameter, EditorRequired] public RevenueReportFilter Filter { get; set; } = new();
     [Parameter] public RevenueReportDto? Result { get; set; }
@@ -237,20 +241,28 @@
     [Parameter] public EventCallback Retry { get; set; }
     [Parameter] public EventCallback<RevenueDateBasis> DateBasisChanged { get; set; }
 
-    private IReadOnlyList<RevenueReportLineDto> DebtLines =>
-        Result?.Lines.Where(line => line.Outstanding > 0m).ToList() ?? [];
+    // Trang 1 lấy từ kết quả cha; trang sau tải riêng để không kéo cả kỳ về RAM.
+    private IReadOnlyList<RevenueReportLineDto> CurrentLines =>
+        LinePage == 1 ? Result?.Lines ?? [] : linesPageResult?.Lines ?? [];
 
-    private IEnumerable<RevenueReportLineDto> PagedLines =>
-        Result?.Lines.Skip((Clamp(LinePage, Result.Lines.Count) - 1) * PageSize).Take(PageSize) ?? [];
+    private int LinesTotal =>
+        LinePage == 1
+            ? Math.Max(Result?.TotalCount ?? 0, Result?.Lines.Count ?? 0)
+            : linesPageResult?.TotalCount ?? 0;
 
-    private IEnumerable<RevenueReportLineDto> PagedDebtLines =>
-        DebtLines.Skip((Clamp(DebtPage, DebtLines.Count) - 1) * PageSize).Take(PageSize);
+    private IReadOnlyList<RevenueReportLineDto> CurrentDebtLines =>
+        DebtPage == 1 ? Result?.DebtLines ?? [] : debtPageResult?.DebtLines ?? [];
+
+    private int DebtTotal =>
+        DebtPage == 1
+            ? Math.Max(Result?.OutstandingCount ?? 0, Result?.DebtLines?.Count ?? 0)
+            : debtPageResult?.OutstandingCount ?? 0;
 
     private (int From, int To) LineItemRange =>
-        PaginationHelper.ItemRange(Clamp(LinePage, Result?.Lines.Count ?? 0), PageSize, Result?.Lines.Count ?? 0);
+        PaginationHelper.ItemRange(LinePage, PageSize, LinesTotal);
 
     private (int From, int To) DebtItemRange =>
-        PaginationHelper.ItemRange(Clamp(DebtPage, DebtLines.Count), PageSize, DebtLines.Count);
+        PaginationHelper.ItemRange(DebtPage, PageSize, DebtTotal);
 
     protected override void OnParametersSet()
     {
@@ -259,6 +271,8 @@
             lastResult = Result;
             LinePage = 1;
             DebtPage = 1;
+            linesPageResult = null;
+            debtPageResult = null;
         }
     }
 
@@ -268,16 +282,52 @@
         await DateBasisChanged.InvokeAsync(basis);
     }
 
-    private Task ChangeLinePageAsync(int page)
+    private async Task ChangeLinePageAsync(int page)
     {
-        LinePage = Clamp(page, Result?.Lines.Count ?? 0);
-        return Task.CompletedTask;
+        if (Busy || LineLoading) return;
+        var target = Clamp(page, LinesTotal);
+        if (target == LinePage) return;
+
+        LinePage = target;
+        LineLoading = true;
+        try
+        {
+            linesPageResult = await PageService.GetRevenueReportAsync(
+                Filter with { Page = target, PageSize = PageSize });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Revenue lines page failed");
+            Toasts.Error(D["Error"]);
+        }
+        finally
+        {
+            LineLoading = false;
+        }
     }
 
-    private Task ChangeDebtPageAsync(int page)
+    private async Task ChangeDebtPageAsync(int page)
     {
-        DebtPage = Clamp(page, DebtLines.Count);
-        return Task.CompletedTask;
+        if (Busy || DebtLoading) return;
+        var target = Clamp(page, DebtTotal);
+        if (target == DebtPage) return;
+
+        DebtPage = target;
+        DebtLoading = true;
+        try
+        {
+            debtPageResult = await PageService.GetRevenueReportAsync(
+                Filter with { Page = target, PageSize = PageSize, OutstandingOnly = true });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Revenue debt page failed");
+            Toasts.Error(D["Error"]);
+        }
+        finally
+        {
+            DebtLoading = false;
+        }
     }
 
     private string StatusText(string status) => status switch

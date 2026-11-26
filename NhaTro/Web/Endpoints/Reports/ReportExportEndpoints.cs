@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Properties;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Services;
@@ -22,6 +23,7 @@ public static class ReportExportEndpoints
         string section,
         string? returnUrl,
         ReportExportService service,
+        OwnerAccessGuard ownerAccess,
         TimeProvider clock,
         CancellationToken cancellationToken)
     {
@@ -35,36 +37,76 @@ public static class ReportExportEndpoints
         }
 
         var caller = new PropertyCaller(userId, Roles.ResolvePrimaryRole(http.User));
+
+        // PLAN-001 #7: báo cáo không được chứa dữ liệu tòa của chủ trọ đang bị khoá.
+        if (caller.Role is Roles.QuanLy or Roles.KhachThue)
+        {
+            var blocked = await ownerAccess.GetBlockedOwnerIdsAsync(cancellationToken);
+            if (blocked.Count > 0)
+            {
+                caller = caller with { BlockedOwnerIds = blocked.ToList() };
+            }
+        }
+
         try
         {
-            var bytes = parsed switch
-            {
-                ReportExportSection.Revenue => await service.ExportRevenueExcelAsync(caller, cancellationToken: cancellationToken),
-                ReportExportSection.Rooms => await service.ExportRoomsExcelAsync(caller, cancellationToken: cancellationToken),
-                ReportExportSection.Tenants => await service.ExportTenantsExcelAsync(caller, cancellationToken: cancellationToken),
-                ReportExportSection.Contracts => await service.ExportContractsExcelAsync(caller, cancellationToken: cancellationToken),
-                ReportExportSection.Costs => await service.ExportCostsExcelAsync(caller, cancellationToken: cancellationToken),
-                ReportExportSection.Incidents => await service.ExportIncidentsExcelAsync(caller, cancellationToken: cancellationToken),
-                _ => throw new InvalidOperationException(),
-            };
             http.Response.Headers.CacheControl = "private, no-store";
             http.Response.Headers["X-Content-Type-Options"] = "nosniff";
             var name = $"bao-cao-{parsed.ToSheetName()}-{VietnamTime.ToVietnam(clock.GetUtcNow().UtcDateTime):yyyyMMdd-HHmm}.xlsx";
-            return Results.File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
+            http.Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            http.Response.Headers.ContentDisposition = $"attachment; filename=\"{name}\"";
+
+            // Ghi thẳng vào luồng phản hồi: không dựng cả file trong RAM rồi mới trả.
+            switch (parsed)
+            {
+                case ReportExportSection.Revenue:
+                    await service.WriteRevenueExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                case ReportExportSection.Rooms:
+                    await service.WriteRoomsExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                case ReportExportSection.Tenants:
+                    await service.WriteTenantsExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                case ReportExportSection.Contracts:
+                    await service.WriteContractsExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                case ReportExportSection.Costs:
+                    await service.WriteCostsExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                case ReportExportSection.Incidents:
+                    await service.WriteIncidentsExcelAsync(http.Response.Body, caller, cancellationToken: cancellationToken);
+                    break;
+                default:
+                    throw new InvalidOperationException();
+            }
+
+            return Results.Empty;
         }
         catch (ReportExportAuthorizationException exception)
         {
+            ResetResponse(http);
             return ExportFailure(returnUrl, exception.ErrorCode, StatusCodes.Status403Forbidden);
         }
         catch (UnauthorizedAccessException)
         {
+            ResetResponse(http);
             return ExportFailure(returnUrl, ReportExportErrorCodes.Forbidden, StatusCodes.Status403Forbidden);
         }
         catch (ReportExportException exception)
         {
+            ResetResponse(http);
             var status = exception.ErrorCode == ReportExportErrorCodes.VolumeExceeded
                 ? StatusCodes.Status413PayloadTooLarge : StatusCodes.Status409Conflict;
             return ExportFailure(returnUrl, exception.ErrorCode, status);
+        }
+    }
+
+    private static void ResetResponse(HttpContext http)
+    {
+        if (!http.Response.HasStarted)
+        {
+            http.Response.Clear();
         }
     }
 

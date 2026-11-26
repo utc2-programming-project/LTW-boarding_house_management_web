@@ -23,6 +23,8 @@
 <data name="TotalRoomsShort" xml:space="preserve"><value>Total rooms</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Occupancy rate</value></data>
 <data name="Revenue" xml:space="preserve"><value>Recognized revenue</value></data>
+<data name="TotalRevenue" xml:space="preserve"><value>Total revenue</value></data>
+<data name="AllTimeData" xml:space="preserve"><value>All-time figures</value></data>
 <data name="Debt" xml:space="preserve"><value>Outstanding receivables</value></data>
 <data name="Incidents" xml:space="preserve"><value>Incidents in period</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>The owner has not permitted room reports</value></data>

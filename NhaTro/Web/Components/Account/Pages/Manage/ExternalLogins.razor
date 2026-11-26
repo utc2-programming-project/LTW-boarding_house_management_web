@@ -18,7 +18,7 @@
 {
     <h3 class="account-subsection">@L["RegisteredLoginsTitle"]</h3>
     <div class="table-scroll">
-        <table class="account-table">
+        <table class="account-table account-table--fixed">
             <thead>
                 <tr>
                     <th scope="col">@L["ManageNavExternalLogins"]</th>
@@ -29,7 +29,14 @@
                 @foreach (var login in currentLogins)
                 {
                     <tr>
-                        <td>@login.ProviderDisplayName</td>
+                        <td>
+                            <span class="cell-truncate" data-hover-tip>
+                                @login.ProviderDisplayName
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@login.ProviderDisplayName</span>
+                                </span>
+                            </span>
+                        </td>
                         <td>
                             @if (showRemoveButton)
                             {

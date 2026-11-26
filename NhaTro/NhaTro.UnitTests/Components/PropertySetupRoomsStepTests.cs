@@ -33,7 +33,7 @@ public sealed class PropertySetupRoomsStepTests : BunitContext
         Services.AddLogging();
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(new RoomPageService(
-            new P2CallerProvider(new OwnerAuthenticationProvider()), _rooms, null!));
+            new P2CallerProvider(new OwnerAuthenticationProvider(), TestOwnerAccess.Create()), _rooms, null!));
     }
 
     private static RoomListItem Room(int id, string code, int? floor, decimal price = 1_000_000m) => new()

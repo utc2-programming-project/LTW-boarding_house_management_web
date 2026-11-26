@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Audit.Entities;
 using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Entities;
 using Web.Features.Properties.Mapping;
+using Web.Features.Properties.Services;
 
 namespace Web.Features.Properties;
 
@@ -45,33 +47,91 @@ public sealed class PropertyService(
             query = query.Where(p => db.Rooms.Count(r => r.PropertyId == p.Id) <= maxRoomCount);
         }
 
-        var total = await query.CountAsync(ct);
-        var skip = (long)(filter.Page - 1) * filter.PageSize;
-        var ordered = filter.SortBy switch
-        {
-            "newest" => query.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id),
-            "oldest" => query.OrderBy(p => p.CreatedAt).ThenBy(p => p.Id),
-            "roomCountAsc" => query.OrderBy(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
-            "roomCountDesc" => query.OrderByDescending(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name),
-            _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id),
-        };
-        var rows = await ordered
-            .Skip((int)Math.Min(skip, int.MaxValue))
-            .Take(filter.PageSize)
+        var sorts = new SortMap<Property>(
+                (query, _) => query.OrderBy(p => p.Name),
+                ordered => ordered.ThenBy(p => p.Id))
+            .Add("newest", (query, _) => query.OrderByDescending(p => p.CreatedAt))
+            .Add("oldest", (query, _) => query.OrderBy(p => p.CreatedAt))
+            .Add("roomCountAsc", (query, _) =>
+                query.OrderBy(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name))
+            .Add("roomCountDesc", (query, _) =>
+                query.OrderByDescending(p => db.Rooms.Count(r => r.PropertyId == p.Id)).ThenBy(p => p.Name));
+
+        var ordered = sorts.Apply(query, filter.SortKey, filter.SortDescending);
+        var page = await ordered
             .Select(p => new
             {
                 Property = p,
                 RoomCount = db.Rooms.Count(r => r.PropertyId == p.Id),
             })
-            .ToListAsync(ct);
+            .ToPagedResultAsync(filter.Page, filter.PageSize, ct);
 
         return new PagedResult<PropertyListItem>
         {
-            Items = rows.Select(r => PropertyMapping.ToListItem(r.Property, r.RoomCount)).ToList(),
-            Page = filter.Page,
-            PageSize = filter.PageSize,
-            TotalCount = total,
+            Items = page.Items.Select(r => PropertyMapping.ToListItem(r.Property, r.RoomCount)).ToList(),
+            Page = page.Page,
+            PageSize = page.PageSize,
+            TotalCount = page.TotalCount,
         };
+    }
+
+    public async Task<PropertyListSummary> GetSummaryAsync(
+        PropertyCaller caller, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var query = ScopeQuery(db, caller).AsNoTracking();
+
+        var counts = await query
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                Total = group.Count(),
+                Active = group.Count(property => property.IsActive),
+            })
+            .SingleOrDefaultAsync(ct);
+
+        var rooms = await (
+                from room in db.Rooms.AsNoTracking()
+                join property in query on room.PropertyId equals property.Id
+                select room.Id)
+            .CountAsync(ct);
+
+        var total = counts?.Total ?? 0;
+        var active = counts?.Active ?? 0;
+        return new PropertyListSummary(total, active, total - active, rooms);
+    }
+
+    public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(
+        PropertyCaller caller, CancellationToken ct = default) =>
+        ListOptionsAsync(caller, null, ct);
+
+    public async Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(
+        PropertyCaller caller, string? keyword, CancellationToken ct = default)
+    {
+        EnsureCanRead(caller);
+        var term = SearchTerm.Normalize(keyword);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        var query = ScopeQuery(db, caller).AsNoTracking();
+        if (term is { Length: > 0 } value)
+        {
+            query = query.Where(property => property.Name.Contains(value)
+                || (property.Address != null && property.Address.Contains(value)));
+        }
+
+        return await LookupQuery.Bounded(query
+                .OrderBy(property => property.Name)
+                .ThenBy(property => property.Id)
+                .Select(property => new PropertyListItem
+                {
+                    Id = property.Id,
+                    Name = property.Name,
+                    Address = property.Address,
+                    IsActive = property.IsActive,
+                }))
+            .ToListAsync(ct);
     }
 
     public async Task<PropertyResult> GetAsync(
@@ -296,21 +356,75 @@ public sealed class PropertyService(
     {
         EnsureCanWrite(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-        var ids = await db.Properties.IgnoreQueryFilters()
-            .Where(p => p.IsDeleted && p.OwnerId == caller.UserId)
-            .Select(p => p.Id)
-            .ToListAsync(ct);
 
-        var purged = 0;
-        var skipped = 0;
-        foreach (var id in ids)
+        // Một lượt đọc cho cả lô thay vì gọi PurgeAsync từng nhà (mỗi nhà mở context + 4-5 truy vấn).
+        var properties = await db.Properties.IgnoreQueryFilters()
+            .Where(p => p.IsDeleted && p.OwnerId == caller.UserId)
+            .ToListAsync(ct);
+        if (properties.Count == 0)
         {
-            var result = await PurgeAsync(id, caller, ct);
-            if (result.Succeeded) purged++;
-            else skipped++;
+            return new TrashPurgeSummary(0, 0);
         }
 
-        return new TrashPurgeSummary(purged, skipped);
+        var ids = properties.Select(p => p.Id).ToList();
+        var blocked = new HashSet<int>();
+        void AddBlocked(IEnumerable<int?> propertyIds)
+        {
+            foreach (var propertyId in propertyIds)
+            {
+                if (propertyId is { } value)
+                {
+                    blocked.Add(value);
+                }
+            }
+        }
+
+        AddBlocked(await db.Rooms.IgnoreQueryFilters()
+            .Where(r => ids.Contains(r.PropertyId)).Select(r => (int?)r.PropertyId).Distinct().ToListAsync(ct));
+        AddBlocked(await db.ServiceCatalogs.IgnoreQueryFilters()
+            .Where(c => c.PropertyId != null && ids.Contains(c.PropertyId.Value)).Select(c => c.PropertyId).Distinct().ToListAsync(ct));
+        AddBlocked(await db.ManagerApprovalRequests
+            .Where(r => r.PropertyId != null && ids.Contains(r.PropertyId.Value)).Select(r => r.PropertyId).Distinct().ToListAsync(ct));
+
+        var purgeProperties = properties.Where(p => !blocked.Contains(p.Id)).ToList();
+        if (purgeProperties.Count == 0)
+        {
+            return new TrashPurgeSummary(0, properties.Count);
+        }
+
+        var purgeIds = purgeProperties.Select(p => p.Id).ToList();
+        var managers = await db.PropertyManagers
+            .Where(m => purgeIds.Contains(m.PropertyId))
+            .ToListAsync(ct);
+        db.PropertyManagers.RemoveRange(managers);
+
+        db.Properties.RemoveRange(purgeProperties);
+        foreach (var property in purgeProperties)
+        {
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "property.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = property.Id,
+                Metadata = $"Property {property.Name}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return new TrashPurgeSummary(0, properties.Count);
+        }
+
+        return new TrashPurgeSummary(purgeProperties.Count, properties.Count - purgeProperties.Count);
     }
 
     // Phạm vi (VHT-6/VHT-24): Chủ trọ chỉ thấy nhà có OwnerId của mình;

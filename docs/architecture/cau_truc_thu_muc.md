@@ -11,7 +11,7 @@
 - Không chuyển repo sang `src/` và `tests/`, không đổi tên project/namespace chỉ để khớp một cây mẫu.
 - Cây **hiện tại** và cây **khung phát triển** tách riêng. Theo yêu cầu INIT, các folder trong cây mở rộng đã được tạo và giữ bằng `.gitkeep`; folder có sẵn không có nghĩa là tính năng đã triển khai.
 - EF Core tập trung ở `Data/`; giữ `ApplicationDbContext` và `ApplicationUser` hiện có. Không thêm generic repository hoặc framework mới.
-- Tham chiếu: [công nghệ](../tech-stack/cong_nghe_su_dung.md), [nghiệp vụ P1–P8](../thiet_ke_he_thong.md), [UI](../design/phong_cach_giao_dien.md), [phân công](../task/cong_viec_theo_tuan.md).
+- Tham chiếu: [công nghệ](../tech-stack/cong_nghe_su_dung.md), [nghiệp vụ P1–P8](../thiet_ke_he_thong.md), [UI](../design/phong_cach_giao_dien.md).
 
 ## 2. Cây hiện tại / Current repository tree
 
@@ -89,22 +89,17 @@ LTW/
 │   └── NhaTro.E2ETests/                 # xUnit + Playwright .NET
 └── docs/
     ├── thiet_ke_he_thong.md
-    ├── thiet_ke_he_thong.docx
     ├── bieudochot.excalidraw
     ├── architecture/                   # Tài liệu tổ chức code
     │   ├── README.md
-    │   ├── cau_truc_thu_muc.md          # Cây và quy tắc hiện hành
-    │   └── cau_truc_thu_muc.docx        # Bản Word; cần đồng bộ khi xuất
+    │   └── cau_truc_thu_muc.md          # Cây và quy tắc hiện hành
     ├── tech-stack/
     ├── design/
     ├── task/
-    ├── api/
-    ├── image/
-    └── archive/
+    └── image/
 ```
 
-**Current status:** The database core and Identity scaffold exist. `/` is a role-aware home page built from real services (room/tenant KPIs, invoices, approvals, incidents, contracts, admin account summary); `/dashboard` remains the deeper analytics screen for Owner and Manager. P2 now has bilingual SQL-backed property and room list/detail/forms in `Features/Properties/` and `Features/Rooms/` (VHT-16 UI + VHT-7 services), with role-gated actions and server-side filtering/pagination. Manager property assignment (VHT-24), live approval switches/queue (VHT-94/VHT-96), and active-contract deletion checks (VHT-98) remain on their service extension points. `docs/UI/UI_Quan_ly_phong` remains the design prototype; its sample rows are not loaded by the application.
-
+**Current status:** The database core and Identity scaffold exist. `/` is a role-aware home page built from real services (room/tenant KPIs, invoices, approvals, incidents, contracts, admin account summary); `/dashboard` remains the deeper analytics screen for Owner and Manager. P2 now has bilingual SQL-backed property and room list/detail/forms in `Features/Properties/` and `Features/Rooms/` (VHT-16 UI + VHT-7 services), with role-gated actions and server-side filtering/pagination. Manager property assignment (VHT-24), live approval switches/queue (VHT-94/VHT-96), and active-contract deletion checks (VHT-98) remain on their service extension points.
 **VHT-94 (đã triển khai - nền công tắc Quản lý):** `Features/Settings/` gồm `ManagerToggleCatalog` (21 mã SW-01…SW-16 + SW-15a…e), `Enums/`, `Entities/ManagerToggle`, `Services/ManagerToggleService` (đọc/ghi SQL + guard Chủ trọ), `Services/ManagerTogglePolicy` (mode → Allowed/RequiresApproval/Denied, cài thêm `IRoomChangePolicy` để P2 dùng lại), `DTOs/`; `Data/Configurations/Settings/ManagerToggleConfiguration.cs` + migration `AddManagerToggles` (seed 21 dòng, check constraint SW-15). Công tắc lưu SQL, **không** dùng `IOptions`/appsettings. UI cấu hình vẫn là NEW-04 (VHT-97), hàng đợi duyệt là VHT-96.
 
 ## 3. Khung thư mục đã tạo / Created folder scaffold

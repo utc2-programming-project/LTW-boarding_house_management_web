@@ -1,0 +1,139 @@
+@using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Feedback
+@using Web.Data
+@using Web.Features.Accounts.External
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IStringLocalizer<Shared> L
+
+@* Tab Bảo mật: điểm bảo mật tổng hợp + các thiết lập đăng nhập, mỗi dòng một nút hành động. *@
+
+<div class="acct-stack">
+    <section class="acct-card" aria-labelledby="account-score-title">
+        <div class="acct-card-head">
+            <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="shield-check" /></span>
+            <div>
+                <h2 id="account-score-title">@L["SecurityScoreTitle"]</h2>
+                <p class="acct-card-desc">@L["SecurityScoreDesc"]</p>
+            </div>
+        </div>
+
+        <div class="acct-score">
+            <div class="acct-score-meter" role="img" aria-label="@($"{_score}/5")">
+                @for (var i = 1; i <= 5; i++)
+                {
+                    <span class="acct-score-seg @(i <= _score ? "on" : null)"></span>
+                }
+            </div>
+            <strong class="acct-score-value tabular-nums">@_score/5</strong>
+        </div>
+
+        @if (_hints.Count == 0)
+        {
+            <p class="acct-score-ok">
+                <LucideIcon Name="circle-check" />
+                @L["SecurityScoreStrong"]
+            </p>
+        }
+        else
+        {
+            <ul class="acct-score-hints">
+                @foreach (var hint in _hints)
+                {
+                    <li>@hint</li>
+                }
+            </ul>
+        }
+    </section>
+
+    <section class="acct-card" aria-labelledby="account-login-title">
+        <div class="acct-card-head">
+            <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="key" /></span>
+            <h2 id="account-login-title">@L["SecurityLoginSection"]</h2>
+        </div>
+
+        <ul class="acct-rows">
+            <SecurityRow Icon="key" Title="@L["PasswordLabel"]" Description="@L["SecurityPasswordDesc"]"
+                         BadgeText="@(hasPassword ? L["SecuritySet"] : L["SecurityNotSet"])"
+                         Tone="@(hasPassword ? BadgeTone.Success : BadgeTone.Neutral)"
+                         ActionLabel="@(hasPassword ? L["SecurityChangeAction"] : L["SecuritySetPasswordAction"])"
+                         ActionHref="@(hasPassword ? "/Account/Manage/ChangePassword" : "/Account/Manage/SetPassword")" />
+
+            <SecurityRow Icon="mail" Title="@L["EmailLabel"]" Description="@(_email ?? _userName)"
+                         BadgeText="@(emailConfirmed ? L["VerifiedStatusLabel"] : L["SecurityUnverified"])"
+                         Tone="@(emailConfirmed ? BadgeTone.Success : BadgeTone.Warning)"
+                         ActionLabel="@L["SecurityChangeAction"]"
+                         ActionHref="/Account/Manage/Email" />
+
+            <SecurityRow Icon="shield-check" Title="@L["TwoFactorLoginTitle"]" Description="@L["SecurityTwoFactorDesc"]"
+                         BadgeText="@(twoFactorEnabled ? L["StatusEnabled"] : L["StatusDisabled"])"
+                         Tone="@(twoFactorEnabled ? BadgeTone.Success : BadgeTone.Neutral)"
+                         ActionLabel="@(twoFactorEnabled ? L["SecurityManageAction"] : L["SecurityEnableAction"])"
+                         ActionHref="/Account/Manage/TwoFactorAuthentication" />
+
+            <SecurityRow Icon="lock" Title="@L["ManageNavPasskeys"]" Description="@L["SecurityPasskeyDesc"]"
+                         BadgeText="@(passkeyCount > 0 ? string.Format(L["SecurityPasskeyCount"], passkeyCount) : L["SecurityNotSet"])"
+                         Tone="@(passkeyCount > 0 ? BadgeTone.Success : BadgeTone.Neutral)"
+                         ActionLabel="@(passkeyCount > 0 ? L["SecurityManageAction"] : L["SecurityAddAction"])"
+                         ActionHref="/Account/Manage/Passkeys" />
+
+            @if (_externalRow.Visible)
+            {
+                <SecurityRow Icon="badge-check" Title="@(_externalRow.ProviderLabel ?? L["ManageNavExternalLogins"])"
+                             Description="@L["SecurityExternalDesc"]"
+                             BadgeText="@(_externalRow.Linked ? L["SecurityLinked"] : L["SecurityNotLinked"])"
+                             Tone="@(_externalRow.Linked ? BadgeTone.Success : BadgeTone.Neutral)"
+                             ActionLabel="@(_externalRow.Linked ? L["SecurityManageAction"] : L["SecurityAddAction"])"
+                             ActionHref="/Account/Manage/ExternalLogins" />
+            }
+        </ul>
+    </section>
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    private string? _email;
+    private string? _userName;
+    private bool hasPassword;
+    private bool emailConfirmed;
+    private bool twoFactorEnabled;
+    private int passkeyCount;
+    private int recoveryCodesLeft;
+    private ExternalLoginRow _externalRow = new(false, false, 0, null);
+    private int _score;
+    private readonly List<string> _hints = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            return;
+        }
+
+        _email = await UserManager.GetEmailAsync(user);
+        _userName = user.UserName;
+        hasPassword = await UserManager.HasPasswordAsync(user);
+        emailConfirmed = await UserManager.IsEmailConfirmedAsync(user);
+        twoFactorEnabled = await UserManager.GetTwoFactorEnabledAsync(user);
+        passkeyCount = (await UserManager.GetPasskeysAsync(user)).Count;
+        recoveryCodesLeft = twoFactorEnabled ? await UserManager.CountRecoveryCodesAsync(user) : 0;
+
+        var schemes = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        var logins = (await UserManager.GetLoginsAsync(user)).ToList();
+        _externalRow = ExternalLoginRow.Resolve(schemes, logins);
+
+        var checks = new (bool Met, string HintKey)[]
+        {
+            (hasPassword, "SecurityHintSetPassword"),
+            (emailConfirmed, "SecurityHintVerifyEmail"),
+            (twoFactorEnabled, "SecurityHintEnable2fa"),
+            (passkeyCount > 0, "SecurityHintAddPasskey"),
+            (recoveryCodesLeft > 0, "SecurityHintRecoveryCodes"),
+        };
+        _score = checks.Count(c => c.Met);
+        _hints.AddRange(checks.Where(c => !c.Met).Select(c => L[c.HintKey].Value));
+    }
+}

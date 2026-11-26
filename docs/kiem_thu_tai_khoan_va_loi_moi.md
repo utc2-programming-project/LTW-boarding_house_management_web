@@ -1,4 +1,4 @@
-# Kiểm thử: tài khoản tự đăng ký và mời khách thuê (PLAN-004…009)
+# Kiểm thử: tài khoản tự đăng ký và mời khách thuê
 
 Tài liệu bổ sung cho `docs/kiem_thu_toan_bo_chuc_nang.md`.
 

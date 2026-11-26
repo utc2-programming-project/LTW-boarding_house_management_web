@@ -2,14 +2,17 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using Web.Components.Shared.Forms
 @using Web.Data
 @using Web.Features.Accounts
+@using Web.Features.Contracts.Enums
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
+@inject ApplicationDbContext Db
 
 <PageTitle>@L["DeletePersonalDataTitle"]</PageTitle>
 
@@ -93,6 +96,25 @@
         {
             Logger.LogWarning("Chan xoa Admin cuoi cung {UserId}.", userId);
             message = $"Error: {L["LastAdminDeleteBlocked"]}";
+            return;
+        }
+
+        // PLAN-001 #3: chặn bằng kiểm tra rõ ràng thay vì để FK ném lỗi khó hiểu.
+        var hasBusinessData =
+            await Db.Properties.AnyAsync(property => property.OwnerId == userId && !property.IsDeleted)
+            || await Db.PropertyManagers.AnyAsync(assignment =>
+                assignment.ManagerUserId == userId && assignment.RevokedAt == null)
+            || await (
+                from member in Db.ContractMembers
+                join contract in Db.Contracts on member.ContractId equals contract.ContractId
+                join tenant in Db.Tenants on member.TenantId equals tenant.Id
+                where tenant.UserId == userId && contract.Status == ContractStatus.Approved
+                select member.ContractId).AnyAsync();
+
+        if (hasBusinessData)
+        {
+            Logger.LogWarning("Chan tu xoa {UserId}: con nha/phan cong/hop dong hieu luc.", userId);
+            message = $"Error: {L["AccountDeleteRelatedDataBlocked"]}";
             return;
         }
 

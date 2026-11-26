@@ -38,6 +38,10 @@
     [Parameter] public DashboardLoadState RevenueState { get; set; } = DashboardLoadState.Loaded;
     [Parameter] public string RevenueHref { get; set; } = "/reports";
     [Parameter] public EventCallback RevenueRetry { get; set; }
+    [Parameter] public RevenueReportDto? TotalRevenue { get; set; }
+    [Parameter] public DashboardLoadState TotalRevenueState { get; set; } = DashboardLoadState.Loaded;
+    [Parameter] public EventCallback TotalRevenueRetry { get; set; }
+    [Parameter] public string DebtHref { get; set; } = "/invoices?paymentState=unpaid";
     [Parameter] public IncidentReportKpis? Incidents { get; set; }
     [Parameter] public DashboardLoadState IncidentState { get; set; } = DashboardLoadState.Loaded;
     [Parameter] public string IncidentsHref { get; set; } = "/reports";
@@ -71,8 +75,10 @@
             {
                 cards.Add(new(L["Revenue"], MoneyFormatter.Format(Revenue?.TotalRevenue), RevenueState,
                     "RevenueDenied", L["PeriodData"], RevenueHref, RevenueRetry));
-                cards.Add(new(L["Debt"], MoneyFormatter.Format(Revenue?.Outstanding), RevenueState,
-                    "RevenueDenied", L["PeriodData"], RevenueHref, RevenueRetry));
+                cards.Add(new(L["TotalRevenue"], MoneyFormatter.Format(TotalRevenue?.TotalRevenue), TotalRevenueState,
+                    "RevenueDenied", L["AllTimeData"], RevenueHref, TotalRevenueRetry));
+                cards.Add(new(L["Debt"], MoneyFormatter.Format(TotalRevenue?.Outstanding), TotalRevenueState,
+                    "RevenueDenied", L["AllTimeData"], DebtHref, TotalRevenueRetry));
             }
 
             cards.Add(new(L["Incidents"], DashboardFormat.FormatNumber(Incidents?.Total), IncidentState,

@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 
 namespace Web.Features.Properties.Services;
 
 /// <summary>Builds the trusted P2 caller context from the authenticated server-side principal.</summary>
-public sealed class P2CallerProvider(AuthenticationStateProvider authenticationStateProvider)
+public sealed class P2CallerProvider(
+    AuthenticationStateProvider authenticationStateProvider,
+    OwnerAccessGuard ownerAccess)
 {
     public async Task<PropertyCaller> GetCallerAsync()
     {
@@ -26,6 +29,18 @@ public sealed class P2CallerProvider(AuthenticationStateProvider authenticationS
             throw new UnauthorizedAccessException("A supported P2 role is required.");
         }
 
-        return new PropertyCaller(userId, role);
+        var caller = new PropertyCaller(userId, role);
+
+        // PLAN-001 #7: chủ trọ bị khoá không chặn cả vai trò, chỉ ẩn dữ liệu của họ.
+        if (role is Roles.QuanLy or Roles.KhachThue)
+        {
+            var blocked = await ownerAccess.GetBlockedOwnerIdsAsync();
+            if (blocked.Count > 0)
+            {
+                caller = caller with { BlockedOwnerIds = blocked.ToList() };
+            }
+        }
+
+        return caller;
     }
 }

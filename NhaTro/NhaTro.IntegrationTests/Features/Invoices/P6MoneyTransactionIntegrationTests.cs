@@ -374,8 +374,16 @@ public sealed class P6MoneyTransactionIntegrationTests(SqlServerFixture fixture)
 
         public Task<IReadOnlyList<InvoiceContractOptionDto>> GetContractOptionsAsync(
             PropertyCaller caller,
+            string? keyword,
+            int take,
             CancellationToken cancellationToken = default) =>
-            inner.GetContractOptionsAsync(caller, cancellationToken);
+            inner.GetContractOptionsAsync(caller, keyword, take, cancellationToken);
+
+        public Task<IReadOnlyList<InvoiceContractOptionDto>> GetContractOptionsByIdsAsync(
+            PropertyCaller caller,
+            IReadOnlyCollection<Guid> contractIds,
+            CancellationToken cancellationToken = default) =>
+            inner.GetContractOptionsByIdsAsync(caller, contractIds, cancellationToken);
 
     public Task<IReadOnlyList<string>> GetContractTenantUserIdsAsync(
         Guid contractId,

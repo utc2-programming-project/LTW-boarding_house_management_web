@@ -7,11 +7,13 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Web.Components.Shared.Forms
 @using Web.Data
+@using Web.Features.Accounts.Security
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject SecurityNotifier Security
 
 <PageTitle>@L["ManageEmailTitle"]</PageTitle>
 
@@ -111,6 +113,13 @@
             new Dictionary<string, object?> { ["userId"] = userId, ["email"] = Input.NewEmail, ["code"] = code });
 
         await EmailSender.SendConfirmationLinkAsync(user, Input.NewEmail, HtmlEncoder.Default.Encode(callbackUrl));
+
+        // PLAN-001 #11: báo hộp thư CŨ để chủ tài khoản biết có yêu cầu đổi email.
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            await Security.NotifyAsync(
+                userId, "Yêu cầu đổi email", $"Email mới: {Input.NewEmail}", emailOverride: email);
+        }
 
         message = L["ChangeEmailConfirmationSent"];
     }

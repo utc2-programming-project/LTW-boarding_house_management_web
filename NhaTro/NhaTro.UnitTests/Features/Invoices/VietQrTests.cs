@@ -53,4 +53,20 @@ public class VietQrTests
     {
         Assert.Equal(expectedBin, VietQrBankCatalog.GetBin(code));
     }
+
+    [Theory]
+    [InlineData("970407", "TECHCOMBANK")]
+    [InlineData("970436", "VIETCOMBANK")]
+    public void Danh_muc_ngan_hang_nhan_ca_bin(string bin, string expectedCode)
+    {
+        Assert.Equal(expectedCode, VietQrBankCatalog.Find(bin)?.Code);
+    }
+
+    [Fact]
+    public void Payload_chap_nhan_ma_ngan_hang_dang_bin()
+    {
+        var payload = VietQr.GeneratePayload("970407", "2145181026", 500_000m, "HD1");
+
+        Assert.Equal(OfficialPayload, payload);
+    }
 }

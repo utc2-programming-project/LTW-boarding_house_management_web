@@ -25,10 +25,39 @@ public static class PropertyScope
             var assignedPropertyIds = assignments
                 .Where(a => a.ManagerUserId == caller.UserId && a.RevokedAt == null)
                 .Select(a => a.PropertyId);
-            return properties.Where(property => assignedPropertyIds.Contains(property.Id));
+            var scoped = properties.Where(property => assignedPropertyIds.Contains(property.Id));
+            var blocked = caller.BlockedOwnerIds;
+            return blocked.Count == 0
+                ? scoped
+                : scoped.Where(property => !blocked.Contains(property.OwnerId));
         }
 
         return properties.Where(_ => false);
+    }
+
+    /// <summary>
+    /// PLAN-001 #7: id nhà Quản lý được phân công, đã loại nhà của chủ trọ đang bị khoá.
+    /// Dùng chung cho mọi query lọc theo phân công để không lộ dữ liệu tòa bị khoá.
+    /// </summary>
+    public static IQueryable<int> ManagerPropertyIds(
+        IQueryable<PropertyManager> assignments,
+        IQueryable<Property> properties,
+        PropertyCaller caller)
+    {
+        var blocked = caller.BlockedOwnerIds;
+        if (blocked.Count == 0)
+        {
+            return assignments
+                .Where(a => a.ManagerUserId == caller.UserId && a.RevokedAt == null)
+                .Select(a => a.PropertyId);
+        }
+
+        return from assignment in assignments
+               join property in properties on assignment.PropertyId equals property.Id
+               where assignment.ManagerUserId == caller.UserId
+                     && assignment.RevokedAt == null
+                     && !blocked.Contains(property.OwnerId)
+               select assignment.PropertyId;
     }
 
     public static void EnsureOwnerCanAccess(string ownerId, string userId)

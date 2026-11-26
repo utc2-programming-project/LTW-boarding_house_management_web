@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using System.Globalization;
+using Web.Common.Queries;
 using Web.Common.Utils;
 using Web.Components.Layout;
 using Web.Features.Accounts;
@@ -10,6 +11,7 @@ using Web.Features.Maintenance.Enums;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Services;
 using Web.Features.Rooms.Enums;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Reports.Pages;
 
@@ -17,10 +19,23 @@ public partial class BusinessReportsView
 {
     private const int PageSize = 20;
 
+    private DateOnly Today =>
+        DateOnly.FromDateTime(VietnamTime.ToVietnam(Clock.GetUtcNow().UtcDateTime));
+
     public enum ReportTab { Rooms, Tenants, Contracts, Costs, Incidents, Revenue }
 
     [SupplyParameterFromQuery] public int? PropertyId { get; set; }
     [SupplyParameterFromQuery] public string? ExportError { get; set; }
+
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ tab và khoảng ngày.</summary>
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "from")]
+    public DateOnly? FromQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "to")]
+    public DateOnly? ToQuery { get; set; }
 
     private ReportTab ActiveTab = ReportTab.Rooms;
     private IReadOnlyList<DashboardPropertyOption> Properties = [];
@@ -86,7 +101,7 @@ public partial class BusinessReportsView
         RoomState, TenantState, ContractState, CostState, IncidentState, RevenueState,
     }.Contains(DashboardLoadState.Error);
 
-    private RevenueReportFilter RevenueFilter => new(From, To, SelectedPropertyId, RevenueDateBasis);
+    private RevenueReportFilter RevenueFilter => new(From, To, SelectedPropertyId, RevenueDateBasis, 1, PageSize);
 
     private (int From, int To) RoomItemRange =>
         PaginationHelper.ItemRange(RoomPage, PageSize, RoomResult?.Rooms.TotalCount ?? 0);
@@ -137,6 +152,17 @@ public partial class BusinessReportsView
             if (readQuery)
             {
                 SelectedPropertyId = PropertyId;
+                // Kỳ mặc định 12 tháng gần nhất khi URL không chỉ định ngày.
+                var (defaultFrom, defaultTo) = VietnamDateRange.ReportPeriod(Today, FromQuery, ToQuery);
+                From = defaultFrom;
+                To = defaultTo;
+                DateRangeInvalid = From.HasValue && To.HasValue && From > To;
+                if (!string.IsNullOrWhiteSpace(TabQuery)
+                    && Enum.TryParse<ReportTab>(TabQuery, true, out var tab))
+                {
+                    ActiveTab = tab;
+                }
+
                 ResetPages();
             }
 
@@ -197,18 +223,49 @@ public partial class BusinessReportsView
         {
             reloadGate.Release();
         }
+
+        await WriteUrlStateAsync();
     }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["propertyId"] = SelectedPropertyId?.ToString(CultureInfo.InvariantCulture),
+        ["from"] = From?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        ["to"] = To?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        ["tab"] = ActiveTab == ReportTab.Rooms ? null : ActiveTab.ToString(),
+    });
 
     private async Task SelectReportAsync(ReportTab tab)
     {
         if (Busy || DateRangeInvalid) return;
         ActiveTab = tab;
+        await WriteUrlStateAsync();
         if (tab is ReportTab.Rooms or ReportTab.Tenants) return;
         if (!loadedTabs.Contains(tab))
         {
             await LoadTabCoreAsync(tab, scopeVersion);
         }
     }
+
+    private IReadOnlyList<Web.Components.Shared.Navigation.TabItem> TabItems
+    {
+        get
+        {
+            var items = new List<Web.Components.Shared.Navigation.TabItem>
+            {
+                new("Rooms", L["RoomReport"].Value),
+                new("Tenants", L["TenantReport"].Value),
+                new("Contracts", L["ContractReport"].Value),
+                new("Costs", L["CostReport"].Value),
+                new("Incidents", L["IncidentReport"].Value),
+            };
+            if (IsOwner) items.Add(new("Revenue", L["RevenueReport"].Value));
+            return items;
+        }
+    }
+
+    private Task SelectReportByKeyAsync(string key) =>
+        Enum.TryParse<ReportTab>(key, out var tab) ? SelectReportAsync(tab) : Task.CompletedTask;
 
     private async Task ChangePropertyAsync(ChangeEventArgs args)
     {
@@ -256,7 +313,7 @@ public partial class BusinessReportsView
     {
         if (Busy) return;
         SelectedPropertyId = null;
-        From = To = null;
+        (From, To) = VietnamDateRange.ReportPeriod(Today, null, null);
         DateRangeInvalid = false;
         RoomActive = true;
         RoomStatusFilter = null;

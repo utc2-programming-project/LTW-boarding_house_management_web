@@ -3,7 +3,7 @@
 .kpi-link:hover { border-color:var(--control-border); }
 .kpi-link:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
 h2 { margin:0 0 16px; font-size:.875rem; line-height:1.25rem; font-weight:500; color:var(--text-primary); }
-.value { display:block; min-height:44px; text-align:right; font-size:2rem; line-height:2.5rem; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.value { display:block; min-height:44px; text-align:right; font-size:2rem; line-height:2.5rem; font-weight:600; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
 .hint { margin:8px 0 0; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
 .kpi-card.unavailable .value { color:var(--text-muted); }
 .retry { min-height:36px; margin-top:8px; padding:4px 12px; }

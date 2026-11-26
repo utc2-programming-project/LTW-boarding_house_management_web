@@ -22,6 +22,12 @@ public sealed class SecurityOptions
     /// </summary>
     public bool ProtectKeysWithDpapi { get; set; }
 
+    /// <summary>
+    /// Bắt buộc Admin/Chủ trọ bật 2FA trước khi dùng giao diện nghiệp vụ.
+    /// Development/Testing luôn bỏ qua để không chặn seed/demo.
+    /// </summary>
+    public bool RequireTwoFactorForPrivileged { get; set; } = true;
+
     public CaptchaOptions Captcha { get; set; } = new();
 
     public LoginGuardOptions LoginGuard { get; set; } = new();

@@ -76,7 +76,7 @@
                         @if (CanRevise || CanDelete)
                         {
                             <details class="invoice-action-menu">
-                                <summary class="btn btn-secondary"><LucideIcon Name="more-horizontal" /><span>@L["InvoiceMoreActions"]</span></summary>
+                                <summary class="btn btn-secondary"><LucideIcon Name="ellipsis" /><span>@L["InvoiceMoreActions"]</span></summary>
                                 <div class="invoice-action-menu-panel">
                                     @if (CanRevise)
                                     {
@@ -201,6 +201,14 @@
             {
                 <div class="table-responsive">
                     <table class="items-table">
+                        <colgroup>
+                            <col style="width:130px" />
+                            <col />
+                            <col style="width:80px" />
+                            <col style="width:100px" />
+                            <col style="width:120px" />
+                            <col style="width:140px" />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>@L["ThItemType"]</th>
@@ -216,7 +224,14 @@
                             {
                                 <tr>
                                     <td>@ItemTypeText(item.ItemType)</td>
-                                    <td>@item.Description</td>
+                                    <td>
+                                        <span class="cell-truncate" data-hover-tip>
+                                            @item.Description
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.Description</span>
+                                            </span>
+                                        </span>
+                                    </td>
                                     <td>@(string.IsNullOrWhiteSpace(item.Unit) ? "-" : item.Unit)</td>
                                     <td class="text-right tabular-nums">@item.Quantity.ToString("0.##")</td>
                                     <td class="text-right tabular-nums">@MoneyFormatter.Format(item.UnitPrice)</td>
@@ -506,6 +521,13 @@
                         <h3 class="section-title">@L["PaymentHistoryHeading"]</h3>
                         <div class="table-responsive">
                             <table class="items-table payment-history-table">
+                                <colgroup>
+                                    <col style="width:160px" />
+                                    <col style="width:120px" />
+                                    <col />
+                                    <col style="width:130px" />
+                                    <col style="width:150px" />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th>@L["PaymentRequestedAt"]</th>
@@ -521,7 +543,14 @@
                                         <tr>
                                             <td class="tabular-nums">@DateFormatter.FormatDateTime(payment.RequestedAt.UtcDateTime)</td>
                                             <td class="text-right tabular-nums">@MoneyFormatter.Format(payment.Amount)</td>
-                                            <td class="break-anywhere">@(string.IsNullOrWhiteSpace(payment.TransactionCode) ? "-" : payment.TransactionCode)</td>
+                                            <td>
+                                                <span class="cell-truncate" data-hover-tip>
+                                                    @TransactionCodeText(payment.TransactionCode)
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@TransactionCodeText(payment.TransactionCode)</span>
+                                                    </span>
+                                                </span>
+                                            </td>
                                             <td>
                                                 <StatusBadge Text="@PaymentStatusText(payment.Status)" Tone="@PaymentStatusTone(payment.Status)" />
                                             </td>
@@ -534,8 +563,12 @@
                                                 {
                                                     foreach (var proofId in payment.ProofFileIds)
                                                     {
-                                                        <a class="proof-link" href="@($"/api/files/{proofId:D}")" target="_blank" rel="noopener">
+                                                        <a class="proof-link cell-truncate" href="@($"/api/files/{proofId:D}")" target="_blank" rel="noopener"
+                                                           data-hover-tip>
                                                             @ProofName(proofId)
+                                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                                <span class="hover-tip__line">@ProofName(proofId)</span>
+                                                            </span>
                                                         </a>
                                                     }
                                                 }
@@ -544,7 +577,14 @@
                                         @if (payment.Status == PaymentStatus.Rejected && !string.IsNullOrWhiteSpace(payment.RejectionReason))
                                         {
                                             <tr class="history-reason">
-                                                <td colspan="5"><strong>@L["PaymentRejectionReason"]:</strong> @payment.RejectionReason</td>
+                                                <td colspan="5">
+                                                    <span class="cell-truncate" data-hover-tip>
+                                                        <strong>@L["PaymentRejectionReason"]:</strong> @payment.RejectionReason
+                                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                            <span class="hover-tip__line">@payment.RejectionReason</span>
+                                                        </span>
+                                                    </span>
+                                                </td>
                                             </tr>
                                         }
                                     }
@@ -1422,6 +1462,9 @@
         _proofFiles.TryGetValue(proofId, out var file) && !string.IsNullOrWhiteSpace(file.FileName)
             ? file.FileName
             : L["PaymentProofOpen"];
+
+    private static string TransactionCodeText(string? code) =>
+        string.IsNullOrWhiteSpace(code) ? "-" : code;
 
     private void BackToList() => Navigation.NavigateTo(ListPath);
 

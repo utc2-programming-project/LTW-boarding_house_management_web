@@ -16,4 +16,7 @@ public sealed class RoomDetail
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>Hợp đồng đang hiệu lực và người thuê; null khi phòng không có ai thuê.</summary>
+    public RoomRentalDetail? CurrentRental { get; set; }
 }

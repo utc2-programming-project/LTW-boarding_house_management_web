@@ -49,5 +49,8 @@ public sealed class RoleService(UserManager<ApplicationUser> users)
             throw new InvalidOperationException("Gan role moi that bai: " +
                 string.Join(", ", add.Errors.Select(e => e.Description)));
         }
+
+        // Quyền cũ phải hết hiệu lực ngay, không chờ cookie hết hạn.
+        await users.UpdateSecurityStampAsync(target);
     }
 }

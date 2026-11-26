@@ -40,6 +40,13 @@ public sealed class OwnerAccessGuard(
         return false;
     }
 
+    /// <summary>Id chủ trọ đang bị khoá; dùng để loại dữ liệu của họ khỏi phạm vi Quản lý/Khách thuê.</summary>
+    public async Task<IReadOnlyList<string>> GetBlockedOwnerIdsAsync(CancellationToken ct = default)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(ct);
+        return await BlockedOwnerIdsAsync(db, ct);
+    }
+
     public async Task<bool> IsRoleBlockedAsync(
         string userId, string role, CancellationToken ct = default)
     {
@@ -62,15 +69,16 @@ public sealed class OwnerAccessGuard(
         ApplicationDbContext db,
         string userId,
         string role,
-        IReadOnlySet<string> blocked,
+        IReadOnlyCollection<string> blocked,
         CancellationToken ct)
     {
         var ownerIds = role == Roles.QuanLy
             ? await ManagerOwnerIdsAsync(db, userId, ct)
             : await TenantOwnerIdsAsync(db, userId, ct);
 
-        // Chỉ cần một chủ trọ bị khoá là ngữ cảnh đó bị chặn; tránh lộ dữ liệu tòa bị khoá.
-        return ownerIds.Count > 0 && ownerIds.Any(blocked.Contains);
+        // Vai trò chỉ bị chặn khi MỌI chủ trọ của người dùng đều bị khoá;
+        // dữ liệu của chủ trọ bị khoá được lọc riêng qua PropertyCaller.BlockedOwnerIds.
+        return ownerIds.Count > 0 && ownerIds.All(blocked.Contains);
     }
 
     public async Task<IReadOnlyList<string>> GetAffectedUserIdsAsync(
@@ -140,11 +148,11 @@ public sealed class OwnerAccessGuard(
                 setters => setters.SetProperty(invitation => invitation.RevokedAt, (DateTime?)now), ct);
     }
 
-    private static async Task<HashSet<string>> BlockedOwnerIdsAsync(
+    private static async Task<List<string>> BlockedOwnerIdsAsync(
         ApplicationDbContext db, CancellationToken ct)
     {
         var permanent = AccountStatusRules.PermanentLockout - TimeSpan.FromMinutes(1);
-        var ids = await (
+        return await (
             from user in db.Users.AsNoTracking()
             join userRole in db.UserRoles.AsNoTracking() on user.Id equals userRole.UserId
             join role in db.Roles.AsNoTracking() on userRole.RoleId equals role.Id
@@ -154,8 +162,6 @@ public sealed class OwnerAccessGuard(
                 && user.LockoutEnd >= permanent
             select user.Id)
             .ToListAsync(ct);
-
-        return new HashSet<string>(ids, StringComparer.Ordinal);
     }
 
     private static async Task<List<string>> OwnerIdsForUserAsync(

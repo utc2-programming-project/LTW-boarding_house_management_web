@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Data.SqlClient;
 using System.Text.Json;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Common.Utils;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
@@ -47,6 +50,9 @@ public sealed class ContractService : IContractService
         _approvals = approvals;
     }
 
+    /// <summary>Số khách gợi ý sẵn trong form; gõ tên/SĐT để tìm tiếp phía server.</summary>
+    private const int TenantPickerPageSize = 25;
+
     public async Task<ContractCreateOptionsDto> GetCreateOptionsAsync(
         PropertyCaller caller,
         CancellationToken cancellationToken = default)
@@ -58,28 +64,50 @@ public sealed class ContractService : IContractService
             _context.PropertyManagers.AsNoTracking(),
             caller);
 
-        var properties = await visibleProperties
-            .Where(property => property.IsActive && !property.IsDeleted)
-            .OrderBy(property => property.Name)
-            .Select(property => new ContractPropertyOptionDto(property.Id, property.Name, property.Address))
+        var properties = await LookupQuery.Bounded(visibleProperties
+                .Where(property => property.IsActive && !property.IsDeleted)
+                .OrderBy(property => property.Name)
+                .Select(property => new ContractPropertyOptionDto(property.Id, property.Name, property.Address)))
             .ToListAsync(cancellationToken);
 
-        // Phòng còn giữ trạng thái Available cho tới khi hợp đồng được duyệt, nên phải loại
-        // cả phòng đang có hợp đồng Pending/Approved để người chọn không bấm vào rồi mới bị chặn.
-        var busyRoomIds = _context.Contracts.AsNoTracking()
-            .Where(contract => contract.Status == ContractStatus.Pending
-                || contract.Status == ContractStatus.Approved
-                || contract.Status == ContractStatus.AwaitingTenant
-                || contract.Status == ContractStatus.ChangeRequested
-                || contract.Status == ContractStatus.TenantAccepted)
-            .Select(contract => contract.RoomId);
+        // VHT-119: danh sách chọn khách dùng chung phạm vi với danh sách hồ sơ,
+        // không lộ tên/SĐT khách của chủ trọ khác. Chỉ nạp một trang gợi ý;
+        // tìm theo tên/SĐT đi qua SearchTenantOptionsAsync để không kéo cả bảng hồ sơ.
+        var tenants = (await TenantPickerQuery(caller)
+                .Take(TenantPickerPageSize)
+                .ToListAsync(cancellationToken))
+            .Select(row => ToTenantOption(row, caller.IsChuTro))
+            .ToList();
 
-        var rooms = await (
+        var services = await LoadServiceOptionsAsync(
+            properties.Select(property => property.Id).ToList(),
+            _timeProvider.TodayVietnam(),
+            cancellationToken);
+
+        // Phòng khả dụng nạp theo tòa đã chọn (GetAvailableRoomsAsync, trần 200):
+        // form không kéo toàn bộ phòng của mọi tòa về một payload.
+        return new ContractCreateOptionsDto(properties, [], tenants, services);
+    }
+
+    /// <summary>Phòng còn trống của một tòa trong phạm vi người gọi, tối đa <see cref="LookupQuery.MaxOptions"/>.</summary>
+    public async Task<IReadOnlyList<ContractRoomOptionDto>> GetAvailableRoomsAsync(
+        PropertyCaller caller, int propertyId, CancellationToken cancellationToken = default)
+    {
+        EnsureCanCreate(caller);
+
+        var visibleProperties = PropertyScope.Apply(
+            _context.Properties.AsNoTracking(),
+            _context.PropertyManagers.AsNoTracking(),
+            caller);
+        var busyRoomIds = BusyRoomIds();
+
+        return await LookupQuery.Bounded(
             from room in _context.Rooms.AsNoTracking()
             join property in visibleProperties on room.PropertyId equals property.Id
-            where room.IsActive && !room.IsDeleted && room.Status == RoomStatus.Available
+            where room.PropertyId == propertyId
+                && room.IsActive && !room.IsDeleted && room.Status == RoomStatus.Available
                 && !busyRoomIds.Contains(room.Id)
-            orderby property.Name, room.Code
+            orderby room.Code
             select new ContractRoomOptionDto(
                 room.Id,
                 property.Id,
@@ -88,14 +116,72 @@ public sealed class ContractService : IContractService
                 room.Floor,
                 room.AreaM2))
             .ToListAsync(cancellationToken);
+    }
 
-        // VHT-119: danh sách chọn khách dùng chung phạm vi với danh sách hồ sơ,
-        // không lộ tên/SĐT khách của chủ trọ khác.
-        var tenantRows = await Web.Features.Tenants.TenantVisibility
+    /// <summary>
+    /// Phòng còn giữ trạng thái Available cho tới khi hợp đồng được duyệt, nên phải loại
+    /// cả phòng đang có hợp đồng đang chờ/đã duyệt để người chọn không bấm vào rồi mới bị chặn.
+    /// </summary>
+    private IQueryable<int> BusyRoomIds() => _context.Contracts.AsNoTracking()
+        .Where(contract => contract.Status == ContractStatus.Pending
+            || contract.Status == ContractStatus.Approved
+            || contract.Status == ContractStatus.AwaitingTenant
+            || contract.Status == ContractStatus.ChangeRequested
+            || contract.Status == ContractStatus.TenantAccepted)
+        .Select(contract => contract.RoomId);
+
+    /// <summary>
+    /// Tìm khách đang hoạt động theo tên/SĐT trong phạm vi người gọi; trả tối đa <paramref name="take"/> dòng.
+    /// </summary>
+    public async Task<IReadOnlyList<ContractTenantOptionDto>> SearchTenantOptionsAsync(
+        PropertyCaller caller,
+        string? keyword,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCanCreate(caller);
+
+        var limit = Math.Clamp(take, 1, 100);
+        var query = ActiveTenantScope(caller);
+        if (keyword?.Trim() is { Length: > 0 } term)
+        {
+            query = query.Where(tenant => tenant.FullName.Contains(term) || tenant.Phone.Contains(term));
+        }
+
+        var rows = await query
+            .OrderBy(tenant => tenant.FullName)
+            .ThenBy(tenant => tenant.Id)
+            .Select(tenant => new ContractTenantRow(
+                tenant.Id,
+                tenant.FullName,
+                tenant.Phone,
+                tenant.Email,
+                tenant.CitizenId,
+                tenant.PermanentAddress,
+                tenant.IdIssuedPlace,
+                tenant.DateOfBirth))
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(row => ToTenantOption(row, caller.IsChuTro)).ToList();
+    }
+
+    /// <summary>Nạp lại đúng các khách đã chọn (deep-link/prefill) theo id, vẫn trong phạm vi người gọi.</summary>
+    public async Task<IReadOnlyList<ContractTenantOptionDto>> GetTenantOptionsAsync(
+        PropertyCaller caller,
+        IReadOnlyCollection<int> tenantIds,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCanCreate(caller);
+        if (tenantIds.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await Web.Features.Tenants.TenantVisibility
             .Apply(_context, caller.UserId, caller.Role)
             .AsNoTracking()
-            .Where(tenant => tenant.IsActive && !tenant.IsDeleted)
-            .OrderBy(tenant => tenant.FullName)
+            .Where(tenant => !tenant.IsDeleted && tenantIds.Contains(tenant.Id))
             .Select(tenant => new ContractTenantRow(
                 tenant.Id,
                 tenant.FullName,
@@ -107,26 +193,40 @@ public sealed class ContractService : IContractService
                 tenant.DateOfBirth))
             .ToListAsync(cancellationToken);
 
-        // CCCD đầy đủ chỉ trả cho Chủ trọ; Quản lý chỉ thấy dạng che để lập hợp đồng.
-        var tenants = tenantRows
-            .Select(tenant => new ContractTenantOptionDto(
+        return rows.Select(row => ToTenantOption(row, caller.IsChuTro)).ToList();
+    }
+
+    private IQueryable<Web.Features.Tenants.Entities.Tenant> ActiveTenantScope(PropertyCaller caller) =>
+        Web.Features.Tenants.TenantVisibility
+            .Apply(_context, caller.UserId, caller.Role)
+            .AsNoTracking()
+            .Where(tenant => tenant.IsActive && !tenant.IsDeleted);
+
+    private IQueryable<ContractTenantRow> TenantPickerQuery(PropertyCaller caller) =>
+        ActiveTenantScope(caller)
+            .OrderBy(tenant => tenant.FullName)
+            .ThenBy(tenant => tenant.Id)
+            .Select(tenant => new ContractTenantRow(
                 tenant.Id,
                 tenant.FullName,
                 tenant.Phone,
                 tenant.Email,
-                caller.IsChuTro ? tenant.CitizenId : MaskCitizenId(tenant.CitizenId),
+                tenant.CitizenId,
                 tenant.PermanentAddress,
                 tenant.IdIssuedPlace,
-                tenant.DateOfBirth))
-            .ToList();
+                tenant.DateOfBirth));
 
-        var services = await LoadServiceOptionsAsync(
-            properties.Select(property => property.Id).ToList(),
-            _timeProvider.TodayVietnam(),
-            cancellationToken);
-
-        return new ContractCreateOptionsDto(properties, rooms, tenants, services);
-    }
+    // CCCD đầy đủ chỉ trả cho Chủ trọ; Quản lý chỉ thấy dạng che để lập hợp đồng.
+    private static ContractTenantOptionDto ToTenantOption(ContractTenantRow tenant, bool isChuTro) =>
+        new(
+            tenant.Id,
+            tenant.FullName,
+            tenant.Phone,
+            tenant.Email,
+            isChuTro ? tenant.CitizenId : MaskCitizenId(tenant.CitizenId),
+            tenant.PermanentAddress,
+            tenant.IdIssuedPlace,
+            tenant.DateOfBirth);
 
     /// <summary>CCCD dạng che cho Quản lý: chỉ giữ 4 số cuối.</summary>
     private static string? MaskCitizenId(string? citizenId)
@@ -178,10 +278,11 @@ public sealed class ContractService : IContractService
         DateOnly today,
         CancellationToken cancellationToken)
     {
-        var catalogs = await _context.ServiceCatalogs.AsNoTracking()
-            .Where(catalog => catalog.IsActive
-                && (catalog.PropertyId == null || propertyIds.Contains(catalog.PropertyId.Value)))
-            .Select(catalog => new { catalog.Id, catalog.PropertyId })
+        var catalogs = await LookupQuery.Bounded(_context.ServiceCatalogs.AsNoTracking()
+                .Where(catalog => catalog.IsActive
+                    && (catalog.PropertyId == null || propertyIds.Contains(catalog.PropertyId.Value)))
+                .OrderBy(catalog => catalog.Id)
+                .Select(catalog => new { catalog.Id, catalog.PropertyId }))
             .ToListAsync(cancellationToken);
 
         if (catalogs.Count == 0)
@@ -312,8 +413,8 @@ public sealed class ContractService : IContractService
     {
         EnsureCanView(caller);
         ArgumentNullException.ThrowIfNull(filter);
-        var page = Math.Max(1, filter.Page);
-        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+        var page = PagingExtensions.ClampPage(filter.Page);
+        var pageSize = PagingExtensions.ClampPageSize(filter.PageSize);
         var today = _timeProvider.TodayVietnam();
         var todayStart = today.ToDateTime(TimeOnly.MinValue);
         var expiringEnd = today.AddDays(ContractStatusPresentation.ExpiringSoonDays).ToDateTime(TimeOnly.MinValue);
@@ -416,13 +517,13 @@ public sealed class ContractService : IContractService
         CancellationToken cancellationToken = default)
     {
         EnsureCanView(caller);
-        return await (
-            from contract in ApplyCallerScope(_context.Contracts.AsNoTracking(), caller)
-            join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-            join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
-            select property.Name)
+        return await LookupQuery.Bounded(
+            (from contract in ApplyCallerScope(_context.Contracts.AsNoTracking(), caller)
+             join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+             join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+             select property.Name)
             .Distinct()
-            .OrderBy(name => name)
+            .OrderBy(name => name))
             .ToListAsync(cancellationToken);
     }
 
@@ -1272,7 +1373,11 @@ public sealed class ContractService : IContractService
             CreatedAt = _timeProvider.GetUtcNow(),
         };
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // Có thể được gọi từ luồng đã mở transaction sẵn (vd. duyệt đề xuất AI); khi đó
+        // tham gia transaction ngoài thay vì mở transaction lồng không được hỗ trợ.
+        IDbContextTransaction? transaction = _context.Database.CurrentTransaction is null
+            ? await _context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
         try
         {
             // Khóa phòng để hai yêu cầu tạo đồng thời không cùng lọt qua bước kiểm trùng.
@@ -1360,19 +1465,33 @@ public sealed class ContractService : IContractService
             }
 
             await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
         }
         catch
         {
-            try
+            if (transaction is not null)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                try
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                }
+                catch
+                {
+                    // Preserve the original write exception if rollback also fails.
+                }
             }
-            catch
-            {
-                // Preserve the original write exception if rollback also fails.
-            }
+
             throw;
+        }
+        finally
+        {
+            if (transaction is not null)
+            {
+                await transaction.DisposeAsync();
+            }
         }
 
         return new ContractResponseDto(
@@ -1465,32 +1584,80 @@ public sealed class ContractService : IContractService
         return new ContractActionResultDto(ContractActionOutcome.Applied, contractId, null);
     }
 
-    public async Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(
+    public async Task<PagedResult<ContractTrashItemDto>> ListDeletedAsync(
         PropertyCaller caller,
+        string? keyword,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         if (!caller.IsChuTro)
         {
-            return [];
+            return new PagedResult<ContractTrashItemDto>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = pageSize,
+            };
         }
 
-        return await (
-                from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
-                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
-                where contract.IsDeleted && property.OwnerId == caller.UserId
-                orderby contract.DeletedAt descending, contract.ContractNumber
-                select new ContractTrashItemDto(
-                    contract.ContractId,
-                    contract.ContractNumber,
-                    room.Code,
-                    property.Name,
-                    contract.Status,
-                    contract.StartDate,
-                    contract.EndDate,
-                    contract.DeletedAt,
-                    contract.DeletedBy))
+        var query =
+            from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
+            join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+            join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+            where contract.IsDeleted && property.OwnerId == caller.UserId
+            select new
+            {
+                contract.ContractId,
+                contract.ContractNumber,
+                RoomCode = room.Code,
+                PropertyName = property.Name,
+                contract.Status,
+                contract.StartDate,
+                contract.EndDate,
+                contract.DeletedAt,
+                contract.DeletedBy,
+            };
+
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        if (term is { } search)
+        {
+            query = query.Where(row =>
+                row.ContractNumber.Contains(search)
+                || row.RoomCode.Contains(search)
+                || row.PropertyName.Contains(search));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderByDescending(row => row.DeletedAt)
+            .ThenBy(row => row.ContractNumber)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        var items = rows.Select(row => new ContractTrashItemDto(
+            row.ContractId,
+            row.ContractNumber,
+            row.RoomCode,
+            row.PropertyName,
+            row.Status,
+            row.StartDate,
+            row.EndDate,
+            row.DeletedAt,
+            row.DeletedBy)).ToList();
+
+        return new PagedResult<ContractTrashItemDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
     }
 
     public async Task<ContractActionResultDto> PurgeAsync(
@@ -1586,37 +1753,103 @@ public sealed class ContractService : IContractService
             return new TrashPurgeSummary(0, 0);
         }
 
-        var ids = await (
+        // Một lượt đọc cho cả lô thay vì gọi PurgeAsync từng hợp đồng (mỗi hợp đồng ~10 truy vấn + transaction).
+        var rows = await (
                 from contract in _context.Contracts.IgnoreQueryFilters().AsNoTracking()
                 join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
                 join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                 where contract.IsDeleted && property.OwnerId == caller.UserId
-                select contract.ContractId)
+                select new { contract.ContractId, contract.ContractNumber, room.PropertyId })
             .ToListAsync(cancellationToken);
-
-        var purged = 0;
-        var skipped = 0;
-        foreach (var id in ids)
+        if (rows.Count == 0)
         {
-            try
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        var ids = rows.Select(row => row.ContractId).ToList();
+        var blocked = new HashSet<Guid>();
+        void AddBlocked(IEnumerable<Guid> contractIds)
+        {
+            foreach (var contractId in contractIds)
             {
-                await PurgeAsync(id, caller, cancellationToken);
-                purged++;
-            }
-            catch (Exception ex) when (ex is ContractOperationException or ContractAuthorizationException or DbUpdateException)
-            {
-                skipped++;
-                _context.ChangeTracker.Clear();
+                blocked.Add(contractId);
             }
         }
 
-        return new TrashPurgeSummary(purged, skipped);
+        AddBlocked(await _context.Invoices.IgnoreQueryFilters()
+            .Where(item => ids.Contains(item.ContractId)).Select(item => item.ContractId).Distinct().ToListAsync(cancellationToken));
+        AddBlocked(await _context.ContractRenewalRequests
+            .Where(item => ids.Contains(item.ContractId)).Select(item => item.ContractId).Distinct().ToListAsync(cancellationToken));
+        AddBlocked(await _context.UtilityReadingPeriods
+            .Where(item => ids.Contains(item.ContractId)).Select(item => item.ContractId).Distinct().ToListAsync(cancellationToken));
+        // Phiếu cọc không bị xoá cùng hợp đồng và là FK Restrict: bỏ filter xoá mềm mới thấy đủ.
+        AddBlocked(await _context.ContractDepositPayments.IgnoreQueryFilters()
+            .Where(item => ids.Contains(item.ContractId)).Select(item => item.ContractId).Distinct().ToListAsync(cancellationToken));
+
+        var purgeIds = ids.Where(contractId => !blocked.Contains(contractId)).ToList();
+        if (purgeIds.Count == 0)
+        {
+            return new TrashPurgeSummary(0, rows.Count);
+        }
+
+        var contracts = await _context.Contracts.IgnoreQueryFilters()
+            .Where(contract => purgeIds.Contains(contract.ContractId))
+            .ToListAsync(cancellationToken);
+        var acceptances = await _context.ContractAcceptances
+            .Where(item => purgeIds.Contains(item.ContractId))
+            .ToListAsync(cancellationToken);
+        var changeRequests = await _context.ContractChangeRequests
+            .Where(item => purgeIds.Contains(item.ContractId))
+            .ToListAsync(cancellationToken);
+        var versions = await _context.ContractVersions
+            .Where(item => purgeIds.Contains(item.ContractId))
+            .ToListAsync(cancellationToken);
+        var members = await _context.ContractMembers
+            .Where(item => purgeIds.Contains(item.ContractId))
+            .ToListAsync(cancellationToken);
+
+        _context.ContractAcceptances.RemoveRange(acceptances);
+        _context.ContractChangeRequests.RemoveRange(changeRequests);
+        _context.ContractVersions.RemoveRange(versions);
+        _context.ContractMembers.RemoveRange(members);
+        _context.Contracts.RemoveRange(contracts);
+        foreach (var row in rows.Where(row => purgeIds.Contains(row.ContractId)))
+        {
+            _context.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "contract.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = row.PropertyId,
+                Metadata = $"Contract {row.ContractNumber}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Lỗi giữa lô: rollback cả lô để không nửa vời dữ liệu.
+            await transaction.RollbackAsync(cancellationToken);
+            _context.ChangeTracker.Clear();
+            return new TrashPurgeSummary(0, rows.Count);
+        }
+
+        return new TrashPurgeSummary(purgeIds.Count, rows.Count - purgeIds.Count);
     }
 
     private async Task<bool> HasContractDependenciesAsync(Guid contractId, CancellationToken cancellationToken) =>
         await _context.Invoices.IgnoreQueryFilters().AnyAsync(item => item.ContractId == contractId, cancellationToken)
         || await _context.ContractRenewalRequests.AnyAsync(item => item.ContractId == contractId, cancellationToken)
-        || await _context.UtilityReadingPeriods.AnyAsync(item => item.ContractId == contractId, cancellationToken);
+        || await _context.UtilityReadingPeriods.AnyAsync(item => item.ContractId == contractId, cancellationToken)
+        // Phiếu cọc là FK Restrict nhưng bị filter xoá mềm của hợp đồng che; thiếu nhánh này thì báo lỗi sai.
+        || await _context.ContractDepositPayments.IgnoreQueryFilters()
+            .AnyAsync(item => item.ContractId == contractId, cancellationToken);
 
     /// <summary>Ghi nghĩa vụ hoàn cọc khi hợp đồng kết thúc sau khi đã thu tiền.</summary>
     private static void MarkDepositRefundObligation(Contract contract)
@@ -1642,12 +1875,15 @@ public sealed class ContractService : IContractService
 
         if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(_context);
             return from contract in contracts
                    join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                   join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                    where _context.PropertyManagers.Any(assignment =>
                        assignment.PropertyId == room.PropertyId
                        && assignment.ManagerUserId == caller.UserId
                        && assignment.RevokedAt == null)
+                       && !blockedOwners.Contains(property.OwnerId)
                    select contract;
         }
 

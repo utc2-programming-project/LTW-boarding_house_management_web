@@ -1,0 +1,156 @@
+@inject IStringLocalizer<AccessControlResource> L
+
+<div class="gate-form-card">
+    <h2>@L["CreateGuestPass"]</h2>
+    <p class="gate-muted">@L["OvernightPendingNotice"]</p>
+
+    <div class="gate-form-grid">
+        @if (Properties.Count > 0)
+        {
+            <label>
+                @L["Property"]
+                <select class="input" @bind="_propertyId" @bind:after="ResetRoomForProperty">
+                    <option value="0">@L["SelectProperty"]</option>
+                    @foreach (var property in Properties)
+                    {
+                        <option value="@property.PropertyId">@property.Name</option>
+                    }
+                </select>
+            </label>
+        }
+        <label>
+            @L["Room"]
+            <select class="input" @bind="_roomId">
+                <option value="0">@L["SelectRoom"]</option>
+                @foreach (var room in RoomsForSelection)
+                {
+                    <option value="@room.RoomId">@room.PropertyName — @room.RoomCode</option>
+                }
+            </select>
+        </label>
+        <label>
+            @L["VisitorName"]
+            <input class="input" @bind="_visitorName" maxlength="200" />
+        </label>
+        <label>
+            @L["VisitorPhone"]
+            <input class="input" @bind="_visitorPhone" maxlength="30" />
+        </label>
+        <label>
+            @L["VisitorIdNumber"]
+            <input class="input" @bind="_visitorIdNumber" maxlength="50" />
+        </label>
+        <label>
+            @L["VisitorDob"]
+            <input type="date" class="input" @bind="_visitorDob" />
+        </label>
+        <label>
+            @L["StayType"]
+            <select class="input" @bind="_stayType">
+                <option value="@GateStayType.Visit">@L["Visit"]</option>
+                <option value="@GateStayType.Overnight">@L["Overnight"]</option>
+            </select>
+        </label>
+        <label>
+            @L["TtlMinutes"]
+            <input type="number" class="input" min="5" max="1440" @bind="_ttlMinutes" />
+        </label>
+        <label>
+            @L["MaxUses"]
+            <input type="number" class="input" min="1" max="10" @bind="_maxUses" />
+        </label>
+        @if (_stayType == GateStayType.Overnight)
+        {
+            <label class="gate-form-wide">
+                @L["StayReason"]
+                <input class="input" @bind="_stayReason" maxlength="500" />
+            </label>
+        }
+        <label class="gate-form-wide">
+            @L["Note"]
+            <input class="input" @bind="_note" maxlength="1000" />
+        </label>
+        <label class="gate-check">
+            <input type="checkbox" @bind="_issueCode" /> @L["IssueCode"]
+        </label>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorText))
+    {
+        <p class="gate-error" role="alert">@ErrorText</p>
+    }
+
+    <div class="gate-form-actions">
+        <button type="button" class="btn btn-secondary" @onclick="OnCancel">@L["Cancel"]</button>
+        <button type="button" class="btn btn-primary" disabled="@_submitting" @onclick="SubmitAsync">
+            @L["CreatePass"]
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<GatePropertyOption> Properties { get; set; } = [];
+    [Parameter] public IReadOnlyList<GateRoomOption> Rooms { get; set; } = [];
+    [Parameter] public bool IsTenant { get; set; }
+    [Parameter] public EventCallback<GatePassCreateRequest> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+
+    private int _propertyId;
+    private int _roomId;
+    private string _visitorName = string.Empty;
+    private string _visitorPhone = string.Empty;
+    private string _visitorIdNumber = string.Empty;
+    private DateTime _visitorDob;
+    private GateStayType _stayType = GateStayType.Visit;
+    private int _ttlMinutes = 60;
+    private int _maxUses = 1;
+    private string _stayReason = string.Empty;
+    private string _note = string.Empty;
+    private bool _issueCode = true;
+    private bool _submitting;
+
+    private IEnumerable<GateRoomOption> RoomsForSelection => _propertyId == 0
+        ? Rooms
+        : Rooms.Where(room => room.PropertyId == _propertyId);
+
+    protected override void OnParametersSet()
+    {
+        if (_roomId != 0 || Rooms.Count == 0) return;
+        _roomId = Rooms[0].RoomId;
+        _propertyId = Rooms[0].PropertyId;
+    }
+
+    private void ResetRoomForProperty()
+    {
+        if (_roomId == 0) return;
+        var room = Rooms.FirstOrDefault(item => item.RoomId == _roomId);
+        if (room is not null && _propertyId != 0 && room.PropertyId != _propertyId)
+        {
+            _roomId = 0;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _submitting = true;
+        await OnSubmit.InvokeAsync(new GatePassCreateRequest
+        {
+            PropertyId = _propertyId == 0 ? null : _propertyId,
+            RoomId = _roomId == 0 ? null : _roomId,
+            VisitorName = _visitorName,
+            VisitorPhone = NullIfBlank(_visitorPhone),
+            VisitorIdNumber = NullIfBlank(_visitorIdNumber),
+            VisitorDob = _visitorDob == default ? null : DateOnly.FromDateTime(_visitorDob),
+            StayReason = NullIfBlank(_stayReason),
+            Note = NullIfBlank(_note),
+            StayType = _stayType,
+            TtlMinutes = _ttlMinutes,
+            MaxUses = _maxUses,
+            IssueCode = _issueCode,
+        });
+        _submitting = false;
+    }
+
+    private static string? NullIfBlank(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}

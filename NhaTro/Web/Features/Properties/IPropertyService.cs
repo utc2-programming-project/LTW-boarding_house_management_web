@@ -1,5 +1,6 @@
 using Web.Common.Models;
 using Web.Features.Properties.DTOs;
+using Web.Features.Properties.Services;
 
 namespace Web.Features.Properties;
 
@@ -13,6 +14,18 @@ public interface IPropertyService
     /// <summary>Danh sách nhà trọ trong phạm vi người gọi, có RoomCount (phòng chưa xóa mềm).</summary>
     Task<PagedResult<PropertyListItem>> ListAsync(
         PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>KPI toàn phạm vi: tổng/đang hoạt động/tổng phòng, không phụ thuộc bộ lọc danh sách.</summary>
+    Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Danh sách gọn cho dropdown chọn nhà; không đếm phòng, tối đa 200 dòng.</summary>
+    Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(
+        PropertyCaller caller, CancellationToken ct = default);
+
+    /// <summary>Như bản trên nhưng lọc theo tên/địa chỉ ở SQL (dùng cho picker gõ tìm).</summary>
+    Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(
+        PropertyCaller caller, string? keyword, CancellationToken ct = default)
+        => ListOptionsAsync(caller, ct);
 
     Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default);
 

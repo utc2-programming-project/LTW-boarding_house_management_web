@@ -273,6 +273,8 @@
   <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Status / Actions</value></data>
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
+  <data name="ContractRentAmountLabel" xml:space="preserve"><value>Rent</value></data>
+  <data name="ContractDepositAmountLabel" xml:space="preserve"><value>Deposit</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>View contract information, parties, terms and payment status.</value></data>
   <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Update deposit</value></data>
   <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Update deposit</value></data>
@@ -478,6 +480,8 @@
   <data name="ContractDepositBankLabel" xml:space="preserve"><value>Receiving account</value></data>
   <data name="ContractDepositBankMissing" xml:space="preserve"><value>The owner has not configured a receiving account.</value></data>
   <data name="ContractDepositQrHint" xml:space="preserve"><value>Scan VietQR to transfer the exact deposit amount.</value></data>
+  <data name="ContractDepositCreateQrAction" xml:space="preserve"><value>Create QR code</value></data>
+  <data name="ContractDepositQrError" xml:space="preserve"><value>Could not create the QR code because the receiving account is invalid. Please contact the owner.</value></data>
   <data name="ContractDepositProofLabel" xml:space="preserve"><value>Deposit transfer proof</value></data>
   <data name="ContractDepositProofHint" xml:space="preserve"><value>Image or PDF confirming the transaction, up to 5 files.</value></data>
   <data name="ContractDepositProofRequired" xml:space="preserve"><value>Please upload at least one deposit transfer proof.</value></data>

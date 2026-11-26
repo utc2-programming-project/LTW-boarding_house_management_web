@@ -1,6 +1,6 @@
 # Nhật ký rà soát migration
 
-Ghi kết quả từng lượt rà soát migration của VHT-28 (2C/2D/2E). Chỉ ghi việc đã chạy thật; checklist review đầy đủ ở [VHT-117](../../archive/imp/VHT-117-review-va-thu-tu-merge-tuan-1.md).
+Ghi kết quả từng lượt rà soát migration của VHT-28 (2C/2D/2E). Chỉ ghi việc đã chạy thật.
 
 ## Cách chạy
 

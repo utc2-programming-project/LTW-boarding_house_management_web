@@ -6,7 +6,7 @@
 - Icon: [Lucide Animated](https://lucide-animated.com/). **Không dùng emoji, icon bàn phím hoặc trộn icon Material.**
 - Giữ Blazor/MudBlazor; chuyển SVG/hiệu ứng Lucide Animated sang dạng tương thích Blazor, giữ giấy phép MIT; không thêm React.
 - Dùng chung quy chuẩn cho mọi chức năng và vai trò; không bổ sung nghiệp vụ.
-- Giao diện hỗ trợ tiếng Việt (`vi-VN`) và tiếng Anh (`en-US`), mặc định tiếng Việt; mỗi feature có cùng resource key ở hai ngôn ngữ. Quy chuẩn font/màu/layout dùng chung, kiểm tra cả text tiếng Anh dài; xem phân công localization tại `docs/task/cong_viec_theo_tuan.md`. INIT hiện chỉ có trang giới thiệu song ngữ, không phải toàn ứng dụng đã được dịch.
+- Giao diện hỗ trợ tiếng Việt (`vi-VN`) và tiếng Anh (`en-US`), mặc định tiếng Việt; mỗi feature có cùng resource key ở hai ngôn ngữ. Quy chuẩn font/màu/layout dùng chung, kiểm tra cả text tiếng Anh dài. INIT hiện chỉ có trang giới thiệu song ngữ, không phải toàn ứng dụng đã được dịch.
 - Đơn vị: CSS px; chữ triển khai bằng rem, gốc 16px. Chiều cao component là tối thiểu, cho phép giãn theo nội dung.
 
 ## 2. Font và cỡ chữ

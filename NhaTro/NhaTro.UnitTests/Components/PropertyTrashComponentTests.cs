@@ -31,9 +31,10 @@ public sealed class PropertyTrashComponentTests : BunitContext
         JSInterop.SetupModule(DialogModule).Mode = JSRuntimeMode.Loose;
 
         Services.AddLogging();
+        Services.AddSingleton(new Web.Common.Utils.FilterUrlState(JSInterop.JSRuntime));
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(_toasts);
-        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider());
+        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider(), TestOwnerAccess.Create());
         Services.AddSingleton(callerProvider);
         Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
         Services.AddSingleton(sp => new PropertySetupDraftStore(
@@ -141,6 +142,12 @@ public sealed class PropertyTrashComponentTests : BunitContext
                 PageSize = 20,
                 TotalCount = Trash.Count,
             });
+
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
 
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(PropertyResult.Success(new PropertyDetail { Id = id, OwnerId = caller.UserId }));

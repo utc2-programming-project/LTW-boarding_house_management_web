@@ -164,7 +164,14 @@
                     @foreach (var service in _contract.Services)
                     {
                         <tr>
-                            <td><a class="cell-link" href="/services">@service.Name</a></td>
+                            <td>
+                                <a class="cell-link cell-truncate" href="/services" data-hover-tip>
+                                    @service.Name
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@service.Name</span>
+                                    </span>
+                                </a>
+                            </td>
                             <td>@service.Unit</td>
                             <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
                             <td><span class="contract-detail-tag @(service.IsRegistered ? "is-applied" : "is-muted")">@L[service.IsRegistered ? "ContractServiceApplied" : "ContractServiceUnregistered"]</span></td>
@@ -247,7 +254,7 @@
             @if (_canManage)
             {
                 <details class="contract-action-menu">
-                    <summary class="btn btn-secondary"><LucideIcon Name="more-horizontal" />@L["ContractMoreActions"]</summary>
+                    <summary class="btn btn-secondary"><LucideIcon Name="ellipsis" />@L["ContractMoreActions"]</summary>
                     <div class="contract-action-menu-panel">
                         @if (_contract.Status is ContractStatus.Draft or ContractStatus.ChangeRequested)
                         {
@@ -264,7 +271,7 @@
                         }
                         @if (_contract.CanLiquidate)
                         {
-                            <button type="button" class="p2-row-menu-item danger" @onclick="() => OpenLifecycle(false)"><LucideIcon Name="x-circle" /><span>@L["ContractLiquidateAction"]</span></button>
+                            <button type="button" class="p2-row-menu-item danger" @onclick="() => OpenLifecycle(false)"><LucideIcon Name="circle-x" /><span>@L["ContractLiquidateAction"]</span></button>
                         }
                         @if (_contract.DepositPaidAmount is not null)
                         {

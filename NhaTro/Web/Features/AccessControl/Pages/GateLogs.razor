@@ -1,0 +1,275 @@
+@page "/gate/logs"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject GatePageService Session
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["PageTitleLogs"]</PageTitle>
+
+<div class="page-stack gate-page">
+    <PageHeading Title="@L["PageTitleLogs"]" HelpText="@L["SubtitleLogs"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" @onclick="RefreshStaysAsync" disabled="@_loading">
+                <LucideIcon Name="refresh" /> @L["RefreshOverdue"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <p class="gate-error" role="alert">@_error</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    }
+    else
+    {
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <label class="gate-inline-label" for="gate-from">@L["From"]</label>
+                <input id="gate-from" type="date" class="input" @bind="_from" />
+                <label class="gate-inline-label" for="gate-to">@L["To"]</label>
+                <input id="gate-to" type="date" class="input" @bind="_to" />
+                <label class="gate-inline-label" for="gate-result">@L["Result"]</label>
+                <select id="gate-result" class="input" @bind="_result">
+                    <option value="">@L["All"]</option>
+                    <option value="1">@L["Success"]</option>
+                    <option value="0">@L["Failed"]</option>
+                </select>
+                <label class="gate-inline-label" for="gate-direction">@L["Direction"]</label>
+                <select id="gate-direction" class="input" @bind="_direction">
+                    <option value="">@L["All"]</option>
+                    <option value="@GateDirection.In">@L["In"]</option>
+                    <option value="@GateDirection.Out">@L["Out"]</option>
+                </select>
+                <button type="button" class="btn btn-primary" @onclick="LoadLogsAsync">@L["Filters"]</button>
+            </div>
+        </div>
+
+        <h2>@L["Stays"]</h2>
+        @if (_stays.Count == 0)
+        {
+            <p class="gate-muted">@L["NoStays"]</p>
+        }
+        else
+        {
+            <div class="gate-table-scroll">
+                <table class="gate-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@L["GuestName"]</th>
+                            <th scope="col">@L["Property"]</th>
+                            <th scope="col">@L["Room"]</th>
+                            <th scope="col">@L["DueAt"]</th>
+                            <th scope="col">@L["Status"]</th>
+                            <th scope="col">@L["Action"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var stay in _stays)
+                        {
+                            <tr>
+                                <td>@stay.GuestName</td>
+                                <td>@stay.PropertyName</td>
+                                <td>@(stay.RoomCode ?? "—")</td>
+                                <td>@stay.DueAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm")</td>
+                                <td><span class="gate-badge gate-badge--@stay.Status.ToString().ToLowerInvariant()">@L[stay.Status.ToString()]</span></td>
+                                <td class="gate-actions">
+                                    @if (stay.Status is StayReportStatus.Pending or StayReportStatus.Overdue)
+                                    {
+                                        <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenReport(stay)">@L["MarkReported"]</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => CancelStayAsync(stay.Id)">@L["Cancel"]</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (_reporting is not null)
+        {
+            <div class="gate-form-card">
+                <h3>@L["MarkReported"] — @_reporting.GuestName</h3>
+                <div class="gate-form-grid">
+                    <label>
+                        @L["ReportChannel"]
+                        <select class="input" @bind="_channel">
+                            @foreach (var channel in Enum.GetValues<StayReportChannel>())
+                            {
+                                <option value="@channel">@channel</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        @L["EvidenceRef"]
+                        <input class="input" @bind="_evidence" maxlength="450" />
+                    </label>
+                    <label class="gate-form-wide">
+                        @L["Note"]
+                        <input class="input" @bind="_reportNote" maxlength="1000" />
+                    </label>
+                </div>
+                <div class="gate-form-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="() => _reporting = null">@L["Cancel"]</button>
+                    <button type="button" class="btn btn-primary" @onclick="SubmitReportAsync">@L["Save"]</button>
+                </div>
+            </div>
+        }
+
+        <h2>@L["PageTitleLogs"]</h2>
+        @if (_logs.Count == 0)
+        {
+            <p class="gate-muted">@L["NoLogs"]</p>
+        }
+        else
+        {
+            <div class="gate-table-scroll">
+                <table class="gate-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@L["DueAt"]</th>
+                            <th scope="col">@L["Property"]</th>
+                            <th scope="col">@L["Device"]</th>
+                            <th scope="col">@L["Direction"]</th>
+                            <th scope="col">@L["Method"]</th>
+                            <th scope="col">@L["Result"]</th>
+                            <th scope="col">@L["GuestName"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in _logs)
+                        {
+                            <tr>
+                                <td>@log.OccurredAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm:ss")</td>
+                                <td>@log.PropertyName</td>
+                                <td>@(log.GateName ?? "—")</td>
+                                <td>@L[log.Direction == GateDirection.In ? "In" : "Out"]</td>
+                                <td>@log.Method</td>
+                                <td>
+                                    @if (log.IsSuccess)
+                                    {
+                                        <span class="gate-badge gate-badge--approved">@L["Success"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="gate-badge gate-badge--rejected" title="@log.Reason">@L["Failed"]@(string.IsNullOrWhiteSpace(log.Reason) ? "" : $" — {log.Reason}")</span>
+                                    }
+                                </td>
+                                <td>@(log.SubjectName ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private IReadOnlyList<GateLogDto> _logs = [];
+    private IReadOnlyList<StayReportDto> _stays = [];
+    private bool _loading = true;
+    private string? _error;
+    private DateTime? _from;
+    private DateTime? _to;
+    private int? _result;
+    private GateDirection? _direction;
+    private StayReportDto? _reporting;
+    private StayReportChannel _channel = StayReportChannel.VNeId;
+    private string _evidence = string.Empty;
+    private string _reportNote = string.Empty;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            await ReloadAllAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAllAsync()
+    {
+        await LoadLogsCoreAsync();
+        _stays = await Session.StaysAsync();
+    }
+
+    private async Task LoadLogsAsync() => await LoadLogsCoreAsync();
+
+    private async Task LoadLogsCoreAsync()
+    {
+        _logs = await Session.LogsAsync(new GateLogFilter
+        {
+            From = _from is { } from ? new DateTimeOffset(from.Date, TimeSpan.FromHours(7)) : null,
+            To = _to is { } to ? new DateTimeOffset(to.Date.AddDays(1), TimeSpan.FromHours(7)) : null,
+            Success = _result switch { 1 => true, 0 => false, _ => null },
+            Direction = _direction,
+        });
+    }
+
+    private async Task RefreshStaysAsync()
+    {
+        try
+        {
+            await Session.RefreshStaysAsync();
+            _stays = await Session.StaysAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private void OpenReport(StayReportDto stay)
+    {
+        _reporting = stay;
+        _evidence = string.Empty;
+        _reportNote = string.Empty;
+    }
+
+    private async Task CancelStayAsync(int id)
+    {
+        try
+        {
+            await Session.CancelStayAsync(id, L["GuestLeftBeforeDue"]);
+            _stays = await Session.StaysAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task SubmitReportAsync()    {
+        var stay = _reporting;
+        if (stay is null) return;
+        try
+        {
+            await Session.MarkReportedAsync(stay.Id, _channel, _evidence, _reportNote);
+            _reporting = null;
+            _stays = await Session.StaysAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+}

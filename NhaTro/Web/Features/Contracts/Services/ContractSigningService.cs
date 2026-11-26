@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Web.Common.Utils;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Accounts.Otp;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
@@ -889,12 +890,15 @@ public sealed class ContractSigningService(
 
         if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             return from contract in db.Contracts
                    join room in db.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                   join property in db.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                    where db.PropertyManagers.Any(assignment =>
                        assignment.PropertyId == room.PropertyId
                        && assignment.ManagerUserId == caller.UserId
                        && assignment.RevokedAt == null)
+                       && !blockedOwners.Contains(property.OwnerId)
                    select contract;
         }
 
@@ -927,7 +931,8 @@ public sealed class ContractSigningService(
                 link);
         }
 
-        var representative = recipients.FirstOrDefault(item => item.IsRepresentative) ?? recipients.FirstOrDefault();
+        var representative = recipients.FirstOrDefault(item => item.IsRepresentative)
+            ?? (recipients.Count > 0 ? recipients[0] : null);
         if (representative is not null && !string.IsNullOrWhiteSpace(representative.Email))
         {
             var content = EmailTemplates.ContractAwaitingTenant(

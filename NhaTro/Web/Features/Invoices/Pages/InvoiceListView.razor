@@ -3,6 +3,7 @@
 @page "/my-invoices"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "InvoiceView")]
+@implements IDisposable
 @using Web.Features.Utilities
 @using Web.Features.Utilities.Services
 @using Web.Features.Accounts
@@ -12,6 +13,7 @@
 @inject NavigationManager Navigation
 @inject Web.Features.Utilities.Services.ServiceRegistrationService RegistrationService
 @inject Web.Features.Utilities.Services.ServiceCatalogPageService ServiceCatalogPageService
+@inject Web.Common.Utils.FilterUrlState Url
 @inject ToastService Toast
 @inject IStringLocalizer<InvoiceResources> L
 @inject IStringLocalizer<UtilityResources> UL
@@ -113,7 +115,7 @@
                     <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                     <input id="invoice-keyword" class="input" type="search" autocomplete="off"
                            placeholder="@L["FilterKeywordPlaceholder"]"
-                           @bind="_keyword" @bind:event="oninput" @bind:after="OnFilterChanged" />
+                           @bind="_keyword" @bind:event="oninput" @bind:after="OnKeywordChanged" />
                 </div>
                 <div class="filter-bar__field filter-bar__select">
                     <label class="sr-only" for="invoice-year">@L["FilterYear"]</label>
@@ -145,6 +147,14 @@
                     </select>
                 </div>
                 <div class="filter-bar__actions">
+                    <div class="filter-bar__state">
+                        <label class="sr-only" for="invoice-page-size">@SL["P2RowsPerPage"]</label>
+                        <select id="invoice-page-size" class="input" value="@_pageSize" @onchange="ChangePageSize">
+                            <option value="10">@string.Format(SL["RowsPerPageOption"].Value, 10)</option>
+                            <option value="20">@string.Format(SL["RowsPerPageOption"].Value, 20)</option>
+                            <option value="50">@string.Format(SL["RowsPerPageOption"].Value, 50)</option>
+                        </select>
+                    </div>
                     <FilterAdvancedToggle @bind-Expanded="_showAdvanced" ActiveCount="AdvancedFilterCount" PanelId="invoice-advanced-panel" />
                     <FilterResetButton OnClick="ResetFiltersAsync" />
                 </div>
@@ -152,13 +162,24 @@
             <div class="filter-bar__advanced" id="invoice-advanced-panel" hidden="@(!_showAdvanced)">
                 <div class="filter-bar__stack filter-bar__wide">
                     <label for="invoice-contract">@L["FilterContract"]</label>
+                    <input id="invoice-contract-search" type="search" class="input" autocomplete="off"
+                           placeholder="@L["ContractSearchPlaceholder"]"
+                           @bind="_contractSearch" @bind:event="oninput" @bind:after="OnContractSearchChangedAsync" />
+                    @if (_contractSearching)
+                    {
+                        <p class="invoice-period-hint" role="status">@L["ContractSearchLoading"]</p>
+                    }
                     <select id="invoice-contract" class="input" @bind="_contractId" @bind:after="OnFilterChanged">
                         <option value="">@L["AllContracts"]</option>
-                        @foreach (var option in _contractOptions)
+                        @foreach (var option in ContractFilterOptions)
                         {
                             <option value="@option.ContractId">@option.ContractNumber · @option.RoomCode</option>
                         }
                     </select>
+                    @if (_contractOptions.Count >= ContractFilterLimit && !_contractSearching)
+                    {
+                        <p class="invoice-period-hint">@L["ContractSearchLimitHint", ContractFilterLimit]</p>
+                    }
                 </div>
                 <div class="filter-bar__stack">
                     <label for="invoice-payment-state">@L["FilterPaymentState"]</label>
@@ -211,18 +232,28 @@
                                 <tr>
                                     <td class="font-semibold">
                                         @* Hóa đơn của chính mình: khách thuê vẫn mở được /my/invoices/{id}. *@
-                                        <a class="cell-link" href="@AppLinks.Invoice(invoice.Id, DetailBase)" title="@SL["CellLinkOpenInvoice"]">HD-@invoice.Id</a>
+                                        <a class="cell-link" href="@AppLinks.Invoice(invoice.Id, DetailBase)">HD-@invoice.Id</a>
                                     </td>
                                     <td class="tabular-nums">@DateFormatter.Format(invoice.PeriodStart) – @DateFormatter.Format(invoice.PeriodEnd)</td>
                                     <td class="tabular-nums">@(invoice.Status == InvoiceStatus.Draft || invoice.DueDate is null ? "—" : DateFormatter.Format(invoice.DueDate.Value))</td>
                                     <td>
                                         @if (CanFollowLinks)
                                         {
-                                            <a class="cell-link is-quiet" href="@AppLinks.Contract(invoice.ContractId)" title="@SL["CellLinkOpenContract"]">@invoice.ContractNumber</a>
+                                            <a class="cell-link is-quiet cell-truncate" href="@AppLinks.Contract(invoice.ContractId)" data-hover-tip>
+                                                @invoice.ContractNumber
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    <span class="hover-tip__line">@invoice.ContractNumber</span>
+                                                </span>
+                                            </a>
                                         }
                                         else
                                         {
-                                            <span>@invoice.ContractNumber</span>
+                                            <span class="cell-truncate" data-hover-tip>
+                                                @invoice.ContractNumber
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    <span class="hover-tip__line">@invoice.ContractNumber</span>
+                                                </span>
+                                            </span>
                                         }
                                     </td>
                                     <td>
@@ -230,21 +261,41 @@
                                             <div class="invoice-room-line">
                                                 @if (CanFollowLinks)
                                                 {
-                                                    <a class="cell-link room-code" href="@AppLinks.RoomsByCode(invoice.RoomCode)" title="@SL["CellLinkOpenRoom"]">@invoice.RoomCode</a>
+                                                    <a class="cell-link room-code cell-truncate" href="@AppLinks.RoomsByCode(invoice.RoomCode)" data-hover-tip>
+                                                        @invoice.RoomCode
+                                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                            <span class="hover-tip__line">@invoice.RoomCode</span>
+                                                        </span>
+                                                    </a>
                                                 }
                                                 else
                                                 {
-                                                    <span class="room-code">@invoice.RoomCode</span>
+                                                    <span class="room-code cell-truncate" data-hover-tip>
+                                                        @invoice.RoomCode
+                                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                            <span class="hover-tip__line">@invoice.RoomCode</span>
+                                                        </span>
+                                                    </span>
                                                 }
                                                 <StatusBadge Text="@StatusText(invoice.Status)" Tone="@StatusTone(invoice.Status)" />
                                             </div>
                                             @if (CanFollowLinks)
                                             {
-                                                <a class="cell-link is-quiet property-name" href="@AppLinks.PropertiesByKeyword(invoice.PropertyName)" title="@SL["CellLinkOpenProperty"]">@invoice.PropertyName</a>
+                                                <a class="cell-link is-quiet property-name cell-truncate" href="@AppLinks.PropertiesByKeyword(invoice.PropertyName)" data-hover-tip>
+                                                    @invoice.PropertyName
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@invoice.PropertyName</span>
+                                                    </span>
+                                                </a>
                                             }
                                             else
                                             {
-                                                <span class="property-name">@invoice.PropertyName</span>
+                                                <span class="property-name cell-truncate" data-hover-tip>
+                                                    @invoice.PropertyName
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@invoice.PropertyName</span>
+                                                    </span>
+                                                </span>
                                             }
                                         </div>
                                     </td>
@@ -255,19 +306,35 @@
                                         }
                                         else if (CanFollowLinks)
                                         {
-                                            @for (var i = 0; i < invoice.TenantNames.Count; i++)
-                                            {
-                                                var tenantName = invoice.TenantNames[i];
-                                                if (i > 0)
+                                            <span class="cell-truncate" data-hover-tip>
+                                                @for (var i = 0; i < invoice.TenantNames.Count; i++)
                                                 {
-                                                    <span>, </span>
+                                                    var tenantName = invoice.TenantNames[i];
+                                                    if (i > 0)
+                                                    {
+                                                        <span>, </span>
+                                                    }
+                                                    <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)">@tenantName</a>
                                                 }
-                                                <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
-                                            }
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    @foreach (var name in invoice.TenantNames)
+                                                    {
+                                                        <span class="hover-tip__line">@name</span>
+                                                    }
+                                                </span>
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span>@string.Join(", ", invoice.TenantNames)</span>
+                                            <span class="cell-truncate" data-hover-tip>
+                                                @string.Join(", ", invoice.TenantNames)
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    @foreach (var name in invoice.TenantNames)
+                                                    {
+                                                        <span class="hover-tip__line">@name</span>
+                                                    }
+                                                </span>
+                                            </span>
                                         }
                                     </td>
                                     <td class="text-right tabular-nums">@MoneyFormatter.Format(invoice.TotalAmount)</td>
@@ -279,9 +346,7 @@
                                         }
                                         else if (invoice.OutstandingAmount > 0)
                                         {
-                                            <a class="outstanding-link"
-                                               href="@AppLinks.Invoice(invoice.Id, DetailBase)"
-                                               title="@SL["CellLinkOpenInvoice"]">
+                                            <a class="outstanding-link" href="@AppLinks.Invoice(invoice.Id, DetailBase)">
                                                 <LucideIcon Name="wallet" />
                                                 <span>@MoneyFormatter.Format(invoice.OutstandingAmount)</span>
                                                 <LucideIcon Name="arrow-right" />
@@ -355,7 +420,7 @@
                     <h2 id="invoice-registration-title">@L["RegisterServiceButton"]</h2>
                     <p>@L["RegisterServiceMonthlyNote"]</p>
                 </div>
-                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal">✕</button>
+                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal"><LucideIcon Name="x" /></button>
             </header>
             <div class="modal-body">
                 <div class="form-field">
@@ -412,7 +477,7 @@
                OnConfirm="DeleteInvoiceAsync" OnCancel="CancelDeleteInvoice" />
 
 @code {
-    private const int PageSize = 20;
+    private int _pageSize = 20;
 
     /// <summary>Các giá trị hợp lệ cho ?paymentState= (khớp option của bộ lọc).</summary>
     private static readonly string[] PaymentStateOptions =
@@ -433,7 +498,7 @@
         Items = [],
         TotalCount = 0,
         Page = 1,
-        PageSize = PageSize,
+        PageSize = 20,
         Summary = new InvoiceSummaryDto
         {
             DraftCount = 0,
@@ -443,7 +508,15 @@
         },
     };
 
+    private const int ContractFilterLimit = 25;
+
     private IReadOnlyList<InvoiceContractOptionDto> _contractOptions = [];
+
+    // Giữ đúng hợp đồng đang chọn khi đổi từ khóa tìm: chỉ nạp tối đa một trang gợi ý.
+    private readonly Dictionary<Guid, InvoiceContractOptionDto> _contractOptionCache = new();
+    private string _contractSearch = string.Empty;
+    private int _contractSearchVersion;
+    private bool _contractSearching;
     private bool _loading = true;
     private string? _error;
 
@@ -452,6 +525,7 @@
     private Guid? _contractId;
     private InvoiceStatus? _status;
     private string _keyword = string.Empty;
+    private CancellationTokenSource? _keywordDebounce;
     private string _paymentState = string.Empty;
     private string _minAmount = string.Empty;
     private string _maxAmount = string.Empty;
@@ -469,6 +543,14 @@
         + (string.IsNullOrWhiteSpace(_maxAmount) ? 0 : 1);
 
     private int? _openMenuId;
+
+    /// <summary>Hợp đồng đang chọn (deep-link) luôn hiện trong dropdown, kể cả khi ngoài trang gợi ý.</summary>
+    private IEnumerable<InvoiceContractOptionDto> ContractFilterOptions =>
+        _contractOptionCache.Values
+            .Concat(_contractOptions)
+            .GroupBy(option => option.ContractId)
+            .Select(group => group.First())
+            .OrderBy(option => option.ContractNumber, StringComparer.OrdinalIgnoreCase);
 
     // Đăng ký dịch vụ (khách thuê) ngay trên trang Hóa đơn.
     private bool _registrationOpen;
@@ -503,11 +585,11 @@
         }
     }
 
-    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)_pageSize));
 
-    private int FirstItem => _result.TotalCount == 0 ? 0 : (_result.Page - 1) * PageSize + 1;
+    private int FirstItem => _result.TotalCount == 0 ? 0 : (_result.Page - 1) * _pageSize + 1;
 
-    private int LastItem => Math.Min(_result.Page * PageSize, _result.TotalCount);
+    private int LastItem => Math.Min(_result.Page * _pageSize, _result.TotalCount);
 
     protected override Task OnInitializedAsync()
     {
@@ -540,6 +622,8 @@
         {
             _paymentState = QueryPaymentState;
         }
+
+        ApplyUrlState();
 
         return ReloadAsync();
     }
@@ -591,6 +675,47 @@
         await ReloadAsync();
     }
 
+    private void ApplyUrlState()
+    {
+        if (PageQuery is > 1)
+        {
+            _page = PageQuery.Value;
+        }
+
+        if (YearQuery is >= 2000 and <= 3000)
+        {
+            _year = YearQuery;
+        }
+
+        if (MonthQuery is >= 1 and <= 12 && _year is not null)
+        {
+            _month = MonthQuery;
+        }
+
+        if (!string.IsNullOrWhiteSpace(StatusQuery))
+        {
+            if (Enum.TryParse<InvoiceStatus>(StatusQuery, true, out var status) && Enum.IsDefined(status))
+            {
+                _status = status;
+            }
+            else if (int.TryParse(StatusQuery, out var statusValue)
+                && Enum.IsDefined(typeof(InvoiceStatus), statusValue))
+            {
+                _status = (InvoiceStatus)statusValue;
+            }
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["page"] = _page > 1 ? _page.ToString(System.Globalization.CultureInfo.InvariantCulture) : null,
+        ["year"] = _year?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ["month"] = _month?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ["status"] = _status?.ToString(),
+        ["paymentState"] = string.IsNullOrEmpty(_paymentState) ? null : _paymentState,
+    });
+
     private async Task OpenRegistrationModal()
     {
         _registrationOpen = true;
@@ -599,13 +724,13 @@
         try
         {
             _registrationContractOptions = await RegistrationService.GetMyContractOptionsAsync();
-            _registrationContractId = _registrationContractOptions.FirstOrDefault()?.ContractId;
+            _registrationContractId = _registrationContractOptions.Count > 0 ? _registrationContractOptions[0].ContractId : null;
 
             var services = await ServiceCatalogPageService.GetServicesForCallerAsync();
             _services = services
                 .Where(service => !service.IsReadOnly && service.Type != Web.Features.Utilities.DTOs.ServiceTypeCategory.Meter)
                 .ToList();
-            _registrationServiceId = _services.FirstOrDefault()?.Id ?? string.Empty;
+            _registrationServiceId = _services.Count > 0 ? _services[0].Id : string.Empty;
 
             if (_registrationContractOptions.Count == 0)
             {
@@ -676,6 +801,19 @@
     [SupplyParameterFromQuery(Name = "paymentState")]
     public string? QueryPaymentState { get; set; }
 
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ trang/bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "year")]
+    public int? YearQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "month")]
+    public int? MonthQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
     private string? _lastAppliedKeywordQuery;
     private string? _lastAppliedContractId;
     private DateOnly? _lastAppliedPeriodStart;
@@ -693,7 +831,9 @@
             try
             {
                 var caller = await CallerProvider.GetCallerAsync();
-                _contractOptions = await InvoiceQuery.GetContractOptionsAsync(caller);
+                _contractOptions = await InvoiceQuery.GetContractOptionsAsync(caller, _contractSearch, ContractFilterLimit);
+                PinContractOptions(_contractOptions);
+                await PinContractByIdAsync(_contractId);
                 _result = await InvoiceQuery.GetInvoicesAsync(BuildFilter(), caller);
             }
             catch (Exception)
@@ -742,7 +882,113 @@
         }
 
         _page = 1;
-        await LoadResultAsync();
+        await LoadResultAsync(showLoading: false);
+    }
+
+    private async Task ChangePageSize(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size is 10 or 20 or 50)
+        {
+            _pageSize = size;
+            _page = 1;
+            await LoadResultAsync(showLoading: false);
+        }
+    }
+
+    // Gõ từ khóa: gộp 300ms. Cả từ khóa lẫn select/năm đều giữ bảng cũ trong lúc tải
+    // để không nháy overlay toàn trang (như Hợp đồng).
+    private async Task OnKeywordChanged()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
+            if (_year is null)
+            {
+                _month = null;
+            }
+
+            _page = 1;
+            await LoadResultAsync(showLoading: false);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+    }
+
+    private async Task OnContractSearchChangedAsync()
+    {
+        var version = ++_contractSearchVersion;
+        await Task.Delay(UiTiming.SearchDebounceMs);
+        if (version != _contractSearchVersion)
+        {
+            return;
+        }
+
+        _contractSearching = true;
+        await _loadGate.WaitAsync();
+        try
+        {
+            try
+            {
+                var caller = await CallerProvider.GetCallerAsync();
+                var options = await InvoiceQuery.GetContractOptionsAsync(caller, _contractSearch, ContractFilterLimit);
+                if (version != _contractSearchVersion)
+                {
+                    return;
+                }
+
+                _contractOptions = options;
+                PinContractOptions(options);
+            }
+            catch
+            {
+                // Giữ gợi ý cũ khi tìm lỗi; danh sách hóa đơn không phụ thuộc bước này.
+            }
+        }
+        finally
+        {
+            _loadGate.Release();
+            if (version == _contractSearchVersion)
+            {
+                _contractSearching = false;
+            }
+        }
+    }
+
+    private void PinContractOptions(IEnumerable<InvoiceContractOptionDto> options)
+    {
+        foreach (var option in options)
+        {
+            _contractOptionCache[option.ContractId] = option;
+        }
+    }
+
+    private async Task PinContractByIdAsync(Guid? contractId)
+    {
+        if (contractId is not { } id || _contractOptionCache.ContainsKey(id))
+        {
+            return;
+        }
+
+        try
+        {
+            var caller = await CallerProvider.GetCallerAsync();
+            PinContractOptions(await InvoiceQuery.GetContractOptionsByIdsAsync(caller, [id]));
+        }
+        catch
+        {
+            // Hợp đồng ngoài phạm vi: bỏ qua, danh sách hóa đơn tự lọc rỗng.
+        }
     }
 
     private async Task LoadResultAsync(bool showLoading = true)
@@ -774,6 +1020,11 @@
         {
             _loadGate.Release();
         }
+
+        if (_error is null)
+        {
+            await WriteUrlStateAsync();
+        }
     }
 
     private InvoiceFilter BuildFilter() => new()
@@ -796,7 +1047,7 @@
         MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
         MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
         Page = _page,
-        PageSize = PageSize,
+        PageSize = _pageSize,
     };
 
     private async Task ResetFiltersAsync()
@@ -809,9 +1060,10 @@
         _paymentState = string.Empty;
         _minAmount = string.Empty;
         _maxAmount = string.Empty;
+        _contractSearch = string.Empty;
         _page = 1;
         _showAdvanced = false;
-        await LoadResultAsync();
+        await ReloadAsync();
     }
 
     private async Task GoToPageAsync(int page)
@@ -823,7 +1075,8 @@
         }
 
         _page = target;
-        await LoadResultAsync();
+        // Giữ bảng cũ trong lúc tải trang kế; tránh nháy overlay mỗi lần bấm số trang.
+        await LoadResultAsync(showLoading: false);
     }
 
     private void OpenDetail(int invoiceId) => Navigation.NavigateTo($"{DetailBase}/{invoiceId}");

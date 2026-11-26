@@ -28,6 +28,9 @@
   <data name="MonthValue" xml:space="preserve"><value>Month {0}</value></data>
   <data name="FilterContract" xml:space="preserve"><value>Contract</value></data>
   <data name="AllContracts" xml:space="preserve"><value>All contracts</value></data>
+  <data name="ContractSearchPlaceholder" xml:space="preserve"><value>Search contract, room, property…</value></data>
+  <data name="ContractSearchLoading" xml:space="preserve"><value>Searching contracts…</value></data>
+  <data name="ContractSearchLimitHint" xml:space="preserve"><value>Showing up to {0} matching contracts — type more to narrow down.</value></data>
   <data name="FilterStatus" xml:space="preserve"><value>Status</value></data>
   <data name="RegisterServiceButton" xml:space="preserve"><value>Register for a service</value></data>
   <data name="CancelBtn" xml:space="preserve"><value>Cancel</value></data>

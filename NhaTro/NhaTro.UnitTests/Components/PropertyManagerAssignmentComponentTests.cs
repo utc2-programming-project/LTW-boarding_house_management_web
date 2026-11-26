@@ -33,7 +33,7 @@ public sealed class PropertyManagerAssignmentComponentTests : BunitContext
         Services.AddLogging();
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(new PropertyPageService(
-            new P2CallerProvider(new OwnerAuthenticationProvider()), _properties, _managers));
+            new P2CallerProvider(new OwnerAuthenticationProvider(), TestOwnerAccess.Create()), _properties, _managers));
     }
 
     private IRenderedComponent<PropertyDetailsDialog> RenderDialog(bool isOwner = true) =>
@@ -193,6 +193,12 @@ public sealed class PropertyManagerAssignmentComponentTests : BunitContext
         public Task<PagedResult<PropertyListItem>> ListAsync(
             PropertyFilter filter, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(new PagedResult<PropertyListItem>());
+
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
 
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(PropertyResult.Success(new PropertyDetail

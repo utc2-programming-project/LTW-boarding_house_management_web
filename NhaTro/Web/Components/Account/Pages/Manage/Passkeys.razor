@@ -18,7 +18,7 @@
 @if (currentPasskeys is { Count: > 0 })
 {
     <div class="table-scroll">
-        <table class="account-table">
+        <table class="account-table account-table--fixed">
             <thead>
                 <tr>
                     <th scope="col">@L["PasskeyNameLabel"]</th>
@@ -29,7 +29,14 @@
                 @foreach (var passkey in currentPasskeys)
                 {
                     <tr>
-                        <td>@(passkey.Name ?? L["UnnamedPasskey"].Value)</td>
+                        <td>
+                            <span class="cell-truncate" data-hover-tip>
+                                @(passkey.Name ?? L["UnnamedPasskey"].Value)
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@(passkey.Name ?? L["UnnamedPasskey"].Value)</span>
+                                </span>
+                            </span>
+                        </td>
                         <td>
                             @{
                                 var credentialId = Base64Url.EncodeToString(passkey.CredentialId);

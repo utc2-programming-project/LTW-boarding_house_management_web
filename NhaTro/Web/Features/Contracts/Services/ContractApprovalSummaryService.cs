@@ -5,6 +5,7 @@ using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 
 namespace Web.Features.Contracts.Services;
 
@@ -17,12 +18,15 @@ public sealed class ContractApprovalSummaryService(ApplicationDbContext db)
     {
         var candidates = requests.Where(x => x.TargetType == ApprovalTargetType.Contract && (x.OperationCode == "SW-07" || x.OperationCode == "SW-08") && Guid.TryParse(x.TargetKey, out _)).ToList();
         var ids = candidates.Select(x => Guid.Parse(x.TargetKey)).ToList();
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         var contracts = await (from contract in db.Contracts.AsNoTracking()
                                join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
                                join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
                                where ids.Contains(contract.ContractId)
                                    && (role == Roles.ChuTro ? property.OwnerId == userId
-                                       : role == Roles.QuanLy && db.PropertyManagers.Any(m => m.PropertyId == property.Id && m.ManagerUserId == userId && m.RevokedAt == null))
+                                       : role == Roles.QuanLy
+                                           && db.PropertyManagers.Any(m => m.PropertyId == property.Id && m.ManagerUserId == userId && m.RevokedAt == null)
+                                           && !blockedOwners.Contains(property.OwnerId))
                                select new { contract.ContractId, contract.ContractNumber, room.Code, PropertyName = property.Name }).ToDictionaryAsync(x => x.ContractId, ct);
         var result = new Dictionary<Guid, ContractApprovalSummary>();
         foreach (var request in candidates)

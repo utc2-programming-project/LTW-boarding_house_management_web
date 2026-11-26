@@ -31,6 +31,7 @@ public sealed class PropertyDeleteComponentTests : BunitContext
         JSInterop.SetupModule(DialogModule).Mode = JSRuntimeMode.Loose;
 
         Services.AddLogging();
+        Services.AddSingleton(new Web.Common.Utils.FilterUrlState(JSInterop.JSRuntime));
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(_toasts);
     }
@@ -118,7 +119,7 @@ public sealed class PropertyDeleteComponentTests : BunitContext
 
     private IRenderedComponent<PropertyList> Render(AuthenticationStateProvider auth)
     {
-        var callerProvider = new P2CallerProvider(auth);
+        var callerProvider = new P2CallerProvider(auth, TestOwnerAccess.Create());
         Services.AddSingleton(callerProvider);
         Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
         Services.AddSingleton(sp => new PropertySetupDraftStore(
@@ -174,6 +175,12 @@ public sealed class PropertyDeleteComponentTests : BunitContext
                 TotalCount = visible.Count,
             });
         }
+
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
 
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             Task.FromResult(PropertyResult.Success(new PropertyDetail { Id = id, OwnerId = caller.UserId }));

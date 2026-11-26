@@ -21,9 +21,9 @@
             <div class="culture-control">
                 <AntiforgeryToken />
                 <span class="sr-only" id="public-culture-label">@L["Language"]</span>
-                <div role="group" aria-labelledby="public-culture-label">
-                    <button type="button" class="culture-button" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
-                    <button type="button" class="culture-button" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
+                <div class="tabbar tabbar--sm" role="group" aria-labelledby="public-culture-label">
+                    <button type="button" class="tabbar-item" data-culture="vi-VN" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "vi-VN" ? "true" : "false")" lang="vi">VI</button>
+                    <button type="button" class="tabbar-item" data-culture="en-US" aria-pressed="@(CultureInfo.CurrentUICulture.Name == "en-US" ? "true" : "false")" lang="en">EN</button>
                 </div>
                 <span class="culture-error" role="alert" hidden data-culture-error>@L["CultureError"]</span>
                 <span class="sr-only" role="status" data-culture-status data-loading-label="@L["Loading"]"></span>

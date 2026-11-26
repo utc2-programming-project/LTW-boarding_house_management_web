@@ -43,7 +43,7 @@
     {
         <div class="inline-error" role="alert"><span>@_error</span></div>
     }
-    else if (_rows.Count == 0)
+    else if (_total == 0)
     {
         <div class="empty-state">
             <h2>@UL["P5CostEmptyTitle"]</h2>
@@ -72,16 +72,27 @@
                             <tr>
                                 <td class="tabular-nums">#@row.Id</td>
                                 <td>
-                                    <span class="room-code">
+                                    <span class="room-code cell-truncate" data-hover-tip>
                                         @for (var i = 0; i < row.TenantNames.Count; i++)
                                         {
                                             if (i > 0) { <span>, </span> }
                                             <a class="cell-link" href="@AppLinks.TenantsByKeyword(row.TenantNames[i])">@row.TenantNames[i]</a>
                                         }
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            @foreach (var name in row.TenantNames)
+                                            {
+                                                <span class="hover-tip__line">@name</span>
+                                            }
+                                        </span>
                                     </span>
                                     @if (row.TenantPhones.Count > 0)
                                     {
-                                        <span class="room-property">@string.Join(", ", row.TenantPhones)</span>
+                                        <span class="room-property cell-truncate" data-hover-tip>
+                                            @string.Join(", ", row.TenantPhones)
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@string.Join(", ", row.TenantPhones)</span>
+                                            </span>
+                                        </span>
                                     }
                                     <span class="room-property">
                                         <a class="cell-link is-quiet is-code" href="@AppLinks.Contract(row.ContractId)"
@@ -89,14 +100,22 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a class="cell-link room-code" href="@AppLinks.ServicePrices(row.ServiceCatalogId)"
-                                       title="@SL["CellLinkOpenService"]">@row.ServiceName</a>
-                                    <span class="room-property">
+                                    <a class="cell-link room-code cell-truncate" href="@AppLinks.ServicePrices(row.ServiceCatalogId)"
+                                       data-hover-tip>
+                                        @row.ServiceName
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@row.ServiceName</span>
+                                        </span>
+                                    </a>
+                                    <span class="room-property cell-truncate" data-hover-tip>
                                         <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(row.RoomCode)"
                                            title="@SL["CellLinkOpenRoom"]">@row.RoomCode</a>
                                         <span> · </span>
                                         <a class="cell-link is-quiet" href="@AppLinks.PropertiesByKeyword(row.PropertyName)"
                                            title="@SL["CellLinkOpenProperty"]">@row.PropertyName</a>
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@row.RoomCode · @row.PropertyName</span>
+                                        </span>
                                     </span>
                                 </td>
                                 <td class="text-center tabular-nums">@row.Quantity.ToString("0.##")</td>
@@ -136,7 +155,7 @@
                 </table>
             </div>
 
-            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_rows.Count"
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_total"
                         PageChanged="GoToPage" />
         </div>
     }
@@ -168,7 +187,18 @@
                     <div><dt>@UL["ServiceRequestQuantity"]</dt><dd class="tabular-nums">@detail.Quantity.ToString("0.##")</dd></div>
                     <div><dt>@UL["ServiceRequestStart"]</dt><dd class="tabular-nums">@DateFormatter.Format(detail.StartDate)</dd></div>
                     <div><dt>@UL["ServiceRequestEnd"]</dt><dd class="tabular-nums">@(detail.EndDate is { } end ? DateFormatter.Format(end) : "—")</dd></div>
-                    <div><dt>@UL["ServiceRequestNote"]</dt><dd>@(string.IsNullOrWhiteSpace(detail.Note) ? "—" : detail.Note)</dd></div>
+                    <div>
+                        <dt>@UL["ServiceRequestNote"]</dt>
+                        <dd class="cell-truncate" data-hover-tip>
+                            @(string.IsNullOrWhiteSpace(detail.Note) ? "—" : detail.Note)
+                            @if (!string.IsNullOrWhiteSpace(detail.Note))
+                            {
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@detail.Note</span>
+                                </span>
+                            }
+                        </dd>
+                    </div>
                     <div><dt>@UL["RegColRequestedAt"]</dt><dd class="tabular-nums">@DateFormatter.FormatDateTime(detail.RequestedAt.UtcDateTime)</dd></div>
                 </dl>
 
@@ -188,7 +218,12 @@
                 {
                     <div class="detail-section">
                         <h3>@UL["RegCancelRequestTitle"]</h3>
-                        <p>@detail.CancelReason</p>
+                        <p class="cell-truncate" data-hover-tip>
+                            @detail.CancelReason
+                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                <span class="hover-tip__line">@detail.CancelReason</span>
+                            </span>
+                        </p>
                     </div>
                     <div class="form-field">
                         <label for="cancel-reject-reason">@UL["RegCancelRejectReasonLabel"]</label>
@@ -303,9 +338,8 @@
 @code {
     private const int PageSize = 20;
 
-    private IReadOnlyList<ServiceRegistrationDto> _rows = [];
-    private IReadOnlyList<ServiceRegistrationDto> _allRows = [];
     private IReadOnlyList<ServiceRegistrationDto> _pageRows = [];
+    private int _total;
     private int _page = 1;
     private int? _openMenuId;
     private ServiceRegistrationDto? _detail;
@@ -326,11 +360,11 @@
     private string? _invoiceQr;
     private OwnerBankAccount? _bankAccount;
 
-    private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
+    private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
 
-    private int FirstItem => _rows.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+    private int FirstItem => _total == 0 ? 0 : (_page - 1) * PageSize + 1;
 
-    private int LastItem => Math.Min(_page * PageSize, _rows.Count);
+    private int LastItem => Math.Min(_page * PageSize, _total);
 
     protected override Task OnInitializedAsync()
     {
@@ -350,11 +384,10 @@
 
         _lastAppliedKeywordQuery = keyword;
         _page = 1;
-        ApplyKeyword();
-        return Task.CompletedTask;
+        return LoadAsync();
     }
 
-    /// <summary>Từ khóa từ link chéo (?q=HD-001 / A107 / tên dịch vụ): lọc ngay trong trang.</summary>
+    /// <summary>Từ khóa từ link chéo (?q=HD-001 / A107 / tên dịch vụ): lọc ở SQL theo trang.</summary>
     [SupplyParameterFromQuery(Name = "q")]
     public string? KeywordQuery { get; set; }
 
@@ -363,32 +396,6 @@
     private static string? NormalizeKeyword(string? keyword) =>
         string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
 
-    private void ApplyKeyword()
-    {
-        _rows = FilterByKeyword(_allRows);
-        _page = PaginationHelper.ClampPage(_page, TotalPages);
-        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
-    }
-
-    private IReadOnlyList<ServiceRegistrationDto> FilterByKeyword(IReadOnlyList<ServiceRegistrationDto> rows)
-    {
-        if (_lastAppliedKeywordQuery is not { } keyword)
-        {
-            return rows;
-        }
-
-        return rows.Where(row =>
-                Contains(row.ContractNumber, keyword)
-                || Contains(row.RoomCode, keyword)
-                || Contains(row.PropertyName, keyword)
-                || Contains(row.ServiceName, keyword)
-                || row.TenantNames.Any(name => Contains(name, keyword)))
-            .ToList();
-    }
-
-    private static bool Contains(string? value, string keyword) =>
-        value?.Contains(keyword, StringComparison.CurrentCultureIgnoreCase) == true;
-
     private async Task LoadAsync()
     {
         _loading = true;
@@ -396,12 +403,25 @@
         _openMenuId = null;
         try
         {
-            _allRows = await RegistrationService.ListForLandlordAsync();
-            ApplyKeyword();
+            var result = await RegistrationService.ListForLandlordPagedAsync(
+                _lastAppliedKeywordQuery, _page, PageSize);
+
+            // Xóa/duyệt làm trang cuối trống: lùi về trang cuối còn dữ liệu.
+            if (result.Items.Count == 0 && result.TotalCount > 0 && _page > 1)
+            {
+                _page = PaginationHelper.TotalPages(result.TotalCount, PageSize);
+                result = await RegistrationService.ListForLandlordPagedAsync(
+                    _lastAppliedKeywordQuery, _page, PageSize);
+            }
+
+            _pageRows = result.Items;
+            _total = result.TotalCount;
         }
         catch (Exception)
         {
             _error = UL["P5CostLoadError"];
+            _pageRows = [];
+            _total = 0;
         }
         finally
         {
@@ -409,7 +429,7 @@
         }
     }
 
-    private void GoToPage(int page)
+    private async Task GoToPage(int page)
     {
         var target = PaginationHelper.ClampPage(page, TotalPages);
         if (target == _page)
@@ -419,7 +439,7 @@
 
         _page = target;
         _openMenuId = null;
-        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+        await LoadAsync();
     }
 
     private bool IsMenuOpen(int registrationId) => _openMenuId == registrationId;

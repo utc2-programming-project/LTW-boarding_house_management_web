@@ -2,25 +2,38 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Tenants.Entities;
 using Web.Infrastructure.Email;
 
 namespace Web.Features.Tenants.Invitations;
 
 /// <summary>
-/// PLAN-006: lời mời khách thuê. Token ngẫu nhiên 32 byte, chỉ lưu hash SHA-256;
-/// lời mời email hết hạn sau 15 phút và dùng được một lần.
+/// PLAN-006: lời mời khách thuê qua email. Token ngẫu nhiên 32 byte, chỉ lưu hash SHA-256;
+/// lời mời dùng một lần, hạn mặc định 24 giờ (cấu hình <c>Invitations:EmailLifetimeMinutes</c>).
+/// PLAN-001 #15: mời được cả khách đã có tài khoản (nhận liên kết bằng chính tài khoản đó).
 /// </summary>
 public sealed class TenantInvitationService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     UserManager<ApplicationUser> users,
     IOutboundEmailSender emailSender,
     TimeProvider clock,
-    ILogger<TenantInvitationService> logger)
+    ILogger<TenantInvitationService> logger,
+    Microsoft.Extensions.Configuration.IConfiguration? configuration = null)
 {
-    public const int EmailLifetimeMinutes = 15;
+    public const int EmailLifetimeMinutes = 1440;
+
+    private int ResolveExpiryMinutes(CreateTenantInvitationRequest request)
+    {
+        var configured = configuration
+            ?.GetValue<int?>("Invitations:EmailLifetimeMinutes") ?? EmailLifetimeMinutes;
+        var minutes = request.ExpiryMinutes is > 0 ? request.ExpiryMinutes.Value : configured;
+        return Math.Clamp(minutes, 15, 1440);
+    }
 
     public async Task<TenantInvitationResult> CreateAsync(
         CreateTenantInvitationRequest request,
@@ -51,10 +64,33 @@ public sealed class TenantInvitationService(
                 TenantInvitationErrorCodes.Forbidden, "Tài khoản chưa được gán cho chủ trọ nào.");
         }
 
-        if (await db.Users.AsNoTracking().AnyAsync(u => u.Email == email, ct))
+        var wantsExisting = request.Kind == Web.Features.Tenants.Enums.TenantInvitationKind.ExistingAccount;
+        var existingUser = await db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, ct);
+
+        if (existingUser is not null && !wantsExisting)
         {
             return TenantInvitationResult.Failure(
                 TenantInvitationErrorCodes.EmailAlreadyRegistered, "Email này đã có tài khoản.");
+        }
+
+        if (existingUser is null && wantsExisting)
+        {
+            return TenantInvitationResult.Failure(
+                TenantInvitationErrorCodes.NotFound, "Không tìm thấy tài khoản với email này.");
+        }
+
+        string? targetUserId = null;
+        if (existingUser is not null)
+        {
+            if (!await db.Tenants.AsNoTracking()
+                    .AnyAsync(t => t.UserId == existingUser.Id && !t.IsDeleted, ct))
+            {
+                return TenantInvitationResult.Failure(
+                    TenantInvitationErrorCodes.NotFound, "Khách chưa có hồ sơ thuê.");
+            }
+
+            targetUserId = existingUser.Id;
         }
 
         // Mời lại cùng email: thu hồi lời mời cũ còn treo để chỉ còn một liên kết sống.
@@ -67,20 +103,24 @@ public sealed class TenantInvitationService(
             item.RevokedAt = clock.GetUtcNow().UtcDateTime;
         }
 
+        var expiryMinutes = ResolveExpiryMinutes(request);
         var rawToken = Base64Url(RandomNumberGenerator.GetBytes(32));
         var invitation = new TenantInvitation
         {
             Email = email,
-            FullName = fullName,
-            Phone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
+            FullName = existingUser is null ? fullName : existingUser.FullName ?? fullName,
+            Phone = string.IsNullOrWhiteSpace(request.PhoneNumber)
+                ? existingUser?.PhoneNumber
+                : request.PhoneNumber.Trim(),
             OwnerId = ownerId,
             InvitedByUserId = caller.UserId,
             CreatedByUserId = caller.UserId,
             Channel = Web.Features.Tenants.Enums.TenantInvitationChannel.Email,
-            Kind = Web.Features.Tenants.Enums.TenantInvitationKind.NewAccount,
-            ExpiryPresetMinutes = EmailLifetimeMinutes,
+            Kind = request.Kind,
+            TargetUserId = targetUserId,
+            ExpiryPresetMinutes = expiryMinutes,
             TokenHash = HashToken(rawToken),
-            ExpiresAt = clock.GetUtcNow().UtcDateTime.AddMinutes(EmailLifetimeMinutes),
+            ExpiresAt = clock.GetUtcNow().UtcDateTime.AddMinutes(expiryMinutes),
             CreatedAt = clock.GetUtcNow().UtcDateTime,
         };
         db.TenantInvitations.Add(invitation);
@@ -93,7 +133,8 @@ public sealed class TenantInvitationService(
 
         var link = $"{inviteBaseUrl.TrimEnd('/')}/invite/{Uri.EscapeDataString(rawToken)}";
         var content = EmailTemplates.TenantInvitation(
-            fullName, email, new EmailRecipient(email, email), link, ownerName);
+            fullName, email, new EmailRecipient(email, email), link, ownerName,
+            expiryMinutes, existingAccount: existingUser is not null);
 
         await emailSender.SendAsync(email, content.Subject, content.Html, ct);
         logger.LogInformation(
@@ -115,10 +156,10 @@ public sealed class TenantInvitationService(
         var ownerIds = await OwnerIdsAsync(db, caller, ct);
         var now = clock.GetUtcNow().UtcDateTime;
 
-        var rows = await db.TenantInvitations.AsNoTracking()
-            .Where(i => ownerIds.Contains(i.OwnerId))
-            .OrderByDescending(i => i.CreatedAt)
-            .Take(200)
+        var rows = await LookupQuery.Bounded(db.TenantInvitations.AsNoTracking()
+                .Where(i => ownerIds.Contains(i.OwnerId))
+                .OrderByDescending(i => i.CreatedAt)
+                .ThenByDescending(i => i.Id))
             .ToListAsync(ct);
 
         return rows.Select(i => new TenantInvitationDto(
@@ -184,6 +225,12 @@ public sealed class TenantInvitationService(
         {
             return TenantInvitationResult.Failure(
                 TenantInvitationErrorCodes.Expired, "Lời mời đã hết hạn.");
+        }
+
+        if (invitation.Kind != Web.Features.Tenants.Enums.TenantInvitationKind.NewAccount)
+        {
+            return TenantInvitationResult.Failure(
+                TenantInvitationErrorCodes.InvalidRequest, "Lời mời này dành cho tài khoản đã có.");
         }
 
         var user = new ApplicationUser
@@ -261,10 +308,12 @@ public sealed class TenantInvitationService(
             return caller.UserId;
         }
 
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         return await (
             from assignment in db.PropertyManagers.AsNoTracking()
             join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
             where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                && !blockedOwners.Contains(property.OwnerId)
             orderby property.Id
             select (string?)property.OwnerId
         ).FirstOrDefaultAsync(ct);
@@ -278,10 +327,12 @@ public sealed class TenantInvitationService(
             return [caller.UserId];
         }
 
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         return await (
             from assignment in db.PropertyManagers.AsNoTracking()
             join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
             where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                && !blockedOwners.Contains(property.OwnerId)
             select property.OwnerId
         ).Distinct().ToListAsync(ct);
     }

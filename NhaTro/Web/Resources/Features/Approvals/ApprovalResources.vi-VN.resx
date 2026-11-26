@@ -8,6 +8,8 @@
   <data name="PageTitle" xml:space="preserve"><value>Hàng đợi duyệt</value></data>
   <data name="PageHelp" xml:space="preserve"><value>Các thao tác Quản lý gửi cần bạn duyệt. Duyệt sẽ áp dụng thay đổi ngay; từ chối cần nêu lý do.</value></data>
   <data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="TabManager" xml:space="preserve"><value>Thao tác Quản lý</value></data>
+  <data name="TabAi" xml:space="preserve"><value>Đề xuất AI</value></data>
   <data name="Loading" xml:space="preserve"><value>Đang tải…</value></data>
   <data name="LoadFailedTitle" xml:space="preserve"><value>Không tải được hàng đợi</value></data>
   <data name="LoadFailedDescription" xml:space="preserve"><value>Kết nối hoặc quyền truy cập có thể đã thay đổi. Vui lòng thử lại.</value></data>
