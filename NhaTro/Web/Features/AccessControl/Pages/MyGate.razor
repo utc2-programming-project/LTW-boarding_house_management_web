@@ -1,0 +1,279 @@
+@page "/my/gate"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "KhachThue")]
+@implements IDisposable
+@inject GatePageService Session
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["PageTitleMyGate"]</PageTitle>
+
+<div class="page-stack gate-page">
+    <PageHeading Title="@L["PageTitleMyGate"]" HelpText="@L["SubtitleMyGate"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="plus" /> @L["CreateGuestPass"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <p class="gate-error" role="alert">@_error</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    }
+    else if (_rooms.Count == 0)
+    {
+        <p class="gate-muted">@L["NoRoom"]</p>
+    }
+    else
+    {
+        @if (_notice is not null)
+        {
+            <div class="gate-notice" role="status">
+                <p>@_notice</p>
+                @if (_created is not null)
+                {
+                    <dl class="gate-created">
+                        <dt>@L["RawToken"]</dt>
+                        <dd><code>@_created.RawToken</code></dd>
+                        @if (!string.IsNullOrWhiteSpace(_created.Code))
+                        {
+                            <dt>@L["FallbackCode"]</dt>
+                            <dd><code>@_created.Code</code></dd>
+                        }
+                    </dl>
+                }
+                <button type="button" class="btn btn-secondary btn-sm" @onclick="DismissNotice">@L["Close"]</button>
+            </div>
+        }
+
+        <div class="gate-form-card">
+            <h2>@L["MyQr"]</h2>
+            <p class="gate-muted">@L["QrHint"]</p>
+            <div class="gate-form-grid">
+                <label>
+                    @L["Room"]
+                    <select class="input" @bind="_qrRoomId" @bind:after="RefreshQrAsync">
+                        @foreach (var room in _rooms)
+                        {
+                            <option value="@room.RoomId">@room.PropertyName — @room.RoomCode</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            <p>
+                <code class="gate-qr-token">@_qr</code>
+            </p>
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="RefreshQrAsync">@L["RefreshQr"]</button>
+            </div>
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["Enrollments"]</h2>
+            <p class="gate-muted">@L["EnrollHint"]</p>
+            @if (_enrollments.Count > 0)
+            {
+                <ul class="gate-enrollment-list">
+                    @foreach (var enrollment in _enrollments)
+                    {
+                        <li>@enrollment.Method — @enrollment.Status</li>
+                    }
+                </ul>
+            }
+            <div class="gate-form-grid">
+                <label>
+                    @L["Method"]
+                    <select class="input" @bind="_enrollMethod">
+                        <option value="@BiometricMethod.Face">@L["Face"]</option>
+                        <option value="@BiometricMethod.Passkey">@L["Passkey"]</option>
+                    </select>
+                </label>
+                <label class="gate-form-wide">
+                    @L["EnrollmentValue"]
+                    <input class="input" @bind="_enrollValue" maxlength="2000" />
+                </label>
+            </div>
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-primary" @onclick="EnrollAsync" disabled="@string.IsNullOrWhiteSpace(_enrollValue)">
+                    @L["Enroll"]
+                </button>
+            </div>
+        </div>
+
+        @if (_creating)
+        {
+            <GatePassForm Rooms="_rooms" IsTenant="true" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+        }
+
+        <h2>@L["MyPasses"]</h2>
+        <GatePassList Passes="_passes" ShowProperty="true" OnRevoke="pass => OpenReason(pass)" />
+    }
+</div>
+
+@if (_reasonPass is not null)
+{
+    <GateReasonDialog Pass="_reasonPass" Title="@L["Revoke"]" ConfirmText="@L["Revoke"]"
+                      OnCancel="() => _reasonPass = null" OnConfirm="ConfirmRevokeAsync" />
+}
+
+@code {
+    private IReadOnlyList<GatePassDto> _passes = [];
+    private IReadOnlyList<GateRoomOption> _rooms = [];
+    private bool _loading = true;
+    private bool _creating;
+    private string? _error;
+    private string? _formError;
+    private string? _notice;
+    private GatePassCreatedDto? _created;
+    private GatePassDto? _reasonPass;
+    private int _qrRoomId;
+    private string _qr = string.Empty;
+    private IReadOnlyList<BiometricEnrollmentDto> _enrollments = [];
+    private BiometricMethod _enrollMethod = BiometricMethod.Face;
+    private string _enrollValue = string.Empty;
+    private readonly CancellationTokenSource _qrCts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        _ = RunQrLoopAsync(_qrCts.Token);
+    }
+
+    private async Task RunQrLoopAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(55));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                if (_rooms.Count == 0 || _qrRoomId == 0) continue;
+                _qr = await Session.ResidentQrAsync(_qrRoomId);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            // Giữ QR cũ; người dùng có thể bấm "Làm mới QR".
+        }
+    }
+
+    public void Dispose()
+    {
+        _qrCts.Cancel();
+        _qrCts.Dispose();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rooms = await Session.RoomsAsync();
+            if (_rooms.Count > 0)
+            {
+                _qrRoomId = _rooms[0].RoomId;
+                _qr = await Session.ResidentQrAsync(_qrRoomId);
+            }
+
+            _passes = await Session.PassesAsync();
+            _enrollments = await Session.EnrollmentsAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateAsync(GatePassCreateRequest request)
+    {
+        _formError = null;
+        try
+        {
+            _created = await Session.CreatePassAsync(request);
+            _creating = false;
+            _notice = L["PassCreated"];
+            _passes = await Session.PassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _formError = Resolve(ex);
+        }
+    }
+
+    private void OpenReason(GatePassDto pass) => _reasonPass = pass;
+
+    private async Task RefreshQrAsync()
+    {
+        try
+        {
+            _qr = await Session.ResidentQrAsync(_qrRoomId);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task EnrollAsync()
+    {
+        try
+        {
+            if (_enrollMethod == BiometricMethod.Passkey)
+            {
+                await Session.EnrollPasskeyAsync(_enrollValue.Trim());
+            }
+            else
+            {
+                await Session.EnrollFaceAsync(_enrollValue.Trim());
+            }
+
+            _enrollValue = string.Empty;
+            _enrollments = await Session.EnrollmentsAsync();
+            _notice = L["Saved"];
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task ConfirmRevokeAsync(string reason)
+    {
+        var pass = _reasonPass;
+        if (pass is null) return;
+        try
+        {
+            await Session.RevokeAsync(pass.Id, reason);
+            _reasonPass = null;
+            _notice = L["Saved"];
+            _passes = await Session.PassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _reasonPass = null;
+            _formError = Resolve(ex);
+        }
+    }
+
+    private void DismissNotice()
+    {
+        _notice = null;
+        _created = null;
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+}

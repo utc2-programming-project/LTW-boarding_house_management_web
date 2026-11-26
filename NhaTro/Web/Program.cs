@@ -580,6 +580,22 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ContractServiceRegist
 // Quy trình đăng ký dịch vụ có xét duyệt + tạo hóa đơn từ yêu cầu.
 builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceRegistrationService>();
 builder.Services.AddScoped<Web.Features.Notifications.INotificationService, Web.Features.Notifications.NotificationService>();
+// P9 (bổ sung): ra vào cổng — chính sách, phiếu khách, token, kiểm soát lượt vào, lưu trú, sinh trắc.
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePolicyService,
+    Web.Features.AccessControl.Services.GatePolicyService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGateTokenService,
+    Web.Features.AccessControl.Services.GateTokenService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePassService,
+    Web.Features.AccessControl.Services.GatePassService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IStayReportService,
+    Web.Features.AccessControl.Services.StayReportService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IBiometricEnrollmentService,
+    Web.Features.AccessControl.Services.BiometricEnrollmentService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Gates.IGateController,
+    Web.Features.AccessControl.Gates.SoftOpenGateController>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGateAccessService,
+    Web.Features.AccessControl.Services.GateAccessService>();
+builder.Services.AddScoped<Web.Features.AccessControl.Services.GatePageService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.IUtilityTariffService, Web.Features.Utilities.Services.UtilityTariffService>();
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityPeriodCostSnapshotService>();
 // VHT-51: ghi chỉ số thật, chốt chi phí snapshot và cấp nguồn chi phí cho hóa đơn.

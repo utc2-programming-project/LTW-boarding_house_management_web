@@ -1,0 +1,194 @@
+@page "/gate/kiosk"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject GatePageService Session
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["PageTitleKiosk"]</PageTitle>
+
+<div class="page-stack gate-page">
+    <PageHeading Title="@L["PageTitleKiosk"]" HelpText="@L["SubtitleKiosk"]" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <p class="gate-error" role="alert">@_error</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    }
+    else if (_properties.Count == 0)
+    {
+        <p class="gate-muted">@L["PropertyNotFound"]</p>
+    }
+    else
+    {
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <label class="gate-inline-label" for="kiosk-property">@L["Property"]</label>
+                <select id="kiosk-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
+                    @foreach (var property in _properties)
+                    {
+                        <option value="@property.PropertyId">@property.Name</option>
+                    }
+                </select>
+                <label class="gate-inline-label" for="kiosk-device">@L["SelectGate"]</label>
+                <select id="kiosk-device" class="input" @bind="_deviceId">
+                    <option value="0">@L["SelectGate"]</option>
+                    @foreach (var device in _devices)
+                    {
+                        <option value="@device.Id">@device.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["KioskTitle"]</h2>
+            <div class="gate-form-grid">
+                <label class="gate-form-wide">
+                    @L["Token"]
+                    <input class="input gate-token-input" @bind="_token" autocomplete="off" />
+                </label>
+                <label>
+                    @L["Direction"]
+                    <select class="input" @bind="_direction">
+                        <option value="@GateDirection.In">@L["In"]</option>
+                        <option value="@GateDirection.Out">@L["Out"]</option>
+                    </select>
+                </label>
+                <label>
+                    @L["Method"]
+                    <select class="input" @bind="_method">
+                        <option value="@GateMethod.Qr">QR</option>
+                        <option value="@GateMethod.Code">@L["FallbackCode"]</option>
+                        <option value="@GateMethod.Manual">@L["ManualOpen"]</option>
+                    </select>
+                </label>
+            </div>
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-primary" @onclick="VerifyAsync" disabled="@string.IsNullOrWhiteSpace(_token)">
+                    <LucideIcon Name="scan" /> @L["Check"]
+                </button>
+            </div>
+            @if (_result is not null)
+            {
+                <p class="@(_result.Succeeded ? "gate-success" : "gate-error")" role="status">@_result.Message</p>
+            }
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["ManualOpen"]</h2>
+            <div class="gate-form-grid">
+                <label class="gate-form-wide">
+                    @L["ManualReason"]
+                    <input class="input" @bind="_manualReason" maxlength="200" />
+                </label>
+            </div>
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-danger" @onclick="ManualOpenAsync" disabled="@string.IsNullOrWhiteSpace(_manualReason)">
+                    @L["ManualOpen"]
+                </button>
+            </div>
+            @if (_manualResult is not null)
+            {
+                <p class="@(_manualResult.Succeeded ? "gate-success" : "gate-error")" role="status">@_manualResult.Message</p>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<GatePropertyOption> _properties = [];
+    private IReadOnlyList<GateDeviceDto> _devices = [];
+    private int _propertyId;
+    private int _deviceId;
+    private string _token = string.Empty;
+    private string _manualReason = string.Empty;
+    private GateDirection _direction = GateDirection.In;
+    private GateMethod _method = GateMethod.Qr;
+    private GateVerifyResult? _result;
+    private GateVerifyResult? _manualResult;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = _properties[0].PropertyId;
+                var (_, devices) = await Session.SettingsAsync(_propertyId);
+                _devices = devices;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ChangePropertyAsync(ChangeEventArgs args)
+    {
+        if (!int.TryParse(args.Value?.ToString(), out var id) || id == _propertyId) return;
+        _propertyId = id;
+        _deviceId = 0;
+        _result = null;
+        try
+        {
+            var (_, devices) = await Session.SettingsAsync(_propertyId);
+            _devices = devices;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task VerifyAsync()
+    {
+        try
+        {
+            _result = await Session.VerifyAsync(new GateVerifyRequest
+            {
+                PropertyId = _propertyId,
+                GateDeviceId = _deviceId == 0 ? null : _deviceId,
+                Token = _token,
+                Method = _method,
+                Direction = _direction,
+            });
+            _token = string.Empty;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task ManualOpenAsync()
+    {
+        try
+        {
+            _manualResult = await Session.ManualOpenAsync(_propertyId, _deviceId == 0 ? null : _deviceId, _manualReason);
+            _manualReason = string.Empty;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+}
