@@ -11,7 +11,7 @@ namespace NhaTro.UnitTests.Features.Accounts;
 public class ExternalLoginRowTests
 {
     private static AuthenticationScheme Scheme(string name, string? display = null) =>
-        new(name, display, typeof(object));
+        new(name, display, typeof(AuthenticationHandler<AuthenticationSchemeOptions>));
 
     private static UserLoginInfo Login(string provider, string? display = null) =>
         new(provider, "key-1", display);
