@@ -777,6 +777,13 @@ using (var scope = app.Services.CreateScope())
         {
             await DevAccountSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
         }
+
+        // DB demo nhỏ chưa có dữ liệu cổng: thêm chính sách/thiết bị/phiếu/nhật ký mẫu
+        // để các trang /gate/* có dữ liệu xem ngay. Idempotent theo từng nhà trọ.
+        if (app.Environment.IsDevelopment())
+        {
+            await GateDemoSeeder.EnsureAsync(scope.ServiceProvider, app.Environment, app.Logger);
+        }
     }
     catch (Exception ex)
     {
