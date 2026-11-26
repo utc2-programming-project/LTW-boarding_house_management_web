@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
@@ -12,7 +12,9 @@ using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
+using Web.Features.Accounts.Avatar;
 using Web.Features.Accounts.Otp;
+using Web.Features.Assistant.Entities;
 using Web.Data.Tariffs;
 using Web.Features.AccessControl.Entities;
 
@@ -24,6 +26,9 @@ namespace Web.Data
 
         // VHT-24: phân công Quản lý theo tòa nhà (nhiều-nhiều, có lịch sử).
         public DbSet<PropertyManager> PropertyManagers => Set<PropertyManager>();
+
+        // PLAN-030 bổ sung: ảnh đại diện lưu server, một dòng mỗi tài khoản.
+        public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
 
         // PLAN-022: mã OTP một lần cho đăng ký/xác thực tài khoản.
         public DbSet<OtpChallenge> OtpChallenges => Set<OtpChallenge>();
@@ -66,6 +71,11 @@ namespace Web.Data
 
         // VHT-96: hang doi duyet thao tac Quan ly (NEW-03).
         public DbSet<ManagerApprovalRequest> ManagerApprovalRequests => Set<ManagerApprovalRequest>();
+
+        // Trợ lý AI: đề xuất chờ Chủ trọ duyệt, nhật ký gọi model và cài đặt theo Chủ trọ.
+        public DbSet<AiSuggestion> AiSuggestions => Set<AiSuggestion>();
+        public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
+        public DbSet<AiAssistantSettings> AiAssistantSettings => Set<AiAssistantSettings>();
         public DbSet<UtilityTariff> UtilityTariffs => Set<UtilityTariff>();
         public DbSet<UtilityTariffTier> UtilityTariffTiers => Set<UtilityTariffTier>();
         public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();
@@ -107,6 +117,14 @@ namespace Web.Data
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            builder.Entity<AppNotification>(entity =>
+            {
+                entity.Property(item => item.RecipientUserId).HasMaxLength(450).IsRequired();
+                entity.Property(item => item.Title).HasMaxLength(200).IsRequired();
+                entity.Property(item => item.Link).HasMaxLength(500);
+                entity.HasIndex(item => new { item.RecipientUserId, item.IsRead, item.CreatedAt });
+            });
 
             builder.Entity<AuditLogEntry>(entity =>
             {

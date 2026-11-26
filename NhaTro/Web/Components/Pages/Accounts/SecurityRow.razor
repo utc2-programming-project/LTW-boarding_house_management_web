@@ -1,0 +1,28 @@
+@using Web.Components.Shared.Feedback
+
+@* Một dòng thiết lập bảo mật: trạng thái rõ + đúng một nút hành động. *@
+
+<li class="acct-row">
+    <span class="acct-row-icon" aria-hidden="true"><LucideIcon Name="@Icon" /></span>
+    <div class="acct-row-copy">
+        <span class="acct-row-title">@Title</span>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <span class="acct-row-desc">@Description</span>
+        }
+    </div>
+    <span class="acct-row-side">
+        <StatusBadge Tone="@Tone" Text="@BadgeText" />
+        <a class="btn btn-secondary acct-row-action" href="@ActionHref">@ActionLabel</a>
+    </span>
+</li>
+
+@code {
+    [Parameter, EditorRequired] public string Icon { get; set; } = "shield";
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Description { get; set; }
+    [Parameter, EditorRequired] public string BadgeText { get; set; } = string.Empty;
+    [Parameter] public BadgeTone Tone { get; set; } = BadgeTone.Neutral;
+    [Parameter, EditorRequired] public string ActionLabel { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ActionHref { get; set; } = string.Empty;
+}

@@ -1,5 +1,6 @@
 @using System.Globalization
 @inject IStringLocalizer<ReportResource> L
+@inject IStringLocalizer<Web.Features.Dashboard.DashboardResource> D
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
@@ -12,8 +13,9 @@ else
     <div class="revenue-chart">
         <div class="revenue-chart__head">
             <div class="revenue-chart__toolbar" role="group" aria-label="@L["ChartType"]">
-                <button type="button" class="btn btn-secondary" aria-pressed="@((!LineChart).ToString().ToLowerInvariant())" @onclick="() => LineChart = false">@L["ColumnChart"]</button>
+                <button type="button" class="btn btn-secondary" aria-pressed="@((!LineChart && !Stacked).ToString().ToLowerInvariant())" @onclick="ShowColumns">@L["ColumnChart"]</button>
                 <button type="button" class="btn btn-secondary" aria-pressed="@(LineChart.ToString().ToLowerInvariant())" @onclick="() => LineChart = true">@L["LineChart"]</button>
+                <button type="button" class="btn btn-secondary" aria-pressed="@Stacked.ToString().ToLowerInvariant()" @onclick="ShowStacked">@D["RevenueStacked"]</button>
             </div>
             <ul class="chart-legend" aria-hidden="true">
                 @for (var series = 0; series < 2; series++)
@@ -40,15 +42,6 @@ else
                             <stop offset="0%" style="@($"stop-color:{SeriesColors[series]}")" />
                             <stop offset="100%" style="@($"stop-color:{SeriesSoftColors[series]}")" />
                         </linearGradient>
-                        <filter id="@GlowId(series)" x="-40%" y="-40%" width="180%" height="180%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur" />
-                            <feFlood style="@($"flood-color:{SeriesColors[series]};flood-opacity:.28")" />
-                            <feComposite in2="blur" operator="in" />
-                            <feMerge>
-                                <feMergeNode />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
                     }
                 </defs>
 
@@ -67,12 +60,24 @@ else
                     {
                         var values = data[series];
                         <path class="chart-area" d="@AreaPath(values)" style="@($"fill:url(#{AreaGradientId(series)})")" />
-                        <path class="chart-line" d="@LinePath(values)" style="@($"stroke:url(#{LineGradientId(series)})")" filter="@($"url(#{GlowId(series)})")" />
+                        <path class="chart-line" d="@LinePath(values)" style="@($"stroke:url(#{LineGradientId(series)})")" />
                         @for (var index = 0; index < values.Length; index++)
                         {
                             <circle class="chart-point-halo" cx="@F(GroupCenter(index))" cy="@F(ValueY(values[index]))" r="8" style="@($"fill:{SeriesColors[series]}")" />
                             <circle class="chart-point" cx="@F(GroupCenter(index))" cy="@F(ValueY(values[index]))" r="4" style="@($"fill:{SeriesColors[series]};stroke:var(--surface)")" />
                         }
+                    }
+                }
+                else if (Stacked)
+                {
+                    @for (var index = 0; index < (Periods?.Count ?? 0); index++)
+                    {
+                        var first = Math.Max(0, PlotHeight * data[0][index] / MaxValue);
+                        var second = Math.Max(0, PlotHeight * data[1][index] / MaxValue);
+                        var x = BarX(index, 0);
+                        var stackedWidth = BarWidth * 2 + 4;
+                        <rect class="chart-bar" x="@F(x)" y="@F(PadTop + PlotHeight - first)" width="@F(stackedWidth)" height="@F(first)" style="@($"fill:url(#{BarGradientId(0)})")" />
+                        <rect class="chart-bar" x="@F(x)" y="@F(PadTop + PlotHeight - first - second)" width="@F(stackedWidth)" height="@F(second)" style="@($"fill:url(#{BarGradientId(1)})")" />
                     }
                 }
                 else
@@ -83,7 +88,7 @@ else
                         {
                             var value = data[series][index];
                             var barHeight = Math.Max(0, PlotHeight * value / MaxValue);
-                            <rect class="chart-bar" x="@F(BarX(index, series))" y="@F(PadTop + PlotHeight - barHeight)" width="@F(BarWidth)" height="@F(barHeight)" rx="@F(BarWidth / 2)" ry="@F(BarWidth / 2)" style="@($"fill:url(#{BarGradientId(series)})")" filter="@($"url(#{GlowId(series)})")" />
+                            <rect class="chart-bar" x="@F(BarX(index, series))" y="@F(PadTop + PlotHeight - barHeight)" width="@F(BarWidth)" height="@F(barHeight)" rx="@F(BarWidth / 2)" ry="@F(BarWidth / 2)" style="@($"fill:url(#{BarGradientId(series)})")" />
                         }
                     }
                 }
@@ -112,7 +117,9 @@ else
                 </div>
             }
         </div>
-        <div class="table-scroll">
+        <details class="revenue-chart__table">
+            <summary>@D["ViewNumberTable"]</summary>
+            <div class="table-scroll">
             <table>
                 <caption>@L["ChartDataTable"]</caption>
                 <thead>
@@ -133,7 +140,8 @@ else
                     }
                 </tbody>
             </table>
-        </div>
+            </div>
+        </details>
     </div>
 }
 
@@ -154,7 +162,11 @@ else
     [Parameter] public IReadOnlyList<RevenuePeriodGroupDto>? Periods { get; set; }
 
     private bool LineChart;
+    private bool Stacked;
     private int? HoverIndex;
+
+    private void ShowColumns() { LineChart = false; Stacked = false; }
+    private void ShowStacked() { LineChart = false; Stacked = true; }
     private double Width = 640;
 
     private string[] SeriesNames => [L["RecognizedRevenue"].Value, L["Outstanding"].Value];
@@ -225,7 +237,6 @@ else
 
     private string LineGradientId(int series) => $"{_chartId}-line-{series}";
 
-    private string GlowId(int series) => $"{_chartId}-glow-{series}";
 
     private static double NiceMax(double value)
     {

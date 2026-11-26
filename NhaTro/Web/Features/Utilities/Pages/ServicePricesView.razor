@@ -58,25 +58,7 @@
     </PageHeading>
 
     <!-- Service Selector Tabs -->
-    <div class="service-tabs-container">
-        <button type="button"
-                class="tab-btn @(_selectedServiceId == "all" ? "active" : "")"
-                @onclick='() => SelectServiceTab("all")'>
-            @L["TabAllServices"]
-        </button>
-        @foreach (var srv in _services)
-        {
-            <button type="button"
-                    class="tab-btn @(_selectedServiceId == srv.Id ? "active" : "")"
-                    @onclick="() => SelectServiceTab(srv.Id)">
-                <span>@srv.Name</span>
-                @if (srv.IsReadOnly)
-                {
-                    <LucideIcon Name="lock" Class="tab-lock-icon" />
-                }
-            </button>
-        }
-    </div>
+    <TabBar Role="tablist" Items="ServiceTabs" ActiveKey="@_selectedServiceId" OnSelect="SelectServiceTab" />
 
     <div class="stat-grid" aria-label="@L["StatPriceSummary"]">
         <article class='stat-card stat-card--link @PriceCardClass("all")' role="button" tabindex="0"
@@ -239,8 +221,20 @@
                                         @L[GetStatusResourceKey(v.Status)]
                                     </span>
                                 </td>
-                                <td class="text-slate-700">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</td>
-                                    <td class="text-slate-600 italic">@(string.IsNullOrWhiteSpace(v.Note) ? L["NoData"].Value : v.Note)</td>
+                                <td class="text-slate-700 cell-truncate" data-hover-tip>
+                                    @(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@(v.BuildingScope == "all" ? L["AllBuildings"] : v.BuildingName)</span>
+                                    </span>
+                                </td>
+                                    <td class="text-slate-600 italic">
+                                        <span class="cell-truncate" data-hover-tip>
+                                            @NoteText(v)
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@NoteText(v)</span>
+                                            </span>
+                                        </span>
+                                    </td>
                             </tr>
                         }
                     </tbody>
@@ -302,11 +296,19 @@
 </AuthorizeView>
 
 @code {
+    private string NoteText(PriceVersionDto version) =>
+        string.IsNullOrWhiteSpace(version.Note) ? L["NoData"].Value : version.Note;
+
     private List<ServiceItemDto> _services = [];
     private List<PriceVersionDto> _allVersions = [];
     private List<PriceVersionDto> _filteredVersions = [];
     private List<(string Value, string Label)> _scopeOptions = [];
     private string _selectedServiceId = string.Empty;
+    private IReadOnlyList<TabItem> ServiceTabs =>
+    [
+        new("all", L["TabAllServices"].Value),
+        .. _services.Select(service => new TabItem(service.Id, service.Name, Icon: service.IsReadOnly ? "lock" : null)),
+    ];
     // Query param chỉ áp dụng lần đầu để reload sau khi lưu không kéo tab về dịch vụ cũ.
     private string? _lastAppliedServiceId;
     private string _statusFilter = "all";

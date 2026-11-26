@@ -21,7 +21,10 @@
 .chart-tooltip__row { display:flex; align-items:center; gap:8px; color:var(--text-secondary); }
 .chart-tooltip__row b { margin-left:auto; color:var(--text-primary); font-variant-numeric:tabular-nums; }
 .chart-tooltip__dot { width:8px; height:8px; flex:0 0 8px; border-radius:var(--radius-pill); }
-.revenue-chart ::deep .table-scroll { margin:8px 0 0; }
+.revenue-chart__table summary { display:inline-flex; align-items:center; min-height:36px; width:fit-content; cursor:pointer; font-size:.875rem; color:var(--text-secondary); }
+.revenue-chart__table summary:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
+.revenue-chart__table[open] summary { margin-bottom:var(--space-2); }
+.revenue-chart ::deep .table-scroll { margin:0; }
 .table-scroll { overflow-x:auto; max-width:100%; border:1px solid var(--border); border-radius:var(--radius-card); }
 table { width:100%; border-collapse:collapse; text-align:left; font-size:.875rem; line-height:1.375rem; }
 caption { text-align:left; font-size:1.125rem; line-height:1.625rem; font-weight:600; padding:16px; color:var(--text-primary); }

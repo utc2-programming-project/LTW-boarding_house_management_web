@@ -37,6 +37,9 @@ public static class AccountErrorCodes
     /// <summary>Chi duyet duoc tai khoan dang Cho duyet.</summary>
     public const string NotPendingApproval = nameof(NotPendingApproval);
 
+    /// <summary>Từ chối tài khoản phải có lý do (tối đa 500 ký tự).</summary>
+    public const string ReasonRequired = nameof(ReasonRequired);
+
     /// <summary>Không cho tự xoá tài khoản đang đăng nhập.</summary>
     public const string CannotDeleteSelf = nameof(CannotDeleteSelf);
 
@@ -72,6 +75,7 @@ public static class AccountErrorCodes
         TenantAlreadyLinked => "ErrorTenantAlreadyLinked",
         RoleLinkedToTenant => "ErrorRoleLinkedToTenant",
         NotPendingApproval => "ErrorNotPendingApproval",
+        ReasonRequired => "ErrorReasonRequired",
         CannotDeleteSelf => "ErrorCannotDeleteSelf",
         CannotDeleteLastAdmin => "ErrorCannotDeleteLastAdmin",
         CannotDeleteAdmin => "ErrorCannotDeleteAdmin",

@@ -28,7 +28,7 @@ async function createCredential(headers, signal) {
     return await navigator.credentials.create({ publicKey: options, signal });
 }
 
-async function requestCredential(email, mediation, headers, signal) {
+async function requestCredential(email, headers, signal) {
     const optionsResponse = await fetchWithErrorHandling(`/Account/PasskeyRequestOptions?username=${email}`, {
         method: 'POST',
         headers,
@@ -36,9 +36,12 @@ async function requestCredential(email, mediation, headers, signal) {
     });
     const optionsJson = await optionsResponse.json();
     const options = PublicKeyCredential.parseRequestOptionsFromJSON(optionsJson);
-    return await navigator.credentials.get({ publicKey: options, mediation, signal });
+    return await navigator.credentials.get({ publicKey: options, signal });
 }
 
+// PLAN-001 #18: chỉ lấy credential khi người dùng bấm nút passkey.
+// Template .NET còn gọi conditional mediation ngay khi trang tải; Edge trên Windows mở
+// hộp thoại "Choose a passkey" mỗi lần reload dù người dùng không đụng gì → đã bỏ.
 customElements.define('passkey-submit', class extends HTMLElement {
     static formAssociated = true;
 
@@ -58,15 +61,13 @@ customElements.define('passkey-submit', class extends HTMLElement {
                 this.obtainAndSubmitCredential();
             }
         });
-
-        this.tryAutofillPasskey();
     }
 
     disconnectedCallback() {
         this.abortController?.abort();
     }
 
-    async obtainCredential(useConditionalMediation, signal) {
+    async obtainCredential(signal) {
         if (!browserSupportsPasskeys) {
             throw new Error('Some passkey features are missing. Please update your browser.');
         }
@@ -79,20 +80,19 @@ customElements.define('passkey-submit', class extends HTMLElement {
             return await createCredential(headers, signal);
         } else if (this.attrs.operation === 'Request') {
             const email = new FormData(this.internals.form).get(this.attrs.emailName);
-            const mediation = useConditionalMediation ? 'conditional' : undefined;
-            return await requestCredential(email, mediation, headers, signal);
+            return await requestCredential(email, headers, signal);
         } else {
             throw new Error(`Unknown passkey operation '${this.attrs.operation}'.`);
         }
     }
 
-    async obtainAndSubmitCredential(useConditionalMediation = false) {
+    async obtainAndSubmitCredential() {
         this.abortController?.abort();
         this.abortController = new AbortController();
         const signal = this.abortController.signal;
         const formData = new FormData();
         try {
-            const credential = await this.obtainCredential(useConditionalMediation, signal);
+            const credential = await this.obtainCredential(signal);
             const credentialJson = JSON.stringify(credential);
             formData.append(`${this.attrs.name}.CredentialJson`, credentialJson);
         } catch (error) {
@@ -101,11 +101,6 @@ customElements.define('passkey-submit', class extends HTMLElement {
                 return;
             }
             console.error(error);
-            if (useConditionalMediation) {
-                // An error occurred during conditional mediation, which is not user-initiated.
-                // We log the error in the console but do not relay it to the user.
-                return;
-            }
             const errorMessage = error.name === 'NotAllowedError'
                 ? 'No passkey was provided by the authenticator.'
                 : error.message;
@@ -113,11 +108,5 @@ customElements.define('passkey-submit', class extends HTMLElement {
         }
         this.internals.setFormValue(formData);
         this.internals.form.submit();
-    }
-
-    async tryAutofillPasskey() {
-        if (browserSupportsPasskeys && this.attrs.operation === 'Request' && await PublicKeyCredential.isConditionalMediationAvailable?.()) {
-            await this.obtainAndSubmitCredential(/* useConditionalMediation */ true);
-        }
     }
 });

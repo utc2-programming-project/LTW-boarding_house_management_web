@@ -39,7 +39,7 @@
 .doc-main-title {
     font-size: 28px;
     line-height: 36px;
-    font-weight: 700;
+    font-weight:600;
     color: var(--text-primary);
     letter-spacing: -0.02em;
     margin: 0;
@@ -54,7 +54,7 @@
     color: var(--primary);
     font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
+
     letter-spacing: 0.05em;
 }
 
@@ -198,7 +198,7 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    text-transform: uppercase;
+
     letter-spacing: 0.05em;
 }
 
@@ -240,7 +240,7 @@
 
 .doc-bento-big-num {
     font-size: 24px;
-    font-weight: 700;
+    font-weight:600;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
 }
@@ -336,7 +336,7 @@
     font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
-    text-transform: uppercase;
+
     letter-spacing: 0.05em;
     box-sizing: border-box;
 }
@@ -563,7 +563,7 @@
 
 .doc-guidelines-title {
     font-size: 15px;
-    font-weight: 700;
+    font-weight:600;
     color: var(--text-primary);
     margin: 0;
 }
@@ -727,7 +727,7 @@
 .doc-state-icon-empty ::deep svg { width: 40px; height: 40px; stroke-width: 1.75; }
 .doc-state-icon-error { color: var(--error-text); background: var(--error-bg); }
 .doc-state-icon-error ::deep svg { width: 32px; height: 32px; }
-.doc-state-card h2 { margin: 0; color: var(--text-primary); font-size: 18px; line-height: 26px; font-weight: 700; }
+.doc-state-card h2 { margin: 0; color: var(--text-primary); font-size: 18px; line-height: 26px; font-weight:600; }
 .doc-state-card p { max-width: 420px; margin: 8px 0 0; color: var(--text-secondary); font-size: 14px; line-height: 22px; }
 .doc-state-card .doc-btn-primary { margin-top: 24px; }
 .doc-state-card .doc-btn-secondary { margin-top: 24px; }
@@ -736,7 +736,7 @@
 .doc-skeleton-table-wrap { width: 100%; overflow-x: auto; }
 .doc-skeleton-table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
 .doc-skeleton-table thead { height: 40px; background: var(--page-bg); border-bottom: 1px solid var(--border); }
-.doc-skeleton-table th { padding: 10px 24px; color: var(--text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.doc-skeleton-table th { padding: 10px 24px; color: var(--text-secondary); font-size: 11px; font-weight: 600;  letter-spacing: .05em; }
 .doc-skeleton-table tbody tr { height: 56px; border-bottom: 1px solid var(--surface-subtle); }
 .doc-skeleton-table td { padding: 12px 24px; }
 .doc-skeleton-pill { display: block; width: 96px; height: 24px; border-radius: 999px; background: var(--accent-soft); }

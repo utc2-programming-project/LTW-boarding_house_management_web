@@ -17,6 +17,23 @@ public sealed class EmailOptions
     public SmtpOptions Smtp { get; set; } = new();
 
     /// <summary>
+    /// SMTP dự phòng khi máy chủ chính lỗi (ví dụ tài khoản Gmail bị khoá tạm).
+    /// Mặc định tắt; bật bằng <see cref="SmtpOptions.Enabled"/> + tài khoản riêng.
+    /// </summary>
+    public SmtpOptions FallbackSmtp { get; set; } = new() { Enabled = false };
+
+    /// <summary>
+    /// Chỉ Development: ghi cả nội dung thư (có OTP/link) ra log để debug.
+    /// Mặc định tắt để không lộ mã; production luôn tắt.
+    /// </summary>
+    public bool LogBodyInDevelopment { get; set; }
+
+    /// <summary>
+    /// Cho phép chạy production không có SMTP (thư chỉ ghi log). Mặc định false để fail-fast.
+    /// </summary>
+    public bool AllowLogOnly { get; set; }
+
+    /// <summary>
     /// Chế độ trình diễn: mọi thư đều gửi về <see cref="FallbackRecipient"/> thay vì địa chỉ
     /// của người dùng. Bật khi dữ liệu mẫu dùng email không tồn tại (admin@admin.com,
     /// chutro@nhatro.local...) để không mất thư. Tắt khi chạy thật với người dùng thật.

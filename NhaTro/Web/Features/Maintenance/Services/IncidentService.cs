@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Audit.Entities;
@@ -22,6 +23,7 @@ using Web.Features.Settings.Services;
 using Web.Features.Storage.Entities;
 using Web.Features.Storage.Enums;
 using Web.Infrastructure.Storage;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Maintenance.Services;
 
@@ -190,6 +192,113 @@ public sealed class IncidentService(
                 incident.CreatedAt,
                 incident.ReportedByUserId))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IncidentListPage> ListPageAsync(
+        PropertyCaller caller,
+        IncidentListQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
+        ArgumentNullException.ThrowIfNull(query);
+        if (!CanView(caller))
+        {
+            return new IncidentListPage([], 0, 1, PagingExtensions.ClampPageSize(query.PageSize), 0, 0, 0, 0);
+        }
+
+        var page = PagingExtensions.ClampPage(query.Page);
+        var pageSize = PagingExtensions.ClampPageSize(query.PageSize);
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var visible = InScopeIncidents(db, caller, Today());
+
+        var stats = await visible
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                Total = group.Count(),
+                NewCount = group.Count(item => item.Status == IncidentStatus.New),
+                InProgressCount = group.Count(item => item.Status == IncidentStatus.InProgress),
+                CompletedCount = group.Count(item => item.Status == IncidentStatus.Completed),
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        var filtered = visible;
+        if (!string.IsNullOrWhiteSpace(query.Title))
+        {
+            var title = query.Title.Trim();
+            filtered = filtered.Where(item => item.Title.Contains(title));
+        }
+
+        if (query.Category is { } category)
+        {
+            filtered = filtered.Where(item => item.Category == category);
+        }
+
+        if (query.Urgency is { } urgency)
+        {
+            filtered = filtered.Where(item => item.Urgency == urgency);
+        }
+
+        if (query.Status is { } status)
+        {
+            filtered = filtered.Where(item => item.Status == status);
+        }
+
+        if (query.CreatedOn is { } createdOn)
+        {
+            var (startUtc, endUtc) = VietnamTime.DayRangeUtc(createdOn);
+            filtered = filtered.Where(item => item.CreatedAt >= startUtc && item.CreatedAt < endUtc);
+        }
+
+        var rows = from incident in filtered
+                   join room in db.Rooms.AsNoTracking() on incident.RoomId equals room.Id
+                   join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+                   select new { Incident = incident, Room = room, Property = property };
+
+        if (!string.IsNullOrWhiteSpace(query.Room))
+        {
+            var roomTerm = query.Room.Trim();
+            rows = rows.Where(row => row.Room.Code.Contains(roomTerm) || row.Property.Name.Contains(roomTerm));
+        }
+
+        var totalCount = await rows.CountAsync(cancellationToken);
+        var ordered = (query.SortKey, query.SortDescending) switch
+        {
+            ("Title", false) => rows.OrderBy(row => row.Incident.Title).ThenBy(row => row.Incident.Id),
+            ("Title", true) => rows.OrderByDescending(row => row.Incident.Title).ThenByDescending(row => row.Incident.Id),
+            ("Room", false) => rows.OrderBy(row => row.Property.Name).ThenBy(row => row.Room.Code).ThenBy(row => row.Incident.Id),
+            ("Room", true) => rows.OrderByDescending(row => row.Property.Name).ThenByDescending(row => row.Room.Code).ThenByDescending(row => row.Incident.Id),
+            ("Created", false) => rows.OrderBy(row => row.Incident.CreatedAt).ThenBy(row => row.Incident.Id),
+            _ => rows.OrderByDescending(row => row.Incident.CreatedAt).ThenByDescending(row => row.Incident.Id),
+        };
+
+        var items = await ordered
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(row => new IncidentListItemDto(
+                row.Incident.Id,
+                row.Room.Id,
+                row.Property.Id,
+                row.Property.Name,
+                row.Room.Code,
+                row.Incident.Title,
+                row.Incident.Category,
+                row.Incident.Urgency,
+                row.Incident.Status,
+                row.Incident.CreatedAt,
+                row.Incident.ReportedByUserId))
+            .ToListAsync(cancellationToken);
+
+        return new IncidentListPage(
+            items,
+            totalCount,
+            page,
+            pageSize,
+            stats?.Total ?? 0,
+            stats?.NewCount ?? 0,
+            stats?.InProgressCount ?? 0,
+            stats?.CompletedCount ?? 0);
     }
 
     public async Task<IncidentResult> GetAsync(
@@ -403,35 +512,84 @@ public sealed class IncidentService(
         return IncidentResult.Success(await ToDetailAsync(db, incident.Id, caller, cancellationToken));
     }
 
-    public async Task<IReadOnlyList<IncidentTrashItemDto>> ListDeletedAsync(
+    public async Task<PagedResult<IncidentTrashItemDto>> ListDeletedAsync(
         PropertyCaller caller,
+        string? keyword,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(caller);
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         if (!caller.IsChuTro)
         {
-            return [];
+            return new PagedResult<IncidentTrashItemDto>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = pageSize,
+            };
         }
 
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-        return await (
-                from incident in db.MaintenanceIncidents.IgnoreQueryFilters().AsNoTracking()
-                join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on incident.RoomId equals room.Id
-                join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
-                where incident.IsDeleted && property.OwnerId == caller.UserId
-                orderby incident.DeletedAt descending, incident.Id descending
-                select new IncidentTrashItemDto(
-                    incident.Id,
-                    incident.RoomId,
-                    property.Name,
-                    room.Code,
-                    incident.Title,
-                    incident.Category,
-                    incident.Status,
-                    incident.CreatedAt,
-                    incident.DeletedAt,
-                    incident.DeletedBy))
+        var query =
+            from incident in db.MaintenanceIncidents.IgnoreQueryFilters().AsNoTracking()
+            join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on incident.RoomId equals room.Id
+            join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+            where incident.IsDeleted && property.OwnerId == caller.UserId
+            select new
+            {
+                incident.Id,
+                incident.RoomId,
+                PropertyName = property.Name,
+                RoomCode = room.Code,
+                incident.Title,
+                incident.Category,
+                incident.Status,
+                incident.CreatedAt,
+                incident.DeletedAt,
+                incident.DeletedBy,
+            };
+
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        if (term is { } search)
+        {
+            query = query.Where(row =>
+                row.Title.Contains(search)
+                || row.RoomCode.Contains(search)
+                || row.PropertyName.Contains(search));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderByDescending(row => row.DeletedAt)
+            .ThenByDescending(row => row.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        var items = rows.Select(row => new IncidentTrashItemDto(
+            row.Id,
+            row.RoomId,
+            row.PropertyName,
+            row.RoomCode,
+            row.Title,
+            row.Category,
+            row.Status,
+            row.CreatedAt,
+            row.DeletedAt,
+            row.DeletedBy)).ToList();
+
+        return new PagedResult<IncidentTrashItemDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
     }
 
     public async Task<IncidentResult> PurgeAsync(

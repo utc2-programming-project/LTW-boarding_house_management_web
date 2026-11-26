@@ -1,3 +1,4 @@
+using Web.Common.Models;
 using Web.Features.Tenants.DTOs;
 
 namespace Web.Features.Tenants;

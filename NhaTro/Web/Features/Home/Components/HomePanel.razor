@@ -3,6 +3,7 @@
     <header>
         <LucideIcon Name="@Icon" />
         <h2>@Title</h2>
+        @Help
         @if (Href is not null && State == HomeLoadState.Loaded)
         {
             <a class="panel-link" href="@Href">@L["ViewAll"]<LucideIcon Name="arrow-right" /></a>
@@ -27,6 +28,7 @@
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string Icon { get; set; } = "file";
     [Parameter] public string? Href { get; set; }
+    [Parameter] public RenderFragment? Help { get; set; }
     [Parameter] public HomeLoadState State { get; set; } = HomeLoadState.Loaded;
     [Parameter] public EventCallback Retry { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }

@@ -33,25 +33,29 @@
 
 @code {
     private bool _dark;
-    private string? _lastUri;
+    private bool _connected;
     private DotNetObjectReference<MainLayout>? _reference;
+
+    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            _reference = DotNetObjectReference.Create(this);
-            _dark = await JS.InvokeAsync<bool>("appLayout.connect", _reference);
-            _lastUri = Navigation.Uri;
-            StateHasChanged();
-            return;
-        }
+        if (!firstRender) return;
+        _reference = DotNetObjectReference.Create(this);
+        _dark = await JS.InvokeAsync<bool>("appLayout.connect", _reference);
+        _connected = true;
+        StateHasChanged();
+    }
 
-        // Interactive routing đổi trang ngay trong circuit: đồng bộ mục active + animation chuyển cảnh.
-        if (Navigation.Uri == _lastUri) return;
-        _lastUri = Navigation.Uri;
-        try { await JS.InvokeVoidAsync("appLayout.onNavigated"); }
-        catch (JSDisconnectedException) { }
+    // Điều hướng trong circuit: C# giữ trạng thái active; JS chỉ chạy animation + đóng popover.
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            if (!_connected) return;
+            try { await JS.InvokeVoidAsync("appLayout.onNavigated"); }
+            catch (JSDisconnectedException) { }
+        });
     }
 
     [JSInvokable]
@@ -63,6 +67,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        Navigation.LocationChanged -= OnLocationChanged;
         // Prerender/static SSR không tạo JS reference và không được gọi interop.
         if (_reference is null) return;
         try { await JS.InvokeVoidAsync("appLayout.disconnect"); }

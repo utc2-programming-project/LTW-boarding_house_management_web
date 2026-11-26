@@ -19,9 +19,7 @@ public static class RoomScope
     {
         if (caller.IsQuanLy)
         {
-            var assignedPropertyIds = assignments
-                .Where(a => a.ManagerUserId == caller.UserId && a.RevokedAt == null)
-                .Select(a => a.PropertyId);
+            var assignedPropertyIds = PropertyScope.ManagerPropertyIds(assignments, properties, caller);
 
             return from room in rooms
                    join property in properties on room.PropertyId equals property.Id

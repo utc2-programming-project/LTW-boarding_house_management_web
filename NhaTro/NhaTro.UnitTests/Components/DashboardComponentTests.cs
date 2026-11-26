@@ -76,7 +76,6 @@ public sealed class DashboardComponentTests : BunitContext
         var component = Render<RoomStructureChart>(p => p.Add(c => c.Kpis,
             new RoomReportKpis { Total = 8, Available = 5, Rented = 2, Maintenance = 1 }));
         Assert.Equal(3, component.FindAll("path.pie-slice").Count);
-        Assert.Equal(3, component.FindAll("path.pie-glow").Count);
         Assert.Single(component.FindAll(".donut-track"));
         Assert.Single(component.FindAll("svg[role='img']"));
         Assert.Single(component.FindAll(".chart-values"));

@@ -68,7 +68,7 @@
     gap: var(--space-2);
     margin: 0;
     font-size: 1.05rem;
-    font-weight: 700;
+    font-weight:600;
 }
 
 .contract-form-section-title ::deep .lucide-icon { width: 20px; height: 20px; flex-basis: 20px; color: var(--accent-text); }
@@ -115,14 +115,16 @@
 
 .contract-service-block { display: grid; gap: var(--space-3); }
 .contract-service-block h3 { margin: 0; font-size: .95rem; font-weight: 600; }
-.contract-service-table { width: 100%; border-collapse: collapse; }
+.contract-service-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.contract-service-table th:nth-child(1) { width: 55%; }
+.contract-service-table th:nth-child(2) { width: 18%; }
 .contract-service-table th, .contract-service-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; }
 .contract-service-table th { color: var(--text-secondary); font-size: .85rem; font-weight: 600; }
 .contract-service-table th:last-child, .contract-service-table td:last-child { text-align: right; }
 
 .contract-terms-input { min-height: 140px; padding: var(--space-3); resize: vertical; line-height: 1.55; }
 
-.contract-price-preview-total-label, .contract-price-preview-total { padding-top: var(--space-2); border-top: 1px solid var(--border); font-weight: 700; }
+.contract-price-preview-total-label, .contract-price-preview-total { padding-top: var(--space-2); border-top: 1px solid var(--border); font-weight:600; }
 .contract-price-preview-total { font-size: 1.05rem; color: var(--accent-text); }
 
 .contract-demo-strip {
@@ -210,7 +212,7 @@
     color: var(--accent-text);
     font-size: 14px;
     line-height: 20px;
-    font-weight: 700;
+    font-weight:600;
 }
 
 .demo-card-copy p {
@@ -236,9 +238,9 @@
 
 .contract-eyebrow span:first-child {
     color: var(--accent-text);
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: .06em;
-    text-transform: uppercase;
+
 }
 
 .contract-status {
@@ -322,7 +324,7 @@
     background: var(--primary);
     color: var(--on-primary);
     font-size: 12px;
-    font-weight: 700;
+    font-weight:600;
 }
 
 .section-tag,
@@ -536,7 +538,7 @@
 .selected-room-price span {
     color: var(--text-muted);
     font-size: 10px;
-    text-transform: uppercase;
+
 }
 
 .selected-room-price strong {
@@ -608,7 +610,7 @@
     background: var(--accent-soft);
     color: var(--accent-text);
     font-size: 12px;
-    font-weight: 700;
+    font-weight:600;
 }
 
 .contract-page ::deep .contract-form .member-row .input {
@@ -776,9 +778,9 @@
     color: var(--text-secondary);
     font-size: 10px;
     line-height: 16px;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: .04em;
-    text-transform: uppercase;
+
 }
 
 .utility-grid {
@@ -813,9 +815,8 @@
     padding: 20px;
     border: 1px solid var(--primary-pressed);
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    background: var(--primary);
     color: var(--on-primary);
-    box-shadow: var(--shadow-accent);
 }
 
 .initial-payment-card header {
@@ -833,7 +834,7 @@
     font-size: 12px;
     line-height: 18px;
     letter-spacing: .04em;
-    text-transform: uppercase;
+
 }
 
 .initial-payment-card .lucide-icon {

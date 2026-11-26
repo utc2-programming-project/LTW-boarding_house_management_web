@@ -11,8 +11,10 @@ using NhaTro.IntegrationTests.Infrastructure;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
+using Web.Features.Properties;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
 using Web.Features.Rooms.Enums;
@@ -234,6 +236,95 @@ public sealed class AccountLifecycleTests(SqlServerFixture fixture)
         Assert.NotNull(lockedAdmin.LockoutEnd);
     }
 
+    [SqlServerFact]
+    public async Task ChuTro_khong_duoc_restore_tai_khoan_trong_thung_rac()
+    {
+        await fixture.ResetAsync();
+        var data = await SeedScopeAsync();
+        var service = NewAccountService();
+
+        // Tài khoản chưa gắn hồ sơ khách thì xoá mềm được; tài khoản đang gắn hồ sơ bị chặn AccountInUse.
+        await using (var db = fixture.CreateContext())
+        {
+            await SqlServerFixture.SeedAccountAsync(db, "khach-trash", Roles.KhachThue);
+        }
+
+        var deleted = await service.DeleteAsync("khach-trash", data.AdminId, Roles.Admin);
+        Assert.True(deleted.Succeeded, deleted.ErrorCode);
+
+        var restore = await service.RestoreAsync("khach-trash", data.OwnerAId, Roles.ChuTro);
+
+        Assert.False(restore.Succeeded);
+        Assert.Equal(AccountErrorCodes.Forbidden, restore.ErrorCode);
+    }
+
+    [SqlServerFact]
+    public async Task Reject_tai_khoan_cho_duyet_go_lien_ket_va_giu_email_de_moi_lai()
+    {
+        await fixture.ResetAsync();
+        var data = await SeedScopeAsync();
+        var service = NewAccountService();
+
+        var created = await service.CreateAsync(new CreateAccountRequest
+        {
+            Email = "khach.reject@test.local",
+            FullName = "Khách bị từ chối",
+            Password = "TestPass123!",
+            Role = Roles.KhachThue,
+            TenantId = data.TenantInAId,
+        }, data.ManagerId, Roles.QuanLy);
+        Assert.True(created.Succeeded, created.ErrorCode);
+
+        var userId = await PendingUserIdAsync("khach.reject@test.local");
+        var rejected = await service.RejectAsync(
+            userId, "Thông tin không hợp lệ", data.OwnerAId, Roles.ChuTro);
+        Assert.True(rejected.Succeeded, rejected.ErrorCode);
+
+        await using var db = fixture.CreateContext();
+        var user = await db.Users.SingleAsync(u => u.Id == userId);
+        Assert.True(user.IsDeleted);
+        Assert.Equal("khach.reject@test.local", user.OriginalEmail);
+        Assert.Null((await db.Tenants.SingleAsync(t => t.Id == data.TenantInAId)).UserId);
+    }
+
+    [SqlServerFact]
+    public async Task QuanLy_manh_hai_chu_tro_bi_khoa_mot_chi_thay_toa_con_lai()
+    {
+        await fixture.ResetAsync();
+        var data = await SeedScopeAsync();
+
+        // manager-1 được giao thêm toà B cạnh toà A.
+        await using (var seed = fixture.CreateContext())
+        {
+            seed.PropertyManagers.Add(new PropertyManager
+            {
+                PropertyId = data.PropertyBId,
+                ManagerUserId = data.ManagerId,
+                AssignedByUserId = data.OwnerBId,
+            });
+            await seed.SaveChangesAsync();
+        }
+
+        var service = NewAccountService();
+        var locked = await service.LockAsync(data.OwnerAId, data.AdminId, Roles.Admin, reason: "Vi phạm");
+        Assert.True(locked.Succeeded, locked.ErrorCode);
+
+        await using var db = fixture.CreateContext();
+        var guard = NewOwnerAccessGuard(db);
+        Assert.True(await guard.HasAnyAccessibleContextAsync(data.ManagerId, [Roles.QuanLy]));
+
+        var caller = new PropertyCaller(data.ManagerId, Roles.QuanLy)
+        {
+            BlockedOwnerIds = [data.OwnerAId],
+        };
+        var visible = await PropertyScope
+            .Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(), caller)
+            .Select(property => property.Name)
+            .ToListAsync();
+
+        Assert.Equal(new[] { "Nhà B" }, visible);
+    }
+
     private async Task<string> PendingUserIdAsync(string email)
     {
         await using var db = fixture.CreateContext();
@@ -269,6 +360,22 @@ public sealed class AccountLifecycleTests(SqlServerFixture fixture)
             NullLogger<UserManager<ApplicationUser>>.Instance);
 
         return new AccountService(userManager, fixture, logger ?? NullLogger<AccountService>.Instance);
+    }
+
+    private OwnerAccessGuard NewOwnerAccessGuard(ApplicationDbContext db)
+    {
+        var userManager = new UserManager<ApplicationUser>(
+            new UserStore<ApplicationUser, IdentityRole, ApplicationDbContext>(db),
+            Options.Create(new IdentityOptions()),
+            new PasswordHasher<ApplicationUser>(),
+            [new UserValidator<ApplicationUser>()],
+            [new PasswordValidator<ApplicationUser>()],
+            new UpperInvariantLookupNormalizer(),
+            new IdentityErrorDescriber(),
+            new ServiceCollection().BuildServiceProvider(),
+            NullLogger<UserManager<ApplicationUser>>.Instance);
+
+        return new OwnerAccessGuard(fixture, userManager, NullLogger<OwnerAccessGuard>.Instance);
     }
 
     /// <summary>

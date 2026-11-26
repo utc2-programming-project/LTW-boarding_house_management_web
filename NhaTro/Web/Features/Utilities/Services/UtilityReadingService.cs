@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
@@ -453,11 +454,15 @@ public sealed class UtilityReadingService(
 
         if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             return from room in db.Rooms.IgnoreQueryFilters().AsNoTracking()
                    join assignment in db.PropertyManagers.AsNoTracking()
                        on room.PropertyId equals assignment.PropertyId
+                   join property in db.Properties.IgnoreQueryFilters().AsNoTracking()
+                       on room.PropertyId equals property.Id
                    where assignment.ManagerUserId == caller.UserId
                        && assignment.RevokedAt == null
+                       && !blockedOwners.Contains(property.OwnerId)
                    select room.Id;
         }
 

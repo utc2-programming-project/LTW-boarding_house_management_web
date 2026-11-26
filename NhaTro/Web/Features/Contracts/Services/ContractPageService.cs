@@ -13,6 +13,23 @@ public sealed class ContractPageService(
     public async Task<ContractCreateOptionsDto> GetCreateOptionsAsync(CancellationToken cancellationToken = default) =>
         await contracts.GetCreateOptionsAsync(await callerProvider.GetCallerAsync(), cancellationToken);
 
+    public async Task<IReadOnlyList<ContractRoomOptionDto>> GetAvailableRoomsAsync(
+        int propertyId, CancellationToken cancellationToken = default) =>
+        await contracts.GetAvailableRoomsAsync(await callerProvider.GetCallerAsync(), propertyId, cancellationToken);
+
+    public async Task<IReadOnlyList<ContractTenantOptionDto>> SearchTenantOptionsAsync(
+        string? keyword,
+        int take,
+        CancellationToken cancellationToken = default) =>
+        await contracts.SearchTenantOptionsAsync(
+            await callerProvider.GetCallerAsync(), keyword, take, cancellationToken);
+
+    public async Task<IReadOnlyList<ContractTenantOptionDto>> GetTenantOptionsAsync(
+        IReadOnlyCollection<int> tenantIds,
+        CancellationToken cancellationToken = default) =>
+        await contracts.GetTenantOptionsAsync(
+            await callerProvider.GetCallerAsync(), tenantIds, cancellationToken);
+
     public async Task<IReadOnlyList<ContractListItemDto>> ListAsync(
         string? keyword = null,
         CancellationToken cancellationToken = default) =>
@@ -115,8 +132,10 @@ public sealed class ContractPageService(
     public async Task<ContractActionResultDto> RestoreAsync(Guid contractId, CancellationToken cancellationToken = default) =>
         await contracts.RestoreAsync(contractId, await callerProvider.GetCallerAsync(), cancellationToken);
 
-    public async Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(CancellationToken cancellationToken = default) =>
-        await contracts.ListDeletedAsync(await callerProvider.GetCallerAsync(), cancellationToken);
+    public async Task<PagedResult<ContractTrashItemDto>> ListDeletedAsync(
+        string? keyword, int page, int pageSize, CancellationToken cancellationToken = default) =>
+        await contracts.ListDeletedAsync(
+            await callerProvider.GetCallerAsync(), keyword, page, pageSize, cancellationToken);
 
     public async Task<ContractActionResultDto> PurgeAsync(Guid contractId, CancellationToken cancellationToken = default) =>
         await contracts.PurgeAsync(contractId, await callerProvider.GetCallerAsync(), cancellationToken);

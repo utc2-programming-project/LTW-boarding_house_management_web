@@ -4,9 +4,9 @@
 .stat-percent { display: inline-flex; align-items: baseline; }
 
 .tenant-name-cell { display: flex; align-items: center; gap: 12px; min-width: 220px; }
-.tenant-avatar { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-card); background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+.tenant-avatar { display: grid; flex: 0 0 36px; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-card); background: var(--accent-soft); color: var(--accent-text); font-weight:600; }
 .tenant-name-text { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-.tenant-name-button { width: fit-content; max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: .8125rem; font-weight: 650; text-align: left; overflow-wrap: anywhere; }
+.tenant-name-button { width: fit-content; max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: .8125rem; font-weight: 650; text-align: left; }
 .tenant-name-button:hover { color: var(--accent-text); text-decoration: underline; }
 .tenant-name-text small { color: var(--text-muted); font-family: ui-monospace,Consolas,monospace; font-size: .6875rem; }
 .tenant-id-mask { font-family: ui-monospace,Consolas,monospace; font-size: .75rem; letter-spacing: .04em; }
@@ -15,23 +15,13 @@
 .tenant-icon-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .tenant-icon-danger:hover { color: var(--danger); }
 .tenant-icon-success:hover { color: var(--success-text); }
-/* Tỉ lệ cột cố định: Họ tên 26% · SĐT 14% · Phòng 11% · CCCD 14% · Trạng thái 13% · Tài khoản 12% · Thao tác 10%. */
+/* Độ rộng cột đặt ở DataTableColumn.Width (colgroup); bảng cố định để ellipsis ăn. */
 .tenant-list-page ::deep .table-card table { table-layout: fixed; min-width: 1120px; }
-.tenant-list-page ::deep .table-card thead th:nth-child(1) { width: 26%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(2) { width: 14%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(3) { width: 11%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(4) { width: 14%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(5) { width: 13%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(6) { width: 12%; }
-.tenant-list-page ::deep .table-card thead th:nth-child(7) { width: 10%; text-align: center; }
 .tenant-list-page ::deep .table-card tbody td { vertical-align: middle; }
-/* Quản lý không thấy cột Tài khoản: bảng 6 cột, chia lại cho cân. */
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(1) { width: 27%; }
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(2) { width: 15%; }
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(3) { width: 12%; }
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(4) { width: 16%; }
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(5) { width: 17%; }
-.tenant-list-page ::deep .table-card:not(:has(thead th:nth-child(7))) thead th:nth-child(6) { width: 13%; text-align: center; }
+/* .p2-row-actions do trang render (không mang scope của DataTable) → căn tại CSS trang. */
+.tenant-list-page ::deep .table-card th.cell-actions,
+.tenant-list-page ::deep .table-card td.cell-actions { text-align: center; }
+.tenant-list-page ::deep .table-card td.cell-actions .p2-row-actions { justify-content: center; }
 
 @media (max-width: 1199px) {
     .tenant-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }

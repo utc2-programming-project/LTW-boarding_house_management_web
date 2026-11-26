@@ -1,14 +1,15 @@
-/* PLAN-001: giao diện khu /Account/Manage và trang Công tắc Quản lý.
-   Chỉ dùng class prefix .account- (trừ .switches-page) để không đụng trang khác. */
+/* PLAN-001 + PLAN-030: khu tài khoản (/account, các trang /Account/Manage con)
+   và trang Công tắc Quản lý. Prefix .account-/acct- để không đụng trang khác. */
 
 .account-shell { display:block; min-width:0; }
-.account-shell .page-heading { margin-bottom:24px; }
-.account-body { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; align-items:start; }
+.account-shell .page-heading { margin-bottom:16px; }
 
-.account-nav { display:flex; flex-direction:column; gap:4px; padding:8px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
-.account-nav a { display:block; padding:10px 12px; border-radius:8px; color:var(--text-secondary)!important; text-decoration:none; font-size:.875rem; font-weight:500; line-height:1.429; }
-.account-nav a:hover { background:var(--hover-bg); }
-.account-nav a.active { background:var(--accent-soft); color:var(--accent-text)!important; font-weight:600; }
+/* Ảnh đại diện lưu ở server (/api/avatar/{userId}), avatar.js phủ kín vòng avatar chữ cái. */
+.avatar.has-avatar-image { background-size:cover; background-position:center; background-repeat:no-repeat; color:transparent!important; }
+
+.account-back { display:inline-flex; align-items:center; gap:6px; margin:0 0 12px; color:var(--text-secondary)!important; font-size:.875rem; font-weight:500; text-decoration:none; }
+.account-back:hover { color:var(--accent-text)!important; }
+.account-back .lucide-icon { width:16px; height:16px; }
 
 .account-panel { min-width:0; padding:24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
 .account-section { margin:0 0 16px; font-size:1.125rem; line-height:1.44; font-weight:600; color:var(--text-primary); }
@@ -38,6 +39,15 @@
 .account-table .actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
 .account-table .actions .btn { min-height:36px; padding:4px 12px; }
 .account-table .input { max-width:240px; }
+
+/* Passkey / đăng nhập ngoài: cột tên chiếm phần lớn, chữ dài cắt "…" thay vì nong bảng. */
+.account-table--fixed { table-layout: fixed; }
+.account-table--fixed th:first-child,
+.account-table--fixed td:first-child { width: 65%; }
+
+/* Danh sách phiên đăng nhập: tên thiết bị 1 dòng + popup, badge và meta cùng hàng. */
+.account-session { display:flex; flex-wrap:wrap; align-items:center; gap:8px; min-width:0; }
+.account-session > strong { flex:1 1 auto; min-width:0; }
 
 /* Hộp thoại thùng rác tài khoản: menu 3 chấm không được bị cắt bởi khung cuộn. */
 .account-trash-scroll { overflow: visible; }
@@ -87,12 +97,118 @@
 .form-alert.warning { background:var(--warning-bg); border-color:var(--warning-border); color:var(--warning-text); }
 .form-alert.success { background:var(--success-bg); border-color:var(--success-border); color:var(--success-text); }
 
+/* Trang /account: tab ngang + khối card. */
+.account-page { display:flex; flex-direction:column; gap:20px; min-width:0; }
+.account-page .page-heading { margin-bottom:0; }
+
+.acct-tabs { display:flex; gap:4px; padding:4px; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow-x:auto; scrollbar-width:none; }
+.acct-tabs::-webkit-scrollbar { display:none; }
+.acct-tab { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; color:var(--text-secondary)!important; font-size:.875rem; font-weight:500; line-height:1.4; text-decoration:none; white-space:nowrap; transition:background-color 150ms var(--ease), color 150ms var(--ease); }
+.acct-tab:hover { background:var(--hover-bg); }
+.acct-tab.active { background:var(--accent-soft); color:var(--accent-text)!important; font-weight:600; }
+.acct-tab .lucide-icon { width:16px; height:16px; flex:0 0 16px; color:inherit; }
+
+.acct-stack { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.acct-card { min-width:0; padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-card); }
+.acct-card-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:16px; }
+.acct-card-head h2 { margin:0; font-size:1rem; line-height:1.5; font-weight:600; color:var(--text-primary); }
+.acct-card-desc { margin:2px 0 0; font-size:.8125rem; line-height:1.55; color:var(--text-muted); }
+.acct-card-icon { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border-radius:10px; background:var(--accent-soft); color:var(--accent-text); }
+.acct-card-icon .lucide-icon { width:18px; height:18px; }
+.acct-card-icon-danger { background:var(--error-bg); color:var(--error-text); }
+
+.acct-rows { display:flex; flex-direction:column; margin:0; padding:0; list-style:none; }
+.acct-row { display:flex; align-items:center; gap:12px; padding:16px 0; border-top:1px solid var(--border); min-width:0; }
+.acct-row:first-child { padding-top:0; border-top:0; }
+.acct-row:last-child { padding-bottom:0; }
+.acct-row-icon { display:grid; place-items:center; width:32px; height:32px; flex:0 0 32px; border-radius:8px; background:var(--surface-subtle); color:var(--text-secondary); }
+.acct-row-icon .lucide-icon { width:16px; height:16px; }
+.acct-row-copy { display:flex; flex-direction:column; gap:2px; flex:1 1 auto; min-width:0; }
+.acct-row-title { font-size:.9375rem; line-height:1.4; font-weight:600; color:var(--text-primary); }
+.acct-row-desc { font-size:.8125rem; line-height:1.5; color:var(--text-muted); overflow-wrap:anywhere; }
+.acct-row-side { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex:0 0 auto; margin-inline-start:auto; }
+.acct-row-side .badge { width:112px; justify-content:center; }
+.acct-row-action { width:112px; flex:0 0 auto; justify-content:center; white-space:nowrap; }
+
+/* Tab Hoạt động: thời gian lùi về cuối dòng mô tả, tiêu đề có thể là liên kết tới đối tượng. */
+.acct-activity-time { color:var(--text-muted); font-size:.75rem; white-space:nowrap; }
+.acct-activity-time::before { content:" · "; }
+a.acct-row-title:hover { color:var(--accent-text); text-decoration:underline; }
+
+.acct-score { display:flex; align-items:center; gap:16px; }
+.acct-score-meter { display:flex; gap:8px; flex:1 1 auto; min-width:0; }
+.acct-score-seg { height:8px; flex:1 1 0; border:1px solid var(--border); border-radius:999px; background:var(--surface-subtle); }
+.acct-score-seg.on { border-color:var(--primary); background:var(--primary); }
+.acct-score-value { flex:0 0 auto; font-size:1rem; font-weight:600; color:var(--text-primary); }
+.acct-score-hints { display:flex; flex-direction:column; gap:8px; margin:16px 0 0; padding:12px 16px; list-style:none; border:1px solid var(--border); border-radius:8px; background:var(--surface-subtle); }
+.acct-score-hints li { font-size:.8125rem; line-height:1.5; color:var(--text-secondary); }
+.acct-score-ok { display:flex; align-items:center; gap:8px; margin:16px 0 0; font-size:.8125rem; font-weight:600; color:var(--success-text); }
+.acct-score-ok .lucide-icon { width:16px; height:16px; }
+
+.acct-identity { display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+.acct-identity-actions { display:flex; flex-direction:column; align-items:stretch; gap:8px; flex:0 0 200px; margin-inline-start:auto; }
+.acct-identity-actions .acct-avatar-actions { display:flex; flex-direction:column; gap:8px; }
+.acct-avatar-btn { justify-content:center; }
+.acct-avatar { display:grid; place-items:center; width:104px; height:104px; border-radius:50%; background:var(--accent-soft); color:var(--accent-text); font-size:2rem; font-weight:600; line-height:1; overflow:hidden; }
+.acct-avatar img { display:block; width:100%; height:100%; object-fit:cover; }
+.acct-avatar-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.acct-avatar-btn { min-height:36px; padding:4px 12px; font-size:.8125rem; width:100%; }
+.acct-avatar-hint { margin:0; text-align:left; font-size:.75rem; line-height:1.5; color:var(--text-muted); }
+.acct-identity-main { display:flex; flex-direction:column; align-items:flex-start; gap:8px; flex:1 1 280px; min-width:0; }
+.acct-identity-main h2 { margin:0; font-size:1.375rem; line-height:1.3; font-weight:600; color:var(--text-primary); }
+.acct-identity-email { display:flex; align-items:center; gap:6px; max-width:100%; margin:0; color:var(--text-secondary); font-size:.875rem; }
+.acct-identity-email .lucide-icon { width:16px; height:16px; flex:0 0 16px; color:var(--text-muted); }
+.acct-identity-email > .cell-truncate { min-width:0; }
+.acct-identity-note { margin:0; font-size:.75rem; line-height:1.5; color:var(--text-muted); }
+
+.acct-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; }
+/* FormField tự mang margin-bottom 20px; grid đã lo gap nên bỏ kẻo cộng thành 36px. */
+.acct-fields > div > .field { margin-bottom:0; }
+/* theme.css bật appearance:base-select toàn cục; trình duyệt base-select cần <selectedcontent> mới hiện giá trị đã chọn. */
+.acct-fields select { appearance:auto; display:block; }
+.acct-field-bank-name { grid-column:1/-1; }
+
+/* Hồ sơ: card "Thông tin cá nhân" và card "Tài khoản nhận tiền" đứng cạnh nhau trên màn rộng. */
+.acct-cards { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; min-width:0; align-items:start; }
+@media (min-width:1180px) {
+    .acct-cards-bank { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:20px; }
+}
+
+.acct-form-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+/* Bản đặt ngoài card (tab Hồ sơ có 2 card): bỏ vạch, chỉ còn hàng nút. */
+.acct-form-actions-plain { margin-top:16px; padding-top:0; border-top:0; }
+
+.acct-danger { border-color:var(--error-border); }
+
+.acct-tenant-card { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.acct-tenant-copy { flex:1 1 320px; min-width:0; }
+.acct-tenant-copy h2 { margin:0; font-size:1rem; line-height:1.5; font-weight:600; color:var(--text-primary); }
+.acct-tenant-copy p { margin:4px 0 0; font-size:.8125rem; line-height:1.55; color:var(--text-muted); }
+
 @media (max-width:900px) {
-    .account-body { grid-template-columns:minmax(0,1fr); }
-    .account-nav { flex-direction:row; overflow-x:auto; }
-    .account-nav a { white-space:nowrap; }
     .sw-guide-list { grid-template-columns:minmax(0,1fr); }
     .sw-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:768px) {
+    .acct-card { padding:16px; }
+    .acct-row { flex-wrap:wrap; }
+    .acct-row-side { width:100%; margin-inline-start:0; justify-content:flex-end; flex-wrap:wrap; }
+    .acct-row-side .badge { width:auto; }
+    .acct-row-action { width:100%; text-align:center; }
+    .acct-identity { flex-direction:column; text-align:center; }
+    .acct-identity-main { flex:0 0 auto; align-items:center; }
+    .acct-identity-actions { flex:0 0 auto; width:100%; align-items:center; margin-inline-start:0; }
+    .acct-identity-actions .acct-avatar-actions { width:100%; align-items:center; }
+    .acct-avatar-btn { width:auto; min-width:200px; }
+    .acct-avatar-hint { text-align:center; }
+    .acct-identity-email { justify-content:center; }
+    .acct-fields { grid-template-columns:minmax(0,1fr); max-width:none; }
+    .acct-field-bank-name { grid-column:auto; }
+    .acct-form-actions { position:sticky; bottom:0; z-index:2; margin:16px -16px -16px; padding:12px 16px; background:var(--surface); }
+    /* Bản tab Hồ sơ không nằm trong card nào nên không được ăn lề âm của card. */
+    .acct-form-actions-plain { margin:16px 0 0; padding:12px 16px; border:1px solid var(--border); border-radius:12px; }
+
+    .acct-form-actions .btn { flex:1 1 auto; }
 }
 @media (max-width:600px) {
     .account-panel { padding:16px; }

@@ -336,7 +336,7 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
     // ---------- VHT-141: lấp đầy lịch sử theo tháng ----------
 
     [SqlServerFact]
-    public async Task Lap_day_mac_dinh_tra_sau_thang_gan_nhat_va_khop_hop_dong()
+    public async Task Lap_day_mac_dinh_tra_muoi_hai_thang_gan_nhat_va_khop_hop_dong()
     {
         var seed = await PrepareAsync();
         await using (var db = fixture.CreateContext())
@@ -353,19 +353,24 @@ public sealed class RoomReportServiceIntegrationTests(SqlServerFixture fixture)
         var result = await NewReportService(readDb, new FixedTimeProvider(new DateOnly(2026, 11, 13)))
             .GetOccupancyAsync(new OccupancyFilter(), ChuTroA);
 
-        // Không chọn ngày: 6 tháng gần nhất tính đến tháng hiện tại (06/2026 - 11/2026).
+        // Không chọn ngày: 12 tháng gần nhất tính đến tháng hiện tại (12/2025 - 11/2026).
         Assert.Equal(
-            ["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"],
+            ["2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05",
+             "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"],
             result.Months.Select(month => month.MonthKey));
-        Assert.All(result.Months, month => Assert.Equal(3, month.TotalRooms));
+        Assert.All(result.Months.Skip(1), month => Assert.Equal(3, month.TotalRooms));
+        // Tháng 2025-12 có trước ngày tạo phòng (01/01/2026) nên không có phòng nào.
+        var createdAtMonth = result.Months[0];
+        Assert.Equal(0, createdAtMonth.TotalRooms);
+        Assert.Null(createdAtMonth.OccupancyRate);
         Assert.Equal(
-            [1, 1, 1, 0, 1, 1],
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1],
             result.Months.Select(month => month.RentedRooms));
         Assert.Equal(
-            [2, 2, 2, 3, 2, 2],
+            [0, 3, 3, 3, 3, 3, 2, 2, 2, 3, 2, 2],
             result.Months.Select(month => month.VacantRooms));
-        Assert.Equal(33.3m, result.Months[0].OccupancyRate!.Value);
-        Assert.Equal(0m, result.Months[3].OccupancyRate!.Value);
+        Assert.Equal(33.3m, result.Months[6].OccupancyRate!.Value);
+        Assert.Equal(0m, result.Months[9].OccupancyRate!.Value);
         Assert.Equal(
             result.Months.Sum(month => month.RentedRooms),
             result.Months.Sum(month => month.TotalRooms - month.VacantRooms));

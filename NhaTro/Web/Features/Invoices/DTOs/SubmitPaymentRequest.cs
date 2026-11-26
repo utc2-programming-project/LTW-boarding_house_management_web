@@ -10,6 +10,7 @@ namespace Web.Features.Invoices.DTOs;
 public sealed class SubmitPaymentRequest
 {
     [Range(typeof(decimal), "0.01", "79228162514264337593543950335",
+        ParseLimitsInInvariantCulture = true, ConvertValueInInvariantCulture = true,
         ErrorMessage = "Số tiền thanh toán phải lớn hơn 0.")]
     public required decimal Amount { get; init; }
 

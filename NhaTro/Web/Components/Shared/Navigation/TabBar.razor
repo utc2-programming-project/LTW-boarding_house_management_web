@@ -1,0 +1,67 @@
+<nav class="@CssClass" aria-label="@AriaLabel" role="@Role">
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var item = Items[i];
+        var isActive = !string.IsNullOrEmpty(ActiveKey) && string.Equals(item.Key, ActiveKey, StringComparison.Ordinal);
+        var isDisabled = Disabled || item.Disabled;
+        var css = isActive ? "tabbar-item active" : "tabbar-item";
+        if (item.Href is not null)
+        {
+            <a class="@css" href="@item.Href"
+               aria-current="@(isActive ? "page" : null)"
+               aria-disabled="@(isDisabled ? "true" : null)"
+               tabindex="@(isDisabled ? "-1" : null)"
+               id="@item.Id" data-tab-index="@i">
+                @if (!string.IsNullOrWhiteSpace(item.Icon))
+                {
+                    <LucideIcon Name="@item.Icon" />
+                }
+                <span>@item.Label</span>
+            </a>
+        }
+        else
+        {
+            <button type="button" class="@css"
+                    role="@(Role == "tablist" ? "tab" : null)"
+                    aria-selected="@(Role == "tablist" ? (isActive ? "true" : "false") : null)"
+                    aria-current="@(isActive ? "page" : null)"
+                    disabled="@isDisabled" aria-controls="@item.Controls"
+                    id="@item.Id" data-tab-index="@i"
+                    @onclick="() => OnSelect.InvokeAsync(item.Key)">
+                @if (!string.IsNullOrWhiteSpace(item.Icon))
+                {
+                    <LucideIcon Name="@item.Icon" />
+                }
+                <span>@item.Label</span>
+            </button>
+        }
+    }
+</nav>
+
+@code {
+    /// <summary>Thanh tab chung: pill (đoạn) hoặc underline, size md (40px) / sm (32px).</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<TabItem> Items { get; set; } = [];
+
+    [Parameter] public string? ActiveKey { get; set; }
+
+    [Parameter] public string Variant { get; set; } = "pill";
+
+    [Parameter] public string Size { get; set; } = "md";
+
+    [Parameter] public string? Role { get; set; }
+
+    [Parameter] public string? AriaLabel { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public bool Fill { get; set; }
+
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private string CssClass => string.Join(' ',
+        "tabbar",
+        $"tabbar--{Variant}",
+        $"tabbar--{Size}",
+        Fill ? "tabbar--fill" : null,
+        Disabled ? "is-disabled" : null);
+}

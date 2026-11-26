@@ -6,6 +6,7 @@
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
 @inject ILogger<PropertyTrash> Logger
+@using Web.Common.SoftDelete
 
 <PageTitle>@L["P2PropertyTrashTitle"] · @L["AppName"]</PageTitle>
 
@@ -97,16 +98,31 @@
     {
         RenderFragment<PropertyTrashItem> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<PropertyTrashItem> name = item => @<span class="cell-truncate" data-hover-tip>
+            @item.Name
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.Name</span>
+            </span>
+        </span>;
+        RenderFragment<PropertyTrashItem> address = item => @<span class="cell-truncate" data-hover-tip>
+            @AddressText(item)
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@AddressText(item)</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "name", Title = L["P2PropertyName"], Value = item => item.Name },
-            new() { Key = "address", Title = L["P2Address"], Value = item => string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address },
-            new() { Key = "trashedRooms", Title = L["P2PropertyTrashRoomCount"], Value = item => item.TrashedRoomCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true },
-            new() { Key = "deletedAt", Title = L["P2TrashDeletedAt"], Value = item => DateFormatter.FormatDateTime(item.DeletedAt) },
-            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+            new() { Key = "name", Title = L["P2PropertyName"], Template = name, Width = "240px" },
+            new() { Key = "address", Title = L["P2Address"], Template = address, Width = "360px" },
+            new() { Key = "trashedRooms", Title = L["P2PropertyTrashRoomCount"], Value = item => item.TrashedRoomCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true, Width = "140px" },
+            TrashColumns.DeletedAt<PropertyTrashItem>(L["P2TrashDeletedAt"], item => item.DeletedAt),
+            TrashColumns.Actions(L["P2Actions"], actions)
         ];
     }
+
+    private string AddressText(PropertyTrashItem item) =>
+        string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address;
 
     private async Task<PagedResult<PropertyTrashItem>> LoadDeletedAsync(DataTableRequest request) =>
         await PageService.ListDeletedAsync(new PropertyFilter

@@ -2,20 +2,18 @@
    Tất cả đều là progressive enhancement; form static SSR vẫn chạy khi không có JS. */
 (() => {
     const directionKey = "nhatro.auth.direction";
-    const fromIndexKey = "nhatro.auth.from";
     const heightKey = "nhatro.auth.height";
 
     /** Ghi nhớ hướng chuyển (tab nào -> tab nào) để chạy animation đúng chiều. */
     function rememberDirection(tab) {
-        const current = document.querySelector("[data-auth-tab][aria-current='page']");
-        const from = current ? Number(current.dataset.authIndex) : 0;
-        const to = Number(tab.dataset.authIndex);
+        const current = document.querySelector("[data-tab-index][aria-current='page']");
+        const from = current ? Number(current.dataset.tabIndex) : 0;
+        const to = Number(tab.dataset.tabIndex);
         if (!Number.isFinite(to) || to < 0) return null;
 
         const direction = to >= from ? "forward" : "back";
         try {
             sessionStorage.setItem(directionKey, direction);
-            sessionStorage.setItem(fromIndexKey, String(Number.isFinite(from) ? from : 0));
         } catch {
             // sessionStorage có thể bị chặn; bỏ animation là đủ.
         }
@@ -101,29 +99,6 @@
         const clear = () => card.classList.remove("auth-enter-forward", "auth-enter-back");
         card.addEventListener("animationend", clear, { once: true });
         setTimeout(clear, 500);
-    }
-
-    /** Thanh tab là khối mới sau mỗi lần đổi trang, nên cho indicator chạy lại từ vị trí cũ
-        để ô sáng trượt sang tab mới thay vì nhảy thẳng. */
-    function animateIndicator() {
-        const indicator = document.querySelector(".auth-tabs-indicator");
-        if (!indicator) return;
-
-        let from = null;
-        try {
-            from = sessionStorage.getItem(fromIndexKey);
-            sessionStorage.removeItem(fromIndexKey);
-        } catch {
-            return;
-        }
-
-        // Giá trị server render sẵn (style="--auth-index:N") là đích cần trả về.
-        const target = (indicator.style.getPropertyValue("--auth-index") || "").trim();
-        if (from === null || from === "" || target === "" || from === target) return;
-
-        indicator.style.setProperty("--auth-index", from);
-        void indicator.offsetWidth;
-        indicator.style.setProperty("--auth-index", target);
     }
 
     function initOtp() {
@@ -235,7 +210,6 @@
     function init() {
         initOtp();
         initResend();
-        animateIndicator();
         animateCardHeight();
         animateAuthCard();
     }
@@ -244,8 +218,8 @@
     // chạy song song trong lúc chờ server trả trang mới.
     document.addEventListener("click", event => {
         if (!(event.target instanceof Element)) return;
-        const tab = event.target.closest("[data-auth-tab]");
-        if (!tab) return;
+        const tab = event.target.closest("[data-tab-index]");
+        if (!tab || !document.querySelector(".auth-card")) return;
         // Chuột trái + không phím phụ (mở tab mới thì đừng chạy animation).
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         if (tab.getAttribute("aria-current") === "page") return;

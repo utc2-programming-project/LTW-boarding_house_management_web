@@ -23,6 +23,8 @@ namespace Web.Features.Maintenance.Services;
 public sealed class IncidentPageService(AuthenticationStateProvider authentication, IIncidentService incidents,
     IncidentPhotoService photos, IManagerTogglePolicy toggles, IManagerApprovalService approvals)
 {
+    private static readonly string[] IncidentOperationCodes = ["SW-12", "SW-13", "SW-14"];
+
     public async Task<PropertyCaller> CallerAsync()
     {
         var user = (await authentication.GetAuthenticationStateAsync()).User;
@@ -58,16 +60,25 @@ public sealed class IncidentPageService(AuthenticationStateProvider authenticati
     {
         var caller = await CallerAsync();
         if (caller.IsKhachThue) return [];
-        var result = caller.IsChuTro ? await approvals.ListInboxAsync(new(caller.UserId, caller.Role))
-            : await approvals.ListMineAsync(new(caller.UserId, caller.Role));
+        var approvalCaller = new ApprovalCaller(caller.UserId, caller.Role);
+        var result = caller.IsChuTro
+            ? await approvals.ListInboxAsync(approvalCaller, IncidentOperationCodes)
+            : await approvals.ListMineAsync(approvalCaller, IncidentOperationCodes);
         if (!result.Succeeded) throw new IncidentPageException(result.ErrorCode ?? "LoadFailed");
-        return result.Items.Where(r => r.OperationCode is "SW-12" or "SW-13" or "SW-14").ToArray();
+        return result.Items;
     }
     public async Task<IReadOnlyList<IncidentItem>> ListAsync()
     {
         var caller = await CallerAsync();
         return (await incidents.ListAsync(caller)).Select(i => new IncidentItem(i.Id, i.RoomId, i.Title, "", i.Category, i.Urgency,
             i.Status, i.CreatedAt, "", [], [], [], RoomLabel: $"{i.PropertyName} / {i.RoomCode}")).ToArray();
+    }
+
+    public async Task<IncidentListPage> ListPageAsync(IncidentListQuery query)
+    {
+        var caller = await CallerAsync();
+        // Trang danh sách là DTO nhẹ từ SQL; component bảng tự chiếu sang model hiển thị.
+        return await incidents.ListPageAsync(caller, query);
     }
 
     public async Task<int> CountOpenAsync() => await incidents.CountOpenAsync(await CallerAsync());
@@ -157,8 +168,9 @@ public sealed class IncidentPageService(AuthenticationStateProvider authenticati
         var result = await incidents.PurgeAsync(id, await CallerAsync());
         if (!result.Succeeded) throw new IncidentPageException(result.ErrorCode ?? "PurgeFailed");
     }
-    public async Task<IReadOnlyList<IncidentTrashItemDto>> ListDeletedAsync() =>
-        await incidents.ListDeletedAsync(await CallerAsync());
+    public async Task<PagedResult<IncidentTrashItemDto>> ListDeletedAsync(
+        string? keyword, int page, int pageSize) =>
+        await incidents.ListDeletedAsync(await CallerAsync(), keyword, page, pageSize);
     public async Task<TrashPurgeSummary> PurgeAllDeletedAsync() =>
         await incidents.PurgeAllAsync(await CallerAsync());
 

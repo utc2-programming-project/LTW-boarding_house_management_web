@@ -1,6 +1,8 @@
 .renewal-queue-page .page-heading p { margin: 8px 0 0; color: var(--text-secondary); }
 .renewal-table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-.renewal-table { width: 100%; min-width: 1040px; border-collapse: collapse; }
+.renewal-table { width: 100%; min-width: 1040px; table-layout: fixed; border-collapse: collapse; }
+/* Cột cuối giữ đủ chỗ cho nút "Quyết định"; các cột còn lại chia đều và cắt chữ. */
+.renewal-table th:last-child { width: 150px; }
 .renewal-table th { height: 44px; padding: 8px 12px; background: var(--surface-subtle); color: var(--text-secondary); font-size: 13px; text-align: left; white-space: nowrap; }
 .renewal-table td { height: 52px; padding: 8px 12px; border-top: 1px solid var(--border); font-size: 14px; }
 .renewal-table tr:hover td { background: var(--hover-bg); }

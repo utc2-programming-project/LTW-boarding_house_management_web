@@ -288,7 +288,7 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
         // Tenant registers only Fitness via toggle service.
         var registrationService = new ContractServiceRegistrationService(
             world.NewDb(),
-            new P2CallerProvider(new FixedAuthenticationStateProvider(world.TenantAAsPropertyCaller)),
+            new P2CallerProvider(new FixedAuthenticationStateProvider(world.TenantAAsPropertyCaller), world.NewOwnerAccessGuard()),
             NullLogger<ContractServiceRegistrationService>.Instance,
             TimeProvider.System);
         var registered = await registrationService.ToggleAsync(second.Id);
@@ -312,7 +312,7 @@ public sealed class MonthlyUtilityCalculationPageServiceIntegrationTests(SqlServ
         PropertyCaller caller)
     {
         var db = world.NewDb();
-        var callerProvider = new P2CallerProvider(new FixedAuthenticationStateProvider(caller));
+        var callerProvider = new P2CallerProvider(new FixedAuthenticationStateProvider(caller), world.NewOwnerAccessGuard());
         var tariffs = new UtilityTariffService(db);
         var snapshots = new UtilityPeriodCostSnapshotService(tariffs);
         return new MonthlyUtilityCalculationPageService(

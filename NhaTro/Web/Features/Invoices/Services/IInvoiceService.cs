@@ -72,8 +72,9 @@ public interface IInvoiceService
     Task RestoreAsync(
         int invoiceId, PropertyCaller caller, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<InvoiceTrashItemDto>> ListDeletedAsync(
-        PropertyCaller caller, CancellationToken cancellationToken = default);
+    Task<PagedResult<InvoiceTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller, string? keyword, int page, int pageSize,
+        CancellationToken cancellationToken = default);
 
     Task PurgeAsync(
         int invoiceId, PropertyCaller caller, CancellationToken cancellationToken = default);

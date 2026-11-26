@@ -35,7 +35,7 @@ public sealed class RevenueChartTests : BunitContext
         var component = Render<RevenueChart>(p => p.Add(c => c.Periods, Periods));
         Assert.Equal(Periods.Length * 2, component.FindAll("rect.chart-bar").Count);
         Assert.Equal(2, component.FindAll("linearGradient[id$='-bar-0'],linearGradient[id$='-bar-1']").Count);
-        Assert.All(component.FindAll("rect.chart-bar"), bar => Assert.StartsWith("url(#", bar.GetAttribute("filter")));
+        Assert.All(component.FindAll("rect.chart-bar"), bar => Assert.Contains("fill:url(#", bar.GetAttribute("style")));
         Assert.Empty(component.FindAll("path.chart-line"));
     }
 
@@ -44,7 +44,7 @@ public sealed class RevenueChartTests : BunitContext
     {
         var component = Render<RevenueChart>(p => p.Add(c => c.Periods, Periods));
         var buttons = component.FindAll(".revenue-chart__toolbar button");
-        Assert.Equal(2, buttons.Count);
+        Assert.Equal(3, buttons.Count);
         buttons[1].Click();
 
         Assert.Empty(component.FindAll("rect.chart-bar"));
@@ -56,6 +56,18 @@ public sealed class RevenueChartTests : BunitContext
 
         component.FindAll(".revenue-chart__toolbar button")[0].Click();
         Assert.Equal(Periods.Length * 2, component.FindAll("rect.chart-bar").Count);
+    }
+
+    [Fact]
+    public void Stacked_button_draws_two_bars_per_period_without_glow()
+    {
+        var component = Render<RevenueChart>(p => p.Add(c => c.Periods, Periods));
+        component.FindAll(".revenue-chart__toolbar button")[2].Click();
+
+        Assert.Equal(Periods.Length * 2, component.FindAll("rect.chart-bar").Count);
+        Assert.All(component.FindAll("rect.chart-bar"), bar => Assert.Contains("fill:url(#", bar.GetAttribute("style")));
+        Assert.All(component.FindAll("rect.chart-bar"), bar => Assert.Null(bar.GetAttribute("filter")));
+        Assert.Empty(component.FindAll("path.chart-line"));
     }
 
     [Fact]

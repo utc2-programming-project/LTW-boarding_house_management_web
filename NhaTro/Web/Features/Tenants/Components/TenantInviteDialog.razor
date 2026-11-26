@@ -2,6 +2,7 @@
 @using Web.Components.Shared.Dialogs
 @using Web.Components.Shared.Forms
 @using Web.Features.Tenants.Invitations
+@using Web.Features.Tenants.Enums
 @using Web.Features.Tenants.Services
 
 @inject TenantPageService TenantPages
@@ -34,6 +35,23 @@
 
             <FormField TValue="string" Id="invite-phone" Label="@L["PhoneLabel"]" For="() => _model.PhoneNumber">
                 <InputText id="invite-phone" @bind-Value="_model.PhoneNumber" inputmode="numeric" maxlength="10" />
+            </FormField>
+
+            <FormField TValue="TenantInvitationKind" Id="invite-kind" Label="@L["InviteKindLabel"]"
+                       For="() => _model.Kind">
+                <select id="invite-kind" class="input" @bind="_model.Kind">
+                    <option value="NewAccount">@L["InviteKindNew"]</option>
+                    <option value="ExistingAccount">@L["InviteKindExisting"]</option>
+                </select>
+            </FormField>
+
+            <FormField TValue="int" Id="invite-expiry" Label="@L["InviteExpiryLabel"]"
+                       For="() => _model.ExpiryMinutes">
+                <select id="invite-expiry" class="input" @bind="_model.ExpiryMinutes">
+                    <option value="60">@L["InviteExpiry1h"]</option>
+                    <option value="360">@L["InviteExpiry6h"]</option>
+                    <option value="1440">@L["InviteExpiry24h"]</option>
+                </select>
             </FormField>
 
             <p class="note">@L["InviteTenantNote"]</p>
@@ -90,6 +108,8 @@
                 FullName = _model.FullName,
                 Email = _model.Email,
                 PhoneNumber = _model.PhoneNumber,
+                Kind = _model.Kind,
+                ExpiryMinutes = _model.ExpiryMinutes,
             });
 
             if (!result.Succeeded)
@@ -128,5 +148,9 @@
         public string Email { get; set; } = string.Empty;
 
         public string? PhoneNumber { get; set; }
+
+        public TenantInvitationKind Kind { get; set; } = TenantInvitationKind.NewAccount;
+
+        public int ExpiryMinutes { get; set; } = 1440;
     }
 }

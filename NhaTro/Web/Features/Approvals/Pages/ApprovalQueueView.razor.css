@@ -74,7 +74,7 @@
     background: var(--neutral-bg);
     color: var(--neutral-text);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
 }
@@ -98,6 +98,9 @@
     height: 14px;
     color: var(--text-muted);
 }
+
+.approval-card__target > span,
+.approval-card__meta dd { min-width: 0; }
 
 .approval-card__meta-row {
     display: flex;

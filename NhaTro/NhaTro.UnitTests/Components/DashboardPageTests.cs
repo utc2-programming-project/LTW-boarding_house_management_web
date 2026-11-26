@@ -40,6 +40,10 @@ public sealed class DashboardPageTests : BunitContext
         }));
         var rooms = Proxy<IRoomReportService>((method, args) =>
         {
+            if (method.Name == nameof(IRoomReportService.GetOccupancyAsync))
+            {
+                return Task.FromResult(new OccupancyReportResult([]));
+            }
             RoomRequests.Add(((RoomReportFilter)args![0]!).PropertyId);
             return DenyRooms ? Task.FromException<RoomReportResult>(new UnauthorizedAccessException()) :
                 Task.FromResult(new RoomReportResult { Kpis = new() { Total = 3, Rented = 2, Available = 1 }, Rooms = new() { Items = [], Page = 1, PageSize = 1, TotalCount = 3 } });
@@ -57,8 +61,9 @@ public sealed class DashboardPageTests : BunitContext
         {
             Kpis = new() { Total = 2, New = 1, InProgress = 1 },
         }));
-        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)),
-            properties, rooms, tenants, revenue, incidents, TimeProvider.System));
+        var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
+        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role), TestOwnerAccess.Create()),
+            properties, rooms, tenants, revenue, incidents, contracts, TimeProvider.System));
         ComponentFactories.AddStub<RoomStructureChart>();
     }
 

@@ -114,13 +114,19 @@
     {
         RenderFragment<StoredFileTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<StoredFileTrashItemDto> file = item => @<span class="cell-truncate" data-hover-tip>
+            @item.FileName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.FileName</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "file", Title = L["DocumentTrashColumnFile"], Value = item => item.FileName },
-            new() { Key = "category", Title = L["DocumentTrashColumnCategory"], Value = item => item.FileCategory.ToString() },
-            new() { Key = "related", Title = L["DocumentTrashColumnRelated"], Value = item => $"{item.RelatedEntityType} #{item.RelatedEntityId}" },
-            new() { Key = "uploaded", Title = L["DocumentTrashColumnUploaded"], Value = item => DateFormatter.FormatDateTime(item.UploadedAt.UtcDateTime) },
+            new() { Key = "file", Title = L["DocumentTrashColumnFile"], Template = file, Width = "260px" },
+            new() { Key = "category", Title = L["DocumentTrashColumnCategory"], Value = item => item.FileCategory.ToString(), Width = "130px" },
+            new() { Key = "related", Title = L["DocumentTrashColumnRelated"], Value = item => $"{item.RelatedEntityType} #{item.RelatedEntityId}", Width = "220px" },
+            new() { Key = "uploaded", Title = L["DocumentTrashColumnUploaded"], Value = item => DateFormatter.FormatDateTime(item.UploadedAt.UtcDateTime), Width = "160px" },
             TrashColumns.DeletedAt<StoredFileTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["P2Actions"], actions),
         ];
@@ -128,18 +134,12 @@
 
     private async Task<PagedResult<StoredFileTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
     {
-        var items = await Files.ListDeletedAsync(_caller);
-        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
-        var filtered = items
-            .Where(item => term is null
-                || item.FileName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.RelatedEntityId.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        var items = await Files.SearchDeletedAsync(_caller, _keyword);
 
         return new PagedResult<StoredFileTrashItemDto>
         {
-            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
-            TotalCount = filtered.Count,
+            Items = items.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
+            TotalCount = items.Count,
             Page = request.Page,
             PageSize = request.PageSize,
         };

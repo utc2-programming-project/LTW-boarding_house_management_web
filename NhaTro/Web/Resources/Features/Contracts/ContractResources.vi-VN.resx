@@ -273,6 +273,8 @@
   <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Trạng thái / Thao tác</value></data>
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Thuê/tháng</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Đặt cọc</value></data>
+  <data name="ContractRentAmountLabel" xml:space="preserve"><value>Thuê</value></data>
+  <data name="ContractDepositAmountLabel" xml:space="preserve"><value>Cọc</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>Xem thông tin hợp đồng, các bên, điều khoản và tình trạng thanh toán.</value></data>
   <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Cập nhật cọc</value></data>
   <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Cập nhật tiền cọc</value></data>
