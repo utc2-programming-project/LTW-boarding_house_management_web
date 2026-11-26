@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.TimeProvider.Testing;
+using Microsoft.Extensions.Time.Testing;
 using Web.Data;
 using Web.Endpoints.Avatars;
 using Web.Features.Accounts.Avatar;
