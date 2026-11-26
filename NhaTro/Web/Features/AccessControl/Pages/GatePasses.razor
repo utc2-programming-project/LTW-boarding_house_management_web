@@ -53,14 +53,16 @@
 
         <div class="filter-bar filter-bar--panel">
             <div class="filter-bar__row">
-                <label class="gate-inline-label" for="gate-status-filter">@L["Status"]</label>
-                <select id="gate-status-filter" class="input" @bind="_statusFilter" @bind:after="LoadPassesAsync">
-                    <option value="">@L["All"]</option>
-                    @foreach (var status in Enum.GetValues<GatePassStatus>())
-                    {
-                        <option value="@status">@L[status.ToString()]</option>
-                    }
-                </select>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="gate-status-filter">@L["Status"]</label>
+                    <select id="gate-status-filter" class="input" @bind="_statusFilter" @bind:after="LoadPassesAsync">
+                        <option value="">@L["All"]</option>
+                        @foreach (var status in Enum.GetValues<GatePassStatus>())
+                        {
+                            <option value="@status">@L[status.ToString()]</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
 

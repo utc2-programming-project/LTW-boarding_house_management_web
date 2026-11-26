@@ -136,12 +136,6 @@
     margin-top: var(--space-4, 16px);
 }
 
-.gate-inline-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-}
-
 .gate-hour-range {
     display: flex;
     align-items: center;

@@ -118,6 +118,7 @@
   <data name="Method" xml:space="preserve"><value>Method</value></data>
   <data name="Device" xml:space="preserve"><value>Gate / device</value></data>
   <data name="Result" xml:space="preserve"><value>Result</value></data>
+  <data name="GateLog" xml:space="preserve"><value>Gate log</value></data>
   <data name="NoLogs" xml:space="preserve"><value>No entries yet.</value></data>
   <data name="Stays" xml:space="preserve"><value>Stay reports</value></data>
   <data name="RefreshOverdue" xml:space="preserve"><value>Refresh overdue</value></data>

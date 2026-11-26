@@ -26,13 +26,15 @@
     {
         <div class="filter-bar filter-bar--panel">
             <div class="filter-bar__row">
-                <label class="gate-inline-label" for="gate-property">@L["Property"]</label>
-                <select id="gate-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
-                    @foreach (var property in _properties)
-                    {
-                        <option value="@property.PropertyId">@property.Name</option>
-                    }
-                </select>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="gate-property">@L["Property"]</label>
+                    <select id="gate-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
+                        @foreach (var property in _properties)
+                        {
+                            <option value="@property.PropertyId">@property.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
 

@@ -28,23 +28,33 @@
     {
         <div class="filter-bar filter-bar--panel">
             <div class="filter-bar__row">
-                <label class="gate-inline-label" for="gate-from">@L["From"]</label>
-                <input id="gate-from" type="date" class="input" @bind="_from" />
-                <label class="gate-inline-label" for="gate-to">@L["To"]</label>
-                <input id="gate-to" type="date" class="input" @bind="_to" />
-                <label class="gate-inline-label" for="gate-result">@L["Result"]</label>
-                <select id="gate-result" class="input" @bind="_result">
-                    <option value="">@L["All"]</option>
-                    <option value="1">@L["Success"]</option>
-                    <option value="0">@L["Failed"]</option>
-                </select>
-                <label class="gate-inline-label" for="gate-direction">@L["Direction"]</label>
-                <select id="gate-direction" class="input" @bind="_direction">
-                    <option value="">@L["All"]</option>
-                    <option value="@GateDirection.In">@L["In"]</option>
-                    <option value="@GateDirection.Out">@L["Out"]</option>
-                </select>
-                <button type="button" class="btn btn-primary" @onclick="LoadLogsAsync">@L["Filters"]</button>
+                <div class="filter-bar__stack filter-bar__text">
+                    <label for="gate-from">@L["From"]</label>
+                    <input id="gate-from" type="date" class="input" @bind="_from" />
+                </div>
+                <div class="filter-bar__stack filter-bar__text">
+                    <label for="gate-to">@L["To"]</label>
+                    <input id="gate-to" type="date" class="input" @bind="_to" />
+                </div>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="gate-result">@L["Result"]</label>
+                    <select id="gate-result" class="input" @bind="_result">
+                        <option value="">@L["All"]</option>
+                        <option value="1">@L["Success"]</option>
+                        <option value="0">@L["Failed"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="gate-direction">@L["Direction"]</label>
+                    <select id="gate-direction" class="input" @bind="_direction">
+                        <option value="">@L["All"]</option>
+                        <option value="@GateDirection.In">@L["In"]</option>
+                        <option value="@GateDirection.Out">@L["Out"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <button type="button" class="btn btn-primary" @onclick="LoadLogsAsync">@L["Filters"]</button>
+                </div>
             </div>
         </div>
 
@@ -120,7 +130,7 @@
             </div>
         }
 
-        <h2>@L["PageTitleLogs"]</h2>
+        <h2>@L["GateLog"]</h2>
         @if (_logs.Count == 0)
         {
             <p class="gate-muted">@L["NoLogs"]</p>

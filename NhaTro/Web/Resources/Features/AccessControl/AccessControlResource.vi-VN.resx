@@ -126,6 +126,7 @@
   <data name="Method" xml:space="preserve"><value>Phương thức</value></data>
   <data name="Device" xml:space="preserve"><value>Cổng/thiết bị</value></data>
   <data name="Result" xml:space="preserve"><value>Kết quả</value></data>
+  <data name="GateLog" xml:space="preserve"><value>Nhật ký cổng</value></data>
   <data name="NoLogs" xml:space="preserve"><value>Chưa có lượt ra vào.</value></data>
   <data name="Stays" xml:space="preserve"><value>Thông báo lưu trú</value></data>
   <data name="RefreshOverdue" xml:space="preserve"><value>Cập nhật quá hạn</value></data>
