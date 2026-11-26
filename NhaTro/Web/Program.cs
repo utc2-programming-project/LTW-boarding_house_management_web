@@ -589,6 +589,39 @@ builder.Services.AddScoped<Web.Features.Invoices.Services.IPaymentReviewQuerySer
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentReviewPageService>();
 // VHT-143: ngữ cảnh tra cứu P6 tối thiểu sau reconnect/tải lại.
 builder.Services.AddScoped<Web.Features.Invoices.Services.PaymentRecoveryService>();
+// Trợ lý AI: một cổng model (OpenAI-compatible hoặc Demo), đề xuất chờ Chủ trọ duyệt.
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection(AiOptions.SectionName));
+builder.Services.AddHttpClient(Web.Features.Assistant.Services.AiChatClient.HttpClientName, (sp, client) =>
+{
+    var aiOptions = sp.GetRequiredService<IOptions<AiOptions>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(Math.Clamp(aiOptions.TimeoutSeconds, 5, 120));
+});
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiChatClient,
+    Web.Features.Assistant.Services.AiChatClient>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.DemoAiChatClient>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.AiContextBuilder>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.AiSettingsService>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.AiSuggestionService>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.AiAssistantPageService>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier>(sp =>
+    new Web.Features.Assistant.Services.InformationalAiSuggestionApplier(
+        Web.Features.Assistant.Enums.AiUseCase.ReportSummary));
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier>(sp =>
+    new Web.Features.Assistant.Services.InformationalAiSuggestionApplier(
+        Web.Features.Assistant.Enums.AiUseCase.IncidentTriage));
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier>(sp =>
+    new Web.Features.Assistant.Services.InformationalAiSuggestionApplier(
+        Web.Features.Assistant.Enums.AiUseCase.DailySummary));
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier,
+    Web.Features.Assistant.Services.ReminderAiSuggestionApplier>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier,
+    Web.Features.Assistant.Services.RoomDraftAiSuggestionApplier>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier,
+    Web.Features.Assistant.Services.TenantDraftAiSuggestionApplier>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier,
+    Web.Features.Assistant.Services.ServiceDraftAiSuggestionApplier>();
+builder.Services.AddScoped<Web.Features.Assistant.Services.IAiSuggestionApplier,
+    Web.Features.Assistant.Services.ContractDraftAiSuggestionApplier>();
 builder.Services.AddMudServices();
 builder.Services.AddSingleton(TimeProvider.System);
 var app = builder.Build();

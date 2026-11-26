@@ -8,6 +8,8 @@
   <data name="PageTitle" xml:space="preserve"><value>Approval queue</value></data>
   <data name="PageHelp" xml:space="preserve"><value>Manager actions waiting for your approval. Approving applies the change immediately; rejecting requires a reason.</value></data>
   <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="TabManager" xml:space="preserve"><value>Manager requests</value></data>
+  <data name="TabAi" xml:space="preserve"><value>AI suggestions</value></data>
   <data name="Loading" xml:space="preserve"><value>Loading…</value></data>
   <data name="LoadFailedTitle" xml:space="preserve"><value>Could not load the queue</value></data>
   <data name="LoadFailedDescription" xml:space="preserve"><value>Your connection or access may have changed. Please try again.</value></data>

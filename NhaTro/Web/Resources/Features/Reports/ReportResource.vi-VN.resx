@@ -3,6 +3,7 @@
 <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
 <resheader name="version"><value>2.0</value></resheader>
 <data name="Title" xml:space="preserve"><value>Báo cáo vận hành</value></data>
+  <data name="AiSummary" xml:space="preserve"><value>Tóm tắt bằng AI</value></data>
 <data name="CurrentData" xml:space="preserve"><value>Số liệu hiện trạng từ dữ liệu vận hành, cập nhật khi làm mới.</value></data>
 <data name="ScopeNote" xml:space="preserve"><value>Phòng được lọc theo nhà trọ và trạng thái. Khách được lọc theo hồ sơ có hợp đồng ở nhà đã chọn, gồm mọi trạng thái hợp đồng. Khi chọn tất cả nhà, nguồn khách còn gồm hồ sơ chưa gắn hợp đồng trong phạm vi được phép.</value></data>
 <data name="UnavailableProperty" xml:space="preserve"><value>Nhà trọ không tồn tại hoặc nằm ngoài phạm vi được phép.</value></data>

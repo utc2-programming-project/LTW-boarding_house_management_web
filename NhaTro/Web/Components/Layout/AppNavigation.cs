@@ -64,6 +64,12 @@ public static class AppNavigation
             new("GateSettings", "settings", "ChuTro,QuanLy", "/gate/settings"),
             new("MyGate", "qr-code", "KhachThue", "/my/gate"),
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
+            new("Assistant", "sparkles", "ChuTro,QuanLy", "/assistant",
+                Children:
+                [
+                    new("AssistantSettings", "", "ChuTro", "/assistant/settings", ShowInSidebar: false),
+                    new("AiSuggestions", "", "ChuTro", "/assistant/inbox", ShowInSidebar: false),
+                ]),
             new("Approvals", "check", "ChuTro", "/approvals"),
             new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
         ]),
