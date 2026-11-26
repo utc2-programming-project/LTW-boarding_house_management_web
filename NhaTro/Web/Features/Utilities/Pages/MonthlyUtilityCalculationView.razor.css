@@ -31,7 +31,7 @@
 .stat-number {
     color: var(--text-primary);
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight:600;
     line-height: 1.2;
 }
 
@@ -73,6 +73,7 @@
     width: 100%;
     min-width: 1080px;
     border-collapse: collapse;
+    table-layout: fixed;
     font-size: .875rem;
 }
 
@@ -89,7 +90,7 @@
     font-weight: 600;
     letter-spacing: .01em;
     text-align: left;
-    text-transform: uppercase;
+
     white-space: nowrap;
     background: var(--surface-subtle, #F1F5F9);
 }
@@ -121,22 +122,33 @@
 
 .total-cell {
     color: var(--primary, #4F46E5);
-    font-weight: 700;
+    font-weight:600;
 }
 
 .room-cell {
     display: flex;
     flex-direction: column;
+    min-inline-size: 0;
     gap: 4px;
 }
 
+/* Mã phòng giữ nguyên, tên nhà trọ dài thì cắt để cột không bị nong. */
+.room-head {
+    display: flex;
+    align-items: baseline;
+    min-inline-size: 0;
+    gap: 6px;
+}
+
 .room-code {
+    flex: none;
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight:600;
 }
 
 .room-property {
-    margin-left: 6px;
+    flex: 1 1 auto;
+    min-inline-size: 0;
     color: var(--text-muted);
     font-size: .75rem;
     font-weight: 500;
@@ -155,7 +167,7 @@
     padding: 1px 8px;
     border-radius: var(--radius-round, 999px);
     font-size: .6875rem;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: .02em;
 }
 
@@ -637,6 +649,7 @@
 
 .reading-pair-card dd,
 .summary-lines dd {
+    flex: none;
     margin: 0;
     color: var(--text-primary);
     font-weight: 600;
@@ -740,6 +753,12 @@
     font-size: .8125rem;
 }
 
+/* Bảng chỉnh sửa chỉ số: cột lý do cắt 1 dòng, cột số giữ nguyên độ rộng. */
+.corrections-table {
+    table-layout: fixed;
+    min-width: 560px;
+}
+
 .mini-table th,
 .mini-table td {
     padding: 8px 10px;
@@ -750,7 +769,7 @@
     color: var(--text-muted);
     font-size: .6875rem;
     font-weight: 600;
-    text-transform: uppercase;
+
     letter-spacing: .02em;
 }
 

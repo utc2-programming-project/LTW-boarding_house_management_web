@@ -13,7 +13,7 @@
 <div class="home-page">
     @if (!IsManagement)
     {
-        <PageHeading Title="@HeadingTitle" HelpText="@L["HomeDescription"]">
+        <PageHeading Title="@L["Title"]" HelpText="@L["HomeDescription"]">
             <HeadingMeta>
                 <p class="home-meta">
                     @if (Snapshot is { } roleSnapshot)
@@ -150,7 +150,6 @@
                                             <td class="num">
                                                 @* Số tiền còn nợ: nổi bật + bấm để mở hoá đơn cần thanh toán. *@
                                                 <a class="home-due-link" href="@InvoiceHref(invoice.InvoiceId)" title="@L["OpenInvoiceTitle"]">
-                                                    <LucideIcon Name="wallet" />
                                                     <span class="tabular-nums">@MoneyFormatter.Format(invoice.Outstanding)</span>
                                                     <LucideIcon Name="arrow-right" />
                                                 </a>
@@ -214,21 +213,6 @@
     private bool Busy;
     private bool IsManagement;
     private bool WorkInitialized;
-
-    private string DisplayName => Snapshot?.DisplayName ?? "";
-
-    private string HeadingTitle => string.IsNullOrEmpty(DisplayName) ? Greeting : $"{Greeting}, {DisplayName}";
-
-    private string Greeting
-    {
-        get
-        {
-            var hour = VietnamTime.ToVietnam(Time.UtcNow()).Hour;
-            return hour < 12 ? L["GreetingMorning"].Value
-                : hour < 18 ? L["GreetingAfternoon"].Value
-                : L["GreetingEvening"].Value;
-        }
-    }
 
     private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my/invoices" : "/invoices";
 

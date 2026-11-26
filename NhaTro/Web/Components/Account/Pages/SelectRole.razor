@@ -17,7 +17,7 @@
 <PageTitle>@L["SelectRoleTitle"] · @L["AppName"]</PageTitle>
 
 <section class="auth-page" aria-labelledby="select-role-title">
-    <div class="auth-card">
+    <div class="auth-card" data-wait="select-role-wait">
         <PageHeading Title="@L["SelectRoleTitle"]" TitleId="select-role-title"
                      HelpText="@L["SelectRoleHelp"]" InteractiveHelp="true" Class="auth-heading" />
 
@@ -55,6 +55,14 @@
                 <button type="submit" class="btn btn-secondary btn-block">@L["SignOut"]</button>
             </form>
         }
+    </div>
+
+    @* Màn hình chờ: form POST/redirect vẫn giữ trang hiện tại cho tới khi trang đích tải xong,
+       nên overlay che đúng khoảng chờ (nav-wait.js bật khi submit). *@
+    <div id="select-role-wait" class="nav-wait" hidden role="status" aria-live="polite">
+        <span class="nav-wait-spinner" aria-hidden="true"></span>
+        <strong class="nav-wait-title">@L["SelectRoleLoadingTitle"]</strong>
+        <span class="nav-wait-hint">@L["SelectRoleLoadingHint"]</span>
     </div>
 </section>
 

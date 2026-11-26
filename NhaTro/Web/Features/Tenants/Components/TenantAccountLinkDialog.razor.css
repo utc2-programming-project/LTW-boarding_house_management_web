@@ -27,7 +27,7 @@
 .tenant-account-option:hover { background: var(--hover-bg); }
 .tenant-account-option:has(input:checked) { border-color: var(--accent-border); background: var(--selected-bg); }
 .tenant-account-option input { width: 18px; height: 18px; accent-color: var(--primary); }
-.tenant-account-option-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-text); font-weight: 700; }
+.tenant-account-option-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border-radius: 12px; background: var(--accent-soft); color: var(--accent-text); font-weight:600; }
 .tenant-account-option-text { display: grid; min-width: 0; gap: 3px; }
 .tenant-account-option-text strong,.tenant-account-option-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tenant-account-option-text small { color: var(--text-muted); }

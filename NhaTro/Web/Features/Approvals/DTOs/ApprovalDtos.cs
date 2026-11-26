@@ -77,13 +77,22 @@ public sealed class ApprovalListResult
 
     public IReadOnlyList<ApprovalRequestDto> Items { get; init; } = [];
 
+    /// <summary>Tổng số yêu cầu khớp bộ lọc (để phân trang); 0 khi danh sách không phân trang.</summary>
+    public int TotalCount { get; init; }
+
     public string? ErrorCode { get; init; }
 
     public string? ErrorMessage { get; init; }
 
-    public static ApprovalListResult Success(IReadOnlyList<ApprovalRequestDto> items) =>
-        new() { Succeeded = true, Items = items };
+    public static ApprovalListResult Success(IReadOnlyList<ApprovalRequestDto> items, int totalCount = 0) =>
+        new() { Succeeded = true, Items = items, TotalCount = totalCount };
 
     public static ApprovalListResult Failure(string errorCode, string errorMessage) =>
         new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
 }
+
+/// <summary>
+/// Số liệu tổng của hộp thư Chờ duyệt, tính bằng một query aggregate
+/// độc lập với trang đang xem.
+/// </summary>
+public sealed record ApprovalInboxStats(int PendingCount, int TodayCount, DateTime? OldestRequestedAt);

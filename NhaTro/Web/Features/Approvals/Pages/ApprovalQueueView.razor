@@ -6,6 +6,8 @@
 @inject TimeProvider Clock
 @inject IStringLocalizer<ApprovalResources> L
 @inject IStringLocalizer<Shared> SL
+@using Web.Common.Utils
+@implements IDisposable
 
 <PageTitle>@L["PageTitle"]</PageTitle>
 
@@ -68,11 +70,11 @@
                     <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                     <input id="approval-keyword" class="input" type="search" autocomplete="off"
                            placeholder="@L["FilterSearchPlaceholder"]"
-                           @bind="_keyword" @bind:event="oninput" />
+                           @bind="_keyword" @bind:event="oninput" @bind:after="KeywordChangedAsync" />
                 </div>
                 <div class="filter-bar__field filter-bar__select">
                     <label class="sr-only" for="approval-group">@L["FilterGroup"]</label>
-                    <select id="approval-group" class="input" @bind="_group">
+                    <select id="approval-group" class="input" @bind="_group" @bind:after="FilterChangedAsync">
                         <option value="">@L["AllGroups"]</option>
                         @foreach (var group in GroupOptions)
                         {
@@ -82,21 +84,21 @@
                 </div>
                 <div class="filter-bar__field filter-bar__select">
                     <label class="sr-only" for="approval-sort">@L["SortLabel"]</label>
-                    <select id="approval-sort" class="input" @bind="_sort">
+                    <select id="approval-sort" class="input" @bind="_sort" @bind:after="FilterChangedAsync">
                         <option value="@SortOldest">@L["SortOldest"]</option>
                         <option value="@SortNewest">@L["SortNewest"]</option>
                     </select>
                 </div>
                 <div class="filter-bar__actions">
-                    <FilterResetButton OnClick="ResetFilters" />
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
                 </div>
             </div>
         </div>
 
-        @if (Filtered.Count == 0)
+        @if (PageItems.Count == 0)
         {
             <EmptyStateCard Title="@L["NoResultsTitle"]" Description="@L["NoResultsDescription"]">
-                <button type="button" class="btn btn-secondary" @onclick="ResetFilters">
+                <button type="button" class="btn btn-secondary" @onclick="ResetFiltersAsync">
                     <LucideIcon Name="refresh-cw" /> @L["ResetFilters"]
                 </button>
             </EmptyStateCard>
@@ -104,7 +106,7 @@
         else
         {
             <ul class="approval-list">
-                @foreach (var item in Filtered)
+                @foreach (var item in PageItems)
                 {
                     var expanded = _expanded.Contains(item.Id);
                     <li class="approval-card @(_highlighted.Contains(item.Id) ? "is-highlighted" : null)" @key="item.Id">
@@ -116,7 +118,12 @@
                                 </div>
                                 <p class="approval-card__target">
                                     <LucideIcon Name="@TargetIcon(item.TargetType)" />
-                                    <span>@item.TargetLabel</span>
+                                    <span class="cell-truncate" data-hover-tip>
+                                        @item.TargetLabel
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@item.TargetLabel</span>
+                                        </span>
+                                    </span>
                                 </p>
                             </div>
                             <StatusBadge Text="@AgeText(item.RequestedAt)" Tone="@AgeTone(item.RequestedAt)" />
@@ -126,7 +133,12 @@
                             <dl class="approval-card__meta">
                                 <div>
                                     <dt><LucideIcon Name="user" />@L["RequesterLabel"]</dt>
-                                    <dd>@RequesterText(item)</dd>
+                                    <dd class="cell-truncate" data-hover-tip>
+                                        @RequesterText(item)
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@RequesterText(item)</span>
+                                        </span>
+                                    </dd>
                                 </div>
                                 <div>
                                     <dt><LucideIcon Name="calendar" />@L["SentAtLabel"]</dt>
@@ -172,7 +184,12 @@
                                 {
                                     <div>
                                         <dt>@DetailLabel(line)</dt>
-                                        <dd>@DetailValue(line)</dd>
+                                        <dd class="cell-truncate" data-hover-tip>
+                                            @DetailValue(line)
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@DetailValue(line)</span>
+                                            </span>
+                                        </dd>
                                     </div>
                                 }
                             </dl>
@@ -196,6 +213,8 @@
                     </li>
                 }
             </ul>
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_total"
+                        Disabled="@_loading" PageChanged="GoToPageAsync" />
         }
     }
 </section>
@@ -273,6 +292,17 @@
     private string _rejectReason = string.Empty;
     private string? _rejectError;
     private bool _busy;
+    private int _page = 1;
+    private int _pageSize = 20;
+    private int _total;
+    private CancellationTokenSource? _keywordDebounce;
+    private ApprovalInboxStats _stats = new(0, 0, null);
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -328,50 +358,54 @@
         }
     }
 
-    private int PendingCount => _items.Count;
+    private int PendingCount => _stats.PendingCount;
 
-    private int TodayCount
-    {
-        get
-        {
-            var today = VietnamTime.ToVietnam(Clock.GetUtcNow().UtcDateTime).Date;
-            return _items.Count(item => VietnamTime.ToVietnam(item.RequestedAt).Date == today);
-        }
-    }
+    private int TodayCount => _stats.TodayCount;
 
-    private int OldestAgeDays
-    {
-        get
-        {
-            if (_items.Count == 0)
-            {
-                return 0;
-            }
-
-            var oldest = _items.Min(item => item.RequestedAt);
-            return AgeDays(oldest);
-        }
-    }
+    private int OldestAgeDays => _stats.OldestRequestedAt is { } oldest ? AgeDays(oldest) : 0;
 
     private string OldestText => OldestAgeDays < 1
         ? L["AgeUnderDay"].Value
         : L["AgeDays", OldestAgeDays].Value;
 
-    private IReadOnlyList<string> GroupOptions =>
-        _items.Select(item => item.Group).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.Ordinal).ToList();
+    private static readonly IReadOnlyList<string> CatalogGroups =
+        ManagerToggleCatalog.All
+            .Select(definition => definition.Group)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
 
-    private IReadOnlyList<ApprovalQueueItem> Filtered
+    private IReadOnlyList<string> GroupOptions => CatalogGroups;
+
+    // Nhóm/chiều sắp xếp/từ khóa lọc ở SQL; trang chỉ hiển thị đúng trang server trả về.
+    private IReadOnlyList<ApprovalQueueItem> PageItems => _items;
+
+    private async Task KeywordChangedAsync()
     {
-        get
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        var cts = _keywordDebounce = new CancellationTokenSource();
+        try
         {
-            var keyword = _keyword.Trim();
-            var matches = _items.Where(item => Matches(item, keyword));
-            return (_sort == SortNewest
-                    ? matches.OrderByDescending(item => item.RequestedAt)
-                    : matches.OrderBy(item => item.RequestedAt))
-                .ToList();
+            await Task.Delay(UiTiming.SearchDebounceMs, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!cts.IsCancellationRequested)
+        {
+            _page = 1;
+            await LoadAsync();
         }
     }
+
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize));
+
+    private int FirstItem => _total == 0 ? 0 : (_page - 1) * _pageSize + 1;
+
+    private int LastItem => Math.Min(_page * _pageSize, _total);
 
     private ApprovalQueueItem? ApproveTarget =>
         _approveId is { } id ? _items.FirstOrDefault(item => item.Id == id) : null;
@@ -381,11 +415,6 @@
 
     private bool Matches(ApprovalQueueItem item, string keyword)
     {
-        if (_group.Length > 0 && !string.Equals(item.Group, _group, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
         if (keyword.Length == 0)
         {
             return true;
@@ -407,10 +436,25 @@
         _failed = false;
         try
         {
-            var result = await Queue.LoadAsync();
+            var operationCodes = OperationCodesForGroup();
+            var keyword = _keyword.Trim();
+            var result = await Queue.LoadPageAsync(
+                _page, _pageSize, operationCodes, _sort == SortNewest, ct: default,
+                keyword: keyword.Length == 0 ? null : keyword);
+            if (result.Succeeded && result.Items.Count == 0 && result.TotalCount > 0 && _page > 1)
+            {
+                // Duyệt/từ chối làm trống trang cuối: lùi về trang cuối còn dữ liệu.
+                _page = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)_pageSize));
+                result = await Queue.LoadPageAsync(
+                    _page, _pageSize, operationCodes, _sort == SortNewest, ct: default,
+                    keyword: keyword.Length == 0 ? null : keyword);
+            }
+
             if (result.Succeeded)
             {
                 _items = result.Items;
+                _total = result.TotalCount;
+                _stats = result.Stats;
                 _expanded.RemoveWhere(id => _items.All(item => item.Id != id));
                 ApplyQueryFocus();
             }
@@ -418,6 +462,7 @@
             {
                 _failed = true;
                 _items = [];
+                _total = 0;
                 Toasts.Error(ErrorText(result.ErrorCode));
             }
         }
@@ -425,6 +470,7 @@
         {
             _failed = true;
             _items = [];
+            _total = 0;
             Toasts.Error(L["LoadFailedDescription"].Value);
         }
         finally
@@ -433,14 +479,36 @@
         }
     }
 
-    private void ResetFilters()
+    private IReadOnlyCollection<string>? OperationCodesForGroup() =>
+        _group.Length == 0
+            ? null
+            : ManagerToggleCatalog.All
+                .Where(definition => string.Equals(definition.Group, _group, StringComparison.OrdinalIgnoreCase))
+                .Select(definition => definition.Code)
+                .ToList();
+
+    private async Task FilterChangedAsync()
+    {
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        _page = Math.Max(1, page);
+        await LoadAsync();
+    }
+
+    private async Task ResetFiltersAsync()
     {
         _keyword = string.Empty;
         _group = string.Empty;
         _sort = SortOldest;
+        _page = 1;
         _highlighted.Clear();
         _appliedQuery = null;
         _focusFromQuery = string.Empty;
+        await LoadAsync();
     }
 
     private void ToggleDetails(Guid id)

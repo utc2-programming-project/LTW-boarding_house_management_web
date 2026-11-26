@@ -482,7 +482,7 @@
         _retrying = true;
         try
         {
-            await Task.Delay(350);
+            await Task.Delay(Web.Common.Utils.UiTiming.SearchDebounceMs);
             await LoadDataAsync();
         }
         finally
@@ -649,10 +649,10 @@
 
             items = _sortOption switch
             {
-                "oldest" => items.OrderBy(d => d.UploadedAt),
-                "name_asc" => items.OrderBy(d => d.FileName),
-                "size_desc" => items.OrderByDescending(d => d.FileSizeBytes),
-                _ => items.OrderByDescending(d => d.UploadedAt)
+                "oldest" => items.OrderBy(d => d.UploadedAt).ThenBy(d => d.Id),
+                "name_asc" => items.OrderBy(d => d.FileName, StringComparer.CurrentCulture).ThenBy(d => d.Id),
+                "size_desc" => items.OrderByDescending(d => d.FileSizeBytes).ThenBy(d => d.Id),
+                _ => items.OrderByDescending(d => d.UploadedAt).ThenBy(d => d.Id)
             };
 
             return items.ToList();

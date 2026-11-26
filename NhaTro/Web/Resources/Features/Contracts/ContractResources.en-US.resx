@@ -273,6 +273,8 @@
   <data name="ContractStatusActionsLabel" xml:space="preserve"><value>Status / Actions</value></data>
   <data name="ContractMonthlyRentShort" xml:space="preserve"><value>Rent/month</value></data>
   <data name="ContractDepositShort" xml:space="preserve"><value>Deposit</value></data>
+  <data name="ContractRentAmountLabel" xml:space="preserve"><value>Rent</value></data>
+  <data name="ContractDepositAmountLabel" xml:space="preserve"><value>Deposit</value></data>
 <data name="ContractDetailDescription" xml:space="preserve"><value>View contract information, parties, terms and payment status.</value></data>
   <data name="ContractDepositUpdateAction" xml:space="preserve"><value>Update deposit</value></data>
   <data name="ContractDepositUpdateTitle" xml:space="preserve"><value>Update deposit</value></data>

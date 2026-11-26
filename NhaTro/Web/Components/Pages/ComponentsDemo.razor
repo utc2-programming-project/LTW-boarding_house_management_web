@@ -196,7 +196,9 @@
                 "updated" => r => r.Updated,
                 _ => r => r.Code,
             };
-            query = request.SortDescending ? query.OrderByDescending(key) : query.OrderBy(key);
+            query = request.SortDescending
+                ? query.OrderByDescending(key).ThenBy(r => r.Code)
+                : query.OrderBy(key).ThenBy(r => r.Code);
         }
 
         var all = query.ToList();

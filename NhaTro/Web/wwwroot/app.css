@@ -221,9 +221,7 @@ html:has(.auth-shell) {
     display: flex;
     flex-direction: column;
     min-height: 100dvh;
-    background:
-        radial-gradient(1100px 520px at 50% -12%, var(--accent-soft) 0%, transparent 62%),
-        var(--page-bg);
+    background: var(--page-bg);
 }
 
 :root[data-theme="dark"] .auth-shell {
@@ -247,7 +245,7 @@ html:has(.auth-shell) {
     color: var(--text-primary);
     font-size: 16px;
     line-height: 24px;
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
 }
 
@@ -257,13 +255,13 @@ html:has(.auth-shell) {
 
 /* Link trong khung auth: theme.css chỉ tô màu link bên trong .app-shell nên
    trước đây link ở trang đăng nhập bị đen như chữ thường, không ai biết bấm được.
-   Trừ .btn (nút dạng link), .auth-brand và .auth-tab (đã có màu riêng).
+   Trừ .btn (nút dạng link), .auth-brand và .tabbar-item (đã có màu riêng).
    Dùng :where() để độ ưu tiên thấp, không đè lên style riêng của từng khối. */
-.auth-shell a:where(:not(.btn, .auth-brand, .auth-tab)) {
+.auth-shell a:where(:not(.btn, .auth-brand, .tabbar-item)) {
     color: var(--accent-text);
 }
 
-.auth-shell a:where(:not(.btn, .auth-brand, .auth-tab)):hover {
+.auth-shell a:where(:not(.btn, .auth-brand, .tabbar-item)):hover {
     text-decoration: underline;
 }
 
@@ -318,6 +316,11 @@ html:has(.auth-shell) {
        Để cả hai thì card chạy 2 animation chồng nhau (hiện lên rồi giật sang ngang). */
 }
 
+/* Tab tài khoản là TabBar chung: giữ khoảng cách dưới như thanh tab cũ. */
+.auth-card > .tabbar {
+    margin: 0 0 24px;
+}
+
 /* Đổi tab: chiều cao card co giãn mượt thay vì nhảy (auth-flow.js đo chiều cao cũ). */
 .auth-card.auth-resize {
     transition: height 180ms var(--ease);
@@ -327,19 +330,19 @@ html:has(.auth-shell) {
 /* Chuyển tab: khung card và thanh tab đứng yên, chỉ nội dung trượt ra/vào.
    Nội dung trượt ra ngay khi bấm (chạy song song lúc chờ server trả trang mới),
    nên không còn khoảng lặng rồi đổi nội dung đột ngột. */
-.auth-card.auth-enter-forward > :not(.auth-tabs) {
+.auth-card.auth-enter-forward > :not(.tabbar) {
     animation: auth-enter-forward 200ms var(--ease);
 }
 
-.auth-card.auth-enter-back > :not(.auth-tabs) {
+.auth-card.auth-enter-back > :not(.tabbar) {
     animation: auth-enter-back 200ms var(--ease);
 }
 
-.auth-card.auth-leave-forward > :not(.auth-tabs) {
+.auth-card.auth-leave-forward > :not(.tabbar) {
     animation: auth-leave-forward 140ms var(--ease) forwards;
 }
 
-.auth-card.auth-leave-back > :not(.auth-tabs) {
+.auth-card.auth-leave-back > :not(.tabbar) {
     animation: auth-leave-back 140ms var(--ease) forwards;
 }
 
@@ -366,10 +369,10 @@ html:has(.auth-shell) {
         transition: none;
     }
 
-    .auth-card.auth-enter-forward > :not(.auth-tabs),
-    .auth-card.auth-enter-back > :not(.auth-tabs),
-    .auth-card.auth-leave-forward > :not(.auth-tabs),
-    .auth-card.auth-leave-back > :not(.auth-tabs) {
+    .auth-card.auth-enter-forward > :not(.tabbar),
+    .auth-card.auth-enter-back > :not(.tabbar),
+    .auth-card.auth-leave-forward > :not(.tabbar),
+    .auth-card.auth-leave-back > :not(.tabbar) {
         animation: none;
     }
 }
@@ -382,7 +385,7 @@ html:has(.auth-shell) {
     margin: 0;
     font-size: 28px;
     line-height: 36px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.015em;
     color: var(--text-primary);
 }
@@ -465,6 +468,7 @@ html:has(.auth-shell) {
     color: var(--accent-text);
 }
 
+/* PLAN-001 #18: dải phân cách giữa đăng nhập mật khẩu và passkey. */
 .auth-divider {
     display: flex;
     align-items: center;
@@ -481,6 +485,23 @@ html:has(.auth-shell) {
     flex: 1;
     height: 1px;
     background: var(--border);
+}
+
+/* PLAN-012: nút đăng nhập Google nằm dưới passkey, cùng nhịp dải phân cách. */
+.auth-oauth-form {
+    margin-top: 12px;
+}
+
+.auth-oauth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.auth-oauth-btn img {
+    display: block;
+    flex: 0 0 18px;
 }
 
 /* Ô nhập trên trang auth: viền nhạt hơn mặc định, bo 10px, focus ring tím. */
@@ -521,23 +542,10 @@ html:has(.auth-shell) {
     border-radius: 10px;
     font-size: 15px;
     font-weight: 600;
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.10), rgb(0 0 0 / 0.05));
-    box-shadow: var(--shadow-accent);
-    transition: background-color 150ms, box-shadow 150ms, transform 100ms;
-}
-
-.auth-card .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 8px 20px rgb(79 70 229 / 0.28);
 }
 
 .auth-card .btn-primary:active:not(:disabled) {
     transform: translateY(1px);
-    box-shadow: none;
-}
-
-.auth-card .btn-primary:disabled {
-    background-image: none;
-    box-shadow: none;
 }
 
 /* Trang đăng nhập: thẻ form + panel đăng nhập nhanh nổi bên cạnh. */
@@ -601,8 +609,7 @@ html:has(.auth-shell) {
     color: var(--warning-text);
     font-size: 11px;
     line-height: 16px;
-    font-weight: 700;
-    letter-spacing: .04em;
+    font-weight: 600;
 }
 
 .quick-login-hint {
@@ -973,6 +980,7 @@ html:has(.auth-shell) {
 .account-owner {
     display: flex;
     flex-direction: column;
+    min-inline-size: 0;
 }
 
 .owner-badge.unassigned {
@@ -1070,4 +1078,99 @@ html:has(.auth-shell) {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* ---------------------------------------------------------------------------
+   Ô chữ dài trong bảng: giữ 1 dòng, cắt ba chấm; rê chuột/Tab mở .hover-tip.
+   Dùng cho ô tự do (tên, địa chỉ, lý do, JSON…). Mã đã có .cell-link.is-code.
+   Bảng phải table-layout:fixed (DataTableColumn.Width) thì ellipsis mới ăn.
+   --------------------------------------------------------------------------- */
+.cell-truncate {
+    display: block;
+    max-width: 100%;
+    min-inline-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
+/* Hai dòng trong một ô (tên + dòng phụ) */
+.cell-stack {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    line-height: 1.35;
+}
+
+/* Thẻ giải thích khi hover/focus. Trước đây nằm trong RoomList.razor.css nên
+   chỉ component đó ăn style; chuyển ra global để mọi bảng dùng được.
+   position:fixed vì .table-card cuộn ngang sẽ cắt phần tử absolute. */
+.hover-tip {
+    position: fixed;
+    z-index: 420;
+    display: block;
+    width: max-content;
+    max-width: min(22rem, calc(100vw - 24px));
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-popover);
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 140ms var(--ease), transform 140ms var(--ease);
+}
+
+.hover-tip.is-open { opacity: 1; visibility: visible; transform: none; }
+
+.hover-tip__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    color: var(--warning-text);
+    font-weight: 600;
+}
+
+.hover-tip__title .lucide-icon { flex: none; width: 15px; height: 15px; }
+
+.hover-tip__line { display: block; color: var(--text-primary); }
+
+.hover-tip__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.hover-tip__meta > span { display: inline-flex; align-items: center; gap: 4px; }
+
+.hover-tip__meta .lucide-icon { flex: none; width: 13px; height: 13px; color: var(--text-muted); }
+
+.hover-tip__cta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hover-tip__cta .lucide-icon { flex: none; width: 14px; height: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .hover-tip { transition: none; }
+}

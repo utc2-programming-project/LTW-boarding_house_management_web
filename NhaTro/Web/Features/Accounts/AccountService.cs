@@ -3,9 +3,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Accounts.Security;
+using Web.Features.Accounts.Sessions;
 using Web.Features.Audit.Entities;
+using Web.Features.Audit.Services;
 using Web.Features.Accounts.Otp;
 using Web.Features.Accounts.Owners;
 using Web.Features.Invoices;
@@ -27,8 +31,37 @@ public sealed class AccountService(
     IDbContextFactory<ApplicationDbContext> dbContextFactory,
     ILogger<AccountService> logger,
     IOtpService? otp = null,
-    OwnerAccessGuard? ownerAccess = null) : IAccountService
+    OwnerAccessGuard? ownerAccess = null,
+    AuditLogService? audit = null,
+    UserSessionStore? sessions = null,
+    SecurityNotifier? notifier = null) : IAccountService
 {
+    /// <summary>PLAN-001 #10/#11: thu hồi phiên + cảnh báo bảo mật best-effort.</summary>
+    private async Task RevokeSessionsAsync(string userId, CancellationToken ct)
+    {
+        if (sessions is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await sessions.RevokeAllAsync(userId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Không thu hồi được phiên của {UserId}.", userId);
+        }
+    }
+
+    private async Task NotifySecurityAsync(string userId, string action, string? detail = null)
+    {
+        if (notifier is not null)
+        {
+            await notifier.NotifyAsync(userId, action, detail);
+        }
+    }
+
     public async Task<PagedResult<AccountListItemDto>> ListAsync(
         string? keyword, string? roleFilter, int page, int pageSize,
         string callerUserId, string callerRole, string? statusFilter = null,
@@ -50,7 +83,9 @@ public sealed class AccountService(
             select new { User = user, RoleName = role.Name! };
 
         // Pham vi phai ap truoc keyword/count de khong lo tong so tai khoan ngoai pham vi.
-        var scopedUserIds = ScopedUserIds(db, callerUserId, callerRole);
+        // Nạp sẵn danh sách ID (một lần) rồi lọc bằng tham số: tránh plan bị "parameter
+        // sniffing" theo phạm vi nhỏ (Quản lý) rồi tái dùng cho Chủ trọ nhiều khách.
+        var scopedUserIds = await ScopedUserIdsAsync(db, callerUserId, callerRole, ct);
         if (scopedUserIds is not null)
         {
             query = query.Where(row => scopedUserIds.Contains(row.User.Id));
@@ -100,14 +135,9 @@ public sealed class AccountService(
             };
         }
 
-        var total = await query.CountAsync(ct);
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
-
-        var rows = await query
+        var pageResult = await query
             .OrderBy(row => row.User.UserName)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .ThenBy(row => row.User.Id)
             .Select(row => new
             {
                 row.User.Id,
@@ -120,7 +150,9 @@ public sealed class AccountService(
                 row.User.EmailConfirmed,
                 Role = row.RoleName,
             })
-            .ToListAsync(ct);
+            .ToPagedResultAsync(page, pageSize, ct);
+
+        var rows = pageResult.Items;
 
         var managerUserIds = rows
             .Where(row => row.Role == Roles.QuanLy)
@@ -181,7 +213,7 @@ public sealed class AccountService(
             .Select(row =>
             {
                 assignmentsByManager.TryGetValue(row.Id, out var assigned);
-                var owner = assigned?.FirstOrDefault();
+                var owner = assigned is { Count: > 0 } ? assigned[0] : null;
                 ownedByOwner.TryGetValue(row.Id, out var owned);
 
                 return new AccountListItemDto
@@ -216,9 +248,9 @@ public sealed class AccountService(
         return new PagedResult<AccountListItemDto>
         {
             Items = items,
-            TotalCount = total,
-            Page = page,
-            PageSize = pageSize,
+            TotalCount = pageResult.TotalCount,
+            Page = pageResult.Page,
+            PageSize = pageResult.PageSize,
         };
     }
 
@@ -466,6 +498,7 @@ public sealed class AccountService(
         }
 
         logger.LogInformation("Tai khoan {Email} vai tro {Role} duoc tao boi {Caller}.", email, role, callerUserId);
+        await RecordAccountAuditAsync("account.create", callerUserId, user.Id, $"role:{role}", ct);
         return AccountResult.Success();
     }
 
@@ -602,14 +635,19 @@ public sealed class AccountService(
             return AccountResult.Failure(AccountErrorCodes.OperationFailed);
         }
 
+        // Xoá mềm phải cắt phiên đang mở, không chỉ chặn lần đăng nhập sau.
+        await users.UpdateSecurityStampAsync(target);
+        await RevokeSessionsAsync(targetUserId, ct);
+
         logger.LogInformation("Da xoa mem tai khoan {UserId} boi {CallerId}.", targetUserId, callerUserId);
+        await RecordAccountAuditAsync("account.delete", callerUserId, targetUserId, null, ct);
         return AccountResult.Success();
     }
 
     public async Task<AccountResult> RestoreAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
     {
-        if (callerRole != Roles.Admin && callerRole != Roles.ChuTro)
+        if (callerRole != Roles.Admin)
         {
             return AccountResult.Failure(AccountErrorCodes.Forbidden);
         }
@@ -655,6 +693,7 @@ public sealed class AccountService(
         }
 
         logger.LogInformation("Da khoi phuc tai khoan {UserId} boi {CallerId}.", targetUserId, callerUserId);
+        await RecordAccountAuditAsync("account.restore", callerUserId, targetUserId, null, ct);
         return AccountResult.Success();
     }
 
@@ -799,6 +838,100 @@ public sealed class AccountService(
         }
 
         logger.LogInformation("Tai khoan {UserId} duoc duyet boi {Caller}.", targetUserId, callerUserId);
+        await RecordAccountAuditAsync("account.approve", callerUserId, targetUserId, $"role:{targetRole}", ct);
+        return AccountResult.Success();
+    }
+
+    /// <summary>
+    /// Từ chối tài khoản đang Chờ duyệt. Dùng xoá mềm để không cho đăng nhập nhưng vẫn
+    /// khôi phục/purge được; gỡ liên kết hồ sơ khách để có thể mời lại cùng email.
+    /// </summary>
+    public async Task<AccountResult> RejectAsync(
+        string targetUserId, string reason,
+        string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null || target.IsDeleted)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        var targetRole = (await users.GetRolesAsync(target)).FirstOrDefault() ?? string.Empty;
+        if (!AccountPermissionRules.CanApprove(callerRole, targetRole))
+        {
+            return AccountResult.Failure(AccountErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OutOfScope);
+        }
+
+        if (target.ApprovedAt is not null)
+        {
+            return AccountResult.Failure(AccountErrorCodes.NotPendingApproval);
+        }
+
+        var note = (reason ?? string.Empty).Trim();
+        if (note.Length is 0 or > 500)
+        {
+            return AccountResult.Failure(AccountErrorCodes.ReasonRequired);
+        }
+
+        var email = target.Email ?? target.UserName;
+        var now = DateTime.UtcNow;
+
+        await db.Tenants
+            .Where(tenant => tenant.UserId == targetUserId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(tenant => tenant.UserId, (string?)null)
+                .SetProperty(tenant => tenant.UpdatedAt, now), ct);
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            await db.TenantInvitations
+                .Where(invitation => invitation.Email == email
+                    && invitation.AcceptedAt == null
+                    && invitation.RevokedAt == null)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(invitation => invitation.RevokedAt, (DateTime?)now), ct);
+        }
+
+        var deleted = await SoftDeleteRejectedAsync(target, callerUserId, now, ct);
+        if (!deleted.Succeeded)
+        {
+            return deleted;
+        }
+
+        await RecordAccountAuditAsync("account.reject", callerUserId, targetUserId, $"reason:{note}", ct);
+        return AccountResult.Success();
+    }
+
+    private async Task<AccountResult> SoftDeleteRejectedAsync(
+        ApplicationUser target, string callerUserId, DateTime now, CancellationToken ct)
+    {
+        var originalEmail = target.Email ?? target.UserName ?? string.Empty;
+        var placeholder = $"deleted-{Guid.NewGuid():N}@deleted.local";
+
+        target.OriginalEmail = originalEmail;
+        target.Email = placeholder;
+        target.UserName = placeholder;
+        target.IsDeleted = true;
+        target.DeletedAt = now;
+        target.DeletedByUserId = callerUserId;
+
+        var updated = await users.UpdateAsync(target);
+        if (!updated.Succeeded)
+        {
+            logger.LogWarning(
+                "Tu choi tai khoan {UserId} that bai: {Errors}",
+                target.Id, string.Join(", ", updated.Errors.Select(error => error.Code)));
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        await users.UpdateSecurityStampAsync(target);
+        await RevokeSessionsAsync(target.Id, ct);
         return AccountResult.Success();
     }
 
@@ -854,14 +987,26 @@ public sealed class AccountService(
             return AccountResult.Failure(AccountErrorCodes.OperationFailed);
         }
 
+        var stamp = await users.UpdateSecurityStampAsync(target);
+        if (!stamp.Succeeded)
+        {
+            logger.LogWarning(
+                "Khong cap nhat duoc security stamp cho {UserId} sau khi doi vai tro: {Errors}",
+                targetUserId, string.Join(", ", stamp.Errors.Select(error => error.Description)));
+        }
+
         logger.LogInformation("Vai tro cua {UserId} doi tu {Old} sang {New} boi {Caller}.",
             targetUserId, currentRole, newRole, callerUserId);
+        await RecordAccountAuditAsync(
+            "account.role_change", callerUserId, targetUserId,
+            $"from:{currentRole};to:{newRole}", ct);
 
         return AccountResult.Success();
     }
 
     public async Task<AccountResult> LockAsync(
-        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+        string targetUserId, string callerUserId, string callerRole,
+        CancellationToken ct = default, string? reason = null)
     {
         var target = await users.FindByIdAsync(targetUserId);
         if (target is null)
@@ -875,11 +1020,11 @@ public sealed class AccountService(
         var targetIsLastAdmin = targetRole == Roles.Admin
             && await CountActiveAdminsAsync(db, ct) <= 1;
 
-        var reason = AccountPermissionRules.CheckLock(
+        var permissionError = AccountPermissionRules.CheckLock(
             callerRole, callerUserId, targetUserId, targetRole, unlock: false, targetIsLastAdmin);
-        if (reason is not null)
+        if (permissionError is not null)
         {
-            return AccountResult.Failure(reason);
+            return AccountResult.Failure(permissionError);
         }
 
         if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
@@ -906,6 +1051,7 @@ public sealed class AccountService(
         // Dang nhap hien tai (neu co) van con hieu luc vi cookie chua het han;
         // doi SecurityStamp de Identity tu choi phien cu o lan kiem tra tiep theo.
         await users.UpdateSecurityStampAsync(target);
+        await RevokeSessionsAsync(targetUserId, ct);
 
         // PLAN-025: khoá chủ trọ từ /admin/users cũng phải khoá lan + thu hồi QR.
         if (targetRole == Roles.ChuTro && ownerAccess is not null)
@@ -915,6 +1061,26 @@ public sealed class AccountService(
         }
 
         logger.LogInformation("Tai khoan {UserId} bi khoa boi {Caller}.", targetUserId, callerUserId);
+
+        var note = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (note is { Length: > 500 })
+        {
+            note = note[..500];
+        }
+
+        await RecordAccountAuditAsync(
+            "account.lock", callerUserId, targetUserId,
+            note is null ? null : $"reason:{note}", ct);
+        if (targetRole == Roles.ChuTro)
+        {
+            await RecordAccountAuditAsync("OwnerLocked", callerUserId, targetUserId, null, ct);
+        }
+
+        await NotifySecurityAsync(
+            targetUserId,
+            "Tài khoản bị khoá",
+            note is null ? "Bởi quản trị viên." : $"Bởi quản trị viên. Lý do: {note}");
+
         return AccountResult.Success();
     }
 
@@ -954,6 +1120,83 @@ public sealed class AccountService(
         }
 
         logger.LogInformation("Tai khoan {UserId} duoc mo khoa boi {Caller}.", targetUserId, callerUserId);
+        await RecordAccountAuditAsync("account.unlock", callerUserId, targetUserId, null, ct);
+        if (targetRole == Roles.ChuTro)
+        {
+            await RecordAccountAuditAsync("OwnerUnlocked", callerUserId, targetUserId, null, ct);
+        }
+
+        await NotifySecurityAsync(targetUserId, "Tài khoản được mở khoá");
+
+        return AccountResult.Success();
+    }
+
+    public async Task<AccountResult> SendPasswordResetAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null || target.IsDeleted)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        var targetRole = (await users.GetRolesAsync(target)).FirstOrDefault() ?? string.Empty;
+        if (!AccountPermissionRules.CanApprove(callerRole, targetRole))
+        {
+            return AccountResult.Failure(AccountErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OutOfScope);
+        }
+
+        if (otp is null || string.IsNullOrWhiteSpace(target.Email) || !target.EmailConfirmed)
+        {
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        var issued = await otp.IssueAsync(target.Id, target.Email, OtpPurpose.PasswordReset, ct);
+        if (issued.Status != OtpIssueStatus.Success)
+        {
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        await RecordAccountAuditAsync("account.reset_password", callerUserId, targetUserId, null, ct);
+        return AccountResult.Success();
+    }
+
+    public async Task<AccountResult> ForceLogoutAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default)
+    {
+        var target = await users.FindByIdAsync(targetUserId);
+        if (target is null || target.IsDeleted)
+        {
+            return AccountResult.Failure(AccountErrorCodes.UserNotFound);
+        }
+
+        var targetRole = (await users.GetRolesAsync(target)).FirstOrDefault() ?? string.Empty;
+        if (!AccountPermissionRules.CanApprove(callerRole, targetRole))
+        {
+            return AccountResult.Failure(AccountErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        if (!await IsUserInScopeAsync(db, targetUserId, callerUserId, callerRole, ct))
+        {
+            return AccountResult.Failure(AccountErrorCodes.OutOfScope);
+        }
+
+        var stamp = await users.UpdateSecurityStampAsync(target);
+        if (!stamp.Succeeded)
+        {
+            return AccountResult.Failure(AccountErrorCodes.OperationFailed);
+        }
+
+        await RevokeSessionsAsync(targetUserId, ct);
+        await RecordAccountAuditAsync("account.force_logout", callerUserId, targetUserId, null, ct);
+        await NotifySecurityAsync(targetUserId, "Đăng xuất mọi thiết bị", "Bởi quản trị viên.");
         return AccountResult.Success();
     }
 
@@ -1020,6 +1263,29 @@ public sealed class AccountService(
             .ToList();
     }
 
+    private async Task RecordAccountAuditAsync(
+        string action, string actorUserId, string targetUserId, string? metadata, CancellationToken ct)
+    {
+        if (audit is null)
+        {
+            return;
+        }
+
+        var payload = $"user:{targetUserId}"
+            + (string.IsNullOrWhiteSpace(metadata) ? string.Empty : $";{metadata}");
+        try
+        {
+            await audit.RecordAsync(
+                AuditLogCategory.Account, action, actorUserId,
+                metadata: payload, cancellationToken: ct);
+        }
+        catch (Exception ex)
+        {
+            // Audit lỗi không được làm hỏng thao tác nghiệp vụ đã thành công.
+            logger.LogWarning(ex, "Khong ghi duoc audit {Action} cho {UserId}.", action, targetUserId);
+        }
+    }
+
     private async Task<MyProfileDto> ToProfileAsync(ApplicationUser user)
     {
         var roles = await users.GetRolesAsync(user);
@@ -1046,14 +1312,15 @@ public sealed class AccountService(
     /// ChuTro: chinh minh + QuanLy dang phan cong vao toa minh + KhachThue co hop dong tai toa minh.
     /// QuanLy: chinh minh + KhachThue co hop dong tai toa duoc giao.
     /// </summary>
-    private static IQueryable<string>? ScopedUserIds(
-        ApplicationDbContext db, string callerUserId, string callerRole)
+    private static async Task<HashSet<string>?> ScopedUserIdsAsync(
+        ApplicationDbContext db, string callerUserId, string callerRole, CancellationToken ct)
     {
         if (callerRole == Roles.Admin)
         {
             return null;
         }
 
+        IQueryable<string> ids;
         if (callerRole == Roles.ChuTro)
         {
             var managedUserIds =
@@ -1062,41 +1329,48 @@ public sealed class AccountService(
                 where assignment.RevokedAt == null && property.OwnerId == callerUserId
                 select assignment.ManagerUserId;
 
-            var tenantUserIds = TenantUserIds(
-                db, db.Properties.Where(p => p.OwnerId == callerUserId).Select(p => p.Id));
+            // Join thẳng thay vì lồng IN (SELECT ... OR ...): SQL Server tách từng nhánh
+            // phạm vi thành UNION một lần quét, tránh timeout khi đếm tài khoản.
+            var tenantUserIds =
+                from tenant in db.Tenants
+                join member in db.ContractMembers on tenant.Id equals member.TenantId
+                join contract in db.Contracts on member.ContractId equals contract.ContractId
+                join room in db.Rooms on contract.RoomId equals room.Id
+                join property in db.Properties on room.PropertyId equals property.Id
+                where property.OwnerId == callerUserId && tenant.UserId != null
+                select tenant.UserId!;
 
-            return db.Users
-                .Where(user => user.Id == callerUserId ||
-                               managedUserIds.Contains(user.Id) ||
-                               tenantUserIds.Contains(user.Id))
-                .Select(user => user.Id);
+            ids = db.Users
+                .Where(user => user.Id == callerUserId)
+                .Select(user => user.Id)
+                .Union(managedUserIds)
+                .Union(tenantUserIds);
         }
-
-        if (callerRole == Roles.QuanLy)
+        else if (callerRole == Roles.QuanLy)
         {
-            var assignedPropertyIds = db.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == callerUserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var tenantUserIds =
+                from tenant in db.Tenants
+                join member in db.ContractMembers on tenant.Id equals member.TenantId
+                join contract in db.Contracts on member.ContractId equals contract.ContractId
+                join room in db.Rooms on contract.RoomId equals room.Id
+                join assignment in db.PropertyManagers on room.PropertyId equals assignment.PropertyId
+                where assignment.ManagerUserId == callerUserId
+                    && assignment.RevokedAt == null
+                    && tenant.UserId != null
+                select tenant.UserId!;
 
-            var tenantUserIds = TenantUserIds(db, assignedPropertyIds);
-
-            return db.Users
-                .Where(user => user.Id == callerUserId || tenantUserIds.Contains(user.Id))
-                .Select(user => user.Id);
+            ids = db.Users
+                .Where(user => user.Id == callerUserId)
+                .Select(user => user.Id)
+                .Union(tenantUserIds);
+        }
+        else
+        {
+            return [];
         }
 
-        return db.Users.Where(_ => false).Select(user => user.Id);
+        return new HashSet<string>(await ids.ToListAsync(ct), StringComparer.Ordinal);
     }
-
-    /// <summary>UserId cua ho so khach co hop dong (ke ca lich su) tai cac toa duoc truyen vao.</summary>
-    private static IQueryable<string> TenantUserIds(
-        ApplicationDbContext db, IQueryable<int> propertyIds) =>
-        from tenant in db.Tenants
-        join member in db.ContractMembers on tenant.Id equals member.TenantId
-        join contract in db.Contracts on member.ContractId equals contract.ContractId
-        join room in db.Rooms on contract.RoomId equals room.Id
-        where propertyIds.Contains(room.PropertyId) && tenant.UserId != null
-        select tenant.UserId!;
 
     /// <summary>Id ho so khach co hop dong tai toa thuoc pham vi nguoi goi.</summary>
     private static IQueryable<int> ScopedTenantIds(
@@ -1126,9 +1400,8 @@ public sealed class AccountService(
         ApplicationDbContext db, string targetUserId, string callerUserId, string callerRole,
         CancellationToken ct)
     {
-        var scopedUserIds = ScopedUserIds(db, callerUserId, callerRole);
-        return scopedUserIds is null
-            || await scopedUserIds.AnyAsync(id => id == targetUserId, ct);
+        var scopedUserIds = await ScopedUserIdsAsync(db, callerUserId, callerRole, ct);
+        return scopedUserIds is null || scopedUserIds.Contains(targetUserId);
     }
 
     /// <summary>Admin dang hoat dong = da duyet va khong bi khoa vinh vien.</summary>

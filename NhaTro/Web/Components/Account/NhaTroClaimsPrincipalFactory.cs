@@ -29,6 +29,12 @@ public sealed class NhaTroClaimsPrincipalFactory(
     {
         var identity = await base.GenerateClaimsAsync(user);
 
+        // Sidebar hiển thị họ tên thật thay cho email đăng nhập.
+        if (!string.IsNullOrWhiteSpace(user.FullName))
+        {
+            identity.AddClaim(new Claim(ClaimTypes.GivenName, user.FullName));
+        }
+
         // Bỏ role claim mặc định của Identity; chỉ phát role của ngữ cảnh đang chọn.
         foreach (var claim in identity.FindAll(identity.RoleClaimType).ToList())
         {

@@ -33,7 +33,7 @@ public sealed class PropertyManagerAssignmentComponentTests : BunitContext
         Services.AddLogging();
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(new PropertyPageService(
-            new P2CallerProvider(new OwnerAuthenticationProvider()), _properties, _managers));
+            new P2CallerProvider(new OwnerAuthenticationProvider(), TestOwnerAccess.Create()), _properties, _managers));
     }
 
     private IRenderedComponent<PropertyDetailsDialog> RenderDialog(bool isOwner = true) =>

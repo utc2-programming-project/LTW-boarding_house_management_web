@@ -1,0 +1,393 @@
+@page "/gate/settings"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject GatePageService Session
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["PageTitleSettings"]</PageTitle>
+
+<div class="page-stack gate-page">
+    <PageHeading Title="@L["PageTitleSettings"]" HelpText="@L["SubtitleSettings"]" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <p class="gate-error" role="alert">@_error</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    }
+    else if (_properties.Count == 0)
+    {
+        <p class="gate-muted">@L["PropertyNotFound"]</p>
+    }
+    else
+    {
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <label class="gate-inline-label" for="gate-property">@L["Property"]</label>
+                <select id="gate-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
+                    @foreach (var property in _properties)
+                    {
+                        <option value="@property.PropertyId">@property.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["Policy"]</h2>
+            <fieldset class="gate-fieldset" disabled="@(!_isOwner)">
+            <div class="gate-form-grid">
+                <label>
+                    @L["AuthMode"]
+                    <select class="input" @bind="_request.AuthMode">
+                        <option value="@GateAuthMode.SingleFactor">@L["SingleFactor"]</option>
+                        <option value="@GateAuthMode.QrPlusBiometric">@L["QrPlusBiometric"]</option>
+                        <option value="@GateAuthMode.FaceOnly">@L["FaceOnly"]</option>
+                    </select>
+                </label>
+                <label>
+                    @L["PreferredChannel"]
+                    <select class="input" @bind="_request.PreferredStayChannel">
+                        @foreach (var channel in Enum.GetValues<StayReportChannel>())
+                        {
+                            <option value="@channel">@channel</option>
+                        }
+                    </select>
+                </label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.AntiPassbackEnabled" /> @L["AntiPassback"]</label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.AllowManualOpen" /> @L["AllowManualOpen"]</label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.AllowManagerApprove" /> @L["AllowManagerApprove"]</label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.AutoApproveDayVisit" /> @L["AutoApproveDayVisit"]</label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.AllowTenantIssuePass" /> @L["AllowTenantIssuePass"]</label>
+                <label class="gate-check"><input type="checkbox" @bind="_request.TenantMayIssueOvernight" /> @L["TenantMayIssueOvernight"]</label>
+                <label>
+                    @L["TenantMaxPassesPerDay"]
+                    <input type="number" class="input" min="0" max="50" @bind="_request.TenantMaxPassesPerDay" />
+                </label>
+                <label>
+                    @L["TenantMaxTtlMinutes"]
+                    <input type="number" class="input" min="5" max="1440" @bind="_request.TenantMaxTtlMinutes" />
+                </label>
+                <label>
+                    @L["TenantMaxUses"]
+                    <input type="number" class="input" min="1" max="10" @bind="_request.TenantMaxUses" />
+                </label>
+                <label>
+                    @L["PassTtlMinutes"]
+                    <input type="number" class="input" min="5" max="1440" @bind="_request.PassTtlMinutes" />
+                </label>
+                <label>
+                    @L["DayWindow"]
+                    <span class="gate-hour-range">
+                        <input type="number" class="input" min="0" max="23" @bind="_request.DayVisitStartHour" />
+                        <span>→</span>
+                        <input type="number" class="input" min="1" max="24" @bind="_request.DayVisitEndHour" />
+                    </span>
+                </label>
+                <label>
+                    @L["RetentionDays"]
+                    <input type="number" class="input" min="1" max="3650" @bind="_request.RetentionDays" />
+                </label>
+                <label>
+                    @L["OfflineGrace"]
+                    <input type="number" class="input" min="0" max="1440" @bind="_request.OfflineGraceMinutes" />
+                </label>
+                <label class="gate-form-wide">
+                    @L["RequiredFields"]
+                    <input class="input" @bind="_request.RequiredGuestFields" maxlength="500" />
+                </label>
+            </div>
+            @if (_notice is not null)
+            {
+                <p class="gate-notice" role="status">@_notice</p>
+            }
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-primary" @onclick="SavePolicyAsync">@L["Save"]</button>
+            </div>
+            </fieldset>
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["Devices"]</h2>
+            @if (_devices.Count == 0)
+            {
+                <p class="gate-muted">@L["NoDevices"]</p>
+            }
+            else
+            {
+                <div class="gate-table-scroll">
+                    <table class="gate-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">@L["DeviceName"]</th>
+                                <th scope="col">@L["Kind"]</th>
+                                <th scope="col">@L["Level"]</th>
+                                <th scope="col">@L["Action"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var device in _devices)
+                            {
+                                <tr>
+                                    <td>@device.Name</td>
+                                    <td>@device.Kind</td>
+                                    <td>@device.Level</td>
+                                    <td class="gate-actions">
+                                        <button type="button" class="btn btn-danger btn-sm" disabled="@(!_isOwner)" @onclick="() => DeleteDeviceAsync(device.Id)">@L["Delete"]</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="gate-form-grid">
+                <label>
+                    @L["DeviceName"]
+                    <input class="input" @bind="_deviceName" maxlength="150" />
+                </label>
+                <label>
+                    @L["Kind"]
+                    <select class="input" @bind="_deviceKind">
+                        @foreach (var kind in Enum.GetValues<GateDeviceKind>())
+                        {
+                            <option value="@kind">@kind</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    @L["Level"]
+                    <select class="input" @bind="_deviceLevel">
+                        @foreach (var level in Enum.GetValues<GateLevel>())
+                        {
+                            <option value="@level">@level</option>
+                        }
+                    </select>
+                </label>
+            </div>
+            <div class="gate-form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="AddDeviceAsync" disabled="@(!_isOwner || string.IsNullOrWhiteSpace(_deviceName))">
+                    @L["AddDevice"]
+                </button>
+            </div>
+        </div>
+
+        <div class="gate-form-card">
+            <h2>@L["Enrollments"]</h2>
+            @if (_enrollments.Count == 0)
+            {
+                <p class="gate-muted">@L["NoEnrollments"]</p>
+            }
+            else
+            {
+                <div class="gate-table-scroll">
+                    <table class="gate-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">@L["Method"]</th>
+                                <th scope="col">@L["Status"]</th>
+                                <th scope="col">@L["Property"]</th>
+                                <th scope="col">@L["Action"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var enrollment in _enrollments)
+                            {
+                                <tr>
+                                    <td>@enrollment.Method</td>
+                                    <td>@enrollment.Status</td>
+                                    <td>@enrollment.PropertyName</td>
+                                    <td class="gate-actions">
+                                        @if (enrollment.Status == EnrollmentStatus.Pending)
+                                        {
+                                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => ApproveEnrollmentAsync(enrollment.Id)">@L["Approve"]</button>
+                                            <button type="button" class="btn btn-danger btn-sm" @onclick="() => RejectEnrollmentAsync(enrollment.Id)">@L["Reject"]</button>
+                                        }
+                                        else if (enrollment.Status == EnrollmentStatus.Active)
+                                        {
+                                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => RevokeEnrollmentAsync(enrollment.Id)">@L["Revoke"]</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<GatePropertyOption> _properties = [];
+    private IReadOnlyList<GateDeviceDto> _devices = [];
+    private IReadOnlyList<BiometricEnrollmentDto> _enrollments = [];
+    private GatePolicySaveRequest _request = new();
+    private int _propertyId;
+    private bool _loading = true;
+    private string? _error;
+    private string? _notice;
+    private bool _isOwner;
+    private string _deviceName = string.Empty;
+    private GateDeviceKind _deviceKind = GateDeviceKind.Kiosk;
+    private GateLevel _deviceLevel = GateLevel.A;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _isOwner = (await Session.CallerAsync()).IsChuTro;
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = _properties[0].PropertyId;
+                await LoadPropertyAsync();
+            }
+
+            _enrollments = await Session.EnrollmentsAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadPropertyAsync()
+    {
+        var (policy, devices) = await Session.SettingsAsync(_propertyId);
+        _devices = devices;
+        _request = new GatePolicySaveRequest
+        {
+            PropertyId = _propertyId,
+            AuthMode = policy.AuthMode,
+            AntiPassbackEnabled = policy.AntiPassbackEnabled,
+            AllowManualOpen = policy.AllowManualOpen,
+            AllowManagerApprove = policy.AllowManagerApprove,
+            AutoApproveDayVisit = policy.AutoApproveDayVisit,
+            AutoApproveOvernight = false,
+            AllowTenantIssuePass = policy.AllowTenantIssuePass,
+            TenantMayIssueOvernight = policy.TenantMayIssueOvernight,
+            TenantMaxPassesPerDay = policy.TenantMaxPassesPerDay,
+            TenantMaxTtlMinutes = policy.TenantMaxTtlMinutes,
+            TenantMaxUses = policy.TenantMaxUses,
+            PassTtlMinutes = policy.PassTtlMinutes,
+            DayVisitStartHour = policy.DayVisitStartHour,
+            DayVisitEndHour = policy.DayVisitEndHour,
+            RetentionDays = policy.RetentionDays,
+            OfflineGraceMinutes = policy.OfflineGraceMinutes,
+            RequiredGuestFields = policy.RequiredGuestFields,
+            PreferredStayChannel = policy.PreferredStayChannel,
+        };
+    }
+
+    private async Task ChangePropertyAsync(ChangeEventArgs args)
+    {
+        if (!int.TryParse(args.Value?.ToString(), out var id) || id == _propertyId) return;
+        _propertyId = id;
+        _notice = null;
+        try
+        {
+            await LoadPropertyAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task SavePolicyAsync()
+    {
+        try
+        {
+            await Session.SavePolicyAsync(_request);
+            await LoadPropertyAsync();
+            _notice = L["Saved"];
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task AddDeviceAsync()
+    {
+        try
+        {
+            await Session.AddDeviceAsync(new GateDeviceSaveRequest(_propertyId, _deviceName.Trim(), _deviceKind, _deviceLevel));
+            _deviceName = string.Empty;
+            await LoadPropertyAsync();
+            _notice = L["Saved"];
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task DeleteDeviceAsync(int id)
+    {
+        try
+        {
+            await Session.DeleteDeviceAsync(id);
+            await LoadPropertyAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task ApproveEnrollmentAsync(int id)
+    {
+        try
+        {
+            await Session.ApproveEnrollmentAsync(id);
+            _enrollments = await Session.EnrollmentsAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task RejectEnrollmentAsync(int id)
+    {
+        try
+        {
+            await Session.RejectEnrollmentAsync(id, "Từ chối bởi chủ trọ");
+            _enrollments = await Session.EnrollmentsAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task RevokeEnrollmentAsync(int id)
+    {
+        try
+        {
+            await Session.RevokeEnrollmentAsync(id, "Thu hồi bởi chủ trọ");
+            _enrollments = await Session.EnrollmentsAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+}

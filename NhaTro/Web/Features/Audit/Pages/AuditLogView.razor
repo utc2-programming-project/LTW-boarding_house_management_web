@@ -1,5 +1,5 @@
 @page "/admin/audit-log"
-@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro)]
+@attribute [Authorize(Roles = Roles.Admin)]
 @rendermode InteractiveServer
 @using Web.Common.Utils
 @inject AuditLogPageService Pages
@@ -174,18 +174,26 @@
                 Key = "occurredAt",
                 Title = L["ColumnTime"],
                 Value = entry => DateFormatter.FormatDateTime(entry.OccurredAt.UtcDateTime),
+                Width = "160px",
             },
             new()
             {
                 Key = "actor",
                 Title = L["ColumnActor"],
-                Value = entry => entry.ActorDisplayName ?? "—",
+                Template = entry => @<span class="cell-truncate" data-hover-tip aria-describedby="tip-@entry.Id">
+                    @(entry.ActorDisplayName ?? "—")
+                    <span class="hover-tip" id="tip-@entry.Id" role="tooltip">
+                        <span class="hover-tip__line">@(entry.ActorDisplayName ?? "—")</span>
+                    </span>
+                </span>,
+                Width = "170px",
             },
             new()
             {
                 Key = "action",
                 Title = L["ColumnAction"],
                 Value = entry => ActionLabel(entry.Action),
+                Width = "170px",
             },
         };
 
@@ -205,6 +213,7 @@
                         <span>—</span>
                     }
                 </text>,
+                Width = "180px",
             });
         }
 
@@ -212,7 +221,22 @@
         {
             Key = "metadata",
             Title = L["ColumnMetadata"],
-            Value = entry => entry.Metadata ?? "—",
+            Template = entry => @<text>
+                @if (string.IsNullOrWhiteSpace(entry.Metadata))
+                {
+                    <span>—</span>
+                }
+                else
+                {
+                    <span class="cell-truncate" data-hover-tip aria-describedby="tip-@entry.Id">
+                        @entry.Metadata
+                        <span class="hover-tip" id="tip-@entry.Id" role="tooltip">
+                            <span class="hover-tip__line">@entry.Metadata</span>
+                        </span>
+                    </span>
+                }
+            </text>,
+            Width = "420px",
         });
 
         _columns = columns;

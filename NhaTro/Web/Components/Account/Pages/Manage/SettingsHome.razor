@@ -1,0 +1,9 @@
+@page "/Account/Manage"
+
+@inject NavigationManager Nav
+
+@* Lối vào cũ của "Cài đặt & bảo mật"; nội dung nay nằm ở tab Bảo mật của /account. *@
+
+@code {
+    protected override void OnInitialized() => Nav.NavigateTo("/account?tab=security");
+}

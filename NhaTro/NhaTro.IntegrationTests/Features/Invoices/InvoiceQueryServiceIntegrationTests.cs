@@ -239,9 +239,9 @@ public sealed class InvoiceQueryServiceIntegrationTests(SqlServerFixture fixture
         var service = new InvoiceQueryService(db);
 
         var optionsA = await service.GetContractOptionsAsync(
-            new PropertyCaller(data.ChuTroAId, Roles.ChuTro));
+            new PropertyCaller(data.ChuTroAId, Roles.ChuTro), keyword: null, take: 50);
         var optionsB = await service.GetContractOptionsAsync(
-            new PropertyCaller(data.ChuTroBId, Roles.ChuTro));
+            new PropertyCaller(data.ChuTroBId, Roles.ChuTro), keyword: null, take: 50);
 
         Assert.Equal([data.ContractAId], optionsA.Select(option => option.ContractId));
         Assert.Equal([data.ContractBId], optionsB.Select(option => option.ContractId));

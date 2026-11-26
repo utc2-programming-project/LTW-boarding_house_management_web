@@ -1,5 +1,6 @@
 // Validate cấu hình "Email" ngay lúc khởi động để lỗi hiện sớm.
 using System.Net.Mail;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 
@@ -9,11 +10,19 @@ namespace Web.Configuration.Validation;
 /// Kiểm tra cấu hình "Email" ngay khi khởi động để lỗi hiện sớm, thay vì chỉ vỡ lúc gửi thư.
 /// Không bắt buộc phải có mật khẩu: chưa cấu hình thì hệ thống lùi về chế độ ghi log.
 /// </summary>
-public sealed class EmailOptionsValidator : IValidateOptions<EmailOptions>
+public sealed class EmailOptionsValidator(IHostEnvironment environment) : IValidateOptions<EmailOptions>
 {
     public ValidateOptionsResult Validate(string? name, EmailOptions options)
     {
         var failures = new List<string>();
+
+        if (!options.Smtp.IsConfigured
+            && !options.AllowLogOnly
+            && !environment.IsDevelopment()
+            && !environment.IsEnvironment("Testing"))
+        {
+            failures.Add("Thiếu cấu hình Email:Smtp; đặt Email:AllowLogOnly=true nếu chấp nhận chỉ ghi log.");
+        }
 
         if (options.DemoMode && string.IsNullOrWhiteSpace(options.FallbackRecipient))
         {
@@ -46,6 +55,25 @@ public sealed class EmailOptionsValidator : IValidateOptions<EmailOptions>
         if (smtp.TimeoutSeconds <= 0)
         {
             failures.Add($"Email:Smtp:TimeoutSeconds phải lớn hơn 0: {smtp.TimeoutSeconds}");
+        }
+
+        var fallback = options.FallbackSmtp;
+        if (fallback.Enabled)
+        {
+            if (!fallback.IsConfigured)
+            {
+                failures.Add("Email:FallbackSmtp bật nhưng thiếu Host/UserName/Password.");
+            }
+
+            if (fallback.Port is <= 0 or > 65535 or 465)
+            {
+                failures.Add($"Email:FallbackSmtp:Port không hợp lệ (dùng 587 + STARTTLS): {fallback.Port}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallback.UserName) && !IsEmail(fallback.UserName))
+            {
+                failures.Add($"Email:FallbackSmtp:UserName không phải địa chỉ hợp lệ: {fallback.UserName}");
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(smtp.UserName) && !IsEmail(smtp.UserName))

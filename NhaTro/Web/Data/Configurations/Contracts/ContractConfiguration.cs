@@ -29,6 +29,10 @@ public sealed class ContractConfiguration : IEntityTypeConfiguration<Contract>
         builder.HasIndex(contract => contract.ContractNumber).IsUnique();
         // Các truy vấn báo cáo/danh sách lọc theo phòng + trạng thái + khoảng ngày.
         builder.HasIndex(contract => new { contract.RoomId, contract.Status, contract.StartDate, contract.EndDate });
+        // Danh sách hợp đồng mặc định sắp "Mới nhất" theo ngày tạo bản ghi.
+        builder.HasIndex(contract => contract.CreatedAt);
+        // Thẻ thống kê đầu danh sách: đếm theo trạng thái + khoảng ngày bắt đầu/kết thúc.
+        builder.HasIndex(contract => new { contract.Status, contract.StartDate, contract.EndDate });
         // Background quét hạn thanh toán cọc.
         builder.HasIndex(contract => new { contract.Status, contract.DepositDueAt });
         builder.Property(contract => contract.DeletedBy).HasMaxLength(450);

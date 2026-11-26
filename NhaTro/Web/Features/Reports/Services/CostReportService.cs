@@ -25,14 +25,115 @@ public sealed class CostReportService(IDbContextFactory<ApplicationDbContext> fa
         if (filter.RoomId is { } roomId) query = query.Where(x => x.room.Id == roomId);
         if (filter.From is { } from) query = query.Where(x => x.reading.PeriodEnd >= from);
         if (filter.To is { } to) query = query.Where(x => x.reading.PeriodStart <= to);
-        var all = await query.ToListAsync(ct);
-        var ids = all.Select(x => x.reading.Id).ToList();
-        var snapshots = await db.UtilityBillingPeriodSnapshots.AsNoTracking().Where(x => ids.Contains(x.BillingPeriodId)).ToListAsync(ct);
-        var map = snapshots.ToDictionary(x => (x.BillingPeriodId, x.Type), x => x.Total);
-        var rows = all.OrderBy(x => x.property.Name).ThenBy(x => x.room.Code).ThenBy(x => x.reading.PeriodStart).ToList();
-        var contracts = await db.Contracts.AsNoTracking().Where(contract => contract.Status == Web.Features.Contracts.Enums.ContractStatus.Approved && all.Select(row => row.room.Id).Contains(contract.RoomId)).ToListAsync(ct);
-        var items=rows.Select(x => { var e=Math.Max(0m,x.reading.ElectricEnd-x.reading.ElectricStart); var w=Math.Max(0m,x.reading.WaterEnd-x.reading.WaterStart); var ea=map.TryGetValue((x.reading.Id,TariffType.Electric),out var electric)?electric:0m; var wa=map.TryGetValue((x.reading.Id,TariffType.Water),out var water)?water:0m; var contract=contracts.Where(c=>c.RoomId==x.room.Id&&c.StartDate<=x.reading.PeriodEnd.ToDateTime(TimeOnly.MaxValue)&&c.EndDate>=x.reading.PeriodStart.ToDateTime(TimeOnly.MinValue)).OrderByDescending(c=>c.StartDate).ThenByDescending(c=>c.ContractId).FirstOrDefault(); return new CostReportItem { ReadingId=x.reading.Id,RoomId=x.room.Id,RoomCode=x.room.Code,PropertyId=x.property.Id,PropertyName=x.property.Name,ContractId=contract?.ContractId,PeriodStart=x.reading.PeriodStart,PeriodEnd=x.reading.PeriodEnd,ElectricUsage=e,WaterUsage=w,ElectricAmount=ea,WaterAmount=wa,TotalAmount=ea+wa,HasSnapshot=(e==0||map.ContainsKey((x.reading.Id,TariffType.Electric)))&&(w==0||map.ContainsKey((x.reading.Id,TariffType.Water))) }; }).ToList(); var kpis=new CostReportKpis { ReadingCount=items.Count, ElectricUsage=items.Sum(x=>x.ElectricUsage), WaterUsage=items.Sum(x=>x.WaterUsage), ElectricAmount=items.Sum(x=>x.ElectricAmount), WaterAmount=items.Sum(x=>x.WaterAmount), TotalAmount=items.Sum(x=>x.TotalAmount), MissingSnapshotCount=items.Count(x=>!x.HasSnapshot) };
-        var skip=(int)Math.Min((long)(filter.Page-1)*filter.PageSize,int.MaxValue);
-        return new CostReportResult { Kpis=kpis, Readings=new PagedResult<CostReportItem>{Items=items.Skip(skip).Take(filter.PageSize).ToList(),Page=filter.Page,PageSize=filter.PageSize,TotalCount=items.Count} };
+
+        var totals = await query
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                ReadingCount = group.Count(),
+                ElectricUsage = group.Sum(x => x.reading.ElectricEnd > x.reading.ElectricStart
+                    ? x.reading.ElectricEnd - x.reading.ElectricStart
+                    : 0m),
+                WaterUsage = group.Sum(x => x.reading.WaterEnd > x.reading.WaterStart
+                    ? x.reading.WaterEnd - x.reading.WaterStart
+                    : 0m),
+            })
+            .SingleOrDefaultAsync(ct);
+
+        var amounts = await (
+                from snapshot in db.UtilityBillingPeriodSnapshots.AsNoTracking()
+                join row in query on snapshot.BillingPeriodId equals row.reading.Id
+                where snapshot.Type == TariffType.Electric || snapshot.Type == TariffType.Water
+                group snapshot by snapshot.Type
+                into grouped
+                select new { Type = grouped.Key, Amount = grouped.Sum(item => item.Total) })
+            .ToListAsync(ct);
+
+        var missingSnapshotCount = await query.CountAsync(row =>
+            (row.reading.ElectricEnd > row.reading.ElectricStart
+                && !db.UtilityBillingPeriodSnapshots.Any(snapshot =>
+                    snapshot.BillingPeriodId == row.reading.Id && snapshot.Type == TariffType.Electric))
+            || (row.reading.WaterEnd > row.reading.WaterStart
+                && !db.UtilityBillingPeriodSnapshots.Any(snapshot =>
+                    snapshot.BillingPeriodId == row.reading.Id && snapshot.Type == TariffType.Water)), ct);
+
+        var skip = (int)Math.Min((long)(filter.Page - 1) * filter.PageSize, int.MaxValue);
+        var pageRows = await query
+            .OrderBy(row => row.property.Name)
+            .ThenBy(row => row.room.Code)
+            .ThenBy(row => row.reading.PeriodStart)
+            .ThenBy(row => row.reading.Id)
+            .Skip(skip)
+            .Take(filter.PageSize)
+            .ToListAsync(ct);
+
+        var pageIds = pageRows.Select(row => row.reading.Id).ToArray();
+        var pageRoomIds = pageRows.Select(row => row.room.Id).Distinct().ToArray();
+        var snapshots = await db.UtilityBillingPeriodSnapshots.AsNoTracking()
+            .Where(snapshot => pageIds.Contains(snapshot.BillingPeriodId))
+            .ToListAsync(ct);
+        var snapshotMap = snapshots.ToDictionary(snapshot => (snapshot.BillingPeriodId, snapshot.Type), snapshot => snapshot.Total);
+        var contracts = await db.Contracts.AsNoTracking()
+            .Where(contract => contract.Status == Web.Features.Contracts.Enums.ContractStatus.Approved
+                && pageRoomIds.Contains(contract.RoomId))
+            .ToListAsync(ct);
+
+        var items = pageRows.Select(row =>
+        {
+            var electricUsage = Math.Max(0m, row.reading.ElectricEnd - row.reading.ElectricStart);
+            var waterUsage = Math.Max(0m, row.reading.WaterEnd - row.reading.WaterStart);
+            var electricAmount = snapshotMap.GetValueOrDefault((row.reading.Id, TariffType.Electric));
+            var waterAmount = snapshotMap.GetValueOrDefault((row.reading.Id, TariffType.Water));
+            var contract = contracts
+                .Where(item => item.RoomId == row.room.Id
+                    && item.StartDate <= row.reading.PeriodEnd.ToDateTime(TimeOnly.MaxValue)
+                    && item.EndDate >= row.reading.PeriodStart.ToDateTime(TimeOnly.MinValue))
+                .OrderByDescending(item => item.StartDate)
+                .ThenByDescending(item => item.ContractId)
+                .FirstOrDefault();
+            return new CostReportItem
+            {
+                ReadingId = row.reading.Id,
+                RoomId = row.room.Id,
+                RoomCode = row.room.Code,
+                PropertyId = row.property.Id,
+                PropertyName = row.property.Name,
+                ContractId = contract?.ContractId,
+                PeriodStart = row.reading.PeriodStart,
+                PeriodEnd = row.reading.PeriodEnd,
+                ElectricUsage = electricUsage,
+                WaterUsage = waterUsage,
+                ElectricAmount = electricAmount,
+                WaterAmount = waterAmount,
+                TotalAmount = electricAmount + waterAmount,
+                HasSnapshot = (electricUsage == 0 || snapshotMap.ContainsKey((row.reading.Id, TariffType.Electric)))
+                    && (waterUsage == 0 || snapshotMap.ContainsKey((row.reading.Id, TariffType.Water))),
+            };
+        }).ToList();
+
+        var electricTotal = amounts.FirstOrDefault(item => item.Type == TariffType.Electric)?.Amount ?? 0m;
+        var waterTotal = amounts.FirstOrDefault(item => item.Type == TariffType.Water)?.Amount ?? 0m;
+        var kpis = new CostReportKpis
+        {
+            ReadingCount = totals?.ReadingCount ?? 0,
+            ElectricUsage = totals?.ElectricUsage ?? 0m,
+            WaterUsage = totals?.WaterUsage ?? 0m,
+            ElectricAmount = electricTotal,
+            WaterAmount = waterTotal,
+            TotalAmount = electricTotal + waterTotal,
+            MissingSnapshotCount = missingSnapshotCount,
+        };
+
+        return new CostReportResult
+        {
+            Kpis = kpis,
+            Readings = new PagedResult<CostReportItem>
+            {
+                Items = items,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
+                TotalCount = kpis.ReadingCount,
+            },
+        };
     }
 }

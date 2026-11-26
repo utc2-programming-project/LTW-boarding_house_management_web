@@ -1,0 +1,37 @@
+@inject IStringLocalizer<AccessControlResource> L
+
+@if (Pass is not null)
+{
+    <div class="gate-dialog-backdrop" role="presentation">
+        <div class="gate-dialog" role="dialog" aria-modal="true" aria-labelledby="gate-reason-title">
+            <h2 id="gate-reason-title">@Title</h2>
+            <p>@Pass.VisitorName — @Pass.PropertyName</p>
+            <label for="gate-reason">@L["Reason"]</label>
+            <textarea id="gate-reason" class="input" rows="3" @bind="_reason" @bind:event="oninput"></textarea>
+            <div class="gate-dialog-actions">
+                <button type="button" class="btn btn-secondary" @onclick="OnCancel">@L["Cancel"]</button>
+                <button type="button" class="btn btn-danger" disabled="@string.IsNullOrWhiteSpace(_reason)" @onclick="SubmitAsync">
+                    @ConfirmText
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public GatePassDto? Pass { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string ConfirmText { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string _reason = string.Empty;
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_reason)) return;
+        var reason = _reason.Trim();
+        _reason = string.Empty;
+        await OnConfirm.InvokeAsync(reason);
+    }
+}

@@ -125,7 +125,7 @@
     line-height: 1.25rem;
     font-weight: 600;
     letter-spacing: .04em;
-    text-transform: uppercase;
+
 }
 .approval-meta dd {
     margin: 0;
@@ -157,7 +157,7 @@
     line-height: 1.25rem;
     font-weight: 600;
     letter-spacing: .04em;
-    text-transform: uppercase;
+
 }
 .approval-reason--danger .approval-reason-label { color: var(--error-text); }
 .approval-reason p {

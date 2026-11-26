@@ -201,10 +201,20 @@
                                 <!-- Tên dịch vụ -->
                                 <td class="cell-name">
                                     <div class="service-name-cell">
-                                        <a class="service-name cell-link" href="@AppLinks.ServicePrices(service.Id)" title="@SL["CellLinkOpenService"]">@service.Name</a>
+                                        <a class="service-name cell-link cell-truncate" href="@AppLinks.ServicePrices(service.Id)" data-hover-tip>
+                                            @service.Name
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@service.Name</span>
+                                            </span>
+                                        </a>
                                         @if (!string.IsNullOrWhiteSpace(service.Description))
                                         {
-                                            <span class="service-description">@service.Description</span>
+                                            <span class="service-description cell-truncate" data-hover-tip>
+                                                @service.Description
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    <span class="hover-tip__line">@service.Description</span>
+                                                </span>
+                                            </span>
                                         }
                                         @if (_isSampleData)
                                         {
@@ -407,7 +417,7 @@
                     <h2 id="registration-title">@L["ServiceRequestTitle"]</h2>
                     <p>@_registrationTarget.Name</p>
                 </div>
-                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal">✕</button>
+                <button type="button" class="icon-action-btn" aria-label="@L["CancelBtn"]" @onclick="CloseRegistrationModal"><LucideIcon Name="x" /></button>
             </header>
             <div class="modal-body">
                 <dl class="summary-lines">

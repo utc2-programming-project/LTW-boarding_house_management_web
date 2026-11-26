@@ -20,7 +20,10 @@ public sealed record RevenueReportFilter(
     DateOnly? From = null,
     DateOnly? To = null,
     int? PropertyId = null,
-    RevenueDateBasis DateBasis = RevenueDateBasis.InvoicePeriod);
+    RevenueDateBasis DateBasis = RevenueDateBasis.InvoicePeriod,
+    int Page = 1,
+    int PageSize = 0,
+    bool OutstandingOnly = false);
 
 /// <summary>
 /// Một dòng đối chiếu theo hóa đơn. <see cref="Paid"/> là tổng tiền đã xác nhận
@@ -97,4 +100,16 @@ public sealed record RevenueReportDto(
     IReadOnlyList<RevenuePropertyGroupDto>? Properties = null,
     IReadOnlyList<RevenueFeeTypeDto>? FeeBreakdown = null,
     decimal OverdueOutstanding = 0m,
-    int OverdueInvoiceCount = 0);
+    int OverdueInvoiceCount = 0,
+    int TotalCount = 0,
+    int OutstandingCount = 0,
+    int Page = 1,
+    int PageSize = 0,
+    IReadOnlyList<RevenueReportLineDto>? DebtLines = null);
+
+/// <summary>Một trang dòng đối chiếu doanh thu (dùng cho phân trang server của bảng chi tiết).</summary>
+public sealed record RevenueLinesPage(
+    IReadOnlyList<RevenueReportLineDto> Items,
+    int TotalCount,
+    int Page,
+    int PageSize);

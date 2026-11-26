@@ -39,8 +39,22 @@
                         @foreach (var item in _items)
                         {
                             <tr>
-                                <td>@item.OriginalEmail</td>
-                                <td>@(string.IsNullOrWhiteSpace(item.FullName) ? L["NoData"].Value : item.FullName)</td>
+                                <td>
+                                    <span class="cell-truncate" data-hover-tip>
+                                        @item.OriginalEmail
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@item.OriginalEmail</span>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="cell-truncate" data-hover-tip>
+                                        @FullNameText(item)
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@FullNameText(item)</span>
+                                        </span>
+                                    </span>
+                                </td>
                                 <td>@(item.DeletedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
                                 <td>
                                     <TrashRowMenu RestoreText="@L["AccountRestore"]" PurgeText="@L["Purge"]"
@@ -93,6 +107,9 @@
 
         _wasVisible = Visible;
     }
+
+    private string FullNameText(DeletedAccountDto item) =>
+        string.IsNullOrWhiteSpace(item.FullName) ? L["NoData"].Value : item.FullName;
 
     private async Task LoadAsync()
     {

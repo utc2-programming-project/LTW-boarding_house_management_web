@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Reports.DTOs;
@@ -258,9 +259,12 @@ public sealed class TenantReportService(
     private static IQueryable<int> VisiblePropertyIds(
         ApplicationDbContext db, TenantCaller caller, int? propertyId = null)
     {
-        var ids = PropertyScope
-            .Apply(db.Properties, db.PropertyManagers, new PropertyCaller(caller.UserId, caller.Role))
-            .Select(property => property.Id);
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+        var ids =
+            from property in PropertyScope.Apply(
+                db.Properties, db.PropertyManagers, new PropertyCaller(caller.UserId, caller.Role))
+            where !blockedOwners.Contains(property.OwnerId)
+            select property.Id;
 
         return propertyId is { } id ? ids.Where(value => value == id) : ids;
     }

@@ -49,3 +49,45 @@ public sealed class ApprovalQueueResult
     public static ApprovalQueueResult Failure(string? errorCode, string? errorMessage) =>
         new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
 }
+
+/// <summary>
+/// Một trang Hàng đợi duyệt: chỉ trang hiện tại được làm giàu,
+/// số liệu thẻ KPI lấy từ aggregate SQL.
+/// </summary>
+public sealed class ApprovalQueuePageResult
+{
+    private ApprovalQueuePageResult()
+    {
+    }
+
+    public required bool Succeeded { get; init; }
+
+    public IReadOnlyList<ApprovalQueueItem> Items { get; init; } = [];
+
+    public int TotalCount { get; init; }
+
+    public int Page { get; init; } = 1;
+
+    public int PageSize { get; init; } = 20;
+
+    public ApprovalInboxStats Stats { get; init; } = new(0, 0, null);
+
+    public string? ErrorCode { get; init; }
+
+    public string? ErrorMessage { get; init; }
+
+    public static ApprovalQueuePageResult Success(
+        IReadOnlyList<ApprovalQueueItem> items, int totalCount, int page, int pageSize, ApprovalInboxStats stats) =>
+        new()
+        {
+            Succeeded = true,
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            Stats = stats,
+        };
+
+    public static ApprovalQueuePageResult Failure(string? errorCode, string? errorMessage) =>
+        new() { Succeeded = false, ErrorCode = errorCode, ErrorMessage = errorMessage };
+}

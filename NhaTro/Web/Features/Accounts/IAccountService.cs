@@ -38,10 +38,19 @@ public interface IAccountService
 
     /// <summary>Khoa tai khoan (khoa vinh vien cho toi khi mo).</summary>
     Task<AccountResult> LockAsync(
-        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+        string targetUserId, string callerUserId, string callerRole,
+        CancellationToken ct = default, string? reason = null);
 
     /// <summary>Mo khoa tai khoan; tai khoan chua duyet quay ve Cho duyet.</summary>
     Task<AccountResult> UnlockAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>Gửi OTP đặt lại mật khẩu cho tài khoản trong phạm vi (Admin/Chủ trọ).</summary>
+    Task<AccountResult> SendPasswordResetAsync(
+        string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>Thu hồi mọi phiên của tài khoản bằng cách đổi security stamp.</summary>
+    Task<AccountResult> ForceLogoutAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
 
     /// <summary>VHT-95: tao tai khoan theo o #5 (Admin/ChuTro hieu luc ngay, QuanLy Cho duyet).</summary>
@@ -74,6 +83,11 @@ public interface IAccountService
     /// <summary>VHT-95: duyet tai khoan dang Cho duyet (o #6).</summary>
     Task<AccountResult> ApproveAsync(
         string targetUserId, string callerUserId, string callerRole, CancellationToken ct = default);
+
+    /// <summary>Từ chối tài khoản đang Chờ duyệt; lý do bắt buộc, tối đa 500 ký tự.</summary>
+    Task<AccountResult> RejectAsync(
+        string targetUserId, string reason,
+        string callerUserId, string callerRole, CancellationToken ct = default);
 
     /// <summary>VHT-95: ho so khach chua co tai khoan trong pham vi nguoi goi (cho dialog tao).</summary>
     Task<IReadOnlyList<AssignableTenantDto>> SearchAssignableTenantsAsync(

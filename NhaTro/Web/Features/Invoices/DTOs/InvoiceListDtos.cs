@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Web.Common.Queries;
 using Web.Features.Invoices.Enums;
 
 namespace Web.Features.Invoices.DTOs;
@@ -104,8 +105,8 @@ public sealed class InvoiceFilter
             Year = null;
         }
 
-        Page = Math.Max(1, Page);
-        PageSize = Math.Clamp(PageSize, 1, 100);
+        Page = PagingExtensions.ClampPage(Page);
+        PageSize = PagingExtensions.ClampPageSize(PageSize);
     }
 
     /// <summary>Khoảng ngày của tháng đang lọc, tính cả hai đầu; null khi không lọc kỳ.</summary>

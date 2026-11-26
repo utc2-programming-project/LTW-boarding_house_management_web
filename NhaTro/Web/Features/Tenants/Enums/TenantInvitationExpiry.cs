@@ -1,6 +1,6 @@
 namespace Web.Features.Tenants.Enums;
 
-/// <summary>Preset hạn QR; email luôn dùng 15 phút.</summary>
+/// <summary>Preset hạn lời mời; email dùng 24 giờ mặc định, QR chọn 15m/1h/6h/24h.</summary>
 public enum TenantInvitationExpiry
 {
     Minutes15 = 15,

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
@@ -101,7 +102,6 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
         var skip = (long)(filter.Page - 1) * filter.PageSize;
 
         var payments = await query
-            .Include(payment => payment.Proofs)
             .OrderByDescending(payment => payment.RequestedAt)
             .ThenByDescending(payment => payment.Id)
             .Skip((int)Math.Min(skip, int.MaxValue))
@@ -136,7 +136,6 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
 
         var payment = await ScopePayments(caller)
             .AsNoTracking()
-            .Include(item => item.Proofs)
             .SingleOrDefaultAsync(item => item.Id == paymentId, cancellationToken);
 
         if (payment is null)
@@ -197,6 +196,18 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
 
         var tenantNames = await LoadTenantNamesAsync(contractIds, cancellationToken);
 
+        // Chỉ nạp id minh chứng thay vì kèm cả entity tệp vào câu list.
+        var paymentIds = payments.Select(payment => payment.Id).ToArray();
+        var proofRows = await context.PaymentProofs
+            .AsNoTracking()
+            .Where(proof => paymentIds.Contains(proof.PaymentId))
+            .OrderBy(proof => proof.FileId)
+            .Select(proof => new { proof.PaymentId, proof.FileId })
+            .ToListAsync(cancellationToken);
+        var proofIdsByPayment = proofRows
+            .GroupBy(row => row.PaymentId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<Guid>)group.Select(row => row.FileId).ToArray());
+
         return payments.Select(payment =>
         {
             var invoice = invoices[payment.InvoiceId];
@@ -206,7 +217,7 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
 
             return new PaymentReviewItemDto
             {
-                Payment = PaymentMapping.ToDto(payment),
+                Payment = PaymentMapping.ToDto(payment, proofIdsByPayment.GetValueOrDefault(payment.Id, [])),
                 InvoiceId = invoice.Id,
                 ContractNumber = contract.ContractNumber,
                 RoomCode = room.Code,
@@ -241,9 +252,13 @@ public sealed class PaymentReviewQueryService(ApplicationDbContext context) : IP
 
         if (caller.IsQuanLy)
         {
-            var propertyIds = context.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(context);
+            var propertyIds =
+                from assignment in context.PropertyManagers
+                join property in context.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
+                select assignment.PropertyId;
 
             return from invoice in context.Invoices
                    join contract in context.Contracts on invoice.ContractId equals contract.ContractId

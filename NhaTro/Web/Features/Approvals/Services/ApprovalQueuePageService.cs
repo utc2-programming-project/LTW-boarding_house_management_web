@@ -33,21 +33,30 @@ public sealed class ApprovalQueuePageService(
     private readonly HashSet<string> _applicableOperations =
         appliers.Select(applier => applier.OperationCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    public async Task<ApprovalQueueResult> LoadAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Một trang hộp thư: page/count/sort/lọc mã/từ khóa ở SQL, chỉ trang hiện tại được làm giàu;
+    /// số liệu thẻ KPI lấy từ aggregate riêng.
+    /// </summary>
+    public async Task<ApprovalQueuePageResult> LoadPageAsync(
+        int page, int pageSize, IReadOnlyCollection<string>? operationCodes, bool newestFirst,
+        CancellationToken ct = default, string? keyword = null)
     {
         var caller = await CallerAsync();
         if (caller is null)
         {
-            return ApprovalQueueResult.Failure(ApprovalErrorCodes.Forbidden, ApprovalErrorMessages.Forbidden);
+            return ApprovalQueuePageResult.Failure(ApprovalErrorCodes.Forbidden, ApprovalErrorMessages.Forbidden);
         }
 
-        var result = await approvals.ListInboxAsync(caller, ct);
+        var result = await approvals.ListInboxPageAsync(
+            caller, page, pageSize, operationCodes, newestFirst, ct, keyword);
         if (!result.Succeeded)
         {
-            return ApprovalQueueResult.Failure(result.ErrorCode, result.ErrorMessage);
+            return ApprovalQueuePageResult.Failure(result.ErrorCode, result.ErrorMessage);
         }
 
-        return ApprovalQueueResult.Success(await EnrichAsync(result.Items, ct));
+        var stats = await approvals.GetInboxStatsAsync(caller, ct);
+        return ApprovalQueuePageResult.Success(
+            await EnrichAsync(result.Items, ct), result.TotalCount, page, pageSize, stats);
     }
 
     public async Task<ApprovalResult> ApproveAsync(Guid id, CancellationToken ct = default)
@@ -106,33 +115,24 @@ public sealed class ApprovalQueuePageService(
             .Select(row => new TenantInfo(row.Id, row.FullName))
             .ToDictionaryAsync(row => row.Id, ct);
 
-        var contracts = await db.Contracts.AsNoTracking()
-            .Where(row => contractIds.Contains(row.ContractId))
-            .Select(row => new ContractInfo(row.ContractId, row.ContractNumber, row.RoomId))
-            .ToDictionaryAsync(row => row.ContractId, ct);
-
         var invoices = await db.Invoices.AsNoTracking()
             .Where(row => invoiceIds.Contains(row.Id))
             .Select(row => new InvoiceInfo(
                 row.Id, row.ContractId, row.PeriodStart, row.PeriodEnd, row.TotalAmount))
             .ToDictionaryAsync(row => row.Id, ct);
 
-        // SW-11 chỉ trỏ tới hóa đơn; hợp đồng của hóa đơn chưa chắc nằm trong danh sách yêu cầu.
-        var missingContractIds = invoices.Values
-            .Select(invoice => invoice.ContractId)
-            .Where(id => !contracts.ContainsKey(id))
-            .ToHashSet();
-        if (missingContractIds.Count > 0)
+        // SW-11 chỉ trỏ tới hóa đơn; hợp đồng của hóa đơn chưa chắc nằm trong danh sách yêu cầu,
+        // nên gộp vào đúng một query hợp đồng.
+        var contractIdsToLoad = new HashSet<Guid>(contractIds);
+        foreach (var invoice in invoices.Values)
         {
-            var extraContracts = await db.Contracts.AsNoTracking()
-                .Where(row => missingContractIds.Contains(row.ContractId))
-                .Select(row => new ContractInfo(row.ContractId, row.ContractNumber, row.RoomId))
-                .ToListAsync(ct);
-            foreach (var contract in extraContracts)
-            {
-                contracts[contract.ContractId] = contract;
-            }
+            contractIdsToLoad.Add(invoice.ContractId);
         }
+
+        var contracts = await db.Contracts.AsNoTracking()
+            .Where(row => contractIdsToLoad.Contains(row.ContractId))
+            .Select(row => new ContractInfo(row.ContractId, row.ContractNumber, row.RoomId))
+            .ToDictionaryAsync(row => row.ContractId, ct);
 
         var readings = await db.UtilityReadings.AsNoTracking()
             .Where(row => readingIds.Contains(row.Id))

@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
+@inject Web.Common.Utils.FilterUrlState Url
 @inject ILogger<RoomList> Logger
 
 <PageTitle>@L["P2RoomsTitle"] · @L["AppName"]</PageTitle>
@@ -261,6 +262,88 @@
     [SupplyParameterFromQuery(Name = "roomId")]
     public int? RoomIdQuery { get; set; }
 
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "active")]
+    public string? ActiveQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "available")]
+    public string? AvailableQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "minPrice")]
+    public string? MinPriceQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "maxPrice")]
+    public string? MaxPriceQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "floor")]
+    public string? FloorQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "minArea")]
+    public string? MinAreaQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "maxArea")]
+    public string? MaxAreaQuery { get; set; }
+
+    private void ApplyUrlState()
+    {
+        if (int.TryParse(StatusQuery, out var status) && Enum.IsDefined((RoomStatus)status))
+        {
+            _statusFilter = status.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (ActiveQuery is "true" or "false")
+        {
+            _activeFilter = ActiveQuery;
+        }
+
+        if (AvailableQuery == "true")
+        {
+            _onlyAvailable = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MinPriceQuery))
+        {
+            _minPriceText = MinPriceQuery;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MaxPriceQuery))
+        {
+            _maxPriceText = MaxPriceQuery;
+        }
+
+        if (!string.IsNullOrWhiteSpace(FloorQuery))
+        {
+            _floorText = FloorQuery;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MinAreaQuery))
+        {
+            _minAreaText = MinAreaQuery;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MaxAreaQuery))
+        {
+            _maxAreaText = MaxAreaQuery;
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["propertyId"] = _propertyFilter.Length > 0 ? _propertyFilter : null,
+        ["status"] = _statusFilter.Length > 0 ? _statusFilter : null,
+        ["active"] = _activeFilter.Length > 0 ? _activeFilter : null,
+        ["available"] = _onlyAvailable ? "true" : null,
+        ["minPrice"] = string.IsNullOrWhiteSpace(_minPriceText) ? null : _minPriceText,
+        ["maxPrice"] = string.IsNullOrWhiteSpace(_maxPriceText) ? null : _maxPriceText,
+        ["floor"] = string.IsNullOrWhiteSpace(_floorText) ? null : _floorText,
+        ["minArea"] = string.IsNullOrWhiteSpace(_minAreaText) ? null : _minAreaText,
+        ["maxArea"] = string.IsNullOrWhiteSpace(_maxAreaText) ? null : _maxAreaText,
+    });
+
     private CancellationTokenSource? _keywordDebounce;
 
     private DataTable<RoomListItem>? _table;
@@ -314,6 +397,16 @@
     {
         _tableLabels = DataTableLabelLocalizer.Create(L);
         _columns = BuildColumns();
+        _lastAppliedPropertyId = PropertyId;
+        _lastAppliedKeywordQuery = KeywordQuery;
+        _lastAppliedRoomId = RoomIdQuery;
+        _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        if (PropertyId is { } propertyId)
+        {
+            _propertyFilter = propertyId.ToString(CultureInfo.InvariantCulture);
+        }
+
+        ApplyUrlState();
         await InitializeAsync();
     }
 
@@ -434,8 +527,13 @@
         </span>;
         RenderFragment<RoomListItem> status = item => @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
         // Cột "Nhà" là link sang danh sách nhà và mở sẵn dialog chi tiết theo id.
-        RenderFragment<RoomListItem> property = item => @<a class="cell-link is-quiet"
-            href="@AppLinks.Property(item.PropertyId)" title="@L["CellLinkOpenProperty"]">@item.PropertyName</a>;
+        RenderFragment<RoomListItem> property = item => @<a class="cell-link is-quiet cell-truncate"
+            href="@AppLinks.Property(item.PropertyId)" data-hover-tip>
+            @item.PropertyName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+            </span>
+        </a>;
         RenderFragment<RoomListItem> activity = item => @<StatusBadge Text="@(item.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(item.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />;
         RenderFragment<RoomListItem> actions = item => @<div class="p2-row-actions">
             <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
@@ -467,14 +565,14 @@
 
         return
         [
-            new() { Key = "code", Title = L["P2RoomCode"], Template = code },
-            new() { Key = "property", Title = L["P2Property"], Template = property },
-            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
-            new() { Key = "area", Title = L["P2Area"], Value = FormatArea, IsNumeric = true },
-            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
-            new() { Key = "status", Title = L["P2Status"], Template = status },
-            new() { Key = "activity", Title = L["P2Activity"], Template = activity },
-            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+            new() { Key = "code", Title = L["P2RoomCode"], Template = code, Width = "110px" },
+            new() { Key = "property", Title = L["P2Property"], Template = property, Width = "240px" },
+            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true, Width = "80px" },
+            new() { Key = "area", Title = L["P2Area"], Value = FormatArea, IsNumeric = true, Width = "100px" },
+            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true, Width = "130px" },
+            new() { Key = "status", Title = L["P2Status"], Template = status, Width = "150px" },
+            new() { Key = "activity", Title = L["P2Activity"], Template = activity, Width = "160px" },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions, CellClass = "cell-actions", Width = "120px" }
         ];
     }
 
@@ -496,7 +594,7 @@
             ? null
             : TryParseArea(_maxAreaText, out var parsedMaxArea) ? parsedMaxArea : null;
 
-        return await PageService.ListAsync(new RoomFilter
+        var result = await PageService.ListAsync(new RoomFilter
         {
             PropertyId = propertyId,
             Status = status,
@@ -511,6 +609,8 @@
             Page = request.Page,
             PageSize = request.PageSize
         });
+        await WriteUrlStateAsync();
+        return result;
     }
 
     public void Dispose()
@@ -527,7 +627,7 @@
         var token = _keywordDebounce.Token;
         try
         {
-            await Task.Delay(300, token);
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
             await ApplyFiltersAsync();
         }
         catch (TaskCanceledException)

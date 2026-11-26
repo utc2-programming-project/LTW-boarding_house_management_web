@@ -126,7 +126,7 @@
     <value>Tài khoản của tôi</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Cài đặt</value>
+    <value>Cài đặt &amp; bảo mật</value>
   </data>
   <data name="SignOut" xml:space="preserve">
     <value>Đăng xuất</value>
@@ -178,6 +178,21 @@
   </data>
   <data name="Incidents" xml:space="preserve">
     <value>Sự cố</value>
+  </data>
+  <data name="GatePasses" xml:space="preserve">
+    <value>Ra vào cổng</value>
+  </data>
+  <data name="GateLogs" xml:space="preserve">
+    <value>Nhật ký cổng</value>
+  </data>
+  <data name="GateSettings" xml:space="preserve">
+    <value>Cấu hình cổng</value>
+  </data>
+  <data name="GateKiosk" xml:space="preserve">
+    <value>Kiosk cổng</value>
+  </data>
+  <data name="MyGate" xml:space="preserve">
+    <value>Ra vào của tôi</value>
   </data>
   <data name="Reports" xml:space="preserve">
     <value>Báo cáo</value>
@@ -295,6 +310,9 @@
   <data name="LoginButton" xml:space="preserve">
     <value>Đăng nhập</value>
   </data>
+  <data name="PasskeyLoginButton" xml:space="preserve">
+    <value>Đăng nhập bằng passkey</value>
+  </data>
   <data name="LoginInvalid" xml:space="preserve">
     <value>Email hoặc mật khẩu không đúng.</value>
   </data>
@@ -358,7 +376,7 @@
     <value>10 chữ số, bắt đầu bằng 0.</value>
   </data>
   <data name="EmailReadonlyHint" xml:space="preserve">
-    <value>Email dùng để đăng nhập, chưa đổi được tại đây.</value>
+    <value>Email dùng để đăng nhập; đổi ở tab Bảo mật.</value>
   </data>
   <data name="SaveChanges" xml:space="preserve">
     <value>Lưu thay đổi</value>
@@ -397,6 +415,12 @@
   </data>
   <data name="FilterAllRoles" xml:space="preserve">
     <value>Tất cả vai trò</value>
+  </data>
+  <data name="FilterStatus" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="FilterAllStatuses" xml:space="preserve">
+    <value>Tất cả trạng thái</value>
   </data>
   <data name="ColumnAccount" xml:space="preserve">
     <value>Tài khoản</value>
@@ -467,6 +491,12 @@
   <data name="UnlockMessage" xml:space="preserve">
     <value>Mở khóa tài khoản {0}?</value>
   </data>
+  <data name="LockReasonLabel" xml:space="preserve">
+    <value>Lý do khóa (tuỳ chọn)</value>
+  </data>
+  <data name="LockReasonHint" xml:space="preserve">
+    <value>Lưu vào nhật ký tài khoản, tối đa 500 ký tự.</value>
+  </data>
   <data name="RoleChanged" xml:space="preserve">
     <value>Đã cập nhật vai trò.</value>
   </data>
@@ -513,6 +543,45 @@
   </data>
   <data name="AccountApproved" xml:space="preserve">
     <value>Đã duyệt tài khoản.</value>
+  </data>
+  <data name="RejectAccount" xml:space="preserve">
+    <value>Từ chối</value>
+  </data>
+  <data name="RejectAccountTitle" xml:space="preserve">
+    <value>Từ chối tài khoản</value>
+  </data>
+  <data name="RejectAccountMessage" xml:space="preserve">
+    <value>Từ chối tài khoản {0}? Tài khoản sẽ không thể đăng nhập và được đưa vào thùng rác.</value>
+  </data>
+  <data name="RejectReasonLabel" xml:space="preserve">
+    <value>Lý do từ chối</value>
+  </data>
+  <data name="RejectReasonHint" xml:space="preserve">
+    <value>Bắt buộc, tối đa 500 ký tự; lưu vào nhật ký tài khoản.</value>
+  </data>
+  <data name="AccountRejected" xml:space="preserve">
+    <value>Đã từ chối tài khoản.</value>
+  </data>
+  <data name="ResetPasswordAction" xml:space="preserve">
+    <value>Gửi mã đặt lại mật khẩu</value>
+  </data>
+  <data name="ResetPasswordSent" xml:space="preserve">
+    <value>Đã gửi mã đặt lại mật khẩu cho {0}.</value>
+  </data>
+  <data name="ForceLogoutAction" xml:space="preserve">
+    <value>Đăng xuất mọi phiên</value>
+  </data>
+  <data name="ForceLogoutTitle" xml:space="preserve">
+    <value>Đăng xuất mọi phiên?</value>
+  </data>
+  <data name="ForceLogoutMessage" xml:space="preserve">
+    <value>Tài khoản {0} sẽ bị đăng xuất khỏi mọi thiết bị.</value>
+  </data>
+  <data name="ForceLogoutConfirm" xml:space="preserve">
+    <value>Đăng xuất</value>
+  </data>
+  <data name="ForceLogoutDone" xml:space="preserve">
+    <value>Đã đăng xuất mọi phiên của tài khoản.</value>
   </data>
   <data name="TenantProfileLabel" xml:space="preserve">
     <value>Hồ sơ khách thuê</value>
@@ -595,6 +664,9 @@
   </data>
   <data name="ErrorNotPendingApproval" xml:space="preserve">
     <value>Chỉ duyệt được tài khoản đang chờ duyệt.</value>
+  </data>
+  <data name="ErrorReasonRequired" xml:space="preserve">
+    <value>Vui lòng nhập lý do (tối đa 500 ký tự).</value>
   </data>
   <data name="ErrorDuplicateEmail" xml:space="preserve">
     <value>Email đã được dùng cho tài khoản khác.</value>
@@ -1593,6 +1665,13 @@
   <data name="InviteTenantEmailHint" xml:space="preserve"><value>Lời mời sẽ được gửi tới email này.</value></data>
   <data name="InviteTenantNote" xml:space="preserve"><value>Khách mở email trong 15 phút, đặt mật khẩu và xác thực OTP; hồ sơ thuộc chủ trọ của bạn.</value></data>
   <data name="InviteTenantSend" xml:space="preserve"><value>Gửi lời mời</value></data>
+  <data name="InviteKindLabel" xml:space="preserve"><value>Loại khách</value></data>
+  <data name="InviteKindNew" xml:space="preserve"><value>Khách mới — tạo tài khoản</value></data>
+  <data name="InviteKindExisting" xml:space="preserve"><value>Đã có tài khoản — chỉ nhận liên kết</value></data>
+  <data name="InviteExpiryLabel" xml:space="preserve"><value>Hạn liên kết</value></data>
+  <data name="InviteExpiry1h" xml:space="preserve"><value>1 giờ</value></data>
+  <data name="InviteExpiry6h" xml:space="preserve"><value>6 giờ</value></data>
+  <data name="InviteExpiry24h" xml:space="preserve"><value>24 giờ</value></data>
   <data name="InviteTenantSent" xml:space="preserve"><value>Đã gửi lời mời qua email.</value></data>
   <data name="InviteTenantEmailTaken" xml:space="preserve"><value>Email này đã có tài khoản.</value></data>
   <data name="InviteTenantForbidden" xml:space="preserve"><value>Bạn chưa được gán cho chủ trọ nào.</value></data>
@@ -1662,10 +1741,34 @@
   <data name="LeaseStartDateLabel" xml:space="preserve"><value>Ngày bắt đầu thuê</value></data>
   <data name="LeaseEndDateLabel" xml:space="preserve"><value>Ngày hết hạn hợp đồng</value></data>
   <data name="MeterReadingCalculating" xml:space="preserve"><value>Đang tính toán…</value></data>
-  <data name="ManageAccountTitle" xml:space="preserve"><value>Quản lý tài khoản</value></data>
-  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Cài đặt tài khoản</value></data>
+  <data name="ManageAccountTitle" xml:space="preserve"><value>Cài đặt &amp; bảo mật</value></data>
+  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Quản lý email, mật khẩu, xác thực hai yếu tố, thiết bị đăng nhập và dữ liệu cá nhân</value></data>
+  <data name="ManageNavOverview" xml:space="preserve"><value>Tổng quan</value></data>
+  <data name="AccountMenuProfileSub" xml:space="preserve"><value>Họ tên, số điện thoại</value></data>
+  <data name="AccountMenuSecuritySub" xml:space="preserve"><value>Email, mật khẩu, thiết bị</value></data>
+  <data name="SettingsGroupIdentity" xml:space="preserve"><value>Hồ sơ</value></data>
+  <data name="SettingsHubProfileDesc" xml:space="preserve"><value>Họ tên, số điện thoại và tài khoản nhận tiền</value></data>
+  <data name="SettingsGroupSecurity" xml:space="preserve"><value>Bảo mật</value></data>
+  <data name="SettingsCardEmailDesc" xml:space="preserve"><value>Đổi email đăng nhập và xác minh địa chỉ</value></data>
+  <data name="SettingsCardPasswordDesc" xml:space="preserve"><value>Đổi mật khẩu đăng nhập</value></data>
+  <data name="SettingsCardTwoFactorDesc" xml:space="preserve"><value>Thêm lớp bảo vệ bằng ứng dụng xác thực</value></data>
+  <data name="SettingsCardPasskeyDesc" xml:space="preserve"><value>Đăng nhập nhanh bằng vân tay hoặc khuôn mặt</value></data>
+  <data name="SettingsCardSessionsDesc" xml:space="preserve"><value>Xem và đăng xuất thiết bị đang đăng nhập</value></data>
+  <data name="SettingsGroupData" xml:space="preserve"><value>Dữ liệu</value></data>
+  <data name="SettingsCardDataDesc" xml:space="preserve"><value>Tải xuống hoặc xoá dữ liệu cá nhân</value></data>
+  <data name="SettingsCardManage" xml:space="preserve"><value>Quản lý</value></data>
   <data name="ManageNavExternalLogins" xml:space="preserve"><value>Đăng nhập bên ngoài</value></data>
   <data name="ManageNavPasskeys" xml:space="preserve"><value>Khóa truy cập</value></data>
+  <data name="ManageNavSessions" xml:space="preserve"><value>Thiết bị đăng nhập</value></data>
+  <data name="SessionsTitle" xml:space="preserve"><value>Thiết bị đăng nhập</value></data>
+  <data name="SessionsHelp" xml:space="preserve"><value>Các phiên đang đăng nhập vào tài khoản của bạn.</value></data>
+  <data name="SessionsCurrent" xml:space="preserve"><value>Thiết bị này</value></data>
+  <data name="SessionsLastSeen" xml:space="preserve"><value>Hoạt động:</value></data>
+  <data name="SessionsRevoke" xml:space="preserve"><value>Đăng xuất</value></data>
+  <data name="SessionsRevokeOthers" xml:space="preserve"><value>Đăng xuất mọi thiết bị khác</value></data>
+  <data name="SessionsRevoked" xml:space="preserve"><value>Đã đăng xuất thiết bị đã chọn.</value></data>
+  <data name="SessionsEmpty" xml:space="preserve"><value>Chưa có phiên nào được ghi nhận.</value></data>
+  <data name="SessionsUnknownDevice" xml:space="preserve"><value>Thiết bị không rõ</value></data>
   <data name="ManageNavPersonalData" xml:space="preserve"><value>Dữ liệu cá nhân</value></data>
   <data name="UsernameLabel" xml:space="preserve"><value>Tên người dùng</value></data>
   <data name="CurrentPasswordLabel" xml:space="preserve"><value>Mật khẩu hiện tại</value></data>
@@ -1708,6 +1811,13 @@
   <data name="ExternalLoginInfoLoadFailed" xml:space="preserve"><value>Không thể tải thông tin đăng nhập bên ngoài.</value></data>
   <data name="ExternalLoginAdded" xml:space="preserve"><value>Đã thêm đăng nhập bên ngoài.</value></data>
   <data name="ExternalLoginAddFailed" xml:space="preserve"><value>Không thể thêm đăng nhập bên ngoài. Mỗi đăng nhập chỉ liên kết được với một tài khoản.</value></data>
+  <data name="GoogleLoginTitle" xml:space="preserve"><value>Đăng nhập bằng Google</value></data>
+  <data name="GoogleContinueAction" xml:space="preserve"><value>Tạo tài khoản bằng Google</value></data>
+  <data name="ExternalLoginInviteFailed" xml:space="preserve"><value>Không tạo được tài khoản từ lời mời bằng Google. Lời mời có thể đã hết hạn, đã dùng, hoặc email Google không khớp email trên lời mời.</value></data>
+  <data name="ExternalLoginNoAccount" xml:space="preserve"><value>Chưa có tài khoản dùng email này. Hãy nhờ chủ trọ mời hoặc tạo tài khoản trước khi đăng nhập bằng Google.</value></data>
+  <data name="ExternalLoginPendingApproval" xml:space="preserve"><value>Tài khoản đang chờ duyệt nên chưa đăng nhập được. Vui lòng liên hệ quản trị viên.</value></data>
+  <data name="ExternalLoginEmailNotVerified" xml:space="preserve"><value>Nhà cung cấp chưa xác thực email này. Vui lòng thử lại bằng tài khoản Google đã xác thực email.</value></data>
+  <data name="ExternalLoginFailed" xml:space="preserve"><value>Không đăng nhập được bằng tài khoản này. Vui lòng thử lại hoặc đăng nhập bằng mật khẩu.</value></data>
   <data name="DisableTwoFactorTitle" xml:space="preserve"><value>Tắt xác thực hai yếu tố (2FA)</value></data>
   <data name="DisableTwoFactorWarning" xml:space="preserve"><value>Thao tác này chỉ tắt 2FA.</value></data>
   <data name="DisableTwoFactorDescription" xml:space="preserve"><value>Tắt 2FA không đổi khóa ứng dụng xác thực. Nếu muốn đổi khóa, hãy</value></data>
@@ -2076,6 +2186,8 @@
   <data name="SelectRoleTenantHint" xml:space="preserve"><value>Xem phòng, hợp đồng, hoá đơn và gửi yêu cầu của khách thuê.</value></data>
   <data name="SelectRoleInvalid" xml:space="preserve"><value>Vai trò không hợp lệ. Vui lòng chọn lại.</value></data>
   <data name="SelectRoleNone" xml:space="preserve"><value>Tài khoản chưa được gán vai trò nào. Vui lòng liên hệ quản trị.</value></data>
+  <data name="SelectRoleLoadingTitle" xml:space="preserve"><value>Đang tải dữ liệu…</value></data>
+  <data name="SelectRoleLoadingHint" xml:space="preserve"><value>Hệ thống đang chuẩn bị không gian làm việc cho vai trò bạn chọn. Lần đầu có thể mất vài giây, vui lòng chờ.</value></data>
   <data name="SwitchRole" xml:space="preserve"><value>Đổi vai trò</value></data>
   <!-- PLAN-024: nhận lời mời/QR -->
   <data name="InviteOwnerLabel" xml:space="preserve"><value>Chủ trọ</value></data>
@@ -2190,4 +2302,57 @@
   <data name="DocumentErrorStorageFailed" xml:space="preserve"><value>Không xóa được tệp vật lý. Vui lòng thử lại.</value></data>
   <data name="DocumentErrorNotInTrash" xml:space="preserve"><value>Tệp không còn trong thùng rác.</value></data>
   <data name="DocumentErrorForbidden" xml:space="preserve"><value>Bạn không có quyền thao tác tệp này.</value></data>
+  <!-- PLAN-030: trang Tài khoản gộp tab -->
+  <data name="AccountTitle" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="AccountTabsLabel" xml:space="preserve"><value>Khu vực tài khoản</value></data>
+  <data name="AccountTabProfile" xml:space="preserve"><value>Hồ sơ</value></data>
+  <data name="AccountTabSecurity" xml:space="preserve"><value>Bảo mật</value></data>
+  <data name="AccountTabDevices" xml:space="preserve"><value>Thiết bị</value></data>
+  <data name="AccountTabData" xml:space="preserve"><value>Dữ liệu</value></data>
+  <data name="AccountTabActivity" xml:space="preserve"><value>Hoạt động</value></data>
+  <data name="AccountBackAction" xml:space="preserve"><value>Quay lại tài khoản</value></data>
+  <data name="AccountMenuSub" xml:space="preserve"><value>Hồ sơ, bảo mật, thiết bị</value></data>
+  <data name="AccountTenantProfileHint" xml:space="preserve"><value>Hồ sơ khách thuê nằm ở trang riêng, gắn với hợp đồng thuê của bạn.</value></data>
+  <data name="AccountTenantProfileAction" xml:space="preserve"><value>Mở hồ sơ khách thuê</value></data>
+  <data name="AvatarUploadAction" xml:space="preserve"><value>Tải ảnh lên</value></data>
+  <data name="AvatarRemoveAction" xml:space="preserve"><value>Gỡ ảnh</value></data>
+  <data name="AvatarHint" xml:space="preserve"><value>Không bắt buộc. Ảnh PNG/JPG/WebP, tối đa 2 MB, dùng chung cho mọi thiết bị.</value></data>
+  <data name="AvatarTooLarge" xml:space="preserve"><value>Ảnh vượt quá 2 MB.</value></data>
+  <data name="AvatarInvalidType" xml:space="preserve"><value>Chỉ nhận tệp ảnh.</value></data>
+  <data name="AvatarSaved" xml:space="preserve"><value>Đã cập nhật ảnh đại diện.</value></data>
+  <data name="AvatarRemoved" xml:space="preserve"><value>Đã gỡ ảnh đại diện.</value></data>
+  <data name="RecentActivityTitle" xml:space="preserve"><value>Hoạt động gần đây</value></data>
+  <data name="RecentActivityDesc" xml:space="preserve"><value>Cảnh báo bảo mật và thông báo gửi tới tài khoản của bạn.</value></data>
+  <data name="RecentActivityEmpty" xml:space="preserve"><value>Chưa có hoạt động nào được ghi nhận.</value></data>
+  <data name="RecentActivityDevicesHint" xml:space="preserve"><value>Phiên đang đăng nhập xem ở tab Thiết bị.</value></data>
+  <data name="SecurityScoreTitle" xml:space="preserve"><value>Mức độ bảo mật</value></data>
+  <data name="SecurityScoreDesc" xml:space="preserve"><value>Tính từ mật khẩu, email xác thực, 2FA, passkey và mã khôi phục.</value></data>
+  <data name="SecurityScoreStrong" xml:space="preserve"><value>Tài khoản của bạn đã được bảo vệ tốt.</value></data>
+  <data name="SecurityHintSetPassword" xml:space="preserve"><value>Tạo mật khẩu</value></data>
+  <data name="SecurityHintVerifyEmail" xml:space="preserve"><value>Xác thực email</value></data>
+  <data name="SecurityHintEnable2fa" xml:space="preserve"><value>Bật 2FA</value></data>
+  <data name="SecurityHintAddPasskey" xml:space="preserve"><value>Thêm khóa truy cập</value></data>
+  <data name="SecurityHintRecoveryCodes" xml:space="preserve"><value>Tạo mã khôi phục</value></data>
+  <data name="SecurityLoginSection" xml:space="preserve"><value>Đăng nhập &amp; xác thực</value></data>
+  <data name="SecurityPasswordDesc" xml:space="preserve"><value>Mật khẩu dùng để đăng nhập bằng email.</value></data>
+  <data name="SecurityTwoFactorDesc" xml:space="preserve"><value>Lớp bảo vệ thứ hai bằng mã từ ứng dụng xác thực.</value></data>
+  <data name="SecurityPasskeyDesc" xml:space="preserve"><value>Đăng nhập nhanh bằng sinh trắc học, chống lừa đảo.</value></data>
+  <data name="SecurityChangeAction" xml:space="preserve"><value>Thay đổi</value></data>
+  <data name="SecurityEnableAction" xml:space="preserve"><value>Bật ngay</value></data>
+  <data name="SecurityManageAction" xml:space="preserve"><value>Quản lý</value></data>
+  <data name="SecurityAddAction" xml:space="preserve"><value>Thêm</value></data>
+  <data name="SecuritySetPasswordAction" xml:space="preserve"><value>Tạo mật khẩu</value></data>
+  <data name="SecuritySet" xml:space="preserve"><value>Đã thiết lập</value></data>
+  <data name="SecurityNotSet" xml:space="preserve"><value>Chưa thiết lập</value></data>
+  <data name="SecurityUnverified" xml:space="preserve"><value>Chưa xác thực</value></data>
+  <data name="SecurityPasskeyCount" xml:space="preserve"><value>{0} khóa</value></data>
+  <data name="SecurityExternalDesc" xml:space="preserve"><value>Liên kết tài khoản Google để đăng nhập mà không cần mật khẩu.</value></data>
+  <data name="SecurityLinked" xml:space="preserve"><value>Đã liên kết</value></data>
+  <data name="SecurityNotLinked" xml:space="preserve"><value>Chưa liên kết</value></data>
+  <data name="StatusEnabled" xml:space="preserve"><value>Đã bật</value></data>
+  <data name="StatusUnread" xml:space="preserve"><value>Chưa đọc</value></data>
+  <data name="StatusDisabled" xml:space="preserve"><value>Chưa bật</value></data>
+  <data name="DataDownloadDesc" xml:space="preserve"><value>Tải bản sao dữ liệu cá nhân mà hệ thống đang lưu.</value></data>
+  <data name="DangerZoneTitle" xml:space="preserve"><value>Vùng nguy hiểm</value></data>
+  <data name="DangerZoneDesc" xml:space="preserve"><value>Xóa dữ liệu sẽ xóa vĩnh viễn tài khoản và không thể khôi phục.</value></data>
 </root>

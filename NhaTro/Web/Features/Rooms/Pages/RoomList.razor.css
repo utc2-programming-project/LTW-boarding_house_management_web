@@ -46,76 +46,9 @@
 
 .p2-approval-chip:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
-.hover-tip {
-    position: fixed;
-    z-index: 420;
-    display: block;
-    width: max-content;
-    max-width: min(22rem, calc(100vw - 24px));
-    padding: var(--space-3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-control);
-    background: var(--surface);
-    color: var(--text-primary);
-    box-shadow: var(--shadow-popover);
-    font-family: var(--font-family);
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.5;
-    text-align: left;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(-4px);
-    transition: opacity 140ms var(--ease), transform 140ms var(--ease);
-}
-
-.hover-tip.is-open { opacity: 1; visibility: visible; transform: none; }
-
-.hover-tip__title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    color: var(--warning-text);
-    font-weight: 700;
-}
-
-.hover-tip__title .lucide-icon { flex: none; width: 15px; height: 15px; }
-
-.hover-tip__line { display: block; color: var(--text-primary); }
-
-.hover-tip__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    margin-top: 6px;
-    color: var(--text-secondary);
-    font-size: 12px;
-}
-
-.hover-tip__meta > span { display: inline-flex; align-items: center; gap: 4px; }
-
-.hover-tip__meta .lucide-icon { flex: none; width: 13px; height: 13px; color: var(--text-muted); }
-
-.hover-tip__cta {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-    color: var(--accent-text);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.hover-tip__cta .lucide-icon { flex: none; width: 14px; height: 14px; }
+/* .hover-tip chuyển sang wwwroot/app.css để mọi bảng dùng được. */
 
 @media (prefers-reduced-motion: reduce) {
-    .hover-tip,
     .p2-approval-chip { transition: none; }
 }
 .p2-alert.error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-text); }
@@ -123,18 +56,14 @@
 :deep(.table-card) { border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
 :deep(.table-card) { min-width: 0; overflow-x: auto; }
 :deep(.table-card table) { min-width: 1120px; }
-/* Tỉ lệ cột cố định: Mã 10% · Nhà trọ 22% · Tầng 7% · Diện tích 9% · Giá 12% · Trạng thái 14% · Hoạt động 15% · Thao tác 11%. */
+/* Độ rộng cột đặt ở DataTableColumn.Width (colgroup); bảng cố định để ellipsis ăn. */
 .p2-page ::deep .table-card table { table-layout: fixed; min-width: 1080px; }
-.p2-page ::deep .table-card thead th:nth-child(1) { width: 10%; }
-.p2-page ::deep .table-card thead th:nth-child(2) { width: 22%; }
-.p2-page ::deep .table-card thead th:nth-child(3) { width: 7%; }
-.p2-page ::deep .table-card thead th:nth-child(4) { width: 9%; }
-.p2-page ::deep .table-card thead th:nth-child(5) { width: 12%; }
-.p2-page ::deep .table-card thead th:nth-child(6) { width: 14%; }
-.p2-page ::deep .table-card thead th:nth-child(7) { width: 15%; }
-.p2-page ::deep .table-card thead th:nth-child(8) { width: 11%; text-align: center; }
 .p2-page ::deep .table-card tbody td { vertical-align: middle; }
-.p2-page ::deep .table-card tbody td:nth-child(2) { overflow-wrap: break-word; }
+/* .p2-row-actions do trang render (không mang scope của DataTable) nên phải căn tại đây,
+   nếu không nút ⋯ dạt phải còn tiêu đề "Thao tác" căn giữa → lệch cột. */
+.p2-page ::deep .table-card th.cell-actions,
+.p2-page ::deep .table-card td.cell-actions { text-align: center; }
+.p2-page ::deep .table-card td.cell-actions .p2-row-actions { justify-content: center; }
 @media (max-width: 900px) { .p2-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 767.98px) {
     .p2-alert { align-items: stretch; flex-direction: column; }

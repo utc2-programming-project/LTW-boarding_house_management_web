@@ -8,6 +8,12 @@ public sealed class CreateTenantInvitationRequest
     public string Email { get; set; } = string.Empty;
 
     public string? PhoneNumber { get; set; }
+
+    /// <summary>Khách mới tạo tài khoản khi nhận, hoặc khách đã có tài khoản chỉ cần nhận liên kết.</summary>
+    public Enums.TenantInvitationKind Kind { get; set; } = Enums.TenantInvitationKind.NewAccount;
+
+    /// <summary>Hạn của liên kết (phút); để trống dùng mặc định 24 giờ.</summary>
+    public int? ExpiryMinutes { get; set; }
 }
 
 /// <summary>Một lời mời hiển thị trong danh sách của chủ trọ/quản lý.</summary>

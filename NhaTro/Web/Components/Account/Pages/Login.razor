@@ -97,7 +97,29 @@
                 }
                 @L["LoginButton"]
             </button>
+
+            @* PLAN-001 #18: đăng nhập không mật khẩu bằng passkey; thẻ <passkey-submit> tự lấy credential. *@
+            <div class="auth-divider"><span>@L["OrDivider"]</span></div>
+            <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input" EmailName="Input.Email"
+                           class="btn btn-secondary btn-block">
+                <LucideIcon Name="key" />
+                @L["PasskeyLoginButton"]
+            </PasskeySubmit>
         </EditForm>
+
+        @* PLAN-012: form riêng, KHÔNG lồng trong EditForm (form lồng nhau bị trình duyệt bỏ).
+           Chỉ hiện khi provider đã cấu hình (Authentication:Google:ClientId). *@
+        @if (_hasGoogleProvider)
+        {
+            <form method="post" action="Account/PerformExternalLogin" class="auth-oauth-form">
+                <AntiforgeryToken />
+                <input type="hidden" name="returnUrl" value="@(ReturnUrl ?? "/")" />
+                <button type="submit" name="provider" value="Google" class="btn btn-secondary btn-block auth-oauth-btn">
+                    <img src="images/google-g.svg" alt="" aria-hidden="true" width="18" height="18" />
+                    @L["GoogleLoginTitle"]
+                </button>
+            </form>
+        }
 
         <p class="auth-alt-action">
             <a href="Account/RegisterOwner">@L["RegisterOwnerLink"]</a>
@@ -111,6 +133,7 @@
 @code {
     private string? errorMessage;
     private bool _submitting;
+    private bool _hasGoogleProvider;
     private EditContext editContext = default!;
     private ValidationMessageStore? messageStore;
     private CaptchaChallenge? _captchaChallenge;
@@ -135,9 +158,18 @@
     [SupplyParameterFromQuery(Name = "tooManyRequests")]
     private string? TooManyRequestsFlag { get; set; }
 
+    [SupplyParameterFromQuery(Name = "pendingApproval")]
+    private string? PendingApprovalFlag { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
+        _hasGoogleProvider = (await SignInManager.GetExternalAuthenticationSchemesAsync())
+            .Any(scheme => scheme.Name == "Google");
+        if (PendingApprovalFlag == "1")
+        {
+            errorMessage = L["LoginPendingApproval"];
+        }
         editContext = new EditContext(Input);
         messageStore ??= new ValidationMessageStore(editContext);
         editContext.OnFieldChanged += (_, _) =>
@@ -175,6 +207,20 @@
     {
         if (_submitting)
         {
+            return;
+        }
+
+        // Passkey gửi kèm CredentialJson thay cho mật khẩu.
+        if (!string.IsNullOrWhiteSpace(Input.CredentialJson))
+        {
+            await LoginWithPasskeyAsync();
+            return;
+        }
+
+        // JS báo lỗi lấy credential (authenticator huỷ, trình duyệt cũ...).
+        if (!string.IsNullOrWhiteSpace(Input.Error))
+        {
+            errorMessage = L["LoginInvalid"];
             return;
         }
 
@@ -218,7 +264,8 @@
         }
 
         // sau nhieu lan sai, bat buoc giai CAPTCHA truoc khi kiem mat khau.
-        if (IsCaptchaRequired())
+        var requireCaptcha = IsCaptchaRequired();
+        if (requireCaptcha)
         {
             if (!CaptchaVerifier.Verify(Input.CaptchaToken, Input.CaptchaAnswer))
             {
@@ -239,15 +286,15 @@
             }
         }
 
+        // Chỉ đếm sai vào lockout sau khi đã giải CAPTCHA, tránh bot khoá tài khoản.
         var result = await SignInManager.PasswordSignInAsync(
-            Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: false);
+            Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: requireCaptcha);
 
         if (result.Succeeded)
         {
             AttemptGuard.RegisterSuccess(clientIp, Input.Email.Trim());
             Logger.LogInformation("Nguoi dung dang nhap thanh cong.");
 
-            // PLAN-022: tài khoản chưa xác thực Gmail chỉ được vào trang OTP.
             var signedInUser = await Users.FindByEmailAsync(Input.Email.Trim());
             if (signedInUser is null)
             {
@@ -255,20 +302,7 @@
                 return;
             }
 
-            if (signedInUser is { EmailConfirmed: false })
-            {
-                var target = string.IsNullOrEmpty(ReturnUrl) ? "/home" : ReturnUrl;
-                RedirectManager.RedirectTo(
-                    $"Account/VerifyOtp?purpose=FirstLogin&email={Uri.EscapeDataString(Input.Email.Trim())}"
-                    + $"&returnUrl={Uri.EscapeDataString(target)}");
-                return;
-            }
-
-            // PLAN-023: một ngữ cảnh vào thẳng; nhiều ngữ cảnh dừng ở /select-role.
-            var redirect = await PostLogin.GetRedirectAsync(
-                signedInUser,
-                string.IsNullOrEmpty(ReturnUrl) ? "/home" : ReturnUrl);
-            RedirectManager.RedirectTo(redirect);
+            await RedirectAfterSignInAsync(signedInUser, ReturnUrl);
             return;
         }
 
@@ -317,6 +351,78 @@
         }
     }
 
+    /// <summary>PLAN-001 #18: xác thực passkey; vẫn đi qua OTP/duyệt/ngữ cảnh như đăng nhập mật khẩu.</summary>
+    private async Task LoginWithPasskeyAsync()
+    {
+        _submitting = true;
+        errorMessage = null;
+        try
+        {
+            var result = await SignInManager.PasskeySignInAsync(Input.CredentialJson!);
+            if (result.Succeeded)
+            {
+                var email = (Input.Email ?? string.Empty).Trim();
+                var user = email.Length == 0 ? null : await Users.FindByEmailAsync(email);
+                if (user is null)
+                {
+                    // Không xác định được tài khoản để kiểm tra trạng thái: buộc dùng mật khẩu.
+                    await SignInManager.SignOutAsync();
+                    errorMessage = L["LoginInvalid"];
+                    return;
+                }
+
+                Logger.LogInformation("Nguoi dung dang nhap bang passkey.");
+                await RedirectAfterSignInAsync(user, ReturnUrl);
+                return;
+            }
+
+            if (result.IsLockedOut)
+            {
+                Logger.LogWarning("Tai khoan dang nhap bang passkey bi khoa.");
+                RedirectManager.RedirectTo("Account/Lockout");
+                return;
+            }
+
+            if (result.RequiresTwoFactor)
+            {
+                RedirectManager.RedirectTo(
+                    "Account/LoginWith2fa",
+                    new() { ["returnUrl"] = ReturnUrl });
+                return;
+            }
+
+            if (result == SignInResult.NotAllowed)
+            {
+                errorMessage = L["LoginPendingApproval"];
+                return;
+            }
+
+            errorMessage = L["LoginInvalid"];
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+
+    /// <summary>PLAN-022/023: OTP nếu chưa xác thực Gmail, rồi chọn ngữ cảnh vai trò.</summary>
+    private async Task RedirectAfterSignInAsync(ApplicationUser user, string? returnUrl)
+    {
+        var target = string.IsNullOrEmpty(returnUrl) ? "/home" : returnUrl;
+
+        if (user is { EmailConfirmed: false })
+        {
+            RedirectManager.RedirectTo(
+                $"Account/VerifyOtp?purpose=FirstLogin&email={Uri.EscapeDataString(user.Email ?? Input.Email.Trim())}"
+                + $"&returnUrl={Uri.EscapeDataString(target)}");
+            return;
+        }
+
+        // PLAN-023: một ngữ cảnh vào thẳng; nhiều ngữ cảnh dừng ở /select-role.
+        var redirect = await PostLogin.GetRedirectAsync(user, target);
+        RedirectManager.RedirectTo(redirect);
+    }
+
     /// <summary>Co bat buoc CAPTCHA khong, dua tren so lan dang nhap sai cua tai khoan.</summary>
     private bool IsCaptchaRequired() =>
         CaptchaVerifier.IsChallengeRequired(AttemptGuard.GetAccountFailures(Input.Email.Trim()));
@@ -356,5 +462,10 @@
         public string CaptchaAnswer { get; set; } = "";
 
         public string CaptchaToken { get; set; } = "";
+
+        // Passkey: JS điền JSON credential (hoặc lỗi) vào form.
+        public string? CredentialJson { get; set; }
+
+        public string? Error { get; set; }
     }
 }

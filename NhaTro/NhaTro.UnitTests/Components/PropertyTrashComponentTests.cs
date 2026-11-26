@@ -31,9 +31,10 @@ public sealed class PropertyTrashComponentTests : BunitContext
         JSInterop.SetupModule(DialogModule).Mode = JSRuntimeMode.Loose;
 
         Services.AddLogging();
+        Services.AddSingleton(new Web.Common.Utils.FilterUrlState(JSInterop.JSRuntime));
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(_toasts);
-        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider());
+        var callerProvider = new P2CallerProvider(new OwnerAuthenticationProvider(), TestOwnerAccess.Create());
         Services.AddSingleton(callerProvider);
         Services.AddSingleton(new PropertyPageService(callerProvider, _properties, new FakeManagerService()));
         Services.AddSingleton(sp => new PropertySetupDraftStore(

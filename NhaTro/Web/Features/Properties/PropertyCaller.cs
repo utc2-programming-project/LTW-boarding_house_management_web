@@ -9,6 +9,14 @@ namespace Web.Features.Properties;
 /// </summary>
 public sealed record PropertyCaller(string UserId, string Role)
 {
+    /// <summary>
+    /// Chủ trọ đang bị khoá (vĩnh viễn). Quản lý/khách thuê có nhiều chủ trọ vẫn dùng được
+    /// vai trò, nhưng dữ liệu thuộc chủ trọ bị khoá phải bị loại khỏi mọi phạm vi.
+    /// </summary>
+    public List<string> BlockedOwnerIds { get; init; } = [];
+
+    public bool BlocksOwner(string ownerId) => BlockedOwnerIds.Contains(ownerId);
+
     public bool IsChuTro => Role == Roles.ChuTro;
 
     public bool IsQuanLy => Role == Roles.QuanLy;

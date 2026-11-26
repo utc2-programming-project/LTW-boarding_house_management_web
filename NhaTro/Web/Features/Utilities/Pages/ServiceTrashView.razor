@@ -94,14 +94,26 @@
     {
         RenderFragment<ServiceCatalogTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<ServiceCatalogTrashItemDto> name = item => @<span class="cell-truncate" data-hover-tip>
+            @item.Name
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.Name</span>
+            </span>
+        </span>;
+        RenderFragment<ServiceCatalogTrashItemDto> property = item => @<span class="cell-truncate" data-hover-tip>
+            @item.PropertyName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "name", Title = L["ServiceTrashColumnName"], Value = item => item.Name },
-            new() { Key = "property", Title = L["ServiceTrashColumnProperty"], Value = item => item.PropertyName },
-            new() { Key = "unit", Title = L["ServiceTrashColumnUnit"], Value = item => item.Unit },
-            new() { Key = "price", Title = L["ServiceTrashColumnPrice"], Value = item => item.UnitPrice.ToString("N0", CultureInfo.CurrentCulture), IsNumeric = true },
-            new() { Key = "versions", Title = L["ServiceTrashColumnVersions"], Value = item => item.PriceVersionCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true },
+            new() { Key = "name", Title = L["ServiceTrashColumnName"], Template = name, Width = "240px" },
+            new() { Key = "property", Title = L["ServiceTrashColumnProperty"], Template = property, Width = "220px" },
+            new() { Key = "unit", Title = L["ServiceTrashColumnUnit"], Value = item => item.Unit, Width = "110px" },
+            new() { Key = "price", Title = L["ServiceTrashColumnPrice"], Value = item => item.UnitPrice.ToString("N0", CultureInfo.CurrentCulture), IsNumeric = true, Width = "130px" },
+            new() { Key = "versions", Title = L["ServiceTrashColumnVersions"], Value = item => item.PriceVersionCount.ToString(CultureInfo.CurrentCulture), IsNumeric = true, Width = "110px" },
             TrashColumns.DeletedAt<ServiceCatalogTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["P2Actions"], actions),
         ];

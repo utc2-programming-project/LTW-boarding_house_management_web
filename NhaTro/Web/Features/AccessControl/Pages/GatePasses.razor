@@ -1,0 +1,200 @@
+@page "/gate/passes"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject GatePageService Session
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["PageTitlePasses"]</PageTitle>
+
+<div class="page-stack gate-page">
+    <PageHeading Title="@L["PageTitlePasses"]" HelpText="@L["SubtitlePasses"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@_loading">
+                <LucideIcon Name="plus" /> @L["CreatePass"]
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <p class="gate-error" role="alert">@_error</p>
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    }
+    else
+    {
+        @if (_notice is not null)
+        {
+            <div class="gate-notice" role="status">
+                <p>@_notice</p>
+                @if (_created is not null)
+                {
+                    <dl class="gate-created">
+                        <dt>@L["RawToken"]</dt>
+                        <dd><code>@_created.RawToken</code></dd>
+                        @if (!string.IsNullOrWhiteSpace(_created.Code))
+                        {
+                            <dt>@L["FallbackCode"]</dt>
+                            <dd><code>@_created.Code</code></dd>
+                        }
+                    </dl>
+                }
+                <button type="button" class="btn btn-secondary btn-sm" @onclick="DismissNotice">@L["Close"]</button>
+            </div>
+        }
+
+        @if (_creating)
+        {
+            <GatePassForm Properties="_properties" Rooms="_rooms" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+        }
+
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <label class="gate-inline-label" for="gate-status-filter">@L["Status"]</label>
+                <select id="gate-status-filter" class="input" @bind="_statusFilter" @bind:after="LoadPassesAsync">
+                    <option value="">@L["All"]</option>
+                    @foreach (var status in Enum.GetValues<GatePassStatus>())
+                    {
+                        <option value="@status">@L[status.ToString()]</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <GatePassList Passes="_passes" ShowProperty="true"
+                      OnApprove="ApproveAsync" OnReject="pass => OpenReason(pass, false)" OnRevoke="pass => OpenReason(pass, true)" />
+    }
+</div>
+
+@if (_reasonPass is not null)
+{
+    <GateReasonDialog Pass="_reasonPass"
+                      Title="@(_revoking ? L["Revoke"] : L["Reject"])"
+                      ConfirmText="@(_revoking ? L["Revoke"] : L["Reject"])"
+                      OnCancel="CloseReason" OnConfirm="ConfirmReasonAsync" />
+}
+
+@code {
+    private IReadOnlyList<GatePassDto> _passes = [];
+    private IReadOnlyList<GateRoomOption> _rooms = [];
+    private IReadOnlyList<GatePropertyOption> _properties = [];
+    private GatePassStatus? _statusFilter;
+    private bool _loading = true;
+    private bool _creating;
+    private string? _error;
+    private string? _formError;
+    private string? _notice;
+    private GatePassCreatedDto? _created;
+    private GatePassDto? _reasonPass;
+    private bool _revoking;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rooms = await Session.RoomsAsync();
+            _properties = await Session.PropertiesAsync();
+            await LoadPassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadPassesAsync()
+    {
+        try
+        {
+            _passes = await Session.PassesAsync(_statusFilter);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task CreateAsync(GatePassCreateRequest request)
+    {
+        _formError = null;
+        try
+        {
+            _created = await Session.CreatePassAsync(request);
+            _creating = false;
+            _notice = L["PassCreated"];
+            await LoadPassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _formError = Resolve(ex);
+        }
+    }
+
+    private async Task ApproveAsync(GatePassDto pass)
+    {
+        try
+        {
+            await Session.ApproveAsync(pass.Id);
+            _notice = L["Saved"];
+            await LoadPassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _formError = Resolve(ex);
+        }
+    }
+
+    private void OpenReason(GatePassDto pass, bool revoking)
+    {
+        _reasonPass = pass;
+        _revoking = revoking;
+    }
+
+    private void CloseReason() => _reasonPass = null;
+
+    private async Task ConfirmReasonAsync(string reason)
+    {
+        var pass = _reasonPass;
+        if (pass is null) return;
+        try
+        {
+            if (_revoking)
+            {
+                await Session.RevokeAsync(pass.Id, reason);
+            }
+            else
+            {
+                await Session.RejectAsync(pass.Id, reason);
+            }
+
+            _reasonPass = null;
+            _notice = L["Saved"];
+            await LoadPassesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _reasonPass = null;
+            _formError = Resolve(ex);
+        }
+    }
+
+    private void DismissNotice()
+    {
+        _notice = null;
+        _created = null;
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+}

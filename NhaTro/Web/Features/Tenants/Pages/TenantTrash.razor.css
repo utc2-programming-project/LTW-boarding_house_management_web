@@ -35,7 +35,7 @@
 .tenant-trash-table td:last-child .p2-row-actions { justify-content: center; }
 .tenant-trash-table th,
 .tenant-trash-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
-.tenant-trash-table th { color: var(--text-secondary); background: var(--surface-subtle); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.tenant-trash-table th { color: var(--text-secondary); background: var(--surface-subtle); font-size: .75rem; font-weight:600;  letter-spacing: .04em; }
 .tenant-trash-table tbody tr:last-child td { border-bottom: 0; }
 .tenant-trash-table tbody tr:hover { background: var(--hover-bg); }
 .tenant-trash-table td { color: var(--text-primary); font-size: .8125rem; }
@@ -43,7 +43,7 @@
 .tenant-trash-name > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .tenant-trash-name strong { font-size: .8125rem; }
 .tenant-trash-name small { color: var(--text-muted); font-family: ui-monospace,Consolas,monospace; font-size: .6875rem; }
-.tenant-trash-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 50%; background: var(--neutral-bg); color: var(--neutral-text); font-size: .8125rem; font-weight: 700; }
+.tenant-trash-avatar { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 50%; background: var(--neutral-bg); color: var(--neutral-text); font-size: .8125rem; font-weight:600; }
 .tenant-trash-mono { font-family: ui-monospace,Consolas,monospace; }
 
 @media (max-width: 767px) {

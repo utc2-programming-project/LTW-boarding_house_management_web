@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Web.Common.Queries;
 using Web.Features.Tenants.Enums;
 
 namespace Web.Features.Tenants.DTOs;
@@ -36,9 +37,8 @@ public sealed class TenantFilterRequest
     // để tránh việc model binding trả 400 trước khi Normalize kịp xử lý.
     public void Normalize()
     {
-        if (Page < 1) Page = 1;
-        if (PageSize < 1) PageSize = 20;
-        if (PageSize > 100) PageSize = 100;
+        Page = PagingExtensions.ClampPage(Page);
+        PageSize = PagingExtensions.ClampPageSize(PageSize);
         Keyword = string.IsNullOrWhiteSpace(Keyword) ? null : Keyword.Trim();
     }
 }

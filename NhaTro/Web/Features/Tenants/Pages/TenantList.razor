@@ -6,6 +6,7 @@
 @inject TenantPageService TenantPages
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
+@inject Web.Common.Utils.FilterUrlState Url
 @using Web.Infrastructure.Time
 @inject TimeProvider Clock
 
@@ -226,6 +227,51 @@
     /// <summary>Id khách từ link chéo (?tenantId=8): mở ngay hồ sơ chi tiết.</summary>
     [SupplyParameterFromQuery(Name = "tenantId")]
     public int? TenantIdQuery { get; set; }
+
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "account")]
+    public string? AccountQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "rental")]
+    public string? RentalQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string? SortQuery { get; set; }
+
+    private void ApplyUrlState()
+    {
+        if (StatusQuery is "active" or "inactive")
+        {
+            _statusFilter = StatusQuery;
+        }
+
+        if (AccountQuery is "linked" or "unlinked" && _canRevealIdNumber)
+        {
+            _accountFilter = AccountQuery;
+        }
+
+        if (RentalQuery is "renting" or "not-renting")
+        {
+            _rentalFilter = RentalQuery;
+        }
+
+        if (SortQuery is "created" or "created-asc" or "name-asc" or "name-desc")
+        {
+            _sortFilter = SortQuery;
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["status"] = _statusFilter.Length > 0 ? _statusFilter : null,
+        ["account"] = _accountFilter.Length > 0 ? _accountFilter : null,
+        ["rental"] = _rentalFilter.Length > 0 ? _rentalFilter : null,
+        ["sort"] = _sortFilter == "created" ? null : _sortFilter,
+    });
     private string _statusFilter = string.Empty;
     private string _accountFilter = string.Empty;
     private string _rentalFilter = string.Empty;
@@ -255,6 +301,7 @@
         _lastAppliedKeywordQuery = KeywordQuery;
         _lastAppliedTenantId = TenantIdQuery;
         _keyword = string.IsNullOrWhiteSpace(KeywordQuery) ? null : KeywordQuery.Trim();
+        ApplyUrlState();
         // Không chặn bảng khách thuê bởi 4 query KPI; bảng tải trước, KPI cập nhật sau.
         _ = LoadSummaryAsync();
         await OpenTenantFromQueryAsync();
@@ -301,7 +348,13 @@
                 Template = tenant => @<div class="tenant-name-cell">
                     <span class="tenant-avatar" aria-hidden="true">@Initial(tenant.FullName)</span>
                     <span class="tenant-name-text">
-                        <button type="button" class="tenant-name-button" @onclick="() => OpenDetailsAsync(tenant.Id)">@tenant.FullName</button>
+                        <button type="button" class="tenant-name-button cell-truncate" data-hover-tip
+                                @onclick="() => OpenDetailsAsync(tenant.Id)">
+                            @tenant.FullName
+                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                <span class="hover-tip__line">@tenant.FullName</span>
+                            </span>
+                        </button>
                         <small>@string.Format(L["TenantRecordNumber"], tenant.Id)</small>
                         @if (tenant.HasPendingApproval)
                         {
@@ -309,12 +362,14 @@
                         }
                     </span>
                 </div>,
+                Width = "290px",
             },
             new()
             {
                 Key = "phone",
                 Title = L["TenantColumnPhone"],
                 Value = tenant => tenant.PhoneNumber,
+                Width = "160px",
             },
             new()
             {
@@ -327,16 +382,22 @@
                     }
                     else
                     {
-                        <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(tenant.RoomName)"
-                           title="@L["CellLinkOpenRoom"]">@tenant.RoomName</a>
+                        <a class="cell-link is-quiet cell-truncate" href="@AppLinks.RoomsByCode(tenant.RoomName)" data-hover-tip>
+                            @tenant.RoomName
+                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                <span class="hover-tip__line">@tenant.RoomName</span>
+                            </span>
+                        </a>
                     }
                 </text>,
+                Width = "150px",
             },
             new()
             {
                 Key = "idNumber",
                 Title = L["TenantColumnIdNumber"],
                 Template = tenant => @<span class="tenant-id-mask" title="@L["TenantIdMaskedHint"]">@(string.IsNullOrWhiteSpace(tenant.IdNumberMasked) ? L["NoData"] : tenant.IdNumberMasked)</span>,
+                Width = "150px",
             },
             new()
             {
@@ -344,6 +405,7 @@
                 Title = L["TenantColumnStatus"],
                 Template = tenant => @<StatusBadge Tone="@(tenant.IsActive ? BadgeTone.Success : BadgeTone.Neutral)"
                                                    Text="@(tenant.IsActive ? L["TenantStatusActive"] : L["TenantStatusInactive"])" />,
+                Width = "140px",
             },
         };
 
@@ -355,6 +417,7 @@
                 Title = L["TenantColumnAccount"],
                 Template = tenant => @<StatusBadge Tone="@(tenant.HasAccount == true ? BadgeTone.Info : BadgeTone.Neutral)"
                                                    Text="@(tenant.HasAccount == true ? L["TenantAccountYes"] : L["TenantAccountNo"])" />,
+                Width = "130px",
             });
         }
 
@@ -390,6 +453,8 @@
                     </div>
                 }
             </div>,
+            CellClass = "cell-actions",
+            Width = "120px",
         });
 
         _columns = columns;
@@ -411,7 +476,9 @@
                 : TenantSortBy.FullName,
             SortDirection = _sortFilter is "name-desc" or "created" ? SortDirection.Desc : SortDirection.Asc,
         };
-        return await TenantPages.ListAsync(filter);
+        var result = await TenantPages.ListAsync(filter);
+        await WriteUrlStateAsync();
+        return result;
     }
 
     private async Task LoadSummaryAsync()
@@ -442,7 +509,7 @@
         var token = _keywordDebounce.Token;
         try
         {
-            await Task.Delay(300, token);
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
             await ResetTableAsync();
         }
         catch (TaskCanceledException)

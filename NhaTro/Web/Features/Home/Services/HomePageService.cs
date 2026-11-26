@@ -3,8 +3,6 @@ using Web.Common.Utils;
 using Web.Features.Accounts;
 using Web.Features.Accounts.DTOs;
 using Web.Features.Approvals;
-using Web.Features.Approvals.DTOs;
-using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Enums;
@@ -97,14 +95,13 @@ public sealed class HomePageService(
             ? await TryAsync("tenants", () => dashboard.GetTenantKpisAsync(null, ct), (TenantReportKpis?)null)
             : (State: HomeLoadState.Loaded, Value: (TenantReportKpis?)null);
         var revenueReport = includeKpis
-            ? await TryAsync("revenue", () => revenue.GetAsync(new RevenueReportFilter(month.Start, month.End), caller, ct), (RevenueReportDto?)null)
+            ? await TryAsync("revenue", () => revenue.GetSummaryAsync(new RevenueReportFilter(month.Start, month.End), caller, ct), (RevenueReportDto?)null)
             : (State: HomeLoadState.Loaded, Value: (RevenueReportDto?)null);
         var invoiceList = await TryAsync("invoices",
             () => invoices.GetInvoicesAsync(new InvoiceFilter { Page = 1, PageSize = 20 }, caller, ct),
             (InvoiceListResult?)null);
-        var inbox = await TryAsync("approvals",
-            () => approvals.ListInboxAsync(new ApprovalCaller(caller.UserId, caller.Role), ct),
-            (ApprovalListResult?)null);
+        var inbox = await TryCountAsync("approvals",
+            () => approvals.CountPendingAsync(new ApprovalCaller(caller.UserId, caller.Role), ct));
         var openIncidents = await TryCountAsync("incidents", () => incidents.CountOpenAsync());
         var contractSnapshot = await TryAsync("contracts", () => contracts.GetHomeSnapshotAsync(today, ct),
             (ContractHomeSnapshotDto?)null);
@@ -170,9 +167,8 @@ public sealed class HomePageService(
         var invoiceList = await TryAsync("invoices",
             () => invoices.GetInvoicesAsync(new InvoiceFilter { Page = 1, PageSize = 20 }, caller, ct),
             (InvoiceListResult?)null);
-        var mine = await TryAsync("approvals",
-            () => approvals.ListMineAsync(new ApprovalCaller(caller.UserId, caller.Role), ct),
-            (ApprovalListResult?)null);
+        var mine = await TryCountAsync("approvals",
+            () => approvals.CountPendingAsync(new ApprovalCaller(caller.UserId, caller.Role), ct));
         var openIncidents = await TryCountAsync("incidents", () => incidents.CountOpenAsync());
         var contractSnapshot = await TryAsync("contracts", () => contracts.GetHomeSnapshotAsync(today, ct),
             (ContractHomeSnapshotDto?)null);
@@ -342,7 +338,7 @@ public sealed class HomePageService(
 
     private static List<HomeAction> BuildManagerActions(
         InvoiceListResult? invoiceList,
-        ApprovalListResult? approvalList,
+        int? pendingApprovals,
         IReadOnlyList<ContractListItemDto>? contractRows,
         int? openIncidentCount,
         DateOnly today)
@@ -353,9 +349,8 @@ public sealed class HomePageService(
             actions.Add(new("HomeActionUnpaidInvoices", invoiceList.Summary.IssuedCount, "/invoices"));
         }
 
-        if (approvalList is { Succeeded: true })
+        if (pendingApprovals is { } pending)
         {
-            var pending = approvalList.Items.Count(item => item.Status == ApprovalRequestStatus.Pending);
             actions.Add(new("HomeActionPendingApprovals", pending, "/approvals"));
         }
 

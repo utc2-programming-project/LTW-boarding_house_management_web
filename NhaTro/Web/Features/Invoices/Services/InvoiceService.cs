@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Web.Common.Models;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
@@ -620,34 +621,83 @@ public sealed class InvoiceService : IInvoiceService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<InvoiceTrashItemDto>> ListDeletedAsync(
+    public async Task<PagedResult<InvoiceTrashItemDto>> ListDeletedAsync(
         PropertyCaller caller,
+        string? keyword,
+        int page,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         if (!caller.IsChuTro)
         {
-            return [];
+            return new PagedResult<InvoiceTrashItemDto>
+            {
+                Items = [],
+                TotalCount = 0,
+                Page = page,
+                PageSize = pageSize,
+            };
         }
 
-        return await (
-                from invoice in _context.Invoices.IgnoreQueryFilters().AsNoTracking()
-                join contract in _context.Contracts.IgnoreQueryFilters() on invoice.ContractId equals contract.ContractId
-                join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
-                join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
-                where invoice.IsDeleted && property.OwnerId == caller.UserId
-                orderby invoice.DeletedAt descending, invoice.Id descending
-                select new InvoiceTrashItemDto(
-                    invoice.Id,
-                    contract.ContractNumber,
-                    room.Code,
-                    property.Name,
-                    invoice.PeriodStart,
-                    invoice.PeriodEnd,
-                    invoice.TotalAmount,
-                    invoice.Status,
-                    invoice.DeletedAt,
-                    invoice.DeletedBy))
+        var query =
+            from invoice in _context.Invoices.IgnoreQueryFilters().AsNoTracking()
+            join contract in _context.Contracts.IgnoreQueryFilters() on invoice.ContractId equals contract.ContractId
+            join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+            join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
+            where invoice.IsDeleted && property.OwnerId == caller.UserId
+            select new
+            {
+                invoice.Id,
+                ContractNumber = contract.ContractNumber,
+                RoomCode = room.Code,
+                PropertyName = property.Name,
+                invoice.PeriodStart,
+                invoice.PeriodEnd,
+                invoice.TotalAmount,
+                invoice.Status,
+                invoice.DeletedAt,
+                invoice.DeletedBy,
+            };
+
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        if (term is { } search)
+        {
+            query = query.Where(row =>
+                row.ContractNumber.Contains(search)
+                || row.RoomCode.Contains(search)
+                || row.PropertyName.Contains(search));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderByDescending(row => row.DeletedAt)
+            .ThenByDescending(row => row.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        var items = rows.Select(row => new InvoiceTrashItemDto(
+            row.Id,
+            row.ContractNumber,
+            row.RoomCode,
+            row.PropertyName,
+            row.PeriodStart,
+            row.PeriodEnd,
+            row.TotalAmount,
+            row.Status,
+            row.DeletedAt,
+            row.DeletedBy)).ToList();
+
+        return new PagedResult<InvoiceTrashItemDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
     }
 
     public async Task PurgeAsync(
@@ -696,7 +746,10 @@ public sealed class InvoiceService : IInvoiceService
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            // Query filter của dòng hoá đơn là "hoá đơn chưa xoá" nên với hoá đơn trong thùng rác
+            // phải bỏ filter, không thì không thấy dòng nào và xoá cứng sẽ vướng FK Restrict.
             var items = await _context.InvoiceItems
+                .IgnoreQueryFilters()
                 .Where(item => item.InvoiceId == invoiceId)
                 .ToListAsync(cancellationToken);
             _context.InvoiceItems.RemoveRange(items);
@@ -734,36 +787,88 @@ public sealed class InvoiceService : IInvoiceService
             return new TrashPurgeSummary(0, 0);
         }
 
-        var ids = await (
+        // Một lượt đọc cho cả lô thay vì gọi PurgeAsync từng hoá đơn (mỗi hoá đơn 5-6 truy vấn + transaction).
+        var rows = await (
                 from invoice in _context.Invoices.IgnoreQueryFilters().AsNoTracking()
                 join contract in _context.Contracts.IgnoreQueryFilters() on invoice.ContractId equals contract.ContractId
                 join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
                 join property in _context.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                 where invoice.IsDeleted && property.OwnerId == caller.UserId
-                select invoice.Id)
+                select new { invoice.Id, PropertyId = room.PropertyId })
             .ToListAsync(cancellationToken);
-
-        var purged = 0;
-        var skipped = 0;
-        foreach (var id in ids)
+        if (rows.Count == 0)
         {
-            try
+            return new TrashPurgeSummary(0, 0);
+        }
+
+        var ids = rows.Select(row => row.Id).ToList();
+        var blocked = new HashSet<int>();
+        void AddBlocked(IEnumerable<int> invoiceIds)
+        {
+            foreach (var invoiceId in invoiceIds)
             {
-                await PurgeAsync(id, caller, cancellationToken);
-                purged++;
-            }
-            catch (Exception ex) when (ex is InvoiceOperationException or InvoiceAuthorizationException or DbUpdateException)
-            {
-                skipped++;
-                _context.ChangeTracker.Clear();
+                blocked.Add(invoiceId);
             }
         }
 
-        return new TrashPurgeSummary(purged, skipped);
+        AddBlocked(await _context.Payments.IgnoreQueryFilters()
+            .Where(item => ids.Contains(item.InvoiceId)).Select(item => item.InvoiceId).Distinct().ToListAsync(cancellationToken));
+        AddBlocked(await _context.UtilityReadingPeriods
+            .Where(item => item.InvoiceId != null && ids.Contains(item.InvoiceId.Value))
+            .Select(item => item.InvoiceId!.Value).Distinct().ToListAsync(cancellationToken));
+        AddBlocked(await _context.ServiceRegistrationRequests
+            .Where(item => item.InvoiceId != null && ids.Contains(item.InvoiceId.Value))
+            .Select(item => item.InvoiceId!.Value).Distinct().ToListAsync(cancellationToken));
+
+        var purgeIds = ids.Where(id => !blocked.Contains(id)).ToList();
+        if (purgeIds.Count == 0)
+        {
+            return new TrashPurgeSummary(0, rows.Count);
+        }
+
+        var invoices = await _context.Invoices.IgnoreQueryFilters()
+            .Where(invoice => purgeIds.Contains(invoice.Id))
+            .ToListAsync(cancellationToken);
+        var items = await _context.InvoiceItems.IgnoreQueryFilters()
+            .Where(item => purgeIds.Contains(item.InvoiceId))
+            .ToListAsync(cancellationToken);
+
+        _context.InvoiceItems.RemoveRange(items);
+        _context.Invoices.RemoveRange(invoices);
+        foreach (var row in rows.Where(row => purgeIds.Contains(row.Id)))
+        {
+            _context.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "invoice.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = row.PropertyId,
+                Metadata = $"Invoice #{row.Id}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // Lỗi giữa lô: rollback cả lô (trước đây từng hoá đơn độc lập) để không nửa vời dữ liệu.
+            await transaction.RollbackAsync(cancellationToken);
+            _context.ChangeTracker.Clear();
+            return new TrashPurgeSummary(0, rows.Count);
+        }
+
+        return new TrashPurgeSummary(purgeIds.Count, rows.Count - purgeIds.Count);
     }
 
     private async Task<bool> HasInvoiceDependenciesAsync(int invoiceId, CancellationToken cancellationToken) =>
-        await _context.Payments.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken)
+        // Bỏ filter xoá mềm: thanh toán của hoá đơn trong thùng rác vẫn là FK Restrict chặn xoá cứng.
+        await _context.Payments.IgnoreQueryFilters()
+            .AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken)
         || await _context.UtilityReadingPeriods.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken)
         || await _context.ServiceRegistrationRequests.AnyAsync(item => item.InvoiceId == invoiceId, cancellationToken);
 
@@ -799,9 +904,13 @@ public sealed class InvoiceService : IInvoiceService
 
         if (caller.IsQuanLy)
         {
-            var propertyIds = _context.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(_context);
+            var propertyIds =
+                from assignment in _context.PropertyManagers
+                join property in _context.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
+                select assignment.PropertyId;
 
             return from contract in _context.Contracts
                    join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
