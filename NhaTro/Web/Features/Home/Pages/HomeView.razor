@@ -28,6 +28,7 @@
                 </p>
             </HeadingMeta>
             <Actions>
+                <HomeQuickActions Role="@CurrentRole" />
                 <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="LoadAsync">
                     <LucideIcon Name="refresh" />@L["Refresh"]
                 </button>
@@ -37,11 +38,10 @@
     else if (WorkInitialized)
     {
         <DashboardOverview RefreshAdditionalContent="LoadAsync" AdditionalContentBusy="Busy">
+            <HeaderActions><HomeQuickActions Role="@CurrentRole" /></HeaderActions>
             <HeaderContent>
                 @if (Snapshot is { } managementSnapshot)
                 {
-                    <HomeQuickActions Role="@managementSnapshot.Role" />
-                    <p class="work-scope-note">@L["WorkScopeNote"]</p>
                     @WorkCards(managementSnapshot)
                 }
             </HeaderContent>
@@ -71,22 +71,21 @@
 
         @if (!IsManagement)
         {
-            <HomeQuickActions Role="@snapshot.Role" />
-        }
-
-        @if (!IsManagement)
-        {
             @WorkCards(snapshot)
         }
     }
 </div>
 
 @code {
-    private RenderFragment WorkCards(HomeSnapshot snapshot) => @<div class="home-grid">
-            <HomePanel Title="@L["ActionsTitle"]" Icon="check" State="@snapshot.Actions.State" Retry="LoadAsync">
-                <HomeActionList Section="@snapshot.Actions" />
-            </HomePanel>
-
+    private RenderFragment WorkCards(HomeSnapshot snapshot) => @<div class="home-work">
+            <section class="home-section" aria-labelledby="actions-heading">
+                <div class="work-heading">
+                    <h2 id="actions-heading" class="section-label">@L["ActionsTitle"]</h2>
+                    <HelpTip Text="@L["WorkScopeNote"]" />
+                </div>
+                <HomeActionStrip Section="@snapshot.Actions" />
+            </section>
+            <div class="home-grid">
             @if (snapshot.Role == Roles.Admin)
             {
                 <HomePanel Title="@L["PendingAccountsTitle"]" Icon="users" Href="/admin/users"
@@ -199,6 +198,7 @@
                     }
                 </HomePanel>
             }
+            </div>
         </div>;
 
     // Giữ ảnh chụp của lượt prerender để lượt interactive không tải lại từ đầu (tránh nháy "Đang tải").
@@ -213,6 +213,7 @@
     private bool Busy;
     private bool IsManagement;
     private bool WorkInitialized;
+    private string CurrentRole = string.Empty;
 
     private string InvoicesHref => Snapshot?.Role == Roles.KhachThue ? "/my/invoices" : "/invoices";
 
@@ -234,6 +235,7 @@
     {
         var principal = (await Authentication.GetAuthenticationStateAsync()).User;
         var role = Roles.ResolvePrimaryRole(principal);
+        CurrentRole = role;
         IsManagement = role is Roles.ChuTro or Roles.QuanLy;
         if (Snapshot is not null)
         {

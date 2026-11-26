@@ -1,27 +1,31 @@
-.home-page { display:flex; flex-direction:column; gap:24px; }
+.home-page { display:flex; flex-direction:column; gap:32px; }
+.home-work { display:flex; flex-direction:column; gap:16px; }
+.work-heading { display:flex; align-items:center; gap:var(--space-2); }
 .home-meta { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0; font-size:.875rem; line-height:1.25rem; color:var(--text-secondary); }
-.role-badge { padding:2px 10px; border:1px solid var(--border); border-radius:999px; background:var(--surface-subtle); font-size:.75rem; font-weight:600; color:var(--text-primary); }
+.role-badge { padding:2px 12px; border:1px solid color-mix(in srgb, var(--text-primary) 9%, transparent); border-radius:var(--radius-pill); background:var(--surface-subtle); font-size:.75rem; font-weight:500; color:var(--text-secondary); }
 .home-section { display:flex; flex-direction:column; gap:12px; }
-.section-label { margin:0; font-size:.875rem; line-height:1.25rem; font-weight:600; color:var(--text-secondary); }
-.home-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:24px; align-items:start; }
-.page-feedback { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin:0; padding:24px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text-secondary); }
+.section-label { margin:0; font-size:.875rem; line-height:1.25rem; font-weight:500; color:var(--text-secondary); }
+.home-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; align-items:start; }
+.page-feedback { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin:0; padding:20px; border:1px solid color-mix(in srgb, var(--text-primary) 9%, transparent); border-radius:var(--radius-card); background:var(--surface); color:var(--text-secondary); }
 .page-feedback p { margin:0; }
 .table-scroll { overflow-x:auto; margin:0 -4px; }
 .home-table { width:100%; border-collapse:collapse; font-size:.875rem; line-height:1.25rem; }
-.home-table th { padding:0 8px 8px; text-align:left; font-size:.75rem; font-weight:600; color:var(--text-secondary); border-bottom:1px solid var(--border); white-space:nowrap; }
-.home-table td { padding:10px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+.home-table th { padding:0 8px 8px; text-align:left; font-size:.75rem; font-weight:500; color:var(--text-secondary); border-bottom:1px solid color-mix(in srgb, var(--text-primary) 9%, transparent); white-space:nowrap; }
+.home-table td { padding:12px 8px; border-bottom:1px solid color-mix(in srgb, var(--text-primary) 7%, transparent); vertical-align:top; }
 .home-table tbody tr:last-child td { border-bottom:none; }
 .home-table .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
 
-/* Số tiền còn nợ trong panel "Hoá đơn chưa thu": số tabular dạng link, bấm để mở hoá đơn. */
+/* Số tiền còn nợ: một điểm nhấn có nghĩa, tabular và căn cùng cột số. */
 .home-due-link {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     color: var(--warning-text);
-    font-weight: 600;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
     text-decoration: none;
     white-space: nowrap;
+    transition: color .12s var(--ease), text-decoration-color .12s var(--ease);
 }
 .home-due-link:hover {
     color: var(--warning-text);
@@ -29,10 +33,8 @@
     text-underline-offset: 3px;
 }
 .home-due-link:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
-.home-due-link ::deep svg { width:14px; height:14px; flex:0 0 auto; }
-.home-due-link ::deep svg:last-child { opacity:.7; }
+.home-due-link ::deep svg { width:16px; height:16px; flex:0 0 16px; }
+.home-due-link ::deep svg:last-child { opacity:.6; }
 .muted { display:block; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
 @media(max-width:1199px) { .home-grid { grid-template-columns:1fr; } }
-@media(max-width:767px) { .home-grid { gap:16px; } }
-
-.work-scope-note { margin:0; font-size:.75rem; line-height:1.125rem; color:var(--text-secondary); }
+@media(max-width:767px) { .home-page { gap:24px; } .home-grid { gap:12px; } .home-work { gap:12px; } }

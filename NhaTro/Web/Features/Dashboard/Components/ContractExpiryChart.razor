@@ -1,0 +1,34 @@
+@inject IStringLocalizer<DashboardResource> L
+
+@if (Months is null || Months.Count == 0)
+{
+    <EmptyStateCard Title="@L["Empty"]" />
+}
+else
+{
+    <div class="expiry-chart-wrap" role="img" aria-label="@L["ContractExpiry"]">
+        <div class="chart-head">
+            <ul class="chart-legend" aria-hidden="true">
+                <li><span class="legend-dot"></span>@L["ExpiringContracts"]</li>
+            </ul>
+        </div>
+        <div class="expiry-chart">
+        @foreach (var month in Months)
+        {
+            <div class="expiry-col">
+                <span class="expiry-count">@month.Count</span>
+                <div class="expiry-track"><span class="expiry-fill" style="height:@Height(month.Count)%"></span></div>
+                <span class="expiry-label">@month.MonthKey</span>
+            </div>
+        }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<ContractExpiryMonthDto>? Months { get; set; }
+
+    private int Max => Months?.Max(item => item.Count) ?? 0;
+
+    private double Height(int count) => Max == 0 ? 0 : Math.Max(4d, count * 100d / Max);
+}

@@ -1,0 +1,28 @@
+@inject IStringLocalizer<HomeResource> L
+
+@* Hàng chỉ số "Việc cần làm": thay cho thẻ trùng số ở bản cũ. Mỗi ô là một link tới đúng danh sách. *@
+@if (OpenItems.Count > 0)
+{
+    <ul class="action-strip" aria-label="@L["ActionsTitle"]">
+        @foreach (var action in OpenItems)
+        {
+            <li>
+                <a class="action-strip-item" href="@action.Href">
+                    <span class="action-strip-label">@L[action.Key]</span>
+                    <span class="action-strip-count">@action.Count.ToString("N0", NumberFormatter.Display)</span>
+                </a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p class="action-strip-empty">@L["ActionsEmpty"]</p>
+}
+
+@code {
+    [Parameter] public HomeSection<HomeAction> Section { get; set; } = HomeSection<HomeAction>.Loading();
+
+    private IReadOnlyList<HomeAction> OpenItems =>
+        Section.Items.Where(action => action.Count > 0).ToList();
+}
