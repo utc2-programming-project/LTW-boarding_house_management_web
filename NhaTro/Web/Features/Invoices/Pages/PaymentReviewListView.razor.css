@@ -30,7 +30,19 @@
     border-collapse: collapse;
     font-size: 13px;
     text-align: left;
+    table-layout: fixed;
+    min-width: 1080px;
 }
+
+.review-table th:nth-child(1) { width: 110px; }
+.review-table th:nth-child(2) { width: 100px; }
+.review-table th:nth-child(3) { width: 180px; }
+.review-table th:nth-child(4) { width: 180px; }
+.review-table th:nth-child(5) { width: 180px; }
+.review-table th:nth-child(6) { width: 150px; }
+.review-table th:nth-child(7) { width: 130px; }
+.review-table th:nth-child(8) { width: 110px; }
+.review-table th:nth-child(9) { width: 80px; }
 
 .review-table th {
     height: 44px;
@@ -41,7 +53,7 @@
     font-size: 12px;
     font-weight: 600;
     text-align: left;
-    text-transform: uppercase;
+
     letter-spacing: 0.04em;
     white-space: nowrap;
 }

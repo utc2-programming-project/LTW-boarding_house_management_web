@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Web.Common.Models;
 using Web.Data;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices.DTOs;
@@ -116,6 +117,116 @@ public sealed class ServiceRegistrationService(
         int? propertyId = null,
         CancellationToken cancellationToken = default) =>
         GateAsync(() => ListForLandlordCoreAsync(propertyId, cancellationToken));
+
+    /// <summary>
+    /// Danh sách yêu cầu đăng ký thuộc tòa của chủ trọ/quản lý, lọc từ khóa + phân trang ở SQL.
+    /// </summary>
+    public Task<PagedResult<ServiceRegistrationDto>> ListForLandlordPagedAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        int? propertyId = null,
+        CancellationToken cancellationToken = default) =>
+        GateAsync(async () =>
+        {
+            var caller = await callerProvider.GetCallerAsync();
+            if (!caller.IsManager)
+            {
+                throw new UnauthorizedAccessException("Chi chủ trọ/quản lý mới quản lý yêu cầu đăng ký.");
+            }
+
+            var propertyIds = PropertyScope.Apply(db.Properties, db.PropertyManagers, caller)
+                .Select(property => property.Id);
+            var contractIds = await db.Contracts
+                .AsNoTracking()
+                .Where(contract => contract.Status == ContractStatus.Approved
+                    && db.Rooms.IgnoreQueryFilters().Any(room => room.Id == contract.RoomId
+                        && propertyIds.Contains(room.PropertyId)
+                        && (propertyId == null || room.PropertyId == propertyId)))
+                .Select(contract => contract.ContractId)
+                .ToListAsync(cancellationToken);
+
+            return await LoadPageCoreAsync(contractIds, keyword, page, pageSize, cancellationToken);
+        });
+
+    /// <summary>Lịch sử yêu cầu đăng ký của chính khách thuê, lọc từ khóa + phân trang ở SQL.</summary>
+    public Task<PagedResult<ServiceRegistrationDto>> ListMinePagedAsync(
+        string? keyword,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default) =>
+        GateAsync(async () =>
+        {
+            var caller = await callerProvider.GetCallerAsync();
+            if (!caller.IsKhachThue)
+            {
+                throw new UnauthorizedAccessException("Chi khách thuê mới xem được lịch sử đăng ký của mình.");
+            }
+
+            var contractIds = await OwnContractIdsAsync(caller, cancellationToken);
+            return await LoadPageCoreAsync(contractIds, keyword, page, pageSize, cancellationToken);
+        });
+
+    private async Task<PagedResult<ServiceRegistrationDto>> LoadPageCoreAsync(
+        IReadOnlyList<Guid> contractIds,
+        string? keyword,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        if (contractIds.Count == 0)
+        {
+            return new PagedResult<ServiceRegistrationDto> { Page = page, PageSize = pageSize };
+        }
+
+        var query = db.ServiceRegistrationRequests
+            .AsNoTracking()
+            .Where(item => contractIds.Contains(item.ContractId));
+
+        if (keyword?.Trim() is { Length: > 0 } term)
+        {
+            var matchingContractIds = await MatchingContractIdsAsync(contractIds, term, cancellationToken);
+            query = query.Where(item => item.ServiceName.Contains(term)
+                || matchingContractIds.Contains(item.ContractId));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
+            .OrderByDescending(item => item.RequestedAt)
+            .ThenByDescending(item => item.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ServiceRegistrationDto>
+        {
+            Items = await MapRegistrationRowsAsync(rows, cancellationToken),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
+    }
+
+    /// <summary>Hợp đồng khớp từ khóa ở mã hợp đồng / phòng / tòa / tên khách.</summary>
+    private async Task<List<Guid>> MatchingContractIdsAsync(
+        IReadOnlyList<Guid> contractIds,
+        string term,
+        CancellationToken cancellationToken) =>
+        await (from contract in db.Contracts.AsNoTracking()
+               join room in db.Rooms.IgnoreQueryFilters().AsNoTracking() on contract.RoomId equals room.Id
+               join property in db.Properties.IgnoreQueryFilters().AsNoTracking() on room.PropertyId equals property.Id
+               where contractIds.Contains(contract.ContractId)
+                   && (contract.ContractNumber.Contains(term)
+                       || room.Code.Contains(term)
+                       || property.Name.Contains(term)
+                       || db.ContractMembers.Any(member => member.ContractId == contract.ContractId
+                           && db.Tenants.IgnoreQueryFilters().Any(tenant =>
+                               tenant.Id == member.TenantId && tenant.FullName.Contains(term))))
+               select contract.ContractId)
+            .ToListAsync(cancellationToken);
+
     private async Task<IReadOnlyList<ServiceRegistrationDto>> ListMineCoreAsync(CancellationToken cancellationToken)
     {
         var caller = await callerProvider.GetCallerAsync();
@@ -853,29 +964,46 @@ public sealed class ServiceRegistrationService(
             .OrderByDescending(item => item.RequestedAt)
             .ToListAsync(cancellationToken);
 
+        return await MapRegistrationRowsAsync(rows, cancellationToken);
+    }
+
+    private sealed record ContractLookup(Guid ContractId, string ContractNumber, int RoomId);
+
+    private sealed record RoomLookup(int Id, string Code, int PropertyId);
+
+    private sealed record PropertyLookup(int Id, string Name);
+
+    private sealed record TenantLookup(Guid ContractId, string FullName, string Phone);
+
+    /// <summary>Nạp thông tin hiển thị cho đúng các dòng được truyền vào (một trang hoặc cả lịch sử nhỏ).</summary>
+    private async Task<IReadOnlyList<ServiceRegistrationDto>> MapRegistrationRowsAsync(
+        IReadOnlyList<ServiceRegistrationRequest> rows,
+        CancellationToken cancellationToken)
+    {
         if (rows.Count == 0)
         {
             return [];
         }
 
+        var contractIds = rows.Select(item => item.ContractId).Distinct().ToList();
         var contracts = await db.Contracts
             .AsNoTracking()
             .Where(contract => contractIds.Contains(contract.ContractId))
-            .Select(contract => new { contract.ContractId, contract.ContractNumber, contract.RoomId })
+            .Select(contract => new ContractLookup(contract.ContractId, contract.ContractNumber, contract.RoomId))
             .ToDictionaryAsync(contract => contract.ContractId, cancellationToken);
         var roomIds = contracts.Values.Select(contract => contract.RoomId).Distinct().ToList();
         var rooms = await db.Rooms
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(room => roomIds.Contains(room.Id))
-            .Select(room => new { room.Id, room.Code, room.PropertyId })
+            .Select(room => new RoomLookup(room.Id, room.Code, room.PropertyId))
             .ToDictionaryAsync(room => room.Id, cancellationToken);
         var propertyIds = rooms.Values.Select(room => room.PropertyId).Distinct().ToList();
         var properties = await db.Properties
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(property => propertyIds.Contains(property.Id))
-            .Select(property => new { property.Id, property.Name })
+            .Select(property => new PropertyLookup(property.Id, property.Name))
             .ToDictionaryAsync(property => property.Id, cancellationToken);
         var tenantsByContract = await db.ContractMembers
             .AsNoTracking()
@@ -884,40 +1012,47 @@ public sealed class ServiceRegistrationService(
                 db.Tenants.IgnoreQueryFilters().AsNoTracking(),
                 member => member.TenantId,
                 tenant => tenant.Id,
-                (member, tenant) => new { member.ContractId, tenant.FullName, tenant.Phone })
+                (member, tenant) => new TenantLookup(member.ContractId, tenant.FullName, tenant.Phone))
             .ToListAsync(cancellationToken);
 
-        return rows.Select(row =>
-        {
-            contracts.TryGetValue(row.ContractId, out var contract);
-            var room = contract is null ? null : rooms.GetValueOrDefault(contract.RoomId);
-            var propertyName = room is null ? string.Empty : properties.GetValueOrDefault(room.PropertyId)?.Name ?? string.Empty;
-            var tenants = tenantsByContract.Where(item => item.ContractId == row.ContractId).ToList();
-            return new ServiceRegistrationDto(
-                row.Id,
-                row.ContractId,
-                contract?.ContractNumber ?? string.Empty,
-                room?.Code ?? string.Empty,
-                propertyName,
-                tenants.Select(item => item.FullName).Distinct().ToArray(),
-                tenants.Select(item => item.Phone).Distinct().ToArray(),
-                row.ServiceCatalogId,
-                row.ServiceName,
-                row.Quantity,
-                row.StartDate,
-                row.EndDate,
-                row.Note,
-                row.Status,
-                row.RequestedByUserId,
-                row.RequestedAt,
-                row.ReviewedByUserId,
-                row.ReviewedAt,
-                row.RejectReason,
-                row.CancelStatus,
-                row.CancelReason,
-                row.CancelRejectReason,
-                row.InvoiceId);
-        }).ToList();
+        return rows.Select(row => ToDto(row, contracts, rooms, properties, tenantsByContract)).ToList();
+    }
+
+    private static ServiceRegistrationDto ToDto(
+        ServiceRegistrationRequest row,
+        IReadOnlyDictionary<Guid, ContractLookup> contracts,
+        IReadOnlyDictionary<int, RoomLookup> rooms,
+        IReadOnlyDictionary<int, PropertyLookup> properties,
+        IReadOnlyList<TenantLookup> tenantsByContract)
+    {
+        contracts.TryGetValue(row.ContractId, out var contract);
+        var room = contract is null ? null : rooms.GetValueOrDefault(contract.RoomId);
+        var propertyName = room is null ? string.Empty : properties.GetValueOrDefault(room.PropertyId)?.Name ?? string.Empty;
+        var tenants = tenantsByContract.Where(item => item.ContractId == row.ContractId).ToList();
+        return new ServiceRegistrationDto(
+            row.Id,
+            row.ContractId,
+            contract?.ContractNumber ?? string.Empty,
+            room?.Code ?? string.Empty,
+            propertyName,
+            tenants.Select(item => item.FullName).Distinct().ToArray(),
+            tenants.Select(item => item.Phone).Distinct().ToArray(),
+            row.ServiceCatalogId,
+            row.ServiceName,
+            row.Quantity,
+            row.StartDate,
+            row.EndDate,
+            row.Note,
+            row.Status,
+            row.RequestedByUserId,
+            row.RequestedAt,
+            row.ReviewedByUserId,
+            row.ReviewedAt,
+            row.RejectReason,
+            row.CancelStatus,
+            row.CancelReason,
+            row.CancelRejectReason,
+            row.InvoiceId);
     }
 
     private async Task<ServiceRegistrationRequest> LoadManageableAsync(

@@ -1,5 +1,5 @@
 @page "/admin/users"
-@attribute [Authorize]
+@attribute [Authorize(Roles = Roles.Admin)]
 @rendermode InteractiveServer
 
 @* Trang quản lý tài khoản (/admin/users): xem/lọc danh sách, tạo tài khoản theo phạm vi,
@@ -68,6 +68,17 @@
                 </select>
             </div>
 
+            <div class="filter-bar__field filter-bar__select">
+                <label class="sr-only" for="account-status">@L["FilterStatus"]</label>
+                <select id="account-status" class="input" @bind="_statusFilter" @bind:after="ReloadAsync">
+                    <option value="">@L["FilterAllStatuses"]</option>
+                    <option value="active">@L["AccountStatusActive"]</option>
+                    <option value="pending">@L["AccountStatusPendingApproval"]</option>
+                    <option value="unverified">@L["AccountStatusUnverified"]</option>
+                    <option value="locked">@L["AccountStatusLocked"]</option>
+                </select>
+            </div>
+
             <div class="filter-bar__actions">
                 <FilterResetButton OnClick="ClearAccountFiltersAsync" />
             </div>
@@ -94,6 +105,24 @@
                Message="@ApproveMessage()" ConfirmText="@L["Approve"]" CancelText="@L["Cancel"]"
                OnConfirm="ConfirmApproveAsync" OnCancel="CancelApprove" />
 
+<ConfirmDialog Visible="_confirmReject.Visible" Title="@L["RejectAccountTitle"]"
+               ConfirmText="@L["RejectAccount"]" CancelText="@L["Cancel"]" Danger="true"
+               ConfirmDisabled="@(string.IsNullOrWhiteSpace(_confirmReject.Reason))"
+               OnConfirm="ConfirmRejectAsync" OnCancel="CancelReject">
+    <p>@string.Format(L["RejectAccountMessage"], _confirmReject.UserName)</p>
+    <div class="field">
+        <label class="label" for="reject-reason">@L["RejectReasonLabel"]</label>
+        <textarea id="reject-reason" class="input" maxlength="500"
+                  @bind="_confirmReject.Reason" @bind:event="oninput"></textarea>
+    </div>
+    <p class="note">@L["RejectReasonHint"]</p>
+</ConfirmDialog>
+
+<ConfirmDialog Visible="_confirmForceLogout.Visible" Title="@L["ForceLogoutTitle"]"
+               Message="@string.Format(L["ForceLogoutMessage"], _confirmForceLogout.UserName)"
+               ConfirmText="@L["ForceLogoutConfirm"]" CancelText="@L["Cancel"]" Danger="true"
+               OnConfirm="ConfirmForceLogoutAsync" OnCancel="CancelForceLogout" />
+
 <ConfirmDialog Visible="_confirmRole.Visible" Title="@L["ChangeRoleTitle"]"
                ConfirmText="@L["Confirm"]" CancelText="@L["Cancel"]"
                OnConfirm="ConfirmRoleAsync" OnCancel="CancelRoleChange">
@@ -115,10 +144,21 @@
                ConfirmText="@L["DeleteAccountConfirm"]" CancelText="@L["Cancel"]" Danger="true"
                OnConfirm="ConfirmDeleteAsync" OnCancel="CancelDelete" />
 
-<ConfirmDialog Visible="_confirmLock.Visible" Title="@(_confirmLock.Lock ? L["LockTitle"] : L["UnlockTitle"])"               Message="@LockMessage()"
+<ConfirmDialog Visible="_confirmLock.Visible" Title="@(_confirmLock.Lock ? L["LockTitle"] : L["UnlockTitle"])"
                ConfirmText="@(_confirmLock.Lock ? L["LockConfirm"] : L["UnlockConfirm"])"
                CancelText="@L["Cancel"]" Danger="_confirmLock.Lock"
-               OnConfirm="ConfirmLockAsync" OnCancel="CancelLock" />
+               OnConfirm="ConfirmLockAsync" OnCancel="CancelLock">
+    <p>@LockMessage()</p>
+    @if (_confirmLock.Lock)
+    {
+        <div class="field">
+            <label class="label" for="lock-reason">@L["LockReasonLabel"]</label>
+            <textarea id="lock-reason" class="input" maxlength="500"
+                      @bind="_confirmLock.Reason" @bind:event="oninput"></textarea>
+        </div>
+        <p class="note">@L["LockReasonHint"]</p>
+    }
+</ConfirmDialog>
 
 @if (_assignManager.Visible)
 {
@@ -142,11 +182,13 @@
 
     private string? _keyword;
     private string? _roleFilter;
+    private string? _statusFilter;
 
     private Task ClearAccountFiltersAsync()
     {
         _keyword = null;
         _roleFilter = null;
+        _statusFilter = null;
         return ReloadAsync();
     }
 
@@ -157,6 +199,8 @@
     private string _callerRole = string.Empty;
 
     private ApproveState _confirmApprove = new();
+    private RejectState _confirmReject = new();
+    private ForceLogoutState _confirmForceLogout = new();
     private RoleChangeState _confirmRole = new();
     private LockState _confirmLock = new();
     private DeleteState _confirmDelete = new();
@@ -170,6 +214,14 @@
         public string UserName { get; set; } = string.Empty;
     }
 
+    private sealed class RejectState
+    {
+        public bool Visible { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
+    }
+
     private sealed class RoleChangeState
     {
         public bool Visible { get; set; }
@@ -178,12 +230,20 @@
         public string NewRole { get; set; } = string.Empty;
     }
 
+    private sealed class ForceLogoutState
+    {
+        public bool Visible { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+    }
+
     private sealed class LockState
     {
         public bool Visible { get; set; }
         public bool Lock { get; set; }
         public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
     }
 
     private sealed class DeleteState
@@ -260,18 +320,39 @@
                     }
                     else if (user.Role == Roles.QuanLy)
                     {
-                        <span class="account-name">@(string.IsNullOrWhiteSpace(user.OwnerName) ? user.OwnerEmail : user.OwnerName)</span>
+                        <span class="account-name cell-truncate">@(string.IsNullOrWhiteSpace(user.OwnerName) ? user.OwnerEmail : user.OwnerName)</span>
                         @if (user.AssignedProperties.Count > 0)
                         {
-                            <small class="account-sub">@string.Join(", ", user.AssignedProperties.Select(property => property.Name))</small>
+                            <small class="account-sub cell-truncate" data-hover-tip aria-describedby="@($"account-owner-tip-{RowKey(user)}")">
+                                @string.Join(", ", user.AssignedProperties.Select(property => property.Name))
+                                <span class="hover-tip" id="@($"account-owner-tip-{RowKey(user)}")" role="tooltip">
+                                    @foreach (var property in user.AssignedProperties)
+                                    {
+                                        <span class="hover-tip__line">@property.Name</span>
+                                    }
+                                </span>
+                            </small>
                         }
                     }
                     else if (user.Role == Roles.ChuTro)
                     {
-                        <span class="account-name">@L["OwnerSelf"]</span>
-                        <small class="account-sub">@(user.OwnedProperties.Count > 0
-                            ? string.Join(", ", user.OwnedProperties.Select(property => property.Name))
-                            : L["OwnerNoProperty"].Value)</small>
+                        <span class="account-name cell-truncate">@L["OwnerSelf"]</span>
+                        @if (user.OwnedProperties.Count > 0)
+                        {
+                            <small class="account-sub cell-truncate" data-hover-tip aria-describedby="@($"account-owner-tip-{RowKey(user)}")">
+                                @string.Join(", ", user.OwnedProperties.Select(property => property.Name))
+                                <span class="hover-tip" id="@($"account-owner-tip-{RowKey(user)}")" role="tooltip">
+                                    @foreach (var property in user.OwnedProperties)
+                                    {
+                                        <span class="hover-tip__line">@property.Name</span>
+                                    }
+                                </span>
+                            </small>
+                        }
+                        else
+                        {
+                            <small class="account-sub">@L["OwnerNoProperty"]</small>
+                        }
                     }
                     else
                     {
@@ -320,6 +401,9 @@
                                         <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuApprove(user)">
                                             <LucideIcon Name="check" /><span>@L["Approve"]</span>
                                         </button>
+                                        <button type="button" class="p2-row-menu-item danger" role="menuitem" @onclick="() => MenuReject(user)">
+                                            <LucideIcon Name="x" /><span>@L["RejectAccount"]</span>
+                                        </button>
                                     }
                                     @if (_canChangeRole)
                                     {
@@ -338,6 +422,15 @@
                                     {
                                         <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuAssign(user)">
                                             <LucideIcon Name="building" /><span>@L["AssignProperties"]</span>
+                                        </button>
+                                    }
+                                    @if (_callerRole is Roles.Admin or Roles.ChuTro)
+                                    {
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => ResetPassword(user)">
+                                            <LucideIcon Name="key" /><span>@L["ResetPasswordAction"]</span>
+                                        </button>
+                                        <button type="button" class="p2-row-menu-item" role="menuitem" @onclick="() => MenuForceLogout(user)">
+                                            <LucideIcon Name="logout" /><span>@L["ForceLogoutAction"]</span>
                                         </button>
                                     }
                                     @if (_lockableRoles.Contains(user.Role) && user.Role != Roles.Admin)
@@ -361,7 +454,8 @@
         return await Accounts.ListAsync(
             string.IsNullOrWhiteSpace(_keyword) ? null : _keyword,
             string.IsNullOrWhiteSpace(_roleFilter) ? null : _roleFilter,
-            request.Page, request.PageSize, _callerUserId, _callerRole);
+            request.Page, request.PageSize, _callerUserId, _callerRole,
+            string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter);
     }
 
     private Task ReloadAsync()
@@ -374,6 +468,7 @@
         (user.Status == AccountStatus.Pending && AccountPermissionRules.CanApprove(_callerRole, user.Role))
         || _canChangeRole
         || _lockableRoles.Contains(user.Role)
+        || (_callerRole is Roles.Admin or Roles.ChuTro)
         || (_callerRole == Roles.ChuTro && user.Role == Roles.QuanLy);
 
     private static string RowKey(AccountListItemDto user) => $"{user.Id}-{user.Role}";
@@ -387,6 +482,12 @@
     {
         _openMenuId = null;
         OpenApprove(user);
+    }
+
+    private void MenuReject(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        OpenReject(user);
     }
 
     private void MenuRoleChange(AccountListItemDto user)
@@ -440,6 +541,78 @@
 
     private void CancelApprove() => _confirmApprove.Visible = false;
 
+    private async Task ResetPassword(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        var result = await Accounts.SendPasswordResetAsync(user.Id, _callerUserId, _callerRole);
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(string.Format(L["ResetPasswordSent"], DisplayName(user)));
+    }
+
+    private void MenuForceLogout(AccountListItemDto user)
+    {
+        _openMenuId = null;
+        _confirmForceLogout = new ForceLogoutState
+        {
+            Visible = true,
+            UserId = user.Id,
+            UserName = DisplayName(user),
+        };
+    }
+
+    private void CancelForceLogout() => _confirmForceLogout.Visible = false;
+
+    private async Task ConfirmForceLogoutAsync()
+    {
+        var result = await Accounts.ForceLogoutAsync(
+            _confirmForceLogout.UserId, _callerUserId, _callerRole);
+
+        _confirmForceLogout.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["ForceLogoutDone"]);
+        await ReloadAsync();
+    }
+
+    private void OpenReject(AccountListItemDto user)
+    {
+        _confirmReject = new RejectState
+        {
+            Visible = true,
+            UserId = user.Id,
+            UserName = DisplayName(user),
+        };
+    }
+
+    private void CancelReject() => _confirmReject.Visible = false;
+
+    private async Task ConfirmRejectAsync()
+    {
+        var result = await Accounts.RejectAsync(
+            _confirmReject.UserId, _confirmReject.Reason, _callerUserId, _callerRole);
+
+        _confirmReject.Visible = false;
+
+        if (!result.Succeeded)
+        {
+            Toasts.Error(MessageFor(result.ErrorCode));
+            return;
+        }
+
+        Toasts.Success(L["AccountRejected"]);
+        await ReloadAsync();
+    }
+
     private string ApproveMessage() => string.Format(L["ApproveMessage"], _confirmApprove.UserName);
 
     private async Task ConfirmApproveAsync()
@@ -465,7 +638,9 @@
             Visible = true,
             UserId = user.Id,
             UserName = DisplayName(user),
-            NewRole = _roleChangeOptions.Contains(user.Role) ? user.Role : _roleChangeOptions.FirstOrDefault() ?? string.Empty,
+            NewRole = _roleChangeOptions.Contains(user.Role)
+                ? user.Role
+                : _roleChangeOptions.Count > 0 ? _roleChangeOptions[0] : string.Empty,
         };
     }
 
@@ -533,8 +708,7 @@
             Lock = !user.IsLocked,
             UserId = user.Id,
             UserName = DisplayName(user),
-        };
-    }
+        };    }
 
     private void CancelLock() => _confirmLock.Visible = false;
 
@@ -558,7 +732,8 @@
     private async Task ConfirmLockAsync()
     {
         var result = _confirmLock.Lock
-            ? await Accounts.LockAsync(_confirmLock.UserId, _callerUserId, _callerRole)
+            ? await Accounts.LockAsync(
+                _confirmLock.UserId, _callerUserId, _callerRole, reason: _confirmLock.Reason)
             : await Accounts.UnlockAsync(_confirmLock.UserId, _callerUserId, _callerRole);
 
         _confirmLock.Visible = false;

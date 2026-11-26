@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Contracts.Entities;
+using Web.Features.Accounts.Owners;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
@@ -569,9 +570,13 @@ public sealed class PaymentService : IPaymentService
 
         if (caller.IsQuanLy)
         {
-            var propertyIds = _context.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(_context);
+            var propertyIds =
+                from assignment in _context.PropertyManagers
+                join property in _context.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
+                select assignment.PropertyId;
 
             return from invoice in _context.Invoices
                    join contract in _context.Contracts on invoice.ContractId equals contract.ContractId

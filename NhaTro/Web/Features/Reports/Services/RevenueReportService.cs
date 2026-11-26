@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Invoices.Entities;
 using Web.Features.Invoices.Enums;
@@ -229,84 +230,217 @@ public sealed class RevenueReportService(
                     && (toUtcExclusive == null || payment.ReviewedAt < toUtcExclusive)));
         }
 
-        var rows = await invoiceQuery
+        var today = Today;
+        var pageSize = PagingExtensions.ClampPageSize(filter.PageSize);
+        var page = PagingExtensions.ClampPage(filter.Page);
+        var confirmed = db.Set<Payment>().AsNoTracking()
+            .Where(payment => payment.Status == PaymentStatus.Confirmed);
+        var recognizedPayments = filter.DateBasis == RevenueDateBasis.PaymentDate
+            ? confirmed.Where(payment => (fromUtc == null || payment.ReviewedAt >= fromUtc)
+                && (toUtcExclusive == null || payment.ReviewedAt < toUtcExclusive))
+            : confirmed;
+
+        // Công nợ = hóa đơn Issued còn thiếu tiền thu đã xác nhận (đối chiếu theo từng hóa đơn).
+        var debtSource = invoiceQuery.Where(row => row.Status == InvoiceStatus.Issued
+            && row.TotalAmount > (confirmed
+                .Where(payment => payment.InvoiceId == row.InvoiceId)
+                .Sum(payment => (decimal?)payment.Amount) ?? 0m));
+        var linesSource = filter.OutstandingOnly ? debtSource : invoiceQuery;
+
+        var totalCount = await linesSource.CountAsync(cancellationToken);
+        var orderedLines = linesSource
             .OrderBy(row => row.PropertyId)
             .ThenBy(row => row.RoomCode)
-            .ThenBy(row => row.InvoiceId)
+            .ThenBy(row => row.InvoiceId);
+        var pageRows = await orderedLines
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var invoiceIds = rows.Select(row => row.InvoiceId).ToList();
-        var payments = await db.Set<Payment>().AsNoTracking()
-            .Where(payment => invoiceIds.Contains(payment.InvoiceId))
-            .Select(payment => new
+        // Bảng công nợ: Page áp cho bảng công nợ khi filter.OutstandingOnly, ngược lại trả trang đầu.
+        var debtPageSize = pageSize;
+        var outstandingCount = filter.OutstandingOnly
+            ? totalCount
+            : await debtSource.CountAsync(cancellationToken);
+        var orderedDebt = debtSource
+            .OrderBy(row => row.PropertyId)
+            .ThenBy(row => row.RoomCode)
+            .ThenBy(row => row.InvoiceId);
+        var debtRows = filter.OutstandingOnly && page == 1
+            ? pageRows
+            : filter.OutstandingOnly
+                ? await orderedDebt.Skip((page - 1) * debtPageSize).Take(debtPageSize).ToListAsync(cancellationToken)
+                : await orderedDebt.Take(debtPageSize).ToListAsync(cancellationToken);
+
+        // Chỉ nạp tiền thu cho hóa đơn trên trang hiện tại (≤ 2 × PageSize id).
+        var pageIds = pageRows.Select(row => row.InvoiceId)
+            .Concat(debtRows.Select(row => row.InvoiceId))
+            .Distinct()
+            .ToList();
+        var paidByInvoice = pageIds.Count == 0
+            ? new Dictionary<int, decimal>()
+            : await confirmed
+                .Where(payment => pageIds.Contains(payment.InvoiceId))
+                .GroupBy(payment => payment.InvoiceId)
+                .Select(group => new { InvoiceId = group.Key, Amount = group.Sum(payment => payment.Amount) })
+                .ToDictionaryAsync(item => item.InvoiceId, item => item.Amount, cancellationToken);
+        var recognizedByInvoice = filter.DateBasis == RevenueDateBasis.InvoicePeriod || pageIds.Count == 0
+            ? paidByInvoice
+            : await recognizedPayments
+                .Where(payment => pageIds.Contains(payment.InvoiceId))
+                .GroupBy(payment => payment.InvoiceId)
+                .Select(group => new { InvoiceId = group.Key, Amount = group.Sum(payment => payment.Amount) })
+                .ToDictionaryAsync(item => item.InvoiceId, item => item.Amount, cancellationToken);
+
+        var lines = pageRows.Select(row => ToLine(row.TotalAmount, paidByInvoice.GetValueOrDefault(row.InvoiceId),
+            row.Status, row.InvoiceId, row.RoomId, row.RoomCode, row.PropertyId, row.PropertyName,
+            row.PeriodStart, row.PeriodEnd, recognizedByInvoice.GetValueOrDefault(row.InvoiceId),
+            row.DueDate, today)).ToList();
+        var debtLines = debtRows.Select(row => ToLine(row.TotalAmount, paidByInvoice.GetValueOrDefault(row.InvoiceId),
+            row.Status, row.InvoiceId, row.RoomId, row.RoomCode, row.PropertyId, row.PropertyName,
+            row.PeriodStart, row.PeriodEnd, recognizedByInvoice.GetValueOrDefault(row.InvoiceId),
+            row.DueDate, today)).ToList();
+
+        // Số liệu/nhóm kỳ tính bằng GROUP BY ở SQL; client chỉ gộp các nhóm nhỏ (nhà × tháng).
+        var monthRows = await invoiceQuery
+            .GroupBy(row => new { row.PropertyId, row.PropertyName, row.PeriodStart.Year, row.PeriodStart.Month })
+            .Select(group => new
             {
-                payment.InvoiceId,
-                payment.Amount,
-                payment.Status,
-                payment.ReviewedAt,
+                group.Key.PropertyId,
+                group.Key.PropertyName,
+                group.Key.Year,
+                group.Key.Month,
+                InvoiceCount = group.Count(),
+                PaidInvoiceCount = group.Count(row => row.Status == InvoiceStatus.Paid),
+                TotalInvoiced = group.Sum(row => row.TotalAmount),
             })
             .ToListAsync(cancellationToken);
 
-        var confirmedByInvoice = payments
-            .Where(payment => payment.Status == PaymentStatus.Confirmed)
-            .GroupBy(payment => payment.InvoiceId)
-            .ToDictionary(group => group.Key, group => group.Sum(payment => payment.Amount));
+        var recognizedRows = await (
+                from payment in recognizedPayments
+                join row in invoiceQuery on payment.InvoiceId equals row.InvoiceId
+                group payment by new { row.PropertyId, row.PropertyName, row.PeriodStart.Year, row.PeriodStart.Month }
+                into grouped
+                select new
+                {
+                    grouped.Key.PropertyId,
+                    grouped.Key.PropertyName,
+                    grouped.Key.Year,
+                    grouped.Key.Month,
+                    Amount = grouped.Sum(item => item.Amount),
+                })
+            .ToListAsync(cancellationToken);
 
-        var recognizedByInvoice = filter.DateBasis == RevenueDateBasis.InvoicePeriod
-            ? confirmedByInvoice
-            : payments
-                .Where(payment => payment.Status == PaymentStatus.Confirmed
-                    && (fromUtc == null || payment.ReviewedAt >= fromUtc)
-                    && (toUtcExclusive == null || payment.ReviewedAt < toUtcExclusive))
-                .GroupBy(payment => payment.InvoiceId)
-                .ToDictionary(group => group.Key, group => group.Sum(payment => payment.Amount));
+        var outstandingRows = await invoiceQuery
+            .Where(row => row.Status == InvoiceStatus.Issued)
+            .Select(row => new
+            {
+                row.PropertyId,
+                row.PropertyName,
+                row.PeriodStart.Year,
+                row.PeriodStart.Month,
+                Amount = row.TotalAmount - (confirmed
+                    .Where(payment => payment.InvoiceId == row.InvoiceId)
+                    .Sum(payment => (decimal?)payment.Amount) ?? 0m),
+            })
+            .Where(item => item.Amount > 0m)
+            .GroupBy(item => new { item.PropertyId, item.PropertyName, item.Year, item.Month })
+            .Select(group => new
+            {
+                group.Key.PropertyId,
+                group.Key.PropertyName,
+                group.Key.Year,
+                group.Key.Month,
+                Amount = group.Sum(item => item.Amount),
+            })
+            .ToListAsync(cancellationToken);
 
-        var pendingAmount = payments
-            .Where(payment => payment.Status == PaymentStatus.Pending)
-            .Sum(payment => payment.Amount);
-        var rejectedAmount = payments
-            .Where(payment => payment.Status == PaymentStatus.Rejected)
-            .Sum(payment => payment.Amount);
+        var overdue = await invoiceQuery
+            .Where(row => row.Status == InvoiceStatus.Issued && row.DueDate != null && row.DueDate < today)
+            .Select(row => new
+            {
+                row.TotalAmount,
+                Paid = confirmed
+                    .Where(payment => payment.InvoiceId == row.InvoiceId)
+                    .Sum(payment => (decimal?)payment.Amount) ?? 0m,
+            })
+            .Where(item => item.TotalAmount > item.Paid)
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                Count = group.Count(),
+                Outstanding = group.Sum(item => item.TotalAmount - item.Paid),
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        var periods = monthRows
+            .GroupBy(row => (row.Year, row.Month))
+            .OrderBy(group => group.Key)
+            .Select(group => BuildPeriodGroup(
+                group.Key.Year,
+                group.Key.Month,
+                group.Sum(row => row.TotalInvoiced),
+                recognizedRows.Where(row => row.Year == group.Key.Year && row.Month == group.Key.Month)
+                    .Sum(row => row.Amount),
+                outstandingRows.Where(row => row.Year == group.Key.Year && row.Month == group.Key.Month)
+                    .Sum(row => row.Amount),
+                group.Sum(row => row.InvoiceCount),
+                group.Sum(row => row.PaidInvoiceCount)))
+            .ToList();
+
+        var propertyGroups = monthRows
+            .GroupBy(row => new { row.PropertyId, row.PropertyName })
+            .OrderBy(group => group.Key.PropertyId)
+            .Select(group => new RevenuePropertyGroupDto(
+                group.Key.PropertyId,
+                group.Key.PropertyName,
+                group.Sum(row => row.TotalInvoiced),
+                recognizedRows.Where(row => row.PropertyId == group.Key.PropertyId).Sum(row => row.Amount),
+                outstandingRows.Where(row => row.PropertyId == group.Key.PropertyId).Sum(row => row.Amount),
+                group.Sum(row => row.InvoiceCount),
+                group.Sum(row => row.PaidInvoiceCount),
+                group
+                    .GroupBy(row => (row.Year, row.Month))
+                    .OrderBy(month => month.Key)
+                    .Select(month => BuildPeriodGroup(
+                        month.Key.Year,
+                        month.Key.Month,
+                        month.Sum(row => row.TotalInvoiced),
+                        recognizedRows.Where(row => row.PropertyId == group.Key.PropertyId
+                            && row.Year == month.Key.Year && row.Month == month.Key.Month).Sum(row => row.Amount),
+                        outstandingRows.Where(row => row.PropertyId == group.Key.PropertyId
+                            && row.Year == month.Key.Year && row.Month == month.Key.Month).Sum(row => row.Amount),
+                        month.Sum(row => row.InvoiceCount),
+                        month.Sum(row => row.PaidInvoiceCount)))
+                    .ToList()))
+            .ToList();
+
+        var totalRevenue = recognizedRows.Sum(row => row.Amount);
+        var outstanding = outstandingRows.Sum(row => row.Amount);
+        var invoiceCount = monthRows.Sum(row => row.InvoiceCount);
+        var paidInvoiceCount = monthRows.Sum(row => row.PaidInvoiceCount);
+        var totalInvoiced = monthRows.Sum(row => row.TotalInvoiced);
+
+        var statusTotals = await (
+                from payment in db.Set<Payment>().AsNoTracking()
+                join row in invoiceQuery on payment.InvoiceId equals row.InvoiceId
+                where payment.Status == PaymentStatus.Pending || payment.Status == PaymentStatus.Rejected
+                group payment by payment.Status
+                into grouped
+                select new { Status = grouped.Key, Amount = grouped.Sum(payment => payment.Amount) })
+            .ToDictionaryAsync(item => item.Status, item => item.Amount, cancellationToken);
+
+        var pendingAmount = statusTotals.GetValueOrDefault(PaymentStatus.Pending);
+        var rejectedAmount = statusTotals.GetValueOrDefault(PaymentStatus.Rejected);
 
         // VHT-141: cơ cấu giá trị hóa đơn theo loại phí, cùng tập hóa đơn hợp lệ.
-        var feeAmounts = await db.InvoiceItems.AsNoTracking()
-            .Where(item => invoiceIds.Contains(item.InvoiceId))
-            .GroupBy(item => item.ItemType)
-            .Select(group => new { Type = group.Key, Amount = group.Sum(item => item.Amount) })
+        var feeAmounts = await (
+                from item in db.InvoiceItems.AsNoTracking()
+                join row in invoiceQuery on item.InvoiceId equals row.InvoiceId
+                group item by item.ItemType
+                into grouped
+                select new { Type = grouped.Key, Amount = grouped.Sum(item => item.Amount) })
             .ToListAsync(cancellationToken);
-
-        var today = Today;
-        var lines = rows
-            .Select(row =>
-            {
-                var paid = confirmedByInvoice.GetValueOrDefault(row.InvoiceId);
-                var recognized = recognizedByInvoice.GetValueOrDefault(row.InvoiceId);
-                var outstanding = row.Status == InvoiceStatus.Issued
-                    ? Math.Max(0m, row.TotalAmount - paid)
-                    : 0m;
-                var overdueDays = row.DueDate is { } dueDate
-                    && row.Status == InvoiceStatus.Issued
-                    && outstanding > 0m
-                    && dueDate < today
-                    ? today.DayNumber - dueDate.DayNumber
-                    : 0;
-                return new RevenueReportLineDto(
-                    row.InvoiceId,
-                    row.RoomId,
-                    row.RoomCode,
-                    row.TotalAmount,
-                    paid,
-                    outstanding,
-                    row.Status.ToString(),
-                    row.PropertyId,
-                    row.PropertyName,
-                    row.PeriodStart,
-                    row.PeriodEnd,
-                    recognized,
-                    row.DueDate,
-                    overdueDays);
-            })
-            .ToList();
 
         var feeBreakdown = new[]
             {
@@ -322,77 +456,87 @@ public sealed class RevenueReportService(
             .Where(fee => fee.Amount != 0m)
             .ToList();
 
-        var propertyGroups = lines
-            .GroupBy(line => new { line.PropertyId, line.PropertyName })
-            .OrderBy(group => group.Key.PropertyId)
-            .Select(group =>
-            {
-                var periodGroups = BuildPeriodGroups(group);
-                return new RevenuePropertyGroupDto(
-                    group.Key.PropertyId,
-                    group.Key.PropertyName,
-                    group.Sum(line => line.Total),
-                    group.Sum(line => line.RecognizedRevenue),
-                    group.Sum(line => line.Outstanding),
-                    group.Count(),
-                    group.Count(line => line.Status == nameof(InvoiceStatus.Paid)),
-                    periodGroups);
-            })
-            .ToList();
-
-        // Nhóm kỳ toàn phạm vi: cộng gộp các nhóm cùng kỳ của mọi nhà.
-        var periodGroupsAll = lines
-            .GroupBy(line => PeriodStartOf(line))
-            .OrderBy(group => group.Key)
-            .Select(group => BuildPeriodGroup(group.Key, group))
-            .ToList();
-
         return new RevenueReportDto(
-            TotalRevenue: lines.Sum(line => line.RecognizedRevenue),
-            Outstanding: lines.Sum(line => line.Outstanding),
-            InvoiceCount: lines.Count,
-            PaidInvoiceCount: lines.Count(line => line.Status == nameof(InvoiceStatus.Paid)),
+            TotalRevenue: totalRevenue,
+            Outstanding: outstanding,
+            InvoiceCount: invoiceCount,
+            PaidInvoiceCount: paidInvoiceCount,
             Lines: lines,
-            TotalInvoiced: lines.Sum(line => line.Total),
+            TotalInvoiced: totalInvoiced,
             PendingAmount: pendingAmount,
             RejectedAmount: rejectedAmount,
             DateBasis: filter.DateBasis,
-            Periods: periodGroupsAll,
+            Periods: periods,
             Properties: propertyGroups,
             FeeBreakdown: feeBreakdown,
-            OverdueOutstanding: lines.Sum(line => line.OverdueDays > 0 ? line.Outstanding : 0m),
-            OverdueInvoiceCount: lines.Count(line => line.OverdueDays > 0));
+            OverdueOutstanding: overdue?.Outstanding ?? 0m,
+            OverdueInvoiceCount: overdue?.Count ?? 0,
+            TotalCount: totalCount,
+            OutstandingCount: outstandingCount,
+            Page: page,
+            PageSize: pageSize,
+            DebtLines: debtLines);
     }
 
-    private static IReadOnlyList<RevenuePeriodGroupDto> BuildPeriodGroups(
-        IEnumerable<RevenueReportLineDto> lines) =>
-        lines
-            .GroupBy(line => PeriodStartOf(line))
-            .OrderBy(group => group.Key)
-            .Select(group => BuildPeriodGroup(group.Key, group))
-            .ToList();
-
-    private static DateOnly PeriodStartOf(RevenueReportLineDto line) =>
-        line.PeriodStart == default
-            ? default
-            : new DateOnly(line.PeriodStart.Year, line.PeriodStart.Month, 1);
+    private static RevenueReportLineDto ToLine(
+        decimal total,
+        decimal paid,
+        InvoiceStatus status,
+        int invoiceId,
+        int roomId,
+        string roomCode,
+        int propertyId,
+        string propertyName,
+        DateOnly periodStart,
+        DateOnly periodEnd,
+        decimal recognized,
+        DateOnly? dueDate,
+        DateOnly today)
+    {
+        var outstanding = status == InvoiceStatus.Issued ? Math.Max(0m, total - paid) : 0m;
+        var overdueDays = dueDate is { } due
+            && status == InvoiceStatus.Issued
+            && outstanding > 0m
+            && due < today
+            ? today.DayNumber - due.DayNumber
+            : 0;
+        return new RevenueReportLineDto(
+            invoiceId,
+            roomId,
+            roomCode,
+            total,
+            paid,
+            outstanding,
+            status.ToString(),
+            propertyId,
+            propertyName,
+            periodStart,
+            periodEnd,
+            recognized,
+            dueDate,
+            overdueDays);
+    }
 
     private static RevenuePeriodGroupDto BuildPeriodGroup(
-        DateOnly key,
-        IEnumerable<RevenueReportLineDto> lines)
+        int year,
+        int month,
+        decimal totalInvoiced,
+        decimal recognizedRevenue,
+        decimal outstanding,
+        int invoiceCount,
+        int paidInvoiceCount)
     {
-        var materialized = lines.ToList();
-        var start = key;
-        var end = key == default ? default : start.AddMonths(1).AddDays(-1);
-        var periodKey = key == default ? "unknown" : key.ToString("yyyy-MM");
+        var start = year == 1 ? default : new DateOnly(year, month, 1);
+        var end = start == default ? default : start.AddMonths(1).AddDays(-1);
+        var periodKey = start == default ? "unknown" : start.ToString("yyyy-MM");
         return new RevenuePeriodGroupDto(
             periodKey,
             start,
             end,
-            materialized.Sum(line => line.Total),
-            materialized.Sum(line => line.RecognizedRevenue),
-            materialized.Sum(line => line.Outstanding),
-            materialized.Count,
-            materialized.Count(line => line.Status == nameof(InvoiceStatus.Paid)));
+            totalInvoiced,
+            recognizedRevenue,
+            outstanding,
+            invoiceCount,
+            paidInvoiceCount);
     }
 }

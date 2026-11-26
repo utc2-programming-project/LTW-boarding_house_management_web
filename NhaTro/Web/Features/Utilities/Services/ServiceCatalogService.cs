@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Audit.Entities;
@@ -55,8 +56,10 @@ public sealed class ServiceCatalogService : IServiceCatalogService
         var today = _timeProvider.TodayVietnam();
         var query = _context.ServiceCatalogs
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(catalog => catalog.PriceHistory)
-            .Where(catalog => catalog.PropertyId == null || allowedPropertyIds.Contains(catalog.PropertyId.Value));
+            .Where(catalog => catalog.PropertyId == null || allowedPropertyIds.Contains(catalog.PropertyId.Value))
+            .Where(catalog => catalog.PriceHistory.Any());
 
         // TF-13: ChuTro sees both Active and Inactive to toggle them back.
         // Manager and Tenant only see Active services.
@@ -303,66 +306,70 @@ public sealed class ServiceCatalogService : IServiceCatalogService
     {
         ArgumentNullException.ThrowIfNull(caller);
         EnsureCanManage(caller);
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize is < 1 or > 100 ? 20 : pageSize;
 
-        var propertyIds = await _context.Properties
+        var ownedPropertyIds = _context.Properties
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(property => property.OwnerId == caller.UserId)
-            .Select(property => property.Id)
-            .ToListAsync(ct);
+            .Select(property => property.Id);
 
-        var catalogs = await _context.ServiceCatalogs
+        var query = _context.ServiceCatalogs
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Include(catalog => catalog.PriceHistory)
             .Where(catalog => catalog.IsDeleted
                 && catalog.PropertyId.HasValue
-                && propertyIds.Contains(catalog.PropertyId.Value))
-            .ToListAsync(ct);
-
-        var propertyNames = await _context.Properties
-            .IgnoreQueryFilters()
-            .AsNoTracking()
-            .Where(property => propertyIds.Contains(property.Id))
-            .ToDictionaryAsync(property => property.Id, property => property.Name, ct);
+                && ownedPropertyIds.Contains(catalog.PropertyId.Value));
 
         var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
-        var items = catalogs
-            .Select(catalog =>
+        if (term is { } search)
+        {
+            query = query.Where(catalog =>
+                catalog.PriceHistory.Any(version => version.Name.Contains(search))
+                || _context.Properties.IgnoreQueryFilters()
+                    .Any(property => property.Id == catalog.PropertyId && property.Name.Contains(search)));
+        }
+
+        var pageResult = await query
+            .OrderByDescending(catalog => catalog.DeletedAt)
+            .ThenByDescending(catalog => catalog.Id)
+            .Select(catalog => new
             {
-                var latest = catalog.PriceHistory
+                catalog.Id,
+                catalog.PropertyId,
+                catalog.DeletedAt,
+                catalog.DeletedBy,
+                PropertyName = _context.Properties.IgnoreQueryFilters()
+                    .Where(property => property.Id == catalog.PropertyId)
+                    .Select(property => property.Name)
+                    .FirstOrDefault(),
+                VersionCount = catalog.PriceHistory.Count,
+                Latest = catalog.PriceHistory
                     .OrderByDescending(version => version.EffectiveDate)
                     .ThenByDescending(version => version.Id)
-                    .FirstOrDefault();
-                var propertyName = propertyNames.TryGetValue(catalog.PropertyId!.Value, out var name)
-                    ? name
-                    : $"#{catalog.PropertyId}";
-                return new ServiceCatalogTrashItemDto(
-                    catalog.Id,
-                    catalog.PropertyId,
-                    propertyName,
-                    latest?.Name ?? $"#{catalog.Id}",
-                    latest?.Unit ?? string.Empty,
-                    latest?.UnitPrice ?? 0m,
-                    catalog.PriceHistory.Count,
-                    catalog.DeletedAt,
-                    catalog.DeletedBy);
+                    .Select(version => new { version.Name, version.Unit, version.UnitPrice })
+                    .FirstOrDefault(),
             })
-            .Where(item => term is null
-                || item.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.DeletedAt)
-            .ThenByDescending(item => item.Id)
+            .ToPagedResultAsync(page, pageSize, ct);
+
+        var items = pageResult.Items
+            .Select(row => new ServiceCatalogTrashItemDto(
+                row.Id,
+                row.PropertyId,
+                string.IsNullOrWhiteSpace(row.PropertyName) ? $"#{row.PropertyId}" : row.PropertyName,
+                row.Latest?.Name ?? $"#{row.Id}",
+                row.Latest?.Unit ?? string.Empty,
+                row.Latest?.UnitPrice ?? 0m,
+                row.VersionCount,
+                row.DeletedAt,
+                row.DeletedBy))
             .ToList();
 
         return new PagedResult<ServiceCatalogTrashItemDto>
         {
-            Items = items.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
-            TotalCount = items.Count,
-            Page = page,
-            PageSize = pageSize,
+            Items = items,
+            TotalCount = pageResult.TotalCount,
+            Page = pageResult.Page,
+            PageSize = pageResult.PageSize,
         };
     }
 

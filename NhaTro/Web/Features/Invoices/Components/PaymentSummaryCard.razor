@@ -32,7 +32,12 @@
     {
         <div class="payment-rejection">
             <span class="detail-label">@L["PaymentRejectionReason"]</span>
-            <p>@Payment.RejectionReason</p>
+            <p class="cell-truncate" data-hover-tip>
+                @Payment.RejectionReason
+                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                    <span class="hover-tip__line">@Payment.RejectionReason</span>
+                </span>
+            </p>
         </div>
     }
 

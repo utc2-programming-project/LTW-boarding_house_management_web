@@ -90,7 +90,7 @@
     justify-content: center;
     gap: 12px;
     max-width: 100%;
-    min-height: 48px;
+    min-height: 44px;
     padding: 6px 10px;
     border: 0;
     border-radius: var(--radius-control);
@@ -131,7 +131,7 @@ button.setup-rail-node[aria-disabled="true"] {
     background: var(--surface);
     color: var(--text-muted);
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
     transition: background 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
 }
@@ -183,7 +183,7 @@ button.setup-rail-node[aria-disabled="true"] {
 
 .setup-rail-step.current .setup-rail-text strong {
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .setup-rail-step.current .setup-rail-text small {
@@ -301,7 +301,7 @@ button.setup-progress-link:hover {
     border-radius: 50%;
     color: var(--text-muted);
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight:600;
 }
 
 .setup-progress-item.done .setup-progress-link {

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Contracts.Entities;
+using Web.Features.Accounts.Owners;
 using Web.Features.Invoices.DTOs;
 using Web.Features.Invoices.Rules;
 using Web.Features.Properties;
@@ -180,9 +181,13 @@ public sealed class InvoiceIssuanceService : IInvoiceIssuanceService
 
         if (caller.IsQuanLy)
         {
-            var propertyIds = _context.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(_context);
+            var propertyIds =
+                from assignment in _context.PropertyManagers
+                join property in _context.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
+                select assignment.PropertyId;
 
             return from contract in _context.Contracts
                    join room in _context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id

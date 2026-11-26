@@ -12,6 +12,7 @@ using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
+using Web.Features.Accounts.Avatar;
 using Web.Features.Accounts.Otp;
 using Web.Features.Assistant.Entities;
 using Web.Data.Tariffs;
@@ -25,6 +26,9 @@ namespace Web.Data
 
         // VHT-24: phân công Quản lý theo tòa nhà (nhiều-nhiều, có lịch sử).
         public DbSet<PropertyManager> PropertyManagers => Set<PropertyManager>();
+
+        // PLAN-030 bổ sung: ảnh đại diện lưu server, một dòng mỗi tài khoản.
+        public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
 
         // PLAN-022: mã OTP một lần cho đăng ký/xác thực tài khoản.
         public DbSet<OtpChallenge> OtpChallenges => Set<OtpChallenge>();
@@ -112,6 +116,14 @@ namespace Web.Data
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            builder.Entity<AppNotification>(entity =>
+            {
+                entity.Property(item => item.RecipientUserId).HasMaxLength(450).IsRequired();
+                entity.Property(item => item.Title).HasMaxLength(200).IsRequired();
+                entity.Property(item => item.Link).HasMaxLength(500);
+                entity.HasIndex(item => new { item.RecipientUserId, item.IsRead, item.CreatedAt });
+            });
 
             builder.Entity<AuditLogEntry>(entity =>
             {

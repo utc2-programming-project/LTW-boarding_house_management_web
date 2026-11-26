@@ -211,7 +211,7 @@ public sealed class ServiceRegistrationFlowIntegrationTests(SqlServerFixture fix
         PropertyCaller caller)
     {
         var db = world.NewDb();
-        var callerProvider = new P2CallerProvider(new FixedAuthenticationStateProvider(caller));
+        var callerProvider = new P2CallerProvider(new FixedAuthenticationStateProvider(caller), world.NewOwnerAccessGuard());
         return new ServiceRegistrationService(
             db,
             callerProvider,

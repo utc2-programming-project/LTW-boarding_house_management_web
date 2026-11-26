@@ -164,7 +164,14 @@
                     @foreach (var service in _contract.Services)
                     {
                         <tr>
-                            <td><a class="cell-link" href="/services">@service.Name</a></td>
+                            <td>
+                                <a class="cell-link cell-truncate" href="/services" data-hover-tip>
+                                    @service.Name
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@service.Name</span>
+                                    </span>
+                                </a>
+                            </td>
                             <td>@service.Unit</td>
                             <td class="tabular-nums">@MoneyFormatter.Format(service.UnitPrice)</td>
                             <td><span class="contract-detail-tag @(service.IsRegistered ? "is-applied" : "is-muted")">@L[service.IsRegistered ? "ContractServiceApplied" : "ContractServiceUnregistered"]</span></td>

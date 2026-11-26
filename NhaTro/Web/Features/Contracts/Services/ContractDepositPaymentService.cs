@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
@@ -286,13 +287,16 @@ public sealed class ContractDepositPaymentService(
         }
         else if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             var managed = await (
                 from contract in db.Contracts
                 join room in db.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in db.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                 join assignment in db.PropertyManagers on room.PropertyId equals assignment.PropertyId
                 where contract.ContractId == contractId
                     && assignment.ManagerUserId == caller.UserId
                     && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
                 select contract.ContractId).AnyAsync(ct);
             if (managed) return;
         }

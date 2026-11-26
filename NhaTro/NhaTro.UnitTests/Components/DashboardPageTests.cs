@@ -57,7 +57,7 @@ public sealed class DashboardPageTests : BunitContext
         {
             Kpis = new() { Total = 2, New = 1, InProgress = 1 },
         }));
-        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)),
+        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role), TestOwnerAccess.Create()),
             properties, rooms, tenants, revenue, incidents, TimeProvider.System));
         ComponentFactories.AddStub<RoomStructureChart>();
     }

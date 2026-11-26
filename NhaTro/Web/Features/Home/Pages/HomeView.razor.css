@@ -13,26 +13,20 @@
 .home-table tbody tr:last-child td { border-bottom:none; }
 .home-table .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
 
-/* Số tiền còn nợ trong panel "Hoá đơn chưa thu": nổi bật, bấm để mở hoá đơn. */
+/* Số tiền còn nợ trong panel "Hoá đơn chưa thu": số tabular dạng link, bấm để mở hoá đơn. */
 .home-due-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border: 1px solid var(--warning-border);
-    border-radius: var(--radius-pill);
-    background: var(--warning-bg);
+    gap: 4px;
     color: var(--warning-text);
-    font-weight: 700;
+    font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
-    transition: background-color .15s var(--ease), border-color .15s var(--ease);
 }
 .home-due-link:hover {
-    border-color: var(--warning-text);
-    background: color-mix(in srgb, var(--warning-bg) 70%, var(--warning-border));
     color: var(--warning-text);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 .home-due-link:focus-visible { outline:2px solid var(--focus-ring); outline-offset:2px; }
 .home-due-link ::deep svg { width:14px; height:14px; flex:0 0 auto; }

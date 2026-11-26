@@ -48,12 +48,28 @@
                         </div>
                     </div>
                     <dl class="tenant-profile-details">
-                        <div><dt>@L["TenantFullName"]</dt><dd>@_profile.FullName</dd></div>
+                        <div>
+                            <dt>@L["TenantFullName"]</dt>
+                            <dd class="cell-truncate" data-hover-tip>
+                                @_profile.FullName
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@_profile.FullName</span>
+                                </span>
+                            </dd>
+                        </div>
                         <div><dt>@L["TenantIdNumber"]</dt><dd class="tenant-mono">@Value(_profile.IdNumber)</dd></div>
                         <div><dt>@L["TenantDateOfBirth"]</dt><dd>@DateFormatter.Format(_profile.DateOfBirth)</dd></div>
                         <div><dt>@L["TenantGender"]</dt><dd>@GenderText(_profile.Gender)</dd></div>
                         <div><dt>@L["TenantIdIssuedDate"]</dt><dd>@DateFormatter.Format(_profile.IdIssuedDate)</dd></div>
-                        <div><dt>@L["TenantIdIssuedPlace"]</dt><dd>@Value(_profile.IdIssuedPlace)</dd></div>
+                        <div>
+                            <dt>@L["TenantIdIssuedPlace"]</dt>
+                            <dd class="cell-truncate" data-hover-tip>
+                                @Value(_profile.IdIssuedPlace)
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@Value(_profile.IdIssuedPlace)</span>
+                                </span>
+                            </dd>
+                        </div>
                     </dl>
                 </section>
 

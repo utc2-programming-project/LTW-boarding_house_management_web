@@ -33,6 +33,8 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
             .HasFilter("[RegistrationId] IS NULL AND [IsDeleted] = 0");
         builder.HasIndex(invoice => new { invoice.PeriodStart, invoice.Status });
         builder.HasIndex(invoice => invoice.RegistrationId);
+        // Bộ lọc "Quá hạn": hóa đơn đã phát hành, có hạn thanh toán và đã qua hạn.
+        builder.HasIndex(invoice => new { invoice.Status, invoice.DueDate });
         builder.Property(invoice => invoice.DeletedBy).HasMaxLength(450);
         builder.HasQueryFilter(invoice => !invoice.IsDeleted);
         builder.HasIndex(invoice => invoice.IsDeleted);

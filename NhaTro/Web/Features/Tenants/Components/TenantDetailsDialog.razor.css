@@ -17,7 +17,7 @@
     border-radius: 12px;
     background: var(--accent-soft);
     color: var(--accent-text);
-    font-weight: 700;
+    font-weight:600;
 }
 
 .tenant-avatar-large {
@@ -28,7 +28,7 @@
 }
 
 .tenant-detail-name { min-width: 0; }
-.tenant-detail-name h3 { margin: 0; overflow-wrap: anywhere; font-size: 1rem; font-weight: 700; }
+.tenant-detail-name h3 { margin: 0; overflow-wrap: anywhere; font-size: 1rem; font-weight:600; }
 .tenant-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
 .tenant-detail-section {

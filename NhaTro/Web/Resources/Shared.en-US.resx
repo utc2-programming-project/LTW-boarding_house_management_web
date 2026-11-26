@@ -126,7 +126,7 @@
     <value>My account</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Settings</value>
+    <value>Settings &amp; security</value>
   </data>
   <data name="SignOut" xml:space="preserve">
     <value>Sign out</value>
@@ -310,6 +310,9 @@
   <data name="LoginButton" xml:space="preserve">
     <value>Sign in</value>
   </data>
+  <data name="PasskeyLoginButton" xml:space="preserve">
+    <value>Sign in with a passkey</value>
+  </data>
   <data name="LoginInvalid" xml:space="preserve">
     <value>Incorrect email or password.</value>
   </data>
@@ -373,7 +376,7 @@
     <value>10 digits, starting with 0.</value>
   </data>
   <data name="EmailReadonlyHint" xml:space="preserve">
-    <value>The email used to sign in; it cannot be changed here yet.</value>
+    <value>Sign-in email; change it in the Security tab.</value>
   </data>
   <data name="SaveChanges" xml:space="preserve">
     <value>Save changes</value>
@@ -412,6 +415,12 @@
   </data>
   <data name="FilterAllRoles" xml:space="preserve">
     <value>All roles</value>
+  </data>
+  <data name="FilterStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="FilterAllStatuses" xml:space="preserve">
+    <value>All statuses</value>
   </data>
   <data name="ColumnAccount" xml:space="preserve">
     <value>Account</value>
@@ -482,6 +491,12 @@
   <data name="UnlockMessage" xml:space="preserve">
     <value>Unlock account {0}?</value>
   </data>
+  <data name="LockReasonLabel" xml:space="preserve">
+    <value>Lock reason (optional)</value>
+  </data>
+  <data name="LockReasonHint" xml:space="preserve">
+    <value>Stored in the account audit log, up to 500 characters.</value>
+  </data>
   <data name="RoleChanged" xml:space="preserve">
     <value>Role updated.</value>
   </data>
@@ -528,6 +543,45 @@
   </data>
   <data name="AccountApproved" xml:space="preserve">
     <value>Account approved.</value>
+  </data>
+  <data name="RejectAccount" xml:space="preserve">
+    <value>Reject</value>
+  </data>
+  <data name="RejectAccountTitle" xml:space="preserve">
+    <value>Reject account</value>
+  </data>
+  <data name="RejectAccountMessage" xml:space="preserve">
+    <value>Reject account {0}? The account cannot sign in and will be moved to the trash.</value>
+  </data>
+  <data name="RejectReasonLabel" xml:space="preserve">
+    <value>Rejection reason</value>
+  </data>
+  <data name="RejectReasonHint" xml:space="preserve">
+    <value>Required, up to 500 characters; stored in the account audit log.</value>
+  </data>
+  <data name="AccountRejected" xml:space="preserve">
+    <value>Account rejected.</value>
+  </data>
+  <data name="ResetPasswordAction" xml:space="preserve">
+    <value>Send password reset code</value>
+  </data>
+  <data name="ResetPasswordSent" xml:space="preserve">
+    <value>A password reset code was sent to {0}.</value>
+  </data>
+  <data name="ForceLogoutAction" xml:space="preserve">
+    <value>Sign out all sessions</value>
+  </data>
+  <data name="ForceLogoutTitle" xml:space="preserve">
+    <value>Sign out all sessions?</value>
+  </data>
+  <data name="ForceLogoutMessage" xml:space="preserve">
+    <value>Account {0} will be signed out from every device.</value>
+  </data>
+  <data name="ForceLogoutConfirm" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="ForceLogoutDone" xml:space="preserve">
+    <value>All sessions for the account were signed out.</value>
   </data>
   <data name="TenantProfileLabel" xml:space="preserve">
     <value>Tenant profile</value>
@@ -610,6 +664,9 @@
   </data>
   <data name="ErrorNotPendingApproval" xml:space="preserve">
     <value>Only pending accounts can be approved.</value>
+  </data>
+  <data name="ErrorReasonRequired" xml:space="preserve">
+    <value>Please enter a reason (up to 500 characters).</value>
   </data>
   <data name="ErrorDuplicateEmail" xml:space="preserve">
     <value>This email is already used by another account.</value>
@@ -1608,6 +1665,13 @@
   <data name="InviteTenantEmailHint" xml:space="preserve"><value>The invitation is sent to this email.</value></data>
   <data name="InviteTenantNote" xml:space="preserve"><value>The tenant opens the email within 15 minutes, sets a password and verifies OTP; the profile belongs to your account.</value></data>
   <data name="InviteTenantSend" xml:space="preserve"><value>Send invitation</value></data>
+  <data name="InviteKindLabel" xml:space="preserve"><value>Guest type</value></data>
+  <data name="InviteKindNew" xml:space="preserve"><value>New guest — create account</value></data>
+  <data name="InviteKindExisting" xml:space="preserve"><value>Existing account — receive link only</value></data>
+  <data name="InviteExpiryLabel" xml:space="preserve"><value>Link expiry</value></data>
+  <data name="InviteExpiry1h" xml:space="preserve"><value>1 hour</value></data>
+  <data name="InviteExpiry6h" xml:space="preserve"><value>6 hours</value></data>
+  <data name="InviteExpiry24h" xml:space="preserve"><value>24 hours</value></data>
   <data name="InviteTenantSent" xml:space="preserve"><value>Invitation sent by email.</value></data>
   <data name="InviteTenantEmailTaken" xml:space="preserve"><value>This email already has an account.</value></data>
   <data name="InviteTenantForbidden" xml:space="preserve"><value>You are not assigned to any owner.</value></data>
@@ -1677,10 +1741,34 @@
   <data name="LeaseStartDateLabel" xml:space="preserve"><value>Lease start date</value></data>
   <data name="LeaseEndDateLabel" xml:space="preserve"><value>Contract expiry date</value></data>
   <data name="MeterReadingCalculating" xml:space="preserve"><value>Calculating…</value></data>
-  <data name="ManageAccountTitle" xml:space="preserve"><value>Manage account</value></data>
-  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Account settings</value></data>
+  <data name="ManageAccountTitle" xml:space="preserve"><value>Settings &amp; security</value></data>
+  <data name="ManageAccountSubtitle" xml:space="preserve"><value>Manage your email, password, two-factor authentication, signed-in devices and personal data</value></data>
+  <data name="ManageNavOverview" xml:space="preserve"><value>Overview</value></data>
+  <data name="AccountMenuProfileSub" xml:space="preserve"><value>Name, phone number</value></data>
+  <data name="AccountMenuSecuritySub" xml:space="preserve"><value>Email, password, devices</value></data>
+  <data name="SettingsGroupIdentity" xml:space="preserve"><value>Profile</value></data>
+  <data name="SettingsHubProfileDesc" xml:space="preserve"><value>Name, phone number and payout account</value></data>
+  <data name="SettingsGroupSecurity" xml:space="preserve"><value>Security</value></data>
+  <data name="SettingsCardEmailDesc" xml:space="preserve"><value>Change your sign-in email and verify it</value></data>
+  <data name="SettingsCardPasswordDesc" xml:space="preserve"><value>Change your sign-in password</value></data>
+  <data name="SettingsCardTwoFactorDesc" xml:space="preserve"><value>Add a second layer with an authenticator app</value></data>
+  <data name="SettingsCardPasskeyDesc" xml:space="preserve"><value>Sign in quickly with fingerprint or face</value></data>
+  <data name="SettingsCardSessionsDesc" xml:space="preserve"><value>Review and sign out signed-in devices</value></data>
+  <data name="SettingsGroupData" xml:space="preserve"><value>Data</value></data>
+  <data name="SettingsCardDataDesc" xml:space="preserve"><value>Download or delete your personal data</value></data>
+  <data name="SettingsCardManage" xml:space="preserve"><value>Manage</value></data>
   <data name="ManageNavExternalLogins" xml:space="preserve"><value>External logins</value></data>
   <data name="ManageNavPasskeys" xml:space="preserve"><value>Passkeys</value></data>
+  <data name="ManageNavSessions" xml:space="preserve"><value>Signed-in devices</value></data>
+  <data name="SessionsTitle" xml:space="preserve"><value>Signed-in devices</value></data>
+  <data name="SessionsHelp" xml:space="preserve"><value>Sessions currently signed in to your account.</value></data>
+  <data name="SessionsCurrent" xml:space="preserve"><value>This device</value></data>
+  <data name="SessionsLastSeen" xml:space="preserve"><value>Last active:</value></data>
+  <data name="SessionsRevoke" xml:space="preserve"><value>Sign out</value></data>
+  <data name="SessionsRevokeOthers" xml:space="preserve"><value>Sign out all other devices</value></data>
+  <data name="SessionsRevoked" xml:space="preserve"><value>The selected device was signed out.</value></data>
+  <data name="SessionsEmpty" xml:space="preserve"><value>No sessions recorded yet.</value></data>
+  <data name="SessionsUnknownDevice" xml:space="preserve"><value>Unknown device</value></data>
   <data name="ManageNavPersonalData" xml:space="preserve"><value>Personal data</value></data>
   <data name="UsernameLabel" xml:space="preserve"><value>Username</value></data>
   <data name="CurrentPasswordLabel" xml:space="preserve"><value>Current password</value></data>
@@ -1723,6 +1811,13 @@
   <data name="ExternalLoginInfoLoadFailed" xml:space="preserve"><value>Could not load external login information.</value></data>
   <data name="ExternalLoginAdded" xml:space="preserve"><value>The external login was added.</value></data>
   <data name="ExternalLoginAddFailed" xml:space="preserve"><value>The external login could not be added. Each login can be linked to only one account.</value></data>
+  <data name="GoogleLoginTitle" xml:space="preserve"><value>Sign in with Google</value></data>
+  <data name="GoogleContinueAction" xml:space="preserve"><value>Create account with Google</value></data>
+  <data name="ExternalLoginInviteFailed" xml:space="preserve"><value>Could not create an account from the invite with Google. The invite may be expired, already used, or the Google email does not match the invited email.</value></data>
+  <data name="ExternalLoginNoAccount" xml:space="preserve"><value>No account uses this email. Ask the property owner for an invitation or create an account before signing in with Google.</value></data>
+  <data name="ExternalLoginPendingApproval" xml:space="preserve"><value>This account is pending approval and cannot sign in yet. Please contact an administrator.</value></data>
+  <data name="ExternalLoginEmailNotVerified" xml:space="preserve"><value>The provider did not verify this email. Try again with a Google account whose email is verified.</value></data>
+  <data name="ExternalLoginFailed" xml:space="preserve"><value>Could not sign in with this account. Try again or sign in with your password.</value></data>
   <data name="DisableTwoFactorTitle" xml:space="preserve"><value>Disable two-factor authentication (2FA)</value></data>
   <data name="DisableTwoFactorWarning" xml:space="preserve"><value>This action only disables 2FA.</value></data>
   <data name="DisableTwoFactorDescription" xml:space="preserve"><value>Disabling 2FA does not change authenticator keys. To change the key,</value></data>
@@ -2091,6 +2186,8 @@
   <data name="SelectRoleTenantHint" xml:space="preserve"><value>View your room, contract, invoices and tenant requests.</value></data>
   <data name="SelectRoleInvalid" xml:space="preserve"><value>Invalid role. Please choose again.</value></data>
   <data name="SelectRoleNone" xml:space="preserve"><value>This account has no role. Please contact an administrator.</value></data>
+  <data name="SelectRoleLoadingTitle" xml:space="preserve"><value>Loading data…</value></data>
+  <data name="SelectRoleLoadingHint" xml:space="preserve"><value>We are preparing the workspace for the role you picked. The first load can take a few seconds.</value></data>
   <data name="SwitchRole" xml:space="preserve"><value>Switch role</value></data>
   <!-- PLAN-024: invitation/QR -->
   <data name="InviteOwnerLabel" xml:space="preserve"><value>Owner</value></data>
@@ -2205,4 +2302,57 @@
   <data name="DocumentErrorStorageFailed" xml:space="preserve"><value>Could not delete the physical file. Please try again.</value></data>
   <data name="DocumentErrorNotInTrash" xml:space="preserve"><value>The file is no longer in the trash.</value></data>
   <data name="DocumentErrorForbidden" xml:space="preserve"><value>You do not have permission to operate on this file.</value></data>
+  <!-- PLAN-030: unified account page -->
+  <data name="AccountTitle" xml:space="preserve"><value>Account</value></data>
+  <data name="AccountTabsLabel" xml:space="preserve"><value>Account sections</value></data>
+  <data name="AccountTabProfile" xml:space="preserve"><value>Profile</value></data>
+  <data name="AccountTabSecurity" xml:space="preserve"><value>Security</value></data>
+  <data name="AccountTabDevices" xml:space="preserve"><value>Devices</value></data>
+  <data name="AccountTabData" xml:space="preserve"><value>Data</value></data>
+  <data name="AccountTabActivity" xml:space="preserve"><value>Activity</value></data>
+  <data name="AccountBackAction" xml:space="preserve"><value>Back to account</value></data>
+  <data name="AccountMenuSub" xml:space="preserve"><value>Profile, security, devices</value></data>
+  <data name="AccountTenantProfileHint" xml:space="preserve"><value>Your tenant profile lives on its own page, tied to your rental contract.</value></data>
+  <data name="AccountTenantProfileAction" xml:space="preserve"><value>Open tenant profile</value></data>
+  <data name="AvatarUploadAction" xml:space="preserve"><value>Upload photo</value></data>
+  <data name="AvatarRemoveAction" xml:space="preserve"><value>Remove photo</value></data>
+  <data name="AvatarHint" xml:space="preserve"><value>Optional. PNG/JPG/WebP up to 2 MB, shared across your devices.</value></data>
+  <data name="AvatarTooLarge" xml:space="preserve"><value>The image is larger than 2 MB.</value></data>
+  <data name="AvatarInvalidType" xml:space="preserve"><value>Only image files are accepted.</value></data>
+  <data name="AvatarSaved" xml:space="preserve"><value>Avatar updated.</value></data>
+  <data name="AvatarRemoved" xml:space="preserve"><value>Avatar removed.</value></data>
+  <data name="RecentActivityTitle" xml:space="preserve"><value>Recent activity</value></data>
+  <data name="RecentActivityDesc" xml:space="preserve"><value>Security alerts and notifications sent to your account.</value></data>
+  <data name="RecentActivityEmpty" xml:space="preserve"><value>No activity recorded yet.</value></data>
+  <data name="RecentActivityDevicesHint" xml:space="preserve"><value>Signed-in sessions are listed in the Devices tab.</value></data>
+  <data name="SecurityScoreTitle" xml:space="preserve"><value>Security level</value></data>
+  <data name="SecurityScoreDesc" xml:space="preserve"><value>Scored from password, verified email, 2FA, passkeys and recovery codes.</value></data>
+  <data name="SecurityScoreStrong" xml:space="preserve"><value>Your account is well protected.</value></data>
+  <data name="SecurityHintSetPassword" xml:space="preserve"><value>Create a password</value></data>
+  <data name="SecurityHintVerifyEmail" xml:space="preserve"><value>Verify your email</value></data>
+  <data name="SecurityHintEnable2fa" xml:space="preserve"><value>Turn on 2FA</value></data>
+  <data name="SecurityHintAddPasskey" xml:space="preserve"><value>Add a passkey</value></data>
+  <data name="SecurityHintRecoveryCodes" xml:space="preserve"><value>Generate recovery codes</value></data>
+  <data name="SecurityLoginSection" xml:space="preserve"><value>Sign-in &amp; authentication</value></data>
+  <data name="SecurityPasswordDesc" xml:space="preserve"><value>Password used to sign in with email.</value></data>
+  <data name="SecurityTwoFactorDesc" xml:space="preserve"><value>Second layer with codes from an authenticator app.</value></data>
+  <data name="SecurityPasskeyDesc" xml:space="preserve"><value>Fast, phishing-resistant sign-in with biometrics.</value></data>
+  <data name="SecurityChangeAction" xml:space="preserve"><value>Change</value></data>
+  <data name="SecurityEnableAction" xml:space="preserve"><value>Turn on</value></data>
+  <data name="SecurityManageAction" xml:space="preserve"><value>Manage</value></data>
+  <data name="SecurityAddAction" xml:space="preserve"><value>Add</value></data>
+  <data name="SecuritySetPasswordAction" xml:space="preserve"><value>Create password</value></data>
+  <data name="SecuritySet" xml:space="preserve"><value>Set</value></data>
+  <data name="SecurityNotSet" xml:space="preserve"><value>Not set</value></data>
+  <data name="SecurityUnverified" xml:space="preserve"><value>Unverified</value></data>
+  <data name="SecurityPasskeyCount" xml:space="preserve"><value>{0} keys</value></data>
+  <data name="SecurityExternalDesc" xml:space="preserve"><value>Link your Google account to sign in without a password.</value></data>
+  <data name="SecurityLinked" xml:space="preserve"><value>Linked</value></data>
+  <data name="SecurityNotLinked" xml:space="preserve"><value>Not linked</value></data>
+  <data name="StatusEnabled" xml:space="preserve"><value>On</value></data>
+  <data name="StatusUnread" xml:space="preserve"><value>Unread</value></data>
+  <data name="StatusDisabled" xml:space="preserve"><value>Off</value></data>
+  <data name="DataDownloadDesc" xml:space="preserve"><value>Download a copy of the personal data we store.</value></data>
+  <data name="DangerZoneTitle" xml:space="preserve"><value>Danger zone</value></data>
+  <data name="DangerZoneDesc" xml:space="preserve"><value>Deleting data permanently removes the account and cannot be undone.</value></data>
 </root>

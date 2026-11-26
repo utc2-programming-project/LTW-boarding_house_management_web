@@ -48,3 +48,53 @@
     color: var(--text-secondary);
     font-size: 0.875rem;
 }
+
+/* Màn hình chờ khi chọn vai trò: trang hiện tại còn giữ DOM cho tới khi /home tải xong. */
+.nav-wait {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.6rem;
+    padding: 2rem;
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    backdrop-filter: blur(8px);
+    text-align: center;
+}
+
+.nav-wait[hidden] {
+    display: none;
+}
+
+.nav-wait-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent-text);
+    border-radius: 50%;
+    animation: nav-wait-spin 0.8s linear infinite;
+}
+
+.nav-wait-title {
+    font-size: 1.0625rem;
+    color: var(--text-primary);
+}
+
+.nav-wait-hint {
+    max-width: 32ch;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+@keyframes nav-wait-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-wait-spinner {
+        animation-duration: 2s;
+    }
+}

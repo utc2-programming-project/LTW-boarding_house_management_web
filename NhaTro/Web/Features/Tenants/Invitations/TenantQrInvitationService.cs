@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Tenants.Entities;
 using Web.Features.Tenants.Enums;
 
@@ -206,10 +207,28 @@ public sealed class TenantQrInvitationService(
             invitation.ExpiresAt <= now);
     }
 
-    public async Task<TenantInvitationResult> BeginNewAccountAsync(
+    public Task<TenantInvitationResult> BeginNewAccountAsync(
         string rawToken,
         NewTenantAccountRequest request,
-        CancellationToken ct = default)
+        CancellationToken ct = default) =>
+        CreateNewAccountAsync(rawToken, request, emailConfirmed: false, requireEmailMatch: false, ct);
+
+    /// <summary>
+    /// PLAN-012: tạo tài khoản từ lời mời bằng danh tính ngoài (Google) — không đặt mật khẩu,
+    /// email đã được provider xác thực nên bỏ OTP; email phải trùng email ghi trên lời mời.
+    /// </summary>
+    public Task<TenantInvitationResult> BeginExternalAccountAsync(
+        string rawToken,
+        NewTenantAccountRequest request,
+        CancellationToken ct = default) =>
+        CreateNewAccountAsync(rawToken, request, emailConfirmed: true, requireEmailMatch: true, ct);
+
+    private async Task<TenantInvitationResult> CreateNewAccountAsync(
+        string rawToken,
+        NewTenantAccountRequest request,
+        bool emailConfirmed,
+        bool requireEmailMatch,
+        CancellationToken ct)
     {
         var email = (request.Email ?? string.Empty).Trim();
         var fullName = CollapseSpaces(request.FullName ?? string.Empty);
@@ -233,6 +252,12 @@ public sealed class TenantQrInvitationService(
                 TenantInvitationErrorCodes.InvalidRequest, "Lời mời này dành cho tài khoản đã có.");
         }
 
+        if (requireEmailMatch && !string.Equals(item.Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            return TenantInvitationResult.Failure(
+                TenantInvitationErrorCodes.Forbidden, "Email đăng nhập không khớp với lời mời.");
+        }
+
         if (await users.FindByEmailAsync(email) is not null
             || await db.Users.AsNoTracking().AnyAsync(user => user.Email == email, ct))
         {
@@ -246,13 +271,16 @@ public sealed class TenantQrInvitationService(
         {
             UserName = email,
             Email = email,
-            EmailConfirmed = false,
+            EmailConfirmed = emailConfirmed,
             ApprovedAt = now,
             FullName = fullName,
             PhoneNumber = string.IsNullOrWhiteSpace(phone) ? null : phone,
         };
 
-        var created = await users.CreateAsync(user, request.Password ?? string.Empty);
+        // Không có mật khẩu = tài khoản chỉ đăng nhập bằng provider ngoài (PLAN-012).
+        var created = request.Password is null
+            ? await users.CreateAsync(user)
+            : await users.CreateAsync(user, request.Password);
         if (!created.Succeeded)
         {
             return TenantInvitationResult.Failure(
@@ -482,10 +510,12 @@ public sealed class TenantQrInvitationService(
             return caller.UserId;
         }
 
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         return await (
             from assignment in db.PropertyManagers.AsNoTracking()
             join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
             where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                && !blockedOwners.Contains(property.OwnerId)
             orderby property.Id
             select (string?)property.OwnerId
         ).FirstOrDefaultAsync(ct);
@@ -499,10 +529,12 @@ public sealed class TenantQrInvitationService(
             return [caller.UserId];
         }
 
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         return await (
             from assignment in db.PropertyManagers.AsNoTracking()
             join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
             where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                && !blockedOwners.Contains(property.OwnerId)
             select property.OwnerId
         ).Distinct().ToListAsync(ct);
     }

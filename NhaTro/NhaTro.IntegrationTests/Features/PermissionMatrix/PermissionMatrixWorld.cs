@@ -10,6 +10,7 @@ using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Services;
@@ -158,6 +159,10 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
     // === Service factories: service mới trên DbContext của cùng một DB test ===
 
     public ApplicationDbContext NewDb() => _fixture.CreateContext();
+
+    /// <summary>Guard chạy trên DB test thật; UserManager chỉ dùng ở nhánh cascade lock.</summary>
+    public OwnerAccessGuard NewOwnerAccessGuard() =>
+        new(_fixture, null!, NullLogger<OwnerAccessGuard>.Instance);
 
     public ApplicationDbContext SharedDb => _sharedDb
         ?? throw new InvalidOperationException("Thế giới ma trận chưa khởi tạo (SQL Server không khả dụng?).");

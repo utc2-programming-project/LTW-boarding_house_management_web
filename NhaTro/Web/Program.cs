@@ -1,7 +1,9 @@
 // Điểm khởi động của web: đăng ký DI (Blazor, Identity + cookie, EF Core, dịch vụ nghiệp vụ,
 // email/SMTP, localization, rate limit), cấu hình middleware, seed vai trò/tài khoản mẫu rồi map endpoint.
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,7 @@ using Web.Configuration.Validation;
 using Web.Data;
 using Web.Data.Seeding;
 using Web.Components.Shared.Feedback;
+using Web.Endpoints.Avatars;
 using Web.Endpoints.Files;
 using Web.Endpoints.Reports;
 using Web.Endpoints.Tenants;
@@ -80,15 +83,26 @@ Directory.CreateDirectory(logDirectory);
 
 // Console + file xoay theo ngày (giữ 7 ngày). Scrubber che thuộc tính nhạy cảm (mật khẩu, token,
 // CCCD) và SafeExceptionEnricher làm sạch exception trước khi ghi để không lộ connection string/SQL.
-builder.Services.AddSerilog(config => config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
-    .Enrich.With<SensitiveDataScrubber>()
-    .Enrich.With<SafeExceptionEnricher>()
-    .WriteTo.Console(outputTemplate: LogTemplates.Console)
-    .WriteTo.File(
-        Path.Combine(logDirectory, "web-.log"),
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7,
-        outputTemplate: LogTemplates.File));
+builder.Services.AddSerilog(config =>
+{
+    config.MinimumLevel.Information().MinimumLevel.Override("Microsoft", LogEventLevel.Warning).Enrich.FromLogContext()
+        .Enrich.With<SensitiveDataScrubber>()
+        .Enrich.With<SafeExceptionEnricher>()
+        .WriteTo.Console(outputTemplate: LogTemplates.Console)
+        .WriteTo.File(
+            Path.Combine(logDirectory, "web-.log"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 7,
+            outputTemplate: LogTemplates.File);
+
+    // Mặc định log ngắn (chỉ cảnh báo/lỗi). Khi cần đo tầng đọc, bật biến môi trường
+    // NhaTro__LogSql=true rồi chạy lại để in từng câu SQL kèm thời gian thực thi.
+    if (builder.Environment.IsDevelopment()
+        && string.Equals(builder.Configuration["NhaTro:LogSql"], "true", StringComparison.OrdinalIgnoreCase))
+    {
+        config.MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Information);
+    }
+});
 
 // ── 2. Blazor Server + Identity: xác thực và cookie ────────────────────────
 builder.Services.AddMemoryCache();
@@ -105,6 +119,28 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     }).AddIdentityCookies();
+
+// PLAN-012: Google là provider tùy chọn. Thiếu ClientId/ClientSecret thì không đăng ký,
+// app vẫn boot và các nút Google tự ẩn (đọc GetExternalAuthenticationSchemesAsync).
+var googleAuth = builder.Configuration.GetSection("Authentication:Google");
+if (!string.IsNullOrEmpty(googleAuth["ClientId"]) && !string.IsNullOrEmpty(googleAuth["ClientSecret"]))
+{
+    // AddIdentityCookies() trả IdentityCookiesBuilder, không phải AuthenticationBuilder → gọi lại AddAuthentication().
+    builder.Services.AddAuthentication().AddGoogle(options =>
+    {
+        options.ClientId = googleAuth["ClientId"]!;
+        options.ClientSecret = googleAuth["ClientSecret"]!;
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        // Handler mặc định bỏ claim không có trong map; luật liên kết cần email_verified.
+        options.ClaimActions.MapJsonKey("email_verified", "email_verified");
+        // Luôn hiện màn chọn tài khoản: trình duyệt đang đăng nhập Google sẽ không tự dùng acc cũ.
+        options.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            context.Response.Redirect(QueryHelpers.AddQueryString(context.RedirectUri, "prompt", "select_account"));
+            return Task.CompletedTask;
+        };
+    });
+}
 
 // /api trả 401/403 đúng hợp đồng mục 5, không chuyển hướng về trang đăng nhập.
 builder.Services.ConfigureApplicationCookie(options =>
@@ -183,11 +219,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredUniqueChars = 1;
 
-        // Không tự khóa khi gõ sai mật khẩu (kẻ tấn công có thể khóa tài khoản chủ trọ = DoS):
-        // chống dò mật khẩu bằng LoginAttemptGuard chặn theo IP, khóa tài khoản chỉ do quản trị chủ động.
+        // Không tự khóa ở 3 lần sai đầu (kẻ tấn công có thể khóa tài khoản chủ trọ = DoS):
+        // chống dò mật khẩu bằng LoginAttemptGuard chặn theo IP; sau khi đã giải CAPTCHA,
+        // sai tiếp mới đếm vào lockout 10 lần/5 phút (khoá tạm, khác PermanentLockout).
         options.Lockout.AllowedForNewUsers = true;
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.MaxFailedAccessAttempts = 10;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 
         // Tên đăng nhập là email nên cấm trùng email.
         options.User.RequireUniqueEmail = true;
@@ -264,10 +301,18 @@ builder.Services.AddScoped<PostLoginRouter>();
 // PLAN-025: khoá lan chủ trọ + màn Admin quản lý chủ trọ.
 builder.Services.AddScoped<Web.Features.Accounts.Owners.OwnerAccessGuard>();
 builder.Services.AddScoped<Web.Features.Accounts.Owners.OwnerAdminService>();
+// PLAN-001 #10/#11: phiên đăng nhập (file JSON) + cảnh báo bảo mật best-effort.
+builder.Services.AddSingleton<Web.Features.Accounts.Sessions.UserSessionStore>();
+builder.Services.AddScoped<Web.Features.Accounts.Security.SecurityNotifier>();
 // VHT-95: hồ sơ cá nhân + quản trị tài khoản; quyền kiểm ở server.
 builder.Services.AddScoped<IAccountService, AccountService>();
+// PLAN-012: luật liên kết provider ngoài (chỉ tài khoản có sẵn, email đã xác thực).
+builder.Services.AddScoped<Web.Features.Accounts.External.ExternalLoginPolicy>();
+// PLAN-030 bổ sung: ảnh đại diện lưu server cho đồng bộ giữa các thiết bị.
+builder.Services.AddScoped<Web.Features.Accounts.Avatar.AvatarService>();
 
 builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<Web.Common.Utils.FilterUrlState>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IRoomReportService, RoomReportService>();
 builder.Services.AddScoped<ITenantReportService, TenantReportService>();
@@ -358,6 +403,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Ngưỡng đọc từ section "Security"; thiếu cấu hình thì dùng mặc định an toàn.
 var securityOptions = builder.Configuration.GetSection(SecurityOptions.SectionName).Get<SecurityOptions>()
     ?? new SecurityOptions();
+builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
 
 // Bật DPAPI mà chưa đặt đường dẫn keys là cấu hình sai: báo lỗi ngay, không âm thầm bỏ qua.
 if (securityOptions.ProtectKeysWithDpapi &&
@@ -712,6 +758,10 @@ app.UseAntiforgery();
 app.UseMiddleware<PendingVerificationMiddleware>();
 // PLAN-023: tài khoản nhiều ngữ cảnh phải chọn vai trò trước khi vào nghiệp vụ.
 app.UseMiddleware<PendingRoleMiddleware>();
+// Admin/Chủ trọ phải bật 2FA trước khi vào nghiệp vụ (Production).
+app.UseMiddleware<RequireTwoFactorMiddleware>();
+// PLAN-001 #10: phiên đã bị thu hồi thì đăng xuất ngay ở request kế tiếp.
+app.UseMiddleware<UserSessionMiddleware>();
 
 // ── 14. Endpoint ───────────────────────────────────────────────────────────
 // Đổi ngôn ngữ (VI/EN) cho bộ chọn ở topbar và trang auth: ghi cookie ".AspNetCore.Culture"
@@ -757,6 +807,8 @@ app.MapGet("/culture/current", (HttpContext http) =>
 app.MapStaticAssets();
 // Tệp dùng chung: kiểm quyền trong service, chặn Admin bằng policy "Business".
 app.MapFileEndpoints();
+// Ảnh đại diện của chính tài khoản đang đăng nhập (xem/nạp/gỡ).
+app.MapAvatarEndpoints();
 app.MapReportExportEndpoints();
 // Health live/ready (ẩn danh, chỉ trả trạng thái).
 app.MapHealthEndpoints();

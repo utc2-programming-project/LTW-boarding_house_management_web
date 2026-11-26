@@ -30,7 +30,7 @@
     margin: 0;
     font-size: 2rem;
     line-height: 2.5rem;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: -.02em;
 }
 
@@ -128,7 +128,7 @@
 .mockup-kpi-value {
     font-size: 1rem;
     line-height: 1.5rem;
-    font-weight: 700;
+    font-weight:600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -246,7 +246,7 @@
     margin: 0;
     font-size: 1.75rem;
     line-height: 2.25rem;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: -.01em;
 }
 
@@ -360,7 +360,7 @@
     margin: 0;
     font-size: 1.5rem;
     line-height: 2rem;
-    font-weight: 700;
+    font-weight:600;
     letter-spacing: -.01em;
 }
 

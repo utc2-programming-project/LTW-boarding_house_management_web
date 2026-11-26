@@ -134,7 +134,7 @@ public sealed class ContractRenewalQueueComponentTests : BunitContext
         fake.ListResult = listResult;
 
         var auth = new FixedAuthenticationProvider("chu-tro-1", Roles.ChuTro);
-        Services.AddSingleton(new ContractRenewalPageService(new P2CallerProvider(auth), fake));
+        Services.AddSingleton(new ContractRenewalPageService(new P2CallerProvider(auth, TestOwnerAccess.Create()), fake));
 
         return Render<ContractRenewalQueueView>();
     }

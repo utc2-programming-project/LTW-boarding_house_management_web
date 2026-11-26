@@ -1,6 +1,5 @@
 using Web.Features.Dashboard.Services;
 using Web.Features.Properties;
-using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Services;
 using Web.Features.Reports.DTOs;
 
@@ -29,15 +28,8 @@ public sealed class ReportsPageService(
     public async Task<IReadOnlyList<DashboardPropertyOption>> ListPropertiesAsync(CancellationToken ct = default)
     {
         var caller = await callers.GetCallerAsync();
-        var result = new List<DashboardPropertyOption>();
-        for (var page = 1; ; page++)
-        {
-            var batch = await properties.ListAsync(new PropertyFilter { Page = page, PageSize = 100 }, caller, ct);
-            result.AddRange(batch.Items.Select(p => new DashboardPropertyOption(p.Id, p.Name, p.IsActive)));
-            if (page * 100L >= batch.TotalCount) break;
-        }
-
-        return result;
+        var options = await properties.ListOptionsAsync(caller, ct);
+        return options.Select(p => new DashboardPropertyOption(p.Id, p.Name, p.IsActive)).ToList();
     }
 
     public async Task<RoomReportResult> GetRoomReportAsync(RoomReportFilter filter, CancellationToken ct = default) =>
