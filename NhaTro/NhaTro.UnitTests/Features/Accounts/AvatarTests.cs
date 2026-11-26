@@ -167,8 +167,8 @@ public class AvatarTests
         var info = await service.GetInfoAsync(UserA);
 
         Assert.NotNull(info);
-        Assert.Equal("image/jpeg", info!.Item1);
-        Assert.Equal(clock.GetUtcNow(), info.Item2);
+        Assert.Equal("image/jpeg", info!.Value.ContentType);
+        Assert.Equal(clock.GetUtcNow(), info!.Value.UpdatedAt);
     }
 
     [Fact]
