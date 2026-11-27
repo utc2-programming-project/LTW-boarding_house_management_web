@@ -1,9 +1,17 @@
+.landing-container {
+    width: 100%;
+    padding-inline: var(--space-4);
+}
+
 .landing-hero {
+    padding-block: var(--space-12) var(--space-10);
+}
+
+.hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
-    gap: var(--space-12);
-    padding: var(--space-16) var(--space-8) var(--space-12);
+    gap: var(--space-10);
 }
 
 .hero-badge {
@@ -28,14 +36,14 @@
 
 .hero-copy h1 {
     margin: 0;
-    font-size: 2rem;
-    line-height: 2.5rem;
-    font-weight:600;
+    font-size: clamp(2rem, 3.6vw, 3.25rem);
+    line-height: 1.08;
+    font-weight: 600;
     letter-spacing: -.02em;
 }
 
 .hero-description {
-    margin: var(--space-4) 0 0;
+    margin: var(--space-5) 0 0;
     max-width: 34rem;
     color: var(--text-secondary);
     font-size: 1rem;
@@ -49,9 +57,10 @@
     margin-top: var(--space-8);
 }
 
-.hero-actions .btn {
-    min-height: 44px;
-    padding: 0 var(--space-5);
+.hero-actions .btn,
+.cta-actions .btn {
+    min-height: 48px;
+    padding: 0 var(--space-6);
 }
 
 .hero-actions ::deep .lucide-icon {
@@ -81,6 +90,7 @@
 
 .mockup-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
@@ -98,7 +108,7 @@
     color: var(--text-muted);
     font-size: .75rem;
     line-height: 1.125rem;
-    white-space: nowrap;
+    text-align: right;
 }
 
 .mockup-kpis {
@@ -128,7 +138,7 @@
 .mockup-kpi-value {
     font-size: 1rem;
     line-height: 1.5rem;
-    font-weight:600;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -206,7 +216,7 @@
 
 .mockup-status {
     display: inline-flex;
-    padding: 2px 8px;
+    padding: var(--space-1) var(--space-2);
     border: 1px solid;
     border-radius: var(--radius-pill);
     font-size: .75rem;
@@ -233,54 +243,103 @@
 }
 
 .landing-section {
-    padding: var(--space-12) var(--space-8);
+    padding-block: var(--space-16);
     scroll-margin-top: 88px;
 }
 
 .section-head {
-    max-width: 42rem;
+    max-width: 44rem;
     margin-bottom: var(--space-8);
 }
 
-.section-head h2 {
+.section-head h2,
+.cta-copy h2 {
     margin: 0;
-    font-size: 1.75rem;
-    line-height: 2.25rem;
-    font-weight:600;
+    font-size: 2rem;
+    line-height: 2.5rem;
+    font-weight: 600;
     letter-spacing: -.01em;
 }
 
-.section-head p {
+.section-head p,
+.cta-copy p {
     margin: var(--space-2) 0 0;
     color: var(--text-secondary);
-    font-size: .875rem;
-    line-height: 1.375rem;
+    font-size: .9375rem;
+    line-height: 1.5rem;
 }
 
+.how-steps,
 .feature-grid,
 .role-grid {
     display: grid;
-    gap: var(--space-4);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.feature-grid {
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+.how-steps {
+    margin-bottom: var(--space-8);
 }
 
-.role-grid {
-    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-}
-
+.how-step,
 .feature-card,
 .role-card {
+    display: flex;
+    flex-direction: column;
     padding: var(--space-6);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--surface);
     box-shadow: var(--shadow-card);
+    transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+
+.how-step:hover,
+.feature-card:hover,
+.role-card:hover {
+    border-color: var(--accent-border);
+    box-shadow: var(--shadow-popover);
+}
+
+.how-step-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.how-step-number {
+    display: grid;
+    flex: 0 0 32px;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: .875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+}
+
+.how-step-title,
+.feature-card h3,
+.role-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+}
+
+.how-step-description,
+.feature-card p,
+.role-description {
+    margin: var(--space-3) 0 0;
+    color: var(--text-secondary);
+    font-size: .875rem;
+    line-height: 1.375rem;
 }
 
 .feature-icon,
@@ -289,7 +348,7 @@
     place-items: center;
     width: 40px;
     height: 40px;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
     border-radius: var(--radius-control);
     background: var(--accent-soft);
     color: var(--accent-text);
@@ -299,22 +358,6 @@
 .role-icon ::deep .lucide-icon {
     width: 20px;
     height: 20px;
-}
-
-.feature-card h3,
-.role-card h3 {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.5rem;
-    font-weight: 600;
-}
-
-.feature-card p,
-.role-description {
-    margin: var(--space-2) 0 0;
-    color: var(--text-secondary);
-    font-size: .875rem;
-    line-height: 1.375rem;
 }
 
 .role-points {
@@ -339,8 +382,70 @@
     flex: 0 0 16px;
     width: 16px;
     height: 16px;
-    margin-top: 3px;
+    margin-top: var(--space-1);
     color: var(--success-text);
+}
+
+.faq-list {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.faq-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-item summary:hover {
+    background: var(--hover-bg);
+}
+
+.faq-item summary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+    border-radius: var(--radius-card);
+}
+
+.faq-item p {
+    margin: 0;
+    padding: 0 var(--space-5) var(--space-5);
+    color: var(--text-secondary);
+    font-size: .875rem;
+    line-height: 1.375rem;
+}
+
+.faq-item ::deep .lucide-icon {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--accent-text);
+    transition: rotate 150ms var(--ease);
+}
+
+.faq-item[open] ::deep .lucide-icon {
+    rotate: 180deg;
+}
+
+.landing-cta-section {
+    padding-block: var(--space-8) var(--space-16);
+    scroll-margin-top: 88px;
 }
 
 .landing-cta {
@@ -349,27 +454,14 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-6);
-    margin: 0 0 var(--space-12);
     padding: var(--space-8);
     border: 1px solid var(--accent-border);
     border-radius: var(--radius-card);
     background: var(--accent-soft);
 }
 
-.cta-copy h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    line-height: 2rem;
-    font-weight:600;
-    letter-spacing: -.01em;
-}
-
-.cta-copy p {
-    max-width: 36rem;
-    margin: var(--space-2) 0 0;
-    color: var(--text-secondary);
-    font-size: .875rem;
-    line-height: 1.375rem;
+.cta-copy {
+    max-width: 44rem;
 }
 
 .cta-actions {
@@ -378,44 +470,65 @@
     gap: var(--space-3);
 }
 
+@media (min-width: 768px) {
+    .landing-container {
+        padding-inline: var(--space-6);
+    }
+}
+
+@media (min-width: 1200px) {
+    .landing-container {
+        padding-inline: var(--space-8);
+    }
+}
+
+@media (max-width: 1199px) {
+    .how-steps,
+    .feature-grid,
+    .role-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 1023px) {
-    .landing-hero {
+    .hero-grid {
         grid-template-columns: minmax(0, 1fr);
         gap: var(--space-8);
-        padding: var(--space-12) var(--space-6) var(--space-8);
     }
 
     .hero-description {
         max-width: none;
     }
 
-    .feature-grid,
-    .role-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .landing-hero {
+        padding-block: var(--space-10) var(--space-8);
     }
 
     .landing-section {
-        padding: var(--space-10) var(--space-6);
+        padding-block: var(--space-12);
     }
 
-    .landing-cta {
-        margin: 0 var(--space-6) var(--space-10);
+    .landing-cta-section {
+        padding-block: var(--space-6) var(--space-12);
     }
 }
 
 @media (max-width: 767px) {
-    .landing-hero {
-        gap: var(--space-6);
-        padding: var(--space-10) var(--space-4) var(--space-6);
+    .how-steps,
+    .feature-grid,
+    .role-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-3);
     }
 
-    .hero-copy h1 {
-        font-size: 1.75rem;
-        line-height: 2.25rem;
+    .hero-actions,
+    .cta-actions {
+        width: 100%;
     }
 
-    .hero-actions {
-        margin-top: var(--space-6);
+    .hero-actions .btn,
+    .cta-actions .btn {
+        flex: 1 1 auto;
     }
 
     .dashboard-mockup {
@@ -426,41 +539,34 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .mockup-sample {
+        text-align: left;
+    }
+
     .mockup-table th:last-child,
     .mockup-table td:last-child {
         text-align: left;
     }
 
     .landing-section {
-        padding: var(--space-8) var(--space-4);
+        padding-block: var(--space-10);
         scroll-margin-top: 120px;
     }
 
-    .section-head {
-        margin-bottom: var(--space-6);
+    .section-head h2,
+    .cta-copy h2 {
+        font-size: 1.75rem;
+        line-height: 2.25rem;
     }
 
-    .section-head h2 {
-        font-size: 1.5rem;
-        line-height: 2rem;
-    }
-
-    .feature-grid,
-    .role-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: var(--space-3);
-    }
-
+    .how-step,
     .feature-card,
     .role-card {
-        padding: var(--space-4);
+        padding: var(--space-5);
     }
 
     .landing-cta {
-        flex-direction: column;
-        align-items: flex-start;
-        margin: 0 var(--space-4) var(--space-8);
-        padding: var(--space-6) var(--space-4);
+        padding: var(--space-6) var(--space-5);
     }
 }
 
