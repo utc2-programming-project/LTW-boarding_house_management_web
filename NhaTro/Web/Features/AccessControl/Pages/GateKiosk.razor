@@ -1,8 +1,10 @@
 @page "/gate/kiosk"
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@implements IAsyncDisposable
 @inject GatePageService Session
 @inject IStringLocalizer<AccessControlResource> L
+@inject IJSRuntime JS
 
 <PageTitle>@L["PageTitleKiosk"]</PageTitle>
 
@@ -51,10 +53,27 @@
         <div class="gate-form-card">
             <h2>@L["KioskTitle"]</h2>
             <div class="gate-form-grid">
-                <label class="gate-form-wide">
-                    @L["Token"]
-                    <input class="input gate-token-input" @bind="_token" autocomplete="off" />
-                </label>
+                <div class="gate-form-wide">
+                    <label for="kiosk-token">@L["Token"]</label>
+                    <div class="gate-token-row">
+                        <input id="kiosk-token" class="input gate-token-input" @bind="_token" autocomplete="off" />
+                        <button type="button" class="btn btn-secondary" @onclick="ToggleScanAsync">
+                            <LucideIcon Name="@(_scanning ? "x" : "qr-code")" />
+                            @(_scanning ? L["ScanQrStop"] : L["ScanQr"])
+                        </button>
+                    </div>
+                    @if (_scanning)
+                    {
+                        <div class="gate-scan-panel">
+                            <video id="kiosk-scan-video" class="gate-scan-video" autoplay playsinline muted></video>
+                            <p class="gate-muted">@L["ScanQrHint"]</p>
+                        </div>
+                    }
+                    @if (_scanStatus is not null)
+                    {
+                        <p class="gate-muted" role="status">@_scanStatus</p>
+                    }
+                </div>
                 <label>
                     @L["Direction"]
                     <select class="input" @bind="_direction">
@@ -103,6 +122,59 @@
     }
 </div>
 
+@if (_overlayVisible && _result is not null)
+{
+    <div class="gate-overlay gate-overlay--@OverlayVariant" role="dialog" aria-modal="true" aria-label="@OverlayTitle"
+         @onclick="DismissOverlay">
+        <div class="gate-fx" aria-hidden="true">
+            <div class="gate-halo">
+                <span class="gate-orbit"></span>
+                <span class="gate-orbit gate-orbit--dash"></span>
+                <span class="gate-orbit gate-orbit--outer"></span>
+                <span class="gate-core"></span>
+                <span class="gate-ring"></span>
+                <span class="gate-ring gate-ring--2"></span>
+                <span class="gate-ring gate-ring--3"></span>
+            </div>
+            <div class="gate-motes">
+                @for (var i = 0; i < MoteCount; i++)
+                {
+                    if (i % 4 == 0)
+                    {
+                        <span class="gate-mote gate-mote--star" style="@ParticleVars(i)">@(i % 8 == 0 ? "✦" : "✧")</span>
+                    }
+                    else
+                    {
+                        <span class="gate-mote" style="@ParticleVars(i)"></span>
+                    }
+                }
+            </div>
+        </div>
+        <div class="gate-pop" @onclick:stopPropagation="true">
+            <div class="gate-sigil">@OverlaySigil</div>
+            <p class="gate-eyebrow">@OverlayEyebrow</p>
+            <h2 class="gate-title">@OverlayTitle</h2>
+            @if (_result.Succeeded)
+            {
+                <div class="gate-rule"></div>
+                @if (!string.IsNullOrWhiteSpace(_result.SubjectName))
+                {
+                    <p class="gate-who">@_result.SubjectName</p>
+                }
+                <p class="gate-meta">@_resultAt.ToString("HH:mm · dd/MM/yyyy")</p>
+            }
+            else
+            {
+                <p class="gate-reason">@_result.Message</p>
+            }
+            <div class="gate-foot">
+                <div class="gate-progress"><span></span></div>
+                <button type="button" class="gate-close" @onclick="DismissOverlay">@L["Close"]</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private IReadOnlyList<GatePropertyOption> _properties = [];
     private IReadOnlyList<GateDeviceDto> _devices = [];
@@ -116,8 +188,106 @@
     private GateVerifyResult? _manualResult;
     private bool _loading = true;
     private string? _error;
+    private bool _scanning;
+    private bool _scanStartPending;
+    private string? _scanStatus;
+    private bool _overlayVisible;
+    private GateDirection _lastDirection = GateDirection.In;
+    private DateTimeOffset _resultAt = DateTimeOffset.Now;
+    private CancellationTokenSource? _overlayCts;
+    private DotNetObjectReference<GateKiosk>? _scanReference;
 
     protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scanStartPending) return;
+        _scanStartPending = false;
+        try
+        {
+            _scanReference ??= DotNetObjectReference.Create(this);
+            // Camera chỉ chạy trong secure context (HTTPS hoặc localhost).
+            var result = await JS.InvokeAsync<string>("vhtQrScan.start", "kiosk-scan-video", _scanReference);
+            if (result == "started")
+            {
+                _scanStatus = null;
+            }
+            else
+            {
+                _scanning = false;
+                _scanStatus = result switch
+                {
+                    "unsupported" => L["ScanQrUnsupported"],
+                    "camera:NotAllowedError" or "camera:SecurityError" => L["ScanQrDenied"],
+                    _ => $"{L["ScanQrFailed"]} ({result})",
+                };
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _scanning = false;
+            _scanStatus = L["ScanQrFailed"];
+        }
+
+        // OnAfterRenderAsync không tự render lại; thiếu dòng này UI đứng ở "Đang mở camera…".
+        StateHasChanged();
+    }
+
+    private async Task ToggleScanAsync()
+    {
+        if (_scanning)
+        {
+            await StopScanAsync();
+            return;
+        }
+
+        // Mở camera mới thì đóng thông báo cũ nếu còn.
+        DismissOverlay();
+        _scanStatus = L["ScanQrOpening"];
+        _scanning = true;
+        _scanStartPending = true;
+    }
+
+    private async Task StopScanAsync()
+    {
+        _scanning = false;
+        try
+        {
+            await JS.InvokeVoidAsync("vhtQrScan.stop");
+        }
+        catch (JSException)
+        {
+        }
+    }
+
+    [JSInvokable]
+    public Task OnQrDetected(string token) =>
+        InvokeAsync(async () =>
+        {
+            // Quét xong kiểm tra luôn đúng luồng kiosk mức A: nhận diện -> server kiểm tra.
+            _token = token.Trim();
+            _scanning = false;
+            _method = GateMethod.Qr;
+            _scanStatus = null;
+            StateHasChanged();
+            await VerifyAsync();
+            // VerifyAsync xóa _token; phải render lại để ô mã trống và nút khóa đúng trạng thái.
+            StateHasChanged();
+        });
+
+    public async ValueTask DisposeAsync()
+    {
+        _overlayCts?.Cancel();
+        _overlayCts?.Dispose();
+        try
+        {
+            await JS.InvokeVoidAsync("vhtQrScan.stop");
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException)
+        {
+        }
+        _scanReference?.Dispose();
+    }
 
     private async Task LoadAsync()
     {
@@ -164,20 +334,100 @@
     {
         try
         {
+            var direction = _direction;
             _result = await Session.VerifyAsync(new GateVerifyRequest
             {
                 PropertyId = _propertyId,
                 GateDeviceId = _deviceId == 0 ? null : _deviceId,
                 Token = _token,
                 Method = _method,
-                Direction = _direction,
+                Direction = direction,
             });
             _token = string.Empty;
+            _lastDirection = direction;
+            ShowOverlay();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _error = Resolve(ex);
         }
+    }
+
+    private string OverlayVariant => _result is not { Succeeded: true }
+        ? "deny"
+        : _lastDirection == GateDirection.Out ? "out" : "in";
+
+    private string OverlaySigil => OverlayVariant switch
+    {
+        "deny" => "✕",
+        "out" => "☾",
+        _ => "⌂",
+    };
+
+    private string OverlayEyebrow => L[OverlayVariant switch
+    {
+        "deny" => "KioskDenyEyebrow",
+        "out" => "KioskOutEyebrow",
+        _ => "KioskInEyebrow",
+    }];
+
+    private string OverlayTitle => L[OverlayVariant switch
+    {
+        "deny" => "KioskDenyTitle",
+        "out" => "KioskOutTitle",
+        _ => "KioskInTitle",
+    }];
+
+    private int MoteCount => OverlayVariant switch
+    {
+        "deny" => 18,
+        "out" => 20,
+        _ => 26,
+    };
+
+    private void ShowOverlay()
+    {
+        _overlayCts?.Cancel();
+        _overlayCts?.Dispose();
+        _overlayCts = new CancellationTokenSource();
+        _overlayVisible = true;
+        _resultAt = DateTimeOffset.Now;
+        _ = CloseOverlayAfterDelayAsync(_overlayCts.Token);
+    }
+
+    private async Task CloseOverlayAfterDelayAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            await InvokeAsync(() =>
+            {
+                if (ct.IsCancellationRequested) return;
+                _overlayVisible = false;
+                StateHasChanged();
+            });
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void DismissOverlay()
+    {
+        _overlayCts?.Cancel();
+        _overlayVisible = false;
+    }
+
+    // Vị trí hạt sáng cố định theo chỉ số để không nhảy mỗi lần render.
+    private static string ParticleVars(int i)
+    {
+        var dx = (i * 73 % 281) - 140;
+        var dy = -120 - (i * 53 % 210);
+        var dur = 4.5 + (i % 5) * 0.5;
+        var delay = (i % 8) * 0.35;
+        var size = 3 + (i % 4);
+        return FormattableString.Invariant(
+            $"--dx:{dx}px;--dy:{dy}px;--dur:{dur:0.0}s;--d:{delay:0.00}s;width:{size}px;height:{size}px;");
     }
 
     private async Task ManualOpenAsync()

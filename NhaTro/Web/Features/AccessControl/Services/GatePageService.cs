@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Web.Data;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Enums;
 using Web.Features.Accounts;
@@ -16,6 +18,7 @@ public sealed class GatePageService(
     IGatePassInviteService invites,
     IGatePolicyService policies,
     IGateAccessService access,
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IStayReportService stays,
     IBiometricEnrollmentService biometrics,
     IGateTokenService tokens,
@@ -70,6 +73,30 @@ public sealed class GatePageService(
         }
 
         return tokens.IssueResidentToken(caller.UserId, propertyId, clock.GetUtcNow());
+    }
+
+    /// <summary>
+    /// Trạng thái trong/ngoài của chính khách thuê: lượt GateLog thành công mới nhất.
+    /// Độc lập với việc chính sách anti-passback có bật hay không (chỉ để hiển thị).
+    /// </summary>
+    public async Task<ResidentGateStatusDto> ResidentStatusAsync()
+    {
+        var caller = await CallerAsync();
+        if (!caller.IsKhachThue)
+        {
+            throw new GatePageException(GateErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync();
+        var last = await db.GateLogs.AsNoTracking()
+            .Where(log => log.UserId == caller.UserId && log.IsSuccess)
+            .OrderByDescending(log => log.OccurredAt)
+            .Select(log => new { log.Direction, log.OccurredAt })
+            .FirstOrDefaultAsync();
+
+        return last is null
+            ? new ResidentGateStatusDto(false, null, null)
+            : new ResidentGateStatusDto(last.Direction == GateDirection.In, last.OccurredAt, last.Direction);
     }
 
     public async Task<IReadOnlyList<GateRoomOption>> RoomsAsync() => await passes.RoomsAsync(await CallerAsync());

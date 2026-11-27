@@ -257,6 +257,58 @@
     font-size: 1.05rem;
 }
 
+/* Quét QR bằng camera điện thoại cho kiosk. */
+.gate-token-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.gate-token-row .input {
+    flex: 1;
+    min-width: 0;
+}
+
+.gate-token-row .btn {
+    white-space: nowrap;
+}
+
+/* Màn hẹp: nút quét xuống dòng dưới để ô mã không bị bóp. */
+@media (max-width: 767.98px) {
+    .gate-token-row {
+        flex-wrap: wrap;
+    }
+
+    .gate-token-row .input,
+    .gate-token-row .btn {
+        width: 100%;
+    }
+}
+
+/* Khung kết quả kiểm tra: full chiều ngang và tách khỏi hàng nút. */
+.gate-form-card > .gate-success,
+.gate-form-card > .gate-error {
+    width: 100%;
+    margin: 12px 0 0;
+    box-sizing: border-box;
+}
+
+.gate-scan-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.gate-scan-video {
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    background: #000;
+    object-fit: cover;
+}
+
 .gate-notice,
 .gate-success,
 .gate-error {
@@ -404,4 +456,449 @@
 /* Neo form cấp phiếu: bù chiều cao topbar khi cuộn tới. */
 .gate-form-anchor {
     scroll-margin-top: calc(var(--topbar-height) + 16px);
+}
+
+/* ── Kiosk: lớp phủ màu chủ đạo sau khi kiểm tra (theo mockup gate-kiosk-feedback) ── */
+.gate-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    color: var(--gate-accent);
+    backdrop-filter: blur(4px) saturate(115%);
+    -webkit-backdrop-filter: blur(4px) saturate(115%);
+    animation: gateOverlayIn .35s ease-out both;
+}
+
+.gate-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(75% 58% at 50% 44%, transparent 38%, rgba(0, 0, 0, .42) 100%);
+}
+
+.gate-overlay--in {
+    --gate-accent: #F6C56B;
+    --gate-accent-2: #FFE9B8;
+    --gate-accent-deep: #B87A22;
+    --gate-ink: #FFF3D9;
+    --gate-glow: rgba(255, 186, 80, .55);
+    background: radial-gradient(120% 85% at 50% 36%,
+        rgba(122, 72, 16, .93) 0%, rgba(48, 28, 8, .975) 42%, rgba(10, 6, 3, .995) 82%);
+}
+
+.gate-overlay--out {
+    --gate-accent: #FFC078;
+    --gate-accent-2: #FFE6C2;
+    --gate-accent-deep: #C4673A;
+    --gate-ink: #FFF0E3;
+    --gate-glow: rgba(255, 140, 80, .5);
+    background: linear-gradient(180deg,
+        rgba(30, 17, 42, .97) 0%, rgba(84, 40, 56, .965) 38%,
+        rgba(178, 84, 56, .95) 70%, rgba(248, 158, 86, .92) 100%);
+}
+
+.gate-overlay--deny {
+    --gate-accent: #FF6F63;
+    --gate-accent-2: #FFC0B7;
+    --gate-accent-deep: #A51E1E;
+    --gate-ink: #FFE9E5;
+    --gate-glow: rgba(255, 70, 60, .5);
+    background: radial-gradient(120% 90% at 50% 38%,
+        rgba(138, 18, 18, .96) 0%, rgba(50, 6, 6, .98) 55%, rgba(12, 2, 2, .995) 100%);
+}
+
+.gate-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.gate-halo {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 0;
+    height: 0;
+    color: currentColor;
+}
+
+.gate-orbit {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 330px;
+    height: 330px;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+    box-shadow: inset 0 0 60px color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.gate-orbit--dash {
+    width: 246px;
+    height: 246px;
+    border-style: dashed;
+    border-color: color-mix(in srgb, currentColor 22%, transparent);
+    animation: gateSpin 46s linear infinite;
+}
+
+.gate-orbit--dash::before,
+.gate-orbit--dash::after {
+    content: "◆";
+    position: absolute;
+    left: 50%;
+    top: -7px;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: currentColor;
+}
+
+.gate-orbit--dash::after {
+    top: auto;
+    bottom: -7px;
+}
+
+.gate-orbit--outer {
+    width: 430px;
+    height: 430px;
+    border-color: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.gate-core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 250px;
+    height: 250px;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, color-mix(in srgb, currentColor 20%, transparent), transparent 66%);
+    filter: blur(12px);
+}
+
+.gate-ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210px;
+    height: 210px;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    border: 1.5px solid currentColor;
+    opacity: 0;
+    animation: gateRipple 3.4s ease-out infinite;
+}
+
+.gate-ring--2 {
+    animation-delay: .6s;
+}
+
+.gate-ring--3 {
+    animation-delay: 1.2s;
+}
+
+.gate-motes {
+    position: absolute;
+    inset: 0;
+}
+
+.gate-mote {
+    position: absolute;
+    left: 50%;
+    top: 58%;
+    opacity: 0;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    animation: gateDrift var(--dur, 5s) ease-out infinite;
+    animation-delay: var(--d, 0s);
+    will-change: transform, opacity;
+}
+
+.gate-mote--star {
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 16px;
+    line-height: 1;
+    text-shadow: 0 0 12px currentColor;
+}
+
+.gate-pop {
+    position: relative;
+    z-index: 2;
+    width: min(320px, calc(100vw - 40px));
+    padding: 6px 18px;
+    text-align: center;
+    color: var(--gate-ink);
+    cursor: default;
+    animation: gatePop .55s cubic-bezier(.2, .9, .3, 1.12) both;
+}
+
+.gate-sigil {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 18px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--gate-accent-2);
+    border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
+    background: radial-gradient(circle, color-mix(in srgb, currentColor 16%, transparent), transparent 72%);
+    box-shadow: 0 0 30px var(--gate-glow), inset 0 0 18px color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.gate-sigil::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 999px;
+    border: 1px dashed color-mix(in srgb, currentColor 30%, transparent);
+    animation: gateSpinSigil 22s linear infinite;
+}
+
+.gate-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    font-size: .65625rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--gate-accent);
+    opacity: .85;
+}
+
+.gate-eyebrow::before,
+.gate-eyebrow::after {
+    content: "";
+    width: 34px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, currentColor);
+    opacity: .7;
+}
+
+.gate-eyebrow::after {
+    background: linear-gradient(90deg, currentColor, transparent);
+}
+
+.gate-title {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.75rem, 8vw, 2.125rem);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: .01em;
+    background: linear-gradient(180deg, var(--gate-accent-2) 0%, var(--gate-accent) 58%, var(--gate-accent-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 2px 16px var(--gate-glow));
+}
+
+.gate-rule {
+    width: 44px;
+    height: 1px;
+    margin: 16px auto 13px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: .55;
+}
+
+.gate-who {
+    margin: 0;
+    font-size: .9375rem;
+    font-weight: 600;
+    color: var(--gate-ink);
+    letter-spacing: .01em;
+}
+
+.gate-meta {
+    margin: 4px 0 0;
+    font-size: .71875rem;
+    color: var(--gate-ink);
+    opacity: .6;
+    letter-spacing: .05em;
+}
+
+.gate-reason {
+    margin: 15px auto 0;
+    max-width: 240px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: .8125rem;
+    color: var(--gate-ink);
+    background: rgba(0, 0, 0, .22);
+    border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.gate-foot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.gate-progress {
+    width: 110px;
+    height: 2.5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .2);
+    overflow: hidden;
+}
+
+.gate-progress > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: currentColor;
+    opacity: .95;
+    animation: gateShrink 2s linear both;
+}
+
+.gate-close {
+    min-height: 34px;
+    padding: 0 24px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
+    background: rgba(0, 0, 0, .16);
+    color: var(--gate-ink);
+    font: 600 .78125rem var(--font-family, sans-serif);
+    cursor: pointer;
+}
+
+.gate-close:hover {
+    background: rgba(0, 0, 0, .3);
+}
+
+@keyframes gateOverlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes gateSpin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes gateSpinSigil {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes gateRipple {
+    0% { transform: translate(-50%, -50%) scale(.35); opacity: .5; }
+    70% { opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
+}
+
+@keyframes gateDrift {
+    0% { transform: translate(-50%, -50%) translate(0, 0) scale(.3); opacity: 0; }
+    18% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(var(--s, 1)); opacity: 0; }
+}
+
+@keyframes gatePop {
+    from { transform: scale(.94) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes gateShrink {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gate-overlay,
+    .gate-pop,
+    .gate-mote,
+    .gate-ring,
+    .gate-orbit--dash,
+    .gate-sigil::before,
+    .gate-progress > span {
+        animation: none;
+    }
+
+    .gate-mote {
+        opacity: .7;
+    }
+}
+
+/* ── Khách thuê: thẻ trạng thái trong/ngoài ── */
+.gate-resident-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+.gate-resident-status--inside {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+}
+
+.gate-resident-status__dot {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--text-muted);
+}
+
+.gate-resident-status--inside .gate-resident-status__dot {
+    background: var(--success-text);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--success-text) 22%, transparent);
+}
+
+.gate-resident-status__txt {
+    min-width: 0;
+}
+
+.gate-resident-status__txt b {
+    display: block;
+    font-size: .9375rem;
+    color: var(--text-primary);
+}
+
+.gate-resident-status__txt span {
+    color: var(--text-muted);
+    font-size: .78125rem;
+}
+
+.gate-resident-status__pill {
+    margin-left: auto;
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 600;
+    background: var(--neutral-border, var(--border));
+    color: var(--text-secondary);
+}
+
+.gate-resident-status--inside .gate-resident-status__pill {
+    background: var(--success-text);
+    color: #fff;
+}
+
+@media (max-width: 480px) {
+    .gate-resident-status {
+        flex-wrap: wrap;
+    }
+
+    .gate-resident-status__pill {
+        margin-left: 24px;
+    }
 }
