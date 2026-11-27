@@ -71,4 +71,11 @@
 <data name="IncidentStatusTitle" xml:space="preserve"><value>Sự cố theo trạng thái</value></data>
 <data name="RevenueStacked" xml:space="preserve"><value>Cột chồng thu/nợ</value></data>
 <data name="ViewNumberTable" xml:space="preserve"><value>Xem bảng số liệu</value></data>
+<data name="VehicleActive" xml:space="preserve"><value>Xe đang gửi</value></data>
+<data name="VehicleBreakdown" xml:space="preserve"><value>Điện {0} · Số {1} · Tay ga {2}</value></data>
+<data name="VehicleZoneFill" xml:space="preserve"><value>Lấp đầy khu đỗ xe</value></data>
+<data name="VehicleZoneFillNote" xml:space="preserve"><value>Chỗ đã dùng trên tổng sức chứa các khu đang hoạt động</value></data>
+<data name="VehicleParkingRevenue" xml:space="preserve"><value>Phí gửi xe tháng này</value></data>
+<data name="VehicleParkingRevenueNote" xml:space="preserve"><value>Doanh thu phí gửi xe của tháng hiện tại</value></data>
+<data name="VehiclesDenied" xml:space="preserve"><value>Bạn không có quyền xem thống kê xe</value></data>
 </root>

@@ -15,12 +15,16 @@
 @using Web.Features.Invoices.DTOs
 @using Web.Features.Invoices.Enums
 @using Web.Features.Invoices.Services
+@using Web.Features.Vehicles.DTOs
+@using Web.Features.Vehicles.Enums
+@using Web.Features.Vehicles.Services
 @using Web.Infrastructure.Time
 @using Web.Components.Shared.Feedback
 @using Web.Components.Shared.Dialogs
 @inject ContractPageService Contracts
 @inject IContractDepositPaymentService DepositPayments
 @inject IInvoiceService InvoiceService
+@inject IVehicleService Vehicles
 @inject P2CallerProvider Callers
 @inject IStringLocalizer<ContractResources> L
 @inject ToastService Toasts
@@ -287,7 +291,8 @@
 @if (_contract is not null)
 {
     <ContractLifecycleModal Visible="_lifecycleOpen" IsBusy="_lifecycleBusy" IsRenewal="_lifecycleIsRenewal"
-                           EndDate="_contract.EndDate" OnClose="CloseLifecycle" OnConfirm="ConfirmLifecycleAsync" />
+                           EndDate="_contract.EndDate" ActiveVehicleLabels="_liquidateVehicleLabels"
+                           OnClose="CloseLifecycle" OnConfirm="ConfirmLifecycleAsync" />
 }
 <FeatureDialog Visible="_depositOpen" Title="@L["ContractDepositUpdateTitle"]" CloseLabel="@L["ContractCloseAction"]" Busy="_depositBusy" OnClose="CloseDeposit">
     <p>@L["ContractDepositUpdateDescription"]</p>
@@ -337,6 +342,7 @@
         : $"/invoices?contractId={_contract.ContractId}";
     private bool _loading = true, _canApprove, _canManage, _decisionOpen, _decisionBusy;
     private bool _lifecycleOpen, _lifecycleBusy, _lifecycleIsRenewal;
+    private IReadOnlyList<string>? _liquidateVehicleLabels;
     private bool _depositOpen, _depositBusy;
     private bool _receiveDepositOpen, _receiveDepositBusy;
     private string? _receiveDepositError;
@@ -574,7 +580,30 @@
         catch (Exception ex) { Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]); }
         finally { _decisionBusy = false; }
     }
-    private void OpenLifecycle(bool isRenewal) { _lifecycleIsRenewal = isRenewal; _lifecycleOpen = true; }
+    private async Task OpenLifecycle(bool isRenewal)
+    {
+        _lifecycleIsRenewal = isRenewal;
+        _liquidateVehicleLabels = null;
+        if (!isRenewal)
+        {
+            // Cho người dùng thấy rõ xe nào sẽ bị ngừng gửi trước khi xác nhận thanh lý.
+            try
+            {
+                var result = await Vehicles.ListAsync(
+                    new VehicleFilter { ContractId = ContractId, Status = VehicleStatus.Active },
+                    await Callers.GetCallerAsync());
+                _liquidateVehicleLabels = result.Items
+                    .Select(v => $"{v.PlateNumber} · {v.RoomCode}")
+                    .ToList();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _liquidateVehicleLabels = null;
+            }
+        }
+
+        _lifecycleOpen = true;
+    }
     private void OpenDeposit() { _depositAmount = _contract?.DepositAmount ?? 0m; _depositInput = MoneyFormatter.Format(_depositAmount); _depositError = null; _depositOpen = true; }
     private Task CloseDeposit() { if (!_depositBusy) _depositOpen = false; return Task.CompletedTask; }
     private async Task SaveDepositAsync()

@@ -1,0 +1,524 @@
+@page "/vehicles/zones"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject NavigationManager Nav
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+
+<PageTitle>@L["PageTitleZones"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleZones"]" HelpText="@L["SubtitleZones"]">
+        <Actions>
+            @if (_isOwner && _setting is { EnableParkingZones: true })
+            {
+                <button type="button" class="btn btn-primary" @onclick="OpenCreateZone">
+                    <LucideIcon Name="plus" />
+                    <span>@L["AddZoneBtn"]</span>
+                </button>
+            }
+        </Actions>
+    </PageHeading>
+
+    <VehicleNavTabs ActiveTab="zones"
+                    EnableParkingZones="@(_setting?.EnableParkingZones ?? false)"
+                    IsOwner="@_isOwner"
+                    PropertyId="@_propertyId"
+                    Properties="@_properties"
+                    OnPropertyChanged="ChangePropertyByIdAsync" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_properties.Count == 0)
+    {
+        <EmptyStateCard Title="@L["PropertyNotFound"]" Description="@L["ZonesDisabledDesc"]" />
+    }
+    else
+    {
+        <div class="vehicle-slot-legend">
+            <span class="vehicle-slot-legend__item">
+                <i class="vehicle-slot-legend__dot vehicle-slot-legend__dot--available"></i>
+                <span>@L["Available"]</span>
+            </span>
+            <span class="vehicle-slot-legend__item">
+                <i class="vehicle-slot-legend__dot vehicle-slot-legend__dot--occupied"></i>
+                <span>@L["Occupied"]</span>
+            </span>
+            <span class="vehicle-slot-legend__item">
+                <i class="vehicle-slot-legend__dot vehicle-slot-legend__dot--maintenance"></i>
+                <span>@L["Maintenance"] @L["MaintenanceToggleHint"]</span>
+            </span>
+        </div>
+
+        @if (_zones.Count == 0)
+        {
+            <EmptyStateCard Title="@L["ZonesEmptyTitle"]"
+                            Description="@L["ZonesEmptyDesc"]">
+                @if (_isOwner)
+                {
+                    <button type="button" class="btn btn-primary" @onclick="OpenCreateZone">
+                        <LucideIcon Name="plus" /> @L["AddZoneBtn"]
+                    </button>
+                }
+            </EmptyStateCard>
+        }
+        else
+        {
+            <div class="vehicle-zone-grid">
+                @foreach (var zone in _zones)
+                {
+                    <section class="vehicle-zone-card">
+                        <div class="vehicle-zone-card__head">
+                            <div>
+                                <div class="vehicle-zone-card__title">
+                                    <h3>@zone.Name</h3>
+                                    <StatusBadge Text="@(zone.IsIndoor ? L["IndoorZone"].Value : L["OutdoorZone"].Value)"
+                                                 Tone="@(zone.IsIndoor ? BadgeTone.Info : BadgeTone.Success)" />
+                                    @if (zone.IsFull)
+                                    {
+                                        <StatusBadge Text="@L["ZoneFullBadge"]" Tone="BadgeTone.Error" />
+                                    }
+                                    else if (zone.IsNearFull)
+                                    {
+                                        <StatusBadge Text="@L["ZoneNearFullBadge"]" Tone="BadgeTone.Warning" />
+                                    }
+                                </div>
+                                <div class="vehicle-zone-card__meta">
+                                    <span>@FormatAllowedTypes(zone.AllowedVehicleTypes)</span>
+                                    <span>·</span>
+                                    <span>@(zone.IsFree ? L["ZoneFree"].Value : (zone.OverrideMonthlyFee.HasValue ? string.Format(L["ZoneFeePerMonth"].Value, MoneyFormatter.Format(zone.OverrideMonthlyFee.Value)) : L["ZoneFeeByType"].Value))</span>
+                                </div>
+                            </div>
+
+                            @if (_isOwner)
+                            {
+                                <div class="p2-row-actions">
+                                    <button class="icon-button p2-menu-trigger @(IsZoneMenuOpen(zone.Id) ? "is-open" : null)" type="button"
+                                            aria-label="@L["Action"]" title="@L["Action"]"
+                                            aria-haspopup="menu" aria-expanded="@(IsZoneMenuOpen(zone.Id) ? "true" : "false")"
+                                            aria-controls="@($"zone-row-menu-{zone.Id}")"
+                                            @onclick="() => ToggleZoneMenu(zone.Id)">
+                                        <LucideIcon Name="ellipsis" />
+                                    </button>
+                                    @if (IsZoneMenuOpen(zone.Id))
+                                    {
+                                        <div id="@($"zone-row-menu-{zone.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                                            <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuEditZone(zone)">
+                                                <LucideIcon Name="pen" /><span>@L["Edit"]</span>
+                                            </button>
+                                            @if (zone.OccupiedCount == 0)
+                                            {
+                                                <div class="p2-row-menu-sep" role="separator"></div>
+                                                <button class="p2-row-menu-item danger" type="button" role="menuitem" @onclick="() => MenuDeleteZoneAsync(zone.Id)">
+                                                    <LucideIcon Name="trash" /><span>@L["Delete"]</span>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="vehicle-zone-progress">
+                            <div class="vehicle-zone-progress__head">
+                                <span>@L["ZoneUsageLabel"] <strong class="tabular-nums">@zone.OccupiedCount / @zone.Capacity</strong> @L["UnitVehicles"]</span>
+                                <strong class="tabular-nums">@zone.UsagePercent%</strong>
+                            </div>
+                            <div class="vehicle-zone-progress__bar">
+                                <div class="vehicle-zone-progress__fill @(zone.IsFull ? "vehicle-zone-progress__fill--danger" : (zone.IsNearFull ? "vehicle-zone-progress__fill--warning" : null))"
+                                     style="width: @(Math.Min(100, zone.UsagePercent))%;"></div>
+                            </div>
+                        </div>
+
+                        @if (zone.HasSlots && zone.Slots.Count > 0)
+                        {
+                            <div>
+                                <div class="vehicle-field-hint" style="margin-bottom: 8px; font-weight: 600;">
+                                    @L["SlotGridTitle"] @string.Format(L["SlotGridCount"].Value, zone.Slots.Count):
+                                </div>
+                                <div class="vehicle-slot-grid">
+                                    @foreach (var slot in zone.Slots)
+                                    {
+                                        <button type="button"
+                                                class="vehicle-slot @SlotCss(slot.Status)"
+                                                data-hover-tip
+                                                aria-describedby="@($"tip-slot-{slot.Id}")"
+                                                @onclick="() => OnSlotClickedAsync(slot)">
+                                            <span class="vehicle-slot__code">@slot.Code</span>
+                                            @if (slot.Status == ParkingSlotStatus.Occupied)
+                                            {
+                                                <span class="vehicle-slot__plate">@VehicleRules.FormatPlateForDisplay(slot.CurrentPlateNumber ?? string.Empty)</span>
+                                                <span class="vehicle-slot__sub">@L["Room"] @slot.CurrentRoomCode</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="vehicle-slot__sub">@L[slot.Status.ToString()]</span>
+                                            }
+                                            <span class="hover-tip" id="@($"tip-slot-{slot.Id}")" role="tooltip">
+                                                <span class="hover-tip__line">@L["SlotLabel"] @slot.Code — @L[slot.Status.ToString()]</span>
+                                                @if (slot.Status == ParkingSlotStatus.Occupied)
+                                                {
+                                                    <span class="hover-tip__line">@L["PlateNumber"]: @VehicleRules.FormatPlateForDisplay(slot.CurrentPlateNumber ?? string.Empty)</span>
+                                                    <span class="hover-tip__line">@L["Room"]: @slot.CurrentRoomCode</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="hover-tip__line">@L["ToggleMaintenanceBtn"]</span>
+                                                }
+                                            </span>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        }
+    }
+</div>
+
+@if (_showZoneModal)
+{
+    <FeatureDialog Visible="true"
+                   Title="@L["EditZoneTitle"]"
+                   CloseLabel="@L["Close"]"
+                   OnClose="() => _showZoneModal = false"
+                   CssClass="vehicle-form-dialog">
+        <form @onsubmit="SaveZoneAsync" @onsubmit:preventDefault novalidate>
+            <div class="vehicle-form-body">
+                @if (!string.IsNullOrWhiteSpace(_modalError))
+                {
+                    <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                        <div class="vehicle-alert__content">
+                            <LucideIcon Name="alert-triangle" />
+                            <span>@_modalError</span>
+                        </div>
+                    </div>
+                }
+
+                <div class="vehicle-form-grid">
+                    <div class="vehicle-field">
+                        <label for="zone-name-input">@L["ZoneNameLabel"] <span class="required" aria-hidden="true">*</span></label>
+                        <input id="zone-name-input" @bind="_zoneRequest.Name" maxlength="150" placeholder="@L["ZoneNamePlaceholder"]" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="zone-indoor-select">@L["ZoneLocationType"]</label>
+                        <select id="zone-indoor-select" @bind="_zoneRequest.IsIndoor">
+                            <option value="true">@L["IndoorZone"]</option>
+                            <option value="false">@L["OutdoorZone"]</option>
+                        </select>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="zone-capacity-input">@L["CapacityLabel"] <span class="required" aria-hidden="true">*</span></label>
+                        <input id="zone-capacity-input" type="number" min="1" max="500" @bind="_zoneRequest.Capacity" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="zone-override-fee">@L["OverrideFeeLabel"]</label>
+                        <input id="zone-override-fee" type="number" min="0" step="1000"
+                               disabled="@_zoneRequest.IsFree"
+                               @bind="_zoneRequest.OverrideMonthlyFee" />
+                    </div>
+
+                    <div class="vehicle-field full">
+                        <span class="vehicle-field-label">@L["AllowedTypesLabel"] <span class="required" aria-hidden="true">*</span></span>
+                        <div class="vehicle-check-group">
+                            <label class="vehicle-check-card">
+                                <input type="checkbox" checked="@_allowElectric" @onchange="e => _allowElectric = (bool)(e.Value ?? false)" />
+                                <span>@L["ElectricMotorbike"]</span>
+                            </label>
+                            <label class="vehicle-check-card">
+                                <input type="checkbox" checked="@_allowManual" @onchange="e => _allowManual = (bool)(e.Value ?? false)" />
+                                <span>@L["ManualMotorbike"]</span>
+                            </label>
+                            <label class="vehicle-check-card">
+                                <input type="checkbox" checked="@_allowScooter" @onchange="e => _allowScooter = (bool)(e.Value ?? false)" />
+                                <span>@L["Scooter"]</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="vehicle-field full">
+                        <div class="vehicle-check-group">
+                            <label class="vehicle-check-card">
+                                <input type="checkbox" @bind="_zoneRequest.IsFree" />
+                                <span>@L["IsFreeZoneLabel"]</span>
+                            </label>
+                            <label class="vehicle-check-card">
+                                <input type="checkbox" @bind="_zoneRequest.HasSlots" />
+                                <span>@L["HasSlotsLabel"]</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    @if (_zoneRequest.HasSlots)
+                    {
+                        <div class="vehicle-field">
+                            <label for="zone-slot-prefix">@L["SlotPrefixLabel"]</label>
+                            <input id="zone-slot-prefix" @bind="_zoneRequest.SlotPrefix" maxlength="5" placeholder="A" />
+                        </div>
+                        <div class="vehicle-field">
+                            <label for="zone-slot-count">@L["SlotCountLabel"]</label>
+                            <input id="zone-slot-count" type="number" min="1" max="200" @bind="_zoneRequest.GenerateSlotCount" />
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <footer class="vehicle-form-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _showZoneModal = false">@L["Cancel"]</button>
+                <button type="submit" class="btn btn-primary"
+                        disabled="@(string.IsNullOrWhiteSpace(_zoneRequest.Name) || (!_allowElectric && !_allowManual && !_allowScooter))">
+                    <LucideIcon Name="check" />
+                    <span>@L["Save"]</span>
+                </button>
+            </footer>
+        </form>
+    </FeatureDialog>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private IReadOnlyList<VehiclePropertyOptionDto> _properties = [];
+    private VehiclePropertySettingDto? _setting;
+    private IReadOnlyList<ParkingZoneDto> _zones = [];
+    private int _propertyId;
+    private int? _openZoneMenuId;
+    private bool _isOwner;
+    private bool _loading = true;
+    private string? _error;
+    private string? _modalError;
+
+    private bool _showZoneModal;
+    private ParkingZoneSaveRequest _zoneRequest = new();
+    private bool _allowElectric = true;
+    private bool _allowManual = true;
+    private bool _allowScooter = true;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _isOwner = (await Session.CallerAsync()).IsChuTro;
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = PropertyIdParam.HasValue && _properties.Any(p => p.PropertyId == PropertyIdParam.Value)
+                    ? PropertyIdParam.Value
+                    : _properties[0].PropertyId;
+                await LoadPropertyZonesAsync();
+                RedirectIfZonesDisabled();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadPropertyZonesAsync()
+    {
+        _openZoneMenuId = null;
+        _setting = await Session.GetSettingAsync(_propertyId);
+        _zones = _setting.EnableParkingZones ? await Session.ListZonesAsync(_propertyId) : [];
+    }
+
+    private async Task ChangePropertyByIdAsync(int id)
+    {
+        if (id == _propertyId) return;
+        _propertyId = id;
+        await LoadPropertyZonesAsync();
+        RedirectIfZonesDisabled();
+    }
+
+    private void RedirectIfZonesDisabled()
+    {
+        if (_setting is { EnableParkingZones: true })
+        {
+            return;
+        }
+
+        var query = _propertyId > 0 ? $"?propertyId={_propertyId}" : string.Empty;
+        Nav.NavigateTo($"/vehicles{query}");
+    }
+
+    private bool IsZoneMenuOpen(int zoneId) => _openZoneMenuId == zoneId;
+
+    private void ToggleZoneMenu(int zoneId) => _openZoneMenuId = _openZoneMenuId == zoneId ? null : zoneId;
+
+    private void MenuEditZone(ParkingZoneDto zone)
+    {
+        _openZoneMenuId = null;
+        OpenEditZone(zone);
+    }
+
+    private async Task MenuDeleteZoneAsync(int zoneId)
+    {
+        _openZoneMenuId = null;
+        await DeleteZoneAsync(zoneId);
+    }
+
+    private void OpenCreateZone()
+    {
+        _zoneRequest = new ParkingZoneSaveRequest
+        {
+            PropertyId = _propertyId,
+            Name = string.Empty,
+            IsIndoor = true,
+            Capacity = 12,
+            HasSlots = true,
+            SlotPrefix = "A",
+            GenerateSlotCount = 12,
+            IsActive = true,
+        };
+        _allowElectric = false;
+        _allowManual = true;
+        _allowScooter = true;
+        _modalError = null;
+        _showZoneModal = true;
+    }
+
+    private void OpenEditZone(ParkingZoneDto zone)
+    {
+        _zoneRequest = new ParkingZoneSaveRequest
+        {
+            Id = zone.Id,
+            PropertyId = zone.PropertyId,
+            Name = zone.Name,
+            IsIndoor = zone.IsIndoor,
+            Capacity = zone.Capacity,
+            HasSlots = zone.HasSlots,
+            IsFree = zone.IsFree,
+            OverrideMonthlyFee = zone.OverrideMonthlyFee,
+            IsActive = zone.IsActive,
+            SlotPrefix = zone.SlotPrefix ?? ResolveSlotPrefix(zone),
+            GenerateSlotCount = zone.Slots.Count > 0 ? zone.Slots.Count : zone.Capacity,
+        };
+        _allowElectric = (zone.AllowedVehicleTypes & AllowedVehicleTypeFlags.ElectricMotorbike) != 0;
+        _allowManual = (zone.AllowedVehicleTypes & AllowedVehicleTypeFlags.ManualMotorbike) != 0;
+        _allowScooter = (zone.AllowedVehicleTypes & AllowedVehicleTypeFlags.Scooter) != 0;
+        _modalError = null;
+        _showZoneModal = true;
+    }
+
+    private static string ResolveSlotPrefix(ParkingZoneDto zone)
+    {
+        var firstCode = zone.Slots
+            .Select(s => s.Code)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .OrderBy(c => c, StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(firstCode))
+        {
+            return "A";
+        }
+
+        var prefix = firstCode.TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+        return string.IsNullOrWhiteSpace(prefix) ? "A" : prefix;
+    }
+
+    private async Task SaveZoneAsync()
+    {
+        _modalError = null;
+        try
+        {
+            var flags = AllowedVehicleTypeFlags.None;
+            if (_allowElectric) flags |= AllowedVehicleTypeFlags.ElectricMotorbike;
+            if (_allowManual) flags |= AllowedVehicleTypeFlags.ManualMotorbike;
+            if (_allowScooter) flags |= AllowedVehicleTypeFlags.Scooter;
+            _zoneRequest.AllowedVehicleTypes = flags;
+
+            await Session.SaveZoneAsync(_zoneRequest);
+            _showZoneModal = false;
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyZonesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task DeleteZoneAsync(int zoneId)
+    {
+        try
+        {
+            await Session.DeleteZoneAsync(zoneId);
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyZonesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task OnSlotClickedAsync(ParkingSlotDto slot)
+    {
+        if (slot.Status == ParkingSlotStatus.Occupied)
+        {
+            return;
+        }
+
+        try
+        {
+            var next = slot.Status == ParkingSlotStatus.Available
+                ? ParkingSlotStatus.Maintenance
+                : ParkingSlotStatus.Available;
+            await Session.SetSlotStatusAsync(slot.Id, next);
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyZonesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private string FormatAllowedTypes(AllowedVehicleTypeFlags flags)
+    {
+        var list = new List<string>(3);
+        if ((flags & AllowedVehicleTypeFlags.ElectricMotorbike) != 0) list.Add(L["ElectricMotorbike"]);
+        if ((flags & AllowedVehicleTypeFlags.ManualMotorbike) != 0) list.Add(L["ManualMotorbike"]);
+        if ((flags & AllowedVehicleTypeFlags.Scooter) != 0) list.Add(L["Scooter"]);
+        return string.Join(", ", list);
+    }
+
+    private static string SlotCss(ParkingSlotStatus status) => status switch
+    {
+        ParkingSlotStatus.Available => "vehicle-slot--available",
+        ParkingSlotStatus.Occupied => "vehicle-slot--occupied",
+        ParkingSlotStatus.Maintenance => "vehicle-slot--maintenance",
+        _ => string.Empty,
+    };
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}

@@ -5,6 +5,7 @@ using Web.Features.Maintenance.Entities;
 using Web.Features.Maintenance.Enums;
 using Web.Features.Properties.Entities;
 using Web.Features.Rooms.Entities;
+using Web.Features.Vehicles.Entities;
 
 namespace Web.Data.Configurations.Maintenance;
 
@@ -28,6 +29,7 @@ public sealed class MaintenanceIncidentConfiguration : IEntityTypeConfiguration<
         builder.Property(incident => incident.Category).IsRequired();
         builder.Property(incident => incident.Urgency).IsRequired();
         builder.Property(incident => incident.Status).IsRequired();
+        builder.Property(incident => incident.VehiclePlateNumber).HasMaxLength(30);
         builder.Property(incident => incident.AssigneeName).HasMaxLength(100);
         builder.Property(incident => incident.TechnicalNotes).HasMaxLength(2000);
         builder.Property(incident => incident.RepairCost).HasPrecision(18, 0);
@@ -35,11 +37,15 @@ public sealed class MaintenanceIncidentConfiguration : IEntityTypeConfiguration<
         builder.Property(incident => incident.RowVersion).IsRowVersion();
 
         builder.HasIndex(incident => incident.RoomId);
+        builder.HasIndex(incident => incident.VehicleId);
         builder.HasIndex(incident => new { incident.Status, incident.CreatedAt });
         builder.Property(incident => incident.DeletedBy).HasMaxLength(450);
         builder.HasQueryFilter(incident => !incident.IsDeleted);
         builder.HasIndex(incident => incident.IsDeleted);
         builder.HasOne<Room>().WithMany().HasForeignKey(incident => incident.RoomId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Vehicle>().WithMany().HasForeignKey(incident => incident.VehicleId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ApplicationUser>().WithMany().HasForeignKey(incident => incident.ReportedByUserId)
             .OnDelete(DeleteBehavior.Restrict);

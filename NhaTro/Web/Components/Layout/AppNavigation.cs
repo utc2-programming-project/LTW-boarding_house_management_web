@@ -63,6 +63,15 @@ public static class AppNavigation
             new("GateLogs", "history", "ChuTro,QuanLy", "/gate/logs"),
             new("GateSettings", "settings", "ChuTro,QuanLy", "/gate/settings"),
             new("MyGate", "qr-code", "KhachThue", "/my/gate"),
+            new("Vehicles", "bike", "ChuTro,QuanLy", "/vehicles",
+                Children:
+                [
+                    new("VehicleZones", "", "ChuTro,QuanLy", "/vehicles/zones", ShowInSidebar: false),
+                    new("VehicleGuests", "", "ChuTro,QuanLy", "/vehicles/guests", ShowInSidebar: false),
+                    new("VehicleAudit", "", "ChuTro,QuanLy", "/vehicles/audit", ShowInSidebar: false),
+                    new("VehicleSettings", "", "ChuTro", "/vehicles/settings", ShowInSidebar: false),
+                ]),
+            new("MyVehicles", "bike", "KhachThue", "/my/vehicles"),
         ]),
         new("NavGroupData", "ChuTro,QuanLy",
         [

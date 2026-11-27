@@ -16,9 +16,25 @@
             @if (_showDateError) { <p class="contract-field-error" role="alert">@L["ContractErrorInvalidRenewalEndDate"]</p> }
             <p class="contract-modal-hint">@string.Format(L["ContractRenewStartHint"], DateFormatter.Format(DateOnly.FromDateTime(EndDate.AddDays(1))))</p>
         }
+        else if (ActiveVehicleLabels is { Count: > 0 })
+        {
+            <div class="contract-modal-warning" role="status">
+                <p>@string.Format(L["ContractLiquidateVehiclesNotice"], ActiveVehicleLabels.Count)</p>
+                <ul>
+                    @foreach (var label in ActiveVehicleLabels)
+                    {
+                        <li>@label</li>
+                    }
+                </ul>
+                <label class="contract-vehicle-confirm">
+                    <input type="checkbox" @bind="_vehiclesPickedUp" disabled="@IsBusy" />
+                    <span>@L["ContractLiquidateVehiclesConfirm"]</span>
+                </label>
+            </div>
+        }
         <footer>
             <button type="button" class="btn btn-secondary" disabled="@IsBusy" @onclick="CloseAsync">@L["ContractCancelAction"]</button>
-            <button type="button" class="btn btn-primary" disabled="@IsBusy" @onclick="SubmitAsync">
+            <button type="button" class="btn btn-primary" disabled="@(IsBusy || (RequiresVehicleAck && !_vehiclesPickedUp))" @onclick="SubmitAsync">
                 @L[IsBusy ? "ContractProcessing" : IsRenewal ? "ContractRenewAction" : "ContractLiquidateAction"]
             </button>
         </footer>
@@ -32,6 +48,7 @@
     [Parameter] public bool IsBusy { get; set; }
     [Parameter] public bool IsRenewal { get; set; }
     [Parameter] public DateTime EndDate { get; set; }
+    [Parameter] public IReadOnlyList<string>? ActiveVehicleLabels { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<DateTime?> OnConfirm { get; set; }
 
@@ -43,8 +60,12 @@
     private bool _showDateError;
     private bool _wasVisible;
     private bool _openInDom;
+    private bool _vehiclesPickedUp;
 
     private DateTime MinEndDate => EndDate.AddDays(1);
+
+    /// <summary>Thanh lý khi còn xe đang gửi: bắt buộc xác nhận khách đã lấy xe.</summary>
+    private bool RequiresVehicleAck => !IsRenewal && ActiveVehicleLabels is { Count: > 0 };
 
     protected override void OnParametersSet()
     {
@@ -52,6 +73,7 @@
         {
             _endDate = EndDate.AddYears(1);
             _showDateError = false;
+            _vehiclesPickedUp = false;
         }
         _wasVisible = Visible;
     }
@@ -80,6 +102,11 @@
     {
         if (!IsRenewal)
         {
+            if (RequiresVehicleAck && !_vehiclesPickedUp)
+            {
+                return;
+            }
+
             await OnConfirm.InvokeAsync(null);
             return;
         }
