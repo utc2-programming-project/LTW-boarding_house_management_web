@@ -9,6 +9,19 @@
 <div class="page-stack gate-page">
     <PageHeading Title="@L["PageTitlePasses"]" HelpText="@L["SubtitlePasses"]">
         <Actions>
+            <div class="gate-heading-filter">
+                <label for="gate-status-filter">@L["Status"]</label>
+                <select id="gate-status-filter" class="input" @bind="_statusFilter" @bind:after="LoadPassesAsync">
+                    <option value="">@L["All"]</option>
+                    @foreach (var status in Enum.GetValues<GatePassStatus>())
+                    {
+                        <option value="@status">@L[status.ToString()]</option>
+                    }
+                </select>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="() => _inviteOpen = true" disabled="@_loading">
+                <LucideIcon Name="qr-code" /> @L["GuestInviteCreate"]
+            </button>
             <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@_loading">
                 <LucideIcon Name="plus" /> @L["CreatePass"]
             </button>
@@ -51,18 +64,7 @@
             <GatePassForm Properties="_properties" Rooms="_rooms" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
         }
 
-        <div class="filter-bar filter-bar--panel">
-            <div class="filter-bar__row">
-                <label class="gate-inline-label" for="gate-status-filter">@L["Status"]</label>
-                <select id="gate-status-filter" class="input" @bind="_statusFilter" @bind:after="LoadPassesAsync">
-                    <option value="">@L["All"]</option>
-                    @foreach (var status in Enum.GetValues<GatePassStatus>())
-                    {
-                        <option value="@status">@L[status.ToString()]</option>
-                    }
-                </select>
-            </div>
-        </div>
+        <GateInviteList Invites="_invites" OnCancel="CancelInviteAsync" />
 
         <GatePassList Passes="_passes" ShowProperty="true"
                       OnApprove="ApproveAsync" OnReject="pass => OpenReason(pass, false)" OnRevoke="pass => OpenReason(pass, true)" />
@@ -77,10 +79,15 @@
                       OnCancel="CloseReason" OnConfirm="ConfirmReasonAsync" />
 }
 
+<GateInviteDialog Visible="_inviteOpen" Rooms="_rooms" Properties="_properties"
+                  OnClose="() => _inviteOpen = false" OnCreated="InviteCreatedAsync" />
+
 @code {
     private IReadOnlyList<GatePassDto> _passes = [];
     private IReadOnlyList<GateRoomOption> _rooms = [];
     private IReadOnlyList<GatePropertyOption> _properties = [];
+    private IReadOnlyList<GateInviteDto> _invites = [];
+    private bool _inviteOpen;
     private GatePassStatus? _statusFilter;
     private bool _loading = true;
     private bool _creating;
@@ -101,6 +108,7 @@
         {
             _rooms = await Session.RoomsAsync();
             _properties = await Session.PropertiesAsync();
+            _invites = await Session.ActiveInvitesAsync();
             await LoadPassesAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -193,6 +201,24 @@
     {
         _notice = null;
         _created = null;
+    }
+
+    private async Task InviteCreatedAsync(GateInviteCreatedDto created)
+    {
+        _invites = await Session.ActiveInvitesAsync();
+    }
+
+    private async Task CancelInviteAsync(GateInviteDto invite)
+    {
+        try
+        {
+            await Session.CancelInviteAsync(invite.Id);
+            _invites = await Session.ActiveInvitesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _formError = Resolve(ex);
+        }
     }
 
     private string Resolve(Exception ex) =>

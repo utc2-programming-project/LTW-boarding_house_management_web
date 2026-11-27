@@ -1,0 +1,87 @@
+@page "/guest/p/{Token}"
+@layout Web.Components.Layout.AuthLayout
+
+@using Web.Features.AccessControl.DTOs
+@using Web.Features.AccessControl.Enums
+@using Web.Features.AccessControl.Services
+
+@inject IGatePassInviteService Invites
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["GuestStatusTitle"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="guest-status-title">
+    <div class="auth-card">
+        <PageHeading Title="@L["GuestStatusTitle"]" TitleId="guest-status-title" Class="auth-heading" />
+        <p class="auth-subtitle">@L["GuestStatusHelp"]</p>
+
+        @if (_pass is null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@L["GuestStatusInvalid"]</span>
+            </div>
+        }
+        else
+        {
+            <div class="invite-summary">
+                <div class="invite-row">
+                    <LucideIcon Name="building" />
+                    <span><strong>@L["InvitePropertyLabel"]:</strong> @_pass.PropertyName · @_pass.RoomCode</span>
+                </div>
+                <div class="invite-row">
+                    <LucideIcon Name="user" />
+                    <span><strong>@L["VisitorName"]:</strong> @_pass.VisitorName</span>
+                </div>
+                <div class="invite-row">
+                    <LucideIcon Name="moon" />
+                    <span><strong>@L["StayType"]:</strong> @L[_pass.StayType.ToString()]</span>
+                </div>
+                <div class="invite-row invite-row--expiry">
+                    <LucideIcon Name="calendar" />
+                    <span>@string.Format(L["GuestStatusExpiresAt"], _pass.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</span>
+                </div>
+            </div>
+
+            <div class="gate-status-badge gate-status-badge--@_pass.Status">
+                <span class="badge badge--@BadgeTone">@L[_pass.Status.ToString()]</span>
+            </div>
+
+            @if (_pass.Status == GatePassStatus.Pending)
+            {
+                <p class="gate-muted">@L["GuestStatusPendingHint"]</p>
+            }
+            else if (_pass.Status == GatePassStatus.Approved)
+            {
+                <p class="gate-muted">@L["GuestStatusApprovedHint"]</p>
+            }
+            else if (_pass.Status == GatePassStatus.Rejected && !string.IsNullOrWhiteSpace(_pass.RejectedReason))
+            {
+                <p class="gate-muted">@string.Format(L["GuestStatusReason"], _pass.RejectedReason)</p>
+            }
+            else if (_pass.Status == GatePassStatus.Revoked && !string.IsNullOrWhiteSpace(_pass.RevokedReason))
+            {
+                <p class="gate-muted">@string.Format(L["GuestStatusReason"], _pass.RevokedReason)</p>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private GuestPassPublicDto? _pass;
+
+    private string BadgeTone => _pass?.Status switch
+    {
+        GatePassStatus.Approved or GatePassStatus.Used => "success",
+        GatePassStatus.Pending => "warning",
+        GatePassStatus.Rejected or GatePassStatus.Revoked or GatePassStatus.Expired => "danger",
+        _ => "muted",
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pass = await Invites.GetPublicPassAsync(Token);
+    }
+}

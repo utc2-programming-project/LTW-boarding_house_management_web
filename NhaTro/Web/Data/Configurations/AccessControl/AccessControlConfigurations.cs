@@ -90,6 +90,7 @@ public sealed class GatePassConfiguration : IEntityTypeConfiguration<GatePass>
         builder.HasIndex(pass => new { pass.PropertyId, pass.Status });
         builder.HasIndex(pass => pass.ExpiresAt);
         builder.HasIndex(pass => new { pass.RoomId, pass.CreatedAt });
+        builder.HasIndex(pass => pass.GatePassInviteId);
 
         builder.HasOne<Property>().WithMany().HasForeignKey(pass => pass.PropertyId)
             .OnDelete(DeleteBehavior.Restrict);
@@ -98,6 +99,34 @@ public sealed class GatePassConfiguration : IEntityTypeConfiguration<GatePass>
         builder.HasOne<Tenant>().WithMany().HasForeignKey(pass => pass.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Contract>().WithMany().HasForeignKey(pass => pass.ContractId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public sealed class GatePassInviteConfiguration : IEntityTypeConfiguration<GatePassInvite>
+{
+    public void Configure(EntityTypeBuilder<GatePassInvite> builder)
+    {
+        builder.ToTable("GatePassInvites", table =>
+        {
+            table.HasCheckConstraint("CK_GatePassInvites_Issuer", $"[IssuerRole] BETWEEN {(int)GateIssuerRole.ChuTro} AND {(int)GateIssuerRole.System}");
+        });
+
+        builder.HasKey(invite => invite.Id);
+        builder.Property(invite => invite.Id).UseIdentityColumn();
+        builder.Property(invite => invite.TokenHash).HasMaxLength(64).IsRequired();
+        builder.Property(invite => invite.CreatedByUserId).HasMaxLength(450).IsRequired();
+        builder.Property(invite => invite.RevokedByUserId).HasMaxLength(450);
+        builder.Property(invite => invite.CreatedAt).IsRequired();
+        builder.Property(invite => invite.RowVersion).IsRowVersion();
+
+        builder.HasIndex(invite => invite.TokenHash).IsUnique();
+        builder.HasIndex(invite => new { invite.PropertyId, invite.CreatedAt });
+        builder.HasIndex(invite => invite.ExpiresAt);
+
+        builder.HasOne<Property>().WithMany().HasForeignKey(invite => invite.PropertyId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Room>().WithMany().HasForeignKey(invite => invite.RoomId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

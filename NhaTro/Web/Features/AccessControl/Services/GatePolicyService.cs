@@ -70,6 +70,8 @@ public sealed class GatePolicyService(
         // Qua đêm luôn phải chờ duyệt — không cho bật tự duyệt.
         policy.AutoApproveOvernight = false;
         policy.AllowTenantIssuePass = request.AllowTenantIssuePass;
+        policy.AllowGuestSelfFill = request.AllowGuestSelfFill;
+        policy.GuestSelfMaxPassesPerDay = request.GuestSelfMaxPassesPerDay;
         policy.TenantMayIssueOvernight = request.TenantMayIssueOvernight;
         policy.TenantMaxPassesPerDay = request.TenantMaxPassesPerDay;
         policy.TenantMaxTtlMinutes = request.TenantMaxTtlMinutes;
@@ -176,6 +178,7 @@ public sealed class GatePolicyService(
     private static void Validate(GatePolicySaveRequest request)
     {
         if (request.TenantMaxPassesPerDay is < 0 or > 50 ||
+            request.GuestSelfMaxPassesPerDay is < 0 or > 50 ||
             request.TenantMaxUses is < 1 or > 10 ||
             request.TenantMaxTtlMinutes is < 5 or > 24 * 60 ||
             request.PassTtlMinutes is < 5 or > 24 * 60 ||
@@ -197,7 +200,8 @@ public sealed class GatePolicyService(
     internal static GatePolicyDto ToDto(GatePolicy policy) => new(
         policy.PropertyId, policy.AuthMode, policy.AntiPassbackEnabled, policy.AllowManualOpen,
         policy.AllowManagerApprove, policy.AutoApproveDayVisit, policy.AutoApproveOvernight,
-        policy.AllowTenantIssuePass, policy.TenantMayIssueOvernight, policy.TenantMaxPassesPerDay,
+        policy.AllowTenantIssuePass, policy.AllowGuestSelfFill, policy.GuestSelfMaxPassesPerDay,
+        policy.TenantMayIssueOvernight, policy.TenantMaxPassesPerDay,
         policy.TenantMaxTtlMinutes, policy.TenantMaxUses, policy.PassTtlMinutes, policy.DayVisitStartHour,
         policy.DayVisitEndHour, policy.RetentionDays, policy.OfflineGraceMinutes, policy.RequiredGuestFields,
         policy.PreferredStayChannel, policy.UpdatedAt);

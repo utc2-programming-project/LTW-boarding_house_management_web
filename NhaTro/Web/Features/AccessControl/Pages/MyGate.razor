@@ -10,6 +10,9 @@
 <div class="page-stack gate-page">
     <PageHeading Title="@L["PageTitleMyGate"]" HelpText="@L["SubtitleMyGate"]">
         <Actions>
+            <button type="button" class="btn btn-secondary" @onclick="() => _inviteOpen = true" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="qr-code" /> @L["GuestInviteCreate"]
+            </button>
             <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@(_loading || _rooms.Count == 0)">
                 <LucideIcon Name="plus" /> @L["CreateGuestPass"]
             </button>
@@ -23,7 +26,9 @@
     else if (_error is not null)
     {
         <p class="gate-error" role="alert">@_error</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        <div class="gate-error-actions">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
     }
     else if (_rooms.Count == 0)
     {
@@ -110,6 +115,8 @@
             <GatePassForm Rooms="_rooms" IsTenant="true" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
         }
 
+        <GateInviteList Invites="_invites" OnCancel="CancelInviteAsync" />
+
         <h2>@L["MyPasses"]</h2>
         <GatePassList Passes="_passes" ShowProperty="true" OnRevoke="pass => OpenReason(pass)" />
     }
@@ -121,9 +128,14 @@
                       OnCancel="() => _reasonPass = null" OnConfirm="ConfirmRevokeAsync" />
 }
 
+<GateInviteDialog Visible="_inviteOpen" IsTenant="true" Rooms="_rooms"
+                  OnClose="() => _inviteOpen = false" OnCreated="InviteCreatedAsync" />
+
 @code {
     private IReadOnlyList<GatePassDto> _passes = [];
     private IReadOnlyList<GateRoomOption> _rooms = [];
+    private IReadOnlyList<GateInviteDto> _invites = [];
+    private bool _inviteOpen;
     private bool _loading = true;
     private bool _creating;
     private string? _error;
@@ -185,6 +197,7 @@
             }
 
             _passes = await Session.PassesAsync();
+            _invites = await Session.ActiveInvitesAsync();
             _enrollments = await Session.EnrollmentsAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -272,6 +285,24 @@
     {
         _notice = null;
         _created = null;
+    }
+
+    private async Task InviteCreatedAsync(GateInviteCreatedDto created)
+    {
+        _invites = await Session.ActiveInvitesAsync();
+    }
+
+    private async Task CancelInviteAsync(GateInviteDto invite)
+    {
+        try
+        {
+            await Session.CancelInviteAsync(invite.Id);
+            _invites = await Session.ActiveInvitesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
     }
 
     private string Resolve(Exception ex) =>
