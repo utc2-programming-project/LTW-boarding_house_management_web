@@ -53,7 +53,8 @@
                  RoomsHref="@RoomsHref" FilterDescription="@FilterDescription"
                  Revenue="@Revenue" RevenueState="@RevenueState" RevenueHref="@RevenueHref" RevenueRetry="LoadRevenueAsync"
                  TotalRevenue="@TotalRevenue" TotalRevenueState="@TotalRevenueState" TotalRevenueRetry="LoadTotalRevenueAsync"
-                 Incidents="@Incidents" IncidentState="@IncidentState" IncidentsHref="@IncidentsHref" IncidentRetry="LoadIncidentsAsync" />
+                 Incidents="@Incidents" IncidentState="@IncidentState" IncidentsHref="@IncidentsHref" IncidentRetry="LoadIncidentsAsync"
+                 Vehicles="@Vehicles" VehicleState="@VehicleState" VehiclesHref="@VehiclesHref" VehicleRetry="LoadVehiclesAsync" />
     <a class="reports-link" href="@ReportsHref">@L["ViewReports"]</a>
     @* Cặp panel luôn nằm chung 1 hàng; panel đơn được đưa ra khỏi grid để chiếm toàn bộ chiều rộng
        (gộp 2 ô thay vì để 1 ô trống như cơ chế grid 2 cột cũ). *@
@@ -116,6 +117,7 @@
     private OccupancyReportResult? Occupancy;
     private DebtAgingDto? DebtAging;
     private IReadOnlyList<ContractExpiryMonthDto>? ContractExpiry;
+    private VehicleDashboardKpis? Vehicles;
     private DashboardLoadState PropertyState = DashboardLoadState.Loading;
     private DashboardLoadState RoomState = DashboardLoadState.Loading;
     private DashboardLoadState TenantState = DashboardLoadState.Loading;
@@ -125,6 +127,7 @@
     private DashboardLoadState OccupancyState = DashboardLoadState.Loading;
     private DashboardLoadState DebtAgingState = DashboardLoadState.Loading;
     private DashboardLoadState ContractExpiryState = DashboardLoadState.Loading;
+    private DashboardLoadState VehicleState = DashboardLoadState.Loading;
     private bool IsOwner;
     private bool Refreshing;
     private DateTime? LastRefreshed;
@@ -132,8 +135,10 @@
         || RoomState == DashboardLoadState.Loading || TenantState == DashboardLoadState.Loading
         || RevenueState == DashboardLoadState.Loading || TotalRevenueState == DashboardLoadState.Loading
         || IncidentState == DashboardLoadState.Loading || OccupancyState == DashboardLoadState.Loading
-        || DebtAgingState == DashboardLoadState.Loading || ContractExpiryState == DashboardLoadState.Loading;
+        || DebtAgingState == DashboardLoadState.Loading || ContractExpiryState == DashboardLoadState.Loading
+        || VehicleState == DashboardLoadState.Loading;
     private string RoomsHref => Filter.PropertyId is { } id ? $"/rooms?propertyId={id}" : "/rooms";
+    private string VehiclesHref => Filter.PropertyId is { } id ? $"/vehicles?propertyId={id}" : "/vehicles";
     private string ReportsHref => Filter.PropertyId is { } id ? $"/reports?propertyId={id}" : "/reports";
     private string RevenueHref => ReportsHref;
     private string IncidentsHref => Filter.PropertyId is { } id ? $"/reports?propertyId={id}" : "/reports";
@@ -169,7 +174,7 @@
             }
             await Task.WhenAll(LoadPropertiesAsync(), LoadRoomsAsync(), LoadTenantsAsync(),
                 LoadIncidentsAsync(), LoadRevenueAsync(), LoadTotalRevenueAsync(),
-                LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync());
+                LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(), LoadVehiclesAsync());
             LastRefreshed = PageService.GetLastRefreshedAtUtc();
             if (States.Contains(DashboardLoadState.Error)) Toasts.Error(L["Error"]);
             else if (notify && States.All(s => s == DashboardLoadState.Loaded)) Toasts.Success(L["RefreshSuccess"]);
@@ -179,14 +184,15 @@
 
     private IEnumerable<DashboardLoadState> States =>
         [PropertyState, RoomState, TenantState, IncidentState, RevenueState, TotalRevenueState,
-         OccupancyState, DebtAgingState, ContractExpiryState];
+         OccupancyState, DebtAgingState, ContractExpiryState, VehicleState];
 
     private async Task ChangePropertyAsync(ChangeEventArgs args)
     {
         if (Busy) return;
         Filter.PropertyId = int.TryParse(args.Value?.ToString(), out var id) ? id : null;
         await Task.WhenAll(LoadRoomsAsync(), LoadTenantsAsync(), LoadIncidentsAsync(), LoadRevenueAsync(),
-            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync());
+            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(),
+            LoadVehiclesAsync());
     }
 
     private async Task ChangePeriodAsync(ChangeEventArgs args)
@@ -202,7 +208,8 @@
         Filter.PropertyId = null;
         Filter.Period = DashboardPeriod.Month;
         await Task.WhenAll(LoadRoomsAsync(), LoadTenantsAsync(), LoadIncidentsAsync(), LoadRevenueAsync(),
-            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync());
+            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(),
+            LoadVehiclesAsync());
     }
 
     private async Task LoadPropertiesAsync()
@@ -327,6 +334,20 @@
         try { ContractExpiry = await PageService.GetContractExpiryAsync(Filter.PropertyId); ContractExpiryState = DashboardLoadState.Loaded; }
         catch (UnauthorizedAccessException) { ContractExpiryState = DashboardLoadState.Denied; }
         catch (Exception ex) { ContractExpiryState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard contract expiry failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task LoadVehiclesAsync()
+    {
+        VehicleState = DashboardLoadState.Loading;
+        Vehicles = null;
+        try
+        {
+            Vehicles = await PageService.GetVehicleKpisAsync(Filter.PropertyId);
+            VehicleState = DashboardLoadState.Loaded;
+        }
+        catch (UnauthorizedAccessException) { VehicleState = DashboardLoadState.Denied; }
+        catch (Exception ex) { VehicleState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard vehicles failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
         finally { await InvokeAsync(StateHasChanged); }
     }
 }

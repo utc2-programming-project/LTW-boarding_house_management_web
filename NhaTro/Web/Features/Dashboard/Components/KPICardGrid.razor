@@ -46,6 +46,10 @@
     [Parameter] public DashboardLoadState IncidentState { get; set; } = DashboardLoadState.Loaded;
     [Parameter] public string IncidentsHref { get; set; } = "/reports";
     [Parameter] public EventCallback IncidentRetry { get; set; }
+    [Parameter] public VehicleDashboardKpis? Vehicles { get; set; }
+    [Parameter] public DashboardLoadState VehicleState { get; set; } = DashboardLoadState.Loaded;
+    [Parameter] public string VehiclesHref { get; set; } = "/vehicles";
+    [Parameter] public EventCallback VehicleRetry { get; set; }
 
     private sealed record Card(
         string Label,
@@ -84,7 +88,26 @@
             cards.Add(new(L["Incidents"], DashboardFormat.FormatNumber(Incidents?.Total), IncidentState,
                 "IncidentsDenied", L["PeriodData"], IncidentsHref, IncidentRetry));
 
+            cards.Add(new(L["VehicleActive"], DashboardFormat.FormatNumber(Vehicles?.ActiveTotal), VehicleState,
+                "VehiclesDenied", VehicleBreakdown, VehiclesHref, VehicleRetry));
+            cards.Add(new(L["VehicleZoneFill"], VehicleFillRate, VehicleState,
+                "VehiclesDenied", L["VehicleZoneFillNote"], VehiclesHref, VehicleRetry));
+
+            if (IsOwner)
+            {
+                cards.Add(new(L["VehicleParkingRevenue"], MoneyFormatter.Format(Vehicles?.MonthlyParkingRevenue),
+                    VehicleState, "VehiclesDenied", L["VehicleParkingRevenueNote"], VehiclesHref, VehicleRetry));
+            }
+
             return cards;
         }
     }
+
+    private string VehicleBreakdown => Vehicles is null
+        ? L["CurrentData"]
+        : string.Format(L["VehicleBreakdown"], Vehicles.ElectricMotorbike, Vehicles.ManualMotorbike, Vehicles.Scooter);
+
+    private string VehicleFillRate => Vehicles is not { ZoneCapacity: > 0 }
+        ? "—"
+        : $"{Math.Round(Vehicles.ZoneOccupied * 100.0 / Vehicles.ZoneCapacity)}%";
 }

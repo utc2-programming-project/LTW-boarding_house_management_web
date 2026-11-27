@@ -123,6 +123,7 @@ public static class DevAccountSeeder
         if (env.IsDevelopment())
         {
             await EnsureManagerAssignmentAsync(services, logger);
+            await VehicleDevSeeder.EnsureAsync(services, logger);
         }
     }
 

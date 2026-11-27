@@ -161,10 +161,20 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // D16: nhật ký thao tác độc lập, xóa trước Users/Properties.
         await db.AuditLogEntries.ExecuteDeleteAsync();
         // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.
+        // Module xe: kiểm kê/phiếu xe gửi nhờ/ô đỗ tham chiếu Xe và Khu đỗ (Restrict), nên dọn
+        // theo thứ tự con → cha trước khi xóa Contracts/Rooms/Properties.
+        await db.VehicleAuditItems.ExecuteDeleteAsync();
+        await db.VehicleAuditSessions.ExecuteDeleteAsync();
+        await db.GuestVehicleNotices.ExecuteDeleteAsync();
+        await db.ParkingSlots.ExecuteDeleteAsync();
+        await db.Vehicles.ExecuteDeleteAsync();
+        await db.ParkingZones.ExecuteDeleteAsync();
+        await db.VehiclePropertySettings.ExecuteDeleteAsync();
         // VHT-48 3A: yêu cầu gia hạn giữ lịch sử (Restrict) nên phải xóa tường minh trước Contracts.
         await db.ContractRenewalRequests.ExecuteDeleteAsync();
         await db.ContractMembers.ExecuteDeleteAsync();
-        await db.Contracts.ExecuteDeleteAsync();
+        // Hợp đồng xóa mềm vẫn chiếm FK tới Rooms: bỏ query filter để dọn sạch hoàn toàn.
+        await db.Contracts.IgnoreQueryFilters().ExecuteDeleteAsync();
         await db.UtilityBillingCostLineSnapshots.ExecuteDeleteAsync();
         await db.UtilityBillingPeriodSnapshots.ExecuteDeleteAsync();
         await db.UtilityTariffTiers.Where(tier => tier.UtilityTariffId > 5).ExecuteDeleteAsync();

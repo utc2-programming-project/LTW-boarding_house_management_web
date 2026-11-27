@@ -22,32 +22,12 @@
     else if (_error is not null)
     {
         <p class="gate-error" role="alert">@_error</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        <div class="gate-error-actions">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
     }
     else
     {
-        <div class="filter-bar filter-bar--panel">
-            <div class="filter-bar__row">
-                <label class="gate-inline-label" for="gate-from">@L["From"]</label>
-                <input id="gate-from" type="date" class="input" @bind="_from" />
-                <label class="gate-inline-label" for="gate-to">@L["To"]</label>
-                <input id="gate-to" type="date" class="input" @bind="_to" />
-                <label class="gate-inline-label" for="gate-result">@L["Result"]</label>
-                <select id="gate-result" class="input" @bind="_result">
-                    <option value="">@L["All"]</option>
-                    <option value="1">@L["Success"]</option>
-                    <option value="0">@L["Failed"]</option>
-                </select>
-                <label class="gate-inline-label" for="gate-direction">@L["Direction"]</label>
-                <select id="gate-direction" class="input" @bind="_direction">
-                    <option value="">@L["All"]</option>
-                    <option value="@GateDirection.In">@L["In"]</option>
-                    <option value="@GateDirection.Out">@L["Out"]</option>
-                </select>
-                <button type="button" class="btn btn-primary" @onclick="LoadLogsAsync">@L["Filters"]</button>
-            </div>
-        </div>
-
         <h2>@L["Stays"]</h2>
         @if (_stays.Count == 0)
         {
@@ -68,7 +48,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var stay in _stays)
+                        @foreach (var stay in PagedStays)
                         {
                             <tr>
                                 <td>@stay.GuestName</td>
@@ -76,18 +56,22 @@
                                 <td>@(stay.RoomCode ?? "—")</td>
                                 <td>@stay.DueAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm")</td>
                                 <td><span class="gate-badge gate-badge--@stay.Status.ToString().ToLowerInvariant()">@L[stay.Status.ToString()]</span></td>
-                                <td class="gate-actions">
-                                    @if (stay.Status is StayReportStatus.Pending or StayReportStatus.Overdue)
-                                    {
-                                        <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenReport(stay)">@L["MarkReported"]</button>
-                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => CancelStayAsync(stay.Id)">@L["Cancel"]</button>
-                                    }
+                                <td>
+                                    <div class="gate-actions">
+                                        @if (stay.Status is StayReportStatus.Pending or StayReportStatus.Overdue)
+                                        {
+                                            <button type="button" class="btn btn-primary btn-sm" @onclick="() => OpenReport(stay)">@L["MarkReported"]</button>
+                                            <button type="button" class="btn btn-secondary btn-sm" @onclick="() => CancelStayAsync(stay.Id)">@L["Cancel"]</button>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
+            <TablePager Page="_stayPage" TotalPages="StayTotalPages" From="StayFrom" To="StayTo" Total="_stays.Count"
+                        PageChanged="GoToStayPage" />
         }
 
         @if (_reporting is not null)
@@ -120,7 +104,38 @@
             </div>
         }
 
-        <h2>@L["PageTitleLogs"]</h2>
+        <h2>@L["GateLog"]</h2>
+        <div class="filter-bar filter-bar--panel" role="search">
+            <div class="filter-bar__row">
+                <div class="filter-bar__field filter-bar__text">
+                    <label class="sr-only" for="gate-from">@L["From"]</label>
+                    <input id="gate-from" type="date" class="input" @bind="_from" @bind:after="LoadLogsAsync" />
+                </div>
+                <div class="filter-bar__field filter-bar__text">
+                    <label class="sr-only" for="gate-to">@L["To"]</label>
+                    <input id="gate-to" type="date" class="input" @bind="_to" @bind:after="LoadLogsAsync" />
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="gate-result">@L["Result"]</label>
+                    <select id="gate-result" class="input" @bind="_result" @bind:after="LoadLogsAsync">
+                        <option value="">@L["All"]</option>
+                        <option value="1">@L["Success"]</option>
+                        <option value="0">@L["Failed"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="gate-direction">@L["Direction"]</label>
+                    <select id="gate-direction" class="input" @bind="_direction" @bind:after="LoadLogsAsync">
+                        <option value="">@L["All"]</option>
+                        <option value="@GateDirection.In">@L["In"]</option>
+                        <option value="@GateDirection.Out">@L["Out"]</option>
+                    </select>
+                </div>
+                <div class="filter-bar__actions">
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
+                </div>
+            </div>
+        </div>
         @if (_logs.Count == 0)
         {
             <p class="gate-muted">@L["NoLogs"]</p>
@@ -141,7 +156,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var log in _logs)
+                        @foreach (var log in PagedLogs)
                         {
                             <tr>
                                 <td>@log.OccurredAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm:ss")</td>
@@ -165,13 +180,19 @@
                     </tbody>
                 </table>
             </div>
+            <TablePager Page="_logPage" TotalPages="LogTotalPages" From="LogFrom" To="LogTo" Total="_logs.Count"
+                        PageChanged="GoToLogPage" />
         }
     }
 </div>
 
 @code {
+    private const int PageSize = 10;
+
     private IReadOnlyList<GateLogDto> _logs = [];
     private IReadOnlyList<StayReportDto> _stays = [];
+    private int _stayPage = 1;
+    private int _logPage = 1;
     private bool _loading = true;
     private string? _error;
     private DateTime? _from;
@@ -205,11 +226,34 @@
 
     private async Task ReloadAllAsync()
     {
+        _stayPage = 1;
+        _logPage = 1;
         await LoadLogsCoreAsync();
         _stays = await Session.StaysAsync();
     }
 
-    private async Task LoadLogsAsync() => await LoadLogsCoreAsync();
+    private async Task LoadLogsAsync()
+    {
+        _logPage = 1;
+        try
+        {
+            await LoadLogsCoreAsync();
+            _error = null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _from = null;
+        _to = null;
+        _result = null;
+        _direction = null;
+        await LoadLogsAsync();
+    }
 
     private async Task LoadLogsCoreAsync()
     {
@@ -228,6 +272,7 @@
         {
             await Session.RefreshStaysAsync();
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -248,6 +293,7 @@
         {
             await Session.CancelStayAsync(id, L["GuestLeftBeforeDue"]);
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -263,6 +309,7 @@
             await Session.MarkReportedAsync(stay.Id, _channel, _evidence, _reportNote);
             _reporting = null;
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -272,4 +319,26 @@
 
     private string Resolve(Exception ex) =>
         ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+
+    private IEnumerable<StayReportDto> PagedStays =>
+        _stays.Skip((_stayPage - 1) * PageSize).Take(PageSize);
+
+    private int StayTotalPages => PaginationHelper.TotalPages(_stays.Count, PageSize);
+
+    private int StayFrom => PaginationHelper.ItemRange(_stayPage, PageSize, _stays.Count).From;
+
+    private int StayTo => PaginationHelper.ItemRange(_stayPage, PageSize, _stays.Count).To;
+
+    private void GoToStayPage(int page) => _stayPage = PaginationHelper.ClampPage(page, StayTotalPages);
+
+    private IEnumerable<GateLogDto> PagedLogs =>
+        _logs.Skip((_logPage - 1) * PageSize).Take(PageSize);
+
+    private int LogTotalPages => PaginationHelper.TotalPages(_logs.Count, PageSize);
+
+    private int LogFrom => PaginationHelper.ItemRange(_logPage, PageSize, _logs.Count).From;
+
+    private int LogTo => PaginationHelper.ItemRange(_logPage, PageSize, _logs.Count).To;
+
+    private void GoToLogPage(int page) => _logPage = PaginationHelper.ClampPage(page, LogTotalPages);
 }

@@ -19,11 +19,16 @@ public sealed class GatePolicy
 
     public bool AllowManagerApprove { get; set; }
 
-    public bool AutoApproveDayVisit { get; set; }
+    public bool AutoApproveDayVisit { get; set; } = true;
 
     public bool AutoApproveOvernight { get; set; }
 
     public bool AllowTenantIssuePass { get; set; } = true;
+
+    /// <summary>Cho phép tạo link mời khách vãng lai tự điền phiếu.</summary>
+    public bool AllowGuestSelfFill { get; set; }
+
+    public int GuestSelfMaxPassesPerDay { get; set; } = 3;
 
     public bool TenantMayIssueOvernight { get; set; }
 

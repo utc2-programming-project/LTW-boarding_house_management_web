@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Tabs & Page Titles -->
+  <data name="TabVehicles" xml:space="preserve"><value>Danh sách xe</value></data>
+  <data name="TabZones" xml:space="preserve"><value>Khu &amp; Sơ đồ ô đỗ</value></data>
+  <data name="TabGuests" xml:space="preserve"><value>Xe bạn gửi nhờ</value></data>
+  <data name="TabAudit" xml:space="preserve"><value>Kiểm kê bãi xe</value></data>
+  <data name="TabSettings" xml:space="preserve"><value>Cấu hình bãi xe</value></data>
+  <data name="PageTitleVehicles" xml:space="preserve"><value>Quản lý xe &amp; bãi đỗ</value></data>
+  <data name="SubtitleVehicles" xml:space="preserve"><value>Quản lý danh sách xe 2 bánh gắn với phòng/hợp đồng, tra cứu nhanh 4 số cuối biển số, báo chắn lối và tự động tính phí gửi xe cuối kỳ.</value></data>
+  <data name="PageTitleZones" xml:space="preserve"><value>Phân khu &amp; sơ đồ ô đỗ xe</value></data>
+  <data name="SubtitleZones" xml:space="preserve"><value>Quản lý các khu đỗ xe trong nhà/ngoài trời, ràng buộc loại xe được phép vào khu và sơ đồ lưới ô đỗ cố định.</value></data>
+  <data name="PageTitleGuests" xml:space="preserve"><value>Xe bạn gửi nhờ / qua đêm</value></data>
+  <data name="SubtitleGuests" xml:space="preserve"><value>Theo dõi danh sách xe bạn của khách thuê gửi nhờ/qua đêm để phân biệt với xe lạ (không tính vào phí gửi xe tháng).</value></data>
+  <data name="PageTitleAudit" xml:space="preserve"><value>Kiểm kê bãi xe</value></data>
+  <data name="SubtitleAudit" xml:space="preserve"><value>Đối chiếu xe thực tế ngoài sân với danh sách đang gửi để chống thất thoát phí và phát hiện xe chưa đăng ký.</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>Cấu hình giá &amp; quy tắc bãi xe</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>Thiết lập đơn giá gửi xe theo tháng cho 3 loại xe, giới hạn số xe mỗi phòng và công tắc bật/tắt phân khu đỗ xe.</value></data>
+  <data name="PageTitleMyVehicles" xml:space="preserve"><value>Xe của tôi</value></data>
+  <data name="SubtitleMyVehicles" xml:space="preserve"><value>Xem danh sách xe đang đăng ký của phòng bạn, mã QR dán xe, báo xe đậu chắn lối và khai báo xe bạn gửi nhờ qua đêm.</value></data>
+  <!-- Common Buttons & Labels -->
+  <data name="Loading" xml:space="preserve"><value>Đang tải dữ liệu bãi xe…</value></data>
+  <data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="Save" xml:space="preserve"><value>Lưu thay đổi</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="Close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Xác nhận</value></data>
+  <data name="Delete" xml:space="preserve"><value>Xóa</value></data>
+  <data name="Edit" xml:space="preserve"><value>Chỉnh sửa</value></data>
+  <data name="All" xml:space="preserve"><value>Tất cả</value></data>
+  <data name="Property" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="Room" xml:space="preserve"><value>Phòng</value></data>
+  <data name="Tenant" xml:space="preserve"><value>Chủ xe / Khách thuê</value></data>
+  <data name="Contract" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="PlateNumber" xml:space="preserve"><value>Biển số xe</value></data>
+  <data name="VehicleType" xml:space="preserve"><value>Loại xe</value></data>
+  <data name="Brand" xml:space="preserve"><value>Hãng xe</value></data>
+  <data name="Color" xml:space="preserve"><value>Màu xe</value></data>
+  <data name="MonthlyFee" xml:space="preserve"><value>Phí / tháng</value></data>
+  <data name="ZoneAndSlot" xml:space="preserve"><value>Khu / Ô đỗ</value></data>
+  <data name="Status" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="StartedAt" xml:space="preserve"><value>Ngày gửi</value></data>
+  <data name="EndedAt" xml:space="preserve"><value>Ngày ngừng</value></data>
+  <data name="Note" xml:space="preserve"><value>Ghi chú</value></data>
+  <data name="Action" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="Saved" xml:space="preserve"><value>Đã lưu thay đổi thành công.</value></data>
+  <data name="LoadFailed" xml:space="preserve"><value>Không thể tải dữ liệu. Vui lòng thử lại.</value></data>
+  <!-- Vehicle Types & Statuses -->
+  <data name="ElectricMotorbike" xml:space="preserve"><value>Xe máy điện</value></data>
+  <data name="ManualMotorbike" xml:space="preserve"><value>Xe máy số</value></data>
+  <data name="Scooter" xml:space="preserve"><value>Xe máy tay ga</value></data>
+  <data name="Active" xml:space="preserve"><value>Đang gửi</value></data>
+  <data name="Inactive" xml:space="preserve"><value>Đã ngừng</value></data>
+  <data name="Available" xml:space="preserve"><value>Trống</value></data>
+  <data name="Occupied" xml:space="preserve"><value>Đã có xe</value></data>
+  <data name="Maintenance" xml:space="preserve"><value>Bảo trì</value></data>
+  <data name="Completed" xml:space="preserve"><value>Đã rời đi</value></data>
+  <data name="Expired" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="Cancelled" xml:space="preserve"><value>Đã hủy</value></data>
+  <data name="InProgress" xml:space="preserve"><value>Đang kiểm kê</value></data>
+  <data name="Pending" xml:space="preserve"><value>Chưa kiểm</value></data>
+  <data name="Present" xml:space="preserve"><value>Có mặt</value></data>
+  <data name="Missing" xml:space="preserve"><value>Vắng mặt</value></data>
+  <!-- KPI Cards -->
+  <data name="StatTotalActive" xml:space="preserve"><value>Xe đang gửi</value></data>
+  <data name="StatByType" xml:space="preserve"><value>Cơ cấu loại xe</value></data>
+  <data name="StatEstimatedRevenue" xml:space="preserve"><value>Doanh thu phí gửi xe / tháng</value></data>
+  <data name="StatGuestAndCapacity" xml:space="preserve"><value>Xe gửi nhờ / Công suất bãi</value></data>
+  <data name="UnitVehicles" xml:space="preserve"><value>xe</value></data>
+  <!-- Actions on Vehicle List -->
+  <data name="AddVehicleBtn" xml:space="preserve"><value>Thêm xe mới</value></data>
+  <data name="EditVehicleTitle" xml:space="preserve"><value>Cập nhật thông tin xe</value></data>
+  <data name="BlockingAlertBtn" xml:space="preserve"><value>Báo đậu chắn lối</value></data>
+  <data name="SyncBillingBtn" xml:space="preserve"><value>Đồng bộ phí vào HĐ nháp</value></data>
+  <data name="SyncBillingSuccess" xml:space="preserve"><value>Đã đồng bộ dòng "Phí gửi xe" cho {0} hóa đơn nháp.</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Tìm biển số (hoặc 4 số cuối), phòng, tên khách, hãng xe…</value></data>
+  <data name="ViewQrBtn" xml:space="preserve"><value>Mã QR</value></data>
+  <data name="DeactivateBtn" xml:space="preserve"><value>Ngừng gửi</value></data>
+  <data name="ReactivateBtn" xml:space="preserve"><value>Gửi lại</value></data>
+  <data name="ReportIncidentBtn" xml:space="preserve"><value>Báo sự cố</value></data>
+  <data name="IncidentTitleLabel" xml:space="preserve"><value>Tiêu đề sự cố</value></data>
+  <data name="IncidentTitlePlaceholder" xml:space="preserve"><value>VD: Xe lạ đậu chiếm ô đỗ / Hư hỏng xe / Mất mũ bảo hiểm…</value></data>
+  <data name="IncidentDescLabel" xml:space="preserve"><value>Mô tả chi tiết</value></data>
+  <data name="IncidentPlatePlaceholder" xml:space="preserve"><value>VD: 59X112345</value></data>
+  <data name="DeactivateModalTitle" xml:space="preserve"><value>Xác nhận ngừng gửi xe</value></data>
+  <data name="DeactivateReasonLabel" xml:space="preserve"><value>Lý do ngừng gửi (trả xe, bán xe, trả phòng…)</value></data>
+  <data name="EmptyVehiclesTitle" xml:space="preserve"><value>Chưa có phương tiện nào</value></data>
+  <data name="EmptyVehiclesDesc" xml:space="preserve"><value>Nhấn "Thêm xe mới" để đăng ký phương tiện 2 bánh cho khách thuê theo phòng/hợp đồng.</value></data>
+  <data name="PlateNormalizedPreview" xml:space="preserve"><value>Biển số chuẩn hóa:</value></data>
+  <!-- QR Dialog -->
+  <data name="QrModalTitle" xml:space="preserve"><value>Tem QR định danh phương tiện</value></data>
+  <data name="QrCardTitle" xml:space="preserve"><value>Thẻ gửi xe</value></data>
+  <data name="QrTokenLabel" xml:space="preserve"><value>Mã tra cứu nội bộ (không chứa SĐT/PII):</value></data>
+  <data name="PrintQrBtn" xml:space="preserve"><value>In tem QR</value></data>
+  <!-- Blocking Alert Dialog -->
+  <data name="BlockingAlertTitle" xml:space="preserve"><value>Tra cứu nhanh &amp; Báo xe đậu chắn lối</value></data>
+  <data name="BlockingAlertDesc" xml:space="preserve"><value>Nhập biển số hoặc 4 số cuối biển số để hệ thống gửi thông báo in-app nhắc chủ xe ra dắt xe mà không lộ số điện thoại cá nhân.</value></data>
+  <data name="PlateQueryLabel" xml:space="preserve"><value>Biển số hoặc 4 số cuối biển số</value></data>
+  <data name="PlateQueryPlaceholder" xml:space="preserve"><value>VD: 2345 hoặc 59X1-12345</value></data>
+  <data name="BlockingNoteLabel" xml:space="preserve"><value>Lời nhắn ngắn (tùy chọn)</value></data>
+  <data name="BlockingNotePlaceholder" xml:space="preserve"><value>Ví dụ: Đang chắn lối ra cổng chính, nhờ bạn dắt giúp…</value></data>
+  <data name="SendBlockingAlertBtn" xml:space="preserve"><value>Gửi thông báo nhắc dắt xe</value></data>
+  <data name="BlockingAlertSentNotice" xml:space="preserve"><value>Đã gửi thông báo nhắc dắt xe biển số {0} (Phòng {1}) tới {2} thành viên.</value></data>
+  <!-- Zones & Slots -->
+  <data name="ZonesDisabledTitle" xml:space="preserve"><value>Chế độ Phân khu &amp; Sơ đồ ô đỗ đang tắt</value></data>
+  <data name="ZonesDisabledDesc" xml:space="preserve"><value>Nhà trọ này đang vận hành ở chế độ bãi xe chung cơ bản. Chủ trọ có thể bật tính năng Phân khu &amp; Ô đỗ xe trong tab Cấu hình bãi xe.</value></data>
+  <data name="EnableZonesNowBtn" xml:space="preserve"><value>Bật Phân khu &amp; Ô đỗ ngay</value></data>
+  <data name="AddZoneBtn" xml:space="preserve"><value>Tạo khu đỗ xe</value></data>
+  <data name="EditZoneTitle" xml:space="preserve"><value>Cấu hình khu đỗ xe</value></data>
+  <data name="ZoneNameLabel" xml:space="preserve"><value>Tên khu đỗ</value></data>
+  <data name="ZoneLocationType" xml:space="preserve"><value>Vị trí khu</value></data>
+  <data name="IndoorZone" xml:space="preserve"><value>Trong nhà / Tầng hầm</value></data>
+  <data name="OutdoorZone" xml:space="preserve"><value>Ngoài trời / Sân thoáng</value></data>
+  <data name="CapacityLabel" xml:space="preserve"><value>Sức chứa tối đa (số xe)</value></data>
+  <data name="AllowedTypesLabel" xml:space="preserve"><value>Loại xe được phép đỗ trong khu này</value></data>
+  <data name="HasSlotsLabel" xml:space="preserve"><value>Chia sơ đồ lưới ô đỗ cố định (A01, A02…)</value></data>
+  <data name="IsFreeZoneLabel" xml:space="preserve"><value>Miễn phí gửi xe tại khu này</value></data>
+  <data name="OverrideFeeLabel" xml:space="preserve"><value>Giá ghi đè riêng của khu (để trống = tính theo loại xe)</value></data>
+  <data name="SlotPrefixLabel" xml:space="preserve"><value>Ký hiệu dãy ô (VD: A, B)</value></data>
+  <data name="SlotGridTitle" xml:space="preserve"><value>Sơ đồ lưới ô đỗ xe</value></data>
+  <data name="ZoneNearFullBadge" xml:space="preserve"><value>Sắp đầy</value></data>
+  <data name="ZoneFullBadge" xml:space="preserve"><value>Đã đầy</value></data>
+  <data name="ToggleMaintenanceBtn" xml:space="preserve"><value>Đổi trạng thái bảo trì</value></data>
+  <!-- Guest Vehicle Notices -->
+  <data name="AddGuestNoticeBtn" xml:space="preserve"><value>Báo xe bạn gửi nhờ</value></data>
+  <data name="GuestNameLabel" xml:space="preserve"><value>Tên khách / bạn đến chơi</value></data>
+  <data name="ExpectedFromLabel" xml:space="preserve"><value>Thời gian vào dự kiến</value></data>
+  <data name="ExpectedToLabel" xml:space="preserve"><value>Thời gian rời đi dự kiến</value></data>
+  <data name="MarkCompletedBtn" xml:space="preserve"><value>Đã rời đi</value></data>
+  <data name="EmptyGuestNotices" xml:space="preserve"><value>Hiện không có xe bạn gửi nhờ / qua đêm nào.</value></data>
+  <!-- Audit -->
+  <data name="StartAuditBtn" xml:space="preserve"><value>Bắt đầu đợt kiểm kê mới</value></data>
+  <data name="CompleteAuditBtn" xml:space="preserve"><value>Hoàn tất &amp; chốt biên bản kiểm kê</value></data>
+  <data name="QuickAddAuditVehicleBtn" xml:space="preserve"><value>Thêm nhanh xe phát hiện ngoài sân</value></data>
+  <data name="AuditHistoryTitle" xml:space="preserve"><value>Lịch sử các đợt kiểm kê</value></data>
+  <data name="AuditChecklistTitle" xml:space="preserve"><value>Danh sách đối chiếu ngoài sân</value></data>
+  <!-- Settings -->
+  <data name="FeeSectionTitle" xml:space="preserve"><value>Bảng giá gửi xe hàng tháng theo loại phương tiện</value></data>
+  <data name="RuleSectionTitle" xml:space="preserve"><value>Quy tắc vận hành &amp; phân quyền bãi xe</value></data>
+  <data name="MaxVehiclesPerRoomLabel" xml:space="preserve"><value>Số xe Active tối đa mỗi phòng (0 = không giới hạn)</value></data>
+  <data name="ZoneThresholdLabel" xml:space="preserve"><value>Ngưỡng cảnh báo khu đỗ sắp đầy (%)</value></data>
+  <data name="EnableParkingZonesLabel" xml:space="preserve"><value>Bật chế độ Phân khu &amp; Sơ đồ ô đỗ xe (trong nhà / ngoài trời, ràng buộc loại xe)</value></data>
+  <data name="AllowTenantGuestNoticeLabel" xml:space="preserve"><value>Cho phép khách thuê khai báo xe bạn gửi nhờ / qua đêm (tối đa 3 xe/phòng)</value></data>
+  <data name="AllowBlockingAlertLabel" xml:space="preserve"><value>Cho phép khách thuê gửi thông báo báo xe đậu chắn lối (ẩn SĐT)</value></data>
+  <data name="AllowManagerManageVehiclesLabel" xml:space="preserve"><value>Cho phép Quản lý tòa nhà thêm/sửa/ngừng gửi xe và kiểm kê bãi xe</value></data>
+  <!-- Error Messages -->
+  <data name="Forbidden" xml:space="preserve"><value>Bạn không có quyền thực hiện thao tác này trên nhà trọ/phòng đã chọn.</value></data>
+  <data name="PropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ trong phạm vi được phép.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng trong nhà trọ đã chọn.</value></data>
+  <data name="NoActiveContract" xml:space="preserve"><value>Phòng này chưa có hợp đồng đang hiệu lực (Approved) để đăng ký xe.</value></data>
+  <data name="VehicleNotFound" xml:space="preserve"><value>Không tìm thấy phương tiện khớp với biển số hoặc mã đã nhập.</value></data>
+  <data name="InvalidPlateNumber" xml:space="preserve"><value>Biển số xe không hợp lệ (cần từ 5–15 ký tự chữ và số, bắt buộc có số).</value></data>
+  <data name="DuplicateActivePlate" xml:space="preserve"><value>Biển số xe này đang được đăng ký gửi (Active) tại nhà trọ này. Vui lòng ngừng xe cũ trước.</value></data>
+  <data name="RoomVehicleLimitReached" xml:space="preserve"><value>Phòng đã đạt số lượng xe gửi tối đa theo quy định của nhà trọ.</value></data>
+  <data name="InvalidFeeAmount" xml:space="preserve"><value>Đơn giá phí gửi xe phải lớn hơn hoặc bằng 0.</value></data>
+  <data name="InvalidSettingValue" xml:space="preserve"><value>Giá trị cấu hình không hợp lệ.</value></data>
+  <data name="ParkingZonesDisabled" xml:space="preserve"><value>Chức năng Phân khu &amp; Ô đỗ xe đang tắt tại nhà trọ này.</value></data>
+  <data name="ZoneNotFound" xml:space="preserve"><value>Không tìm thấy khu đỗ xe hoặc khu đỗ đã ngừng hoạt động.</value></data>
+  <data name="DuplicateZoneName" xml:space="preserve"><value>Tên khu đỗ xe đã tồn tại trong nhà trọ này.</value></data>
+  <data name="InvalidZoneCapacity" xml:space="preserve"><value>Sức chứa khu đỗ không hợp lệ hoặc nhỏ hơn số xe đang đỗ thực tế.</value></data>
+  <data name="ZoneFull" xml:space="preserve"><value>Khu đỗ xe đã đầy sức chứa, không thể gán thêm xe mới.</value></data>
+  <data name="VehicleTypeNotAllowedInZone" xml:space="preserve"><value>Loại xe này không được phép đỗ tại khu đã chọn (ví dụ: quy định an toàn xe máy điện).</value></data>
+  <data name="ZoneHasActiveVehicles" xml:space="preserve"><value>Khu đỗ vẫn còn xe đang gửi (Active), vui lòng chuyển xe sang khu khác trước.</value></data>
+  <data name="SlotNotFound" xml:space="preserve"><value>Không tìm thấy ô đỗ xe trong khu đã chọn.</value></data>
+  <data name="DuplicateSlotCode" xml:space="preserve"><value>Mã ô đỗ đã tồn tại trong khu này.</value></data>
+  <data name="SlotNotAvailable" xml:space="preserve"><value>Ô đỗ xe đang tạm khóa bảo trì, không thể gán xe.</value></data>
+  <data name="SlotCurrentlyOccupied" xml:space="preserve"><value>Ô đỗ xe này đã có xe khác đang sử dụng.</value></data>
+  <data name="BlockingAlertDisabled" xml:space="preserve"><value>Chủ trọ đã tắt tính năng báo đậu chắn lối cho khách thuê tại nhà trọ này.</value></data>
+  <data name="BlockingAlertRateLimited" xml:space="preserve"><value>Biển số này vừa được gửi thông báo chắn lối trong 5 phút gần đây. Vui lòng chờ một lát.</value></data>
+  <data name="BlockingAlertAmbiguousPlate" xml:space="preserve"><value>Có nhiều xe trùng 4 số cuối này. Vui lòng nhập đầy đủ biển số xe.</value></data>
+  <data name="GuestNoticeDisabled" xml:space="preserve"><value>Chủ trọ đã tắt tính năng tự báo xe bạn gửi nhờ tại nhà trọ này.</value></data>
+  <data name="GuestNoticeLimitReached" xml:space="preserve"><value>Mỗi phòng chỉ được đăng ký tối đa 3 xe bạn gửi nhờ đang còn hiệu lực cùng lúc.</value></data>
+  <data name="GuestNoticeNotFound" xml:space="preserve"><value>Không tìm thấy phiếu báo xe gửi nhờ.</value></data>
+  <data name="InvalidTimeRange" xml:space="preserve"><value>Thời gian kết thúc dự kiến phải lớn hơn thời gian bắt đầu và ở tương lai.</value></data>
+  <data name="AuditSessionNotFound" xml:space="preserve"><value>Không tìm thấy phiên kiểm kê bãi xe.</value></data>
+  <data name="AuditSessionAlreadyCompleted" xml:space="preserve"><value>Phiên kiểm kê này đã hoàn tất, không thể chỉnh sửa thêm.</value></data>
+  <data name="AuditSessionAlreadyInProgress" xml:space="preserve"><value>Đang có phiên kiểm kê chưa hoàn tất cho nhà trọ này.</value></data>
+  <data name="InvalidAuditResult" xml:space="preserve"><value>Kết quả kiểm kê không hợp lệ.</value></data>
+  <data name="ReasonRequired" xml:space="preserve"><value>Vui lòng nhập lý do ngừng gửi xe.</value></data>
+  <data name="InvalidStatus" xml:space="preserve"><value>Trạng thái chuyển đổi không hợp lệ.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Không thể lưu dữ liệu. Vui lòng kiểm tra lại thông tin.</value></data>
+  <data name="CreateStrangeVehicleIncidentBtn" xml:space="preserve"><value>Tạo sự cố xe lạ</value></data>
+  <data name="TenantNotInRoom" xml:space="preserve"><value>Khách thuê được chọn không thuộc hợp đồng đang hiệu lực của phòng.</value></data>
+  <data name="MaxVehiclesBelowActiveCount" xml:space="preserve"><value>Số xe tối đa mỗi phòng không được nhỏ hơn số xe đang gửi của phòng có nhiều xe nhất.</value></data>
+  <data name="ParkingZonesInUse" xml:space="preserve"><value>Vẫn còn xe đang được gán khu/ô đỗ. Vui lòng gỡ gán trước khi tắt phân khu &amp; ô đỗ.</value></data>
+  <data name="ZoneTypeExcludesActiveVehicles" xml:space="preserve"><value>Không thể cập nhật: khu đỗ đang có xe thuộc loại không còn được phép theo cấu hình mới.</value></data>
+  <data name="ZoneHasOccupiedSlots" xml:space="preserve"><value>Khu đỗ vẫn còn ô đỗ đang được sử dụng, không thể tắt hoặc bớt ô đỗ.</value></data>
+  <data name="PhotoInvalid" xml:space="preserve"><value>Tệp ảnh không hợp lệ. Vui lòng chọn ảnh JPG, PNG hoặc WEBP dưới 2MB.</value></data>
+  <data name="PhotoInvalidType" xml:space="preserve"><value>Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.</value></data>
+  <data name="PhotoTooLarge" xml:space="preserve"><value>Ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.</value></data>
+  <data name="VehiclePhotoLabel" xml:space="preserve"><value>Ảnh xe (tùy chọn)</value></data>
+  <data name="RemovePhoto" xml:space="preserve"><value>Xóa ảnh</value></data>
+  <data name="CommonYard" xml:space="preserve"><value>Sân chung</value></data>
+  <data name="SlotLabel" xml:space="preserve"><value>Ô</value></data>
+  <data name="ColumnTenant" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="ColumnRoomProperty" xml:space="preserve"><value>Phòng / Nhà trọ</value></data>
+  <data name="ColumnTypeLocation" xml:space="preserve"><value>Phân loại &amp; Vị trí</value></data>
+  <data name="ColumnFinance" xml:space="preserve"><value>Tài chính</value></data>
+  <data name="MonthlyFeeShort" xml:space="preserve"><value>Phí hàng tháng</value></data>
+  <data name="TenantUnassigned" xml:space="preserve"><value>Chưa gắn tên khách</value></data>
+  <data name="QrTooltipHint" xml:space="preserve"><value>Nhấn để xem thẻ gửi xe QR ({0})</value></data>
+  <data name="FixedSlotTooltip" xml:space="preserve"><value>Ô đỗ cố định: {0}</value></data>
+  <data name="AllRooms" xml:space="preserve"><value>Tất cả phòng</value></data>
+  <data name="AllVehicleTypes" xml:space="preserve"><value>Tất cả loại xe</value></data>
+  <data name="AllStatuses" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="RoomOptionFormat" xml:space="preserve"><value>Phòng {0}</value></data>
+  <data name="RoomOptionUsageFormat" xml:space="preserve"><value>Phòng {0} (Đang gửi: {1}/{2} {3})</value></data>
+  <data name="SelectTenantPlaceholder" xml:space="preserve"><value>-- Chọn khách thuê --</value></data>
+  <data name="ParkingZoneLabel" xml:space="preserve"><value>Khu đỗ xe</value></data>
+  <data name="NoZoneOption" xml:space="preserve"><value>-- Chưa gán khu đỗ --</value></data>
+  <data name="FixedSlotLabel" xml:space="preserve"><value>Ô đỗ cố định</value></data>
+  <data name="SelectFreeSlotOption" xml:space="preserve"><value>-- Chọn ô đỗ trống --</value></data>
+  <data name="SlotCodeFormat" xml:space="preserve"><value>Ô {0}</value></data>
+  <data name="ZoneOptionUsageFormat" xml:space="preserve"><value>{0} ({1}/{2} {3})</value></data>
+  <data name="RoomPropertyOptionFormat" xml:space="preserve"><value>Phòng {0} ({1})</value></data>
+  <data name="PlatePlaceholder" xml:space="preserve"><value>VD: 59-X1 123.45</value></data>
+  <data name="GuestPlatePlaceholder" xml:space="preserve"><value>VD: 59-X1 999.99</value></data>
+  <data name="BrandPlaceholder" xml:space="preserve"><value>Honda, Yamaha, VinFast…</value></data>
+  <data name="ColorPlaceholder" xml:space="preserve"><value>Đen, Trắng, Đỏ…</value></data>
+  <data name="VehicleNotePlaceholder" xml:space="preserve"><value>Ghi chú thêm về phương tiện…</value></data>
+  <data name="KpiActiveBreakdown" xml:space="preserve"><value>Gồm {0} xe máy điện · {1} xe máy số · {2} xe tay ga</value></data>
+  <data name="KpiElectricHelp" xml:space="preserve"><value>Nhấn để lọc nhanh phương tiện xe máy điện đang gửi trong bãi</value></data>
+  <data name="KpiFeeLabel" xml:space="preserve"><value>Phí gửi xe tháng</value></data>
+  <data name="KpiFeeHelp" xml:space="preserve"><value>Tổng doanh thu phí gửi xe hàng tháng của các phương tiện đang gửi</value></data>
+  <data name="KpiFreeSlots" xml:space="preserve"><value>Chỗ đỗ còn trống</value></data>
+  <data name="KpiSlotsSuffix" xml:space="preserve"><value>/ {0} chỗ</value></data>
+  <data name="KpiFreeSlotsHelp" xml:space="preserve"><value>Đã sử dụng {0}/{1} chỗ đỗ · {2} xe gửi nhờ</value></data>
+  <data name="KpiGuests" xml:space="preserve"><value>Xe bạn gửi nhờ</value></data>
+  <data name="KpiGuestsHelp" xml:space="preserve"><value>Hiện có {0} xe gửi nhờ · {1} xe đã ngừng gửi (nhấn để xem)</value></data>
+  <data name="DeactivateDefaultReason" xml:space="preserve"><value>Khách trả xe / ngừng gửi</value></data>
+  <data name="FeeUnitBadge" xml:space="preserve"><value>VND / tháng</value></data>
+  <data name="FeeDefaultElectricHelp" xml:space="preserve"><value>Mặc định 50.000 ₫/tháng theo quyết định D-VH-03</value></data>
+  <data name="FeeDefaultManualHelp" xml:space="preserve"><value>Mặc định 80.000 ₫/tháng theo quyết định D-VH-03</value></data>
+  <data name="FeeDefaultScooterHelp" xml:space="preserve"><value>Mặc định 100.000 ₫/tháng theo quyết định D-VH-03</value></data>
+  <data name="FeePreviewHint" xml:space="preserve"><value>Hiển thị trên hóa đơn: {0} / tháng</value></data>
+  <data name="ZoneModeOn" xml:space="preserve"><value>Chế độ Phân khu</value></data>
+  <data name="ZoneModeOff" xml:space="preserve"><value>Chế độ Cơ bản</value></data>
+  <data name="ZonesEmptyTitle" xml:space="preserve"><value>Chưa có khu đỗ xe nào</value></data>
+  <data name="ZonesEmptyDesc" xml:space="preserve"><value>Tạo Khu trong nhà hoặc Bãi ngoài trời để phân bổ sức chứa, ràng buộc loại xe và vẽ sơ đồ lưới ô đỗ cố định.</value></data>
+  <data name="MaintenanceToggleHint" xml:space="preserve"><value>(Nhấn vào ô trống để chuyển trạng thái bảo trì)</value></data>
+  <data name="ZoneFree" xml:space="preserve"><value>Miễn phí</value></data>
+  <data name="ZoneFeeByType" xml:space="preserve"><value>Giá theo loại xe</value></data>
+  <data name="ZoneFeePerMonth" xml:space="preserve"><value>{0}/tháng</value></data>
+  <data name="ZoneUsageLabel" xml:space="preserve"><value>Công suất đang đỗ:</value></data>
+  <data name="SlotGridCount" xml:space="preserve"><value>({0} ô):</value></data>
+  <data name="ZoneNamePlaceholder" xml:space="preserve"><value>VD: Khu trong nhà A / Bãi ngoài trời B</value></data>
+  <data name="SlotCountLabel" xml:space="preserve"><value>Số ô đỗ cần tạo</value></data>
+  <data name="GuestNamePlaceholder" xml:space="preserve"><value>Tên bạn / khách gửi nhờ</value></data>
+  <data name="GuestDurationLabel" xml:space="preserve"><value>Thời hạn gửi nhờ (giờ)</value></data>
+  <data name="GuestNotePlaceholder" xml:space="preserve"><value>VD: Ở lại học nhóm qua đêm…</value></data>
+  <data name="ColumnRoomGuest" xml:space="preserve"><value>Phòng / Khách báo</value></data>
+  <data name="GuestDueColumn" xml:space="preserve"><value>Thời hạn gửi nhờ</value></data>
+  <data name="GuestTimeTo" xml:space="preserve"><value>Đến {0}</value></data>
+  <data name="GuestTimeFrom" xml:space="preserve"><value>Từ {0}</value></data>
+  <data name="AuditStatTotalExpected" xml:space="preserve"><value>Tổng xe đối chiếu</value></data>
+  <data name="AuditStatTotalExpectedHelp" xml:space="preserve"><value>Tổng số phương tiện đang đăng ký gửi (Active) cần kiểm kê trong đợt này</value></data>
+  <data name="AuditStatPresentHelp" xml:space="preserve"><value>Số phương tiện đã xác nhận có mặt thực tế ngoài sân</value></data>
+  <data name="AuditStatPendingHelp" xml:space="preserve"><value>Số phương tiện đang chờ người kiểm kê đối chiếu</value></data>
+  <data name="AuditStatMissingHelp" xml:space="preserve"><value>Số phương tiện vắng mặt ngoài sân tại thời điểm kiểm kê</value></data>
+  <data name="AuditSessionPrefix" xml:space="preserve"><value>Đợt #{0}</value></data>
+  <data name="AuditCompletedAt" xml:space="preserve"><value>Hoàn tất: {0}</value></data>
+  <data name="AuditResultPresent" xml:space="preserve"><value>{0} / {1} xe có mặt</value></data>
+  <data name="AuditResultSummary" xml:space="preserve"><value>{0} vắng mặt · {1} chưa kiểm</value></data>
+  <data name="ColumnAuditSession" xml:space="preserve"><value>Mã đợt</value></data>
+  <data name="ColumnAuditor" xml:space="preserve"><value>Người kiểm kê</value></data>
+  <data name="ColumnAuditTime" xml:space="preserve"><value>Thời gian thực hiện</value></data>
+  <data name="ColumnAuditResult" xml:space="preserve"><value>Kết quả đối chiếu</value></data>
+  <data name="MyStatTotalHelp" xml:space="preserve"><value>Số lượng phương tiện đang đăng ký gửi của phòng bạn</value></data>
+  <data name="MyStatFeeHelp" xml:space="preserve"><value>Tổng phí gửi xe hàng tháng cộng vào hóa đơn phòng</value></data>
+  <data name="MyStatGuestHelp" xml:space="preserve"><value>Tối đa 3 phiếu báo xe bạn gửi nhờ đang còn hiệu lực cùng lúc cho mỗi phòng</value></data>
+  <data name="MyGuestHoursLabel" xml:space="preserve"><value>Số giờ gửi nhờ dự kiến</value></data>
+  <data name="NotifVehicleAddedTitle" xml:space="preserve"><value>Đã đăng ký xe {0}</value></data>
+  <data name="NotifVehicleAddedBody" xml:space="preserve"><value>Xe {0} ({1}) đã được thêm vào phòng {2}.</value></data>
+  <data name="NotifVehicleDeactivatedTitle" xml:space="preserve"><value>Đã ngừng gửi xe {0}</value></data>
+  <data name="NotifVehicleDeactivatedBody" xml:space="preserve"><value>Xe {0} đã chuyển sang trạng thái ngừng gửi. Lý do: {1}</value></data>
+  <data name="NotifZoneNearFullTitle" xml:space="preserve"><value>Khu đỗ xe "{0}" đạt {1}% sức chứa</value></data>
+  <data name="NotifZoneNearFullBody" xml:space="preserve"><value>Khu "{0}" hiện có {1}/{2} xe đang gửi.</value></data>
+  <data name="BlockingAlertNotifTitle" xml:space="preserve"><value>Xe {0} đang đậu chắn lối</value></data>
+  <data name="BlockingAlertNotifBody" xml:space="preserve"><value>Xe {0} (Phòng {1}) đang đậu chắn lối, vui lòng ra dắt xe giúp.</value></data>
+  <data name="BlockingAlertNotifBodyWithNote" xml:space="preserve"><value>Xe {0} (Phòng {1}) đang đậu chắn lối: "{2}". Vui lòng ra dắt xe giúp.</value></data>
+  <data name="GuestNoticeNotifTitle" xml:space="preserve"><value>Phòng {0} báo xe bạn gửi nhờ ({1})</value></data>
+  <data name="GuestNoticeNotifBody" xml:space="preserve"><value>Biển số: {0}. Dự kiến đến: {1}.</value></data>
+  <data name="InvoiceUnitMonth" xml:space="preserve"><value>tháng</value></data>
+  <data name="InvoiceParkingLinePrefix" xml:space="preserve"><value>Phí gửi xe</value></data>
+  <data name="ContractLiquidatedReason" xml:space="preserve"><value>Hợp đồng đã thanh lý</value></data>
+  <data name="ContractLiquidatedNotifTitle" xml:space="preserve"><value>Hợp đồng đã thanh lý</value></data>
+  <data name="ContractLiquidatedTenantBody" xml:space="preserve"><value>Hợp đồng phòng {0} đã thanh lý. Xe {1} đã được ngừng gửi.</value></data>
+  <data name="ContractLiquidatedOwnerBody" xml:space="preserve"><value>Phòng {0}: {1} xe ({2}) đã được ngừng gửi do thanh lý hợp đồng.</value></data>
+</root>

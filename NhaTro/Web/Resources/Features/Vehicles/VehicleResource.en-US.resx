@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <!-- Tabs & Page Titles -->
+  <data name="TabVehicles" xml:space="preserve"><value>Vehicle list</value></data>
+  <data name="TabZones" xml:space="preserve"><value>Zones &amp; slot map</value></data>
+  <data name="TabGuests" xml:space="preserve"><value>Guest vehicles</value></data>
+  <data name="TabAudit" xml:space="preserve"><value>Parking audit</value></data>
+  <data name="TabSettings" xml:space="preserve"><value>Parking settings</value></data>
+  <data name="PageTitleVehicles" xml:space="preserve"><value>Vehicle &amp; parking management</value></data>
+  <data name="SubtitleVehicles" xml:space="preserve"><value>Manage 2-wheel vehicles linked to rooms and contracts, quick lookup by last 4 digits, blocking alerts, and monthly invoice billing.</value></data>
+  <data name="PageTitleZones" xml:space="preserve"><value>Parking zones &amp; slot map</value></data>
+  <data name="SubtitleZones" xml:space="preserve"><value>Manage indoor/outdoor parking zones, allowed vehicle types per zone, and fixed parking slot grids.</value></data>
+  <data name="PageTitleGuests" xml:space="preserve"><value>Guest &amp; overnight vehicles</value></data>
+  <data name="SubtitleGuests" xml:space="preserve"><value>Track visitor vehicles reported by tenants to distinguish from unauthorized vehicles (exempt from monthly fee).</value></data>
+  <data name="PageTitleAudit" xml:space="preserve"><value>Parking audit</value></data>
+  <data name="SubtitleAudit" xml:space="preserve"><value>Reconcile physical vehicles in the yard with registered records to prevent fee leakage.</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>Parking rates &amp; rules</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>Configure monthly fees for the 3 motorbike types, per-room limits, and optional parking zones.</value></data>
+  <data name="PageTitleMyVehicles" xml:space="preserve"><value>My vehicles</value></data>
+  <data name="SubtitleMyVehicles" xml:space="preserve"><value>View registered vehicles for your room, vehicle QR stickers, send blocking alerts, and declare visitor vehicles.</value></data>
+  <!-- Common Buttons & Labels -->
+  <data name="Loading" xml:space="preserve"><value>Loading parking data…</value></data>
+  <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Save" xml:space="preserve"><value>Save changes</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="All" xml:space="preserve"><value>All</value></data>
+  <data name="Property" xml:space="preserve"><value>Property</value></data>
+  <data name="Room" xml:space="preserve"><value>Room</value></data>
+  <data name="Tenant" xml:space="preserve"><value>Owner / Tenant</value></data>
+  <data name="Contract" xml:space="preserve"><value>Contract</value></data>
+  <data name="PlateNumber" xml:space="preserve"><value>License plate</value></data>
+  <data name="VehicleType" xml:space="preserve"><value>Vehicle type</value></data>
+  <data name="Brand" xml:space="preserve"><value>Brand</value></data>
+  <data name="Color" xml:space="preserve"><value>Color</value></data>
+  <data name="MonthlyFee" xml:space="preserve"><value>Monthly fee</value></data>
+  <data name="ZoneAndSlot" xml:space="preserve"><value>Zone / Slot</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="StartedAt" xml:space="preserve"><value>Start date</value></data>
+  <data name="EndedAt" xml:space="preserve"><value>End date</value></data>
+  <data name="Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Action" xml:space="preserve"><value>Actions</value></data>
+  <data name="Saved" xml:space="preserve"><value>Changes saved successfully.</value></data>
+  <data name="LoadFailed" xml:space="preserve"><value>Failed to load data. Please try again.</value></data>
+  <!-- Vehicle Types & Statuses -->
+  <data name="ElectricMotorbike" xml:space="preserve"><value>Electric motorbike</value></data>
+  <data name="ManualMotorbike" xml:space="preserve"><value>Manual motorbike</value></data>
+  <data name="Scooter" xml:space="preserve"><value>Scooter</value></data>
+  <data name="Active" xml:space="preserve"><value>Active</value></data>
+  <data name="Inactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="Available" xml:space="preserve"><value>Available</value></data>
+  <data name="Occupied" xml:space="preserve"><value>Occupied</value></data>
+  <data name="Maintenance" xml:space="preserve"><value>Maintenance</value></data>
+  <data name="Completed" xml:space="preserve"><value>Departed</value></data>
+  <data name="Expired" xml:space="preserve"><value>Expired</value></data>
+  <data name="Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="InProgress" xml:space="preserve"><value>In progress</value></data>
+  <data name="Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Present" xml:space="preserve"><value>Present</value></data>
+  <data name="Missing" xml:space="preserve"><value>Missing</value></data>
+  <!-- KPI Cards -->
+  <data name="StatTotalActive" xml:space="preserve"><value>Active vehicles</value></data>
+  <data name="StatByType" xml:space="preserve"><value>Vehicle breakdown</value></data>
+  <data name="StatEstimatedRevenue" xml:space="preserve"><value>Monthly parking revenue</value></data>
+  <data name="StatGuestAndCapacity" xml:space="preserve"><value>Guest vehicles / Zone capacity</value></data>
+  <data name="UnitVehicles" xml:space="preserve"><value>vehicles</value></data>
+  <!-- Actions on Vehicle List -->
+  <data name="AddVehicleBtn" xml:space="preserve"><value>Add vehicle</value></data>
+  <data name="EditVehicleTitle" xml:space="preserve"><value>Update vehicle details</value></data>
+  <data name="BlockingAlertBtn" xml:space="preserve"><value>Report blocking vehicle</value></data>
+  <data name="SyncBillingBtn" xml:space="preserve"><value>Sync fees to draft invoices</value></data>
+  <data name="SyncBillingSuccess" xml:space="preserve"><value>Synced parking fee line to {0} draft invoice(s).</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search plate (or last 4 digits), room, tenant, brand…</value></data>
+  <data name="ViewQrBtn" xml:space="preserve"><value>QR code</value></data>
+  <data name="DeactivateBtn" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="ReactivateBtn" xml:space="preserve"><value>Reactivate</value></data>
+  <data name="ReportIncidentBtn" xml:space="preserve"><value>Report incident</value></data>
+  <data name="IncidentTitleLabel" xml:space="preserve"><value>Incident title</value></data>
+  <data name="IncidentTitlePlaceholder" xml:space="preserve"><value>e.g. Unknown car occupying a slot / Vehicle damage / Helmet missing…</value></data>
+  <data name="IncidentDescLabel" xml:space="preserve"><value>Details</value></data>
+  <data name="IncidentPlatePlaceholder" xml:space="preserve"><value>e.g. 59X112345</value></data>
+  <data name="DeactivateModalTitle" xml:space="preserve"><value>Confirm vehicle deactivation</value></data>
+  <data name="DeactivateReasonLabel" xml:space="preserve"><value>Reason (returned vehicle, sold, checkout…)</value></data>
+  <data name="EmptyVehiclesTitle" xml:space="preserve"><value>No vehicles registered</value></data>
+  <data name="EmptyVehiclesDesc" xml:space="preserve"><value>Click "Add vehicle" to register a 2-wheel vehicle for a room with an active contract.</value></data>
+  <data name="PlateNormalizedPreview" xml:space="preserve"><value>Normalized plate:</value></data>
+  <!-- QR Dialog -->
+  <data name="QrModalTitle" xml:space="preserve"><value>Vehicle QR identification sticker</value></data>
+  <data name="QrCardTitle" xml:space="preserve"><value>Parking card</value></data>
+  <data name="QrTokenLabel" xml:space="preserve"><value>Internal lookup token (no PII/phone):</value></data>
+  <data name="PrintQrBtn" xml:space="preserve"><value>Print QR sticker</value></data>
+  <!-- Blocking Alert Dialog -->
+  <data name="BlockingAlertTitle" xml:space="preserve"><value>Quick lookup &amp; Blocking alert</value></data>
+  <data name="BlockingAlertDesc" xml:space="preserve"><value>Enter a license plate or its last 4 digits to send an anonymous in-app alert without revealing phone numbers.</value></data>
+  <data name="PlateQueryLabel" xml:space="preserve"><value>License plate or last 4 digits</value></data>
+  <data name="PlateQueryPlaceholder" xml:space="preserve"><value>e.g. 2345 or 59X1-12345</value></data>
+  <data name="BlockingNoteLabel" xml:space="preserve"><value>Short note (optional)</value></data>
+  <data name="BlockingNotePlaceholder" xml:space="preserve"><value>e.g., Blocking the main gate exit, please move your motorbike…</value></data>
+  <data name="SendBlockingAlertBtn" xml:space="preserve"><value>Send move-vehicle alert</value></data>
+  <data name="BlockingAlertSentNotice" xml:space="preserve"><value>Sent blocking alert for plate {0} (Room {1}) to {2} member(s).</value></data>
+  <!-- Zones & Slots -->
+  <data name="ZonesDisabledTitle" xml:space="preserve"><value>Parking zones &amp; slot map are disabled</value></data>
+  <data name="ZonesDisabledDesc" xml:space="preserve"><value>This property currently operates in basic shared yard mode. The owner can enable Parking Zones &amp; Slots in Parking Settings.</value></data>
+  <data name="EnableZonesNowBtn" xml:space="preserve"><value>Enable Parking Zones now</value></data>
+  <data name="AddZoneBtn" xml:space="preserve"><value>Create parking zone</value></data>
+  <data name="EditZoneTitle" xml:space="preserve"><value>Configure parking zone</value></data>
+  <data name="ZoneNameLabel" xml:space="preserve"><value>Zone name</value></data>
+  <data name="ZoneLocationType" xml:space="preserve"><value>Zone location</value></data>
+  <data name="IndoorZone" xml:space="preserve"><value>Indoor / Basement</value></data>
+  <data name="OutdoorZone" xml:space="preserve"><value>Outdoor / Open yard</value></data>
+  <data name="CapacityLabel" xml:space="preserve"><value>Maximum capacity (vehicles)</value></data>
+  <data name="AllowedTypesLabel" xml:space="preserve"><value>Allowed vehicle types in this zone</value></data>
+  <data name="HasSlotsLabel" xml:space="preserve"><value>Use fixed parking slot grid (A01, A02…)</value></data>
+  <data name="IsFreeZoneLabel" xml:space="preserve"><value>Free parking in this zone</value></data>
+  <data name="OverrideFeeLabel" xml:space="preserve"><value>Zone override monthly fee (blank = use vehicle type rate)</value></data>
+  <data name="SlotPrefixLabel" xml:space="preserve"><value>Slot prefix (e.g., A, B)</value></data>
+  <data name="SlotGridTitle" xml:space="preserve"><value>Parking slot grid</value></data>
+  <data name="ZoneNearFullBadge" xml:space="preserve"><value>Near full</value></data>
+  <data name="ZoneFullBadge" xml:space="preserve"><value>Full</value></data>
+  <data name="ToggleMaintenanceBtn" xml:space="preserve"><value>Toggle maintenance</value></data>
+  <!-- Guest Vehicle Notices -->
+  <data name="AddGuestNoticeBtn" xml:space="preserve"><value>Report guest vehicle</value></data>
+  <data name="GuestNameLabel" xml:space="preserve"><value>Visitor name</value></data>
+  <data name="ExpectedFromLabel" xml:space="preserve"><value>Expected arrival</value></data>
+  <data name="ExpectedToLabel" xml:space="preserve"><value>Expected departure</value></data>
+  <data name="MarkCompletedBtn" xml:space="preserve"><value>Mark departed</value></data>
+  <data name="EmptyGuestNotices" xml:space="preserve"><value>No active guest or overnight vehicles reported.</value></data>
+  <!-- Audit -->
+  <data name="StartAuditBtn" xml:space="preserve"><value>Start new parking audit</value></data>
+  <data name="CompleteAuditBtn" xml:space="preserve"><value>Complete &amp; finalize audit</value></data>
+  <data name="QuickAddAuditVehicleBtn" xml:space="preserve"><value>Quick-add vehicle found in yard</value></data>
+  <data name="AuditHistoryTitle" xml:space="preserve"><value>Audit history</value></data>
+  <data name="AuditChecklistTitle" xml:space="preserve"><value>Yard inspection checklist</value></data>
+  <!-- Settings -->
+  <data name="FeeSectionTitle" xml:space="preserve"><value>Monthly parking rates by vehicle type</value></data>
+  <data name="RuleSectionTitle" xml:space="preserve"><value>Operational rules &amp; manager permissions</value></data>
+  <data name="MaxVehiclesPerRoomLabel" xml:space="preserve"><value>Max active vehicles per room (0 = unlimited)</value></data>
+  <data name="ZoneThresholdLabel" xml:space="preserve"><value>Zone near-full warning threshold (%)</value></data>
+  <data name="EnableParkingZonesLabel" xml:space="preserve"><value>Enable Parking Zones &amp; Slot Map (indoor/outdoor, vehicle type restrictions)</value></data>
+  <data name="AllowTenantGuestNoticeLabel" xml:space="preserve"><value>Allow tenants to declare guest/overnight vehicles (max 3 active/room)</value></data>
+  <data name="AllowBlockingAlertLabel" xml:space="preserve"><value>Allow tenants to send anonymous blocking alerts (phone hidden)</value></data>
+  <data name="AllowManagerManageVehiclesLabel" xml:space="preserve"><value>Allow assigned property managers to add/edit/deactivate vehicles and run audits</value></data>
+  <!-- Error Messages -->
+  <data name="Forbidden" xml:space="preserve"><value>You do not have permission to perform this action on the selected property/room.</value></data>
+  <data name="PropertyNotFound" xml:space="preserve"><value>Property not found within your permitted scope.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>Room not found in the selected property.</value></data>
+  <data name="NoActiveContract" xml:space="preserve"><value>This room does not have an approved active contract to register a vehicle.</value></data>
+  <data name="VehicleNotFound" xml:space="preserve"><value>No active vehicle matches the entered license plate or code.</value></data>
+  <data name="InvalidPlateNumber" xml:space="preserve"><value>Invalid license plate (must be 5–15 alphanumeric characters with at least one digit).</value></data>
+  <data name="DuplicateActivePlate" xml:space="preserve"><value>This license plate is already registered as Active in this property. Deactivate the old record first.</value></data>
+  <data name="RoomVehicleLimitReached" xml:space="preserve"><value>This room has reached the maximum number of active vehicles allowed.</value></data>
+  <data name="InvalidFeeAmount" xml:space="preserve"><value>Monthly parking fee must be zero or greater.</value></data>
+  <data name="InvalidSettingValue" xml:space="preserve"><value>Invalid configuration value.</value></data>
+  <data name="ParkingZonesDisabled" xml:space="preserve"><value>Parking zones &amp; slots are disabled for this property.</value></data>
+  <data name="ZoneNotFound" xml:space="preserve"><value>Parking zone not found or inactive.</value></data>
+  <data name="DuplicateZoneName" xml:space="preserve"><value>A parking zone with this name already exists in this property.</value></data>
+  <data name="InvalidZoneCapacity" xml:space="preserve"><value>Invalid zone capacity or smaller than current occupied vehicle count.</value></data>
+  <data name="ZoneFull" xml:space="preserve"><value>This parking zone is at full capacity.</value></data>
+  <data name="VehicleTypeNotAllowedInZone" xml:space="preserve"><value>This vehicle type is not permitted in the selected zone (e.g., electric motorbike safety rule).</value></data>
+  <data name="ZoneHasActiveVehicles" xml:space="preserve"><value>This zone still has active vehicles; please move them before deleting or disabling the zone.</value></data>
+  <data name="SlotNotFound" xml:space="preserve"><value>Parking slot not found in the selected zone.</value></data>
+  <data name="DuplicateSlotCode" xml:space="preserve"><value>Slot code already exists in this zone.</value></data>
+  <data name="SlotNotAvailable" xml:space="preserve"><value>This parking slot is under maintenance and unavailable.</value></data>
+  <data name="SlotCurrentlyOccupied" xml:space="preserve"><value>This parking slot is already occupied by another vehicle.</value></data>
+  <data name="BlockingAlertDisabled" xml:space="preserve"><value>Blocking alerts are disabled for tenants at this property.</value></data>
+  <data name="BlockingAlertRateLimited" xml:space="preserve"><value>A blocking alert was already sent for this license plate within the last 5 minutes. Please wait.</value></data>
+  <data name="BlockingAlertAmbiguousPlate" xml:space="preserve"><value>Multiple vehicles match these last 4 digits. Please enter the full license plate.</value></data>
+  <data name="GuestNoticeDisabled" xml:space="preserve"><value>Guest vehicle notices are disabled for tenants at this property.</value></data>
+  <data name="GuestNoticeLimitReached" xml:space="preserve"><value>Each room may have at most 3 active guest vehicle notices at the same time.</value></data>
+  <data name="GuestNoticeNotFound" xml:space="preserve"><value>Guest vehicle notice not found.</value></data>
+  <data name="InvalidTimeRange" xml:space="preserve"><value>Expected departure time must be after arrival time and in the future.</value></data>
+  <data name="AuditSessionNotFound" xml:space="preserve"><value>Parking audit session not found.</value></data>
+  <data name="AuditSessionAlreadyCompleted" xml:space="preserve"><value>This audit session is already completed and cannot be modified.</value></data>
+  <data name="AuditSessionAlreadyInProgress" xml:space="preserve"><value>An audit session is already in progress for this property.</value></data>
+  <data name="InvalidAuditResult" xml:space="preserve"><value>Invalid audit result.</value></data>
+  <data name="ReasonRequired" xml:space="preserve"><value>Please enter a reason for deactivating the vehicle.</value></data>
+  <data name="InvalidStatus" xml:space="preserve"><value>Invalid status transition.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Could not save data. Please verify your input.</value></data>
+  <data name="CreateStrangeVehicleIncidentBtn" xml:space="preserve"><value>Report strange vehicle incident</value></data>
+  <data name="TenantNotInRoom" xml:space="preserve"><value>The selected tenant is not a member of the room's active contract.</value></data>
+  <data name="MaxVehiclesBelowActiveCount" xml:space="preserve"><value>Max vehicles per room cannot be lower than the current active vehicle count of the busiest room.</value></data>
+  <data name="ParkingZonesInUse" xml:space="preserve"><value>Some vehicles are still assigned to zones/slots. Unassign them before disabling zones &amp; slots.</value></data>
+  <data name="ZoneTypeExcludesActiveVehicles" xml:space="preserve"><value>Cannot update: the zone still contains vehicles whose type is no longer allowed.</value></data>
+  <data name="ZoneHasOccupiedSlots" xml:space="preserve"><value>The zone still has slots in use; cannot disable or reduce slots.</value></data>
+  <data name="PhotoInvalid" xml:space="preserve"><value>Invalid image file. Please choose a JPG, PNG or WEBP image under 2MB.</value></data>
+  <data name="PhotoInvalidType" xml:space="preserve"><value>Only JPG, PNG or WEBP images are accepted.</value></data>
+  <data name="PhotoTooLarge" xml:space="preserve"><value>The image exceeds 2MB. Please choose a smaller image.</value></data>
+  <data name="VehiclePhotoLabel" xml:space="preserve"><value>Vehicle photo (optional)</value></data>
+  <data name="RemovePhoto" xml:space="preserve"><value>Remove photo</value></data>
+  <data name="CommonYard" xml:space="preserve"><value>Common yard</value></data>
+  <data name="SlotLabel" xml:space="preserve"><value>Slot</value></data>
+  <data name="ColumnTenant" xml:space="preserve"><value>Tenant</value></data>
+  <data name="ColumnRoomProperty" xml:space="preserve"><value>Room / Property</value></data>
+  <data name="ColumnTypeLocation" xml:space="preserve"><value>Type &amp; Location</value></data>
+  <data name="ColumnFinance" xml:space="preserve"><value>Finance</value></data>
+  <data name="MonthlyFeeShort" xml:space="preserve"><value>Monthly fee</value></data>
+  <data name="TenantUnassigned" xml:space="preserve"><value>No tenant assigned</value></data>
+  <data name="QrTooltipHint" xml:space="preserve"><value>Click to view the QR parking card ({0})</value></data>
+  <data name="FixedSlotTooltip" xml:space="preserve"><value>Fixed slot: {0}</value></data>
+  <data name="AllRooms" xml:space="preserve"><value>All rooms</value></data>
+  <data name="AllVehicleTypes" xml:space="preserve"><value>All vehicle types</value></data>
+  <data name="AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+  <data name="RoomOptionFormat" xml:space="preserve"><value>Room {0}</value></data>
+  <data name="RoomOptionUsageFormat" xml:space="preserve"><value>Room {0} (Parked: {1}/{2} {3})</value></data>
+  <data name="SelectTenantPlaceholder" xml:space="preserve"><value>-- Select tenant --</value></data>
+  <data name="ParkingZoneLabel" xml:space="preserve"><value>Parking zone</value></data>
+  <data name="NoZoneOption" xml:space="preserve"><value>-- No zone assigned --</value></data>
+  <data name="FixedSlotLabel" xml:space="preserve"><value>Fixed slot</value></data>
+  <data name="SelectFreeSlotOption" xml:space="preserve"><value>-- Select a free slot --</value></data>
+  <data name="SlotCodeFormat" xml:space="preserve"><value>Slot {0}</value></data>
+  <data name="ZoneOptionUsageFormat" xml:space="preserve"><value>{0} ({1}/{2} {3})</value></data>
+  <data name="RoomPropertyOptionFormat" xml:space="preserve"><value>Room {0} ({1})</value></data>
+  <data name="PlatePlaceholder" xml:space="preserve"><value>e.g. 59-X1 123.45</value></data>
+  <data name="GuestPlatePlaceholder" xml:space="preserve"><value>e.g. 59-X1 999.99</value></data>
+  <data name="BrandPlaceholder" xml:space="preserve"><value>Honda, Yamaha, VinFast…</value></data>
+  <data name="ColorPlaceholder" xml:space="preserve"><value>Black, White, Red…</value></data>
+  <data name="VehicleNotePlaceholder" xml:space="preserve"><value>Additional notes about the vehicle…</value></data>
+  <data name="KpiActiveBreakdown" xml:space="preserve"><value>Includes {0} electric motorbikes · {1} manual motorbikes · {2} scooters</value></data>
+  <data name="KpiElectricHelp" xml:space="preserve"><value>Click to quickly filter electric motorbikes currently parked</value></data>
+  <data name="KpiFeeLabel" xml:space="preserve"><value>Monthly parking fee</value></data>
+  <data name="KpiFeeHelp" xml:space="preserve"><value>Total monthly parking revenue of currently parked vehicles</value></data>
+  <data name="KpiFreeSlots" xml:space="preserve"><value>Free parking slots</value></data>
+  <data name="KpiSlotsSuffix" xml:space="preserve"><value>/ {0} slots</value></data>
+  <data name="KpiFreeSlotsHelp" xml:space="preserve"><value>Used {0}/{1} slots · {2} guest vehicles</value></data>
+  <data name="KpiGuests" xml:space="preserve"><value>Guest vehicles</value></data>
+  <data name="KpiGuestsHelp" xml:space="preserve"><value>Currently {0} guest vehicles · {1} inactive vehicles (click to view)</value></data>
+  <data name="DeactivateDefaultReason" xml:space="preserve"><value>Tenant returned vehicle / stopped parking</value></data>
+  <data name="FeeUnitBadge" xml:space="preserve"><value>VND / month</value></data>
+  <data name="FeeDefaultElectricHelp" xml:space="preserve"><value>Default 50,000 VND/month per decision D-VH-03</value></data>
+  <data name="FeeDefaultManualHelp" xml:space="preserve"><value>Default 80,000 VND/month per decision D-VH-03</value></data>
+  <data name="FeeDefaultScooterHelp" xml:space="preserve"><value>Default 100,000 VND/month per decision D-VH-03</value></data>
+  <data name="FeePreviewHint" xml:space="preserve"><value>Shown on invoice: {0} / month</value></data>
+  <data name="ZoneModeOn" xml:space="preserve"><value>Zone mode</value></data>
+  <data name="ZoneModeOff" xml:space="preserve"><value>Basic mode</value></data>
+  <data name="ZonesEmptyTitle" xml:space="preserve"><value>No parking zones yet</value></data>
+  <data name="ZonesEmptyDesc" xml:space="preserve"><value>Create an indoor or outdoor zone to allocate capacity, restrict vehicle types and lay out a fixed slot grid.</value></data>
+  <data name="MaintenanceToggleHint" xml:space="preserve"><value>(Click an empty slot to toggle maintenance status)</value></data>
+  <data name="ZoneFree" xml:space="preserve"><value>Free</value></data>
+  <data name="ZoneFeeByType" xml:space="preserve"><value>Price by vehicle type</value></data>
+  <data name="ZoneFeePerMonth" xml:space="preserve"><value>{0}/month</value></data>
+  <data name="ZoneUsageLabel" xml:space="preserve"><value>Current usage:</value></data>
+  <data name="SlotGridCount" xml:space="preserve"><value>({0} slots):</value></data>
+  <data name="ZoneNamePlaceholder" xml:space="preserve"><value>e.g. Indoor zone A / Outdoor lot B</value></data>
+  <data name="SlotCountLabel" xml:space="preserve"><value>Slots to create</value></data>
+  <data name="GuestNamePlaceholder" xml:space="preserve"><value>Your name / guest</value></data>
+  <data name="GuestDurationLabel" xml:space="preserve"><value>Guest parking duration (hours)</value></data>
+  <data name="GuestNotePlaceholder" xml:space="preserve"><value>e.g. Staying overnight for a group study…</value></data>
+  <data name="ColumnRoomGuest" xml:space="preserve"><value>Room / Reporter</value></data>
+  <data name="GuestDueColumn" xml:space="preserve"><value>Parking window</value></data>
+  <data name="GuestTimeTo" xml:space="preserve"><value>Until {0}</value></data>
+  <data name="GuestTimeFrom" xml:space="preserve"><value>From {0}</value></data>
+  <data name="AuditStatTotalExpected" xml:space="preserve"><value>Vehicles to reconcile</value></data>
+  <data name="AuditStatTotalExpectedHelp" xml:space="preserve"><value>Total active registered vehicles to audit in this session</value></data>
+  <data name="AuditStatPresentHelp" xml:space="preserve"><value>Vehicles confirmed present in the yard</value></data>
+  <data name="AuditStatPendingHelp" xml:space="preserve"><value>Vehicles awaiting reconciliation by the auditor</value></data>
+  <data name="AuditStatMissingHelp" xml:space="preserve"><value>Vehicles absent from the yard at audit time</value></data>
+  <data name="AuditSessionPrefix" xml:space="preserve"><value>Session #{0}</value></data>
+  <data name="AuditCompletedAt" xml:space="preserve"><value>Completed: {0}</value></data>
+  <data name="AuditResultPresent" xml:space="preserve"><value>{0} / {1} present</value></data>
+  <data name="AuditResultSummary" xml:space="preserve"><value>{0} missing · {1} pending</value></data>
+  <data name="ColumnAuditSession" xml:space="preserve"><value>Session</value></data>
+  <data name="ColumnAuditor" xml:space="preserve"><value>Auditor</value></data>
+  <data name="ColumnAuditTime" xml:space="preserve"><value>Time</value></data>
+  <data name="ColumnAuditResult" xml:space="preserve"><value>Reconciliation result</value></data>
+  <data name="MyStatTotalHelp" xml:space="preserve"><value>Number of vehicles registered for your room</value></data>
+  <data name="MyStatFeeHelp" xml:space="preserve"><value>Total monthly parking fee added to the room invoice</value></data>
+  <data name="MyStatGuestHelp" xml:space="preserve"><value>Up to 3 active guest vehicle notices at a time per room</value></data>
+  <data name="MyGuestHoursLabel" xml:space="preserve"><value>Expected guest parking hours</value></data>
+  <data name="NotifVehicleAddedTitle" xml:space="preserve"><value>Vehicle {0} registered</value></data>
+  <data name="NotifVehicleAddedBody" xml:space="preserve"><value>Vehicle {0} ({1}) was added to room {2}.</value></data>
+  <data name="NotifVehicleDeactivatedTitle" xml:space="preserve"><value>Vehicle {0} deactivated</value></data>
+  <data name="NotifVehicleDeactivatedBody" xml:space="preserve"><value>Vehicle {0} is now inactive. Reason: {1}</value></data>
+  <data name="NotifZoneNearFullTitle" xml:space="preserve"><value>Parking zone "{0}" reached {1}% capacity</value></data>
+  <data name="NotifZoneNearFullBody" xml:space="preserve"><value>Zone "{0}" currently has {1}/{2} vehicles.</value></data>
+  <data name="BlockingAlertNotifTitle" xml:space="preserve"><value>Vehicle {0} is blocking the way</value></data>
+  <data name="BlockingAlertNotifBody" xml:space="preserve"><value>Vehicle {0} (Room {1}) is blocking the way, please move it.</value></data>
+  <data name="BlockingAlertNotifBodyWithNote" xml:space="preserve"><value>Vehicle {0} (Room {1}) is blocking the way: "{2}". Please move it.</value></data>
+  <data name="GuestNoticeNotifTitle" xml:space="preserve"><value>Room {0} reported your guest vehicle ({1})</value></data>
+  <data name="GuestNoticeNotifBody" xml:space="preserve"><value>Plate: {0}. Expected arrival: {1}.</value></data>
+  <data name="InvoiceUnitMonth" xml:space="preserve"><value>month</value></data>
+  <data name="InvoiceParkingLinePrefix" xml:space="preserve"><value>Parking fee</value></data>
+  <data name="ContractLiquidatedReason" xml:space="preserve"><value>Contract liquidated</value></data>
+  <data name="ContractLiquidatedNotifTitle" xml:space="preserve"><value>Contract liquidated</value></data>
+  <data name="ContractLiquidatedTenantBody" xml:space="preserve"><value>The contract for room {0} was liquidated. Vehicle {1} has been checked out.</value></data>
+  <data name="ContractLiquidatedOwnerBody" xml:space="preserve"><value>Room {0}: {1} vehicle(s) ({2}) were checked out due to contract liquidation.</value></data>
+</root>

@@ -1,0 +1,221 @@
+@using Web.Components.Shared.Dialogs
+@using Web.Components.Shared.Forms
+@using Web.Components.Shared.Navigation
+@using Web.Features.AccessControl.DTOs
+@using Web.Features.AccessControl.Services
+@using Web.Features.Tenants.Invitations
+
+@inject GatePageService Session
+@inject QrCodeRenderer Qr
+@inject IStringLocalizer<AccessControlResource> L
+@inject IJSRuntime JS
+
+<FeatureDialog Visible="Visible" Title="@L["GuestInviteTitle"]" CloseLabel="@L["Close"]"
+               CssClass="gate-invite-dialog" Busy="_busy" OnClose="OnClose">
+    <div class="account-form-body">
+        <p class="gate-muted">@L["GuestInviteHelp"]</p>
+
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_created is not null)
+        {
+            <div class="qr-result">
+                <img src="@_qrDataUrl" alt="@L["GuestInviteQrAlt"]" width="220" height="220" />
+                <p class="qr-result-meta">@string.Format(L["GuestInviteExpiresAt"], _created.Invite.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</p>
+                <div class="qr-link-row">
+                    <p class="qr-link"><a href="@_link" target="_blank" rel="noreferrer">@_link</a></p>
+                    <button type="button" class="gate-copy-btn" aria-label="@L["GuestFillCopyLink"]" title="@L["GuestFillCopyLink"]"
+                            @onclick="CopyLinkAsync">
+                        <LucideIcon Name="@(_linkCopied ? "circle-check" : "copy")" />
+                    </button>
+                </div>
+                <p class="note">@L["GuestInviteWarning"]</p>
+                @if (_linkCopied)
+                {
+                    <p class="qr-result-meta" role="status">@L["GuestFillLinkCopied"]</p>
+                }
+                <div class="account-form-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="ShareLinkAsync">
+                        <LucideIcon Name="share" /> @L["GuestInviteShare"]
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="OnClose">@L["Close"]</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            @if (!IsTenant)
+            {
+                <FormField TValue="string" Id="gate-invite-property" Label="@L["Property"]" Required="true" For="() => _propertyValue">
+                    <select id="gate-invite-property" class="input" @bind="_propertyValue" @bind:after="ResetRoom">
+                        <option value="">@L["SelectProperty"]</option>
+                        @foreach (var property in Properties)
+                        {
+                            <option value="@property.PropertyId">@property.Name</option>
+                        }
+                    </select>
+                </FormField>
+            }
+
+            <FormField TValue="string" Id="gate-invite-room" Label="@L["Room"]" Required="true" For="() => _roomValue">
+                <select id="gate-invite-room" class="input" @bind="_roomValue">
+                    <option value="">@L["SelectRoom"]</option>
+                    @foreach (var room in RoomsForSelection)
+                    {
+                        <option value="@room.RoomId">@room.PropertyName — @room.RoomCode</option>
+                    }
+                </select>
+            </FormField>
+
+            <FormField TValue="string" Id="gate-invite-expiry" Label="@L["GuestInviteExpiry"]" For="() => _expiryValue">
+                <select id="gate-invite-expiry" class="input" @bind="_expiryValue">
+                    <option value="15">@L["GuestInviteExpiry15m"]</option>
+                    <option value="60">@L["GuestInviteExpiry1h"]</option>
+                    <option value="360">@L["GuestInviteExpiry6h"]</option>
+                    <option value="1440">@L["GuestInviteExpiry24h"]</option>
+                </select>
+            </FormField>
+
+            <div class="account-form-actions">
+                <button type="button" class="btn btn-secondary" disabled="@_busy" @onclick="OnClose">
+                    <LucideIcon Name="close" />
+                    @L["Cancel"]
+                </button>
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="CreateAsync">
+                    @if (_busy)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="qr-code" />
+                    }
+                    @L["GuestInviteCreate"]
+                </button>
+            </div>
+        }
+    </div>
+</FeatureDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool IsTenant { get; set; }
+    [Parameter] public IReadOnlyList<GateRoomOption> Rooms { get; set; } = [];
+    [Parameter] public IReadOnlyList<GatePropertyOption> Properties { get; set; } = [];
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<GateInviteCreatedDto> OnCreated { get; set; }
+
+    private bool _wasVisible;
+    private bool _busy;
+    private string? _error;
+    private string _propertyValue = string.Empty;
+    private string _roomValue = string.Empty;
+    private string _expiryValue = "1440";
+    private string? _qrDataUrl;
+    private string? _link;
+    private GateInviteCreatedDto? _created;
+    private bool _linkCopied;
+
+    private IEnumerable<GateRoomOption> RoomsForSelection =>
+        IsTenant || string.IsNullOrEmpty(_propertyValue)
+            ? Rooms
+            : Rooms.Where(room => room.PropertyId.ToString() == _propertyValue);
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !_wasVisible)
+        {
+            Reset();
+            if (IsTenant && Rooms.Count > 0)
+            {
+                _roomValue = Rooms[0].RoomId.ToString();
+            }
+        }
+
+        _wasVisible = Visible;
+    }
+
+    private void Reset()
+    {
+        _error = null;
+        _created = null;
+        _qrDataUrl = null;
+        _link = null;
+        _linkCopied = false;
+        _propertyValue = string.Empty;
+        _roomValue = string.Empty;
+        _expiryValue = "1440";
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        if (_link is null) return;
+        _linkCopied = await JS.InvokeAsync<bool>("vhtCopyText", _link);
+        if (!_linkCopied)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
+    }
+
+    private async Task ShareLinkAsync()
+    {
+        if (_link is null) return;
+        try
+        {
+            // Hộp chia sẻ hệ thống; trình duyệt không hỗ trợ thì sao chép link thay thế.
+            var shared = await JS.InvokeAsync<bool>("vhtShare", L["GuestInviteShareTitle"].Value, _link);
+            if (shared)
+            {
+                _linkCopied = false;
+                return;
+            }
+
+            await CopyLinkAsync();
+        }
+        catch (JSException)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
+    }
+
+    private void ResetRoom() => _roomValue = string.Empty;
+
+    private async Task CreateAsync()
+    {
+        if (!int.TryParse(_roomValue, out var roomId) || roomId == 0)
+        {
+            _error = L["SelectRoom"];
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            _created = await Session.CreateInviteAsync(new GateInviteCreateRequest
+            {
+                PropertyId = int.TryParse(_propertyValue, out var propertyId) ? propertyId : null,
+                RoomId = roomId,
+                ExpiryMinutes = int.TryParse(_expiryValue, out var minutes) ? minutes : 1440,
+            });
+
+            _link = Session.GuestInviteUrl(_created.RawToken);
+            _qrDataUrl = Qr.ToPngDataUrl(_link);
+            await OnCreated.InvokeAsync(_created);
+        }
+        catch (GatePageException ex)
+        {
+            _error = L[ex.Message];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

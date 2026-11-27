@@ -2361,4 +2361,10 @@
   <data name="DataDownloadDesc" xml:space="preserve"><value>Download a copy of the personal data we store.</value></data>
   <data name="DangerZoneTitle" xml:space="preserve"><value>Danger zone</value></data>
   <data name="DangerZoneDesc" xml:space="preserve"><value>Deleting data permanently removes the account and cannot be undone.</value></data>
+  <data name="Vehicles" xml:space="preserve"><value>Vehicle management</value></data>
+  <data name="VehicleZones" xml:space="preserve"><value>Parking zones &amp; slots</value></data>
+  <data name="VehicleGuests" xml:space="preserve"><value>Guest vehicles</value></data>
+  <data name="VehicleAudit" xml:space="preserve"><value>Parking audit</value></data>
+  <data name="VehicleSettings" xml:space="preserve"><value>Parking settings</value></data>
+  <data name="MyVehicles" xml:space="preserve"><value>My vehicles</value></data>
 </root>

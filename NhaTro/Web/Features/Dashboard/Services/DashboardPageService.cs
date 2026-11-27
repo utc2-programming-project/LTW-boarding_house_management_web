@@ -10,6 +10,7 @@ using Web.Features.Reports;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Services;
 using Web.Features.Tenants;
+using Web.Features.Vehicles.Services;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Dashboard.Services;
@@ -20,7 +21,8 @@ public sealed class DashboardPageService(
     P2CallerProvider callers, IPropertyService properties,
     IRoomReportService rooms, ITenantReportService tenants, RevenueReportService revenue,
     IIncidentReportService incidents, IContractReportService contracts,
-    TimeProvider time, IMemoryCache? cache = null)
+    TimeProvider time, IMemoryCache? cache = null,
+    IVehicleDashboardService? vehicleDashboard = null)
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(45);
     private long _cacheVersion;
@@ -152,6 +154,19 @@ public sealed class DashboardPageService(
                 .OrderBy(item => item.SortKey)
                 .ToList();
         }, ct);
+    }
+
+    /// <summary>SPEC §10: thẻ KPI xe (tổng xe Active theo loại, lấp đầy khu đỗ, phí gửi xe tháng này).</summary>
+    public async Task<VehicleDashboardKpis?> GetVehicleKpisAsync(int? propertyId, CancellationToken ct = default)
+    {
+        if (vehicleDashboard is null)
+        {
+            return null;
+        }
+
+        var caller = await callers.GetCallerAsync();
+        return await CacheAsync($"vehicles:{caller.UserId}:{caller.Role}:{propertyId}",
+            () => vehicleDashboard.GetKpisAsync(propertyId, caller, ct), ct);
     }
 
     private async Task<T> CacheAsync<T>(string key, Func<Task<T>> load, CancellationToken ct)

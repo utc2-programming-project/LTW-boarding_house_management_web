@@ -24,23 +24,27 @@
     }
     else
     {
-        <div class="filter-bar filter-bar--panel">
+        <div class="filter-bar filter-bar--panel gate-filter-wide">
             <div class="filter-bar__row">
-                <label class="gate-inline-label" for="kiosk-property">@L["Property"]</label>
-                <select id="kiosk-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
-                    @foreach (var property in _properties)
-                    {
-                        <option value="@property.PropertyId">@property.Name</option>
-                    }
-                </select>
-                <label class="gate-inline-label" for="kiosk-device">@L["SelectGate"]</label>
-                <select id="kiosk-device" class="input" @bind="_deviceId">
-                    <option value="0">@L["SelectGate"]</option>
-                    @foreach (var device in _devices)
-                    {
-                        <option value="@device.Id">@device.Name</option>
-                    }
-                </select>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="kiosk-property">@L["Property"]</label>
+                    <select id="kiosk-property" class="input" value="@_propertyId" @onchange="ChangePropertyAsync">
+                        @foreach (var property in _properties)
+                        {
+                            <option value="@property.PropertyId">@property.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-bar__stack filter-bar__select">
+                    <label for="kiosk-device">@L["SelectGate"]</label>
+                    <select id="kiosk-device" class="input" @bind="_deviceId">
+                        <option value="0">@L["SelectGate"]</option>
+                        @foreach (var device in _devices)
+                        {
+                            <option value="@device.Id">@device.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
 

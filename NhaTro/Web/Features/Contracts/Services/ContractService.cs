@@ -25,6 +25,7 @@ using Web.Features.Settings.Enums;
 using Web.Features.Settings.Services;
 using Web.Features.Tenants;
 using Web.Features.Tenants.Entities;
+using Web.Features.Vehicles.Services;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
@@ -37,17 +38,20 @@ public sealed class ContractService : IContractService
     private readonly TimeProvider _timeProvider;
     private readonly IManagerTogglePolicy? _togglePolicy;
     private readonly IManagerApprovalService? _approvals;
+    private readonly IVehicleBillingService? _vehicleBilling;
 
     public ContractService(
         ApplicationDbContext dbContext,
         TimeProvider? timeProvider = null,
         IManagerTogglePolicy? togglePolicy = null,
-        IManagerApprovalService? approvals = null)
+        IManagerApprovalService? approvals = null,
+        IVehicleBillingService? vehicleBilling = null)
     {
         _context = dbContext;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _togglePolicy = togglePolicy;
         _approvals = approvals;
+        _vehicleBilling = vehicleBilling;
     }
 
     /// <summary>Số khách gợi ý sẵn trong form; gõ tên/SĐT để tìm tiếp phía server.</summary>
@@ -2200,13 +2204,20 @@ public sealed class ContractService : IContractService
 
             MarkDepositRefundObligation(contract);
             await ContractLifecycleOperations.LiquidateAsync(
-                _context, contract, lockedRoom, today, cancellationToken);
+                _context, contract, lockedRoom, today, actorUserId, _timeProvider.GetUtcNow(), cancellationToken);
             await ContractLifecycleOperations.SettlePendingRenewalRequestsAsync(_context, contract.ContractId,
                 RenewalRequestStatus.Rejected, actorUserId, _timeProvider.GetUtcNow().UtcDateTime, ContractErrorMessages.RenewalRejectedByLiquidation, cancellationToken);
             ContractLifecycleOperations.AddAudit(_context, ContractLifecycleOperations.ContractAuditActions.Liquidated,
                 actorUserId, property.Id, JsonSerializer.Serialize(new { contractId = contract.ContractId }), _timeProvider.GetUtcNow());
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // Xe đã ngừng ở trên ⇒ tính lại phí gửi xe trên hóa đơn nháp theo kỳ (không chạm hóa đơn đã phát hành).
+            if (_vehicleBilling is not null)
+            {
+                await _vehicleBilling.SyncDraftInvoicesForContractAsync(contract.ContractId, cancellationToken);
+            }
+
             await transaction.CommitAsync(cancellationToken);
 
             return new ContractActionResultDto(ContractActionOutcome.Applied, contract.ContractId, null);

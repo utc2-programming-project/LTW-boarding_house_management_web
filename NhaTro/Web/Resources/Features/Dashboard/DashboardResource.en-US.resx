@@ -71,4 +71,11 @@
 <data name="IncidentStatusTitle" xml:space="preserve"><value>Incidents by status</value></data>
 <data name="RevenueStacked" xml:space="preserve"><value>Stacked revenue/debt bars</value></data>
 <data name="ViewNumberTable" xml:space="preserve"><value>View data table</value></data>
+<data name="VehicleActive" xml:space="preserve"><value>Active vehicles</value></data>
+<data name="VehicleBreakdown" xml:space="preserve"><value>Electric {0} · Manual {1} · Scooter {2}</value></data>
+<data name="VehicleZoneFill" xml:space="preserve"><value>Parking occupancy</value></data>
+<data name="VehicleZoneFillNote" xml:space="preserve"><value>Occupied slots over total capacity of active zones</value></data>
+<data name="VehicleParkingRevenue" xml:space="preserve"><value>Parking fees this month</value></data>
+<data name="VehicleParkingRevenueNote" xml:space="preserve"><value>Parking revenue for the current month</value></data>
+<data name="VehiclesDenied" xml:space="preserve"><value>You do not have permission to view vehicle statistics</value></data>
 </root>

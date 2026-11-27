@@ -1,0 +1,375 @@
+@inject IStringLocalizer<VehicleResource> L
+@inject VehiclePageService Session
+
+<FeatureDialog Visible="true"
+               Title="@(EditVehicle is null ? L["AddVehicleBtn"].Value : L["EditVehicleTitle"].Value)"
+               CloseLabel="@L["Close"]"
+               OnClose="OnCancel"
+               CssClass="vehicle-form-dialog">
+    <form @onsubmit="SubmitAsync" @onsubmit:preventDefault novalidate>
+        <div class="vehicle-form-body">
+            @if (!string.IsNullOrWhiteSpace(ErrorText))
+            {
+                <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                    <div class="vehicle-alert__content">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@ErrorText</span>
+                    </div>
+                </div>
+            }
+
+            <div class="vehicle-form-grid">
+                @if (EditVehicle is null)
+                {
+                    <div class="vehicle-field">
+                        <label for="vh-room-select">@L["Room"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="vh-room-select" value="@_roomId" @onchange="OnRoomChanged">
+                            @foreach (var room in Rooms)
+                            {
+                                <option value="@room.RoomId">
+                                    @string.Format(L["RoomOptionUsageFormat"].Value, room.RoomCode,
+                                        room.ActiveVehicleCount,
+                                        room.MaxVehiclesPerRoom == 0 ? "∞" : room.MaxVehiclesPerRoom.ToString(),
+                                        L["UnitVehicles"].Value)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <div class="vehicle-field">
+                        <label for="vh-room-locked">@L["Room"]</label>
+                        <input id="vh-room-locked" value="@string.Format(L["RoomOptionFormat"].Value, EditVehicle.RoomCode)" disabled />
+                    </div>
+                }
+
+                <div class="vehicle-field">
+                    <label for="vh-tenant-select">@L["Tenant"]</label>
+                    <select id="vh-tenant-select" @bind="_tenantId">
+                        <option value="">@L["SelectTenantPlaceholder"]</option>
+                        @foreach (var tenant in CurrentRoomTenants)
+                        {
+                            <option value="@tenant.TenantId">@tenant.FullName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="vehicle-field">
+                    <label for="vh-type-select">@L["VehicleType"] <span class="required" aria-hidden="true">*</span></label>
+                    <select id="vh-type-select" @bind="_vehicleType" @bind:after="OnVehicleTypeChanged">
+                        @foreach (var vt in Enum.GetValues<VehicleType>())
+                        {
+                            <option value="@vt">@L[vt.ToString()]</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="vehicle-field">
+                    <label for="vh-plate-input">@L["PlateNumber"] <span class="required" aria-hidden="true">*</span></label>
+                    <input id="vh-plate-input" @bind="_plateNumber" @bind:event="oninput"
+                           maxlength="25" autocomplete="off" placeholder="@L["PlatePlaceholder"]" />
+                    @if (!string.IsNullOrWhiteSpace(NormalizedPlate))
+                    {
+                        <span class="vehicle-field-hint">@L["PlateNormalizedPreview"] <strong>@NormalizedPlate</strong></span>
+                    }
+                </div>
+
+                <div class="vehicle-field">
+                    <label for="vh-brand-input">@L["Brand"]</label>
+                    <input id="vh-brand-input" @bind="_brand" maxlength="100" placeholder="@L["BrandPlaceholder"]" />
+                </div>
+
+                <div class="vehicle-field">
+                    <label for="vh-color-input">@L["Color"]</label>
+                    <input id="vh-color-input" @bind="_color" maxlength="60" placeholder="@L["ColorPlaceholder"]" />
+                </div>
+
+                <div class="vehicle-field full">
+                    <span class="vehicle-field-label">@L["VehiclePhotoLabel"]</span>
+                    @if (!string.IsNullOrWhiteSpace(_photoPreview))
+                    {
+                        <figure class="vehicle-photo-preview">
+                            <img src="@_photoPreview" alt="@L["VehiclePhotoLabel"]" />
+                            <button type="button" class="btn btn-secondary" @onclick="ClearPhoto">
+                                <LucideIcon Name="trash" />
+                                <span>@L["RemovePhoto"]</span>
+                            </button>
+                        </figure>
+                    }
+                    else
+                    {
+                        <InputFile OnChange="OnPhotoSelectedAsync" accept="image/png,image/jpeg,image/webp" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_photoError))
+                    {
+                        <span class="vehicle-field-hint">@_photoError</span>
+                    }
+                </div>
+
+                @if (ShowParkingControls)
+                {
+                    <div class="vehicle-field @(SelectedZone is { HasSlots: true } ? null : "full")">
+                        <label for="vh-zone-select">@L["ParkingZoneLabel"]</label>
+                        <select id="vh-zone-select" @bind="_parkingZoneId" @bind:after="OnZoneChanged">
+                            <option value="">@L["NoZoneOption"]</option>
+                            @foreach (var zone in AllowedZonesForType)
+                            {
+                                <option value="@zone.Id">
+                                    @string.Format(L["ZoneOptionUsageFormat"].Value, zone.Name, zone.OccupiedCount, zone.Capacity, L["UnitVehicles"].Value)
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    @if (SelectedZone is { HasSlots: true })
+                    {
+                        <div class="vehicle-field">
+                            <label for="vh-slot-select">@L["FixedSlotLabel"]</label>
+                            <select id="vh-slot-select" @bind="_parkingSlotId">
+                                <option value="">@L["SelectFreeSlotOption"]</option>
+                                @foreach (var slot in AvailableSlotsForZone)
+                                {
+                                    <option value="@slot.Id">@string.Format(L["SlotCodeFormat"].Value, slot.Code)</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                }
+
+                <div class="vehicle-field full">
+                    <label for="vh-note-input">@L["Note"]</label>
+                    <input id="vh-note-input" @bind="_note" maxlength="500" placeholder="@L["VehicleNotePlaceholder"]" />
+                </div>
+            </div>
+        </div>
+
+        <footer class="vehicle-form-footer">
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel">@L["Cancel"]</button>
+            <button type="submit" class="btn btn-primary"
+                    disabled="@(string.IsNullOrWhiteSpace(NormalizedPlate) || (EditVehicle is null && _roomId <= 0))">
+                <LucideIcon Name="check" />
+                <span>@L["Save"]</span>
+            </button>
+        </footer>
+    </form>
+</FeatureDialog>
+
+@code {
+    [Parameter] public int PropertyId { get; set; }
+    [Parameter] public IReadOnlyList<VehicleRoomOptionDto> Rooms { get; set; } = [];
+    [Parameter] public IReadOnlyList<ParkingZoneDto> AvailableZones { get; set; } = [];
+    [Parameter] public bool EnableParkingZones { get; set; }
+    [Parameter] public VehicleDto? EditVehicle { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<VehicleCreateRequest> OnCreate { get; set; }
+    [Parameter] public EventCallback<VehicleUpdateRequest> OnUpdate { get; set; }
+
+    private int _roomId;
+    private int? _tenantId;
+    private VehicleType _vehicleType = VehicleType.ManualMotorbike;
+    private string _plateNumber = string.Empty;
+    private string? _brand;
+    private string? _color;
+    private string? _note;
+    private string? _photoRef;
+    private string? _photoPreview;
+    private string? _photoError;
+    private int? _parkingZoneId;
+    private int? _parkingSlotId;
+
+    private int? _initializedEditId;
+    private const long MaxPhotoBytes = 2 * 1024 * 1024;
+
+    private string NormalizedPlate => VehicleRules.NormalizePlateNumber(_plateNumber);
+
+    // Chỉ gửi ý định "gỡ khu/ô đỗ" khi người dùng thực sự thấy và thao tác được trên các ô chọn khu/ô.
+    private bool ShowParkingControls => EnableParkingZones && AvailableZones.Count > 0;
+
+    private IReadOnlyList<VehicleTenantOptionDto> CurrentRoomTenants =>
+        Rooms.FirstOrDefault(r => r.RoomId == _roomId)?.Tenants ?? [];
+
+    private IReadOnlyList<ParkingZoneDto> AllowedZonesForType =>
+        AvailableZones
+            .Where(z => z.IsActive && VehicleRules.IsVehicleTypeAllowed(_vehicleType, z.AllowedVehicleTypes))
+            .ToList();
+
+    private ParkingZoneDto? SelectedZone =>
+        _parkingZoneId.HasValue
+            ? AllowedZonesForType.FirstOrDefault(z => z.Id == _parkingZoneId.Value)
+            : null;
+
+    private IReadOnlyList<ParkingSlotDto> AvailableSlotsForZone =>
+        SelectedZone?.Slots
+            .Where(s => s.Status == ParkingSlotStatus.Available
+                || (EditVehicle is not null && s.CurrentVehicleId == EditVehicle.Id))
+            .ToList() ?? [];
+
+    protected override void OnParametersSet()
+    {
+        if (EditVehicle is not null)
+        {
+            // Chỉ nạp dữ liệu một lần cho mỗi xe; tránh ghi đè nội dung người dùng đang sửa
+            // khi component cha render lại (bug 34).
+            if (_initializedEditId == EditVehicle.Id)
+            {
+                return;
+            }
+
+            _initializedEditId = EditVehicle.Id;
+            _roomId = EditVehicle.RoomId;
+            _tenantId = EditVehicle.TenantId;
+            _vehicleType = EditVehicle.VehicleType;
+            _plateNumber = EditVehicle.PlateNumber;
+            _brand = EditVehicle.Brand;
+            _color = EditVehicle.Color;
+            _note = EditVehicle.Note;
+            _photoRef = EditVehicle.PhotoRef;
+            _parkingZoneId = EditVehicle.ParkingZoneId;
+            _parkingSlotId = EditVehicle.ParkingSlotId;
+
+            if (!string.IsNullOrWhiteSpace(_photoRef))
+            {
+                _ = LoadPhotoPreviewAsync();
+            }
+        }
+        else if (_roomId == 0 && Rooms.Count > 0)
+        {
+            _roomId = Rooms[0].RoomId;
+            _tenantId = Rooms[0].Tenants.FirstOrDefault()?.TenantId;
+        }
+    }
+
+    private async Task LoadPhotoPreviewAsync()
+    {
+        try
+        {
+            _photoPreview = await Session.GetVehiclePhotoDataUrlAsync(_photoRef);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _photoError = L["PhotoInvalid"];
+        }
+    }
+
+    private async Task OnPhotoSelectedAsync(InputFileChangeEventArgs e)
+    {
+        _photoError = null;
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            _photoError = L["PhotoInvalidType"];
+            return;
+        }
+
+        if (file.Size > MaxPhotoBytes)
+        {
+            _photoError = L["PhotoTooLarge"];
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(MaxPhotoBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var bytes = buffer.ToArray();
+
+            _photoRef = await Session.UploadVehiclePhotoAsync(bytes, ext);
+            _photoPreview = $"data:{PhotoContentType(ext)};base64,{Convert.ToBase64String(bytes)}";
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _photoRef = null;
+            _photoPreview = null;
+            _photoError = L["PhotoInvalid"];
+        }
+    }
+
+    private void ClearPhoto()
+    {
+        _photoRef = null;
+        _photoPreview = null;
+        _photoError = null;
+    }
+
+    private static string PhotoContentType(string ext) => ext switch
+    {
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        _ => "image/jpeg",
+    };
+
+    private void OnRoomChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            _roomId = id;
+            _tenantId = CurrentRoomTenants.FirstOrDefault()?.TenantId;
+        }
+    }
+
+    private void OnVehicleTypeChanged()
+    {
+        if (_parkingZoneId.HasValue && AllowedZonesForType.All(z => z.Id != _parkingZoneId.Value))
+        {
+            _parkingZoneId = null;
+            _parkingSlotId = null;
+        }
+    }
+
+    private void OnZoneChanged()
+    {
+        if (SelectedZone is null || !SelectedZone.HasSlots || AvailableSlotsForZone.All(s => s.Id != _parkingSlotId))
+        {
+            _parkingSlotId = null;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (EditVehicle is null)
+        {
+            await OnCreate.InvokeAsync(new VehicleCreateRequest
+            {
+                PropertyId = PropertyId,
+                RoomId = _roomId,
+                TenantId = _tenantId,
+                VehicleType = _vehicleType,
+                PlateNumber = _plateNumber,
+                Brand = _brand,
+                Color = _color,
+                PhotoRef = _photoRef,
+                Note = _note,
+                ParkingZoneId = ShowParkingControls ? _parkingZoneId : null,
+                ParkingSlotId = ShowParkingControls ? _parkingSlotId : null,
+            });
+        }
+        else
+        {
+            await OnUpdate.InvokeAsync(new VehicleUpdateRequest
+            {
+                Id = EditVehicle.Id,
+                TenantId = _tenantId,
+                VehicleType = _vehicleType,
+                PlateNumber = _plateNumber,
+                Brand = _brand,
+                Color = _color,
+                PhotoRef = _photoRef,
+                Note = _note,
+                // Khi tắt phân khu, không gửi lại khu/ô cũ để tránh lỗi ParkingZonesDisabled (bug 33).
+                ParkingZoneId = ShowParkingControls ? _parkingZoneId : null,
+                ParkingSlotId = ShowParkingControls ? _parkingSlotId : null,
+                ClearParkingAssignment = ShowParkingControls && _parkingZoneId is null,
+            });
+        }
+    }
+}

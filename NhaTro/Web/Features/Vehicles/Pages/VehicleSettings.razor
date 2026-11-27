@@ -1,0 +1,215 @@
+@page "/vehicles/settings"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+
+<PageTitle>@L["PageTitleSettings"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleSettings"]" HelpText="@L["SubtitleSettings"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" @onclick="SaveAsync" disabled="@(_loading || _properties.Count == 0)">
+                <LucideIcon Name="check" />
+                <span>@L["Save"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <VehicleNavTabs ActiveTab="settings"
+                    EnableParkingZones="@_request.EnableParkingZones"
+                    IsOwner="true"
+                    PropertyId="@_propertyId"
+                    Properties="@_properties"
+                    OnPropertyChanged="ChangePropertyByIdAsync" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_properties.Count == 0)
+    {
+        <EmptyStateCard Title="@L["PropertyNotFound"]" Description="@L["SubtitleSettings"]" />
+    }
+    else
+    {
+        <form class="vehicle-settings-layout" @onsubmit="SaveAsync" @onsubmit:preventDefault novalidate>
+            <!-- Cột 1: Bảng giá gửi xe hàng tháng theo 3 loại phương tiện -->
+            <section class="vehicle-panel-card">
+                <header class="vehicle-panel-card__header">
+                    <h2>@L["FeeSectionTitle"]</h2>
+                    <StatusBadge Text="@L["FeeUnitBadge"]" Tone="BadgeTone.Info" />
+                </header>
+                <div class="vehicle-panel-card__body">
+                    <div class="vehicle-field">
+                        <label for="fee-electric">
+                            @L["ElectricMotorbike"]
+                            <HelpTip Text="@L["FeeDefaultElectricHelp"]" />
+                        </label>
+                        <input id="fee-electric" type="number" min="0" step="5000" @bind="_request.ElectricMotorbikeMonthlyFee" />
+                        <span class="vehicle-field-hint">@L["FeePreviewHint", MoneyFormatter.Format(_request.ElectricMotorbikeMonthlyFee)]</span>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="fee-manual">
+                            @L["ManualMotorbike"]
+                            <HelpTip Text="@L["FeeDefaultManualHelp"]" />
+                        </label>
+                        <input id="fee-manual" type="number" min="0" step="5000" @bind="_request.ManualMotorbikeMonthlyFee" />
+                        <span class="vehicle-field-hint">@L["FeePreviewHint", MoneyFormatter.Format(_request.ManualMotorbikeMonthlyFee)]</span>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="fee-scooter">
+                            @L["Scooter"]
+                            <HelpTip Text="@L["FeeDefaultScooterHelp"]" />
+                        </label>
+                        <input id="fee-scooter" type="number" min="0" step="5000" @bind="_request.ScooterMonthlyFee" />
+                        <span class="vehicle-field-hint">@L["FeePreviewHint", MoneyFormatter.Format(_request.ScooterMonthlyFee)]</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cột 2: Quy tắc vận hành & Phân quyền bãi xe -->
+            <section class="vehicle-panel-card">
+                <header class="vehicle-panel-card__header">
+                    <h2>@L["RuleSectionTitle"]</h2>
+                    <StatusBadge Text="@(_request.EnableParkingZones ? L["ZoneModeOn"].Value : L["ZoneModeOff"].Value)"
+                                 Tone="@(_request.EnableParkingZones ? BadgeTone.Success : BadgeTone.Neutral)" />
+                </header>
+                <div class="vehicle-panel-card__body">
+                    <div class="vehicle-form-grid">
+                        <div class="vehicle-field">
+                            <label for="rule-max-per-room">@L["MaxVehiclesPerRoomLabel"]</label>
+                            <input id="rule-max-per-room" type="number" min="0" max="50" @bind="_request.MaxVehiclesPerRoom" />
+                        </div>
+
+                        <div class="vehicle-field">
+                            <label for="rule-zone-threshold">@L["ZoneThresholdLabel"]</label>
+                            <input id="rule-zone-threshold" type="number" min="50" max="100" @bind="_request.ZoneNearFullThresholdPercent" />
+                        </div>
+                    </div>
+
+                    <label class="vehicle-check-card">
+                        <input type="checkbox" @bind="_request.EnableParkingZones" />
+                        <span>@L["EnableParkingZonesLabel"]</span>
+                    </label>
+
+                    <label class="vehicle-check-card">
+                        <input type="checkbox" @bind="_request.AllowTenantGuestNotice" />
+                        <span>@L["AllowTenantGuestNoticeLabel"]</span>
+                    </label>
+
+                    <label class="vehicle-check-card">
+                        <input type="checkbox" @bind="_request.AllowBlockingAlert" />
+                        <span>@L["AllowBlockingAlertLabel"]</span>
+                    </label>
+
+                    <label class="vehicle-check-card">
+                        <input type="checkbox" @bind="_request.AllowManagerManageVehicles" />
+                        <span>@L["AllowManagerManageVehiclesLabel"]</span>
+                    </label>
+                </div>
+                <footer class="vehicle-panel-card__footer">
+                    <button type="submit" class="btn btn-primary">
+                        <LucideIcon Name="check" />
+                        <span>@L["Save"]</span>
+                    </button>
+                </footer>
+            </section>
+        </form>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private IReadOnlyList<VehiclePropertyOptionDto> _properties = [];
+    private VehiclePropertySettingSaveRequest _request = new();
+    private int _propertyId;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = PropertyIdParam.HasValue && _properties.Any(p => p.PropertyId == PropertyIdParam.Value)
+                    ? PropertyIdParam.Value
+                    : _properties[0].PropertyId;
+                await LoadSettingAsync();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadSettingAsync()
+    {
+        var dto = await Session.GetSettingAsync(_propertyId);
+        _request = new VehiclePropertySettingSaveRequest
+        {
+            PropertyId = dto.PropertyId,
+            ElectricMotorbikeMonthlyFee = dto.ElectricMotorbikeMonthlyFee,
+            ManualMotorbikeMonthlyFee = dto.ManualMotorbikeMonthlyFee,
+            ScooterMonthlyFee = dto.ScooterMonthlyFee,
+            MaxVehiclesPerRoom = dto.MaxVehiclesPerRoom,
+            EnableParkingZones = dto.EnableParkingZones,
+            ZoneNearFullThresholdPercent = dto.ZoneNearFullThresholdPercent,
+            AllowTenantGuestNotice = dto.AllowTenantGuestNotice,
+            AllowBlockingAlert = dto.AllowBlockingAlert,
+            AllowManagerManageVehicles = dto.AllowManagerManageVehicles,
+        };
+    }
+
+    private async Task ChangePropertyByIdAsync(int id)
+    {
+        if (id == _propertyId) return;
+        _propertyId = id;
+        await LoadSettingAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        try
+        {
+            await Session.SaveSettingAsync(_request);
+            _properties = await Session.PropertiesAsync();
+            await LoadSettingAsync();
+            Toasts.Success(L["Saved"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}
