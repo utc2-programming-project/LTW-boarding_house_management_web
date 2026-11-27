@@ -5,10 +5,12 @@
 @inject P2CallerProvider Callers
 @inject ToastService Toasts
 @inject IStringLocalizer<AssistantResources> L
+@inject IStringLocalizer<Web.Features.Approvals.ApprovalResources> AL
 @inject IStringLocalizer<Shared> SL
 @inject ILogger<AiSuggestionInboxView> Logger
 
 @using System.Text.Json
+@using Web.Components.Shared.Navigation
 
 <PageTitle>@L["InboxPageTitle"] · @SL["AppName"]</PageTitle>
 <HeadContent><link rel="stylesheet" href="/css/assistant.css" /></HeadContent>
@@ -16,6 +18,11 @@
 <div class="assistant-page page-stack">
     <PageHeading Title="@L["InboxPageTitle"]" HelpText="@L["InboxHelp"]">
         <Actions>
+            @if (ShowApprovalTabs)
+            {
+                <TabBar Items="ApprovalTabs" ActiveKey="@AiTabKey" Variant="pill" Size="sm"
+                        AriaLabel="@AL["PageTitle"]" />
+            }
             <a class="btn btn-secondary" href="/assistant">
                 <LucideIcon Name="sparkles" />@L["BackToAssistant"]
             </a>
@@ -225,6 +232,19 @@
 </FeatureDialog>
 
 @code {
+    private const string ManagerTabKey = "manager";
+    private const string AiTabKey = "ai";
+
+    /// <summary>Hiện cụm chuyển đổi 2 hàng đợi khi mở từ /approvals.</summary>
+    [Parameter]
+    public bool ShowApprovalTabs { get; set; }
+
+    private IReadOnlyList<TabItem> ApprovalTabs =>
+    [
+        new(ManagerTabKey, AL["TabManager"].Value, "/approvals", "check"),
+        new(AiTabKey, AL["TabAi"].Value, "/approvals?tab=ai", "sparkles"),
+    ];
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private sealed class RoomEditRow

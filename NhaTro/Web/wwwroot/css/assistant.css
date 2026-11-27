@@ -2,7 +2,7 @@
 
 /* Trang dùng chung khung nội dung với các trang khác (không giới hạn bề ngang),
    để co giãn theo cửa sổ/trình duyệt thay vì bị dồn về bên trái. */
-.assistant-page { max-width: none; }
+.assistant-page { width: 100%; max-width: none; min-width: 0; }
 
 .assistant-notice,
 .assistant-quota {

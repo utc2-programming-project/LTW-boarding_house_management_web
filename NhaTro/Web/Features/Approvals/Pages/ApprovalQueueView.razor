@@ -7,6 +7,7 @@
 @inject IStringLocalizer<ApprovalResources> L
 @inject IStringLocalizer<Shared> SL
 @using Web.Common.Utils
+@using Web.Components.Shared.Navigation
 @implements IDisposable
 
 <PageTitle>@L["PageTitle"]</PageTitle>
@@ -14,6 +15,11 @@
 <section class="approval-queue-page page-stack" aria-labelledby="approval-queue-title">
     <PageHeading Title="@L["PageTitle"]" TitleId="approval-queue-title" HelpText="@L["PageHelp"]">
         <Actions>
+            @if (ShowApprovalTabs)
+            {
+                <TabBar Items="ApprovalTabs" ActiveKey="@ManagerTabKey" Variant="pill" Size="sm"
+                        AriaLabel="@L["PageTitle"]" />
+            }
             <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="LoadAsync">
                 <LucideIcon Name="refresh" />
                 <span>@L["Refresh"]</span>
@@ -272,10 +278,22 @@
 @code {
     private const string SortOldest = "oldest";
     private const string SortNewest = "newest";
+    private const string ManagerTabKey = "manager";
+    private const string AiTabKey = "ai";
 
     /// <summary>Mã phòng từ badge ở danh sách phòng (/approvals?q=A107), null khi mở từ menu.</summary>
     [Parameter]
     public string? InitialQuery { get; set; }
+
+    /// <summary>Hiện cụm chuyển đổi 2 hàng đợi khi mở từ /approvals.</summary>
+    [Parameter]
+    public bool ShowApprovalTabs { get; set; }
+
+    private IReadOnlyList<TabItem> ApprovalTabs =>
+    [
+        new(ManagerTabKey, L["TabManager"].Value, "/approvals", "check"),
+        new(AiTabKey, L["TabAi"].Value, "/approvals?tab=ai", "sparkles"),
+    ];
 
     private IReadOnlyList<ApprovalQueueItem> _items = [];
     private readonly HashSet<Guid> _expanded = [];
