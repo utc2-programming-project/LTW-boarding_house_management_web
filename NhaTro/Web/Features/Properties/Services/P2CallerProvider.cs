@@ -2,13 +2,14 @@ using Microsoft.AspNetCore.Components.Authorization;
 using System.Security.Claims;
 using Web.Features.Accounts;
 using Web.Features.Accounts.Owners;
+using Web.Features.Search.Abstractions;
 
 namespace Web.Features.Properties.Services;
 
 /// <summary>Builds the trusted P2 caller context from the authenticated server-side principal.</summary>
 public sealed class P2CallerProvider(
     AuthenticationStateProvider authenticationStateProvider,
-    OwnerAccessGuard ownerAccess)
+    OwnerAccessGuard ownerAccess) : ISearchCallerProvider
 {
     public async Task<PropertyCaller> GetCallerAsync()
     {

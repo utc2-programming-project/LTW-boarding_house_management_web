@@ -7,13 +7,8 @@
     <button class="icon-button" type="button" data-drawer-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="@L["ToggleNavigation"]"><LucideIcon Name="menu" /></button>
     <AuthorizeView>
         <Authorized>
-            @* Ô tìm kiếm toàn cục: mới dựng giao diện, chưa gắn chức năng. *@
-            <div class="topbar-search" role="search">
-                <span class="topbar-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-                <input id="global-search" class="topbar-search-input" type="search"
-                       placeholder="@L["GlobalSearchPlaceholder"]" aria-label="@L["GlobalSearch"]"
-                       autocomplete="off" />
-            </div>
+            @* Ô tìm kiếm toàn cục (Ctrl/Cmd+K): đã gắn chức năng, xem Features/Search. *@
+            <GlobalSearchBox />
         </Authorized>
     </AuthorizeView>
     <div class="topbar-actions">

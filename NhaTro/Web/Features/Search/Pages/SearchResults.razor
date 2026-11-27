@@ -1,0 +1,186 @@
+@page "/search"
+@attribute [Authorize(Roles = Roles.Admin + "," + Roles.ChuTro + "," + Roles.QuanLy + "," + Roles.KhachThue)]
+@rendermode InteractiveServer
+@implements IAsyncDisposable
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using Web.Components
+@using Web.Components.Layout
+@using Web.Components.Shared
+@using Web.Features.Accounts
+@using Web.Features.Search.DTOs
+@using Web.Features.Search.Services
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject GlobalSearchService Search
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SearchResources> L
+
+<PageTitle>@L["SearchTitle"]</PageTitle>
+<section class="app-surface">
+    <PageHeading Title="@L["SearchTitle"]" />
+
+    @if (_error)
+    {
+        <p>@L["SearchError"]</p>
+    }
+    else if (!HasQuery)
+    {
+        <p>@L["SearchMinChars"]</p>
+    }
+    else
+    {
+        <nav class="search-groups" aria-label="@L["SearchTitle"]">
+            <a class="search-chip @(string.IsNullOrEmpty(Group) ? "active" : null)" href="@PageHref(1, null)">@L["SearchAllGroups"]</a>
+            @foreach (var info in _groupInfos)
+            {
+                <a class="search-chip @(Group == info.GroupKey ? "active" : null)" href="@PageHref(1, info.GroupKey)">
+                    <LucideIcon Name="@info.Icon" />@GroupLabel(info.GroupLabelKey)
+                </a>
+            }
+        </nav>
+
+        @if (_response is null)
+        {
+            <p>@L["SearchLoading"]</p>
+        }
+        else if (_allFailed)
+        {
+            <p>@L["SearchError"]</p>
+        }
+        else if (_response.Groups.Count == 0)
+        {
+            <p>@L["SearchNoResults"]</p>
+            @if (_partial) { <p class="search-partial">@L["SearchPartialError"]</p> }
+        }
+        else
+        {
+            @if (_partial) { <p class="search-partial">@L["SearchPartialError"]</p> }
+            @foreach (var group in _response.Groups)
+            {
+                <section class="preview-card search-result-group">
+                    <h2><LucideIcon Name="@group.Icon" />@GroupLabel(group)</h2>
+                    @foreach (var hit in group.Hits)
+                    {
+                        <p class="search-result-item">
+                            <a href="@hit.Href">@hit.Title</a>
+                            @if (!string.IsNullOrWhiteSpace(hit.Subtitle)) { <small>@hit.Subtitle</small> }
+                        </p>
+                    }
+                    @if (group.HasMore) { <p class="search-more">@L["SearchHasMore"]</p> }
+                </section>
+            }
+        }
+
+        @if (_response is not null && !_allFailed && (_response.Groups.Count > 0 || Page > 1))
+        {
+            <nav class="search-pagination" aria-label="@L["SearchTitle"]">
+                @if (Page > 1)
+                {
+                    <a class="search-page-link" href="@PageHref(Page - 1, Group)">@L["SearchPrevPage"]</a>
+                }
+                <span class="search-page-current">@L["SearchPage"] @Page</span>
+                @if (_hasMore)
+                {
+                    <a class="search-page-link" href="@PageHref(Page + 1, Group)">@L["SearchNextPage"]</a>
+                }
+            </nav>
+        }
+    }
+</section>
+@code {
+    private const int PageSize = 10;
+
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+    [SupplyParameterFromQuery(Name = "group")] public string? Group { get; set; }
+    [SupplyParameterFromQuery(Name = "page")] public int Page { get; set; } = 1;
+
+    private CancellationTokenSource? _cts;
+    private SearchResponse? _response;
+    private IReadOnlyList<SearchGroupInfo> _groupInfos = [];
+    private bool _groupsLoaded;
+    private bool _error;
+
+    private bool HasQuery => !string.IsNullOrWhiteSpace(Query) && Query.Trim().Length >= 2;
+    private int FailedCount => _response?.FailedGroups?.Count ?? 0;
+    private bool _allFailed => FailedCount > 0 && FailedCount >= (_response?.ProviderCount ?? 0);
+    private bool _partial => FailedCount > 0 && !_allFailed;
+    private bool _hasMore => _response?.Groups.Any(group => group.HasMore) ?? false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Page < 1) Page = 1;
+
+        // C14: mỗi lần đổi query/trang thì hủy yêu cầu cũ thay vì CancellationToken.None.
+        var previous = _cts;
+        previous?.Cancel();
+        previous?.Dispose();
+        var cts = _cts = new CancellationTokenSource();
+        _error = false;
+        // Hiện trạng thái tải cho truy vấn mới thay vì giữ kết quả của query trước.
+        _response = null;
+
+        try
+        {
+            if (!_groupsLoaded)
+            {
+                _groupInfos = await Search.GetGroupsAsync(cts.Token);
+                _groupsLoaded = true;
+            }
+
+            if (!HasQuery)
+            {
+                _response = new([]);
+                return;
+            }
+
+            // D04: gộp các lần đổi query/trang dồn dập; lượt mới nhất hủy lượt trước (C14).
+            await Task.Delay(150, cts.Token);
+            if (cts != _cts) return;
+
+            var response = await Search.SearchAsync(
+                new SearchRequest(Query, Group, PageSize, Page - 1), cts.Token);
+            if (cts != _cts) return;
+            _response = response;
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // C14: lỗi ngoài UnauthorizedAccessException vẫn phải có trạng thái lỗi rõ ràng.
+            if (cts == _cts)
+            {
+                _error = true;
+                _response = null;
+            }
+        }
+    }
+
+    private string GroupLabel(SearchGroupResult group) =>
+        string.IsNullOrEmpty(group.GroupLabelKey) ? group.GroupKey : GroupLabel(group.GroupLabelKey);
+
+    // C08: thiếu resource cho nhóm mới thì hiện GroupKey thay vì tên khoá "SearchGroupXxx".
+    private string GroupLabel(string key)
+    {
+        var value = L[key];
+        return value.ResourceNotFound ? key : value.Value;
+    }
+
+    private string PageHref(int page, string? group) =>
+        Navigation.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            ["q"] = Query,
+            ["group"] = group,
+            ["page"] = page,
+        });
+
+    public ValueTask DisposeAsync()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        return ValueTask.CompletedTask;
+    }
+}

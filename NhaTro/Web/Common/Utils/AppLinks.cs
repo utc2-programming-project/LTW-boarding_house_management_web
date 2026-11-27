@@ -51,6 +51,14 @@ public static class AppLinks
 
     public static string ServiceRegistrationsByKeyword(string? keyword) => WithQuery("/service-registrations", "q", keyword);
 
+    // --- Khách thuê: phòng đang thuê và kho tài liệu của chính mình ---
+    public static string TenantRoom(Guid contractId) => $"/my/room/{contractId:D}";
+
+    public static string TenantDocuments() => "/my/documents";
+
+    // --- Ra vào cổng: trang danh sách phiếu (quản lý) ---
+    public static string GatePasses() => "/gate/passes";
+
     // Không có giá trị (bản ghi thiếu mã/tên) thì trả path trần để link vẫn dùng được.
     private static string WithQuery(string path, string key, string? value) =>
         string.IsNullOrWhiteSpace(value)

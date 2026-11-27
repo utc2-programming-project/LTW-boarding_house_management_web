@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="SearchTitle" xml:space="preserve"><value>Tìm kiếm</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Tìm kiếm toàn cục</value></data>
+  <data name="SearchLoading" xml:space="preserve"><value>Đang tìm kiếm…</value></data>
+  <data name="SearchError" xml:space="preserve"><value>Không thể tìm kiếm lúc này.</value></data>
+  <data name="SearchMinChars" xml:space="preserve"><value>Nhập ít nhất 2 ký tự.</value></data>
+  <data name="SearchNoResults" xml:space="preserve"><value>Không tìm thấy kết quả.</value></data>
+  <data name="SearchViewAll" xml:space="preserve"><value>Xem tất cả</value></data>
+  <data name="SearchAllGroups" xml:space="preserve"><value>Tất cả</value></data>
+  <data name="SearchPrevPage" xml:space="preserve"><value>Trang trước</value></data>
+  <data name="SearchNextPage" xml:space="preserve"><value>Trang sau</value></data>
+  <data name="SearchPage" xml:space="preserve"><value>Trang</value></data>
+  <data name="SearchHasMore" xml:space="preserve"><value>Còn kết quả khác — xem tất cả</value></data>
+  <data name="SearchPartialError" xml:space="preserve"><value>Một số nhóm không tải được.</value></data>
+
+  <data name="SearchGroupRooms" xml:space="preserve"><value>Phòng</value></data>
+  <data name="SearchGroupProperties" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="SearchGroupTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="SearchGroupContracts" xml:space="preserve"><value>Hợp đồng</value></data>
+  <data name="SearchGroupInvoices" xml:space="preserve"><value>Hóa đơn</value></data>
+  <data name="SearchGroupIncidents" xml:space="preserve"><value>Sự cố</value></data>
+  <data name="SearchGroupServices" xml:space="preserve"><value>Dịch vụ</value></data>
+  <data name="SearchGroupGate" xml:space="preserve"><value>Phiếu ra vào</value></data>
+  <data name="SearchGroupDocuments" xml:space="preserve"><value>Tài liệu</value></data>
+  <data name="SearchGroupVehicles" xml:space="preserve"><value>Xe</value></data>
+</root>
