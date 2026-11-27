@@ -1,6 +1,8 @@
 @page "/my/service-registrations"
 @rendermode InteractiveServer
-@attribute [Authorize(Policy = "UtilityBusiness")]
+@attribute [Authorize(Roles = Roles.KhachThue)]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Features.Accounts
 @using Web.Common.Utils
 @using Web.Features.Utilities.Entities
 @using Web.Features.Utilities.Services
@@ -29,7 +31,7 @@
     {
         <div class="inline-error" role="alert"><span>@_error</span></div>
     }
-    else if (_rows.Count == 0)
+    else if (_total == 0)
     {
         <div class="empty-state">
             <h2>@UL["P5CostEmptyTitle"]</h2>
@@ -41,6 +43,15 @@
         <div class="table-card">
             <div class="table-responsive">
                 <table class="registrations-table">
+                    <colgroup>
+                        <col style="width:26%" />
+                        <col style="width:10%" />
+                        <col style="width:16%" />
+                        <col style="width:12%" />
+                        <col style="width:18%" />
+                        <col style="width:10%" />
+                        <col style="width:8%" />
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>@UL["P5CostThRoom"]</th>
@@ -57,12 +68,27 @@
                         {
                             <tr>
                                 <td>
-                                    <span class="room-code">@row.ServiceName</span>
-                                    <span class="room-property">@row.RoomCode · @row.PropertyName</span>
+                                    <span class="room-code cell-truncate" data-hover-tip>
+                                        @row.ServiceName
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@row.ServiceName</span>
+                                        </span>
+                                    </span>
+                                    <span class="room-property cell-truncate" data-hover-tip>
+                                        @row.RoomCode · @row.PropertyName
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@row.RoomCode · @row.PropertyName</span>
+                                        </span>
+                                    </span>
                                     <span class="muted">@DateFormatter.Format(row.StartDate)@(row.EndDate is { } end ? $" – {DateFormatter.Format(end)}" : "")</span>
                                     @if (!string.IsNullOrWhiteSpace(row.Note))
                                     {
-                                        <span class="muted">@row.Note</span>
+                                        <span class="muted cell-truncate" data-hover-tip>
+                                            @row.Note
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@row.Note</span>
+                                            </span>
+                                        </span>
                                     }
                                 </td>
                                 <td class="text-right tabular-nums">@row.Quantity.ToString("0.##")</td>
@@ -71,7 +97,12 @@
                                 <td>
                                     @if (row.Status == ServiceRegistrationStatus.Rejected)
                                     {
-                                        <span>@row.RejectReason</span>
+                                        <span class="cell-truncate" data-hover-tip>
+                                            @row.RejectReason
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@row.RejectReason</span>
+                                            </span>
+                                        </span>
                                     }
                                     else if (row.ReviewedAt is { } reviewedAt)
                                     {
@@ -126,7 +157,7 @@
                 </table>
             </div>
 
-            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_rows.Count"
+            <TablePager Page="_page" TotalPages="TotalPages" From="FirstItem" To="LastItem" Total="_total"
                         PageChanged="GoToPage" />
         </div>
     }
@@ -141,7 +172,7 @@
                     <h2 id="cancel-request-title">@UL["RegCancelRequestTitle"]</h2>
                     <p>@_cancelTarget.ServiceName</p>
                 </div>
-                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseCancelRequest">✕</button>
+                <button type="button" class="icon-btn" aria-label="@UL["P5CostClosePanel"]" @onclick="CloseCancelRequest"><LucideIcon Name="x" /></button>
             </header>
             <div class="modal-body">
                 <div class="form-field">
@@ -167,8 +198,8 @@
 @code {
     private const int PageSize = 20;
 
-    private IReadOnlyList<ServiceRegistrationDto> _rows = [];
     private IReadOnlyList<ServiceRegistrationDto> _pageRows = [];
+    private int _total;
     private int _page = 1;
     private bool _loading = true;
     private bool _busy;
@@ -186,13 +217,23 @@
         _error = null;
         try
         {
-            _rows = await RegistrationService.ListMineAsync();
-            _page = PaginationHelper.ClampPage(_page, TotalPages);
-            _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+            var result = await RegistrationService.ListMinePagedAsync(null, _page, PageSize);
+
+            // Hủy yêu cầu làm trang cuối trống: lùi về trang cuối còn dữ liệu.
+            if (result.Items.Count == 0 && result.TotalCount > 0 && _page > 1)
+            {
+                _page = PaginationHelper.TotalPages(result.TotalCount, PageSize);
+                result = await RegistrationService.ListMinePagedAsync(null, _page, PageSize);
+            }
+
+            _pageRows = result.Items;
+            _total = result.TotalCount;
         }
         catch (Exception)
         {
             _error = UL["P5CostLoadError"];
+            _pageRows = [];
+            _total = 0;
         }
         finally
         {
@@ -200,13 +241,13 @@
         }
     }
 
-    private int TotalPages => PaginationHelper.TotalPages(_rows.Count, PageSize);
+    private int TotalPages => PaginationHelper.TotalPages(_total, PageSize);
 
-    private int FirstItem => _rows.Count == 0 ? 0 : (_page - 1) * PageSize + 1;
+    private int FirstItem => _total == 0 ? 0 : (_page - 1) * PageSize + 1;
 
-    private int LastItem => Math.Min(_page * PageSize, _rows.Count);
+    private int LastItem => Math.Min(_page * PageSize, _total);
 
-    private void GoToPage(int page)
+    private async Task GoToPage(int page)
     {
         var target = PaginationHelper.ClampPage(page, TotalPages);
         if (target == _page)
@@ -215,7 +256,7 @@
         }
 
         _page = target;
-        _pageRows = _rows.Skip((_page - 1) * PageSize).Take(PageSize).ToList();
+        await LoadAsync();
     }
 
     private async Task CancelAsync(ServiceRegistrationDto row)

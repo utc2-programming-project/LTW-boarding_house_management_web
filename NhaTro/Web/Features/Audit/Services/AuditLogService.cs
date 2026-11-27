@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Audit.DTOs;
 using Web.Features.Audit.Entities;
@@ -25,44 +26,71 @@ public sealed class AuditLogAuthorizationException(string message, string errorC
 /// </summary>
 public sealed class AuditLogService(AuditLogFileStore store, ApplicationDbContext db)
 {
-    private const int DefaultPageSize = 20;
-    private const int MaxPageSize = 200;
+    private const int DefaultPageSize = PagingExtensions.DefaultPageSize;
+    private const int MaxPageSize = PagingExtensions.MaxPageSize;
 
     public async Task<AuditLogPageDto> QueryAsync(
         PropertyCaller caller,
         AuditLogQuery? query = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(caller);
         query ??= new AuditLogQuery();
+        var (rows, ownedPropertyIds) = await ReadRowsAsync(caller, query.PropertyId, cancellationToken);
+        return await BuildPageAsync(rows, query, ownedPropertyIds, cancellationToken);
+    }
 
-        IReadOnlyList<AuditLogFileEntry> rows;
-        HashSet<int>? ownedPropertyIds = null;
+    /// <summary>Đọc sổ một lần cho cả trang và bộ lọc của cùng một request.</summary>
+    public async Task<(AuditLogPageDto Page, AuditLogFilterOptionsDto Options)> QueryWithOptionsAsync(
+        PropertyCaller caller,
+        AuditLogQuery? query = null,
+        CancellationToken cancellationToken = default)
+    {
+        query ??= new AuditLogQuery();
+        var (rows, ownedPropertyIds) = await ReadRowsAsync(caller, query.PropertyId, cancellationToken);
+        var page = await BuildPageAsync(rows, query, ownedPropertyIds, cancellationToken);
+        var options = await BuildOptionsAsync(rows, cancellationToken);
+        return (page, options);
+    }
+
+    private async Task<(IReadOnlyList<AuditLogFileEntry> Rows, HashSet<int>? OwnedPropertyIds)> ReadRowsAsync(
+        PropertyCaller caller,
+        int? requestedPropertyId,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(caller);
 
         if (caller.IsAdmin)
         {
-            rows = await store.ReadAsync(AuditLogCategory.Account, ownerId: null, cancellationToken);
+            var rows = await store.ReadAsync(AuditLogCategory.Account, ownerId: null, cancellationToken);
+            return (rows, null);
         }
-        else if (caller.IsChuTro)
-        {
-            ownedPropertyIds = await OwnedPropertyIdsAsync(caller, cancellationToken);
 
-            if (query.PropertyId is { } requestedPropertyId && !ownedPropertyIds.Contains(requestedPropertyId))
+        if (caller.IsChuTro)
+        {
+            var ownedPropertyIds = await OwnedPropertyIdsAsync(caller, cancellationToken);
+
+            if (requestedPropertyId is { } propertyId && !ownedPropertyIds.Contains(propertyId))
             {
                 throw new AuditLogAuthorizationException(
                     "Không được xem nhật ký ngoài phạm vi tòa nhà của mình.",
                     AuditLogErrorCodes.OutsideScope);
             }
 
-            rows = await store.ReadAsync(AuditLogCategory.Business, caller.UserId, cancellationToken);
-        }
-        else
-        {
-            throw new AuditLogAuthorizationException(
-                "Chỉ Admin hoặc Chủ trọ được xem nhật ký thao tác.",
-                AuditLogErrorCodes.Forbidden);
+            var rows = await store.ReadAsync(AuditLogCategory.Business, caller.UserId, cancellationToken);
+            return (rows, ownedPropertyIds);
         }
 
+        throw new AuditLogAuthorizationException(
+            "Chỉ Admin hoặc Chủ trọ được xem nhật ký thao tác.",
+            AuditLogErrorCodes.Forbidden);
+    }
+
+    private async Task<AuditLogPageDto> BuildPageAsync(
+        IReadOnlyList<AuditLogFileEntry> rows,
+        AuditLogQuery query,
+        HashSet<int>? ownedPropertyIds,
+        CancellationToken cancellationToken)
+    {
         var filtered = rows.AsEnumerable();
 
         if (ownedPropertyIds is not null)
@@ -101,9 +129,9 @@ public sealed class AuditLogService(AuditLogFileStore store, ApplicationDbContex
             .ThenByDescending(entry => entry.Id)
             .ToList();
 
-        var pageSize = Math.Clamp(query.PageSize <= 0 ? DefaultPageSize : query.PageSize, 1, MaxPageSize);
+        var pageSize = PagingExtensions.ClampPageSize(query.PageSize);
         var totalCount = ordered.Count;
-        var page = Math.Max(1, query.Page);
+        var page = PagingExtensions.ClampPage(query.Page);
         var pageItems = ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
         var items = await ToDtosAsync(pageItems, cancellationToken);
@@ -115,24 +143,14 @@ public sealed class AuditLogService(AuditLogFileStore store, ApplicationDbContex
         PropertyCaller caller,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(caller);
+        var (rows, _) = await ReadRowsAsync(caller, requestedPropertyId: null, cancellationToken);
+        return await BuildOptionsAsync(rows, cancellationToken);
+    }
 
-        IReadOnlyList<AuditLogFileEntry> rows;
-        if (caller.IsAdmin)
-        {
-            rows = await store.ReadAsync(AuditLogCategory.Account, ownerId: null, cancellationToken);
-        }
-        else if (caller.IsChuTro)
-        {
-            rows = await store.ReadAsync(AuditLogCategory.Business, caller.UserId, cancellationToken);
-        }
-        else
-        {
-            throw new AuditLogAuthorizationException(
-                "Chỉ Admin hoặc Chủ trọ được xem nhật ký thao tác.",
-                AuditLogErrorCodes.Forbidden);
-        }
-
+    private async Task<AuditLogFilterOptionsDto> BuildOptionsAsync(
+        IReadOnlyList<AuditLogFileEntry> rows,
+        CancellationToken cancellationToken)
+    {
         var actorIds = rows
             .Select(entry => entry.ActorUserId)
             .Where(id => !string.IsNullOrWhiteSpace(id))

@@ -1,0 +1,909 @@
+/* ==========================================================================
+   Quản lý xe & Phân khu đỗ xe (V1–V7)
+   Đồng bộ 100% phong cách trang Hợp đồng (Ảnh 1): tông màu Xanh Indigo chủ đạo
+   (--primary / --accent-text / --accent-soft), bố cục thoáng, đối xứng 2 bên.
+   ========================================================================== */
+
+.vehicle-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+.vehicle-page > * {
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Thanh TabBar + Chọn nhà trọ cân đối 2 bên, không bao giờ đẩy tràn khung ngang */
+.vehicle-toolbar-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.vehicle-toolbar-bar > .tabbar {
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.vehicle-property-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.vehicle-property-picker label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vehicle-property-picker label .lucide-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--accent-text);
+}
+
+.vehicle-property-picker .input {
+    width: 220px;
+    max-width: 100%;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Bảng chuẩn phong cách Hợp đồng (Ảnh 1) ---------- */
+
+.vehicle-page .table-card table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.vehicle-page .table-card thead th {
+    height: 44px;
+    padding: 8px 16px;
+    background: var(--surface-subtle);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.vehicle-page .table-card tbody td {
+    height: 56px;
+    padding: 10px 16px;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+.vehicle-page .table-card th.cell-actions,
+.vehicle-page .table-card td.cell-actions {
+    text-align: center;
+}
+
+.vehicle-page .table-card td.cell-actions .p2-row-actions {
+    justify-content: center;
+}
+
+/* Cột Biển số xe màu Xanh Indigo chủ đạo giống Mã hợp đồng ở Ảnh 1 */
+.vh-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent-text);
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    transition: color 150ms var(--ease);
+}
+
+.vh-code-btn:hover,
+.vh-code-btn:focus-visible {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.vh-code-btn .lucide-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    color: var(--accent-text);
+}
+
+.vh-code-text {
+    color: var(--accent-text);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Cột Phòng / Nhà trọ giống hệt Ảnh 1: dòng trên Mã phòng (xanh) + StatusBadge, dòng dưới Tên nhà trọ (xanh nhỏ) */
+.vh-room-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+}
+
+.vh-room-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.vh-cell-secondary {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+.vh-cell-secondary-link {
+    color: var(--accent-text) !important;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-decoration: none;
+}
+
+.vh-cell-secondary-link:hover {
+    text-decoration: underline;
+}
+
+/* Cột Thông số 2 phần tử hoặc Cột 2 dòng thẳng hàng từ trên xuống dưới (không bị thụt ra thụt vào) */
+.vh-pair-grid {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) minmax(90px, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    width: 100%;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.vh-pair-grid__col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+}
+
+.vh-pair-grid__col + .vh-pair-grid__col {
+    padding-left: 12px;
+    border-left: 1px solid var(--border);
+}
+
+.vh-inline-pairs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 2px;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.vh-inline-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+}
+
+.vh-inline-item + .vh-inline-item {
+    padding-left: 10px;
+    border-left: 1px solid var(--border);
+}
+
+.vh-inline-label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.vh-inline-item strong,
+.vh-pair-grid__col strong {
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Chống tràn chữ và co giãn mượt trong thanh bộ lọc khi kéo hẹp trang */
+.vehicle-page .filter-bar__search {
+    flex: 1 1 220px;
+    min-width: 180px;
+}
+
+.vehicle-page .filter-bar__select {
+    flex: 1 1 140px;
+    min-width: 125px;
+    max-width: 190px;
+}
+
+.vehicle-page .filter-bar__select .input {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Thẻ Khu đỗ xe & Sơ đồ lưới ô đỗ cố định (Tông Xanh Indigo chủ đạo) ---------- */
+
+.vehicle-zone-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    align-items: stretch;
+}
+
+.vehicle-zone-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease);
+}
+
+.vehicle-zone-card:hover {
+    border-color: var(--accent-border);
+}
+
+.vehicle-zone-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.vehicle-zone-card__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vehicle-zone-card__title h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vehicle-zone-card__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+}
+
+.vehicle-zone-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: var(--radius-control);
+    background: var(--surface-subtle);
+}
+
+.vehicle-zone-progress__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.vehicle-zone-progress__bar {
+    height: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    overflow: hidden;
+}
+
+.vehicle-zone-progress__fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--primary);
+    transition: width 200ms var(--ease);
+}
+
+.vehicle-zone-progress__fill--warning {
+    background: var(--warning-text);
+}
+
+.vehicle-zone-progress__fill--danger {
+    background: var(--error-text);
+}
+
+.vehicle-slot-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.vehicle-slot-legend__items {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+}
+
+.vehicle-slot-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.vehicle-slot-legend__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1.5px solid transparent;
+}
+
+/* Tông màu Xanh Indigo đồng bộ thương hiệu cho Sơ đồ ô đỗ */
+.vehicle-slot-legend__dot--occupied {
+    background: var(--accent-soft);
+    border-color: var(--primary);
+}
+
+.vehicle-slot-legend__dot--available {
+    background: var(--surface);
+    border-color: var(--accent-border);
+}
+
+.vehicle-slot-legend__dot--maintenance {
+    background: var(--surface-subtle);
+    border-color: var(--border);
+    border-style: dashed;
+}
+
+.vehicle-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.vehicle-slot {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 76px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    text-align: center;
+    cursor: pointer;
+    min-width: 0;
+    transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.vehicle-slot:hover,
+.vehicle-slot:focus-visible {
+    z-index: 30;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-accent);
+}
+
+/* Ô ĐÃ CÓ XE: Tông Xanh Indigo chủ đạo của web (sang trọng, nổi bật, đồng bộ) */
+.vehicle-slot--occupied {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.vehicle-slot--occupied::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 14px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: var(--primary);
+}
+
+.vehicle-slot--occupied:hover {
+    background: var(--accent-soft-hover);
+    border-color: var(--primary);
+}
+
+/* Ô TRỐNG: Nền sáng tinh gọn, viền Indigo nhạt, hover chuyển xanh Indigo */
+.vehicle-slot--available {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.vehicle-slot--available:hover {
+    border-color: var(--primary);
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.vehicle-slot--available .vehicle-slot__sub {
+    color: var(--accent-text);
+    font-weight: 500;
+}
+
+/* Ô BẢO TRÌ: Nền xám nhạt nét đứt */
+.vehicle-slot--maintenance {
+    border-color: var(--border);
+    background: var(--surface-subtle);
+    color: var(--text-muted);
+    border-style: dashed;
+}
+
+.vehicle-slot--maintenance:hover {
+    border-color: var(--border-hover);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-card);
+}
+
+.vehicle-slot__code {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.vehicle-slot__plate {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-text);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vehicle-slot__sub {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+/* ---------- Kiểm kê bãi xe tinh gọn dạng Bảng đối xứng (không chia thẻ rối mắt) ---------- */
+
+.vh-audit-pills {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.vh-audit-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms var(--ease), color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.vh-audit-pill .lucide-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+}
+
+.vh-audit-pill:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+}
+
+.vh-audit-pill.is-present {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+.vh-audit-pill.is-missing {
+    background: var(--error-bg);
+    border-color: var(--error-border);
+    color: var(--error-text);
+}
+
+/* ---------- Hộp thoại FeatureDialog & Biểu mẫu 2 cột đối xứng ---------- */
+
+.feature-dialog.vehicle-form-dialog {
+    width: min(680px, calc(100vw - 32px));
+}
+
+.feature-dialog.vehicle-compact-dialog {
+    width: min(480px, calc(100vw - 32px));
+}
+
+.vehicle-form-body {
+    padding: 24px;
+    overflow-x: hidden;
+}
+
+.vehicle-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 20px;
+    align-items: start;
+}
+
+.vehicle-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 6px;
+}
+
+.vehicle-field.full {
+    grid-column: 1 / -1;
+}
+
+.vehicle-field > label,
+.vehicle-field-label {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vehicle-field input:not([type="checkbox"]),
+.vehicle-field select,
+.vehicle-field textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: border-color 150ms var(--ease), box-shadow 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.vehicle-field textarea {
+    min-height: 84px;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    resize: vertical;
+}
+
+.vehicle-field input:not([type="checkbox"]):hover:not(:disabled),
+.vehicle-field select:hover:not(:disabled),
+.vehicle-field textarea:hover:not(:disabled) {
+    border-color: var(--border-hover);
+}
+
+.vehicle-field input:not([type="checkbox"]):focus-visible,
+.vehicle-field select:focus-visible,
+.vehicle-field textarea:focus-visible {
+    border-color: var(--focus-ring);
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.vehicle-field input:disabled,
+.vehicle-field select:disabled,
+.vehicle-field textarea:disabled {
+    background: var(--disabled-bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.vehicle-field-hint {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.vehicle-check-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.vehicle-check-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 0;
+    transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+}
+
+.vehicle-check-card span {
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.vehicle-check-card:hover {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+}
+
+.vehicle-check-card input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--primary);
+    flex: 0 0 18px;
+}
+
+.vehicle-form-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+.vehicle-form-footer .btn {
+    min-height: 40px;
+    padding: 8px 16px;
+}
+
+.vehicle-form-footer .btn-primary {
+    min-width: 120px;
+}
+
+.vehicle-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    font-size: 0.875rem;
+}
+
+.vehicle-alert__content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.vehicle-alert__content .lucide-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+}
+
+.vehicle-alert.success {
+    border-color: var(--success-border);
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.vehicle-alert.warning {
+    border-color: var(--warning-border);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+}
+
+.vehicle-alert.error {
+    border-color: var(--error-border);
+    background: var(--error-bg);
+    color: var(--error-text);
+}
+
+/* ---------- Thẻ Cấu hình bãi xe (2 cột cân xứng trên Desktop) ---------- */
+
+.vehicle-settings-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    align-items: stretch;
+}
+
+.vehicle-panel-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.vehicle-panel-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+.vehicle-panel-card__header h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vehicle-panel-card__body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1 1 auto;
+}
+
+.vehicle-panel-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-subtle);
+}
+
+/* ---------- Tem QR định danh phương tiện ---------- */
+
+.vehicle-qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    border: 1px dashed var(--accent-border);
+    border-radius: var(--radius-card);
+    background: var(--accent-soft);
+    text-align: center;
+}
+
+.vehicle-qr-box img {
+    width: 180px;
+    height: 180px;
+    border-radius: var(--radius-control);
+    background: #FFFFFF;
+    padding: 10px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+}
+
+.vehicle-qr-box img.vehicle-qr-photo {
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+    max-height: 180px;
+    object-fit: cover;
+    padding: 0;
+}
+
+.vehicle-qr-token {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    color: var(--accent-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+    .vehicle-zone-grid,
+    .vehicle-settings-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .vehicle-form-body {
+        padding: 16px;
+    }
+
+    .vehicle-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .vehicle-field.full {
+        grid-column: auto;
+    }
+
+    .vehicle-form-footer {
+        flex-direction: column-reverse;
+        padding: 12px 16px;
+    }
+
+    .vehicle-form-footer .btn {
+        width: 100%;
+    }
+
+    .vehicle-slot-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

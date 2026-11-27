@@ -5,6 +5,7 @@ using Bunit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Common.Models;
 using Web.Data;
@@ -37,15 +38,21 @@ public sealed class BusinessReportsPageTests : BunitContext
 
     private void Configure(string role)
     {
+        JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
+        Services.AddSingleton(new Web.Common.Utils.FilterUrlState(JSInterop.JSRuntime));
         Services.AddLocalization(o => o.ResourcesPath = "Resources");
         Services.AddSingleton<ToastService>();
         Services.AddSingleton(TimeProvider.System);
-        var properties = Proxy<IPropertyService>((_, _) => Task.FromResult(new PagedResult<PropertyListItem>
-        {
-            Items = [new() { Id = 7, Name = "House 7", IsActive = true }],
-            Page = 1, PageSize = 100, TotalCount = 1,
-        }));
+        var properties = Proxy<IPropertyService>((method, _) =>
+            method?.Name == nameof(IPropertyService.ListOptionsAsync)
+                ? Task.FromResult<IReadOnlyList<PropertyListItem>>(
+                    [new() { Id = 7, Name = "House 7", IsActive = true }])
+                : Task.FromResult(new PagedResult<PropertyListItem>
+                {
+                    Items = [new() { Id = 7, Name = "House 7", IsActive = true }],
+                    Page = 1, PageSize = 100, TotalCount = 1,
+                }));
         var rooms = Proxy<IRoomReportService>((method, args) =>
         {
             if (method?.Name == nameof(IRoomReportService.GetOccupancyAsync))
@@ -92,12 +99,12 @@ public sealed class BusinessReportsPageTests : BunitContext
                 },
             });
         });
-        var revenue = new RevenueReportService(NewDb());
+        var revenue = new RevenueReportService(NewDbFactory());
         var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
         var costs = Proxy<ICostReportService>((_, _) => Task.FromResult(new CostReportResult()));
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult()));
         var export = new ReportExportService(revenue, rooms, tenants, contracts, costs, incidents, NewDb());
-        Services.AddSingleton(new ReportsPageService(new P2CallerProvider(new Authentication(role)),
+        Services.AddSingleton(new ReportsPageService(new P2CallerProvider(new Authentication(role), TestOwnerAccess.Create()),
             properties, rooms, tenants, revenue, contracts, costs, incidents, export));
         ComponentFactories.AddStub<RoomStructureChart>();
     }
@@ -110,7 +117,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".room-table tbody tr")));
         GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, RoomRequests.Last().Page));
-        page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
         GoToPage(page, 2);
         page.WaitForAssertion(() => Assert.Equal(2, TenantRequests.Last().Page));
@@ -126,7 +133,7 @@ public sealed class BusinessReportsPageTests : BunitContext
             Assert.Contains("T-7-1", page.Find(".tenant-table").TextContent);
             Assert.Equal("21", page.Find(".kpis dd").TextContent);
         });
-        page.FindAll(".report-tabs button[role=\"tab\"]")[0].Click();
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[0].Click();
         page.WaitForAssertion(() => Assert.Contains("R-7-1", page.Find(".room-table").TextContent));
         Assert.All(CallerRoles, value => Assert.Equal(Roles.ChuTro, value));
     }
@@ -152,7 +159,7 @@ public sealed class BusinessReportsPageTests : BunitContext
         Assert.Equal(tenantCalls, TenantRequests.Count);
         var roomCalls = RoomRequests.Count;
 
-        page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
         page.Find("#report-tenant-rental").Change("true");
         page.WaitForAssertion(() => Assert.True(TenantRequests.Last().HasActiveContract));
@@ -167,8 +174,8 @@ public sealed class BusinessReportsPageTests : BunitContext
         DenyRooms = true;
         Configure(Roles.QuanLy);
         var page = Render<BusinessReportsView>();
-        page.WaitForAssertion(() => Assert.Equal(5, page.FindAll(".report-tabs button[role=\"tab\"]").Count));
-        page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
+        page.WaitForAssertion(() => Assert.Equal(5, page.FindAll("button.tabbar-item[role=\"tab\"]").Count));
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[1].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
         Assert.Empty(page.FindAll(".room-table"));
         Assert.Equal(6, page.FindAll(".tenant-table th").Count);
@@ -220,14 +227,14 @@ public sealed class BusinessReportsPageTests : BunitContext
         var tenantCalls = TenantRequests.Count;
         Assert.Empty(page.FindAll(".tenant-table"));
 
-        page.FindAll(".report-tabs button[role=\"tab\"]")[1].Click();
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[1].Click();
 
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".tenant-table tbody tr")));
         Assert.Empty(page.FindAll(".room-table"));
         Assert.Equal(roomCalls, RoomRequests.Count);
         Assert.Equal(tenantCalls, TenantRequests.Count);
 
-        page.FindAll(".report-tabs button[role=\"tab\"]")[0].Click();
+        page.FindAll("button.tabbar-item[role=\"tab\"]")[0].Click();
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".room-table tbody tr")));
         Assert.Equal(roomCalls, RoomRequests.Count);
         Assert.Equal(tenantCalls, TenantRequests.Count);
@@ -243,13 +250,15 @@ public sealed class BusinessReportsPageTests : BunitContext
         Assert.Equal("ChuTro,QuanLy", item.Roles);
     }
 
-    private static ApplicationDbContext NewDb()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+    private static ApplicationDbContext NewDb() => new(NewDbOptions());
+
+    private static IDbContextFactory<ApplicationDbContext> NewDbFactory() =>
+        new PooledDbContextFactory<ApplicationDbContext>(NewDbOptions());
+
+    private static DbContextOptions<ApplicationDbContext> NewDbOptions() =>
+        new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase($"vht140-reports-{Guid.NewGuid()}")
             .Options;
-        return new ApplicationDbContext(options);
-    }
 
     private static void GoToPage(IRenderedComponent<BusinessReportsView> page, int number) =>
         page.WaitForAssertion(() => page.FindAll(".table-pager__pages button")

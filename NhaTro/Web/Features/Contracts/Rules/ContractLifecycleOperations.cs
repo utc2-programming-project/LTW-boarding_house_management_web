@@ -9,7 +9,12 @@ using Web.Features.Audit.Entities;
 using Web.Features.Approvals.Entities;
 using Web.Features.Approvals.Enums;
 using Web.Features.Contracts.DTOs;
+using Web.Features.Notifications;
 using Web.Features.Utilities.Entities;
+using Web.Features.Vehicles.Entities;
+using Web.Features.Vehicles.Enums;
+using Web.Features.Vehicles.Rules;
+using Web.Features.Vehicles.Services;
 
 namespace Web.Features.Contracts.Rules;
 
@@ -136,25 +141,44 @@ public static class ContractLifecycleOperations
             RoomId = current.RoomId,
             StartDate = current.EndDate.AddDays(1),
             EndDate = newEndDate.Date,
-            SnapshotPrice = room.StandardPrice,
-            DepositAmount = MoneyFormatter.RoundVnd(room.StandardPrice * 0.20m),
+            SnapshotPrice = current.SnapshotPrice,
+            DepositAmount = current.DepositAmount,
             Status = ContractStatus.Approved,
+            PaymentCycleMonths = current.PaymentCycleMonths,
+            MeterReadingDay = current.MeterReadingDay,
+            Terms = current.Terms,
+            CreatedByUserId = current.CreatedByUserId,
+            CreatedByRole = current.CreatedByRole,
+            CreatedAt = createdAt,
         };
 
-        var tenantIds = await db.ContractMembers
+        var members = await db.ContractMembers
             .Where(member => member.ContractId == current.ContractId)
-            .Select(member => member.TenantId)
+            .Select(member => new { member.TenantId, member.IsRepresentative, member.Relationship })
             .ToListAsync(cancellationToken);
 
         db.Contracts.Add(renewal);
-        db.ContractMembers.AddRange(tenantIds.Select(tenantId => new ContractMember
+        db.ContractMembers.AddRange(members.Select(member => new ContractMember
         {
             ContractId = renewal.ContractId,
-            TenantId = tenantId,
+            TenantId = member.TenantId,
+            IsRepresentative = member.IsRepresentative,
+            Relationship = member.Relationship,
         }));
 
         await CopyFutureServiceRegistrationsAsync(db, current.ContractId, renewal.ContractId,
             new DateOnly(renewal.StartDate.Year, renewal.StartDate.Month, 1), createdAt, cancellationToken);
+
+        // Xe đang gửi thuộc hợp đồng cũ phải được gắn sang hợp đồng kế nhiệm ngay,
+        // tránh tính phí tháng mới theo hợp đồng đã hết hạn (double-billing / mất phí).
+        var activeVehicles = await db.Vehicles
+            .Where(vehicle => vehicle.ContractId == current.ContractId
+                && vehicle.Status == VehicleStatus.Active)
+            .ToListAsync(cancellationToken);
+        foreach (var vehicle in activeVehicles)
+        {
+            vehicle.ContractId = renewal.ContractId;
+        }
 
         return renewal;
     }
@@ -168,6 +192,8 @@ public static class ContractLifecycleOperations
         Contract contract,
         Room room,
         DateOnly today,
+        string actorUserId,
+        DateTimeOffset occurredAt,
         CancellationToken cancellationToken = default)
     {
         contract.Status = ContractStatus.Liquidated;
@@ -185,5 +211,108 @@ public static class ContractLifecycleOperations
         {
             room.Status = RoomStatus.Available;
         }
+
+        // Mục 2.7/10: thanh lý hợp đồng phải ngừng luôn xe đang gửi, trả ô đỗ và báo cho khách/chủ.
+        await DeactivateContractVehiclesAsync(db, contract, room, actorUserId, occurredAt, cancellationToken);
+    }
+
+    /// <summary>
+    /// Ngừng toàn bộ xe đang Active của hợp đồng khi hợp đồng hết hiệu lực/thanh lý:
+    /// trả ô đỗ về trống, đánh dấu Inactive kèm EndedAt, ghi audit và gửi thông báo.
+    /// </summary>
+    public static async Task<int> DeactivateContractVehiclesAsync(
+        ApplicationDbContext db,
+        Contract contract,
+        Room room,
+        string actorUserId,
+        DateTimeOffset occurredAt,
+        CancellationToken cancellationToken = default)
+    {
+        var activeVehicles = await db.Vehicles
+            .Where(vehicle => vehicle.ContractId == contract.ContractId
+                && vehicle.Status == VehicleStatus.Active)
+            .ToListAsync(cancellationToken);
+
+        if (activeVehicles.Count == 0)
+        {
+            return 0;
+        }
+
+        var slotIds = activeVehicles
+            .Where(vehicle => vehicle.ParkingSlotId.HasValue)
+            .Select(vehicle => vehicle.ParkingSlotId!.Value)
+            .Distinct()
+            .ToArray();
+        if (slotIds.Length > 0)
+        {
+            var slots = await db.ParkingSlots
+                .Where(slot => slotIds.Contains(slot.Id))
+                .ToListAsync(cancellationToken);
+            foreach (var slot in slots)
+            {
+                slot.Status = ParkingSlotStatus.Available;
+                slot.CurrentVehicleId = null;
+            }
+        }
+
+        var reason = VehicleLocalization.TCurrent("ContractLiquidatedReason", "Hợp đồng đã thanh lý");
+        foreach (var vehicle in activeVehicles)
+        {
+            vehicle.Status = VehicleStatus.Inactive;
+            vehicle.EndedAt = occurredAt;
+            vehicle.EndReason = reason;
+            vehicle.ParkingSlotId = null;
+        }
+
+        AddAudit(db, "Vehicle.ContractVehiclesDeactivated", actorUserId, room.PropertyId,
+            $"ContractId={contract.ContractId};Count={activeVehicles.Count};Reason={reason}", occurredAt);
+
+        var plateList = string.Join(", ",
+            activeVehicles.Select(vehicle => VehicleRules.FormatPlateForDisplay(vehicle.PlateNumber)));
+        var link = $"/vehicles?propertyId={room.PropertyId}&roomId={room.Id}";
+        var notifTitle = VehicleLocalization.TCurrent("ContractLiquidatedNotifTitle", "Hợp đồng đã thanh lý");
+
+        var tenantUserIds = await (
+            from member in db.ContractMembers.AsNoTracking()
+            join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
+            where member.ContractId == contract.ContractId && tenant.UserId != null
+            select tenant.UserId!)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        foreach (var tenantUserId in tenantUserIds)
+        {
+            db.Set<AppNotification>().Add(new AppNotification
+            {
+                RecipientUserId = tenantUserId,
+                Title = notifTitle,
+                Body = VehicleLocalization.TCurrent(
+                    "ContractLiquidatedTenantBody",
+                    "Hợp đồng phòng {0} đã thanh lý. Xe {1} đã được ngừng gửi.",
+                    room.Code, plateList),
+                Link = "/my/vehicles",
+                CreatedAt = occurredAt,
+            });
+        }
+
+        var ownerId = await db.Properties.AsNoTracking()
+            .Where(property => property.Id == room.PropertyId)
+            .Select(property => property.OwnerId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(ownerId))
+        {
+            db.Set<AppNotification>().Add(new AppNotification
+            {
+                RecipientUserId = ownerId,
+                Title = notifTitle,
+                Body = VehicleLocalization.TCurrent(
+                    "ContractLiquidatedOwnerBody",
+                    "Phòng {0}: {1} xe ({2}) đã được ngừng gửi do thanh lý hợp đồng.",
+                    room.Code, activeVehicles.Count, plateList),
+                Link = link,
+                CreatedAt = occurredAt,
+            });
+        }
+
+        return activeVehicles.Count;
     }
 }

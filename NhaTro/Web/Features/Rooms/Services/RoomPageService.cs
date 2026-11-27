@@ -46,20 +46,6 @@ public sealed class RoomPageService(
     public async Task<TrashPurgeSummary> PurgeAllAsync(CancellationToken ct = default) =>
         await rooms.PurgeAllAsync(await callerProvider.GetCallerAsync(), ct);
 
-    public async Task<IReadOnlyList<PropertyListItem>> GetPropertyOptionsAsync(CancellationToken ct = default)
-    {
-        const int pageSize = 100;
-        var caller = await callerProvider.GetCallerAsync();
-        var firstPage = await properties.ListAsync(new PropertyFilter { Page = 1, PageSize = pageSize }, caller, ct);
-        var results = firstPage.Items.ToList();
-        var pageCount = (int)Math.Ceiling(firstPage.TotalCount / (double)pageSize);
-
-        for (var page = 2; page <= pageCount; page++)
-        {
-            var next = await properties.ListAsync(new PropertyFilter { Page = page, PageSize = pageSize }, caller, ct);
-            results.AddRange(next.Items);
-        }
-
-        return results;
-    }
+    public async Task<IReadOnlyList<PropertyListItem>> GetPropertyOptionsAsync(CancellationToken ct = default) =>
+        await properties.ListOptionsAsync(await callerProvider.GetCallerAsync(), ct);
 }

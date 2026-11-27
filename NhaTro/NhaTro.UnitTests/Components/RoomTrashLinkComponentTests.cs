@@ -25,7 +25,9 @@ public sealed class RoomTrashLinkComponentTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         JSInterop.SetupModule("./Components/Shared/Dialogs/ConfirmDialog.razor.js").Mode = JSRuntimeMode.Loose;
 
+        JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
+        Services.AddSingleton(new Web.Common.Utils.FilterUrlState(JSInterop.JSRuntime));
         Services.AddSingleton<IStringLocalizer<SharedResource>>(new KeyLocalizer());
         Services.AddSingleton(new Web.Components.Shared.Feedback.ToastService());
     }
@@ -50,7 +52,7 @@ public sealed class RoomTrashLinkComponentTests : BunitContext
     private IRenderedComponent<RoomList> Render(AuthenticationStateProvider auth)
     {
         Services.AddSingleton(new RoomPageService(
-            new P2CallerProvider(auth), new FakeRoomService(), new FakePropertyService()));
+            new P2CallerProvider(auth, TestOwnerAccess.Create()), new FakeRoomService(), new FakePropertyService()));
 
         return Render<RoomList>();
     }
@@ -66,6 +68,12 @@ public sealed class RoomTrashLinkComponentTests : BunitContext
                 PageSize = 20,
                 TotalCount = 1,
             });
+
+        public Task<PropertyListSummary> GetSummaryAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult(new PropertyListSummary(0, 0, 0, 0));
+
+        public Task<IReadOnlyList<PropertyListItem>> ListOptionsAsync(PropertyCaller caller, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PropertyListItem>>([]);
 
         public Task<PropertyResult> GetAsync(int id, PropertyCaller caller, CancellationToken ct = default) =>
             throw new NotSupportedException();

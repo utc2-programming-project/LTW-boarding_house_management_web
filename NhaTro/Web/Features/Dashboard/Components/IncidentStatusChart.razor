@@ -1,0 +1,52 @@
+@inject IStringLocalizer<DashboardResource> L
+
+@if (Kpis is null || Kpis.Total == 0)
+{
+    <EmptyStateCard Title="@L["Empty"]" />
+}
+else
+{
+    <div class="incident-status-chart" role="img" aria-label="@L["IncidentStatusTitle"]">
+        <div class="chart-head">
+            <ul class="chart-legend" aria-hidden="true">
+                <li><span class="legend-dot s1"></span>@L["IncidentNew"]</li>
+                <li><span class="legend-dot s2"></span>@L["IncidentInProgress"]</li>
+                <li><span class="legend-dot s3"></span>@L["IncidentCompleted"]</li>
+                <li><span class="legend-dot s4"></span>@L["IncidentUrgent"]</li>
+            </ul>
+        </div>
+        @foreach (var row in Rows)
+        {
+            <div class="status-row">
+                <span class="status-label">@row.Label</span>
+                <div class="status-track"><span class="status-fill @row.Class" style="width:@row.Percent%"></span></div>
+                <span class="status-count">@row.Count</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public IncidentReportKpis? Kpis { get; set; }
+
+    private IReadOnlyList<StatusRow> Rows
+    {
+        get
+        {
+            var data = Kpis;
+            if (data is null || data.Total == 0) return [];
+            return new[]
+            {
+                new StatusRow(L["IncidentNew"].Value, data.New, "s1", data.Total),
+                new StatusRow(L["IncidentInProgress"].Value, data.InProgress, "s2", data.Total),
+                new StatusRow(L["IncidentCompleted"].Value, data.Completed, "s3", data.Total),
+                new StatusRow(L["IncidentUrgent"].Value, data.Urgent, "s4", data.Total),
+            };
+        }
+    }
+
+    private sealed record StatusRow(string Label, int Count, string Class, int Total)
+    {
+        public double Percent => Total == 0 ? 0 : Math.Max(2d, Count * 100d / Total);
+    }
+}

@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="PageTitlePasses" xml:space="preserve"><value>Gate passes</value></data>
+  <data name="PageTitleLogs" xml:space="preserve"><value>Gate log &amp; stay reports</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>Gate settings</value></data>
+  <data name="PageTitleKiosk" xml:space="preserve"><value>Gate kiosk</value></data>
+  <data name="PageTitleMyGate" xml:space="preserve"><value>My access</value></data>
+  <data name="SubtitlePasses" xml:space="preserve"><value>Create, approve and revoke guest passes; tenants only see passes they issued.</value></data>
+  <data name="SubtitleLogs" xml:space="preserve"><value>Every entry attempt is logged, including rejected ones.</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>Only the landlord can change gate policy and devices.</value></data>
+  <data name="SubtitleKiosk" xml:space="preserve"><value>Enter a QR or 6-digit code; level A shows valid so the guard can open.</value></data>
+  <data name="SubtitleMyGate" xml:space="preserve"><value>Issue passes for your guests and follow the ones you created.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Loadingâ€¦</value></data>
+  <data name="LoadFailed" xml:space="preserve"><value>Could not load data.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Could not save.</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="CreatePass" xml:space="preserve"><value>Create guest pass</value></data>
+  <data name="VisitorName" xml:space="preserve"><value>Guest name</value></data>
+  <data name="VisitorPhone" xml:space="preserve"><value>Phone</value></data>
+  <data name="VisitorIdNumber" xml:space="preserve"><value>ID / passport</value></data>
+  <data name="VisitorDob" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="StayReason" xml:space="preserve"><value>Stay reason</value></data>
+  <data name="StayType" xml:space="preserve"><value>Type</value></data>
+  <data name="Visit" xml:space="preserve"><value>Day visit</value></data>
+  <data name="Overnight" xml:space="preserve"><value>Overnight</value></data>
+  <data name="TtlMinutes" xml:space="preserve"><value>Valid for (minutes)</value></data>
+  <data name="MaxUses" xml:space="preserve"><value>Uses</value></data>
+  <data name="IssueCode" xml:space="preserve"><value>Issue 6-digit fallback code</value></data>
+  <data name="Note" xml:space="preserve"><value>Note</value></data>
+  <data name="Room" xml:space="preserve"><value>Room</value></data>
+  <data name="Property" xml:space="preserve"><value>Property</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="ExpiresAt" xml:space="preserve"><value>Expires</value></data>
+  <data name="Uses" xml:space="preserve"><value>Uses</value></data>
+  <data name="Issuer" xml:space="preserve"><value>Issuer</value></data>
+  <data name="AutoApproved" xml:space="preserve"><value>Auto-approved</value></data>
+  <data name="Approve" xml:space="preserve"><value>Approve</value></data>
+  <data name="Reject" xml:space="preserve"><value>Reject</value></data>
+  <data name="Revoke" xml:space="preserve"><value>Revoke</value></data>
+  <data name="Action" xml:space="preserve"><value>Action</value></data>
+  <data name="Reason" xml:space="preserve"><value>Reason</value></data>
+  <data name="ReasonRequired" xml:space="preserve"><value>Reason is required.</value></data>
+  <data name="Pending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Approved" xml:space="preserve"><value>Approved</value></data>
+  <data name="Rejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="Used" xml:space="preserve"><value>Used</value></data>
+  <data name="Expired" xml:space="preserve"><value>Expired</value></data>
+  <data name="Revoked" xml:space="preserve"><value>Revoked</value></data>
+  <data name="NoPasses" xml:space="preserve"><value>No passes yet.</value></data>
+  <data name="PassCreated" xml:space="preserve"><value>Pass created. The QR is shown only once â€” send it to the guest now.</value></data>
+  <data name="RawToken" xml:space="preserve"><value>QR token</value></data>
+  <data name="FallbackCode" xml:space="preserve"><value>6-digit code</value></data>
+  <data name="OvernightPendingNotice" xml:space="preserve"><value>Overnight passes always wait for the landlord and create a stay report.</value></data>
+  <data name="Filters" xml:space="preserve"><value>Filters</value></data>
+  <data name="From" xml:space="preserve"><value>From</value></data>
+  <data name="To" xml:space="preserve"><value>To</value></data>
+  <data name="All" xml:space="preserve"><value>All</value></data>
+  <data name="Success" xml:space="preserve"><value>Valid</value></data>
+  <data name="Failed" xml:space="preserve"><value>Rejected</value></data>
+  <data name="Direction" xml:space="preserve"><value>Direction</value></data>
+  <data name="In" xml:space="preserve"><value>In</value></data>
+  <data name="Out" xml:space="preserve"><value>Out</value></data>
+  <data name="Method" xml:space="preserve"><value>Method</value></data>
+  <data name="Device" xml:space="preserve"><value>Gate / device</value></data>
+  <data name="Result" xml:space="preserve"><value>Result</value></data>
+  <data name="GateLog" xml:space="preserve"><value>Gate log</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>No entries yet.</value></data>
+  <data name="Stays" xml:space="preserve"><value>Stay reports</value></data>
+  <data name="RefreshOverdue" xml:space="preserve"><value>Refresh overdue</value></data>
+  <data name="GuestName" xml:space="preserve"><value>Guest</value></data>
+  <data name="DueAt" xml:space="preserve"><value>Due</value></data>
+  <data name="MarkReported" xml:space="preserve"><value>Mark reported</value></data>
+  <data name="ReportChannel" xml:space="preserve"><value>Channel</value></data>
+  <data name="EvidenceRef" xml:space="preserve"><value>Evidence ref</value></data>
+  <data name="NoStays" xml:space="preserve"><value>No stay reports.</value></data>
+  <data name="Overdue" xml:space="preserve"><value>Overdue</value></data>
+  <data name="Reported" xml:space="preserve"><value>Reported</value></data>
+  <data name="Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="Policy" xml:space="preserve"><value>Gate policy</value></data>
+  <data name="PolicySectionAuth" xml:space="preserve"><value>Authentication &amp; reporting channel</value></data>
+  <data name="PolicySectionAccess" xml:space="preserve"><value>Access control</value></data>
+  <data name="PolicySectionTenant" xml:space="preserve"><value>Tenants &amp; guest self-fill</value></data>
+  <data name="PolicySectionValidity" xml:space="preserve"><value>Validity &amp; retention</value></data>
+  <data name="AuthMode" xml:space="preserve"><value>Authentication mode</value></data>
+  <data name="SingleFactor" xml:space="preserve"><value>Single factor</value></data>
+  <data name="QrPlusBiometric" xml:space="preserve"><value>QR + biometric</value></data>
+  <data name="FaceOnly" xml:space="preserve"><value>Face only</value></data>
+  <data name="AntiPassback" xml:space="preserve"><value>Anti-passback</value></data>
+  <data name="AllowManualOpen" xml:space="preserve"><value>Allow manual open</value></data>
+  <data name="AllowManagerApprove" xml:space="preserve"><value>Allow manager approval</value></data>
+  <data name="AutoApproveDayVisit" xml:space="preserve"><value>Auto-approve day visits</value></data>
+  <data name="AllowTenantIssuePass" xml:space="preserve"><value>Allow tenants to issue passes</value></data>
+  <data name="TenantMayIssueOvernight" xml:space="preserve"><value>Allow tenants to create overnight passes</value></data>
+  <data name="TenantMaxPassesPerDay" xml:space="preserve"><value>Tenant passes per day</value></data>
+  <data name="TenantMaxTtlMinutes" xml:space="preserve"><value>Max validity (minutes)</value></data>
+  <data name="TenantMaxUses" xml:space="preserve"><value>Max uses</value></data>
+  <data name="PassTtlMinutes" xml:space="preserve"><value>Default validity (minutes)</value></data>
+  <data name="DayWindow" xml:space="preserve"><value>Day-visit hours</value></data>
+  <data name="RetentionDays" xml:space="preserve"><value>Retention (days)</value></data>
+  <data name="OfflineGrace" xml:space="preserve"><value>Offline grace (minutes)</value></data>
+  <data name="PreferredChannel" xml:space="preserve"><value>Preferred stay-report channel</value></data>
+  <data name="RequiredFields" xml:space="preserve"><value>Required fields (comma separated)</value></data>
+  <data name="Devices" xml:space="preserve"><value>Gate devices</value></data>
+  <data name="AddDevice" xml:space="preserve"><value>Add device</value></data>
+  <data name="DeviceName" xml:space="preserve"><value>Device name</value></data>
+  <data name="Kind" xml:space="preserve"><value>Kind</value></data>
+  <data name="Level" xml:space="preserve"><value>Level</value></data>
+  <data name="NoDevices" xml:space="preserve"><value>No devices.</value></data>
+  <data name="Enrollments" xml:space="preserve"><value>Biometric enrollments</value></data>
+  <data name="MyQr" xml:space="preserve"><value>My access QR</value></data>
+  <data name="QrHint" xml:space="preserve"><value>The QR rotates every minute; show it to the guard when entering or leaving.</value></data>
+  <data name="RefreshQr" xml:space="preserve"><value>Refresh QR</value></data>
+  <data name="EnrollHint" xml:space="preserve"><value>Enroll a face or passkey for level B. The landlord must approve before it works.</value></data>
+  <data name="EnrollmentValue" xml:space="preserve"><value>Face template reference / public key</value></data>
+  <data name="Enroll" xml:space="preserve"><value>Submit enrollment</value></data>
+  <data name="EnrollFace" xml:space="preserve"><value>Enroll face</value></data>
+  <data name="EnrollPasskey" xml:space="preserve"><value>Enroll passkey</value></data>
+  <data name="PasskeyPublicKey" xml:space="preserve"><value>Public key (WebAuthn)</value></data>
+  <data name="NoEnrollments" xml:space="preserve"><value>No enrollments.</value></data>
+  <data name="Face" xml:space="preserve"><value>Face</value></data>
+  <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
+  <data name="Active" xml:space="preserve"><value>Active</value></data>
+  <data name="KioskTitle" xml:space="preserve"><value>Verify entry</value></data>
+  <data name="Token" xml:space="preserve"><value>QR / 6-digit code</value></data>
+  <data name="Check" xml:space="preserve"><value>Check</value></data>
+  <data name="ManualOpen" xml:space="preserve"><value>Manual open</value></data>
+  <data name="ManualReason" xml:space="preserve"><value>Manual open reason</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Select property</value></data>
+  <data name="SelectRoom" xml:space="preserve"><value>Select room</value></data>
+  <data name="SelectGate" xml:space="preserve"><value>Select gate (optional)</value></data>
+  <data name="NoRoom" xml:space="preserve"><value>You have no active contract.</value></data>
+  <data name="AccessDenied" xml:space="preserve"><value>You are not allowed to use this feature.</value></data>
+  <data name="MyPasses" xml:space="preserve"><value>Passes I issued</value></data>
+  <data name="CreateGuestPass" xml:space="preserve"><value>Issue a guest pass</value></data>
+  <data name="Forbidden" xml:space="preserve"><value>Forbidden.</value></data>
+  <data name="PropertyNotFound" xml:space="preserve"><value>Property not found.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>Room not found.</value></data>
+  <data name="PassNotFound" xml:space="preserve"><value>Pass not found.</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>Invalid data.</value></data>
+  <data name="MissingGuestName" xml:space="preserve"><value>Guest name is required.</value></data>
+  <data name="MissingGuestPhone" xml:space="preserve"><value>Guest phone is required.</value></data>
+  <data name="MissingLawfulFields" xml:space="preserve"><value>Please fill in all required guest details: date of birth, ID and stay reason (when required).</value></data>
+  <data name="TenantIssueDisabled" xml:space="preserve"><value>The landlord has not enabled tenant-issued passes.</value></data>
+  <data name="TenantOvernightDisabled" xml:space="preserve"><value>You cannot create overnight passes.</value></data>
+  <data name="TenantQuotaExceeded" xml:space="preserve"><value>Daily pass quota reached.</value></data>
+  <data name="TenantNoActiveContract" xml:space="preserve"><value>No active contract.</value></data>
+  <data name="InvalidStatus" xml:space="preserve"><value>Invalid status.</value></data>
+  <data name="PassExpired" xml:space="preserve"><value>Pass expired.</value></data>
+  <data name="PassRevoked" xml:space="preserve"><value>Pass revoked.</value></data>
+  <data name="PassNotApproved" xml:space="preserve"><value>Pass not approved.</value></data>
+  <data name="PassUsedUp" xml:space="preserve"><value>Pass used up.</value></data>
+  <data name="OutsideAllowedHours" xml:space="preserve"><value>Outside day-visit hours.</value></data>
+  <data name="GuestLeftBeforeDue" xml:space="preserve"><value>Guest left before the stay-report deadline</value></data>
+  <data name="MethodNotAllowed" xml:space="preserve"><value>Method not allowed.</value></data>
+  <data name="TokenInvalid" xml:space="preserve"><value>Invalid code.</value></data>
+  <data name="AlreadyInside" xml:space="preserve"><value>This person is already inside.</value></data>
+  <data name="NotInside" xml:space="preserve"><value>No entry recorded.</value></data>
+  <data name="ManualOpenDisabled" xml:space="preserve"><value>Policy does not allow manual open.</value></data>
+  <data name="InviteInvalid" xml:space="preserve"><value>This link is invalid, already used or expired.</value></data>
+  <data name="GuestFillDisabled" xml:space="preserve"><value>The landlord has not enabled guest self-fill.</value></data>
+  <data name="GuestQuotaExceeded" xml:space="preserve"><value>This phone number has reached the daily self-fill limit.</value></data>
+  <data name="DuplicateGuestRequest" xml:space="preserve"><value>A pending or approved pass already exists for this phone number.</value></data>
+  <data name="SelfFilled" xml:space="preserve"><value>Self-filled</value></data>
+  <data name="AllowGuestSelfFill" xml:space="preserve"><value>Allow guest self-fill links</value></data>
+  <data name="GuestSelfMaxPassesPerDay" xml:space="preserve"><value>Self-filled passes per phone per day</value></data>
+  <data name="GuestFillTitle" xml:space="preserve"><value>Guest pass request</value></data>
+  <data name="GuestFillHelp" xml:space="preserve"><value>Fill in your details to create a gate pass. No account needed — this link works only once.</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="GuestFillExpiresAt" xml:space="preserve"><value>Link expires at {0}</value></data>
+  <data name="GuestFillInvalid" xml:space="preserve"><value>This link is invalid, already used or expired. Ask a resident for a new link.</value></data>
+  <data name="GuestFillSubmit" xml:space="preserve"><value>Submit request</value></data>
+  <data name="GuestFillFailed" xml:space="preserve"><value>Could not submit the request. Please try again.</value></data>
+  <data name="GuestFillApproved" xml:space="preserve"><value>Your pass is approved. Show the QR below at the gate.</value></data>
+  <data name="GuestFillPending" xml:space="preserve"><value>Request sent, waiting for the landlord/manager to approve.</value></data>
+  <data name="GuestFillKeepLinkHint" xml:space="preserve"><value>Keep this link to check the pass status. The QR is shown only once.</value></data>
+  <data name="GuestFillPassLink" xml:space="preserve"><value>Pass link</value></data>
+  <data name="GuestFillCopyLink" xml:space="preserve"><value>Copy link</value></data>
+  <data name="GuestFillLinkCopied" xml:space="preserve"><value>Link copied.</value></data>
+  <data name="GuestFillCopyFailed" xml:space="preserve"><value>Couldn't copy. Please select the link and copy it manually.</value></data>
+  <data name="GuestFillQrAlt" xml:space="preserve"><value>Gate pass QR</value></data>
+  <data name="GuestFillViewStatus" xml:space="preserve"><value>View pass status</value></data>
+  <data name="GuestFillOvernightHint" xml:space="preserve"><value>Overnight guests must provide date of birth, ID number and stay reason.</value></data>
+  <data name="GuestStatusTitle" xml:space="preserve"><value>Gate pass status</value></data>
+  <data name="GuestStatusHelp" xml:space="preserve"><value>This page only shows the pass status; phone and ID are not displayed.</value></data>
+  <data name="GuestStatusInvalid" xml:space="preserve"><value>Pass not found or the link is invalid.</value></data>
+  <data name="GuestStatusExpiresAt" xml:space="preserve"><value>Valid until {0}</value></data>
+  <data name="GuestStatusPendingHint" xml:space="preserve"><value>The pass is pending approval. Please check again later.</value></data>
+  <data name="GuestStatusApprovedHint" xml:space="preserve"><value>The pass is approved. Show the QR or 6-digit code at the gate.</value></data>
+  <data name="GuestStatusReason" xml:space="preserve"><value>Reason: {0}</value></data>
+  <data name="GuestInviteTitle" xml:space="preserve"><value>Create a guest self-fill link</value></data>
+  <data name="GuestInviteHelp" xml:space="preserve"><value>Send this link/QR to a visitor. The pass is created only when the guest submits the form; each link works once and is tied to the selected room.</value></data>
+  <data name="GuestInviteQrAlt" xml:space="preserve"><value>Guest self-fill link QR</value></data>
+  <data name="GuestInviteExpiresAt" xml:space="preserve"><value>Expires at {0}</value></data>
+  <data name="GuestInviteWarning" xml:space="preserve"><value>The link is shown only once — send it now and do not share it publicly.</value></data>
+  <data name="GuestInviteShare" xml:space="preserve"><value>Share</value></data>
+  <data name="GuestInviteShareTitle" xml:space="preserve"><value>Guest self check-in link</value></data>
+  <data name="GuestInviteCreate" xml:space="preserve"><value>Create link</value></data>
+  <data name="GuestInviteExpiry" xml:space="preserve"><value>Link validity</value></data>
+  <data name="GuestInviteExpiry15m" xml:space="preserve"><value>15 minutes</value></data>
+  <data name="GuestInviteExpiry1h" xml:space="preserve"><value>1 hour</value></data>
+  <data name="GuestInviteExpiry6h" xml:space="preserve"><value>6 hours</value></data>
+  <data name="GuestInviteExpiry24h" xml:space="preserve"><value>24 hours</value></data>
+  <data name="GuestInvitesActive" xml:space="preserve"><value>Open links</value></data>
+  <data name="GuestInvitesActiveHint" xml:space="preserve"><value>The guest has not filled in yet. Cancel if no longer needed.</value></data>
+  <data name="GuestInviteCancel" xml:space="preserve"><value>Cancel link</value></data>
+</root>

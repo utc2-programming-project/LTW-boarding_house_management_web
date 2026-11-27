@@ -37,11 +37,17 @@ public static class AccountErrorCodes
     /// <summary>Chi duyet duoc tai khoan dang Cho duyet.</summary>
     public const string NotPendingApproval = nameof(NotPendingApproval);
 
+    /// <summary>Từ chối tài khoản phải có lý do (tối đa 500 ký tự).</summary>
+    public const string ReasonRequired = nameof(ReasonRequired);
+
     /// <summary>Không cho tự xoá tài khoản đang đăng nhập.</summary>
     public const string CannotDeleteSelf = nameof(CannotDeleteSelf);
 
     /// <summary>Không cho xoá Admin cuối cùng của hệ thống.</summary>
     public const string CannotDeleteLastAdmin = nameof(CannotDeleteLastAdmin);
+
+    /// <summary>Chot 13/11/2026: Admin khong duoc xoa tai khoan Admin khac.</summary>
+    public const string CannotDeleteAdmin = nameof(CannotDeleteAdmin);
 
     /// <summary>Tài khoản còn dữ liệu nghiệp vụ tham chiếu (hồ sơ khách) nên không xoá được.</summary>
     public const string AccountInUse = nameof(AccountInUse);
@@ -69,8 +75,10 @@ public static class AccountErrorCodes
         TenantAlreadyLinked => "ErrorTenantAlreadyLinked",
         RoleLinkedToTenant => "ErrorRoleLinkedToTenant",
         NotPendingApproval => "ErrorNotPendingApproval",
+        ReasonRequired => "ErrorReasonRequired",
         CannotDeleteSelf => "ErrorCannotDeleteSelf",
         CannotDeleteLastAdmin => "ErrorCannotDeleteLastAdmin",
+        CannotDeleteAdmin => "ErrorCannotDeleteAdmin",
         AccountInUse => "ErrorAccountInUse",
         _ => "ErrorGeneric",
     };

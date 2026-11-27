@@ -103,37 +103,27 @@
     {
         RenderFragment<ContractTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<ContractTrashItemDto> property = item => @<span class="cell-truncate" data-hover-tip>
+            @($"{item.PropertyName} / {item.RoomCode}")
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+                <span class="hover-tip__line">@item.RoomCode</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "number", Title = L["ContractNumberLabel"], Value = item => item.ContractNumber },
-            new() { Key = "property", Title = L["ContractRoomPropertyLabel"], Value = item => $"{item.PropertyName} / {item.RoomCode}" },
-            new() { Key = "status", Title = L["ContractStatusLabel"], Value = item => L[StatusKey(item.Status)].Value },
-            new() { Key = "term", Title = L["ContractTermLabel"], Value = item => $"{DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))} – {DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))}" },
+            new() { Key = "number", Title = L["ContractNumberLabel"], Value = item => item.ContractNumber, Width = "170px" },
+            new() { Key = "property", Title = L["ContractRoomPropertyLabel"], Template = property, Width = "240px" },
+            new() { Key = "status", Title = L["ContractStatusLabel"], Value = item => L[StatusKey(item.Status)].Value, Width = "150px" },
+            new() { Key = "term", Title = L["ContractTermLabel"], Value = item => $"{DateFormatter.Format(DateOnly.FromDateTime(item.StartDate))} – {DateFormatter.Format(DateOnly.FromDateTime(item.EndDate))}", Width = "190px" },
             TrashColumns.DeletedAt<ContractTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["ContractActionsLabel"], actions),
         ];
     }
 
-    private async Task<PagedResult<ContractTrashItemDto>> LoadDeletedAsync(DataTableRequest request)
-    {
-        var items = await Contracts.ListDeletedAsync();
-        var term = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim();
-        var filtered = items
-            .Where(item => term is null
-                || item.ContractNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.PropertyName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || item.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        return new PagedResult<ContractTrashItemDto>
-        {
-            Items = filtered.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToList(),
-            TotalCount = filtered.Count,
-            Page = request.Page,
-            PageSize = request.PageSize,
-        };
-    }
+    private async Task<PagedResult<ContractTrashItemDto>> LoadDeletedAsync(DataTableRequest request) =>
+        await Contracts.ListDeletedAsync(_keyword, request.Page, request.PageSize);
 
     private Task ClearSearchAsync()
     {
@@ -280,6 +270,11 @@
 
     private static string StatusKey(ContractStatus status) => status switch
     {
+        ContractStatus.Draft => "ContractStatusDraft",
+        ContractStatus.AwaitingTenant => "ContractStatusAwaitingTenant",
+        ContractStatus.ChangeRequested => "ContractStatusChangeRequested",
+        ContractStatus.TenantAccepted => "ContractStatusTenantAccepted",
+        ContractStatus.Cancelled => "ContractStatusCancelled",
         ContractStatus.Pending => "ContractStatusPending",
         ContractStatus.Approved => "ContractStatusActive",
         ContractStatus.Rejected => "ContractStatusRejected",

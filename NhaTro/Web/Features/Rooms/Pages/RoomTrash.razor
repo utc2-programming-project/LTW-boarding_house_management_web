@@ -6,6 +6,7 @@
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
 @inject ILogger<RoomTrash> Logger
+@using Web.Common.SoftDelete
 
 <PageTitle>@L["P2TrashTitle"] · @L["AppName"]</PageTitle>
 
@@ -99,16 +100,28 @@
             @<StatusBadge Text="@StatusText(item.Status)" Tone="@StatusTone(item.Status)" />;
         RenderFragment<RoomTrashItem> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<RoomTrashItem> code = item => @<span class="cell-truncate" data-hover-tip>
+            @item.Code
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.Code</span>
+            </span>
+        </span>;
+        RenderFragment<RoomTrashItem> property = item => @<span class="cell-truncate" data-hover-tip>
+            @item.PropertyName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "code", Title = L["P2RoomCode"], Value = item => item.Code },
-            new() { Key = "property", Title = L["P2Property"], Value = item => item.PropertyName },
-            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true },
-            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true },
-            new() { Key = "status", Title = L["P2Status"], Template = status },
-            new() { Key = "deletedAt", Title = L["P2TrashDeletedAt"], Value = item => DateFormatter.FormatDateTime(item.DeletedAt) },
-            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+            new() { Key = "code", Title = L["P2RoomCode"], Template = code, Width = "120px" },
+            new() { Key = "property", Title = L["P2Property"], Template = property, Width = "220px" },
+            new() { Key = "floor", Title = L["P2Floor"], Value = item => item.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"].Value, IsNumeric = true, Width = "80px" },
+            new() { Key = "price", Title = L["P2StandardPrice"], Value = item => MoneyFormatter.Format(item.StandardPrice), IsNumeric = true, Width = "130px" },
+            new() { Key = "status", Title = L["P2Status"], Template = status, Width = "140px" },
+            new() { Key = "deletedAt", Title = L["P2TrashDeletedAt"], Value = item => DateFormatter.FormatDateTime(item.DeletedAt), Width = "170px" },
+            TrashColumns.Actions(L["P2Actions"], actions)
         ];
     }
 

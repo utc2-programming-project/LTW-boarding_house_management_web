@@ -22,6 +22,12 @@ public sealed class SecurityOptions
     /// </summary>
     public bool ProtectKeysWithDpapi { get; set; }
 
+    /// <summary>
+    /// Bắt buộc Admin/Chủ trọ bật 2FA trước khi dùng giao diện nghiệp vụ.
+    /// Development/Testing luôn bỏ qua để không chặn seed/demo.
+    /// </summary>
+    public bool RequireTwoFactorForPrivileged { get; set; } = true;
+
     public CaptchaOptions Captcha { get; set; } = new();
 
     public LoginGuardOptions LoginGuard { get; set; } = new();
@@ -70,4 +76,24 @@ public sealed class RateLimitOptions
     public int CultureSetPermitLimit { get; set; } = 20;
 
     public int CultureSetWindowSeconds { get; set; } = 60;
+
+    /// <summary>Chặn spam đăng ký chủ trọ (PLAN-008).</summary>
+    public int RegisterPermitLimit { get; set; } = 5;
+
+    public int RegisterWindowSeconds { get; set; } = 3600;
+
+    /// <summary>Chặn dò mã OTP (PLAN-022).</summary>
+    public int OtpVerifyPermitLimit { get; set; } = 20;
+
+    public int OtpVerifyWindowSeconds { get; set; } = 900;
+
+    /// <summary>Chặn spam form quên mật khẩu (PLAN-038).</summary>
+    public int ForgotPasswordPermitLimit { get; set; } = 5;
+
+    public int ForgotPasswordWindowSeconds { get; set; } = 900;
+
+    /// <summary>Chặn spam gửi lại thư xác nhận email (PLAN-038).</summary>
+    public int ResendEmailPermitLimit { get; set; } = 5;
+
+    public int ResendEmailWindowSeconds { get; set; } = 900;
 }

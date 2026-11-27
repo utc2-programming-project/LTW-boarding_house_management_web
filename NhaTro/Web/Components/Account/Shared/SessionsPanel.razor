@@ -1,0 +1,179 @@
+@using Microsoft.AspNetCore.Identity
+@using Web.Components.Shared.Feedback
+@using Web.Data
+@using Web.Features.Accounts.Sessions
+
+@inject UserManager<ApplicationUser> UserManager
+@inject UserSessionStore SessionStore
+@inject IStringLocalizer<Shared> L
+
+@* Danh sách thiết bị đăng nhập, dùng chung cho tab "Thiết bị" của /account và trang cũ /Account/Manage/Sessions. *@
+
+<div class="acct-stack">
+    <section class="acct-card" aria-labelledby="account-devices-title">
+        <div class="acct-card-head">
+            <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="hard-drive" /></span>
+            <div>
+                <h2 id="account-devices-title">@L["SessionsTitle"]</h2>
+                <p class="acct-card-desc">@L["SessionsHelp"]</p>
+            </div>
+        </div>
+
+        <StatusMessage Message="@message" />
+
+        @if (_rows.Count == 0)
+        {
+            <p class="account-help">@L["SessionsEmpty"]</p>
+        }
+        else
+        {
+            <EditForm Model="Revoke" FormName="revoke-session" OnValidSubmit="RevokeOneAsync" method="post">
+                <AntiforgeryToken />
+                <ul class="acct-rows">
+                    @foreach (var row in _rows)
+                    {
+                        <li class="acct-row">
+                            <div class="acct-row-copy">
+                                <span class="acct-row-title cell-truncate" data-hover-tip>
+                                    @DeviceLabel(row.UserAgent)
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@RawAgent(row.UserAgent)</span>
+                                    </span>
+                                </span>
+                                <span class="acct-row-desc">
+                                    @(string.IsNullOrWhiteSpace(row.IpAddress) ? "—" : row.IpAddress)
+                                    · @L["SessionsLastSeen"] @row.LastSeenAt.ToLocalTime().ToString("HH:mm dd/MM/yyyy")
+                                </span>
+                            </div>
+                            <span class="acct-row-side">
+                                @if (row.IsCurrent(_currentSessionId))
+                                {
+                                    <StatusBadge Tone="@BadgeTone.Success" Text="@L["SessionsCurrent"]" />
+                                }
+                                else
+                                {
+                                    <button type="submit" name="Revoke.SessionId" value="@row.SessionId" class="btn btn-secondary acct-row-action">
+                                        @L["SessionsRevoke"]
+                                    </button>
+                                }
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </EditForm>
+
+            @if (_rows.Count > 1)
+            {
+                <div class="acct-form-actions">
+                    <EditForm Model="Others" FormName="revoke-others" OnValidSubmit="RevokeOthersAsync" method="post">
+                        <AntiforgeryToken />
+                        <button type="submit" class="btn btn-danger">@L["SessionsRevokeOthers"]</button>
+                    </EditForm>
+                </div>
+            }
+        }
+    </section>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "revoke-session")]
+    private RevokeModel Revoke { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "revoke-others")]
+    private EmptyModel Others { get; set; } = default!;
+
+    private IReadOnlyList<UserSessionInfo> _rows = [];
+    private string? _userId;
+    private string? _currentSessionId;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Revoke ??= new();
+        Others ??= new();
+
+        var user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user is null)
+        {
+            return;
+        }
+
+        _userId = user.Id;
+        _currentSessionId = HttpContext.Request.Cookies[UserSessionCookies.SessionId];
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_userId is not null)
+        {
+            _rows = await SessionStore.ListAsync(_userId);
+        }
+    }
+
+    private async Task RevokeOneAsync()
+    {
+        if (_userId is null || string.IsNullOrWhiteSpace(Revoke.SessionId)
+            || string.Equals(Revoke.SessionId, _currentSessionId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        await SessionStore.RevokeAsync(_userId, Revoke.SessionId);
+        message = L["SessionsRevoked"];
+        await LoadAsync();
+    }
+
+    private async Task RevokeOthersAsync()
+    {
+        if (_userId is null)
+        {
+            return;
+        }
+
+        await SessionStore.RevokeOthersAsync(_userId, _currentSessionId);
+        message = L["SessionsRevoked"];
+        await LoadAsync();
+    }
+
+    // Nhãn thân thiện cho chủ trọ; UA đầy đủ giữ trong tooltip.
+    private string DeviceLabel(string? userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent))
+        {
+            return L["SessionsUnknownDevice"];
+        }
+
+        var browser = userAgent.Contains("HeadlessChrome", StringComparison.Ordinal) ? "Chrome (headless)"
+            : userAgent.Contains("Edg/", StringComparison.Ordinal) ? "Microsoft Edge"
+            : userAgent.Contains("OPR/", StringComparison.Ordinal) ? "Opera"
+            : userAgent.Contains("Firefox/", StringComparison.Ordinal) ? "Firefox"
+            : userAgent.Contains("Chrome/", StringComparison.Ordinal) ? "Chrome"
+            : userAgent.Contains("Safari/", StringComparison.Ordinal) ? "Safari"
+            : L["SessionsUnknownDevice"].Value;
+
+        var os = userAgent.Contains("Android", StringComparison.Ordinal) ? "Android"
+            : userAgent.Contains("iPhone", StringComparison.Ordinal) || userAgent.Contains("iPad", StringComparison.Ordinal) ? "iOS"
+            : userAgent.Contains("Windows", StringComparison.Ordinal) ? "Windows"
+            : userAgent.Contains("Mac OS X", StringComparison.Ordinal) ? "macOS"
+            : userAgent.Contains("Linux", StringComparison.Ordinal) ? "Linux"
+            : string.Empty;
+
+        return string.IsNullOrEmpty(os) ? browser : $"{browser} · {os}";
+    }
+
+    private string RawAgent(string? userAgent) =>
+        string.IsNullOrWhiteSpace(userAgent) ? L["SessionsUnknownDevice"] : userAgent;
+
+    private sealed class RevokeModel
+    {
+        public string? SessionId { get; set; }
+    }
+
+    private sealed class EmptyModel
+    {
+    }
+}

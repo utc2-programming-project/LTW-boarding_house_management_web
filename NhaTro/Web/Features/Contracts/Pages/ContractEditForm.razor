@@ -1,0 +1,207 @@
+@page "/contracts/{ContractId:guid}/edit"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "ContractManage")]
+@using Microsoft.AspNetCore.Authorization
+@using Web.Common.Utils
+@using Web.Components.Shared.Feedback
+@using Web.Features.Contracts.DTOs
+@using Web.Features.Contracts.Enums
+@using Web.Features.Contracts.Services
+@inject ContractPageService Contracts
+@inject IStringLocalizer<ContractResources> L
+@inject ToastService Toasts
+@inject NavigationManager Navigation
+
+<PageTitle>@L["ContractEditTitle"]</PageTitle>
+<section class="contract-edit-page" aria-labelledby="contract-edit-title">
+    <PageHeading Title="@L["ContractEditTitle"]" TitleId="contract-edit-title" HelpText="@L["ContractEditDescription"]" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+    }
+    else if (_contract is null || (_contract.Status is not ContractStatus.Draft and not ContractStatus.ChangeRequested))
+    {
+        <EmptyStateCard Title="@L["ContractLoadErrorTitle"]" Description="@L["ContractEditNotEditable"]">
+            <a class="btn btn-secondary" href="/contracts">@L["ContractBackToList"]</a>
+        </EmptyStateCard>
+    }
+    else
+    {
+        <div class="contract-edit-card"><EditForm Model="_form" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+            @if (_error is not null) { <div class="contract-edit-error" role="alert">@_error</div> }
+
+            <section class="contract-edit-section">
+                <h2 class="contract-edit-section-title"><LucideIcon Name="building" />@L["ContractSectionProperty"]</h2>
+                <dl class="contract-edit-summary">
+                    <div><dt>@L["ContractPropertyLabel"]</dt><dd>@_contract.PropertyName</dd></div>
+                    <div><dt>@L["ContractRoomLabel"]</dt><dd>@_contract.RoomCode</dd></div>
+                    <div class="contract-edit-wide"><dt>@L["ContractTenantSection"]</dt><dd>@string.Join(", ", _contract.Members.Select(member => member.FullName))</dd></div>
+                </dl>
+            </section>
+
+            <section class="contract-edit-section">
+                <h2 class="contract-edit-section-title"><LucideIcon Name="calendar" />@L["ContractSectionPeriod"]</h2>
+                <div class="contract-edit-grid">
+                    <div class="contract-edit-field">
+                        <label for="edit-start">@L["ContractStartDate"]</label>
+                        <InputDate id="edit-start" class="input" TValue="DateOnly" @bind-Value="_form.StartDate" />
+                    </div>
+                    <div class="contract-edit-field">
+                        <label for="edit-end">@L["ContractEndDate"]</label>
+                        <InputDate id="edit-end" class="input" TValue="DateOnly" @bind-Value="_form.EndDate" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="contract-edit-section">
+                <h2 class="contract-edit-section-title"><LucideIcon Name="wallet" />@L["ContractSectionBilling"]</h2>
+                <div class="contract-edit-grid">
+                    <div class="contract-edit-field">
+                        <label for="edit-rent">@L["ContractRentLabel"]</label>
+                        <InputNumber id="edit-rent" class="input tabular-nums" TValue="decimal?" @bind-Value="_form.MonthlyRent" />
+                    </div>
+                    <div class="contract-edit-field">
+                        <label for="edit-deposit">@L["ContractDepositLabel"]</label>
+                        <InputNumber id="edit-deposit" class="input tabular-nums" TValue="decimal?" @bind-Value="_form.DepositAmount" />
+                        <small class="contract-edit-hint">@L["ContractDepositHint"]</small>
+                    </div>
+                    <div class="contract-edit-field">
+                        <label for="edit-cycle">@L["ContractPaymentCycle"]</label>
+                        <InputSelect id="edit-cycle" class="input" TValue="int" @bind-Value="_form.PaymentCycleMonths">
+                            @foreach (var months in CycleOptions) { <option value="@months">@CycleLabel(months)</option> }
+                        </InputSelect>
+                    </div>
+                    <div class="contract-edit-field">
+                        <label for="edit-meter">@L["ContractMeterDay"]</label>
+                        <InputSelect id="edit-meter" class="input" TValue="int?" @bind-Value="_form.MeterReadingDay">
+                            <option value="">@L["ContractLastDayMonthly"]</option>
+                            @foreach (var day in MeterDayOptions) { <option value="@day">@L["ContractDayMonthly", day]</option> }
+                        </InputSelect>
+                    </div>
+                </div>
+            </section>
+
+            <section class="contract-edit-section">
+                <h2 class="contract-edit-section-title"><LucideIcon Name="file-text" />@L["ContractNotesSection"]</h2>
+                <div class="contract-edit-field">
+                    <textarea class="input contract-edit-terms" maxlength="4000" rows="6"
+                              placeholder="@L["ContractNotesPlaceholder"]" @bind="_form.Terms" @bind:event="oninput"></textarea>
+                    <small class="contract-edit-hint">@L["ContractTermsCounter", _form.Terms?.Length ?? 0]</small>
+                </div>
+            </section>
+
+            <footer class="contract-edit-actions">
+                <a class="btn btn-secondary" href="@($"/contracts/{ContractId}")">@L["ContractCancel"]</a>
+                <button type="submit" class="btn btn-primary" disabled="@_saving"><LucideIcon Name="check" />@L[_saving ? "ContractProcessing" : "ContractEditSaveAction"]</button>
+            </footer>
+        </EditForm></div>
+    }
+</section>
+
+@code {
+    [Parameter] public Guid ContractId { get; set; }
+
+    private static readonly int[] CycleOptions = [1, 2, 3, 6, 12];
+    private static readonly int[] MeterDayOptions = [1, 15, 25, 28];
+
+    private ContractDetailDto? _contract;
+    private EditModel _form = new();
+    private bool _loading = true, _saving;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try
+        {
+            _contract = await Contracts.GetAsync(ContractId);
+            if (_contract is not null)
+            {
+                _form = new EditModel
+                {
+                    StartDate = DateOnly.FromDateTime(_contract.StartDate),
+                    EndDate = DateOnly.FromDateTime(_contract.EndDate),
+                    MonthlyRent = _contract.SnapshotPrice,
+                    DepositAmount = _contract.DepositAmount,
+                    PaymentCycleMonths = _contract.PaymentCycleMonths,
+                    MeterReadingDay = _contract.MeterReadingDay,
+                    Terms = _contract.Terms,
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _contract = null;
+            Toasts.Error(ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"]);
+        }
+        finally { _loading = false; }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_saving || _contract is null) return;
+        if (_form.StartDate >= _form.EndDate)
+        {
+            _error = L["ContractErrorInvalidDateRange"];
+            return;
+        }
+
+        if (_form.EndDate < _form.StartDate.AddMonths(1))
+        {
+            _error = L["ContractErrorEndDateMinimum"];
+            return;
+        }
+
+        _saving = true;
+        _error = null;
+        try
+        {
+            var representative = _contract.Members.FirstOrDefault(member => member.IsRepresentative);
+            var relations = _contract.Members
+                .Where(member => !string.IsNullOrWhiteSpace(member.Relationship))
+                .ToDictionary(member => member.TenantId, member => member.Relationship!);
+            await Contracts.UpdateDraftAsync(ContractId, new UpdateContractDraftRequest
+            {
+                StartDate = _form.StartDate.ToDateTime(TimeOnly.MinValue),
+                EndDate = _form.EndDate.ToDateTime(TimeOnly.MinValue),
+                MonthlyRent = _form.MonthlyRent,
+                DepositAmount = _form.DepositAmount,
+                PaymentCycleMonths = _form.PaymentCycleMonths,
+                MeterReadingDay = _form.MeterReadingDay,
+                Terms = _form.Terms,
+                RepresentativeTenantId = representative?.TenantId,
+                TenantIds = _contract.Members.Select(member => member.TenantId).ToList(),
+                MemberRelations = relations.Count == 0 ? null : relations,
+            });
+            Toasts.Success(L["ContractEditSavedSuccess"]);
+            Navigation.NavigateTo($"/contracts/{ContractId}");
+        }
+        catch (Exception ex)
+        {
+            _error = ex is IContractServiceError err ? L[$"ContractError{err.ErrorCode}"] : L["ContractGenericError"];
+        }
+        finally { _saving = false; }
+    }
+
+    private string CycleLabel(int months) => L[months switch
+    {
+        2 => "ContractCycleTwo",
+        3 => "ContractCycleThree",
+        6 => "ContractCycleSix",
+        12 => "ContractCycleTwelve",
+        _ => "ContractCycleOne",
+    }];
+
+    private sealed class EditModel
+    {
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
+        public decimal? MonthlyRent { get; set; }
+        public decimal? DepositAmount { get; set; }
+        public int PaymentCycleMonths { get; set; } = 1;
+        public int? MeterReadingDay { get; set; }
+        public string? Terms { get; set; }
+    }
+}

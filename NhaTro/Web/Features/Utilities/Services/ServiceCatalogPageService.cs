@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Web.Common.Models;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
@@ -31,9 +32,25 @@ public sealed class ServiceCatalogPageService(
     IServiceScopeFactory scopeFactory,
     TimeProvider? timeProvider,
     ILogger<ServiceCatalogPageService> logger,
-    IStringLocalizer<UtilityResources>? localizer = null)
+    IStringLocalizer<UtilityResources>? localizer = null,
+    OwnerAccessGuard? ownerAccess = null)
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
+
+    /// <summary>PLAN-001 #7: caller kèm danh sách chủ trọ bị khoá để scope loại dữ liệu của họ.</summary>
+    private async Task<PropertyCaller> BuildCallerAsync(string userId, string role)
+    {
+        var caller = new PropertyCaller(userId, role);
+        if (ownerAccess is not null && role is Roles.QuanLy or Roles.KhachThue)
+        {
+            var blocked = await ownerAccess.GetBlockedOwnerIdsAsync();
+            if (blocked.Count > 0)
+            {
+                caller = caller with { BlockedOwnerIds = blocked.ToList() };
+            }
+        }
+        return caller;
+    }
 
     /// <summary>Resolves a localized UI string; falls back to the key when no localizer is available.</summary>
     private string T(string key, params object[] args)
@@ -121,7 +138,7 @@ public sealed class ServiceCatalogPageService(
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         // 1. Fetch from persisted backend with Property Scope applied by IServiceCatalogService
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
         var scopedCatalogs = await catalogService.GetServiceCatalogsAsync(caller);
 
         // Load property names for display
@@ -149,7 +166,12 @@ public sealed class ServiceCatalogPageService(
         // 3. TF-06: Aggregate system-locked UtilityTariffs (Option A - Read-only)
         var tariffs = await db.UtilityTariffs
             .AsNoTracking()
-            .Include(t => t.Tiers)
+            .OrderBy(t => t.Id)
+            .Select(t => new TariffView(t.Id, t.Type, t.ScopeCode, t.Unit, t.EffectiveDate, t.SourceName,
+                t.Tiers
+                    .OrderBy(tier => tier.TierNumber)
+                    .Select(tier => new TariffTierView(tier.Id, tier.TierNumber, tier.From, tier.To, tier.UnitPrice))
+                    .ToList()))
             .ToListAsync(ct);
 
         var tariffServices = tariffs
@@ -256,7 +278,12 @@ public sealed class ServiceCatalogPageService(
         // 1. TF-06: Check if querying UtilityTariff price versions
         var tariffs = await db.UtilityTariffs
             .AsNoTracking()
-            .Include(t => t.Tiers)
+            .OrderBy(t => t.Id)
+            .Select(t => new TariffView(t.Id, t.Type, t.ScopeCode, t.Unit, t.EffectiveDate, t.SourceName,
+                t.Tiers
+                    .OrderBy(tier => tier.TierNumber)
+                    .Select(tier => new TariffTierView(tier.Id, tier.TierNumber, tier.From, tier.To, tier.UnitPrice))
+                    .ToList()))
             .ToListAsync(ct);
 
         // Tab dịch vụ chỉ trỏ tới biểu giá đang áp dụng; để hiển thị đúng "theo kỳ",
@@ -327,7 +354,7 @@ public sealed class ServiceCatalogPageService(
         }
 
         // 2. Load ServiceCatalogs price versions
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
         var catalogs = await catalogService.GetServiceCatalogsAsync(caller);
 
         var userIds = catalogs.SelectMany(c => c.PriceHistory).Select(v => v.CreatedByUserId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
@@ -444,7 +471,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         if (!caller.IsChuTro)
         {
@@ -497,7 +524,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         if (!caller.IsChuTro)
         {
@@ -596,7 +623,7 @@ public sealed class ServiceCatalogPageService(
 
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         if (!caller.IsChuTro)
         {
@@ -701,7 +728,7 @@ public sealed class ServiceCatalogPageService(
 
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         if (!caller.IsChuTro)
         {
@@ -750,7 +777,7 @@ public sealed class ServiceCatalogPageService(
 
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         if (!caller.IsChuTro)
         {
@@ -788,7 +815,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
@@ -809,7 +836,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
@@ -832,7 +859,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
@@ -854,7 +881,7 @@ public sealed class ServiceCatalogPageService(
     {
         var role = await GetCurrentRoleAsync();
         var userId = await GetCurrentUserIdAsync();
-        var caller = new PropertyCaller(userId, role);
+        var caller = await BuildCallerAsync(userId, role);
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var catalogService = scope.ServiceProvider.GetRequiredService<IServiceCatalogService>();
@@ -896,10 +923,13 @@ public sealed class ServiceCatalogPageService(
         }
         else if (role == Roles.QuanLy)
         {
-            var ids = await db.PropertyManagers
-                .AsNoTracking()
-                .Where(pm => pm.ManagerUserId == userId && pm.RevokedAt == null)
-                .Select(pm => pm.PropertyId)
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+            var ids = await (
+                    from pm in db.PropertyManagers.AsNoTracking()
+                    join property in db.Properties.AsNoTracking() on pm.PropertyId equals property.Id
+                    where pm.ManagerUserId == userId && pm.RevokedAt == null
+                        && !blockedOwners.Contains(property.OwnerId)
+                    select pm.PropertyId)
                 .ToListAsync(ct);
             foreach (var id in ids) propertyIds.Add(id);
         }
@@ -1039,4 +1069,16 @@ public sealed class ServiceCatalogPageService(
             _ => ServiceUnitCategory.Room
         };
     }
+
+    /// <summary>Chiếu thẳng cột cần dùng của biểu giá thay vì nạp entity + collection.</summary>
+    private sealed record TariffView(
+        int Id,
+        Web.Features.Utilities.TariffType Type,
+        string ScopeCode,
+        string Unit,
+        DateOnly EffectiveDate,
+        string SourceName,
+        IReadOnlyList<TariffTierView> Tiers);
+
+    private sealed record TariffTierView(int Id, int TierNumber, decimal From, decimal? To, decimal UnitPrice);
 }

@@ -1,0 +1,93 @@
+@inject IStringLocalizer<VehicleResource> L
+
+<FeatureDialog Visible="true"
+               Title="@L["ReportIncidentBtn"]"
+               CloseLabel="@L["Close"]"
+               OnClose="OnCancel"
+               CssClass="vehicle-form-dialog">
+    <form @onsubmit="SubmitAsync" @onsubmit:preventDefault novalidate>
+        <div class="vehicle-form-body">
+            @if (!string.IsNullOrWhiteSpace(ErrorText))
+            {
+                <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                    <div class="vehicle-alert__content">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@ErrorText</span>
+                    </div>
+                </div>
+            }
+
+            <div class="vehicle-form-grid">
+                <div class="vehicle-field">
+                    <label for="vh-inc-room">@L["Room"] <span class="required" aria-hidden="true">*</span></label>
+                    <select id="vh-inc-room" @bind="_roomId">
+                        @foreach (var room in Rooms)
+                        {
+                            <option value="@room.RoomId">@room.PropertyName — @room.RoomCode</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="vehicle-field">
+                    <label for="vh-inc-plate">@L["PlateNumber"] <span class="required" aria-hidden="true">*</span></label>
+                    <input id="vh-inc-plate" @bind="_plateNumber" maxlength="25" placeholder="@L["IncidentPlatePlaceholder"]" />
+                </div>
+
+                <div class="vehicle-field full">
+                    <label for="vh-inc-title">@L["IncidentTitleLabel"] <span class="required" aria-hidden="true">*</span></label>
+                    <input id="vh-inc-title" @bind="_title" maxlength="150" placeholder="@L["IncidentTitlePlaceholder"]" />
+                </div>
+
+                <div class="vehicle-field full">
+                    <label for="vh-inc-desc">@L["IncidentDescLabel"]</label>
+                    <textarea id="vh-inc-desc" rows="3" maxlength="1000" @bind="_description"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <footer class="vehicle-form-footer">
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel">@L["Cancel"]</button>
+            <button type="submit" class="btn btn-primary"
+                    disabled="@(string.IsNullOrWhiteSpace(_plateNumber) || string.IsNullOrWhiteSpace(_title) || _roomId <= 0)">
+                <LucideIcon Name="wrench" />
+                <span>@L["Confirm"]</span>
+            </button>
+        </footer>
+    </form>
+</FeatureDialog>
+
+@code {
+    [Parameter] public IReadOnlyList<VehicleRoomOptionDto> Rooms { get; set; } = [];
+    [Parameter] public VehicleDto? InitialVehicle { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<VehicleIncidentCreateRequest> OnSubmit { get; set; }
+
+    private int _roomId;
+    private string _plateNumber = string.Empty;
+    private string _title = string.Empty;
+    private string _description = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (InitialVehicle is not null && _roomId == 0)
+        {
+            _roomId = InitialVehicle.RoomId;
+            _plateNumber = InitialVehicle.PlateNumber;
+        }
+        else if (_roomId == 0 && Rooms.Count > 0)
+        {
+            _roomId = Rooms[0].RoomId;
+        }
+    }
+
+    private Task SubmitAsync() =>
+        OnSubmit.InvokeAsync(new VehicleIncidentCreateRequest
+        {
+            RoomId = _roomId,
+            VehicleId = InitialVehicle?.Id,
+            PlateNumber = _plateNumber,
+            Title = _title,
+            Description = _description,
+        });
+}

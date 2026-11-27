@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +9,7 @@ using Web.Configuration.Options;
 using Web.Features.Approvals.Entities;
 using Web.Features.Approvals.Enums;
 using Web.Features.Audit.Entities;
+using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices.Entities;
@@ -37,7 +40,7 @@ public static class DemoDataSeeder
     public const string DataFileName = "demo-data.json";
     public const string CompletedAction = "DemoSeed.Completed";
     public const string DefaultPassword = "Demo@123456";
-    private const int SupportedSchemaVersion = 1;
+    private const int SupportedSchemaVersion = 3;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -164,6 +167,9 @@ public static class DemoDataSeeder
             await InsertIdentityAsync(db, "ServicePriceHistory", document.ServicePriceHistories, cancellationToken);
             await InsertAsync(db, document.Contracts, cancellationToken);
             await InsertAsync(db, document.ContractMembers, cancellationToken);
+            await InsertIdentityAsync(db, "ContractVersions", document.ContractVersions, cancellationToken);
+            await InsertIdentityAsync(db, "ContractAcceptances", document.ContractAcceptances, cancellationToken);
+            await InsertIdentityAsync(db, "ContractChangeRequests", document.ContractChangeRequests, cancellationToken);
             await InsertAsync(db, document.RenewalRequests, cancellationToken);
             await InsertIdentityAsync(db, "ContractServiceRegistrations", document.ServiceRegistrations, cancellationToken);
             await InsertIdentityAsync(db, "ServiceRegistrationRequests", document.ServiceRegistrationRequests, cancellationToken);
@@ -173,6 +179,7 @@ public static class DemoDataSeeder
             await InsertIdentityAsync(db, "UtilityBillingCostLineSnapshots", document.UtilityBillingCostLines, cancellationToken);
             await InsertIdentityAsync(db, "Invoices", document.Invoices, cancellationToken);
             await InsertIdentityAsync(db, "InvoiceItems", document.InvoiceItems, cancellationToken);
+            await InsertIdentityAsync(db, "InvoiceRevisions", document.InvoiceRevisions, cancellationToken);
             await InsertIdentityAsync(db, "Payments", document.Payments, cancellationToken);
             await InsertAsync(db, document.PaymentProofs, cancellationToken);
             await InsertIdentityAsync(db, "PaymentAuditLogs", document.PaymentAuditLogs, cancellationToken);
@@ -241,6 +248,7 @@ public static class DemoDataSeeder
 
         (string Table, Func<Task<bool>> HasRows)[] checks =
         [
+            ("AspNetUsers", () => db.Users.IgnoreQueryFilters().AnyAsync(cancellationToken)),
             ("Tenants", () => AnyAsync<Tenant>(db, cancellationToken)),
             ("Properties", () => AnyAsync<Property>(db, cancellationToken)),
             ("Rooms", () => AnyAsync<Room>(db, cancellationToken)),
@@ -248,6 +256,10 @@ public static class DemoDataSeeder
             ("TenantInvitations", () => AnyAsync<TenantInvitation>(db, cancellationToken)),
             ("ServiceCatalogs", () => AnyAsync<ServiceCatalog>(db, cancellationToken)),
             ("ServicePriceHistory", () => AnyAsync<ServicePriceHistory>(db, cancellationToken)),
+            ("Contracts", () => AnyAsync<Contract>(db, cancellationToken)),
+            ("ContractVersions", () => AnyAsync<ContractVersion>(db, cancellationToken)),
+            ("ContractAcceptances", () => AnyAsync<ContractAcceptance>(db, cancellationToken)),
+            ("ContractChangeRequests", () => AnyAsync<ContractChangeRequest>(db, cancellationToken)),
             ("ContractServiceRegistrations", () => AnyAsync<ContractServiceRegistration>(db, cancellationToken)),
             ("ServiceRegistrationRequests", () => AnyAsync<ServiceRegistrationRequest>(db, cancellationToken)),
             ("UtilityReadings", () => AnyAsync<UtilityReading>(db, cancellationToken)),
@@ -286,64 +298,89 @@ public static class DemoDataSeeder
         return occupied.Count > 6 ? $"{preview} (+{occupied.Count - 6} bảng khác)" : preview;
     }
 
+    /// <summary>
+    /// 7.000 tài khoản không thể đi qua <c>UserManager.CreateAsync</c> từng người (mỗi lần một
+    /// transaction + PBKDF2). Ở đây hash song song rồi chèn thẳng vào <c>AspNetUsers</c>/<c>AspNetUserRoles</c>.
+    /// </summary>
     private static async Task SeedAccountsAsync(
         IServiceProvider provider,
         DemoSeedDocument document,
         string password,
         ILogger logger)
     {
-        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
-        foreach (var account in document.Accounts)
-        {
-            var existing = await userManager.FindByEmailAsync(account.Email);
-            if (existing is not null)
-            {
-                throw new InvalidOperationException(
-                    $"DemoSeed: tài khoản {account.Email} đã tồn tại; không nạp chồng.");
-            }
+        var db = provider.GetRequiredService<ApplicationDbContext>();
+        var hasher = provider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
+        var normalizer = provider.GetRequiredService<ILookupNormalizer>();
 
+        var roleIds = (await db.Roles.ToListAsync())
+            .Where(role => role.Name is not null && Roles.All.Contains(role.Name))
+            .ToDictionary(role => role.Name!, role => role.Id);
+        foreach (var role in Roles.All)
+        {
+            if (!roleIds.ContainsKey(role))
+            {
+                throw new InvalidOperationException($"DemoSeed: vai trò {role} chưa được tạo.");
+            }
+        }
+
+        var accounts = document.Accounts;
+        var users = new ApplicationUser[accounts.Count];
+        Parallel.For(0, accounts.Count, index =>
+        {
+            var account = accounts[index];
             var user = new ApplicationUser
             {
                 Id = account.Id,
                 UserName = account.Email,
+                NormalizedUserName = normalizer.NormalizeName(account.Email),
                 Email = account.Email,
+                NormalizedEmail = normalizer.NormalizeEmail(account.Email),
                 EmailConfirmed = account.EmailConfirmed,
                 FullName = account.FullName,
                 PhoneNumber = account.PhoneNumber,
+                BankCode = account.BankCode,
+                BankAccountNumber = account.BankAccountNumber,
+                BankAccountName = account.BankAccountName,
                 ApprovedAt = account.ApprovedAt,
                 LockoutEnd = account.LockoutEnd,
+                LockoutEnabled = true,
                 OriginalEmail = account.OriginalEmail,
                 IsDeleted = account.IsDeleted,
                 DeletedAt = account.DeletedAt,
                 DeletedByUserId = account.DeletedByUserId,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
             };
-            user.LockoutEnabled = true;
+            user.PasswordHash = hasher.HashPassword(user, password);
+            users[index] = user;
+        });
 
-            var created = await userManager.CreateAsync(user, password);
-            if (!created.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    $"DemoSeed: không tạo được {account.Email}: {string.Join(", ", created.Errors.Select(error => error.Description))}");
-            }
+        db.Users.AddRange(users);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
 
-            foreach (var role in account.Roles.Distinct(StringComparer.Ordinal))
-            {
-                var added = await userManager.AddToRoleAsync(user, role);
-                if (!added.Succeeded)
-                {
-                    throw new InvalidOperationException(
-                        $"DemoSeed: không gán được vai trò {role} cho {account.Email}: {string.Join(", ", added.Errors.Select(error => error.Description))}");
-                }
-            }
+        var userRoles = accounts
+            .SelectMany(account => account.Roles
+                .Distinct(StringComparer.Ordinal)
+                .Select(role => new IdentityUserRole<string> { UserId = account.Id, RoleId = roleIds[role] }))
+            .ToList();
+        db.UserRoles.AddRange(userRoles);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
 
-            logger.LogDebug("DemoSeed: đã tạo {Email} ({Roles}).", account.Email, string.Join('+', account.Roles));
-        }
+        logger.LogInformation("DemoSeed: đã tạo {Accounts} tài khoản ({Roles} lượt vai trò).", users.Length, userRoles.Count);
     }
 
+    /// <summary>
+    /// Nhiều tệp demo dùng chung một ảnh (minh chứng chuyển khoản, ảnh phòng…), nên chỉ ghi
+    /// mỗi đường dẫn vật lý một lần; metadata vẫn đếm đủ số bản ghi.
+    /// </summary>
     private static void WritePhysicalFiles(DemoSeedDocument document, string storageRoot, List<string> written)
     {
         var root = Path.GetFullPath(storageRoot);
         var prefix = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        var templateBytes = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        var writtenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in document.Files)
         {
@@ -354,7 +391,18 @@ public static class DemoDataSeeder
                     $"DemoSeed: tệp {file.Id} phải nằm dưới demo/ để dọn dẹp an toàn.");
             }
 
-            var bytes = Convert.FromBase64String(entry.ContentBase64);
+            if (!document.FileTemplates.TryGetValue(entry.TemplateKey, out var base64))
+            {
+                throw new InvalidOperationException(
+                    $"DemoSeed: tệp {file.Id} trỏ templateKey '{entry.TemplateKey}' không có trong fileTemplates.");
+            }
+
+            if (!templateBytes.TryGetValue(entry.TemplateKey, out var bytes))
+            {
+                bytes = Convert.FromBase64String(base64);
+                templateBytes[entry.TemplateKey] = bytes;
+            }
+
             if (bytes.Length != file.FileSizeBytes)
             {
                 throw new InvalidOperationException(
@@ -365,6 +413,11 @@ public static class DemoDataSeeder
             if (!physical.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"DemoSeed: đường dẫn tệp {file.RelativePath} thoát khỏi Storage:RootPath.");
+            }
+
+            if (!writtenPaths.Add(physical))
+            {
+                continue;
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(physical)!);
@@ -541,22 +594,52 @@ public static class DemoDataSeeder
         var readingPeriodIds = document.UtilityReadingPeriods.Select(item => item.Id).ToHashSet();
         var incidentById = document.Incidents.ToDictionary(item => item.Id);
 
-        Require(document.Accounts.Count == 120, "phải có đúng 120 tài khoản.");
-        Require(document.Tenants.Count == 106, "phải có đúng 106 hồ sơ khách.");
+        Require(document.Accounts.Count > 0, "phải có tài khoản.");
+        Require(document.Tenants.Count > 0, "phải có hồ sơ khách.");
+        Require(document.Properties.Count > 0, "phải có nhà trọ.");
+        Require(document.Rooms.Count > 0, "phải có phòng.");
         Require(document.Accounts.Select(item => item.Email).Distinct(StringComparer.OrdinalIgnoreCase).Count()
                 == document.Accounts.Count, "email tài khoản bị trùng.");
         Require(document.Accounts.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count()
                 == document.Accounts.Count, "UserId bị trùng.");
         Require(document.Accounts.All(item => item.Roles.Count > 0), "mỗi tài khoản phải có ít nhất một vai trò.");
-        Require(document.Properties.Count == 8, "phải có 8 nhà trọ.");
-        Require(document.Rooms.Count == 60, "phải có 60 phòng.");
         Require(document.Rooms.Select(item => (item.PropertyId, item.Code)).Distinct().Count() == document.Rooms.Count,
             "mã phòng trùng trong cùng nhà trọ.");
+
+        var activePropertyIds = document.Properties
+            .Where(item => item.IsActive && !item.IsDeleted)
+            .Select(item => item.Id)
+            .ToHashSet();
+        var availableByProperty = document.Rooms
+            .Where(item => !item.IsDeleted && item.Status == RoomStatus.Available && activePropertyIds.Contains(item.PropertyId))
+            .GroupBy(item => item.PropertyId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        foreach (var propertyId in activePropertyIds)
+        {
+            Require(availableByProperty.GetValueOrDefault(propertyId) > 0,
+                $"nhà {propertyId} không còn phòng trống để nhận khách.");
+        }
+
+        Require(document.FileTemplates.Count > 0, "fileTemplates phải có ít nhất một mẫu nội dung.");
+        Require(document.Files.Select(item => item.File.Id).Distinct().Count()
+                == document.Files.Count, "Id tệp bị trùng.");
+        foreach (var entry in document.Files)
+        {
+            Require(document.FileTemplates.ContainsKey(entry.TemplateKey),
+                $"tệp {entry.File.Id} trỏ templateKey '{entry.TemplateKey}' không tồn tại.");
+            Require(entry.File.RelativePath.StartsWith("demo/", StringComparison.Ordinal),
+                $"tệp {entry.File.Id} phải nằm dưới demo/.");
+            Require(entry.File.FileSizeBytes > 0, $"tệp {entry.File.Id} phải có kích thước dương.");
+            Require(userIds.Contains(entry.File.UploadedByUserId), $"tệp {entry.File.Id} có người tải lên không tồn tại.");
+        }
 
         foreach (var account in document.Accounts)
         {
             Require(account.Roles.All(role => role is Roles.Admin or Roles.ChuTro or Roles.QuanLy or Roles.KhachThue),
                 $"vai trò không hợp lệ ở {account.Email}.");
+            string?[] bankFields = [account.BankCode, account.BankAccountNumber, account.BankAccountName];
+            Require(bankFields.All(string.IsNullOrWhiteSpace) || bankFields.All(value => !string.IsNullOrWhiteSpace(value)),
+                $"tài khoản {account.Email} phải có đủ ba trường ngân hàng hoặc không trường nào.");
         }
 
         foreach (var room in document.Rooms)
@@ -595,6 +678,8 @@ public static class DemoDataSeeder
             Require(propertyIds.Contains(manager.PropertyId), "phân công quản lý trỏ nhà trọ không tồn tại.");
             Require(userIds.Contains(manager.ManagerUserId), "phân công quản lý trỏ tài khoản không tồn tại.");
             Require(userIds.Contains(manager.AssignedByUserId), "người gán quản lý không tồn tại.");
+            Require(manager.RevokedAt is null || userIds.Contains(manager.RevokedByUserId ?? string.Empty),
+                "phân công đã thu hồi thiếu người thu hồi hợp lệ.");
         }
 
         Require(document.Contracts.Select(item => item.ContractNumber).Distinct(StringComparer.Ordinal).Count()
@@ -604,20 +689,28 @@ public static class DemoDataSeeder
             .Where(item => item.Status == ContractStatus.Approved)
             .GroupBy(item => item.RoomId)
             .ToDictionary(group => group.Key, group => group.ToList());
-        Require(approvedByRoom.Count == 42, "phải có 42 phòng có hợp đồng Approved.");
-        Require(approvedByRoom.Values.All(items => items.Count == 1), "một phòng có nhiều hợp đồng Approved.");
-        Require(document.Rooms.Count(item => item.Status == RoomStatus.Rented) == 42,
-            "số phòng Rented phải bằng 42.");
+        // Một phòng có thể có hợp đồng hiện tại + hợp đồng gia hạn kế nhiệm (bắt đầu sau khi
+        // cái trước kết thúc), nên chỉ cấm hai hợp đồng Approved chồng lấn khoảng ngày.
+        Require(approvedByRoom.Values.All(items => !items.Any(left => items.Any(right =>
+                left.ContractId != right.ContractId
+                && left.StartDate <= right.EndDate
+                && right.StartDate <= left.EndDate))),
+            "một phòng có hai hợp đồng Approved chồng lấn.");
         Require(approvedByRoom.Keys.All(roomIds.Contains), "hợp đồng Approved trỏ phòng không tồn tại.");
-        Require(document.Contracts.Where(item => item.Status == ContractStatus.Approved)
-            .All(item => document.Rooms.Single(room => room.Id == item.RoomId).Status == RoomStatus.Rented),
-            "hợp đồng Approved phải nằm trên phòng Rented.");
+        Require(approvedByRoom.Keys.ToHashSet().SetEquals(
+                document.Rooms.Where(item => item.Status == RoomStatus.Rented).Select(item => item.Id)),
+            "mỗi phòng Rented phải có ít nhất một hợp đồng Approved và ngược lại.");
 
         foreach (var contract in document.Contracts)
         {
             Require(roomIds.Contains(contract.RoomId), $"hợp đồng {contract.ContractNumber} trỏ phòng không tồn tại.");
             Require(contract.EndDate > contract.StartDate, $"hợp đồng {contract.ContractNumber} có kỳ hạn không hợp lệ.");
             Require(contract.DepositAmount >= 0, $"hợp đồng {contract.ContractNumber} có cọc âm.");
+            Require(contract.CreatedAt is not null, $"hợp đồng {contract.ContractNumber} thiếu CreatedAt.");
+            Require(contract.CreatedByRole is Roles.ChuTro or Roles.QuanLy,
+                $"hợp đồng {contract.ContractNumber} có vai trò người tạo không hợp lệ.");
+            Require(userIds.Contains(contract.CreatedByUserId ?? string.Empty),
+                $"hợp đồng {contract.ContractNumber} có người tạo không tồn tại.");
         }
 
         var membersByContract = document.ContractMembers
@@ -633,6 +726,110 @@ public static class DemoDataSeeder
         {
             Require(contractById.ContainsKey(member.ContractId), "ContractMember trỏ hợp đồng không tồn tại.");
             Require(tenantIds.Contains(member.TenantId), "ContractMember trỏ hồ sơ khách không tồn tại.");
+        }
+
+        var memberPairs = document.ContractMembers
+            .Select(item => (item.ContractId, item.TenantId))
+            .ToHashSet();
+        var tenantUserById = document.Tenants.ToDictionary(item => item.Id, item => item.UserId);
+
+        Require(document.ContractVersions.Select(item => item.Id).Distinct().Count() == document.ContractVersions.Count,
+            "Id phiên bản hợp đồng bị trùng.");
+        Require(document.ContractVersions.Select(item => (item.ContractId, item.VersionNo)).Distinct().Count()
+                == document.ContractVersions.Count, "phiên bản hợp đồng trùng số trong cùng hợp đồng.");
+        var versionsByContract = document.ContractVersions
+            .GroupBy(item => item.ContractId)
+            .ToDictionary(group => group.Key, group => group.OrderBy(item => item.VersionNo).ToList());
+        var versionById = document.ContractVersions.ToDictionary(item => item.Id);
+        foreach (var version in document.ContractVersions)
+        {
+            Require(contractById.ContainsKey(version.ContractId), "phiên bản hợp đồng trỏ hợp đồng không tồn tại.");
+            Require(version.VersionNo > 0, "số phiên bản hợp đồng phải dương.");
+            Require(version.ContentHash == HashSnapshot(version.SnapshotJson),
+                $"phiên bản hợp đồng {version.Id} có hash không khớp nội dung.");
+            Require(userIds.Contains(version.CreatedByUserId), "phiên bản hợp đồng có người tạo không tồn tại.");
+            Require(version.SentAt is null || version.SentAt >= version.CreatedAt,
+                $"phiên bản hợp đồng {version.Id} có thời điểm gửi trước thời điểm tạo.");
+        }
+
+        foreach (var (contractId, versions) in versionsByContract)
+        {
+            Require(versions.Where((item, index) => item.VersionNo != index + 1).Any() == false,
+                $"phiên bản hợp đồng {contractId} phải đánh số liên tục từ 1.");
+        }
+
+        Require(document.ContractAcceptances.Select(item => item.Id).Distinct().Count()
+                == document.ContractAcceptances.Count, "Id xác nhận hợp đồng bị trùng.");
+        Require(document.ContractAcceptances.Select(item => (item.ContractId, item.ContractVersionId)).Distinct().Count()
+                == document.ContractAcceptances.Count, "một phiên bản hợp đồng bị khách xác nhận hai lần.");
+        foreach (var acceptance in document.ContractAcceptances)
+        {
+            var acceptedVersion = versionById.GetValueOrDefault(acceptance.ContractVersionId);
+            Require(acceptedVersion is not null && acceptedVersion.ContractId == acceptance.ContractId,
+                "xác nhận hợp đồng trỏ phiên bản không thuộc hợp đồng.");
+            var matchedVersion = acceptedVersion!;
+            Require(acceptance.ContentHash == matchedVersion.ContentHash,
+                $"xác nhận hợp đồng {acceptance.Id} có hash không khớp phiên bản.");
+            Require(userIds.Contains(acceptance.UserId), "xác nhận hợp đồng có tài khoản khách không tồn tại.");
+            Require(memberPairs.Contains((acceptance.ContractId, acceptance.TenantId)),
+                "xác nhận hợp đồng trỏ khách không thuộc hợp đồng.");
+            Require(tenantUserById.GetValueOrDefault(acceptance.TenantId) == acceptance.UserId,
+                "xác nhận hợp đồng có tài khoản không thuộc hồ sơ khách.");
+            Require(acceptance.SignatureMethod == "Otp", "phương thức xác nhận hợp đồng chỉ hỗ trợ Otp.");
+            Require(matchedVersion.SentAt is not null && matchedVersion.SentAt <= acceptance.AcceptedAt,
+                $"xác nhận hợp đồng {acceptance.Id} phải sau thời điểm gửi phiên bản.");
+        }
+
+        Require(document.ContractChangeRequests.Select(item => item.Id).Distinct().Count()
+                == document.ContractChangeRequests.Count, "Id yêu cầu sửa hợp đồng bị trùng.");
+        foreach (var request in document.ContractChangeRequests)
+        {
+            var requestVersion = versionById.GetValueOrDefault(request.ContractVersionId);
+            Require(requestVersion is not null && requestVersion.ContractId == request.ContractId,
+                "yêu cầu sửa hợp đồng trỏ phiên bản không thuộc hợp đồng.");
+            Require(memberPairs.Contains((request.ContractId, request.TenantId)),
+                "yêu cầu sửa hợp đồng trỏ khách không thuộc hợp đồng.");
+            Require(request.Message.Length is > 0 and <= 2000,
+                $"yêu cầu sửa hợp đồng {request.Id} có nội dung sai độ dài.");
+            Require(request.ResolutionNote is null or { Length: <= 1000 },
+                $"yêu cầu sửa hợp đồng {request.Id} có ghi chú quá dài.");
+            if (request.Status == ContractChangeRequestStatus.Pending)
+            {
+                Require(request.ResolvedAt is null && request.ResolvedByUserId is null,
+                    "yêu cầu sửa hợp đồng đang chờ không được có người xử lý.");
+            }
+            else
+            {
+                Require(request.ResolvedAt is not null
+                        && request.ResolvedByUserId is { } resolver
+                        && userIds.Contains(resolver),
+                    "yêu cầu sửa hợp đồng đã xử lý phải có người xử lý hợp lệ.");
+            }
+        }
+
+        var contractStatuses = document.Contracts.Where(item => !item.IsDeleted)
+            .Select(item => item.Status)
+            .ToHashSet();
+        Require(contractStatuses.Contains(ContractStatus.Draft)
+                && contractStatuses.Contains(ContractStatus.AwaitingTenant)
+                && contractStatuses.Contains(ContractStatus.ChangeRequested),
+            "phải có hợp đồng nháp, chờ khách xác nhận và khách yêu cầu sửa.");
+        Require(!contractStatuses.Contains(ContractStatus.TenantAccepted),
+            "không seed hợp đồng TenantAccepted vì chưa có luồng đặt trạng thái này.");
+        foreach (var contract in document.Contracts.Where(item => !item.IsDeleted
+                     && item.Status is ContractStatus.Draft or ContractStatus.AwaitingTenant or ContractStatus.ChangeRequested))
+        {
+            Require(membersByContract.TryGetValue(contract.ContractId, out var signingMembers) && signingMembers.Count > 0,
+                $"hợp đồng {contract.ContractNumber} ở luồng ký phải có thành viên.");
+        }
+        foreach (var contract in document.Contracts.Where(item =>
+                     item.Status is ContractStatus.AwaitingTenant or ContractStatus.ChangeRequested))
+        {
+            var versions = versionsByContract.GetValueOrDefault(contract.ContractId) ?? new List<ContractVersion>();
+            Require(versions.Count > 0 && versions.Any(item => item.SentAt is not null),
+                $"hợp đồng {contract.ContractNumber} phải có phiên bản đã gửi khách.");
+            Require(document.ContractAcceptances.All(item => item.ContractId != contract.ContractId),
+                $"hợp đồng {contract.ContractNumber} chưa xác nhận nên không được có bằng chứng chấp nhận.");
         }
 
         foreach (var renewal in document.RenewalRequests)
@@ -676,7 +873,7 @@ public static class DemoDataSeeder
         foreach (var reading in document.UtilityReadings)
         {
             Require(roomIds.Contains(reading.RoomId), "chỉ số trỏ phòng không tồn tại.");
-            Require(reading.Id <= 9999, "chỉ số cũ phải có Id ≤ 9999.");
+            Require(reading.Id is > 0 and <= 99_999, "chỉ số cũ phải có Id trong 1–99.999.");
             Require(reading.ElectricEnd >= reading.ElectricStart && reading.WaterEnd >= reading.WaterStart,
                 "chỉ số cuối phải lớn hơn hoặc bằng chỉ số đầu.");
             Require(userIds.Contains(reading.RecordedByUserId), "người ghi chỉ số không tồn tại.");
@@ -770,6 +967,19 @@ public static class DemoDataSeeder
                 Require(item.ItemType == InvoiceItemType.Discount ? item.Amount <= 0 : item.Amount >= 0,
                     $"dấu tiền dòng hóa đơn {item.Id} sai.");
             }
+        }
+
+        Require(document.InvoiceRevisions.Select(item => item.Id).Distinct().Count() == document.InvoiceRevisions.Count,
+            "Id bản chỉnh sửa hoá đơn bị trùng.");
+        foreach (var revision in document.InvoiceRevisions)
+        {
+            Require(invoiceById.ContainsKey(revision.InvoiceId),
+                $"bản chỉnh sửa {revision.Id} trỏ hoá đơn không tồn tại.");
+            Require(!string.IsNullOrWhiteSpace(revision.Reason), $"bản chỉnh sửa {revision.Id} thiếu lý do.");
+            Require(revision.PreviousTotalAmount != revision.NewTotalAmount,
+                $"bản chỉnh sửa {revision.Id} không thay đổi số tiền.");
+            Require(userIds.Contains(revision.ChangedByUserId),
+                $"bản chỉnh sửa {revision.Id} có người thực hiện không tồn tại.");
         }
 
         var paymentsByInvoice = document.Payments.GroupBy(item => item.InvoiceId)
@@ -886,11 +1096,54 @@ public static class DemoDataSeeder
                         "yêu cầu SW-13 Pending trỏ sự cố không tồn tại.");
                     break;
                 case "SW-10":
-                case "SW-07":
-                case "SW-08":
-                    Require(Guid.TryParse(approval.TargetKey, out var contractId) && contractById.ContainsKey(contractId),
-                        $"yêu cầu {approval.OperationCode} Pending trỏ hợp đồng không tồn tại.");
+                    Require(Guid.TryParse(approval.TargetKey, out var invoiceDraftContractId)
+                            && contractById.ContainsKey(invoiceDraftContractId),
+                        "yêu cầu SW-10 Pending trỏ hợp đồng không tồn tại.");
                     break;
+                case "SW-07":
+                {
+                    Require(Guid.TryParse(approval.TargetKey, out var renewContractId),
+                        "yêu cầu SW-07 Pending có targetKey không phải GUID.");
+                    Require(contractById.TryGetValue(renewContractId, out var renewContract),
+                        "yêu cầu SW-07 Pending trỏ hợp đồng không tồn tại.");
+                    var action = payload.RootElement.TryGetProperty("action", out var actionElement)
+                        ? actionElement.GetString()
+                        : null;
+                    Require(action is ContractApprovalActions.Renew or ContractApprovalActions.Liquidate,
+                        "yêu cầu SW-07 Pending phải là Renew hoặc Liquidate.");
+                    if (action == ContractApprovalActions.Renew)
+                    {
+                        Require(payload.RootElement.TryGetProperty("endDate", out var endDateElement)
+                                && endDateElement.TryGetDateTime(out var newEndDate)
+                                && newEndDate > renewContract!.EndDate,
+                            "yêu cầu gia hạn Pending phải có endDate sau ngày kết thúc hiện tại.");
+                    }
+
+                    break;
+                }
+                case "SW-08":
+                {
+                    Require(Guid.TryParse(approval.TargetKey, out var depositContractId),
+                        "yêu cầu SW-08 Pending có targetKey không phải GUID.");
+                    Require(contractById.TryGetValue(depositContractId, out var depositContract),
+                        "yêu cầu SW-08 Pending trỏ hợp đồng không tồn tại.");
+                    Require(depositContract!.Status == ContractStatus.Approved,
+                        "yêu cầu SW-08 Pending phải trỏ hợp đồng đã duyệt.");
+                    Require(payload.RootElement.TryGetProperty("action", out var depositAction)
+                            && depositAction.GetString() == ContractApprovalActions.UpdateDeposit,
+                        "yêu cầu SW-08 Pending phải có action UpdateDeposit.");
+                    var expectedDeposit = payload.RootElement.TryGetProperty("expectedDepositAmount", out var expectedElement)
+                        ? expectedElement.GetDecimal()
+                        : (decimal?)null;
+                    var depositAmount = payload.RootElement.TryGetProperty("depositAmount", out var amountElement)
+                        ? amountElement.GetDecimal()
+                        : (decimal?)null;
+                    Require(expectedDeposit == depositContract.DepositAmount,
+                        "yêu cầu SW-08 Pending phải ghi đúng số cọc hiện tại.");
+                    Require(depositAmount is not null && depositAmount != expectedDeposit,
+                        "yêu cầu SW-08 Pending phải đổi số cọc so với hiện tại.");
+                    break;
+                }
                 case "SW-12":
                     Require(roomIds.Contains(ParseKey(approval.TargetKey)),
                         "yêu cầu SW-12 Pending trỏ phòng không tồn tại.");
@@ -968,6 +1221,9 @@ public static class DemoDataSeeder
             }
         }
     }
+
+    private static string HashSnapshot(string snapshotJson) =>
+        Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(snapshotJson)));
 
     private static JsonDocument ParsePayload(string payloadJson, string operationCode)
     {

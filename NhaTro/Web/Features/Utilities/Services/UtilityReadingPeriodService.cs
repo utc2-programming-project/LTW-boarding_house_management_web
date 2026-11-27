@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Web.Common.Utils;
 using Web.Data;
 using Web.Data.Tariffs;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.Entities;
 using Web.Features.Contracts.Enums;
 using Web.Features.Invoices.DTOs;
@@ -847,9 +848,13 @@ public sealed class UtilityReadingPeriodService(
 
         if (caller.IsQuanLy)
         {
-            var propertyIds = context.PropertyManagers
-                .Where(assignment => assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null)
-                .Select(assignment => assignment.PropertyId);
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(context);
+            var propertyIds =
+                from assignment in context.PropertyManagers
+                join property in context.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
+                where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
+                select assignment.PropertyId;
 
             return from contract in context.Contracts
                    join room in context.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id

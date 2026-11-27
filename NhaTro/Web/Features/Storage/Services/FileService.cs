@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Web.Common.Models;
 using Web.Configuration.Options;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Properties;
 using Web.Features.Rooms;
 using Web.Features.Storage.DTOs;
@@ -544,11 +545,34 @@ public sealed class FileService(
         return true;
     }
 
-    public async Task<IReadOnlyList<StoredFileTrashItemDto>> ListDeletedAsync(
+    public Task<IReadOnlyList<StoredFileTrashItemDto>> ListDeletedAsync(
         StorageCaller caller,
         RelatedEntityType? relatedEntityType = null,
         string? relatedEntityId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        ListDeletedCoreAsync(caller, relatedEntityType, relatedEntityId, null, TrashScanLimit, cancellationToken);
+
+    /// <summary>
+    /// Danh sách thùng rác cho UI, lọc từ khóa ngay ở SQL. Quyền xóa vẫn xét theo từng
+    /// đối tượng liên quan (phụ thuộc phạm vi hồ sơ/phòng), nên chỉ chặn trần số dòng nạp
+    /// thay vì phân trang SQL; dữ liệu thùng rác vượt trần rất hiếm và "Dọn thùng rác" vẫn
+    /// xử lý toàn bộ.
+    /// </summary>
+    public Task<IReadOnlyList<StoredFileTrashItemDto>> SearchDeletedAsync(
+        StorageCaller caller,
+        string? keyword,
+        CancellationToken cancellationToken = default) =>
+        ListDeletedCoreAsync(caller, null, null, keyword, TrashScanLimit, cancellationToken);
+
+    private const int TrashScanLimit = 1000;
+
+    private async Task<IReadOnlyList<StoredFileTrashItemDto>> ListDeletedCoreAsync(
+        StorageCaller caller,
+        RelatedEntityType? relatedEntityType,
+        string? relatedEntityId,
+        string? keyword,
+        int? take,
+        CancellationToken cancellationToken)
     {
         EnsureBusinessAllowed(caller);
 
@@ -568,15 +592,78 @@ public sealed class FileService(
             query = query.Where(file => file.RelatedEntityId == relatedEntityId);
         }
 
-        var files = await query
+        var term = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
+        if (term is { } search)
+        {
+            query = query.Where(file =>
+                file.FileName.Contains(search) || file.RelatedEntityId.Contains(search));
+        }
+
+        var ordered = query
             .OrderByDescending(file => file.DeletedAt)
             .ThenByDescending(file => file.UploadedAt)
+            .ThenBy(file => file.Id);
+        var files = await (take is { } limit ? ordered.Take(limit) : ordered)
             .ToListAsync(cancellationToken);
+
+        // Thùng rác có thể chứa nhiều tệp cùng một phòng/hồ sơ: nhớ kết quả phạm vi
+        // theo từng đối tượng để không hỏi lại DB cho mỗi tệp (tránh N+1).
+        var tenantAccess = new Dictionary<string, TenantDocumentAccessLevel>(StringComparer.Ordinal);
+        var incidentAccess = new Dictionary<string, IncidentFileAccess>(StringComparer.Ordinal);
+        var roomAccess = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+        async Task<bool> CanManageMemoizedAsync(StoredFile file)
+        {
+            if (file.RelatedEntityType == RelatedEntityType.IncidentApproval)
+            {
+                return false;
+            }
+
+            if (file.RelatedEntityType == RelatedEntityType.Tenant)
+            {
+                if (!tenantAccess.TryGetValue(file.RelatedEntityId, out var access))
+                {
+                    access = await ResolveTenantAccessAsync(file.RelatedEntityId, caller, cancellationToken);
+                    tenantAccess[file.RelatedEntityId] = access;
+                }
+
+                return TenantDocumentPermissionRules.CanDelete(access);
+            }
+
+            if (!StoragePermissionRules.CanDelete(caller.Role))
+            {
+                return false;
+            }
+
+            if (file.RelatedEntityType == RelatedEntityType.MaintenanceIncident)
+            {
+                if (!incidentAccess.TryGetValue(file.RelatedEntityId, out var access))
+                {
+                    access = await ResolveIncidentAccessAsync(file.RelatedEntityId, caller, cancellationToken);
+                    incidentAccess[file.RelatedEntityId] = access;
+                }
+
+                return access is IncidentFileAccess.Manage;
+            }
+
+            if (file.RelatedEntityType != RelatedEntityType.Room)
+            {
+                return true;
+            }
+
+            if (!roomAccess.TryGetValue(file.RelatedEntityId, out var inScope))
+            {
+                inScope = await IsRoomInScopeAsync(db, file.RelatedEntityId, caller, cancellationToken);
+                roomAccess[file.RelatedEntityId] = inScope;
+            }
+
+            return inScope;
+        }
 
         var items = new List<StoredFileTrashItemDto>();
         foreach (var file in files)
         {
-            if (await CanManageTrashedFileAsync(db, file, caller, cancellationToken))
+            if (await CanManageMemoizedAsync(file))
             {
                 items.Add(new StoredFileTrashItemDto(
                     file.Id,
@@ -678,7 +765,8 @@ public sealed class FileService(
         string? relatedEntityId = null,
         CancellationToken cancellationToken = default)
     {
-        var items = await ListDeletedAsync(caller, relatedEntityType, relatedEntityId, cancellationToken);
+        // Dọn toàn bộ phải quét hết thùng rác, không áp trần của danh sách UI.
+        var items = await ListDeletedCoreAsync(caller, relatedEntityType, relatedEntityId, null, null, cancellationToken);
         var purged = 0;
         var skipped = 0;
         foreach (var item in items)
@@ -828,6 +916,8 @@ public sealed class FileService(
         // VHT-54: minh chứng thanh toán gắn với hóa đơn (RelatedEntityId = invoiceId) trước khi có Payment.
         RelatedEntityType.Payment => int.TryParse(entityId, out var invoiceId)
             && await db.Invoices.AnyAsync(i => i.Id == invoiceId, cancellationToken),
+        RelatedEntityType.ContractDeposit => Guid.TryParse(entityId, out var contractId)
+            && await db.Contracts.AnyAsync(c => c.ContractId == contractId, cancellationToken),
         _ => true,
     };
 
@@ -844,8 +934,13 @@ public sealed class FileService(
             return false;
         }
 
-        var roomScope = RoomScope.Apply(
-            db.Rooms, db.Properties, db.PropertyManagers, new PropertyCaller(caller.UserId, caller.Role));
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+        var roomScope =
+            from room in RoomScope.Apply(
+                db.Rooms, db.Properties, db.PropertyManagers, new PropertyCaller(caller.UserId, caller.Role))
+            join property in db.Properties on room.PropertyId equals property.Id
+            where !blockedOwners.Contains(property.OwnerId)
+            select room;
         return await roomScope.AnyAsync(room => room.Id == roomId, cancellationToken);
     }
 
@@ -867,6 +962,11 @@ public sealed class FileService(
                    join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
                    where invoice.Id == invoiceId && tenant.UserId == userId
                    select invoice.Id).AnyAsync(cancellationToken),
+        RelatedEntityType.ContractDeposit when userId.Length > 0 && Guid.TryParse(entityId, out var contractId) =>
+            await (from member in db.ContractMembers
+                   join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+                   where member.ContractId == contractId && tenant.UserId == userId
+                   select member.ContractId).AnyAsync(cancellationToken),
         _ => false,
     };
 

@@ -16,7 +16,7 @@ Nguồn chỉnh sửa: [../bieudochot.excalidraw](../bieudochot.excalidraw), g�
 
 SVG và nguồn Excalidraw dùng cùng tập luồng. PNG mới được xuất từ nguồn ở kích thước 1900 × 1050 (render cùng dữ liệu Excalidraw); không sửa đè chữ/mũi tên trên ảnh chụp cũ. Không cần chụp thủ công cho lần sửa này.
 
-Bản trước khi thêm Admin (8 PNG + 8 SVG + `dfd_tong_the.svg` cũ và `bieudochot_truoc_admin.excalidraw`) được lưu trong `docs/archive/truoc_admin/`, không còn nhúng trong tài liệu. Các ảnh chụp cũ hơn được lưu trong `docs/archive/truoc_sua_luong/`.
+Bản trước khi thêm Admin và các ảnh chụp cũ hơn đã được bỏ khỏi repo (không còn nhúng trong tài liệu); muốn xem lại thì tra lịch sử git của thư mục `docs/image/`.
 
 Không gọi đây là DFD mức 2. Không thêm công nghệ hay thiết kế chi tiết vào bộ luồng chính thức. Nếu chỉnh nguồn sau này, phải xuất lại ảnh tương ứng và cập nhật tài liệu cùng lúc.
 

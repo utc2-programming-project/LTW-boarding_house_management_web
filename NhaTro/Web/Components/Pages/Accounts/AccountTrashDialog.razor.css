@@ -1,0 +1,25 @@
+.account-trash-content {
+    padding: var(--space-6);
+}
+
+.trash-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+@media (max-width: 767px) {
+    .account-trash-content {
+        padding: var(--space-4);
+    }
+
+    .trash-actions {
+        justify-content: stretch;
+    }
+
+    .trash-actions .btn {
+        width: 100%;
+    }
+}

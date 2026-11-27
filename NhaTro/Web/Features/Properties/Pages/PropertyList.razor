@@ -1,12 +1,14 @@
 @page "/properties"
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject PropertyPageService PageService
 @inject PropertySetupDraftStore DraftStore
 @inject P2CallerProvider CallerProvider
 @inject NavigationManager Navigation
 @inject ToastService Toasts
 @inject IStringLocalizer<Shared> L
+@inject Web.Common.Utils.FilterUrlState Url
 @inject ILogger<PropertyList> Logger
 
 <PageTitle>@L["P2PropertiesTitle"] · @L["AppName"]</PageTitle>
@@ -52,7 +54,8 @@
         @if (_summary is not null)
         {
             <section class="stat-grid" aria-label="@L["P2PropertyStatSummary"]">
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("")'>
                     <div class="stat-card__top">
                         <span class="stat-label">
                             @L["P2PropertyStatTotal"]
@@ -62,14 +65,16 @@
                     </div>
                     <div class="stat-value">@_summary.Total <small>@L["P2PropertyStatUnit"]</small></div>
                 </article>
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("true")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("true")'>
                     <div class="stat-card__top">
                         <span class="stat-label">@L["P2Active"]</span>
                         <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                     </div>
                     <div class="stat-value">@_summary.Active <small>@L["P2PropertyStatUnit"]</small></div>
                 </article>
-                <article class="stat-card">
+                <article class='stat-card stat-card--link @PropertyCardClass("false")' role="button" tabindex="0"
+                         @onclick='() => ApplyPropertyFilterAsync("false")'>
                     <div class="stat-card__top">
                         <span class="stat-label">@L["P2Inactive"]</span>
                         <span class="stat-icon stat-icon--neutral"><LucideIcon Name="pause-circle" /></span>
@@ -97,7 +102,7 @@
                         <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                         <input id="property-keyword" class="input" type="search" maxlength="200" autocomplete="off"
                                placeholder="@L["P2SearchProperties"]" @bind="_keyword" @bind:event="oninput"
-                               @bind:after="ApplyFiltersAsync" />
+                               @bind:after="OnKeywordChangedAsync" />
                     </div>
                     <div class="filter-bar__field filter-bar__select">
                         <label class="sr-only" for="property-active">@L["P2Activity"]</label>
@@ -201,6 +206,7 @@
     private DataTableLabels _tableLabels = new();
     private PropertyListItem? _selectedProperty;
     private string _keyword = string.Empty;
+    private CancellationTokenSource? _keywordDebounce;
 
     /// <summary>Từ khóa từ link chéo (?q=Trọ A): điền sẵn ô tìm kiếm.</summary>
     [SupplyParameterFromQuery(Name = "q")]
@@ -209,6 +215,51 @@
     /// <summary>Id nhà từ link chéo (?propertyId=3): mở ngay dialog chi tiết.</summary>
     [SupplyParameterFromQuery(Name = "propertyId")]
     public int? PropertyIdQuery { get; set; }
+
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "active")]
+    public string? ActiveQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "minRooms")]
+    public string? MinRoomsQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "maxRooms")]
+    public string? MaxRoomsQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string? SortQuery { get; set; }
+
+    private void ApplyUrlState()
+    {
+        if (ActiveQuery is "true" or "false")
+        {
+            _activeFilter = ActiveQuery;
+        }
+
+        if (int.TryParse(MinRoomsQuery, out var minRooms) && minRooms >= 0)
+        {
+            _minRoomCount = MinRoomsQuery!;
+        }
+
+        if (int.TryParse(MaxRoomsQuery, out var maxRooms) && maxRooms >= 0)
+        {
+            _maxRoomCount = MaxRoomsQuery!;
+        }
+
+        if (SortQuery is "newest" or "oldest" or "roomCountAsc" or "roomCountDesc")
+        {
+            _sortFilter = SortQuery;
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["active"] = string.IsNullOrEmpty(_activeFilter) ? null : _activeFilter,
+        ["minRooms"] = string.IsNullOrWhiteSpace(_minRoomCount) ? null : _minRoomCount,
+        ["maxRooms"] = string.IsNullOrWhiteSpace(_maxRoomCount) ? null : _maxRoomCount,
+        ["sort"] = _sortFilter == "name" ? null : _sortFilter,
+    });
 
     private string? _lastAppliedKeywordQuery;
     private int? _lastAppliedPropertyId;
@@ -244,6 +295,7 @@
         _lastAppliedKeywordQuery = KeywordQuery;
         _lastAppliedPropertyId = PropertyIdQuery;
         _keyword = KeywordQuery?.Trim() ?? string.Empty;
+        ApplyUrlState();
         await InitializeAsync();
         OpenPropertyFromQuery();
     }
@@ -298,15 +350,8 @@
             _isOwner = role == Roles.ChuTro;
             _ready = true;
 
-            try
-            {
-                _summary = await PageService.GetSummaryAsync();
-            }
-            catch (Exception ex)
-            {
-                // Dải KPI chỉ là phụ trợ: lỗi tải số liệu không chặn bảng danh sách.
-                Logger.LogError(ex, "P2 property summary failed");
-            }
+            // Bảng tải trước; KPI là phần phụ trợ nên cập nhật sau, không chặn render.
+            _ = LoadSummaryAsync();
         }
         catch (Exception ex)
         {
@@ -316,9 +361,34 @@
         }
     }
 
+    private async Task LoadSummaryAsync()
+    {
+        try
+        {
+            _summary = await PageService.GetSummaryAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            // Dải KPI chỉ là phụ trợ: lỗi tải số liệu không chặn bảng danh sách.
+            Logger.LogError(ex, "P2 property summary failed");
+        }
+    }
+
     private IReadOnlyList<DataTableColumn<PropertyListItem>> BuildColumns()
     {
-        RenderFragment<PropertyListItem> name = item => @<button class="p2-link-button" type="button" @onclick="() => OpenDetails(item)">@item.Name</button>;
+        RenderFragment<PropertyListItem> name = item => @<button class="p2-link-button cell-truncate" type="button" data-hover-tip @onclick="() => OpenDetails(item)">
+            @item.Name
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.Name</span>
+            </span>
+        </button>;
+        RenderFragment<PropertyListItem> address = item => @<span class="cell-truncate" data-hover-tip>
+            @AddressText(item)
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@AddressText(item)</span>
+            </span>
+        </span>;
         // Số phòng là link sang danh sách phòng đã lọc theo nhà này.
         RenderFragment<PropertyListItem> roomCount = item => @<a class="cell-link" href="@AppLinks.RoomsOfProperty(item.Id)"
             title="@L["CellLinkFilterRelated", item.Name]">@item.RoomCount.ToString(CultureInfo.CurrentCulture)</a>;
@@ -353,13 +423,16 @@
 
         return
         [
-            new() { Key = "name", Title = L["P2PropertyName"], Template = name, Sortable = false },
-            new() { Key = "address", Title = L["P2Address"], Value = item => string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address },
-            new() { Key = "roomCount", Title = L["P2RoomCount"], Template = roomCount, IsNumeric = true },
-            new() { Key = "activity", Title = L["P2Activity"], Template = activity },
-            new() { Key = "actions", Title = L["P2Actions"], Template = actions }
+            new() { Key = "name", Title = L["P2PropertyName"], Template = name, Sortable = false, Width = "260px" },
+            new() { Key = "address", Title = L["P2Address"], Template = address, Width = "320px" },
+            new() { Key = "roomCount", Title = L["P2RoomCount"], Template = roomCount, IsNumeric = true, Width = "110px" },
+            new() { Key = "activity", Title = L["P2Activity"], Template = activity, Width = "130px" },
+            new() { Key = "actions", Title = L["P2Actions"], Template = actions, CellClass = "cell-actions", Width = "110px" }
         ];
     }
+
+    private string AddressText(PropertyListItem item) =>
+        string.IsNullOrWhiteSpace(item.Address) ? L["P2NotProvided"].Value : item.Address;
 
     private async Task<PagedResult<PropertyListItem>> LoadPropertiesAsync(DataTableRequest request)
     {
@@ -367,7 +440,7 @@
         var active = bool.TryParse(_activeFilter, out var parsed) ? parsed : (bool?)null;
         var minRooms = int.TryParse(_minRoomCount, out var min) && min >= 0 ? min : (int?)null;
         var maxRooms = int.TryParse(_maxRoomCount, out var max) && max >= 0 ? max : (int?)null;
-        return await PageService.ListAsync(new PropertyFilter
+        var result = await PageService.ListAsync(new PropertyFilter
         {
             Keyword = _keyword,
             IsActive = active,
@@ -377,6 +450,17 @@
             Page = request.Page,
             PageSize = request.PageSize
         });
+        await WriteUrlStateAsync();
+        return result;
+    }
+
+    private string PropertyCardClass(string active) =>
+        string.Equals(_activeFilter, active, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyPropertyFilterAsync(string active)
+    {
+        _activeFilter = active;
+        if (_table is not null) await _table.ReloadAsync();
     }
 
     private Task ApplyFiltersAsync()
@@ -388,6 +472,29 @@
             || _sortFilter != "name";
         _tableKey++;
         return Task.CompletedTask;
+    }
+
+    // Gõ từ khóa: gộp 300ms để không dựng lại bảng (một truy vấn/keystroke).
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
+            await ApplyFiltersAsync();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
     }
 
     private Task ResetFiltersAsync()

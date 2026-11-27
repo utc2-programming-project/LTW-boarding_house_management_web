@@ -410,6 +410,657 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.BiometricEnrollment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ConsentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("EnrolledByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("GatePassId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PublicKey")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("RetentionUntil")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RevokeReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TemplateRef")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GatePassId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("PropertyId", "Status");
+
+                    b.ToTable("BiometricEnrollments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BiometricEnrollments_Method", "[Method] BETWEEN 0 AND 2");
+
+                            t.HasCheckConstraint("CK_BiometricEnrollments_Status", "[Status] BETWEEN 0 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GateDevice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsOnline")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("GateDevices", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GateDevices_Kind", "[Kind] BETWEEN 0 AND 4");
+
+                            t.HasCheckConstraint("CK_GateDevices_Level", "[Level] BETWEEN 0 AND 1");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GateLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("GateDeviceId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("GatePassId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MatchScore")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SubjectName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SubjectType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GateDeviceId");
+
+                    b.HasIndex("GatePassId", "OccurredAt");
+
+                    b.HasIndex("PropertyId", "OccurredAt");
+
+                    b.HasIndex("PropertyId", "Direction", "IsSuccess");
+
+                    b.ToTable("GateLogs", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GateLogs_Direction", "[Direction] BETWEEN 0 AND 1");
+
+                            t.HasCheckConstraint("CK_GateLogs_Subject", "[SubjectType] BETWEEN 0 AND 1");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePass", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AllowedMethods")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("AutoApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CodeHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid?>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("GatePassInviteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IssuedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("IssuerRole")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxUses")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("PassType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RejectedReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RevokedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RevokedReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StayReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("StayReportId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StayType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly?>("VisitorDob")
+                        .HasColumnType("date");
+
+                    b.Property<string>("VisitorIdNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("VisitorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("VisitorPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("VisitorPhotoRef")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("GatePassInviteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("PropertyId", "Status");
+
+                    b.HasIndex("RoomId", "CreatedAt");
+
+                    b.ToTable("GatePasses", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GatePasses_Issuer", "[IssuerRole] BETWEEN 0 AND 3");
+
+                            t.HasCheckConstraint("CK_GatePasses_Status", "[Status] BETWEEN 0 AND 5");
+
+                            t.HasCheckConstraint("CK_GatePasses_Uses", "[MaxUses] BETWEEN 1 AND 50 AND [UsedCount] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePassInvite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("IssuerRole")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RevokedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("UsedGatePassId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("RoomId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("PropertyId", "CreatedAt");
+
+                    b.ToTable("GatePassInvites", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GatePassInvites_Issuer", "[IssuerRole] BETWEEN 0 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePolicy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowGuestSelfFill")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowManagerApprove")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowManualOpen")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowTenantIssuePass")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AntiPassbackEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("AuthMode")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("AutoApproveDayVisit")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AutoApproveOvernight")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("DayVisitEndHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DayVisitStartHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GuestSelfMaxPassesPerDay")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OfflineGraceMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PassTtlMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PreferredStayChannel")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequiredGuestFields")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("RetentionDays")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("TenantMaxPassesPerDay")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantMaxTtlMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantMaxUses")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("TenantMayIssueOvernight")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId")
+                        .IsUnique();
+
+                    b.ToTable("GatePolicies", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GatePolicies_AuthMode", "[AuthMode] BETWEEN 0 AND 2");
+
+                            t.HasCheckConstraint("CK_GatePolicies_Hours", "[DayVisitStartHour] BETWEEN 0 AND 23 AND [DayVisitEndHour] BETWEEN 1 AND 24 AND [DayVisitStartHour] < [DayVisitEndHour]");
+
+                            t.HasCheckConstraint("CK_GatePolicies_TenantQuota", "[TenantMaxPassesPerDay] BETWEEN 0 AND 50 AND [TenantMaxUses] BETWEEN 1 AND 10");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.StayReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("Channel")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DueAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("EvidenceRef")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("GatePassId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly?>("GuestDob")
+                        .HasColumnType("date");
+
+                    b.Property<string>("GuestIdNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("GuestName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ReportedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ReportedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("StayFrom")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("StayReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset>("StayTo")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DueAt");
+
+                    b.HasIndex("GatePassId");
+
+                    b.HasIndex("RoomId");
+
+                    b.HasIndex("PropertyId", "Status");
+
+                    b.ToTable("StayReports", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StayReports_Status", "[Status] BETWEEN 0 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Accounts.Avatar.UserAvatar", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserAvatars");
+                });
+
             modelBuilder.Entity("Web.Features.Accounts.Otp.OtpChallenge", b =>
                 {
                     b.Property<int>("Id")
@@ -560,6 +1211,157 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiAssistantSettings", b =>
+                {
+                    b.Property<string>("OwnerUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("DailyRequestLimit")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("OwnerUserId");
+
+                    b.ToTable("AiAssistantSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiSuggestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AppliedRefId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DecidedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("DecisionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("InputRefsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OutputJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("ScopeJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UseCase")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecidedByUserId");
+
+                    b.HasIndex("RequestedByUserId", "Status");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.HasIndex("PropertyId", "UseCase", "CreatedAt");
+
+                    b.ToTable("AiSuggestions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AiSuggestions_Status", "[Status] IN (0, 1, 2, 3)");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiUsageLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("CompletionTokens")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Cost")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UseCase")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("AiUsageLogs", (string)null);
+                });
+
             modelBuilder.Entity("Web.Features.Audit.Entities.AuditLogEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -610,6 +1412,17 @@ namespace Web.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
 
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByRole")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
 
@@ -621,11 +1434,46 @@ namespace Web.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTimeOffset?>("DepositDueAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal?>("DepositPaidAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("DepositPaidAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DepositPaidByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal?>("DepositRefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("DepositRefundedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DepositReminder24hAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DepositReminder6hAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int?>("MeterReadingDay")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentCycleMonths")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("RejectReason")
                         .HasMaxLength(500)
@@ -644,14 +1492,24 @@ namespace Web.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<string>("Terms")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.HasKey("ContractId");
 
                     b.HasIndex("ContractNumber")
                         .IsUnique();
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("IsDeleted");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("Status", "DepositDueAt");
+
+                    b.HasIndex("Status", "StartDate", "EndDate");
+
+                    b.HasIndex("RoomId", "Status", "StartDate", "EndDate");
 
                     b.ToTable("Contracts", t =>
                         {
@@ -659,6 +1517,176 @@ namespace Web.Migrations
                         });
 
                     b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractAcceptance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AcceptedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ContractVersionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("OtpChallengeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SignatureMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractVersionId");
+
+                    b.HasIndex("ContractId", "ContractVersionId")
+                        .IsUnique();
+
+                    b.ToTable("ContractAcceptances", (string)null);
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractChangeRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ContractVersionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ResolvedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractVersionId");
+
+                    b.HasIndex("ContractId", "Status");
+
+                    b.ToTable("ContractChangeRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractDepositPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProofFileIdsJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RequestedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("TransferredAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId", "RequestedAt");
+
+                    b.HasIndex("ContractId", "Status")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ContractDepositPayments_Pending")
+                        .HasFilter("[Status] = 0");
+
+                    b.ToTable("ContractDepositPayments", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
@@ -669,9 +1697,16 @@ namespace Web.Migrations
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsRepresentative")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Relationship")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("ContractId", "TenantId");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("TenantId", "ContractId");
 
                     b.ToTable("ContractMembers");
                 });
@@ -737,6 +1772,48 @@ namespace Web.Migrations
 
                             t.HasCheckConstraint("CK_ContractRenewalRequests_Status", "[Status] IN (0, 1, 2)");
                         });
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VersionNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId", "VersionNo")
+                        .IsUnique();
+
+                    b.ToTable("ContractVersions", (string)null);
                 });
 
             modelBuilder.Entity("Web.Features.Invoices.Entities.Invoice", b =>
@@ -808,6 +1885,8 @@ namespace Web.Migrations
                         .HasFilter("[RegistrationId] IS NULL AND [IsDeleted] = 0");
 
                     b.HasIndex("PeriodStart", "Status");
+
+                    b.HasIndex("Status", "DueDate");
 
                     b.ToTable("Invoices", null, t =>
                         {
@@ -966,6 +2045,10 @@ namespace Web.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_Payments_InvoiceStatus")
                         .HasFilter("[Status] IN (0, 1)");
+
+                    b.HasIndex("Status", "RequestedAt");
+
+                    b.HasIndex("Status", "ReviewedAt");
 
                     b.HasIndex("InvoiceId", "Status", "RequestedAt");
 
@@ -1147,6 +2230,13 @@ namespace Web.Migrations
                     b.Property<int>("Urgency")
                         .HasColumnType("int");
 
+                    b.Property<int?>("VehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VehiclePlateNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IsDeleted");
@@ -1154,6 +2244,10 @@ namespace Web.Migrations
                     b.HasIndex("ReportedByUserId");
 
                     b.HasIndex("RoomId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("MaintenanceIncidents", null, t =>
                         {
@@ -1232,20 +2326,25 @@ namespace Web.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Link")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("RecipientUserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RecipientUserId", "IsRead", "CreatedAt");
 
                     b.ToTable("AppNotifications");
                 });
@@ -1813,6 +2912,8 @@ namespace Web.Migrations
                     b.HasIndex("CitizenId")
                         .IsUnique()
                         .HasFilter("[CitizenId] IS NOT NULL AND [IsDeleted] = 0 AND [IsActive] = 1");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("FullName");
 
@@ -2827,6 +3928,476 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.GuestVehicleNotice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("ExpectedFrom")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("ExpectedTo")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("GuestName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PlateNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VehicleType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpectedTo");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("PropertyId", "Status");
+
+                    b.HasIndex("RoomId", "Status");
+
+                    b.ToTable("GuestVehicleNotices", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GuestVehicleNotices_ExpectedRange", "[ExpectedTo] > [ExpectedFrom]");
+
+                            t.HasCheckConstraint("CK_GuestVehicleNotices_Status", "[Status] BETWEEN 1 AND 4");
+
+                            t.HasCheckConstraint("CK_GuestVehicleNotices_VehicleType", "[VehicleType] BETWEEN 1 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.ParkingSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int?>("CurrentVehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ParkingZoneId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurrentVehicleId")
+                        .IsUnique()
+                        .HasFilter("[CurrentVehicleId] IS NOT NULL");
+
+                    b.HasIndex("ParkingZoneId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ParkingSlots", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ParkingSlots_Status", "[Status] BETWEEN 1 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.ParkingZone", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AllowedVehicleTypes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("HasSlots")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFree")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsIndoor")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal?>("OverrideMonthlyFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SlotPrefix")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ParkingZones", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ParkingZones_Capacity", "[Capacity] BETWEEN 1 AND 5000");
+
+                            t.HasCheckConstraint("CK_ParkingZones_OverrideFee", "[OverrideMonthlyFee] IS NULL OR [OverrideMonthlyFee] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.Vehicle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Brand")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<Guid>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ParkingSlotId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ParkingZoneId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhotoRef")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PlateNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QrCodeToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VehicleType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParkingSlotId");
+
+                    b.HasIndex("ParkingZoneId");
+
+                    b.HasIndex("QrCodeToken")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ContractId", "Status");
+
+                    b.HasIndex("PropertyId", "PlateNumber")
+                        .IsUnique()
+                        .HasFilter("[Status] = 1");
+
+                    b.HasIndex("RoomId", "Status");
+
+                    b.ToTable("Vehicles", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Vehicles_Status", "[Status] BETWEEN 1 AND 2");
+
+                            t.HasCheckConstraint("CK_Vehicles_VehicleType", "[VehicleType] BETWEEN 1 AND 3");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehicleAuditItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuditSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("CheckedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("GuestNoticeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PlateNumberSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("Result")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RoomCodeSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("RoomIdSnapshot")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VehicleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VehicleTypeSnapshot")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuestNoticeId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("AuditSessionId", "GuestNoticeId")
+                        .IsUnique()
+                        .HasFilter("[GuestNoticeId] IS NOT NULL");
+
+                    b.HasIndex("AuditSessionId", "VehicleId")
+                        .IsUnique()
+                        .HasFilter("[VehicleId] IS NOT NULL");
+
+                    b.ToTable("VehicleAuditItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_VehicleAuditItems_Result", "[Result] BETWEEN 0 AND 2");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehicleAuditSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuditedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalExpected")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalMissing")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalPresent")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VehicleAuditSessions_PropertyId_InProgress")
+                        .HasFilter("[Status] = 1");
+
+                    b.HasIndex("PropertyId", "StartedAt");
+
+                    b.HasIndex("PropertyId", "Status");
+
+                    b.ToTable("VehicleAuditSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_VehicleAuditSessions_Status", "[Status] BETWEEN 1 AND 2");
+                        });
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehiclePropertySetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowBlockingAlert")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowManagerManageVehicles")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowTenantGuestNotice")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("ElectricMotorbikeMonthlyFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("EnableParkingZones")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("ManualMotorbikeMonthlyFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("MaxVehiclesPerRoom")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("ScooterMonthlyFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ZoneNearFullThresholdPercent")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId")
+                        .IsUnique();
+
+                    b.ToTable("VehiclePropertySettings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_VehiclePropertySettings_Fees", "[ElectricMotorbikeMonthlyFee] >= 0 AND [ManualMotorbikeMonthlyFee] >= 0 AND [ScooterMonthlyFee] >= 0");
+
+                            t.HasCheckConstraint("CK_VehiclePropertySettings_MaxVehicles", "[MaxVehiclesPerRoom] BETWEEN 0 AND 50");
+
+                            t.HasCheckConstraint("CK_VehiclePropertySettings_Threshold", "[ZoneNearFullThresholdPercent] BETWEEN 50 AND 100");
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -2948,6 +4519,129 @@ namespace Web.Migrations
                     b.Navigation("TariffVersion");
                 });
 
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.BiometricEnrollment", b =>
+                {
+                    b.HasOne("Web.Features.AccessControl.Entities.GatePass", null)
+                        .WithMany()
+                        .HasForeignKey("GatePassId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GateDevice", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GateLog", b =>
+                {
+                    b.HasOne("Web.Features.AccessControl.Entities.GateDevice", null)
+                        .WithMany()
+                        .HasForeignKey("GateDeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Web.Features.AccessControl.Entities.GatePass", null)
+                        .WithMany()
+                        .HasForeignKey("GatePassId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePass", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePassInvite", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePolicy", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.StayReport", b =>
+                {
+                    b.HasOne("Web.Features.AccessControl.Entities.GatePass", null)
+                        .WithMany()
+                        .HasForeignKey("GatePassId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Web.Features.Accounts.Avatar.UserAvatar", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Web.Features.Accounts.Avatar.UserAvatar", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Approvals.Entities.ManagerApprovalRequest", b =>
                 {
                     b.HasOne("Web.Data.ApplicationUser", null)
@@ -2967,6 +4661,43 @@ namespace Web.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiAssistantSettings", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiSuggestion", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("DecidedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Assistant.Entities.AiUsageLog", b =>
+                {
+                    b.HasOne("Web.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Features.Contracts.Entities.Contract", b =>
                 {
                     b.HasOne("Web.Features.Rooms.Entities.Room", null)
@@ -2974,6 +4705,47 @@ namespace Web.Migrations
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractAcceptance", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ContractVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractChangeRequest", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Contracts.Entities.ContractVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ContractVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractDepositPayment", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contract");
                 });
 
             modelBuilder.Entity("Web.Features.Contracts.Entities.ContractMember", b =>
@@ -3007,6 +4779,15 @@ namespace Web.Migrations
                     b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("RequestedByTenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Contracts.Entities.ContractVersion", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -3110,6 +4891,11 @@ namespace Web.Migrations
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Web.Features.Vehicles.Entities.Vehicle", null)
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Web.Features.Maintenance.Entities.MaintenanceIncidentHistory", b =>
@@ -3283,6 +5069,123 @@ namespace Web.Migrations
                     b.Navigation("UtilityTariff");
                 });
 
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.GuestVehicleNotice", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.ParkingSlot", b =>
+                {
+                    b.HasOne("Web.Features.Vehicles.Entities.Vehicle", null)
+                        .WithMany()
+                        .HasForeignKey("CurrentVehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Vehicles.Entities.ParkingZone", null)
+                        .WithMany()
+                        .HasForeignKey("ParkingZoneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.ParkingZone", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.Vehicle", b =>
+                {
+                    b.HasOne("Web.Features.Contracts.Entities.Contract", null)
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Vehicles.Entities.ParkingSlot", null)
+                        .WithMany()
+                        .HasForeignKey("ParkingSlotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Vehicles.Entities.ParkingZone", null)
+                        .WithMany()
+                        .HasForeignKey("ParkingZoneId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Tenants.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehicleAuditItem", b =>
+                {
+                    b.HasOne("Web.Features.Vehicles.Entities.VehicleAuditSession", null)
+                        .WithMany("Items")
+                        .HasForeignKey("AuditSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Vehicles.Entities.GuestVehicleNotice", null)
+                        .WithMany()
+                        .HasForeignKey("GuestNoticeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Web.Features.Vehicles.Entities.Vehicle", null)
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehicleAuditSession", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehiclePropertySetting", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web.Data.Tariffs.UtilityBillingPeriodSnapshot", b =>
                 {
                     b.Navigation("CostLines");
@@ -3321,6 +5224,11 @@ namespace Web.Migrations
             modelBuilder.Entity("Web.Features.Utilities.Entities.UtilityTariff", b =>
                 {
                     b.Navigation("Tiers");
+                });
+
+            modelBuilder.Entity("Web.Features.Vehicles.Entities.VehicleAuditSession", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

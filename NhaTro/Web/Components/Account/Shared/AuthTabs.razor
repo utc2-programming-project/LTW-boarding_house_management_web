@@ -1,41 +1,25 @@
 @inject IStringLocalizer<Shared> L
 
-<nav class="auth-tabs @(Dimmed ? "is-dimmed" : null)" aria-label="@L["AuthTabsLabel"]">
-    <span class="auth-tabs-indicator @(Index < 0 ? "is-hidden" : null)"
-          style="--auth-index:@Index" aria-hidden="true"></span>
-
-    <a class="auth-tab" href="/login" data-auth-tab data-auth-index="0"
-       aria-current="@Current(AuthTab.Login)"
-       tabindex="@(Dimmed ? "-1" : null)"
-       aria-disabled="@(Dimmed ? "true" : null)">
-        @L["LoginTitle"]
-    </a>
-    <a class="auth-tab" href="/Account/RegisterOwner" data-auth-tab data-auth-index="1"
-       aria-current="@Current(AuthTab.Register)"
-       tabindex="@(Dimmed ? "-1" : null)"
-       aria-disabled="@(Dimmed ? "true" : null)">
-        @L["AuthTabRegister"]
-    </a>
-    <a class="auth-tab" href="/Account/ForgotPassword" data-auth-tab data-auth-index="2"
-       aria-current="@Current(AuthTab.Forgot)"
-       tabindex="@(Dimmed ? "-1" : null)"
-       aria-disabled="@(Dimmed ? "true" : null)">
-        @L["AuthTabForgot"]
-    </a>
-</nav>
+@* Preset 3 tab của luồng tài khoản trên TabBar chung; trang auth là static SSR nên phải là link. *@
+<TabBar Items="Items" ActiveKey="@ActiveKey" Disabled="@Dimmed" Fill="true" AriaLabel="@L["AuthTabsLabel"]" />
 
 @code {
     [Parameter] public AuthTab Active { get; set; } = AuthTab.None;
 
     [Parameter] public bool Dimmed { get; set; }
 
-    private int Index => Active switch
+    private string ActiveKey => Active switch
     {
-        AuthTab.Login => 0,
-        AuthTab.Register => 1,
-        AuthTab.Forgot => 2,
-        _ => -1,
+        AuthTab.Login => "login",
+        AuthTab.Register => "register",
+        AuthTab.Forgot => "forgot",
+        _ => string.Empty,
     };
 
-    private string? Current(AuthTab tab) => Active == tab ? "page" : null;
+    private IReadOnlyList<TabItem> Items =>
+    [
+        new("login", L["LoginTitle"].Value, "/login"),
+        new("register", L["AuthTabRegister"].Value, "/Account/RegisterOwner"),
+        new("forgot", L["AuthTabForgot"].Value, "/Account/ForgotPassword"),
+    ];
 }

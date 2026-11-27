@@ -12,23 +12,34 @@ public sealed class DashboardComponentTests : BunitContext
     public DashboardComponentTests() { Services.AddLogging(); Services.AddLocalization(options => options.ResourcesPath = "Resources"); }
 
     [Theory]
-    [InlineData(true, 5)]
-    [InlineData(false, 3)]
+    [InlineData(true, 9)]
+    [InlineData(false, 5)]
     public void Financial_cards_only_render_for_owner(bool owner, int count)
     {
         var component = Render<KPICardGrid>(p => p.Add(c => c.IsOwner, owner)
             .Add(c => c.State, DashboardLoadState.Loaded).Add(c => c.Kpis, new RoomReportKpis { Total = 8, Rented = 5, Maintenance = 2 })
             .Add(c => c.RoomsHref, "/rooms?propertyId=7")
             .Add(c => c.Revenue, new RevenueReportDto(1000m, 250m, 2, 1, []))
+            .Add(c => c.TotalRevenue, new RevenueReportDto(9000m, 1200m, 12, 4, []))
             .Add(c => c.Incidents, new IncidentReportKpis { Total = 2 })
+            .Add(c => c.Vehicles, new Web.Features.Vehicles.Services.VehicleDashboardKpis(12, 3, 4, 5, 20, 10, 750_000m))
+            .Add(c => c.VehiclesHref, "/vehicles?propertyId=7")
             .Add(c => c.RevenueHref, "/reports?propertyId=7")
-            .Add(c => c.IncidentsHref, "/reports?propertyId=7"));
+            .Add(c => c.IncidentsHref, "/reports?propertyId=7")
+            .Add(c => c.DebtHref, "/invoices?paymentState=unpaid"));
         Assert.Equal(count, component.FindAll("article").Count);
         Assert.DoesNotContain("unwired", component.Markup);
         var hrefs = component.FindAll("a").Select(a => a.GetAttribute("href")).Distinct().ToList();
         Assert.Contains("/rooms?propertyId=7", hrefs);
         Assert.Contains("/reports?propertyId=7", hrefs);
+        Assert.Contains("/vehicles?propertyId=7", hrefs);
         Assert.Contains("83,3 %", component.Markup);
+        Assert.Contains("50%", component.Markup);
+        if (owner)
+        {
+            Assert.Contains("/invoices?paymentState=unpaid", hrefs);
+            Assert.Contains("750.000", component.Markup);
+        }
     }
 
     [Fact]

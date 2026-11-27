@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Web.Features.Properties.Entities;
 using Web.Features.Approvals.Entities;
@@ -12,8 +12,12 @@ using Web.Features.Settings.Entities;
 using Web.Features.Storage.Entities;
 using Web.Features.Tenants.Entities;
 using Web.Features.Utilities.Entities;
+using Web.Features.Accounts.Avatar;
 using Web.Features.Accounts.Otp;
+using Web.Features.Assistant.Entities;
 using Web.Data.Tariffs;
+using Web.Features.AccessControl.Entities;
+using Web.Features.Vehicles.Entities;
 
 namespace Web.Data
 {
@@ -23,6 +27,9 @@ namespace Web.Data
 
         // VHT-24: phân công Quản lý theo tòa nhà (nhiều-nhiều, có lịch sử).
         public DbSet<PropertyManager> PropertyManagers => Set<PropertyManager>();
+
+        // PLAN-030 bổ sung: ảnh đại diện lưu server, một dòng mỗi tài khoản.
+        public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
 
         // PLAN-022: mã OTP một lần cho đăng ký/xác thực tài khoản.
         public DbSet<OtpChallenge> OtpChallenges => Set<OtpChallenge>();
@@ -39,6 +46,11 @@ namespace Web.Data
         public DbSet<PendingRoomAssignment> PendingRoomAssignments => Set<PendingRoomAssignment>();
         public DbSet<Contract> Contracts => Set<Contract>();
         public DbSet<ContractMember> ContractMembers => Set<ContractMember>();
+        // Luồng ký hợp đồng: phiên bản nội dung, bằng chứng khách xác nhận, yêu cầu chỉnh sửa.
+        public DbSet<ContractVersion> ContractVersions => Set<ContractVersion>();
+        public DbSet<ContractAcceptance> ContractAcceptances => Set<ContractAcceptance>();
+        public DbSet<ContractChangeRequest> ContractChangeRequests => Set<ContractChangeRequest>();
+        public DbSet<ContractDepositPayment> ContractDepositPayments => Set<ContractDepositPayment>();
         // VHT-125 (2D): yeu cau gia han hop dong do khach thue gui tu "Phong dang thue".
         public DbSet<ContractRenewalRequest> ContractRenewalRequests => Set<ContractRenewalRequest>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
@@ -60,6 +72,11 @@ namespace Web.Data
 
         // VHT-96: hang doi duyet thao tac Quan ly (NEW-03).
         public DbSet<ManagerApprovalRequest> ManagerApprovalRequests => Set<ManagerApprovalRequest>();
+
+        // Trợ lý AI: đề xuất chờ Chủ trọ duyệt, nhật ký gọi model và cài đặt theo Chủ trọ.
+        public DbSet<AiSuggestion> AiSuggestions => Set<AiSuggestion>();
+        public DbSet<AiUsageLog> AiUsageLogs => Set<AiUsageLog>();
+        public DbSet<AiAssistantSettings> AiAssistantSettings => Set<AiAssistantSettings>();
         public DbSet<UtilityTariff> UtilityTariffs => Set<UtilityTariff>();
         public DbSet<UtilityTariffTier> UtilityTariffTiers => Set<UtilityTariffTier>();
         public DbSet<UtilityBillingPeriodSnapshot> UtilityBillingPeriodSnapshots => Set<UtilityBillingPeriodSnapshot>();
@@ -81,6 +98,15 @@ namespace Web.Data
         // Thông báo giữa các vai trò (đăng ký, hóa đơn, thanh toán).
         public DbSet<AppNotification> AppNotifications => Set<AppNotification>();
 
+        // P9 (bổ sung): kiểm soát ra vào cổng — chính sách, thiết bị, phiếu, lưu trú, sinh trắc, nhật ký.
+        public DbSet<GatePolicy> GatePolicies => Set<GatePolicy>();
+        public DbSet<GateDevice> GateDevices => Set<GateDevice>();
+        public DbSet<GatePass> GatePasses => Set<GatePass>();
+        public DbSet<GatePassInvite> GatePassInvites => Set<GatePassInvite>();
+        public DbSet<StayReport> StayReports => Set<StayReport>();
+        public DbSet<BiometricEnrollment> BiometricEnrollments => Set<BiometricEnrollment>();
+        public DbSet<GateLog> GateLogs => Set<GateLog>();
+
         // D16: nhật ký thao tác tách sổ hệ thống (Admin) và sổ nghiệp vụ theo tòa nhà (Chủ trọ).
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
 
@@ -88,10 +114,27 @@ namespace Web.Data
         public DbSet<UtilityReading> UtilityReadings => Set<UtilityReading>();
         public DbSet<UtilityReadingAudit> UtilityReadingAudits => Set<UtilityReadingAudit>();
 
+        // Quản lý xe 2 bánh & Phân khu đỗ xe (V1–V7).
+        public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+        public DbSet<VehiclePropertySetting> VehiclePropertySettings => Set<VehiclePropertySetting>();
+        public DbSet<ParkingZone> ParkingZones => Set<ParkingZone>();
+        public DbSet<ParkingSlot> ParkingSlots => Set<ParkingSlot>();
+        public DbSet<GuestVehicleNotice> GuestVehicleNotices => Set<GuestVehicleNotice>();
+        public DbSet<VehicleAuditSession> VehicleAuditSessions => Set<VehicleAuditSession>();
+        public DbSet<VehicleAuditItem> VehicleAuditItems => Set<VehicleAuditItem>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            builder.Entity<AppNotification>(entity =>
+            {
+                entity.Property(item => item.RecipientUserId).HasMaxLength(450).IsRequired();
+                entity.Property(item => item.Title).HasMaxLength(200).IsRequired();
+                entity.Property(item => item.Link).HasMaxLength(500);
+                entity.HasIndex(item => new { item.RecipientUserId, item.IsRead, item.CreatedAt });
+            });
 
             builder.Entity<AuditLogEntry>(entity =>
             {

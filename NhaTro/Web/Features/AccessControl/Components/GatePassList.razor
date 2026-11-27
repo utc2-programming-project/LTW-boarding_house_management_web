@@ -1,0 +1,98 @@
+@inject IStringLocalizer<AccessControlResource> L
+
+<div class="gate-table-scroll">
+    <table class="gate-table">
+        <thead>
+            <tr>
+                <th scope="col">@L["GuestName"]</th>
+                @if (ShowProperty)
+                {
+                    <th scope="col">@L["Property"]</th>
+                }
+                <th scope="col">@L["Room"]</th>
+                <th scope="col">@L["StayType"]</th>
+                <th scope="col">@L["Status"]</th>
+                <th scope="col">@L["ExpiresAt"]</th>
+                <th scope="col">@L["Uses"]</th>
+                <th scope="col">@L["Action"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Passes.Count == 0)
+            {
+                <tr><td colspan="@(ShowProperty ? 8 : 7)" class="gate-empty">@L["NoPasses"]</td></tr>
+            }
+            @foreach (var pass in PagedPasses)
+            {
+                <tr>
+                    <td>
+                        <strong>@pass.VisitorName</strong>
+                        @if (!string.IsNullOrWhiteSpace(pass.VisitorPhone))
+                        {
+                            <span class="gate-muted">@pass.VisitorPhone</span>
+                        }
+                    </td>
+                    @if (ShowProperty)
+                    {
+                        <td>@pass.PropertyName</td>
+                    }
+                    <td>@(pass.RoomCode ?? "—")</td>
+                    <td>@L[pass.StayType == GateStayType.Overnight ? "Overnight" : "Visit"]</td>
+                    <td>
+                        <span class="gate-badge gate-badge--@pass.Status.ToString().ToLowerInvariant()">@L[pass.Status.ToString()]</span>
+                        @if (pass.AutoApproved)
+                        {
+                            <span class="gate-muted">@L["AutoApproved"]</span>
+                        }
+                        @if (pass.IsSelfFilled)
+                        {
+                            <span class="gate-badge gate-badge--info">@L["SelfFilled"]</span>
+                        }
+                    </td>
+                    <td>@pass.ExpiresAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm")</td>
+                    <td>@pass.UsedCount/@pass.MaxUses</td>
+                    <td>
+                        <div class="gate-actions">
+                            @if (pass.CanApprove)
+                            {
+                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => OnApprove.InvokeAsync(pass)">@L["Approve"]</button>
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="() => OnReject.InvokeAsync(pass)">@L["Reject"]</button>
+                            }
+                            else if (pass.CanRevoke)
+                            {
+                                <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OnRevoke.InvokeAsync(pass)">@L["Revoke"]</button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<TablePager Page="_page" TotalPages="TotalPages" From="From" To="To" Total="Passes.Count"
+            PageChanged="GoToPage" />
+
+@code {
+    private const int PageSize = 10;
+
+    private int _page = 1;
+
+    [Parameter, EditorRequired] public IReadOnlyList<GatePassDto> Passes { get; set; } = [];
+    [Parameter] public bool ShowProperty { get; set; } = true;
+    [Parameter] public EventCallback<GatePassDto> OnApprove { get; set; }
+    [Parameter] public EventCallback<GatePassDto> OnReject { get; set; }
+    [Parameter] public EventCallback<GatePassDto> OnRevoke { get; set; }
+
+    private IEnumerable<GatePassDto> PagedPasses =>
+        Passes.Skip((_page - 1) * PageSize).Take(PageSize);
+
+    private int TotalPages => PaginationHelper.TotalPages(Passes.Count, PageSize);
+
+    private int From => PaginationHelper.ItemRange(_page, PageSize, Passes.Count).From;
+
+    private int To => PaginationHelper.ItemRange(_page, PageSize, Passes.Count).To;
+
+    protected override void OnParametersSet() => _page = PaginationHelper.ClampPage(_page, TotalPages);
+
+    private void GoToPage(int page) => _page = PaginationHelper.ClampPage(page, TotalPages);
+}

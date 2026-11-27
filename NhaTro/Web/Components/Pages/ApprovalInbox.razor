@@ -1,14 +1,30 @@
 @page "/approvals"
 @using Web.Features.Approvals.Pages
+@using Web.Features.Assistant.Pages
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ChuTro")]
 
-@* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ,
-   còn giao diện hàng đợi nằm trong Features/Approvals để tách khỏi trang
-   "Yêu cầu của tôi" của Quản lý. *@
-<ApprovalQueueView InitialQuery="@Query" />
+@* Route mỏng: giữ nguyên đường dẫn /approvals và chính sách Chủ trọ.
+   Hai tab: thao tác Quản lý gửi duyệt và đề xuất do Trợ lý AI tạo. *@
+
+@* Cụm chuyển đổi nằm trong PageHeading của từng trang con (ShowApprovalTabs),
+   cùng hàng với các nút hành động, không còn dải tab trước breadcrumb. *@
+
+@if (IsAiTab)
+{
+    <AiSuggestionInboxView ShowApprovalTabs="true" />
+}
+else
+{
+    <ApprovalQueueView InitialQuery="@Query" ShowApprovalTabs="true" />
+}
 
 @code {
     /// <summary>Mã phòng từ badge "Chờ duyệt" ở danh sách phòng: /approvals?q=A107.</summary>
     [SupplyParameterFromQuery(Name = "q")]
     public string? Query { get; set; }
+
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
+    private bool IsAiTab => string.Equals(Tab, "ai", StringComparison.OrdinalIgnoreCase);
 }

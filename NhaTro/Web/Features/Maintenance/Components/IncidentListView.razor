@@ -1,10 +1,14 @@
 @inject IStringLocalizer<IncidentResource> L
 @inject IStringLocalizer<Web.Shared> SL
+@inject NavigationManager Nav
+@inject Web.Common.Utils.FilterUrlState Url
+@using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.JSInterop
 
 <div class="incident-list page-stack" @ref="_listRegion" tabindex="-1" aria-label="@L["ListCaption"]">
 <section class="stat-grid" aria-label="@L["StatSummary"]">
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass("")' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync("")'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatTotal"]
@@ -14,7 +18,8 @@
         </div>
         <div class="stat-value">@_totalCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.New))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.New))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusNew"]
@@ -24,7 +29,8 @@
         </div>
         <div class="stat-value">@_newCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.InProgress))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.InProgress))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusInProgress"]
@@ -34,7 +40,8 @@
         </div>
         <div class="stat-value">@_inProgressCount <small>@L["StatUnit"]</small></div>
     </article>
-    <article class="stat-card">
+    <article class='stat-card stat-card--link @IncidentCardClass(nameof(IncidentStatus.Completed))' role="button" tabindex="0"
+             @onclick='() => ApplyIncidentFilterAsync(nameof(IncidentStatus.Completed))'>
         <div class="stat-card__top">
             <span class="stat-label">
                 @L["StatusCompleted"]
@@ -51,12 +58,12 @@
             <label class="sr-only" for="incident-title-filter">@L["Title"]</label>
             <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
             <input id="incident-title-filter" class="input" type="search" autocomplete="off"
-                   placeholder="@L["SearchTitle"]" @bind="_fTitle" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+                   placeholder="@L["SearchTitle"]" @bind="_fTitle" @bind:event="oninput" @bind:after="ApplyFiltersDebouncedAsync" />
         </div>
         <div class="filter-bar__field filter-bar__text">
             <label class="sr-only" for="incident-room-filter">@L["PropertyRoom"]</label>
             <input id="incident-room-filter" class="input" type="search" autocomplete="off"
-                   placeholder="@L["SearchRoom"]" @bind="_fRoom" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+                   placeholder="@L["SearchRoom"]" @bind="_fRoom" @bind:event="oninput" @bind:after="ApplyFiltersDebouncedAsync" />
         </div>
         <div class="filter-bar__field filter-bar__select">
             <label class="sr-only" for="incident-category-filter">@L["Category"]</label>
@@ -90,8 +97,8 @@
         </div>
         <div class="filter-bar__field filter-bar__text">
             <label class="sr-only" for="incident-created-filter">@L["CreatedAt"]</label>
-            <input id="incident-created-filter" class="input" type="search" autocomplete="off"
-                   placeholder="@L["SearchCreatedDate"]" @bind="_fCreated" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+            <input id="incident-created-filter" class="input" type="date"
+                   @bind="_fCreated" @bind:after="ApplyFiltersAsync" />
         </div>
         <div class="filter-bar__actions">
             <FilterResetButton OnClick="ClearFiltersAsync" />
@@ -135,8 +142,9 @@
     private string _fCategory = string.Empty;
     private string _fUrgency = string.Empty;
     private string _fStatus = string.Empty;
-    private string _fCreated = string.Empty;
+    private DateTime? _fCreated;
     private int _tableKey;
+    private CancellationTokenSource? _filterDebounce;
 
     private bool HasFilters =>
         !string.IsNullOrWhiteSpace(_fTitle)
@@ -144,7 +152,7 @@
         || !string.IsNullOrWhiteSpace(_fCategory)
         || !string.IsNullOrWhiteSpace(_fUrgency)
         || !string.IsNullOrWhiteSpace(_fStatus)
-        || !string.IsNullOrWhiteSpace(_fCreated);
+        || _fCreated is not null;
 
     private DataTableLabels Labels => new()
     {
@@ -158,23 +166,82 @@
     {
         _columns =
         [
-            new() { Key = "Title", Title = L["Title"], Value = i => Text(i, i.Title), Sortable = true },
-            new() { Key = "Room", Title = L["PropertyRoom"], Template = RoomCell, Sortable = true },
-            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"] },
-            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"] },
+            new()
+            {
+                Key = "Title",
+                Title = L["Title"],
+                Template = i => @<span class="cell-truncate" data-hover-tip>
+                    @Text(i, i.Title)
+                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                        <span class="hover-tip__line">@Text(i, i.Title)</span>
+                    </span>
+                </span>,
+                Sortable = true,
+                Width = "260px",
+            },
+            new() { Key = "Room", Title = L["PropertyRoom"], Template = RoomCell, Sortable = true, Width = "200px" },
+            new() { Key = "Category", Title = L["Category"], Value = i => L[$"Category{i.Category}"], Width = "130px" },
+            new() { Key = "Urgency", Title = L["Urgency"], Value = i => L[$"Urgency{i.Urgency}"], Width = "110px" },
             new() { Key = "Status", Title = L["Status"], Template = i => @<div>
                     <StatusBadge Text="@L[$"Status{i.Status}"]" Tone="@(i.Status == IncidentStatus.Completed ? BadgeTone.Success : BadgeTone.Info)" />
                 @if (i.Pending.Count > 0)
                 {
                     <StatusBadge Text="@L["PendingApproval"]" Tone="BadgeTone.Warning" />
                 }
-            </div> },
-            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true },
+            </div>, Width = "170px" },
+            new() { Key = "Created", Title = L["CreatedAt"], Value = i => DateFormatter.FormatDateTime(i.CreatedAtUtc), Sortable = true, Width = "150px" },
             new() { Key = "Actions", Title = L["Actions"], Template = i => @<button type="button" class="btn btn-secondary incident-detail-action"
                 @ref="_detailButtons[i.Id]"
-                aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button> }
+                aria-label="@L["ViewDetailNamed", Text(i, i.Title)]" @onclick="() => OnDetail.InvokeAsync(i.Id)">@L["ViewDetail"]</button>, CellClass = "cell-actions", Width = "140px" }
         ];
+
+        ApplyUrlState();
     }
+
+    // Component con không nhận SupplyParameterFromQuery: đọc thẳng query string khi mở trang.
+    private void ApplyUrlState()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
+        _fTitle = query.TryGetValue("q", out var title) ? title.ToString() : string.Empty;
+        _fRoom = query.TryGetValue("room", out var room) ? room.ToString() : string.Empty;
+
+        if (query.TryGetValue("category", out var category)
+            && Enum.TryParse<IncidentCategory>(category.ToString(), out var parsedCategory))
+        {
+            _fCategory = parsedCategory.ToString();
+        }
+
+        if (query.TryGetValue("urgency", out var urgency)
+            && Enum.TryParse<IncidentUrgency>(urgency.ToString(), out var parsedUrgency))
+        {
+            _fUrgency = parsedUrgency.ToString();
+        }
+
+        if (query.TryGetValue("status", out var status)
+            && Enum.TryParse<IncidentStatus>(status.ToString(), out var parsedStatus))
+        {
+            _fStatus = parsedStatus.ToString();
+        }
+
+        if (query.TryGetValue("created", out var created)
+            && DateTime.TryParse(created.ToString(), System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var parsedCreated))
+        {
+            _fCreated = parsedCreated.Date;
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_fTitle) ? null : _fTitle.Trim(),
+        ["room"] = string.IsNullOrWhiteSpace(_fRoom) ? null : _fRoom.Trim(),
+        ["category"] = string.IsNullOrEmpty(_fCategory) ? null : _fCategory,
+        ["urgency"] = string.IsNullOrEmpty(_fUrgency) ? null : _fUrgency,
+        ["status"] = string.IsNullOrEmpty(_fStatus) ? null : _fStatus,
+        ["created"] = _fCreated is { } created
+            ? created.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+            : null,
+    });
 
     private static string Text(IncidentItem item, string text) => text;
 
@@ -204,21 +271,60 @@
     private RenderFragment<IncidentItem> RoomCell => item => @<text>
         @if (CanFollowLinks)
         {
-            <a class="cell-link is-quiet" href="@AppLinks.RoomsByCode(RoomName(item))" title="@SL["CellLinkOpenRoom"]">@RoomText(item)</a>
+            <a class="cell-link is-quiet cell-truncate" href="@AppLinks.RoomsByCode(RoomName(item))" data-hover-tip>
+                @RoomText(item)
+                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                    <span class="hover-tip__line">@RoomText(item)</span>
+                </span>
+            </a>
         }
         else
         {
-            <span>@RoomText(item)</span>
+            <span class="cell-truncate" data-hover-tip>
+                @RoomText(item)
+                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                    <span class="hover-tip__line">@RoomText(item)</span>
+                </span>
+            </span>
         }
     </text>;
 
     private string RoomName(IncidentItem item) =>
         Rooms.FirstOrDefault(r => r.Id == item.RoomId)?.Name ?? item.RoomLabel;
 
+    private string IncidentCardClass(string status) =>
+        string.Equals(_fStatus, status, StringComparison.Ordinal) ? "is-active" : string.Empty;
+
+    private async Task ApplyIncidentFilterAsync(string status)
+    {
+        _fStatus = status;
+        if (_table is not null) await _table.ReloadAsync();
+    }
+
     private Task ApplyFiltersAsync()
     {
         _tableKey++;
         return Task.CompletedTask;
+    }
+
+    private async Task ApplyFiltersDebouncedAsync()
+    {
+        _filterDebounce?.Cancel();
+        _filterDebounce?.Dispose();
+        var cts = _filterDebounce = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(UiTiming.SearchDebounceMs, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!cts.IsCancellationRequested)
+        {
+            await InvokeAsync(ApplyFiltersAsync);
+        }
     }
 
     private Task ClearFilterStateAsync()
@@ -228,7 +334,7 @@
         _fCategory = string.Empty;
         _fUrgency = string.Empty;
         _fStatus = string.Empty;
-        _fCreated = string.Empty;
+        _fCreated = null;
         return Task.CompletedTask;
     }
 
@@ -241,54 +347,36 @@
     private async Task<PagedResult<IncidentItem>> LoadAsync(DataTableRequest request)
     {
         _detailButtons.Clear();
-        var scoped = await Session.ListAsync();
-        await UpdateStatsAsync(scoped);
-        IEnumerable<IncidentItem> items = scoped;
-        if (!string.IsNullOrWhiteSpace(_fTitle))
+        var query = new IncidentListQuery(
+            Title: string.IsNullOrWhiteSpace(_fTitle) ? null : _fTitle,
+            Room: string.IsNullOrWhiteSpace(_fRoom) ? null : _fRoom,
+            Category: Enum.TryParse<IncidentCategory>(_fCategory, out var category) ? category : null,
+            Urgency: Enum.TryParse<IncidentUrgency>(_fUrgency, out var urgency) ? urgency : null,
+            Status: Enum.TryParse<IncidentStatus>(_fStatus, out var status) ? status : null,
+            CreatedOn: _fCreated is { } created ? DateOnly.FromDateTime(created) : null,
+            Page: request.Page,
+            PageSize: request.PageSize,
+            SortKey: request.SortKey,
+            SortDescending: request.SortDescending);
+
+        var page = await Session.ListPageAsync(query);
+        await UpdateStatsAsync(page.Total, page.NewCount, page.InProgressCount, page.CompletedCount);
+        await WriteUrlStateAsync();
+        // Trang do SQL trả DTO nhẹ; bảng vẫn dùng model hiển thị cũ nên chiếu tại đây.
+        var items = page.Items.Select(i => new IncidentItem(i.Id, i.RoomId, i.Title, "", i.Category, i.Urgency,
+            i.Status, i.CreatedAt, "", [], [], [], RoomLabel: $"{i.PropertyName} / {i.RoomCode}")).ToArray();
+        return new()
         {
-            items = items.Where(i => i.Title.Contains(_fTitle, StringComparison.CurrentCultureIgnoreCase));
-        }
-        if (!string.IsNullOrWhiteSpace(_fRoom))
-        {
-            items = items.Where(i => RoomText(i).Contains(_fRoom, StringComparison.CurrentCultureIgnoreCase));
-        }
-        if (Enum.TryParse<IncidentCategory>(_fCategory, out var category))
-        {
-            items = items.Where(i => i.Category == category);
-        }
-        if (Enum.TryParse<IncidentUrgency>(_fUrgency, out var urgency))
-        {
-            items = items.Where(i => i.Urgency == urgency);
-        }
-        if (Enum.TryParse<IncidentStatus>(_fStatus, out var status))
-        {
-            items = items.Where(i => i.Status == status);
-        }
-        if (!string.IsNullOrWhiteSpace(_fCreated))
-        {
-            items = items.Where(i => DateFormatter.FormatDateTime(i.CreatedAtUtc)
-                .Contains(_fCreated, StringComparison.CurrentCultureIgnoreCase));
-        }
-        var ordered = request.SortKey switch
-        {
-            "Title" => items.OrderBy(i => Text(i, i.Title), StringComparer.CurrentCultureIgnoreCase),
-            "Room" => items.OrderBy(RoomText, StringComparer.CurrentCultureIgnoreCase),
-            "Created" => items.OrderBy(i => i.CreatedAtUtc),
-            _ => items.OrderByDescending(i => i.CreatedAtUtc)
+            Items = items,
+            TotalCount = page.TotalCount,
+            Page = page.Page,
+            PageSize = page.PageSize,
         };
-        var sorted = request.SortDescending ? ordered.Reverse() : ordered;
-        var all = sorted.ToArray();
-        return new() { Items = all.Skip((request.Page - 1) * request.PageSize).Take(request.PageSize).ToArray(),
-            TotalCount = all.Length, Page = request.Page, PageSize = request.PageSize };
     }
 
     // Dải KPI tính trên toàn bộ phiếu trong phạm vi người xem, không phụ thuộc bộ lọc của bảng.
-    private async Task UpdateStatsAsync(IReadOnlyList<IncidentItem> scoped)
+    private async Task UpdateStatsAsync(int total, int newCount, int inProgress, int completed)
     {
-        var total = scoped.Count;
-        var newCount = scoped.Count(item => item.Status == IncidentStatus.New);
-        var inProgress = scoped.Count(item => item.Status == IncidentStatus.InProgress);
-        var completed = scoped.Count(item => item.Status == IncidentStatus.Completed);
         if (total == _totalCount && newCount == _newCount
             && inProgress == _inProgressCount && completed == _completedCount)
         {

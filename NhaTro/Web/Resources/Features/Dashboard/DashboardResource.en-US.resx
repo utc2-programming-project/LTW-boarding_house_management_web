@@ -22,8 +22,10 @@
 <data name="TotalRooms" xml:space="preserve"><value>Total active rooms</value></data>
 <data name="TotalRoomsShort" xml:space="preserve"><value>Total rooms</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Occupancy rate</value></data>
-<data name="Revenue" xml:space="preserve"><value>Recognized revenue</value></data>
-<data name="Debt" xml:space="preserve"><value>Outstanding receivables</value></data>
+<data name="Revenue" xml:space="preserve"><value>Revenue this period</value></data>
+<data name="TotalRevenue" xml:space="preserve"><value>Lifetime revenue</value></data>
+<data name="AllTimeData" xml:space="preserve"><value>All-time figures</value></data>
+<data name="Debt" xml:space="preserve"><value>Lifetime outstanding</value></data>
 <data name="Incidents" xml:space="preserve"><value>Incidents in period</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>The owner has not permitted room reports</value></data>
 <data name="TenantsDenied" xml:space="preserve"><value>The owner has not permitted tenant reports</value></data>
@@ -58,4 +60,22 @@
 <data name="IncidentInProgress" xml:space="preserve"><value>In progress</value></data>
 <data name="IncidentCompleted" xml:space="preserve"><value>Completed</value></data>
 <data name="IncidentUrgent" xml:space="preserve"><value>Urgent</value></data>
+<data name="OccupancyBasis" xml:space="preserve"><value>excludes maintenance rooms</value></data>
+<data name="OccupancyTrend" xml:space="preserve"><value>Monthly occupancy rate</value></data>
+<data name="DebtAging" xml:space="preserve"><value>Outstanding by age</value></data>
+<data name="DebtUnder30" xml:space="preserve"><value>Under 30 days</value></data>
+<data name="Debt30To60" xml:space="preserve"><value>30–60 days</value></data>
+<data name="DebtOver60" xml:space="preserve"><value>Over 60 days</value></data>
+<data name="DebtAgingNote" xml:space="preserve"><value>Aggregated from up to the first 100 outstanding invoices</value></data>
+<data name="ContractExpiry" xml:space="preserve"><value>Contracts expiring by month</value></data>
+<data name="IncidentStatusTitle" xml:space="preserve"><value>Incidents by status</value></data>
+<data name="RevenueStacked" xml:space="preserve"><value>Stacked revenue/debt bars</value></data>
+<data name="ViewNumberTable" xml:space="preserve"><value>View data table</value></data>
+<data name="VehicleActive" xml:space="preserve"><value>Active vehicles</value></data>
+<data name="VehicleBreakdown" xml:space="preserve"><value>Electric {0} · Manual {1} · Scooter {2}</value></data>
+<data name="VehicleZoneFill" xml:space="preserve"><value>Parking occupancy</value></data>
+<data name="VehicleZoneFillNote" xml:space="preserve"><value>Occupied slots over total capacity of active zones</value></data>
+<data name="VehicleParkingRevenue" xml:space="preserve"><value>Parking fees this month</value></data>
+<data name="VehicleParkingRevenueNote" xml:space="preserve"><value>Parking revenue for the current month</value></data>
+<data name="VehiclesDenied" xml:space="preserve"><value>You do not have permission to view vehicle statistics</value></data>
 </root>

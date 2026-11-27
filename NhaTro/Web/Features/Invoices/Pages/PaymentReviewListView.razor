@@ -1,7 +1,9 @@
 @page "/payment-requests"
 @rendermode InteractiveServer
 @attribute [Authorize(Policy = "PaymentReview")]
+@implements IDisposable
 @inject PaymentReviewPageService ReviewPage
+@inject Web.Common.Utils.FilterUrlState Url
 @inject NavigationManager Navigation
 @inject IStringLocalizer<InvoiceResources> L
 @inject IStringLocalizer<Web.Shared> SL
@@ -11,7 +13,7 @@
 <div class="payment-review-page page-stack">
     <PageHeading Title="@L["ReviewHeading"]" HelpText="@L["ReviewSubtitle"]">
         <Actions>
-            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="ReloadAsync">
+            <button type="button" class="btn btn-secondary" disabled="@_loading" @onclick="() => ReloadAsync()">
                 <LucideIcon Name="refresh" />
                 <span>@L["ReviewRefresh"]</span>
             </button>
@@ -26,40 +28,44 @@
     {
         <div class="page-error" role="alert">
             <p>@_error</p>
-            <button type="button" class="btn btn-secondary" @onclick="ReloadAsync">@L["ReviewRetry"]</button>
+            <button type="button" class="btn btn-secondary" @onclick="() => ReloadAsync()">@L["ReviewRetry"]</button>
         </div>
     }
     else
     {
         <div class="stat-grid">
-            <div class="stat-card stat-card--warning">
+            <article class='stat-card stat-card--link stat-card--warning @ReviewCardClass(PaymentStatus.Pending)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Pending)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatPending"]</span>
                     <span class="stat-icon stat-icon--warning"><LucideIcon Name="history" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.PendingCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Confirmed)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Confirmed)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatConfirmed"]</span>
                     <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.ConfirmedCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Rejected)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Rejected)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatRejected"]</span>
                     <span class="stat-icon stat-icon--danger"><LucideIcon Name="circle-x" /></span>
                 </div>
                 <div class="stat-value">@_result.Summary.RejectedCount</div>
-            </div>
-            <div class="stat-card">
+            </article>
+            <article class='stat-card stat-card--link @ReviewCardClass(PaymentStatus.Pending)' role="button" tabindex="0"
+                     @onclick='() => ApplyReviewFilterAsync(PaymentStatus.Pending)'>
                 <div class="stat-card__top">
                     <span class="stat-label">@L["ReviewStatPendingAmount"]</span>
                     <span class="stat-icon stat-icon--accent"><LucideIcon Name="wallet" /></span>
                 </div>
                 <div class="stat-value">@MoneyFormatter.Format(_result.Summary.PendingAmount)</div>
-            </div>
+            </article>
         </div>
 
         <div class="filter-bar filter-bar--panel">
@@ -69,7 +75,7 @@
                     <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
                     <input id="review-keyword" class="input" type="search" autocomplete="off"
                            placeholder="@L["ReviewFilterKeywordPlaceholder"]"
-                           @bind="_keyword" @bind:event="oninput" @bind:after="OnFilterChangedAsync" />
+                           @bind="_keyword" @bind:event="oninput" @bind:after="OnKeywordChangedAsync" />
                 </div>
                 <div class="filter-bar__field filter-bar__select">
                     <label class="sr-only" for="review-status">@L["ReviewFilterStatus"]</label>
@@ -144,14 +150,24 @@
                             {
                                 <tr>
                                     <td class="font-semibold tabular-nums">
-                                        <a class="cell-link" href="@AppLinks.PaymentRequest(item.Payment.Id)" title="@SL["CellLinkOpenPayment"]">YC-@item.Payment.Id</a>
+                                        <a class="cell-link" href="@AppLinks.PaymentRequest(item.Payment.Id)">YC-@item.Payment.Id</a>
                                     </td>
                                     <td class="font-semibold tabular-nums">
-                                        <a class="cell-link" href="@AppLinks.Invoice(item.InvoiceId)" title="@SL["CellLinkOpenInvoice"]">HD-@item.InvoiceId</a>
+                                        <a class="cell-link" href="@AppLinks.Invoice(item.InvoiceId)">HD-@item.InvoiceId</a>
                                     </td>
                                     <td>
-                                        <a class="cell-link room-code" href="@AppLinks.RoomsByCode(item.RoomCode)" title="@SL["CellLinkOpenRoom"]">@item.RoomCode</a>
-                                        <a class="cell-link is-quiet property-name" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" title="@SL["CellLinkOpenProperty"]">@item.PropertyName</a>
+                                        <a class="cell-link room-code cell-truncate" href="@AppLinks.RoomsByCode(item.RoomCode)" data-hover-tip>
+                                            @item.RoomCode
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.RoomCode</span>
+                                            </span>
+                                        </a>
+                                        <a class="cell-link is-quiet property-name cell-truncate" href="@AppLinks.PropertiesByKeyword(item.PropertyName)" data-hover-tip>
+                                            @item.PropertyName
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@item.PropertyName</span>
+                                            </span>
+                                        </a>
                                     </td>
                                     <td>
                                         @if (item.TenantNames.Count == 0)
@@ -160,15 +176,23 @@
                                         }
                                         else
                                         {
-                                            @for (var i = 0; i < item.TenantNames.Count; i++)
-                                            {
-                                                var tenantName = item.TenantNames[i];
-                                                if (i > 0)
+                                            <span class="cell-truncate" data-hover-tip>
+                                                @for (var i = 0; i < item.TenantNames.Count; i++)
                                                 {
-                                                    <span>, </span>
+                                                    var tenantName = item.TenantNames[i];
+                                                    if (i > 0)
+                                                    {
+                                                        <span>, </span>
+                                                    }
+                                                    <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)">@tenantName</a>
                                                 }
-                                                <a class="cell-link is-quiet" href="@AppLinks.TenantsByKeyword(tenantName)" title="@SL["CellLinkOpenTenant"]">@tenantName</a>
-                                            }
+                                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                    @foreach (var name in item.TenantNames)
+                                                    {
+                                                        <span class="hover-tip__line">@name</span>
+                                                    }
+                                                </span>
+                                            </span>
                                         }
                                     </td>
                                     <td class="tabular-nums">@DateFormatter.Format(item.PeriodStart) – @DateFormatter.Format(item.PeriodEnd)</td>
@@ -236,6 +260,7 @@
 
     private PaymentStatus? _status = PaymentStatus.Pending;
     private string _keyword = string.Empty;
+    private CancellationTokenSource? _keywordDebounce;
     private int? _year;
     private int? _month;
     private string _minAmount = string.Empty;
@@ -244,6 +269,9 @@
     private string? _error;
     private int _page = 1;
     private bool _showAdvanced;
+    // Các lượt đọc dùng chung DbContext scoped của circuit: xếp hàng để bấm thẻ KPI/gõ tìm
+    // liên tiếp không chạy hai truy vấn song song trên cùng context.
+    private readonly SemaphoreSlim _reloadGate = new(1, 1);
 
     private int AdvancedFilterCount =>
         (string.IsNullOrWhiteSpace(_minAmount) ? 0 : 1)
@@ -274,6 +302,7 @@
             _keyword = KeywordQuery.Trim();
         }
 
+        ApplyUrlState();
         return ReloadAsync();
     }
 
@@ -295,39 +324,124 @@
     [SupplyParameterFromQuery(Name = "q")]
     public string? KeywordQuery { get; set; }
 
+    /// <summary>URL state: mở lại link chia sẻ vẫn giữ trang/bộ lọc.</summary>
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? StatusQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "year")]
+    public int? YearQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "month")]
+    public int? MonthQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "minAmount")]
+    public string? MinAmountQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "maxAmount")]
+    public string? MaxAmountQuery { get; set; }
+
+    private void ApplyUrlState()
+    {
+        if (PageQuery is > 1)
+        {
+            _page = PageQuery.Value;
+        }
+
+        if (!string.IsNullOrWhiteSpace(StatusQuery)
+            && Enum.TryParse<PaymentStatus>(StatusQuery, true, out var status)
+            && Enum.IsDefined(status))
+        {
+            _status = status;
+        }
+
+        if (YearQuery is >= 2000 and <= 3000)
+        {
+            _year = YearQuery;
+        }
+
+        if (MonthQuery is >= 1 and <= 12 && _year is not null)
+        {
+            _month = MonthQuery;
+        }
+
+        if (decimal.TryParse(MinAmountQuery, out var minAmount) && minAmount >= 0)
+        {
+            _minAmount = MinAmountQuery!;
+        }
+
+        if (decimal.TryParse(MaxAmountQuery, out var maxAmount) && maxAmount >= 0)
+        {
+            _maxAmount = MaxAmountQuery!;
+        }
+    }
+
+    private Task WriteUrlStateAsync() => Url.ReplaceAsync(new Dictionary<string, string?>
+    {
+        ["q"] = string.IsNullOrWhiteSpace(_keyword) ? null : _keyword.Trim(),
+        ["page"] = _page > 1 ? _page.ToString(System.Globalization.CultureInfo.InvariantCulture) : null,
+        ["status"] = _status?.ToString(),
+        ["year"] = _year?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ["month"] = _month?.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        ["minAmount"] = string.IsNullOrWhiteSpace(_minAmount) ? null : _minAmount,
+        ["maxAmount"] = string.IsNullOrWhiteSpace(_maxAmount) ? null : _maxAmount,
+    });
+
     private string? _lastAppliedKeywordQuery;
 
-    private async Task ReloadAsync()
-    {
-        _loading = true;
-        _error = null;
-        _openMenuId = null;
+    private string ReviewCardClass(PaymentStatus status) =>
+        _status == status ? "is-active" : string.Empty;
 
+    private async Task ApplyReviewFilterAsync(PaymentStatus status)
+    {
+        _status = status;
+        _page = 1;
+        await ReloadAsync(showLoading: false);
+    }
+
+    private async Task ReloadAsync(bool showLoading = true)
+    {
+        await _reloadGate.WaitAsync();
         try
         {
-            _result = await ReviewPage.ListAsync(new PaymentReviewFilter
+            if (showLoading) _loading = true;
+            _error = null;
+            _openMenuId = null;
+
+            try
             {
-                Status = _status,
-                Keyword = _keyword,
-                Year = _year,
-                Month = _month,
-                MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
-                MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
-                Page = _page,
-                PageSize = PageSize,
-            });
+                _result = await ReviewPage.ListAsync(new PaymentReviewFilter
+                {
+                    Status = _status,
+                    Keyword = _keyword,
+                    Year = _year,
+                    Month = _month,
+                    MinAmount = decimal.TryParse(_minAmount, out var min) && min >= 0 ? min : null,
+                    MaxAmount = decimal.TryParse(_maxAmount, out var max) && max >= 0 ? max : null,
+                    Page = _page,
+                    PageSize = PageSize,
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _error = L["ReviewErrorForbidden"];
+            }
+            catch (Exception)
+            {
+                _error = L["ReviewLoadError"];
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
-        catch (UnauthorizedAccessException)
+        finally { _reloadGate.Release(); }
+
+        if (_error is null)
         {
-            _error = L["ReviewErrorForbidden"];
-        }
-        catch (Exception)
-        {
-            _error = L["ReviewLoadError"];
-        }
-        finally
-        {
-            _loading = false;
+            await WriteUrlStateAsync();
         }
     }
 
@@ -339,7 +453,37 @@
         }
 
         _page = 1;
-        await ReloadAsync();
+        await ReloadAsync(showLoading: false);
+    }
+
+    // Gõ từ khóa: gộp 300ms. Cả từ khóa lẫn select/năm đều giữ bảng cũ trong lúc tải
+    // để không nháy overlay toàn trang (như Hợp đồng).
+    private async Task OnKeywordChangedAsync()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
+        _keywordDebounce = new CancellationTokenSource();
+        var token = _keywordDebounce.Token;
+        try
+        {
+            await Task.Delay(UiTiming.SearchDebounceMs, token);
+            if (_year is null)
+            {
+                _month = null;
+            }
+
+            _page = 1;
+            await ReloadAsync(showLoading: false);
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _keywordDebounce?.Cancel();
+        _keywordDebounce?.Dispose();
     }
 
     private async Task ResetFiltersAsync()
@@ -364,7 +508,8 @@
         }
 
         _page = target;
-        await ReloadAsync();
+        // Giữ bảng cũ trong lúc tải trang kế; tránh nháy overlay mỗi lần bấm số trang.
+        await ReloadAsync(showLoading: false);
     }
 
     private void OpenDetail(int paymentId) => Navigation.NavigateTo($"/payment-requests/{paymentId}");

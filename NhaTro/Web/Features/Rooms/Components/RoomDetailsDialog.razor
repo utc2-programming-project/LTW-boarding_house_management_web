@@ -1,5 +1,8 @@
+@using Web.Common.Utils
+@using Web.Features.Contracts
 @inject RoomPageService PageService
 @inject IStringLocalizer<Shared> L
+@inject IStringLocalizer<ContractResources> CL
 @inject ILogger<RoomDetailsDialog> Logger
 
 <FeatureDialog @ref="_featureDialog" Visible="true" Title="@DialogTitle" CloseLabel="@L["Close"]" OnClose="OnClose">
@@ -22,7 +25,7 @@
                 <StatusBadge Text="@(_detail.IsActive ? L["P2Active"].Value : L["P2Inactive"].Value)" Tone="@(_detail.IsActive ? BadgeTone.Success : BadgeTone.Neutral)" />
             </div>
             <dl class="p2-detail-grid">
-                <div><dt>@L["P2Property"]</dt><dd>@_detail.PropertyName</dd></div>
+                <div><dt>@L["P2Property"]</dt><dd><a class="cell-link" href="@AppLinks.Property(_detail.PropertyId)">@_detail.PropertyName</a></dd></div>
                 <div><dt>@L["P2RoomCode"]</dt><dd>@_detail.Code</dd></div>
                 <div><dt>@L["P2Floor"]</dt><dd>@(_detail.Floor?.ToString(CultureInfo.CurrentCulture) ?? L["P2NotProvided"])</dd></div>
                 <div><dt>@L["P2Area"]</dt><dd>@(_detail.AreaM2?.ToString("N2", CultureInfo.CurrentCulture) ?? L["P2NotProvided"]) @L["P2SquareMeter"]</dd></div>
@@ -33,6 +36,60 @@
                     <div><dt>@L["P2UpdatedAt"]</dt><dd>@DateFormatter.FormatDateTime(_detail.UpdatedAt)</dd></div>
                 }
             </dl>
+            @if (_detail.Status == RoomStatus.Rented || _detail.CurrentRental is not null)
+            {
+                <section class="p2-tenant-section" aria-labelledby="room-tenant-title">
+                    <h3 id="room-tenant-title" class="p2-tenant-title"><LucideIcon Name="users" />@L["P2CurrentTenants"]</h3>
+                    @if (_detail.CurrentRental is { } rental)
+                    {
+                        <dl class="p2-detail-grid">
+                            <div>
+                                <dt>@L["ContractNumber"]</dt>
+                                <dd><a class="cell-link" href="@AppLinks.Contract(rental.ContractId)" title="@L["CellLinkOpenContract"]">@rental.ContractNumber</a></dd>
+                            </div>
+                            <div>
+                                <dt>@L["P2ContractTerm"]</dt>
+                                <dd>@DateFormatter.Format(DateOnly.FromDateTime(rental.StartDate)) – @DateFormatter.Format(DateOnly.FromDateTime(rental.EndDate))</dd>
+                            </div>
+                        </dl>
+                        @if (rental.Tenants.Count == 0)
+                        {
+                            <p class="p2-tenant-empty">@L["P2RentalWithoutTenant"]</p>
+                        }
+                        else
+                        {
+                            <ul class="p2-tenant-list">
+                                @foreach (var tenant in rental.Tenants)
+                                {
+                                    <li class="p2-tenant-item">
+                                        <span class="p2-tenant-name">
+                                            <a class="cell-link" href="@AppLinks.Tenant(tenant.TenantId)" title="@L["CellLinkOpenTenant"]">@tenant.FullName</a>
+                                            @if (tenant.IsRepresentative)
+                                            {
+                                                <span class="p2-tenant-tag">@CL["ContractRepresentativeTag"]</span>
+                                            }
+                                        </span>
+                                        <span class="p2-tenant-meta">
+                                            @if (!string.IsNullOrWhiteSpace(tenant.Phone))
+                                            {
+                                                <a class="cell-link" href="tel:@tenant.Phone">@tenant.Phone</a>
+                                            }
+                                            @if (ContractRelationshipPresentation.Format(CL, tenant.Relationship) is { Length: > 0 } relation)
+                                            {
+                                                <span>@relation</span>
+                                            }
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                    else
+                    {
+                        <p class="p2-tenant-empty">@L["P2NoActiveContract"]</p>
+                    }
+                </section>
+            }
             <div class="p2-details-actions">
                 <button class="btn btn-secondary" type="button" @onclick="CloseDialogAsync">@L["Close"]</button>
                 <button class="btn btn-primary" type="button" @onclick="EditAsync">@L["P2Edit"]</button>

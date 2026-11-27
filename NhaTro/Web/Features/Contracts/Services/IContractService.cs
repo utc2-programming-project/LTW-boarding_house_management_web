@@ -1,4 +1,5 @@
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Properties;
 
@@ -10,9 +11,42 @@ public interface IContractService
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Phòng còn trống của một tòa trong phạm vi người gọi (trần <see cref="LookupQuery.MaxOptions"/>).</summary>
+    Task<IReadOnlyList<ContractRoomOptionDto>> GetAvailableRoomsAsync(
+        PropertyCaller caller,
+        int propertyId,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ContractTenantOptionDto>> SearchTenantOptionsAsync(
+        PropertyCaller caller,
+        string? keyword,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ContractTenantOptionDto>> GetTenantOptionsAsync(
+        PropertyCaller caller,
+        IReadOnlyCollection<int> tenantIds,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ContractListItemDto>> ListAsync(
         string? keyword,
         PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<ContractListPageDto> GetListPageAsync(
+        ContractListFilter filter,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetPropertyNamesAsync(
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
+    Task<ContractHomeSnapshotDto> GetHomeSnapshotAsync(
+        PropertyCaller caller,
+        DateOnly today,
+        int expiringDays = 30,
+        int take = 5,
         CancellationToken cancellationToken = default);
 
     Task<ContractDetailDto> GetAsync(
@@ -49,14 +83,21 @@ public interface IContractService
         PropertyCaller caller,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Xác nhận chủ trọ đã thực nhận đủ tiền cọc giữ căn theo hợp đồng.</summary>
+    Task<ContractActionResultDto> RecordDepositPaymentAsync(
+        Guid contractId,
+        PropertyCaller caller,
+        CancellationToken cancellationToken = default);
+
     Task<ContractActionResultDto> DeleteAsync(
         Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);
 
     Task<ContractActionResultDto> RestoreAsync(
         Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ContractTrashItemDto>> ListDeletedAsync(
-        PropertyCaller caller, CancellationToken cancellationToken = default);
+    Task<PagedResult<ContractTrashItemDto>> ListDeletedAsync(
+        PropertyCaller caller, string? keyword, int page, int pageSize,
+        CancellationToken cancellationToken = default);
 
     Task<ContractActionResultDto> PurgeAsync(
         Guid contractId, PropertyCaller caller, CancellationToken cancellationToken = default);

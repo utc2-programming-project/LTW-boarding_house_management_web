@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -9,6 +10,7 @@ using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.Accounts;
 using Web.Features.Accounts.DTOs;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Services;
@@ -158,6 +160,10 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
     public ApplicationDbContext NewDb() => _fixture.CreateContext();
 
+    /// <summary>Guard chạy trên DB test thật; UserManager chỉ dùng ở nhánh cascade lock.</summary>
+    public OwnerAccessGuard NewOwnerAccessGuard() =>
+        new(_fixture, null!, NullLogger<OwnerAccessGuard>.Instance);
+
     public ApplicationDbContext SharedDb => _sharedDb
         ?? throw new InvalidOperationException("Thế giới ma trận chưa khởi tạo (SQL Server không khả dụng?).");
 
@@ -211,7 +217,7 @@ public sealed class PermissionMatrixWorld : IAsyncLifetime
 
     public PaymentService NewPayments() => new(SharedDb, TimeProvider.System);
 
-    public RevenueReportService NewRevenueReports() => new(SharedDb);
+    public RevenueReportService NewRevenueReports() => new(_fixture);
 
     public ReportExportService NewReportExports() => new(
         NewRevenueReports(),

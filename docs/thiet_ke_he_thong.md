@@ -255,11 +255,11 @@ P2, P5 và P8 không thay đổi quan hệ luồng; chỉ chuẩn hóa cách tr�
 ## 7. File và cách xuất lại ảnh
 
 - Mở [docs/bieudochot.excalidraw](bieudochot.excalidraw) bằng Excalidraw. File có **8 frame**, đặt tên theo P1–P8 (vẫn 8 frame sau khi thêm Admin vào P1).
-- Cả 8 frame đều thay đổi (P1 có tác nhân mới; P2–P8 đổi nhãn) nên xuất lại cả 8 PNG + 8 SVG + `dfd_tong_the.svg`; bản trước lưu `archive/truoc_admin/`. Các SVG hiện hành trong `docs/image/` xuất từ cùng dữ liệu nguồn. **Cả tám PNG mới đã được xuất từ SVG**, kích thước 1900 × 1050, và được nhúng ở mục 4. Không còn dùng PNG chụp cũ trong tài liệu hiện hành.
+- Cả 8 frame đều thay đổi (P1 có tác nhân mới; P2–P8 đổi nhãn) nên xuất lại cả 8 PNG + 8 SVG + `dfd_tong_the.svg`; bản trước đã bỏ khỏi repo, xem lịch sử git. Các SVG hiện hành trong `docs/image/` xuất từ cùng dữ liệu nguồn. **Cả tám PNG mới đã được xuất từ SVG**, kích thước 1900 × 1050, và được nhúng ở mục 4. Không còn dùng PNG chụp cũ trong tài liệu hiện hành.
 - **Không cần chụp lại ảnh nào thủ công** cho lần sửa này. Nhóm có thể dùng trực tiếp PNG hoặc SVG; danh mục nằm tại [image/README.md](image/README.md).
 - Nếu sửa sơ đồ sau này: xuất từng frame P1–P8, đặt tên giống SVG và đổi đuôi thành `.png`. Nên dùng **Export → PNG**, không chụp cả giao diện/canvas để tránh dòng hướng dẫn và chữ bị nhỏ.
 - P1, P3, P4, P6, P7 có sửa nội dung so với ảnh cũ; P2, P5, P8 chỉ đổi trình bày. Cả tám đã được thay bằng bản mới để thống nhất.
-- Bản SVG/PNG và nguồn trước khi sửa được lưu tại `docs/archive/truoc_sua_luong/`. Bản tài liệu chi tiết trước được lưu tại `docs/archive/ban_cu/`; không dùng làm yêu cầu của luồng chính thức.
+- Bản SVG/PNG, nguồn và tài liệu chi tiết trước khi sửa đã bỏ khỏi repo; tra lịch sử git nếu cần, và không dùng chúng làm yêu cầu của luồng chính thức.
 - PDF cũ gộp tác nhân và dùng 6 kho dữ liệu là bản lịch sử, không trộn mã kho của nó vào tài liệu này.
 
 **Hướng dẫn cho AI và thành viên nhóm:** Dùng luồng ở mục 4 làm căn cứ chính thức. Chỉ mô tả/triển khai chi tiết chức năng được giao; không coi công nghệ, cấu trúc bảng, trạng thái chi tiết, công thức tính phí hoặc phần mở rộng chưa thống nhất là yêu cầu đã chốt. Khi thay đổi tác nhân, tiến trình, kho hoặc quan hệ luồng, phải thống nhất và cập nhật cả sơ đồ lẫn tài liệu.

@@ -1,0 +1,55 @@
+WEB VẬN HÀNH NHÀ TRỌ — GIAO DIỆN HIỆN TRẠNG: TRANG CHỦ /home — KHÁCH THUÊ
+====================================================================================================
+> Mô tả theo code đang chạy: HomeView.razor (nhánh không quản lý) + HomeKpiGrid/HomeQuickActions/HomePanel.
+> Đây KHÔNG phải bản v2 trong file txt đính kèm; [{...}] là số liệu thực từ DB, không chèn số mẫu.
+> Nguồn nhãn: HomeResource / Shared (vi-VN).
+
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Web vận hành nhà trọ      [☰]  [ Tìm kiếm nhanh... ]              [🔔 {số chưa đọc}]  [{avatar}]  │
+├──────────────────────────┬────────────────────────────────────────────────────────────────────────┤
+│ MENU (sidebar)           │ Trang chủ                                              [Làm mới]       │
+│                          │ Tổng quan nhanh tình hình nhà trọ, phòng, hợp đồng và hóa đơn trong    │
+│ ▣ Trang chủ              │ phạm vi tài khoản của bạn.                                              │
+│                          │ [Khách thuê]  [dd/MM/yyyy]  · Cập nhật lúc [HH:mm]                     │
+│ NHÀ TRỌ & HỢP ĐỒNG       │                                                                        │
+│ ▣ Hợp đồng               │ TỔNG QUAN HÔM NAY                                                      │
+│ ▣ Phòng của tôi          │ ┌───────────────────┐┌───────────────────┐                             │
+│                          │ │ Hoá đơn chưa      ││ Số tiền còn nợ    │                             │
+│ TÀI CHÍNH                │ │ thanh toán        ││                   │                             │
+│ ◉ Dịch vụ                │ │      [{số}] ›     ││    [{tiền}] ›     │                             │
+│ ▤ Hóa đơn của tôi        │ └───────────────────┘└───────────────────┘                             │
+│                          │ ┌───────────────────┐┌───────────────────┐                             │
+│ VẬN HÀNH                 │ │ Sự cố đang xử lý  ││ Hợp đồng còn      │                             │
+│ ⚙ Báo sự cố              │ │      [{số}] ›     ││     [{số}] ngày › │                             │
+│ ◉ Ra vào của tôi         │ │                   ││ Ngày kết thúc:    │                             │
+│                          │ │                   ││ [dd/MM/yyyy]      │                             │
+│ CÁ NHÂN                  │ └───────────────────┘└───────────────────┘                             │
+│ ▤ Hồ sơ giấy tờ          │   (không có hợp đồng → "—" + "Chưa có hợp đồng đang hiệu lực")        │
+│                          │                                                                        │
+│ [{Họ tên}] / Khách thuê  │ LỐI TẮT                                                                │
+│ [avatar] [⇄ đổi vai trò] │ [▣ Phòng của tôi] [▤ Xem hoá đơn] [⚙ Gửi sự cố]                        │
+│ [VI|EN] [☾] [Đăng xuất]  │                                                                        │
+│                          │ ┌───────────────────────────────────┐┌────────────────────────────────┐ │
+│                          │ │ VIỆC CẦN LÀM                      ││ HÓA ĐƠN CHƯA THU  Xem tất cả →│ │
+│                          │ │ • Hoá đơn chưa thu        [{số}] ›││ [{mã phòng}] · [{nhà trọ}]     │ │
+│                          │ │ • Sự cố đang mở           [{số}] ›││   Kỳ [{dd/MM} – {dd/MM/yyyy}]  │ │
+│                          │ │ • HĐ sắp hết hạn (30 ngày) [{số}]›││   [{tiền}] › (mở hoá đơn)      │ │
+│                          │ │ (ẩn mục có số = 0)               ││ … tối đa 5 dòng (Issued)       │ │
+│                          │ └───────────────────────────────────┘└────────────────────────────────┘ │
+│                          │ ┌────────────────────────────────────────────────────────────────────┐ │
+│                          │ │ HỢP ĐỒNG SẮP HẾT HẠN                             Xem tất cả →     │ │
+│                          │ │ [{mã phòng}] · [{nhà trọ}]   [{khách thuê}]                        │ │
+│                          │ │   Kết thúc [dd/MM/yyyy]      Còn [{n}] ngày                        │ │
+│                          │ │ … tối đa 5 dòng, EndDate ≤ today + 30 ngày                         │ │
+│                          │ └────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+GHI CHÚ HIỆN TRẠNG:
+- Có PageHeading riêng: huy hiệu "Khách thuê", ngày VN, "Cập nhật lúc HH:mm", nút Làm mới.
+- KPI, việc cần làm và panel hoá đơn dùng link /my/invoices (không phải /invoices); KPI sự cố → /incidents,
+  KPI hợp đồng → /contracts; panel hợp đồng → /contracts.
+- Không có bộ lọc nhà/kỳ, không có dashboard/biểu đồ; "Tổng quan hôm nay" là section của HomeView.
+- Panel rỗng hiện EmptyStateCard: "Không có việc nào cần xử lý." / "Không có hoá đơn chưa thu." /
+  "Không có hợp đồng nào hết hạn trong 30 ngày tới."
+- Lỗi/vô hiệu: "—" + "Không tải được số liệu" + [Thử lại]; mất quyền: "Bạn không có quyền xem mục này."
+- Topbar KHÔNG có nút [+ Tạo nhanh] (chỉ có trong bản v2).

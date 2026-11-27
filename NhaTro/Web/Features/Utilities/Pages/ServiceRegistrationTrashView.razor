@@ -94,14 +94,32 @@
     {
         RenderFragment<ServiceRegistrationTrashItemDto> actions = item => @<TrashRowMenu RestoreText="@L["Restore"]" PurgeText="@L["Purge"]"
             OnRestore="() => RequestRestore(item)" OnPurge="() => RequestPurge(item)" />;
+        RenderFragment<ServiceRegistrationTrashItemDto> contract = item => @<span class="cell-truncate" data-hover-tip>
+            @item.ContractNumber
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.ContractNumber</span>
+            </span>
+        </span>;
+        RenderFragment<ServiceRegistrationTrashItemDto> property = item => @<span class="cell-truncate" data-hover-tip>
+            @item.PropertyName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.PropertyName</span>
+            </span>
+        </span>;
+        RenderFragment<ServiceRegistrationTrashItemDto> service = item => @<span class="cell-truncate" data-hover-tip>
+            @item.ServiceName
+            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                <span class="hover-tip__line">@item.ServiceName</span>
+            </span>
+        </span>;
 
         return
         [
-            new() { Key = "contract", Title = L["ServiceRegistrationTrashColumnContract"], Value = item => item.ContractNumber },
-            new() { Key = "room", Title = L["ServiceRegistrationTrashColumnRoom"], Value = item => item.RoomCode },
-            new() { Key = "property", Title = L["ServiceRegistrationTrashColumnProperty"], Value = item => item.PropertyName },
-            new() { Key = "service", Title = L["ServiceRegistrationTrashColumnService"], Value = item => item.ServiceName },
-            new() { Key = "month", Title = L["ServiceRegistrationTrashColumnMonth"], Value = item => DateFormatter.FormatMonth(item.MonthStart) },
+            new() { Key = "contract", Title = L["ServiceRegistrationTrashColumnContract"], Template = contract, Width = "170px" },
+            new() { Key = "room", Title = L["ServiceRegistrationTrashColumnRoom"], Value = item => item.RoomCode, Width = "110px" },
+            new() { Key = "property", Title = L["ServiceRegistrationTrashColumnProperty"], Template = property, Width = "210px" },
+            new() { Key = "service", Title = L["ServiceRegistrationTrashColumnService"], Template = service, Width = "190px" },
+            new() { Key = "month", Title = L["ServiceRegistrationTrashColumnMonth"], Value = item => DateFormatter.FormatMonth(item.MonthStart), Width = "120px" },
             TrashColumns.DeletedAt<ServiceRegistrationTrashItemDto>(L["TrashDeletedAt"], item => item.DeletedAt),
             TrashColumns.Actions(L["P2Actions"], actions),
         ];

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Tenants.Entities;
 
 namespace Web.Features.Tenants;
@@ -31,10 +32,12 @@ public static class TenantVisibility
         if (role == Roles.QuanLy)
         {
             // Quan ly: ho so thuoc chu tro cua toa minh duoc giao, hoac da gan hop dong o toa minh quan ly.
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             var ownerIds =
                 from assignment in db.PropertyManagers
                 join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
                 where assignment.ManagerUserId == userId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
                 select property.OwnerId;
 
             var ownedTenantIds = db.TenantOwnerLinks
@@ -78,12 +81,15 @@ public static class TenantVisibility
 
         if (role == Roles.QuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             return
                 from member in db.ContractMembers
                 join contract in db.Contracts on member.ContractId equals contract.ContractId
                 join room in db.Rooms.IgnoreQueryFilters() on contract.RoomId equals room.Id
+                join property in db.Properties.IgnoreQueryFilters() on room.PropertyId equals property.Id
                 join assignment in db.PropertyManagers on room.PropertyId equals assignment.PropertyId
                 where assignment.ManagerUserId == userId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
                 select member.TenantId;
         }
 

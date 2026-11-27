@@ -35,7 +35,7 @@ public sealed class PaymentRecoveryInvoiceTests : P6RecoveryBunitContext
         Services.AddSingleton(_backend.CreateInvoiceQuery());
         Services.AddSingleton(_backend.CreateInvoiceService());
         Services.AddSingleton(_backend.CreateNotificationService());
-        Services.AddSingleton(new P2CallerProvider(auth));
+        Services.AddSingleton(new P2CallerProvider(auth, TestOwnerAccess.Create()));
     }
 
     private IRenderedComponent<InvoiceDetailView> RenderInvoice() =>

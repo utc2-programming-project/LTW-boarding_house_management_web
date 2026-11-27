@@ -39,6 +39,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasFilter("[Status] IN (0, 1)")
             .HasDatabaseName("UX_Payments_InvoiceStatus");
         builder.HasIndex(payment => new { payment.InvoiceId, payment.Status, payment.RequestedAt });
+        // Báo cáo doanh thu theo ngày thu (DateBasis = PaymentDate).
+        builder.HasIndex(payment => new { payment.Status, payment.ReviewedAt });
+        // Hàng đợi duyệt thanh toán: lọc theo trạng thái, sắp theo thời điểm gửi giảm dần.
+        builder.HasIndex(payment => new { payment.Status, payment.RequestedAt });
 
         // Đồng bộ filter với Invoice (xóa mềm); hóa đơn có thanh toán không được xóa nên không mất sổ tiền.
         builder.HasQueryFilter(payment => !payment.Invoice.IsDeleted);

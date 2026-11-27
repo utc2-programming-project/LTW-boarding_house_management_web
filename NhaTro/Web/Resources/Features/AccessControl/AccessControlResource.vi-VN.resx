@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitlePasses" xml:space="preserve"><value>Phiếu ra vào</value></data>
+  <data name="PageTitleLogs" xml:space="preserve"><value>Nhật ký cổng &amp; lưu trú</value></data>
+  <data name="PageTitleSettings" xml:space="preserve"><value>Cấu hình cổng</value></data>
+  <data name="PageTitleKiosk" xml:space="preserve"><value>Kiosk cổng</value></data>
+  <data name="PageTitleMyGate" xml:space="preserve"><value>Ra vào của tôi</value></data>
+  <data name="SubtitlePasses" xml:space="preserve"><value>Tạo, duyệt và thu hồi phiếu khách; khách thuê chỉ thấy phiếu do mình cấp.</value></data>
+  <data name="SubtitleLogs" xml:space="preserve"><value>Mọi lượt vào/ra đều có nhật ký, kể cả lượt bị từ chối.</value></data>
+  <data name="SubtitleSettings" xml:space="preserve"><value>Chỉ chủ trọ được đổi chính sách cổng và thiết bị.</value></data>
+  <data name="SubtitleKiosk" xml:space="preserve"><value>Nhập mã QR/mã 6 số để kiểm tra; mức A hiện hợp lệ để bảo vệ mở tay.</value></data>
+  <data name="SubtitleMyGate" xml:space="preserve"><value>Cấp phiếu cho khách của bạn và theo dõi phiếu đã cấp.</value></data>
+  <data name="Loading" xml:space="preserve"><value>Đang tải…</value></data>
+  <data name="LoadFailed" xml:space="preserve"><value>Không tải được dữ liệu.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+  <data name="Save" xml:space="preserve"><value>Lưu</value></data>
+  <data name="Saved" xml:space="preserve"><value>Đã lưu.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Không lưu được.</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Huỷ</value></data>
+  <data name="Close" xml:space="preserve"><value>Đóng</value></data>
+  <data name="Delete" xml:space="preserve"><value>Xoá</value></data>
+  <data name="CreatePass" xml:space="preserve"><value>Tạo phiếu khách</value></data>
+  <data name="VisitorName" xml:space="preserve"><value>Họ tên khách</value></data>
+  <data name="VisitorPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="VisitorIdNumber" xml:space="preserve"><value>CCCD/hộ chiếu</value></data>
+  <data name="VisitorDob" xml:space="preserve"><value>Ngày sinh</value></data>
+  <data name="StayReason" xml:space="preserve"><value>Lý do lưu trú</value></data>
+  <data name="StayType" xml:space="preserve"><value>Hình thức</value></data>
+  <data name="Visit" xml:space="preserve"><value>Đến chơi trong ngày</value></data>
+  <data name="Overnight" xml:space="preserve"><value>Ở lại qua đêm</value></data>
+  <data name="TtlMinutes" xml:space="preserve"><value>Hiệu lực (phút)</value></data>
+  <data name="MaxUses" xml:space="preserve"><value>Số lần dùng</value></data>
+  <data name="IssueCode" xml:space="preserve"><value>Phát mã 6 số dự phòng</value></data>
+  <data name="Note" xml:space="preserve"><value>Ghi chú</value></data>
+  <data name="Room" xml:space="preserve"><value>Phòng</value></data>
+  <data name="Property" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="Status" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="ExpiresAt" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="Uses" xml:space="preserve"><value>Lượt dùng</value></data>
+  <data name="Issuer" xml:space="preserve"><value>Người cấp</value></data>
+  <data name="AutoApproved" xml:space="preserve"><value>Tự duyệt</value></data>
+  <data name="Approve" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="Reject" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="Revoke" xml:space="preserve"><value>Thu hồi</value></data>
+  <data name="Action" xml:space="preserve"><value>Thao tác</value></data>
+  <data name="Reason" xml:space="preserve"><value>Lý do</value></data>
+  <data name="ReasonRequired" xml:space="preserve"><value>Bắt buộc nhập lý do.</value></data>
+  <data name="Pending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="Approved" xml:space="preserve"><value>Đã duyệt</value></data>
+  <data name="Rejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="Used" xml:space="preserve"><value>Đã dùng</value></data>
+  <data name="Expired" xml:space="preserve"><value>Hết hạn</value></data>
+  <data name="Revoked" xml:space="preserve"><value>Đã thu hồi</value></data>
+  <data name="NoPasses" xml:space="preserve"><value>Chưa có phiếu nào.</value></data>
+  <data name="PassCreated" xml:space="preserve"><value>Đã tạo phiếu. QR chỉ hiển thị một lần — hãy gửi ngay cho khách.</value></data>
+  <data name="RawToken" xml:space="preserve"><value>Mã QR</value></data>
+  <data name="FallbackCode" xml:space="preserve"><value>Mã 6 số</value></data>
+  <data name="OvernightPendingNotice" xml:space="preserve"><value>Phiếu qua đêm luôn chờ chủ trọ duyệt và sẽ sinh phiếu thông báo lưu trú.</value></data>
+  <data name="Filters" xml:space="preserve"><value>Bộ lọc</value></data>
+  <data name="From" xml:space="preserve"><value>Từ ngày</value></data>
+  <data name="To" xml:space="preserve"><value>Đến ngày</value></data>
+  <data name="All" xml:space="preserve"><value>Tất cả</value></data>
+  <data name="Success" xml:space="preserve"><value>Hợp lệ</value></data>
+  <data name="Failed" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="Direction" xml:space="preserve"><value>Chiều</value></data>
+  <data name="In" xml:space="preserve"><value>Vào</value></data>
+  <data name="Out" xml:space="preserve"><value>Ra</value></data>
+  <data name="Method" xml:space="preserve"><value>Phương thức</value></data>
+  <data name="Device" xml:space="preserve"><value>Cổng/thiết bị</value></data>
+  <data name="Result" xml:space="preserve"><value>Kết quả</value></data>
+  <data name="GateLog" xml:space="preserve"><value>Nhật ký cổng</value></data>
+  <data name="NoLogs" xml:space="preserve"><value>Chưa có lượt ra vào.</value></data>
+  <data name="Stays" xml:space="preserve"><value>Thông báo lưu trú</value></data>
+  <data name="RefreshOverdue" xml:space="preserve"><value>Cập nhật quá hạn</value></data>
+  <data name="GuestName" xml:space="preserve"><value>Khách lưu trú</value></data>
+  <data name="DueAt" xml:space="preserve"><value>Hạn báo</value></data>
+  <data name="MarkReported" xml:space="preserve"><value>Đánh dấu đã gửi</value></data>
+  <data name="ReportChannel" xml:space="preserve"><value>Kênh đã gửi</value></data>
+  <data name="EvidenceRef" xml:space="preserve"><value>Mã/ảnh bằng chứng</value></data>
+  <data name="NoStays" xml:space="preserve"><value>Không có phiếu lưu trú.</value></data>
+  <data name="Overdue" xml:space="preserve"><value>Quá hạn</value></data>
+  <data name="Reported" xml:space="preserve"><value>Đã gửi</value></data>
+  <data name="Cancelled" xml:space="preserve"><value>Đã huỷ</value></data>
+  <data name="Policy" xml:space="preserve"><value>Chính sách cổng</value></data>
+  <data name="PolicySectionAuth" xml:space="preserve"><value>Xác thực &amp; kênh báo</value></data>
+  <data name="PolicySectionAccess" xml:space="preserve"><value>Kiểm soát ra vào</value></data>
+  <data name="PolicySectionTenant" xml:space="preserve"><value>Khách thuê &amp; khách tự điền</value></data>
+  <data name="PolicySectionValidity" xml:space="preserve"><value>Hiệu lực &amp; lưu trữ</value></data>
+  <data name="AuthMode" xml:space="preserve"><value>Chế độ xác thực</value></data>
+  <data name="SingleFactor" xml:space="preserve"><value>Một yếu tố</value></data>
+  <data name="QrPlusBiometric" xml:space="preserve"><value>QR + sinh trắc</value></data>
+  <data name="FaceOnly" xml:space="preserve"><value>Bắt buộc khuôn mặt</value></data>
+  <data name="AntiPassback" xml:space="preserve"><value>Chống đi theo (anti-passback)</value></data>
+  <data name="AllowManualOpen" xml:space="preserve"><value>Cho phép mở tay</value></data>
+  <data name="AllowManagerApprove" xml:space="preserve"><value>Cho Quản lý duyệt phiếu</value></data>
+  <data name="AutoApproveDayVisit" xml:space="preserve"><value>Tự duyệt khách đến chơi trong ngày</value></data>
+  <data name="AllowTenantIssuePass" xml:space="preserve"><value>Cho khách thuê cấp phiếu</value></data>
+  <data name="TenantMayIssueOvernight" xml:space="preserve"><value>Cho khách thuê tạo phiếu qua đêm</value></data>
+  <data name="TenantMaxPassesPerDay" xml:space="preserve"><value>Quota phiếu/ngày của khách thuê</value></data>
+  <data name="TenantMaxTtlMinutes" xml:space="preserve"><value>Hiệu lực tối đa (phút)</value></data>
+  <data name="TenantMaxUses" xml:space="preserve"><value>Số lần dùng tối đa</value></data>
+  <data name="PassTtlMinutes" xml:space="preserve"><value>Hiệu lực mặc định (phút)</value></data>
+  <data name="DayWindow" xml:space="preserve"><value>Khung giờ khách trong ngày</value></data>
+  <data name="RetentionDays" xml:space="preserve"><value>Số ngày lưu dữ liệu</value></data>
+  <data name="OfflineGrace" xml:space="preserve"><value>Ân hạn offline (phút)</value></data>
+  <data name="PreferredChannel" xml:space="preserve"><value>Kênh báo lưu trú ưu tiên</value></data>
+  <data name="RequiredFields" xml:space="preserve"><value>Trường bắt buộc (phân cách dấu phẩy)</value></data>
+  <data name="Devices" xml:space="preserve"><value>Thiết bị cổng</value></data>
+  <data name="AddDevice" xml:space="preserve"><value>Thêm thiết bị</value></data>
+  <data name="DeviceName" xml:space="preserve"><value>Tên thiết bị</value></data>
+  <data name="Kind" xml:space="preserve"><value>Loại</value></data>
+  <data name="Level" xml:space="preserve"><value>Mức</value></data>
+  <data name="NoDevices" xml:space="preserve"><value>Chưa có thiết bị.</value></data>
+  <data name="Enrollments" xml:space="preserve"><value>Đăng ký sinh trắc</value></data>
+  <data name="MyQr" xml:space="preserve"><value>QR ra vào của tôi</value></data>
+  <data name="QrHint" xml:space="preserve"><value>QR đổi theo từng phút; đưa mã này cho bảo vệ quét khi vào/ra cổng.</value></data>
+  <data name="RefreshQr" xml:space="preserve"><value>Làm mới QR</value></data>
+  <data name="EnrollHint" xml:space="preserve"><value>Đăng ký khuôn mặt hoặc passkey để dùng cổng ở mức B. Chủ trọ duyệt trước khi có hiệu lực.</value></data>
+  <data name="EnrollmentValue" xml:space="preserve"><value>Mã tham chiếu khuôn mặt / public key</value></data>
+  <data name="Enroll" xml:space="preserve"><value>Gửi đăng ký</value></data>
+  <data name="EnrollFace" xml:space="preserve"><value>Đăng ký khuôn mặt</value></data>
+  <data name="EnrollPasskey" xml:space="preserve"><value>Đăng ký passkey</value></data>
+  <data name="PasskeyPublicKey" xml:space="preserve"><value>Public key (WebAuthn)</value></data>
+  <data name="NoEnrollments" xml:space="preserve"><value>Chưa có đăng ký.</value></data>
+  <data name="Face" xml:space="preserve"><value>Khuôn mặt</value></data>
+  <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
+  <data name="Active" xml:space="preserve"><value>Đang dùng</value></data>
+  <data name="KioskTitle" xml:space="preserve"><value>Kiểm tra lượt vào</value></data>
+  <data name="Token" xml:space="preserve"><value>Mã QR / mã 6 số</value></data>
+  <data name="Check" xml:space="preserve"><value>Kiểm tra</value></data>
+  <data name="ManualOpen" xml:space="preserve"><value>Mở tay</value></data>
+  <data name="ManualReason" xml:space="preserve"><value>Lý do mở tay</value></data>
+  <data name="SelectProperty" xml:space="preserve"><value>Chọn nhà trọ</value></data>
+  <data name="SelectRoom" xml:space="preserve"><value>Chọn phòng</value></data>
+  <data name="SelectGate" xml:space="preserve"><value>Chọn cổng (tuỳ chọn)</value></data>
+  <data name="NoRoom" xml:space="preserve"><value>Bạn chưa có hợp đồng còn hiệu lực.</value></data>
+  <data name="AccessDenied" xml:space="preserve"><value>Bạn không có quyền dùng chức năng này.</value></data>
+  <data name="MyPasses" xml:space="preserve"><value>Phiếu tôi đã cấp</value></data>
+  <data name="CreateGuestPass" xml:space="preserve"><value>Cấp phiếu cho khách</value></data>
+  <data name="Forbidden" xml:space="preserve"><value>Không có quyền.</value></data>
+  <data name="PropertyNotFound" xml:space="preserve"><value>Không tìm thấy nhà trọ.</value></data>
+  <data name="RoomNotFound" xml:space="preserve"><value>Không tìm thấy phòng.</value></data>
+  <data name="PassNotFound" xml:space="preserve"><value>Không tìm thấy phiếu.</value></data>
+  <data name="InvalidRequest" xml:space="preserve"><value>Dữ liệu không hợp lệ.</value></data>
+  <data name="MissingGuestName" xml:space="preserve"><value>Thiếu họ tên khách.</value></data>
+  <data name="MissingGuestPhone" xml:space="preserve"><value>Thiếu số điện thoại khách.</value></data>
+  <data name="MissingLawfulFields" xml:space="preserve"><value>Vui lòng nhập đủ thông tin bắt buộc của khách: ngày sinh, CCCD và lý do lưu trú (nếu được yêu cầu).</value></data>
+  <data name="TenantIssueDisabled" xml:space="preserve"><value>Chủ trọ chưa bật quyền cấp phiếu cho khách thuê.</value></data>
+  <data name="TenantOvernightDisabled" xml:space="preserve"><value>Bạn không được tạo phiếu qua đêm.</value></data>
+  <data name="TenantQuotaExceeded" xml:space="preserve"><value>Đã hết quota phiếu trong ngày.</value></data>
+  <data name="TenantNoActiveContract" xml:space="preserve"><value>Không có hợp đồng còn hiệu lực.</value></data>
+  <data name="InvalidStatus" xml:space="preserve"><value>Trạng thái không phù hợp.</value></data>
+  <data name="PassExpired" xml:space="preserve"><value>Phiếu đã hết hạn.</value></data>
+  <data name="PassRevoked" xml:space="preserve"><value>Phiếu đã bị thu hồi.</value></data>
+  <data name="PassNotApproved" xml:space="preserve"><value>Phiếu chưa được duyệt.</value></data>
+  <data name="PassUsedUp" xml:space="preserve"><value>Phiếu đã dùng hết lượt.</value></data>
+  <data name="OutsideAllowedHours" xml:space="preserve"><value>Ngoài khung giờ khách đến chơi.</value></data>
+  <data name="GuestLeftBeforeDue" xml:space="preserve"><value>Khách rời trước hạn báo lưu trú</value></data>
+  <data name="MethodNotAllowed" xml:space="preserve"><value>Phương thức không được phép.</value></data>
+  <data name="TokenInvalid" xml:space="preserve"><value>Mã không hợp lệ.</value></data>
+  <data name="AlreadyInside" xml:space="preserve"><value>Người này đang ở trong nhà.</value></data>
+  <data name="NotInside" xml:space="preserve"><value>Chưa ghi nhận lượt vào.</value></data>
+  <data name="ManualOpenDisabled" xml:space="preserve"><value>Chính sách không cho mở tay.</value></data>
+  <data name="InviteInvalid" xml:space="preserve"><value>Liên kết không hợp lệ, đã dùng hoặc đã hết hạn.</value></data>
+  <data name="GuestFillDisabled" xml:space="preserve"><value>Chủ trọ chưa bật hình thức khách tự điền.</value></data>
+  <data name="GuestQuotaExceeded" xml:space="preserve"><value>Số điện thoại này đã gửi quá số phiếu cho phép trong ngày.</value></data>
+  <data name="DuplicateGuestRequest" xml:space="preserve"><value>Đã có phiếu đang chờ/đã duyệt cho số điện thoại này.</value></data>
+  <data name="SelfFilled" xml:space="preserve"><value>Khách tự điền</value></data>
+  <data name="AllowGuestSelfFill" xml:space="preserve"><value>Cho phép tạo liên kết khách tự điền</value></data>
+  <data name="GuestSelfMaxPassesPerDay" xml:space="preserve"><value>Số phiếu tự điền/ngày mỗi SĐT</value></data>
+  <data name="GuestFillTitle" xml:space="preserve"><value>Khách điền phiếu ra vào</value></data>
+  <data name="GuestFillHelp" xml:space="preserve"><value>Điền thông tin để tạo phiếu ra vào. Không cần tài khoản — liên kết này chỉ dùng được một lần.</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Nhà trọ</value></data>
+  <data name="GuestFillExpiresAt" xml:space="preserve"><value>Liên kết hết hạn lúc {0}</value></data>
+  <data name="GuestFillInvalid" xml:space="preserve"><value>Liên kết không hợp lệ, đã dùng hoặc đã hết hạn. Hãy xin người trong nhà tạo liên kết mới.</value></data>
+  <data name="GuestFillSubmit" xml:space="preserve"><value>Gửi phiếu</value></data>
+  <data name="GuestFillFailed" xml:space="preserve"><value>Không gửi được phiếu. Vui lòng thử lại.</value></data>
+  <data name="GuestFillApproved" xml:space="preserve"><value>Phiếu đã được duyệt. Xuất trình mã QR bên dưới khi vào cổng.</value></data>
+  <data name="GuestFillPending" xml:space="preserve"><value>Đã gửi phiếu, đang chờ chủ trọ/quản lý duyệt.</value></data>
+  <data name="GuestFillKeepLinkHint" xml:space="preserve"><value>Lưu liên kết này để xem trạng thái phiếu. Mã QR chỉ hiển thị một lần.</value></data>
+  <data name="GuestFillPassLink" xml:space="preserve"><value>Liên kết phiếu</value></data>
+  <data name="GuestFillCopyLink" xml:space="preserve"><value>Sao chép liên kết</value></data>
+  <data name="GuestFillLinkCopied" xml:space="preserve"><value>Đã sao chép liên kết.</value></data>
+  <data name="GuestFillCopyFailed" xml:space="preserve"><value>Không sao chép được. Hãy chọn liên kết và sao chép thủ công.</value></data>
+  <data name="GuestFillQrAlt" xml:space="preserve"><value>Mã QR phiếu ra vào</value></data>
+  <data name="GuestFillViewStatus" xml:space="preserve"><value>Xem trạng thái phiếu</value></data>
+  <data name="GuestFillOvernightHint" xml:space="preserve"><value>Khách ở lại qua đêm cần khai đủ ngày sinh, CCCD và lý do lưu trú.</value></data>
+  <data name="GuestStatusTitle" xml:space="preserve"><value>Trạng thái phiếu ra vào</value></data>
+  <data name="GuestStatusHelp" xml:space="preserve"><value>Trang này chỉ hiển thị trạng thái phiếu, không hiển thị số điện thoại/CCCD.</value></data>
+  <data name="GuestStatusInvalid" xml:space="preserve"><value>Không tìm thấy phiếu hoặc liên kết không hợp lệ.</value></data>
+  <data name="GuestStatusExpiresAt" xml:space="preserve"><value>Hiệu lực đến {0}</value></data>
+  <data name="GuestStatusPendingHint" xml:space="preserve"><value>Phiếu đang chờ duyệt. Vui lòng quay lại sau.</value></data>
+  <data name="GuestStatusApprovedHint" xml:space="preserve"><value>Phiếu đã được duyệt. Xuất trình mã QR hoặc mã 6 số khi vào cổng.</value></data>
+  <data name="GuestStatusReason" xml:space="preserve"><value>Lý do: {0}</value></data>
+  <data name="GuestInviteTitle" xml:space="preserve"><value>Tạo liên kết cho khách tự điền</value></data>
+  <data name="GuestInviteHelp" xml:space="preserve"><value>Gửi liên kết/QR này cho khách vãng lai. Khách điền và gửi thì phiếu mới được tạo; liên kết chỉ dùng một lần và gắn với phòng đã chọn.</value></data>
+  <data name="GuestInviteQrAlt" xml:space="preserve"><value>Mã QR liên kết khách tự điền</value></data>
+  <data name="GuestInviteExpiresAt" xml:space="preserve"><value>Hết hạn lúc {0}</value></data>
+  <data name="GuestInviteWarning" xml:space="preserve"><value>Liên kết chỉ hiển thị một lần — hãy gửi ngay và không chia sẻ công khai.</value></data>
+  <data name="GuestInviteShare" xml:space="preserve"><value>Chia sẻ</value></data>
+  <data name="GuestInviteShareTitle" xml:space="preserve"><value>Liên kết khách tự điền</value></data>
+  <data name="GuestInviteCreate" xml:space="preserve"><value>Tạo liên kết</value></data>
+  <data name="GuestInviteExpiry" xml:space="preserve"><value>Hiệu lực liên kết</value></data>
+  <data name="GuestInviteExpiry15m" xml:space="preserve"><value>15 phút</value></data>
+  <data name="GuestInviteExpiry1h" xml:space="preserve"><value>1 giờ</value></data>
+  <data name="GuestInviteExpiry6h" xml:space="preserve"><value>6 giờ</value></data>
+  <data name="GuestInviteExpiry24h" xml:space="preserve"><value>24 giờ</value></data>
+  <data name="GuestInvitesActive" xml:space="preserve"><value>Liên kết đang mở</value></data>
+  <data name="GuestInvitesActiveHint" xml:space="preserve"><value>Khách chưa điền. Huỷ nếu không còn dùng.</value></data>
+  <data name="GuestInviteCancel" xml:space="preserve"><value>Huỷ liên kết</value></data>
+</root>

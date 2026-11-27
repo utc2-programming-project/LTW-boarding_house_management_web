@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Bunit;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Web.Common.Models;
 using Web.Data;
@@ -39,6 +40,10 @@ public sealed class DashboardPageTests : BunitContext
         }));
         var rooms = Proxy<IRoomReportService>((method, args) =>
         {
+            if (method.Name == nameof(IRoomReportService.GetOccupancyAsync))
+            {
+                return Task.FromResult(new OccupancyReportResult([]));
+            }
             RoomRequests.Add(((RoomReportFilter)args![0]!).PropertyId);
             return DenyRooms ? Task.FromException<RoomReportResult>(new UnauthorizedAccessException()) :
                 Task.FromResult(new RoomReportResult { Kpis = new() { Total = 3, Rented = 2, Available = 1 }, Rooms = new() { Items = [], Page = 1, PageSize = 1, TotalCount = 3 } });
@@ -51,13 +56,14 @@ public sealed class DashboardPageTests : BunitContext
                 Kpis = new() { Total = 15, Active = 12, Renting = 8, LinkedAccountCount = 5 }
             });
         });
-        var revenue = new RevenueReportService(NewDb());
+        var revenue = new RevenueReportService(NewDbFactory());
         var incidents = Proxy<IIncidentReportService>((_, _) => Task.FromResult(new IncidentReportResult
         {
             Kpis = new() { Total = 2, New = 1, InProgress = 1 },
         }));
-        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role)),
-            properties, rooms, tenants, revenue, incidents, TimeProvider.System));
+        var contracts = Proxy<IContractReportService>((_, _) => Task.FromResult(new ContractReportResult()));
+        Services.AddSingleton(new DashboardPageService(new P2CallerProvider(new Authentication(role), TestOwnerAccess.Create()),
+            properties, rooms, tenants, revenue, incidents, contracts, TimeProvider.System));
         ComponentFactories.AddStub<RoomStructureChart>();
     }
 
@@ -114,13 +120,15 @@ public sealed class DashboardPageTests : BunitContext
         Assert.Equal("15", page.FindAll("dd")[0].TextContent);
     }
 
-    private static ApplicationDbContext NewDb()
-    {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+    private static ApplicationDbContext NewDb() => new(NewDbOptions());
+
+    private static IDbContextFactory<ApplicationDbContext> NewDbFactory() =>
+        new PooledDbContextFactory<ApplicationDbContext>(NewDbOptions());
+
+    private static DbContextOptions<ApplicationDbContext> NewDbOptions() =>
+        new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase($"vht140-dashboard-{Guid.NewGuid()}")
             .Options;
-        return new ApplicationDbContext(options);
-    }
 
     private static T Proxy<T>(Func<MethodInfo?, object?[]?, object?> handler) where T : class
     {

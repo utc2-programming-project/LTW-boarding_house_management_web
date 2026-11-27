@@ -1,0 +1,11 @@
+.expiry-chart-wrap { min-width:0; }
+.chart-head { display:flex; align-items:center; min-height:28px; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:16px; margin:0; padding:0; list-style:none; font-size:.75rem; color:var(--text-secondary); }
+.chart-legend li { display:inline-flex; align-items:center; gap:var(--space-2); }
+.legend-dot { width:8px; height:8px; border-radius:var(--radius-pill); background:var(--chart-1); }
+.expiry-chart { display:flex; align-items:flex-end; gap:var(--space-2); min-height:180px; min-width:0; overflow-x:auto; }
+.expiry-col { display:flex; flex:1 0 44px; flex-direction:column; align-items:center; gap:var(--space-1); min-width:0; }
+.expiry-count { font-size:.75rem; font-weight:500; font-variant-numeric:tabular-nums; }
+.expiry-track { display:flex; align-items:flex-end; width:100%; max-width:40px; height:120px; border-radius:var(--radius-sm); background:linear-gradient(to top, color-mix(in srgb, var(--text-primary) 9%, transparent) 1px, transparent 1px); background-size:100% 25%; overflow:hidden; }
+.expiry-fill { display:block; width:100%; border-radius:var(--radius-sm); background:var(--chart-1); }
+.expiry-label { font-size:11px; color:var(--text-secondary); white-space:nowrap; }

@@ -15,6 +15,17 @@ CLAUDE.md
 .freebuff/
 .opencode/
 docs/huong_dan/
+tools/
+
+# unslop skill (project-local under .agents/) and files it generates
+.agents/skills/unslop/
+node_modules/
+package.json
+package-lock.json
+*.live.png
+.story-frames/
+*.mp4
+unslop-*.html
 
 # Visual Studio / .NET
 .vs/
@@ -26,9 +37,7 @@ TestResults/
 *.user
 *.suo
 *.userprefs
-
-# Demo seed dataset (local only; deleting the file disables --seed-demo)
-NhaTro/Web/Data/Seeding/demo-data.json
+debug/
 
 # Secrets, local data, logs (never commit)
 secrets.json
@@ -47,7 +56,6 @@ outputs/
 docs/archive/*
 !docs/archive/truoc_admin/
 docs/Imp/*
-docs/spec/
 
 scripts/*
 !scripts/database/
@@ -55,5 +63,5 @@ scripts/*
 !scripts/data/
 !scripts/data/*.ps1   
 docs/imp/
-
-
+docs/test-results/
+docs/spec/UI/spec-giao-dien-cho-ai.md

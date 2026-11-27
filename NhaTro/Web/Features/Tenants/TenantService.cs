@@ -3,7 +3,9 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text.Json;
+using Web.Common.Models;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Audit.Entities;
 using Web.Features.Approvals.DTOs;
@@ -46,14 +48,25 @@ public sealed class TenantService(
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
 
         var query = ScopeQuery(db, caller).AsNoTracking();
+        var row = await query
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                TotalCount = group.Count(),
+                ActiveCount = group.Count(tenant => tenant.IsActive),
+                LinkedAccountCount = group.Count(tenant => tenant.UserId != null),
+                WithIdNumberCount = group.Count(tenant => tenant.CitizenId != null && tenant.CitizenId != ""),
+            })
+            .SingleOrDefaultAsync(ct);
+
         return new TenantListSummaryDto
         {
-            TotalCount = await query.CountAsync(ct),
-            ActiveCount = await query.CountAsync(t => t.IsActive, ct),
+            TotalCount = row?.TotalCount ?? 0,
+            ActiveCount = row?.ActiveCount ?? 0,
             LinkedAccountCount = caller.Role == Accounts.Roles.ChuTro
-                ? await query.CountAsync(t => t.UserId != null, ct)
+                ? row?.LinkedAccountCount ?? 0
                 : 0,
-            WithIdNumberCount = await query.CountAsync(t => t.CitizenId != null && t.CitizenId != "", ct),
+            WithIdNumberCount = row?.WithIdNumberCount ?? 0,
         };
     }
 
@@ -1061,10 +1074,12 @@ public sealed class TenantService(
             return null;
         }
 
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
         return await (
             from assignment in db.PropertyManagers.AsNoTracking()
             join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
             where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                && !blockedOwners.Contains(property.OwnerId)
             orderby property.Id
             select (string?)property.OwnerId
         ).FirstOrDefaultAsync(ct);
@@ -1088,10 +1103,12 @@ public sealed class TenantService(
 
         if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             var ownerIds =
                 from assignment in db.PropertyManagers
                 join property in db.Properties.IgnoreQueryFilters() on assignment.PropertyId equals property.Id
                 where assignment.ManagerUserId == caller.UserId && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
                 select property.OwnerId;
 
             var ownedTenantIds = db.TenantOwnerLinks
@@ -1151,14 +1168,17 @@ public sealed class TenantService(
     {
         if (caller.IsQuanLy)
         {
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
             var managedPropertyId = await (
                 from member in db.ContractMembers.AsNoTracking()
                 join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
                 join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+                join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
                 join assignment in db.PropertyManagers.AsNoTracking() on room.PropertyId equals assignment.PropertyId
                 where member.TenantId == tenantId
                     && assignment.ManagerUserId == caller.UserId
                     && assignment.RevokedAt == null
+                    && !blockedOwners.Contains(property.OwnerId)
                 select (int?)room.PropertyId
             ).FirstOrDefaultAsync(ct);
 
@@ -1216,6 +1236,8 @@ public sealed class TenantService(
                 row,
                 today,
                 roommatesByContract.GetValueOrDefault(row.ContractId, [])))
+            // Bản nháp nội bộ của Chủ trọ/Quản lý chưa gửi thì khách không thấy.
+            .Where(rental => rental.Status != Web.Features.Contracts.Enums.ContractStatus.Draft)
             .OrderByDescending(rental => rental.IsCurrent)
             .ThenByDescending(rental => rental.StartDate)
             .ThenByDescending(rental => rental.ContractId)
@@ -1250,6 +1272,12 @@ public sealed class TenantService(
             contract.EndDate,
             contract.SnapshotPrice,
             contract.DepositAmount,
+            contract.DepositPaidAmount,
+            contract.DepositPaidAt,
+            contract.DepositDueAt,
+            contract.PaymentCycleMonths,
+            contract.MeterReadingDay,
+            contract.Terms,
             contract.Status);
 
     // 2C (VHT-120) — hợp đồng đang hiệu lực của từng khách theo liên kết thật:
@@ -1320,11 +1348,16 @@ public sealed class TenantService(
         EndDate = DateOnly.FromDateTime(row.EndDate),
         SnapshotPrice = row.SnapshotPrice,
         DepositAmount = row.DepositAmount,
-        // Chưa có chứng từ thu cọc trong schema (P4/VHT-50, công tắc SW-08): hợp đồng chỉ lưu
-        // cọc thỏa thuận ở DepositAmount nên không có số tiền/ngày đã đóng để trả về.
-        // UI phải hiển thị "Chưa có dữ liệu" chứ không suy ra số đã đóng.
-        PaidDepositAmount = null,
-        DepositPaidDate = null,
+        PaymentCycleMonths = row.PaymentCycleMonths,
+        MeterReadingDay = row.MeterReadingDay,
+        Terms = row.Terms,
+        PaidDepositAmount = row.DepositPaidAmount,
+        DepositPaidDate = row.DepositPaidAt is { } paidAt
+            ? DateOnly.FromDateTime(paidAt.ToLocalTime().DateTime)
+            : null,
+        DepositDueDate = row.DepositDueAt is { } dueAt
+            ? DateOnly.FromDateTime(dueAt.ToLocalTime().DateTime)
+            : null,
         Status = row.Status,
         IsCurrent = row.Status == ContractStatus.Approved
             && row.StartDate <= today
@@ -1381,7 +1414,10 @@ public sealed class TenantService(
         var idNumber = TenantNormalizer.NormalizeIdNumber(term);
 
         return query.Where(t =>
-            (nameTerm.Length > 0 && t.FullName.Contains(nameTerm))
+            // Collate CI_AI để gõ "nguyen" vẫn khớp "Nguyễn"; mặc định SQL Server
+            // có thể phân biệt dấu nên tìm không ra dù UI có ô tìm kiếm.
+            (nameTerm.Length > 0
+                && EF.Functions.Collate(t.FullName, "SQL_Latin1_General_CP1_CI_AI").Contains(nameTerm))
             // Bỏ qua từ khóa quá ngắn để "+84" => "0" không khớp gần như mọi số.
             || (phone.Length >= 3 && t.Phone.Contains(phone))
             || (idNumber.Length >= 3 && t.CitizenId != null && t.CitizenId.Contains(idNumber)));
@@ -1581,6 +1617,12 @@ public sealed class TenantService(
         DateTime EndDate,
         decimal SnapshotPrice,
         decimal DepositAmount,
+        decimal? DepositPaidAmount,
+        DateTimeOffset? DepositPaidAt,
+        DateTimeOffset? DepositDueAt,
+        int PaymentCycleMonths,
+        int? MeterReadingDay,
+        string? Terms,
         ContractStatus Status);
 
     /// <summary>Hợp đồng đang hiệu lực của một khách, kèm phòng để hiển thị danh sách/picker.</summary>

@@ -68,7 +68,7 @@ public class RoomPropertyDtoTests
         var pf = new PropertyFilter { Page = 0, PageSize = 500, Keyword = " " };
         pf.Normalize();
         Assert.Equal(1, pf.Page);
-        Assert.Equal(20, pf.PageSize);
+        Assert.Equal(100, pf.PageSize);
         Assert.Null(pf.Keyword);
 
         var rf = new RoomFilter { Page = -1, MinPrice = -5, Keyword = " P1 " };

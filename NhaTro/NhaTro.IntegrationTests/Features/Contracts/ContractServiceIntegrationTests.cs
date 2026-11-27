@@ -135,7 +135,8 @@ public sealed class ContractServiceIntegrationTests(SqlServerFixture fixture)
         Assert.Equal(new DateTime(2026, 10, 22), response.StartDate);
         Assert.Equal(new DateTime(2026, 11, 22), response.EndDate);
         Assert.Equal(1_000_000m, response.SnapshotPrice);
-        Assert.Equal(200_000m, response.DepositAmount);
+        // Mặc định cọc giữ căn = 1 tháng tiền thuê khi không nhập riêng.
+        Assert.Equal(1_000_000m, response.DepositAmount);
         // D4: hợp đồng do Chủ trọ tạo có hiệu lực ngay.
         Assert.Equal(ContractStatus.Approved, response.Status);
 

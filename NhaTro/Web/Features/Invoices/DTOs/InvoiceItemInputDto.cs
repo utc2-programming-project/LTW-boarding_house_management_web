@@ -20,6 +20,7 @@ public sealed class InvoiceItemInputDto
     public string? Unit { get; init; }
 
     [Range(typeof(decimal), "0.0001", "79228162514264337593543950335",
+        ParseLimitsInInvariantCulture = true, ConvertValueInInvariantCulture = true,
         ErrorMessage = "Số lượng phải lớn hơn 0.")]
     public decimal Quantity { get; init; } = 1m;
 

@@ -227,7 +227,9 @@
                 var resetUser = await Users.FindByEmailAsync(_email);
                 if (resetUser is null || !await Users.IsEmailConfirmedAsync(resetUser))
                 {
-                    _error = L["OtpNotFound"];
+                    // Phản hồi giống hệt trường hợp đã gửi để không lộ email có tồn tại.
+                    _notice = L["OtpSent"];
+                    _resendAt = DateTimeOffset.UtcNow.AddSeconds(60);
                     return;
                 }
             }
@@ -293,7 +295,11 @@
         }
 
         user.EmailConfirmed = true;
-        user.ApprovedAt ??= DateTime.UtcNow;
+        // Chỉ chủ trọ tự đăng ký mới tự kích hoạt; tài khoản Quản lý tạo vẫn chờ chủ trọ duyệt.
+        if (_purpose == OtpPurpose.OwnerRegistration)
+        {
+            user.ApprovedAt ??= DateTime.UtcNow;
+        }
 
         var updated = await Users.UpdateAsync(user);
         if (!updated.Succeeded)
@@ -303,6 +309,14 @@
         }
 
         await Users.UpdateSecurityStampAsync(user);
+
+        // Chưa được duyệt thì không giữ phiên đã đăng nhập; quay lại login kèm thông báo.
+        if (user.ApprovedAt is null)
+        {
+            await SignInManager.SignOutAsync();
+            RedirectManager.RedirectTo("Account/Login?pendingApproval=1");
+            return;
+        }
 
         if (HttpContext.User.Identity?.IsAuthenticated == true)
         {
@@ -325,7 +339,11 @@
     private static OtpPurpose ParsePurpose(string? value)
     {
         if (Enum.TryParse<OtpPurpose>(value, ignoreCase: true, out var purpose)
-            && Enum.IsDefined(purpose))
+            && purpose is OtpPurpose.OwnerRegistration
+                or OtpPurpose.TenantRegistration
+                or OtpPurpose.FirstLogin
+                or OtpPurpose.PasswordReset
+                or OtpPurpose.ContractAcceptance)
         {
             return purpose;
         }

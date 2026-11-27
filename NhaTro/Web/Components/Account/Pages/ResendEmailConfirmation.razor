@@ -22,6 +22,14 @@
 <PageHeading Title="@L["ResendEmailConfirmationTitle"]" HelpText="@L["ResendEmailConfirmationHelp"]" InteractiveHelp="true" />
 <h2>@L["EmailPrompt"]</h2>
 <hr />
+@* Rate limiter chuyển POST bị chặn về đây kèm cờ tooManyRequests=1. *@
+@if (TooManyRequestsFlag == "1")
+{
+    <div class="form-alert" role="alert">
+        <LucideIcon Name="alert" />
+        <span>@L["TooManyRequests"]</span>
+    </div>
+}
 <StatusMessage Message="@message" />
 <div class="row">
     <div class="col-md-4">
@@ -43,6 +51,10 @@
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = default!;
+
+    // Rate limiter chuyển POST bị chặn về đây thay vì trả text thô.
+    [SupplyParameterFromQuery(Name = "tooManyRequests")]
+    private string? TooManyRequestsFlag { get; set; }
 
     protected override void OnInitialized()
     {

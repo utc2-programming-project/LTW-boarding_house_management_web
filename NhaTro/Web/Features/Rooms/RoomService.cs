@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Web.Common.Models;
+using Web.Common.Queries;
 using Web.Data;
 using Web.Features.Approvals;
 using Web.Features.Audit.Entities;
@@ -12,6 +13,7 @@ using Web.Infrastructure.Storage;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
 using Web.Features.Approvals.Services;
+using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Rooms.DTOs;
 using Web.Features.Rooms.Entities;
@@ -20,6 +22,7 @@ using Web.Features.Rooms.Mapping;
 using Web.Features.Rooms.Services;
 using Web.Features.Settings;
 using Web.Features.Settings.Enums;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Rooms;
 
@@ -79,15 +82,12 @@ public sealed class RoomService(
 
         var query = ApplyFilter(ScopeRooms(db, caller), filter);
 
-        var total = await query.CountAsync(ct);
-        var skip = (long)(filter.Page - 1) * filter.PageSize;
-        var rows = await query
+        var page = await query
             .OrderBy(r => r.Code)
             .ThenBy(r => r.Id)
-            .Skip((int)Math.Min(skip, int.MaxValue))
-            .Take(filter.PageSize)
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
-            .ToListAsync(ct);
+            .ToPagedResultAsync(filter.Page, filter.PageSize, ct);
+        var rows = page.Items;
 
         var pendingApprovals = await PendingApprovalByRoomAsync(db, rows.Select(row => row.Room.Id), ct);
 
@@ -95,9 +95,9 @@ public sealed class RoomService(
         {
             Items = rows.Select(x => RoomMapping.ToListItem(
                 x.Room, x.PropertyName, pendingApprovals.GetValueOrDefault(x.Room.Id))).ToList(),
-            Page = filter.Page,
-            PageSize = filter.PageSize,
-            TotalCount = total,
+            Page = page.Page,
+            PageSize = page.PageSize,
+            TotalCount = page.TotalCount,
         };
     }
 
@@ -112,9 +112,67 @@ public sealed class RoomService(
             .Select(r => new RoomRow(r, db.Properties.Where(p => p.Id == r.PropertyId).Select(p => p.Name).First()))
             .FirstOrDefaultAsync(ct);
 
-        return row is null
-            ? NotFound()
-            : RoomResult.Success(RoomMapping.ToDetail(row.Room, row.PropertyName));
+        if (row is null)
+        {
+            return NotFound();
+        }
+
+        var detail = RoomMapping.ToDetail(row.Room, row.PropertyName);
+        detail.CurrentRental = await LoadCurrentRentalAsync(db, row.Room.Id, ct);
+        return RoomResult.Success(detail);
+    }
+
+    // "Đang thuê" lấy từ hợp đồng đã duyệt, hôm nay nằm trong [StartDate, EndDate] —
+    // cùng định nghĩa hiệu lực với ActiveContractRoomUsageChecker/ContractService.
+    private async Task<RoomRentalDetail?> LoadCurrentRentalAsync(
+        ApplicationDbContext db, int roomId, CancellationToken ct)
+    {
+        var todayStart = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+
+        var contract = await db.Contracts
+            .AsNoTracking()
+            .Where(contract => contract.RoomId == roomId
+                && contract.Status == ContractStatus.Approved
+                && contract.StartDate <= todayStart
+                && contract.EndDate >= todayStart)
+            .OrderByDescending(contract => contract.StartDate)
+            .Select(contract => new
+            {
+                contract.ContractId,
+                contract.ContractNumber,
+                contract.StartDate,
+                contract.EndDate,
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (contract is null)
+        {
+            return null;
+        }
+
+        var tenants = await (
+            from member in db.ContractMembers.AsNoTracking()
+            join tenant in db.Tenants.IgnoreQueryFilters() on member.TenantId equals tenant.Id
+            where member.ContractId == contract.ContractId
+            orderby member.IsRepresentative descending, tenant.FullName
+            select new RoomTenantDetail
+            {
+                TenantId = tenant.Id,
+                FullName = tenant.FullName,
+                Phone = tenant.Phone,
+                Relationship = member.Relationship,
+                IsRepresentative = member.IsRepresentative,
+            })
+            .ToListAsync(ct);
+
+        return new RoomRentalDetail
+        {
+            ContractId = contract.ContractId,
+            ContractNumber = contract.ContractNumber,
+            StartDate = contract.StartDate,
+            EndDate = contract.EndDate,
+            Tenants = tenants,
+        };
     }
 
     public async Task<RoomResult> CreateAsync(
@@ -449,21 +507,88 @@ public sealed class RoomService(
     {
         EnsureCanManage(caller);
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-        var ids = await ScopeRooms(db, caller, includeDeleted: true)
-            .Where(r => r.IsDeleted)
-            .Select(r => r.Id)
-            .ToListAsync(ct);
 
-        var purged = 0;
-        var skipped = 0;
-        foreach (var id in ids)
+        // Một lượt đọc cho cả lô thay vì gọi PurgeAsync từng phòng (mỗi phòng mở context + 5-6 truy vấn).
+        var rooms = await ScopeRooms(db, caller, includeDeleted: true)
+            .Where(r => r.IsDeleted)
+            .ToListAsync(ct);
+        if (rooms.Count == 0)
         {
-            var result = await PurgeAsync(id, caller, ct);
-            if (result.Succeeded) purged++;
-            else skipped++;
+            return new TrashPurgeSummary(0, 0);
         }
 
-        return new TrashPurgeSummary(purged, skipped);
+        var ids = rooms.Select(r => r.Id).ToList();
+        var blocked = new HashSet<int>();
+        void AddBlocked(IEnumerable<int> roomIds)
+        {
+            foreach (var roomId in roomIds)
+            {
+                blocked.Add(roomId);
+            }
+        }
+
+        AddBlocked(await db.Contracts.IgnoreQueryFilters()
+            .Where(c => ids.Contains(c.RoomId)).Select(c => c.RoomId).Distinct().ToListAsync(ct));
+        AddBlocked(await db.MaintenanceIncidents.IgnoreQueryFilters()
+            .Where(i => ids.Contains(i.RoomId)).Select(i => i.RoomId).Distinct().ToListAsync(ct));
+        AddBlocked(await db.UtilityReadingPeriods
+            .Where(p => ids.Contains(p.RoomId)).Select(p => p.RoomId).Distinct().ToListAsync(ct));
+        AddBlocked(await db.UtilityReadings
+            .Where(r => ids.Contains(r.RoomId)).Select(r => r.RoomId).Distinct().ToListAsync(ct));
+
+        var purgeRooms = rooms.Where(r => !blocked.Contains(r.Id)).ToList();
+        if (purgeRooms.Count == 0)
+        {
+            return new TrashPurgeSummary(0, rooms.Count);
+        }
+
+        var purgeIds = purgeRooms.Select(r => r.Id).ToList();
+        var purgeRelatedIds = purgeIds.Select(id => id.ToString(CultureInfo.InvariantCulture)).ToList();
+
+        var assignments = await db.PendingRoomAssignments
+            .Where(item => purgeIds.Contains(item.RoomId))
+            .ToListAsync(ct);
+        db.PendingRoomAssignments.RemoveRange(assignments);
+
+        var files = await db.StoredFiles
+            .IgnoreQueryFilters()
+            .Where(file => file.RelatedEntityType == RelatedEntityType.Room
+                && purgeRelatedIds.Contains(file.RelatedEntityId))
+            .ToListAsync(ct);
+        db.StoredFiles.RemoveRange(files);
+
+        db.Rooms.RemoveRange(purgeRooms);
+        foreach (var room in purgeRooms)
+        {
+            db.AuditLogEntries.Add(new AuditLogEntry
+            {
+                Category = AuditLogCategory.Business,
+                Action = "room.purge",
+                ActorUserId = caller.UserId,
+                PropertyId = room.PropertyId,
+                Metadata = $"Room {room.Code}",
+                OccurredAt = DateTimeOffset.UtcNow,
+            });
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync(ct);
+            return new TrashPurgeSummary(0, rooms.Count);
+        }
+
+        foreach (var file in files)
+        {
+            TryDeletePhysical(file.RelativePath);
+        }
+
+        return new TrashPurgeSummary(purgeRooms.Count, rooms.Count - purgeRooms.Count);
     }
 
     private void TryDeletePhysical(string relativePath)

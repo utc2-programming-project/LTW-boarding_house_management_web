@@ -5,16 +5,18 @@
 @inject IStringLocalizer<Shared> L
 
 <nav class="account-nav" aria-label="@L["ManageAccountTitle"]">
-    <NavLink href="Account/Manage" Match="NavLinkMatch.All">@L["ProfileTitle"]</NavLink>
-    <NavLink href="Account/Manage/Email">@L["EmailLabel"]</NavLink>
-    <NavLink href="Account/Manage/ChangePassword">@L["PasswordLabel"]</NavLink>
+    <NavLink href="Account/Manage" Match="NavLinkMatch.All"><LucideIcon Name="settings" /><span>@L["ManageNavOverview"]</span></NavLink>
+    <NavLink href="Account/Manage/Email"><LucideIcon Name="mail" /><span>@L["EmailLabel"]</span></NavLink>
+    <NavLink href="Account/Manage/ChangePassword"><LucideIcon Name="key" /><span>@L["PasswordLabel"]</span></NavLink>
     @if (hasExternalLogins)
     {
-        <NavLink href="Account/Manage/ExternalLogins">@L["ManageNavExternalLogins"]</NavLink>
+        <NavLink href="Account/Manage/ExternalLogins"><LucideIcon Name="unlink" /><span>@L["ManageNavExternalLogins"]</span></NavLink>
     }
-    <NavLink href="Account/Manage/TwoFactorAuthentication">@L["TwoFactorLoginTitle"]</NavLink>
-    <NavLink href="Account/Manage/Passkeys">@L["ManageNavPasskeys"]</NavLink>
-    <NavLink href="Account/Manage/PersonalData">@L["ManageNavPersonalData"]</NavLink>
+    <NavLink href="Account/Manage/TwoFactorAuthentication"><LucideIcon Name="shield-check" /><span>@L["TwoFactorLoginTitle"]</span></NavLink>
+    <NavLink href="Account/Manage/Passkeys"><LucideIcon Name="lock" /><span>@L["ManageNavPasskeys"]</span></NavLink>
+    <NavLink href="Account/Manage/Sessions"><LucideIcon Name="history" /><span>@L["ManageNavSessions"]</span></NavLink>
+    <span class="account-nav-sep" role="separator"></span>
+    <NavLink href="Account/Manage/PersonalData"><LucideIcon Name="file-text" /><span>@L["ManageNavPersonalData"]</span></NavLink>
 </nav>
 
 @code {

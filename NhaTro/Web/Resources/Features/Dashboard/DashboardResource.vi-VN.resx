@@ -22,8 +22,10 @@
 <data name="TotalRooms" xml:space="preserve"><value>Tổng phòng đang hoạt động</value></data>
 <data name="TotalRoomsShort" xml:space="preserve"><value>Tổng phòng</value></data>
 <data name="Occupancy" xml:space="preserve"><value>Tỷ lệ lấp đầy</value></data>
-<data name="Revenue" xml:space="preserve"><value>Doanh thu ghi nhận</value></data>
-<data name="Debt" xml:space="preserve"><value>Công nợ còn phải thu</value></data>
+<data name="Revenue" xml:space="preserve"><value>Doanh thu trong kỳ</value></data>
+<data name="TotalRevenue" xml:space="preserve"><value>Tổng doanh thu lũy kế</value></data>
+<data name="AllTimeData" xml:space="preserve"><value>Số liệu luỹ kế toàn bộ</value></data>
+<data name="Debt" xml:space="preserve"><value>Công nợ lũy kế</value></data>
 <data name="Incidents" xml:space="preserve"><value>Sự cố trong kỳ</value></data>
 <data name="RoomsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Phòng</value></data>
 <data name="TenantsDenied" xml:space="preserve"><value>Chủ trọ chưa cho phép xem mục Khách thuê</value></data>
@@ -58,4 +60,22 @@
 <data name="IncidentInProgress" xml:space="preserve"><value>Đang xử lý</value></data>
 <data name="IncidentCompleted" xml:space="preserve"><value>Hoàn tất</value></data>
 <data name="IncidentUrgent" xml:space="preserve"><value>Khẩn cấp</value></data>
+<data name="OccupancyBasis" xml:space="preserve"><value>không tính phòng bảo trì</value></data>
+<data name="OccupancyTrend" xml:space="preserve"><value>Tỷ lệ lấp đầy theo tháng</value></data>
+<data name="DebtAging" xml:space="preserve"><value>Công nợ theo tuổi nợ</value></data>
+<data name="DebtUnder30" xml:space="preserve"><value>Dưới 30 ngày</value></data>
+<data name="Debt30To60" xml:space="preserve"><value>30–60 ngày</value></data>
+<data name="DebtOver60" xml:space="preserve"><value>Trên 60 ngày</value></data>
+<data name="DebtAgingNote" xml:space="preserve"><value>Gộp tối đa 100 hoá đơn công nợ đầu tiên</value></data>
+<data name="ContractExpiry" xml:space="preserve"><value>Hợp đồng hết hạn theo tháng</value></data>
+<data name="IncidentStatusTitle" xml:space="preserve"><value>Sự cố theo trạng thái</value></data>
+<data name="RevenueStacked" xml:space="preserve"><value>Cột chồng thu/nợ</value></data>
+<data name="ViewNumberTable" xml:space="preserve"><value>Xem bảng số liệu</value></data>
+<data name="VehicleActive" xml:space="preserve"><value>Xe đang gửi</value></data>
+<data name="VehicleBreakdown" xml:space="preserve"><value>Điện {0} · Số {1} · Tay ga {2}</value></data>
+<data name="VehicleZoneFill" xml:space="preserve"><value>Lấp đầy khu đỗ xe</value></data>
+<data name="VehicleZoneFillNote" xml:space="preserve"><value>Chỗ đã dùng trên tổng sức chứa các khu đang hoạt động</value></data>
+<data name="VehicleParkingRevenue" xml:space="preserve"><value>Phí gửi xe tháng này</value></data>
+<data name="VehicleParkingRevenueNote" xml:space="preserve"><value>Doanh thu phí gửi xe của tháng hiện tại</value></data>
+<data name="VehiclesDenied" xml:space="preserve"><value>Bạn không có quyền xem thống kê xe</value></data>
 </root>

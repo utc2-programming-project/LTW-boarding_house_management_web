@@ -44,21 +44,59 @@ public sealed class OwnerAdminService(
             .Take(pageSize)
             .ToListAsync(ct);
 
-        var items = new List<OwnerListItemDto>(owners.Count);
-        foreach (var owner in owners)
-        {
-            var impact = await GetImpactAsync(db, owner.Id, ct);
-            items.Add(new OwnerListItemDto(
-                owner.Id,
-                owner.FullName,
-                owner.Email,
-                owner.PhoneNumber,
-                AccountStatusRules.IsPermanentlyLocked(owner.LockoutEnd),
-                impact.PropertyCount,
-                impact.ManagerCount,
-                impact.TenantCount,
-                owner.ApprovedAt));
-        }
+        var ownerIds = owners.Select(owner => owner.Id).ToArray();
+        // Một query cho cả số nhà và số quản lý được phân công: tránh query thứ 5 mỗi trang.
+        var propertyRows = await (
+                from property in db.Properties.AsNoTracking()
+                where ownerIds.Contains(property.OwnerId) && !property.IsDeleted
+                join assignment in db.PropertyManagers.AsNoTracking()
+                    on property.Id equals assignment.PropertyId into assignments
+                from assignment in assignments.Where(row => row.RevokedAt == null).DefaultIfEmpty()
+                select new { property.OwnerId, property.Id, ManagerUserId = assignment == null ? null : assignment.ManagerUserId })
+            .ToListAsync(ct);
+        var propertyCounts = propertyRows
+            .Select(row => new { row.OwnerId, row.Id })
+            .Distinct()
+            .GroupBy(row => row.OwnerId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        var managerCounts = propertyRows
+            .Where(row => row.ManagerUserId is not null)
+            .Select(row => new { row.OwnerId, row.ManagerUserId })
+            .Distinct()
+            .GroupBy(row => row.OwnerId)
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var linkedTenants =
+            from link in db.TenantOwnerLinks.AsNoTracking()
+            where ownerIds.Contains(link.OwnerId)
+            select new { link.OwnerId, link.TenantId };
+
+        var contractedTenants =
+            from member in db.ContractMembers.AsNoTracking()
+            join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+            join room in db.Rooms.AsNoTracking() on contract.RoomId equals room.Id
+            join property in db.Properties.AsNoTracking() on room.PropertyId equals property.Id
+            where ownerIds.Contains(property.OwnerId)
+            select new { property.OwnerId, member.TenantId };
+
+        var tenantPairs = await linkedTenants
+            .Union(contractedTenants)
+            .Distinct()
+            .ToListAsync(ct);
+        var tenantCounts = tenantPairs
+            .GroupBy(row => row.OwnerId)
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var items = owners.Select(owner => new OwnerListItemDto(
+            owner.Id,
+            owner.FullName,
+            owner.Email,
+            owner.PhoneNumber,
+            AccountStatusRules.IsPermanentlyLocked(owner.LockoutEnd),
+            propertyCounts.GetValueOrDefault(owner.Id),
+            managerCounts.GetValueOrDefault(owner.Id),
+            tenantCounts.GetValueOrDefault(owner.Id),
+            owner.ApprovedAt)).ToList();
 
         return (items, total);
     }

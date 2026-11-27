@@ -231,7 +231,7 @@
     color: var(--text-muted);
     font-size: .75rem;
     font-weight: 600;
-    text-transform: uppercase;
+
     letter-spacing: .02em;
 }
 
@@ -245,7 +245,7 @@
 .section-title {
     margin: 0 0 var(--space-4);
     font-size: 1.0625rem;
-    font-weight: 700;
+    font-weight:600;
     color: var(--text-primary);
 }
 
@@ -256,6 +256,7 @@
 .items-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     font-size: .875rem;
 }
 
@@ -267,7 +268,7 @@
     font-size: .75rem;
     font-weight: 600;
     text-align: left;
-    text-transform: uppercase;
+
     letter-spacing: .02em;
     white-space: nowrap;
 }
@@ -394,7 +395,7 @@
     background: var(--surface);
     border: 1px solid var(--warning-border, #FDE68A);
     font-size: .75rem;
-    font-weight: 700;
+    font-weight:600;
     color: var(--warning-text, #92400E);
 }
 
@@ -630,3 +631,21 @@ html[data-connection-lost] [data-payment-write] {
     pointer-events: none;
     opacity: .6;
 }
+
+.invoice-action-menu { position: relative; }
+.invoice-action-menu > summary { list-style: none; cursor: pointer; }
+.invoice-action-menu > summary::-webkit-details-marker { display: none; }
+.invoice-action-menu-panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    z-index: 20;
+    display: grid;
+    min-width: 220px;
+    padding: var(--space-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+.invoice-action-menu-panel .p2-row-menu-item { width: 100%; justify-content: flex-start; }

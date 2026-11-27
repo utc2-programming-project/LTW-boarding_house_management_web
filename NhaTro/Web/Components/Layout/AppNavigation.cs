@@ -57,19 +57,46 @@ public static class AppNavigation
             new("Incidents", "wrench", "ChuTro,QuanLy", "/incidents",
                 Children: [new("TrashTitle", "", "ChuTro", "/incidents/trash", ShowInSidebar: false)]),
             new("ReportIncident", "wrench", "KhachThue", "/incidents"),
+            // P9 (bổ sung): ra vào cổng — phiếu khách, kiosk, nhật ký, cấu hình.
+            new("GatePasses", "qr-code", "ChuTro,QuanLy", "/gate/passes"),
+            new("GateKiosk", "shield-check", "ChuTro,QuanLy", "/gate/kiosk"),
+            new("GateLogs", "history", "ChuTro,QuanLy", "/gate/logs"),
+            new("GateSettings", "settings", "ChuTro,QuanLy", "/gate/settings"),
+            new("MyGate", "qr-code", "KhachThue", "/my/gate"),
+            new("Vehicles", "bike", "ChuTro,QuanLy", "/vehicles",
+                Children:
+                [
+                    new("VehicleZones", "", "ChuTro,QuanLy", "/vehicles/zones", ShowInSidebar: false),
+                    new("VehicleGuests", "", "ChuTro,QuanLy", "/vehicles/guests", ShowInSidebar: false),
+                    new("VehicleAudit", "", "ChuTro,QuanLy", "/vehicles/audit", ShowInSidebar: false),
+                    new("VehicleSettings", "", "ChuTro", "/vehicles/settings", ShowInSidebar: false),
+                ]),
+            new("MyVehicles", "bike", "KhachThue", "/my/vehicles"),
+        ]),
+        new("NavGroupData", "ChuTro,QuanLy",
+        [
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
+            new("Assistant", "sparkles", "ChuTro,QuanLy", "/assistant",
+                Children:
+                [
+                    new("AssistantSettings", "", "ChuTro", "/assistant/settings", ShowInSidebar: false),
+                    new("AiSuggestions", "", "ChuTro", "/assistant/inbox", ShowInSidebar: false),
+                ]),
+        ]),
+        new("NavGroupReview", "ChuTro,QuanLy",
+        [
             new("Approvals", "check", "ChuTro", "/approvals"),
+            new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
             new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
         ]),
         new("NavGroupAdmin", "Admin,ChuTro,QuanLy",
         [
-            // VHT-95: /admin/users cho Admin, Chủ trọ, Quản lý; phạm vi dữ liệu do service lọc.
-            new("Accounts", "users", "Admin,ChuTro,QuanLy", "/admin/users"),
+            // Quản trị tài khoản là khu vực quản trị hệ thống: chỉ Admin mở được.
+            new("Accounts", "users", "Admin", "/admin/users"),
             new("OwnerAdmin", "building", "Admin", "/admin/owners"),
             new("DocumentTrashTitle", "", "ChuTro,QuanLy", "/documents/trash", ShowInSidebar: false),
-            // VHT-104: Admin đọc sổ tài khoản/hệ thống, Chủ trọ đọc sổ nghiệp vụ trong phạm vi.
-            new("AuditLog", "history", "Admin,ChuTro", "/admin/audit-log"),
-            new("ManagerSwitches", "settings", "ChuTro", "/admin/manager-switches", Aliases: ["/manager-switches"]),
+            // Nhật ký thao tác giờ chỉ Admin đọc được.
+            new("AuditLog", "history", "Admin", "/admin/audit-log"),
         ]),
         new("NavGroupPersonal", "KhachThue",
         [

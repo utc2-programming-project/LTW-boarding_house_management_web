@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="PageTitle" xml:space="preserve"><value>Trợ lý AI</value></data>
+  <data name="PageHelp" xml:space="preserve"><value>Trợ lý chỉ tạo bản nháp từ dữ liệu trong phạm vi của bạn. Chủ trọ duyệt thì hệ thống mới thực hiện; dữ liệu không bị thay đổi khi chưa duyệt.</value></data>
+  <data name="SettingsLink" xml:space="preserve"><value>Cài đặt AI</value></data>
+  <data name="InboxLink" xml:space="preserve"><value>Đề xuất chờ duyệt</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Làm mới</value></data>
+  <data name="Loading" xml:space="preserve"><value>Đang tải…</value></data>
+  <data name="DeniedTitle" xml:space="preserve"><value>Không có quyền dùng trợ lý AI</value></data>
+  <data name="DeniedDescription" xml:space="preserve"><value>Trợ lý AI dành cho Chủ trọ và Quản lý đang được phân công tòa nhà.</value></data>
+  <data name="LoadFailedTitle" xml:space="preserve"><value>Không tải được dữ liệu</value></data>
+  <data name="LoadFailedDescription" xml:space="preserve"><value>Kết nối hoặc quyền truy cập có thể đã thay đổi. Vui lòng thử lại.</value></data>
+  <data name="Retry" xml:space="preserve"><value>Thử lại</value></data>
+  <data name="DisabledNotice" xml:space="preserve"><value>Chủ trọ đã tắt trợ lý AI cho tòa nhà này. Bạn không thể tạo đề xuất mới.</value></data>
+  <data name="QuotaText" xml:space="preserve"><value>Đã dùng {0}/{1} lượt hôm nay</value></data>
+  <data name="DemoBadge" xml:space="preserve"><value>Chế độ demo</value></data>
+
+  <data name="UseCaseSectionTitle" xml:space="preserve"><value>Chọn việc cần trợ lý</value></data>
+  <data name="UseCaseReportSummary" xml:space="preserve"><value>Tóm tắt báo cáo</value></data>
+  <data name="UseCaseReportSummaryDesc" xml:space="preserve"><value>Doanh thu, công nợ, sự cố và việc nên làm.</value></data>
+  <data name="UseCaseReminderMessage" xml:space="preserve"><value>Nhắc thanh toán</value></data>
+  <data name="UseCaseReminderMessageDesc" xml:space="preserve"><value>Soạn tin nhắc khách thuê còn nợ; gửi sau khi duyệt.</value></data>
+  <data name="UseCaseRoomDraft" xml:space="preserve"><value>Nháp nhà/phòng</value></data>
+  <data name="UseCaseRoomDraftDesc" xml:space="preserve"><value>Mô tả bằng lời, AI điền sẵn form tạo phòng.</value></data>
+  <data name="UseCaseIncidentTriage" xml:space="preserve"><value>Phân loại sự cố</value></data>
+  <data name="UseCaseIncidentTriageDesc" xml:space="preserve"><value>Gợi ý nhóm, mức ưu tiên và người xử lý.</value></data>
+  <data name="UseCaseDailySummary" xml:space="preserve"><value>Việc trong ngày</value></data>
+  <data name="UseCaseDailySummaryDesc" xml:space="preserve"><value>Danh sách gọn việc hôm nay kèm liên kết.</value></data>
+  <data name="UseCaseUnknown" xml:space="preserve"><value>Không xác định</value></data>
+
+  <data name="PropertyLabel" xml:space="preserve"><value>Tòa nhà</value></data>
+  <data name="AllProperties" xml:space="preserve"><value>Tất cả tòa trong phạm vi</value></data>
+  <data name="FromLabel" xml:space="preserve"><value>Từ ngày</value></data>
+  <data name="ToLabel" xml:space="preserve"><value>Đến ngày</value></data>
+  <data name="InvoiceLabel" xml:space="preserve"><value>Hóa đơn cần nhắc</value></data>
+  <data name="SelectInvoice" xml:space="preserve"><value>Tự chọn hóa đơn còn nợ gần hạn</value></data>
+  <data name="IncidentLabel" xml:space="preserve"><value>Sự cố cần phân loại</value></data>
+  <data name="SelectIncident" xml:space="preserve"><value>Chọn từ sự cố đang mở</value></data>
+  <data name="InstructionLabel" xml:space="preserve"><value>Yêu cầu thêm (tùy chọn)</value></data>
+  <data name="InstructionReport" xml:space="preserve"><value>Ví dụ: tập trung vào phòng đang trống và công nợ quá hạn.</value></data>
+  <data name="InstructionReminder" xml:space="preserve"><value>Ví dụ: giọng nhẹ nhàng, nhắc hạn thanh toán trong tuần.</value></data>
+  <data name="InstructionRoomDraft" xml:space="preserve"><value>Ví dụ: Nhà 3 tầng 9 phòng, tầng 1 làm cửa hàng, giá từ 2,5 triệu.</value></data>
+  <data name="InstructionIncident" xml:space="preserve"><value>Mô tả sự cố, ví dụ: mất điện cả tầng 2 từ sáng, có mùi khét.</value></data>
+  <data name="InstructionDaily" xml:space="preserve"><value>Ví dụ: ưu tiên việc gấp trong tuần này.</value></data>
+  <data name="Generate" xml:space="preserve"><value>Tạo bản nháp</value></data>
+  <data name="Generating" xml:space="preserve"><value>Đang tạo…</value></data>
+  <data name="GenerateHint" xml:space="preserve"><value>Bản nháp do AI tạo, chỉ được áp dụng sau khi Chủ trọ duyệt.</value></data>
+  <data name="GenerateSuccess" xml:space="preserve"><value>Đã tạo bản nháp. Chủ trọ duyệt thì mới áp dụng.</value></data>
+  <data name="GenerateFailed" xml:space="preserve"><value>Không tạo được bản nháp. Vui lòng thử lại.</value></data>
+
+  <data name="DraftBadge" xml:space="preserve"><value>Bản nháp do AI tạo</value></data>
+  <data name="ModelLabel" xml:space="preserve"><value>Model</value></data>
+  <data name="CreatedLabel" xml:space="preserve"><value>Tạo lúc</value></data>
+  <data name="AwaitingApproval" xml:space="preserve"><value>Bản nháp này không thay đổi dữ liệu. Chủ trọ cần duyệt trước khi áp dụng.</value></data>
+  <data name="MySuggestionsTitle" xml:space="preserve"><value>Đề xuất của tôi</value></data>
+  <data name="EmptyMineHint" xml:space="preserve"><value>Chưa có đề xuất nào. Chọn một việc bên trên và tạo bản nháp.</value></data>
+
+  <data name="StatusPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="StatusApproved" xml:space="preserve"><value>Đã duyệt</value></data>
+  <data name="StatusRejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="StatusApplied" xml:space="preserve"><value>Đã áp dụng</value></data>
+
+  <data name="Insights" xml:space="preserve"><value>Nhận định</value></data>
+  <data name="Actions" xml:space="preserve"><value>Việc nên làm</value></data>
+  <data name="OpenLink" xml:space="preserve"><value>Mở</value></data>
+  <data name="RoomCount" xml:space="preserve"><value>{0} phòng</value></data>
+  <data name="RoomCode" xml:space="preserve"><value>Mã phòng</value></data>
+  <data name="Floor" xml:space="preserve"><value>Tầng</value></data>
+  <data name="Area" xml:space="preserve"><value>Diện tích</value></data>
+  <data name="Price" xml:space="preserve"><value>Giá thuê</value></data>
+  <data name="IncidentCategory" xml:space="preserve"><value>Nhóm sự cố</value></data>
+  <data name="IncidentUrgency" xml:space="preserve"><value>Mức ưu tiên</value></data>
+  <data name="IncidentAssignee" xml:space="preserve"><value>Người xử lý</value></data>
+  <data name="SuggestedTitle" xml:space="preserve"><value>Tiêu đề gợi ý</value></data>
+  <data name="EmptyDraft" xml:space="preserve"><value>Không đọc được nội dung bản nháp.</value></data>
+  <data name="CategoryElectrical" xml:space="preserve"><value>Điện</value></data>
+  <data name="CategoryWater" xml:space="preserve"><value>Nước</value></data>
+  <data name="CategoryFurniture" xml:space="preserve"><value>Nội thất</value></data>
+  <data name="CategoryEquipment" xml:space="preserve"><value>Thiết bị</value></data>
+  <data name="CategoryOther" xml:space="preserve"><value>Khác</value></data>
+  <data name="UrgencyNormal" xml:space="preserve"><value>Bình thường</value></data>
+  <data name="UrgencyUrgent" xml:space="preserve"><value>Khẩn</value></data>
+  <data name="UrgencyEmergency" xml:space="preserve"><value>Cấp bách</value></data>
+
+  <data name="SettingsPageTitle" xml:space="preserve"><value>Cài đặt trợ lý AI</value></data>
+  <data name="SettingsHelp" xml:space="preserve"><value>Bật/tắt trợ lý và giới hạn số lượt gọi model mỗi ngày. Thay đổi áp dụng cho toàn bộ tòa nhà bạn sở hữu.</value></data>
+  <data name="BackToAssistant" xml:space="preserve"><value>Về Trợ lý AI</value></data>
+  <data name="StatusLabel" xml:space="preserve"><value>Trạng thái</value></data>
+  <data name="EnabledOn" xml:space="preserve"><value>Đang bật</value></data>
+  <data name="EnabledOff" xml:space="preserve"><value>Đang tắt</value></data>
+  <data name="UsedToday" xml:space="preserve"><value>Lượt dùng hôm nay</value></data>
+  <data name="ProviderLabel" xml:space="preserve"><value>Nhà cung cấp</value></data>
+  <data name="SettingsFormTitle" xml:space="preserve"><value>Thiết lập trợ lý</value></data>
+  <data name="EnabledLabel" xml:space="preserve"><value>Cho phép dùng trợ lý AI</value></data>
+  <data name="EnabledHint" xml:space="preserve"><value>Tắt sẽ chặn cả bạn và Quản lý tạo đề xuất mới.</value></data>
+  <data name="DailyLimitLabel" xml:space="preserve"><value>Hạn mức lượt gọi mỗi ngày</value></data>
+  <data name="DailyLimitHint" xml:space="preserve"><value>Từ 1 đến 1000 lượt cho mỗi tài khoản. Quản lý dùng mức nhỏ nhất trong các tòa được giao.</value></data>
+  <data name="DailyLimitDefault" xml:space="preserve"><value>Hạn mức mặc định</value></data>
+  <data name="DemoNotice" xml:space="preserve"><value>Đang chạy chế độ demo: đề xuất được tạo theo mẫu cục bộ, không gửi dữ liệu ra ngoài.</value></data>
+  <data name="LiveNotice" xml:space="preserve"><value>Đang gọi model qua endpoint tương thích OpenAI. Chỉ ngữ cảnh đã che PII được gửi đi.</value></data>
+  <data name="Save" xml:space="preserve"><value>Lưu cài đặt</value></data>
+  <data name="Saving" xml:space="preserve"><value>Đang lưu…</value></data>
+  <data name="SaveSuccess" xml:space="preserve"><value>Đã lưu cài đặt trợ lý AI.</value></data>
+  <data name="SaveFailed" xml:space="preserve"><value>Không lưu được cài đặt. Vui lòng thử lại.</value></data>
+
+  <data name="InboxPageTitle" xml:space="preserve"><value>Đề xuất AI chờ duyệt</value></data>
+  <data name="InboxHelp" xml:space="preserve"><value>Duyệt để hệ thống thực hiện qua nghiệp vụ hiện có; từ chối cần nêu lý do. Bản nháp không tự thay đổi dữ liệu.</value></data>
+  <data name="StatPending" xml:space="preserve"><value>Chờ duyệt</value></data>
+  <data name="StatApplied" xml:space="preserve"><value>Đã áp dụng</value></data>
+  <data name="StatRejected" xml:space="preserve"><value>Bị từ chối</value></data>
+  <data name="InboxEmpty" xml:space="preserve"><value>Không có đề xuất AI</value></data>
+  <data name="InboxEmptyHint" xml:space="preserve"><value>Khi Quản lý hoặc bạn tạo bản nháp từ trang Trợ lý AI, đề xuất sẽ xuất hiện ở đây.</value></data>
+  <data name="RequesterLabel" xml:space="preserve"><value>Người tạo</value></data>
+  <data name="Approve" xml:space="preserve"><value>Duyệt</value></data>
+  <data name="Reject" xml:space="preserve"><value>Từ chối</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Hủy</value></data>
+  <data name="Busy" xml:space="preserve"><value>Đang xử lý…</value></data>
+  <data name="CloseDialog" xml:space="preserve"><value>Đóng</value></data>
+  <data name="ApproveDialogTitle" xml:space="preserve"><value>Duyệt đề xuất AI</value></data>
+  <data name="ApproveDialogBody" xml:space="preserve"><value>Hệ thống sẽ áp dụng đề xuất qua nghiệp vụ tương ứng và ghi nhật ký ai đã duyệt.</value></data>
+  <data name="RejectDialogTitle" xml:space="preserve"><value>Từ chối đề xuất AI</value></data>
+  <data name="RejectReasonLabel" xml:space="preserve"><value>Lý do từ chối</value></data>
+  <data name="RejectReasonPlaceholder" xml:space="preserve"><value>Ví dụ: nội dung chưa đúng giá thuê thực tế.</value></data>
+  <data name="RejectReasonHint" xml:space="preserve"><value>Bắt buộc, tối đa 500 ký tự. Người tạo nhận được thông báo kèm lý do.</value></data>
+  <data name="ApproveSuccess" xml:space="preserve"><value>Đã duyệt và áp dụng đề xuất.</value></data>
+  <data name="ApproveFailed" xml:space="preserve"><value>Không duyệt được đề xuất. Vui lòng kiểm tra lại nội dung.</value></data>
+  <data name="RejectSuccess" xml:space="preserve"><value>Đã từ chối đề xuất.</value></data>
+  <data name="RejectFailed" xml:space="preserve"><value>Không từ chối được đề xuất. Vui lòng thử lại.</value></data>
+  <data name="AppliedRef" xml:space="preserve"><value>Kết quả áp dụng</value></data>
+  <data name="EditTitleLabel" xml:space="preserve"><value>Tiêu đề gửi khách</value></data>
+  <data name="EditBodyLabel" xml:space="preserve"><value>Nội dung gửi khách</value></data>
+  <data name="EditRoomDraftHint" xml:space="preserve"><value>Sửa trực tiếp trước khi duyệt. Hệ thống vẫn kiểm tra trùng mã phòng và dữ liệu hợp lệ.</value></data>
+  <data name="EditPropertyName" xml:space="preserve"><value>Tên nhà trọ</value></data>
+  <data name="EditPropertyAddress" xml:space="preserve"><value>Địa chỉ</value></data>
+  <data name="AddRoomRow" xml:space="preserve"><value>Thêm phòng</value></data>
+  <data name="UseCaseTenantDraft" xml:space="preserve"><value>Nháp khách thuê</value></data>
+  <data name="UseCaseTenantDraftDesc" xml:space="preserve"><value>Mô tả bằng lời, AI điền sẵn hồ sơ khách thuê.</value></data>
+  <data name="UseCaseServiceDraft" xml:space="preserve"><value>Nháp dịch vụ</value></data>
+  <data name="UseCaseServiceDraftDesc" xml:space="preserve"><value>Điền sẵn danh mục dịch vụ và giá ban đầu.</value></data>
+  <data name="UseCaseContractDraft" xml:space="preserve"><value>Nháp hợp đồng</value></data>
+  <data name="UseCaseContractDraftDesc" xml:space="preserve"><value>Chọn phòng, khách và điều khoản từ dữ liệu có sẵn.</value></data>
+  <data name="InstructionTenantDraft" xml:space="preserve"><value>Ví dụ: Thêm khách thuê Nguyễn Văn A, SĐT 0901234567, email a@example.com, sinh ngày 01/02/1998.</value></data>
+  <data name="InstructionServiceDraft" xml:space="preserve"><value>Ví dụ: Dịch vụ giữ xe 100.000đ/xe/tháng, hoặc Internet 50.000đ/phòng/tháng.</value></data>
+  <data name="InstructionContractDraft" xml:space="preserve"><value>Ví dụ: Hợp đồng cho khách Nguyễn Văn A thuê phòng P101 từ 01/11/2026 đến 31/10/2027, giá 3 triệu, cọc 1 tháng.</value></data>
+  <data name="TenantPhone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="TenantEmail" xml:space="preserve"><value>Email</value></data>
+  <data name="TenantBirthDate" xml:space="preserve"><value>Ngày sinh</value></data>
+  <data name="TenantGender" xml:space="preserve"><value>Giới tính</value></data>
+  <data name="TenantAddress" xml:space="preserve"><value>Địa chỉ thường trú</value></data>
+  <data name="TenantNoIdHint" xml:space="preserve"><value>AI không điền CCCD/số tài khoản. Chủ trọ bổ sung ở hồ sơ nếu cần.</value></data>
+  <data name="GenderMale" xml:space="preserve"><value>Nam</value></data>
+  <data name="GenderFemale" xml:space="preserve"><value>Nữ</value></data>
+  <data name="GenderOther" xml:space="preserve"><value>Khác</value></data>
+  <data name="ServiceUnit" xml:space="preserve"><value>Đơn vị</value></data>
+  <data name="ServiceMethod" xml:space="preserve"><value>Cách tính</value></data>
+  <data name="ServiceEffective" xml:space="preserve"><value>Hiệu lực từ</value></data>
+  <data name="ServiceEffectiveTo" xml:space="preserve"><value>Hiệu lực đến</value></data>
+  <data name="ServiceMethodFixed" xml:space="preserve"><value>Cố định hàng tháng</value></data>
+  <data name="ServiceMethodMeter" xml:space="preserve"><value>Theo chỉ số</value></data>
+  <data name="ServiceMethodTiered" xml:space="preserve"><value>Bậc thang</value></data>
+  <data name="ServiceMethodCustom" xml:space="preserve"><value>Tùy chỉnh</value></data>
+  <data name="ContractRoom" xml:space="preserve"><value>Phòng</value></data>
+  <data name="ContractTenants" xml:space="preserve"><value>Khách thuê</value></data>
+  <data name="ContractRent" xml:space="preserve"><value>Giá thuê</value></data>
+  <data name="ContractDeposit" xml:space="preserve"><value>Tiền cọc</value></data>
+  <data name="ContractCycle" xml:space="preserve"><value>Kỳ thanh toán</value></data>
+  <data name="ContractCycleValue" xml:space="preserve"><value>{0} tháng/lần</value></data>
+  <data name="ContractMeterDay" xml:space="preserve"><value>Ngày chốt chỉ số</value></data>
+  <data name="ContractDraftNote" xml:space="preserve"><value>Hợp đồng được tạo ở trạng thái nháp; Chủ trọ đi tiếp luồng gửi/duyệt hợp đồng hiện có.</value></data>
+</root>

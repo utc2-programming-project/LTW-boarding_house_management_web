@@ -2,6 +2,8 @@
 @attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy)]
 @rendermode InteractiveServer
 @inject ReportsPageService PageService
+@inject TimeProvider Clock
+@inject Web.Common.Utils.FilterUrlState Url
 @inject IStringLocalizer<ReportResource> L
 @inject IStringLocalizer<DashboardResource> D
 @inject ToastService Toasts
@@ -16,6 +18,9 @@
             <p class="updated-at">@D["Updated"]: @DateFormatter.FormatDateTime(LastRefreshed)</p>
         </HeadingMeta>
         <Actions>
+            <a class="btn btn-secondary" href="/assistant?usecase=ReportSummary">
+                <LucideIcon Name="sparkles" />@L["AiSummary"]
+            </a>
             <button type="button" class="btn btn-primary" disabled="@(Busy || DateRangeInvalid)" @onclick="RefreshAsync">
                 <LucideIcon Name="refresh" />@D["Refresh"]
             </button>
@@ -67,17 +72,8 @@
         }
     </div>
 
-    <div class="report-tabs" role="tablist" aria-label="@L["Title"]">
-        <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Rooms).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Rooms)">@L["RoomReport"]</button>
-        <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Tenants).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Tenants)">@L["TenantReport"]</button>
-        <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Contracts).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Contracts)">@L["ContractReport"]</button>
-        <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Costs).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Costs)">@L["CostReport"]</button>
-        <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Incidents).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Incidents)">@L["IncidentReport"]</button>
-        @if (IsOwner)
-        {
-            <button type="button" role="tab" class="report-tab" aria-selected="@((ActiveTab == ReportTab.Revenue).ToString().ToLowerInvariant())" @onclick="() => SelectReportAsync(ReportTab.Revenue)">@L["RevenueReport"]</button>
-        }
-    </div>
+    <TabBar Role="tablist" Variant="underline" Items="TabItems" ActiveKey="@ActiveTab.ToString()"
+            AriaLabel="@L["Title"]" OnSelect="SelectReportByKeyAsync" />
 
     @if (ActiveTab == ReportTab.Rooms)
     {

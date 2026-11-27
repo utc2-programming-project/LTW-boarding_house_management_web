@@ -56,16 +56,11 @@ public sealed class NotificationService(ApplicationDbContext db, TimeProvider? t
 
     public async Task MarkAllReadAsync(string userId)
     {
-        var items = await db.AppNotifications
-            .Where(item => item.RecipientUserId == userId && !item.IsRead)
-            .ToListAsync();
         var now = _timeProvider.GetUtcNow();
-        foreach (var item in items)
-        {
-            item.IsRead = true;
-            item.ReadAt = now;
-        }
-
-        await db.SaveChangesAsync();
+        await db.AppNotifications
+            .Where(item => item.RecipientUserId == userId && !item.IsRead)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(item => item.IsRead, true)
+                .SetProperty(item => item.ReadAt, now));
     }
 }

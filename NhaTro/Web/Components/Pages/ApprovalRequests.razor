@@ -1,6 +1,7 @@
 @using System.Security.Claims
 @using System.Text.Json
 @using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Tables
 @using Web.Features.Approvals
 @using Web.Features.Approvals.DTOs
 @using Web.Features.Approvals.Enums
@@ -50,7 +51,13 @@
                             <h2>@item.OperationCode · @L[item.OperationCode]</h2>
                             @if (_contractSummaries.TryGetValue(item.Id, out var contractSummary))
                             {
-                                <p class="approval-target">@ActionLabel(contractSummary.Action) <span class="approval-target-key">@contractSummary.ContractNumber · @contractSummary.RoomCode · @contractSummary.PropertyName</span></p>
+                                <p class="approval-target">@ActionLabel(contractSummary.Action) <span class="approval-target-key cell-truncate" data-hover-tip>
+                                    @($"{contractSummary.ContractNumber} · {contractSummary.RoomCode} · {contractSummary.PropertyName}")
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@contractSummary.ContractNumber</span>
+                                        <span class="hover-tip__line">@contractSummary.RoomCode · @contractSummary.PropertyName</span>
+                                    </span>
+                                </span></p>
                                 @if (contractSummary.NewEndDate is not null)
                                 {
                                     <p class="approval-target"><strong>@L["ApprovalUiNewEndDate"]:</strong> @DateFormatter.Format(DateOnly.FromDateTime(contractSummary.NewEndDate.Value))</p>
@@ -62,10 +69,22 @@
                             }
                             else
                             {
-                                <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key">@item.TargetKey</span></p>
+                                <p class="approval-target">@L[$"ApprovalUiTarget{item.TargetType}"] <span class="approval-target-key cell-truncate" data-hover-tip>
+                                    @item.TargetKey
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@item.TargetKey</span>
+                                    </span>
+                                </span></p>
                                 @if (PayloadSummary(item) is { Length: > 0 } summary)
                                 {
-                                    <p class="approval-target">@summary</p>
+                                    <p class="approval-target">
+                                        <span class="cell-truncate" data-hover-tip>
+                                            @summary
+                                            <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                <span class="hover-tip__line">@summary</span>
+                                            </span>
+                                        </span>
+                                    </p>
                                 }
                             }
                         </div>
@@ -74,7 +93,15 @@
                     </div>
                     @if (!string.IsNullOrWhiteSpace(item.DecisionReason))
                     {
-                        <p class="approval-reason"><strong>@L["ApprovalUiReason"]:</strong> @item.DecisionReason</p>
+                        <p class="approval-reason">
+                            <strong>@L["ApprovalUiReason"]:</strong>
+                            <span class="cell-truncate" data-hover-tip>
+                                @item.DecisionReason
+                                <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                    <span class="hover-tip__line">@item.DecisionReason</span>
+                                </span>
+                            </span>
+                        </p>
                     }
                     @if (!Mine && item.Status == ApprovalRequestStatus.Pending)
                     {
@@ -108,6 +135,9 @@
                 </article>
             }
         </div>
+        <TablePager Page="_page" TotalPages="TotalPages" From="@((_page - 1) * PageSize + 1)"
+                    To="@((_page - 1) * PageSize + _items.Count)" Total="_total"
+                    Disabled="@_busy" PageChanged="GoToPageAsync" />
     }
 </section>
 
@@ -115,8 +145,12 @@
     [Parameter] public bool Mine { get; set; }
 
     private string Title => L[Mine ? "MyRequests" : "Approvals"];
+    private const int PageSize = 20;
     private ApprovalCaller _caller = default!;
     private IReadOnlyList<ApprovalRequestDto>? _items;
+    private int _page = 1;
+    private int _total;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(_total / (double)PageSize));
     private Guid? _rejecting;
     private Guid? _confirming;
     private string _reason = "";
@@ -156,10 +190,19 @@
     {
         try
         {
-            var result = Mine ? await Approvals.ListMineAsync(_caller) : await Approvals.ListInboxAsync(_caller);
+            var result = await LoadPageAsync();
+
+            // Duyệt/hủy làm trang cuối trống: lùi về trang cuối còn dữ liệu.
+            if (result.Succeeded && result.Items.Count == 0 && result.TotalCount > 0 && _page > 1)
+            {
+                _page = Math.Max(1, (int)Math.Ceiling(result.TotalCount / (double)PageSize));
+                result = await LoadPageAsync();
+            }
+
             _error = !result.Succeeded;
             _errorMessage = result.Succeeded ? null : result.ErrorMessage;
             _items = result.Succeeded ? result.Items : null;
+            _total = result.Succeeded ? result.TotalCount : 0;
             _contractSummaries = _items is not null
                 ? await ContractSummaries.GetAsync(_items, _caller.UserId, _caller.Role)
                 : new Dictionary<Guid, ContractApprovalSummary>();
@@ -168,6 +211,31 @@
         {
             _error = true;
             _items = null;
+            _total = 0;
+        }
+    }
+
+    private Task<ApprovalListResult> LoadPageAsync() => Mine
+        ? Approvals.ListMinePageAsync(_caller, _page, PageSize)
+        : Approvals.ListInboxPageAsync(_caller, _page, PageSize);
+
+    private async Task GoToPageAsync(int page)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _page = page;
+        _items = null;
+        _error = false;
+        _errorMessage = null;
+        try
+        {
+            await LoadAsync();
+        }
+        finally
+        {
+            _busy = false;
         }
     }
     private string ActionLabel(string action) => L[action switch { "Renew" => "ApprovalUiActionRenew", "Liquidate" => "ApprovalUiActionLiquidate", "UpdateDeposit" => "ApprovalUiActionDeposit", _ => "ApprovalUiActionUnknown" }];

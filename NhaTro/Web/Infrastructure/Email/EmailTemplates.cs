@@ -168,11 +168,15 @@ public static class EmailTemplates
         string accountEmail,
         EmailRecipient recipient,
         string inviteLink,
-        string ownerName)
+        string ownerName,
+        int lifetimeMinutes = 1440,
+        bool existingAccount = false)
     {
         var name = string.IsNullOrWhiteSpace(displayName) ? accountEmail : displayName.Trim();
         var account = WebUtility.HtmlEncode(accountEmail);
         var owner = WebUtility.HtmlEncode(ownerName);
+        var lifetime = lifetimeMinutes >= 60 ? $"{lifetimeMinutes / 60} giờ" : $"{lifetimeMinutes} phút";
+        var lifetimeEn = lifetimeMinutes >= 60 ? $"{lifetimeMinutes / 60} hours" : $"{lifetimeMinutes} minutes";
 
         return IsEnglish
             ? new EmailContent(
@@ -184,8 +188,8 @@ public static class EmailTemplates
                         <p style="margin:0 0 12px">Hi <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
                         <p style="margin:0 0 16px"><strong>{owner}</strong> invited you to the boarding-house
                         system with the account <strong>{account}</strong>.</p>
-                        {Button("Set your password", inviteLink)}
-                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">The invitation expires in 15 minutes.
+                        {Button(existingAccount ? "Open invitation" : "Set your password", inviteLink)}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">The invitation expires in {lifetimeEn}.
                         If you did not expect this email, you can ignore it.</p>
                         """))
             : new EmailContent(
@@ -197,9 +201,91 @@ public static class EmailTemplates
                         <p style="margin:0 0 12px">Xin chào <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
                         <p style="margin:0 0 16px"><strong>{owner}</strong> mời bạn tham gia hệ thống quản lý
                         nhà trọ với tài khoản <strong>{account}</strong>.</p>
-                        {Button("Đặt mật khẩu", inviteLink)}
-                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Lời mời hết hạn sau 15 phút.
+                        {Button(existingAccount ? "Mở lời mời" : "Đặt mật khẩu", inviteLink)}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Lời mời hết hạn sau {lifetime}.
                         Nếu bạn không mong đợi thư này, hãy bỏ qua.</p>
+                        """));
+    }
+
+    /// <summary>PLAN-001 #11: cảnh báo khi có thay đổi bảo mật trên tài khoản.</summary>
+    public static EmailContent SecurityAlert(
+        string? displayName,
+        string accountEmail,
+        EmailRecipient recipient,
+        string action,
+        string? detail)
+    {
+        var name = string.IsNullOrWhiteSpace(displayName) ? accountEmail : displayName.Trim();
+        var account = WebUtility.HtmlEncode(accountEmail);
+        var actionText = WebUtility.HtmlEncode(action);
+        var detailText = string.IsNullOrWhiteSpace(detail)
+            ? string.Empty
+            : $"<p style=\"margin:0 0 16px;font-size:13px;color:#6b7280\">{WebUtility.HtmlEncode(detail)}</p>";
+        var time = DateTimeOffset.UtcNow.ToString("HH:mm dd/MM/yyyy 'UTC'", CultureInfo.InvariantCulture);
+
+        return IsEnglish
+            ? new EmailContent(
+                Prefix(recipient) + $"Security alert for {accountEmail}",
+                Layout(
+                    heading: "Security alert",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Hi <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 8px">A security change happened on your account
+                        <strong>{account}</strong>:</p>
+                        <p style="margin:0 0 16px"><strong>{actionText}</strong> — {time}</p>
+                        {detailText}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">If this was you, no action is needed.
+                        Otherwise change your password and sign out all devices immediately.</p>
+                        """))
+            : new EmailContent(
+                Prefix(recipient) + $"Cảnh báo bảo mật cho {accountEmail}",
+                Layout(
+                    heading: "Cảnh báo bảo mật",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Xin chào <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 8px">Tài khoản <strong>{account}</strong> vừa có thay đổi bảo mật:</p>
+                        <p style="margin:0 0 16px"><strong>{actionText}</strong> — {time}</p>
+                        {detailText}
+                        <p style="margin:16px 0 0;font-size:13px;color:#6b7280">Nếu đúng là bạn, không cần làm gì.
+                        Nếu không, hãy đổi mật khẩu và đăng xuất mọi thiết bị ngay.</p>
+                        """));
+    }
+
+    /// <summary>Thư báo khách thuê có hợp đồng mới cần xem và xác nhận.</summary>
+    public static EmailContent ContractAwaitingTenant(
+        string? displayName,
+        string accountEmail,
+        string contractNumber,
+        string reviewLink)
+    {
+        var name = string.IsNullOrWhiteSpace(displayName) ? accountEmail : displayName.Trim();
+        var number = WebUtility.HtmlEncode(contractNumber);
+        var recipient = new EmailRecipient(accountEmail, accountEmail);
+
+        return IsEnglish
+            ? new EmailContent(
+                Prefix(recipient) + $"Lease contract {contractNumber} awaits your confirmation",
+                Layout(
+                    heading: "Confirm your lease contract",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Hi <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px">Your lease contract <strong>{number}</strong> has been sent for review.
+                        Please check the terms and confirm or request changes.</p>
+                        {Button("Review contract", reviewLink)}
+                        """))
+            : new EmailContent(
+                Prefix(recipient) + $"Hợp đồng thuê {contractNumber} chờ bạn xác nhận",
+                Layout(
+                    heading: "Xác nhận hợp đồng thuê",
+                    recipient,
+                    body: $"""
+                        <p style="margin:0 0 12px">Xin chào <strong>{WebUtility.HtmlEncode(name)}</strong>,</p>
+                        <p style="margin:0 0 16px">Hợp đồng thuê <strong>{number}</strong> đã được gửi để bạn xem.
+                        Vui lòng kiểm tra điều khoản rồi xác nhận hoặc yêu cầu chỉnh sửa.</p>
+                        {Button("Xem hợp đồng", reviewLink)}
                         """));
     }
 

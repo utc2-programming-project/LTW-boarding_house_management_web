@@ -9,8 +9,9 @@ namespace Web.Infrastructure.Security;
 
 /// <summary>
 /// Tên policy và phản hồi dùng chung cho rate limiting.
-/// Global limiter chỉ áp cho POST đăng nhập; <see cref="FileUpload"/> và <see cref="CultureSet"/>
-/// áp riêng theo endpoint qua <c>RequireRateLimiting</c>.
+/// Global limiter áp cho các POST nhạy cảm (đăng nhập, đăng ký, OTP, quên mật khẩu, gửi lại
+/// xác nhận email); <see cref="FileUpload"/> và <see cref="CultureSet"/> áp riêng theo endpoint
+/// qua <c>RequireRateLimiting</c>.
 /// </summary>
 public static class RateLimitPolicies
 {
@@ -76,6 +77,19 @@ public static class RateLimitPolicies
         HttpMethods.IsPost(http.Request.Method)
         && OtpPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
 
+    // PLAN-038: hai form gửi mail (OTP quên mật khẩu / thư xác nhận email) chặn spam theo IP.
+    private static readonly string[] ForgotPasswordPaths = ["/account/forgotpassword"];
+
+    public static bool IsForgotPasswordRequest(HttpContext http) =>
+        HttpMethods.IsPost(http.Request.Method)
+        && ForgotPasswordPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] ResendEmailPaths = ["/account/resendemailconfirmation"];
+
+    public static bool IsResendEmailRequest(HttpContext http) =>
+        HttpMethods.IsPost(http.Request.Method)
+        && ResendEmailPaths.Contains(NormalizePath(http.Request.Path), StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
     /// Bỏ '/' cuối để "/Account/Login/" không lách được giới hạn; "/" giữ nguyên.
     /// </summary>
@@ -86,9 +100,9 @@ public static class RateLimitPolicies
     }
 
     /// <summary>
-    /// Phản hồi khi vượt giới hạn: JSON theo cấu trúc storage cho <c>/api</c>; POST đăng nhập thì
-    /// chuyển về form đăng nhập kèm thông báo đã bản địa hoá; còn lại là 429 text.
-    /// Không lộ chi tiết nội bộ.
+    /// Phản hồi khi vượt giới hạn: JSON theo cấu trúc storage cho <c>/api</c>; POST đăng nhập,
+    /// quên mật khẩu và gửi lại xác nhận email thì chuyển về form thật kèm thông báo đã bản địa hoá;
+    /// còn lại là 429 text. Không lộ chi tiết nội bộ.
     /// </summary>
     public static async ValueTask WriteRejectionAsync(OnRejectedContext context, CancellationToken cancellationToken)
     {
@@ -120,6 +134,21 @@ public static class RateLimitPolicies
 
             response.StatusCode = StatusCodes.Status303SeeOther;
             response.Headers.Location = target;
+            return;
+        }
+
+        // PLAN-038: form gửi mail cũng quay về trang thật kèm cờ để hiện thông báo.
+        if (IsForgotPasswordRequest(http))
+        {
+            response.StatusCode = StatusCodes.Status303SeeOther;
+            response.Headers.Location = "/Account/ForgotPassword?tooManyRequests=1";
+            return;
+        }
+
+        if (IsResendEmailRequest(http))
+        {
+            response.StatusCode = StatusCodes.Status303SeeOther;
+            response.Headers.Location = "/Account/ResendEmailConfirmation?tooManyRequests=1";
             return;
         }
 

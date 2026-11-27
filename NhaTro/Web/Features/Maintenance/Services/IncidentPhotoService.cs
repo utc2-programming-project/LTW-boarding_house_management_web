@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Web.Configuration.Options;
 using Web.Data;
+using Web.Features.Accounts.Owners;
 using Web.Features.Approvals;
 using Web.Features.Approvals.DTOs;
 using Web.Features.Approvals.Enums;
@@ -210,8 +211,13 @@ public sealed class IncidentPhotoService(
             || request.Status != ApprovalRequestStatus.Pending || request.PropertyId is null) return false;
         if (writing && (caller.UserId != request.RequestedByUserId || !caller.IsQuanLy)) return false;
         if (!caller.IsChuTro && caller.UserId != request.RequestedByUserId) return false;
-        return await PropertyScope.Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(),
-            new PropertyCaller(caller.UserId, caller.Role)).AnyAsync(p => p.Id == request.PropertyId, ct);
+        var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+        var properties =
+            from property in PropertyScope.Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(),
+                new PropertyCaller(caller.UserId, caller.Role))
+            where !blockedOwners.Contains(property.OwnerId)
+            select property;
+        return await properties.AnyAsync(p => p.Id == request.PropertyId, ct);
     }
 
     public async Task<bool> CanReadAsync(ApplicationDbContext db, StoredFile file, StorageCaller caller, CancellationToken ct)

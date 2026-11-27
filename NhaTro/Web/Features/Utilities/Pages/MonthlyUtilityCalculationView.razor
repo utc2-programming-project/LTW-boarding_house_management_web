@@ -146,6 +146,17 @@
             <div class="table-card">
                 <div class="table-responsive">
                     <table class="cost-table">
+                        <colgroup>
+                            <col style="width:20%" />
+                            <col style="width:10%" />
+                            <col style="width:12%" />
+                            <col style="width:10%" />
+                            <col style="width:12%" />
+                            <col style="width:11%" />
+                            <col style="width:12%" />
+                            <col style="width:9%" />
+                            <col style="width:4%" />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="text-left">@UL["P5CostThRoom"]</th>
@@ -165,13 +176,27 @@
                                 <tr @key="room.ContractId">
                                     <td class="cell-room" data-label="@UL["P5CostThRoom"]">
                                         <div class="room-cell">
-                                            <div>
-                                                <span class="room-code">@room.RoomCode</span>
-                                                <span class="room-property">@room.PropertyName</span>
+                                            <div class="room-head">
+                                                <a class="cell-link room-code" href="@AppLinks.Room(room.RoomId)">@room.RoomCode</a>
+                                                <a class="cell-link is-quiet room-property cell-truncate"
+                                                   href="@AppLinks.Property(room.PropertyId)"
+                                                   data-hover-tip>
+                                                    @room.PropertyName
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@room.PropertyName</span>
+                                                    </span>
+                                                </a>
                                             </div>
                                             @if (!string.IsNullOrWhiteSpace(room.TenantNames))
                                             {
-                                                <span class="room-tenant">@room.TenantNames</span>
+                                                <a class="cell-link room-tenant cell-truncate"
+                                                   href="@AppLinks.TenantsByKeyword(room.TenantNames)"
+                                                   data-hover-tip>
+                                                    @room.TenantNames
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@room.TenantNames</span>
+                                                    </span>
+                                                </a>
                                             }
                                             <span class="status-badge @StatusClass(room)">@StatusLabel(room)</span>
                                         </div>
@@ -415,7 +440,12 @@
                         @foreach (var line in detail.ServiceLines)
                         {
                             <div>
-                                <dt>@line.Name <span class="muted">(@FormatUsage(line.Quantity, line.Unit))</span></dt>
+                                <dt class="cell-truncate" data-hover-tip>
+                                    @line.Name <span class="muted">(@FormatUsage(line.Quantity, line.Unit))</span>
+                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                        <span class="hover-tip__line">@line.Name (@FormatUsage(line.Quantity, line.Unit))</span>
+                                    </span>
+                                </dt>
                                 <dd class="tabular-nums">@MoneyFormatter.Format(line.Amount)</dd>
                             </div>
                         }
@@ -435,7 +465,12 @@
                             @foreach (var revision in detail.InvoiceRevisions)
                             {
                                 <div class="invoice-revision-item">
-                                    <div class="invoice-revision-reason">@revision.Reason</div>
+                                    <div class="invoice-revision-reason cell-truncate" data-hover-tip>
+                                        @revision.Reason
+                                        <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                            <span class="hover-tip__line">@revision.Reason</span>
+                                        </span>
+                                    </div>
                                     <div class="invoice-revision-meta">
                                         <span class="tabular-nums">@FormatMoment(revision.ChangedAt)</span>
                                         @if (revision.PreviousTotalAmount != revision.NewTotalAmount)
@@ -466,6 +501,12 @@
                     {
                         <div class="table-responsive">
                             <table class="mini-table corrections-table">
+                                <colgroup>
+                                    <col style="width:140px" />
+                                    <col style="width:140px" />
+                                    <col />
+                                    <col style="width:150px" />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th>@UL["P5CostCorrectionField"]</th>
@@ -480,7 +521,14 @@
                                         <tr>
                                             <td>@CorrectionFieldLabel(correction.Field)</td>
                                             <td class="text-right tabular-nums">@FormatCorrection(correction)</td>
-                                            <td>@correction.Reason</td>
+                                            <td>
+                                                <span class="cell-truncate" data-hover-tip>
+                                                    @correction.Reason
+                                                    <span class="hover-tip" role="tooltip" aria-hidden="true">
+                                                        <span class="hover-tip__line">@correction.Reason</span>
+                                                    </span>
+                                                </span>
+                                            </td>
                                             <td class="tabular-nums">@FormatMoment(correction.ChangedAt)</td>
                                         </tr>
                                     }

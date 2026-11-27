@@ -1,0 +1,99 @@
+@inject IStringLocalizer<VehicleResource> L
+
+<FeatureDialog Visible="true"
+               Title="@L["BlockingAlertTitle"]"
+               CloseLabel="@L["Close"]"
+               OnClose="OnCancel"
+               CssClass="vehicle-compact-dialog">
+    <form @onsubmit="SubmitAsync" @onsubmit:preventDefault novalidate>
+        <div class="vehicle-form-body">
+            <div class="vehicle-alert warning" style="margin-bottom: 16px;">
+                <div class="vehicle-alert__content">
+                    <LucideIcon Name="shield-check" />
+                    <span>@L["BlockingAlertDesc"]</span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(ErrorText))
+            {
+                <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                    <div class="vehicle-alert__content">
+                        <LucideIcon Name="alert-triangle" />
+                        <span>@ErrorText</span>
+                    </div>
+                </div>
+            }
+
+            <div class="vehicle-form-grid">
+                @if (Properties is { Count: > 1 })
+                {
+                    <div class="vehicle-field full">
+                        <label for="blocking-property-select">@L["Property"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="blocking-property-select" @bind="_selectedPropertyId">
+                            @foreach (var prop in Properties)
+                            {
+                                <option value="@prop.PropertyId">@prop.Name</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                <div class="vehicle-field full">
+                    <label for="blocking-plate-query">@L["PlateQueryLabel"] <span class="required" aria-hidden="true">*</span></label>
+                    <input id="blocking-plate-query" @bind="_plateQuery" @bind:event="oninput"
+                           maxlength="25" autocomplete="off" placeholder="@L["PlateQueryPlaceholder"]" />
+                </div>
+
+                <div class="vehicle-field full">
+                    <label for="blocking-note-input">@L["BlockingNoteLabel"]</label>
+                    <textarea id="blocking-note-input" rows="3" maxlength="300"
+                              placeholder="@L["BlockingNotePlaceholder"]"
+                              @bind="_note"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <footer class="vehicle-form-footer">
+            <button type="button" class="btn btn-secondary" @onclick="OnCancel">@L["Cancel"]</button>
+            <button type="submit" class="btn btn-primary"
+                    disabled="@(string.IsNullOrWhiteSpace(_plateQuery) || _plateQuery.Trim().Length < 4)">
+                <LucideIcon Name="bell" />
+                <span>@L["SendBlockingAlertBtn"]</span>
+            </button>
+        </footer>
+    </form>
+</FeatureDialog>
+
+@code {
+    [Parameter] public int PropertyId { get; set; }
+    [Parameter] public IReadOnlyList<VehiclePropertyOptionDto>? Properties { get; set; }
+    [Parameter] public string? InitialPlate { get; set; }
+    [Parameter] public string? ErrorText { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<BlockingAlertRequest> OnSubmit { get; set; }
+
+    private string _plateQuery = string.Empty;
+    private string? _note;
+    private int _selectedPropertyId;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(InitialPlate) && string.IsNullOrWhiteSpace(_plateQuery))
+        {
+            _plateQuery = InitialPlate;
+        }
+
+        if (_selectedPropertyId == 0)
+        {
+            _selectedPropertyId = PropertyId;
+        }
+    }
+
+    private Task SubmitAsync() =>
+        OnSubmit.InvokeAsync(new BlockingAlertRequest
+        {
+            PropertyId = _selectedPropertyId > 0 ? _selectedPropertyId : PropertyId,
+            PlateQuery = _plateQuery.Trim(),
+            Note = _note,
+        });
+}

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Web.Common.Queries;
 using Web.Features.Rooms.Enums;
 
 namespace Web.Features.Reports.DTOs;
@@ -24,9 +25,8 @@ public sealed class RoomReportFilter
 
     public void Normalize()
     {
-        if (Page < 1) Page = 1;
-        if (PageSize < 1) PageSize = 20;
-        else if (PageSize > 100) PageSize = 100;
+        Page = PagingExtensions.ClampPage(Page);
+        PageSize = PagingExtensions.ClampPageSize(PageSize);
         Keyword = string.IsNullOrWhiteSpace(Keyword) ? null : Keyword.Trim();
     }
 }

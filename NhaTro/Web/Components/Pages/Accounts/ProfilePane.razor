@@ -1,0 +1,517 @@
+@using Web.Features.Accounts
+@using Web.Features.Accounts.Avatar
+@using Web.Features.Accounts.DTOs
+@using Web.Features.Invoices
+@using Web.Components.Shared.Feedback
+@using Web.Components.Shared.Forms
+
+@inject IAccountService Accounts
+@inject AuthenticationStateProvider AuthState
+@inject IStringLocalizer<Shared> L
+@inject ToastService Toasts
+@inject IJSRuntime JS
+@inject AvatarService Avatars
+@inject Web.Features.Invoices.Services.OwnerBankAccountNotifier BankAccountNotifier
+
+@* VHT-8 + PLAN-030: tab Hồ sơ của trang /account. Sửa họ tên/SĐT/ngân hàng của chính mình. *@
+
+@if (_loading)
+{
+    <LoadingOverlay Visible="true" Text="@L["TableLoading"]" />
+}
+else if (_profile is null)
+{
+    <EmptyStateCard Title="@L["NoData"]" Description="@L["ProfileLoadFailed"]">
+        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+    </EmptyStateCard>
+}
+else
+{
+    <div class="acct-stack">
+        <section class="acct-card acct-identity" aria-labelledby="account-identity-title">
+            <div class="acct-avatar" aria-hidden="true">
+                @if (_hasAvatar)
+                {
+                    <img src="@AvatarSrc" alt="" />
+                }
+                else
+                {
+                    @ProfileInitial
+                }
+            </div>
+
+            <div class="acct-identity-main">
+                <h2 id="account-identity-title">@ProfileDisplayName</h2>
+                <p class="acct-identity-email">
+                    <LucideIcon Name="lock" />
+                    <span class="cell-truncate">@_emailReadonly</span>
+                </p>
+                <p class="acct-identity-note">@L["EmailReadonlyHint"]</p>
+                <StatusBadge Tone="@RoleTone(_activeRole)" Text="@RoleText(_activeRole)" />
+            </div>
+
+            <div class="acct-identity-actions">
+                <div class="acct-avatar-actions">
+                    <button type="button" class="btn btn-secondary acct-avatar-btn" @onclick="PickAvatarAsync">
+                        <LucideIcon Name="upload" />
+                        @L["AvatarUploadAction"]
+                    </button>
+                    @if (_hasAvatar)
+                    {
+                        <button type="button" class="btn btn-secondary acct-avatar-btn" @onclick="RemoveAvatarAsync">
+                            @L["AvatarRemoveAction"]
+                        </button>
+                    }
+                </div>
+                <p class="acct-avatar-hint">@L["AvatarHint"]</p>
+            </div>
+        </section>
+
+        <EditForm EditContext="_editContext" OnValidSubmit="SaveProfileAsync">
+            <div class="acct-cards @(IsOwner ? "acct-cards-bank" : "")">
+                <section class="acct-card" aria-labelledby="account-info-title">
+                    <div class="acct-card-head">
+                        <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="user" /></span>
+                        <h2 id="account-info-title">@L["ProfileInfoSection"]</h2>
+                    </div>
+
+                    <div class="acct-fields">
+                        <div class="acct-field-name">
+                            <FormField TValue="string" Id="profile-fullname" Label="@L["FullNameLabel"]" Required="true"
+                                       For="() => _form.FullName">
+                                <InputText @bind-Value="_form.FullName" id="profile-fullname" maxlength="200"
+                                           aria-describedby="profile-fullname-error" aria-invalid="@(_editContext.HasError(() => _form.FullName) ? "true" : "false")" />
+                            </FormField>
+                        </div>
+
+                        <div class="acct-field-phone">
+                            <FormField TValue="string" Id="profile-phone" Label="@L["PhoneLabel"]"
+                                       Hint="@L["PhoneHint"]" For="() => _form.PhoneNumber">
+                                <InputText @bind-Value="_form.PhoneNumber" id="profile-phone" inputmode="numeric" maxlength="10"
+                                           aria-describedby="profile-phone-hint profile-phone-error" aria-invalid="@(_editContext.HasError(() => _form.PhoneNumber) ? "true" : "false")" />
+                            </FormField>
+                        </div>
+                    </div>
+                </section>
+
+                @if (IsOwner)
+                {
+                    <section class="acct-card" aria-labelledby="account-bank-title">
+                        <div class="acct-card-head">
+                            <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="wallet" /></span>
+                            <div>
+                                <h2 id="account-bank-title">@L["ProfileBankSection"]</h2>
+                                <p class="acct-card-desc">@L["ProfileBankHint"]</p>
+                            </div>
+                        </div>
+
+                        <div class="acct-fields">
+                            <div class="acct-field-bank">
+                                <FormField TValue="string" Id="profile-bank-code" Label="@L["BankLabel"]" Required="true"
+                                           For="() => _form.BankCode">
+                                    <InputSelect TValue="string" @bind-Value="_form.BankCode" id="profile-bank-code"
+                                                 aria-describedby="profile-bank-code-error" aria-invalid="@(_editContext.HasError(() => _form.BankCode) ? "true" : "false")">
+                                        <option value="">@L["BankSelectPlaceholder"]</option>
+                                        @foreach (var bank in VietQrBankCatalog.All)
+                                        {
+                                            <option value="@bank.Code">@bank.Name</option>
+                                        }
+                                    </InputSelect>
+                                </FormField>
+                            </div>
+
+                            <div class="acct-field-bank-number">
+                                <FormField TValue="string" Id="profile-bank-number" Label="@L["BankAccountNumberLabel"]" Required="true"
+                                           Hint="@L["BankAccountNumberHint"]" For="() => _form.BankAccountNumber">
+                                    <InputText @bind-Value="_form.BankAccountNumber" id="profile-bank-number" inputmode="numeric" maxlength="20"
+                                               aria-describedby="profile-bank-number-hint profile-bank-number-error" aria-invalid="@(_editContext.HasError(() => _form.BankAccountNumber) ? "true" : "false")" />
+                                </FormField>
+                            </div>
+
+                            <div class="acct-field-bank-name">
+                                <FormField TValue="string" Id="profile-bank-name" Label="@L["BankAccountNameLabel"]" Required="true"
+                                           Hint="@L["BankAccountNameHint"]" For="() => _form.BankAccountName">
+                                    <InputText @bind-Value="_form.BankAccountName" id="profile-bank-name" maxlength="50"
+                                               aria-describedby="profile-bank-name-hint profile-bank-name-error" aria-invalid="@(_editContext.HasError(() => _form.BankAccountName) ? "true" : "false")" />
+                                </FormField>
+                            </div>
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <div class="acct-form-actions acct-form-actions-plain">
+                <button type="button" class="btn btn-secondary" disabled="@(_saving || !IsDirty)" @onclick="ResetForm">
+                    @L["Cancel"]
+                </button>
+                <button type="submit" class="btn btn-primary" disabled="@(_saving || !IsDirty)">
+                    @if (_saving)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    @L["SaveChanges"]
+                </button>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private MyProfileDto? _profile;
+    private bool _loading = true;
+    private bool _saving;
+    private string _userId = string.Empty;
+    private string _activeRole = string.Empty;
+    private bool _hasAvatar;
+    private long _avatarVersion;
+
+    private EditContext _editContext = default!;
+    private ValidationMessageStore _messages = default!;
+    private ProfileForm _form = new();
+    private ProfileForm _snapshot = new();
+    private string _emailReadonly = string.Empty;
+
+    private bool IsOwner => _activeRole == Roles.ChuTro;
+
+    private bool IsDirty => !FormEquals(_form, _snapshot);
+
+    private string ProfileDisplayName => string.IsNullOrWhiteSpace(_profile?.FullName)
+        ? _profile?.UserName ?? string.Empty
+        : _profile?.FullName ?? string.Empty;
+
+    private string ProfileInitial => ProfileDisplayName.Length == 0
+        ? "?"
+        : char.ToUpperInvariant(ProfileDisplayName.Trim()[0]).ToString();
+
+    private sealed class ProfileForm
+    {
+        public string? FullName { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? BankCode { get; set; }
+        public string? BankAccountNumber { get; set; }
+        public string? BankAccountName { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _editContext = CreateEditContext();
+        await LoadAsync();
+    }
+
+    // Ảnh nằm ở server; ?v= để trình duyệt nạp lại đúng lần ảnh đổi (endpoint trả no-store).
+    private string AvatarSrc => $"/api/avatar/{_userId}?v={_avatarVersion}";
+
+    private async Task LoadAvatarAsync()
+    {
+        if (string.IsNullOrEmpty(_userId))
+        {
+            return;
+        }
+
+        var info = await Avatars.GetInfoAsync(_userId);
+        _hasAvatar = info is not null;
+        _avatarVersion = info?.UpdatedAt.ToUnixTimeSeconds() ?? 0;
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _userId = state.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+            _activeRole = Roles.ResolvePrimaryRole(state.User);
+            if (string.IsNullOrEmpty(_userId))
+            {
+                _profile = null;
+                return;
+            }
+
+            var result = await Accounts.GetMyProfileAsync(_userId);
+            _profile = result.Succeeded ? result.Value : null;
+            await LoadAvatarAsync();
+            if (_profile is not null)
+            {
+                _form = ToForm(_profile);
+                _snapshot = ToForm(_profile);
+                _emailReadonly = _profile.Email ?? _profile.UserName;
+                if (string.IsNullOrEmpty(_activeRole))
+                {
+                    _activeRole = _profile.Role;
+                }
+                _editContext = CreateEditContext();
+            }
+        }
+        catch
+        {
+            _profile = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        if (_profile is null) return;
+        _form = ToForm(_profile);
+        _editContext = CreateEditContext();
+    }
+
+    private static ProfileForm ToForm(MyProfileDto profile) => new()
+    {
+        FullName = profile.FullName,
+        PhoneNumber = profile.PhoneNumber,
+        // Dữ liệu cũ có thể lưu BIN (970407) thay vì mã ngân hàng; đưa về mã để select chọn đúng.
+        BankCode = VietQrBankCatalog.Find(profile.BankCode)?.Code ?? profile.BankCode,
+        BankAccountNumber = profile.BankAccountNumber,
+        BankAccountName = profile.BankAccountName,
+    };
+
+    private static bool FormEquals(ProfileForm a, ProfileForm b) =>
+        string.Equals(a.FullName?.Trim(), b.FullName?.Trim(), StringComparison.Ordinal)
+        && string.Equals(a.PhoneNumber?.Trim(), b.PhoneNumber?.Trim(), StringComparison.Ordinal)
+        && string.Equals(a.BankCode?.Trim(), b.BankCode?.Trim(), StringComparison.Ordinal)
+        && string.Equals(a.BankAccountNumber?.Trim(), b.BankAccountNumber?.Trim(), StringComparison.Ordinal)
+        && string.Equals(a.BankAccountName?.Trim(), b.BankAccountName?.Trim(), StringComparison.Ordinal);
+
+    // EditForm chạy OnValidSubmit nên cần bộ kiểm tra gắn vào EditContext; dùng ValidationMessageStore để message theo ngôn ngữ đang chọn.
+    private EditContext CreateEditContext()
+    {
+        var context = new EditContext(_form);
+        var messages = _messages = new ValidationMessageStore(context);
+        context.OnValidationRequested += (_, _) =>
+        {
+            messages.Clear();
+            ValidateProfile((ProfileForm)context.Model, messages);
+            context.NotifyValidationStateChanged();
+        };
+        context.OnFieldChanged += (_, args) =>
+        {
+            messages.Clear(args.FieldIdentifier);
+            context.NotifyValidationStateChanged();
+        };
+        return context;
+    }
+
+    // Cùng quy tắc với AccountService.UpdateMyProfileAsync: họ tên tối đa 200 ký tự, SĐT 10 chữ số bắt đầu bằng 0.
+    private void ValidateProfile(ProfileForm form, ValidationMessageStore messages)
+    {
+        if ((form.FullName?.Trim().Length ?? 0) > 200)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.FullName)),
+                string.Format(L["TenantValidationLength"], L["FullNameLabel"], 200));
+        }
+
+        var phone = form.PhoneNumber?.Trim();
+        if (!string.IsNullOrEmpty(phone) && !AccountService.IsValidVietnamPhone(phone))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
+        }
+
+        if (IsOwner)
+        {
+            ValidateBankAccount(form, messages);
+        }
+    }
+
+    // PLAN-028: hoặc để trống cả 3 (không dùng QR), hoặc nhập đủ 3 và đúng định dạng.
+    private void ValidateBankAccount(ProfileForm form, ValidationMessageStore messages)
+    {
+        var code = form.BankCode?.Trim();
+        var number = form.BankAccountNumber?.Trim();
+        var name = form.BankAccountName?.Trim();
+        if (string.IsNullOrEmpty(code) && string.IsNullOrEmpty(number) && string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(code))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankCode)),
+                string.Format(L["TenantValidationRequired"], L["BankLabel"]));
+        }
+
+        if (string.IsNullOrEmpty(number))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountNumber)),
+                string.Format(L["TenantValidationRequired"], L["BankAccountNumberLabel"]));
+        }
+        else if (!number.All(char.IsAsciiDigit) || number.Length is < 6 or > 20)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountNumber)), L["ErrorInvalidBankAccount"]);
+        }
+
+        if (string.IsNullOrEmpty(name))
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountName)),
+                string.Format(L["TenantValidationRequired"], L["BankAccountNameLabel"]));
+        }
+        else if (name.Length is < 5 or > 50)
+        {
+            messages.Add(new FieldIdentifier(form, nameof(ProfileForm.BankAccountName)), L["ErrorInvalidBankAccount"]);
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_saving) return;
+        _saving = true;
+        try
+        {
+            if (string.IsNullOrEmpty(_userId)) return;
+
+            var result = await Accounts.UpdateMyProfileAsync(
+                new UpdateMyProfileRequest
+                {
+                    FullName = _form.FullName,
+                    PhoneNumber = _form.PhoneNumber,
+                    BankCode = _form.BankCode,
+                    BankAccountNumber = _form.BankAccountNumber,
+                    BankAccountName = _form.BankAccountName,
+                },
+                _userId);
+            if (!result.Succeeded)
+            {
+                if (result.ErrorCode == AccountErrorCodes.InvalidPhone)
+                {
+                    _messages.Add(new FieldIdentifier(_form, nameof(ProfileForm.PhoneNumber)), L["ErrorInvalidPhone"]);
+                    _editContext.NotifyValidationStateChanged();
+                }
+                else if (result.ErrorCode == AccountErrorCodes.InvalidBankAccount)
+                {
+                    _messages.Add(new FieldIdentifier(_form, nameof(ProfileForm.BankCode)), L["ErrorInvalidBankAccount"]);
+                    _editContext.NotifyValidationStateChanged();
+                }
+                Toasts.Error(MessageFor(result.ErrorCode));
+                return;
+            }
+
+            _profile = result.Value;
+            _emailReadonly = _profile?.Email ?? _emailReadonly;
+            if (_profile is not null)
+            {
+                _form = ToForm(_profile);
+                _snapshot = ToForm(_profile);
+                _editContext = CreateEditContext();
+            }
+            // PLAN-028: báo banner "chưa nhập tài khoản nhận tiền" cập nhật ngay sau khi lưu.
+            BankAccountNotifier.NotifyChanged();
+            Toasts.Success(L["ProfileSaved"]);
+        }
+        catch
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    // Chọn ảnh, nén 256px rồi nộp lên server ngay trong JS (avatar.js):
+    // chuỗi base64 không đi qua interop, và avatar.js vẽ lại cả sidebar/menu cùng trang.
+    private async Task PickAvatarAsync()
+    {
+        if (string.IsNullOrEmpty(_userId))
+        {
+            return;
+        }
+
+        AvatarResult? result;
+        try
+        {
+            result = await JS.InvokeAsync<AvatarResult>("nhatroAvatar.pick", _userId);
+        }
+        catch (JSException)
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+            return;
+        }
+
+        if (result is null)
+        {
+            return;
+        }
+
+        if (result.Ok)
+        {
+            await LoadAvatarAsync();
+            Toasts.Success(L["AvatarSaved"]);
+            return;
+        }
+
+        switch (result.Error)
+        {
+            case "cancel":
+                break;
+            case "too-large":
+                Toasts.Error(L["AvatarTooLarge"]);
+                break;
+            case "not-image":
+            case "decode":
+                Toasts.Error(L["AvatarInvalidType"]);
+                break;
+            default:
+                Toasts.Error(L["ErrorGeneric"]);
+                break;
+        }
+    }
+
+    private async Task RemoveAvatarAsync()
+    {
+        if (string.IsNullOrEmpty(_userId))
+        {
+            return;
+        }
+
+        AvatarResult? result;
+        try
+        {
+            result = await JS.InvokeAsync<AvatarResult>("nhatroAvatar.clear", _userId);
+        }
+        catch (JSException)
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+            return;
+        }
+
+        if (result is null || !result.Ok)
+        {
+            Toasts.Error(L["ErrorGeneric"]);
+            return;
+        }
+
+        _hasAvatar = false;
+        _avatarVersion = 0;
+        Toasts.Success(L["AvatarRemoved"]);
+    }
+
+    private sealed class AvatarResult
+    {
+        public bool Ok { get; set; }
+        public string? Error { get; set; }
+    }
+
+    private string MessageFor(string? code) => code switch
+    {
+        AccountErrorCodes.InvalidPhone => L["ErrorInvalidPhone"],
+        AccountErrorCodes.InvalidBankAccount => L["ErrorInvalidBankAccount"],
+        AccountErrorCodes.UserNotFound => L["ErrorUserNotFound"],
+        _ => L["ErrorGeneric"],
+    };
+
+    private string RoleText(string? role) => string.IsNullOrEmpty(role)
+        ? string.Empty
+        : L[AccountPermissionRules.RoleResourceKey(role)];
+
+    private static BadgeTone RoleTone(string? role) => role switch
+    {
+        Roles.Admin => BadgeTone.Error,
+        Roles.ChuTro => BadgeTone.Info,
+        Roles.QuanLy => BadgeTone.Success,
+        Roles.KhachThue => BadgeTone.Neutral,
+        _ => BadgeTone.Neutral,
+    };
+}

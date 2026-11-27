@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Features.Accounts;
+using Web.Features.Accounts.Owners;
 using Web.Features.Contracts.Enums;
 using Web.Features.Properties;
 using Web.Features.Storage;
@@ -21,8 +22,12 @@ public sealed class IncidentFileScope(IDbContextFactory<ApplicationDbContext> fa
 
         if (caller.IsChuTro || caller.IsQuanLy)
         {
-            var properties = PropertyScope.Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(),
-                new PropertyCaller(caller.UserId, caller.Role));
+            var blockedOwners = OwnerLockQuery.BlockedOwnerIds(db);
+            var properties =
+                from property in PropertyScope.Apply(db.Properties.AsNoTracking(), db.PropertyManagers.AsNoTracking(),
+                    new PropertyCaller(caller.UserId, caller.Role))
+                where !blockedOwners.Contains(property.OwnerId)
+                select property;
             var scopedRoomIds = from room in db.Rooms.AsNoTracking()
                                 join property in properties on room.PropertyId equals property.Id
                                 select room.Id;

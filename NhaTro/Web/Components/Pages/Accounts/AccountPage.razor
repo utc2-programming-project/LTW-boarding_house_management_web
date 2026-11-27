@@ -1,0 +1,96 @@
+@page "/account"
+@attribute [Authorize]
+@attribute [ExcludeFromInteractiveRouting]
+
+@using Microsoft.AspNetCore.Authorization
+@using Web.Components.Account.Shared
+@using Web.Features.Accounts
+
+@inject IStringLocalizer<Shared> L
+
+<PageTitle>@TitleKey · @L["AppName"]</PageTitle>
+
+<section class="account-page" aria-labelledby="account-title">
+    <PageHeading Title="@L[TitleKey]" TitleId="account-title" BreadcrumbItems="Crumbs" />
+
+    <nav class="acct-tabs" aria-label="@L["AccountTabsLabel"]">
+        @foreach (var (key, icon) in Tabs)
+        {
+            var active = key == Tab;
+            <a class="acct-tab @(active ? "active" : null)" href="@($"/account?tab={key}")"
+               aria-current="@(active ? "page" : null)">
+                <LucideIcon Name="@icon" />
+                <span>@L[TabKey(key)]</span>
+            </a>
+        }
+    </nav>
+
+    @if (Tab == "profile")
+    {
+        @if (IsTenant)
+        {
+            <section class="acct-card acct-tenant-card" aria-labelledby="account-tenant-title">
+                <span class="acct-card-icon" aria-hidden="true"><LucideIcon Name="users" /></span>
+                <div class="acct-tenant-copy">
+                    <h2 id="account-tenant-title">@L["ProfileTitle"]</h2>
+                    <p>@L["AccountTenantProfileHint"]</p>
+                </div>
+                <a class="btn btn-primary" href="/my/tenant-profile">@L["AccountTenantProfileAction"]</a>
+            </section>
+        }
+        else
+        {
+            <ProfilePane @rendermode="InteractiveServer" />
+        }
+    }
+    else if (Tab == "security")
+    {
+        <SecurityPanel />
+    }
+    else if (Tab == "devices")
+    {
+        <SessionsPanel />
+    }
+    else if (Tab == "activity")
+    {
+        <RecentActivityPanel />
+    }
+    else
+    {
+        <DataPanel />
+    }
+</section>
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "tab")] public string? TabQuery { get; set; }
+
+    private static readonly (string Key, string Icon)[] Tabs =
+        [("profile", "user"), ("security", "shield-check"), ("devices", "hard-drive"), ("activity", "history"), ("data", "file-text")];
+
+    private bool IsTenant => HttpContext.User.IsInRole(Roles.KhachThue);
+
+    private string Tab =>
+        !string.IsNullOrWhiteSpace(TabQuery) && Tabs.Any(t => t.Key == TabQuery)
+            ? TabQuery
+            : "profile";
+
+    private string TitleKey => TabKey(Tab);
+
+    private static string TabKey(string tab) => tab switch
+    {
+        "security" => "AccountTabSecurity",
+        "devices" => "AccountTabDevices",
+        "activity" => "AccountTabActivity",
+        "data" => "AccountTabData",
+        _ => "AccountTabProfile",
+    };
+
+    private IReadOnlyList<BreadcrumbNav.BreadcrumbItem> Crumbs =>
+    [
+        new(L["Home"].Value, "/home"),
+        new(L["AccountTitle"].Value, "/account"),
+        new(L[TitleKey].Value),
+    ];
+}
