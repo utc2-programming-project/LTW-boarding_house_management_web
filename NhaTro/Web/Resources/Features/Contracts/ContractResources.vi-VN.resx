@@ -172,6 +172,7 @@
   <data name="ContractLiquidateTitle" xml:space="preserve"><value>Thanh lý hợp đồng</value></data>
   <data name="ContractRenewDescription" xml:space="preserve"><value>Hợp đồng mới bắt đầu ngay sau ngày kết thúc hiện tại, giữ nguyên khách thuê và chốt giá thuê hiện tại. Hợp đồng cũ được giữ lại làm lịch sử.</value></data>
   <data name="ContractLiquidateDescription" xml:space="preserve"><value>Hợp đồng sẽ chuyển sang trạng thái Đã thanh lý và không thể chuyển tiếp.</value></data>
+  <data name="ContractLiquidateVehiclesNotice" xml:space="preserve"><value>Thanh lý sẽ ngừng gửi {0} xe đang hoạt động và trả lại ô đỗ:</value></data>
   <data name="ContractRenewEndDateLabel" xml:space="preserve"><value>Ngày kết thúc mới</value></data>
   <data name="ContractRenewStartHint" xml:space="preserve"><value>Hợp đồng mới bắt đầu từ {0}.</value></data>
   <data name="ContractRenewSuccess" xml:space="preserve"><value>Đã gia hạn hợp đồng.</value></data>
@@ -515,4 +516,5 @@
   <data name="ContractTenantSignedPaymentNote" xml:space="preserve"><value>Bạn đã ký hợp đồng. Việc ký không tự động trừ tiền; vui lòng thanh toán tiền thuê kỳ đầu và phí dịch vụ theo hóa đơn. Cọc giữ căn được ghi nhận riêng khi chủ trọ xác nhận đã thu.</value></data>
   <data name="ContractTenantInvoicesAction" xml:space="preserve"><value>Hóa đơn của tôi</value></data>
   <data name="ContractInvoicesAction" xml:space="preserve"><value>Hóa đơn hợp đồng</value></data>
+  <data name="ContractLiquidateVehiclesConfirm" xml:space="preserve"><value>Tôi xác nhận khách đã lấy lại toàn bộ xe trên trước khi thanh lý hợp đồng.</value></data>
 </root>

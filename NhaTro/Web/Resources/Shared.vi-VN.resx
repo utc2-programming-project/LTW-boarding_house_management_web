@@ -2361,4 +2361,10 @@
   <data name="DataDownloadDesc" xml:space="preserve"><value>Tải bản sao dữ liệu cá nhân mà hệ thống đang lưu.</value></data>
   <data name="DangerZoneTitle" xml:space="preserve"><value>Vùng nguy hiểm</value></data>
   <data name="DangerZoneDesc" xml:space="preserve"><value>Xóa dữ liệu sẽ xóa vĩnh viễn tài khoản và không thể khôi phục.</value></data>
+  <data name="Vehicles" xml:space="preserve"><value>Quản lý xe</value></data>
+  <data name="VehicleZones" xml:space="preserve"><value>Phân khu &amp; ô đỗ xe</value></data>
+  <data name="VehicleGuests" xml:space="preserve"><value>Xe bạn gửi nhờ</value></data>
+  <data name="VehicleAudit" xml:space="preserve"><value>Kiểm kê bãi xe</value></data>
+  <data name="VehicleSettings" xml:space="preserve"><value>Cấu hình bãi xe</value></data>
+  <data name="MyVehicles" xml:space="preserve"><value>Xe của tôi</value></data>
 </root>

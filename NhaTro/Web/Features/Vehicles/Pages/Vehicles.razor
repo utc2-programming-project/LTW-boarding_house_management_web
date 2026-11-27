@@ -1,0 +1,872 @@
+@page "/vehicles"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+
+<PageTitle>@L["PageTitleVehicles"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleVehicles"]" HelpText="@L["SubtitleVehicles"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" @onclick="() => OpenBlockingAlert(null)" disabled="@(_loading || _properties.Count == 0)">
+                <LucideIcon Name="bell" />
+                <span>@L["BlockingAlertBtn"]</span>
+            </button>
+            @if (CanManageVehicles)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="SyncBillingAsync" disabled="@(_loading || _properties.Count == 0)">
+                    <LucideIcon Name="receipt" />
+                    <span>@L["SyncBillingBtn"]</span>
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="OpenCreateModal" disabled="@(_loading || _rooms.Count == 0)">
+                    <LucideIcon Name="plus" />
+                    <span>@L["AddVehicleBtn"]</span>
+                </button>
+            }
+        </Actions>
+    </PageHeading>
+
+    <VehicleNavTabs ActiveTab="vehicles"
+                    EnableParkingZones="@CurrentEnableZones"
+                    IsOwner="@_isOwner"
+                    PropertyId="@_propertyId"
+                    Properties="@_properties"
+                    OnPropertyChanged="ChangePropertyByIdAsync" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_properties.Count == 0)
+    {
+        <EmptyStateCard Title="@L["PropertyNotFound"]" Description="@L["EmptyVehiclesDesc"]" />
+    }
+    else
+    {
+        <!-- 4 Interactive KPI Stat Cards đồng bộ 100% cấu trúc chuẩn: Nhãn 1 dòng + Số lớn + Đơn vị nhỏ -->
+        <section class="stat-grid" aria-label="@L["PageTitleVehicles"]">
+            <article class='stat-card stat-card--link @KpiCardClass("active")' role="button" tabindex="0"
+                     @onclick='() => ApplyKpiFilterAsync("active")'>
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["StatTotalActive"]
+                        <HelpTip Text="@string.Format(L["KpiActiveBreakdown"].Value, _summary.ElectricMotorbikeCount, _summary.ManualMotorbikeCount, _summary.ScooterCount)" />
+                    </span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="bike" /></span>
+                </div>
+                <div class="stat-value">
+                    @_summary.TotalActiveCount
+                    <small>@L["UnitVehicles"]</small>
+                </div>
+            </article>
+
+            <article class='stat-card stat-card--link @KpiCardClass("electric")' role="button" tabindex="0"
+                     @onclick='() => ApplyKpiFilterAsync("electric")'>
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["ElectricMotorbike"]
+                        <HelpTip Text="@L["KpiElectricHelp"]" />
+                    </span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="zap" /></span>
+                </div>
+                <div class="stat-value">
+                    @_summary.ElectricMotorbikeCount
+                    <small>@L["UnitVehicles"]</small>
+                </div>
+            </article>
+
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["KpiFeeLabel"]
+                        <HelpTip Text="@L["KpiFeeHelp"]" />
+                    </span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="wallet" /></span>
+                </div>
+                <div class="stat-value tabular-nums">@MoneyFormatter.Format(_summary.EstimatedMonthlyRevenue)</div>
+            </div>
+
+            <article class='stat-card stat-card--link @KpiCardClass("inactive")' role="button" tabindex="0"
+                     @onclick='() => ApplyKpiFilterAsync("inactive")'>
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @(CurrentEnableZones && _summary.TotalZoneCapacity > 0 ? L["KpiFreeSlots"].Value : L["KpiGuests"].Value)
+                        <HelpTip Text="@(CurrentEnableZones && _summary.TotalZoneCapacity > 0
+                            ? string.Format(L["KpiFreeSlotsHelp"].Value, _summary.TotalZoneOccupied, _summary.TotalZoneCapacity, _summary.ActiveGuestNoticeCount)
+                            : string.Format(L["KpiGuestsHelp"].Value, _summary.ActiveGuestNoticeCount, _summary.TotalInactiveCount))" />
+                    </span>
+                    <span class="stat-icon stat-icon--warning"><LucideIcon Name="map-pin" /></span>
+                </div>
+                @if (CurrentEnableZones && _summary.TotalZoneCapacity > 0)
+                {
+                    <div class="stat-value">
+                        @(Math.Max(0, _summary.TotalZoneCapacity - _summary.TotalZoneOccupied))
+                        <small>@string.Format(L["KpiSlotsSuffix"].Value, _summary.TotalZoneCapacity)</small>
+                    </div>
+                }
+                else
+                {
+                    <div class="stat-value">
+                        @_summary.ActiveGuestNoticeCount
+                        <small>@L["UnitVehicles"]</small>
+                    </div>
+                }
+            </article>
+        </section>
+
+        <!-- Filter & Search Bar: gọn gàng, không tràn chữ -->
+        <section aria-label="@L["SearchPlaceholder"]">
+            <div class="filter-bar filter-bar--panel">
+                <div class="filter-bar__row">
+                    <div class="filter-bar__search">
+                        <label class="sr-only" for="vehicle-keyword">@L["SearchPlaceholder"]</label>
+                        <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                        <input id="vehicle-keyword" class="input" type="search" autocomplete="off"
+                               placeholder="@L["SearchPlaceholder"]"
+                               @bind="_keyword" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+                    </div>
+
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="vehicle-room-filter">@L["Room"]</label>
+                        <select id="vehicle-room-filter" class="input" @bind="_roomFilter" @bind:after="ApplyFiltersAsync">
+                            <option value="">@L["AllRooms"]</option>
+                            @foreach (var room in _rooms)
+                            {
+                                <option value="@room.RoomId">@string.Format(L["RoomOptionFormat"].Value, room.RoomCode)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="vehicle-type-filter">@L["VehicleType"]</label>
+                        <select id="vehicle-type-filter" class="input" @bind="_typeFilter" @bind:after="ApplyFiltersAsync">
+                            <option value="">@L["AllVehicleTypes"]</option>
+                            @foreach (var vt in Enum.GetValues<VehicleType>())
+                            {
+                                <option value="@vt">@L[vt.ToString()]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="filter-bar__field filter-bar__select">
+                        <label class="sr-only" for="vehicle-status-filter">@L["Status"]</label>
+                        <select id="vehicle-status-filter" class="input" @bind="_statusFilter" @bind:after="ApplyFiltersAsync">
+                            <option value="">@L["AllStatuses"]</option>
+                            @foreach (var st in Enum.GetValues<VehicleStatus>())
+                            {
+                                <option value="@st">@L[st.ToString()]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="filter-bar__actions">
+                        <div class="filter-bar__state">
+                            <label class="sr-only" for="vehicle-page-size">@SL["P2RowsPerPage"]</label>
+                            <select id="vehicle-page-size" class="input" value="@_pageSize" @onchange="ChangePageSizeAsync">
+                                <option value="10">@string.Format(SL["RowsPerPageOption"].Value, 10)</option>
+                                <option value="20">@string.Format(SL["RowsPerPageOption"].Value, 20)</option>
+                                <option value="50">@string.Format(SL["RowsPerPageOption"].Value, 50)</option>
+                            </select>
+                        </div>
+                        <FilterResetButton OnClick="ResetFiltersAsync" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DataTable tinh gọn 6-7 cột đối xứng, gói gọn 100% trong khung card -->
+        <DataTable @key="_tableKey" @ref="_table" TItem="VehicleDto" Columns="_columns"
+                   ItemsProvider="ProvideVehiclesAsync" PageSize="_pageSize"
+                   Caption="@L["PageTitleVehicles"]" Labels="_tableLabels"
+                   HasActiveFilters="@HasActiveFilters" OnClearFilters="ResetFiltersAsync">
+            <EmptyActions>
+                @if (CanManageVehicles)
+                {
+                    <button type="button" class="btn btn-primary" @onclick="OpenCreateModal" disabled="@(_rooms.Count == 0)">
+                        <LucideIcon Name="plus" /> @L["AddVehicleBtn"]
+                    </button>
+                }
+            </EmptyActions>
+        </DataTable>
+    }
+</div>
+
+@if (_showFormModal)
+{
+    <VehicleFormDialog PropertyId="_propertyId"
+                       Rooms="_rooms"
+                       AvailableZones="_zones"
+                       EnableParkingZones="CurrentEnableZones"
+                       EditVehicle="_editVehicle"
+                       ErrorText="@_modalError"
+                       OnCancel="CloseFormModal"
+                       OnCreate="CreateVehicleAsync"
+                       OnUpdate="UpdateVehicleAsync" />
+}
+
+@if (_qrVehicle is not null)
+{
+    <VehicleQrDialog Vehicle="_qrVehicle" OnClose="() => _qrVehicle = null" />
+}
+
+@if (_showBlockingModal)
+{
+    <BlockingAlertDialog PropertyId="_propertyId"
+                         InitialPlate="@_blockingInitialPlate"
+                         ErrorText="@_modalError"
+                         OnCancel="() => _showBlockingModal = false"
+                         OnSubmit="SendBlockingAlertAsync" />
+}
+
+@if (_deactivateVehicle is not null)
+{
+    <FeatureDialog Visible="true"
+                   Title="@L["DeactivateModalTitle"]"
+                   CloseLabel="@L["Close"]"
+                   OnClose="() => _deactivateVehicle = null"
+                   CssClass="vehicle-compact-dialog">
+        <form @onsubmit="ConfirmDeactivateAsync" @onsubmit:preventDefault novalidate>
+            <div class="vehicle-form-body">
+                @if (!string.IsNullOrWhiteSpace(_modalError))
+                {
+                    <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                        <div class="vehicle-alert__content">
+                            <LucideIcon Name="alert-triangle" />
+                            <span>@_modalError</span>
+                        </div>
+                    </div>
+                }
+
+                <div class="vehicle-form-grid">
+                    <div class="vehicle-field full">
+                        <span class="vehicle-field-label">@L["PlateNumber"]</span>
+                        <div>
+                            <span class="vehicle-plate-badge">@VehicleRules.FormatPlateForDisplay(_deactivateVehicle.PlateNumber)</span>
+                            <span style="margin-left: 8px; color: var(--text-secondary);">@L["Room"] @_deactivateVehicle.RoomCode</span>
+                        </div>
+                    </div>
+
+                    <div class="vehicle-field full">
+                        <label for="deactivate-reason-input">@L["DeactivateReasonLabel"] <span class="required" aria-hidden="true">*</span></label>
+                        <textarea id="deactivate-reason-input" rows="3" maxlength="500" @bind="_deactivateReason"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="vehicle-form-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _deactivateVehicle = null">@L["Cancel"]</button>
+                <button type="submit" class="btn btn-danger" disabled="@string.IsNullOrWhiteSpace(_deactivateReason)">
+                    <LucideIcon Name="pause-circle" />
+                    <span>@L["DeactivateBtn"]</span>
+                </button>
+            </footer>
+        </form>
+    </FeatureDialog>
+}
+
+@if (_incidentVehicle is not null)
+{
+    <VehicleIncidentDialog Rooms="_rooms"
+                           InitialVehicle="_incidentVehicle"
+                           ErrorText="@_modalError"
+                           OnCancel="() => _incidentVehicle = null"
+                           OnSubmit="SubmitIncidentAsync" />
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private DataTable<VehicleDto>? _table;
+    private IReadOnlyList<DataTableColumn<VehicleDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+
+    private IReadOnlyList<VehiclePropertyOptionDto> _properties = [];
+    private IReadOnlyList<VehicleRoomOptionDto> _rooms = [];
+    private IReadOnlyList<ParkingZoneDto> _zones = [];
+    private VehiclePropertySettingDto? _setting;
+    private VehicleSummaryDto _summary = new(0, 0, 0, 0, 0, 0m, 0, 0, 0);
+
+    private int _propertyId;
+    private int? _roomFilter;
+    private VehicleType? _typeFilter;
+    private VehicleStatus? _statusFilter;
+    private string _keyword = string.Empty;
+    private int _pageSize = 10;
+    private int _tableKey;
+    private int? _openMenuId;
+
+    private bool _loading = true;
+    private bool _isOwner;
+    private string? _error;
+    private string? _modalError;
+
+    private bool _showFormModal;
+    private VehicleDto? _editVehicle;
+    private VehicleDto? _qrVehicle;
+    private bool _showBlockingModal;
+    private string? _blockingInitialPlate;
+    private VehicleDto? _deactivateVehicle;
+    private string _deactivateReason = string.Empty;
+    private VehicleDto? _incidentVehicle;
+
+    private bool CurrentEnableZones =>
+        _properties.FirstOrDefault(p => p.PropertyId == _propertyId)?.EnableParkingZones ?? false;
+
+    // Chủ trọ luôn quản lý được; quản lý chỉ khi chủ trọ bật AllowManagerManageVehicles.
+    private bool CanManageVehicles =>
+        _isOwner || (_setting?.AllowManagerManageVehicles ?? true);
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(_keyword) || _roomFilter.HasValue || _typeFilter.HasValue || _statusFilter.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(SL);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _isOwner = (await Session.CallerAsync()).IsChuTro;
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = PropertyIdParam.HasValue && _properties.Any(p => p.PropertyId == PropertyIdParam.Value)
+                    ? PropertyIdParam.Value
+                    : _properties[0].PropertyId;
+                _columns = BuildColumns();
+                await LoadPropertyContextAsync();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadPropertyContextAsync()
+    {
+        _rooms = await Session.RoomsAsync(_propertyId);
+        _setting = await Session.GetSettingAsync(_propertyId);
+        _zones = CurrentEnableZones ? await Session.ListZonesAsync(_propertyId) : [];
+        _columns = BuildColumns();
+        _tableKey++;
+    }
+
+    private async Task<PagedResult<VehicleDto>> ProvideVehiclesAsync(DataTableRequest request)
+    {
+        _openMenuId = null;
+        var res = await Session.ListVehiclesAsync(new VehicleFilter
+        {
+            PropertyId = _propertyId,
+            RoomId = _roomFilter,
+            VehicleType = _typeFilter,
+            Status = _statusFilter,
+            Keyword = _keyword,
+        });
+
+        _summary = res.Summary;
+        await InvokeAsync(StateHasChanged);
+
+        IEnumerable<VehicleDto> sorted = res.Items;
+        sorted = (request.SortKey, request.SortDescending) switch
+        {
+            ("plate", false) => sorted.OrderBy(v => v.PlateNumber),
+            ("plate", true) => sorted.OrderByDescending(v => v.PlateNumber),
+            ("room", false) => sorted.OrderBy(v => v.RoomCode),
+            ("room", true) => sorted.OrderByDescending(v => v.RoomCode),
+            ("fee", false) => sorted.OrderBy(v => v.MonthlyFee),
+            ("fee", true) => sorted.OrderByDescending(v => v.MonthlyFee),
+            _ => sorted,
+        };
+
+        var all = sorted.ToList();
+        var pageItems = all
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return new PagedResult<VehicleDto>
+        {
+            Items = pageItems,
+            TotalCount = all.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    /// <summary>
+    /// Đồng bộ bố cục và màu sắc Indigo Blue chuẩn ContractListView (/contracts):
+    /// 6 cột cân đối (15%, 16%, 18%, 22%, 17%, 12%), gộp Trạng thái lên cùng dòng Phòng,
+    /// Nhà trọ ở dòng phụ màu xanh Indigo, và dùng inline-pairs cho Phân loại/Vị trí & Tài chính.
+    /// </summary>
+    private IReadOnlyList<DataTableColumn<VehicleDto>> BuildColumns()
+    {
+        RenderFragment<VehicleDto> vehicleCol = item => @<div class="vh-room-cell" data-hover-tip aria-describedby="@($"tip-vh-plate-{item.Id}")">
+            <button type="button" class="vh-code-btn cell-truncate" @onclick="() => _qrVehicle = item">
+                @VehicleRules.FormatPlateForDisplay(item.PlateNumber)
+            </button>
+            @if (!string.IsNullOrWhiteSpace(item.Brand) || !string.IsNullOrWhiteSpace(item.Color))
+            {
+                <span class="vh-cell-secondary cell-truncate">@FormatBrandColor(item.Brand, item.Color)</span>
+            }
+            <span class="hover-tip" id="@($"tip-vh-plate-{item.Id}")" role="tooltip">
+                <span class="hover-tip__line">@L["PlateNumber"]: @VehicleRules.FormatPlateForDisplay(item.PlateNumber)</span>
+                <span class="hover-tip__line">@FormatBrandColor(item.Brand, item.Color)</span>
+                <span class="hover-tip__line">@string.Format(L["QrTooltipHint"].Value, item.QrCodeToken)</span>
+            </span>
+        </div>;
+
+        RenderFragment<VehicleDto> tenantCol = item => @<div class="vh-room-cell" data-hover-tip aria-describedby="@($"tip-vh-tenant-{item.Id}")">
+            @if (!string.IsNullOrWhiteSpace(item.TenantName))
+            {
+                <a class="cell-link is-quiet cell-truncate" href="@($"/tenants?q={Uri.EscapeDataString(item.TenantName)}")">@item.TenantName</a>
+            }
+            else
+            {
+                <span class="muted">—</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(item.Note))
+            {
+                <span class="vh-cell-secondary cell-truncate">@item.Note</span>
+            }
+            <span class="hover-tip" id="@($"tip-vh-tenant-{item.Id}")" role="tooltip">
+                <span class="hover-tip__line">@(item.TenantName ?? L["TenantUnassigned"].Value)</span>
+                @if (!string.IsNullOrWhiteSpace(item.Note))
+                {
+                    <span class="hover-tip__line">@L["Note"]: @item.Note</span>
+                }
+            </span>
+        </div>;
+
+        RenderFragment<VehicleDto> roomPropertyCol = item => @<div class="vh-room-cell" data-hover-tip aria-describedby="@($"tip-vh-room-{item.Id}")">
+            <div class="vh-room-line">
+                <a class="cell-link" href="@($"/rooms?q={Uri.EscapeDataString(item.RoomCode)}")">@item.RoomCode</a>
+                <StatusBadge Text="@L[item.Status.ToString()]"
+                             Tone="@(item.Status == VehicleStatus.Active ? BadgeTone.Success : BadgeTone.Neutral)" />
+            </div>
+            <a class="cell-link is-quiet vh-cell-secondary-link cell-truncate"
+               href="@($"/properties?q={Uri.EscapeDataString(item.PropertyName)}")">@item.PropertyName</a>
+            <span class="hover-tip" id="@($"tip-vh-room-{item.Id}")" role="tooltip">
+                <span class="hover-tip__line">@L["Room"] @item.RoomCode — @L[item.Status.ToString()]</span>
+                <span class="hover-tip__line">@item.PropertyName</span>
+                @if (item.Status == VehicleStatus.Inactive && !string.IsNullOrWhiteSpace(item.EndReason))
+                {
+                    <span class="hover-tip__line">@item.EndReason</span>
+                }
+            </span>
+        </div>;
+
+        RenderFragment<VehicleDto> typeAndLocationCol = item => @<div class="vh-room-cell" data-hover-tip aria-describedby="@($"tip-vh-zone-{item.Id}")">
+            <strong class="cell-truncate">@L[item.VehicleType.ToString()]</strong>
+            <span class="vh-cell-secondary cell-truncate">@FormatLocationSubtitle(item)</span>
+            <span class="hover-tip" id="@($"tip-vh-zone-{item.Id}")" role="tooltip">
+                <span class="hover-tip__line">@L["VehicleType"]: @L[item.VehicleType.ToString()]</span>
+                <span class="hover-tip__line">@(string.IsNullOrWhiteSpace(item.ParkingZoneName) ? L["CommonYard"].Value : item.ParkingZoneName)</span>
+                @if (!string.IsNullOrWhiteSpace(item.ParkingSlotCode))
+                {
+                    <span class="hover-tip__line">@string.Format(L["FixedSlotTooltip"].Value, item.ParkingSlotCode)</span>
+                }
+            </span>
+        </div>;
+
+        RenderFragment<VehicleDto> financeCol = item => @<div class="vh-room-cell tabular-nums">
+            <strong>@MoneyFormatter.Format(item.MonthlyFee)</strong>
+            <span class="vh-cell-secondary">@L["MonthlyFeeShort"]</span>
+        </div>;
+
+        RenderFragment<VehicleDto> actionsCol = item => @<div class="p2-row-actions">
+            <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
+                    aria-label="@L["Action"]" title="@L["Action"]"
+                    aria-haspopup="menu" aria-expanded="@(IsMenuOpen(item.Id) ? "true" : "false")"
+                    aria-controls="@($"vh-row-menu-{item.Id}")"
+                    @onclick="() => ToggleRowMenu(item.Id)">
+                <LucideIcon Name="ellipsis" />
+            </button>
+            @if (IsMenuOpen(item.Id))
+            {
+                <div id="@($"vh-row-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                    <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuShowQr(item)">
+                        <LucideIcon Name="qr-code" /><span>@L["ViewQrBtn"]</span>
+                    </button>
+                    @if (item.Status == VehicleStatus.Active)
+                    {
+                        @if (CanManageVehicles)
+                        {
+                            <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuEdit(item)">
+                                <LucideIcon Name="pen" /><span>@L["Edit"]</span>
+                            </button>
+                        }
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuBlockingAlert(item)">
+                            <LucideIcon Name="bell" /><span>@L["BlockingAlertBtn"]</span>
+                        </button>
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuReportIncident(item)">
+                            <LucideIcon Name="wrench" /><span>@L["ReportIncidentBtn"]</span>
+                        </button>
+                        @if (CanManageVehicles)
+                        {
+                            <div class="p2-row-menu-sep" role="separator"></div>
+                            <button class="p2-row-menu-item danger" type="button" role="menuitem" @onclick="() => MenuDeactivate(item)">
+                                <LucideIcon Name="pause-circle" /><span>@L["DeactivateBtn"]</span>
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        @if (CanManageVehicles)
+                        {
+                            <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuReactivateAsync(item)">
+                                <LucideIcon Name="refresh-cw" /><span>@L["ReactivateBtn"]</span>
+                            </button>
+                        }
+                        <button class="p2-row-menu-item" type="button" role="menuitem" @onclick="() => MenuReportIncident(item)">
+                            <LucideIcon Name="wrench" /><span>@L["ReportIncidentBtn"]</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "plate", Title = L["PlateNumber"], Template = vehicleCol, Width = "15%", Sortable = true },
+            new() { Key = "tenant", Title = L["ColumnTenant"], Template = tenantCol, Width = "16%" },
+            new() { Key = "room", Title = L["ColumnRoomProperty"], Template = roomPropertyCol, Width = "18%", Sortable = true },
+            new() { Key = "location", Title = L["ColumnTypeLocation"], Template = typeAndLocationCol, Width = "24%" },
+            new() { Key = "fee", Title = L["ColumnFinance"], Template = financeCol, Width = "15%", Sortable = true },
+            new() { Key = "actions", Title = L["Action"], Template = actionsCol, CellClass = "cell-actions", Width = "12%" },
+        ];
+    }
+
+    private string FormatLocationSubtitle(VehicleDto item)
+    {
+        var slot = L["SlotLabel"].Value;
+        if (!string.IsNullOrWhiteSpace(item.ParkingSlotCode) && !string.IsNullOrWhiteSpace(item.ParkingZoneName))
+        {
+            return $"{slot} {item.ParkingSlotCode} · {ShortZoneName(item.ParkingZoneName)}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.ParkingSlotCode))
+        {
+            return $"{slot} {item.ParkingSlotCode}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.ParkingZoneName))
+        {
+            return ShortZoneName(item.ParkingZoneName);
+        }
+
+        return L["CommonYard"].Value;
+    }
+
+    private static string ShortZoneName(string name)
+    {
+        var idx = name.IndexOf('(');
+        return idx > 0 ? name[..idx].Trim() : name;
+    }
+
+    private bool IsMenuOpen(int id) => _openMenuId == id;
+
+    private void ToggleRowMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
+
+    private void MenuShowQr(VehicleDto item)
+    {
+        _openMenuId = null;
+        _qrVehicle = item;
+    }
+
+    private void MenuEdit(VehicleDto item)
+    {
+        _openMenuId = null;
+        OpenEditModal(item);
+    }
+
+    private void MenuBlockingAlert(VehicleDto item)
+    {
+        _openMenuId = null;
+        OpenBlockingAlert(item.PlateNumber);
+    }
+
+    private void MenuReportIncident(VehicleDto item)
+    {
+        _openMenuId = null;
+        OpenIncidentModal(item);
+    }
+
+    private void MenuDeactivate(VehicleDto item)
+    {
+        _openMenuId = null;
+        OpenDeactivateModal(item);
+    }
+
+    private async Task MenuReactivateAsync(VehicleDto item)
+    {
+        _openMenuId = null;
+        await ReactivateAsync(item);
+    }
+
+    private async Task ChangePropertyByIdAsync(int id)
+    {
+        if (id == _propertyId) return;
+        _propertyId = id;
+        _roomFilter = null;
+        await LoadPropertyContextAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        _tableKey++;
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private async Task ChangePageSizeAsync(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _tableKey++;
+            if (_table is not null)
+            {
+                await _table.ReloadAsync();
+            }
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _keyword = string.Empty;
+        _roomFilter = null;
+        _typeFilter = null;
+        _statusFilter = null;
+        await ApplyFiltersAsync();
+    }
+
+    private string KpiCardClass(string key) => key switch
+    {
+        "active" when _statusFilter == VehicleStatus.Active && !_typeFilter.HasValue => "is-active",
+        "electric" when _typeFilter == VehicleType.ElectricMotorbike => "is-active",
+        "inactive" when _statusFilter == VehicleStatus.Inactive => "is-active",
+        _ => string.Empty,
+    };
+
+    private async Task ApplyKpiFilterAsync(string key)
+    {
+        switch (key)
+        {
+            case "active":
+                _statusFilter = _statusFilter == VehicleStatus.Active && !_typeFilter.HasValue ? null : VehicleStatus.Active;
+                _typeFilter = null;
+                break;
+            case "electric":
+                _typeFilter = _typeFilter == VehicleType.ElectricMotorbike ? null : VehicleType.ElectricMotorbike;
+                _statusFilter = VehicleStatus.Active;
+                break;
+            case "inactive":
+                _statusFilter = _statusFilter == VehicleStatus.Inactive ? null : VehicleStatus.Inactive;
+                _typeFilter = null;
+                break;
+        }
+
+        await ApplyFiltersAsync();
+    }
+
+    private void OpenCreateModal()
+    {
+        _editVehicle = null;
+        _modalError = null;
+        _showFormModal = true;
+    }
+
+    private void OpenEditModal(VehicleDto vehicle)
+    {
+        _editVehicle = vehicle;
+        _modalError = null;
+        _showFormModal = true;
+    }
+
+    private void CloseFormModal()
+    {
+        _showFormModal = false;
+        _editVehicle = null;
+        _modalError = null;
+    }
+
+    private async Task CreateVehicleAsync(VehicleCreateRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            await Session.CreateVehicleAsync(request);
+            _showFormModal = false;
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyContextAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task UpdateVehicleAsync(VehicleUpdateRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            await Session.UpdateVehicleAsync(request);
+            _showFormModal = false;
+            _editVehicle = null;
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyContextAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private void OpenDeactivateModal(VehicleDto vehicle)
+    {
+        _deactivateVehicle = vehicle;
+        _deactivateReason = L["DeactivateDefaultReason"].Value;
+        _modalError = null;
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (_deactivateVehicle is null) return;
+        _modalError = null;
+        try
+        {
+            await Session.DeactivateVehicleAsync(_deactivateVehicle.Id, _deactivateReason);
+            _deactivateVehicle = null;
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyContextAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task ReactivateAsync(VehicleDto vehicle)
+    {
+        try
+        {
+            await Session.ReactivateVehicleAsync(vehicle.Id);
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyContextAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private void OpenBlockingAlert(string? plate)
+    {
+        _blockingInitialPlate = plate;
+        _modalError = null;
+        _showBlockingModal = true;
+    }
+
+    private async Task SendBlockingAlertAsync(BlockingAlertRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            var res = await Session.SendBlockingAlertAsync(request);
+            _showBlockingModal = false;
+            Toasts.Success(string.Format(
+                L["BlockingAlertSentNotice"],
+                VehicleRules.FormatPlateForDisplay(res.MatchedPlateNumber ?? request.PlateQuery),
+                res.RoomCode ?? "—",
+                res.NotifiedCount));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private void OpenIncidentModal(VehicleDto vehicle)
+    {
+        _incidentVehicle = vehicle;
+        _modalError = null;
+    }
+
+    private async Task SubmitIncidentAsync(VehicleIncidentCreateRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            await Session.ReportIncidentAsync(request);
+            _incidentVehicle = null;
+            Toasts.Success(L["Saved"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task SyncBillingAsync()
+    {
+        try
+        {
+            var count = await Session.SyncPropertyDraftInvoicesAsync(_propertyId);
+            Toasts.Success(string.Format(L["SyncBillingSuccess"], count));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private static BadgeTone TypeTone(VehicleType type) => type switch
+    {
+        VehicleType.ElectricMotorbike => BadgeTone.Success,
+        VehicleType.ManualMotorbike => BadgeTone.Info,
+        VehicleType.Scooter => BadgeTone.Warning,
+        _ => BadgeTone.Neutral,
+    };
+
+    private static string FormatBrandColor(string? brand, string? color)
+    {
+        if (string.IsNullOrWhiteSpace(brand) && string.IsNullOrWhiteSpace(color))
+        {
+            return "—";
+        }
+
+        if (string.IsNullOrWhiteSpace(brand)) return color!;
+        if (string.IsNullOrWhiteSpace(color)) return brand!;
+        return $"{brand} · {color}";
+    }
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}

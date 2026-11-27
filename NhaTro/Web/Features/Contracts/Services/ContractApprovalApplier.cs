@@ -9,12 +9,14 @@ using Web.Features.Approvals.Services;
 using Web.Features.Contracts.DTOs;
 using Web.Features.Contracts.Enums;
 using Web.Features.Contracts.Rules;
+using Web.Features.Vehicles.Services;
 using Web.Infrastructure.Time;
 
 namespace Web.Features.Contracts.Services;
 
 /// <summary>Áp dụng yêu cầu SW-07 (gia hạn / thanh lý hợp đồng) khi Chủ trọ duyệt.</summary>
-public sealed class ContractApprovalApplier(TimeProvider clock) : IApprovalApplier, IApprovalSaveExceptionMapper
+public sealed class ContractApprovalApplier(TimeProvider clock, IVehicleBillingService? vehicleBilling = null)
+    : IApprovalApplier, IApprovalSaveExceptionMapper
 {
     private static readonly JsonSerializerOptions PayloadJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -133,13 +135,21 @@ public sealed class ContractApprovalApplier(TimeProvider clock) : IApprovalAppli
                 break;
 
             case ContractApprovalActions.Liquidate:
-                await ContractLifecycleOperations.LiquidateAsync(db, contract, room, today, ct);
+                await ContractLifecycleOperations.LiquidateAsync(db, contract, room, today,
+                    request.DecidedByUserId ?? string.Empty, clock.GetUtcNow(), ct);
                 await ContractLifecycleOperations.SettlePendingRenewalRequestsAsync(db, contractId,
                     RenewalRequestStatus.Rejected, request.DecidedByUserId ?? string.Empty,
                     request.DecidedAt ?? clock.GetUtcNow().UtcDateTime, ContractErrorMessages.RenewalRejectedByLiquidation, ct);
                 ContractLifecycleOperations.AddAudit(db, ContractLifecycleOperations.ContractAuditActions.Liquidated,
                     request.DecidedByUserId ?? string.Empty, request.PropertyId.Value,
                     JsonSerializer.Serialize(new { contractId }), clock.GetUtcNow());
+
+                // Xe đã được ngừng trong LiquidateAsync; cần ghi xuống DB trước khi tính lại hóa đơn nháp.
+                if (vehicleBilling is not null)
+                {
+                    await db.SaveChangesAsync(ct);
+                    await vehicleBilling.SyncDraftInvoicesForContractAsync(contractId, ct);
+                }
                 break;
 
             default:

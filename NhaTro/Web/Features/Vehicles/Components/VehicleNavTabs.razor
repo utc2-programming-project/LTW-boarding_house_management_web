@@ -1,0 +1,68 @@
+@inject IStringLocalizer<VehicleResource> L
+
+<div class="vehicle-toolbar-bar">
+    <TabBar Items="Tabs" ActiveKey="@ActiveTab" Variant="pill" Size="md" AriaLabel="@L["PageTitleVehicles"]" />
+
+    @if (Properties is { Count: > 0 } && OnPropertyChanged.HasDelegate)
+    {
+        <div class="vehicle-property-picker">
+            <label for="vehicle-top-property-select">
+                <LucideIcon Name="building" />
+                <span>@L["Property"]:</span>
+            </label>
+            <select id="vehicle-top-property-select" class="input" value="@PropertyId" @onchange="HandlePropertyChangeAsync">
+                @foreach (var prop in Properties)
+                {
+                    <option value="@prop.PropertyId">@prop.Name</option>
+                }
+            </select>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string ActiveTab { get; set; } = "vehicles";
+    [Parameter] public bool EnableParkingZones { get; set; }
+    [Parameter] public bool IsOwner { get; set; } = true;
+    [Parameter] public int? PropertyId { get; set; }
+    [Parameter] public IReadOnlyList<VehiclePropertyOptionDto>? Properties { get; set; }
+    [Parameter] public EventCallback<int> OnPropertyChanged { get; set; }
+
+    private IReadOnlyList<TabItem> Tabs
+    {
+        get
+        {
+            var list = new List<TabItem>(5)
+            {
+                new("vehicles", L["TabVehicles"], BuildHref("/vehicles"), "bike"),
+            };
+
+            // Spec §1.4: ẩn hoàn toàn tab Khu đỗ xe khi bật/tắt phân khu = false.
+            if (EnableParkingZones)
+            {
+                list.Add(new("zones", L["TabZones"], BuildHref("/vehicles/zones"), "map-pin"));
+            }
+
+            list.Add(new("guests", L["TabGuests"], BuildHref("/vehicles/guests"), "users"));
+            list.Add(new("audit", L["TabAudit"], BuildHref("/vehicles/audit"), "clipboard-check"));
+
+            if (IsOwner)
+            {
+                list.Add(new("settings", L["TabSettings"], BuildHref("/vehicles/settings"), "settings"));
+            }
+
+            return list;
+        }
+    }
+
+    private string BuildHref(string basePath) =>
+        PropertyId is > 0 ? $"{basePath}?propertyId={PropertyId}" : basePath;
+
+    private async Task HandlePropertyChangeAsync(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id) && id != PropertyId)
+        {
+            await OnPropertyChanged.InvokeAsync(id);
+        }
+    }
+}

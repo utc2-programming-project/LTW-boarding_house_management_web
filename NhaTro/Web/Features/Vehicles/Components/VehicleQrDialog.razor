@@ -1,0 +1,71 @@
+@using Microsoft.JSInterop
+@inject IStringLocalizer<VehicleResource> L
+@inject VehiclePageService Session
+@inject IJSRuntime JS
+
+<FeatureDialog Visible="true"
+               Title="@L["QrModalTitle"]"
+               CloseLabel="@L["Close"]"
+               OnClose="OnClose"
+               CssClass="vehicle-compact-dialog">
+    <div class="vehicle-form-body">
+        <div class="vehicle-qr-box">
+            <span class="vehicle-plate-badge">@VehicleRules.FormatPlateForDisplay(Vehicle.PlateNumber)</span>
+            @if (!string.IsNullOrWhiteSpace(_photoPreview))
+            {
+                <img class="vehicle-qr-photo" src="@_photoPreview" alt="@L["VehiclePhotoLabel"]" />
+            }
+            <strong>@L[Vehicle.VehicleType.ToString()] — @L["Room"] @Vehicle.RoomCode</strong>
+            @if (!string.IsNullOrWhiteSpace(QrDataUrl))
+            {
+                <img src="@QrDataUrl" alt="QR @Vehicle.PlateNumber" />
+            }
+            <div>
+                <div class="vehicle-field-hint" style="margin-bottom: 6px;">@L["QrTokenLabel"]</div>
+                <code class="vehicle-qr-token">@Vehicle.QrCodeToken</code>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Vehicle.ParkingZoneName))
+            {
+                <StatusBadge Text="@($"{Vehicle.ParkingZoneName}{(string.IsNullOrWhiteSpace(Vehicle.ParkingSlotCode) ? "" : $" · {L["SlotLabel"]} {Vehicle.ParkingSlotCode}")}")"
+                             Tone="BadgeTone.Info" />
+            }
+        </div>
+    </div>
+
+    <footer class="vehicle-form-footer">
+        <button type="button" class="btn btn-secondary" @onclick="PrintQrAsync">
+            <LucideIcon Name="printer" />
+            <span>@L["PrintQrBtn"]</span>
+        </button>
+        <button type="button" class="btn btn-secondary" @onclick="OnClose">@L["Close"]</button>
+    </footer>
+</FeatureDialog>
+
+@code {
+    [Parameter, EditorRequired] public VehicleDto Vehicle { get; set; } = default!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string QrDataUrl => Session.RenderQrDataUrl(Vehicle.QrCodeToken);
+    private string? _photoPreview;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Vehicle.PhotoRef))
+        {
+            return;
+        }
+
+        _photoPreview = await Session.GetVehiclePhotoDataUrlAsync(Vehicle.PhotoRef);
+    }
+
+    private async Task PrintQrAsync()
+    {
+        await JS.InvokeVoidAsync(
+            "printVehicleQr",
+            QrDataUrl,
+            VehicleRules.FormatPlateForDisplay(Vehicle.PlateNumber),
+            string.Format(L["RoomOptionFormat"].Value, Vehicle.RoomCode),
+            Vehicle.QrCodeToken,
+            L["QrCardTitle"].Value);
+    }
+}

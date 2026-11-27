@@ -7,6 +7,8 @@ using Web.Features.Invoices.Rules;
 using Web.Features.Properties;
 using Web.Features.Utilities;
 using Web.Features.Utilities.Services;
+using Web.Features.Vehicles.Rules;
+using Web.Features.Vehicles.Services;
 using UtilityReadingException = Web.Features.Utilities.UtilityReadingException;
 using UtilityReadingAuthorizationException = Web.Features.Utilities.UtilityReadingAuthorizationException;
 using UtilityReadingNotFoundException = Web.Features.Utilities.UtilityReadingNotFoundException;
@@ -23,15 +25,18 @@ public sealed class InvoiceIssuanceService : IInvoiceIssuanceService
     private readonly ApplicationDbContext _context;
     private readonly IInvoiceService _invoices;
     private readonly IUtilityReadingService _readings;
+    private readonly IVehicleBillingService? _vehicleBilling;
 
     public InvoiceIssuanceService(
         ApplicationDbContext context,
         IInvoiceService invoices,
-        IUtilityReadingService readings)
+        IUtilityReadingService readings,
+        IVehicleBillingService? vehicleBilling = null)
     {
         _context = context;
         _invoices = invoices;
         _readings = readings;
+        _vehicleBilling = vehicleBilling;
     }
 
     public async Task<InvoicePeriodSourceDto> PreviewPeriodAsync(
@@ -144,12 +149,26 @@ public sealed class InvoiceIssuanceService : IInvoiceIssuanceService
             }
 
             var built = await _readings.BuildInvoiceRequestAsync(period.Id, caller, cancellationToken);
+            var items = built.Items.ToList();
+
+            if (_vehicleBilling is not null)
+            {
+                // Luôn gỡ dòng phí gửi xe cũ (nếu có); chỉ thêm lại khi phát sinh phí trong kỳ.
+                items.RemoveAll(item => VehicleRules.IsParkingFeeLine(item.Description));
+
+                var parkingItem = await _vehicleBilling.BuildInvoiceItemInputAsync(contractId, periodStart, periodEnd, cancellationToken);
+                if (parkingItem is not null)
+                {
+                    items.Add(parkingItem);
+                }
+            }
+
             return new CreateInvoiceRequest
             {
                 ContractId = contractId,
                 PeriodStart = periodStart,
                 PeriodEnd = periodEnd,
-                Items = built.Items,
+                Items = items,
             };
         }
         catch (UtilityReadingAuthorizationException)

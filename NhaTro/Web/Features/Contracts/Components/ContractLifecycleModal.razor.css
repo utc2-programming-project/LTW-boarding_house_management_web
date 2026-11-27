@@ -27,6 +27,17 @@
 .contract-field-error { color: var(--error-text); font-size: 12px; }
 .contract-modal-hint { font-size: 13px; }
 
+.contract-modal .contract-vehicle-confirm {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 8px 0 0;
+    font-weight: 500;
+}
+
+.contract-modal .contract-vehicle-confirm input { width: auto; margin-top: 3px; }
+.contract-modal .contract-vehicle-confirm span { color: var(--text-primary); }
+
 @media (max-width: 767px) {
     .contract-modal-panel { padding: 16px; }
     .contract-modal footer { flex-wrap: wrap; }

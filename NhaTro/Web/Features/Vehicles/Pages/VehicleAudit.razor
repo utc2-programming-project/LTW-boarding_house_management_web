@@ -1,0 +1,482 @@
+@page "/vehicles/audit"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+
+<PageTitle>@L["PageTitleAudit"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleAudit"]" HelpText="@L["SubtitleAudit"]">
+        <Actions>
+            @if (_properties.Count > 0)
+            {
+                <button type="button" class="btn btn-secondary"
+                        @onclick="OpenIncidentModal"
+                        disabled="@(_rooms.Count == 0)">
+                    <LucideIcon Name="alert-triangle" />
+                    <span>@L["CreateStrangeVehicleIncidentBtn"]</span>
+                </button>
+            }
+            @if (_activeSession is not null)
+            {
+                <button type="button" class="btn btn-secondary" @onclick="() => _showQuickAddModal = true" disabled="@(_rooms.Count == 0)">
+                    <LucideIcon Name="plus" />
+                    <span>@L["QuickAddAuditVehicleBtn"]</span>
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="CompleteSessionAsync">
+                    <LucideIcon Name="check" />
+                    <span>@L["CompleteAuditBtn"]</span>
+                </button>
+            }
+            else if (_properties.Count > 0)
+            {
+                <button type="button" class="btn btn-primary" @onclick="StartSessionAsync">
+                    <LucideIcon Name="clipboard-check" />
+                    <span>@L["StartAuditBtn"]</span>
+                </button>
+            }
+        </Actions>
+    </PageHeading>
+
+    <VehicleNavTabs ActiveTab="audit"
+                    EnableParkingZones="@CurrentEnableZones"
+                    IsOwner="@_isOwner"
+                    PropertyId="@_propertyId"
+                    Properties="@_properties"
+                    OnPropertyChanged="ChangePropertyByIdAsync" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_properties.Count == 0)
+    {
+        <EmptyStateCard Title="@L["PropertyNotFound"]" Description="@L["SubtitleAudit"]" />
+    }
+    else
+    {
+        @if (_activeSession is not null)
+        {
+            <section class="stat-grid" aria-label="@L["PageTitleAudit"]">
+                <div class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["AuditStatTotalExpected"]
+                            <HelpTip Text="@L["AuditStatTotalExpectedHelp"]" />
+                        </span>
+                        <span class="stat-icon stat-icon--accent"><LucideIcon Name="bike" /></span>
+                    </div>
+                    <div class="stat-value tabular-nums">@_activeSession.TotalExpected <small>@L["UnitVehicles"]</small></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["Present"]
+                            <HelpTip Text="@L["AuditStatPresentHelp"]" />
+                        </span>
+                        <span class="stat-icon stat-icon--success"><LucideIcon Name="circle-check" /></span>
+                    </div>
+                    <div class="stat-value tabular-nums">@_activeSession.TotalPresent <small>@L["UnitVehicles"]</small></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["Pending"]
+                            <HelpTip Text="@L["AuditStatPendingHelp"]" />
+                        </span>
+                        <span class="stat-icon stat-icon--info"><LucideIcon Name="history" /></span>
+                    </div>
+                    <div class="stat-value tabular-nums">@_activeSession.TotalPending <small>@L["UnitVehicles"]</small></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__top">
+                        <span class="stat-label">
+                            @L["Missing"]
+                            <HelpTip Text="@L["AuditStatMissingHelp"]" />
+                        </span>
+                        <span class="stat-icon stat-icon--warning"><LucideIcon Name="alert-triangle" /></span>
+                    </div>
+                    <div class="stat-value tabular-nums">@_activeSession.TotalMissing <small>@L["UnitVehicles"]</small></div>
+                </div>
+            </section>
+
+            <DataTable @key="@($"checklist-{_checklistTableKey}")" TItem="VehicleAuditItemDto" Columns="_checklistColumns"
+                       ItemsProvider="ProvideChecklistItemsAsync" PageSize="15"
+                       Caption="@($"{L["AuditChecklistTitle"]} (#{_activeSession.Id})")" Labels="_tableLabels" />
+        }
+
+        <DataTable @key="@($"sessions-{_tableKey}")" @ref="_table" TItem="VehicleAuditSessionDto" Columns="_columns"
+                   ItemsProvider="ProvideSessionsAsync" PageSize="10"
+                   Caption="@L["AuditHistoryTitle"]" Labels="_tableLabels">
+            <EmptyActions>
+                <button type="button" class="btn btn-primary" @onclick="StartSessionAsync">
+                    <LucideIcon Name="clipboard-check" /> @L["StartAuditBtn"]
+                </button>
+            </EmptyActions>
+        </DataTable>
+    }
+</div>
+
+@if (_showQuickAddModal && _activeSession is not null)
+{
+    <VehicleFormDialog PropertyId="_propertyId"
+                       Rooms="_rooms"
+                       AvailableZones="_zones"
+                       EnableParkingZones="CurrentEnableZones"
+                       ErrorText="@_modalError"
+                       OnCancel="() => _showQuickAddModal = false"
+                       OnCreate="QuickAddVehicleAsync" />
+}
+
+@if (_showIncidentModal)
+{
+    <VehicleIncidentDialog Rooms="_rooms"
+                          ErrorText="@_incidentError"
+                          OnCancel="() => _showIncidentModal = false"
+                          OnSubmit="SubmitIncidentAsync" />
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private DataTable<VehicleAuditSessionDto>? _table;
+    private IReadOnlyList<DataTableColumn<VehicleAuditSessionDto>> _columns = [];
+    private IReadOnlyList<DataTableColumn<VehicleAuditItemDto>> _checklistColumns = [];
+    private DataTableLabels _tableLabels = new();
+
+    private IReadOnlyList<VehiclePropertyOptionDto> _properties = [];
+    private IReadOnlyList<VehicleRoomOptionDto> _rooms = [];
+    private IReadOnlyList<ParkingZoneDto> _zones = [];
+    private IReadOnlyList<VehicleAuditSessionDto> _sessions = [];
+    private VehicleAuditSessionDto? _activeSession;
+
+    private int _propertyId;
+    private int _tableKey;
+    private int _checklistTableKey;
+    private int? _openChecklistMenuId;
+    private bool _isOwner;
+    private bool _loading = true;
+    private string? _error;
+    private string? _modalError;
+    private bool _showQuickAddModal;
+    private bool _showIncidentModal;
+    private string? _incidentError;
+
+    private string CurrentPropertyName =>
+        _properties.FirstOrDefault(p => p.PropertyId == _propertyId)?.Name ?? string.Empty;
+
+    private bool CurrentEnableZones =>
+        _properties.FirstOrDefault(p => p.PropertyId == _propertyId)?.EnableParkingZones ?? false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(SL);
+        _columns = BuildColumns();
+        _checklistColumns = BuildChecklistColumns();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _isOwner = (await Session.CallerAsync()).IsChuTro;
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = PropertyIdParam.HasValue && _properties.Any(p => p.PropertyId == PropertyIdParam.Value)
+                    ? PropertyIdParam.Value
+                    : _properties[0].PropertyId;
+                await LoadPropertyAuditAsync();
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadPropertyAuditAsync()
+    {
+        _rooms = await Session.RoomsAsync(_propertyId);
+        _zones = CurrentEnableZones ? await Session.ListZonesAsync(_propertyId) : [];
+        _sessions = await Session.ListAuditSessionsAsync(_propertyId);
+        _activeSession = _sessions.FirstOrDefault(s => s.Status == VehicleAuditSessionStatus.InProgress);
+        _checklistColumns = BuildChecklistColumns();
+        _tableKey++;
+        _checklistTableKey++;
+    }
+
+    private Task<PagedResult<VehicleAuditItemDto>> ProvideChecklistItemsAsync(DataTableRequest request)
+    {
+        _openChecklistMenuId = null;
+        var items = _activeSession?.Items ?? [];
+        var pageItems = items
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Task.FromResult(new PagedResult<VehicleAuditItemDto>
+        {
+            Items = pageItems,
+            TotalCount = items.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        });
+    }
+
+    private Task<PagedResult<VehicleAuditSessionDto>> ProvideSessionsAsync(DataTableRequest request)
+    {
+        var pageItems = _sessions
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return Task.FromResult(new PagedResult<VehicleAuditSessionDto>
+        {
+            Items = pageItems,
+            TotalCount = _sessions.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        });
+    }
+
+    private IReadOnlyList<DataTableColumn<VehicleAuditItemDto>> BuildChecklistColumns()
+    {
+        RenderFragment<VehicleAuditItemDto> plateCol = item => @<div class="vh-room-cell">
+            <span class="vh-code-btn cell-truncate">@VehicleRules.FormatPlateForDisplay(item.PlateNumberSnapshot)</span>
+            @if (!string.IsNullOrWhiteSpace(item.Brand) || !string.IsNullOrWhiteSpace(item.Color))
+            {
+                <span class="vh-cell-secondary cell-truncate">
+                    @(string.IsNullOrWhiteSpace(item.Brand) ? item.Color : (string.IsNullOrWhiteSpace(item.Color) ? item.Brand : $"{item.Brand} · {item.Color}"))
+                </span>
+            }
+        </div>;
+
+        RenderFragment<VehicleAuditItemDto> roomCol = item => @<div class="vh-room-cell">
+            <div class="vh-room-line">
+                <a class="cell-link" href="@($"/rooms?q={Uri.EscapeDataString(item.RoomCodeSnapshot)}")">@item.RoomCodeSnapshot</a>
+                <StatusBadge Text="@L[item.Result.ToString()]" Tone="@AuditTone(item.Result)" />
+            </div>
+            <a class="cell-link is-quiet vh-cell-secondary-link cell-truncate"
+               href="@($"/properties?q={Uri.EscapeDataString(CurrentPropertyName)}")">@CurrentPropertyName</a>
+        </div>;
+
+        RenderFragment<VehicleAuditItemDto> infoCol = item => @<div class="vh-room-cell">
+            <strong class="cell-truncate">@L[item.VehicleTypeSnapshot.ToString()]</strong>
+            <span class="vh-cell-secondary cell-truncate">
+                @(!string.IsNullOrWhiteSpace(item.ParkingSlotCode)
+                    ? $"{L["SlotLabel"]} {item.ParkingSlotCode}{(string.IsNullOrWhiteSpace(item.ParkingZoneName) ? "" : $" · {item.ParkingZoneName}")}"
+                    : (!string.IsNullOrWhiteSpace(item.ParkingZoneName) ? item.ParkingZoneName : L["CommonYard"].Value))
+            </span>
+        </div>;
+
+        RenderFragment<VehicleAuditItemDto> actionCol = item => @<div class="p2-row-actions">
+            <button class="icon-button p2-menu-trigger @(_openChecklistMenuId == item.Id ? "is-open" : null)" type="button"
+                    aria-label="@L["Action"]" title="@L["Action"]"
+                    aria-haspopup="menu" aria-expanded="@(_openChecklistMenuId == item.Id ? "true" : "false")"
+                    aria-controls="@($"audit-item-menu-{item.Id}")"
+                    @onclick="() => ToggleChecklistMenu(item.Id)">
+                <LucideIcon Name="ellipsis" />
+            </button>
+            @if (_openChecklistMenuId == item.Id)
+            {
+                <div id="@($"audit-item-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                    <button class="p2-row-menu-item" type="button" role="menuitem"
+                            @onclick="() => MenuRecordItemAsync(item.Id, VehicleAuditItemResult.Present)">
+                        <LucideIcon Name="circle-check" /><span>@L["Present"]</span>
+                    </button>
+                    <button class="p2-row-menu-item danger" type="button" role="menuitem"
+                            @onclick="() => MenuRecordItemAsync(item.Id, VehicleAuditItemResult.Missing)">
+                        <LucideIcon Name="close" /><span>@L["Missing"]</span>
+                    </button>
+                    @if (item.Result != VehicleAuditItemResult.Pending)
+                    {
+                        <div class="p2-row-menu-sep" role="separator"></div>
+                        <button class="p2-row-menu-item" type="button" role="menuitem"
+                                @onclick="() => MenuRecordItemAsync(item.Id, VehicleAuditItemResult.Pending)">
+                            <LucideIcon Name="refresh-cw" /><span>@L["Pending"]</span>
+                        </button>
+                    }
+                </div>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "plate", Title = L["PlateNumber"], Template = plateCol, Width = "24%" },
+            new() { Key = "room", Title = L["ColumnRoomProperty"], Template = roomCol, Width = "28%" },
+            new() { Key = "info", Title = L["ColumnTypeLocation"], Template = infoCol, Width = "36%" },
+            new() { Key = "action", Title = L["Action"], Template = actionCol, CellClass = "cell-actions", Width = "12%" },
+        ];
+    }
+
+    private void ToggleChecklistMenu(int itemId) =>
+        _openChecklistMenuId = _openChecklistMenuId == itemId ? null : itemId;
+
+    private async Task MenuRecordItemAsync(int itemId, VehicleAuditItemResult result)
+    {
+        _openChecklistMenuId = null;
+        await RecordItemAsync(itemId, result);
+    }
+
+    private IReadOnlyList<DataTableColumn<VehicleAuditSessionDto>> BuildColumns()
+    {
+        RenderFragment<VehicleAuditSessionDto> idCol = s => @<span class="vh-code-btn">@string.Format(L["AuditSessionPrefix"].Value, s.Id)</span>;
+
+        RenderFragment<VehicleAuditSessionDto> auditorCol = s => @<span class="cell-link is-quiet">@(s.AuditedByName ?? "—")</span>;
+
+        RenderFragment<VehicleAuditSessionDto> timeCol = s => @<div class="vh-room-cell tabular-nums">
+            <span>@DateFormatter.FormatDateTime(s.StartedAt.UtcDateTime)</span>
+            @if (s.CompletedAt.HasValue)
+            {
+                <span class="vh-cell-secondary">@string.Format(L["AuditCompletedAt"].Value, DateFormatter.FormatDateTime(s.CompletedAt.Value.UtcDateTime))</span>
+            }
+        </div>;
+
+        RenderFragment<VehicleAuditSessionDto> resultCol = s => @<div class="vh-room-cell tabular-nums">
+            <strong>@string.Format(L["AuditResultPresent"].Value, s.TotalPresent, s.TotalExpected)</strong>
+            <span class="vh-cell-secondary">@string.Format(L["AuditResultSummary"].Value, s.TotalMissing, s.TotalPending)</span>
+        </div>;
+
+        RenderFragment<VehicleAuditSessionDto> statusCol = s => @<StatusBadge Text="@L[s.Status.ToString()]"
+                                                                              Tone="@(s.Status == VehicleAuditSessionStatus.Completed ? BadgeTone.Success : BadgeTone.Warning)" />;
+
+        return
+        [
+            new() { Key = "id", Title = L["ColumnAuditSession"], Template = idCol, Width = "14%" },
+            new() { Key = "auditor", Title = L["ColumnAuditor"], Template = auditorCol, Width = "20%" },
+            new() { Key = "time", Title = L["ColumnAuditTime"], Template = timeCol, Width = "24%" },
+            new() { Key = "result", Title = L["ColumnAuditResult"], Template = resultCol, Width = "26%" },
+            new() { Key = "status", Title = L["Status"], Template = statusCol, Width = "16%" },
+        ];
+    }
+
+    private async Task ChangePropertyByIdAsync(int id)
+    {
+        if (id == _propertyId) return;
+        _propertyId = id;
+        await LoadPropertyAuditAsync();
+    }
+
+    private async Task StartSessionAsync()
+    {
+        try
+        {
+            _activeSession = await Session.StartAuditSessionAsync(_propertyId);
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyAuditAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task RecordItemAsync(int itemId, VehicleAuditItemResult result)
+    {
+        try
+        {
+            _activeSession = await Session.RecordAuditItemAsync(itemId, result);
+            _sessions = await Session.ListAuditSessionsAsync(_propertyId);
+            _checklistTableKey++;
+            _tableKey++;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task QuickAddVehicleAsync(VehicleCreateRequest request)
+    {
+        if (_activeSession is null) return;
+        _modalError = null;
+        try
+        {
+            _activeSession = await Session.QuickAddVehicleDuringAuditAsync(_activeSession.Id, request);
+            _sessions = await Session.ListAuditSessionsAsync(_propertyId);
+            _showQuickAddModal = false;
+            _checklistTableKey++;
+            _tableKey++;
+            Toasts.Success(L["Saved"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private void OpenIncidentModal()
+    {
+        _incidentError = null;
+        _showIncidentModal = true;
+    }
+
+    private async Task SubmitIncidentAsync(VehicleIncidentCreateRequest request)
+    {
+        _incidentError = null;
+        try
+        {
+            await Session.ReportIncidentAsync(request);
+            _showIncidentModal = false;
+            Toasts.Success(L["Saved"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _incidentError = Resolve(ex);
+        }
+    }
+
+    private async Task CompleteSessionAsync()
+    {
+        if (_activeSession is null) return;
+        try
+        {
+            await Session.CompleteAuditSessionAsync(_activeSession.Id);
+            Toasts.Success(L["Saved"]);
+            await LoadPropertyAuditAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private static string AuditCardCss(VehicleAuditItemResult result) => result switch
+    {
+        VehicleAuditItemResult.Present => "vehicle-audit-card--present",
+        VehicleAuditItemResult.Missing => "vehicle-audit-card--missing",
+        _ => string.Empty,
+    };
+
+    private static BadgeTone AuditTone(VehicleAuditItemResult result) => result switch
+    {
+        VehicleAuditItemResult.Present => BadgeTone.Success,
+        VehicleAuditItemResult.Missing => BadgeTone.Error,
+        _ => BadgeTone.Warning,
+    };
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}
