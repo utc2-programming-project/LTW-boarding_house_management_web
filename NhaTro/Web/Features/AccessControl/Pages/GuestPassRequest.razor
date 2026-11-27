@@ -2,6 +2,7 @@
 @layout Web.Components.Layout.AuthLayout
 @rendermode InteractiveServer
 
+@using Microsoft.JSInterop
 @using System.ComponentModel.DataAnnotations
 @using Web.Features.AccessControl.DTOs
 @using Web.Features.AccessControl.Enums
@@ -11,6 +12,7 @@
 @inject IGatePassInviteService Invites
 @inject NavigationManager Navigation
 @inject QrCodeRenderer Qr
+@inject IJSRuntime JS
 @inject IStringLocalizer<AccessControlResource> L
 
 <PageTitle>@L["GuestFillTitle"]</PageTitle>
@@ -58,13 +60,23 @@
                 <p class="gate-muted">@L["GuestFillKeepLinkHint"]</p>
                 <dl class="gate-created">
                     <dt>@L["GuestFillPassLink"]</dt>
-                    <dd><a href="@_passUrl">@_passUrl</a></dd>
+                    <dd class="gate-link-row">
+                        <a href="@_passUrl">@_passUrl</a>
+                        <button type="button" class="gate-copy-btn" aria-label="@L["GuestFillCopyLink"]" title="@L["GuestFillCopyLink"]"
+                                @onclick="CopyPassLinkAsync">
+                            <LucideIcon Name="@(_linkCopied ? "circle-check" : "copy")" />
+                        </button>
+                    </dd>
                     @if (!string.IsNullOrWhiteSpace(_created.Code))
                     {
                         <dt>@L["FallbackCode"]</dt>
                         <dd><code>@_created.Code</code></dd>
                     }
                 </dl>
+                @if (_linkCopied)
+                {
+                    <p class="gate-muted" role="status">@L["GuestFillLinkCopied"]</p>
+                }
                 <img class="gate-qr-image" src="@Qr.ToPngDataUrl(_passUrl)" alt="@L["GuestFillQrAlt"]" width="220" height="220" />
                 <a class="btn btn-secondary btn-sm" href="@_passUrl">@L["GuestFillViewStatus"]</a>
             </div>
@@ -104,22 +116,31 @@
                         <LucideIcon Name="moon" />
                         <span>@L["GuestFillOvernightHint"]</span>
                     </div>
+                }
 
+                @if (NeedsDob)
+                {
                     <FormField TValue="DateOnly?" Id="guest-dob" Label="@L["VisitorDob"]" Required="true" For="() => Input.VisitorDob">
                         <InputDate @bind-Value="Input.VisitorDob" id="guest-dob" class="input" max="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
                     </FormField>
+                }
 
+                @if (NeedsIdNumber)
+                {
                     <FormField TValue="string" Id="guest-id" Label="@L["VisitorIdNumber"]" Required="true" For="() => Input.VisitorIdNumber">
-                        <InputText @bind-Value="Input.VisitorIdNumber" id="guest-id" class="input" maxlength="30" />
+                        <InputText @bind-Value="Input.VisitorIdNumber" id="guest-id" class="input" maxlength="50" />
                     </FormField>
+                }
 
+                @if (NeedsStayReason)
+                {
                     <FormField TValue="string" Id="guest-reason" Label="@L["StayReason"]" Required="true" For="() => Input.StayReason">
                         <InputText @bind-Value="Input.StayReason" id="guest-reason" class="input" maxlength="500" />
                     </FormField>
                 }
 
                 <FormField TValue="string" Id="guest-note" Label="@L["Note"]" For="() => Input.Note">
-                    <InputText @bind-Value="Input.Note" id="guest-note" class="input" maxlength="500" />
+                    <InputText @bind-Value="Input.Note" id="guest-note" class="input" maxlength="1000" />
                 </FormField>
 
                 <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
@@ -146,6 +167,7 @@
     private string? _error;
     private bool _busy;
     private string _passUrl = string.Empty;
+    private bool _linkCopied;
 
     private InputModel Input { get; set; } = new();
 
@@ -182,11 +204,39 @@
             _created = result.Created;
             _passUrl = Navigation.ToAbsoluteUri($"/guest/p/{Uri.EscapeDataString(result.Created.RawToken)}").ToString();
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = L["GuestFillFailed"];
+        }
         finally
         {
             _busy = false;
         }
     }
+
+    private async Task CopyPassLinkAsync()
+    {
+        try
+        {
+            _linkCopied = await JS.InvokeAsync<bool>("vhtCopyText", _passUrl);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _linkCopied = false;
+        }
+
+        if (!_linkCopied)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
+    }
+
+    private bool Requires(string field) =>
+        _location?.RequiredFields.Contains(field, StringComparer.OrdinalIgnoreCase) == true;
+
+    private bool NeedsDob => Input.StayType == GateStayType.Overnight || Requires("Dob");
+    private bool NeedsIdNumber => Input.StayType == GateStayType.Overnight || Requires("IdNumber");
+    private bool NeedsStayReason => Input.StayType == GateStayType.Overnight || Requires("StayReason");
 
     private string MapError(string? code) => code switch
     {
@@ -198,6 +248,9 @@
         GateErrorCodes.GuestQuotaExceeded => L["GuestQuotaExceeded"],
         GateErrorCodes.DuplicateGuestRequest => L["DuplicateGuestRequest"],
         GateErrorCodes.MissingLawfulFields => L["MissingLawfulFields"],
+        GateErrorCodes.MissingGuestName => L["MissingGuestName"],
+        GateErrorCodes.MissingGuestPhone => L["MissingGuestPhone"],
+        GateErrorCodes.InvalidRequest => L["InvalidRequest"],
         _ => L["GuestFillFailed"],
     };
 
@@ -215,13 +268,13 @@
 
         public DateOnly? VisitorDob { get; set; }
 
-        [StringLength(30)]
+        [StringLength(50, ErrorMessage = "CCCD/hộ chiếu tối đa 50 ký tự.")]
         public string? VisitorIdNumber { get; set; }
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessage = "Lý do lưu trú tối đa 500 ký tự.")]
         public string? StayReason { get; set; }
 
-        [StringLength(500)]
+        [StringLength(1000, ErrorMessage = "Ghi chú tối đa 1000 ký tự.")]
         public string? Note { get; set; }
     }
 }

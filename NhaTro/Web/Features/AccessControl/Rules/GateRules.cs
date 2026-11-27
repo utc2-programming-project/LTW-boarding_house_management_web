@@ -31,7 +31,7 @@ public static class GatePassRules
     public static DateTimeOffset ComputeExpiry(DateTimeOffset now, int ttlMinutes) =>
         now.AddMinutes(Math.Clamp(ttlMinutes, MinTtlMinutes, MaxTtlMinutes));
 
-    public static string? ValidateCreate(GatePassCreateRequest request, bool isTenant)
+    public static string? ValidateCreate(GatePassCreateRequest request, bool isTenant, DateOnly? todayVietnam = null)
     {
         if (string.IsNullOrWhiteSpace(request.VisitorName) || request.VisitorName.Trim().Length > 200)
         {
@@ -41,6 +41,27 @@ public static class GatePassRules
         if (string.IsNullOrWhiteSpace(request.VisitorPhone) || request.VisitorPhone.Trim().Length > 30)
         {
             return GateErrorCodes.MissingGuestPhone;
+        }
+
+        // Giới hạn theo cột DB để không lỗi truncate khi dữ liệu gửi thẳng lên service.
+        if (request.VisitorIdNumber is { } idNumber && idNumber.Trim().Length > 50)
+        {
+            return GateErrorCodes.InvalidRequest;
+        }
+
+        if (request.StayReason is { } stayReason && stayReason.Trim().Length > 500)
+        {
+            return GateErrorCodes.InvalidRequest;
+        }
+
+        if (request.Note is { } note && note.Trim().Length > 1000)
+        {
+            return GateErrorCodes.InvalidRequest;
+        }
+
+        if (todayVietnam is { } today && request.VisitorDob is { } dob && dob > today)
+        {
+            return GateErrorCodes.InvalidRequest;
         }
 
         if (request.StayType == GateStayType.Overnight)
@@ -69,6 +90,38 @@ public static class GatePassRules
 
         return null;
     }
+
+    private static readonly string[] GuestFieldNames = ["FullName", "Phone", "Dob", "IdNumber", "StayReason"];
+
+    /// <summary>Đọc cấu hình RequiredGuestFields, bỏ qua tên trường không nhận diện được.</summary>
+    public static IReadOnlySet<string> ParseRequiredGuestFields(string? value)
+    {
+        var fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var part in (value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (GuestFieldNames.Contains(part, StringComparer.OrdinalIgnoreCase))
+            {
+                fields.Add(part);
+            }
+        }
+
+        return fields;
+    }
+
+    /// <summary>Bỏ khoảng trắng/ký tự ngăn cách và đổi +84 thành 0 để so trùng ổn định.</summary>
+    public static string NormalizePhone(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            return string.Empty;
+        }
+
+        var cleaned = new string(phone.Where(ch => !char.IsWhiteSpace(ch) && ch is not ('-' or '.' or '(' or ')')).ToArray());
+        return cleaned.StartsWith("+84", StringComparison.Ordinal) ? $"0{cleaned[3..]}" : cleaned;
+    }
+
+    public static bool IsVietnamMobile(string? phone) =>
+        phone is { Length: 10 } && phone[0] == '0' && phone.All(char.IsAsciiDigit);
 
     /// <summary>Chỉ áp dụng trong khung giờ khách đến chơi (theo giờ Việt Nam).</summary>
     public static bool IsInsideDayVisitWindow(GatePolicyDto policy, DateTimeOffset at)

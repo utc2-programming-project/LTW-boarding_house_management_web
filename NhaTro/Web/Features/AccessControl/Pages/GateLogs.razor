@@ -48,7 +48,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var stay in _stays)
+                        @foreach (var stay in PagedStays)
                         {
                             <tr>
                                 <td>@stay.GuestName</td>
@@ -70,6 +70,8 @@
                     </tbody>
                 </table>
             </div>
+            <TablePager Page="_stayPage" TotalPages="StayTotalPages" From="StayFrom" To="StayTo" Total="_stays.Count"
+                        PageChanged="GoToStayPage" />
         }
 
         @if (_reporting is not null)
@@ -154,7 +156,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var log in _logs)
+                        @foreach (var log in PagedLogs)
                         {
                             <tr>
                                 <td>@log.OccurredAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd/MM HH:mm:ss")</td>
@@ -178,13 +180,19 @@
                     </tbody>
                 </table>
             </div>
+            <TablePager Page="_logPage" TotalPages="LogTotalPages" From="LogFrom" To="LogTo" Total="_logs.Count"
+                        PageChanged="GoToLogPage" />
         }
     }
 </div>
 
 @code {
+    private const int PageSize = 10;
+
     private IReadOnlyList<GateLogDto> _logs = [];
     private IReadOnlyList<StayReportDto> _stays = [];
+    private int _stayPage = 1;
+    private int _logPage = 1;
     private bool _loading = true;
     private string? _error;
     private DateTime? _from;
@@ -218,12 +226,15 @@
 
     private async Task ReloadAllAsync()
     {
+        _stayPage = 1;
+        _logPage = 1;
         await LoadLogsCoreAsync();
         _stays = await Session.StaysAsync();
     }
 
     private async Task LoadLogsAsync()
     {
+        _logPage = 1;
         try
         {
             await LoadLogsCoreAsync();
@@ -261,6 +272,7 @@
         {
             await Session.RefreshStaysAsync();
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -281,6 +293,7 @@
         {
             await Session.CancelStayAsync(id, L["GuestLeftBeforeDue"]);
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -296,6 +309,7 @@
             await Session.MarkReportedAsync(stay.Id, _channel, _evidence, _reportNote);
             _reporting = null;
             _stays = await Session.StaysAsync();
+            _stayPage = 1;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -305,4 +319,26 @@
 
     private string Resolve(Exception ex) =>
         ex is GatePageException ? L[ex.Message] : L["LoadFailed"];
+
+    private IEnumerable<StayReportDto> PagedStays =>
+        _stays.Skip((_stayPage - 1) * PageSize).Take(PageSize);
+
+    private int StayTotalPages => PaginationHelper.TotalPages(_stays.Count, PageSize);
+
+    private int StayFrom => PaginationHelper.ItemRange(_stayPage, PageSize, _stays.Count).From;
+
+    private int StayTo => PaginationHelper.ItemRange(_stayPage, PageSize, _stays.Count).To;
+
+    private void GoToStayPage(int page) => _stayPage = PaginationHelper.ClampPage(page, StayTotalPages);
+
+    private IEnumerable<GateLogDto> PagedLogs =>
+        _logs.Skip((_logPage - 1) * PageSize).Take(PageSize);
+
+    private int LogTotalPages => PaginationHelper.TotalPages(_logs.Count, PageSize);
+
+    private int LogFrom => PaginationHelper.ItemRange(_logPage, PageSize, _logs.Count).From;
+
+    private int LogTo => PaginationHelper.ItemRange(_logPage, PageSize, _logs.Count).To;
+
+    private void GoToLogPage(int page) => _logPage = PaginationHelper.ClampPage(page, LogTotalPages);
 }

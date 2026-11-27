@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "ChuTro,QuanLy")]
 @inject GatePageService Session
 @inject IStringLocalizer<AccessControlResource> L
+@inject IJSRuntime JS
 
 <PageTitle>@L["PageTitlePasses"]</PageTitle>
 
@@ -22,7 +23,7 @@
             <button type="button" class="btn btn-secondary" @onclick="() => _inviteOpen = true" disabled="@_loading">
                 <LucideIcon Name="qr-code" /> @L["GuestInviteCreate"]
             </button>
-            <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@_loading">
+            <button type="button" class="btn btn-primary" @onclick="OpenCreateForm" disabled="@_loading">
                 <LucideIcon Name="plus" /> @L["CreatePass"]
             </button>
         </Actions>
@@ -61,12 +62,14 @@
 
         @if (_creating)
         {
-            <GatePassForm Properties="_properties" Rooms="_rooms" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+            <div id="gate-pass-form" class="gate-form-anchor">
+                <GatePassForm Properties="_properties" Rooms="_rooms" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+            </div>
         }
 
         <GateInviteList Invites="_invites" OnCancel="CancelInviteAsync" />
 
-        <GatePassList Passes="_passes" ShowProperty="true"
+        <GatePassList @key="_statusFilter" Passes="_passes" ShowProperty="true"
                       OnApprove="ApproveAsync" OnReject="pass => OpenReason(pass, false)" OnRevoke="pass => OpenReason(pass, true)" />
     }
 </div>
@@ -98,7 +101,24 @@
     private GatePassDto? _reasonPass;
     private bool _revoking;
 
+    private bool _scrollToForm;
+
     protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_scrollToForm)
+        {
+            _scrollToForm = false;
+            await JS.InvokeVoidAsync("vhtScrollTo", "gate-pass-form");
+        }
+    }
+
+    private void OpenCreateForm()
+    {
+        _creating = true;
+        _scrollToForm = true;
+    }
 
     private async Task LoadAsync()
     {

@@ -44,6 +44,17 @@
     color: var(--text-secondary);
 }
 
+.qr-link-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 100%;
+}
+
+.qr-link-row .qr-link {
+    min-width: 0;
+}
+
 .qr-link {
     max-width: 100%;
     margin: 0;
@@ -55,6 +66,32 @@
 
 .qr-link a {
     color: var(--accent-text);
+}
+
+/* Nút copy cạnh link QR; icon do component con render nên cần ::deep. */
+.gate-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.gate-copy-btn:hover {
+    opacity: 1;
+}
+
+.gate-copy-btn ::deep .lucide-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .account-form-actions {

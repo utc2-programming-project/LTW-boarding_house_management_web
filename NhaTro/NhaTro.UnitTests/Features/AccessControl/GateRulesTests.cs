@@ -105,6 +105,79 @@ public sealed class GateRulesTests
     }
 
     [Fact]
+    public void OversizedLawfulFieldsAreRejected()
+    {
+        var request = new GatePassCreateRequest
+        {
+            VisitorName = "Nguyễn Văn A",
+            VisitorPhone = "0901234567",
+            StayType = GateStayType.Overnight,
+            VisitorDob = new DateOnly(1990, 1, 1),
+            StayReason = "Thăm người thân",
+            VisitorIdNumber = "079090001234",
+            Note = null,
+        };
+
+        Assert.Null(GatePassRules.ValidateCreate(request, isTenant: false));
+        Assert.Equal(GateErrorCodes.InvalidRequest,
+            GatePassRules.ValidateCreate(request with { VisitorIdNumber = new string('9', 51) }, false));
+        Assert.Equal(GateErrorCodes.InvalidRequest,
+            GatePassRules.ValidateCreate(request with { Note = new string('a', 1001) }, false));
+        Assert.Equal(GateErrorCodes.InvalidRequest,
+            GatePassRules.ValidateCreate(request with { StayReason = new string('a', 501) }, false));
+    }
+
+    [Fact]
+    public void FutureDateOfBirthIsRejected()
+    {
+        var request = new GatePassCreateRequest
+        {
+            VisitorName = "Nguyễn Văn A",
+            VisitorPhone = "0901234567",
+            StayType = GateStayType.Overnight,
+            VisitorDob = new DateOnly(2030, 1, 1),
+            VisitorIdNumber = "079090001234",
+            StayReason = "Thăm người thân",
+        };
+
+        Assert.Equal(GateErrorCodes.InvalidRequest,
+            GatePassRules.ValidateCreate(request, isTenant: false, todayVietnam: new DateOnly(2026, 11, 27)));
+        Assert.Null(GatePassRules.ValidateCreate(request, isTenant: false, todayVietnam: new DateOnly(2030, 1, 1)));
+    }
+
+    [Theory]
+    [InlineData("0901234567", "0901234567")]
+    [InlineData(" 090 123 4567 ", "0901234567")]
+    [InlineData("+84901234567", "0901234567")]
+    [InlineData("090-123-4567", "0901234567")]
+    [InlineData(null, "")]
+    public void PhoneIsNormalized(string? input, string expected)
+    {
+        Assert.Equal(expected, GatePassRules.NormalizePhone(input));
+    }
+
+    [Theory]
+    [InlineData("0901234567", true)]
+    [InlineData("090123456", false)]
+    [InlineData("1901234567", false)]
+    [InlineData("+84901234567", false)]
+    public void VietnamMobileFormatIsEnforced(string phone, bool valid)
+    {
+        Assert.Equal(valid, GatePassRules.IsVietnamMobile(phone));
+    }
+
+    [Fact]
+    public void RequiredGuestFieldsIgnoreUnknownNames()
+    {
+        var fields = GatePassRules.ParseRequiredGuestFields(" FullName, phone ,Unknown,Dob ");
+
+        Assert.Equal(3, fields.Count);
+        Assert.Contains("FullName", fields);
+        Assert.Contains("Phone", fields);
+        Assert.Contains("Dob", fields);
+    }
+
+    [Fact]
     public void StayReportIsDueAt23SameDayForDaytimeArrival()
     {
         var arrival = new DateTimeOffset(2026, 11, 24, 20, 30, 0, TimeSpan.FromHours(7));
