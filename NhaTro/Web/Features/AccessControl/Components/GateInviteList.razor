@@ -1,0 +1,33 @@
+@using Web.Features.AccessControl.DTOs
+
+@inject IStringLocalizer<AccessControlResource> L
+
+@if (Invites.Count > 0)
+{
+    <div class="gate-form-card">
+        <h2>@L["GuestInvitesActive"]</h2>
+        <p class="gate-muted">@L["GuestInvitesActiveHint"]</p>
+        <ul class="gate-invite-list">
+            @foreach (var invite in Invites)
+            {
+                <li>
+                    <div>
+                        <strong>@invite.PropertyName · @invite.RoomCode</strong>
+                        <span class="gate-muted"> — @invite.CreatedByName</span>
+                    </div>
+                    <div class="gate-invite-meta">
+                        <span class="gate-muted">@string.Format(L["GuestInviteExpiresAt"], invite.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</span>
+                        <button type="button" class="btn btn-secondary btn-sm" @onclick="() => OnCancel.InvokeAsync(invite)">
+                            <LucideIcon Name="x" /> @L["GuestInviteCancel"]
+                        </button>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<GateInviteDto> Invites { get; set; } = [];
+    [Parameter] public EventCallback<GateInviteDto> OnCancel { get; set; }
+}

@@ -278,6 +278,12 @@
   <data name="NavGroupOperations" xml:space="preserve">
     <value>Vận hành</value>
   </data>
+  <data name="NavGroupData" xml:space="preserve">
+    <value>Dữ liệu</value>
+  </data>
+  <data name="NavGroupReview" xml:space="preserve">
+    <value>Duyệt &amp; quyền</value>
+  </data>
   <data name="NavGroupAdmin" xml:space="preserve">
     <value>Quản trị</value>
   </data>

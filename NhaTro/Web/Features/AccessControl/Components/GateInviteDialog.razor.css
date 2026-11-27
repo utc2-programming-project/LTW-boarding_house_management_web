@@ -1,0 +1,77 @@
+/* Nội dung dialog tạo liên kết khách tự điền.
+   Các class tên giống dialog khách thuê nhưng phải khai báo riêng ở đây vì CSS scoped
+   của component khác không áp dụng cho markup này. */
+
+.account-form-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: var(--space-6);
+}
+
+/* Body đã có gap nên bỏ margin mặc định của FormField và cảnh báo. */
+.account-form-body ::deep .field {
+    margin-bottom: 0;
+}
+
+.account-form-body .form-alert,
+.account-form-body .note {
+    margin: 0;
+}
+
+.qr-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    text-align: center;
+}
+
+.qr-result img {
+    width: 220px;
+    height: 220px;
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+}
+
+.qr-result-meta {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.qr-link {
+    max-width: 100%;
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.qr-link a {
+    color: var(--accent-text);
+}
+
+.account-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 479px) {
+    .account-form-body {
+        padding: var(--space-4);
+    }
+
+    .account-form-actions .btn {
+        flex: 1 1 100%;
+    }
+}

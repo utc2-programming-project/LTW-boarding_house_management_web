@@ -1,0 +1,42 @@
+@inject IStringLocalizer<DashboardResource> L
+
+@if (Data is null || Total <= 0)
+{
+    <EmptyStateCard Title="@L["Empty"]" />
+}
+else
+{
+    <div class="aging-chart" role="img" aria-label="@L["DebtAging"]">
+        <div class="chart-head">
+            <ul class="chart-legend" aria-hidden="true">
+                <li><span class="legend-dot c1"></span>@L["DebtUnder30"]</li>
+                <li><span class="legend-dot c2"></span>@L["Debt30To60"]</li>
+                <li><span class="legend-dot c3"></span>@L["DebtOver60"]</li>
+            </ul>
+        </div>
+        <div class="aging-row">
+            <span class="aging-label">@L["DebtUnder30"]</span>
+            <div class="aging-track"><span class="aging-fill c1" style="width:@Width(Data.Under30)%"></span></div>
+            <span class="aging-value">@MoneyFormatter.Format(Data.Under30)</span>
+        </div>
+        <div class="aging-row">
+            <span class="aging-label">@L["Debt30To60"]</span>
+            <div class="aging-track"><span class="aging-fill c2" style="width:@Width(Data.Days30To60)%"></span></div>
+            <span class="aging-value">@MoneyFormatter.Format(Data.Days30To60)</span>
+        </div>
+        <div class="aging-row">
+            <span class="aging-label">@L["DebtOver60"]</span>
+            <div class="aging-track"><span class="aging-fill c3" style="width:@Width(Data.Over60)%"></span></div>
+            <span class="aging-value">@MoneyFormatter.Format(Data.Over60)</span>
+        </div>
+        <p class="chart-note">@L["DebtAgingNote"]</p>
+    </div>
+}
+
+@code {
+    [Parameter] public DebtAgingDto? Data { get; set; }
+
+    private decimal Total => (Data?.Under30 ?? 0) + (Data?.Days30To60 ?? 0) + (Data?.Over60 ?? 0);
+
+    private decimal Width(decimal value) => Total <= 0 ? 0 : Math.Max(2m, value * 100m / Total);
+}

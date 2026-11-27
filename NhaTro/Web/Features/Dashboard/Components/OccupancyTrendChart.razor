@@ -1,0 +1,106 @@
+@using System.Globalization
+@inject IStringLocalizer<DashboardResource> L
+
+@if (Months is null || Months.Count == 0)
+{
+    <EmptyStateCard Title="@L["Empty"]" />
+}
+else
+{
+    <div class="occupancy-trend">
+        <div class="chart-head">
+            <ul class="chart-legend" aria-hidden="true">
+                <li><span class="legend-dot"></span>@L["Occupancy"]</li>
+            </ul>
+        </div>
+        <div class="occupancy-plot">
+            <svg class="occupancy-trend-svg" viewBox="0 0 320 170" role="img" aria-label="@L["OccupancyTrend"]">
+                <defs>
+                    <linearGradient id="occ-area" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" style="stop-color:var(--chart-1);stop-opacity:.28" />
+                        <stop offset="100%" style="stop-color:var(--chart-1);stop-opacity:0" />
+                    </linearGradient>
+                </defs>
+                <line class="grid" x1="0" y1="24" x2="320" y2="24" vector-effect="non-scaling-stroke" />
+                <line class="grid" x1="0" y1="82" x2="320" y2="82" vector-effect="non-scaling-stroke" />
+                <line class="grid" x1="0" y1="140" x2="320" y2="140" vector-effect="non-scaling-stroke" />
+                <path class="area" d="@AreaPath" fill="url(#occ-area)" />
+                <polyline class="line" points="@Polyline" fill="none" vector-effect="non-scaling-stroke" />
+                @foreach (var point in Points)
+                {
+                    <circle class="point" cx="@F(point.X)" cy="@F(point.Y)" r="2.5" vector-effect="non-scaling-stroke" />
+                }
+            </svg>
+            @for (var index = 0; index < Points.Count; index++)
+            {
+                var point = Points[index];
+                if (ShowValue(index, Points.Count))
+                {
+                    <span class="value-label" style="left:@PercentX(point.X)%;top:@PercentY(point.Y)%">@point.Label</span>
+                }
+            }
+        </div>
+        <div class="axis-labels" aria-hidden="true">
+            @for (var index = 0; index < Points.Count; index++)
+            {
+                var point = Points[index];
+                if (ShowAxis(index, Points.Count))
+                {
+                    <span class="axis-label" style="left:@PercentX(point.X)%">@point.Month</span>
+                }
+            }
+        </div>
+        <p class="chart-note">@L["CurrentData"] · @L["OccupancyBasis"]</p>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<OccupancyMonthDto>? Months { get; set; }
+
+    private sealed record Point(double X, double Y, string Month, string Label);
+
+    private IReadOnlyList<Point> Points
+    {
+        get
+        {
+            var rows = Months ?? [];
+            if (rows.Count == 0) return [];
+            const double width = 300d;
+            var step = rows.Count == 1 ? width : width / (rows.Count - 1);
+            return rows.Select((month, index) =>
+            {
+                var rate = month.OccupancyRate ?? 0m;
+                var y = 140d - (double)rate * 1.16d;
+                return new Point(10 + index * step, Math.Clamp(y, 24d, 140d),
+                    month.Start.ToString("MM/yy", CultureInfo.InvariantCulture),
+                    $"{NumberFormatter.Trimmed(rate)} %");
+            }).ToList();
+        }
+    }
+
+    private string Polyline => string.Join(' ', Points.Select(p => $"{F(p.X)},{F(p.Y)}"));
+
+    private string AreaPath
+    {
+        get
+        {
+            var points = Points;
+            if (points.Count == 0) return string.Empty;
+            const double baseline = 140d;
+            var line = string.Join(' ', points.Select(p => $"L {F(p.X)} {F(p.Y)}"));
+            return $"M {F(points[0].X)} {F(baseline)} {line} L {F(points[^1].X)} {F(baseline)} Z";
+        }
+    }
+
+    private static bool ShowValue(int index, int count) =>
+        count <= 6 || index == 0 || index % 3 == 0 || index == count - 1;
+
+    private static bool ShowAxis(int index, int count) =>
+        count <= 8 || index % 2 == 0 || index == count - 1;
+
+    private static string PercentX(double x) => F(x / 320d * 100d);
+
+    private static string PercentY(double y) => F(y / 170d * 100d);
+
+    private static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

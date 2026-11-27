@@ -1,28 +1,34 @@
 @inject IStringLocalizer<HomeResource> L
 
-<section class="quick-actions" aria-labelledby="quick-actions-heading">
-    <h2 id="quick-actions-heading">@L["QuickActionsTitle"]</h2>
-    <div class="quick-grid">
+@* Nút gộp nằm trong PageHeading của /home: <details> mở/đóng bằng click, Enter/Space, Esc-native
+   (không cần JS, không cần popover polyfill). Không dùng role="menu": đây là danh sách điều hướng. *@
+<details class="home-quick-menu">
+    <summary class="home-quick-trigger" aria-label="@L["CreateQuick"]">
+        <LucideIcon Name="plus" />
+        <span>@L["CreateQuick"]</span>
+        <LucideIcon Name="chevron-down" />
+    </summary>
+    <nav class="home-quick-panel" aria-label="@L["CreateQuick"]">
         @foreach (var action in Items)
         {
-            @if (action.Href is null)
+            if (action.Href is null)
             {
-                <div class="quick-action disabled" aria-disabled="true">
+                <span class="home-quick-item is-disabled" aria-disabled="true">
                     <LucideIcon Name="@action.Icon" />
                     <span>@L[action.Key]</span>
                     <small>@L["ComingSoon"]</small>
-                </div>
+                </span>
             }
             else
             {
-                <a class="quick-action" href="@action.Href">
+                <a class="home-quick-item" href="@action.Href">
                     <LucideIcon Name="@action.Icon" />
                     <span>@L[action.Key]</span>
                 </a>
             }
         }
-    </div>
-</section>
+    </nav>
+</details>
 
 @code {
     [Parameter, EditorRequired] public string Role { get; set; } = "";

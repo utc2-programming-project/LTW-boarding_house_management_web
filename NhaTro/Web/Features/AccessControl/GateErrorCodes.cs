@@ -27,5 +27,11 @@ public static class GateErrorCodes
     public const string AlreadyInside = nameof(AlreadyInside);
     public const string NotInside = nameof(NotInside);
     public const string ManualOpenDisabled = nameof(ManualOpenDisabled);
+
+    // Link mời khách vãng lai tự điền (không tiết lộ link hỏng vì lý do gì).
+    public const string InviteInvalid = nameof(InviteInvalid);
+    public const string GuestFillDisabled = nameof(GuestFillDisabled);
+    public const string GuestQuotaExceeded = nameof(GuestQuotaExceeded);
+    public const string DuplicateGuestRequest = nameof(DuplicateGuestRequest);
     public const string SaveFailed = nameof(SaveFailed);
 }
