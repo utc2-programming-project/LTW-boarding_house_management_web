@@ -1,5 +1,9 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Web.Data;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Enums;
 using Web.Features.Accounts;
@@ -11,13 +15,33 @@ namespace Web.Features.AccessControl.Services;
 public sealed class GatePageService(
     AuthenticationStateProvider authentication,
     IGatePassService passes,
+    IGatePassInviteService invites,
     IGatePolicyService policies,
     IGateAccessService access,
+    IDbContextFactory<ApplicationDbContext> dbContextFactory,
     IStayReportService stays,
     IBiometricEnrollmentService biometrics,
     IGateTokenService tokens,
+    NavigationManager navigation,
+    IConfiguration configuration,
     TimeProvider clock)
 {
+    /// <summary>Base URL cho link khách tự điền; cùng cấu hình với link mời khách thuê.</summary>
+    public string PublicBaseUrl
+    {
+        get
+        {
+            var configured = configuration["Invitations:PublicBaseUrl"];
+            return string.IsNullOrWhiteSpace(configured)
+                ? navigation.BaseUri.TrimEnd('/')
+                : configured.TrimEnd('/');
+        }
+    }
+
+    public string GuestInviteUrl(string rawToken) => $"{PublicBaseUrl}/guest/{Uri.EscapeDataString(rawToken)}";
+
+    public string GuestPassUrl(string rawToken) => $"{PublicBaseUrl}/guest/p/{Uri.EscapeDataString(rawToken)}";
+
     public async Task<PropertyCaller> CallerAsync()
     {
         var user = (await authentication.GetAuthenticationStateAsync()).User;
@@ -51,6 +75,30 @@ public sealed class GatePageService(
         return tokens.IssueResidentToken(caller.UserId, propertyId, clock.GetUtcNow());
     }
 
+    /// <summary>
+    /// Trạng thái trong/ngoài của chính khách thuê: lượt GateLog thành công mới nhất.
+    /// Độc lập với việc chính sách anti-passback có bật hay không (chỉ để hiển thị).
+    /// </summary>
+    public async Task<ResidentGateStatusDto> ResidentStatusAsync()
+    {
+        var caller = await CallerAsync();
+        if (!caller.IsKhachThue)
+        {
+            throw new GatePageException(GateErrorCodes.Forbidden);
+        }
+
+        await using var db = await dbContextFactory.CreateDbContextAsync();
+        var last = await db.GateLogs.AsNoTracking()
+            .Where(log => log.UserId == caller.UserId && log.IsSuccess)
+            .OrderByDescending(log => log.OccurredAt)
+            .Select(log => new { log.Direction, log.OccurredAt })
+            .FirstOrDefaultAsync();
+
+        return last is null
+            ? new ResidentGateStatusDto(false, null, null)
+            : new ResidentGateStatusDto(last.Direction == GateDirection.In, last.OccurredAt, last.Direction);
+    }
+
     public async Task<IReadOnlyList<GateRoomOption>> RoomsAsync() => await passes.RoomsAsync(await CallerAsync());
 
     public async Task<GatePassCreatedDto> CreatePassAsync(GatePassCreateRequest request)
@@ -68,17 +116,46 @@ public sealed class GatePageService(
     public async Task RejectAsync(int id, string reason) => Ensure(await passes.RejectAsync(id, reason, await CallerAsync()));
     public async Task RevokeAsync(int id, string reason) => Ensure(await passes.RevokeAsync(id, reason, await CallerAsync()));
 
+    public async Task<GateInviteCreatedDto> CreateInviteAsync(GateInviteCreateRequest request)
+    {
+        var result = await invites.CreateAsync(request, await CallerAsync());
+        if (!result.Succeeded || result.Created is null)
+        {
+            throw new GatePageException(result.ErrorCode ?? GateErrorCodes.SaveFailed);
+        }
+
+        return result.Created;
+    }
+
+    public async Task<IReadOnlyList<GateInviteDto>> ActiveInvitesAsync() =>
+        await invites.ListActiveAsync(await CallerAsync());
+
+    public async Task CancelInviteAsync(int id)
+    {
+        var result = await invites.CancelAsync(id, await CallerAsync());
+        if (!result.Succeeded)
+        {
+            throw new GatePageException(result.ErrorCode ?? GateErrorCodes.SaveFailed);
+        }
+    }
+
     public async Task<IReadOnlyList<GatePropertyOption>> PropertiesAsync() => await policies.PropertiesAsync(await CallerAsync());
 
     public async Task<(GatePolicyDto Policy, IReadOnlyList<GateDeviceDto> Devices)> SettingsAsync(int propertyId) =>
         (await policies.GetAsync(propertyId, await CallerAsync()),
          await policies.DevicesAsync(propertyId, await CallerAsync()));
 
-    public async Task SavePolicyAsync(GatePolicySaveRequest request) =>
-        await policies.SaveAsync(request, await CallerAsync());
+    public async Task SavePolicyAsync(GatePolicySaveRequest request)
+    {
+        var caller = await CallerAsync();
+        await MapValidationAsync(() => policies.SaveAsync(request, caller));
+    }
 
-    public async Task AddDeviceAsync(GateDeviceSaveRequest request) =>
-        await policies.SaveDeviceAsync(request, await CallerAsync());
+    public async Task AddDeviceAsync(GateDeviceSaveRequest request)
+    {
+        var caller = await CallerAsync();
+        await MapValidationAsync(() => policies.SaveDeviceAsync(request, caller));
+    }
 
     public async Task DeleteDeviceAsync(int id) => await policies.DeleteDeviceAsync(id, await CallerAsync());
 
@@ -132,6 +209,20 @@ public sealed class GatePageService(
         if (!await biometrics.RevokeAsync(id, reason, await CallerAsync()))
         {
             throw new GatePageException(GateErrorCodes.InvalidStatus);
+        }
+    }
+
+    // Lỗi validate của service ném ArgumentException/InvalidOperationException; đổi sang mã
+    // nghiệp vụ để trang dịch được thay vì rơi vào thông báo "tải thất bại" chung.
+    private static async Task MapValidationAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            throw new GatePageException(GateErrorCodes.InvalidRequest);
         }
     }
 

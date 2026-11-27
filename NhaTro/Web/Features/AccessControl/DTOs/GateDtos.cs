@@ -25,11 +25,13 @@ public sealed record GatePassDto(
     bool AutoApproved,
     string? RejectedReason,
     string? RevokedReason,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    int? GatePassInviteId)
 {
     public bool CanApprove { get; init; }
     public bool CanRevoke { get; init; }
     public bool IsOvernight => StayType == GateStayType.Overnight;
+    public bool IsSelfFilled => GatePassInviteId is not null;
 }
 
 public sealed record GatePassCreateRequest
@@ -64,6 +66,8 @@ public sealed record GatePolicyDto(
     bool AutoApproveDayVisit,
     bool AutoApproveOvernight,
     bool AllowTenantIssuePass,
+    bool AllowGuestSelfFill,
+    int GuestSelfMaxPassesPerDay,
     bool TenantMayIssueOvernight,
     int TenantMaxPassesPerDay,
     int TenantMaxTtlMinutes,
@@ -78,8 +82,8 @@ public sealed record GatePolicyDto(
     DateTimeOffset UpdatedAt)
 {
     public static GatePolicyDto Defaults(int propertyId) => new(
-        propertyId, GateAuthMode.SingleFactor, true, true, false, false, false, true, false,
-        3, 60, 1, 60, 6, 22, 30, 15, "FullName,Phone", StayReportChannel.VNeId, DateTimeOffset.MinValue);
+        propertyId, GateAuthMode.SingleFactor, true, true, false, true, false, true, false, 3,
+        false, 3, 60, 1, 60, 6, 22, 30, 15, "FullName,Phone", StayReportChannel.VNeId, DateTimeOffset.MinValue);
 }
 
 public sealed record GatePolicySaveRequest
@@ -92,6 +96,8 @@ public sealed record GatePolicySaveRequest
     public bool AutoApproveDayVisit { get; set; }
     public bool AutoApproveOvernight { get; set; }
     public bool AllowTenantIssuePass { get; set; }
+    public bool AllowGuestSelfFill { get; set; }
+    public int GuestSelfMaxPassesPerDay { get; set; } = 3;
     public bool TenantMayIssueOvernight { get; set; }
     public int TenantMaxPassesPerDay { get; set; }
     public int TenantMaxTtlMinutes { get; set; }
@@ -143,6 +149,9 @@ public sealed record GateLogFilter
     public int Take { get; init; } = 100;
 }
 
+/// <summary>Trạng thái trong/ngoài của khách thuê, suy ra từ lượt GateLog thành công mới nhất.</summary>
+public sealed record ResidentGateStatusDto(bool Inside, DateTimeOffset? LastAt, GateDirection? LastDirection);
+
 public sealed record StayReportDto(
     int Id,
     int? GatePassId,
@@ -175,3 +184,76 @@ public sealed record BiometricEnrollmentDto(
 public sealed record GateOpenRequest(int PropertyId, int? GateDeviceId, string Reason, string ActorUserId);
 
 public sealed record GateOpenResult(bool Opened, string? ErrorCode = null);
+
+// ── Link mời khách vãng lai tự điền ────────────────────────────────────────
+
+public sealed record GateInviteDto(
+    int Id,
+    int PropertyId,
+    string PropertyName,
+    int RoomId,
+    string RoomCode,
+    string CreatedByUserId,
+    string CreatedByName,
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset CreatedAt);
+
+public sealed record GateInviteCreateRequest
+{
+    public int? PropertyId { get; init; }
+    public int RoomId { get; init; }
+    public int ExpiryMinutes { get; init; } = 1440;
+}
+
+public sealed record GateInviteCreatedDto(GateInviteDto Invite, string RawToken);
+
+public sealed record GateInviteResult(bool Succeeded, string? ErrorCode = null, GateInviteCreatedDto? Created = null)
+{
+    public static GateInviteResult Fail(string errorCode) => new(false, errorCode);
+}
+
+/// <summary>Thông tin tối thiểu để trang khách hiển thị trước khi điền.</summary>
+public sealed record GuestPassLocation(
+    int InviteId,
+    int PropertyId,
+    string PropertyName,
+    int RoomId,
+    string RoomCode,
+    DateTimeOffset ExpiresAt,
+    IReadOnlyList<string> RequiredFields);
+
+public sealed record GuestPassSubmission
+{
+    public string VisitorName { get; init; } = string.Empty;
+    public string? VisitorPhone { get; init; }
+    public string? VisitorIdNumber { get; init; }
+    public DateOnly? VisitorDob { get; init; }
+    public string? StayReason { get; init; }
+    public string? Note { get; init; }
+    public GateStayType StayType { get; init; } = GateStayType.Visit;
+}
+
+public sealed record GuestPassSubmittedDto(
+    int PassId,
+    string RawToken,
+    string? Code,
+    GatePassStatus Status,
+    bool AutoApproved,
+    DateTimeOffset ExpiresAt);
+
+public sealed record GuestPassSubmitResult(bool Succeeded, string? ErrorCode = null, GuestPassSubmittedDto? Created = null)
+{
+    public static GuestPassSubmitResult Fail(string errorCode) => new(false, errorCode);
+}
+
+/// <summary>DTO công khai cho trang trạng thái; không chứa SĐT/CCCD.</summary>
+public sealed record GuestPassPublicDto(
+    int PassId,
+    string PropertyName,
+    string RoomCode,
+    string VisitorName,
+    GateStayType StayType,
+    GatePassStatus Status,
+    DateTimeOffset ExpiresAt,
+    string? RejectedReason,
+    string? RevokedReason);

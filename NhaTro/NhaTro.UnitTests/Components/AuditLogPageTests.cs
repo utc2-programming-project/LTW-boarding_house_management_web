@@ -67,7 +67,10 @@ public sealed class AuditLogPageTests : BunitContext
 
         var page = RenderPage(Roles.Admin, "admin-1");
 
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".table-card tbody tr")));
+        // DataTable hiện 5 dòng skeleton khi đang tải; runner CI chậm có thể vượt timeout mặc định 1 s.
+        page.WaitForAssertion(
+            () => Assert.Single(page.FindAll(".table-card tbody tr")),
+            TimeSpan.FromSeconds(10));
         Assert.Contains("OwnerLocked", page.Markup);
         Assert.DoesNotContain("ContractRenewed", page.Markup);
         Assert.DoesNotContain("Nhà A", page.Find(".table-card thead").TextContent);

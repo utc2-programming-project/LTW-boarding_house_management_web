@@ -60,6 +60,21 @@
   <data name="SubtitleSettings" xml:space="preserve"><value>Only the landlord can change gate policy and devices.</value></data>
   <data name="SubtitleKiosk" xml:space="preserve"><value>Enter a QR or 6-digit code; level A shows valid so the guard can open.</value></data>
   <data name="SubtitleMyGate" xml:space="preserve"><value>Issue passes for your guests and follow the ones you created.</value></data>
+  <data name="KioskInEyebrow" xml:space="preserve"><value>Door unlocked</value></data>
+  <data name="KioskInTitle" xml:space="preserve"><value>Welcome home</value></data>
+  <data name="KioskOutEyebrow" xml:space="preserve"><value>Exit unlocked</value></data>
+  <data name="KioskOutTitle" xml:space="preserve"><value>See you again</value></data>
+  <data name="KioskDenyEyebrow" xml:space="preserve"><value>Door not opened</value></data>
+  <data name="KioskDenyTitle" xml:space="preserve"><value>Could not open the door</value></data>
+  <data name="GateStatusInsideTitle" xml:space="preserve"><value>You are home</value></data>
+  <data name="GateStatusOutsideTitle" xml:space="preserve"><value>You are away</value></data>
+  <data name="GateStatusNoneTitle" xml:space="preserve"><value>No entry yet</value></data>
+  <data name="GateStatusInsidePill" xml:space="preserve"><value>Inside</value></data>
+  <data name="GateStatusOutsidePill" xml:space="preserve"><value>Outside</value></data>
+  <data name="GateStatusNonePill" xml:space="preserve"><value>—</value></data>
+  <data name="GateStatusLastIn" xml:space="preserve"><value>Last entry</value></data>
+  <data name="GateStatusLastOut" xml:space="preserve"><value>Last exit</value></data>
+  <data name="GateStatusNoneHint" xml:space="preserve"><value>Your status will update here when the kiosk records an entry or exit.</value></data>
   <data name="Loading" xml:space="preserve"><value>Loadingâ€¦</value></data>
   <data name="LoadFailed" xml:space="preserve"><value>Could not load data.</value></data>
   <data name="Retry" xml:space="preserve"><value>Retry</value></data>
@@ -118,6 +133,7 @@
   <data name="Method" xml:space="preserve"><value>Method</value></data>
   <data name="Device" xml:space="preserve"><value>Gate / device</value></data>
   <data name="Result" xml:space="preserve"><value>Result</value></data>
+  <data name="GateLog" xml:space="preserve"><value>Gate log</value></data>
   <data name="NoLogs" xml:space="preserve"><value>No entries yet.</value></data>
   <data name="Stays" xml:space="preserve"><value>Stay reports</value></data>
   <data name="RefreshOverdue" xml:space="preserve"><value>Refresh overdue</value></data>
@@ -131,6 +147,10 @@
   <data name="Reported" xml:space="preserve"><value>Reported</value></data>
   <data name="Cancelled" xml:space="preserve"><value>Cancelled</value></data>
   <data name="Policy" xml:space="preserve"><value>Gate policy</value></data>
+  <data name="PolicySectionAuth" xml:space="preserve"><value>Authentication &amp; reporting channel</value></data>
+  <data name="PolicySectionAccess" xml:space="preserve"><value>Access control</value></data>
+  <data name="PolicySectionTenant" xml:space="preserve"><value>Tenants &amp; guest self-fill</value></data>
+  <data name="PolicySectionValidity" xml:space="preserve"><value>Validity &amp; retention</value></data>
   <data name="AuthMode" xml:space="preserve"><value>Authentication mode</value></data>
   <data name="SingleFactor" xml:space="preserve"><value>Single factor</value></data>
   <data name="QrPlusBiometric" xml:space="preserve"><value>QR + biometric</value></data>
@@ -171,8 +191,15 @@
   <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
   <data name="Active" xml:space="preserve"><value>Active</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Verify entry</value></data>
-  <data name="Token" xml:space="preserve"><value>QR / 6-digit code</value></data>
+  <data name="Token" xml:space="preserve"><value>QR or 6-digit guest code</value></data>
   <data name="Check" xml:space="preserve"><value>Check</value></data>
+  <data name="ScanQr" xml:space="preserve"><value>Scan QR with camera</value></data>
+  <data name="ScanQrStop" xml:space="preserve"><value>Stop camera</value></data>
+  <data name="ScanQrHint" xml:space="preserve"><value>Point the QR at the frame. The camera is used only in this session and nothing is recorded.</value></data>
+  <data name="ScanQrOpening" xml:space="preserve"><value>Opening the camera… Allow camera access if the browser asks.</value></data>
+  <data name="ScanQrUnsupported" xml:space="preserve"><value>This browser does not support QR scanning. Enter the code manually.</value></data>
+  <data name="ScanQrDenied" xml:space="preserve"><value>The camera could not start. Allow camera access and use HTTPS (or localhost).</value></data>
+  <data name="ScanQrFailed" xml:space="preserve"><value>The camera could not start.</value></data>
   <data name="ManualOpen" xml:space="preserve"><value>Manual open</value></data>
   <data name="ManualReason" xml:space="preserve"><value>Manual open reason</value></data>
   <data name="SelectProperty" xml:space="preserve"><value>Select property</value></data>
@@ -189,7 +216,7 @@
   <data name="InvalidRequest" xml:space="preserve"><value>Invalid data.</value></data>
   <data name="MissingGuestName" xml:space="preserve"><value>Guest name is required.</value></data>
   <data name="MissingGuestPhone" xml:space="preserve"><value>Guest phone is required.</value></data>
-  <data name="MissingLawfulFields" xml:space="preserve"><value>Overnight guests need date of birth, ID and stay reason.</value></data>
+  <data name="MissingLawfulFields" xml:space="preserve"><value>Please fill in all required guest details: date of birth, ID and stay reason (when required).</value></data>
   <data name="TenantIssueDisabled" xml:space="preserve"><value>The landlord has not enabled tenant-issued passes.</value></data>
   <data name="TenantOvernightDisabled" xml:space="preserve"><value>You cannot create overnight passes.</value></data>
   <data name="TenantQuotaExceeded" xml:space="preserve"><value>Daily pass quota reached.</value></data>
@@ -206,4 +233,51 @@
   <data name="AlreadyInside" xml:space="preserve"><value>This person is already inside.</value></data>
   <data name="NotInside" xml:space="preserve"><value>No entry recorded.</value></data>
   <data name="ManualOpenDisabled" xml:space="preserve"><value>Policy does not allow manual open.</value></data>
+  <data name="InviteInvalid" xml:space="preserve"><value>This link is invalid, already used or expired.</value></data>
+  <data name="GuestFillDisabled" xml:space="preserve"><value>The landlord has not enabled guest self-fill.</value></data>
+  <data name="GuestQuotaExceeded" xml:space="preserve"><value>This phone number has reached the daily self-fill limit.</value></data>
+  <data name="DuplicateGuestRequest" xml:space="preserve"><value>A pending or approved pass already exists for this phone number.</value></data>
+  <data name="SelfFilled" xml:space="preserve"><value>Self-filled</value></data>
+  <data name="AllowGuestSelfFill" xml:space="preserve"><value>Allow guest self-fill links</value></data>
+  <data name="GuestSelfMaxPassesPerDay" xml:space="preserve"><value>Self-filled passes per phone per day</value></data>
+  <data name="GuestFillTitle" xml:space="preserve"><value>Guest pass request</value></data>
+  <data name="GuestFillHelp" xml:space="preserve"><value>Fill in your details to create a gate pass. No account needed — this link works only once.</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Property</value></data>
+  <data name="GuestFillExpiresAt" xml:space="preserve"><value>Link expires at {0}</value></data>
+  <data name="GuestFillInvalid" xml:space="preserve"><value>This link is invalid, already used or expired. Ask a resident for a new link.</value></data>
+  <data name="GuestFillSubmit" xml:space="preserve"><value>Submit request</value></data>
+  <data name="GuestFillFailed" xml:space="preserve"><value>Could not submit the request. Please try again.</value></data>
+  <data name="GuestFillApproved" xml:space="preserve"><value>Your pass is approved. Show the QR below at the gate.</value></data>
+  <data name="GuestFillPending" xml:space="preserve"><value>Request sent, waiting for the landlord/manager to approve.</value></data>
+  <data name="GuestFillKeepLinkHint" xml:space="preserve"><value>Keep this link to check the pass status. The QR is shown only once.</value></data>
+  <data name="GuestFillPassLink" xml:space="preserve"><value>Pass link</value></data>
+  <data name="GuestFillCopyLink" xml:space="preserve"><value>Copy link</value></data>
+  <data name="GuestFillLinkCopied" xml:space="preserve"><value>Link copied.</value></data>
+  <data name="GuestFillCopyFailed" xml:space="preserve"><value>Couldn't copy. Please select the link and copy it manually.</value></data>
+  <data name="GuestFillQrAlt" xml:space="preserve"><value>Gate pass QR</value></data>
+  <data name="GuestFillViewStatus" xml:space="preserve"><value>View pass status</value></data>
+  <data name="GuestFillOvernightHint" xml:space="preserve"><value>Overnight guests must provide date of birth, ID number and stay reason.</value></data>
+  <data name="GuestStatusTitle" xml:space="preserve"><value>Gate pass status</value></data>
+  <data name="GuestStatusHelp" xml:space="preserve"><value>This page only shows the pass status; phone and ID are not displayed.</value></data>
+  <data name="GuestStatusInvalid" xml:space="preserve"><value>Pass not found or the link is invalid.</value></data>
+  <data name="GuestStatusExpiresAt" xml:space="preserve"><value>Valid until {0}</value></data>
+  <data name="GuestStatusPendingHint" xml:space="preserve"><value>The pass is pending approval. Please check again later.</value></data>
+  <data name="GuestStatusApprovedHint" xml:space="preserve"><value>The pass is approved. Show the QR or 6-digit code at the gate.</value></data>
+  <data name="GuestStatusReason" xml:space="preserve"><value>Reason: {0}</value></data>
+  <data name="GuestInviteTitle" xml:space="preserve"><value>Create a guest self-fill link</value></data>
+  <data name="GuestInviteHelp" xml:space="preserve"><value>Send this link/QR to a visitor. The pass is created only when the guest submits the form; each link works once and is tied to the selected room.</value></data>
+  <data name="GuestInviteQrAlt" xml:space="preserve"><value>Guest self-fill link QR</value></data>
+  <data name="GuestInviteExpiresAt" xml:space="preserve"><value>Expires at {0}</value></data>
+  <data name="GuestInviteWarning" xml:space="preserve"><value>The link is shown only once — send it now and do not share it publicly.</value></data>
+  <data name="GuestInviteShare" xml:space="preserve"><value>Share</value></data>
+  <data name="GuestInviteShareTitle" xml:space="preserve"><value>Guest self check-in link</value></data>
+  <data name="GuestInviteCreate" xml:space="preserve"><value>Create link</value></data>
+  <data name="GuestInviteExpiry" xml:space="preserve"><value>Link validity</value></data>
+  <data name="GuestInviteExpiry15m" xml:space="preserve"><value>15 minutes</value></data>
+  <data name="GuestInviteExpiry1h" xml:space="preserve"><value>1 hour</value></data>
+  <data name="GuestInviteExpiry6h" xml:space="preserve"><value>6 hours</value></data>
+  <data name="GuestInviteExpiry24h" xml:space="preserve"><value>24 hours</value></data>
+  <data name="GuestInvitesActive" xml:space="preserve"><value>Open links</value></data>
+  <data name="GuestInvitesActiveHint" xml:space="preserve"><value>The guest has not filled in yet. Cancel if no longer needed.</value></data>
+  <data name="GuestInviteCancel" xml:space="preserve"><value>Cancel link</value></data>
 </root>

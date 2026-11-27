@@ -2,15 +2,22 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "KhachThue")]
 @implements IDisposable
+@using Web.Common.Utils
+@using Web.Features.Tenants.Invitations
 @inject GatePageService Session
+@inject QrCodeRenderer Qr
 @inject IStringLocalizer<AccessControlResource> L
+@inject IJSRuntime JS
 
 <PageTitle>@L["PageTitleMyGate"]</PageTitle>
 
 <div class="page-stack gate-page">
     <PageHeading Title="@L["PageTitleMyGate"]" HelpText="@L["SubtitleMyGate"]">
         <Actions>
-            <button type="button" class="btn btn-primary" @onclick="() => _creating = true" disabled="@(_loading || _rooms.Count == 0)">
+            <button type="button" class="btn btn-secondary" @onclick="() => _inviteOpen = true" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="qr-code" /> @L["GuestInviteCreate"]
+            </button>
+            <button type="button" class="btn btn-primary" @onclick="OpenCreateForm" disabled="@(_loading || _rooms.Count == 0)">
                 <LucideIcon Name="plus" /> @L["CreateGuestPass"]
             </button>
         </Actions>
@@ -23,7 +30,9 @@
     else if (_error is not null)
     {
         <p class="gate-error" role="alert">@_error</p>
-        <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        <div class="gate-error-actions">
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
     }
     else if (_rooms.Count == 0)
     {
@@ -51,6 +60,15 @@
             </div>
         }
 
+        <div class="gate-resident-status gate-resident-status--@StatusClass" role="status">
+            <span class="gate-resident-status__dot"></span>
+            <div class="gate-resident-status__txt">
+                <b>@StatusTitle</b>
+                <span>@StatusHint</span>
+            </div>
+            <span class="gate-resident-status__pill">@StatusPill</span>
+        </div>
+
         <div class="gate-form-card">
             <h2>@L["MyQr"]</h2>
             <p class="gate-muted">@L["QrHint"]</p>
@@ -65,6 +83,10 @@
                     </select>
                 </label>
             </div>
+            @if (!string.IsNullOrEmpty(_qr))
+            {
+                <img class="gate-qr-image" src="@Qr.ToPngDataUrl(_qr)" alt="@L["MyQr"]" width="220" height="220" />
+            }
             <p>
                 <code class="gate-qr-token">@_qr</code>
             </p>
@@ -107,8 +129,12 @@
 
         @if (_creating)
         {
-            <GatePassForm Rooms="_rooms" IsTenant="true" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+            <div id="gate-pass-form" class="gate-form-anchor">
+                <GatePassForm Rooms="_rooms" IsTenant="true" OnCancel="() => _creating = false" OnSubmit="CreateAsync" ErrorText="_formError" />
+            </div>
         }
+
+        <GateInviteList Invites="_invites" OnCancel="CancelInviteAsync" />
 
         <h2>@L["MyPasses"]</h2>
         <GatePassList Passes="_passes" ShowProperty="true" OnRevoke="pass => OpenReason(pass)" />
@@ -121,9 +147,14 @@
                       OnCancel="() => _reasonPass = null" OnConfirm="ConfirmRevokeAsync" />
 }
 
+<GateInviteDialog Visible="_inviteOpen" IsTenant="true" Rooms="_rooms"
+                  OnClose="() => _inviteOpen = false" OnCreated="InviteCreatedAsync" />
+
 @code {
     private IReadOnlyList<GatePassDto> _passes = [];
     private IReadOnlyList<GateRoomOption> _rooms = [];
+    private IReadOnlyList<GateInviteDto> _invites = [];
+    private bool _inviteOpen;
     private bool _loading = true;
     private bool _creating;
     private string? _error;
@@ -136,12 +167,31 @@
     private IReadOnlyList<BiometricEnrollmentDto> _enrollments = [];
     private BiometricMethod _enrollMethod = BiometricMethod.Face;
     private string _enrollValue = string.Empty;
+    private ResidentGateStatusDto? _status;
     private readonly CancellationTokenSource _qrCts = new();
+    private readonly CancellationTokenSource _statusCts = new();
+    private bool _scrollToForm;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
         _ = RunQrLoopAsync(_qrCts.Token);
+        _ = RunStatusLoopAsync(_statusCts.Token);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_scrollToForm)
+        {
+            _scrollToForm = false;
+            await JS.InvokeVoidAsync("vhtScrollTo", "gate-pass-form");
+        }
+    }
+
+    private void OpenCreateForm()
+    {
+        _creating = true;
+        _scrollToForm = true;
     }
 
     private async Task RunQrLoopAsync(CancellationToken ct)
@@ -165,10 +215,32 @@
         }
     }
 
+    private async Task RunStatusLoopAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                _status = await Session.ResidentStatusAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            // Giữ trạng thái cũ; lượt làm mới sau sẽ thử lại.
+        }
+    }
+
     public void Dispose()
     {
         _qrCts.Cancel();
         _qrCts.Dispose();
+        _statusCts.Cancel();
+        _statusCts.Dispose();
     }
 
     private async Task LoadAsync()
@@ -185,7 +257,9 @@
             }
 
             _passes = await Session.PassesAsync();
+            _invites = await Session.ActiveInvitesAsync();
             _enrollments = await Session.EnrollmentsAsync();
+            _status = await Session.ResidentStatusAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -268,10 +342,48 @@
         }
     }
 
+    private string StatusClass => _status is null ? "none" : _status.Inside ? "inside" : "outside";
+
+    private string StatusTitle => L[StatusClass switch
+    {
+        "inside" => "GateStatusInsideTitle",
+        "outside" => "GateStatusOutsideTitle",
+        _ => "GateStatusNoneTitle",
+    }];
+
+    private string StatusPill => L[StatusClass switch
+    {
+        "inside" => "GateStatusInsidePill",
+        "outside" => "GateStatusOutsidePill",
+        _ => "GateStatusNonePill",
+    }];
+
+    private string StatusHint => _status?.LastAt is null
+        ? L["GateStatusNoneHint"]
+        : $"{L[_status.Inside ? "GateStatusLastIn" : "GateStatusLastOut"]}: {DateFormatter.FormatDateTime(_status.LastAt.Value.UtcDateTime)}";
+
     private void DismissNotice()
     {
         _notice = null;
         _created = null;
+    }
+
+    private async Task InviteCreatedAsync(GateInviteCreatedDto created)
+    {
+        _invites = await Session.ActiveInvitesAsync();
+    }
+
+    private async Task CancelInviteAsync(GateInviteDto invite)
+    {
+        try
+        {
+            await Session.CancelInviteAsync(invite.Id);
+            _invites = await Session.ActiveInvitesAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
     }
 
     private string Resolve(Exception ex) =>

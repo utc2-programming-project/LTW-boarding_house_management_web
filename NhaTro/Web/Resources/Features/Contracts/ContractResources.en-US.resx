@@ -172,6 +172,7 @@
   <data name="ContractLiquidateTitle" xml:space="preserve"><value>Liquidate contract</value></data>
   <data name="ContractRenewDescription" xml:space="preserve"><value>The new contract starts right after the current end date, keeps the same tenants and snapshots the current rent. The old contract stays as history.</value></data>
   <data name="ContractLiquidateDescription" xml:space="preserve"><value>The contract moves to Liquidated and cannot transition again.</value></data>
+  <data name="ContractLiquidateVehiclesNotice" xml:space="preserve"><value>Liquidating will stop {0} active vehicle(s) and release their parking slots:</value></data>
   <data name="ContractRenewEndDateLabel" xml:space="preserve"><value>New end date</value></data>
   <data name="ContractRenewStartHint" xml:space="preserve"><value>The new contract starts on {0}.</value></data>
   <data name="ContractRenewSuccess" xml:space="preserve"><value>Contract renewed.</value></data>
@@ -515,4 +516,5 @@
   <data name="ContractTenantSignedPaymentNote" xml:space="preserve"><value>Your contract is signed. Signing does not charge you automatically; please pay the first-cycle rent and service fees via invoices. The holding deposit is recorded separately once the landlord confirms receipt.</value></data>
   <data name="ContractTenantInvoicesAction" xml:space="preserve"><value>My invoices</value></data>
   <data name="ContractInvoicesAction" xml:space="preserve"><value>Contract invoices</value></data>
+  <data name="ContractLiquidateVehiclesConfirm" xml:space="preserve"><value>I confirm the tenant has picked up all vehicles above before liquidating the contract.</value></data>
 </root>
