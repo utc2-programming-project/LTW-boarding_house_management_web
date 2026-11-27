@@ -1,0 +1,23 @@
+@implements IAsyncDisposable
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.Extensions.Localization
+@using Microsoft.JSInterop
+@using Web.Components.Shared
+@using Web.Features.Search.DTOs
+@using Web.Features.Search.Services
+@inject GlobalSearchService Search
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider Authentication
+@inject IStringLocalizer<SearchResources> L
+
+@if (!_isAdmin) { <div class="topbar-search global-search" role="search" @ref="_root">
+ <span class="topbar-search-icon"><LucideIcon Name="search" /></span>
+<input @ref="_input" class="topbar-search-input" type="search" role="combobox" aria-expanded="@_open" aria-controls="global-search-results" aria-activedescendant="@ActiveId" placeholder="@L["SearchPlaceholder"]" value="@_query" @onfocus="OpenAsync" @onblur="Close" @oninput="InputAsync" @onkeydown="KeyAsync" />
+ @if (_open) { <div id="global-search-results" class="global-search-popover" role="listbox" @onmousedown:preventDefault="true">
+  @if (_loading) { <p>@L["SearchLoading"]</p> } else if (_error) { <p>@L["SearchError"]</p> } else if (_items.Count == 0) { <p>@(_query.Length < 2 ? L["SearchMinChars"] : L["SearchNoResults"])</p> } else { @foreach (var item in _items) { var i=_items.IndexOf(item); <a id="search-option-@i" role="option" aria-selected="@(i==_active)" class="@(i==_active?"active":null)" href="@item.Href" @onclick="Close"><LucideIcon Name="@item.Icon" />@item.Title</a> } <a href="@($"/search?q={Uri.EscapeDataString(_query)}")" @onclick="Close">@L["SearchViewAll"]</a> }
+ </div> }
+</div> }
+@code { private CancellationTokenSource? _cts; private ElementReference _input,_root; private List<SearchHitDto> _items=[]; private string _query=""; private bool _open,_loading,_error,_isAdmin,_registered; private int _active=-1; private string? ActiveId=>_active>=0?$"search-option-{_active}":null; protected override async Task OnInitializedAsync(){_isAdmin=(await Authentication.GetAuthenticationStateAsync()).User.IsInRole(Web.Features.Accounts.Roles.Admin);Navigation.LocationChanged+=OnLocationChanged;} protected override async Task OnAfterRenderAsync(bool first){if(!_isAdmin&&!_registered){await JS.InvokeVoidAsync("globalSearch.register",_input,_root);_registered=true;}} private async Task OpenAsync(){_open=true;if(_query.Length>=2)await RunAsync();} private async Task InputAsync(ChangeEventArgs e){_query=e.Value?.ToString()??"";_open=true;await RunAsync();} private async Task RunAsync(){_cts?.Cancel();var cts=_cts=new();_items=[];_active=-1;_error=false;_loading=_query.Trim().Length>=2;if(!_loading)return;try{await Task.Delay(250,cts.Token);var r=await Search.SearchAsync(_query,null,5,0,cts.Token);if(cts==_cts)_items=r.Groups.SelectMany(x=>x.Hits).ToList();}catch(OperationCanceledException){}catch{if(cts==_cts)_error=true;}finally{if(cts==_cts)_loading=false;}} private Task KeyAsync(KeyboardEventArgs e){if(e.Key=="Escape")Close();else if(_items.Count>0&&e.Key=="ArrowDown")_active=(_active+1)%_items.Count;else if(_items.Count>0&&e.Key=="ArrowUp")_active=(_active+_items.Count-1)%_items.Count;else if(e.Key=="Enter"&&_active>=0&&_active<_items.Count){Navigation.NavigateTo(_items[_active].Href);Close();}return Task.CompletedTask;} private void Close(){_open=false;_active=-1;} private void OnLocationChanged(object? s,LocationChangedEventArgs e)=>_=InvokeAsync(()=>{Close();StateHasChanged();}); public async ValueTask DisposeAsync(){Navigation.LocationChanged-=OnLocationChanged;_cts?.Cancel();_cts?.Dispose();if(_registered)try{await JS.InvokeVoidAsync("globalSearch.unregister",_root);}catch(JSDisconnectedException){}} }

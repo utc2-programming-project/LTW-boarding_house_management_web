@@ -1,0 +1,25 @@
+@page "/search"
+@attribute [Authorize(Roles = Roles.ChuTro + "," + Roles.QuanLy + "," + Roles.KhachThue)]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Localization
+@using Web.Components
+@using Web.Components.Layout
+@using Web.Components.Shared
+@using Web.Features.Accounts
+@using Web.Features.Search.DTOs
+@using Web.Features.Search.Services
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject GlobalSearchService Search
+@inject IStringLocalizer<SearchResources> L
+
+<PageTitle>@L["SearchTitle"]</PageTitle>
+<section class="app-surface">
+    <PageHeading Title="@L["SearchTitle"]" />
+    @if (_response is null) { <p>@L["SearchLoading"]</p> }
+    else if (_response.Groups.Count == 0) { <p>@L["SearchNoResults"]</p> }
+    else { @foreach (var group in _response.Groups) { <section class="preview-card"><h2>@L[$"SearchGroup{char.ToUpperInvariant(group.GroupKey[0])}{group.GroupKey[1..]}"]</h2>@foreach(var hit in group.Hits){<p><a href="@hit.Href">@hit.Title</a> <small>@hit.Subtitle</small></p>}</section> } }
+</section>
+@code { [SupplyParameterFromQuery(Name="q")] public string? Query {get;set;} private SearchResponse? _response; protected override async Task OnParametersSetAsync(){ _response=string.IsNullOrWhiteSpace(Query)||Query.Trim().Length<2?new([]):await Search.SearchAsync(Query,null,20,0,CancellationToken.None); } }

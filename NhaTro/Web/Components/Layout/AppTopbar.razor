@@ -8,12 +8,7 @@
     <AuthorizeView>
         <Authorized>
             @* Ô tìm kiếm toàn cục: mới dựng giao diện, chưa gắn chức năng. *@
-            <div class="topbar-search" role="search">
-                <span class="topbar-search-icon" aria-hidden="true"><LucideIcon Name="search" /></span>
-                <input id="global-search" class="topbar-search-input" type="search"
-                       placeholder="@L["GlobalSearchPlaceholder"]" aria-label="@L["GlobalSearch"]"
-                       autocomplete="off" />
-            </div>
+            <GlobalSearchBox />
         </Authorized>
     </AuthorizeView>
     <div class="topbar-actions">
