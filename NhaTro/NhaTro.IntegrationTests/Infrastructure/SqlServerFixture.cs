@@ -158,6 +158,14 @@ public sealed class SqlServerFixture : IAsyncLifetime, IDbContextFactory<Applica
         // P5 (D10): lịch sử sửa chỉ số xóa trước chỉ số; chỉ số tham chiếu Rooms.
         await db.UtilityReadingAudits.ExecuteDeleteAsync();
         await db.UtilityReadings.ExecuteDeleteAsync();
+        // Ra vào cổng: GatePass/GatePassInvite/StayReport tham chiếu Property/Room/Tenant/Contract bằng Restrict.
+        await db.GateLogs.ExecuteDeleteAsync();
+        await db.BiometricEnrollments.ExecuteDeleteAsync();
+        await db.StayReports.ExecuteDeleteAsync();
+        await db.GatePasses.ExecuteDeleteAsync();
+        await db.GatePassInvites.ExecuteDeleteAsync();
+        await db.GateDevices.ExecuteDeleteAsync();
+        await db.GatePolicies.ExecuteDeleteAsync();
         // D16: nhật ký thao tác độc lập, xóa trước Users/Properties.
         await db.AuditLogEntries.ExecuteDeleteAsync();
         // Hợp đồng tham chiếu Tenants/Rooms bằng Restrict: xóa trước hai bảng đó.

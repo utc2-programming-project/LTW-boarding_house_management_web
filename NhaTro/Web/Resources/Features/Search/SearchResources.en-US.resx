@@ -1,1 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?><root><data name="SearchTitle"><value>Search</value></data><data name="SearchPlaceholder"><value>Search everything</value></data><data name="SearchLoading"><value>Searching…</value></data><data name="SearchError"><value>Search is unavailable right now.</value></data><data name="SearchMinChars"><value>Enter at least 2 characters.</value></data><data name="SearchNoResults"><value>No results found.</value></data><data name="SearchViewAll"><value>View all</value></data><data name="SearchAllGroups"><value>All</value></data><data name="SearchPrevPage"><value>Previous</value></data><data name="SearchNextPage"><value>Next</value></data><data name="SearchGroupRooms"><value>Rooms</value></data><data name="SearchGroupProperties"><value>Properties</value></data><data name="SearchGroupTenants"><value>Tenants</value></data><data name="SearchGroupContracts"><value>Contracts</value></data><data name="SearchGroupInvoices"><value>Invoices</value></data><data name="SearchGroupIncidents"><value>Incidents</value></data><data name="SearchGroupServices"><value>Services</value></data></root>
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="SearchTitle" xml:space="preserve"><value>Search</value></data>
+  <data name="SearchPlaceholder" xml:space="preserve"><value>Search everything</value></data>
+  <data name="SearchLoading" xml:space="preserve"><value>Searching…</value></data>
+  <data name="SearchError" xml:space="preserve"><value>Search is unavailable right now.</value></data>
+  <data name="SearchMinChars" xml:space="preserve"><value>Enter at least 2 characters.</value></data>
+  <data name="SearchNoResults" xml:space="preserve"><value>No results found.</value></data>
+  <data name="SearchViewAll" xml:space="preserve"><value>View all</value></data>
+  <data name="SearchAllGroups" xml:space="preserve"><value>All</value></data>
+  <data name="SearchPrevPage" xml:space="preserve"><value>Previous</value></data>
+  <data name="SearchNextPage" xml:space="preserve"><value>Next</value></data>
+  <data name="SearchPage" xml:space="preserve"><value>Page</value></data>
+  <data name="SearchHasMore" xml:space="preserve"><value>More results available — view all</value></data>
+  <data name="SearchPartialError" xml:space="preserve"><value>Some result groups could not be loaded.</value></data>
+
+  <data name="SearchGroupRooms" xml:space="preserve"><value>Rooms</value></data>
+  <data name="SearchGroupProperties" xml:space="preserve"><value>Properties</value></data>
+  <data name="SearchGroupTenants" xml:space="preserve"><value>Tenants</value></data>
+  <data name="SearchGroupContracts" xml:space="preserve"><value>Contracts</value></data>
+  <data name="SearchGroupInvoices" xml:space="preserve"><value>Invoices</value></data>
+  <data name="SearchGroupIncidents" xml:space="preserve"><value>Incidents</value></data>
+  <data name="SearchGroupServices" xml:space="preserve"><value>Services</value></data>
+  <data name="SearchGroupGate" xml:space="preserve"><value>Gate passes</value></data>
+  <data name="SearchGroupDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="SearchGroupVehicles" xml:space="preserve"><value>Vehicles</value></data>
+</root>

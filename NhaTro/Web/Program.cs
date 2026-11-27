@@ -363,6 +363,8 @@ builder.Services.AddScoped<ContractRenewalPageService>();
 builder.Services.AddScoped<IPropertyManagerService, PropertyManagerService>();
 builder.Services.AddScoped<IRoomUsageChecker, ActiveContractRoomUsageChecker>();
 builder.Services.AddScoped<P2CallerProvider>();
+builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchCallerProvider>(
+    sp => sp.GetRequiredService<P2CallerProvider>());
 builder.Services.AddScoped<Web.Features.Search.Services.GlobalSearchService>();
 builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.RoomSearchProvider>();
 builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.PropertySearchProvider>();
@@ -371,6 +373,8 @@ builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web
 builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.IncidentSearchProvider>();
 builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.InvoiceSearchProvider>();
 builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.ServiceSearchProvider>();
+builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.GateSearchProvider>();
+builder.Services.AddScoped<Web.Features.Search.Abstractions.ISearchProvider, Web.Features.Search.Providers.DocumentSearchProvider>();
 builder.Services.AddScoped<PropertyPageService>();
 builder.Services.AddScoped<RoomPageService>();
 // PLAN-010: nháp thiết lập nhà trọ ở local (ProtectedLocalStorage do Blazor đăng ký sẵn;
