@@ -80,6 +80,7 @@ public static class AiOutputSchemas
             "summary": { "type": "string" },
             "insights": {
               "type": "array",
+              "maxItems": 10,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -93,6 +94,7 @@ public static class AiOutputSchemas
             },
             "actions": {
               "type": "array",
+              "maxItems": 10,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -106,6 +108,7 @@ public static class AiOutputSchemas
             },
             "metrics": {
               "type": "array",
+              "maxItems": 12,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -150,6 +153,7 @@ public static class AiOutputSchemas
             },
             "rooms": {
               "type": "array",
+              "maxItems": 200,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -193,6 +197,7 @@ public static class AiOutputSchemas
             "summary": { "type": "string" },
             "items": {
               "type": "array",
+              "maxItems": 15,
               "items": {
                 "type": "object",
                 "additionalProperties": false,
@@ -256,6 +261,7 @@ public static class AiOutputSchemas
             "tenantIds": {
               "type": "array",
               "minItems": 1,
+              "maxItems": 10,
               "items": { "type": "integer" }
             },
             "startDate": { "type": "string" },
