@@ -191,7 +191,7 @@
   <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
   <data name="Active" xml:space="preserve"><value>Active</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Verify entry</value></data>
-  <data name="Token" xml:space="preserve"><value>QR / 6-digit code</value></data>
+  <data name="Token" xml:space="preserve"><value>QR or 6-digit guest code</value></data>
   <data name="Check" xml:space="preserve"><value>Check</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Scan QR with camera</value></data>
   <data name="ScanQrStop" xml:space="preserve"><value>Stop camera</value></data>

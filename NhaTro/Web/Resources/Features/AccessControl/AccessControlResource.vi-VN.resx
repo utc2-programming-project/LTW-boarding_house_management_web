@@ -199,7 +199,7 @@
   <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
   <data name="Active" xml:space="preserve"><value>Đang dùng</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Kiểm tra lượt vào</value></data>
-  <data name="Token" xml:space="preserve"><value>Mã QR / mã 6 số</value></data>
+  <data name="Token" xml:space="preserve"><value>Mã QR hoặc mã 6 số (khách vãng lai)</value></data>
   <data name="Check" xml:space="preserve"><value>Kiểm tra</value></data>
   <data name="ScanQr" xml:space="preserve"><value>Quét QR bằng camera</value></data>
   <data name="ScanQrStop" xml:space="preserve"><value>Tắt camera</value></data>

@@ -81,14 +81,6 @@
                         <option value="@GateDirection.Out">@L["Out"]</option>
                     </select>
                 </label>
-                <label>
-                    @L["Method"]
-                    <select class="input" @bind="_method">
-                        <option value="@GateMethod.Qr">QR</option>
-                        <option value="@GateMethod.Code">@L["FallbackCode"]</option>
-                        <option value="@GateMethod.Manual">@L["ManualOpen"]</option>
-                    </select>
-                </label>
             </div>
             <div class="gate-form-actions">
                 <button type="button" class="btn btn-primary" @onclick="VerifyAsync" disabled="@string.IsNullOrWhiteSpace(_token)">
@@ -183,7 +175,6 @@
     private string _token = string.Empty;
     private string _manualReason = string.Empty;
     private GateDirection _direction = GateDirection.In;
-    private GateMethod _method = GateMethod.Qr;
     private GateVerifyResult? _result;
     private GateVerifyResult? _manualResult;
     private bool _loading = true;
@@ -267,7 +258,6 @@
             // Quét xong kiểm tra luôn đúng luồng kiosk mức A: nhận diện -> server kiểm tra.
             _token = token.Trim();
             _scanning = false;
-            _method = GateMethod.Qr;
             _scanStatus = null;
             StateHasChanged();
             await VerifyAsync();
@@ -335,12 +325,14 @@
         try
         {
             var direction = _direction;
+            var token = _token.Trim();
             _result = await Session.VerifyAsync(new GateVerifyRequest
             {
                 PropertyId = _propertyId,
                 GateDeviceId = _deviceId == 0 ? null : _deviceId,
-                Token = _token,
-                Method = _method,
+                Token = token,
+                // Mã 6 số chỉ dành cho phiếu khách vãng lai; còn lại là QR (khách thuê hoặc phiếu khách).
+                Method = IsFallbackCode(token) ? GateMethod.Code : GateMethod.Qr,
                 Direction = direction,
             });
             _token = string.Empty;
@@ -352,6 +344,9 @@
             _error = Resolve(ex);
         }
     }
+
+    private static bool IsFallbackCode(string token) =>
+        token.Length == 6 && token.All(char.IsAsciiDigit);
 
     private string OverlayVariant => _result is not { Succeeded: true }
         ? "deny"
