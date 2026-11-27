@@ -15,7 +15,10 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next, ILogger<Secu
             || context.Request.Path.StartsWithSegments("/Account/ResetPassword")
             ? "no-referrer"
             : "strict-origin-when-cross-origin";
-        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        // Kiosk quét QR cần camera; các trang khác giữ chặn mặc định.
+        headers["Permissions-Policy"] = context.Request.Path.StartsWithSegments("/gate/kiosk")
+            ? "camera=(self), microphone=(), geolocation=()"
+            : "camera=(), microphone=(), geolocation=()";
         headers["Content-Security-Policy-Report-Only"] =
             "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
             "style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; " +
