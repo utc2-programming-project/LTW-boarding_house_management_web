@@ -400,3 +400,8 @@
     margin: 12px 0;
     text-align: center;
 }
+
+/* Neo form cấp phiếu: bù chiều cao topbar khi cuộn tới. */
+.gate-form-anchor {
+    scroll-margin-top: calc(var(--topbar-height) + 16px);
+}

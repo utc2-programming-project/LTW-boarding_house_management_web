@@ -22,7 +22,7 @@
             {
                 <tr><td colspan="@(ShowProperty ? 8 : 7)" class="gate-empty">@L["NoPasses"]</td></tr>
             }
-            @foreach (var pass in Passes)
+            @foreach (var pass in PagedPasses)
             {
                 <tr>
                     <td>
@@ -69,11 +69,30 @@
         </tbody>
     </table>
 </div>
+<TablePager Page="_page" TotalPages="TotalPages" From="From" To="To" Total="Passes.Count"
+            PageChanged="GoToPage" />
 
 @code {
+    private const int PageSize = 10;
+
+    private int _page = 1;
+
     [Parameter, EditorRequired] public IReadOnlyList<GatePassDto> Passes { get; set; } = [];
     [Parameter] public bool ShowProperty { get; set; } = true;
     [Parameter] public EventCallback<GatePassDto> OnApprove { get; set; }
     [Parameter] public EventCallback<GatePassDto> OnReject { get; set; }
     [Parameter] public EventCallback<GatePassDto> OnRevoke { get; set; }
+
+    private IEnumerable<GatePassDto> PagedPasses =>
+        Passes.Skip((_page - 1) * PageSize).Take(PageSize);
+
+    private int TotalPages => PaginationHelper.TotalPages(Passes.Count, PageSize);
+
+    private int From => PaginationHelper.ItemRange(_page, PageSize, Passes.Count).From;
+
+    private int To => PaginationHelper.ItemRange(_page, PageSize, Passes.Count).To;
+
+    protected override void OnParametersSet() => _page = PaginationHelper.ClampPage(_page, TotalPages);
+
+    private void GoToPage(int page) => _page = PaginationHelper.ClampPage(page, TotalPages);
 }

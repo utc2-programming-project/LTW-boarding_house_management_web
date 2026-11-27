@@ -8,6 +8,7 @@
 @inject GatePageService Session
 @inject QrCodeRenderer Qr
 @inject IStringLocalizer<AccessControlResource> L
+@inject IJSRuntime JS
 
 <FeatureDialog Visible="Visible" Title="@L["GuestInviteTitle"]" CloseLabel="@L["Close"]"
                CssClass="gate-invite-dialog" Busy="_busy" OnClose="OnClose">
@@ -27,9 +28,22 @@
             <div class="qr-result">
                 <img src="@_qrDataUrl" alt="@L["GuestInviteQrAlt"]" width="220" height="220" />
                 <p class="qr-result-meta">@string.Format(L["GuestInviteExpiresAt"], _created.Invite.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</p>
-                <p class="qr-link"><a href="@_link" target="_blank" rel="noreferrer">@_link</a></p>
+                <div class="qr-link-row">
+                    <p class="qr-link"><a href="@_link" target="_blank" rel="noreferrer">@_link</a></p>
+                    <button type="button" class="gate-copy-btn" aria-label="@L["GuestFillCopyLink"]" title="@L["GuestFillCopyLink"]"
+                            @onclick="CopyLinkAsync">
+                        <LucideIcon Name="@(_linkCopied ? "circle-check" : "copy")" />
+                    </button>
+                </div>
                 <p class="note">@L["GuestInviteWarning"]</p>
+                @if (_linkCopied)
+                {
+                    <p class="qr-result-meta" role="status">@L["GuestFillLinkCopied"]</p>
+                }
                 <div class="account-form-actions">
+                    <button type="button" class="btn btn-secondary" @onclick="ShareLinkAsync">
+                        <LucideIcon Name="share" /> @L["GuestInviteShare"]
+                    </button>
                     <button type="button" class="btn btn-primary" @onclick="OnClose">@L["Close"]</button>
                 </div>
             </div>
@@ -106,6 +120,7 @@
     private string? _qrDataUrl;
     private string? _link;
     private GateInviteCreatedDto? _created;
+    private bool _linkCopied;
 
     private IEnumerable<GateRoomOption> RoomsForSelection =>
         IsTenant || string.IsNullOrEmpty(_propertyValue)
@@ -132,9 +147,41 @@
         _created = null;
         _qrDataUrl = null;
         _link = null;
+        _linkCopied = false;
         _propertyValue = string.Empty;
         _roomValue = string.Empty;
         _expiryValue = "1440";
+    }
+
+    private async Task CopyLinkAsync()
+    {
+        if (_link is null) return;
+        _linkCopied = await JS.InvokeAsync<bool>("vhtCopyText", _link);
+        if (!_linkCopied)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
+    }
+
+    private async Task ShareLinkAsync()
+    {
+        if (_link is null) return;
+        try
+        {
+            // Hộp chia sẻ hệ thống; trình duyệt không hỗ trợ thì sao chép link thay thế.
+            var shared = await JS.InvokeAsync<bool>("vhtShare", L["GuestInviteShareTitle"].Value, _link);
+            if (shared)
+            {
+                _linkCopied = false;
+                return;
+            }
+
+            await CopyLinkAsync();
+        }
+        catch (JSException)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
     }
 
     private void ResetRoom() => _roomValue = string.Empty;

@@ -39,7 +39,8 @@ public sealed class GatePassService(
         PropertyCaller caller, GatePassStatus? status = null, CancellationToken ct = default)
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
-        var query = ScopePasses(db, caller);
+        var today = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
+        var query = ScopePasses(db, caller, today);
 
         // Hạn lưu 30 ngày: phiếu hết hạn quá lâu không còn hiển thị (job dọn sẽ xoá hẳn).
         var retentionDays = retention.Value.RetentionDays;
@@ -107,7 +108,7 @@ public sealed class GatePassService(
         var isTenant = caller.IsKhachThue;
         if (!caller.IsManager && !isTenant) return GatePassResult.Fail(GateErrorCodes.Forbidden);
 
-        var invalid = GatePassRules.ValidateCreate(request, isTenant);
+        var invalid = GatePassRules.ValidateCreate(request, isTenant, clock.TodayVietnam());
         if (invalid is not null) return GatePassResult.Fail(invalid);
 
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
@@ -404,7 +405,7 @@ public sealed class GatePassService(
     internal static async Task<string?> OwnerOfAsync(ApplicationDbContext db, int propertyId, CancellationToken ct) =>
         await db.Properties.AsNoTracking().Where(item => item.Id == propertyId).Select(item => item.OwnerId).FirstOrDefaultAsync(ct);
 
-    internal static IQueryable<GatePass> ScopePasses(ApplicationDbContext db, PropertyCaller caller)
+    internal static IQueryable<GatePass> ScopePasses(ApplicationDbContext db, PropertyCaller caller, DateTime today)
     {
         var passes = db.GatePasses.AsNoTracking();
         if (caller.IsChuTro || caller.IsQuanLy)
@@ -415,7 +416,20 @@ public sealed class GatePassService(
 
         if (caller.IsKhachThue)
         {
-            return passes.Where(pass => pass.IssuedByUserId == caller.UserId);
+            // Phiếu mình tạo hoặc phiếu cấp cho phòng mình đang có hợp đồng hiệu lực;
+            // phiếu do Chủ trọ/Quản lý tạo chỉ gắn RoomId nên không lọc theo TenantId được.
+            var userId = caller.UserId;
+            var roomIds = from member in db.ContractMembers.AsNoTracking()
+                          join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
+                          join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
+                          where tenant.UserId == userId
+                              && contract.Status == ContractStatus.Approved
+                              && contract.StartDate <= today && contract.EndDate >= today
+                          select contract.RoomId;
+
+            return passes.Where(pass =>
+                pass.IssuedByUserId == userId ||
+                (pass.RoomId != null && roomIds.Contains(pass.RoomId.Value)));
         }
 
         return passes.Where(_ => false);

@@ -229,7 +229,8 @@ public sealed class GatePassInviteService(
             return null;
         }
 
-        return new GuestPassLocation(row.Id, row.PropertyId, row.PropertyName, row.RoomId, row.RoomCode, row.ExpiresAt);
+        var requiredFields = GatePassRules.ParseRequiredGuestFields(policy.RequiredGuestFields).Order().ToArray();
+        return new GuestPassLocation(row.Id, row.PropertyId, row.PropertyName, row.RoomId, row.RoomCode, row.ExpiresAt, requiredFields);
     }
 
     public async Task<GuestPassSubmitResult> SubmitAsync(
@@ -240,16 +241,25 @@ public sealed class GatePassInviteService(
             return GuestPassSubmitResult.Fail(GateErrorCodes.InviteInvalid);
         }
 
+        // Khách tự điền: chuẩn hoá và bắt buộc SĐT di động Việt Nam để quota/so trùng ổn định.
+        var phone = GatePassRules.NormalizePhone(submission.VisitorPhone);
+        if (!GatePassRules.IsVietnamMobile(phone))
+        {
+            return GuestPassSubmitResult.Fail(GateErrorCodes.MissingGuestPhone);
+        }
+
+        var today = clock.TodayVietnam();
         var invalid = GatePassRules.ValidateCreate(new GatePassCreateRequest
         {
             RoomId = 1,
             VisitorName = submission.VisitorName,
-            VisitorPhone = submission.VisitorPhone,
+            VisitorPhone = phone,
             VisitorIdNumber = submission.VisitorIdNumber,
             VisitorDob = submission.VisitorDob,
             StayReason = submission.StayReason,
+            Note = submission.Note,
             StayType = submission.StayType,
-        }, isTenant: false);
+        }, isTenant: false, todayVietnam: today);
         if (invalid is not null)
         {
             return GuestPassSubmitResult.Fail(invalid);
@@ -268,6 +278,14 @@ public sealed class GatePassInviteService(
         if (!policy.AllowGuestSelfFill)
         {
             return GuestPassSubmitResult.Fail(GateErrorCodes.GuestFillDisabled);
+        }
+
+        var requiredFields = GatePassRules.ParseRequiredGuestFields(policy.RequiredGuestFields);
+        if ((requiredFields.Contains("Dob") && submission.VisitorDob is null)
+            || (requiredFields.Contains("IdNumber") && string.IsNullOrWhiteSpace(submission.VisitorIdNumber))
+            || (requiredFields.Contains("StayReason") && string.IsNullOrWhiteSpace(submission.StayReason)))
+        {
+            return GuestPassSubmitResult.Fail(GateErrorCodes.MissingLawfulFields);
         }
 
         var isTenantIssue = invite.IssuerRole == GateIssuerRole.KhachThue;
@@ -294,7 +312,6 @@ public sealed class GatePassInviteService(
             }
         }
 
-        var phone = submission.VisitorPhone?.Trim() ?? string.Empty;
         var selfFilledToday = await db.GatePasses.CountAsync(pass =>
             pass.PropertyId == invite.PropertyId
             && pass.GatePassInviteId != null

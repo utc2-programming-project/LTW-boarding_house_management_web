@@ -118,11 +118,17 @@ public sealed class GatePageService(
         (await policies.GetAsync(propertyId, await CallerAsync()),
          await policies.DevicesAsync(propertyId, await CallerAsync()));
 
-    public async Task SavePolicyAsync(GatePolicySaveRequest request) =>
-        await policies.SaveAsync(request, await CallerAsync());
+    public async Task SavePolicyAsync(GatePolicySaveRequest request)
+    {
+        var caller = await CallerAsync();
+        await MapValidationAsync(() => policies.SaveAsync(request, caller));
+    }
 
-    public async Task AddDeviceAsync(GateDeviceSaveRequest request) =>
-        await policies.SaveDeviceAsync(request, await CallerAsync());
+    public async Task AddDeviceAsync(GateDeviceSaveRequest request)
+    {
+        var caller = await CallerAsync();
+        await MapValidationAsync(() => policies.SaveDeviceAsync(request, caller));
+    }
 
     public async Task DeleteDeviceAsync(int id) => await policies.DeleteDeviceAsync(id, await CallerAsync());
 
@@ -176,6 +182,20 @@ public sealed class GatePageService(
         if (!await biometrics.RevokeAsync(id, reason, await CallerAsync()))
         {
             throw new GatePageException(GateErrorCodes.InvalidStatus);
+        }
+    }
+
+    // Lỗi validate của service ném ArgumentException/InvalidOperationException; đổi sang mã
+    // nghiệp vụ để trang dịch được thay vì rơi vào thông báo "tải thất bại" chung.
+    private static async Task MapValidationAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            throw new GatePageException(GateErrorCodes.InvalidRequest);
         }
     }
 

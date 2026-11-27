@@ -194,7 +194,7 @@
   <data name="InvalidRequest" xml:space="preserve"><value>Invalid data.</value></data>
   <data name="MissingGuestName" xml:space="preserve"><value>Guest name is required.</value></data>
   <data name="MissingGuestPhone" xml:space="preserve"><value>Guest phone is required.</value></data>
-  <data name="MissingLawfulFields" xml:space="preserve"><value>Overnight guests need date of birth, ID and stay reason.</value></data>
+  <data name="MissingLawfulFields" xml:space="preserve"><value>Please fill in all required guest details: date of birth, ID and stay reason (when required).</value></data>
   <data name="TenantIssueDisabled" xml:space="preserve"><value>The landlord has not enabled tenant-issued passes.</value></data>
   <data name="TenantOvernightDisabled" xml:space="preserve"><value>You cannot create overnight passes.</value></data>
   <data name="TenantQuotaExceeded" xml:space="preserve"><value>Daily pass quota reached.</value></data>
@@ -220,6 +220,7 @@
   <data name="GuestSelfMaxPassesPerDay" xml:space="preserve"><value>Self-filled passes per phone per day</value></data>
   <data name="GuestFillTitle" xml:space="preserve"><value>Guest pass request</value></data>
   <data name="GuestFillHelp" xml:space="preserve"><value>Fill in your details to create a gate pass. No account needed — this link works only once.</value></data>
+  <data name="InvitePropertyLabel" xml:space="preserve"><value>Property</value></data>
   <data name="GuestFillExpiresAt" xml:space="preserve"><value>Link expires at {0}</value></data>
   <data name="GuestFillInvalid" xml:space="preserve"><value>This link is invalid, already used or expired. Ask a resident for a new link.</value></data>
   <data name="GuestFillSubmit" xml:space="preserve"><value>Submit request</value></data>
@@ -228,6 +229,9 @@
   <data name="GuestFillPending" xml:space="preserve"><value>Request sent, waiting for the landlord/manager to approve.</value></data>
   <data name="GuestFillKeepLinkHint" xml:space="preserve"><value>Keep this link to check the pass status. The QR is shown only once.</value></data>
   <data name="GuestFillPassLink" xml:space="preserve"><value>Pass link</value></data>
+  <data name="GuestFillCopyLink" xml:space="preserve"><value>Copy link</value></data>
+  <data name="GuestFillLinkCopied" xml:space="preserve"><value>Link copied.</value></data>
+  <data name="GuestFillCopyFailed" xml:space="preserve"><value>Couldn't copy. Please select the link and copy it manually.</value></data>
   <data name="GuestFillQrAlt" xml:space="preserve"><value>Gate pass QR</value></data>
   <data name="GuestFillViewStatus" xml:space="preserve"><value>View pass status</value></data>
   <data name="GuestFillOvernightHint" xml:space="preserve"><value>Overnight guests must provide date of birth, ID number and stay reason.</value></data>
@@ -243,6 +247,8 @@
   <data name="GuestInviteQrAlt" xml:space="preserve"><value>Guest self-fill link QR</value></data>
   <data name="GuestInviteExpiresAt" xml:space="preserve"><value>Expires at {0}</value></data>
   <data name="GuestInviteWarning" xml:space="preserve"><value>The link is shown only once — send it now and do not share it publicly.</value></data>
+  <data name="GuestInviteShare" xml:space="preserve"><value>Share</value></data>
+  <data name="GuestInviteShareTitle" xml:space="preserve"><value>Guest self check-in link</value></data>
   <data name="GuestInviteCreate" xml:space="preserve"><value>Create link</value></data>
   <data name="GuestInviteExpiry" xml:space="preserve"><value>Link validity</value></data>
   <data name="GuestInviteExpiry15m" xml:space="preserve"><value>15 minutes</value></data>

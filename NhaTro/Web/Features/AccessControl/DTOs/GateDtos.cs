@@ -216,7 +216,8 @@ public sealed record GuestPassLocation(
     string PropertyName,
     int RoomId,
     string RoomCode,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    IReadOnlyList<string> RequiredFields);
 
 public sealed record GuestPassSubmission
 {
