@@ -1,7 +1,8 @@
 /* Trợ lý AI: khung trang, thẻ đề xuất và khối nội dung nháp. */
 
-/* Phủ đầy bề ngang .app-surface như các trang danh sách. */
-.assistant-page { width: 100%; min-width: 0; }
+/* Trang dùng chung khung nội dung với các trang khác (không giới hạn bề ngang),
+   để co giãn theo cửa sổ/trình duyệt thay vì bị dồn về bên trái. */
+.assistant-page { width: 100%; max-width: none; min-width: 0; }
 
 .assistant-notice,
 .assistant-quota {
@@ -31,9 +32,10 @@
     font-weight: 600;
 }
 
+/* 8 thẻ -> 4 cột x 2 hàng ở màn rộng, tự giảm cột khi thu nhỏ. */
 .assistant-usecases {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: .75rem;
 }
 
@@ -353,3 +355,20 @@
 
 .draft-table th.num, .draft-table td.num { text-align: right; }
 .draft-table thead th { font-size: .78rem; color: var(--text-muted); font-weight: 600; }
+
+/* Co giãn theo bề rộng trình duyệt / mức zoom. */
+@media (max-width: 1199.98px) {
+    .assistant-usecases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 899.98px) {
+    .assistant-usecases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .assistant-form__grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+}
+
+@media (max-width: 575.98px) {
+    .assistant-usecases { grid-template-columns: minmax(0, 1fr); }
+    .assistant-form__grid { grid-template-columns: minmax(0, 1fr); }
+    .assistant-form__actions { align-items: stretch; }
+    .assistant-form__actions .btn { justify-content: center; }
+}
