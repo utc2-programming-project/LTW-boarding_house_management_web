@@ -1,6 +1,7 @@
 /* Trợ lý AI: khung trang, thẻ đề xuất và khối nội dung nháp. */
 
-.assistant-page { max-width: 1180px; }
+/* Phủ đầy bề ngang .app-surface như các trang danh sách. */
+.assistant-page { width: 100%; min-width: 0; }
 
 .assistant-notice,
 .assistant-quota {
