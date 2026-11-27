@@ -64,6 +64,31 @@ public sealed class SecurityHeadersMiddlewareTests
         Assert.True(reached);
     }
 
+    [Fact]
+    public async Task Kiosk_duoc_phep_camera_same_origin()
+    {
+        var context = CreateContext("GET");
+        context.Request.Path = "/gate/kiosk";
+
+        await InvokeAsync(context, () => { });
+
+        Assert.Equal(
+            "camera=(self), microphone=(), geolocation=()",
+            context.Response.Headers["Permissions-Policy"].ToString());
+    }
+
+    [Fact]
+    public async Task Trang_khac_van_chan_camera()
+    {
+        var context = CreateContext("GET");
+
+        await InvokeAsync(context, () => { });
+
+        Assert.Equal(
+            "camera=(), microphone=(), geolocation=()",
+            context.Response.Headers["Permissions-Policy"].ToString());
+    }
+
     private static DefaultHttpContext CreateContext(string method)
     {
         var context = new DefaultHttpContext();

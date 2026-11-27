@@ -2,7 +2,10 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "KhachThue")]
 @implements IDisposable
+@using Web.Common.Utils
+@using Web.Features.Tenants.Invitations
 @inject GatePageService Session
+@inject QrCodeRenderer Qr
 @inject IStringLocalizer<AccessControlResource> L
 @inject IJSRuntime JS
 
@@ -57,6 +60,15 @@
             </div>
         }
 
+        <div class="gate-resident-status gate-resident-status--@StatusClass" role="status">
+            <span class="gate-resident-status__dot"></span>
+            <div class="gate-resident-status__txt">
+                <b>@StatusTitle</b>
+                <span>@StatusHint</span>
+            </div>
+            <span class="gate-resident-status__pill">@StatusPill</span>
+        </div>
+
         <div class="gate-form-card">
             <h2>@L["MyQr"]</h2>
             <p class="gate-muted">@L["QrHint"]</p>
@@ -71,6 +83,10 @@
                     </select>
                 </label>
             </div>
+            @if (!string.IsNullOrEmpty(_qr))
+            {
+                <img class="gate-qr-image" src="@Qr.ToPngDataUrl(_qr)" alt="@L["MyQr"]" width="220" height="220" />
+            }
             <p>
                 <code class="gate-qr-token">@_qr</code>
             </p>
@@ -151,13 +167,16 @@
     private IReadOnlyList<BiometricEnrollmentDto> _enrollments = [];
     private BiometricMethod _enrollMethod = BiometricMethod.Face;
     private string _enrollValue = string.Empty;
+    private ResidentGateStatusDto? _status;
     private readonly CancellationTokenSource _qrCts = new();
+    private readonly CancellationTokenSource _statusCts = new();
     private bool _scrollToForm;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
         _ = RunQrLoopAsync(_qrCts.Token);
+        _ = RunStatusLoopAsync(_statusCts.Token);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -196,10 +215,32 @@
         }
     }
 
+    private async Task RunStatusLoopAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                _status = await Session.ResidentStatusAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            // Giữ trạng thái cũ; lượt làm mới sau sẽ thử lại.
+        }
+    }
+
     public void Dispose()
     {
         _qrCts.Cancel();
         _qrCts.Dispose();
+        _statusCts.Cancel();
+        _statusCts.Dispose();
     }
 
     private async Task LoadAsync()
@@ -218,6 +259,7 @@
             _passes = await Session.PassesAsync();
             _invites = await Session.ActiveInvitesAsync();
             _enrollments = await Session.EnrollmentsAsync();
+            _status = await Session.ResidentStatusAsync();
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -299,6 +341,26 @@
             _formError = Resolve(ex);
         }
     }
+
+    private string StatusClass => _status is null ? "none" : _status.Inside ? "inside" : "outside";
+
+    private string StatusTitle => L[StatusClass switch
+    {
+        "inside" => "GateStatusInsideTitle",
+        "outside" => "GateStatusOutsideTitle",
+        _ => "GateStatusNoneTitle",
+    }];
+
+    private string StatusPill => L[StatusClass switch
+    {
+        "inside" => "GateStatusInsidePill",
+        "outside" => "GateStatusOutsidePill",
+        _ => "GateStatusNonePill",
+    }];
+
+    private string StatusHint => _status?.LastAt is null
+        ? L["GateStatusNoneHint"]
+        : $"{L[_status.Inside ? "GateStatusLastIn" : "GateStatusLastOut"]}: {DateFormatter.FormatDateTime(_status.LastAt.Value.UtcDateTime)}";
 
     private void DismissNotice()
     {

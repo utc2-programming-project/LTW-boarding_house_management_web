@@ -60,6 +60,21 @@
   <data name="SubtitleSettings" xml:space="preserve"><value>Only the landlord can change gate policy and devices.</value></data>
   <data name="SubtitleKiosk" xml:space="preserve"><value>Enter a QR or 6-digit code; level A shows valid so the guard can open.</value></data>
   <data name="SubtitleMyGate" xml:space="preserve"><value>Issue passes for your guests and follow the ones you created.</value></data>
+  <data name="KioskInEyebrow" xml:space="preserve"><value>Door unlocked</value></data>
+  <data name="KioskInTitle" xml:space="preserve"><value>Welcome home</value></data>
+  <data name="KioskOutEyebrow" xml:space="preserve"><value>Exit unlocked</value></data>
+  <data name="KioskOutTitle" xml:space="preserve"><value>See you again</value></data>
+  <data name="KioskDenyEyebrow" xml:space="preserve"><value>Door not opened</value></data>
+  <data name="KioskDenyTitle" xml:space="preserve"><value>Could not open the door</value></data>
+  <data name="GateStatusInsideTitle" xml:space="preserve"><value>You are home</value></data>
+  <data name="GateStatusOutsideTitle" xml:space="preserve"><value>You are away</value></data>
+  <data name="GateStatusNoneTitle" xml:space="preserve"><value>No entry yet</value></data>
+  <data name="GateStatusInsidePill" xml:space="preserve"><value>Inside</value></data>
+  <data name="GateStatusOutsidePill" xml:space="preserve"><value>Outside</value></data>
+  <data name="GateStatusNonePill" xml:space="preserve"><value>—</value></data>
+  <data name="GateStatusLastIn" xml:space="preserve"><value>Last entry</value></data>
+  <data name="GateStatusLastOut" xml:space="preserve"><value>Last exit</value></data>
+  <data name="GateStatusNoneHint" xml:space="preserve"><value>Your status will update here when the kiosk records an entry or exit.</value></data>
   <data name="Loading" xml:space="preserve"><value>Loadingâ€¦</value></data>
   <data name="LoadFailed" xml:space="preserve"><value>Could not load data.</value></data>
   <data name="Retry" xml:space="preserve"><value>Retry</value></data>
@@ -176,8 +191,15 @@
   <data name="Passkey" xml:space="preserve"><value>Passkey</value></data>
   <data name="Active" xml:space="preserve"><value>Active</value></data>
   <data name="KioskTitle" xml:space="preserve"><value>Verify entry</value></data>
-  <data name="Token" xml:space="preserve"><value>QR / 6-digit code</value></data>
+  <data name="Token" xml:space="preserve"><value>QR or 6-digit guest code</value></data>
   <data name="Check" xml:space="preserve"><value>Check</value></data>
+  <data name="ScanQr" xml:space="preserve"><value>Scan QR with camera</value></data>
+  <data name="ScanQrStop" xml:space="preserve"><value>Stop camera</value></data>
+  <data name="ScanQrHint" xml:space="preserve"><value>Point the QR at the frame. The camera is used only in this session and nothing is recorded.</value></data>
+  <data name="ScanQrOpening" xml:space="preserve"><value>Opening the camera… Allow camera access if the browser asks.</value></data>
+  <data name="ScanQrUnsupported" xml:space="preserve"><value>This browser does not support QR scanning. Enter the code manually.</value></data>
+  <data name="ScanQrDenied" xml:space="preserve"><value>The camera could not start. Allow camera access and use HTTPS (or localhost).</value></data>
+  <data name="ScanQrFailed" xml:space="preserve"><value>The camera could not start.</value></data>
   <data name="ManualOpen" xml:space="preserve"><value>Manual open</value></data>
   <data name="ManualReason" xml:space="preserve"><value>Manual open reason</value></data>
   <data name="SelectProperty" xml:space="preserve"><value>Select property</value></data>

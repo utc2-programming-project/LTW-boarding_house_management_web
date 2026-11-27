@@ -149,6 +149,9 @@ public sealed record GateLogFilter
     public int Take { get; init; } = 100;
 }
 
+/// <summary>Trạng thái trong/ngoài của khách thuê, suy ra từ lượt GateLog thành công mới nhất.</summary>
+public sealed record ResidentGateStatusDto(bool Inside, DateTimeOffset? LastAt, GateDirection? LastDirection);
+
 public sealed record StayReportDto(
     int Id,
     int? GatePassId,
