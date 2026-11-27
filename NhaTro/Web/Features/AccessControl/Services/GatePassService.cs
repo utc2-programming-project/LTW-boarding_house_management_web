@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Entities;
@@ -28,7 +30,8 @@ public sealed class GatePassService(
     TimeProvider clock,
     IGateTokenService tokens,
     INotificationService notifications,
-    AuditLogService audit) : IGatePassService
+    AuditLogService audit,
+    IOptions<GateRetentionOptions> retention) : IGatePassService
 {
     private static readonly TimeSpan VietnamOffset = TimeSpan.FromHours(7);
 
@@ -37,6 +40,15 @@ public sealed class GatePassService(
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         var query = ScopePasses(db, caller);
+
+        // Hạn lưu 30 ngày: phiếu hết hạn quá lâu không còn hiển thị (job dọn sẽ xoá hẳn).
+        var retentionDays = retention.Value.RetentionDays;
+        if (retentionDays > 0)
+        {
+            var cutoff = clock.GetUtcNow().AddDays(-retentionDays);
+            query = query.Where(pass => pass.ExpiresAt >= cutoff);
+        }
+
         if (status is { } filter)
         {
             query = query.Where(pass => pass.Status == filter);
@@ -64,8 +76,8 @@ public sealed class GatePassService(
         var today = clock.TodayVietnam().ToDateTime(TimeOnly.MinValue);
         if (caller.IsKhachThue)
         {
-            // Distinct/OrderBy trên projection record không dịch được sang SQL (EF Core 10),
-            // nên distinct ở SQL bằng kiểu ẩn danh rồi sắp xếp + map ở client.
+            // Distinct/OrderBy phải chạy trên kiểu ẩn danh: EF Core không dịch được
+            // Distinct trên projection record (GateRoomOption), nên map sang DTO sau khi tải.
             var rows = await (from member in db.ContractMembers.AsNoTracking()
                               join tenant in db.Tenants.AsNoTracking() on member.TenantId equals tenant.Id
                               join contract in db.Contracts.AsNoTracking() on member.ContractId equals contract.ContractId
@@ -75,12 +87,10 @@ public sealed class GatePassService(
                                   && contract.StartDate <= today && contract.EndDate >= today
                               select new { RoomId = room.Id, PropertyId = property.Id, PropertyName = property.Name, RoomCode = room.Code })
                 .Distinct()
+                .OrderBy(option => option.PropertyName).ThenBy(option => option.RoomCode)
                 .ToListAsync(ct);
 
-            return rows
-                .OrderBy(row => row.PropertyName).ThenBy(row => row.RoomCode)
-                .Select(row => new GateRoomOption(row.RoomId, row.PropertyId, row.PropertyName, row.RoomCode))
-                .ToArray();
+            return rows.Select(option => new GateRoomOption(option.RoomId, option.PropertyId, option.PropertyName, option.RoomCode)).ToArray();
         }
 
         if (!caller.IsManager) return [];
@@ -420,7 +430,7 @@ public sealed class GatePassService(
             pass.Id, pass.PropertyId, property.Name, pass.RoomId, room == null ? null : room.Code,
             pass.VisitorName, pass.VisitorPhone, pass.PassType, pass.StayType, pass.Status, pass.ExpiresAt,
             pass.MaxUses, pass.UsedCount, pass.IssuerRole, pass.IssuedByUserId, pass.AutoApproved,
-            pass.RejectedReason, pass.RevokedReason, pass.CreatedAt);
+            pass.RejectedReason, pass.RevokedReason, pass.CreatedAt, pass.GatePassInviteId);
 
     private static async Task<GatePassDto> LoadDtoAsync(ApplicationDbContext db, int id, CancellationToken ct) =>
         await Project(db, db.GatePasses.AsNoTracking().Where(pass => pass.Id == id)).FirstAsync(ct);

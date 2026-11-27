@@ -1,4 +1,4 @@
-// Điểm khởi động của web: đăng ký DI (Blazor, Identity + cookie, EF Core, dịch vụ nghiệp vụ,
+﻿// Điểm khởi động của web: đăng ký DI (Blazor, Identity + cookie, EF Core, dịch vụ nghiệp vụ,
 // email/SMTP, localization, rate limit), cấu hình middleware, seed vai trò/tài khoản mẫu rồi map endpoint.
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
@@ -194,6 +194,8 @@ var auditRoot = AuditLogFileStore.ResolveRoot(
     builder.Environment.ContentRootPath);
 builder.Services.AddSingleton(new AuditLogFileStore(auditRoot, auditOptions.RetentionDays));
 builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection(AuditOptions.SectionName));
+// Hạn lưu dữ liệu cổng (nhật ký, phiếu, liên kết tự điền): mặc định 30 ngày, dọn hằng ngày.
+builder.Services.Configure<GateRetentionOptions>(builder.Configuration.GetSection(GateRetentionOptions.SectionName));
 builder.Services.AddSingleton<AuditLogSaveInterceptor>();
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
@@ -588,6 +590,9 @@ builder.Services.AddScoped<Web.Features.AccessControl.Services.IGateTokenService
     Web.Features.AccessControl.Services.GateTokenService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePassService,
     Web.Features.AccessControl.Services.GatePassService>();
+// Link mời khách vãng lai tự điền phiếu (gắn một phòng, dùng một lần).
+builder.Services.AddScoped<Web.Features.AccessControl.Services.IGatePassInviteService,
+    Web.Features.AccessControl.Services.GatePassInviteService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IStayReportService,
     Web.Features.AccessControl.Services.StayReportService>();
 builder.Services.AddScoped<Web.Features.AccessControl.Services.IBiometricEnrollmentService,
@@ -627,6 +632,8 @@ builder.Services.AddScoped<Web.Features.Utilities.Services.ServiceCatalogPageSer
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogService>();
 builder.Services.AddScoped<Web.Features.Audit.Services.AuditLogPageService>();
 builder.Services.AddHostedService<AuditLogCleanupService>();
+// Dữ liệu cổng chỉ giữ 30 ngày; thông báo lưu trú không bị dọn.
+builder.Services.AddHostedService<Web.Features.AccessControl.Services.GateRetentionCleanupService>();
 // P5: chỉ số điện/nước bền vững + lịch sử sửa chỉ số (D10, SW-09).
 builder.Services.AddScoped<Web.Features.Utilities.Services.UtilityReadingService>();
 builder.Services.AddScoped<IApprovalApplier, Web.Features.Utilities.Services.UtilityReadingApprovalApplier>();
@@ -881,6 +888,13 @@ using (var scope = app.Services.CreateScope())
             && !app.Configuration.GetValue("DevAccounts:Skip", false))
         {
             await DevAccountSeeder.EnsureAsync(scope.ServiceProvider, app.Configuration, app.Logger);
+        }
+
+        // DB demo nhỏ chưa có dữ liệu cổng: thêm chính sách/thiết bị/phiếu/nhật ký mẫu
+        // để các trang /gate/* có dữ liệu xem ngay. Idempotent theo từng nhà trọ.
+        if (app.Environment.IsDevelopment())
+        {
+            await GateDemoSeeder.EnsureAsync(scope.ServiceProvider, app.Environment, app.Logger);
         }
     }
     catch (Exception ex)

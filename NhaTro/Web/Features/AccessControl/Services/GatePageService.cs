@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Configuration;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Enums;
 using Web.Features.Accounts;
@@ -11,13 +13,32 @@ namespace Web.Features.AccessControl.Services;
 public sealed class GatePageService(
     AuthenticationStateProvider authentication,
     IGatePassService passes,
+    IGatePassInviteService invites,
     IGatePolicyService policies,
     IGateAccessService access,
     IStayReportService stays,
     IBiometricEnrollmentService biometrics,
     IGateTokenService tokens,
+    NavigationManager navigation,
+    IConfiguration configuration,
     TimeProvider clock)
 {
+    /// <summary>Base URL cho link khách tự điền; cùng cấu hình với link mời khách thuê.</summary>
+    public string PublicBaseUrl
+    {
+        get
+        {
+            var configured = configuration["Invitations:PublicBaseUrl"];
+            return string.IsNullOrWhiteSpace(configured)
+                ? navigation.BaseUri.TrimEnd('/')
+                : configured.TrimEnd('/');
+        }
+    }
+
+    public string GuestInviteUrl(string rawToken) => $"{PublicBaseUrl}/guest/{Uri.EscapeDataString(rawToken)}";
+
+    public string GuestPassUrl(string rawToken) => $"{PublicBaseUrl}/guest/p/{Uri.EscapeDataString(rawToken)}";
+
     public async Task<PropertyCaller> CallerAsync()
     {
         var user = (await authentication.GetAuthenticationStateAsync()).User;
@@ -67,6 +88,29 @@ public sealed class GatePageService(
     public async Task ApproveAsync(int id) => Ensure(await passes.ApproveAsync(id, await CallerAsync()));
     public async Task RejectAsync(int id, string reason) => Ensure(await passes.RejectAsync(id, reason, await CallerAsync()));
     public async Task RevokeAsync(int id, string reason) => Ensure(await passes.RevokeAsync(id, reason, await CallerAsync()));
+
+    public async Task<GateInviteCreatedDto> CreateInviteAsync(GateInviteCreateRequest request)
+    {
+        var result = await invites.CreateAsync(request, await CallerAsync());
+        if (!result.Succeeded || result.Created is null)
+        {
+            throw new GatePageException(result.ErrorCode ?? GateErrorCodes.SaveFailed);
+        }
+
+        return result.Created;
+    }
+
+    public async Task<IReadOnlyList<GateInviteDto>> ActiveInvitesAsync() =>
+        await invites.ListActiveAsync(await CallerAsync());
+
+    public async Task CancelInviteAsync(int id)
+    {
+        var result = await invites.CancelAsync(id, await CallerAsync());
+        if (!result.Succeeded)
+        {
+            throw new GatePageException(result.ErrorCode ?? GateErrorCodes.SaveFailed);
+        }
+    }
 
     public async Task<IReadOnlyList<GatePropertyOption>> PropertiesAsync() => await policies.PropertiesAsync(await CallerAsync());
 

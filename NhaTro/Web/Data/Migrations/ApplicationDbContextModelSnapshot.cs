@@ -647,6 +647,9 @@ namespace Web.Migrations
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int?>("GatePassInviteId")
+                        .HasColumnType("int");
+
                     b.Property<string>("IssuedByUserId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -742,6 +745,8 @@ namespace Web.Migrations
 
                     b.HasIndex("ExpiresAt");
 
+                    b.HasIndex("GatePassInviteId");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("TokenHash")
@@ -761,6 +766,81 @@ namespace Web.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePassInvite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("ContractId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("IssuerRole")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RevokedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("UsedGatePassId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("RoomId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("PropertyId", "CreatedAt");
+
+                    b.ToTable("GatePassInvites", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GatePassInvites_Issuer", "[IssuerRole] BETWEEN 0 AND 3");
+                        });
+                });
+
             modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePolicy", b =>
                 {
                     b.Property<int>("Id")
@@ -768,6 +848,9 @@ namespace Web.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowGuestSelfFill")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("AllowManagerApprove")
                         .HasColumnType("bit");
@@ -794,6 +877,9 @@ namespace Web.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("DayVisitStartHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GuestSelfMaxPassesPerDay")
                         .HasColumnType("int");
 
                     b.Property<int>("OfflineGraceMinutes")
@@ -4502,6 +4588,21 @@ namespace Web.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePassInvite", b =>
+                {
+                    b.HasOne("Web.Features.Properties.Entities.Property", null)
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Web.Features.Rooms.Entities.Room", null)
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Web.Features.AccessControl.Entities.GatePolicy", b =>

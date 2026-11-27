@@ -7,6 +7,9 @@
 }
 
 .gate-table-scroll {
+    /* Giữ phần tử absolute bên trong (vd. .sr-only ở header) bị cắt theo khung cuộn,
+       tránh kéo rộng cả trang khi bảng dài hơn màn hình. */
+    position: relative;
     overflow-x: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -46,9 +49,60 @@
 
 .gate-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     justify-content: flex-end;
+}
+
+.gate-actions .btn {
+    white-space: nowrap;
+}
+
+/* Bộ lọc chỉ có một control: đặt cùng hàng hành động ở tiêu đề trang thay vì card riêng. */
+.gate-heading-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.gate-heading-filter label {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.gate-heading-filter .input {
+    width: auto;
+    min-width: 12rem;
+    max-width: 16rem;
+    min-height: 44px;
+}
+
+@media (max-width: 640px) {
+    .gate-heading-filter {
+        flex: 1 1 100%;
+    }
+
+    .gate-heading-filter .input {
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+}
+
+/* Kiosk: card lọc là ngữ cảnh vận hành nên giãn hết chiều ngang, không co theo nội dung. */
+.gate-filter-wide .filter-bar__select {
+    flex: 1 1 14rem;
+    max-width: none;
+}
+
+@media (max-width: 767.98px) {
+    .gate-filter-wide .filter-bar__select {
+        flex: 1 1 100%;
+    }
 }
 
 .gate-muted {
@@ -71,20 +125,23 @@
 .gate-badge--approved,
 .gate-badge--active,
 .gate-badge--reported {
-    background: var(--success-subtle, #e7f6ec);
-    color: var(--success-text, #17663a);
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
 }
 
 .gate-badge--pending {
-    background: var(--warning-subtle, #fff4e0);
-    color: var(--warning-text, #8a5a00);
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    border: 1px solid var(--warning-border);
 }
 
 .gate-badge--rejected,
 .gate-badge--revoked,
 .gate-badge--overdue {
-    background: var(--danger-subtle, #fdeaea);
-    color: var(--danger-text, #a1271b);
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
 }
 
 .gate-form-card {
@@ -92,6 +149,18 @@
     border-radius: var(--radius-md);
     background: var(--surface);
     padding: var(--space-4, 16px);
+}
+
+/* Nhóm field có tiêu đề trong card cấu hình. */
+.gate-form-section + .gate-form-section {
+    margin-top: var(--space-6);
+}
+
+.gate-form-section > h3 {
+    margin: 0 0 var(--space-3);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .gate-fieldset {
@@ -107,8 +176,8 @@
 
 .gate-form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
 }
 
 .gate-form-grid label {
@@ -123,10 +192,47 @@
     grid-column: 1 / -1;
 }
 
+/* Lưới riêng cho checkbox: các ô cao bằng nhau nên không lệch hàng với field. */
+.gate-check-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 var(--space-4);
+}
+
+.gate-check-grid + .gate-form-grid {
+    margin-top: var(--space-4);
+}
+
+@media (max-width: 767.98px) {
+    .gate-form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .gate-check-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .gate-check {
     flex-direction: row !important;
     align-items: center;
     gap: 8px !important;
+    min-height: 44px;
+    cursor: pointer;
+}
+
+.gate-form-grid label.gate-check,
+.gate-check-grid label.gate-check {
+    color: var(--text-primary);
+}
+
+.gate-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin: 0;
+    accent-color: var(--primary);
 }
 
 .gate-form-actions {
@@ -134,12 +240,6 @@
     justify-content: flex-end;
     gap: 8px;
     margin-top: var(--space-4, 16px);
-}
-
-.gate-inline-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
 }
 
 .gate-hour-range {
@@ -167,13 +267,23 @@
 
 .gate-notice,
 .gate-success {
-    background: var(--success-subtle, #e7f6ec);
-    color: var(--success-text, #17663a);
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
 }
 
 .gate-error {
-    background: var(--danger-subtle, #fdeaea);
-    color: var(--danger-text, #a1271b);
+    background: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+}
+
+/* Khối nút dưới thông báo lỗi: không giãn hết chiều ngang trong .page-stack. */
+.gate-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-self: flex-start;
 }
 
 .gate-created {
@@ -216,7 +326,7 @@
 .gate-dialog-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: var(--overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -232,7 +342,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+    box-shadow: var(--shadow-dialog);
 }
 
 .gate-dialog h2 {
@@ -245,4 +355,48 @@
     justify-content: flex-end;
     gap: 8px;
     margin-top: 8px;
+}
+
+/* Link mời khách vãng lai tự điền phiếu */
+.gate-badge--info {
+    background: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+}
+
+.gate-invite-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gate-invite-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-subtle);
+}
+
+.gate-invite-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gate-qr-image {
+    display: block;
+    margin: 8px auto;
+}
+
+.gate-status-badge {
+    margin: 12px 0;
+    text-align: center;
 }
