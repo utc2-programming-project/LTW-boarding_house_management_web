@@ -73,6 +73,9 @@ public sealed class GatePass
 
     public int? StayReportId { get; set; }
 
+    /// <summary>Khác null khi phiếu được tạo từ link khách tự điền.</summary>
+    public int? GatePassInviteId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public byte[] RowVersion { get; set; } = [];

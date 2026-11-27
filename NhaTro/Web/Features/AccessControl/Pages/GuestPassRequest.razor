@@ -1,0 +1,280 @@
+@page "/guest/{Token}"
+@layout Web.Components.Layout.AuthLayout
+@rendermode InteractiveServer
+
+@using Microsoft.JSInterop
+@using System.ComponentModel.DataAnnotations
+@using Web.Features.AccessControl.DTOs
+@using Web.Features.AccessControl.Enums
+@using Web.Features.AccessControl.Services
+@using Web.Features.Tenants.Invitations
+
+@inject IGatePassInviteService Invites
+@inject NavigationManager Navigation
+@inject QrCodeRenderer Qr
+@inject IJSRuntime JS
+@inject IStringLocalizer<AccessControlResource> L
+
+<PageTitle>@L["GuestFillTitle"]</PageTitle>
+
+<section class="auth-page" aria-labelledby="guest-fill-title">
+    <div class="auth-card auth-card--wide">
+        <PageHeading Title="@L["GuestFillTitle"]" TitleId="guest-fill-title" Class="auth-heading" />
+        <p class="auth-subtitle">@L["GuestFillHelp"]</p>
+
+        @if (_location is not null && _created is null)
+        {
+            <div class="invite-summary">
+                <div class="invite-row">
+                    <LucideIcon Name="building" />
+                    <span><strong>@L["InvitePropertyLabel"]:</strong> @_location.PropertyName · @_location.RoomCode</span>
+                </div>
+                <div class="invite-row invite-row--expiry">
+                    <LucideIcon Name="calendar" />
+                    <span>@string.Format(L["GuestFillExpiresAt"], _location.ExpiresAt.ToLocalTime().ToString("HH:mm dd/MM"))</span>
+                </div>
+            </div>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@_error</span>
+            </div>
+        }
+
+        @if (_created is not null)
+        {
+            <div class="gate-notice" role="status">
+                <p>
+                    @if (_created.AutoApproved)
+                    {
+                        <strong>@L["GuestFillApproved"]</strong>
+                    }
+                    else
+                    {
+                        <strong>@L["GuestFillPending"]</strong>
+                    }
+                </p>
+                <p class="gate-muted">@L["GuestFillKeepLinkHint"]</p>
+                <dl class="gate-created">
+                    <dt>@L["GuestFillPassLink"]</dt>
+                    <dd class="gate-link-row">
+                        <a href="@_passUrl">@_passUrl</a>
+                        <button type="button" class="gate-copy-btn" aria-label="@L["GuestFillCopyLink"]" title="@L["GuestFillCopyLink"]"
+                                @onclick="CopyPassLinkAsync">
+                            <LucideIcon Name="@(_linkCopied ? "circle-check" : "copy")" />
+                        </button>
+                    </dd>
+                    @if (!string.IsNullOrWhiteSpace(_created.Code))
+                    {
+                        <dt>@L["FallbackCode"]</dt>
+                        <dd><code>@_created.Code</code></dd>
+                    }
+                </dl>
+                @if (_linkCopied)
+                {
+                    <p class="gate-muted" role="status">@L["GuestFillLinkCopied"]</p>
+                }
+                <img class="gate-qr-image" src="@Qr.ToPngDataUrl(_passUrl)" alt="@L["GuestFillQrAlt"]" width="220" height="220" />
+                <a class="btn btn-secondary btn-sm" href="@_passUrl">@L["GuestFillViewStatus"]</a>
+            </div>
+        }
+        else if (_location is null)
+        {
+            <div class="form-alert" role="alert">
+                <LucideIcon Name="alert" />
+                <span>@L["GuestFillInvalid"]</span>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="Input" OnValidSubmit="SubmitAsync">
+                <DataAnnotationsValidator />
+
+                <FormField TValue="string" Id="guest-name" Label="@L["VisitorName"]" Required="true" For="() => Input.VisitorName">
+                    <InputText @bind-Value="Input.VisitorName" id="guest-name" class="input"
+                               autocomplete="name" maxlength="200" aria-required="true" />
+                </FormField>
+
+                <FormField TValue="string" Id="guest-phone" Label="@L["VisitorPhone"]" Required="true" For="() => Input.VisitorPhone">
+                    <InputText @bind-Value="Input.VisitorPhone" id="guest-phone" class="input"
+                               inputmode="numeric" maxlength="10" autocomplete="tel" aria-required="true" />
+                </FormField>
+
+                <FormField TValue="GateStayType" Id="guest-stay" Label="@L["StayType"]" Required="true" For="() => Input.StayType">
+                    <InputSelect @bind-Value="Input.StayType" id="guest-stay" class="input">
+                        <option value="@GateStayType.Visit">@L["Visit"]</option>
+                        <option value="@GateStayType.Overnight">@L["Overnight"]</option>
+                    </InputSelect>
+                </FormField>
+
+                @if (Input.StayType == GateStayType.Overnight)
+                {
+                    <div class="form-alert" role="status">
+                        <LucideIcon Name="moon" />
+                        <span>@L["GuestFillOvernightHint"]</span>
+                    </div>
+                }
+
+                @if (NeedsDob)
+                {
+                    <FormField TValue="DateOnly?" Id="guest-dob" Label="@L["VisitorDob"]" Required="true" For="() => Input.VisitorDob">
+                        <InputDate @bind-Value="Input.VisitorDob" id="guest-dob" class="input" max="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
+                    </FormField>
+                }
+
+                @if (NeedsIdNumber)
+                {
+                    <FormField TValue="string" Id="guest-id" Label="@L["VisitorIdNumber"]" Required="true" For="() => Input.VisitorIdNumber">
+                        <InputText @bind-Value="Input.VisitorIdNumber" id="guest-id" class="input" maxlength="50" />
+                    </FormField>
+                }
+
+                @if (NeedsStayReason)
+                {
+                    <FormField TValue="string" Id="guest-reason" Label="@L["StayReason"]" Required="true" For="() => Input.StayReason">
+                        <InputText @bind-Value="Input.StayReason" id="guest-reason" class="input" maxlength="500" />
+                    </FormField>
+                }
+
+                <FormField TValue="string" Id="guest-note" Label="@L["Note"]" For="() => Input.Note">
+                    <InputText @bind-Value="Input.Note" id="guest-note" class="input" maxlength="1000" />
+                </FormField>
+
+                <button type="submit" class="btn btn-primary btn-block" disabled="@_busy">
+                    @if (_busy)
+                    {
+                        <span class="spinner" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <LucideIcon Name="send" />
+                    }
+                    @L["GuestFillSubmit"]
+                </button>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Token { get; set; } = string.Empty;
+
+    private GuestPassLocation? _location;
+    private GuestPassSubmittedDto? _created;
+    private string? _error;
+    private bool _busy;
+    private string _passUrl = string.Empty;
+    private bool _linkCopied;
+
+    private InputModel Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _location = await Invites.PeekAsync(Token);
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_location is null || _busy) return;
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Invites.SubmitAsync(Token, new GuestPassSubmission
+            {
+                VisitorName = Input.VisitorName,
+                VisitorPhone = Input.VisitorPhone,
+                VisitorIdNumber = Input.VisitorIdNumber,
+                VisitorDob = Input.VisitorDob,
+                StayReason = Input.StayReason,
+                Note = Input.Note,
+                StayType = Input.StayType,
+            });
+
+            if (!result.Succeeded || result.Created is null)
+            {
+                _error = MapError(result.ErrorCode);
+                return;
+            }
+
+            _created = result.Created;
+            _passUrl = Navigation.ToAbsoluteUri($"/guest/p/{Uri.EscapeDataString(result.Created.RawToken)}").ToString();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = L["GuestFillFailed"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyPassLinkAsync()
+    {
+        try
+        {
+            _linkCopied = await JS.InvokeAsync<bool>("vhtCopyText", _passUrl);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _linkCopied = false;
+        }
+
+        if (!_linkCopied)
+        {
+            _error = L["GuestFillCopyFailed"];
+        }
+    }
+
+    private bool Requires(string field) =>
+        _location?.RequiredFields.Contains(field, StringComparer.OrdinalIgnoreCase) == true;
+
+    private bool NeedsDob => Input.StayType == GateStayType.Overnight || Requires("Dob");
+    private bool NeedsIdNumber => Input.StayType == GateStayType.Overnight || Requires("IdNumber");
+    private bool NeedsStayReason => Input.StayType == GateStayType.Overnight || Requires("StayReason");
+
+    private string MapError(string? code) => code switch
+    {
+        GateErrorCodes.InviteInvalid => L["GuestFillInvalid"],
+        GateErrorCodes.GuestFillDisabled => L["GuestFillDisabled"],
+        GateErrorCodes.TenantIssueDisabled => L["TenantIssueDisabled"],
+        GateErrorCodes.TenantQuotaExceeded => L["TenantQuotaExceeded"],
+        GateErrorCodes.TenantNoActiveContract => L["TenantNoActiveContract"],
+        GateErrorCodes.GuestQuotaExceeded => L["GuestQuotaExceeded"],
+        GateErrorCodes.DuplicateGuestRequest => L["DuplicateGuestRequest"],
+        GateErrorCodes.MissingLawfulFields => L["MissingLawfulFields"],
+        GateErrorCodes.MissingGuestName => L["MissingGuestName"],
+        GateErrorCodes.MissingGuestPhone => L["MissingGuestPhone"],
+        GateErrorCodes.InvalidRequest => L["InvalidRequest"],
+        _ => L["GuestFillFailed"],
+    };
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập họ tên khách.")]
+        [StringLength(200, MinimumLength = 2)]
+        public string VisitorName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại.")]
+        [RegularExpression(@"^0\d{9}$", ErrorMessage = "Số điện thoại phải có 10 số, bắt đầu bằng 0.")]
+        public string VisitorPhone { get; set; } = string.Empty;
+
+        public GateStayType StayType { get; set; } = GateStayType.Visit;
+
+        public DateOnly? VisitorDob { get; set; }
+
+        [StringLength(50, ErrorMessage = "CCCD/hộ chiếu tối đa 50 ký tự.")]
+        public string? VisitorIdNumber { get; set; }
+
+        [StringLength(500, ErrorMessage = "Lý do lưu trú tối đa 500 ký tự.")]
+        public string? StayReason { get; set; }
+
+        [StringLength(1000, ErrorMessage = "Ghi chú tối đa 1000 ký tự.")]
+        public string? Note { get; set; }
+    }
+}

@@ -1,5 +1,8 @@
+using System.Globalization;
 using Microsoft.Extensions.Caching.Memory;
 using Web.Common.Queries;
+using Web.Features.Contracts.Enums;
+using Web.Features.Dashboard.Models;
 using Web.Features.Properties;
 using Web.Features.Properties.DTOs;
 using Web.Features.Properties.Services;
@@ -7,6 +10,8 @@ using Web.Features.Reports;
 using Web.Features.Reports.DTOs;
 using Web.Features.Reports.Services;
 using Web.Features.Tenants;
+using Web.Features.Vehicles.Services;
+using Web.Infrastructure.Time;
 
 namespace Web.Features.Dashboard.Services;
 
@@ -15,7 +20,9 @@ public sealed record DashboardPropertyOption(int Id, string Name, bool IsActive)
 public sealed class DashboardPageService(
     P2CallerProvider callers, IPropertyService properties,
     IRoomReportService rooms, ITenantReportService tenants, RevenueReportService revenue,
-    IIncidentReportService incidents, TimeProvider time, IMemoryCache? cache = null)
+    IIncidentReportService incidents, IContractReportService contracts,
+    TimeProvider time, IMemoryCache? cache = null,
+    IVehicleDashboardService? vehicleDashboard = null)
 {
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(45);
     private long _cacheVersion;
@@ -85,6 +92,82 @@ public sealed class DashboardPageService(
 
     public async Task<IncidentReportResult> GetIncidentReportAsync(IncidentReportFilter filter, CancellationToken ct = default)
         => await incidents.GetAsync(filter, await callers.GetCallerAsync(), ct);
+
+    /// <summary>Xu hướng lấp đầy 6 tháng gần nhất, cùng phạm vi với báo cáo phòng.</summary>
+    public async Task<OccupancyReportResult> GetOccupancyAsync(int? propertyId, CancellationToken ct = default)
+    {
+        var caller = await callers.GetCallerAsync();
+        return await CacheAsync($"occupancy:{caller.UserId}:{caller.Role}:{propertyId}",
+            () => rooms.GetOccupancyAsync(new OccupancyFilter { PropertyId = propertyId }, caller, ct), ct);
+    }
+
+    /// <summary>Công nợ theo tuổi nợ. Chỉ Chủ trọ; nguồn giới hạn 100 hoá đơn đầu.</summary>
+    public async Task<DebtAgingDto> GetDebtAgingAsync(int? propertyId, CancellationToken ct = default)
+    {
+        var caller = await callers.GetCallerAsync();
+        return await CacheAsync($"aging:{caller.UserId}:{caller.Role}:{propertyId}", async () =>
+        {
+            var report = await revenue.GetAsync(new RevenueReportFilter(null, null, propertyId)
+            {
+                OutstandingOnly = true,
+                PageSize = 100,
+            }, caller, ct);
+            var today = time.TodayVietnam();
+            decimal under = 0, between = 0, over = 0;
+            foreach (var line in report.DebtLines)
+            {
+                if (line.Outstanding <= 0) continue;
+                var days = line.DueDate is { } due ? today.DayNumber - due.DayNumber : 0;
+                if (days <= 30) under += line.Outstanding;
+                else if (days <= 60) between += line.Outstanding;
+                else over += line.Outstanding;
+            }
+            return new DebtAgingDto(under, between, over);
+        }, ct);
+    }
+
+    /// <summary>Số hợp đồng Approved hết hạn trong 12 tháng tới, nhóm theo tháng.</summary>
+    public async Task<IReadOnlyList<ContractExpiryMonthDto>> GetContractExpiryAsync(
+        int? propertyId, CancellationToken ct = default)
+    {
+        var caller = await callers.GetCallerAsync();
+        return await CacheAsync($"contract-expiry:{caller.UserId}:{caller.Role}:{propertyId}", async () =>
+        {
+            var today = time.TodayVietnam();
+            var result = await contracts.GetAsync(new ContractReportFilter
+            {
+                From = today,
+                To = today.AddMonths(12),
+                PropertyId = propertyId,
+                Status = ContractStatus.Approved,
+                Page = 1,
+                PageSize = 100,
+            }, caller, ct);
+            var lastMonth = today.AddMonths(12);
+            return (IReadOnlyList<ContractExpiryMonthDto>)result.Contracts.Items
+                .Where(item => item.EndDate >= today && item.EndDate <= lastMonth)
+                .GroupBy(item => new { item.EndDate.Year, item.EndDate.Month })
+                .Select(group => new ContractExpiryMonthDto(
+                    new DateOnly(group.Key.Year, group.Key.Month, 1).ToString("MM/yyyy", CultureInfo.InvariantCulture),
+                    group.Count(),
+                    group.Key.Year * 12 + group.Key.Month))
+                .OrderBy(item => item.SortKey)
+                .ToList();
+        }, ct);
+    }
+
+    /// <summary>SPEC §10: thẻ KPI xe (tổng xe Active theo loại, lấp đầy khu đỗ, phí gửi xe tháng này).</summary>
+    public async Task<VehicleDashboardKpis?> GetVehicleKpisAsync(int? propertyId, CancellationToken ct = default)
+    {
+        if (vehicleDashboard is null)
+        {
+            return null;
+        }
+
+        var caller = await callers.GetCallerAsync();
+        return await CacheAsync($"vehicles:{caller.UserId}:{caller.Role}:{propertyId}",
+            () => vehicleDashboard.GetKpisAsync(propertyId, caller, ct), ct);
+    }
 
     private async Task<T> CacheAsync<T>(string key, Func<Task<T>> load, CancellationToken ct)
         where T : class

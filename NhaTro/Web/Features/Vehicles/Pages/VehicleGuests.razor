@@ -1,0 +1,440 @@
+@page "/vehicles/guests"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "ChuTro,QuanLy")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+@inject TimeProvider Clock
+
+<PageTitle>@L["PageTitleGuests"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleGuests"]" HelpText="@L["SubtitleGuests"]">
+        <Actions>
+            <button type="button" class="btn btn-primary" @onclick="OpenCreateModal" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="plus" />
+                <span>@L["AddGuestNoticeBtn"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
+
+    <VehicleNavTabs ActiveTab="guests"
+                    EnableParkingZones="@CurrentEnableZones"
+                    IsOwner="@_isOwner"
+                    PropertyId="@_propertyId"
+                    Properties="@_properties"
+                    OnPropertyChanged="ChangePropertyByIdAsync" />
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_properties.Count == 0)
+    {
+        <EmptyStateCard Title="@L["PropertyNotFound"]" Description="@L["EmptyGuestNotices"]" />
+    }
+    else
+    {
+        <div class="filter-bar filter-bar--panel">
+            <div class="filter-bar__row">
+                <div class="filter-bar__search">
+                    <label class="sr-only" for="guest-keyword">@L["SearchPlaceholder"]</label>
+                    <span class="filter-bar__icon" aria-hidden="true"><LucideIcon Name="search" /></span>
+                    <input id="guest-keyword" class="input" type="search" autocomplete="off"
+                           placeholder="@L["SearchPlaceholder"]"
+                           @bind="_keyword" @bind:event="oninput" @bind:after="ApplyFiltersAsync" />
+                </div>
+
+                <div class="filter-bar__field filter-bar__select">
+                    <label class="sr-only" for="guest-status">@L["Status"]</label>
+                    <select id="guest-status" class="input" @bind="_statusFilter" @bind:after="ApplyFiltersAsync">
+                        <option value="">@L["AllStatuses"]</option>
+                        @foreach (var st in Enum.GetValues<GuestVehicleNoticeStatus>())
+                        {
+                            <option value="@st">@L[st.ToString()]</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-bar__actions">
+                    <FilterResetButton OnClick="ResetFiltersAsync" />
+                </div>
+            </div>
+        </div>
+
+        <DataTable @key="_tableKey" @ref="_table" TItem="GuestVehicleNoticeDto" Columns="_columns"
+                   ItemsProvider="ProvideGuestNoticesAsync" PageSize="10"
+                   Caption="@L["PageTitleGuests"]" Labels="_tableLabels"
+                   HasActiveFilters="@(!string.IsNullOrWhiteSpace(_keyword) || _statusFilter.HasValue)"
+                   OnClearFilters="ResetFiltersAsync">
+            <EmptyActions>
+                <button type="button" class="btn btn-primary" @onclick="OpenCreateModal" disabled="@(_rooms.Count == 0)">
+                    <LucideIcon Name="plus" /> @L["AddGuestNoticeBtn"]
+                </button>
+            </EmptyActions>
+        </DataTable>
+    }
+</div>
+
+@if (_creating)
+{
+    <FeatureDialog Visible="true"
+                   Title="@L["AddGuestNoticeBtn"]"
+                   CloseLabel="@L["Close"]"
+                   OnClose="() => _creating = false"
+                   CssClass="vehicle-form-dialog">
+        <form @onsubmit="CreateAsync" @onsubmit:preventDefault novalidate>
+            <div class="vehicle-form-body">
+                @if (!string.IsNullOrWhiteSpace(_modalError))
+                {
+                    <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                        <div class="vehicle-alert__content">
+                            <LucideIcon Name="alert-triangle" />
+                            <span>@_modalError</span>
+                        </div>
+                    </div>
+                }
+
+                <div class="vehicle-form-grid">
+                    <div class="vehicle-field">
+                        <label for="guest-room-select">@L["Room"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="guest-room-select" @bind="_createRoomId">
+                            @foreach (var room in _rooms)
+                            {
+                                <option value="@room.RoomId">@string.Format(L["RoomOptionFormat"].Value, room.RoomCode)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="guest-type-select">@L["VehicleType"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="guest-type-select" @bind="_createType">
+                            @foreach (var vt in Enum.GetValues<VehicleType>())
+                            {
+                                <option value="@vt">@L[vt.ToString()]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="guest-plate-input">@L["PlateNumber"] <span class="required" aria-hidden="true">*</span></label>
+                        <input id="guest-plate-input" @bind="_createPlate" @bind:event="oninput" maxlength="25" placeholder="@L["GuestPlatePlaceholder"]" />
+                        @if (!string.IsNullOrWhiteSpace(_createPlate))
+                        {
+                            <span class="vehicle-field-hint">@L["PlateNormalizedPreview"] <strong>@VehicleRules.NormalizePlateNumber(_createPlate)</strong></span>
+                        }
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="guest-name-input">@L["GuestNameLabel"]</label>
+                        <input id="guest-name-input" @bind="_createGuestName" maxlength="150" placeholder="@L["GuestNamePlaceholder"]" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="guest-hours-input">@L["GuestDurationLabel"]</label>
+                        <input id="guest-hours-input" type="number" min="1" max="168" @bind="_durationHours" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="guest-note-input">@L["Note"]</label>
+                        <input id="guest-note-input" @bind="_createNote" maxlength="500" placeholder="@L["GuestNotePlaceholder"]" />
+                    </div>
+                </div>
+            </div>
+
+            <footer class="vehicle-form-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _creating = false">@L["Cancel"]</button>
+                <button type="submit" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(_createPlate)">
+                    <LucideIcon Name="check" />
+                    <span>@L["Save"]</span>
+                </button>
+            </footer>
+        </form>
+    </FeatureDialog>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "propertyId")]
+    public int? PropertyIdParam { get; set; }
+
+    private DataTable<GuestVehicleNoticeDto>? _table;
+    private IReadOnlyList<DataTableColumn<GuestVehicleNoticeDto>> _columns = [];
+    private DataTableLabels _tableLabels = new();
+
+    private IReadOnlyList<VehiclePropertyOptionDto> _properties = [];
+    private IReadOnlyList<VehicleRoomOptionDto> _rooms = [];
+    private int _propertyId;
+    private GuestVehicleNoticeStatus? _statusFilter;
+    private string _keyword = string.Empty;
+    private int _tableKey;
+    private int? _openMenuId;
+
+    private bool _isOwner;
+    private bool _loading = true;
+    private string? _error;
+    private string? _modalError;
+
+    private bool _creating;
+    private int _createRoomId;
+    private VehicleType _createType = VehicleType.ManualMotorbike;
+    private string _createPlate = string.Empty;
+    private string? _createGuestName;
+    private int _durationHours = 12;
+    private string? _createNote;
+
+    private bool CurrentEnableZones =>
+        _properties.FirstOrDefault(p => p.PropertyId == _propertyId)?.EnableParkingZones ?? false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(SL);
+        _columns = BuildColumns();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _isOwner = (await Session.CallerAsync()).IsChuTro;
+            _properties = await Session.PropertiesAsync();
+            if (_properties.Count > 0)
+            {
+                _propertyId = PropertyIdParam.HasValue && _properties.Any(p => p.PropertyId == PropertyIdParam.Value)
+                    ? PropertyIdParam.Value
+                    : _properties[0].PropertyId;
+                _rooms = await Session.RoomsAsync(_propertyId);
+                _tableKey++;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<PagedResult<GuestVehicleNoticeDto>> ProvideGuestNoticesAsync(DataTableRequest request)
+    {
+        _openMenuId = null;
+        var all = await Session.ListGuestNoticesAsync(_propertyId, _statusFilter);
+
+        IEnumerable<GuestVehicleNoticeDto> filtered = all;
+        if (!string.IsNullOrWhiteSpace(_keyword))
+        {
+            var term = _keyword.Trim();
+            var norm = VehicleRules.NormalizePlateNumber(term);
+            filtered = filtered.Where(g =>
+                (!string.IsNullOrEmpty(norm) && g.PlateNumber.Contains(norm, StringComparison.OrdinalIgnoreCase))
+                || g.RoomCode.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || (g.GuestName != null && g.GuestName.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || (g.TenantName != null && g.TenantName.Contains(term, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        var list = filtered.ToList();
+        var pageItems = list
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return new PagedResult<GuestVehicleNoticeDto>
+        {
+            Items = pageItems,
+            TotalCount = list.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private IReadOnlyList<DataTableColumn<GuestVehicleNoticeDto>> BuildColumns()
+    {
+        RenderFragment<GuestVehicleNoticeDto> vehicleCol = item => @<div class="vh-room-cell">
+            <span class="vh-code-btn cell-truncate">@VehicleRules.FormatPlateForDisplay(item.PlateNumber)</span>
+            <span class="vh-cell-secondary cell-truncate">@L[item.VehicleType.ToString()]</span>
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> guestCol = item => @<div class="vh-room-cell" data-hover-tip aria-describedby="@($"tip-guest-{item.Id}")">
+            <span class="cell-link is-quiet cell-truncate">@(item.GuestName ?? "—")</span>
+            @if (!string.IsNullOrWhiteSpace(item.Note))
+            {
+                <span class="vh-cell-secondary cell-truncate">@item.Note</span>
+            }
+            <span class="hover-tip" id="@($"tip-guest-{item.Id}")" role="tooltip">
+                <span class="hover-tip__line">@(item.GuestName ?? "—")</span>
+                @if (!string.IsNullOrWhiteSpace(item.Note))
+                {
+                    <span class="hover-tip__line">@item.Note</span>
+                }
+            </span>
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> roomCol = item => @<div class="vh-room-cell">
+            <div class="vh-room-line">
+                <a class="cell-link" href="@($"/rooms?q={Uri.EscapeDataString(item.RoomCode)}")">@item.RoomCode</a>
+                <StatusBadge Text="@L[item.Status.ToString()]" Tone="@StatusTone(item.Status)" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(item.TenantName))
+            {
+                <a class="cell-link is-quiet vh-cell-secondary-link cell-truncate"
+                   href="@($"/tenants?q={Uri.EscapeDataString(item.TenantName)}")">@item.TenantName</a>
+            }
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> timeCol = item => @<div class="vh-room-cell tabular-nums">
+            <strong>@string.Format(L["GuestTimeTo"].Value, DateFormatter.FormatDateTime(item.ExpectedTo.UtcDateTime))</strong>
+            <span class="vh-cell-secondary">@string.Format(L["GuestTimeFrom"].Value, DateFormatter.FormatDateTime(item.ExpectedFrom.UtcDateTime))</span>
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> actionsCol = item => @<div class="p2-row-actions">
+            @if (item.Status == GuestVehicleNoticeStatus.Active)
+            {
+                <button class="icon-button p2-menu-trigger @(IsMenuOpen(item.Id) ? "is-open" : null)" type="button"
+                        aria-label="@L["Action"]" title="@L["Action"]"
+                        aria-haspopup="menu" aria-expanded="@(IsMenuOpen(item.Id) ? "true" : "false")"
+                        aria-controls="@($"guest-row-menu-{item.Id}")"
+                        @onclick="() => ToggleRowMenu(item.Id)">
+                    <LucideIcon Name="ellipsis" />
+                </button>
+                @if (IsMenuOpen(item.Id))
+                {
+                    <div id="@($"guest-row-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                        <button class="p2-row-menu-item" type="button" role="menuitem"
+                                @onclick="() => MenuUpdateStatusAsync(item.Id, GuestVehicleNoticeStatus.Completed)">
+                            <LucideIcon Name="circle-check" /><span>@L["MarkCompletedBtn"]</span>
+                        </button>
+                        <div class="p2-row-menu-sep" role="separator"></div>
+                        <button class="p2-row-menu-item danger" type="button" role="menuitem"
+                                @onclick="() => MenuUpdateStatusAsync(item.Id, GuestVehicleNoticeStatus.Cancelled)">
+                            <LucideIcon Name="close" /><span>@L["Cancel"]</span>
+                        </button>
+                    </div>
+                }
+            }
+            else
+            {
+                <span class="muted">—</span>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "plate", Title = L["PlateNumber"], Template = vehicleCol, Width = "18%" },
+            new() { Key = "guest", Title = L["GuestNameLabel"], Template = guestCol, Width = "22%" },
+            new() { Key = "room", Title = L["ColumnRoomGuest"], Template = roomCol, Width = "22%" },
+            new() { Key = "time", Title = L["GuestDueColumn"], Template = timeCol, Width = "26%" },
+            new() { Key = "actions", Title = L["Action"], Template = actionsCol, CellClass = "cell-actions", Width = "12%" },
+        ];
+    }
+
+    private bool IsMenuOpen(int id) => _openMenuId == id;
+
+    private void ToggleRowMenu(int id) => _openMenuId = _openMenuId == id ? null : id;
+
+    private async Task MenuUpdateStatusAsync(int id, GuestVehicleNoticeStatus status)
+    {
+        _openMenuId = null;
+        await UpdateStatusAsync(id, status);
+    }
+
+    private async Task ChangePropertyByIdAsync(int id)
+    {
+        if (id == _propertyId) return;
+        _propertyId = id;
+        _rooms = await Session.RoomsAsync(_propertyId);
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        _tableKey++;
+        if (_table is not null)
+        {
+            await _table.ReloadAsync();
+        }
+    }
+
+    private async Task ResetFiltersAsync()
+    {
+        _keyword = string.Empty;
+        _statusFilter = null;
+        await ApplyFiltersAsync();
+    }
+
+    private void OpenCreateModal()
+    {
+        _createRoomId = _rooms.FirstOrDefault()?.RoomId ?? 0;
+        _createPlate = string.Empty;
+        _createGuestName = null;
+        _durationHours = 12;
+        _createNote = null;
+        _modalError = null;
+        _creating = true;
+    }
+
+    private async Task CreateAsync()
+    {
+        _modalError = null;
+        try
+        {
+            var now = Clock.GetUtcNow();
+            await Session.CreateGuestNoticeAsync(new GuestVehicleNoticeCreateRequest
+            {
+                RoomId = _createRoomId,
+                PlateNumber = _createPlate,
+                VehicleType = _createType,
+                GuestName = _createGuestName,
+                ExpectedFrom = now,
+                ExpectedTo = now.AddHours(Math.Clamp(_durationHours, 1, 168)),
+                Note = _createNote,
+            });
+            _creating = false;
+            Toasts.Success(L["Saved"]);
+            await ApplyFiltersAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task UpdateStatusAsync(int id, GuestVehicleNoticeStatus status)
+    {
+        try
+        {
+            await Session.UpdateGuestNoticeStatusAsync(id, status);
+            Toasts.Success(L["Saved"]);
+            await ApplyFiltersAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private static BadgeTone StatusTone(GuestVehicleNoticeStatus status) => status switch
+    {
+        GuestVehicleNoticeStatus.Active => BadgeTone.Success,
+        GuestVehicleNoticeStatus.Completed => BadgeTone.Info,
+        GuestVehicleNoticeStatus.Expired => BadgeTone.Warning,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}

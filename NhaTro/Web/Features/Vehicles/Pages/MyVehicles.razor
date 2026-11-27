@@ -1,0 +1,562 @@
+@page "/my/vehicles"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "KhachThue")]
+@inject VehiclePageService Session
+@inject ToastService Toasts
+@inject IStringLocalizer<VehicleResource> L
+@inject IStringLocalizer<Web.Shared> SL
+@inject TimeProvider Clock
+
+<PageTitle>@L["PageTitleMyVehicles"] · @SL["AppName"]</PageTitle>
+
+<div class="page-stack vehicle-page">
+    <PageHeading Title="@L["PageTitleMyVehicles"]" HelpText="@L["SubtitleMyVehicles"]">
+        <Actions>
+            <button type="button" class="btn btn-secondary" @onclick="OpenBlockingModal" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="bell" />
+                <span>@L["BlockingAlertBtn"]</span>
+            </button>
+            <button type="button" class="btn btn-secondary" @onclick="OpenIncidentModal" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="wrench" />
+                <span>@L["ReportIncidentBtn"]</span>
+            </button>
+            <button type="button" class="btn btn-primary" @onclick="OpenGuestModal" disabled="@(_loading || _rooms.Count == 0)">
+                <LucideIcon Name="plus" />
+                <span>@L["AddGuestNoticeBtn"]</span>
+            </button>
+        </Actions>
+    </PageHeading>
+
+    @if (_loading)
+    {
+        <LoadingOverlay Visible="true" Text="@L["Loading"]" />
+    }
+    else if (_error is not null)
+    {
+        <div class="vehicle-alert error" role="alert">
+            <div class="vehicle-alert__content">
+                <LucideIcon Name="alert-triangle" />
+                <span>@_error</span>
+            </div>
+            <button type="button" class="btn btn-secondary" @onclick="LoadAsync">@L["Retry"]</button>
+        </div>
+    }
+    else if (_rooms.Count == 0)
+    {
+        <EmptyStateCard Title="@L["NoActiveContract"]" Description="@L["SubtitleMyVehicles"]" />
+    }
+    else
+    {
+        <div class="stat-grid stat-grid--three">
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["StatTotalActive"]
+                        <HelpTip Text="@L["MyStatTotalHelp"]" />
+                    </span>
+                    <span class="stat-icon stat-icon--accent"><LucideIcon Name="bike" /></span>
+                </div>
+                <div class="stat-value tabular-nums">@_summary.TotalActiveCount <small>@L["UnitVehicles"]</small></div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["MonthlyFee"]
+                        <HelpTip Text="@L["MyStatFeeHelp"]" />
+                    </span>
+                    <span class="stat-icon stat-icon--success"><LucideIcon Name="wallet" /></span>
+                </div>
+                <div class="stat-value tabular-nums">@MoneyFormatter.Format(_summary.EstimatedMonthlyRevenue)</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card__top">
+                    <span class="stat-label">
+                        @L["TabGuests"]
+                        <HelpTip Text="@L["MyStatGuestHelp"]" />
+                    </span>
+                    <span class="stat-icon stat-icon--info"><LucideIcon Name="users" /></span>
+                </div>
+                <div class="stat-value tabular-nums">@_summary.ActiveGuestNoticeCount <small>/ 3 @L["UnitVehicles"]</small></div>
+            </div>
+        </div>
+
+        <DataTable @key="@($"my-vehicles-{_vehicleTableKey}")" TItem="VehicleDto" Columns="_vehicleColumns"
+                   ItemsProvider="ProvideMyVehiclesAsync" PageSize="10"
+                   Caption="@L["TabVehicles"]" Labels="_tableLabels" />
+
+        <DataTable @key="@($"my-guests-{_guestTableKey}")" TItem="GuestVehicleNoticeDto" Columns="_guestColumns"
+                   ItemsProvider="ProvideMyGuestsAsync" PageSize="10"
+                   Caption="@L["TabGuests"]" Labels="_tableLabels">
+            <EmptyActions>
+                <button type="button" class="btn btn-primary" @onclick="OpenGuestModal">
+                    <LucideIcon Name="plus" /> @L["AddGuestNoticeBtn"]
+                </button>
+            </EmptyActions>
+        </DataTable>
+    }
+</div>
+
+@if (_qrVehicle is not null)
+{
+    <VehicleQrDialog Vehicle="_qrVehicle" OnClose="() => _qrVehicle = null" />
+}
+
+@if (_showBlockingModal && _rooms.Count > 0)
+{
+    <BlockingAlertDialog PropertyId="_blockingPropertyId"
+                         InitialPlate="@_blockingInitialPlate"
+                         Properties="_blockingProperties"
+                         ErrorText="@_modalError"
+                         OnCancel="() => _showBlockingModal = false"
+                         OnSubmit="SendBlockingAlertAsync" />
+}
+
+@if (_showIncidentModal && _rooms.Count > 0)
+{
+    <VehicleIncidentDialog Rooms="_rooms"
+                           InitialVehicle="_incidentVehicle"
+                           ErrorText="@_modalError"
+                           OnCancel="() => _showIncidentModal = false"
+                           OnSubmit="SubmitIncidentAsync" />
+}
+
+@if (_showGuestModal)
+{
+    <FeatureDialog Visible="true"
+                   Title="@L["AddGuestNoticeBtn"]"
+                   CloseLabel="@L["Close"]"
+                   OnClose="() => _showGuestModal = false"
+                   CssClass="vehicle-form-dialog">
+        <form @onsubmit="CreateGuestNoticeAsync" @onsubmit:preventDefault novalidate>
+            <div class="vehicle-form-body">
+                @if (!string.IsNullOrWhiteSpace(_modalError))
+                {
+                    <div class="vehicle-alert error" role="alert" style="margin-bottom: 16px;">
+                        <div class="vehicle-alert__content">
+                            <LucideIcon Name="alert-triangle" />
+                            <span>@_modalError</span>
+                        </div>
+                    </div>
+                }
+
+                <div class="vehicle-form-grid">
+                    <div class="vehicle-field">
+                        <label for="my-guest-room">@L["Room"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="my-guest-room" @bind="_guestRoomId">
+                            @foreach (var room in _rooms)
+                            {
+                                <option value="@room.RoomId">@string.Format(L["RoomPropertyOptionFormat"].Value, room.RoomCode, room.PropertyName)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="my-guest-type">@L["VehicleType"] <span class="required" aria-hidden="true">*</span></label>
+                        <select id="my-guest-type" @bind="_guestType">
+                            @foreach (var vt in Enum.GetValues<VehicleType>())
+                            {
+                                <option value="@vt">@L[vt.ToString()]</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="my-guest-plate">@L["PlateNumber"] <span class="required" aria-hidden="true">*</span></label>
+                        <input id="my-guest-plate" @bind="_guestPlate" @bind:event="oninput" maxlength="25" placeholder="@L["GuestPlatePlaceholder"]" />
+                        @if (!string.IsNullOrWhiteSpace(_guestPlate))
+                        {
+                            <span class="vehicle-field-hint">@L["PlateNormalizedPreview"] <strong>@VehicleRules.NormalizePlateNumber(_guestPlate)</strong></span>
+                        }
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="my-guest-name">@L["GuestNameLabel"]</label>
+                        <input id="my-guest-name" @bind="_guestName" maxlength="150" placeholder="@L["GuestNamePlaceholder"]" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="my-guest-hours">@L["MyGuestHoursLabel"]</label>
+                        <input id="my-guest-hours" type="number" min="1" max="72" @bind="_guestHours" />
+                    </div>
+
+                    <div class="vehicle-field">
+                        <label for="my-guest-note">@L["Note"]</label>
+                        <input id="my-guest-note" @bind="_guestNote" maxlength="500" />
+                    </div>
+                </div>
+            </div>
+
+            <footer class="vehicle-form-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => _showGuestModal = false">@L["Cancel"]</button>
+                <button type="submit" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(_guestPlate)">
+                    <LucideIcon Name="check" />
+                    <span>@L["Save"]</span>
+                </button>
+            </footer>
+        </form>
+    </FeatureDialog>
+}
+
+@code {
+    private DataTableLabels _tableLabels = new();
+    private IReadOnlyList<DataTableColumn<VehicleDto>> _vehicleColumns = [];
+    private IReadOnlyList<DataTableColumn<GuestVehicleNoticeDto>> _guestColumns = [];
+
+    private IReadOnlyList<VehicleRoomOptionDto> _rooms = [];
+    private IReadOnlyList<VehiclePropertyOptionDto> _blockingProperties = [];
+    private VehicleSummaryDto _summary = new(0, 0, 0, 0, 0, 0m, 0, 0, 0);
+
+    private int _vehicleTableKey;
+    private int _guestTableKey;
+    private int? _openVehicleMenuId;
+    private int? _openGuestMenuId;
+
+    private bool _loading = true;
+    private string? _error;
+    private string? _modalError;
+
+    private VehicleDto? _qrVehicle;
+    private VehicleDto? _incidentVehicle;
+    private bool _showBlockingModal;
+    private bool _showIncidentModal;
+    private int _blockingPropertyId;
+    private string? _blockingInitialPlate;
+    private bool _showGuestModal;
+
+    private int _guestRoomId;
+    private VehicleType _guestType = VehicleType.ManualMotorbike;
+    private string _guestPlate = string.Empty;
+    private string? _guestName;
+    private int _guestHours = 12;
+    private string? _guestNote;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableLabels = DataTableLabelLocalizer.Create(SL);
+        _vehicleColumns = BuildVehicleColumns();
+        _guestColumns = BuildGuestColumns();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _rooms = await Session.RoomsAsync();
+            _blockingProperties = _rooms
+                .GroupBy(r => r.PropertyId)
+                .Select(g => new VehiclePropertyOptionDto(g.Key, g.First().PropertyName, false))
+                .ToList();
+            var list = await Session.ListVehiclesAsync(new VehicleFilter());
+            _summary = list.Summary;
+            _vehicleTableKey++;
+            _guestTableKey++;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task<PagedResult<VehicleDto>> ProvideMyVehiclesAsync(DataTableRequest request)
+    {
+        _openVehicleMenuId = null;
+        var res = await Session.ListVehiclesAsync(new VehicleFilter());
+        _summary = res.Summary;
+        await InvokeAsync(StateHasChanged);
+
+        var items = res.Items
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return new PagedResult<VehicleDto>
+        {
+            Items = items,
+            TotalCount = res.Items.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private async Task<PagedResult<GuestVehicleNoticeDto>> ProvideMyGuestsAsync(DataTableRequest request)
+    {
+        _openGuestMenuId = null;
+        var all = await Session.ListGuestNoticesAsync();
+        var items = all
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        return new PagedResult<GuestVehicleNoticeDto>
+        {
+            Items = items,
+            TotalCount = all.Count,
+            Page = request.Page,
+            PageSize = request.PageSize,
+        };
+    }
+
+    private IReadOnlyList<DataTableColumn<VehicleDto>> BuildVehicleColumns()
+    {
+        RenderFragment<VehicleDto> vehicleCol = item => @<div class="vh-room-cell">
+            <button type="button" class="vh-code-btn cell-truncate" @onclick="() => _qrVehicle = item">
+                @VehicleRules.FormatPlateForDisplay(item.PlateNumber)
+            </button>
+            @if (!string.IsNullOrWhiteSpace(item.Brand) || !string.IsNullOrWhiteSpace(item.Color))
+            {
+                <span class="vh-cell-secondary cell-truncate">@(string.IsNullOrWhiteSpace(item.Brand) ? item.Color : $"{item.Brand} · {item.Color}")</span>
+            }
+        </div>;
+
+        RenderFragment<VehicleDto> roomCol = item => @<div class="vh-room-cell">
+            <div class="vh-room-line">
+                <span class="cell-link">@item.RoomCode</span>
+                <StatusBadge Text="@L[item.Status.ToString()]"
+                             Tone="@(item.Status == VehicleStatus.Active ? BadgeTone.Success : BadgeTone.Neutral)" />
+            </div>
+            <span class="cell-link is-quiet vh-cell-secondary-link cell-truncate">@item.PropertyName</span>
+        </div>;
+
+        RenderFragment<VehicleDto> locationCol = item => @<div class="vh-room-cell">
+            <strong class="cell-truncate">@L[item.VehicleType.ToString()]</strong>
+            <span class="vh-cell-secondary cell-truncate">
+                @(!string.IsNullOrWhiteSpace(item.ParkingSlotCode)
+                    ? $"{L["SlotLabel"]} {item.ParkingSlotCode}{(string.IsNullOrWhiteSpace(item.ParkingZoneName) ? "" : $" · {item.ParkingZoneName}")}"
+                    : (!string.IsNullOrWhiteSpace(item.ParkingZoneName) ? item.ParkingZoneName : L["CommonYard"].Value))
+            </span>
+        </div>;
+
+        RenderFragment<VehicleDto> financeCol = item => @<div class="vh-room-cell tabular-nums">
+            <strong>@MoneyFormatter.Format(item.MonthlyFee)</strong>
+            <span class="vh-cell-secondary">@L["MonthlyFeeShort"]</span>
+        </div>;
+
+        RenderFragment<VehicleDto> actionsCol = item => @<div class="p2-row-actions">
+            <button class="icon-button p2-menu-trigger @(_openVehicleMenuId == item.Id ? "is-open" : null)" type="button"
+                    aria-label="@L["Action"]" title="@L["Action"]"
+                    aria-haspopup="menu" aria-expanded="@(_openVehicleMenuId == item.Id ? "true" : "false")"
+                    aria-controls="@($"my-vh-menu-{item.Id}")"
+                    @onclick="() => _openVehicleMenuId = _openVehicleMenuId == item.Id ? null : item.Id">
+                <LucideIcon Name="ellipsis" />
+            </button>
+            @if (_openVehicleMenuId == item.Id)
+            {
+                <div id="@($"my-vh-menu-{item.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                    <button class="p2-row-menu-item" type="button" role="menuitem"
+                            @onclick="() => { _openVehicleMenuId = null; _qrVehicle = item; }">
+                        <LucideIcon Name="qr-code" /><span>@L["ViewQrBtn"]</span>
+                    </button>
+                    <button class="p2-row-menu-item" type="button" role="menuitem"
+                            @onclick="() => MenuBlockingAlert(item)">
+                        <LucideIcon Name="bell" /><span>@L["BlockingAlertBtn"]</span>
+                    </button>
+                    <button class="p2-row-menu-item" type="button" role="menuitem"
+                            @onclick="() => MenuReportIncident(item)">
+                        <LucideIcon Name="wrench" /><span>@L["ReportIncidentBtn"]</span>
+                    </button>
+                </div>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "plate", Title = L["PlateNumber"], Template = vehicleCol, Width = "20%" },
+            new() { Key = "room", Title = L["ColumnRoomProperty"], Template = roomCol, Width = "24%" },
+            new() { Key = "location", Title = L["ColumnTypeLocation"], Template = locationCol, Width = "26%" },
+            new() { Key = "fee", Title = L["ColumnFinance"], Template = financeCol, Width = "18%" },
+            new() { Key = "actions", Title = L["Action"], Template = actionsCol, CellClass = "cell-actions", Width = "12%" },
+        ];
+    }
+
+    private IReadOnlyList<DataTableColumn<GuestVehicleNoticeDto>> BuildGuestColumns()
+    {
+        RenderFragment<GuestVehicleNoticeDto> vehicleCol = g => @<div class="vh-room-cell">
+            <span class="vh-code-btn cell-truncate">@VehicleRules.FormatPlateForDisplay(g.PlateNumber)</span>
+            <span class="vh-cell-secondary cell-truncate">@L[g.VehicleType.ToString()]</span>
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> guestCol = g => @<div class="vh-room-cell">
+            <span class="cell-link is-quiet cell-truncate">@(g.GuestName ?? "—")</span>
+            @if (!string.IsNullOrWhiteSpace(g.Note))
+            {
+                <span class="vh-cell-secondary cell-truncate">@g.Note</span>
+            }
+        </div>;
+
+        RenderFragment<GuestVehicleNoticeDto> statusCol = g => @<StatusBadge Text="@L[g.Status.ToString()]"
+                                                                             Tone="@(g.Status == GuestVehicleNoticeStatus.Active ? BadgeTone.Success : BadgeTone.Neutral)" />;
+
+        RenderFragment<GuestVehicleNoticeDto> actionsCol = g => @<div class="p2-row-actions">
+            @if (g.Status == GuestVehicleNoticeStatus.Active)
+            {
+                <button class="icon-button p2-menu-trigger @(_openGuestMenuId == g.Id ? "is-open" : null)" type="button"
+                        aria-label="@L["Action"]" title="@L["Action"]"
+                        aria-haspopup="menu" aria-expanded="@(_openGuestMenuId == g.Id ? "true" : "false")"
+                        aria-controls="@($"my-guest-menu-{g.Id}")"
+                        @onclick="() => _openGuestMenuId = _openGuestMenuId == g.Id ? null : g.Id">
+                    <LucideIcon Name="ellipsis" />
+                </button>
+                @if (_openGuestMenuId == g.Id)
+                {
+                    <div id="@($"my-guest-menu-{g.Id}")" class="p2-row-menu" role="menu" aria-label="@L["Action"]" data-row-menu>
+                        <button class="p2-row-menu-item" type="button" role="menuitem"
+                                @onclick="() => MarkGuestDepartedAsync(g.Id)">
+                            <LucideIcon Name="circle-check" /><span>@L["MarkCompletedBtn"]</span>
+                        </button>
+                    </div>
+                }
+            }
+            else
+            {
+                <span class="muted">—</span>
+            }
+        </div>;
+
+        return
+        [
+            new() { Key = "plate", Title = L["PlateNumber"], Template = vehicleCol, Width = "22%" },
+            new() { Key = "guest", Title = L["GuestNameLabel"], Template = guestCol, Width = "26%" },
+            new() { Key = "to", Title = L["ExpectedToLabel"], Value = g => DateFormatter.FormatDateTime(g.ExpectedTo.UtcDateTime), Width = "24%" },
+            new() { Key = "status", Title = L["Status"], Template = statusCol, Width = "16%" },
+            new() { Key = "actions", Title = L["Action"], Template = actionsCol, CellClass = "cell-actions", Width = "12%" },
+        ];
+    }
+
+    private void OpenBlockingModal()
+    {
+        _blockingPropertyId = _rooms.FirstOrDefault()?.PropertyId ?? 0;
+        _blockingInitialPlate = null;
+        _modalError = null;
+        _showBlockingModal = true;
+    }
+
+    private void MenuBlockingAlert(VehicleDto vehicle)
+    {
+        _openVehicleMenuId = null;
+        _blockingPropertyId = vehicle.PropertyId;
+        _blockingInitialPlate = vehicle.PlateNumber;
+        _modalError = null;
+        _showBlockingModal = true;
+    }
+
+    private void OpenIncidentModal()
+    {
+        _incidentVehicle = null;
+        _modalError = null;
+        _showIncidentModal = true;
+    }
+
+    private void MenuReportIncident(VehicleDto vehicle)
+    {
+        _openVehicleMenuId = null;
+        _incidentVehicle = vehicle;
+        _modalError = null;
+        _showIncidentModal = true;
+    }
+
+    private void OpenGuestModal()
+    {
+        _guestRoomId = _rooms.FirstOrDefault()?.RoomId ?? 0;
+        _guestPlate = string.Empty;
+        _guestName = null;
+        _guestHours = 12;
+        _guestNote = null;
+        _modalError = null;
+        _showGuestModal = true;
+    }
+
+    private async Task CreateGuestNoticeAsync()
+    {
+        _modalError = null;
+        try
+        {
+            var now = Clock.GetUtcNow();
+            await Session.CreateGuestNoticeAsync(new GuestVehicleNoticeCreateRequest
+            {
+                RoomId = _guestRoomId,
+                PlateNumber = _guestPlate,
+                VehicleType = _guestType,
+                GuestName = _guestName,
+                ExpectedFrom = now,
+                ExpectedTo = now.AddHours(Math.Clamp(_guestHours, 1, 72)),
+                Note = _guestNote,
+            });
+            _showGuestModal = false;
+            Toasts.Success(L["Saved"]);
+            await LoadAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task MarkGuestDepartedAsync(int id)
+    {
+        _openGuestMenuId = null;
+        try
+        {
+            await Session.UpdateGuestNoticeStatusAsync(id, GuestVehicleNoticeStatus.Completed);
+            Toasts.Success(L["Saved"]);
+            await LoadAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _error = Resolve(ex);
+        }
+    }
+
+    private async Task SendBlockingAlertAsync(BlockingAlertRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            var res = await Session.SendBlockingAlertAsync(request);
+            _showBlockingModal = false;
+            Toasts.Success(string.Format(
+                L["BlockingAlertSentNotice"],
+                VehicleRules.FormatPlateForDisplay(res.MatchedPlateNumber ?? request.PlateQuery),
+                res.RoomCode ?? "—",
+                res.NotifiedCount));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private async Task SubmitIncidentAsync(VehicleIncidentCreateRequest request)
+    {
+        _modalError = null;
+        try
+        {
+            await Session.ReportIncidentAsync(request);
+            _showIncidentModal = false;
+            Toasts.Success(L["Saved"]);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _modalError = Resolve(ex);
+        }
+    }
+
+    private static BadgeTone TypeTone(VehicleType type) => type switch
+    {
+        VehicleType.ElectricMotorbike => BadgeTone.Success,
+        VehicleType.ManualMotorbike => BadgeTone.Info,
+        VehicleType.Scooter => BadgeTone.Warning,
+        _ => BadgeTone.Neutral,
+    };
+
+    private string Resolve(Exception ex) =>
+        ex is VehiclePageException ? L[ex.Message] : L["LoadFailed"];
+}

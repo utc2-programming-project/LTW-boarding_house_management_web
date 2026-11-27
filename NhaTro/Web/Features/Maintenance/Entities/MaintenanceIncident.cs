@@ -7,6 +7,10 @@ public sealed class MaintenanceIncident : ISoftDeletable
 {
     public int Id { get; set; }
     public int RoomId { get; set; }
+
+    /// <summary>Phương tiện liên quan (nếu sự cố gắn với một xe đã đăng ký).</summary>
+    public int? VehicleId { get; set; }
+    public string? VehiclePlateNumber { get; set; }
     public string ReportedByUserId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;

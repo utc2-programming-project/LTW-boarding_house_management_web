@@ -349,3 +349,9 @@
         onNavigated
     };
 })();
+
+// Cuộn tới khối nội dung vừa mở (form inline) để người dùng thao tác ngay.
+window.vhtScrollTo = function (id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+};

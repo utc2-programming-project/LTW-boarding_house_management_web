@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Web.Configuration.Options;
 using Web.Data;
 using Web.Features.AccessControl.DTOs;
 using Web.Features.AccessControl.Entities;
@@ -25,7 +27,8 @@ public sealed class GateAccessService(
     TimeProvider clock,
     IGateTokenService tokens,
     IGateController gateController,
-    AuditLogService audit) : IGateAccessService
+    AuditLogService audit,
+    IOptions<GateRetentionOptions> retention) : IGateAccessService
 {
     public async Task<GateVerifyResult> VerifyAndRecordAsync(
         GateVerifyRequest request, PropertyCaller caller, CancellationToken ct = default)
@@ -192,6 +195,17 @@ public sealed class GateAccessService(
             .Where(log => properties.Any(property => property.Id == log.PropertyId));
 
         if (filter.From is { } from) query = query.Where(log => log.OccurredAt >= from);
+
+        // Hạn lưu 30 ngày: không hiển thị nhật ký cũ hơn cutoff dù bộ lọc không đặt From.
+        var retentionDays = retention.Value.RetentionDays;
+        if (retentionDays > 0)
+        {
+            var cutoff = clock.GetUtcNow().AddDays(-retentionDays);
+            if (filter.From is null || filter.From < cutoff)
+            {
+                query = query.Where(log => log.OccurredAt >= cutoff);
+            }
+        }
         if (filter.To is { } to) query = query.Where(log => log.OccurredAt <= to);
         if (filter.Success is { } success) query = query.Where(log => log.IsSuccess == success);
         if (filter.Direction is { } direction) query = query.Where(log => log.Direction == direction);

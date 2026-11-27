@@ -7,14 +7,18 @@
 <div class="dashboard-page">
     <PageHeading Title="@L["HomeTitle"]" HelpText="@L["Subtitle"]">
         <Actions>
+            @HeaderActions
             <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="RefreshAsync"><LucideIcon Name="refresh" />@L["Refresh"]</button>
         </Actions>
     </PageHeading>
     @HeaderContent
-    <div class="filter-bar filter-bar--panel">
+    <div class="filter-bar filter-bar--panel filter-bar--sticky">
         <div class="filter-bar__row">
             <div class="filter-bar__stack filter-bar__select">
-                <label for="dashboard-property">@L["Property"]</label>
+                <div class="filter-bar__label">
+                    <label for="dashboard-property">@L["Property"]</label>
+                    <HelpTip Text="@L["RoomScopeNote"]" />
+                </div>
                 <select id="dashboard-property" class="input" value="@Filter.PropertyId" @onchange="ChangePropertyAsync" disabled="@(Busy || PropertyState != DashboardLoadState.Loaded)">
                     <option value="">@L["AllProperties"]</option>
                     @foreach (var property in Properties)
@@ -24,7 +28,10 @@
                 </select>
             </div>
             <div class="filter-bar__stack filter-bar__select">
-                <label for="dashboard-period">@L["PendingPeriod"]</label>
+                <div class="filter-bar__label">
+                    <label for="dashboard-period">@L["PendingPeriod"]</label>
+                    <HelpTip Text="@L["CurrentPeriodNote"]" />
+                </div>
                 <select id="dashboard-period" class="input" value="@Filter.Period" @onchange="ChangePeriodAsync" disabled="@Busy">
                     @foreach (var period in Enum.GetValues<DashboardPeriod>())
                     {
@@ -36,8 +43,6 @@
                 <FilterResetButton OnClick="ClearFiltersAsync" Disabled="Busy" />
             </div>
         </div>
-        <p class="scope-note">@L["RoomScopeNote"]</p>
-        <p class="scope-note">@L["CurrentPeriodNote"]</p>
     </div>
     @if (PropertyState is DashboardLoadState.Error or DashboardLoadState.Denied)
     {
@@ -48,8 +53,11 @@
                  RoomsHref="@RoomsHref" FilterDescription="@FilterDescription"
                  Revenue="@Revenue" RevenueState="@RevenueState" RevenueHref="@RevenueHref" RevenueRetry="LoadRevenueAsync"
                  TotalRevenue="@TotalRevenue" TotalRevenueState="@TotalRevenueState" TotalRevenueRetry="LoadTotalRevenueAsync"
-                 Incidents="@Incidents" IncidentState="@IncidentState" IncidentsHref="@IncidentsHref" IncidentRetry="LoadIncidentsAsync" />
+                 Incidents="@Incidents" IncidentState="@IncidentState" IncidentsHref="@IncidentsHref" IncidentRetry="LoadIncidentsAsync"
+                 Vehicles="@Vehicles" VehicleState="@VehicleState" VehiclesHref="@VehiclesHref" VehicleRetry="LoadVehiclesAsync" />
     <a class="reports-link" href="@ReportsHref">@L["ViewReports"]</a>
+    @* Cặp panel luôn nằm chung 1 hàng; panel đơn được đưa ra khỏi grid để chiếm toàn bộ chiều rộng
+       (gộp 2 ô thay vì để 1 ô trống như cơ chế grid 2 cột cũ). *@
     <div class="panel-grid">
         <DashboardPanel Title="@L["RoomStructure"]" State="@RoomState" DeniedText="@L["RoomsDenied"]" Retry="LoadRoomsAsync">
             @if (Rooms is not null) { <RoomStructureChart Kpis="@Rooms" /> }
@@ -57,24 +65,45 @@
         <DashboardPanel Title="@L["Tenants"]" Icon="users" State="@TenantState" DeniedText="@L["TenantsDenied"]" Retry="LoadTenantsAsync">
             <TenantOverviewCard Kpis="@Tenants" />
         </DashboardPanel>
+    </div>
+    @if (IsOwner)
+    {
+        <DashboardPanel Title="@L["RevenueChart"]" State="@TotalRevenueState" DeniedText="@L["RevenueDenied"]" Retry="LoadTotalRevenueAsync">
+            <p class="scope-note">@L["AllTimeData"]</p>
+            <RevenueChart Periods="@(TotalRevenue?.Periods)" />
+        </DashboardPanel>
+    }
+    else
+    {
+        <DashboardPanel Title="@L["Incidents"]" Icon="wrench" State="@IncidentState" DeniedText="@L["IncidentsDenied"]" Retry="LoadIncidentsAsync">
+            <IncidentOverviewCard Kpis="@Incidents" ReportsHref="@IncidentsHref" />
+        </DashboardPanel>
+    }
+    <div class="panel-grid panel-grid--charts">
+        <DashboardPanel Title="@L["OccupancyTrend"]" State="@OccupancyState" DeniedText="@L["RoomsDenied"]" Retry="LoadOccupancyAsync">
+            <OccupancyTrendChart Months="@(Occupancy?.Months)" />
+        </DashboardPanel>
         @if (IsOwner)
         {
-            <DashboardPanel CssClass="panel-full" Title="@L["RevenueChart"]" State="@TotalRevenueState" DeniedText="@L["RevenueDenied"]" Retry="LoadTotalRevenueAsync">
-                <p class="scope-note">@L["AllTimeData"]</p>
-                <RevenueChart Periods="@(TotalRevenue?.Periods)" />
+            <DashboardPanel Title="@L["DebtAging"]" State="@DebtAgingState" DeniedText="@L["RevenueDenied"]" Retry="LoadDebtAgingAsync">
+                <DebtAgingChart Data="@DebtAging" />
             </DashboardPanel>
         }
         else
         {
-            <DashboardPanel CssClass="panel-full" Title="@L["Incidents"]" Icon="wrench" State="@IncidentState" DeniedText="@L["IncidentsDenied"]" Retry="LoadIncidentsAsync">
-                <IncidentOverviewCard Kpis="@Incidents" ReportsHref="@IncidentsHref" />
+            <DashboardPanel Title="@L["IncidentStatusTitle"]" State="@IncidentState" DeniedText="@L["IncidentsDenied"]" Retry="LoadIncidentsAsync">
+                <IncidentStatusChart Kpis="@Incidents" />
             </DashboardPanel>
         }
     </div>
+    <DashboardPanel Title="@L["ContractExpiry"]" State="@ContractExpiryState" DeniedText="@L["RoomsDenied"]" Retry="LoadContractExpiryAsync">
+        <ContractExpiryChart Months="@ContractExpiry" />
+    </DashboardPanel>
 </div>
 
 @code {
     [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
     [Parameter] public EventCallback RefreshAdditionalContent { get; set; }
     [Parameter] public bool AdditionalContentBusy { get; set; }
 
@@ -85,20 +114,31 @@
     private RevenueReportDto? Revenue;
     private RevenueReportDto? TotalRevenue;
     private IncidentReportKpis? Incidents;
+    private OccupancyReportResult? Occupancy;
+    private DebtAgingDto? DebtAging;
+    private IReadOnlyList<ContractExpiryMonthDto>? ContractExpiry;
+    private VehicleDashboardKpis? Vehicles;
     private DashboardLoadState PropertyState = DashboardLoadState.Loading;
     private DashboardLoadState RoomState = DashboardLoadState.Loading;
     private DashboardLoadState TenantState = DashboardLoadState.Loading;
     private DashboardLoadState RevenueState = DashboardLoadState.Loading;
     private DashboardLoadState TotalRevenueState = DashboardLoadState.Loading;
     private DashboardLoadState IncidentState = DashboardLoadState.Loading;
+    private DashboardLoadState OccupancyState = DashboardLoadState.Loading;
+    private DashboardLoadState DebtAgingState = DashboardLoadState.Loading;
+    private DashboardLoadState ContractExpiryState = DashboardLoadState.Loading;
+    private DashboardLoadState VehicleState = DashboardLoadState.Loading;
     private bool IsOwner;
     private bool Refreshing;
     private DateTime? LastRefreshed;
     private bool Busy => AdditionalContentBusy || Refreshing || PropertyState == DashboardLoadState.Loading
         || RoomState == DashboardLoadState.Loading || TenantState == DashboardLoadState.Loading
         || RevenueState == DashboardLoadState.Loading || TotalRevenueState == DashboardLoadState.Loading
-        || IncidentState == DashboardLoadState.Loading;
+        || IncidentState == DashboardLoadState.Loading || OccupancyState == DashboardLoadState.Loading
+        || DebtAgingState == DashboardLoadState.Loading || ContractExpiryState == DashboardLoadState.Loading
+        || VehicleState == DashboardLoadState.Loading;
     private string RoomsHref => Filter.PropertyId is { } id ? $"/rooms?propertyId={id}" : "/rooms";
+    private string VehiclesHref => Filter.PropertyId is { } id ? $"/vehicles?propertyId={id}" : "/vehicles";
     private string ReportsHref => Filter.PropertyId is { } id ? $"/reports?propertyId={id}" : "/reports";
     private string RevenueHref => ReportsHref;
     private string IncidentsHref => Filter.PropertyId is { } id ? $"/reports?propertyId={id}" : "/reports";
@@ -133,7 +173,8 @@
                 await RefreshAdditionalContent.InvokeAsync();
             }
             await Task.WhenAll(LoadPropertiesAsync(), LoadRoomsAsync(), LoadTenantsAsync(),
-                LoadIncidentsAsync(), LoadRevenueAsync(), LoadTotalRevenueAsync());
+                LoadIncidentsAsync(), LoadRevenueAsync(), LoadTotalRevenueAsync(),
+                LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(), LoadVehiclesAsync());
             LastRefreshed = PageService.GetLastRefreshedAtUtc();
             if (States.Contains(DashboardLoadState.Error)) Toasts.Error(L["Error"]);
             else if (notify && States.All(s => s == DashboardLoadState.Loaded)) Toasts.Success(L["RefreshSuccess"]);
@@ -142,14 +183,16 @@
     }
 
     private IEnumerable<DashboardLoadState> States =>
-        [PropertyState, RoomState, TenantState, IncidentState, RevenueState, TotalRevenueState];
+        [PropertyState, RoomState, TenantState, IncidentState, RevenueState, TotalRevenueState,
+         OccupancyState, DebtAgingState, ContractExpiryState, VehicleState];
 
     private async Task ChangePropertyAsync(ChangeEventArgs args)
     {
         if (Busy) return;
         Filter.PropertyId = int.TryParse(args.Value?.ToString(), out var id) ? id : null;
         await Task.WhenAll(LoadRoomsAsync(), LoadTenantsAsync(), LoadIncidentsAsync(), LoadRevenueAsync(),
-            LoadTotalRevenueAsync());
+            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(),
+            LoadVehiclesAsync());
     }
 
     private async Task ChangePeriodAsync(ChangeEventArgs args)
@@ -165,7 +208,8 @@
         Filter.PropertyId = null;
         Filter.Period = DashboardPeriod.Month;
         await Task.WhenAll(LoadRoomsAsync(), LoadTenantsAsync(), LoadIncidentsAsync(), LoadRevenueAsync(),
-            LoadTotalRevenueAsync());
+            LoadTotalRevenueAsync(), LoadOccupancyAsync(), LoadDebtAgingAsync(), LoadContractExpiryAsync(),
+            LoadVehiclesAsync());
     }
 
     private async Task LoadPropertiesAsync()
@@ -253,6 +297,57 @@
         }
         catch (UnauthorizedAccessException) { TotalRevenueState = DashboardLoadState.Denied; }
         catch (Exception ex) { TotalRevenueState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard total revenue failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task LoadOccupancyAsync()
+    {
+        OccupancyState = DashboardLoadState.Loading;
+        Occupancy = null;
+        try { Occupancy = await PageService.GetOccupancyAsync(Filter.PropertyId); OccupancyState = DashboardLoadState.Loaded; }
+        catch (UnauthorizedAccessException) { OccupancyState = DashboardLoadState.Denied; }
+        catch (Exception ex) { OccupancyState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard occupancy failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task LoadDebtAgingAsync()
+    {
+        if (!IsOwner)
+        {
+            DebtAging = null;
+            DebtAgingState = DashboardLoadState.Loaded;
+            return;
+        }
+
+        DebtAgingState = DashboardLoadState.Loading;
+        DebtAging = null;
+        try { DebtAging = await PageService.GetDebtAgingAsync(Filter.PropertyId); DebtAgingState = DashboardLoadState.Loaded; }
+        catch (UnauthorizedAccessException) { DebtAgingState = DashboardLoadState.Denied; }
+        catch (Exception ex) { DebtAgingState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard debt aging failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task LoadContractExpiryAsync()
+    {
+        ContractExpiryState = DashboardLoadState.Loading;
+        ContractExpiry = null;
+        try { ContractExpiry = await PageService.GetContractExpiryAsync(Filter.PropertyId); ContractExpiryState = DashboardLoadState.Loaded; }
+        catch (UnauthorizedAccessException) { ContractExpiryState = DashboardLoadState.Denied; }
+        catch (Exception ex) { ContractExpiryState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard contract expiry failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task LoadVehiclesAsync()
+    {
+        VehicleState = DashboardLoadState.Loading;
+        Vehicles = null;
+        try
+        {
+            Vehicles = await PageService.GetVehicleKpisAsync(Filter.PropertyId);
+            VehicleState = DashboardLoadState.Loaded;
+        }
+        catch (UnauthorizedAccessException) { VehicleState = DashboardLoadState.Denied; }
+        catch (Exception ex) { VehicleState = DashboardLoadState.Error; Logger.LogError(ex, "Dashboard vehicles failed"); if (!Refreshing) Toasts.Error(L["Error"]); }
         finally { await InvokeAsync(StateHasChanged); }
     }
 }

@@ -1,0 +1,77 @@
+WEB VẬN HÀNH NHÀ TRỌ — GIAO DIỆN HIỆN TRẠNG: TRANG CHỦ /home — CHỦ TRỌ
+====================================================================================================
+> Mô tả theo code đang chạy: HomeView.razor (nhánh IsManagement) + DashboardOverview.razor.
+> Đây KHÔNG phải bản v2 trong file txt đính kèm; [{...}] là số liệu thực từ DB, không chèn số mẫu.
+> Nguồn nhãn: HomeResource / DashboardResource / Shared (vi-VN).
+
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Web vận hành nhà trọ      [☰]  [ Tìm kiếm nhanh... ]              [🔔 {số chưa đọc}]  [{avatar}]  │
+├──────────────────────────┬────────────────────────────────────────────────────────────────────────┤
+│ MENU (sidebar)           │ Trang chủ · Tổng quan vận hành nhà trọ              [Làm mới]         │
+│                          │                                                                        │
+│ ▣ Trang chủ              │ LỐI TẮT                                                                │
+│                          │ [⚡ Ghi chỉ số] [▤ Lập hoá đơn] [▣ Tạo hợp đồng] [♧ Thêm khách thuê]    │
+│ NHÀ TRỌ & HỢP ĐỒNG       │                                                                        │
+│ ▣ Nhà trọ                │ Danh sách công việc bên dưới áp dụng cho toàn bộ phạm vi bạn được      │
+│ ▤ Phòng                  │ cấp quyền, không theo bộ lọc thống kê bên dưới.                        │
+│ ♧ Khách thuê             │                                                                        │
+│ ▣ Hợp đồng               │ VIỆC CẦN LÀM                                                           │
+│                          │ ┌──────────────┐┌──────────────┐┌──────────────┐┌──────────────┐      │
+│ TÀI CHÍNH                │ │ Hoá đơn chưa ││ Yêu cầu chờ  ││ HĐ sắp hết   ││ Sự cố đang   │      │
+│ ◉ Dịch vụ                │ │ thu          ││ duyệt        ││ hạn (30 ngày)││ mở           │      │
+│ ▤ Hóa đơn                │ │     [{số}] › ││    [{số}] ›  ││    [{số}] ›  ││   [{số}] ›   │      │
+│ ◉ Xác nhận thanh toán    │ └──────────────┘└──────────────┘└──────────────┘└──────────────┘      │
+│                          │                                                                        │
+│ VẬN HÀNH                 │ ┌───────────────────────────────────┐┌────────────────────────────────┐ │
+│ ⚙ Sự cố                  │ │ HÓA ĐƠN CHƯA THU   Xem tất cả →  ││ HĐ SẮP HẾT HẠN    Xem tất cả →│ │
+│ ◉ Ra vào cổng            │ │ [{mã phòng}] · [{nhà trọ}]       ││ [{mã phòng}] [{khách thuê}]    │ │
+│ ◉ Kiosk cổng             │ │   Kỳ [{dd/MM} – {dd/MM/yyyy}]    ││   Kết thúc [{dd/MM/yyyy}]      │ │
+│ ◉ Nhật ký cổng           │ │   [{tiền}] › (mở hoá đơn)        ││   Còn [{n}] ngày                │ │
+│ ◉ Cấu hình cổng          │ │ … tối đa 5 dòng (Status=Issued)  ││ … tối đa 5 dòng (30 ngày)      │ │
+│ ◉ Báo cáo                │ └───────────────────────────────────┘└────────────────────────────────┘ │
+│ ✦ Trợ lý AI              │                                                                        │
+│ ✓ Hàng đợi duyệt         │ ┌────────────────────────────────────────────────────────────────────┐ │
+│ ⚙ Công tắc Quản lý       │ │ BỘ LỌC                                                            │ │
+│                          │ │ Nhà trọ [ Tất cả nhà ▼ ]   Kỳ cho báo cáo theo thời gian          │ │
+│ [{Họ tên}] / Chủ trọ     │ │ [ Tháng này ▼ ]  [ Xóa bộ lọc ]                                   │ │
+│ [avatar] [⇄ đổi vai trò] │ │ Chỉ thống kê phòng đang hoạt động. Phòng/khách là số liệu hiện      │ │
+│ [VI|EN] [☾] [Đăng xuất]  │ │ trạng theo nhà trọ; kỳ áp dụng cho báo cáo theo thời gian.         │ │
+│                          │ └────────────────────────────────────────────────────────────────────┘ │
+│                          │ Cập nhật lúc: [dd/MM/yyyy HH:mm]                                       │
+│                          │                                                                        │
+│                          │ ┌───────────────────┐┌───────────────────┐┌───────────────────┐       │
+│                          │ │ Tổng phòng đang   ││ Tỷ lệ lấp đầy     ││ Doanh thu ghi nhận│       │
+│                          │ │ hoạt động         ││                   ││                   │       │
+│                          │ │ [{số}]            ││ [{n} %]           ││ [{tiền}]          │       │
+│                          │ │ Số liệu hiện tại  ││ Số liệu hiện tại  ││ Số liệu trong kỳ  │       │
+│                          │ └───────────────────┘└───────────────────┘└───────────────────┘       │
+│                          │ ┌───────────────────┐┌───────────────────┐┌───────────────────┐       │
+│                          │ │ Tổng doanh thu    ││ Công nợ còn phải  ││ Sự cố trong kỳ    │       │
+│                          │ │                   ││ thu               ││                   │       │
+│                          │ │ [{tiền}]          ││ [{tiền}]          ││ [{số}]            │       │
+│                          │ │ Luỹ kế toàn bộ    ││ Luỹ kế toàn bộ    ││ Số liệu trong kỳ  │       │
+│                          │ └───────────────────┘└───────────────────┘└───────────────────┘       │
+│                          │                                                                        │
+│                          │ Xem báo cáo phòng và khách thuê →                                       │
+│                          │                                                                        │
+│                          │ ┌──────────────────────────────────┐┌────────────────────────────────┐ │
+│                          │ │ CƠ CẤU PHÒNG                     ││ KHÁCH THUÊ                     │ │
+│                          │ │ Còn trống  [{số}]  [{n} %]        ││ Tổng hồ sơ        [{số}]       │ │
+│                          │ │ Đang thuê  [{số}]  [{n} %]        ││ Đang hoạt động    [{số}]       │ │
+│                          │ │ Bảo trì    [{số}]  [{n} %]        ││ Khách đang thuê   [{số}]       │ │
+│                          │ │ (donut + chú thích hiện tại)     ││ Có tài khoản      [{số}]       │ │
+│                          │ │                                  ││ Xem khách thuê →               │ │
+│                          │ └──────────────────────────────────┘└────────────────────────────────┘ │
+│                          │ ┌────────────────────────────────────────────────────────────────────┐ │
+│                          │ │ DOANH THU THEO KỲ   · Số liệu luỹ kế toàn bộ                        │ │
+│                          │ │ [biểu đồ cột/đường theo kỳ: doanh thu + công nợ]                   │ │
+│                          │ └────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+
+GHI CHÚ HIỆN TRẠNG (khác bản v2):
+- Không có nút [+ Tạo nhanh] trên thanh trên; lối tắt nằm ngay đầu nội dung.
+- Bộ lọc là card thường, KHÔNG cố định khi cuộn; nhãn kỳ là "Kỳ cho báo cáo theo thời gian".
+- Không có các nhóm "SỐ LIỆU HIỆN TRẠNG / TRONG KỲ / LŨY KẾ", không có 4 biểu đồ bổ sung.
+- Không có thẻ "Tổng quan hôm nay" riêng; KPI do DashboardOverview render (6 thẻ như trên).
+- "Doanh thu tháng" của HomePageService không hiển thị vì HomeView gọi includeManagementKpis=false.
+- KPI/Panel có trạng thái Loading/Error/Denied: hiện skeleton / "—" + thông báo + [Thử lại].

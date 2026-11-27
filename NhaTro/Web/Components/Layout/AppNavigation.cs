@@ -63,6 +63,18 @@ public static class AppNavigation
             new("GateLogs", "history", "ChuTro,QuanLy", "/gate/logs"),
             new("GateSettings", "settings", "ChuTro,QuanLy", "/gate/settings"),
             new("MyGate", "qr-code", "KhachThue", "/my/gate"),
+            new("Vehicles", "bike", "ChuTro,QuanLy", "/vehicles",
+                Children:
+                [
+                    new("VehicleZones", "", "ChuTro,QuanLy", "/vehicles/zones", ShowInSidebar: false),
+                    new("VehicleGuests", "", "ChuTro,QuanLy", "/vehicles/guests", ShowInSidebar: false),
+                    new("VehicleAudit", "", "ChuTro,QuanLy", "/vehicles/audit", ShowInSidebar: false),
+                    new("VehicleSettings", "", "ChuTro", "/vehicles/settings", ShowInSidebar: false),
+                ]),
+            new("MyVehicles", "bike", "KhachThue", "/my/vehicles"),
+        ]),
+        new("NavGroupData", "ChuTro,QuanLy",
+        [
             new("Reports", "chart", "ChuTro,QuanLy", "/reports"),
             new("Assistant", "sparkles", "ChuTro,QuanLy", "/assistant",
                 Children:
@@ -70,6 +82,9 @@ public static class AppNavigation
                     new("AssistantSettings", "", "ChuTro", "/assistant/settings", ShowInSidebar: false),
                     new("AiSuggestions", "", "ChuTro", "/assistant/inbox", ShowInSidebar: false),
                 ]),
+        ]),
+        new("NavGroupReview", "ChuTro,QuanLy",
+        [
             new("Approvals", "check", "ChuTro", "/approvals"),
             new("ManagerSwitches", "settings", "ChuTro", "/manager-switches"),
             new("MyRequests", "file", "QuanLy", "/my/requests", Aliases: ["/my-requests"]),
