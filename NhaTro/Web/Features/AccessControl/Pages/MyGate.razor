@@ -202,7 +202,7 @@
             while (await timer.WaitForNextTickAsync(ct))
             {
                 if (_rooms.Count == 0 || _qrRoomId == 0) continue;
-                _qr = await Session.ResidentQrAsync(_qrRoomId);
+                _qr = await Session.ResidentQrAsync(SelectedPropertyId);
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -253,7 +253,7 @@
             if (_rooms.Count > 0)
             {
                 _qrRoomId = _rooms[0].RoomId;
-                _qr = await Session.ResidentQrAsync(_qrRoomId);
+                _qr = await Session.ResidentQrAsync(SelectedPropertyId);
             }
 
             _passes = await Session.PassesAsync();
@@ -289,11 +289,15 @@
 
     private void OpenReason(GatePassDto pass) => _reasonPass = pass;
 
+    // Token QR ký theo PropertyId; dropdown chọn theo RoomId nên phải quy đổi.
+    private int SelectedPropertyId =>
+        _rooms.FirstOrDefault(room => room.RoomId == _qrRoomId)?.PropertyId ?? 0;
+
     private async Task RefreshQrAsync()
     {
         try
         {
-            _qr = await Session.ResidentQrAsync(_qrRoomId);
+            _qr = await Session.ResidentQrAsync(SelectedPropertyId);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
